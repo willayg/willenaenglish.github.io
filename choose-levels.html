@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Willena 원어민 영어학원</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #2e2b3f;
+      --background: #f4f8fb;
+      --text: #222;
+      --highlight: #ccc;
+      --box-white: #ffffff;
+      --box-border: #e0e0e0;
+      --glass-blue: rgba(200, 235, 255, 0.55);
+      --glass-pink: rgba(255, 230, 240, 0.55);
+      --glass-green: rgba(230, 255, 240, 0.55);
+      --glass-orange: rgba(255, 240, 215, 0.55);
+      --glass-yellow: rgba(255, 255, 210, 0.55);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+    }
+    header {
+      background-color: var(--primary);
+      padding: 10px 6%;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    header img { height: 50px; }
+    .swiper {
+      width: 100%;
+      height: 200px;
+      position: sticky;
+      top: 60px;
+      z-index: 999;
+      backdrop-filter: blur(12px);
+    }
+    .swiper-slide {
+      background: var(--glass-blue);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: var(--text);
+      transition: transform 0.3s ease;
+      text-shadow: -1px -1px 0 rgba(255,255,255,0.7), 1px -1px 0 rgba(255,255,255,0.7), -1px 1px 0 rgba(255,255,255,0.7), 1px 1px 0 rgba(255,255,255,0.7);
+    }
+    .swiper-slide:nth-child(2) { background: var(--glass-pink); }
+    .swiper-slide:nth-child(3) { background: var(--glass-green); }
+    .swiper-slide:nth-child(4) { background: var(--glass-orange); }
+    .swiper-slide:nth-child(5) { background: var(--glass-yellow); }
+    .swiper-slide:nth-child(6) { background: var(--glass-blue); }
+    .swiper-slide:nth-child(7) { background: var(--glass-pink); }
+    .swiper-slide:hover { transform: scale(1.05); }
+    .swiper-slide span {
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-top: 0.3rem;
+      color: #444;
+    }
+    .swiper-slide a {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .swiper-pagination {
+      position: absolute;
+      top: 8px;
+      text-align: center;
+      width: 100%;
+    }
+    .game-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .game-box {
+      width: 100%;
+      height: 130px;
+      background: var(--box-white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      border-bottom: 3px solid var(--box-border);
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="Logo.png" alt="Willena Logo">
+  </header>
+  <div class="swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide"><a href="#">Level 1<span>왕기초</span></a></div>
+      <div class="swiper-slide"><a href="#">Level 2<span>기초</span></a></div>
+      <div class="swiper-slide"><a href="#">Level 3<span>초기</span></a></div>
+      <div class="swiper-slide"><a href="#">Level 4<span>중기</span></a></div>
+      <div class="swiper-slide"><a href="#">Level 5<span>중기2</span></a></div>
+      <div class="swiper-slide"><a href="#">Level 6<span>심화</span></a></div>
+      <div class="swiper-slide"><a href="#">Level 7<span>고급</span></a></div>
+    </div>
+    <div class="swiper-pagination"></div>
+  </div>
+  <div id="game-options" class="game-options"></div>
+  <script>
+    const gameNamesByLevel = {
+      'Level 3': [
+        ['Cutie Past Tense', 'Choose the right past tense verb']
+      ],
+      'Level 4': [
+        ['Tag Questions Goblin', 'Defeat the goblin with grammar!']
+      ]
+    };
+
+    function loadLevel(level) {
+      const games = gameNamesByLevel[level] || [];
+      const html = games.map(([title, subtitle]) => {
+        const isGoblin = title === 'Tag Questions Goblin';
+        const isPastTense = title === 'Cutie Past Tense';
+        const href = isGoblin ? 'goblin_tag.html' : isPastTense ? 'past_tense_game.html' : '#';
+        return `<div class="game-box" tabindex="0" data-title="${title}" data-subtitle="${subtitle}" onclick="event.stopPropagation(); location.href='${href}'">${title}</div>`;
+      }).join('');
+      document.getElementById('game-options').innerHTML = html;
+
+      document.querySelectorAll('.game-box').forEach(box => {
+        let holdTimer;
+        const originalText = box.dataset.title;
+        const newText = box.dataset.subtitle;
+        const startHold = () => {
+          holdTimer = setTimeout(() => {
+            box.textContent = newText;
+            setTimeout(() => { box.textContent = originalText; }, 1000);
+          }, 500);
+        };
+        const endHold = () => clearTimeout(holdTimer);
+        box.addEventListener('mousedown', startHold);
+        box.addEventListener('touchstart', startHold);
+        box.addEventListener('mouseup', endHold);
+        box.addEventListener('mouseleave', endHold);
+        box.addEventListener('touchend', endHold);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const swiper = new Swiper('.swiper', {
+        loop: true,
+        threshold: 80,
+        touchRatio: 0.45,
+        touchAngle: 25,
+        pagination: { el: '.swiper-pagination', clickable: true },
+        simulateTouch: true,
+        allowTouchMove: true,
+        on: {
+          slideChange: function () {
+            const levelText = document.querySelectorAll('.swiper-slide')[this.realIndex + 1]?.innerText?.split('\n')[0].trim();
+            if (levelText) loadLevel(levelText);
+          }
+        }
+      });
+
+      let touchStartX = 0;
+      let touchEndX = 0;
+      document.body.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+      document.body.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const deltaX = touchEndX - touchStartX;
+        if (Math.abs(deltaX) > 50) {
+          if (deltaX < 0) swiper.slideNext();
+          else swiper.slidePrev();
+        }
+      });
+
+      loadLevel('Level 1');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Goblin Tag Question Battle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: #f5f5dc;
+      font-family: 'Pirata One', cursive;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #e0c060;
+      font-size: 48px;
+      text-shadow: 2px 2px #000;
+    }
+    .question {
+      font-size: 32px;
+      margin: 20px;
+      font-family: 'Roboto Slab', serif;
+    }
+    .btn {
+      font-size: 24px;
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: #e0c060;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #startBtn {
+      font-size: 60px;
+      padding: 25px 50px;
+    }
+    #result {
+      font-size: 28px;
+      margin-top: 20px;
+    }
+    #score, #timer {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    #highScores {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Goblin Tag Question Battle! 👹</h1>
+  <button id="startBtn" class="btn" onclick="startGame()">Start</button>
+  <div id="timer" style="display:none;">Time: 45s</div>
+  <div id="score" style="display:none;">Score: 0</div>
+  <div id="question" class="question" style="display:none;">Loading...</div>
+  <div id="buttons"></div>
+  <div id="result"></div>
+  <div id="endScreen" style="display:none;">
+    <p>Your final score: <span id="finalScore"></span></p>
+    <div id="nameEntry">
+      <input type="text" id="playerName" placeholder="Enter your name" class="btn">
+      <button id="submitBtn" class="btn" onclick="saveScore()">Submit Score</button>
+    </div>
+    <div id="highScores"></div>
+  </div>
+  <audio id="bgm" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    let questions = [
+      { stem: "You're coming to the party,", correct: "aren't you?", options: ["are you?", "aren't you?", "won't you?", "isn't it?"] },
+      { stem: "She doesn't eat meat,", correct: "does she?", options: ["does she?", "doesn't she?", "is she?", "isn't she?"] },
+      { stem: "It’s a beautiful day,", correct: "isn't it?", options: ["is it?", "isn't it?", "was it?", "won’t it?"] },
+      { stem: "We should go now,", correct: "shouldn't we?", options: ["should we?", "shouldn't we?", "can we?", "shall we?"] },
+      { stem: "They haven’t finished yet,", correct: "have they?", options: ["haven’t they?", "hasn’t they?", "have they?", "did they?"] }
+    ];
+
+    let current = 0;
+    let score = 0;
+    let timeLeft = 45;
+    let timer;
+    let locked = false;
+
+    const scoreDisplay = document.getElementById("score");
+    const timerDisplay = document.getElementById("timer");
+    const bgm = document.getElementById("bgm");
+    bgm.volume = 0.1;
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function showQuestion() {
+      locked = false;
+      const q = questions[current % questions.length];
+      document.getElementById("question").textContent = `${q.stem}`;
+      const buttons = document.getElementById("buttons");
+      buttons.innerHTML = "";
+      shuffle([...q.options]).forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(option);
+        buttons.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(choice) {
+      if (locked) return;
+      locked = true;
+      const correct = questions[current % questions.length].correct;
+
+      if (choice === correct) {
+        score += 300;
+        document.getElementById("result").style.color = "#4CAF50";
+        document.getElementById("result").textContent = `⚔️ Correct! The goblins retreat...`;
+      } else {
+        score -= 100;
+        document.getElementById("result").style.color = "#f44336";
+        document.getElementById("result").textContent = `👹 Wrong! The goblins laugh... Correct: ${correct}`;
+      }
+
+      scoreDisplay.textContent = `Score: ${score}`;
+
+      setTimeout(() => {
+        current++;
+        document.getElementById("result").textContent = "";
+        showQuestion();
+      }, 1000);
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `Time: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          document.getElementById("score").style.display = "none";
+          document.getElementById("timer").style.display = "none";
+          document.getElementById("question").style.display = "none";
+          document.getElementById("buttons").style.display = "none";
+          document.getElementById("result").style.display = "none";
+          document.getElementById("endScreen").style.display = "block";
+          document.getElementById("finalScore").textContent = score;
+        }
+      }, 1000);
+    }
+
+    function saveScore() {
+      const name = document.getElementById("playerName").value || "Anonymous";
+      const scores = JSON.parse(localStorage.getItem("highScores") || "[]");
+      scores.push({ name, score });
+      scores.sort((a, b) => b.score - a.score);
+      localStorage.setItem("highScores", JSON.stringify(scores.slice(0, 10)));
+      displayHighScores();
+      document.getElementById("nameEntry").innerHTML = '<button class="btn" onclick="location.reload()">Replay</button>';
+    }
+
+    function displayHighScores() {
+      const scores = JSON.parse(localStorage.getItem("highScores") || "[]");
+      const list = scores.map(s => `<p>${s.name}: ${s.score}</p>`).join("");
+      document.getElementById("highScores").innerHTML = `<h3>High Scores</h3>${list}`;
+    }
+
+    function startGame() {
+      questions = shuffle(questions);
+      document.getElementById("startBtn").style.display = "none";
+      document.getElementById("timer").style.display = "block";
+      document.getElementById("score").style.display = "block";
+      document.getElementById("question").style.display = "block";
+      bgm.play();
+      showQuestion();
+      startTimer();
+    }
+  </script>
+</body>
+</html>
