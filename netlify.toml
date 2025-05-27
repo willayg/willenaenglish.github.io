@@ -1,0 +1,6 @@
+[build]
+  publish = "."
+  command = ""
+
+[context.production.environment]
+  NODE_VERSION = "18"
