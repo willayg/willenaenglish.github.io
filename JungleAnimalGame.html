@@ -201,14 +201,29 @@
     }
 
     function checkAnswer(choice) {
-      if (choice === currentQuestion.answer) {
-        score += 200;
-      } else {
-        score -= 100;
-      }
-      scoreDisplay.textContent = score;
-      nextQuestion();
+  const buttons = document.querySelectorAll('#options button');
+
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === currentQuestion.answer) {
+      btn.style.backgroundColor = '#ffeb3b'; // bright yellow
+      btn.style.color = '#000'; // black text
+    } else if (btn.textContent === choice) {
+      btn.style.backgroundColor = '#e53935'; // red
     }
+  });
+
+  if (choice === currentQuestion.answer) {
+    score += 200;
+    scoreDisplay.textContent = score;
+    setTimeout(nextQuestion, 500); // short pause for correct too
+  } else {
+    score -= 100;
+    scoreDisplay.textContent = score;
+    setTimeout(nextQuestion, 500); // pause so kids can learn
+  }
+}
+
 
     function endGame() {
       clearInterval(timer);
@@ -218,13 +233,19 @@
     }
 
     function submitScore() {
-      const name = nameInput.value || 'Anonymous';
-      const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
-      highScores.push({ name, score });
-      highScores.sort((a, b) => b.score - a.score);
-      localStorage.setItem('animalQuizHighScores', JSON.stringify(highScores.slice(0, 5)));
-      displayHighScores();
-    }
+  const name = nameInput.value || 'Anonymous';
+  const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
+  highScores.push({ name, score });
+  highScores.sort((a, b) => b.score - a.score);
+  localStorage.setItem('animalQuizHighScores', JSON.stringify(highScores.slice(0, 5)));
+  displayHighScores();
+
+  // Hide input and button to prevent double submission
+  nameInput.style.display = 'none';
+  const submitBtn = document.querySelector('button[onclick="submitScore()"]');
+  if (submitBtn) submitBtn.style.display = 'none';
+}
+
 
     function displayHighScores() {
       const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
