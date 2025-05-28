@@ -15,7 +15,7 @@
     }
     .container {
       max-width: 600px;
-      margin: 40px auto;
+      margin: 80px auto;
       padding: 20px;
       border: 4px solid white;
       border-radius: 20px;
@@ -44,9 +44,10 @@
     #logo {
       width: 100px;
       position: fixed;
-      bottom: 10px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
+      z-index: 10;
     }
     #emoji {
       font-size: 6em;
@@ -71,6 +72,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
 </head>
 <body>
+<img id="logo" src="Logo.png" alt="Willena Logo">
   <div class="container">
     <div id="startScreen">
       <h1>Jungle Animal Quiz</h1>
@@ -83,7 +85,7 @@
         <div id="emoji"></div>
         <div class="status-item"><span id="score">0</span></div>
       </div>
-      <div class="options" id="options"></div>
+      <div class="options" id="options"></div> <button id="restartButton" onclick="resetGame()" style="display: none; margin-top: 10px;">Restart</button>
     </div>
 
     <div id="endScreen">
@@ -96,7 +98,7 @@
       <button onclick="resetGame()">Play Again</button>
     </div>
   </div>
-  <img id="logo" src="Logo.png" alt="Willena Logo">
+  
 
   <script>
     const questions = [
@@ -164,10 +166,15 @@
     function startGame() {
       score = 0;
       timeLeft = 20;
+endScreen.style.display = 'none';
+startScreen.style.display = 'none';
+
       usedQuestions = [];
       startScreen.style.display = 'none';
       endScreen.style.display = 'none';
       quizScreen.style.display = 'block';
+document.getElementById('restartButton').style.display = 'inline-block';
+
       document.querySelector('.status-bar').style.display = 'flex';
       nextQuestion();
       timer = setInterval(() => {
@@ -226,6 +233,8 @@
 
 
     function endGame() {
+document.getElementById('restartButton').style.display = 'none';
+
       clearInterval(timer);
       quizScreen.style.display = 'none';
       endScreen.style.display = 'block';
@@ -258,6 +267,8 @@
     }
 
     function resetGame() {
+document.getElementById('restartButton').style.display = 'none';
+
       nameInput.value = '';
       scoreDisplay.textContent = '0';
       timerDisplay.textContent = '20';
