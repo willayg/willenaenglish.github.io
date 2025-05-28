@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jungle Animal Quiz</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #004d00;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+    #startScreen, #quizScreen, #endScreen {
+      display: none;
+    }
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding-top: 16px;
+      padding-bottom: 16px;
+      font-size: 1.4em;
+    }
+    #logo {
+      width: 100px;
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #emoji {
+      font-size: 6em;
+      flex: 0 0 auto;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .status-bar {
+      display: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .status-item {
+      font-size: 2em;
+      font-weight: bold;
+      width: 80px;
+      text-align: center;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div id="startScreen">
+      <h1>Jungle Animal Quiz</h1>
+      <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="quizScreen">
+      <div class="status-bar">
+        <div class="status-item"><span id="timer">20</span>s</div>
+        <div id="emoji"></div>
+        <div class="status-item"><span id="score">0</span></div>
+      </div>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div id="endScreen">
+      <h2>Game Over!</h2>
+      <p>Your score: <span id="finalScore"></span></p>
+      <p>Top Scores:</p>
+      <ol id="highScores"></ol>
+      <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
+      <button onclick="submitScore()">Submit Score</button>
+      <button onclick="resetGame()">Play Again</button>
+    </div>
+  </div>
+  <img id="logo" src="Logo.png" alt="Willena Logo">
+
+  <script>
+    const questions = [
+      { icon: '🦁', answer: 'Lion', choices: ['Tiger', 'Lion', 'Bear', 'Elephant'] },
+      { icon: '🐘', answer: 'Elephant', choices: ['Dog', 'Elephant', 'Giraffe', 'Horse'] },
+      { icon: '🐯', answer: 'Tiger', choices: ['Tiger', 'Zebra', 'Lion', 'Monkey'] },
+      { icon: '🐵', answer: 'Monkey', choices: ['Donkey', 'Monkey', 'Cat', 'Panda'] },
+      { icon: '🐻', answer: 'Bear', choices: ['Bear', 'Koala', 'Pig', 'Fox'] },
+      { icon: '🦊', answer: 'Fox', choices: ['Dog', 'Wolf', 'Fox', 'Lion'] },
+      { icon: '🐺', answer: 'Wolf', choices: ['Dog', 'Cat', 'Wolf', 'Tiger'] },
+      { icon: '🦒', answer: 'Giraffe', choices: ['Elephant', 'Camel', 'Giraffe', 'Horse'] },
+      { icon: '🐴', answer: 'Horse', choices: ['Horse', 'Cow', 'Dog', 'Pig'] },
+      { icon: '🐷', answer: 'Pig', choices: ['Sheep', 'Pig', 'Bear', 'Rabbit'] },
+      { icon: '🐰', answer: 'Rabbit', choices: ['Hamster', 'Rabbit', 'Kangaroo', 'Fox'] },
+      { icon: '🐱', answer: 'Cat', choices: ['Tiger', 'Cat', 'Panther', 'Dog'] },
+      { icon: '🐶', answer: 'Dog', choices: ['Wolf', 'Dog', 'Fox', 'Lion'] },
+      { icon: '🐮', answer: 'Cow', choices: ['Cow', 'Buffalo', 'Pig', 'Donkey'] },
+      { icon: '🐑', answer: 'Sheep', choices: ['Goat', 'Horse', 'Sheep', 'Pig'] },
+      { icon: '🦓', answer: 'Zebra', choices: ['Zebra', 'Horse', 'Donkey', 'Elephant'] },
+      { icon: '🦘', answer: 'Kangaroo', choices: ['Rabbit', 'Kangaroo', 'Dog', 'Koala'] },
+      { icon: '🐔', answer: 'Chicken', choices: ['Turkey', 'Chicken', 'Duck', 'Ostrich'] },
+      { icon: '🦆', answer: 'Duck', choices: ['Chicken', 'Duck', 'Swan', 'Goose'] },
+      { icon: '🦢', answer: 'Swan', choices: ['Duck', 'Flamingo', 'Swan', 'Goose'] },
+      { icon: '🦩', answer: 'Flamingo', choices: ['Duck', 'Pelican', 'Flamingo', 'Swan'] },
+      { icon: '🦚', answer: 'Peacock', choices: ['Peacock', 'Turkey', 'Swan', 'Duck'] },
+      { icon: '🦜', answer: 'Parrot', choices: ['Parrot', 'Eagle', 'Falcon', 'Toucan'] },
+      { icon: '🦢', answer: 'Swan', choices: ['Duck', 'Goose', 'Swan', 'Heron'] },
+      { icon: '🦃', answer: 'Turkey', choices: ['Chicken', 'Turkey', 'Duck', 'Pheasant'] },
+      { icon: '🪿', answer: 'Goose', choices: ['Duck', 'Goose', 'Swan', 'Pelican'] },
+      { icon: '🦅', answer: 'Eagle', choices: ['Hawk', 'Eagle', 'Parrot', 'Falcon'] },
+      { icon: '🦉', answer: 'Owl', choices: ['Hawk', 'Owl', 'Eagle', 'Dove'] },
+      { icon: '🪰', answer: 'Fly', choices: ['Mosquito', 'Bee', 'Fly', 'Ant'] },
+      { icon: '🐝', answer: 'Bee', choices: ['Wasp', 'Fly', 'Bee', 'Ant'] },
+      { icon: '🐜', answer: 'Ant', choices: ['Ant', 'Spider', 'Beetle', 'Fly'] },
+      { icon: '🕷️', answer: 'Spider', choices: ['Spider', 'Crab', 'Ant', 'Beetle'] },
+      { icon: '🦂', answer: 'Scorpion', choices: ['Scorpion', 'Spider', 'Lobster', 'Crab'] },
+      { icon: '🐢', answer: 'Turtle', choices: ['Turtle', 'Lizard', 'Frog', 'Snake'] },
+      { icon: '🐍', answer: 'Snake', choices: ['Worm', 'Eel', 'Snake', 'Lizard'] },
+      { icon: '🦎', answer: 'Lizard', choices: ['Turtle', 'Lizard', 'Frog', 'Snake'] },
+      { icon: '🐸', answer: 'Frog', choices: ['Toad', 'Frog', 'Lizard', 'Salamander'] },
+      { icon: '🐊', answer: 'Crocodile', choices: ['Crocodile', 'Alligator', 'Lizard', 'Turtle'] },
+      { icon: '🦭', answer: 'Seal', choices: ['Otter', 'Seal', 'Whale', 'Walrus'] },
+      { icon: '🐬', answer: 'Dolphin', choices: ['Shark', 'Dolphin', 'Whale', 'Seal'] },
+      { icon: '🐳', answer: 'Whale', choices: ['Whale', 'Dolphin', 'Shark', 'Seal'] },
+      { icon: '🦈', answer: 'Shark', choices: ['Whale', 'Dolphin', 'Shark', 'Seal'] }
+    ];
+
+    let score = 0;
+    let timeLeft = 20;
+    let timer;
+    let currentQuestion;
+    let usedQuestions = [];
+
+    const startScreen = document.getElementById('startScreen');
+    const quizScreen = document.getElementById('quizScreen');
+    const endScreen = document.getElementById('endScreen');
+    const emoji = document.getElementById('emoji');
+    const options = document.getElementById('options');
+    const timerDisplay = document.getElementById('timer');
+    const scoreDisplay = document.getElementById('score');
+    const finalScore = document.getElementById('finalScore');
+    const highScoresList = document.getElementById('highScores');
+    const nameInput = document.getElementById('nameInput');
+
+    function startGame() {
+      score = 0;
+      timeLeft = 20;
+      usedQuestions = [];
+      startScreen.style.display = 'none';
+      endScreen.style.display = 'none';
+      quizScreen.style.display = 'block';
+      document.querySelector('.status-bar').style.display = 'flex';
+      nextQuestion();
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function nextQuestion() {
+      if (usedQuestions.length === questions.length) {
+        endGame();
+        return;
+      }
+      let index;
+      do {
+        index = Math.floor(Math.random() * questions.length);
+      } while (usedQuestions.includes(index));
+      usedQuestions.push(index);
+      currentQuestion = questions[index];
+      emoji.textContent = currentQuestion.icon;
+      options.innerHTML = '';
+      currentQuestion.choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.textContent = choice;
+        btn.onclick = () => checkAnswer(choice);
+        options.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(choice) {
+      if (choice === currentQuestion.answer) {
+        score += 200;
+      } else {
+        score -= 100;
+      }
+      scoreDisplay.textContent = score;
+      nextQuestion();
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      quizScreen.style.display = 'none';
+      endScreen.style.display = 'block';
+      finalScore.textContent = score;
+    }
+
+    function submitScore() {
+      const name = nameInput.value || 'Anonymous';
+      const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
+      highScores.push({ name, score });
+      highScores.sort((a, b) => b.score - a.score);
+      localStorage.setItem('animalQuizHighScores', JSON.stringify(highScores.slice(0, 5)));
+      displayHighScores();
+    }
+
+    function displayHighScores() {
+      const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
+      highScoresList.innerHTML = '';
+      highScores.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name}: ${entry.score}`;
+        highScoresList.appendChild(li);
+      });
+    }
+
+    function resetGame() {
+      nameInput.value = '';
+      scoreDisplay.textContent = '0';
+      timerDisplay.textContent = '20';
+      startScreen.style.display = 'block';
+      quizScreen.style.display = 'none';
+      endScreen.style.display = 'none';
+    }
+
+    startScreen.style.display = 'block';
+  </script>
+</body>
+</html>
