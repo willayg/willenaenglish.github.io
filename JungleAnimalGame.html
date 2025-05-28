@@ -202,12 +202,13 @@ document.getElementById('restartButton').style.display = 'inline-block';
       currentQuestion = questions[index];
       emoji.textContent = currentQuestion.icon;
       options.innerHTML = '';
-      currentQuestion.choices.forEach(choice => {
-        const btn = document.createElement('button');
-        btn.textContent = choice;
-        btn.onclick = () => checkAnswer(choice);
-        options.appendChild(btn);
-      });
+      const shuffledChoices = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
+shuffledChoices.forEach(choice => {
+  const btn = document.createElement('button');
+  btn.textContent = choice;
+  btn.onclick = () => checkAnswer(choice);
+  options.appendChild(btn);
+});
     }
 
     function checkAnswer(choice) {
