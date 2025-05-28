@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Easy Picture Word Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Fredoka One', cursive;
+      background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
+      color: #333;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 3em;
+      margin: 0.5em 0;
+      color: #ff3e00;
+      text-shadow: 2px 2px #fff;
+    }
+    #icon {
+      font-size: 8em;
+      margin: 20px;
+      display: none;
+    }
+    .options {
+      display: none;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      max-width: 400px;
+      margin: auto;
+    }
+    .option {
+      background: #fff;
+      padding: 20px;
+      font-size: 2em;
+      border-radius: 15px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .option:hover {
+      transform: scale(1.05);
+    }
+    .scoreboard {
+      margin-top: 20px;
+      font-size: 1.2em;
+      display: none;
+    }
+    .timer {
+      font-size: 1.5em;
+      color: #fff;
+      background: #333;
+      padding: 10px 20px;
+      border-radius: 20px;
+      margin-top: 10px;
+      display: none;
+    }
+    #startBtn, #endBtn {
+      margin: 10px;
+      padding: 15px 30px;
+      font-size: 1.5em;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #highscores {
+      margin-top: 20px;
+      font-size: 1em;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+      @media (max-width: 768px) {
+      #icon {
+        font-size: 7.2em;
+      }
+      .option {
+        font-size: 1.8em;
+        padding: 18px;
+      }
+      #startBtn, #endBtn {
+        font-size: 1.35em;
+        padding: 13px 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Easy Picture Word Game</h1>
+  
+  <div id="icon">🍎</div>
+  <div class="options">
+    <div class="option">Apple</div>
+    <div class="option">Ball</div>
+    <div class="option">Cat</div>
+    <div class="option">Dog</div>
+  </div>
+  <div class="scoreboard">Score: <span id="score">0</span></div>
+  <div class="timer">Time Left: <span id="time">10</span>s</div>
+  <button id="startBtn">Start Game</button>
+  <button id="endBtn" style="display:none;">End Game</button>
+  <div id="highscores">
+    <h3>🏆 High Scores 🏆</h3>
+    <ol id="scoreList"></ol>
+  </div>
+
+  <script>
+    const words = [
+  { word: "Apple", icon: "🍎" },
+  { word: "Ball", icon: "⚽" },
+  { word: "Cat", icon: "🐱" },
+  { word: "Dog", icon: "🐶" },
+  { word: "Book", icon: "📖" },
+  { word: "Car", icon: "🚗" },
+  { word: "Sun", icon: "☀️" },
+  { word: "Moon", icon: "🌙" },
+  { word: "Star", icon: "⭐" },
+  { word: "Tree", icon: "🌳" },
+  { word: "Flower", icon: "🌸" },
+  { word: "Bird", icon: "🐦" },
+  { word: "Fish", icon: "🐟" },
+  { word: "Chair", icon: "🪑" },
+  { word: "Table", icon: "🛋️" },
+  { word: "Hat", icon: "🎩" },
+  { word: "Shoe", icon: "👟" },
+  { word: "House", icon: "🏠" },
+  { word: "Bed", icon: "🛏️" },
+  { word: "Water", icon: "💧" },
+  { word: "Fire", icon: "🔥" },
+  { word: "Ice", icon: "🧊" },
+  { word: "Banana", icon: "🍌" },
+  { word: "Milk", icon: "🥛" },
+  { word: "Clock", icon: "🕒" },
+  { word: "Pencil", icon: "✏️" },
+  { word: "Phone", icon: "📱" },
+  { word: "Bag", icon: "🎒" },
+  { word: "Door", icon: "🚪" },
+  { word: "Key", icon: "🔑" }
+];
+
+    const iconDiv = document.getElementById("icon");
+    const optionDivs = document.querySelectorAll(".option");
+    const optionsContainer = document.querySelector(".options");
+    const scoreSpan = document.getElementById("score");
+    const timeSpan = document.getElementById("time");
+    const startBtn = document.getElementById("startBtn");
+    const endBtn = document.getElementById("endBtn");
+    const scoreboard = document.querySelector(".scoreboard");
+    const timerBox = document.querySelector(".timer");
+    const highScoresDiv = document.getElementById("highscores");
+    const scoreList = document.getElementById("scoreList");
+
+    let currentAnswer = "";
+    let score = 0;
+let streak = 0;
+    let timeLeft = 10;
+    let timer;
+    let highScores = JSON.parse(localStorage.getItem("iconHighScores") || "[]");
+
+    function startGame() {
+      score = 0;
+      timeLeft = 10;
+      scoreSpan.textContent = score;
+      timeSpan.textContent = timeLeft;
+      startBtn.style.display = "none";
+      endBtn.style.display = "inline-block";
+      highScoresDiv.style.display = "none";
+
+      iconDiv.style.display = "block";
+      optionsContainer.style.display = "grid";
+      scoreboard.style.display = "block";
+      timerBox.style.display = "block";
+
+      nextQuestion();
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timeSpan.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function showBonus(text) {
+      const bonus = document.createElement("div");
+      bonus.textContent = text;
+      bonus.style.position = "fixed";
+      bonus.style.top = "10%";
+      bonus.style.left = "50%";
+      bonus.style.transform = "translateX(-50%)";
+      bonus.style.fontSize = "2em";
+      bonus.style.color = "#ff3e00";
+      bonus.style.background = "#fff";
+      bonus.style.padding = "10px 20px";
+      bonus.style.borderRadius = "15px";
+      bonus.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
+      bonus.style.zIndex = "1000";
+      document.body.appendChild(bonus);
+      setTimeout(() => document.body.removeChild(bonus), 1200);
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      startBtn.style.display = "inline-block";
+      iconDiv.style.display = "none";
+      optionsContainer.style.display = "none";
+      scoreboard.style.display = "none";
+      timerBox.style.display = "none";
+      endBtn.style.display = "none";
+
+      alert("Game Over! Your final score is: " + score);
+
+      if (highScores.length < 5 || score > highScores[4].score) {
+        setTimeout(() => {
+          const name = window.prompt("Enter your name for the leaderboard:", "")?.trim() || "Anonymous";
+          highScores.push({ name, score });
+          highScores.sort((a, b) => b.score - a.score);
+          highScores = highScores.slice(0, 5);
+          localStorage.setItem("iconHighScores", JSON.stringify(highScores));
+          scoreList.innerHTML = highScores.map(entry => `<li>${entry.name}: ${entry.score}</li>`).join("");
+          highScoresDiv.style.display = "block";
+        }, 100);
+      } else {
+        highScoresDiv.style.display = "block";
+      }
+
+      alert("Game Over! Your final score is: " + score);
+    }
+
+    function nextQuestion() {
+      const choices = [...words].sort(() => 0.5 - Math.random()).slice(0, 4);
+      const answer = choices[Math.floor(Math.random() * 4)];
+      currentAnswer = answer.word;
+      iconDiv.textContent = answer.icon;
+      optionDivs.forEach((div, i) => {
+        div.textContent = choices[i].word;
+      });
+    }
+
+    optionDivs.forEach(option => {
+      option.addEventListener("click", () => {
+        if (option.textContent === currentAnswer) {
+        score++;
+        streak++;
+        if (streak % 3 === 0) {
+          score++;
+          showBonus("🔥 Streak Bonus!");
+        }
+        const timeBonus = timeLeft >= 8 ? 2 : timeLeft >= 6 ? 1 : 0;
+        if (timeBonus > 0) {
+          score += timeBonus;
+          showBonus(`⏱️ Speed Bonus +${timeBonus}!`);
+        }
+        } else {
+          score--;
+        streak = 0;
+        }
+        scoreSpan.textContent = score;
+        nextQuestion();
+      });
+    });
+
+    startBtn.addEventListener("click", startGame);
+    endBtn.addEventListener("click", endGame);
+  </script>
+</body>
+</html>
