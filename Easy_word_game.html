@@ -82,7 +82,7 @@
       overflow-y: auto;
       display: none;
     }
-      @media (max-width: 768px) {
+    @media (max-width: 768px) {
       #icon {
         font-size: 7.2em;
       }
@@ -99,7 +99,6 @@
 </head>
 <body>
   <h1>Easy Picture Word Game</h1>
-  
   <div id="icon">🍎</div>
   <div class="options">
     <div class="option">Apple</div>
@@ -109,8 +108,17 @@
   </div>
   <div class="scoreboard">Score: <span id="score">0</span></div>
   <div class="timer">Time Left: <span id="time">10</span>s</div>
-  <button id="startBtn">Start Game</button>
+  <button id="startBtn">Replay</button>
   <button id="endBtn" style="display:none;">End Game</button>
+  <div id="nameEntry" style="display: none; margin-top: 20px;">
+    <div id="namePrompt" style="font-size: 1.5em; margin-bottom: 10px; color: #ff3e00;">You got a top 5 score! What’s your name?</div>
+    <input id="playerName" type="text" placeholder="Enter your name"
+      style="font-family: 'Fredoka One', cursive; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; border: none; max-width: 300px; text-align: center;">
+    <button id="submitName"
+      style="margin-left: 10px; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; background: #333; color: white; border: none; cursor: pointer;">
+      Submit
+    </button>
+  </div>
   <div id="highscores">
     <h3>🏆 High Scores 🏆</h3>
     <ol id="scoreList"></ol>
@@ -118,37 +126,17 @@
 
   <script>
     const words = [
-  { word: "Apple", icon: "🍎" },
-  { word: "Ball", icon: "⚽" },
-  { word: "Cat", icon: "🐱" },
-  { word: "Dog", icon: "🐶" },
-  { word: "Book", icon: "📖" },
-  { word: "Car", icon: "🚗" },
-  { word: "Sun", icon: "☀️" },
-  { word: "Moon", icon: "🌙" },
-  { word: "Star", icon: "⭐" },
-  { word: "Tree", icon: "🌳" },
-  { word: "Flower", icon: "🌸" },
-  { word: "Bird", icon: "🐦" },
-  { word: "Fish", icon: "🐟" },
-  { word: "Chair", icon: "🪑" },
-  { word: "Table", icon: "🛋️" },
-  { word: "Hat", icon: "🎩" },
-  { word: "Shoe", icon: "👟" },
-  { word: "House", icon: "🏠" },
-  { word: "Bed", icon: "🛏️" },
-  { word: "Water", icon: "💧" },
-  { word: "Fire", icon: "🔥" },
-  { word: "Ice", icon: "🧊" },
-  { word: "Banana", icon: "🍌" },
-  { word: "Milk", icon: "🥛" },
-  { word: "Clock", icon: "🕒" },
-  { word: "Pencil", icon: "✏️" },
-  { word: "Phone", icon: "📱" },
-  { word: "Bag", icon: "🎒" },
-  { word: "Door", icon: "🚪" },
-  { word: "Key", icon: "🔑" }
-];
+      { word: "Apple", icon: "🍎" }, { word: "Ball", icon: "⚽" }, { word: "Cat", icon: "🐱" },
+      { word: "Dog", icon: "🐶" }, { word: "Book", icon: "📖" }, { word: "Car", icon: "🚗" },
+      { word: "Sun", icon: "☀️" }, { word: "Moon", icon: "🌙" }, { word: "Star", icon: "⭐" },
+      { word: "Tree", icon: "🌳" }, { word: "Flower", icon: "🌸" }, { word: "Bird", icon: "🐦" },
+      { word: "Fish", icon: "🐟" }, { word: "Chair", icon: "🪑" }, { word: "Table", icon: "🛋️" },
+      { word: "Hat", icon: "🎩" }, { word: "Shoe", icon: "👟" }, { word: "House", icon: "🏠" },
+      { word: "Bed", icon: "🛏️" }, { word: "Water", icon: "💧" }, { word: "Fire", icon: "🔥" },
+      { word: "Ice", icon: "🧊" }, { word: "Banana", icon: "🍌" }, { word: "Milk", icon: "🥛" },
+      { word: "Clock", icon: "🕒" }, { word: "Pencil", icon: "✏️" }, { word: "Phone", icon: "📱" },
+      { word: "Bag", icon: "🎒" }, { word: "Door", icon: "🚪" }, { word: "Key", icon: "🔑" }
+    ];
 
     const iconDiv = document.getElementById("icon");
     const optionDivs = document.querySelectorAll(".option");
@@ -161,15 +149,21 @@
     const timerBox = document.querySelector(".timer");
     const highScoresDiv = document.getElementById("highscores");
     const scoreList = document.getElementById("scoreList");
+    const nameEntry = document.getElementById("nameEntry");
+    const playerName = document.getElementById("playerName");
+    const submitName = document.getElementById("submitName");
 
     let currentAnswer = "";
     let score = 0;
-let streak = 0;
+    let streak = 0;
     let timeLeft = 10;
     let timer;
     let highScores = JSON.parse(localStorage.getItem("iconHighScores") || "[]");
 
     function startGame() {
+      nameEntry.style.display = "none";
+      playerName.value = "";
+      submitName.onclick = null;
       score = 0;
       timeLeft = 10;
       scoreSpan.textContent = score;
@@ -177,14 +171,11 @@ let streak = 0;
       startBtn.style.display = "none";
       endBtn.style.display = "inline-block";
       highScoresDiv.style.display = "none";
-
       iconDiv.style.display = "block";
       optionsContainer.style.display = "grid";
       scoreboard.style.display = "block";
       timerBox.style.display = "block";
-
       nextQuestion();
-
       timer = setInterval(() => {
         timeLeft--;
         timeSpan.textContent = timeLeft;
@@ -194,50 +185,34 @@ let streak = 0;
       }, 1000);
     }
 
-    function showBonus(text) {
-      const bonus = document.createElement("div");
-      bonus.textContent = text;
-      bonus.style.position = "fixed";
-      bonus.style.top = "10%";
-      bonus.style.left = "50%";
-      bonus.style.transform = "translateX(-50%)";
-      bonus.style.fontSize = "2em";
-      bonus.style.color = "#ff3e00";
-      bonus.style.background = "#fff";
-      bonus.style.padding = "10px 20px";
-      bonus.style.borderRadius = "15px";
-      bonus.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
-      bonus.style.zIndex = "1000";
-      document.body.appendChild(bonus);
-      setTimeout(() => document.body.removeChild(bonus), 1200);
-    }
-
     function endGame() {
       clearInterval(timer);
-      startBtn.style.display = "inline-block";
+      startBtn.style.display = "none";
       iconDiv.style.display = "none";
       optionsContainer.style.display = "none";
       scoreboard.style.display = "none";
       timerBox.style.display = "none";
       endBtn.style.display = "none";
-
       alert("Game Over! Your final score is: " + score);
 
       if (highScores.length < 5 || score > highScores[4].score) {
-        setTimeout(() => {
-          const name = window.prompt("Enter your name for the leaderboard:", "")?.trim() || "Anonymous";
+        nameEntry.style.display = "block";
+        submitName.onclick = function () {
+          const name = playerName.value.trim() || "Anonymous";
           highScores.push({ name, score });
           highScores.sort((a, b) => b.score - a.score);
           highScores = highScores.slice(0, 5);
           localStorage.setItem("iconHighScores", JSON.stringify(highScores));
           scoreList.innerHTML = highScores.map(entry => `<li>${entry.name}: ${entry.score}</li>`).join("");
           highScoresDiv.style.display = "block";
-        }, 100);
+          nameEntry.style.display = "none";
+          playerName.value = "";
+          startBtn.style.display = "inline-block";
+        };
       } else {
         highScoresDiv.style.display = "block";
+        startBtn.style.display = "inline-block";
       }
-
-      alert("Game Over! Your final score is: " + score);
     }
 
     function nextQuestion() {
@@ -250,23 +225,41 @@ let streak = 0;
       });
     }
 
+    function showBonus(text) {
+      const bonus = document.createElement("div");
+      bonus.textContent = text;
+      bonus.style.position = "absolute";
+      bonus.style.top = "-30px";
+      bonus.style.left = "50%";
+      bonus.style.transform = "translateX(-50%)";
+      bonus.style.fontSize = "2em";
+      bonus.style.color = "#ff3e00";
+      bonus.style.background = "#fff";
+      bonus.style.padding = "10px 20px";
+      bonus.style.borderRadius = "15px";
+      bonus.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
+      bonus.style.zIndex = "10";
+      document.body.appendChild(bonus);
+      setTimeout(() => document.body.removeChild(bonus), 1200);
+    }
+
     optionDivs.forEach(option => {
       option.addEventListener("click", () => {
         if (option.textContent === currentAnswer) {
-        score++;
-        streak++;
-        if (streak % 3 === 0) {
           score++;
-          showBonus("🔥 Streak Bonus!");
-        }
-        const timeBonus = timeLeft >= 8 ? 2 : timeLeft >= 6 ? 1 : 0;
-        if (timeBonus > 0) {
-          score += timeBonus;
-          showBonus(`⏱️ Speed Bonus +${timeBonus}!`);
-        }
+          streak++;
+          if (streak % 3 === 0) {
+            score++;
+            showBonus("🔥 Streak Bonus!");
+          }
+          const timeBonus = timeLeft >= 8 ? 2 : timeLeft >= 6 ? 1 : 0;
+          if (timeBonus > 0) {
+            score += timeBonus;
+            showBonus(`⏱️ Speed Bonus +${timeBonus}!`);
+          }
         } else {
           score--;
-        streak = 0;
+          streak = 0;
         }
         scoreSpan.textContent = score;
         nextQuestion();
