@@ -150,7 +150,7 @@ body {
     ];
 
     let score = 0;
-    let timeLeft = 20;
+    let timeLeft = 30;
     let timer;
     let currentQuestion;
     let usedQuestions = [];
@@ -168,7 +168,7 @@ body {
 
     function startGame() {
       score = 0;
-      timeLeft = 20;
+      timeLeft = 30;
 endScreen.style.display = 'none';
 startScreen.style.display = 'none';
 
@@ -275,10 +275,14 @@ document.getElementById('restartButton').style.display = 'none';
 
       nameInput.value = '';
       scoreDisplay.textContent = '0';
-      timerDisplay.textContent = '20';
+      timerDisplay.textContent = '30';
       startScreen.style.display = 'block';
       quizScreen.style.display = 'none';
       endScreen.style.display = 'none';
+nameInput.style.display = 'block';
+const submitBtn = document.querySelector('button[onclick="submitScore()"]');
+if (submitBtn) submitBtn.style.display = 'inline-block';
+
     }
 
     startScreen.style.display = 'block';
