@@ -130,10 +130,16 @@
   <div id="game-options" class="game-options"></div>
   <script>
     const gameNamesByLevel = {
+      'Level 1': [
+        ['Easy Word Game', 'Picture word quiz for beginners']
+      ],
+      'Level 2': [
+        ['Jungle Animal Game', 'Guess the animal!']
+      ],
       'Level 3': [
         ['Cutie Past Tense', 'Choose the right past tense verb']
       ],
-      'Level 4': [
+      'Level 6': [
         ['Tag Questions Goblin', 'Defeat the goblin with grammar!']
       ]
     };
@@ -143,7 +149,13 @@
       const html = games.map(([title, subtitle]) => {
         const isGoblin = title === 'Tag Questions Goblin';
         const isPastTense = title === 'Cutie Past Tense';
-        const href = isGoblin ? 'goblin_tag.html' : isPastTense ? 'past_tense_game.html' : '#';
+        const isJungle = title === 'Jungle Animal Game';
+        const isEasyWord = title === 'Easy Word Game';
+        let href = '#';
+        if (isGoblin) href = 'goblin_tag.html';
+        else if (isPastTense) href = 'past_tense_game.html';
+        else if (isJungle) href = 'JungleAnimalGame.html';
+        else if (isEasyWord) href = 'Easy_word_game.html';
         return `<div class="game-box" tabindex="0" data-title="${title}" data-subtitle="${subtitle}" onclick="event.stopPropagation(); location.href='${href}'">${title}</div>`;
       }).join('');
       document.getElementById('game-options').innerHTML = html;
@@ -178,7 +190,7 @@
         allowTouchMove: true,
         on: {
           slideChange: function () {
-            const levelText = document.querySelectorAll('.swiper-slide')[this.realIndex + 1]?.innerText?.split('\n')[0].trim();
+            const levelText = document.querySelectorAll('.swiper-slide')[this.realIndex]?.innerText?.split('\n')[0].trim();
             if (levelText) loadLevel(levelText);
           }
         }
