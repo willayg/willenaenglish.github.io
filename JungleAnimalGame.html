@@ -82,6 +82,7 @@ body {
 </head>
 <body>
 <img id="logo" src="Logo.png" alt="Willena Logo">
+<button id="soundToggle" style="position: absolute; top: 20px; right: 30px; z-index: 20;">🔊 Sound On</button>
   <div class="container">
     <div id="startScreen">
       <h1>Animal Quiz</h1>
@@ -148,7 +149,7 @@ body {
       { icon: '🐍', answer: 'Snake', choices: ['Worm', 'Eel', 'Snake', 'Lizard'] },
       { icon: '🦎', answer: 'Lizard', choices: ['Turtle', 'Lizard', 'Frog', 'Snake'] },
       { icon: '🐸', answer: 'Frog', choices: ['cat', 'Frog', 'Lizard', 'Salamander'] },
-      { icon: '🐊', answer: 'Crocodile', choices: ['Crocodile', 'Alligator', 'Lizard', 'Turtle'] },
+      { icon: '🐊', answer: 'Crocodile', choices: ['Crocodile', 'Banana', 'Lizard', 'Turtle'] },
       { icon: '🦭', answer: 'Seal', choices: ['Otter', 'Seal', 'Whale', 'Walrus'] },
       { icon: '🐬', answer: 'Dolphin', choices: ['Shark', 'Dolphin', 'Whale', 'Seal'] },
       { icon: '🐳', answer: 'Whale', choices: ['Whale', 'Dolphin', 'Shark', 'Seal'] },
@@ -172,11 +173,44 @@ body {
     const highScoresList = document.getElementById('highScores');
     const nameInput = document.getElementById('nameInput');
 
+    // Sound setup
+    const correctSound = new Audio('sounds/right.mp3');
+    const wrongSound = new Audio('sounds/wrong.mp3');
+    const endGameSound = new Audio('sounds/endgame.mp3');
+    const jungleMusic = new Audio('sounds/junglemusic.mp3');
+    jungleMusic.loop = true;
+    jungleMusic.volume = 0.5; // Optional: lower volume for background music
+
+    let soundOn = true;
+
+    const soundToggle = document.getElementById('soundToggle');
+    soundToggle.onclick = function() {
+      soundOn = !soundOn;
+      // Mute/unmute all sounds
+      correctSound.muted = !soundOn;
+      wrongSound.muted = !soundOn;
+      endGameSound.muted = !soundOn;
+      jungleMusic.muted = !soundOn;
+      soundToggle.textContent = soundOn ? '🔊 Sound On' : '🔇 Sound Off';
+    };
+
+    // Optionally, ensure all sounds respect the toggle at start
+    correctSound.muted = !soundOn;
+    wrongSound.muted = !soundOn;
+    endGameSound.muted = !soundOn;
+    jungleMusic.muted = !soundOn;
+
     function startGame() {
       score = 0;
       timeLeft = 30;
       endScreen.style.display = 'none';
       startScreen.style.display = 'none';
+
+      // Start background music if not already playing
+      if (jungleMusic.paused) {
+        jungleMusic.currentTime = 0;
+        jungleMusic.play();
+      }
 
       // FIX: Clear any existing timer before starting a new one
       if (timer) clearInterval(timer);
@@ -224,29 +258,32 @@ shuffledChoices.forEach(choice => {
     }
 
     function checkAnswer(choice) {
-  const buttons = document.querySelectorAll('#options button');
+      const buttons = document.querySelectorAll('#options button');
 
-  buttons.forEach(btn => {
-    btn.disabled = true;
-    if (btn.textContent === currentQuestion.answer) {
-      btn.style.backgroundColor = '#ffeb3b'; // bright yellow
-      btn.style.color = '#000'; // black text
-    } else if (btn.textContent === choice) {
-      btn.style.backgroundColor = '#e53935'; // red
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === currentQuestion.answer) {
+          btn.style.backgroundColor = '#ffeb3b'; // bright yellow
+          btn.style.color = '#000'; // black text
+        } else if (btn.textContent === choice) {
+          btn.style.backgroundColor = '#e53935'; // red
+        }
+      });
+
+      if (choice === currentQuestion.answer) {
+        correctSound.currentTime = 0;
+        correctSound.play();
+        score += 200;
+        scoreDisplay.textContent = score;
+        setTimeout(nextQuestion, 500); // short pause for correct too
+      } else {
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+        score -= 100;
+        scoreDisplay.textContent = score;
+        setTimeout(nextQuestion, 500); // pause so kids can learn
+      }
     }
-  });
-
-  if (choice === currentQuestion.answer) {
-    score += 200;
-    scoreDisplay.textContent = score;
-    setTimeout(nextQuestion, 500); // short pause for correct too
-  } else {
-    score -= 100;
-    scoreDisplay.textContent = score;
-    setTimeout(nextQuestion, 500); // pause so kids can learn
-  }
-}
-
 
     function endGame() {
       document.getElementById('restartButton').style.display = 'none';
@@ -255,6 +292,10 @@ shuffledChoices.forEach(choice => {
       quizScreen.style.display = 'none';
       endScreen.style.display = 'block';
       finalScore.textContent = score;
+
+      // Play end game sound
+      endGameSound.currentTime = 0;
+      endGameSound.play();
 
       // Show high scores immediately on end screen
       displayHighScores();
@@ -303,6 +344,10 @@ shuffledChoices.forEach(choice => {
       const submitBtn = document.querySelector('button[onclick="submitScore()"]');
       if (submitBtn) submitBtn.style.display = 'inline-block';
       highScoresList.innerHTML = '';
+
+      // Stop jungle music if you want, or keep it looping
+      // jungleMusic.pause();
+      // jungleMusic.currentTime = 0;
     }
 
     startScreen.style.display = 'block';

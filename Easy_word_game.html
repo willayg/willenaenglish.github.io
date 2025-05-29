@@ -11,69 +11,87 @@
     body {
       margin: 0;
       font-family: 'Fredoka One', cursive;
-      background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
-      color: #333;
+      background: url('images/tolkenlike.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
       text-align: center;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      overflow: hidden;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 30px 20px 20px 20px;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(0, 0, 0, 0.65);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     }
     h1 {
-      font-size: 3em;
-      margin: 0.5em 0;
-      color: #ff3e00;
-      text-shadow: 2px 2px #fff;
+      font-size: 2.5em;
+      margin: 0.5em 0 0.2em 0;
+      color: #ffeb3b;
+      text-shadow: 2px 2px #222;
     }
     #icon {
-      font-size: 8em;
-      margin: 20px;
+      font-size: 7em;
+      margin: 20px 0 10px 0;
       display: none;
     }
     .options {
       display: none;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 14px;
       max-width: 400px;
-      margin: auto;
+      margin: 0 auto 20px auto;
     }
     .option {
       background: #fff;
-      padding: 20px;
+      color: #222;
+      padding: 18px;
       font-size: 2em;
       border-radius: 15px;
-      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 5px 10px rgba(0,0,0,0.12);
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: transform 0.2s, background 0.2s;
+      border: 2px solid #ffeb3b;
     }
     .option:hover {
       transform: scale(1.05);
+      background: #ffeb3b;
+      color: #222;
     }
     .scoreboard {
-      margin-top: 20px;
-      font-size: 1.2em;
+      margin-top: 10px;
+      font-size: 1.3em;
       display: none;
+      color: #fff;
     }
     .timer {
-      font-size: 1.5em;
-      color: #fff;
-      background: #333;
-      padding: 10px 20px;
+      font-size: 1.3em;
+      color: #222;
+      background: #ffeb3b;
+      padding: 10px 24px;
       border-radius: 20px;
-      margin-top: 10px;
+      margin: 14px auto 10px auto;
       display: none;
+      width: fit-content;
     }
     #startBtn, #endBtn {
-      margin: 10px;
+      margin: 10px 8px 0 8px;
       padding: 15px 30px;
-      font-size: 1.5em;
-      background: #333;
+      font-size: 1.3em;
+      background: #388e3c;
       color: #fff;
       border: none;
       border-radius: 10px;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+    #startBtn:hover, #endBtn:hover {
+      background: #2e7031;
     }
     #highscores {
       margin-top: 20px;
@@ -81,47 +99,76 @@
       max-height: 200px;
       overflow-y: auto;
       display: none;
+      color: #fff;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 600px) {
+      .container {
+        max-width: 98vw;
+        padding: 10px 2vw 20px 2vw;
+      }
       #icon {
-        font-size: 7.2em;
+        font-size: 4em;
       }
       .option {
-        font-size: 1.8em;
-        padding: 18px;
+        font-size: 1.2em;
+        padding: 12px;
       }
       #startBtn, #endBtn {
-        font-size: 1.35em;
-        padding: 13px 26px;
+        font-size: 1em;
+        padding: 10px 16px;
       }
+    }
+    .bonus-float {
+      position: absolute;
+      left: 50%;
+      top: 60%;
+      transform: translate(-50%, 0);
+      font-size: 3em; /* Made bigger */
+      color: #ffeb3b;
+      text-shadow: 2px 2px 8px #222;
+      pointer-events: none;
+      animation: bonus-float 1s ease-out forwards;
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      z-index: 1000;
+    }
+    @keyframes bonus-float {
+      0% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -60px); }
     }
   </style>
 </head>
 <body>
-  <h1>Easy Picture Word Game</h1>
-  <div id="icon">🍎</div>
-  <div class="options">
-    <div class="option">Apple</div>
-    <div class="option">Ball</div>
-    <div class="option">Cat</div>
-    <div class="option">Dog</div>
-  </div>
-  <div class="scoreboard">Score: <span id="score">0</span></div>
-  <div class="timer">Time Left: <span id="time">10</span>s</div>
-  <button id="startBtn">Replay</button>
-  <button id="endBtn" style="display:none;">End Game</button>
-  <div id="nameEntry" style="display: none; margin-top: 20px;">
-    <div id="namePrompt" style="font-size: 1.5em; margin-bottom: 10px; color: #ff3e00;">You got a top 5 score! What’s your name?</div>
-    <input id="playerName" type="text" placeholder="Enter your name"
-      style="font-family: 'Fredoka One', cursive; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; border: none; max-width: 300px; text-align: center;">
-    <button id="submitName"
-      style="margin-left: 10px; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; background: #333; color: white; border: none; cursor: pointer;">
-      Submit
-    </button>
-  </div>
-  <div id="highscores">
-    <h3>🏆 High Scores 🏆</h3>
-    <ol id="scoreList"></ol>
+  <div class="container">
+    <img src="logo.png" alt="Logo" id="logo" style="display:block; margin: 0 auto 10px auto; width:100px;"/>
+    <h1>Easy Picture Word Game</h1>
+    <div id="icon">🍎</div>
+    <div class="options">
+      <div class="option">Apple</div>
+      <div class="option">Ball</div>
+      <div class="option">Cat</div>
+      <div class="option">Dog</div>
+    </div>
+    <div class="scoreboard">Score: <span id="score">0</span></div>
+    <div class="timer">Time Left: <span id="time">10</span>s</div>
+    <button id="startBtn">Start Game</button>
+    <button id="endBtn" style="display:none;">End Game</button>
+    <div id="nameEntry" style="display: none; margin-top: 20px;">
+      <div id="namePrompt" style="font-size: 1.5em; margin-bottom: 10px; color: #ff3e00;">You got a top 5 score! What’s your name?</div>
+      <input id="playerName" type="text" placeholder="Enter your name"
+        style="font-family: 'Fredoka One', cursive; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; border: none; max-width: 300px; text-align: center;">
+      <button id="submitName"
+        style="margin-left: 10px; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; background: #333; color: white; border: none; cursor: pointer;">
+        Submit
+      </button>
+    </div>
+    <div id="highscores">
+      <h3>🏆 High Scores 🏆</h3>
+      <ol id="scoreList"></ol>
+    </div>
+    <div id="endMessage" style="display:none; font-size:2em; color:#ffeb3b; margin:20px 0;"></div>
   </div>
 
   <script>
@@ -152,20 +199,42 @@
     const nameEntry = document.getElementById("nameEntry");
     const playerName = document.getElementById("playerName");
     const submitName = document.getElementById("submitName");
+    const endMessage = document.getElementById("endMessage");
+
+    const rightSound = new Audio('sounds/right.mp3');
+    const wrongSound = new Audio('sounds/wrong.mp3');
 
     let currentAnswer = "";
     let score = 0;
     let streak = 0;
-    let timeLeft = 10;
+    let timeLeft = 30; // Changed from 10 to 30
     let timer;
     let highScores = JSON.parse(localStorage.getItem("iconHighScores") || "[]");
+    let unusedWords = [];
+    let lastQuestionTime = 0;
+
+    // Add background music
+    const music = new Audio('sounds/pianopoly.mp3');
+    music.loop = true;
+    music.volume = 0.5;
+    // Start music when the page loads (user interaction may be required in some browsers)
+    window.addEventListener('DOMContentLoaded', () => {
+      // Try to play after first user interaction
+      const startMusic = () => {
+        music.play();
+        window.removeEventListener('click', startMusic);
+        window.removeEventListener('keydown', startMusic);
+      };
+      window.addEventListener('click', startMusic);
+      window.addEventListener('keydown', startMusic);
+    });
 
     function startGame() {
       nameEntry.style.display = "none";
       playerName.value = "";
       submitName.onclick = null;
       score = 0;
-      timeLeft = 10;
+      timeLeft = 30; // Reset timer to 30 seconds
       scoreSpan.textContent = score;
       timeSpan.textContent = timeLeft;
       startBtn.style.display = "none";
@@ -175,6 +244,7 @@
       optionsContainer.style.display = "grid";
       scoreboard.style.display = "block";
       timerBox.style.display = "block";
+      unusedWords = [...words]; // Reset unused words
       nextQuestion();
       timer = setInterval(() => {
         timeLeft--;
@@ -185,15 +255,36 @@
       }, 1000);
     }
 
-    function endGame() {
-      clearInterval(timer);
-      startBtn.style.display = "none";
+    // Add a function to show the start screen
+    function showStartScreen() {
+      nameEntry.style.display = "none";
+      playerName.value = "";
+      submitName.onclick = null;
       iconDiv.style.display = "none";
       optionsContainer.style.display = "none";
       scoreboard.style.display = "none";
       timerBox.style.display = "none";
       endBtn.style.display = "none";
-      alert("Game Over! Your final score is: " + score);
+      highScoresDiv.style.display = "none";
+      endMessage.style.display = "none";
+      startBtn.textContent = "Start Game";
+      startBtn.style.display = "inline-block";
+    }
+
+    // Call showStartScreen on page load
+    window.addEventListener('DOMContentLoaded', showStartScreen);
+
+    function endGame() {
+      clearInterval(timer);
+      startBtn.textContent = "Replay";
+      startBtn.style.display = "inline-block";
+      iconDiv.style.display = "none";
+      optionsContainer.style.display = "none";
+      scoreboard.style.display = "none";
+      timerBox.style.display = "none";
+      endBtn.style.display = "none";
+      endMessage.style.display = "block";
+      endMessage.textContent = `Game Over! Your final score is: ${score}`;
 
       if (highScores.length < 5 || score > highScores[4].score) {
         nameEntry.style.display = "block";
@@ -207,67 +298,95 @@
           highScoresDiv.style.display = "block";
           nameEntry.style.display = "none";
           playerName.value = "";
+          // Show replay button, hide end message
           startBtn.style.display = "inline-block";
+          endMessage.style.display = "none";
         };
       } else {
         highScoresDiv.style.display = "block";
-        startBtn.style.display = "inline-block";
+        // Hide end message when restarting
+        startBtn.onclick = () => { showStartScreen(); };
       }
     }
 
     function nextQuestion() {
-      const choices = [...words].sort(() => 0.5 - Math.random()).slice(0, 4);
+      // If less than 4 unused words left, refill from all words
+      if (unusedWords.length < 4) {
+        unusedWords = [...words];
+      }
+      // Pick 4 random words from unusedWords
+      const choices = [];
+      while (choices.length < 4) {
+        const idx = Math.floor(Math.random() * unusedWords.length);
+        choices.push(unusedWords.splice(idx, 1)[0]);
+      }
       const answer = choices[Math.floor(Math.random() * 4)];
       currentAnswer = answer.word;
       iconDiv.textContent = answer.icon;
       optionDivs.forEach((div, i) => {
         div.textContent = choices[i].word;
       });
-    }
-
-    function showBonus(text) {
-      const bonus = document.createElement("div");
-      bonus.textContent = text;
-      bonus.style.position = "absolute";
-      bonus.style.top = "-30px";
-      bonus.style.left = "50%";
-      bonus.style.transform = "translateX(-50%)";
-      bonus.style.fontSize = "2em";
-      bonus.style.color = "#ff3e00";
-      bonus.style.background = "#fff";
-      bonus.style.padding = "10px 20px";
-      bonus.style.borderRadius = "15px";
-      bonus.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
-      bonus.style.zIndex = "10";
-      document.body.appendChild(bonus);
-      setTimeout(() => document.body.removeChild(bonus), 1200);
+      lastQuestionTime = performance.now();
     }
 
     optionDivs.forEach(option => {
       option.addEventListener("click", () => {
+        const now = performance.now();
+        const elapsed = (now - lastQuestionTime) / 1000; // seconds
+        let earned = 0;
+
         if (option.textContent === currentAnswer) {
-          score++;
-          streak++;
-          if (streak % 3 === 0) {
-            score++;
-            showBonus("🔥 Streak Bonus!");
+          rightSound.currentTime = 0;
+          rightSound.play();
+
+          if (elapsed <= 0.7) {
+            earned = 300;
+            showBonus("🚀 Super Fast! +300");
+          } else if (elapsed <= 1.2) {
+            earned = 200;
+            showBonus("⚡ Lightning! +200");
+          } else if (elapsed <= 2) {
+            earned = 100;
+            showBonus("⏱️ Fast! +100");
+          } else {
+            earned = 50;
+            showBonus("+50");
           }
-          const timeBonus = timeLeft >= 8 ? 2 : timeLeft >= 6 ? 1 : 0;
-          if (timeBonus > 0) {
-            score += timeBonus;
-            showBonus(`⏱️ Speed Bonus +${timeBonus}!`);
-          }
+          score += earned;
         } else {
-          score--;
-          streak = 0;
+          wrongSound.currentTime = 0;
+          wrongSound.play();
+          if (elapsed <= 1) {
+            score -= 150;
+            showBonus("❌ -150");
+          }
+          // No minus points after 1 second
         }
         scoreSpan.textContent = score;
         nextQuestion();
       });
     });
 
-    startBtn.addEventListener("click", startGame);
+    // Remove showStartScreen() from here:
+    startBtn.addEventListener("click", function() {
+      // Only start the game if the button says "Start Game" or "Replay"
+      if (startBtn.textContent === "Start Game" || startBtn.textContent === "Replay") {
+        startGame();
+      }
+    });
+
     endBtn.addEventListener("click", endGame);
+
+    // Place this function in your <script> section (replace your old showBonus if present)
+    function showBonus(text) {
+      const bonus = document.createElement("div");
+      bonus.className = "bonus-float";
+      bonus.textContent = text;
+      document.body.appendChild(bonus);
+      setTimeout(() => {
+        bonus.remove();
+      }, 1000);
+    }
   </script>
 </body>
 </html>
