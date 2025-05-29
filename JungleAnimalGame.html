@@ -175,16 +175,22 @@ body {
     function startGame() {
       score = 0;
       timeLeft = 30;
-endScreen.style.display = 'none';
-startScreen.style.display = 'none';
+      endScreen.style.display = 'none';
+      startScreen.style.display = 'none';
+
+      // FIX: Clear any existing timer before starting a new one
+      if (timer) clearInterval(timer);
 
       usedQuestions = [];
       startScreen.style.display = 'none';
       endScreen.style.display = 'none';
       quizScreen.style.display = 'block';
-document.getElementById('restartButton').style.display = 'inline-block';
+      document.getElementById('restartButton').style.display = 'inline-block';
 
       document.querySelector('.status-bar').style.display = 'flex';
+      scoreDisplay.textContent = score;
+      timerDisplay.textContent = timeLeft;
+
       nextQuestion();
       timer = setInterval(() => {
         timeLeft--;
@@ -243,12 +249,20 @@ shuffledChoices.forEach(choice => {
 
 
     function endGame() {
-document.getElementById('restartButton').style.display = 'none';
+      document.getElementById('restartButton').style.display = 'none';
 
       clearInterval(timer);
       quizScreen.style.display = 'none';
       endScreen.style.display = 'block';
       finalScore.textContent = score;
+
+      // Show high scores immediately on end screen
+      displayHighScores();
+
+      // Reset input/button for new score submission
+      nameInput.style.display = 'block';
+      const submitBtn = document.querySelector('button[onclick="submitScore()"]');
+      if (submitBtn) submitBtn.style.display = 'inline-block';
     }
 
     function submitScore() {
@@ -277,7 +291,7 @@ document.getElementById('restartButton').style.display = 'none';
     }
 
     function resetGame() {
-document.getElementById('restartButton').style.display = 'none';
+      document.getElementById('restartButton').style.display = 'none';
 
       nameInput.value = '';
       scoreDisplay.textContent = '0';
@@ -285,10 +299,10 @@ document.getElementById('restartButton').style.display = 'none';
       startScreen.style.display = 'block';
       quizScreen.style.display = 'none';
       endScreen.style.display = 'none';
-nameInput.style.display = 'block';
-const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-if (submitBtn) submitBtn.style.display = 'inline-block';
-
+      nameInput.style.display = 'block';
+      const submitBtn = document.querySelector('button[onclick="submitScore()"]');
+      if (submitBtn) submitBtn.style.display = 'inline-block';
+      highScoresList.innerHTML = '';
     }
 
     startScreen.style.display = 'block';
