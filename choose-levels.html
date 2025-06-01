@@ -5,9 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Willena 원어민 영어학원</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
   <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <style>
     :root {
       --primary: #2e2b3f;
@@ -24,7 +27,7 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Inter', sans-serif;
       background-color: var(--background);
       color: var(--text);
     }
@@ -109,11 +112,39 @@
       border-bottom: 3px solid var(--box-border);
       transition: all 0.3s ease;
     }
+    .hero {
+      background: var(--primary);
+      color: white;
+      padding: 60px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    }
+    .footer {
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .footer p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
   <header>
-    <img src="Logo.png" alt="Willena Logo">
+    <a href="../../index.html">
+      <img src="../../assets/images/logo.png" alt="Logo" id="logo">
+    </a>
   </header>
   <div class="swiper">
     <div class="swiper-wrapper">
@@ -147,15 +178,24 @@
     function loadLevel(level) {
       const games = gameNamesByLevel[level] || [];
       const html = games.map(([title, subtitle]) => {
-        const isGoblin = title === 'Tag Questions Goblin';
-        const isPastTense = title === 'Cutie Past Tense';
-        const isJungle = title === 'Jungle Animal Game';
-        const isEasyWord = title === 'Easy Word Game';
-        let href = '#';
-        if (isGoblin) href = 'goblin_tag.html';
-        else if (isPastTense) href = 'past_tense_game.html';
-        else if (isJungle) href = 'JungleAnimalGame.html';
-        else if (isEasyWord) href = 'Easy_word_game.html';
+        // Folder names should match the game file names (without .html)
+        // Example: games/animal-match/animal-match.html
+        let folder = "";
+        let file = "";
+        if (title === 'Tag Questions Goblin') {
+          folder = "goblin_tag";
+          file = "goblin_tag.html";
+        } else if (title === 'Cutie Past Tense') {
+          folder = "cutie_past_tense";
+          file = "cutie_past_tense.html";
+        } else if (title === 'Jungle Animal Game') {
+          folder = "jungleanimalgame";
+          file = "jungleanimalgame.html";
+        } else if (title === 'Easy Word Game') {
+          folder = "easy_word_game";
+          file = "easy_word_game.html";
+        }
+        let href = folder && file ? `games/${folder}/${file}` : "#";
         return `<div class="game-box" tabindex="0" data-title="${title}" data-subtitle="${subtitle}" onclick="event.stopPropagation(); location.href='${href}'">${title}</div>`;
       }).join('');
       document.getElementById('game-options').innerHTML = html;

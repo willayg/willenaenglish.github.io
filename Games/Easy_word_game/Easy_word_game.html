@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="google" content="notranslate">
   <title>Easy Picture Word Game</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
@@ -11,7 +12,7 @@
     body {
       margin: 0;
       font-family: 'Fredoka One', cursive;
-      background: url('images/tolkenlike.png') no-repeat center center fixed;
+      background: url('../../assets/images/backgrounds/tolken.png') no-repeat center center fixed;
       background-size: cover;
       color: white;
       text-align: center;
@@ -138,11 +139,14 @@
       0% { opacity: 1; transform: translate(-50%, 0); }
       100% { opacity: 0; transform: translate(-50%, -60px); }
     }
+    .noselect {
+      user-select: none;
+    }
   </style>
 </head>
-<body>
+<body translate="no">
   <div class="container">
-    <img src="logo.png" alt="Logo" id="logo" style="display:block; margin: 0 auto 10px auto; width:100px;"/>
+    <img src="../../assets/images/logo.png" alt="Logo" id="logo" style="display:block; margin: 0 auto 10px auto; width:100px;"/>
     <h1>Easy Picture Word Game</h1>
     <div id="icon">🍎</div>
     <div class="options">
@@ -201,20 +205,10 @@
     const submitName = document.getElementById("submitName");
     const endMessage = document.getElementById("endMessage");
 
-    const rightSound = new Audio('sounds/right.mp3');
-    const wrongSound = new Audio('sounds/wrong.mp3');
-
-    let currentAnswer = "";
-    let score = 0;
-    let streak = 0;
-    let timeLeft = 30; // Changed from 10 to 30
-    let timer;
-    let highScores = JSON.parse(localStorage.getItem("iconHighScores") || "[]");
-    let unusedWords = [];
-    let lastQuestionTime = 0;
-
-    // Add background music
-    const music = new Audio('sounds/pianopoly.mp3');
+    // Update sound paths
+    const rightSound = new Audio('../../assets/audio/right.mp3');
+    const wrongSound = new Audio('../../assets/audio/wrong.mp3');
+    const music = new Audio('../../assets/audio/pianopoly.mp3');
     music.loop = true;
     music.volume = 0.5;
     // Start music when the page loads (user interaction may be required in some browsers)
