@@ -31,6 +31,27 @@
     font-size: 18px;
   }
 }
+    @media (max-width: 600px) {
+  h1 {
+    font-size: 32px;
+  }
+  .question {
+    font-size: 24px;
+    padding: 10px;
+  }
+  .option-button, .start-button {
+    font-size: 24px;
+    padding: 16px 24px;
+    width: 90%;
+    max-width: 340px;
+  }
+  .scoreboard, .feedback {
+    font-size: 32px;
+  }
+  .timer {
+    font-size: 22px;
+  }
+}
       .question {
         font-size: 36px;
         padding: 16px;
@@ -63,7 +84,7 @@
       overflow: hidden;
     }
     h1 {
-      font-size: 64px;
+      font-size: 40px;
       color: #f3f0f2;
       text-shadow: 2px 2px #360216;
     }
@@ -91,11 +112,11 @@
       margin-top: 20px;
     }
     .option-button {
-      font-size: 28px;
-      margin: 10px;
-      padding: 12px 24px;
+      font-size: 36px;
+      margin: 14px;
+      padding: 24px 36px;
       border: none;
-      border-radius: 12px;
+      border-radius: 16px;
       background-color: #f7c5e0;
       cursor: pointer;
       box-shadow: 1px 3px 6px rgba(0,0,0,0.2);
@@ -107,12 +128,12 @@
     .feedback {
       margin-top: 20px;
       font-size: 32px;
-      color: #ff1493;
+      color: #f8daea;
     }
     .scoreboard {
       font-size: 48px;
       margin-top: 30px;
-      color: #ff69b4;
+      color: #ffcbe5;
       font-weight: bold;
     }
     .timer {
@@ -209,7 +230,7 @@
   <div class="options" id="options"></div>
   <div class="feedback" id="feedback"></div>
   <div class="scoreboard" id="scoreboard" style="display: none;">Score: <span id="score">0</span></div>
-  <div class="timer" id="timer" style="display: none;">Time: <span id="timeLeft">5</span>s</div>
+  <div class="timer" id="timer" style="display: none;">Time: <span id="timeLeft">35</span>s</div>
   <div class="high-score-overlay" id="highScores" style="display: none;">
     <div class="high-score-popup animated-popup">
       <div class="high-score-box animated-box" style="backdrop-filter: blur(10px); background-color: rgba(173, 216, 230, 0.6); margin: 0 auto; overflow-y: auto; max-height: 400px; background-color: rgba(173, 216, 230, 0.3); border: 2px solid silver">
@@ -229,7 +250,7 @@
   <script>
 let score = 0;
 let combo = 0;
-let timeLeft = 5;
+let timeLeft = 35;
 let timerInterval;
 let shuffledQuestions = [];
 let questionPointer = 0;
@@ -444,7 +465,7 @@ function checkAnswer(selected, question) {
   } else {
     combo = 0;
     score -= 300;
-    timeLeft = Math.max(0, timeLeft - 5);
+    timeLeft = Math.max(0, timeLeft - 3);
     wrongSound.currentTime = 0;
     wrongSound.play();
     feedback.textContent = "😢 You got that one wrong.";
