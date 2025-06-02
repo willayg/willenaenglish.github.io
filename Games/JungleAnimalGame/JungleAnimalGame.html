@@ -83,13 +83,28 @@ body {
 .noselect {
   user-select: none;
 }
+#soundToggle {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-size: 2em;
+  background: none;
+  border: none;
+  color: #388e3c;
+  cursor: pointer;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body translate="no">
 <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
-<button id="soundToggle" style="position: absolute; top: 20px; right: 30px; z-index: 20;">🔊 Sound On</button>
+<button id="soundToggle" title="Toggle Sound">🔊</button>
   <div class="container">
     <div id="startScreen">
       <h1>Animal Quiz</h1>
@@ -166,7 +181,7 @@ const questions = [
 
 let score = 0;
 let timer;
-let timeLeft = 10;
+let timeLeft = 30;
 let currentQuestion;
 let usedQuestions = [];
 const startScreen = document.getElementById('startScreen');
@@ -195,7 +210,7 @@ soundToggle.onclick = function() {
   wrongSound.muted = !soundOn;
   endGameSound.muted = !soundOn;
   jungleMusic.muted = !soundOn;
-  soundToggle.textContent = soundOn ? '🔊 Sound On' : '🔇 Sound Off';
+  soundToggle.textContent = soundOn ? '🔊' : '🔇';
 };
 // Ensure all sounds respect the toggle at start
 correctSound.muted = !soundOn;
@@ -209,7 +224,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 function startGame() {
   score = 0;
-  timeLeft = 10;
+  timeLeft = 30;
   endScreen.style.display = 'none';
   startScreen.style.display = 'none';
   // Start background music if not already playing
@@ -291,10 +306,10 @@ function endGame() {
   finalScore.textContent = score;
   endGameSound.currentTime = 0;
   endGameSound.play();
-  displayHighScores(); // Use consistent name
+  displayHighScores();
   nameInput.style.display = 'block';
-  const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-  if (submitBtn) submitBtn.style.display = 'inline-block';
+  const submitBtn = document.getElementById('submitBtn'); // FIXED
+  if (submitBtn) submitBtn.style.display = 'inline-block'; // FIXED
 }
 
 async function submitScore() {
@@ -341,19 +356,15 @@ function resetGame() {
   document.getElementById('restartButton').style.display = 'none';
   nameInput.value = '';
   scoreDisplay.textContent = '0';
-  timerDisplay.textContent = '10';
+  timerDisplay.textContent = '30';
   startScreen.style.display = 'block';
   quizScreen.style.display = 'none';
   endScreen.style.display = 'none';
   nameInput.style.display = 'block';
-  const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-  if (submitBtn) submitBtn.style.display = 'inline-block';
+  const submitBtn = document.getElementById('submitBtn'); // FIXED
+  if (submitBtn) submitBtn.style.display = 'inline-block'; // FIXED
   highscoresList.innerHTML = '';
-  // Optionally stop jungle music here if you want:
-  // jungleMusic.pause();
-  // jungleMusic.currentTime = 0;
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   startScreen.style.display = 'block';
   quizScreen.style.display = 'none';
@@ -361,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
   emoji.textContent = '';
   options.innerHTML = '';
   scoreDisplay.textContent = '0';
-  timerDisplay.textContent = '10';
+  timerDisplay.textContent = '30';
   nameInput.style.display = 'none';
   highscoresList.innerHTML = '';
 
