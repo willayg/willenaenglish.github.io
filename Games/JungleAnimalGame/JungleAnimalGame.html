@@ -6,11 +6,12 @@
   <meta name="google" content="notranslate">
   <title>Animal Quiz</title>
   <style>
+    
 body {
   font-family: 'Poppins', sans-serif;
   background: url('../../Assets/Images/backgrounds/Jungle.jpg') no-repeat center center fixed;
   background-size: cover;
-  background-color: red;
+  background-color: darkgreen;
   color: white;
   text-align: center;
   margin: 0;
@@ -84,6 +85,7 @@ body {
 }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body translate="no">
 <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
@@ -107,9 +109,10 @@ body {
       <h2>Game Over!</h2>
       <p>Your score: <span id="finalScore"></span></p>
       <p>Top Scores:</p>
-      <ol id="highScores"></ol>
+      <ol id="highscores"></ol>
       <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
-      <button onclick="submitScore()">Submit Score</button>
+      <button id="submitBtn">Submit Score</button>
+
       <button onclick="resetGame()">Play Again</button>
     </div>
   </div>
@@ -163,7 +166,7 @@ const questions = [
 
 let score = 0;
 let timer;
-let timeLeft = 30;
+let timeLeft = 10;
 let currentQuestion;
 let usedQuestions = [];
 const startScreen = document.getElementById('startScreen');
@@ -174,7 +177,7 @@ const options = document.getElementById('options');
 const timerDisplay = document.getElementById('timer');
 const scoreDisplay = document.getElementById('score');
 const finalScore = document.getElementById('finalScore');
-const highScoresList = document.getElementById('highScores');
+const highscoresList = document.getElementById('highscores'); // Make sure this matches your HTML
 const nameInput = document.getElementById('nameInput');
 
 // Sound setup
@@ -200,9 +203,13 @@ wrongSound.muted = !soundOn;
 endGameSound.muted = !soundOn;
 jungleMusic.muted = !soundOn;
 
+const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaWV1aWt0bHNpdndmZ3lpdmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTEyNTIsImV4cCI6MjA2NDE4NzI1Mn0.aMQN_U2aLvH7RzuT-dfzQF4RNA7YQ-Xn6upqJFr7eis';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 function startGame() {
   score = 0;
-  timeLeft = 30;
+  timeLeft = 10;
   endScreen.style.display = 'none';
   startScreen.style.display = 'none';
   // Start background music if not already playing
@@ -282,56 +289,90 @@ function endGame() {
   quizScreen.style.display = 'none';
   endScreen.style.display = 'block';
   finalScore.textContent = score;
-  // Play end game sound
   endGameSound.currentTime = 0;
   endGameSound.play();
-  // Show high scores immediately on end screen
-  displayHighScores();
-  // Reset input/button for new score submission
+  displayHighScores(); // Use consistent name
   nameInput.style.display = 'block';
   const submitBtn = document.querySelector('button[onclick="submitScore()"]');
   if (submitBtn) submitBtn.style.display = 'inline-block';
 }
 
-function submitScore() {
+async function submitScore() {
   const name = nameInput.value || 'Anonymous';
-  const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
-  highScores.push({ name, score });
-  highScores.sort((a, b) => b.score - a.score);
-  localStorage.setItem('animalQuizHighScores', JSON.stringify(highScores.slice(0, 5)));
-  displayHighScores();
-  // Hide input and button to prevent double submission
-  nameInput.style.display = 'none';
-  const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-  if (submitBtn) submitBtn.style.display = 'none';
+  console.log("Submit button clicked");
+
+  const { data, error } = await supabase
+    .from('Scores')
+    .insert([{ name, score, game: 'JungleAnimalGame' }]);
+  if (error) {
+    console.error('Failed to submit score:', error.message);
+  } else {
+    console.log('Score submitted:', data);
+    nameInput.style.display = 'none';
+    const submitBtn = document.querySelector('button[onclick="submitScore()"]');
+    if (submitBtn) submitBtn.style.display = 'none';
+    displayHighScores(); // Use consistent name
+  }
 }
 
-function displayHighScores() {
-  const highScores = JSON.parse(localStorage.getItem('animalQuizHighScores') || '[]');
-  highScoresList.innerHTML = '';
-  highScores.forEach(entry => {
+async function displayHighScores() {
+  const { data, error } = await supabase
+    .from('Scores')
+    .select('name, score')
+    .eq('game', 'JungleAnimalGame')
+    .order('score', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Failed to fetch scores:', error.message);
+    return;
+  }
+
+  highscoresList.innerHTML = '';
+  data.forEach(entry => {
     const li = document.createElement('li');
     li.textContent = `${entry.name}: ${entry.score}`;
-    highScoresList.appendChild(li);
+    highscoresList.appendChild(li);
   });
 }
+
 
 function resetGame() {
   document.getElementById('restartButton').style.display = 'none';
   nameInput.value = '';
   scoreDisplay.textContent = '0';
-  timerDisplay.textContent = '30';
+  timerDisplay.textContent = '10';
   startScreen.style.display = 'block';
   quizScreen.style.display = 'none';
   endScreen.style.display = 'none';
   nameInput.style.display = 'block';
   const submitBtn = document.querySelector('button[onclick="submitScore()"]');
   if (submitBtn) submitBtn.style.display = 'inline-block';
-  highScoresList.innerHTML = '';
+  highscoresList.innerHTML = '';
   // Optionally stop jungle music here if you want:
   // jungleMusic.pause();
   // jungleMusic.currentTime = 0;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  startScreen.style.display = 'block';
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  emoji.textContent = '';
+  options.innerHTML = '';
+  scoreDisplay.textContent = '0';
+  timerDisplay.textContent = '10';
+  nameInput.style.display = 'none';
+  highscoresList.innerHTML = '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.addEventListener('click', submitScore);
+  }
+});
+
   </script>
 </body>
 </html>
+
