@@ -56,15 +56,16 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background: linear-gradient(to top, #ffe0f0, #d2f0ff);
+      background: url('../../Assets/Images/backgrounds/twilightclouds.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       text-align: center;
       overflow: hidden;
     }
     h1 {
       font-size: 64px;
-      color: #ff69b4;
-      text-shadow: 2px 2px #fff;
+      color: #f3f0f2;
+      text-shadow: 2px 2px #360216;
     }
     .start-button {
       font-size: 32px;
@@ -72,9 +73,9 @@
       margin-top: 20px;
       border: none;
       border-radius: 12px;
-      background-color: #ffb6c1;
+      background-color: #8d094b;
       color: white;
-      box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 2px 4px 10px rgba(2, 1, 1, 0.2);
       cursor: pointer;
     }
     .question {
@@ -195,52 +196,47 @@
 .fade-out {
   animation: fadeOutScale 0.5s ease forwards;
 }
-</style> 
+  </style> 
 
 </head>
 <body>
+  <img src="../../Assets/Images/Logo.png" alt="Willena Logo" id="logo" style="display:block; margin: 32px auto 0 auto; max-width:180px; width:30vw;">
   <h1 id="gameTitle">🐶🐰 Past Tense Cuteness</h1>
   <div id="championBanner" style="margin-top: 10px; font-size: 20px; color: #333; background-color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 12px; backdrop-filter: blur(4px);">Current Champion: 🏆 <span id="championName">-</span></div>
   
-  <button class="start-button" onclick="startGame()">Start Game</button>
+  <button class="start-button" id="startBtn">Start Game</button>
   <div class="question" id="questionText" style="display:none;"></div>
   <div class="options" id="options"></div>
   <div class="feedback" id="feedback"></div>
   <div class="scoreboard" id="scoreboard" style="display: none;">Score: <span id="score">0</span></div>
-  <div class="timer" id="timer" style="display: none;">Time: <span id="timeLeft">45</span>s</div>
+  <div class="timer" id="timer" style="display: none;">Time: <span id="timeLeft">5</span>s</div>
   <div class="high-score-overlay" id="highScores" style="display: none;">
-  <div class="high-score-popup animated-popup">
-    
-    <div class="high-score-box animated-box" style="backdrop-filter: blur(10px); background-color: rgba(173, 216, 230, 0.6); margin: 0 auto; overflow-y: auto; max-height: 400px;; background-color: rgba(173, 216, 230, 0.3); border: 2px solid silver">
-      <h2>All-Time Top Scores</h2>
-      <ol id="scoreList"></ol>
+    <div class="high-score-popup animated-popup">
+      <div class="high-score-box animated-box" style="backdrop-filter: blur(10px); background-color: rgba(173, 216, 230, 0.6); margin: 0 auto; overflow-y: auto; max-height: 400px; background-color: rgba(173, 216, 230, 0.3); border: 2px solid silver">
+        <h2>All-Time Top Scores</h2>
+        <ol id="highscores"></ol> <!-- This is the ID highscores.js expects -->
+      </div>
+      <button id="closeScoresBtn" class="start-button" style="margin-top: 20px;">Close</button>
     </div>
-      <button onclick="toggleHighScores()" class="start-button" style="margin-top: 20px;">Close</button>
   </div>
-</div>
   <button id="toggleScoresBtn" class="start-button" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 18px; padding: 6px 12px;">Show/Hide High Scores</button>
   <div id="floating-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-displayHighScores();
-updateChampion();
-document.getElementById("toggleScoresBtn").addEventListener("click", () => {
-  const scores = document.getElementById("highScores");
-  if (scores.style.display === "none" || scores.style.display === "") {
-    scores.style.display = "flex";
-  } else {
-    scores.style.display = "none";
-  }
-});
+  window.game = "CutiePastTense";
+  </script>
+  <script src="../../js/highscores.js"></script>
+  <script>
 let score = 0;
 let combo = 0;
-let timeLeft = 45;
+let timeLeft = 5;
 let timerInterval;
 let shuffledQuestions = [];
 let questionPointer = 0;
 let synth;
 
-const correctSound = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_1bbcfb2a5d.mp3");
-const wrongSound = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_f1c3cb9585.mp3");
+const correctSound = new Audio("../../Assets/audio/correct.mp3");
+const wrongSound = new Audio("../../Assets/audio/wrong.mp3");
 
 const questions = [
   { sentence: "Yesterday, I ___ to the park.", answer: "went" },
@@ -283,6 +279,8 @@ const questions = [
   { sentence: "They ___ their bikes to the park.", answer: "rode" }
 ];
 
+
+
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -290,14 +288,6 @@ function shuffle(array) {
   }
   return array;
 }
-
-//function speak(text) {
- // if (synth) synth.cancel();
-  //synth = window.speechSynthesis;
- // const utter = new SpeechSynthesisUtterance(text);
-//  utter.lang = 'en-US';
- // synth.speak(utter);
-//}
 
 function floatPoints(text, x, y, color = '#ff1493', size = '48px') {
   const float = document.createElement("div");
@@ -317,7 +307,7 @@ function startGame(tense = 'past') {
   document.getElementById("scoreboard").style.display = "block";
   document.getElementById("timer").style.display = "block";
   document.getElementById("gameTitle").style.display = "none";
-  document.querySelector("button[onclick^='startGame']").style.display = "none";
+  document.getElementById("startBtn").style.display = "none";
   document.getElementById("questionText").style.display = "block";
   document.getElementById("score").textContent = score;
   document.getElementById("timeLeft").textContent = timeLeft;
@@ -445,13 +435,10 @@ function checkAnswer(selected, question) {
     score += points;
     correctSound.currentTime = 0;
     correctSound.play();
-    //speak(full);
-
     let fontSize = 48;
     if (multiplier === 2) fontSize = 72;
     if (multiplier === 3) fontSize = 96;
     if (multiplier === 4) fontSize = 120;
-
     floatPoints(`+${points}`, window.innerWidth/2, window.innerHeight/2, '#ff1493', `${fontSize}px`);
     feedback.textContent = multiplier > 1 ? `🎉 Correct! Combo x${multiplier}!` : `🎉 Correct!`;
   } else {
@@ -460,7 +447,6 @@ function checkAnswer(selected, question) {
     timeLeft = Math.max(0, timeLeft - 5);
     wrongSound.currentTime = 0;
     wrongSound.play();
-    //speak("You got that one wrong");
     feedback.textContent = "😢 You got that one wrong.";
     floatPoints("-300", window.innerWidth/2, window.innerHeight/2 + 60, '#ff0000', '64px');
   }
@@ -487,10 +473,11 @@ function endGame() {
   const feedback = document.getElementById("feedback");
   feedback.textContent = "";
 
+  // Show name input and submit button
   const nameInput = document.createElement("input");
   nameInput.type = "text";
   nameInput.placeholder = "Your name";
-  nameInput.id = "playerName";
+  nameInput.id = "nameInput";
   nameInput.style.margin = "20px auto";
   nameInput.style.padding = "16px";
   nameInput.style.borderRadius = "10px";
@@ -504,35 +491,24 @@ function endGame() {
   const submitBtn = document.createElement("button");
   submitBtn.textContent = "Submit Score";
   submitBtn.className = "start-button";
-    submitBtn.style.fontSize = "20px";
-    submitBtn.style.padding = "8px 16px";
-    submitBtn.style.marginTop = "10px";
-  submitBtn.onclick = () => {
-    const name = nameInput.value || "Anonymous";
-    const date = new Date();
-    const month = `${date.getFullYear()}-${date.getMonth()}`;
+  submitBtn.style.fontSize = "20px";
+  submitBtn.style.padding = "8px 16px";
+  submitBtn.style.marginTop = "10px";
+  submitBtn.onclick = async () => {
+    window.score = score;
+    await submitScore(); // Wait for score to be submitted and input/button to be hidden
 
-    let allScores = JSON.parse(localStorage.getItem("highScores") || "[]");
-    allScores.push({ name, score });
-    allScores.sort((a, b) => b.score - a.score);
-    localStorage.setItem("highScores", JSON.stringify(allScores.slice(0, 20)));
+    submitBtn.style.display = "none"; // Hide the submit button
 
-    
-
-    nameInput.remove();
-    submitBtn.remove();
-
+    // Now add the replay button
     const playAgainBtn = document.createElement("button");
     playAgainBtn.textContent = "Play Again";
     playAgainBtn.className = "start-button";
     playAgainBtn.style.zIndex = "1001";
     playAgainBtn.style.position = "relative";
     playAgainBtn.style.pointerEvents = "auto";
-    playAgainBtn.addEventListener("click", () => {
-      location.reload();
-    });
-    document.getElementById("feedback").appendChild(playAgainBtn);
-    displayHighScores();
+    playAgainBtn.onclick = () => location.reload();
+    feedback.appendChild(playAgainBtn);
   };
 
   const container = document.getElementById("feedback");
@@ -541,24 +517,10 @@ function endGame() {
   container.appendChild(submitBtn);
 }
 
-function displayHighScores() {
-  const all = JSON.parse(localStorage.getItem("highScores") || "[]");
-
-  const list = document.getElementById("scoreList");
-  list.innerHTML = "";
-
-  all.forEach(entry => {
-    const li = document.createElement("li");
-    li.textContent = `${entry.name}: ${entry.score}`;
-    list.appendChild(li);
-  });
-
-  document.getElementById("highScores").style.display = "flex";
-}
 function toggleHighScores() {
   const highScoreSection = document.getElementById("highScores");
-  const willShow = (highScoreSection.style.display === "none" || highScoreSection.style.display === '');
-  if (willShow) {
+  const isHidden = (highScoreSection.style.display === "none" || highScoreSection.style.display === '');
+  if (isHidden) {
     displayHighScores();
     highScoreSection.style.display = "flex";
     highScoreSection.classList.remove("fade-out");
@@ -568,17 +530,31 @@ function toggleHighScores() {
     highScoreSection.classList.add("fade-out");
     setTimeout(() => {
       highScoreSection.style.display = "none";
+      highScoreSection.classList.remove("fade-out");
     }, 500);
   }
-  if (willShow) displayHighScores();
 }
 
-function updateChampion() {
-  const all = JSON.parse(localStorage.getItem("highScores") || "[]");
-  const champion = all.length > 0 ? all[0].name : "-";
-  document.getElementById("championName").textContent = champion;
+// Optional: updateChampion using Supabase
+async function updateChampion() {
+  const { data, error } = await supabase
+    .from('Scores')
+    .select('name, score')
+    .eq('game', window.game)
+    .order('score', { ascending: false })
+    .limit(1);
+  document.getElementById("championName").textContent = (data && data[0]) ? data[0].name : "-";
 }
-</script>
+
+// Setup event listeners after DOM is loaded
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById("startBtn").addEventListener("click", startGame);
+  document.getElementById("toggleScoresBtn").addEventListener("click", toggleHighScores);
+  document.getElementById("closeScoresBtn").addEventListener("click", toggleHighScores);
+  displayHighScores();
+  updateChampion();
+});
+  </script>
 </body>
 </html>
 
