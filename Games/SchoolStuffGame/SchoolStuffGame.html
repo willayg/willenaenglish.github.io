@@ -12,7 +12,7 @@
     
 body {
   font-family: 'Poppins', sans-serif;
-  background: url('../../Assets/Images/backgrounds/twilightclouds.png') no-repeat center center fixed;
+  background: url('../../Assets/Images/backgrounds/dragonreads.jpg') no-repeat center center fixed;
   background-size: cover;
   background-color: rgb(1, 6, 88);
   color: white;
@@ -36,7 +36,7 @@ body {
     button {
       font-size: 1.2em;
       padding: 10px 20px;
-      background-color: #326ad3;
+      background-color: #d84f0f;
       color: white;
       border: none;
       border-radius: 10px;
@@ -106,7 +106,9 @@ body {
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body translate="no">
-<img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
+<a href="../../index.html">
+  <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
+</a>
 <button id="soundToggle" title="Toggle Sound">🔊</button>
   <div class="container">
     <div id="startScreen">
@@ -142,15 +144,15 @@ window.game = "SchoolStuffGame";
 const questions = [
   { word: "pencil", icon: "✏️", choices: ["pencil", "pen", "eraser", "desk"], answer: "pencil" },
   { word: "pen", icon: "🖊️", choices: ["pen", "ruler", "scissors", "chalk"], answer: "pen" },
-  { word: "eraser", icon: "🧽", choices: ["eraser", "book", "globe", "chair"], answer: "eraser" },
+  { word: "eraser", icon: "🧽", choices: ["sponge", "book", "globe", "chair"], answer: "eraser" },
   { word: "globe", icon: "🌍", choices: ["globe", "book", "pencil case", "chalk"], answer: "globe" },
   { word: "notebook", icon: "📒", choices: ["notebook", "chair", "eraser", "desk"], answer: "notebook" },
   { word: "scissors", icon: "✂️", choices: ["scissors", "pen", "ruler", "glue"], answer: "scissors" },
   { word: "ruler", icon: "📏", choices: ["ruler", "pencil", "desk", "eraser"], answer: "ruler" },
   { word: "book", icon: "📚", choices: ["books", "notebook", "desk", "pen"], answer: "books" },
-  { word: "calculator", icon: "🧮", choices: ["calculator", "ruler", "globe", "desk"], answer: "calculator" },
+  { word: "calculator", icon: "🧮", choices: ["abacus", "ruler", "globe", "desk"], answer: "calculator" },
   { word: "computer", icon: "💻", choices: ["computer", "car", "book", "pencil"], answer: "computer" },
-  { word: "tablet", icon: "📱", choices: ["tablet", "book", "chalk", "pen"], answer: "tablet" },
+  { word: "phone", icon: "📱", choices: ["phone", "book", "chalk", "pen"], answer: "phone" },
   { word: "chair", icon: "🪑", choices: ["chair", "desk", "eraser", "globe"], answer: "chair" },
   { word: "teacher", icon: "👩‍🏫", choices: ["teacher", "student", "chalk", "book"], answer: "teacher" },
   { word: "student", icon: "🧑‍🎓", choices: ["student", "teacher", "desk", "pen"], answer: "student" },
@@ -173,7 +175,7 @@ const questions = [
   { word: "bell", icon: "🔔", choices: ["bell", "clock", "computer", "teacher"], answer: "bell" },
   { word: "door", icon: "🚪", choices: ["door", "desk", "folder", "window"], answer: "door" },
   { word: "trash can", icon: "🗑️", choices: ["trash can", "folder", "book", "paint"], answer: "trash can" },
-  { word: "water", icon: "💧", choices: ["water fountain", "sink", "toilet", "paint"], answer: "water fountain" }
+  { word: "water", icon: "💧", choices: ["water", "sink", "toilet", "paint"], answer: "water" }
 ];
 
 
@@ -197,9 +199,9 @@ const nameInput = document.getElementById('nameInput');
 const correctSound = new Audio('../../Assets/Audio/right.mp3');
 const wrongSound = new Audio('../../Assets/Audio/wrong.mp3');
 const endGameSound = new Audio('../../Assets/Audio/endgame.mp3');
-const jungleMusic = new Audio('../../Assets/Audio/junglemusic.mp3');
-jungleMusic.loop = true;
-jungleMusic.volume = 0.5;
+const kids1 = new Audio('../../Assets/Audio/kids1.mp3');
+kids1.loop = true;
+kids1.volume = 0.5;
 let soundOn = true;
 const soundToggle = document.getElementById('soundToggle');
 soundToggle.onclick = function() {
@@ -207,14 +209,14 @@ soundToggle.onclick = function() {
   correctSound.muted = !soundOn;
   wrongSound.muted = !soundOn;
   endGameSound.muted = !soundOn;
-  jungleMusic.muted = !soundOn;
+  kids1.muted = !soundOn;
   soundToggle.textContent = soundOn ? '🔊' : '🔇';
 };
 // Ensure all sounds respect the toggle at start
 correctSound.muted = !soundOn;
 wrongSound.muted = !soundOn;
 endGameSound.muted = !soundOn;
-jungleMusic.muted = !soundOn;
+kids1.muted = !soundOn;
 
 const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaWV1aWt0bHNpdndmZ3lpdmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTEyNTIsImV4cCI6MjA2NDE4NzI1Mn0.aMQN_U2aLvH7RzuT-dfzQF4RNA7YQ-Xn6upqJFr7eis';
@@ -226,9 +228,9 @@ function startGame() {
   endScreen.style.display = 'none';
   startScreen.style.display = 'none';
   // Start background music if not already playing
-  if (jungleMusic.paused) {
-    jungleMusic.currentTime = 0;
-    jungleMusic.play();
+  if (kids1.paused) {
+    kids1.currentTime = 0;
+    kids1.play();
   }
   // Clear any existing timer before starting a new one
   if (timer) clearInterval(timer);
@@ -342,7 +344,7 @@ async function displayHighScores() {
   const { data, error } = await supabase
     .from('Scores')
     .select('name, score')
-    .eq('game', 'JungleAnimalGame')
+    .eq('game', 'SchoolStuffGame')
     .order('score', { ascending: false })
     .limit(5);
 

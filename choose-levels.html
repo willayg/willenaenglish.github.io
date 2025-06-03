@@ -160,102 +160,104 @@
   </div>
   <div id="game-options" class="game-options"></div>
   <script>
-    const gameNamesByLevel = {
-      'Level 1': [
-        ['Easy Word Game', 'Picture word quiz for beginners']
-      ],
-      'Level 2': [
-        ['Jungle Animal Game', 'Guess the animal!'],
-        ['School Stuff Game', 'School things vocabulary quiz']
-      ],
-      'Level 3': [
-        ['Cutie Past Tense', 'Choose the right past tense verb']
-      ],
-      'Level 6': [
-        ['Tag Questions Goblin', 'Defeat the goblin with grammar!']
-      ]
-    };
+  const gameNamesByLevel = {
+    'Level 1': [
+      ['Easy Word Game', 'Picture word quiz for beginners']
+    ],
+    'Level 2': [
+      ['Jungle Animal Game', 'Guess the animal!'],
+      ['School Stuff Game', 'School things vocabulary quiz']
+    ],
+    'Level 3': [
+      ['Cutie Past Tense', 'Choose the right past tense verb'],
+      ['Go or Goes', 'Present simple fill-in-the-blank']
+    ],
+    'Level 6': [
+      ['Tag Questions Goblin', 'Defeat the goblin with grammar!']
+    ]
+  };
 
-    function loadLevel(level) {
-      const games = gameNamesByLevel[level] || [];
-      const html = games.map(([title, subtitle]) => {
-        // Folder names should match the game file names (without .html)
-        // Example: games/animal-match/animal-match.html
-        let folder = "";
-        let file = "";
-        if (title === 'Tag Questions Goblin') {
-          folder = "goblin_tag";
-          file = "goblin_tag.html";
-        } else if (title === 'Cutie Past Tense') {
-          folder = "cutie_past_tense";
-          file = "cutie_past_tense.html";
-        } else if (title === 'Jungle Animal Game') {
-          folder = "jungleanimalgame";
-          file = "jungleanimalgame.html";
-        } else if (title === 'Easy Word Game') {
-          folder = "easy_word_game";
-          file = "easy_word_game.html";
-        } else if (title === 'School Stuff Game') {
-          folder = "schoolstuffgame";
-          file = "schoolstuffgame.html";
-        }
-        let href = folder && file ? `games/${folder}/${file}` : "#";
-        return `<div class="game-box" tabindex="0" data-title="${title}" data-subtitle="${subtitle}" onclick="event.stopPropagation(); location.href='${href}'">${title}</div>`;
-      }).join('');
-      document.getElementById('game-options').innerHTML = html;
+  function loadLevel(level) {
+    const games = gameNamesByLevel[level] || [];
+    const html = games.map(([title, subtitle]) => {
+      let folder = "";
+      let file = "";
+      if (title === 'Tag Questions Goblin') {
+        folder = "goblin_tag";
+        file = "goblin_tag.html";
+      } else if (title === 'Cutie Past Tense') {
+        folder = "cutie_past_tense";
+        file = "cutie_past_tense.html";
+      } else if (title === 'Jungle Animal Game') {
+        folder = "jungleanimalgame";
+        file = "jungleanimalgame.html";
+      } else if (title === 'Easy Word Game') {
+        folder = "easy_word_game";
+        file = "easy_word_game.html";
+      } else if (title === 'School Stuff Game') {
+        folder = "schoolstuffgame";
+        file = "schoolstuffgame.html";
+      } else if (title === 'Go or Goes') {
+        folder = "presentgame1";
+        file = "presentgame1.html";
+      }
+      let href = folder && file ? `games/${folder}/${file}` : "#";
+      return `<div class="game-box" tabindex="0" data-title="${title}" data-subtitle="${subtitle}" onclick="event.stopPropagation(); location.href='${href}'">${title}</div>`;
+    }).join('');
+    document.getElementById('game-options').innerHTML = html;
 
-      document.querySelectorAll('.game-box').forEach(box => {
-        let holdTimer;
-        const originalText = box.dataset.title;
-        const newText = box.dataset.subtitle;
-        const startHold = () => {
-          holdTimer = setTimeout(() => {
-            box.textContent = newText;
-            setTimeout(() => { box.textContent = originalText; }, 1000);
-          }, 500);
-        };
-        const endHold = () => clearTimeout(holdTimer);
-        box.addEventListener('mousedown', startHold);
-        box.addEventListener('touchstart', startHold);
-        box.addEventListener('mouseup', endHold);
-        box.addEventListener('mouseleave', endHold);
-        box.addEventListener('touchend', endHold);
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      const swiper = new Swiper('.swiper', {
-        loop: true,
-        threshold: 80,
-        touchRatio: 0.45,
-        touchAngle: 25,
-        pagination: { el: '.swiper-pagination', clickable: true },
-        simulateTouch: true,
-        allowTouchMove: true,
-        on: {
-          slideChange: function () {
-            const levelText = document.querySelectorAll('.swiper-slide')[this.realIndex]?.innerText?.split('\n')[0].trim();
-            if (levelText) loadLevel(levelText);
-          }
-        }
-      });
-
-      let touchStartX = 0;
-      let touchEndX = 0;
-      document.body.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-      });
-      document.body.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        const deltaX = touchEndX - touchStartX;
-        if (Math.abs(deltaX) > 50) {
-          if (deltaX < 0) swiper.slideNext();
-          else swiper.slidePrev();
-        }
-      });
-
-      loadLevel('Level 1');
+    document.querySelectorAll('.game-box').forEach(box => {
+      let holdTimer;
+      const originalText = box.dataset.title;
+      const newText = box.dataset.subtitle;
+      const startHold = () => {
+        holdTimer = setTimeout(() => {
+          box.textContent = newText;
+          setTimeout(() => { box.textContent = originalText; }, 1000);
+        }, 500);
+      };
+      const endHold = () => clearTimeout(holdTimer);
+      box.addEventListener('mousedown', startHold);
+      box.addEventListener('touchstart', startHold);
+      box.addEventListener('mouseup', endHold);
+      box.addEventListener('mouseleave', endHold);
+      box.addEventListener('touchend', endHold);
     });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const swiper = new Swiper('.swiper', {
+      loop: false, // Disable infinite loop
+      threshold: 80,
+      touchRatio: 0.45,
+      touchAngle: 25,
+      pagination: { el: '.swiper-pagination', clickable: true },
+      simulateTouch: true,
+      allowTouchMove: true,
+      on: {
+        slideChange: function () {
+          const levelText = document.querySelectorAll('.swiper-slide')[this.realIndex]?.innerText?.split('\n')[0].trim();
+          if (levelText) loadLevel(levelText);
+        }
+      }
+    });
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    document.body.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    document.body.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const deltaX = touchEndX - touchStartX;
+      if (Math.abs(deltaX) > 50) {
+        if (deltaX < 0 && swiper.activeIndex < swiper.slides.length - 1) swiper.slideNext();
+        else if (deltaX > 0 && swiper.activeIndex > 0) swiper.slidePrev();
+      }
+    });
+
+    loadLevel('Level 1');
+  });
   </script>
 </body>
 </html>
