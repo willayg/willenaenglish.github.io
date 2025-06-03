@@ -342,7 +342,7 @@ async function displayHighScores() {
   const { data, error } = await supabase
     .from('Scores')
     .select('name, score')
-    .eq('game', 'JungleAnimalGame')
+    .eq('game', 'SchoolStuffGame')
     .order('score', { ascending: false })
     .limit(5);
 
