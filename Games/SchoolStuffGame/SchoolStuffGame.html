@@ -14,7 +14,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background: url('../../Assets/Images/backgrounds/twilightclouds.png') no-repeat center center fixed;
   background-size: cover;
-  background-color: darkgreen;
+  background-color: rgb(1, 6, 88);
   color: white;
   text-align: center;
   margin: 0;
@@ -36,7 +36,7 @@ body {
     button {
       font-size: 1.2em;
       padding: 10px 20px;
-      background-color: #388e3c;
+      background-color: #326ad3;
       color: white;
       border: none;
       border-radius: 10px;
@@ -147,9 +147,9 @@ const questions = [
   { word: "notebook", icon: "📒", choices: ["notebook", "chair", "eraser", "desk"], answer: "notebook" },
   { word: "scissors", icon: "✂️", choices: ["scissors", "pen", "ruler", "glue"], answer: "scissors" },
   { word: "ruler", icon: "📏", choices: ["ruler", "pencil", "desk", "eraser"], answer: "ruler" },
-  { word: "book", icon: "📚", choices: ["book", "notebook", "desk", "pen"], answer: "book" },
+  { word: "book", icon: "📚", choices: ["books", "notebook", "desk", "pen"], answer: "books" },
   { word: "calculator", icon: "🧮", choices: ["calculator", "ruler", "globe", "desk"], answer: "calculator" },
-  { word: "computer", icon: "💻", choices: ["computer", "notebook", "book", "pencil"], answer: "computer" },
+  { word: "computer", icon: "💻", choices: ["computer", "car", "book", "pencil"], answer: "computer" },
   { word: "tablet", icon: "📱", choices: ["tablet", "book", "chalk", "pen"], answer: "tablet" },
   { word: "chair", icon: "🪑", choices: ["chair", "desk", "eraser", "globe"], answer: "chair" },
   { word: "teacher", icon: "👩‍🏫", choices: ["teacher", "student", "chalk", "book"], answer: "teacher" },
@@ -305,26 +305,36 @@ function endGame() {
   endGameSound.currentTime = 0;
   endGameSound.play();
   displayHighScores();
-  nameInput.style.display = 'block';
-  const submitBtn = document.getElementById('submitBtn'); // FIXED
-  if (submitBtn) submitBtn.style.display = 'inline-block'; // FIXED
+
+  // Check for logged-in user
+  const loggedInName = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+  const submitBtn = document.getElementById('submitBtn');
+  if (loggedInName) {
+    nameInput.value = loggedInName;
+    nameInput.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'none';
+    submitScore(loggedInName); // auto-submit
+  } else {
+    nameInput.style.display = 'block';
+    if (submitBtn) submitBtn.style.display = 'inline-block';
+  }
 }
 
-async function submitScore() {
-  const name = nameInput.value || 'Anonymous';
+async function submitScore(forcedName) {
+  const name = forcedName || nameInput.value || 'Anonymous';
   console.log("Submit button clicked");
 
   const { data, error } = await supabase
     .from('Scores')
-    .insert([{ name, score, game: 'JungleAnimalGame' }]);
+    .insert([{ name, score, game: window.game || 'SchoolStuffGame' }]);
   if (error) {
     console.error('Failed to submit score:', error.message);
   } else {
     console.log('Score submitted:', data);
     nameInput.style.display = 'none';
-    const submitBtn = document.querySelector('button[onclick="submitScore()"]');
+    const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) submitBtn.style.display = 'none';
-    displayHighScores(); // Use consistent name
+    displayHighScores();
   }
 }
 
