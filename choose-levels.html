@@ -165,7 +165,8 @@
         ['Easy Word Game', 'Picture word quiz for beginners']
       ],
       'Level 2': [
-        ['Jungle Animal Game', 'Guess the animal!']
+        ['Jungle Animal Game', 'Guess the animal!'],
+        ['School Stuff Game', 'School things vocabulary quiz']
       ],
       'Level 3': [
         ['Cutie Past Tense', 'Choose the right past tense verb']
@@ -194,6 +195,9 @@
         } else if (title === 'Easy Word Game') {
           folder = "easy_word_game";
           file = "easy_word_game.html";
+        } else if (title === 'School Stuff Game') {
+          folder = "schoolstuffgame";
+          file = "schoolstuffgame.html";
         }
         let href = folder && file ? `games/${folder}/${file}` : "#";
         return `<div class="game-box" tabindex="0" data-title="${title}" data-subtitle="${subtitle}" onclick="event.stopPropagation(); location.href='${href}'">${title}</div>`;
