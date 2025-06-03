@@ -116,6 +116,7 @@
 <body>
   <header>
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
+    <div id="userBox" style="margin-left:auto; display:flex; align-items:center; gap:14px; font-size:1.1rem;"></div>
   </header>
 
   <div class="swiper">
@@ -152,5 +153,28 @@
       © 2025 Willena 원어민 영어학원. All rights reserved.
     </p>
   </div>
+  <script>
+  // User login UI logic
+  function renderUserBox() {
+    const userBox = document.getElementById('userBox');
+    const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+    userBox.innerHTML = '';
+    if (name) {
+      userBox.innerHTML = `<span style="color:#f3f0f2;">${name}</span>
+        <a href="#" id="logoutLink" style="color:#f3f0f2; text-decoration:underline; cursor:pointer;">로그아웃</a>`;
+      document.getElementById('logoutLink').onclick = function(e) {
+        e.preventDefault();
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('user_name');
+        sessionStorage.removeItem('user_id');
+        sessionStorage.removeItem('user_name');
+        renderUserBox();
+      };
+    } else {
+      userBox.innerHTML = `<a href="login.html" style="color:#f3f0f2; text-decoration:underline;">로그인/가입</a>`;
+    }
+  }
+  renderUserBox();
+</script>
 </body>
 </html>

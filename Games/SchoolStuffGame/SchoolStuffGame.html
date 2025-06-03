@@ -7,12 +7,12 @@
   <meta http-equiv="Content-Language" content="en">
   <meta name="naver" content="notranslate">
   <meta name="robots" content="noindex,nofollow">
-  <title>JungleAnimalGame</title>
+  <title>SchoolStuffGame</title>
   <style>
     
 body {
   font-family: 'Poppins', sans-serif;
-  background: url('../../Assets/Images/backgrounds/Jungle.jpg') no-repeat center center fixed;
+  background: url('../../Assets/Images/backgrounds/twilightclouds.png') no-repeat center center fixed;
   background-size: cover;
   background-color: darkgreen;
   color: white;
@@ -110,7 +110,7 @@ body {
 <button id="soundToggle" title="Toggle Sound">🔊</button>
   <div class="container">
     <div id="startScreen">
-      <h1>Animal Quiz</h1>
+      <h1>School Stuff</h1>
       <button onclick="startGame()">Start Game</button>
     </div>
 
@@ -137,50 +137,45 @@ body {
   
 
   <script>
+window.game = "SchoolStuffGame";
+
 const questions = [
-  { icon: '🦁', answer: 'Lion', choices: ['Tiger', 'Lion', 'Bear', 'Elephant'] },
-  { icon: '🐘', answer: 'Elephant', choices: ['Dog', 'Elephant', 'Giraffe', 'Horse'] },
-  { icon: '🐯', answer: 'Tiger', choices: ['Tiger', 'Zebra', 'Lion', 'Monkey'] },
-  { icon: '🐵', answer: 'Monkey', choices: ['Donkey', 'Monkey', 'Cat', 'Panda'] },
-  { icon: '🐻', answer: 'Bear', choices: ['Bear', 'Koala', 'Pig', 'Fox'] },
-  { icon: '🦊', answer: 'Fox', choices: ['Dog', 'Wolf', 'Fox', 'Lion'] },
-  { icon: '🐺', answer: 'Wolf', choices: ['Dog', 'Cat', 'Wolf', 'Tiger'] },
-  { icon: '🦒', answer: 'Giraffe', choices: ['Elephant', 'Camel', 'Giraffe', 'Horse'] },
-  { icon: '🐴', answer: 'Horse', choices: ['Horse', 'Cow', 'Dog', 'Pig'] },
-  { icon: '🐷', answer: 'Pig', choices: ['Sheep', 'Pig', 'Bear', 'Rabbit'] },
-  { icon: '🐰', answer: 'Rabbit', choices: ['Hamster', 'Rabbit', 'Kangaroo', 'Fox'] },
-  { icon: '🐱', answer: 'Cat', choices: ['Tiger', 'Cat', 'Panther', 'Dog'] },
-  { icon: '🐶', answer: 'Dog', choices: ['Wolf', 'Dog', 'Fox', 'Lion'] },
-  { icon: '🐮', answer: 'Cow', choices: ['Cow', 'Buffalo', 'Pig', 'Donkey'] },
-  { icon: '🐑', answer: 'Sheep', choices: ['Goat', 'Horse', 'Sheep', 'Pig'] },
-  { icon: '🦓', answer: 'Zebra', choices: ['Zebra', 'Horse', 'Donkey', 'Elephant'] },
-  { icon: '🦘', answer: 'Kangaroo', choices: ['Rabbit', 'Kangaroo', 'Dog', 'Koala'] },
-  { icon: '🐔', answer: 'Chicken', choices: ['Turkey', 'Chicken', 'Duck', 'Ostrich'] },
-  { icon: '🦆', answer: 'Duck', choices: ['Chicken', 'Duck', 'Swan', 'Goose'] },
-  { icon: '🦢', answer: 'Swan', choices: ['Duck', 'Flamingo', 'Swan', 'Goose'] },
-  { icon: '🦩', answer: 'Flamingo', choices: ['Duck', 'Pelican', 'Flamingo', 'Swan'] },
-  { icon: '🦚', answer: 'Peacock', choices: ['Peacock', 'Turkey', 'Swan', 'Duck'] },
-  { icon: '🦜', answer: 'Parrot', choices: ['Parrot', 'Eagle', 'Falcon', 'Toucan'] },
-  { icon: '🦢', answer: 'Swan', choices: ['Duck', 'Goose', 'Swan', 'Heron'] },
-  { icon: '🦃', answer: 'Turkey', choices: ['Chicken', 'Turkey', 'Duck', 'Pheasant'] },
-  { icon: '🪿', answer: 'Goose', choices: ['Duck', 'Goose', 'Swan', 'Pelican'] },
-  { icon: '🦅', answer: 'Eagle', choices: ['Tucan', 'Eagle', 'Parrot', 'Penguin'] },
-  { icon: '🦉', answer: 'Owl', choices: ['Hawk', 'Owl', 'Eagle', 'Dove'] },
-  { icon: '🪰', answer: 'Fly', choices: ['Mosquito', 'Bee', 'Fly', 'Ant'] },
-  { icon: '🐝', answer: 'Bee', choices: ['Wasp', 'Fly', 'Bee', 'Ant'] },
-  { icon: '🐜', answer: 'Ant', choices: ['Ant', 'Spider', 'Beetle', 'Fly'] },
-  { icon: '🕷️', answer: 'Spider', choices: ['Spider', 'Crab', 'Ant', 'Beetle'] },
-  { icon: '🦂', answer: 'Scorpion', choices: ['Scorpion', 'Spider', 'Lobster', 'Crab'] },
-  { icon: '🐢', answer: 'Turtle', choices: ['Turtle', 'Lizard', 'Frog', 'Snake'] },
-  { icon: '🐍', answer: 'Snake', choices: ['Worm', 'Eel', 'Snake', 'Lizard'] },
-  { icon: '🦎', answer: 'Lizard', choices: ['Turtle', 'Lizard', 'Frog', 'Snake'] },
-  { icon: '🐸', answer: 'Frog', choices: ['cat', 'Frog', 'Lizard', 'Salamander'] },
-  { icon: '🐊', answer: 'Crocodile', choices: ['Crocodile', 'Banana', 'Lizard', 'Turtle'] },
-  { icon: '🦭', answer: 'Seal', choices: ['Otter', 'Seal', 'Whale', 'Walrus'] },
-  { icon: '🐬', answer: 'Dolphin', choices: ['Shark', 'Dolphin', 'Whale', 'Seal'] },
-  { icon: '🐳', answer: 'Whale', choices: ['Whale', 'Dolphin', 'Shark', 'Seal'] },
-  { icon: '🦈', answer: 'Shark', choices: ['Whale', 'Dolphin', 'Shark', 'Seal'] }
+  { word: "pencil", icon: "✏️", choices: ["pencil", "pen", "eraser", "desk"], answer: "pencil" },
+  { word: "pen", icon: "🖊️", choices: ["pen", "ruler", "scissors", "chalk"], answer: "pen" },
+  { word: "eraser", icon: "🧽", choices: ["eraser", "book", "globe", "chair"], answer: "eraser" },
+  { word: "globe", icon: "🌍", choices: ["globe", "book", "pencil case", "chalk"], answer: "globe" },
+  { word: "notebook", icon: "📒", choices: ["notebook", "chair", "eraser", "desk"], answer: "notebook" },
+  { word: "scissors", icon: "✂️", choices: ["scissors", "pen", "ruler", "glue"], answer: "scissors" },
+  { word: "ruler", icon: "📏", choices: ["ruler", "pencil", "desk", "eraser"], answer: "ruler" },
+  { word: "book", icon: "📚", choices: ["book", "notebook", "desk", "pen"], answer: "book" },
+  { word: "calculator", icon: "🧮", choices: ["calculator", "ruler", "globe", "desk"], answer: "calculator" },
+  { word: "computer", icon: "💻", choices: ["computer", "notebook", "book", "pencil"], answer: "computer" },
+  { word: "tablet", icon: "📱", choices: ["tablet", "book", "chalk", "pen"], answer: "tablet" },
+  { word: "chair", icon: "🪑", choices: ["chair", "desk", "eraser", "globe"], answer: "chair" },
+  { word: "teacher", icon: "👩‍🏫", choices: ["teacher", "student", "chalk", "book"], answer: "teacher" },
+  { word: "student", icon: "🧑‍🎓", choices: ["student", "teacher", "desk", "pen"], answer: "student" },
+  { word: "clock", icon: "⏰", choices: ["clock", "calculator", "globe", "notebook"], answer: "clock" },
+  { word: "map", icon: "🗺️", choices: ["map", "globe", "book", "desk"], answer: "map" },
+  { word: "paint", icon: "🎨", choices: ["paint", "crayon", "marker", "chalk"], answer: "paint" },
+  { word: "paintbrush", icon: "🖌️", choices: ["paintbrush", "pencil", "pen", "scissors"], answer: "paintbrush" },
+  { word: "paper", icon: "📄", choices: ["paper", "notebook", "book", "tablet"], answer: "paper" },
+  { word: "folder", icon: "📁", choices: ["folder", "book", "notebook", "desk"], answer: "folder" },
+  { word: "dictionary", icon: "📖", choices: ["dictionary", "desk", "pen", "tablet"], answer: "dictionary" },
+  { word: "projector", icon: "📽️", choices: ["projector", "computer", "tablet", "clock"], answer: "projector" },
+  { word: "microscope", icon: "🔬", choices: ["microscope", "calculator", "globe", "book"], answer: "microscope" },
+  { word: "test", icon: "📝", choices: ["test", "student", "bag", "dog"], answer: "test" },
+  { word: "lunchbox", icon: "🍱", choices: ["lunchbox", "backpack", "folder", "desk"], answer: "lunchbox" },
+  { word: "school bus", icon: "🚌", choices: ["school bus", "car", "bike", "desk"], answer: "school bus" },
+  { word: "toilet", icon: "🚽", choices: ["toilet", "sink", "chair", "desk"], answer: "toilet" },
+  { word: "soap", icon: "🧼", choices: ["soap", "chalk", "paint", "pencil"], answer: "soap" },
+  { word: "soccer ball", icon: "⚽", choices: ["soccer ball", "basketball", "clock", "microscope"], answer: "soccer ball" },
+  { word: "basketball", icon: "🏀", choices: ["basketball", "soccer ball", "calculator", "paintbrush"], answer: "basketball" },
+  { word: "bell", icon: "🔔", choices: ["bell", "clock", "computer", "teacher"], answer: "bell" },
+  { word: "door", icon: "🚪", choices: ["door", "desk", "folder", "window"], answer: "door" },
+  { word: "trash can", icon: "🗑️", choices: ["trash can", "folder", "book", "paint"], answer: "trash can" },
+  { word: "water", icon: "💧", choices: ["water fountain", "sink", "toilet", "paint"], answer: "water fountain" }
 ];
+
 
 let score = 0;
 let timer;
@@ -310,24 +305,13 @@ function endGame() {
   endGameSound.currentTime = 0;
   endGameSound.play();
   displayHighScores();
-
-  // Auto-submit score if user is logged in
-  const loggedInName = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
-  if (loggedInName) {
-    nameInput.value = loggedInName;
-    nameInput.style.display = 'none';
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.style.display = 'none';
-    submitScore(loggedInName);
-  } else {
-    nameInput.style.display = 'block';
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.style.display = 'inline-block';
-  }
+  nameInput.style.display = 'block';
+  const submitBtn = document.getElementById('submitBtn'); // FIXED
+  if (submitBtn) submitBtn.style.display = 'inline-block'; // FIXED
 }
 
-async function submitScore(forcedName) {
-  const name = forcedName || nameInput.value || 'Anonymous';
+async function submitScore() {
+  const name = nameInput.value || 'Anonymous';
   console.log("Submit button clicked");
 
   const { data, error } = await supabase
@@ -338,9 +322,9 @@ async function submitScore(forcedName) {
   } else {
     console.log('Score submitted:', data);
     nameInput.style.display = 'none';
-    const submitBtn = document.getElementById('submitBtn');
+    const submitBtn = document.querySelector('button[onclick="submitScore()"]');
     if (submitBtn) submitBtn.style.display = 'none';
-    displayHighScores();
+    displayHighScores(); // Use consistent name
   }
 }
 
