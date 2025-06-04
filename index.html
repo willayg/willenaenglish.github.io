@@ -74,12 +74,20 @@
       font-weight: 600;
     }
     
-    .swiper-slide img {
-      min-width: 120%;
-      min-height: 120%;
-      object-fit: cover;
-      display: block;
-    }
+   .slide-moon {
+     min-width: 120%;
+     min-height: 120%;
+     object-fit: cover;
+     display: block;
+   }
+
+   .slide-girls {
+     width: 100%;
+     height: 80%;
+     object-fit: contain;
+   }
+
+
 
 
     .swiper-pagination {
@@ -118,13 +126,19 @@
 <body>
   <header>
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
-    <div id="userBox" style="margin-left:auto; display:flex; align-items:center; gap:14px; font-size:1.1rem;"></div>
+    <div id="userBox" style="position:absolute; top:16px; right:20px; font-size:0.8rem; display:flex; align-items:center; gap:10px;"></div>
   </header>
 
   <div class="swiper">
     <div class="swiper-wrapper">
-      <div class="swiper-slide"><img src="moon.jpg" alt="Touch The Moon"></div>
-      <div class="swiper-slide"><img src="Assets/Images/Girls.jpg" alt="Listening to Writing Flow"></div>
+      <div class="swiper-slide">
+       <img src="moon.jpg" class="slide-moon" alt="Moon">
+    </div>
+
+  <div class="swiper-slide">
+    <img src="Assets/Images/Girls.jpg" class="slide-girls" alt="Girls">
+  </div>
+
       <div class="swiper-slide">✨  The Joy Of Learning</div>
     </div>
     <div class="swiper-pagination"></div>
