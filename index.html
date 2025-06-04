@@ -29,16 +29,18 @@
       color: var(--text);
     }
 
-    header {
-      background-color: var(--primary);
-      padding: 20px 6%;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
+header {
+  background-color: rgba(46, 43, 63, 0.92);   /* same blue as #2e2b3f, now 70% opaque */
+  backdrop-filter: blur(10px);              /* the blur behind */
+  -webkit-backdrop-filter: blur(10px);      /* Safari support */
+  padding: 20px 6%;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
 
     header img {
       height: 80px;
