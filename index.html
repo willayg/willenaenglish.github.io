@@ -59,7 +59,7 @@ header {
 
     .swiper {
       width: 100%;
-      height: 260px;
+      height: 70vh;
       margin-top: 2px;
       position: relative;
       background-color: white;
@@ -77,8 +77,8 @@ header {
     }
     
    .slide-moon {
-     min-width: 120%;
-     min-height: 170%;
+     min-width: 100%;
+     min-height: 100%;
      object-fit: cover;
      display: block;
    }
@@ -106,6 +106,71 @@ header {
       font-size: 0.9rem;
       color: #777;
     }
+
+    .slider-bar {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      width: 100%;
+      height: 48px;
+      background: #827e9b;
+      margin-top: 2px; /* 2px gap below the slider */
+      border-bottom: 2px solid #2e2b3f; /* 2px border below the bar */
+      gap: 2px; /* 1px gap between boxes */
+    }
+
+    .slider-box {
+      flex: 1 1 0;
+      background: #2e2b3f;
+      min-width: 0;
+      min-height: 0;
+      border-radius: 0; /* No rounded edges */
+      margin: 2;
+      /* No border here! */
+    }
+
+    .play-extras {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .play-extra-item {
+      position: absolute;
+      font-size: 1.1rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: auto;
+      color: var(--primary);
+    }
+
+    .item1 {
+      top: 20%;
+      left: 20%;
+    }
+    .item2 {
+      bottom: 15%;
+      right: 25%;
+    }
+    .item3 {
+      top: 60%;
+      left: 60%;
+    }
+
+    @keyframes fadeInItem {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
   </style>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script>
@@ -126,51 +191,131 @@ header {
   </script>
 </head>
 <body>
-  <header>
+  <header style="position:relative;">
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
     <div id="userBox" style="position:absolute; top:16px; right:20px; font-size:0.8rem; display:flex; align-items:center; gap:10px;"></div>
+    <button id="langToggle"
+      style="
+        position: absolute;
+        right: 18px;
+        bottom: 8px;
+        background: none;
+        border: none;
+        color: #f3f0f2;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1.1;
+      ">
+      Eng
+    </button>
   </header>
 
   <div class="swiper">
     <div class="swiper-wrapper">
       <div class="swiper-slide">
-       <img src="moon.jpg" class="slide-moon" alt="Moon">
-    </div>
-
-  <div class="swiper-slide">
-    <img src="Girls.jpg" class="slide-girls" alt="Girls">
-  </div>
-
-      <div class="swiper-slide">✨  The Joy Of Learning</div>
+        <img src="moon.jpg" class="slide-moon" alt="Moon">
+      </div>
+      <div class="swiper-slide">
+        <img src="Girls.jpg" class="slide-girls" alt="Girls">
+      </div>
+      <div class="swiper-slide" id="slideJoy">✨ The Joy Of Learning</div>
     </div>
     <div class="swiper-pagination"></div>
   </div>
-
-  </section>
+  <div class="slider-bar">
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+  </div>
 
   <!-- Main Sections -->
-  <div style="background: var(--light-beige); color: var(--primary); height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a href="choose-levels.html" style="font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none;">Play English</a>
+  <div id="playEnglishSection" style="background: var(--light-beige); color: var(--primary); height: 600px; display: flex; align-items: center; justify-content: center; position: relative;" data-aos="fade-up">
+    <a id="playEnglish" href="choose-levels.html" style="font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none; z-index: 2;">Play English</a>
+    <div class="play-extras">
+      <div class="play-extra-item item1">Challenge Zone</div>
+      <div class="play-extra-item item2">영어 프레이 종</div>
+      <div class="play-extra-item item3">Quizzes & Tests</div>
+    </div>
   </div>
 
   <div style="background: var(--primary); color: white; height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a href="learn-english.html" style="font-size: 1.8rem; font-weight: 700; color: white; text-decoration: none;">Learn English</a>
+    <a id="learnEnglish" href="learn-english.html" style="font-size: 1.8rem; font-weight: 700; color: white; text-decoration: none;">Learn English</a>
   </div>
 
   <div style="background: white; color: var(--primary); height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a href="grammar-games.html" style="font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none;">About Learning</a>
+    <a id="aboutLearning" href="grammar-games.html" style="font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none;">About Learning</a>
   </div>
 
   <div style="background: var(--primary); color: white; height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a href="vocab-games.html" style="font-size: 1.8rem; font-weight: 700; color: white; text-decoration: none;">About Willena</a>
+    <a id="aboutWillena" href="vocab-games.html" style="font-size: 1.8rem; font-weight: 700; color: white; text-decoration: none;">About Willena</a>
   </div>
 
-  <div class="footer">
+  <div class="slider-bar">
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+    <div class="slider-box"></div>
+  </div>
+
+  <div class="footer" id="footerContact">
     <p style="margin-top: 12px; font-size: 0.9rem;">
       Phone: 010-1234-5678<br>
       © 2025 Willena 원어민 영어학원. All rights reserved.
     </p>
   </div>
+  <script>
+  // Language translations
+  const translations = {
+    en: {
+      joy: "✨ The Joy Of Learning",
+      playEnglish: "Play English",
+      learnEnglish: "Learn English",
+      aboutLearning: "About Learning",
+      aboutWillena: "About Willena",
+      footer: `Phone: 031 8042 2203<br>© 2025 Willena English Academy. All rights reserved.`,
+      langBtn: "한국어"
+    },
+    ko: {
+      joy: "✨ 배우는 기쁨",
+      playEnglish: "영어 게임",
+      learnEnglish: "영어 배우기",
+      aboutLearning: "학습 소개",
+      aboutWillena: "윌레나 소개",
+      footer: `전화: 010-1234-5678<br>© 2025 윌레나 원어민 영어학원. All rights reserved.`,
+      langBtn: "Eng"
+    }
+  };
+
+  function setLanguage(lang) {
+    document.getElementById('slideJoy').textContent = translations[lang].joy;
+    document.getElementById('playEnglish').textContent = translations[lang].playEnglish;
+    document.getElementById('learnEnglish').textContent = translations[lang].learnEnglish;
+    document.getElementById('aboutLearning').textContent = translations[lang].aboutLearning;
+    document.getElementById('aboutWillena').textContent = translations[lang].aboutWillena;
+    document.getElementById('footerContact').innerHTML = `<p style="margin-top: 12px; font-size: 0.9rem;">${translations[lang].footer}</p>`;
+    document.getElementById('langToggle').textContent = translations[lang].langBtn;
+    localStorage.setItem('site_lang', lang);
+  }
+
+  // Detect browser language or use saved preference
+  function detectLanguage() {
+    const saved = localStorage.getItem('site_lang');
+    if (saved) return saved;
+    const lang = navigator.language || navigator.userLanguage;
+    return lang.startsWith('ko') ? 'ko' : 'en';
+  }
+
+  document.getElementById('langToggle').onclick = function() {
+    const current = localStorage.getItem('site_lang') || detectLanguage();
+    setLanguage(current === 'en' ? 'ko' : 'en');
+  };
+
+  setLanguage(detectLanguage());
+  </script>
   <script>
   // User login UI logic
   function renderUserBox() {
@@ -193,6 +338,29 @@ header {
     }
   }
   renderUserBox();
+  </script>
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const section = document.getElementById('playEnglishSection');
+  const items = section.querySelectorAll('.play-extra-item');
+  let triggered = false;
+
+  function onScroll() {
+    const rect = section.getBoundingClientRect();
+    if (!triggered && rect.top < window.innerHeight * 0.7) {
+      triggered = true;
+      items[0].style.animation = "fadeInItem 1s ease forwards";
+      items[0].style.animationDelay = "0.3s";
+      items[1].style.animation = "fadeInItem 1s ease forwards";
+      items[1].style.animationDelay = "1s";
+      items[2].style.animation = "fadeInItem 1s ease forwards";
+      items[2].style.animationDelay = "0.6s";
+    }
+  }
+  window.addEventListener('scroll', onScroll);
+  // Also trigger on load in case already in view
+  onScroll();
+});
 </script>
 </body>
 </html>
