@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Willena 원어민 영어학원</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
   <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
   <style>
@@ -171,6 +171,137 @@ header {
         opacity: 1;
       }
     }
+
+    /* New styles for program section */
+    /* Program Section Styles */
+.container {
+  width: 540px;
+  max-width: 100vw;
+  margin: 0 auto;
+  position: relative;
+  padding: 0 16px;
+}
+h1 {
+  font-family: 'Poppins', 'Century Gothic', Arial, sans-serif;
+  font-size: 2.2em;
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: #444;
+  letter-spacing: 1px;
+  text-align: left;
+  margin-left: 0;
+  text-shadow: 0 6px 32px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.22);
+  z-index: 10;
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.7s 0.05s forwards;
+}
+.program-stack {
+  width: 100%;
+}
+.bubble {
+  background: #fff;
+  border-radius: 50%;
+  width: 310px;
+  height: 310px;
+  box-shadow: 0 6px 18px rgba(100, 100, 100, 0.26);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0;
+  margin: 40px auto;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+  position: static;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.bubble.animate {
+  animation: fadeInUp 0.8s forwards;
+}
+/* Animation delays for each bubble */
+
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.bubble-title {
+  font-family: 'Poppins', 'Century Gothic', Arial, sans-serif;
+  font-size: 1.35em;
+  margin-bottom: 12px;
+  color: #555;
+  font-weight: bold;
+  margin-top: 0;
+}
+.bubble-content {
+  font-size: 1em;
+  color: #222;
+  line-height: 1.6;
+  padding: 0 24px;
+  word-break: keep-all;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+/* Zig-zag on desktop if you want */
+@media (min-width: 601px) {
+  .program-stack {
+    min-height: 950px;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 48px;
+  }
+  .bubble, .bubble.library, .bubble.special, .bubble.how {
+    position: static !important;
+    margin: 0 !important;
+  }
+}
+/* Zig-zag stack for mobile */
+@media (max-width: 600px) {
+  .container { width: 100vw; padding: 0 4vw; }
+  h1 { margin-left: 0; font-size: 2em; }
+  .program-stack { min-height: 0; position: static; }
+  .bubble, .bubble.library, .bubble.special, .bubble.how {
+    position: static !important;
+    width: 90vw !important;
+    height: 90vw !important;
+    max-width: 340px !important;
+    max-height: 340px !important;
+    min-width: 180px !important;
+    min-height: 180px !important;
+    margin-top: 24px !important;
+    margin-bottom: 24px !important;
+  }
+  /* Zig-zag: adjust margin-left/right for each bubble */
+  .bubble.library  { margin-left: 0 !important; margin-right: auto !important; }
+  .bubble.special  { margin-left: auto !important; margin-right: 0 !important; }
+  .bubble.how      { margin-left: 0vw !important; margin-right: auto !important; }
+  .slide-dosomething {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block;
+  }
+}
+
+.program-section h1 {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
   </style>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script>
@@ -219,7 +350,9 @@ header {
       <div class="swiper-slide">
         <img src="Girls.jpg" class="slide-girls" alt="Girls">
       </div>
-      <div class="swiper-slide" id="slideJoy">✨ The Joy Of Learning</div>
+      <div class="swiper-slide">
+        <img src="dosomething.png" class="slide-dosomething" alt="Do Something">
+      </div>
     </div>
     <div class="swiper-pagination"></div>
   </div>
@@ -240,16 +373,66 @@ header {
     </div>
   </div>
 
-  <div style="background: var(--primary); color: white; height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a id="learnEnglish" href="learn-english.html" style="font-size: 1.8rem; font-weight: 700; color: white; text-decoration: none;">Learn English</a>
+  <div style="background: var(--primary); color: white; width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 40px 0;" data-aos="fade-up">
+    <div style="max-width: 700px; width: 90%; padding: 0 16px; text-align: left;">
+      <div style="font-size: 2rem; font-weight: 700; margin-bottom: 40px;">What is Willena?</div>
+      <div style="font-size: 1.15rem; line-height: 2;">
+        윌레나 영어에서는 단순히 단어를 암기하는 것을 넘어, 무한한 가능성의 문을 여는 학습을 믿습니다. 저희의 목표는 창의적인 탐구와 흥미로운 수업을 통해 영어에 대한 평생의 사랑을 심어주는 것입니다.<br><br>
+        모든 아이는 특별하며, 각 학생이 자신감을 찾고 자신의 목소리를 발견할 수 있도록 돕는 수업 방식을 제공합니다.<br><br>
+        호기심을 자극하고 실생활에서 사용할 수 있는 소통 능력을 기르는 과정을 통해 영어 학습이 즐거운 모험이 되도록 합니다.<br><br>
+        윌레나의 열정적인 선생님들은 실수를 성공으로 나아가는 디딤돌로 삼을 수 있도록 지지해주는 수업 분위기를 만들어줍니다.<br><br>
+        윌레나에서 학생들은 단순히 언어를 배우는 것이 아니라, 세상과 연결될 새로운 방법을 발견하게 될 것입니다.<br><br>
+        윌레나와 함께 자녀의 미래를 위한 첫걸음을 시작해 보세요. 그 여정은 지금 시작됩니다!
+      </div>
+    </div>
   </div>
 
   <div style="background: white; color: var(--primary); height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a id="aboutLearning" href="grammar-games.html" style="font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none;">About Learning</a>
+    <div style="font-size: 1.6rem; font-weight: 600; text-align: center; max-width: 600px;">
+      <span style="font-family: 'Nanum Myeongjo', 'serif', cursive; font-style: italic;">
+        “모든 아이는 예술가입니다. 문제는 어른이 되어서도 예술가로 남는 것입니다.”
+      </span><br>
+      <span style="display:block; margin-top: 18px; font-size: 1.1rem; font-weight: 400;">– 파블로 피카소</span>
+    </div>
   </div>
 
-  <div style="background: var(--primary); color: white; height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
-    <a id="aboutWillena" href="vocab-games.html" style="font-size: 1.8rem; font-weight: 700; color: white; text-decoration: none;">About Willena</a>
+  <div class="container program-section" data-aos="fade-up" style="background: var(--light-beige); width: 100vw; max-width: 100vw; margin-left: calc(50% - 50vw); padding: 60px 0 80px 0;">
+    <h1 style="text-align:center;">Program</h1>
+    <div class="program-stack">
+      <div class="bubble library">
+        <div class="bubble-title">Library</div>
+        <div class="bubble-content">
+          독서는 영어의 자연스러운 습득으로<br>
+          읽기, 쓰기, 듣기, 말하기 능력을<br>
+          향상시키기에 중요합니다!<br><br>
+          윌레에서는 원서독서로,<br>
+          엘레에서는 온라인독서로<br>
+          아이의 목표를 경험할 수 있고,<br>
+          자신감도 키워주세요!
+        </div>
+      </div>
+      <div class="bubble special">
+        <div class="bubble-title">Special</div>
+        <div class="bubble-content">
+          모든반 영어로 수업<br>
+          영어 일기<br>
+          국제 공인 자격증반<br>
+          Event Days<br>
+          영어마을<br>
+          해외 영어 캠프
+        </div>
+      </div>
+      <div class="bubble how">
+        <div class="bubble-title">How?</div>
+        <div class="bubble-content">
+          주5회 원어민-한국인 매일 교차<br>
+          수업 학생이 주인공인 수업<br>
+          액티비티 중심 수업<br>
+          (말하기, 읽기, 듣기, 쓰기, 문법)<br>
+          프로젝트
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="slider-bar">
@@ -360,6 +543,36 @@ document.addEventListener('DOMContentLoaded', function () {
   window.addEventListener('scroll', onScroll);
   // Also trigger on load in case already in view
   onScroll();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const bubbles = document.querySelectorAll('.program-section .bubble');
+  const options = {
+    threshold: 0.3
+  };
+
+  let animated = false;
+
+  function animateBubbles(entries, observer) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !animated) {
+        animated = true;
+        bubbles.forEach((bubble, i) => {
+          setTimeout(() => {
+            bubble.classList.add('animate');
+          }, i * 100); // 400ms delay between each bubble
+        });
+        observer.disconnect();
+      }
+    });
+  }
+
+  const observer = new IntersectionObserver(animateBubbles, options);
+  const programSection = document.querySelector('.program-section');
+  if (programSection) {
+    observer.observe(programSection);
+  }
 });
 </script>
 </body>
