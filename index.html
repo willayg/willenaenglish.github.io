@@ -342,61 +342,221 @@ h1 {
   }
 }
 
-    
+    .activity-swiper {
+  max-width: 1100px;
+  width: 100%;
+  margin: 28px auto 40px auto;
+  padding-bottom: 32px;
+  box-sizing: border-box;
+  background: transparent !important;
+}
+.activity-swiper .swiper-slide {
+  height: auto !important;
+  min-height: 0 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: transparent !important;
+}
+.activity-swiper .swiper-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 24px;
+  background: #f6f6f6;
+}
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+/* Overlay styles for card-stack */
+.card-stack {
+  position: relative;
+  overflow: hidden;
+}
+.card-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(46,43,63,0.72);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+  padding: 18px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+.card-stack:hover .card-overlay,
+.card-stack:focus-within .card-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.overlay-text {
+  max-width: 90%;
+  line-height: 1.5;
+}
+
+.card-stack img {
+  width: 100%;
+  height: auto;
+  max-height: 80%;
+  object-fit: contain;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(100, 100, 100, 0.10);
+}
+
+.card-caption {
+  opacity: 0;
+  font-size: 2rem;         /* Bigger text */
+  font-weight: 800;
+  color: #2e2b3f;
+  text-align: center;
+  margin-top: 12px;
+  margin-bottom: 0;
+  letter-spacing: 1px;
+  transition: opacity 0.7s, transform 0.7s;
+  transform: translateY(30px);
+  width: 100%;
+}
+
+.card-caption.animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Tablet */
+@media (max-width: 1024px) {
+  .activity-swiper {
+    max-width: 100vw;
+  }
+  .activity-swiper .swiper-slide {
+    width: 65vw !important;   /* Slightly wider than phone, but not too wide */
+    max-width: 90vw;
+    min-width: 220px !important;
+    min-height: 160px !important;
+  }
+}
+/* Mobile */
+@media (max-width: 600px) {
+  .activity-swiper .swiper-slide {
+    width: 75vw !important;
+    max-width: 95vw;
+    min-width: 160px !important;
+    min-height: 120px !important;
+  }
+}
+@media (min-width: 601px) and (max-width: 1024px) {
+  .card-caption {
+    font-size: 6rem !important; /* 3x bigger than 2rem */
+  }
+}
+  /* Add this to your <style> section to customize the Swiper navigation arrows */
+.activity-swiper .swiper-button-prev,
+.activity-swiper .swiper-button-next {
+  color: #2e2b3f !important;         /* Change arrow color (e.g. dark blue) */
+  background: #f9f5ec !important;    /* Soft beige background */
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 2px 8px rgba(46,43,63,0.10);
+  border: 1.5px solid #bbb;
+  top: 45%;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  opacity: 0.92;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.activity-swiper .swiper-button-prev:hover,
+.activity-swiper .swiper-button-next:hover {
+  background: #2e2b3f !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(46,43,63,0.18);
+}
+
+/* Optional: Make the arrow icons a little larger and use a custom icon */
+.activity-swiper .swiper-button-prev::after,
+.activity-swiper .swiper-button-next::after {
+  font-size: 1.8rem;
+  font-weight: bold;
+  content: '';
+  display: block;
+  width: 1em;
+  height: 1em;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60% 60%;
+}
+
+.activity-swiper .swiper-button-prev::after {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%232e2b3f" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="15 18 9 12 15 6" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+
+.activity-swiper .swiper-button-next::after {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%232e2b3f" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
   </style>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Top Swiper (unchanged)
-    new Swiper('.swiper:not(.activity-swiper)', {
+    // Top Swiper (main-swiper)
+    window.mainSwiper = new Swiper('.main-swiper', {
       loop: true,
       pagination: {
-        el: '.swiper-pagination',
+        el: '.main-swiper .swiper-pagination',
         clickable: true,
       },
       autoplay: {
         delay: 3000,
       },
     });
-    // Activity Swiper (new)
+
+    // Activity Swiper (activity-swiper)
     new Swiper('.activity-swiper', {
-      loop: true,
-      slidesPerView: 1.05,
-      spaceBetween: 4,
-      centeredSlides: true,
-      pagination: {
-        el: '.activity-swiper .swiper-pagination',
-        clickable: true,
-      },
+      loop: false,
+      initialSlide: 0,
       navigation: {
         nextEl: '.activity-swiper .swiper-button-next',
         prevEl: '.activity-swiper .swiper-button-prev',
       },
-      autoplay: {
-        delay: 2700,
-        disableOnInteraction: false,
-      },
       effect: 'slide',
+      breakpoints: {
+        // Mobile: beautiful carousel
+        0: {
+          slidesPerView: 1.25,
+          centeredSlides: true,
+          spaceBetween: 24,
+          slidesOffsetAfter: 30,
+        },
+        // Tablet: same logic, just a bit wider
+        600: {
+          slidesPerView: 1.5, // Show 1.5 cards for a "peek"
+          centeredSlides: true,
+          spaceBetween: 24,
+          slidesOffsetAfter: 40, // Only after, not before
+        },
+        // Desktop: show all cards, no scroll
+        1024: {
+          slidesPerView: 4,
+          centeredSlides: false,
+          spaceBetween: 24,
+          allowTouchMove: false,
+          slidesOffsetAfter: 0,
+        }
+      }
     });
 
     AOS.init();
   });
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      new Swiper('.swiper', {
-        loop: true,
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-        },
-        autoplay: {
-          delay: 3000,
-        },
-      });
-
-      AOS.init();
-    });
   </script>
 </head>
 <body>
@@ -404,65 +564,116 @@ h1 {
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
     <div id="userBox" style="position:absolute; top:16px; right:20px; font-size:0.8rem; display:flex; align-items:center; gap:10px;"></div>
     <button id="langToggle"
-      style="
-        position: absolute;
-        right: 18px;
-        bottom: 8px;
-        background: none;
-        border: none;
-        color: #f3f0f2;
-        font-size: 0.9rem;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1.1;
-      ">
+      style="position: absolute; right: 18px; bottom: 8px; background: none; border: none; color: #f3f0f2; font-size: 0.9rem; cursor: pointer; padding: 0; line-height: 1.1;">
       Eng
     </button>
   </header>
 
-  <div class="swiper">
+  <!-- Top Swiper -->
+  <div class="swiper main-swiper">
     <div class="swiper-wrapper">
       <div class="swiper-slide">
-        <img src="moon.jpg" class="slide-moon" alt="Moon">
+  <a href="#aboutWillenaSection" id="moonScrollLink" style="display:block;">
+    <img src="Assets/Images/moon.jpg" class="slide-moon" alt="Moon" style="cursor:pointer;">
+  </a>
+</div>
+      <div class="swiper-slide">
+        <a href="#programSection" id="girlsScrollLink" style="display:block;">
+    <img src="Assets/Images/Girls.jpg" class="slide-girls" alt="Girls">
+  </a>
       </div>
       <div class="swiper-slide">
-        <img src="Girls.jpg" class="slide-girls" alt="Girls">
-      </div>
-      <div class="swiper-slide">
-        <img src="dosomething.png" class="slide-dosomething" alt="Do Something">
+        <a href="#playEnglishSection" id="doSomethingScrollLink" style="display:block;">
+    <img src="Assets/Images/dosomething.png" class="slide-dosomething" alt="Do Something" style="cursor:pointer;">
+  </a>
       </div>
     </div>
     <div class="swiper-pagination"></div>
   </div>
-  <div class="slider-bar">
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
+
+  <!-- Move Play English section here -->
+  <!-- Add a 2px grey line to the top of the activity section -->
+  <div id="playEnglishSection" 
+     style="background: var(--light-beige); color: var(--primary); height: 150px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border-top: 2px solid #bbb; margin-top:50px;" 
+     data-aos="fade-up">
+    <a id="playEnglish" 
+     href="choose-levels.html" 
+     style="font-size: 3.6rem; font-weight: 700; color: var(--primary); text-decoration: none; z-index: 2; transition: opacity 0.7s, transform 0.7s;">
+    Activity Zone
+  </a>
+  <div class="play-extras">
+    <div class="play-extra-item item2" style="font-size:0.7rem; top:87%; left:60%; color:#c0b8a1;">프레이 존</div>
+    <div class="play-extra-item item3" style="font-size:1.1rem; top:15%; left:6%; color:#dfd6bd;">Quizzes & Tests</div>
+    <div class="play-extra-item item4" style="font-size:1.1rem; top:10%; left:60%; color:#dbd1b3;">Puzzles</div>
+    <div class="play-extra-item item5" style="font-size:0.9rem; top:70%; left:80%; color:#c9bfad;">Fun</div>
+    <div class="play-extra-item item6" style="font-size:1.2rem; top:30%; left:10%; color:#ddd2b5;">연습</div>
+    <div class="play-extra-item item7" style="font-size:0.8rem; top:80%; left:20%; color:#cac2ab;">Practice</div>
+    <div class="play-extra-item item8" style="font-size:1.1rem; top:15%; left:75%; color:#e6dfcc;">학습</div>
+    <div class="play-extra-item item9" style="font-size:0.95rem; top:60%; left:55%; color:#ccc5b0;">Learn</div>
+    <div class="play-extra-item item10" style="font-size:0.85rem; top:40%; left:85%; color:#e9e3d3;">퀴즈</div>
+    <div class="play-extra-item item11" style="font-size:1.05rem; top:25%; left:35%; color:#e6ddc6;">도전</div>
+    <div class="play-extra-item item12" style="font-size:0.8rem; top:25%; left:50%; color:#e4ddca;">Games</div>
+    <div class="play-extra-item item13" style="font-size:1.15rem; top:90%; left:12%; color:#d4cdb9;">게임</div>
   </div>
-<!-- Activity Swiper (Animated) -->
-<div class="swiper activity-swiper" data-aos="fade-up" data-aos-duration="1100" style="margin-top:28px; margin-bottom:40px; max-width: 700px;">
-  <div class="swiper-wrapper">
-    <div class="swiper-slide"><img src="CHALLENGE.jpg" alt="Challenge" style="width:100%;height:400px;object-fit:contain;background:#f6f6f6;"></div>
-    <div class="swiper-slide"><img src="QUIZ.jpg" alt="Quiz" style="width:100%;height:400px;object-fit:contain;background:#f6f6f6;"></div>
-    <div class="swiper-slide"><img src="THINK.jpg" alt="Think" style="width:100%;height:400px;object-fit:contain;background:#f6f6f6;"></div>
-    <div class="swiper-slide"><img src="Play.jpg" alt="Play" style="width:100%;height:400px;object-fit:contain;background:#f6f6f6;"></div>
-  </div>
-  <div class="swiper-pagination"></div>
-  <div class="swiper-button-prev"></div>
-  <div class="swiper-button-next"></div>
-</div>
-  <!-- Main Sections -->
-  <div id="playEnglishSection" style="background: var(--light-beige); color: var(--primary); height: 600px; display: flex; align-items: center; justify-content: center; position: relative;" data-aos="fade-up">
-    <a id="playEnglish" href="choose-levels.html" style="font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none; z-index: 2;">Play English</a>
-    <div class="play-extras">
-      <div class="play-extra-item item1">Challenge Zone</div>
-      <div class="play-extra-item item2">프레이 존</div>
-      <div class="play-extra-item item3">Quizzes & Tests</div>
-    </div>
   </div>
 
-  <div style="background: var(--primary); color: white; width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 40px 0;" data-aos="fade-up">
+  <!-- Activity Swiper -->
+  <div class="swiper activity-swiper" data-aos="fade-up" data-aos-duration="1100" style="margin-top:28px; margin-bottom:40px;">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <div class="card-stack">
+          <img src="Assets/Images/Play.jpg" alt="Play">
+          <div class="card-caption">Play Zone</div>
+          <a class="card-overlay" href="choose-levels.html">
+          <div class="overlay-text">
+              <strong>왕기초~초급 레벨</strong><br>
+              게임과 놀이로 영어를 자연스럽게 익혀요!
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="swiper-slide">
+        <div class="card-stack">
+          <img src="Assets/Images/CHALLENGE.jpg" alt="Challenge">
+          <div class="card-caption">Challenge Zone</div>
+          <a class="card-overlay" href="choose-levels.html">
+          <div class="overlay-text">
+              <strong>심화~고급 레벨</strong><br>
+              다양한 미션과 챌린지로 실력을 키워요!
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="swiper-slide">
+        <div class="card-stack">
+          <img src="Assets/Images/QUIZ.jpg" alt="Quiz">
+          <div class="card-caption">Study Zone</div>
+          <a class="card-overlay" href="choose-levels.html">
+          <div class="overlay-text">
+              레슨, 어휘, 테스트<br>
+              언어 포인트와 단어를 배우고 실력을 점검해요!
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="swiper-slide">
+        <div class="card-stack">
+          <img src="Assets/Images/THINK.jpg" alt="Think">
+          <div class="card-caption">Quiz Zone</div>
+          <a class="card-overlay" href="choose-levels.html">
+          <div class="overlay-text">
+              영어 퀴즈<br>
+              트리비아부터 MBTI까지 다양한 퀴즈를 풀어요!
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+  </div>
+  <!-- Main Sections -->
+  <div id="aboutWillenaSection" style="background: var(--primary); color: white; width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 40px 0;" data-aos="fade-up">
     <div style="max-width: 700px; width: 90%; padding: 0 16px; text-align: left;">
       <div style="font-size: 2rem; font-weight: 700; margin-bottom: 40px;">What is Willena?</div>
       <div style="font-size: 1.15rem; line-height: 2;">
@@ -485,7 +696,7 @@ h1 {
     </div>
   </div>
 
-  <div class="container program-section" data-aos="fade-up" style="background: var(--light-beige); width: 100vw; max-width: 100vw; margin-left: calc(50% - 50vw); padding: 60px 0 80px 0;">
+  <div class="container program-section" id="programSection" data-aos="fade-up" style="background: var(--light-beige); width: 100vw; max-width: 100vw; margin-left: calc(50% - 50vw); padding: 60px 0 80px 0;">
     <h1 style="text-align:center;">Program</h1>
     <div class="program-stack">
       <div class="bubble library">
@@ -524,15 +735,141 @@ h1 {
     </div>
   </div>
 
-  <div class="slider-bar">
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-    <div class="slider-box"></div>
-  </div>
+  <!-- Slideshow Section: Place before your .container.program-section -->
 
+<div class="photo-slideshow" id="photoSlideshow" style="position:relative; left:50%; transform:translateX(-50%); width:100vw; max-width:100vw; overflow:hidden; height:65vh; min-height:260px; max-height:600px; opacity:0; transition:opacity 1.2s, transform 1.2s;">
+  <div class="swiper photo-swiper" style="height:100%;">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <img src="Assets/Images/lobby.jpg" alt="Lobby" class="autopan-img">
+      </div>
+      <div class="swiper-slide">
+        <img src="Assets/Images/LibraryMap.jpg" alt="Library Map" class="autopan-img">
+      </div>
+      <div class="swiper-slide">
+        <img src="Assets/Images/libraryinner.jpg" alt="Library Inner" class="autopan-img">
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.photo-slideshow {
+  background: #222;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0;
+  min-height: 260px;
+  max-height: 600px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(40px);
+  left: 50%;
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  transition: opacity 1.2s, transform 1.2s;
+}
+.photo-slideshow.visible {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+.photo-slideshow.hidden {
+  opacity: 0 !important;
+  transform: translateX(-50%) translateY(40px) !important;
+}
+.photo-swiper .swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  height: 65vh;
+}
+.autopan-img {
+  width: 100vw;
+  height: 65vh;
+  object-fit: cover;
+  object-position: left center;
+  border-radius: 0 !important;
+  position: relative;
+  left: 0;
+  top: 0;
+  transition: object-position 7s linear;
+}
+@media (min-width: 900px) {
+  .photo-slideshow {
+    max-width: 1100px;
+    width: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 60px 0 40px 0;
+  }
+  .autopan-img {
+    width: 100%;
+    height: 65vh;
+    border-radius: 0 !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Swiper setup (slower: delay and speed doubled)
+  const swiper = new Swiper('.photo-swiper', {
+    loop: true,
+    autoplay: {
+      delay: 8400, // was 4200
+      disableOnInteraction: false,
+    },
+    effect: 'slide',
+    allowTouchMove: false,
+    navigation: false,
+    pagination: false,
+    speed: 2400, // was 1200
+  });
+
+  // Auto-panning effect for each slide (slower: transition doubled)
+  function panImage(img) {
+    img.style.transition = 'object-position 7s linear';
+    img.style.objectPosition = 'right center';
+  }
+  function resetPan(img) {
+    img.style.transition = 'object-position 1s linear';
+    img.style.objectPosition = 'left center';
+  }
+
+  function doPan() {
+    // Reset all images
+    document.querySelectorAll('.autopan-img').forEach(resetPan);
+    // Pan the current image
+    const slides = document.querySelectorAll('.photo-swiper .swiper-slide');
+    const realIndex = swiper.realIndex;
+    const img = slides[realIndex].querySelector('.autopan-img');
+    if (img) {
+      setTimeout(() => panImage(img), 100);
+    }
+  }
+
+  swiper.on('slideChangeTransitionEnd', doPan);
+
+  // Initial pan on load
+  setTimeout(doPan, 600);
+
+  // Animate in/out on scroll
+  const slideshow = document.getElementById('photoSlideshow');
+  function handleSlideshowVisibility() {
+    const rect = slideshow.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.85 && rect.bottom > window.innerHeight * 0.15) {
+      slideshow.classList.add('visible');
+      slideshow.classList.remove('hidden');
+    } else {
+      slideshow.classList.remove('visible');
+      slideshow.classList.add('hidden');
+    }
+  }
+  window.addEventListener('scroll', handleSlideshowVisibility);
+  handleSlideshowVisibility();
+});
+</script>
   <div class="footer" id="footerContact">
     <p style="margin-top: 12px; font-size: 0.9rem;">
       Phone: 031-8041-2203<br>
@@ -619,18 +956,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function onScroll() {
     const rect = section.getBoundingClientRect();
-    if (!triggered && rect.top < window.innerHeight * 0.7) {
+    // Animate in when in view
+    if (!triggered && rect.top < window.innerHeight * 0.7 && rect.bottom > 0) {
       triggered = true;
-      items[0].style.animation = "fadeInItem 1s ease forwards";
-      items[0].style.animationDelay = "0.3s";
-      items[1].style.animation = "fadeInItem 1s ease forwards";
-      items[1].style.animationDelay = "1s";
-      items[2].style.animation = "fadeInItem 1s ease forwards";
-      items[2].style.animationDelay = "0.6s";
+      items.forEach((item, i) => {
+        item.style.animation = "fadeInItem 1s ease forwards";
+        item.style.animationDelay = (0.2 + i * 0.08) + "s";
+      });
+      section.classList.remove('animate-out');
+    }
+    // Animate out when scrolled away
+    if (triggered && (rect.bottom < 0 || rect.top > window.innerHeight)) {
+      section.classList.add('animate-out');
+      triggered = false;
+      // Reset animations for next scroll-in
+      items.forEach(item => {
+        item.style.animation = "";
+        item.style.opacity = 0;
+      });
     }
   }
   window.addEventListener('scroll', onScroll);
-  // Also trigger on load in case already in view
   onScroll();
 });
 </script>
@@ -661,6 +1007,179 @@ document.addEventListener('DOMContentLoaded', function () {
   const programSection = document.querySelector('.program-section');
   if (programSection) {
     observer.observe(programSection);
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const captions = document.querySelectorAll('.activity-swiper .card-caption');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animated');
+      } else {
+        entry.target.classList.remove('animated');
+      }
+    });
+  }, { threshold: 0.5 });
+
+  captions.forEach(caption => observer.observe(caption));
+});
+</script>
+<style>
+.swiper,
+.activity-swiper {
+  border: none !important;
+}
+#playEnglishSection {
+  transition: opacity 0.7s, transform 0.7s;
+}
+#playEnglishSection.animate-out {
+  opacity: 0;
+  transform: translateY(-60px) scale(0.95);
+  pointer-events: none;
+}
+#playEnglishSection #playEnglish {
+  font-size: 3.6rem !important;
+  color: #2e2b3f !important; /* Blue like header */
+  text-shadow: 0 4px 24px rgba(46,43,63,0.18), 0 1px 2px #fff, 0 2px 8px rgba(46,43,63,0.22);
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s 0.2s forwards;
+}
+.play-extras .play-extra-item {
+  opacity: 0;
+  transition: opacity 0.7s, transform 0.7s;
+}
+.play-extras .play-extra-item[style*="font-size:0.8rem"],
+.play-extras .play-extra-item[style*="font-size:0.85rem"],
+.play-extras .play-extra-item[style*="font-size:0.9rem"],
+.play-extras .play-extra-item[style*="font-size:0.95rem"],
+.play-extras .play-extra-item[style*="font-size:1.05rem"] {
+  color: #a49e8e !important; /* Warm grey for small fonts */
+}
+
+/* Hide the activity-swiper navigation buttons */
+.activity-swiper .swiper-button-prev,
+.activity-swiper .swiper-button-next {
+  display: none !important;
+}
+
+/* Add this to your CSS */
+.card-stack.show-overlay .card-overlay {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Only for touch devices
+  function isTouchDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+  if (isTouchDevice()) {
+    document.querySelectorAll('.card-stack').forEach(card => {
+      let overlayVisible = false;
+
+      card.addEventListener('touchend', function (e) {
+        // If tapping a link, let it work!
+        if (e.target.closest('a')) return;
+
+        document.querySelectorAll('.card-stack').forEach(c => {
+          if (c !== card) c.classList.remove('show-overlay');
+        });
+        overlayVisible = !card.classList.contains('show-overlay');
+        if (overlayVisible) {
+          card.classList.add('show-overlay');
+        } else {
+          card.classList.remove('show-overlay');
+        }
+        e.preventDefault();
+      });
+    });
+
+    document.body.addEventListener('touchstart', function (e) {
+      if (!e.target.closest('.card-stack')) {
+        document.querySelectorAll('.card-stack').forEach(card => card.classList.remove('show-overlay'));
+      }
+    });
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const moonLink = document.getElementById('moonScrollLink');
+  if (moonLink) {
+    moonLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.getElementById('aboutWillenaSection');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const doSomethingLink = document.getElementById('doSomethingScrollLink');
+  if (doSomethingLink) {
+    doSomethingLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.getElementById('playEnglishSection');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const girlsLink = document.getElementById('girlsScrollLink');
+  if (girlsLink) {
+    girlsLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.getElementById('programSection');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function scrollWithOffset(targetId, offset = 0) {
+    const target = document.getElementById(targetId);
+    if (target) {
+      const y = target.getBoundingClientRect().top + window.pageYOffset + offset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }
+
+  const moonLink = document.getElementById('moonScrollLink');
+  if (moonLink) {
+    moonLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      scrollWithOffset('aboutWillenaSection', -65); // adjust -40 as needed
+    });
+  }
+
+  const doSomethingLink = document.getElementById('doSomethingScrollLink');
+  if (doSomethingLink) {
+    doSomethingLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      scrollWithOffset('playEnglishSection', -70); // adjust -40 as needed
+    });
+  }
+
+  const girlsLink = document.getElementById('girlsScrollLink');
+  if (girlsLink) {
+    girlsLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      scrollWithOffset('programSection', -40); // adjust -40 as needed
+    });
   }
 });
 </script>
