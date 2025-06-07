@@ -224,27 +224,7 @@ h1 {
   animation: fadeInUp 0.8s forwards;
 }
 /* Animation delays for each bubble */
-<style>
-  .activity-swiper {
-    max-width: 700px;
-    margin: 28px auto 40px auto;
-    width: 100%;
-  }
-  .activity-swiper img {
-    width: 100%;
-    height: 320px;
-    object-fit: contain;
-    background: #f6f6f6;
-    display: block;
-  }
-  @media (max-width: 780px) {
-    .activity-swiper img {
-      height: 45vw;
-      min-height: 150px;
-      max-height: 320px;
-    }
-  }
-</style>
+
 
 @keyframes fadeInUp {
   to {
@@ -456,7 +436,7 @@ h1 {
     <div class="slider-box"></div>
   </div>
 <!-- Activity Swiper (Animated) -->
-<div class="swiper activity-swiper" data-aos="fade-up" data-aos-duration="1100">
+<div class="swiper activity-swiper" data-aos="fade-up" data-aos-duration="1100" style="margin-top:28px; margin-bottom:40px; max-width: 700px;">
   <div class="swiper-wrapper">
     <div class="swiper-slide"><img src="CHALLENGE.jpg" alt="Challenge" style="width:100%;height:320px;object-fit:cover;"></div>
     <div class="swiper-slide"><img src="QUIZ.jpg" alt="Quiz" style="width:100%;height:320px;object-fit:cover;"></div>
