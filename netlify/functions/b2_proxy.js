@@ -20,6 +20,7 @@ exports.handler = async (event, context) => {
     if (file) {
       return {
         statusCode: 200,
+        headers: { "Access-Control-Allow-Origin": "*" },
         body: JSON.stringify({ url: `https://f000.backblazeb2.com/file/${BUCKET_NAME}/${filename}` })
       };
     }
@@ -36,11 +37,13 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers: { "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify({ url: `https://f000.backblazeb2.com/file/${BUCKET_NAME}/${filename}` })
     };
   } catch (err) {
     return {
       statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify({ error: err.message })
     };
   }
