@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/willayg/willenaenglish.github.io/issues"
   },
-  "homepage": "https://github.com/willayg/willenaenglish.github.io#readme"
+  "homepage": "https://github.com/willayg/willenaenglish.github.io#readme",
+  "dependencies": {
+    "backblaze-b2": "^1.7.1"
+  }
 }
