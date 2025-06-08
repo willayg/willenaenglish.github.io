@@ -572,19 +572,19 @@ h1 {
   <div class="swiper main-swiper">
     <div class="swiper-wrapper">
       <div class="swiper-slide">
-  <a href="#aboutWillenaSection" id="moonScrollLink" style="display:block;">
-    <img src="Assets/Images/moon.jpg" class="slide-moon" alt="Moon" style="cursor:pointer;">
-  </a>
-</div>
+      <a href="#aboutWillenaSection" id="moonScrollLink" style="display:block;">
+        <img src="Assets/Images/moon.jpg" class="slide-moon" alt="Moon" style="cursor:pointer;">
+      </a>
+      </div>
       <div class="swiper-slide">
         <a href="#programSection" id="girlsScrollLink" style="display:block;">
-    <img src="Assets/Images/Girls.jpg" class="slide-girls" alt="Girls">
-  </a>
+        <img src="Assets/Images/Girls.jpg" class="slide-girls" alt="Girls">
+      </a>
       </div>
       <div class="swiper-slide">
         <a href="#playEnglishSection" id="doSomethingScrollLink" style="display:block;">
-    <img src="Assets/Images/dosomething.png" class="slide-dosomething" alt="Do Something" style="cursor:pointer;">
-  </a>
+        <img src="Assets/Images/dosomething.jpg" class="slide-dosomething" alt="Do Something" style="cursor:pointer;">
+      </a>
       </div>
     </div>
     <div class="swiper-pagination"></div>
@@ -1045,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 #playEnglishSection.animate-out {
   opacity: 0;
-  transform: translateY(-60px) scale(0.95);
+  transform: translateY(-70px) scale(0.95);
   pointer-events: none;
 }
 #playEnglishSection #playEnglish {
@@ -1086,14 +1086,16 @@ document.addEventListener('DOMContentLoaded', function () {
   function isTouchDevice() {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }
+  function closeAllOverlays() {
+    document.querySelectorAll('.card-stack').forEach(card => card.classList.remove('show-overlay'));
+  }
+
   if (isTouchDevice()) {
     document.querySelectorAll('.card-stack').forEach(card => {
       let overlayVisible = false;
 
       card.addEventListener('touchend', function (e) {
-        // If tapping a link, let it work!
         if (e.target.closest('a')) return;
-
         document.querySelectorAll('.card-stack').forEach(c => {
           if (c !== card) c.classList.remove('show-overlay');
         });
@@ -1109,10 +1111,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.body.addEventListener('touchstart', function (e) {
       if (!e.target.closest('.card-stack')) {
-        document.querySelectorAll('.card-stack').forEach(card => card.classList.remove('show-overlay'));
+        closeAllOverlays();
       }
     });
   }
+
+  // Instantly close overlays on scroll, wheel, or key press (for all devices)
+  window.addEventListener('scroll', closeAllOverlays, { passive: true });
+  window.addEventListener('wheel', closeAllOverlays, { passive: true });
+  window.addEventListener('keydown', closeAllOverlays, { passive: true });
 });
 </script>
 <script>
