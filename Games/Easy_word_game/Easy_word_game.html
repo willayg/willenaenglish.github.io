@@ -17,9 +17,29 @@
       color: white;
       text-align: center;
       min-height: 100vh;
+      /* Remove flex styles */
+    }
+
+    .center-wrapper {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
+    }
+
+    .logo-bar {
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+    #logo {
+      width: 100px;
+      display: block;
+      margin: 0 auto;
     }
     .container {
       max-width: 500px;
@@ -145,34 +165,40 @@
   </style>
 </head>
 <body translate="no">
-  <div class="container">
-    <img src="../../assets/images/logo.png" alt="Logo" id="logo" style="display:block; margin: 0 auto 10px auto; width:100px;"/>
-    <h1>Easy Picture Word Game</h1>
-    <div id="icon">🍎</div>
-    <div class="options">
-      <div class="option">Apple</div>
-      <div class="option">Ball</div>
-      <div class="option">Cat</div>
-      <div class="option">Dog</div>
+  <div class="center-wrapper">
+    <div class="logo-bar">
+      <a href="../../playzone.html">
+        <img src="../../assets/images/logo.png" alt="Willena Logo" id="logo"/>
+      </a>
     </div>
-    <div class="scoreboard">Score: <span id="score">0</span></div>
-    <div class="timer">Time Left: <span id="time">10</span>s</div>
-    <button id="startBtn">Start Game</button>
-    <button id="endBtn" style="display:none;">End Game</button>
-    <div id="nameEntry" style="display: none; margin-top: 20px;">
-      <div id="namePrompt" style="font-size: 1.5em; margin-bottom: 10px; color: #ff3e00;">You got a top 5 score! What’s your name?</div>
-      <input id="playerName" type="text" placeholder="Enter your name"
-        style="font-family: 'Fredoka One', cursive; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; border: none; max-width: 300px; text-align: center;">
-      <button id="submitName"
-        style="margin-left: 10px; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; background: #333; color: white; border: none; cursor: pointer;">
-        Submit
-      </button>
+    <div class="container">
+      <h1>Easy Picture Word Game</h1>
+      <div id="icon">🍎</div>
+      <div class="options">
+        <div class="option">Apple</div>
+        <div class="option">Ball</div>
+        <div class="option">Cat</div>
+        <div class="option">Dog</div>
+      </div>
+      <div class="scoreboard">Score: <span id="score">0</span></div>
+      <div class="timer">Time Left: <span id="time">10</span>s</div>
+      <button id="startBtn">Start Game</button>
+      <button id="endBtn" style="display:none;">End Game</button>
+      <div id="nameEntry" style="display: none; margin-top: 20px;">
+        <div id="namePrompt" style="font-size: 1.5em; margin-bottom: 10px; color: #ff3e00;">You got a top 5 score! What’s your name?</div>
+        <input id="playerName" type="text" placeholder="Enter your name"
+          style="font-family: 'Fredoka One', cursive; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; border: none; max-width: 300px; text-align: center;">
+        <button id="submitName"
+          style="margin-left: 10px; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; background: #333; color: white; border: none; cursor: pointer;">
+          Submit
+        </button>
+      </div>
+      <div id="highscores">
+        <h3>🏆 High Scores 🏆</h3>
+        <ol id="scoreList"></ol>
+      </div>
+      <div id="endMessage" style="display:none; font-size:2em; color:#ffeb3b; margin:20px 0;"></div>
     </div>
-    <div id="highscores">
-      <h3>🏆 High Scores 🏆</h3>
-      <ol id="scoreList"></ol>
-    </div>
-    <div id="endMessage" style="display:none; font-size:2em; color:#ffeb3b; margin:20px 0;"></div>
   </div>
 
   <script>
@@ -222,6 +248,13 @@
       window.addEventListener('click', startMusic);
       window.addEventListener('keydown', startMusic);
     });
+
+    let score = 0;
+    let timeLeft = 30;
+    let timer;
+    let unusedWords = [];
+    let currentAnswer = "";
+    let highScores = JSON.parse(localStorage.getItem("iconHighScores") || "[]");
 
     function startGame() {
       nameEntry.style.display = "none";
@@ -317,53 +350,46 @@
       const answer = choices[Math.floor(Math.random() * 4)];
       currentAnswer = answer.word;
       iconDiv.textContent = answer.icon;
-      optionDivs.forEach((div, i) => {
-        div.textContent = choices[i].word;
+      optionDivs.forEach((option, i) => {
+        option.textContent = choices[i].word;
+        option.classList.remove("noselect");
+        option.onclick = () => {
+          const elapsed = (performance.now() - questionTime) / 1000;
+          let earned = 0;
+          if (option.textContent === currentAnswer) {
+            rightSound.currentTime = 0;
+            rightSound.play();
+            if (elapsed <= 0.7) {
+              earned = 300;
+              showBonus("🚀 Super Fast! +300");
+            } else if (elapsed <= 1.2) {
+              earned = 200;
+              showBonus("⚡ Lightning! +200");
+            } else if (elapsed <= 2) {
+              earned = 100;
+              showBonus("⏱️ Fast! +100");
+            } else {
+              earned = 50;
+              showBonus("+50");
+            }
+            score += earned;
+          } else {
+            wrongSound.currentTime = 0;
+            wrongSound.play();
+            if (elapsed <= 1) {
+              score -= 150;
+              showBonus("❌ -150");
+            }
+            // No minus points after 1 second
+          }
+          scoreSpan.textContent = score;
+          nextQuestion();
+        };
       });
-      lastQuestionTime = performance.now();
+      questionTime = performance.now();
     }
 
-    optionDivs.forEach(option => {
-      option.addEventListener("click", () => {
-        const now = performance.now();
-        const elapsed = (now - lastQuestionTime) / 1000; // seconds
-        let earned = 0;
-
-        if (option.textContent === currentAnswer) {
-          rightSound.currentTime = 0;
-          rightSound.play();
-
-          if (elapsed <= 0.7) {
-            earned = 300;
-            showBonus("🚀 Super Fast! +300");
-          } else if (elapsed <= 1.2) {
-            earned = 200;
-            showBonus("⚡ Lightning! +200");
-          } else if (elapsed <= 2) {
-            earned = 100;
-            showBonus("⏱️ Fast! +100");
-          } else {
-            earned = 50;
-            showBonus("+50");
-          }
-          score += earned;
-        } else {
-          wrongSound.currentTime = 0;
-          wrongSound.play();
-          if (elapsed <= 1) {
-            score -= 150;
-            showBonus("❌ -150");
-          }
-          // No minus points after 1 second
-        }
-        scoreSpan.textContent = score;
-        nextQuestion();
-      });
-    });
-
-    // Remove showStartScreen() from here:
     startBtn.addEventListener("click", function() {
-      // Only start the game if the button says "Start Game" or "Replay"
       if (startBtn.textContent === "Start Game" || startBtn.textContent === "Replay") {
         startGame();
       }
@@ -371,7 +397,6 @@
 
     endBtn.addEventListener("click", endGame);
 
-    // Place this function in your <script> section (replace your old showBonus if present)
     function showBonus(text) {
       const bonus = document.createElement("div");
       bonus.className = "bonus-float";
