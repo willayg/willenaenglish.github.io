@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Play Zone | Willena English Academy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #f8f6f2;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #2e2b3f;
+    }
+    header {
+      background: #2e2b3f;
+      color: #fff;
+      padding: 24px 0 16px 0;
+      text-align: center;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .games-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px 10vw 60px 10vw;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 2px 16px rgba(46,43,63,0.08);
+      width: 340px;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 18px 22px 18px;
+      transition: transform 0.18s, box-shadow 0.18s;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      color: #2e2b3f;
+    }
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 8px 32px rgba(46,43,63,0.13);
+    }
+    .game-card img {
+      width: 320px;
+      height: 320px;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      margin-bottom: 18px;
+      border-radius: 16px;
+      background: #f6f6f6;
+      display: block;
+    }
+    .game-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 0;
+    }
+    .game-desc {
+      display: none;
+    }
+    .game-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.25s;
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: #fff;
+      text-shadow:
+        0 4px 16px rgba(16, 20, 42, 0.45),
+        0 2px 8px rgba(16, 20, 42, 0.25); /* Soft dark blue drop shadow */
+      padding: 24px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 2;
+      font-family: 'Baloo 2', 'Quicksand', 'Segoe UI', Arial, sans-serif; /* Classy but playful */
+    }
+    .game-card:hover .game-overlay,
+    .game-card:focus .game-overlay,
+    .game-card.show-overlay .game-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .overlay-pink  { background: rgba(220, 120, 180, 0.85); }  /* Less saturated pink */
+    .overlay-yellow,
+    .overlay-green,
+    .overlay-blue  { background: rgba(70, 120, 200, 0.85); }   /* Less saturated blue */
+
+    @media (max-width: 700px) {
+      .games-container {
+        gap: 18px;
+        padding: 24px 2vw 40px 2vw;
+      }
+      .game-card {
+        width: 98vw;
+        min-height: 220px;
+        padding: 18px 8px 16px 8px;
+      }
+      .game-card img {
+        width: 90vw;
+        height: 90vw;
+        max-width: 340px;
+        max-height: 340px;
+        aspect-ratio: 1 / 1;
+      }
+      .game-overlay {
+        font-size: 2.4rem !important; /* Twice as large as before */
+        padding: 10vw 4vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  </header>
+  <div style="width:100%;text-align:center;margin:0 0 18px 0; background:#fff; padding:24px 0 18px 0; border-radius:18px; box-shadow:0 2px 16px rgba(46,43,63,0.08);">
+    <img src="Assets/Images/backgrounds/play-zone-title.jpg" alt="Play Zone Title" style="max-width:600px;width:90vw;height:auto;display:block;margin:0 auto;">
+    <img src="Assets/Images/color-logo.png"Willena Color Logo" style="max-width:180px;width:40vw;height:auto;display:block;margin:18px auto 0 auto;">
+  </div>
+  <div class="games-container">
+    <a class="game-card" href="Games/goblin_tag/goblin_tag.html">
+      <img src="Games/goblin_tag/goblin_tag.jpg" alt="Goblin Tag">
+      <div class="game-title">Goblin Tag</div>
+      <div class="game-overlay overlay-blue">문법을 빠르게 맞힐 수 있나요?</div>
+    </a>
+  </div>
+  <!-- Add footer for scroll space and info -->
+  <div class="footer" style="text-align: center; padding: 30px 20px; background-color: #f0f0f0; font-size: 0.9rem; color: #777;">
+    Phone: 031-8041-2203<br>
+    © 2025 Willena 원어민 영어학원. All rights reserved.
+  </div>
+  <script>
+  // Enable overlays on tap/click for mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.game-card').forEach(function(card) {
+      card.addEventListener('touchstart', function(e) {
+        // Remove overlay from others
+        document.querySelectorAll('.game-card.show-overlay').forEach(function(other) {
+          if (other !== card) other.classList.remove('show-overlay');
+        });
+        card.classList.toggle('show-overlay');
+        // Prevent click-through
+        e.stopPropagation();
+      });
+    });
+    // Hide overlay when tapping outside
+    document.body.addEventListener('touchstart', function(e) {
+      document.querySelectorAll('.game-card.show-overlay').forEach(function(card) {
+        if (!card.contains(e.target)) card.classList.remove('show-overlay');
+      });
+    });
+  });
+  </script>
+  <script>
+  // Only run on mobile
+  if (window.innerWidth <= 700) {
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.game-card');
+      // The rootMargin will create a "center band" where the overlay is active
+      // For example, if the viewport is 1000px tall, rootMargin: "-35% 0px -35% 0px"
+      // means only the middle 30% (100% - 35% - 35%) will trigger intersection
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('show-overlay');
+          } else {
+            entry.target.classList.remove('show-overlay');
+          }
+        });
+      }, {
+        root: null,
+        rootMargin: "-35% 0px -35% 0px", // Only center 30% of viewport
+        threshold: 0.5 // At least 50% of card must be in the center band
+      });
+
+      cards.forEach(card => observer.observe(card));
+    });
+  }
+  </script>
+</body>
+</html>
