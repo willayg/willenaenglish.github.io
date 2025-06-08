@@ -82,8 +82,8 @@
       font-weight: 500;
       color: #fff;
       text-shadow:
-        0 4px 16px rgba(16, 20, 42, 0.45),
-        0 2px 8px rgba(16, 20, 42, 0.25); /* Soft dark blue drop shadow */
+        0 4px 16px rgba(16, 20, 42, 0.65),
+        0 2px 8px rgba(16, 20, 42, 0.45); /* Darker drop shadow */
       padding: 24px;
       text-align: center;
       pointer-events: none;
@@ -96,10 +96,12 @@
       opacity: 1;
       pointer-events: auto;
     }
-    .overlay-pink  { background: rgba(220, 120, 180, 0.85); }  /* Less saturated pink */
-    .overlay-yellow,
-    .overlay-green,
-    .overlay-blue  { background: rgba(70, 120, 200, 0.85); }   /* Less saturated blue */
+    .overlay-pink    { background: rgba(220, 120, 180, 0.85); }
+    .overlay-yellow  { background: rgba(197, 164, 66, 0.85); }
+    .overlay-blue    { background: rgba(70, 120, 200, 0.85); }
+    .overlay-green   { background: rgba(100, 200, 140, 0.85); }
+    .overlay-orange  { background: rgba(255, 160, 80, 0.85); }
+    /* Add more as needed */
 
     @media (max-width: 700px) {
       .games-container {
@@ -129,33 +131,40 @@
   </header>
   <div style="width:100%;text-align:center;margin:0 0 18px 0; background:#fff; padding:24px 0 18px 0; border-radius:18px; box-shadow:0 2px 16px rgba(46,43,63,0.08);">
     <img src="Assets/Images/backgrounds/play-zone-title.jpg" alt="Play Zone Title" style="max-width:600px;width:90vw;height:auto;display:block;margin:0 auto;">
-    <img src="Assets/Images/color-logo.png"Willena Color Logo" style="max-width:180px;width:40vw;height:auto;display:block;margin:18px auto 0 auto;">
+    <a href="index.html">
+      <img src="Assets/Images/color-logo.png" alt="Willena Color Logo" style="max-width:180px;width:40vw;height:auto;display:block;margin:18px auto 0 auto;">
+    </a>
   </div>
   <div class="games-container">
+    <a class="game-card" href="Games/PastTenseGame/PastTenseGame.html">
+      <img src="Games/PastTenseGame/pasttensegame.jpg" alt="Past Tense Game">
+      <div class="game-title">Past Tense Game</div>
+      <div class="game-overlay overlay-yellow">Past Tense Quiz!</div>
+    </a>
     <a class="game-card" href="Games/cutie_past_tense/cutie_past_tense.html">
       <img src="Games/cutie_past_tense/cutie_past_tense.jpg" alt="Cutie Past Tense">
       <div class="game-title">Cutie Past Tense</div>
-      <div class="game-overlay overlay-pink">과거형 문장을 만들 수 있나요?</div>
+      <div class="game-overlay overlay-blue">Eat or ate?</div>
     </a>
     <a class="game-card" href="Games/Easy_word_game/Easy_word_game.html">
       <img src="Games/Easy_word_game/Easy_word_game.jpg" alt="Easy Word Game">
       <div class="game-title">Easy Word Game</div>
-      <div class="game-overlay overlay-yellow">영어로 과거형 단어를 알고 있나요?</div>
+      <div class="game-overlay overlay-orange">Random Words</div>
     </a>
     <a class="game-card" href="Games/JungleAnimalGame/JungleAnimalGame.html">
       <img src="Games/JungleAnimalGame/JungleAnimalGame.jpg" alt="Jungle Animal Game">
       <div class="game-title">Jungle Animal Game</div>
-      <div class="game-overlay overlay-blue">정글 동물을 맞혀보세요!</div>
+      <div class="game-overlay overlay-green">Guess The Animals!</div>
     </a>
     <a class="game-card" href="Games/PresentGame1/presentgame1.html">
-      <img src="Games/PresentGame1/presentgame1.jpg" alt="Present Game 1">
-      <div class="game-title">Present Game 1</div>
-      <div class="game-overlay overlay-pink">동사를 어떻게 쓰는지 알고 있나요?</div>
+      <img src="Games/PresentGame1/presentgame1.jpg" alt="Go Goes">
+      <div class="game-title">Go Goes</div>
+      <div class="game-overlay overlay-blue">Is it "Go or Goes?"</div>
     </a>
     <a class="game-card" href="Games/SchoolStuffGame/SchoolStuffGame.html">
       <img src="Games/SchoolStuffGame/SchoolStuffGame.jpg" alt="School Stuff Game">
       <div class="game-title">School Stuff Game</div>
-      <div class="game-overlay overlay-yellow">학교 물건을 영어로 아시나요?</div>
+      <div class="game-overlay overlay-orange">Guess School Stuff</div>
     </a>
   </div>
   <!-- Add footer for scroll space and info -->

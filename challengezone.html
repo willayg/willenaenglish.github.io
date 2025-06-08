@@ -2,24 +2,35 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Play Zone | Willena English Academy</title>
+  <title>Challenge Zone | Willena English Academy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts for Cyberpunk/Sleek Look -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #f8f6f2;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #181c29 0%, #232946 100%);
+      font-family: 'Share Tech Mono', 'Segoe UI', Arial, sans-serif;
       margin: 0;
       padding: 0;
-      color: #2e2b3f;
+      color: #e0e6ff;
+      min-height: 100vh;
     }
-    header {
-      background: #2e2b3f;
-      color: #fff;
-      padding: 24px 0 16px 0;
-      text-align: center;
-      font-size: 2.2rem;
+    .header-cyber {
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-size: 3.2rem;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.15em;
+      color: #00ffe7;
+      text-shadow:
+        0 0 8px #00ffe7,
+        0 0 24px #0ff,
+        0 2px 12px #232946;
+      text-align: center;
+      padding: 48px 0 24px 0;
+      background: transparent;
+      border-bottom: 2px solid #232946;
+      margin-bottom: 0;
+      user-select: none;
     }
     .games-container {
       display: flex;
@@ -33,9 +44,9 @@
     .game-card {
       position: relative;
       overflow: hidden;
-      background: #fff;
+      background: rgba(30, 34, 56, 0.98);
       border-radius: 18px;
-      box-shadow: 0 2px 16px rgba(46,43,63,0.08);
+      box-shadow: 0 4px 32px #00ffe733, 0 2px 16px #181c29;
       width: 340px;
       min-height: 400px;
       display: flex;
@@ -46,11 +57,14 @@
       text-align: center;
       cursor: pointer;
       text-decoration: none;
-      color: #2e2b3f;
+      color: #e0e6ff;
+      border: 1.5px solid #00ffe7;
+      backdrop-filter: blur(2px);
     }
     .game-card:hover {
       transform: translateY(-6px) scale(1.03);
-      box-shadow: 0 8px 32px rgba(46,43,63,0.13);
+      box-shadow: 0 8px 48px #00ffe799, 0 8px 32px #181c29;
+      border-color: #ff00c8;
     }
     .game-card img {
       width: 320px;
@@ -59,16 +73,19 @@
       object-fit: cover;
       margin-bottom: 18px;
       border-radius: 16px;
-      background: #f6f6f6;
+      background: #232946;
       display: block;
+      border: 2px solid #ff00c8;
+      box-shadow: 0 0 24px #ff00c855;
     }
     .game-title {
-      font-size: 1.35rem;
-      font-weight: 600;
+      font-size: 1.5rem;
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-weight: 700;
+      color: #ff00c8;
+      letter-spacing: 0.08em;
       margin-bottom: 0;
-    }
-    .game-desc {
-      display: none;
+      text-shadow: 0 0 8px #ff00c8;
     }
     .game-overlay {
       position: absolute;
@@ -82,13 +99,17 @@
       font-weight: 500;
       color: #fff;
       text-shadow:
-        0 4px 16px rgba(16, 20, 42, 0.45),
-        0 2px 8px rgba(16, 20, 42, 0.25); /* Soft dark blue drop shadow */
+        0 0 16px #00ffe7,
+        0 2px 8px #181c29;
       padding: 24px;
       text-align: center;
       pointer-events: none;
       z-index: 2;
-      font-family: 'Baloo 2', 'Quicksand', 'Segoe UI', Arial, sans-serif; /* Classy but playful */
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      background: rgba(0, 0, 32, 0.92);
+      border-radius: 18px;
+      border: 2px solid #00ffe7;
+      box-shadow: 0 0 32px #00ffe7cc;
     }
     .game-card:hover .game-overlay,
     .game-card:focus .game-overlay,
@@ -96,12 +117,14 @@
       opacity: 1;
       pointer-events: auto;
     }
-    .overlay-pink  { background: rgba(220, 120, 180, 0.85); }  /* Less saturated pink */
-    .overlay-yellow,
-    .overlay-green,
-    .overlay-blue  { background: rgba(70, 120, 200, 0.85); }   /* Less saturated blue */
+    .overlay-blue  { background: rgba(70, 120, 200, 0.85); border-color: #00ffe7; }
+    .overlay-pink  { background: rgba(220, 120, 180, 0.85); border-color: #ff00c8; }
 
     @media (max-width: 700px) {
+      .header-cyber {
+        font-size: 2.1rem;
+        padding: 32px 0 16px 0;
+      }
       .games-container {
         gap: 18px;
         padding: 24px 2vw 40px 2vw;
@@ -119,18 +142,24 @@
         aspect-ratio: 1 / 1;
       }
       .game-overlay {
-        font-size: 2.4rem !important; /* Twice as large as before */
+        font-size: 2.4rem !important;
         padding: 10vw 4vw;
       }
+    }
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      background-color: #181c29;
+      font-size: 0.9rem;
+      color: #00ffe7;
+      border-top: 1.5px solid #232946;
+      margin-top: 60px;
+      letter-spacing: 0.04em;
     }
   </style>
 </head>
 <body>
-  </header>
-  <div style="width:100%;text-align:center;margin:0 0 18px 0; background:#fff; padding:24px 0 18px 0; border-radius:18px; box-shadow:0 2px 16px rgba(46,43,63,0.08);">
-    <img src="Assets/Images/backgrounds/play-zone-title.jpg" alt="Play Zone Title" style="max-width:600px;width:90vw;height:auto;display:block;margin:0 auto;">
-    <img src="Assets/Images/color-logo.png"Willena Color Logo" style="max-width:180px;width:40vw;height:auto;display:block;margin:18px auto 0 auto;">
-  </div>
+  <div class="header-cyber">Challenge Zone</div>
   <div class="games-container">
     <a class="game-card" href="Games/goblin_tag/goblin_tag.html">
       <img src="Games/goblin_tag/goblin_tag.jpg" alt="Goblin Tag">
@@ -138,8 +167,7 @@
       <div class="game-overlay overlay-blue">문법을 빠르게 맞힐 수 있나요?</div>
     </a>
   </div>
-  <!-- Add footer for scroll space and info -->
-  <div class="footer" style="text-align: center; padding: 30px 20px; background-color: #f0f0f0; font-size: 0.9rem; color: #777;">
+  <div class="footer">
     Phone: 031-8041-2203<br>
     © 2025 Willena 원어민 영어학원. All rights reserved.
   </div>
@@ -170,9 +198,6 @@
   if (window.innerWidth <= 700) {
     document.addEventListener('DOMContentLoaded', function() {
       const cards = document.querySelectorAll('.game-card');
-      // The rootMargin will create a "center band" where the overlay is active
-      // For example, if the viewport is 1000px tall, rootMargin: "-35% 0px -35% 0px"
-      // means only the middle 30% (100% - 35% - 35%) will trigger intersection
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -183,8 +208,8 @@
         });
       }, {
         root: null,
-        rootMargin: "-35% 0px -35% 0px", // Only center 30% of viewport
-        threshold: 0.5 // At least 50% of card must be in the center band
+        rootMargin: "-35% 0px -35% 0px",
+        threshold: 0.5
       });
 
       cards.forEach(card => observer.observe(card));

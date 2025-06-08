@@ -1199,5 +1199,30 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.mainSwiper) {
+    let startX = null;
+    window.mainSwiper.on('touchStart', function (e) {
+      startX = e.touches ? e.touches[0].clientX : null;
+    });
+    window.mainSwiper.on('touchMove', function (e) {
+      if (startX !== null && e.touches) {
+        const diff = e.touches[0].clientX - startX;
+        if (diff > 0) {
+          // Prevent right swipe (to previous slide)
+          window.mainSwiper.allowSlidePrev = false;
+        } else {
+          window.mainSwiper.allowSlidePrev = true;
+        }
+      }
+    });
+    window.mainSwiper.on('touchEnd', function () {
+      window.mainSwiper.allowSlidePrev = true; // Reset after swipe
+      startX = null;
+    });
+  }
+});
+</script>
 </body>
 </html>
