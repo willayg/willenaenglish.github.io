@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>로그인 / 회원가입</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -84,10 +83,6 @@
   </a>
 
   <script>
-      const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaWV1aWt0bHNpdndmZ3lpdmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTEyNTIsImV4cCI6MjA2NDE4NzI1Mn0.aMQN_U2aLvH7RzuT-dfzQF4RNA7YQ-Xn6upqJFr7eis';
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
     async function handleAuth() {
       const name = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
@@ -98,40 +93,23 @@
         return;
       }
 
-      const { data: existingUser, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('name', name)
-        .eq('password', password)
-        .single();
+      const response = await fetch('/.netlify/functions/auth_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password })
+      });
+      const result = await response.json();
 
-      if (existingUser) {
-        storeUser(existingUser.id, existingUser.name, stayLoggedIn);
+      if (response.ok && result.status === 'login') {
+        storeUser(result.user.id, result.user.name, stayLoggedIn);
+        window.location.href = "index.html";
+      } else if (response.ok && result.status === 'name_taken') {
+        alert("이 이름은 이미 사용 중입니다. 다른 이름을 입력해 주세요.");
+      } else if (response.ok && result.status === 'created') {
+        storeUser(result.user.id, result.user.name, stayLoggedIn);
         window.location.href = "index.html";
       } else {
-        // check if name already exists with different password
-        const { data: nameTaken } = await supabase
-          .from('users')
-          .select('id')
-          .eq('name', name);
-
-        if (nameTaken && nameTaken.length > 0) {
-          alert("이 이름은 이미 사용 중입니다. 다른 이름을 입력해 주세요.");
-          return;
-        }
-
-        const { data: newUser, error: insertError } = await supabase
-          .from('users')
-          .insert([{ name, password }])
-          .select()
-          .single();
-
-        if (insertError) {
-          alert("계정을 생성할 수 없습니다.");
-        } else {
-          storeUser(newUser.id, newUser.name, stayLoggedIn);
-          window.location.href = "index.html";
-        }
+        alert("계정을 생성할 수 없습니다.");
       }
     }
 

@@ -244,7 +244,6 @@
   </div>
   <button id="toggleScoresBtn" class="start-button" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 18px; padding: 6px 12px;">Show/Hide High Scores</button>
   <div id="floating-container"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
   window.game = "CutiePastTense";
   </script>
@@ -560,12 +559,8 @@ function toggleHighScores() {
 
 // Optional: updateChampion using Supabase
 async function updateChampion() {
-  const { data, error } = await supabase
-    .from('Scores')
-    .select('name, score')
-    .eq('game', window.game)
-    .order('score', { ascending: false })
-    .limit(1);
+  const response = await fetch('/.netlify/functions/get_champion?game=' + encodeURIComponent(window.game));
+  const data = await response.json();
   document.getElementById("championName").textContent = (data && data[0]) ? data[0].name : "-";
 }
 
