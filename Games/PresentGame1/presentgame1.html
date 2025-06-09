@@ -104,7 +104,7 @@ body {
 }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  
 </head>
 <body translate="no">
 <a href="../../playzone.html" class="notranslate">
@@ -384,10 +384,6 @@ correctSound.muted = !soundOn;
 wrongSound.muted = !soundOn;
 endGameSound.muted = !soundOn;
 sneakingout.muted = !soundOn;
-
-const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaWV1aWt0bHNpdndmZ3lpdmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTEyNTIsImV4cCI6MjA2NDE4NzI1Mn0.aMQN_U2aLvH7RzuT-dfzQF4RNA7YQ-Xn6upqJFr7eis';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 function startGame() {
   score = 0;

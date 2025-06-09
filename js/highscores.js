@@ -1,8 +1,3 @@
-// Connect to Supabase
-const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaWV1aWt0bHNpdndmZ3lpdmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTEyNTIsImV4cCI6MjA2NDE4NzI1Mn0.aMQN_U2aLvH7RzuT-dfzQF4RNA7YQ-Xn6upqJFr7eis';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
 // Always get the latest input/button when called (for dynamic DOM)
 function getNameInput() {
   return document.getElementById('nameInput');
@@ -22,18 +17,20 @@ async function submitScore() {
   const scoreValue = typeof score !== "undefined" ? score : 0;
   console.log("Submitting:", name, scoreValue); // for debugging
 
-  const { data, error } = await supabase
-    .from('Scores')
-    .insert([{ name, score: scoreValue, game: window.game }]);
+  const response = await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score: scoreValue, game: window.game })
+  });
+  const result = await response.json();
 
-  if (error) {
-    console.error('Failed to submit score:', error.message);
-  } else {
-    console.log('Score submitted:', data);
+  if (response.ok) {
     if (nameInput) nameInput.style.display = 'none';
     const submitBtn = getSubmitBtn();
     if (submitBtn) submitBtn.style.display = 'none';
     displayHighScores();
+  } else {
+    console.error('Failed to submit score:', result.error);
   }
 }
 
@@ -41,25 +38,56 @@ async function submitScore() {
 async function displayHighScores() {
   const highScoresList = getHighScoresList();
   if (!highScoresList) return;
-  const { data, error } = await supabase
-    .from('Scores')
-    .select('name, score')
-    .eq('game', window.game)
-    .order('score', { ascending: false })
-    .limit(5);
 
-  if (error) {
-    console.error('Failed to fetch scores:', error.message);
-    return;
+  const response = await fetch('/.netlify/functions/submit_score?game=' + encodeURIComponent(window.game));
+  const data = await response.json();
+
+  if (response.ok) {
+    highScoresList.innerHTML = '';
+    data.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name}: ${entry.score}`;
+      highScoresList.appendChild(li);
+    });
+  } else {
+    console.error('Failed to fetch scores:', data.error);
   }
-
-  highScoresList.innerHTML = '';
-  data.forEach(entry => {
-    const li = document.createElement('li');
-    li.textContent = `${entry.name}: ${entry.score}`;
-    highScoresList.appendChild(li);
-  });
 }
 
 // No DOMContentLoaded event for submitBtn here!
 // The game code should set up the submitBtn.onclick handler when it creates the button.
+
+const { createClient } = require('@supabase/supabase-js');
+
+exports.handler = async (event) => {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_KEY;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  if (event.httpMethod === 'POST') {
+    const { name, score, game } = JSON.parse(event.body);
+    const { data, error } = await supabase
+      .from('Scores')
+      .insert([{ name, score, game }]);
+    if (error) {
+      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    }
+    return { statusCode: 200, body: JSON.stringify(data) };
+  }
+
+  if (event.httpMethod === 'GET') {
+    const game = event.queryStringParameters.game || '';
+    const { data, error } = await supabase
+      .from('Scores')
+      .select('name, score')
+      .eq('game', game)
+      .order('score', { ascending: false })
+      .limit(5);
+    if (error) {
+      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    }
+    return { statusCode: 200, body: JSON.stringify(data) };
+  }
+
+  return { statusCode: 405, body: 'Method Not Allowed' };
+};

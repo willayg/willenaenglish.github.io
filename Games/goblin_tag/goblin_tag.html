@@ -218,20 +218,33 @@ function startTimer() {
   }, 1000);
 }
 
-function saveScore() {
+async function saveScore() {
   const name = document.getElementById("playerName").value || "Anonymous";
-  const scores = JSON.parse(localStorage.getItem("highScores") || "[]");
-  scores.push({ name, score });
-  scores.sort((a, b) => b.score - a.score);
-  localStorage.setItem("highScores", JSON.stringify(scores.slice(0, 10)));
-  displayHighScores();
-  document.getElementById("nameEntry").innerHTML = '<button class="btn" onclick="location.reload()">Replay</button>';
+  const response = await fetch('/.netlify/functions/submit_score_goblin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score })
+  });
+  const result = await response.json();
+  if (response.ok) {
+    displayHighScores();
+    document.getElementById("nameEntry").innerHTML = '<button class="btn" onclick="location.reload()">Replay</button>';
+  } else {
+    alert('Failed to submit score.');
+    console.error(result.error);
+  }
 }
 
-function displayHighScores() {
-  const scores = JSON.parse(localStorage.getItem("highScores") || "[]");
-  const list = scores.map(s => `<p>${s.name}: ${s.score}</p>`).join("");
-  document.getElementById("highScores").innerHTML = `<h3>High Scores</h3>${list}`;
+async function displayHighScores() {
+  const response = await fetch('/.netlify/functions/submit_score_goblin');
+  const data = await response.json();
+  if (response.ok) {
+    const list = data.map(s => `<p>${s.name}: ${s.score}</p>`).join("");
+    document.getElementById("highScores").innerHTML = `<h3>High Scores</h3>${list}`;
+  } else {
+    document.getElementById("highScores").innerHTML = '<h3>High Scores</h3><p>Failed to load scores.</p>';
+    console.error(data.error);
+  }
 }
 
 function startGame() {

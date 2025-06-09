@@ -103,7 +103,7 @@ body {
 }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 </head>
 <body translate="no">
 <a href="../../playzone.html" class="notranslate">
@@ -223,9 +223,6 @@ wrongSound.muted = !soundOn;
 endGameSound.muted = !soundOn;
 jungleMusic.muted = !soundOn;
 
-const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaWV1aWt0bHNpdndmZ3lpdmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTEyNTIsImV4cCI6MjA2NDE4NzI1Mn0.aMQN_U2aLvH7RzuT-dfzQF4RNA7YQ-Xn6upqJFr7eis';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 function startGame() {
   score = 0;
@@ -332,39 +329,35 @@ async function submitScore(forcedName) {
   const name = forcedName || nameInput.value || 'Anonymous';
   console.log("Submit button clicked");
 
-  const { data, error } = await supabase
-    .from('Scores')
-    .insert([{ name, score, game: 'JungleAnimalGame' }]);
-  if (error) {
-    console.error('Failed to submit score:', error.message);
-  } else {
-    console.log('Score submitted:', data);
+  const response = await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score })
+  });
+  const result = await response.json();
+  if (response.ok) {
     nameInput.style.display = 'none';
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) submitBtn.style.display = 'none';
     displayHighScores();
+  } else {
+    console.error('Failed to submit score:', result.error);
   }
 }
 
 async function displayHighScores() {
-  const { data, error } = await supabase
-    .from('Scores')
-    .select('name, score')
-    .eq('game', 'JungleAnimalGame')
-    .order('score', { ascending: false })
-    .limit(5);
-
-  if (error) {
-    console.error('Failed to fetch scores:', error.message);
-    return;
+  const response = await fetch('/.netlify/functions/submit_score');
+  const data = await response.json();
+  if (response.ok) {
+    highscoresList.innerHTML = '';
+    data.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name}: ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+  } else {
+    console.error('Failed to fetch scores:', data.error);
   }
-
-  highscoresList.innerHTML = '';
-  data.forEach(entry => {
-    const li = document.createElement('li');
-    li.textContent = `${entry.name}: ${entry.score}`;
-    highscoresList.appendChild(li);
-  });
 }
 
 

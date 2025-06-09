@@ -11,6 +11,7 @@
     }
     body {
       margin: 0;
+      padding: 0;
       font-family: 'Fredoka One', cursive;
       background: url('../../assets/images/backgrounds/tolken.png') no-repeat center center fixed;
       background-size: cover;
@@ -18,14 +19,6 @@
       text-align: center;
       min-height: 100vh;
       /* Remove flex styles */
-    }
-
-    .center-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
     }
 
     .logo-bar {
@@ -42,13 +35,21 @@
       margin: 0 auto;
     }
     .container {
-      max-width: 500px;
-      margin: 40px auto;
-      padding: 30px 20px 20px 20px;
+      width: 100vw;
+      max-width: 100vw;
+      margin: 0 auto;
+      padding: 8px 0 16px 0;
       border: 4px solid white;
       border-radius: 20px;
       background-color: rgba(0, 0, 0, 0.65);
       box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    @media (min-width: 601px) {
+      .container {
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 30px 20px 20px 20px;
+      }
     }
     h1 {
       font-size: 2.5em;
@@ -62,22 +63,23 @@
       display: none;
     }
     .options {
-      display: none;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      max-width: 400px;
-      margin: 0 auto 20px auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 98vw;
     }
     .option {
+      min-width: 0;
+      font-size: 1.3em;
+      padding: 18px 0;
+      border-radius: 16px;
       background: #fff;
       color: #222;
-      padding: 18px;
-      font-size: 2em;
-      border-radius: 15px;
-      box-shadow: 0 5px 10px rgba(0,0,0,0.12);
       cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
+      text-align: center;
       border: 2px solid #ffeb3b;
+      word-break: break-word;
     }
     .option:hover {
       transform: scale(1.05);
@@ -89,6 +91,7 @@
       font-size: 1.3em;
       display: none;
       color: #fff;
+      padding: 10px 0;
     }
     .timer {
       font-size: 1.3em;
@@ -99,6 +102,7 @@
       margin: 14px auto 10px auto;
       display: none;
       width: fit-content;
+      padding: 10px 0;
     }
     #startBtn, #endBtn {
       margin: 10px 8px 0 8px;
@@ -124,19 +128,23 @@
     }
     @media (max-width: 600px) {
       .container {
-        max-width: 98vw;
-        padding: 10px 2vw 20px 2vw;
+        width: 100%;
+        max-width: 100%;
+        padding: 8px 1vw 16px 1vw;
+        border-width: 2px;
       }
-      #icon {
-        font-size: 4em;
+      #logo {
+        width: 18vw;
+        min-width: 60px;
+        max-width: 100px;
       }
       .option {
         font-size: 1.2em;
-        padding: 12px;
+        padding: 18px 0;
+        min-height: 48px;
       }
-      #startBtn, #endBtn {
-        font-size: 1em;
-        padding: 10px 16px;
+      h1 {
+        font-size: 1.5em;
       }
     }
     .bonus-float {
@@ -161,6 +169,21 @@
     }
     .noselect {
       user-select: none;
+    }
+    #playerName {
+      font-size: 1.2em;
+      padding: 12px 10px;
+      border-radius: 10px;
+      width: 220px;
+      max-width: 90vw;
+      margin-bottom: 10px;
+    }
+    #submitName {
+      font-size: 1.2em;
+      padding: 12px 20px;
+      border-radius: 10px;
+      min-width: 100px;
+      min-height: 44px;
     }
   </style>
 </head>
@@ -313,27 +336,10 @@
       endMessage.style.display = "block";
       endMessage.textContent = `Game Over! Your final score is: ${score}`;
 
-      if (highScores.length < 5 || score > highScores[4].score) {
-        nameEntry.style.display = "block";
-        submitName.onclick = function () {
-          const name = playerName.value.trim() || "Anonymous";
-          highScores.push({ name, score });
-          highScores.sort((a, b) => b.score - a.score);
-          highScores = highScores.slice(0, 5);
-          localStorage.setItem("iconHighScores", JSON.stringify(highScores));
-          scoreList.innerHTML = highScores.map(entry => `<li>${entry.name}: ${entry.score}</li>`).join("");
-          highScoresDiv.style.display = "block";
-          nameEntry.style.display = "none";
-          playerName.value = "";
-          // Show replay button, hide end message
-          startBtn.style.display = "inline-block";
-          endMessage.style.display = "none";
-        };
-      } else {
-        highScoresDiv.style.display = "block";
-        // Hide end message when restarting
-        startBtn.onclick = () => { showStartScreen(); };
-      }
+      // Always show name entry for top scores
+      nameEntry.style.display = "block";
+      submitName.onclick = submitScore;
+      displayHighScores();
     }
 
     function nextQuestion() {
@@ -405,6 +411,44 @@
       setTimeout(() => {
         bonus.remove();
       }, 1000);
+    }
+
+    async function submitScore() {
+      const name = playerName.value.trim() || "Anonymous";
+      const response = await fetch('/.netlify/functions/submit_score_easyword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, score })
+      });
+      const result = await response.json();
+      if (response.ok) {
+        displayHighScores();
+        nameEntry.style.display = "none";
+        playerName.value = "";
+        startBtn.style.display = "inline-block";
+        endMessage.style.display = "none";
+      } else {
+        alert('Failed to submit score.');
+        console.error(result.error);
+      }
+    }
+
+    async function displayHighScores() {
+      const response = await fetch('/.netlify/functions/submit_score_easyword');
+      const data = await response.json();
+      scoreList.innerHTML = '';
+      if (response.ok) {
+        data.forEach(entry => {
+          const li = document.createElement('li');
+          li.textContent = `${entry.name}: ${entry.score}`;
+          scoreList.appendChild(li);
+        });
+        highScoresDiv.style.display = "block";
+      } else {
+        scoreList.innerHTML = '<li>Failed to load scores.</li>';
+        highScoresDiv.style.display = "block";
+        console.error(data.error);
+      }
     }
   </script>
 </body>
