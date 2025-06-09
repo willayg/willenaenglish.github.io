@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/willayg/willenaenglish.github.io#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
     "backblaze-b2": "^1.7.1",
     "form-data": "^4.0.3",
     "node-fetch": "^3.3.2"
