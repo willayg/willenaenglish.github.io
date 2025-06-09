@@ -16,7 +16,15 @@ exports.handler = async (event, context) => {
   try {
     await b2.authorize();
     const buckets = await b2.listBuckets();
-    const bucketId = buckets.data.buckets.find(b => b.bucketName === BUCKET_NAME).bucketId;
+    const bucket = buckets.data.buckets.find(b => b.bucketName === BUCKET_NAME);
+    if (!bucket) {
+      return {
+        statusCode: 404,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ error: "Bucket not found" })
+      };
+    }
+    const bucketId = bucket.bucketId;
 
     // Check if file exists
     const files = await b2.listFileNames({ bucketId, maxFileCount: 1000 });
