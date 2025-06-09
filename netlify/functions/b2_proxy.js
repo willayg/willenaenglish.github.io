@@ -6,6 +6,10 @@ const b2 = new B2({
 });
 const BUCKET_NAME = process.env.b2_bucket_name;
 
+console.log('b2_key_id:', process.env.b2_key_id);
+console.log('b2_app_key:', process.env.b2_app_key ? 'set' : 'not set');
+console.log('b2_bucket_name:', process.env.b2_bucket_name);
+
 exports.handler = async (event, context) => {
   const { filename, audioBase64 } = JSON.parse(event.body);
 
