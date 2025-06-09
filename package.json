@@ -21,6 +21,6 @@
     "@supabase/supabase-js": "^2.50.0",
     "backblaze-b2": "^1.7.1",
     "form-data": "^4.0.3",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^2.7.0"
   }
 }
