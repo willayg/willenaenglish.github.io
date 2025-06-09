@@ -4,7 +4,7 @@ const b2 = new B2({
   applicationKeyId: process.env.b2_key_id,
   applicationKey: process.env.b2_app_key,
 });
-const BUCKET_NAME = process.env.b2_bucket_name;
+const BUCKET_NAME = "willena";
 
 console.log('b2_key_id:', process.env.b2_key_id);
 console.log('b2_app_key:', process.env.b2_app_key ? 'set' : 'not set');
