@@ -4,7 +4,7 @@ const b2 = new B2({
   applicationKeyId: process.env.b2_key_id,
   applicationKey: process.env.b2_app_key,
 });
-const BUCKET_NAME = "willena";
+const BUCKET_NAME = process.env.b2_bucket_name || "willena";
 
 console.log('b2_key_id:', process.env.b2_key_id);
 console.log('b2_app_key:', process.env.b2_app_key ? 'set' : 'not set');
@@ -16,6 +16,7 @@ exports.handler = async (event, context) => {
   try {
     await b2.authorize();
     const buckets = await b2.listBuckets();
+    console.log('Buckets found:', buckets.data.buckets.map(b => b.bucketName)); // Add this line
     const bucket = buckets.data.buckets.find(b => b.bucketName === BUCKET_NAME);
     if (!bucket) {
       return {
