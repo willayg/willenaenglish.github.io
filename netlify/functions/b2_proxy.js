@@ -1,10 +1,10 @@
 const B2 = require('backblaze-b2');
 
 const b2 = new B2({
-  applicationKeyId: process.env.B2_KEY_ID,
-  applicationKey: process.env.B2_APP_KEY,
+  applicationKeyId: process.env.b2_key_id,
+  applicationKey: process.env.b2_app_key,
 });
-const BUCKET_NAME = process.env.B2_BUCKET_NAME;
+const BUCKET_NAME = process.env.b2_bucket_name;
 
 exports.handler = async (event, context) => {
   const { filename, audioBase64 } = JSON.parse(event.body);
