@@ -6,10 +6,10 @@ exports.handler = async (event) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   if (event.httpMethod === 'POST') {
-    const { name, score } = JSON.parse(event.body);
+    const { name, score, game } = JSON.parse(event.body);
     const { data, error } = await supabase
       .from('Scores')
-      .insert([{ name, score }]);
+      .insert([{ name, score, game }]);
     if (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
@@ -31,3 +31,9 @@ exports.handler = async (event) => {
 
   return { statusCode: 405, body: 'Method Not Allowed' };
 };
+
+const response = await fetch('/.netlify/functions/submit_score', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ name, score, game: "JungleAnimalGame" })
+});
