@@ -3,12 +3,16 @@ const { createClient } = require('@supabase/supabase-js');
 exports.handler = async (event) => {
   const SUPABASE_URL = process.env.supabase_url;
   const SUPABASE_KEY = process.env.supabase_key;
+
+  console.log('SUPABASE_URL:', SUPABASE_URL);
+  console.log('SUPABASE_KEY:', SUPABASE_KEY ? 'Exists' : 'Missing');
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Parse request
   const method = event.httpMethod;
   const body = event.body ? JSON.parse(event.body) : {};
-  const table = body.table || 'profiles'; // Default table
+  const table = body.table || 'users'; // Default table
 
   let result;
 
