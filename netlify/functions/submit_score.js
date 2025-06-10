@@ -1,10 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
-exports.handler = async (event) => {
-  const SUPABASE_URL = process.env.supabase_url;
-  const SUPABASE_KEY = process.env.supabase_key;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+exports.handler = async (event) => {
   if (event.httpMethod === 'POST') {
     const { name, score, game } = JSON.parse(event.body);
     const { data, error } = await supabase
@@ -13,14 +11,15 @@ exports.handler = async (event) => {
     if (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    return { statusCode: 200, body: JSON.stringify(data) };
   }
 
-  // GET: return top scores
   if (event.httpMethod === 'GET') {
+    const game = event.queryStringParameters.game || 'Fruti';
     const { data, error } = await supabase
       .from('Scores')
-      .select('*')
+      .select('name, score')
+      .eq('game', game) // <-- Only get scores for this game
       .order('score', { ascending: false })
       .limit(10);
     if (error) {
