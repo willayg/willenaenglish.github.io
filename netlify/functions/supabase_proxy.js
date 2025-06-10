@@ -3,11 +3,19 @@ const { createClient } = require('@supabase/supabase-js');
 exports.handler = async (event) => {
   const SUPABASE_URL = process.env.supabase_url;
   const SUPABASE_KEY = process.env.supabase_key;
-
-  console.log('SUPABASE_URL:', SUPABASE_URL);
-  console.log('SUPABASE_KEY:', SUPABASE_KEY ? 'Exists' : 'Missing');
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  if (event.httpMethod === 'POST') {
+    console.log('BODY:', event.body); // Add this line
+    const { name, score, game } = JSON.parse(event.body);
+    const { data, error } = await supabase
+      .from('Scores')
+      .insert([{ name, score, game }]);
+    if (error) {
+      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    }
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+  }
 
   // Parse request
   const method = event.httpMethod;

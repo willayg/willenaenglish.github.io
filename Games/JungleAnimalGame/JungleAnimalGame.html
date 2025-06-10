@@ -332,7 +332,7 @@ async function submitScore(forcedName) {
   const response = await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score })
+    body: JSON.stringify({ name, score, game: "JungleAnimalGame" })
   });
   const result = await response.json();
   if (response.ok) {
