@@ -31,9 +31,3 @@ exports.handler = async (event) => {
 
   return { statusCode: 405, body: 'Method Not Allowed' };
 };
-
-const response = await fetch('/.netlify/functions/submit_score', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name, score, game: "JungleAnimalGame" })
-});
