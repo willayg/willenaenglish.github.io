@@ -388,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
     submitBtn.style.display = 'none';
-    submitBtn.addEventListener('click', submitScore);
+    submitBtn.addEventListener('click', () => submitScore());
   }
 });
 
