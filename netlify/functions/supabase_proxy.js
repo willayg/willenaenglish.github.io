@@ -72,3 +72,25 @@ exports.handler = async (event) => {
     };
   }
 };
+
+async function submitScore(forcedName) {
+  let name = forcedName || nameInput.value || 'Anonymous';
+  // If name is an object (e.g., event), use 'Anonymous'
+  if (typeof name !== 'string') name = 'Anonymous';
+  console.log("Submit button clicked", name);
+
+  const response = await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "JungleAnimalGame" })
+  });
+  const result = await response.json();
+  if (response.ok) {
+    nameInput.style.display = 'none';
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.style.display = 'none';
+    displayHighScores();
+  } else {
+    console.error('Failed to submit score:', result.error);
+  }
+}
