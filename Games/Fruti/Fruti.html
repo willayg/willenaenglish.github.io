@@ -14,7 +14,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background: url('../../Assets/Images/backgrounds/korean_market.jpg') no-repeat center center fixed;
   background-size: cover;
-  background-color: darkgreen;
+  background-color: rgb(95, 49, 6);
   color: white;
   text-align: center;
   margin: 0;
@@ -36,8 +36,8 @@ body {
     button {
       font-size: 1.2em;
       padding: 10px 20px;
-      background-color: #388e3c;
-      color: white;
+      background-color: #ffeb3b; /* yellow */
+      color: #000; /* black text */
       border: none;
       border-radius: 10px;
       margin-top: 20px;
@@ -49,6 +49,8 @@ body {
       padding-top: 16px;
       padding-bottom: 16px;
       font-size: 1.4em;
+      background-color: #ffeb3b; /* yellow */
+      color: #000; /* black text */
     }
     #logo {
       width: 100px;
@@ -112,7 +114,7 @@ body {
 <button id="soundToggle" title="Toggle Sound">🔊</button>
   <div class="container">
     <div id="startScreen">
-      <h1>Animal Quiz</h1>
+      <h1>Fruti</h1>
       <button onclick="startGame()">Start Game</button>
     </div>
 
@@ -222,7 +224,7 @@ music.muted = !soundOn;
 
 function startGame() {
   score = 0;
-  timeLeft = 30;
+  timeLeft = 5;
   endScreen.style.display = 'none';
   startScreen.style.display = 'none';
   // Start background music if not already playing
@@ -275,7 +277,7 @@ function checkAnswer(choice) {
   buttons.forEach(btn => {
     btn.disabled = true;
     if (btn.textContent === currentQuestion.answer) {
-      btn.style.backgroundColor = '#ffeb3b'; // bright yellow
+      btn.style.backgroundColor = '#4caf50'; // green for correct answer
       btn.style.color = '#000'; // black text
     } else if (btn.textContent === choice) {
       btn.style.backgroundColor = '#e53935'; // red
@@ -314,37 +316,36 @@ function endGame() {
   if (submitBtn) submitBtn.style.display = 'inline-block';
 }
 
-async function submitScore() {
-  const name = nameInput.value.trim() || 'Anonymous';
+async function submitScore(forcedName) {
+  const name = forcedName || nameInput.value || 'Anonymous';
   const response = await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "Fruti" })
   });
-  const result = await response.json();
   if (response.ok) {
     nameInput.style.display = 'none';
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) submitBtn.style.display = 'none';
     displayHighScores();
   } else {
-    alert('Failed to submit score: ' + (result.error || 'Unknown error'));
+    alert('Failed to submit score.');
   }
 }
 
 async function displayHighScores() {
   const response = await fetch('/.netlify/functions/submit_score?game=Fruti');
-  const data = await response.json();
-  if (response.ok) {
-    highscoresList.innerHTML = '';
-    data.forEach(entry => {
-      const li = document.createElement('li');
-      li.textContent = `${entry.name}: ${entry.score}`;
-      highscoresList.appendChild(li);
-    });
-  } else {
+  if (!response.ok) {
     highscoresList.innerHTML = '<li>Failed to load scores</li>';
+    return;
   }
+  const data = await response.json();
+  highscoresList.innerHTML = '';
+  data.forEach(entry => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.name}: ${entry.score}`;
+    highscoresList.appendChild(li);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
