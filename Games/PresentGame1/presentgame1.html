@@ -502,14 +502,22 @@ function endGame() {
 }
 
 async function submitScore(forcedName) {
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.style.display = 'none';
+  }
+
   let name = forcedName || nameInput.value || 'Anonymous';
-  if (typeof name !== 'string') name = nameInput.value || 'Anonymous'; // Fix: ignore event objects
+  if (typeof name !== 'string') name = nameInput.value || 'Anonymous';
 
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "PresentGame1" })
   });
+
+  displayHighScores();
 }
 
 async function displayHighScores() {
