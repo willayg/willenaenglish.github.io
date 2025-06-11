@@ -224,7 +224,7 @@ music.muted = !soundOn;
 
 function startGame() {
   score = 0;
-  timeLeft = 5;
+  timeLeft = 25;
   endScreen.style.display = 'none';
   startScreen.style.display = 'none';
   // Start background music if not already playing
@@ -318,13 +318,16 @@ function endGame() {
 
 async function submitScore() {
   const name = nameInput.value || 'Anonymous';
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true; // Disable immediately to prevent spamming
+  }
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "Fruti" })
   });
   // Hide the submit button after submitting
-  const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) submitBtn.style.display = 'none';
   nameInput.style.display = 'none';
   displayHighScores();
