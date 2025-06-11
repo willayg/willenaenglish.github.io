@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     const { data, error } = await supabase
       .from('Scores')
       .select('name, score')
-      .eq('game', game) // <-- Only get scores for this game
+      .ilike('game', game) // <-- Use ilike for case-insensitive match
       .order('score', { ascending: false })
       .limit(10);
     if (error) {
