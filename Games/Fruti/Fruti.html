@@ -316,13 +316,18 @@ function endGame() {
   if (submitBtn) submitBtn.style.display = 'inline-block';
 }
 
-async function submitScore(forcedName) {
-  const name = forcedName || nameInput.value || 'Anonymous';
+async function submitScore() {
+  const name = nameInput.value || 'Anonymous';
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "Fruti" })
   });
+  // Hide the submit button after submitting
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.style.display = 'none';
+  nameInput.style.display = 'none';
+  displayHighScores();
 }
 
 async function displayHighScores() {
@@ -354,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
     submitBtn.style.display = 'none';
-    submitBtn.onclick = submitScore;
+    submitBtn.onclick = () => submitScore();
   }
 });
 
