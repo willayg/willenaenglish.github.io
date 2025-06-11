@@ -418,7 +418,7 @@
       const response = await fetch('/.netlify/functions/submit_score_easyword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, score })
+        body: JSON.stringify({ name, score, game: "EasyWordGame" })
       });
       const result = await response.json();
       if (response.ok) {
@@ -434,7 +434,7 @@
     }
 
     async function displayHighScores() {
-      const response = await fetch('/.netlify/functions/submit_score_easyword');
+      const response = await fetch('/.netlify/functions/submit_score_easyword?game=EasyWordGame');
       const data = await response.json();
       scoreList.innerHTML = '';
       if (response.ok) {
