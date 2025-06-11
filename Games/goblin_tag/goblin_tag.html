@@ -223,7 +223,7 @@ async function saveScore() {
   const response = await fetch('/.netlify/functions/submit_score_goblin', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score })
+    body: JSON.stringify({ name, score, game: "GoblinTag" })
   });
   const result = await response.json();
   if (response.ok) {
@@ -236,7 +236,7 @@ async function saveScore() {
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score_goblin');
+  const response = await fetch('/.netlify/functions/submit_score_goblin?game=GoblinTag');
   const data = await response.json();
   if (response.ok) {
     const list = data.map(s => `<p>${s.name}: ${s.score}</p>`).join("");

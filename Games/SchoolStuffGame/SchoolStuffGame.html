@@ -319,25 +319,26 @@ function endGame() {
 }
 
 async function submitScore(forcedName) {
-  const name = forcedName || nameInput.value || 'Anonymous';
-  const response = await fetch('/.netlify/functions/submit_score_school', {
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.style.display = 'none';
+  }
+
+  let name = forcedName || nameInput.value || 'Anonymous';
+  if (typeof name !== 'string') name = nameInput.value || 'Anonymous';
+
+  await fetch('/.netlify/functions/submit_score', { // <-- use submit_score
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score })
+    body: JSON.stringify({ name, score, game: "SchoolStuffGame" })
   });
-  const result = await response.json();
-  if (response.ok) {
-    nameInput.style.display = 'none';
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.style.display = 'none';
-    displayHighScores();
-  } else {
-    console.error('Failed to submit score:', result.error);
-  }
+
+  displayHighScores();
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score_school');
+  const response = await fetch('/.netlify/functions/submit_score?game=SchoolStuffGame'); // <-- use submit_score
   const data = await response.json();
   if (response.ok) {
     highscoresList.innerHTML = '';
@@ -379,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
     submitBtn.style.display = 'none';
-    submitBtn.addEventListener('click', submitScore);
+    submitBtn.addEventListener('click', () => submitScore()); // <-- FIX: use arrow function
   }
 });
 

@@ -1,5 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
 
+<<<<<<< HEAD
+=======
+const supabase = createClient(process.env.supabase_url, process.env.supabase_key);
+
+>>>>>>> 199f181acde472f1644539a8062caea32c33fa7d
 exports.handler = async (event) => {
   const SUPABASE_URL = process.env.supabase_url;
   const SUPABASE_KEY = process.env.supabase_key;
@@ -24,8 +29,13 @@ exports.handler = async (event) => {
     const game = event.queryStringParameters.game || 'Fruti';
     const { data, error } = await supabase
       .from('Scores')
+<<<<<<< HEAD
       .select('*')
       .eq('game', game) // Only scores for this game
+=======
+      .select('name, score')
+      .ilike('game', game) // <-- Use ilike for case-insensitive match
+>>>>>>> 199f181acde472f1644539a8062caea32c33fa7d
       .order('score', { ascending: false })
       .limit(10);
     if (error) {
