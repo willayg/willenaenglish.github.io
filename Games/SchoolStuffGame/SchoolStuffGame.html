@@ -326,9 +326,9 @@ async function submitScore(forcedName) {
   }
 
   let name = forcedName || nameInput.value || 'Anonymous';
-  if (typeof name !== 'string') name = nameInput.value || 'Anonymous'; // FIX: ignore event objects
+  if (typeof name !== 'string') name = nameInput.value || 'Anonymous';
 
-  await fetch('/.netlify/functions/submit_score_school', {
+  await fetch('/.netlify/functions/submit_score', { // <-- use submit_score
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "SchoolStuffGame" })
@@ -338,7 +338,7 @@ async function submitScore(forcedName) {
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score_school?game=SchoolStuffGame');
+  const response = await fetch('/.netlify/functions/submit_score?game=SchoolStuffGame'); // <-- use submit_score
   const data = await response.json();
   if (response.ok) {
     highscoresList.innerHTML = '';
