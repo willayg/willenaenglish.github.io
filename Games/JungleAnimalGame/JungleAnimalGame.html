@@ -346,7 +346,7 @@ async function submitScore(forcedName) {
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score');
+  const response = await fetch('/.netlify/functions/submit_score?game=JungleAnimalGame');
   const data = await response.json();
   if (response.ok) {
     highscoresList.innerHTML = '';

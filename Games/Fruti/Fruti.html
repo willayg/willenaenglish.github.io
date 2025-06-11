@@ -318,19 +318,11 @@ function endGame() {
 
 async function submitScore(forcedName) {
   const name = forcedName || nameInput.value || 'Anonymous';
-  const response = await fetch('/.netlify/functions/submit_score', {
+  await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "Fruti" })
   });
-  if (response.ok) {
-    nameInput.style.display = 'none';
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.style.display = 'none';
-    displayHighScores();
-  } else {
-    alert('Failed to submit score.');
-  }
 }
 
 async function displayHighScores() {
