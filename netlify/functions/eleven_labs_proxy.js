@@ -4,7 +4,7 @@ exports.handler = async (event, context) => {
   const elevenLabsApiKey = process.env.ELEVEN_LABS_API_KEY;
 
   let text = "";
-  let voiceId = "YOUR_DEFAULT_VOICE_ID"; // Replace with your default voice ID
+  let voiceId = process.env.eleven_labs_default_voice_id || "YOUR_DEFAULT_VOICE_ID"; // Replace with your default voice ID
   try {
     const body = JSON.parse(event.body);
     text = body.text;
