@@ -60,8 +60,8 @@ async function displayHighScores() {
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY;
+  const supabaseUrl = process.env.supabase_url;
+  const supabaseKey = process.env.supabase_key;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   if (event.httpMethod === 'POST') {
