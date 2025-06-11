@@ -505,7 +505,7 @@ async function submitScore(forcedName) {
   const name = forcedName || nameInput.value || 'Anonymous';
   console.log("Submit button clicked");
 
-  await fetch('/.netlify/functions/submit_score_present?game=PresentGame1', {
+  await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "PresentGame1" })
@@ -513,24 +513,19 @@ async function submitScore(forcedName) {
 }
 
 async function displayHighScores() {
-  const { data, error } = await supabase
-    .from('Scores')
-    .select('name, score')
-    .eq('game', 'PresentGame1')
-    .order('score', { ascending: false })
-    .limit(5);
-
-  if (error) {
-    console.error('Failed to fetch scores:', error.message);
-    return;
-  }
+  const response = await fetch('/.netlify/functions/submit_score?game=PresentGame1');
+  const data = await response.json();
 
   highscoresList.innerHTML = '';
-  data.forEach(entry => {
-    const li = document.createElement('li');
-    li.textContent = `${entry.name}: ${entry.score}`;
-    highscoresList.appendChild(li);
-  });
+  if (Array.isArray(data)) {
+    data.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name}: ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+  } else if (data.error) {
+    highscoresList.innerHTML = `<li>Error: ${data.error}</li>`;
+  }
 }
 
 
