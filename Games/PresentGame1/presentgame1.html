@@ -502,8 +502,8 @@ function endGame() {
 }
 
 async function submitScore(forcedName) {
-  const name = forcedName || nameInput.value || 'Anonymous';
-  console.log("Submit button clicked");
+  let name = forcedName || nameInput.value || 'Anonymous';
+  if (typeof name !== 'string') name = nameInput.value || 'Anonymous'; // Fix: ignore event objects
 
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
     submitBtn.style.display = 'none';
-    submitBtn.addEventListener('click', submitScore);
+    submitBtn.addEventListener('click', () => submitScore()); // <-- wrap in arrow function
   }
 });
 
