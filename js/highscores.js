@@ -56,38 +56,3 @@ async function displayHighScores() {
 
 // No DOMContentLoaded event for submitBtn here!
 // The game code should set up the submitBtn.onclick handler when it creates the button.
-
-const { createClient } = require('@supabase/supabase-js');
-
-exports.handler = async (event) => {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  if (event.httpMethod === 'POST') {
-    const { name, score, game } = JSON.parse(event.body);
-    const { data, error } = await supabase
-      .from('Scores')
-      .insert([{ name, score, game }]);
-    if (error) {
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-    }
-    return { statusCode: 200, body: JSON.stringify(data) };
-  }
-
-  if (event.httpMethod === 'GET') {
-    const game = event.queryStringParameters.game || '';
-    const { data, error } = await supabase
-      .from('Scores')
-      .select('name, score')
-      .eq('game', game)
-      .order('score', { ascending: false })
-      .limit(5);
-    if (error) {
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-    }
-    return { statusCode: 200, body: JSON.stringify(data) };
-  }
-
-  return { statusCode: 405, body: 'Method Not Allowed' };
-};
