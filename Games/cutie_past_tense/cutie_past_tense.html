@@ -517,9 +517,20 @@ function endGame() {
   submitBtn.style.padding = "8px 16px";
   submitBtn.style.marginTop = "10px";
   submitBtn.onclick = async () => {
-    window.score = score;
-    await submitScore(); // Wait for score to be submitted and input/button to be hidden
+    const name = document.getElementById("nameInput").value.trim();
+    if (!name) {
+      alert("Please enter your name!");
+      return;
+    }
 
+    // Submit score to Netlify function
+    await fetch('/.netlify/functions/submit_score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score, game: "CutiePastTense" })
+    });
+
+    window.score = score;
     submitBtn.style.display = "none"; // Hide the submit button
 
     // Now add the replay button

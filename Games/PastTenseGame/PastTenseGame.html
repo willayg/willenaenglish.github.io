@@ -274,21 +274,11 @@
 
     async function submitScore() {
       const name = nameInput.value || 'Anonymous';
-      const response = await fetch('https://your-supabase-url.supabase.co/rest/v1/Scores', {
+      await fetch('/.netlify/functions/submit_score?game=PastTenseGame', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': 'your-supabase-anon-key',
-          'Authorization': `Bearer your-supabase-service-role-key`
-        },
-        body: JSON.stringify([{ name, score, game: 'PastTenseGame' }])
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, score, game: "PastTenseGame" })
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Error submitting score:', error);
-        return;
-      }
 
       displayHighScores();
       nameInput.style.display = 'none';

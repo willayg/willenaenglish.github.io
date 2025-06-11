@@ -505,18 +505,11 @@ async function submitScore(forcedName) {
   const name = forcedName || nameInput.value || 'Anonymous';
   console.log("Submit button clicked");
 
-  const { data, error } = await supabase
-    .from('Scores')
-    .insert([{ name, score, game: window.game || 'PresentGame1' }]);
-  if (error) {
-    console.error('Failed to submit score:', error.message);
-  } else {
-    console.log('Score submitted:', data);
-    nameInput.style.display = 'none';
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.style.display = 'none';
-    displayHighScores();
-  }
+  await fetch('/.netlify/functions/submit_score_present?game=PresentGame1', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "PresentGame1" })
+  });
 }
 
 async function displayHighScores() {
