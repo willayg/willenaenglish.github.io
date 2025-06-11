@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kat's June Final Test Vocab</title>
+  <style>
+    body {
+      font-family: Calibri, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      text-align: center;
+      max-width: 900px;
+      width: 100%;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+    }
+    .level-buttons button,
+    .mode-buttons button,
+    .option,
+    #studySection button {
+      margin: 10px;
+      padding: 16px 32px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #4285f4;
+      color: white;
+      width: 90%;
+      max-width: 300px;
+    }
+    .option.correct {
+      background-color: #4caf50 !important;
+    }
+    .option.incorrect {
+      background-color: #f44336 !important;
+    }
+    .card {
+      margin: 20px auto;
+      padding: 40px;
+      font-size: 24px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      background-color: #f0f8ff;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Kat's June Final Test Vocab</h1>
+    <button onclick="goHome()" style="position: absolute; top: 10px; left: 10px; padding: 8px 12px; font-size: 20px; border: none; border-radius: 6px; background-color: #4285f4; color: white; cursor: pointer;">⌂</button>
+    <div id="home">
+      <h2>Select a Level</h2>
+      <div class="level-buttons" id="levelButtons"></div>
+    </div>
+
+    <div id="modeSelect" class="hidden">
+      <h2 id="selectedLevelTitle"></h2>
+      <div class="mode-buttons">
+        <button onclick="showStudy()">Study</button>
+        <button onclick="startPractice()">Practice</button>
+        <button onclick="startSpellingTest()">Spelling Test</button>
+      </div>
+    </div>
+
+    <div id="studySection" class="hidden">
+      <h3>Word List</h3>
+      <ul id="wordList"></ul>
+      <button onclick="startPractice()">Practice</button>
+      <button onclick="goHome()">Back</button>
+    </div>
+
+    <div id="practiceSection" class="hidden">
+      <div class="card" id="questionCard"></div>
+      <div class="options" id="options"></div>
+      <div id="result"></div>
+    </div>
+
+    <div id="scoreSection" class="hidden">
+      <h3>Your Score: <span id="score"></span></h3>
+      <button onclick="retryWrong()">Practice Wrong Answers</button>
+      <button onclick="goHome()">Home</button>
+    </div>
+  </div>
+
+<script>
+const data = {
+  "Lesson 3": [
+    { en: "press", ko: "버튼을 누르다" },
+    { en: "trader", ko: "상인" },
+    { en: "civilization", ko: "문명" },
+    { en: "flood", ko: "홍수" },
+    { en: "slice", ko: "조각" },
+    { en: "massage", ko: "안마" },
+    { en: "century", ko: "세기" },
+    { en: "present", ko: "현재" },
+    { en: "soap", ko: "비누" },
+    { en: "experience", ko: "경험하다" },
+    { en: "slave", ko: "노예" },
+    { en: "suggest", ko: "제안하다" },
+    { en: "universe", ko: "우주" },
+    { en: "law", ko: "법" },
+    { en: "hurricane", ko: "허리케인" },
+    { en: "contact", ko: "접촉, 연락" },
+    { en: "anger", ko: "화" },
+    { en: "pass through", ko: "통과하다" },
+    { en: "pick up", ko: "익히다, 태우다" },
+    { en: "origin", ko: "기원" },
+    { en: "originally", ko: "원래는" },
+    { en: "originate from", ko: "~에서 유래하다" }
+  ],
+  "Lesson 4": [
+    { en: "spender", ko: "돈을 쓰는 사람" },
+    { en: "exchange", ko: "교환하다" },
+    { en: "refund", ko: "환불하다" },
+    { en: "receipt", ko: "영수증" },
+    { en: "receive", ko: "받다" },
+    { en: "budget", ko: "예산" },
+    { en: "donate", ko: "기부하다" },
+    { en: "allowance", ko: "용돈" },
+    { en: "effort", ko: "노력" },
+    { en: "majority", ko: "대다수" },
+    { en: "balance", ko: "잔액" },
+    { en: "have difficulty -ing", ko: "~하는 데 어려움을 겪다" },
+    { en: "charity", ko: "자선 단체" },
+    { en: "remaining", ko: "남아 있는" },
+    { en: "tight", ko: "빠듯한" },
+    { en: "although", ko: "비록 ~이지만" },
+    { en: "on the spot", ko: "즉석에서" },
+    { en: "on sale", ko: "할인 중인" },
+    { en: "native", ko: "토박이, 원주민" },
+    { en: "loose", ko: "헐렁한" },
+    { en: "coach", ko: "코치" }
+  ],
+  "Tropical Fruits": [
+    { en: "tropical", ko: "열대 지방의" },
+    { en: "temperate", ko: "온화한" },
+    { en: "average", ko: "평균" },
+    { en: "range", ko: "범위" },
+    { en: "agricultural", ko: "농업의" },
+    { en: "harvest", ko: "수확하다" },
+    { en: "team up with", ko: "~와 협력하다" },
+    { en: "greenhouse", ko: "온실" },
+    { en: "equator", ko: "적도" },
+    { en: "be attributed to", ko: "~에 기인하다" },
+    { en: "precipitation", ko: "강수량" },
+    { en: "in turn", ko: "그 결과" },
+    { en: "favorable for", ko: "~에 유리한" },
+    { en: "along with", ko: "~와 함께" },
+    { en: "affect", ko: "영향을 미치다" },
+    { en: "staple", ko: "주요한" },
+    { en: "thrive", ko: "잘 자라다" },
+    { en: "orchard", ko: "과수원" },
+    { en: "adapt to", ko: "~에 적응하다" },
+    { en: "altogether", ko: "완전히" },
+    { en: "variety", ko: "다양성, 품종" }
+  ],
+  "Idioms": [
+    { en: "It's raining cats and dogs", ko: "비가 아주 많이 내려요" },
+    { en: "Lunch is on me", ko: "내가 점심 살게" },
+    { en: "It's not my cup of tea", ko: "그건 내 스타일이 아니야" },
+    { en: "I feel under the weather", ko: "몸이 좀 안 좋아요" },
+    { en: "Break a leg", ko: "행운을 빌어요!" },
+    { en: "It's a piece of cake", ko: "식은 죽 먹기예요" },
+    { en: "I'll keep my fingers crossed", ko: "행운을 빌게요" },
+    { en: "I'll keep in touch", ko: "연락할게요" }
+  ]
+};
+
+const levelButtons = document.getElementById('levelButtons');
+Object.keys(data).forEach(level => {
+  const btn = document.createElement('button');
+  btn.textContent = level;
+  btn.onclick = () => selectLevel(level);
+  levelButtons.appendChild(btn);
+});
+
+const home = document.getElementById('home');
+const modeSelect = document.getElementById('modeSelect');
+const studySection = document.getElementById('studySection');
+const practiceSection = document.getElementById('practiceSection');
+const scoreSection = document.getElementById('scoreSection');
+
+let currentLevel = '';
+let currentData = [];
+let currentQuestion = 0;
+let correct = 0;
+let wrongList = [];
+
+function selectLevel(level) {
+  currentLevel = level;
+  document.getElementById('selectedLevelTitle').textContent = level;
+  modeSelect.classList.remove('hidden');
+  home.classList.add('hidden');
+}
+
+function showStudy() {
+  studySection.classList.remove('hidden');
+  modeSelect.classList.add('hidden');
+  const list = document.getElementById('wordList');
+  list.innerHTML = '';
+  (data[currentLevel] || []).forEach(({ en, ko }) => {
+    const li = document.createElement('li');
+    li.textContent = `${en} — ${ko}`;
+    list.appendChild(li);
+  });
+}
+
+function startPractice() {
+  modeSelect.classList.add('hidden');
+  studySection.classList.add('hidden');
+  practiceSection.classList.remove('hidden');
+  currentData = [...(data[currentLevel] || [])];
+  currentQuestion = 0;
+  correct = 0;
+  wrongList = [];
+  showQuestion();
+}
+function startSpellingTest() {
+  modeSelect.classList.add('hidden');
+  studySection.classList.add('hidden');
+  practiceSection.classList.remove('hidden');
+  currentData = [...(data[currentLevel] || [])];
+  currentQuestion = 0;
+  correct = 0;
+  wrongList = [];
+  showSpellingQuestion();
+}
+
+function showSpellingQuestion() {
+  if (currentQuestion >= currentData.length) {
+    practiceSection.classList.add('hidden');
+    scoreSection.classList.remove('hidden');
+    document.getElementById('score').textContent = `${correct}/${currentData.length}`;
+    return;
+  }
+
+  const question = currentData[currentQuestion];
+  const card = document.getElementById('questionCard');
+  const options = document.getElementById('options');
+
+  card.textContent = question.ko;
+  options.innerHTML = `
+    <input type="text" id="spellingInput" placeholder="Type English word..." style="padding: 10px; font-size: 18px; width: 80%;" />
+    <button onclick="checkSpellingAnswer('${question.en}')">Submit</button>
+  `;
+}
+
+function checkSpellingAnswer(correctAnswer) {
+  const input = document.getElementById('spellingInput');
+  const userAnswer = input.value.trim().toLowerCase();
+  if (userAnswer === correctAnswer.toLowerCase()) {
+    correct++;
+  } else {
+    wrongList.push(currentData[currentQuestion]);
+  }
+  currentQuestion++;
+  showSpellingQuestion();
+}
+
+function showQuestion() {
+  if (currentQuestion >= currentData.length) {
+    practiceSection.classList.add('hidden');
+    scoreSection.classList.remove('hidden');
+    document.getElementById('score').textContent = `${correct}/${currentData.length}`;
+    return;
+  }
+
+  const question = currentData[currentQuestion];
+  document.getElementById('questionCard').textContent = question.en;
+
+  const options = [question.ko];
+  const allKOs = Object.values(data).flat().map(w => w.ko);
+  while (options.length < 4) {
+    const choice = allKOs[Math.floor(Math.random() * allKOs.length)];
+    if (!options.includes(choice)) options.push(choice);
+  }
+  options.sort(() => Math.random() - 0.5);
+
+  const optionsContainer = document.getElementById('options');
+  optionsContainer.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      const buttons = document.querySelectorAll('.option');
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === question.ko) {
+          b.classList.add('correct');
+        } else if (b.textContent === opt) {
+          b.classList.add('incorrect');
+        }
+      });
+      if (opt === question.ko) {
+        correct++;
+      } else {
+        wrongList.push(question);
+      }
+      setTimeout(() => {
+        currentQuestion++;
+        showQuestion();
+      }, 1000);
+    };
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function retryWrong() {
+  if (wrongList.length === 0) {
+    alert('Nothing to retry!');
+    return;
+  }
+  scoreSection.classList.add('hidden');
+  practiceSection.classList.remove('hidden');
+  currentData = [...wrongList];
+  currentQuestion = 0;
+  correct = 0;
+  wrongList = [];
+  showQuestion();
+}
+
+function goHome() {
+  home.classList.remove('hidden');
+  modeSelect.classList.add('hidden');
+  studySection.classList.add('hidden');
+  practiceSection.classList.add('hidden');
+  scoreSection.classList.add('hidden');
+}
+</script>
+</body>
+</html>
