@@ -319,12 +319,22 @@ function endGame() {
 }
 
 async function submitScore(forcedName) {
-  const name = forcedName || nameInput.value || 'Anonymous';
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.style.display = 'none';
+  }
+
+  let name = forcedName || nameInput.value || 'Anonymous';
+  if (typeof name !== 'string') name = nameInput.value || 'Anonymous'; // FIX: ignore event objects
+
   await fetch('/.netlify/functions/submit_score_school', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "SchoolStuffGame" })
   });
+
+  displayHighScores();
 }
 
 async function displayHighScores() {
@@ -370,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
     submitBtn.style.display = 'none';
-    submitBtn.addEventListener('click', submitScore);
+    submitBtn.addEventListener('click', () => submitScore()); // <-- FIX: use arrow function
   }
 });
 
