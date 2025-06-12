@@ -523,11 +523,11 @@ function endGame() {
       return;
     }
 
-    // Submit score to Netlify function
+    // Submit score
     await fetch('/.netlify/functions/submit_score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score, game: "CutiePastTense" })
+      body: JSON.stringify({ name, score, game: "cutie_past_tense" })
     });
 
     window.score = score;
@@ -573,6 +573,22 @@ async function updateChampion() {
   const response = await fetch('/.netlify/functions/get_champion?game=' + encodeURIComponent(window.game));
   const data = await response.json();
   document.getElementById("championName").textContent = (data && data[0]) ? data[0].name : "-";
+}
+
+// Display high scores
+async function displayHighScores() {
+  const response = await fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
+  const data = await response.json();
+  if (response.ok) {
+    highscoresList.innerHTML = '';
+    data.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name}: ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+  } else {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+  }
 }
 
 // Setup event listeners after DOM is loaded

@@ -220,23 +220,19 @@ function startTimer() {
 
 async function saveScore() {
   const name = document.getElementById("playerName").value || "Anonymous";
-  const response = await fetch('/.netlify/functions/submit_score_goblin', {
+  // Submit score
+  await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "GoblinTag" })
+    body: JSON.stringify({ name, score, game: "goblin_tag" })
   });
-  const result = await response.json();
-  if (response.ok) {
-    displayHighScores();
-    document.getElementById("nameEntry").innerHTML = '<button class="btn" onclick="location.reload()">Replay</button>';
-  } else {
-    alert('Failed to submit score.');
-    console.error(result.error);
-  }
+
+  displayHighScores();
+  document.getElementById("nameEntry").innerHTML = '<button class="btn" onclick="location.reload()">Replay</button>';
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score_goblin?game=GoblinTag');
+  const response = await fetch('/.netlify/functions/submit_score?game=goblin_tag');
   const data = await response.json();
   if (response.ok) {
     const list = data.map(s => `<p>${s.name}: ${s.score}</p>`).join("");

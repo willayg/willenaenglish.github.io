@@ -320,18 +320,20 @@ async function submitScore() {
   const name = nameInput.value || 'Anonymous';
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
-    submitBtn.disabled = true; // Disable immediately to prevent spamming
+    submitBtn.disabled = true;
   }
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "Fruti" })
   });
-  // Hide the submit button after submitting
   if (submitBtn) submitBtn.style.display = 'none';
   nameInput.style.display = 'none';
   displayHighScores();
 }
+
+// Make startGame globally accessible
+window.startGame = startGame;
 
 async function displayHighScores() {
   const response = await fetch('/.netlify/functions/submit_score?game=Fruti');
