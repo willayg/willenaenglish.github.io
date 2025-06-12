@@ -100,7 +100,7 @@
       cursor: pointer;
     }
     .question {
-      font-size: 48px;
+      font-size: 60px; /* 25% larger than previous 48px */
       margin: 20px;
       color: #8e44ad;
       background-color: #ffffffcc;
@@ -166,12 +166,31 @@
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       width: 45%;
-      min-width: 280px;
       max-width: 320px;
-      min-height: 200px;
       text-align: left;
       font-size: 20px;
-      color: #333;}
+      color: #333;
+    }
+
+    .container {
+      max-width: 420px;
+      width: 96vw;
+      margin: 32px auto 0 auto;
+      background: rgba(255,255,255,0.85);
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 24px 8px 32px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    @media (max-width: 600px) {
+      .container {
+        max-width: 99vw;
+        padding: 8px 2vw 16px 2vw;
+      }
+    }
+
   .high-score-overlay {
   position: fixed;
   top: 0;
@@ -217,6 +236,28 @@
 .fade-out {
   animation: fadeOutScale 0.5s ease forwards;
 }
+
+.start-button,
+.option-button {
+    font-size: 64px !important;
+    padding: 24px 48px !important;
+    border-radius: 24px !important;
+  }
+
+  @media (max-width: 600px) {
+    .start-button,
+    .option-button {
+      font-size: 48px !important;
+      padding: 18px 24px !important;
+      border-radius: 18px !important;
+    }
+  }
+
+  /* Show/Hide High Scores button half size */
+  #toggleScoresBtn {
+    font-size: 9px !important;
+    padding: 3px 6px !important;
+  }
   </style> 
 
 </head>
@@ -245,7 +286,7 @@
   <button id="toggleScoresBtn" class="start-button" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 18px; padding: 6px 12px;">Show/Hide High Scores</button>
   <div id="floating-container"></div>
   <script>
-  window.game = "CutiePastTense";
+  window.game = "cutie_past_tense";
   </script>
   <script src="../../js/highscores.js"></script>
   <script>
