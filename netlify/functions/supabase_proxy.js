@@ -1,23 +1,27 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
-  const SUPABASE_URL = process.env.supabase_url;
-  const SUPABASE_KEY = process.env.supabase_key;
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_KEY;
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  if (event.httpMethod === 'POST') {
-    console.log('BODY:', event.body); // Add this line
-    const { name, score, game } = JSON.parse(event.body);
-    const { data, error } = await supabase
-      .from('Scores')
-      .insert([{ name, score, game }]);
-    if (error) {
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+  // Dedicated POST handler for Scores table
+  if (event.httpMethod === 'POST' && event.path && event.path.includes('submit_score')) {
+    try {
+      const { name, score, game } = JSON.parse(event.body);
+      const { error } = await supabase
+        .from('Scores')
+        .insert([{ name, score, game }]);
+      if (error) {
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      }
+      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    } catch (err) {
+      return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
     }
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
   }
 
-  // Parse request
+  // General CRUD handler
   const method = event.httpMethod;
   const body = event.body ? JSON.parse(event.body) : {};
   const table = body.table || 'users'; // Default table
@@ -26,7 +30,6 @@ exports.handler = async (event) => {
 
   try {
     if (method === 'GET') {
-      // Read: fetch rows (optionally with filters)
       const { data, error } = await supabase
         .from(table)
         .select('*')
@@ -34,7 +37,6 @@ exports.handler = async (event) => {
       if (error) throw error;
       result = { data };
     } else if (method === 'POST') {
-      // Create: insert new row(s)
       const { data, error } = await supabase
         .from(table)
         .insert(body.values)
@@ -42,19 +44,17 @@ exports.handler = async (event) => {
       if (error) throw error;
       result = { data };
     } else if (method === 'PUT') {
-      // Update: update row(s) by filter
       const { data, error } = await supabase
         .from(table)
         .update(body.values)
-        .match(body.match); // e.g., { id: 1 }
+        .match(body.match);
       if (error) throw error;
       result = { data };
     } else if (method === 'DELETE') {
-      // Delete: delete row(s) by filter
       const { data, error } = await supabase
         .from(table)
         .delete()
-        .match(body.match); // e.g., { id: 1 }
+        .match(body.match);
       if (error) throw error;
       result = { data };
     } else {
