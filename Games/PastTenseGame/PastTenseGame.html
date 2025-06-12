@@ -274,11 +274,28 @@
 
     async function submitScore() {
       const name = nameInput.value || 'Anonymous';
-      await fetch('/.netlify/functions/submit_score?game=PastTenseGame', {
+      // Submit score
+      await fetch('/.netlify/functions/submit_score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, score, game: "PastTenseGame" })
       });
+
+      // Display high scores
+      async function displayHighScores() {
+        const response = await fetch('/.netlify/functions/submit_score?game=PastTenseGame');
+        const data = await response.json();
+        if (response.ok) {
+          highscoresList.innerHTML = '';
+          data.forEach(entry => {
+            const li = document.createElement('li');
+            li.textContent = `${entry.name}: ${entry.score}`;
+            highscoresList.appendChild(li);
+          });
+        } else {
+          highscoresList.innerHTML = '<li>Failed to load scores</li>';
+        }
+      }
 
       displayHighScores();
       nameInput.style.display = 'none';
