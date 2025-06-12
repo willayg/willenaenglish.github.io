@@ -283,10 +283,11 @@
 
       // Display high scores
       async function displayHighScores() {
+        const highscoresList = document.getElementById('highScores');
         const response = await fetch('/.netlify/functions/submit_score?game=PastTenseGame');
         const data = await response.json();
-        if (response.ok) {
-          highscoresList.innerHTML = '';
+        highscoresList.innerHTML = '';
+        if (response.ok && Array.isArray(data)) {
           data.forEach(entry => {
             const li = document.createElement('li');
             li.textContent = `${entry.name}: ${entry.score}`;

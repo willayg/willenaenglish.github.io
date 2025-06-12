@@ -577,6 +577,7 @@ async function updateChampion() {
 
 // Display high scores
 async function displayHighScores() {
+  const highscoresList = document.getElementById('highscores');
   const response = await fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
   const data = await response.json();
   if (response.ok) {
