@@ -89,8 +89,8 @@
       <p>Top Scores:</p>
       <ol id="highScores"></ol>
       <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
-      <button onclick="submitScore()">Submit Score</button>
-      <button onclick="resetGame()">Play Again</button>
+      <button id="submitScoreBtn" onclick="submitScore()">확인</button>
+      <button id="playAgainBtn" onclick="resetGame()" style="display:none;">Play Again</button>
     </div>
   </div>
 
@@ -268,8 +268,8 @@
       finalScore.textContent = score;
       displayHighScores();
       nameInput.style.display = 'block';
-      const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-      if (submitBtn) submitBtn.style.display = 'inline-block';
+      document.getElementById('submitScoreBtn').style.display = 'inline-block';
+      document.getElementById('playAgainBtn').style.display = 'none';
     }
 
     async function submitScore() {
@@ -284,10 +284,10 @@
       // Display high scores using Netlify function
       await displayHighScores();
 
-      // Hide input and button after submitting
+      // Hide input and button after submitting, show Play Again
       nameInput.style.display = 'none';
-      const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-      if (submitBtn) submitBtn.style.display = 'none';
+      document.getElementById('submitScoreBtn').style.display = 'none';
+      document.getElementById('playAgainBtn').style.display = 'inline-block';
     }
 
     async function displayHighScores() {
@@ -315,8 +315,8 @@
       quizScreen.style.display = 'none';
       endScreen.style.display = 'none';
       nameInput.style.display = 'block';
-      const submitBtn = document.querySelector('button[onclick="submitScore()"]');
-      if (submitBtn) submitBtn.style.display = 'inline-block';
+      document.getElementById('submitScoreBtn').style.display = 'inline-block';
+      document.getElementById('playAgainBtn').style.display = 'none';
       highScoresList.innerHTML = '';
     }
 
