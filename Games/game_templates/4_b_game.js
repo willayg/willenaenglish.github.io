@@ -86,7 +86,7 @@ function showQuestion() {
 
 function checkAnswer(choice, btnClicked) {
   // Speak the word the user picked
-  speakWithElevenLabs(choice);
+  speakWord(choice);
 
   const q = questions[currentQuestionIndex];
   const buttons = document.querySelectorAll('#options button');
@@ -211,20 +211,14 @@ const allWords = [
   // add more if you have them
 ];
 
-// Call your Netlify function to get TTS audio and play it
-async function speakWithElevenLabs(text) {
-  try {
-    const response = await fetch('/.netlify/functions/eleven_labs_proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    });
-    const data = await response.json();
-    if (data.audio) {
-      const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
-      audio.play();
-    }
-  } catch (err) {
-    console.error('TTS error:', err);
-  }
+function getAudioFilename(word) {
+  // Lowercase, trim, replace spaces and non-alphanumerics with underscores
+  return word.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_') + '.mp3';
+}
+
+async function speakWord(word) {
+  const filename = getAudioFilename(word);
+  const url = `https://fiieuiktlsivwfgyivai.supabase.co/storage/v1/object/public/tts-audio/${filename}`;
+  const audio = new Audio(url);
+  audio.play();
 }

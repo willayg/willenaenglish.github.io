@@ -274,59 +274,36 @@
 
     async function submitScore() {
       const name = nameInput.value || 'Anonymous';
-      // Submit score
+      // Submit score to Netlify function
       await fetch('/.netlify/functions/submit_score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, score, game: "PastTenseGame" })
       });
 
-      // Display high scores
-      async function displayHighScores() {
-        const highscoresList = document.getElementById('highScores');
-        const response = await fetch('/.netlify/functions/submit_score?game=PastTenseGame');
-        const data = await response.json();
-        highscoresList.innerHTML = '';
-        if (response.ok && Array.isArray(data)) {
-          data.forEach(entry => {
-            const li = document.createElement('li');
-            li.textContent = `${entry.name}: ${entry.score}`;
-            highscoresList.appendChild(li);
-          });
-        } else {
-          highscoresList.innerHTML = '<li>Failed to load scores</li>';
-        }
-      }
+      // Display high scores using Netlify function
+      await displayHighScores();
 
-      displayHighScores();
+      // Hide input and button after submitting
       nameInput.style.display = 'none';
       const submitBtn = document.querySelector('button[onclick="submitScore()"]');
       if (submitBtn) submitBtn.style.display = 'none';
     }
 
     async function displayHighScores() {
-      const response = await fetch('https://your-supabase-url.supabase.co/rest/v1/Scores?game=eq.PastTenseGame&select=name,score&order=score.desc&limit=5', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': 'your-supabase-anon-key',
-          'Authorization': `Bearer your-supabase-service-role-key`
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Error fetching high scores:', error);
-        return;
+      const highscoresList = document.getElementById('highScores');
+      const response = await fetch('/.netlify/functions/submit_score?game=PastTenseGame');
+      const data = await response.json();
+      highscoresList.innerHTML = '';
+      if (response.ok && Array.isArray(data)) {
+        data.forEach(entry => {
+          const li = document.createElement('li');
+          li.textContent = `${entry.name}: ${entry.score}`;
+          highscoresList.appendChild(li);
+        });
+      } else {
+        highscoresList.innerHTML = '<li>Failed to load scores</li>';
       }
-
-      const highScores = await response.json();
-      highScoresList.innerHTML = '';
-      highScores.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        highScoresList.appendChild(li);
-      });
     }
 
     function resetGame() {
