@@ -1,10 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
 
-<<<<<<< HEAD
-=======
-const supabase = createClient(process.env.supabase_url, process.env.supabase_key);
-
->>>>>>> 199f181acde472f1644539a8062caea32c33fa7d
 exports.handler = async (event) => {
   const SUPABASE_URL = process.env.supabase_url;
   const SUPABASE_KEY = process.env.supabase_key;
@@ -15,7 +10,7 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'POST') {
     const { name, score, game } = JSON.parse(event.body);
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('Scores')
       .insert([{ name, score, game }]);
     if (error) {
@@ -26,16 +21,11 @@ exports.handler = async (event) => {
 
   // GET: return top scores
   if (event.httpMethod === 'GET') {
-    const game = event.queryStringParameters.game || 'Fruti';
+    const game = event.queryStringParameters.game || 'EmojiGame';
     const { data, error } = await supabase
       .from('Scores')
-<<<<<<< HEAD
-      .select('*')
-      .eq('game', game) // Only scores for this game
-=======
       .select('name, score')
-      .ilike('game', game) // <-- Use ilike for case-insensitive match
->>>>>>> 199f181acde472f1644539a8062caea32c33fa7d
+      .eq('game', game)
       .order('score', { ascending: false })
       .limit(10);
     if (error) {
