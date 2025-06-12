@@ -218,7 +218,8 @@ function getAudioFilename(word) {
 
 async function speakWord(word) {
   const filename = getAudioFilename(word);
-  const url = `https://fiieuiktlsivwfgyivai.supabase.co/storage/v1/object/public/tts-audio/${filename}`;
+  const SUPABASE_PROJECT_ID = "fiieuiktlsivwfgyivai"; // This is NOT a secret
+  const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/tts-audio/${filename}`;
   const audio = new Audio(url);
   audio.play();
 }
