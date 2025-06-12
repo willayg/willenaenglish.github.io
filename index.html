@@ -647,7 +647,7 @@ h1 {
         <div class="card-stack">
           <img src="Assets/Images/QUIZ.jpg" alt="Quiz">
           <div class="card-caption">Study Zone</div>
-          <a class="card-overlay" href="choose-levels.html">
+          <a class="card-overlay" href="coming_soon.html">
           <div class="overlay-text">
               레슨, 어휘, 테스트<br>
               언어 포인트와 단어를 배우고 실력을 점검해요!
@@ -659,7 +659,7 @@ h1 {
         <div class="card-stack">
           <img src="Assets/Images/THINK.jpg" alt="Think">
           <div class="card-caption">Quiz Zone</div>
-          <a class="card-overlay" href="choose-levels.html">
+          <a class="card-overlay" href="coming_soon.html">
           <div class="overlay-text">
               영어 퀴즈<br>
               트리비아부터 MBTI까지 다양한 퀴즈를 풀어요!
@@ -1222,6 +1222,51 @@ document.addEventListener('DOMContentLoaded', function () {
       startX = null;
     });
   }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const LONG_PRESS_DURATION = 400; // ms
+  document.querySelectorAll('.card-stack').forEach(card => {
+    let pressTimer = null;
+
+    // Show overlay
+    function showOverlay() {
+      card.classList.add('show-overlay');
+    }
+    // Hide overlay
+    function hideOverlay() {
+      card.classList.remove('show-overlay');
+    }
+
+    // Touch events
+    card.addEventListener('touchstart', function (e) {
+      if (pressTimer) clearTimeout(pressTimer);
+      pressTimer = setTimeout(showOverlay, LONG_PRESS_DURATION);
+    });
+    card.addEventListener('touchend', function () {
+      if (pressTimer) clearTimeout(pressTimer);
+      hideOverlay();
+    });
+    card.addEventListener('touchmove', function () {
+      if (pressTimer) clearTimeout(pressTimer);
+      hideOverlay();
+    });
+
+    // Mouse events (for desktop)
+    card.addEventListener('mousedown', function (e) {
+      if (pressTimer) clearTimeout(pressTimer);
+      pressTimer = setTimeout(showOverlay, LONG_PRESS_DURATION);
+    });
+    card.addEventListener('mouseup', function () {
+      if (pressTimer) clearTimeout(pressTimer);
+      hideOverlay();
+    });
+    card.addEventListener('mouseleave', function () {
+      if (pressTimer) clearTimeout(pressTimer);
+      hideOverlay();
+    });
+  });
 });
 </script>
 </body>
