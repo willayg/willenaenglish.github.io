@@ -137,11 +137,11 @@ function endGame() {
 
 // Highscore functions
 function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=AnimalQuiz')
+  fetch('/.netlify/functions/submit_score?game=EmojiGame')
     .then(res => res.json())
     .then(data => {
       highscoresList.innerHTML = '';
-      data.scores.slice(0, 10).forEach(entry => {
+      (data || []).slice(0, 10).forEach(entry => {
         const li = document.createElement('li');
         li.textContent = `${entry.name}: ${entry.score}`;
         highscoresList.appendChild(li);
@@ -155,14 +155,26 @@ submitBtn.onclick = function() {
   fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: 'AnimalQuiz' })
-  }).then(() => {
-    displayHighScores();
-    nameInput.value = '';
-    // Hide submit, show play again after submitting
-    submitBtn.style.display = 'none';
-    nameInput.style.display = 'none';
-    playAgainBtn.style.display = '';
+    body: JSON.stringify({
+      name: name,
+      score: score,
+      game: 'EmojiGame'
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      submitBtn.style.display = 'none';
+      playAgainBtn.style.display = '';
+      nameInput.style.display = 'none';
+      alert('Score submitted!');
+      displayHighScores();
+    } else {
+      alert('Error submitting score.');
+    }
+  })
+  .catch(err => {
+    alert('Network error submitting score.');
   });
 };
 
