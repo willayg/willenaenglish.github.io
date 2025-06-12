@@ -31,6 +31,22 @@ correctSound.muted = musicMuted;
 wrongSound.muted = musicMuted;
 endGameSound.muted = musicMuted;
 
+const correctResponses = [
+  "Nice job!",
+  "You're Awesome!",
+  "Wow! That was right!",
+  "You got it right!",
+  "That's the correct answer. Cool!"
+];
+
+const wrongResponses = [
+  "That's too bad.",
+  "You got that one wrong.",
+  "Oops.",
+  "Oh my!",
+  "You made a mistake."
+];
+
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
@@ -84,33 +100,39 @@ function showQuestion() {
   });
 }
 
-function checkAnswer(choice, btnClicked) {
-  // Speak the word the user picked
-  speakWord(choice);
+function speakResponse(text) {
+  if (soundMuted) return;
+  const utter = new window.SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  window.speechSynthesis.speak(utter);
+}
 
+function checkAnswer(choice, btnClicked) {
   const q = questions[currentQuestionIndex];
   const buttons = document.querySelectorAll('#options button');
   const correctText = q.word.toLowerCase();
 
   buttons.forEach(btn => {
     btn.disabled = true;
-    // Always color the correct answer green
     if (btn.textContent.trim().toLowerCase() === correctText) {
-      btn.style.backgroundColor = '#4caf50'; // green
+      btn.style.backgroundColor = '#4caf50';
       btn.style.color = '#fff';
     }
   });
 
-  // If wrong, color the clicked button red (unless it's the correct one)
   if (choice.toLowerCase() !== correctText) {
-    btnClicked.style.backgroundColor = '#e53935'; // red
+    btnClicked.style.backgroundColor = '#e53935';
     btnClicked.style.color = '#fff';
     wrongSound.currentTime = 0;
     wrongSound.play();
+    const response = wrongResponses[Math.floor(Math.random() * wrongResponses.length)];
+    playFeedbackAudio(response, 'wrong');   // for wrong answers
     score -= 100;
   } else {
     correctSound.currentTime = 0;
     correctSound.play();
+    const response = correctResponses[Math.floor(Math.random() * correctResponses.length)];
+    playFeedbackAudio(response, 'correct'); // for correct answers
     score += 300;
   }
 
@@ -222,4 +244,28 @@ async function speakWord(word) {
   const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/tts-audio/${filename}`;
   const audio = new Audio(url);
   audio.play();
+}
+
+async function playFeedbackAudio(phrase, type) {
+  if (soundMuted) return;
+  try {
+    const res = await fetch('/.netlify/functions/get_feedback_audio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phrase, type })
+    });
+    const data = await res.json();
+    if (data.url) {
+      const audio = new Audio(data.url);
+      audio.play();
+    }
+  } catch (err) {
+    // Fallback to browser TTS if Eleven Labs fails
+    try {
+      speakResponse(phrase);
+    } catch (ttsErr) {
+      console.error('Browser TTS failed:', ttsErr);
+    }
+    console.error('Audio feedback error:', err);
+  }
 }
