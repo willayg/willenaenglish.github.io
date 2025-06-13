@@ -9,9 +9,14 @@ const BUCKET_NAME = process.env.b2_bucket_name || "willena";
 console.log('b2_key_id:', process.env.b2_key_id);
 console.log('b2_app_key:', process.env.b2_app_key ? 'set' : 'not set');
 console.log('b2_bucket_name:', process.env.b2_bucket_name);
+console.log("ELEVEN_LABS_API_KEY:", !!process.env.ELEVEN_LABS_API_KEY);
+console.log("ELEVEN_LABS_VOICE_ID:", process.env.ELEVEN_LABS_VOICE_ID);
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_KEY:", !!process.env.SUPABASE_KEY);
 
 exports.handler = async (event, context) => {
   const { filename, audioBase64 } = JSON.parse(event.body);
+  console.log("Request body:", event.body);
 
   try {
     await b2.authorize();
@@ -54,10 +59,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ url: `https://f000.backblazeb2.com/file/${BUCKET_NAME}/${filename}` })
     };
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: err.message })
-    };
+    console.error("Error in get_feedback_audio:", err);
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
