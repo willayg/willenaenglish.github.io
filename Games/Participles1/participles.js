@@ -19,6 +19,20 @@ const wrongResponses = [
   "That's too bad.", "You got that one wrong.", "Oops.", "Oh my!", "You made a mistake."
 ];
 
+// Add your funny/anonymous names here!
+const funnyNames = [
+  "Nobody",
+  "Ghost",
+  "Invisible Human",
+  "Guess who I am",
+  "Mystery Potato",
+  "Captain Unknown",
+  "The Phantom",
+  "Secret Squirrel",
+  "Unseen Ninja",
+  "Masked Genius"
+];
+
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
@@ -205,8 +219,11 @@ window.addEventListener('DOMContentLoaded', function() {
   // Submit button
   if (submitBtn) {
     submitBtn.onclick = function() {
-      const name = nameInput.value.trim();
-      if (!name) return;
+      let name = nameInput.value.trim();
+      if (!name) {
+        // Pick a random funny name if input is empty!
+        name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
+      }
       fetch('/.netlify/functions/submit_score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
