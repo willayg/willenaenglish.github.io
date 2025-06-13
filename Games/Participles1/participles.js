@@ -114,13 +114,19 @@ function checkAnswer(choice, btnClicked) {
   let penalty = 0;
 
   if (choice.toLowerCase() !== correctText) {
-    btnClicked.style.backgroundColor = '#e53935';
-    btnClicked.style.color = '#fff';
-    playFeedbackAudio('wrong');
-    score -= 100;
-    else {
+  if (choice.toLowerCase() !== correctText) {
+  btnClicked.style.backgroundColor = '#e53935';
+  btnClicked.style.color = '#fff';
+  playFeedbackAudio('wrong');
+  score -= 100;
+  // ...rest of wrong answer logic
+} else {
   playFeedbackAudio('correct');
   score += 300;
+  // ...fast bonus logic
+  btnClicked.style.backgroundColor = '#43a047'; // green for correct
+  btnClicked.style.color = '#fff';
+  }
   // Fast correct bonus logic...
   btnClicked.style.backgroundColor = '#43a047'; // a nice green
   btnClicked.style.color = '#fff';
