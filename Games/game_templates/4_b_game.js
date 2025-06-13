@@ -123,16 +123,12 @@ function checkAnswer(choice, btnClicked) {
   if (choice.toLowerCase() !== correctText) {
     btnClicked.style.backgroundColor = '#e53935';
     btnClicked.style.color = '#fff';
-    wrongSound.currentTime = 0;
-    wrongSound.play();
     const response = wrongResponses[Math.floor(Math.random() * wrongResponses.length)];
-    playFeedbackAudio(response, 'wrong');   // for wrong answers
+    playFeedbackAudio(response, 'wrong');   // only play the voice
     score -= 100;
   } else {
-    correctSound.currentTime = 0;
-    correctSound.play();
     const response = correctResponses[Math.floor(Math.random() * correctResponses.length)];
-    playFeedbackAudio(response, 'correct'); // for correct answers
+    playFeedbackAudio(response, 'correct'); // only play the voice
     score += 300;
   }
 
@@ -268,8 +264,11 @@ async function playFeedbackAudio(phrase, type) {
   // Pick a random file based on type
   let fileList = type === "correct" ? correctFiles : wrongFiles;
   let file = fileList[Math.floor(Math.random() * fileList.length)];
-  let url = "../../assets/audio/voices/rabbit/" + file;
+  let url = "../../Assets/Audio/voices/rabbit/" + file; // Make sure this path is correct and case matches your folders
 
   const audio = new Audio(url);
-  audio.play();
+  audio.play().catch(e => {
+    // Optionally log or ignore errors if file not found
+    // console.warn("Audio not found:", url);
+  });
 }
