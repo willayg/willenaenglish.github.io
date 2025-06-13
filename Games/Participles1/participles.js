@@ -153,6 +153,7 @@ function playFeedbackAudio(type) {
   });
 }
 
+// THIS IS THE KEY FUNCTION FOR SUPABASE HIGH SCORES
 async function displayHighScores() {
   highscoresList.innerHTML = '<li>Loading...</li>';
   try {
@@ -162,13 +163,24 @@ async function displayHighScores() {
       return;
     }
     const data = await response.json();
+    // LOG THE RESPONSE TO DEBUG
+    console.log("High scores response:", data);
     highscoresList.innerHTML = '';
-    (data.scores || []).forEach((entry, i) => {
+
+    // ---- ADJUST THIS SECTION DEPENDING ON YOUR BACKEND RESPONSE ----
+    // Uncomment the line that matches your backend response format:
+    
+    // let scoresArray = data.scores || [];      // If backend: {scores: [...]}
+    // let scoresArray = data.data || [];        // If backend: {data: [...]}
+    let scoresArray = Array.isArray(data) ? data : []; // If backend: [...]
+
+    scoresArray.forEach((entry, i) => {
       const li = document.createElement('li');
       li.textContent = `${i + 1}. ${entry.name || 'Anonymous'} - ${entry.score}`;
       highscoresList.appendChild(li);
     });
-    if ((data.scores || []).length === 0) {
+
+    if (scoresArray.length === 0) {
       highscoresList.innerHTML = '<li>No scores yet</li>';
     }
   } catch (e) {
