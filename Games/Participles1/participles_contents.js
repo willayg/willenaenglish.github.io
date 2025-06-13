@@ -1,5 +1,7 @@
+
+
 // Past participles quiz questions
-window.participlesQuestions = [
+export const participlesQuestions = [
   { base: "eat", answer: "eaten", options: ["eaten", "eats", "eating", "ate"] },
   { base: "go", answer: "gone", options: ["gone", "goes", "going", "went"] },
   { base: "see", answer: "seen", options: ["seen", "sees", "seeing", "saw"] },
