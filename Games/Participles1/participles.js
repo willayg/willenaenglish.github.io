@@ -118,6 +118,13 @@ function checkAnswer(choice, btnClicked) {
     btnClicked.style.color = '#fff';
     playFeedbackAudio('wrong');
     score -= 100;
+    else {
+  playFeedbackAudio('correct');
+  score += 300;
+  // Fast correct bonus logic...
+  btnClicked.style.backgroundColor = '#43a047'; // a nice green
+  btnClicked.style.color = '#fff';
+  }
     // Extra penalty for fast wrong answers
     if (answerTime <= 0.5) {
       penalty = 200;
