@@ -21,7 +21,7 @@ let currentQuestionIndex = 0;
 let score = 0;
 let timer = null;
 let timeLeft = 25; // 25 seconds for the whole game
-let soundMuted = false;
+let soundMuted = false; // Make sure this is set globally
 let musicMuted = false;
 
 const correctSound = new Audio('../../Assets/Audio/right.mp3');
@@ -254,10 +254,15 @@ async function speakWord(word) {
   audio.play();
 }
 
-export async function playFeedbackAudio(phrase, type) {
-  if (window.soundMuted) return;
+// Update your sound toggle logic:
+soundToggle.addEventListener('change', function() {
+  soundMuted = !soundToggle.checked;
+});
 
-  // Use Steve's folder for feedback
+// Feedback audio function
+export async function playFeedbackAudio(type) {
+  if (soundMuted) return;
+
   const correctFiles = [
     "pos_1.mp3",
     "pos_2.mp3",
@@ -276,6 +281,7 @@ export async function playFeedbackAudio(phrase, type) {
   let file = fileList[Math.floor(Math.random() * fileList.length)];
   let url = "../../Assets/Audio/voices/steve/" + file;
   const audio = new Audio(url);
+  audio.muted = soundMuted; // This ensures muting works even if toggled during playback
   audio.play().catch(e => {
     console.warn("Audio not found or not allowed to play:", url, e);
   });
