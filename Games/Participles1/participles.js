@@ -257,6 +257,34 @@ window.addEventListener('DOMContentLoaded', function() {
       window.resetGame();
     };
   }
+  submitBtn.addEventListener('click', function() {
+    let name = nameInput.value.trim();
+    if (!name) {
+      // Pick a random funny name if blank
+      name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
+    }
+    // Save score locally
+    let highscores = JSON.parse(localStorage.getItem('highscores') || '[]');
+    highscores.push({ name, score });
+    highscores.sort((a, b) => b.score - a.score);
+    highscores = highscores.slice(0, 10); // Keep top 10
+    localStorage.setItem('highscores', JSON.stringify(highscores));
+    // Update the highscore list on the page
+    displayHighscores();
+    submitBtn.disabled = true;
+    nameInput.disabled = true;
+    playAgainBtn.style.display = '';
+  });
+
+  function displayHighscores() {
+    let highscores = JSON.parse(localStorage.getItem('highscores') || '[]');
+    highscoresList.innerHTML = '';
+    highscores.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name}: ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+  }
 });
 
 // Reset function
