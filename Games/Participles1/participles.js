@@ -132,9 +132,9 @@ function endGame() {
   endScreen.style.display = 'block';
   finalScoreSpan.textContent = score;
   playEndGameVoice(score);
-  displayHighScores(); // This now calls the helper from submit_score.js
+  displayHighScores(); // Update high scores from server
   submitBtn.style.display = '';
-  playAgainBtn.style.display = 'none';
+  playAgainBtn.style.display = '';
   nameInput.style.display = '';
   if (timer) clearInterval(timer);
 }
@@ -176,7 +176,6 @@ async function displayHighScores() {
   }
 }
 
-// Attach all event handlers and assign variables safely after DOM is loaded
 window.addEventListener('DOMContentLoaded', function() {
   // Assign variables after DOM is ready
   startScreen = document.getElementById('startScreen');
@@ -195,7 +194,7 @@ window.addEventListener('DOMContentLoaded', function() {
   soundToggle = document.getElementById('soundToggle');
   musicToggle = document.getElementById('musicToggle');
 
-  window.game = "ParticiplesGame"; // Set the game name for the helpers
+  window.game = "ParticiplesGame";
 
   // Make sure music is muted by default
   if (bgMusic) bgMusic.muted = true;
@@ -229,18 +228,20 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 
   async function submitScore() {
-    const name = nameInput.value || 'Anonymous';
-    if (submitBtn) {
-      submitBtn.disabled = true;
+    let name = nameInput.value.trim();
+    if (!name) {
+      name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
     }
+    submitBtn.disabled = true;
     await fetch('/.netlify/functions/submit_score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, score, game: "ParticiplesGame" })
     });
-    if (submitBtn) submitBtn.style.display = 'none';
-    if (nameInput) nameInput.style.display = 'none';
+    submitBtn.style.display = 'none';
+    nameInput.style.display = 'none';
     displayHighScores();
+    playAgainBtn.style.display = '';
   }
 
   if (submitBtn) submitBtn.addEventListener('click', submitScore);
@@ -256,6 +257,7 @@ window.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = false;
         submitBtn.style.display = 'none';
       }
+      playAgainBtn.style.display = 'none';
       startGame();
     });
   }
