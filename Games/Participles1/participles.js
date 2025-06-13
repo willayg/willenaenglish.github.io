@@ -80,17 +80,17 @@ function showQuestion() {
     return;
   }
   const q = questions[currentQuestionIndex];
-  // Show only the base verb, not a long sentence
   emojiDiv.textContent = q.base;
   optionsDiv.innerHTML = '';
   const choices = shuffle(q.options.slice());
   choices.forEach(choice => {
     const btn = document.createElement('button');
     btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
+    btn.disabled = false; // Ensure button is enabled for the new question
     btn.onclick = () => checkAnswer(choice, btn);
     optionsDiv.appendChild(btn);
   });
-  questionStartTime = Date.now(); // Track when the question is shown
+  questionStartTime = Date.now();
 }
 
 function speakResponse(text) {
@@ -105,32 +105,36 @@ function checkAnswer(choice, btnClicked) {
   const buttons = document.querySelectorAll('#options button');
   const correctText = q.answer.toLowerCase();
 
-  buttons.forEach(btn => {
-    btn.disabled = true;
-    if (btn.textContent.trim().toLowerCase() === correctText) {
-      btn.style.backgroundColor = '#4caf50';
-      btn.style.color = '#fff';
-    }
-  });
+  // Disable all buttons immediately to prevent spamming
+  buttons.forEach(btn => btn.disabled = true);
 
-  // Calculate answer time and bonus
+  // Calculate answer time and bonus/penalty
   const answerTime = (Date.now() - questionStartTime) / 1000; // in seconds
   let bonus = 0;
-  if (answerTime <= 0.8) { // 0.8 seconds for bonus
-    bonus = 150;
-    score += bonus;
-    // Optionally, show a quick bonus message:
-    // emojiDiv.innerHTML += '<div style="color: gold; font-size: 1.2em;">+150 Bonus!</div>';
-  }
+  let penalty = 0;
 
   if (choice.toLowerCase() !== correctText) {
     btnClicked.style.backgroundColor = '#e53935';
     btnClicked.style.color = '#fff';
     playFeedbackAudio('wrong');
     score -= 100;
+    // Extra penalty for fast wrong answers
+    if (answerTime <= 0.5) {
+      penalty = 200;
+      score -= penalty;
+      // Optionally, show a penalty message:
+      // emojiDiv.innerHTML += '<div style="color: red; font-size: 1.2em;">-200 Fast Penalty!</div>';
+    }
   } else {
     playFeedbackAudio('correct');
     score += 300;
+    // Fast correct bonus
+    if (answerTime <= 0.8) {
+      bonus = 150;
+      score += bonus;
+      // Optionally, show a bonus message:
+      // emojiDiv.innerHTML += '<div style="color: gold; font-size: 1.2em;">+150 Bonus!</div>';
+    }
   }
 
   scoreSpan.textContent = score;
