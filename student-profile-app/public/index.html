@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile App</title>
+    <link rel="stylesheet" href="../src/styles/main.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script src="../src/index.js" type="module"></script>
+</body>
+</html>
+
+import React, { useState } from "react";
+
+function StudentSignUp() {
+  const [nickname, setNickname] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Handle sign up logic here (e.g., send to backend or local storage)
+    alert(`Signed up as: ${nickname}`);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="signup-form">
+      <h2>Student Sign Up</h2>
+      <label>
+        English Nickname:
+        <input
+          type="text"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          required
+        />
+      </label>
+      <label>
+        Password:
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </label>
+      <button type="submit">Sign Up</button>
+    </form>
+  );
+}
+
+export default StudentSignUp;
