@@ -127,44 +127,63 @@ function playEndGameVoice(finalScore) {
   audio.play().catch(e => { console.warn("End game audio not found or not allowed to play:", url, e); });
 }
 
+async function submitScore() {
+  let name = nameInput.value.trim() || 'Anonymous';
+  submitBtn.disabled = true;
+  try {
+    await fetch('/.netlify/functions/submit_score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score, game: "Participles" })
+    });
+    submitBtn.style.display = 'none';
+    nameInput.style.display = 'none';
+    displayHighScores();
+  } catch (e) {
+    alert('Network error submitting score.');
+    submitBtn.disabled = false;
+  }
+}
+
+async function displayHighScores() {
+  try {
+    const response = await fetch('/.netlify/functions/submit_score?game=Participles');
+    if (!response.ok) {
+      highscoresList.innerHTML = '<li>Failed to load scores</li>';
+      return;
+    }
+    const data = await response.json();
+    highscoresList.innerHTML = '';
+    data.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name}: ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+  } catch (e) {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+  }
+}
+
+// When game ends:
 function endGame() {
   quizScreen.style.display = 'none';
   endScreen.style.display = 'block';
   finalScoreSpan.textContent = score;
   playEndGameVoice(score);
   displayHighScores();
-  submitBtn.style.display = '';
-  playAgainBtn.style.display = 'none';
-  nameInput.style.display = '';
-  if (timer) clearInterval(timer);
+  nameInput.value = '';
+  nameInput.style.display = 'block';
+  nameInput.focus();
+  submitBtn.style.display = 'inline-block';
+  submitBtn.disabled = false;
 }
 
-function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=ParticiplesGame')
-    .then(res => res.json())
-    .then(data => {
-      highscoresList.innerHTML = '';
-      (data || []).slice(0, 10).forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        highscoresList.appendChild(li);
-      });
-    });
-}
-
-function playFeedbackAudio(type) {
-  if (soundMuted) return;
-  const correctFiles = ["pos_1.mp3","pos_2.mp3","pos_3.mp3","pos_4.mp3","pos_5.mp3"];
-  const wrongFiles = ["neg_1.mp3","neg_2.mp3","neg_3.mp3","neg_4.mp3","neg_5.mp3"];
-  let fileList = type === "correct" ? correctFiles : wrongFiles;
-  let file = fileList[Math.floor(Math.random() * fileList.length)];
-  let url = "../../Assets/Audio/voices/steve/" + file;
-  const audio = new Audio(url);
-  audio.muted = soundMuted;
-  audio.play().catch(e => {
-    console.warn("Audio not found or not allowed to play:", url, e);
-  });
-}
+// Reset function
+window.resetGame = function() {
+  if (startScreen) startScreen.style.display = 'block';
+  if (quizScreen) quizScreen.style.display = 'none';
+  if (endScreen) endScreen.style.display = 'none';
+};
 
 // Attach all event handlers and assign variables safely after DOM is loaded
 window.addEventListener('DOMContentLoaded', function() {
@@ -218,37 +237,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Submit button
   if (submitBtn) {
-    submitBtn.onclick = function() {
-      let name = nameInput.value.trim();
-      if (!name) {
-        // Pick a random funny name if input is empty!
-        name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
-      }
-      fetch('/.netlify/functions/submit_score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name,
-          score: score,
-          game: 'ParticiplesGame'
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          submitBtn.style.display = 'none';
-          playAgainBtn.style.display = '';
-          nameInput.style.display = 'none';
-          alert('Score submitted!');
-          displayHighScores();
-        } else {
-          alert('Error submitting score.');
-        }
-      })
-      .catch(err => {
-        alert('Network error submitting score.');
-      });
-    };
+    submitBtn.onclick = () => submitScore();
   }
 
   // Play again button
@@ -257,39 +246,4 @@ window.addEventListener('DOMContentLoaded', function() {
       window.resetGame();
     };
   }
-  submitBtn.addEventListener('click', function() {
-    let name = nameInput.value.trim();
-    if (!name) {
-      // Pick a random funny name if blank
-      name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
-    }
-    // Save score locally
-    let highscores = JSON.parse(localStorage.getItem('highscores') || '[]');
-    highscores.push({ name, score });
-    highscores.sort((a, b) => b.score - a.score);
-    highscores = highscores.slice(0, 10); // Keep top 10
-    localStorage.setItem('highscores', JSON.stringify(highscores));
-    // Update the highscore list on the page
-    displayHighscores();
-    submitBtn.disabled = true;
-    nameInput.disabled = true;
-    playAgainBtn.style.display = '';
-  });
-
-  function displayHighscores() {
-    let highscores = JSON.parse(localStorage.getItem('highscores') || '[]');
-    highscoresList.innerHTML = '';
-    highscores.forEach(entry => {
-      const li = document.createElement('li');
-      li.textContent = `${entry.name}: ${entry.score}`;
-      highscoresList.appendChild(li);
-    });
-  }
 });
-
-// Reset function
-window.resetGame = function() {
-  if (startScreen) startScreen.style.display = 'block';
-  if (quizScreen) quizScreen.style.display = 'none';
-  if (endScreen) endScreen.style.display = 'none';
-};
