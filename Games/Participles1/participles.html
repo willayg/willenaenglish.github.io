@@ -2,42 +2,283 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Past Participles Game</title>
-  <link rel="stylesheet" href="participles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <meta http-equiv="Content-Language" content="en">
+  <meta name="naver" content="notranslate">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Past Participle Basher</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f7f7f7; }
-    #quizScreen, #endScreen { display: none; }
-    .center { text-align: center; margin: 2em; }
-    #options button { margin: 0.5em; }
-    #musicToggle { cursor: pointer; }
-    #timer { font-weight: bold; }
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Disable scrolling */
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: url('../../Assets/Images/backgrounds/CHALLENGE.jpg') no-repeat center center fixed;
+  background-size: cover;
+  background-color: rgb(119, 109, 16);
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+
+    .container {
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 20px;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    #quizScreen, #endScreen {
+      display: none;
+    }
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      background-color: #ff9800; /* orange */
+      color: white;
+      border: 2px solid #ff9800;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    button:active {
+      background-color: #fb8c00; /* darker orange */
+      color: #fff;
+    }
+    .options {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.options button {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+    #logo {
+      width: 100px;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    #emoji {
+      font-size: 2em;
+      flex: 0 0 auto;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .status-bar {
+      display: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .status-item {
+      font-size: 2em;
+      font-weight: bold;
+      width: 80px;
+      text-align: center;
+    }
+#nameInput {
+  display: block;
+  margin: 20px auto;
+  text-align: center;
+}
+
+.noselect {
+  user-select: none;
+}
+#soundToggle {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-size: 2em;
+  background: none;
+  border: none;
+  color: #388e3c;
+  cursor: pointer;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+.toggle-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin: 24px auto 0 auto;
+}
+
+#soundToggle, #musicToggle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7em;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: none;
+  border: 2px solid #388e3c;
+  color: #388e3c;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  min-width: 80px;
+}
+
+#soundToggle:active, #musicToggle:active {
+  background: #388e3c;
+  color: #fff;
+}
+
+.toggle-music, .toggle-sound {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+/* Toggle switch base styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 18px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ff9800 !important;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #ff9800 !important;
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+/* Korean label styling */
+.toggle-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #4e2e0e; /* dark brown */
+  margin-left: 6px;
+  margin-right: 12px;
+  vertical-align: middle;
+  text-shadow: 1px 1px 4px #fff8, 0 2px 8px #0006;
+}
+
+/* Positioning */
+.toggle-music {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-sound {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+}
+
+.switch, .slider, .slider:before {
+  /* Add drop shadow to the switch and slider */
+  box-shadow: 0 2px 8px #0004, 0 1px 2px #fff4;
+}
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
 </head>
-<body>
-  <div id="startScreen" class="center">
-    <h1>Past Participles Game</h1>
+<body translate="no">
+<a href="../../challengezone.html" class="notranslate">
+  <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
+</a>
+<div class="container">
+  <div id="startScreen">
+    <h1>Guess The Past Participle</h1>
+    <!-- Removed category selection dropdown -->
     <button id="startBtn">Start Game</button>
-    <br><br>
-    <label>
-      <input type="checkbox" id="musicToggle" />
-      <span>🔇 Music</span>
-    </label>
-    <audio id="bgMusic" src="music.mp3" loop></audio>
   </div>
-  <div id="quizScreen" class="center">
-    <div>
-      <span>Score: <span id="score">0</span></span> |
-      <span>Time left: <span id="timer">20</span>s</span>
+
+  <div id="quizScreen">
+    <div class="status-bar">
+      <div class="status-item"><span id="timer">20</span>s</div>
+      <div id="emoji"></div>
+      <div class="status-item"><span id="score">0</span></div>
     </div>
-    <h2 id="question"></h2>
-    <div id="options"></div>
+    <div class="options" id="options"></div> <button id="restartButton" onclick="resetGame()" style="display: none; margin-top: 10px;">Restart</button>
   </div>
-  <div id="endScreen" class="center">
+
+  <div id="endScreen">
     <h2>Game Over!</h2>
-    <p>Your score: <span id="finalScore">0</span></p>
-    <button onclick="resetGame()">Restart</button>
+    <p>Your score: <span id="finalScore"></span></p>
+    <p>Top Scores:</p>
+    <ol id="highscores"></ol>
+    <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
+    <button id="submitBtn">Submit Score</button>
+    <button id="playAgainBtn" onclick="resetGame()" style="display:none;">Play Again</button>
   </div>
-  <script src="participles_contents.js"></script>
-  <script src="participles.js"></script>
+</div> <!-- end of .container -->
+
+  <div class="toggle-row">
+    <label class="switch">
+      <input type="checkbox" id="musicToggle">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🎵 음악</span>
+    <label class="switch">
+      <input type="checkbox" id="soundToggle">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🔊 소리</span>
+  </div>
+<audio id="bgMusic" src="../../Assets/audio/junglemusic.mp3" loop muted></audio>
+  <script type="module" src="participles.js"></script>
 </body>
 </html>
