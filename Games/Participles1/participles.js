@@ -23,6 +23,7 @@ let timer = null;
 let timeLeft = 25; // 25 seconds for the whole game
 let soundMuted = false; // Make sure this is set globally
 let musicMuted = false;
+let questionStartTime = 0;
 
 const correctSound = new Audio('../../Assets/Audio/right.mp3');
 const wrongSound = new Audio('../../Assets/Audio/wrong.mp3');
@@ -89,6 +90,7 @@ function showQuestion() {
     btn.onclick = () => checkAnswer(choice, btn);
     optionsDiv.appendChild(btn);
   });
+  questionStartTime = Date.now(); // Track when the question is shown
 }
 
 function speakResponse(text) {
@@ -111,15 +113,23 @@ function checkAnswer(choice, btnClicked) {
     }
   });
 
+  // Calculate answer time and bonus
+  const answerTime = (Date.now() - questionStartTime) / 1000; // in seconds
+  let bonus = 0;
+  if (answerTime <= 0.8) { // 0.8 seconds for bonus
+    bonus = 150;
+    score += bonus;
+    // Optionally, show a quick bonus message:
+    // emojiDiv.innerHTML += '<div style="color: gold; font-size: 1.2em;">+150 Bonus!</div>';
+  }
+
   if (choice.toLowerCase() !== correctText) {
     btnClicked.style.backgroundColor = '#e53935';
     btnClicked.style.color = '#fff';
-    // const response = wrongResponses[Math.floor(Math.random() * wrongResponses.length)];
-    playFeedbackAudio('wrong');   // only play the voice
+    playFeedbackAudio('wrong');
     score -= 100;
   } else {
-    // const response = correctResponses[Math.floor(Math.random() * correctResponses.length)];
-    playFeedbackAudio('correct'); // only play the voice
+    playFeedbackAudio('correct');
     score += 300;
   }
 
@@ -302,3 +312,5 @@ document.addEventListener('DOMContentLoaded', function() {
     window.soundMuted = !soundToggle.checked;
   });
 });
+
+questionStartTime = Date.now();
