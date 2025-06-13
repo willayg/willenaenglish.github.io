@@ -6,7 +6,11 @@ exports.handler = async (event) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Dedicated POST handler for Scores table
-  if (event.httpMethod === 'POST' && event.path && event.path.includes('submit_score')) {
+  if (
+    event.httpMethod === 'POST' &&
+    event.path &&
+    event.path.includes('submit_score')
+  ) {
     try {
       const { name, score, game } = JSON.parse(event.body);
       const { error } = await supabase
