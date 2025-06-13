@@ -251,24 +251,24 @@ async function playFeedbackAudio(phrase, type) {
 
   // Arrays of local audio file names
   const correctFiles = [
-    "rabbit_correct1.mp3",
-    "rabbit_correct2.mp3",
-    "rabbit_correct3.mp3",
-    "rabbit_correct4.mp3",
-    "rabbit_correct5.mp3"
+    "good_job.mp3",
+    "great_work.mp3",
+    "nice_job.mp3",
+    "youre_good.mp3",
+    "well_done.mp3"
   ];
   const wrongFiles = [
-    "rabbit_wrong1.mp3",
-    "rabbit_wrong2.mp3",
-    "rabbit_wrong3.mp3",
-    "rabbit_wrong4.mp3",
-    "rabbit_wrong5.mp3"
+    "close_one.mp3",
+    "huge_mistake.mp3",
+    "not_the_answer.mp3",
+    "oh_man.mp3",
+    "wrong.mp3"
   ];
 
   // Pick a random file based on type
   let fileList = type === "correct" ? correctFiles : wrongFiles;
   let file = fileList[Math.floor(Math.random() * fileList.length)];
-  let url = `../../assets/audio/voices/rabbit/${file}`;
+  let url = "../../assets/audio/voices/rabbit/" + file;
 
   const audio = new Audio(url);
   audio.play();
