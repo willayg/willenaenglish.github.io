@@ -21,8 +21,8 @@ let currentQuestionIndex = 0;
 let score = 0;
 let timer = null;
 let timeLeft = 25; // 25 seconds for the whole game
-let soundMuted = false; // Make sure this is set globally
-let musicMuted = false;
+let soundMuted = false;
+let musicMuted = true; // Default music to muted
 let questionStartTime = 0;
 
 const correctSound = new Audio('../../Assets/Audio/right.mp3');
@@ -86,7 +86,7 @@ function showQuestion() {
   choices.forEach(choice => {
     const btn = document.createElement('button');
     btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
-    btn.disabled = false; // Ensure button is enabled for the new question
+    btn.disabled = false;
     btn.onclick = () => checkAnswer(choice, btn);
     optionsDiv.appendChild(btn);
   });
@@ -114,40 +114,23 @@ function checkAnswer(choice, btnClicked) {
   let penalty = 0;
 
   if (choice.toLowerCase() !== correctText) {
-  if (choice.toLowerCase() !== correctText) {
-  btnClicked.style.backgroundColor = '#e53935';
-  btnClicked.style.color = '#fff';
-  playFeedbackAudio('wrong');
-  score -= 100;
-  // ...rest of wrong answer logic
-} else {
-  playFeedbackAudio('correct');
-  score += 300;
-  // ...fast bonus logic
-  btnClicked.style.backgroundColor = '#43a047'; // green for correct
-  btnClicked.style.color = '#fff';
-  }
-  // Fast correct bonus logic...
-  btnClicked.style.backgroundColor = '#43a047'; // a nice green
-  btnClicked.style.color = '#fff';
-  }
-    // Extra penalty for fast wrong answers
+    btnClicked.style.backgroundColor = '#e53935';
+    btnClicked.style.color = '#fff';
+    playFeedbackAudio('wrong');
+    score -= 100;
     if (answerTime <= 0.5) {
       penalty = 200;
       score -= penalty;
-      // Optionally, show a penalty message:
-      // emojiDiv.innerHTML += '<div style="color: red; font-size: 1.2em;">-200 Fast Penalty!</div>';
     }
   } else {
     playFeedbackAudio('correct');
     score += 300;
-    // Fast correct bonus
     if (answerTime <= 0.8) {
       bonus = 150;
       score += bonus;
-      // Optionally, show a bonus message:
-      // emojiDiv.innerHTML += '<div style="color: gold; font-size: 1.2em;">+150 Bonus!</div>';
     }
+    btnClicked.style.backgroundColor = '#43a047'; // vivid green for correct
+    btnClicked.style.color = '#fff';
   }
 
   scoreSpan.textContent = score;
@@ -235,6 +218,7 @@ submitBtn.onclick = function() {
   });
 };
 
+// Sound toggle
 soundToggle.onclick = function() {
   soundMuted = !soundMuted;
   correctSound.muted = soundMuted;
@@ -249,9 +233,18 @@ musicToggle.onclick = function() {
   musicToggle.textContent = musicMuted ? '🔇 Music' : '🎵 Music';
 };
 
+// Ensure music is muted by default
+window.addEventListener('DOMContentLoaded', function () {
+  bgMusic.muted = true;
+  musicMuted = true;
+  if (musicToggle) {
+    musicToggle.textContent = '🔇 Music';
+    musicToggle.checked = false;
+  }
+});
+
 document.getElementById('startBtn').addEventListener('click', () => {
   startGame();
-  const bgMusic = document.getElementById('bgMusic');
   if (bgMusic) bgMusic.play();
 });
 
@@ -260,31 +253,6 @@ window.resetGame = function() {
   quizScreen.style.display = 'none';
   endScreen.style.display = 'none';
 };
-
-const allWords = [
-  ...wordData.foodWords,
-  ...wordData.toyWords,
-  ...wordData.animalWords
-  // add more if you have them
-];
-
-function getAudioFilename(word) {
-  // Lowercase, trim, replace spaces and non-alphanumerics with underscores
-  return word.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_') + '.mp3';
-}
-
-async function speakWord(word) {
-  const filename = getAudioFilename(word);
-  const SUPABASE_PROJECT_ID = "fiieuiktlsivwfgyivai"; // This is NOT a secret
-  const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/tts-audio/${filename}`;
-  const audio = new Audio(url);
-  audio.play();
-}
-
-// Update your sound toggle logic:
-soundToggle.addEventListener('change', function() {
-  soundMuted = !soundToggle.checked;
-});
 
 // Feedback audio function
 export async function playFeedbackAudio(type) {
@@ -313,21 +281,3 @@ export async function playFeedbackAudio(type) {
     console.warn("Audio not found or not allowed to play:", url, e);
   });
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-  const bgMusic = document.getElementById('bgMusic');
-  const musicToggle = document.getElementById('musicToggle');
-  musicToggle.checked = !bgMusic.muted;
-  musicToggle.addEventListener('change', function() {
-    bgMusic.muted = !musicToggle.checked;
-  });
-
-  const soundToggle = document.getElementById('soundToggle');
-  window.soundMuted = false;
-  soundToggle.checked = !window.soundMuted;
-  soundToggle.addEventListener('change', function() {
-    window.soundMuted = !soundToggle.checked;
-  });
-});
-
-questionStartTime = Date.now();
