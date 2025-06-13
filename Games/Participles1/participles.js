@@ -1,5 +1,5 @@
 window.addEventListener('DOMContentLoaded', function() {
-  // Elements
+  // HTML Elements
   const startBtn = document.getElementById('startBtn');
   const startScreen = document.getElementById('startScreen');
   const quizScreen = document.getElementById('quizScreen');
@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', function() {
   let current = 0, score = 0, timerInterval = null, timeLeft = 20;
   let musicMuted = true;
 
-  // Hide quiz and end by default
+  // Hide quiz and end screens initially
   quizScreen.style.display = "none";
   endScreen.style.display = "none";
 
@@ -71,21 +71,14 @@ window.addEventListener('DOMContentLoaded', function() {
     q.options.forEach(opt => {
       const btn = document.createElement('button');
       btn.textContent = opt;
-      btn.onclick = () => checkAnswer(opt);
+      btn.onclick = () => {
+        if (opt === q.answer) score += 1;
+        scoreSpan.textContent = score;
+        current += 1;
+        showQuestion();
+      };
       optionsDiv.appendChild(btn);
     });
-  }
-
-  function checkAnswer(selected) {
-    const q = questions[current];
-    if (selected === q.answer) score += 1;
-    scoreSpan.textContent = score;
-    current += 1;
-    if (current < questions.length) {
-      showQuestion();
-    } else {
-      endGame();
-    }
   }
 
   function startTimer() {
