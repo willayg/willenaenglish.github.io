@@ -127,63 +127,31 @@ function playEndGameVoice(finalScore) {
   audio.play().catch(e => { console.warn("End game audio not found or not allowed to play:", url, e); });
 }
 
-async function submitScore() {
-  let name = nameInput.value.trim() || 'Anonymous';
-  submitBtn.disabled = true;
-  try {
-    await fetch('/.netlify/functions/submit_score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score, game: "Participles" })
-    });
-    submitBtn.style.display = 'none';
-    nameInput.style.display = 'none';
-    displayHighScores();
-  } catch (e) {
-    alert('Network error submitting score.');
-    submitBtn.disabled = false;
-  }
-}
-
-async function displayHighScores() {
-  try {
-    const response = await fetch('/.netlify/functions/submit_score?game=Participles');
-    if (!response.ok) {
-      highscoresList.innerHTML = '<li>Failed to load scores</li>';
-      return;
-    }
-    const data = await response.json();
-    highscoresList.innerHTML = '';
-    data.forEach(entry => {
-      const li = document.createElement('li');
-      li.textContent = `${entry.name}: ${entry.score}`;
-      highscoresList.appendChild(li);
-    });
-  } catch (e) {
-    highscoresList.innerHTML = '<li>Failed to load scores</li>';
-  }
-}
-
-// When game ends:
 function endGame() {
   quizScreen.style.display = 'none';
   endScreen.style.display = 'block';
   finalScoreSpan.textContent = score;
   playEndGameVoice(score);
-  displayHighScores();
-  nameInput.value = '';
-  nameInput.style.display = 'block';
-  nameInput.focus();
-  submitBtn.style.display = 'inline-block';
-  submitBtn.disabled = false;
+  displayHighScores(); // This now calls the helper from submit_score.js
+  submitBtn.style.display = '';
+  playAgainBtn.style.display = 'none';
+  nameInput.style.display = '';
+  if (timer) clearInterval(timer);
 }
 
-// Reset function
-window.resetGame = function() {
-  if (startScreen) startScreen.style.display = 'block';
-  if (quizScreen) quizScreen.style.display = 'none';
-  if (endScreen) endScreen.style.display = 'none';
-};
+function playFeedbackAudio(type) {
+  if (soundMuted) return;
+  const correctFiles = ["pos_1.mp3","pos_2.mp3","pos_3.mp3","pos_4.mp3","pos_5.mp3"];
+  const wrongFiles = ["neg_1.mp3","neg_2.mp3","neg_3.mp3","neg_4.mp3","neg_5.mp3"];
+  let fileList = type === "correct" ? correctFiles : wrongFiles;
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = "../../Assets/Audio/voices/steve/" + file;
+  const audio = new Audio(url);
+  audio.muted = soundMuted;
+  audio.play().catch(e => {
+    console.warn("Audio not found or not allowed to play:", url, e);
+  });
+}
 
 // Attach all event handlers and assign variables safely after DOM is loaded
 window.addEventListener('DOMContentLoaded', function() {
@@ -203,6 +171,8 @@ window.addEventListener('DOMContentLoaded', function() {
   bgMusic = document.getElementById('bgMusic');
   soundToggle = document.getElementById('soundToggle');
   musicToggle = document.getElementById('musicToggle');
+
+  window.game = "ParticiplesGame"; // Set the game name for the helpers
 
   // Make sure music is muted by default
   if (bgMusic) bgMusic.muted = true;
@@ -237,7 +207,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Submit button
   if (submitBtn) {
-    submitBtn.onclick = () => submitScore();
+    submitBtn.onclick = function() {
+      let name = nameInput.value.trim();
+      if (!name) {
+        name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
+        nameInput.value = name;
+      }
+      submitScore(); // Call the helper from submit_score.js
+    };
   }
 
   // Play again button
@@ -247,3 +224,10 @@ window.addEventListener('DOMContentLoaded', function() {
     };
   }
 });
+
+// Reset function
+window.resetGame = function() {
+  if (startScreen) startScreen.style.display = 'block';
+  if (quizScreen) quizScreen.style.display = 'none';
+  if (endScreen) endScreen.style.display = 'none';
+};
