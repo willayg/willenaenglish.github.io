@@ -248,24 +248,28 @@ async function speakWord(word) {
 
 async function playFeedbackAudio(phrase, type) {
   if (soundMuted) return;
-  try {
-    const res = await fetch('/.netlify/functions/get_feedback_audio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phrase, type })
-    });
-    const data = await res.json();
-    if (data.url) {
-      const audio = new Audio(data.url);
-      audio.play();
-    }
-  } catch (err) {
-    // Fallback to browser TTS if Eleven Labs fails
-    try {
-      speakResponse(phrase);
-    } catch (ttsErr) {
-      console.error('Browser TTS failed:', ttsErr);
-    }
-    console.error('Audio feedback error:', err);
-  }
+
+  // Arrays of local audio file names
+  const correctFiles = [
+    "rabbit_correct1.mp3",
+    "rabbit_correct2.mp3",
+    "rabbit_correct3.mp3",
+    "rabbit_correct4.mp3",
+    "rabbit_correct5.mp3"
+  ];
+  const wrongFiles = [
+    "rabbit_wrong1.mp3",
+    "rabbit_wrong2.mp3",
+    "rabbit_wrong3.mp3",
+    "rabbit_wrong4.mp3",
+    "rabbit_wrong5.mp3"
+  ];
+
+  // Pick a random file based on type
+  let fileList = type === "correct" ? correctFiles : wrongFiles;
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = `../../assets/audio/voices/rabbit/${file}`;
+
+  const audio = new Audio(url);
+  audio.play();
 }
