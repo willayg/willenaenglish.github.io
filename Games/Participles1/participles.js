@@ -167,7 +167,7 @@ function endGame() {
 
 // Highscore functions
 function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=EmojiGame')
+  fetch('/.netlify/functions/submit_score?game=ParticiplesGame')
     .then(res => res.json())
     .then(data => {
       highscoresList.innerHTML = '';
@@ -188,7 +188,7 @@ submitBtn.onclick = function() {
     body: JSON.stringify({
       name: name,
       score: score,
-      game: 'EmojiGame'
+      game: 'ParticiplesGame'
     })
   })
   .then(res => res.json())
