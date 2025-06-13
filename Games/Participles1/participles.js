@@ -1,25 +1,34 @@
 window.addEventListener('DOMContentLoaded', function() {
-  // Get elements
+  // Elements
   const startBtn = document.getElementById('startBtn');
   const startScreen = document.getElementById('startScreen');
   const quizScreen = document.getElementById('quizScreen');
   const endScreen = document.getElementById('endScreen');
   const bgMusic = document.getElementById('bgMusic');
   const musicToggle = document.getElementById('musicToggle');
-  let musicMuted = true; // default muted
+  const scoreSpan = document.getElementById('score');
+  const timerSpan = document.getElementById('timer');
+  const questionElem = document.getElementById('question');
+  const optionsDiv = document.getElementById('options');
+  const finalScoreSpan = document.getElementById('finalScore');
 
-  // Hide quiz and end screens initially
-  if (quizScreen) quizScreen.style.display = "none";
-  if (endScreen) endScreen.style.display = "none";
+  // Game state
+  const questions = window.participlesQuestions || [];
+  let current = 0, score = 0, timerInterval = null, timeLeft = 20;
+  let musicMuted = true;
 
-  // Music defaults
+  // Hide quiz and end by default
+  quizScreen.style.display = "none";
+  endScreen.style.display = "none";
+
+  // Music setup
   if (bgMusic) {
     bgMusic.muted = true;
     bgMusic.pause();
   }
   if (musicToggle) {
-    musicToggle.textContent = '🔇 Music';
     musicToggle.checked = false;
+    musicToggle.nextElementSibling.textContent = '🔇 Music';
     musicToggle.onclick = function() {
       musicMuted = !musicMuted;
       if (bgMusic) {
@@ -30,42 +39,35 @@ window.addEventListener('DOMContentLoaded', function() {
           bgMusic.pause();
         }
       }
-      musicToggle.textContent = musicMuted ? '🔇 Music' : '🎵 Music';
+      musicToggle.nextElementSibling.textContent = musicMuted ? '🔇 Music' : '🎵 Music';
     };
   }
 
-  // Use questions from participles_contents.js
-  const questions = window.participlesQuestions || [];
-  let current = 0, score = 0, timerInterval = null, timeLeft = 20;
-
-  // Hook up Start Game button
-  if (startBtn) {
-    startBtn.addEventListener('click', function() {
-      if (startScreen) startScreen.style.display = "none";
-      if (quizScreen) quizScreen.style.display = "block";
-      if (endScreen) endScreen.style.display = "none";
-      startGame();
-    });
-  }
+  // Start game
+  startBtn.addEventListener('click', function() {
+    startScreen.style.display = "none";
+    quizScreen.style.display = "block";
+    endScreen.style.display = "none";
+    startGame();
+  });
 
   function startGame() {
     current = 0;
     score = 0;
     timeLeft = 20;
+    scoreSpan.textContent = score;
     showQuestion();
     startTimer();
-    updateScore();
   }
 
   function showQuestion() {
+    if (current >= questions.length) {
+      endGame();
+      return;
+    }
     const q = questions[current];
-    const optionsDiv = document.getElementById('options');
+    questionElem.textContent = `What is the past participle of "${q.base}"?`;
     optionsDiv.innerHTML = "";
-    // Show the base verb as question
-    const questionText = document.createElement('div');
-    questionText.textContent = `Past participle of "${q.base}"?`;
-    optionsDiv.appendChild(questionText);
-
     q.options.forEach(opt => {
       const btn = document.createElement('button');
       btn.textContent = opt;
@@ -77,8 +79,8 @@ window.addEventListener('DOMContentLoaded', function() {
   function checkAnswer(selected) {
     const q = questions[current];
     if (selected === q.answer) score += 1;
+    scoreSpan.textContent = score;
     current += 1;
-    updateScore();
     if (current < questions.length) {
       showQuestion();
     } else {
@@ -86,13 +88,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  function updateScore() {
-    const scoreSpan = document.getElementById('score');
-    if (scoreSpan) scoreSpan.textContent = score;
-  }
-
   function startTimer() {
-    const timerSpan = document.getElementById('timer');
     if (timerInterval) clearInterval(timerInterval);
     timeLeft = 20;
     timerSpan.textContent = timeLeft;
@@ -107,16 +103,17 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 
   function endGame() {
-    if (quizScreen) quizScreen.style.display = "none";
-    if (endScreen) endScreen.style.display = "block";
-    document.getElementById('finalScore').textContent = score;
-    // Optionally: load highscores, etc
+    if (timerInterval) clearInterval(timerInterval);
+    quizScreen.style.display = "none";
+    endScreen.style.display = "block";
+    finalScoreSpan.textContent = score;
   }
 
-  // Optional: hook up restart button
   window.resetGame = function() {
-    if (endScreen) endScreen.style.display = "none";
-    if (startScreen) startScreen.style.display = "block";
-    if (quizScreen) quizScreen.style.display = "none";
+    endScreen.style.display = "none";
+    startScreen.style.display = "block";
+    quizScreen.style.display = "none";
+    scoreSpan.textContent = "0";
+    timerSpan.textContent = "20";
   };
 });
