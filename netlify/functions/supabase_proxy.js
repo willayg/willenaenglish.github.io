@@ -25,10 +25,29 @@ exports.handler = async (event) => {
     }
   }
 
-  // General CRUD handler
   const method = event.httpMethod;
   const body = event.body ? JSON.parse(event.body) : {};
   const table = body.table || 'users'; // Default table
+
+  if (body.action === "login") {
+    const { name, password } = body;
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("name", name)
+      .eq("password", password)
+      .single();
+    if (error || !data) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ status: "not_found" }),
+      };
+    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ status: "success", user: data }),
+    };
+  }
 
   let result;
 

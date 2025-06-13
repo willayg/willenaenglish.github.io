@@ -1,8 +1,8 @@
 {
   "name": "student-profile-app",
   "version": "1.0.0",
-  "description": "A simple application for managing student profiles and sign-up.",
-  "main": "src/index.js",
+  "description": "A student profile application that displays student information and allows interaction.",
+  "main": "src/App.tsx",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -12,17 +12,19 @@
   "dependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3"
+    "react-router-dom": "^5.3.0",
+    "typescript": "^4.4.4"
   },
   "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-plugin-react": "^7.27.1"
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
+    "@types/react-router-dom": "^5.3.0"
   },
   "keywords": [
     "student",
     "profile",
-    "signup",
-    "react"
+    "react",
+    "typescript"
   ],
   "author": "Your Name",
   "license": "MIT"
