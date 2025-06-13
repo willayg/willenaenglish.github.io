@@ -153,6 +153,29 @@ function playFeedbackAudio(type) {
   });
 }
 
+async function displayHighScores() {
+  highscoresList.innerHTML = '<li>Loading...</li>';
+  try {
+    const response = await fetch('/.netlify/functions/submit_score?game=ParticiplesGame');
+    if (!response.ok) {
+      highscoresList.innerHTML = '<li>Failed to load scores</li>';
+      return;
+    }
+    const data = await response.json();
+    highscoresList.innerHTML = '';
+    (data.scores || []).forEach((entry, i) => {
+      const li = document.createElement('li');
+      li.textContent = `${i + 1}. ${entry.name || 'Anonymous'} - ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+    if ((data.scores || []).length === 0) {
+      highscoresList.innerHTML = '<li>No scores yet</li>';
+    }
+  } catch (e) {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+  }
+}
+
 // Attach all event handlers and assign variables safely after DOM is loaded
 window.addEventListener('DOMContentLoaded', function() {
   // Assign variables after DOM is ready
@@ -205,33 +228,42 @@ window.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // ... [other game code above]
-
-// New submitScore function (paste this)
-async function submitScore() {
-  const name = nameInput.value || 'Anonymous';
-  const submitBtn = document.getElementById('submitBtn');
-  if (submitBtn) {
-    submitBtn.disabled = true;
+  async function submitScore() {
+    const name = nameInput.value || 'Anonymous';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+    }
+    await fetch('/.netlify/functions/submit_score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score, game: "ParticiplesGame" })
+    });
+    if (submitBtn) submitBtn.style.display = 'none';
+    if (nameInput) nameInput.style.display = 'none';
+    displayHighScores();
   }
-  await fetch('/.netlify/functions/submit_score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "ParticiplesGame" })
-  });
-  if (submitBtn) submitBtn.style.display = 'none';
-  nameInput.style.display = 'none';
-  displayHighScores();
-}
 
-// Attach to button (if not already)
-submitBtn.addEventListener('click', submitScore);
+  if (submitBtn) submitBtn.addEventListener('click', submitScore);
 
-// ... [other game code below]
+  if (playAgainBtn) {
+    playAgainBtn.addEventListener('click', function() {
+      // Reset name input and button visibility for next game
+      if (nameInput) {
+        nameInput.value = '';
+        nameInput.style.display = 'none';
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.display = 'none';
+      }
+      startGame();
+    });
+  }
 
-// Reset function
-window.resetGame = function() {
-  if (startScreen) startScreen.style.display = 'block';
-  if (quizScreen) quizScreen.style.display = 'none';
-  if (endScreen) endScreen.style.display = 'none';
-};
+  // Reset function (if you need to expose it globally)
+  window.resetGame = function() {
+    if (startScreen) startScreen.style.display = 'block';
+    if (quizScreen) quizScreen.style.display = 'none';
+    if (endScreen) endScreen.style.display = 'none';
+  };
+});
