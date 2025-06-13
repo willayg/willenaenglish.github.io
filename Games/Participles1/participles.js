@@ -205,25 +205,29 @@ window.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Submit button
-  if (submitBtn) {
-    submitBtn.onclick = function() {
-      let name = nameInput.value.trim();
-      if (!name) {
-        name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
-        nameInput.value = name;
-      }
-      submitScore(); // Call the helper from submit_score.js
-    };
-  }
+  // ... [other game code above]
 
-  // Play again button
-  if (playAgainBtn) {
-    playAgainBtn.onclick = function() {
-      window.resetGame();
-    };
+// New submitScore function (paste this)
+async function submitScore() {
+  const name = nameInput.value || 'Anonymous';
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
   }
-});
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "ParticiplesGame" })
+  });
+  if (submitBtn) submitBtn.style.display = 'none';
+  nameInput.style.display = 'none';
+  displayHighScores();
+}
+
+// Attach to button (if not already)
+submitBtn.addEventListener('click', submitScore);
+
+// ... [other game code below]
 
 // Reset function
 window.resetGame = function() {
