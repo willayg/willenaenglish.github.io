@@ -114,12 +114,12 @@ function checkAnswer(choice, btnClicked) {
   if (choice.toLowerCase() !== correctText) {
     btnClicked.style.backgroundColor = '#e53935';
     btnClicked.style.color = '#fff';
-    const response = wrongResponses[Math.floor(Math.random() * wrongResponses.length)];
-    playFeedbackAudio(response, 'wrong');   // only play the voice
+    // const response = wrongResponses[Math.floor(Math.random() * wrongResponses.length)];
+    playFeedbackAudio('wrong');   // only play the voice
     score -= 100;
   } else {
-    const response = correctResponses[Math.floor(Math.random() * correctResponses.length)];
-    playFeedbackAudio(response, 'correct'); // only play the voice
+    // const response = correctResponses[Math.floor(Math.random() * correctResponses.length)];
+    playFeedbackAudio('correct'); // only play the voice
     score += 300;
   }
 
