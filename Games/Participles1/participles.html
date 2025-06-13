@@ -1,320 +1,285 @@
-import { participlesQuestions } from './participles_contents.js';
-
-const startScreen = document.getElementById('startScreen');
-const quizScreen = document.getElementById('quizScreen');
-const endScreen = document.getElementById('endScreen');
-const emojiDiv = document.getElementById('emoji');
-const optionsDiv = document.getElementById('options');
-const scoreSpan = document.getElementById('score');
-const timerSpan = document.getElementById('timer');
-const finalScoreSpan = document.getElementById('finalScore');
-const highscoresList = document.getElementById('highscores');
-const submitBtn = document.getElementById('submitBtn');
-const playAgainBtn = document.getElementById('playAgainBtn');
-const nameInput = document.getElementById('nameInput');
-const bgMusic = document.getElementById('bgMusic');
-const soundToggle = document.getElementById('soundToggle');
-const musicToggle = document.getElementById('musicToggle');
-
-let questions = participlesQuestions.slice();
-let currentQuestionIndex = 0;
-let score = 0;
-let timer = null;
-let timeLeft = 25; // 25 seconds for the whole game
-let soundMuted = false; // Make sure this is set globally
-let musicMuted = false;
-let questionStartTime = 0;
-
-const correctSound = new Audio('../../Assets/Audio/right.mp3');
-const wrongSound = new Audio('../../Assets/Audio/wrong.mp3');
-const endGameSound = new Audio('../../Assets/Audio/endgame.mp3');
-correctSound.muted = musicMuted;
-wrongSound.muted = musicMuted;
-endGameSound.muted = musicMuted;
-
-const correctResponses = [
-  "Nice job!",
-  "You're Awesome!",
-  "Wow! That was right!",
-  "You got it right!",
-  "That's the correct answer. Cool!"
-];
-
-const wrongResponses = [
-  "That's too bad.",
-  "You got that one wrong.",
-  "Oops.",
-  "Oh my!",
-  "You made a mistake."
-];
-
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <meta http-equiv="Content-Language" content="en">
+  <meta name="naver" content="notranslate">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Past Participle Basher</title>
+  <style>
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Disable scrolling */
 }
 
-function startGame() {
-  shuffle(questions);
-  currentQuestionIndex = 0;
-  score = 0;
-  timeLeft = 25;
-  scoreSpan.textContent = score;
-  timerSpan.textContent = timeLeft;
-  startScreen.style.display = 'none';
-  quizScreen.style.display = 'block';
-  endScreen.style.display = 'none';
-  if (timer) clearInterval(timer);
-  timer = setInterval(() => {
-    timeLeft--;
-    timerSpan.textContent = timeLeft;
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      endGame();
+body {
+  font-family: 'Poppins', sans-serif;
+  background: url('../../Assets/Images/backgrounds/CHALLENGE.jpg') no-repeat center center fixed;
+  background-size: cover;
+  background-color: rgb(119, 109, 16);
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+
+    .container {
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 20px;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
     }
-  }, 1000);
-  showQuestion();
-}
-
-function showQuestion() {
-  if (currentQuestionIndex >= questions.length) {
-    endGame();
-    return;
-  }
-  const q = questions[currentQuestionIndex];
-  emojiDiv.textContent = q.base;
-  optionsDiv.innerHTML = '';
-  const choices = shuffle(q.options.slice());
-  choices.forEach(choice => {
-    const btn = document.createElement('button');
-    btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
-    btn.disabled = false; // Ensure button is enabled for the new question
-    btn.onclick = () => checkAnswer(choice, btn);
-    optionsDiv.appendChild(btn);
-  });
-  questionStartTime = Date.now();
-}
-
-function speakResponse(text) {
-  if (soundMuted) return;
-  const utter = new window.SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
-  window.speechSynthesis.speak(utter);
-}
-
-function checkAnswer(choice, btnClicked) {
-  const q = questions[currentQuestionIndex];
-  const buttons = document.querySelectorAll('#options button');
-  const correctText = q.answer.toLowerCase();
-
-  // Disable all buttons immediately to prevent spamming
-  buttons.forEach(btn => btn.disabled = true);
-
-  // Calculate answer time and bonus/penalty
-  const answerTime = (Date.now() - questionStartTime) / 1000; // in seconds
-  let bonus = 0;
-  let penalty = 0;
-
-  if (choice.toLowerCase() !== correctText) {
-    btnClicked.style.backgroundColor = '#e53935';
-    btnClicked.style.color = '#fff';
-    playFeedbackAudio('wrong');
-    score -= 100;
-    // Extra penalty for fast wrong answers
-    if (answerTime <= 0.5) {
-      penalty = 200;
-      score -= penalty;
-      // Optionally, show a penalty message:
-      // emojiDiv.innerHTML += '<div style="color: red; font-size: 1.2em;">-200 Fast Penalty!</div>';
+    #quizScreen, #endScreen {
+      display: none;
     }
-  } else {
-    playFeedbackAudio('correct');
-    score += 300;
-    // Fast correct bonus
-    if (answerTime <= 0.8) {
-      bonus = 150;
-      score += bonus;
-      // Optionally, show a bonus message:
-      // emojiDiv.innerHTML += '<div style="color: gold; font-size: 1.2em;">+150 Bonus!</div>';
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      background-color: #ff9800; /* orange */
+      color: white;
+      border: 2px solid #ff9800;
+      border-radius: 10px;
+      margin-top: 20px;
     }
-  }
-
-  scoreSpan.textContent = score;
-  setTimeout(nextQuestion, 500);
-}
-
-function nextQuestion() {
-  currentQuestionIndex++;
-  showQuestion();
-}
-
-function playEndGameVoice(finalScore) {
-  let file;
-  if (finalScore < 0) {
-    file = "end_bad.mp3";
-  } else if (finalScore > 2300) {
-    file = "end_outstanding.mp3";
-  } else if (finalScore > 1300) {
-    file = "end_good.mp3";
-  } else if (finalScore > 800) {
-    file = "end_fair.mp3";
-  } else {
-    file = "end_bad.mp3";
-  }
-  const url = "../../Assets/Audio/voices/steve/" + file;
-  const audio = new Audio(url);
-  audio.play().catch(e => {
-    console.warn("End game audio not found or not allowed to play:", url, e);
-  });
-}
-
-function endGame() {
-  quizScreen.style.display = 'none';
-  endScreen.style.display = 'block';
-  finalScoreSpan.textContent = score;
-  playEndGameVoice(score);
-  displayHighScores();
-  // Show submit, hide play again at first
-  submitBtn.style.display = '';
-  playAgainBtn.style.display = 'none';
-  nameInput.style.display = '';
-  if (timer) clearInterval(timer);
-}
-
-// Highscore functions
-function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=ParticiplesGame')
-    .then(res => res.json())
-    .then(data => {
-      highscoresList.innerHTML = '';
-      (data || []).slice(0, 10).forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        highscoresList.appendChild(li);
-      });
-    });
-}
-
-submitBtn.onclick = function() {
-  const name = nameInput.value.trim();
-  if (!name) return;
-  fetch('/.netlify/functions/submit_score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: name,
-      score: score,
-      game: 'ParticiplesGame'
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      submitBtn.style.display = 'none';
-      playAgainBtn.style.display = '';
-      nameInput.style.display = 'none';
-      alert('Score submitted!');
-      displayHighScores();
-    } else {
-      alert('Error submitting score.');
+    button:active {
+      background-color: #fb8c00; /* darker orange */
+      color: #fff;
     }
-  })
-  .catch(err => {
-    alert('Network error submitting score.');
-  });
-};
-
-soundToggle.onclick = function() {
-  soundMuted = !soundMuted;
-  correctSound.muted = soundMuted;
-  wrongSound.muted = soundMuted;
-  endGameSound.muted = soundMuted;
-  soundToggle.textContent = soundMuted ? '🔇 Sound' : '🔊 Sound';
-};
-
-musicToggle.onclick = function() {
-  musicMuted = !musicMuted;
-  bgMusic.muted = musicMuted;
-  musicToggle.textContent = musicMuted ? '🔇 Music' : '🎵 Music';
-};
-
-document.getElementById('startBtn').addEventListener('click', () => {
-  startGame();
-  const bgMusic = document.getElementById('bgMusic');
-  if (bgMusic) bgMusic.play();
-});
-
-window.resetGame = function() {
-  startScreen.style.display = 'block';
-  quizScreen.style.display = 'none';
-  endScreen.style.display = 'none';
-};
-
-const allWords = [
-  ...wordData.foodWords,
-  ...wordData.toyWords,
-  ...wordData.animalWords
-  // add more if you have them
-];
-
-function getAudioFilename(word) {
-  // Lowercase, trim, replace spaces and non-alphanumerics with underscores
-  return word.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_') + '.mp3';
+    .options {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
 }
 
-async function speakWord(word) {
-  const filename = getAudioFilename(word);
-  const SUPABASE_PROJECT_ID = "fiieuiktlsivwfgyivai"; // This is NOT a secret
-  const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/tts-audio/${filename}`;
-  const audio = new Audio(url);
-  audio.play();
+.options button {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+    #logo {
+      width: 100px;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    #emoji {
+      font-size: 2em;
+      flex: 0 0 auto;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .status-bar {
+      display: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .status-item {
+      font-size: 2em;
+      font-weight: bold;
+      width: 80px;
+      text-align: center;
+    }
+#nameInput {
+  display: block;
+  margin: 20px auto;
+  text-align: center;
 }
 
-// Update your sound toggle logic:
-soundToggle.addEventListener('change', function() {
-  soundMuted = !soundToggle.checked;
-});
-
-// Feedback audio function
-export async function playFeedbackAudio(type) {
-  if (soundMuted) return;
-
-  const correctFiles = [
-    "pos_1.mp3",
-    "pos_2.mp3",
-    "pos_3.mp3",
-    "pos_4.mp3",
-    "pos_5.mp3"
-  ];
-  const wrongFiles = [
-    "neg_1.mp3",
-    "neg_2.mp3",
-    "neg_3.mp3",
-    "neg_4.mp3",
-    "neg_5.mp3"
-  ];
-  let fileList = type === "correct" ? correctFiles : wrongFiles;
-  let file = fileList[Math.floor(Math.random() * fileList.length)];
-  let url = "../../Assets/Audio/voices/steve/" + file;
-  const audio = new Audio(url);
-  audio.muted = soundMuted; // This ensures muting works even if toggled during playback
-  audio.play().catch(e => {
-    console.warn("Audio not found or not allowed to play:", url, e);
-  });
+.noselect {
+  user-select: none;
+}
+#soundToggle {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-size: 2em;
+  background: none;
+  border: none;
+  color: #388e3c;
+  cursor: pointer;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+.toggle-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin: 24px auto 0 auto;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const bgMusic = document.getElementById('bgMusic');
-  const musicToggle = document.getElementById('musicToggle');
-  musicToggle.checked = !bgMusic.muted;
-  musicToggle.addEventListener('change', function() {
-    bgMusic.muted = !musicToggle.checked;
-  });
+#soundToggle, #musicToggle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7em;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: none;
+  border: 2px solid #388e3c;
+  color: #388e3c;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  min-width: 80px;
+}
 
-  const soundToggle = document.getElementById('soundToggle');
-  window.soundMuted = false;
-  soundToggle.checked = !window.soundMuted;
-  soundToggle.addEventListener('change', function() {
-    window.soundMuted = !soundToggle.checked;
-  });
-});
+#soundToggle:active, #musicToggle:active {
+  background: #388e3c;
+  color: #fff;
+}
 
-questionStartTime = Date.now();
+.toggle-music, .toggle-sound {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+/* Toggle switch base styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 18px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ff9800 !important;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #ff9800 !important;
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+/* Korean label styling */
+.toggle-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #4e2e0e; /* dark brown */
+  margin-left: 6px;
+  margin-right: 12px;
+  vertical-align: middle;
+  text-shadow: 1px 1px 4px #fff8, 0 2px 8px #0006;
+}
+
+/* Positioning */
+.toggle-music {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-sound {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+}
+
+.switch, .slider, .slider:before {
+  /* Add drop shadow to the switch and slider */
+  box-shadow: 0 2px 8px #0004, 0 1px 2px #fff4;
+}
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+</head>
+<body translate="no">
+<a href="../../challengezone.html" class="notranslate">
+  <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
+</a>
+<div class="container">
+  <div id="startScreen">
+    <h1>Guess The Past Participle</h1>
+    <!-- Removed category selection dropdown -->
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <div id="quizScreen">
+    <div class="status-bar">
+      <div class="status-item"><span id="timer">20</span>s</div>
+      <div id="emoji"></div>
+      <div class="status-item"><span id="score">0</span></div>
+    </div>
+    <div class="options" id="options"></div> <button id="restartButton" onclick="resetGame()" style="display: none; margin-top: 10px;">Restart</button>
+  </div>
+
+  <div id="endScreen">
+    <h2>Game Over!</h2>
+    <p>Your score: <span id="finalScore"></span></p>
+    <p>Top Scores:</p>
+    <ol id="highscores"></ol>
+    <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
+    <button id="submitBtn">Submit Score</button>
+    <button id="playAgainBtn" onclick="resetGame()" style="display:none;">Play Again</button>
+  </div>
+</div> <!-- end of .container -->
+
+  <div class="toggle-row">
+    <label class="switch">
+      <input type="checkbox" id="musicToggle">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🎵 음악</span>
+    <label class="switch">
+      <input type="checkbox" id="soundToggle">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🔊 소리</span>
+  </div>
+<audio id="bgMusic" src="../../Assets/audio/junglemusic.mp3" autoplay loop></audio>
+
+  <script type="module" src="participles.js"></script>
+</body>
+</html>
