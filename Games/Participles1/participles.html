@@ -19,7 +19,7 @@ html, body {
 
 body {
   font-family: 'Poppins', sans-serif;
-  background: url('../../Assets/Images/backgrounds/CHALLENGE.jpg') no-repeat center center fixed;
+  background: url('../../Assets/Images/backgrounds/participles.jpg') no-repeat center center fixed;
   background-size: cover;
   background-color: rgb(119, 109, 16);
   color: white;
@@ -43,15 +43,27 @@ body {
     button {
       font-size: 1.2em;
       padding: 10px 20px;
-      background-color: #ff9800; /* orange */
-      color: white;
-      border: 2px solid #ff9800;
+      background-color: #232a3b; /* dark greyish blue */
+      color: #fff;
+      border: 2px solid #232a3b;
       border-radius: 10px;
       margin-top: 20px;
+      box-shadow: 0 0 16px 4px #ff4fd8, 0 0 8px 2px #ff4fd8; /* pink backglow */
+      transition: 
+        background 0.2s, 
+        color 0.2s, 
+        box-shadow 0.2s, 
+        border-color 0.2s,
+        transform 0.1s;
+      letter-spacing: 1px;
+      font-family: 'Poppins', 'Orbitron', 'monospace', sans-serif;
     }
     button:active {
-      background-color: #fb8c00; /* darker orange */
-      color: #fff;
+      background-color: #1a2030;
+      color: #ffb3f7;
+      box-shadow: 0 0 32px 8px #ff4fd8;
+      border-color: #ff4fd8;
+      transform: scale(0.97);
     }
     .options {
   display: flex;
@@ -64,6 +76,28 @@ body {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
+  margin-bottom: 8px;
+  background-color: #232a3b;
+  color: #fff;
+  border: 2px solid #232a3b;
+  border-radius: 10px;
+  box-shadow: 0 0 16px 4px #ff4fd8, 0 0 8px 2px #ff4fd8;
+  font-weight: bold;
+  font-size: 1.3em;
+  transition: 
+    background 0.2s, 
+    color 0.2s, 
+    box-shadow 0.2s, 
+    border-color 0.2s,
+    transform 0.1s;
+}
+
+.options button:active {
+  background-color: #1a2030;
+  color: #ffb3f7;
+  box-shadow: 0 0 32px 8px #ff4fd8;
+  border-color: #ff4fd8;
+  transform: scale(0.97);
 }
     #logo {
       width: 100px;
