@@ -16,7 +16,7 @@ exports.handler = async (event, context) => {
   try {
     await b2.authorize();
     const buckets = await b2.listBuckets();
-    console.log('Buckets found:', buckets.data.buckets.map(b => b.bucketName)); // Add this line
+    console.log('Buckets found:', buckets.data.buckets.map(b => b.bucketName));
     const bucket = buckets.data.buckets.find(b => b.bucketName === BUCKET_NAME);
     if (!bucket) {
       return {
