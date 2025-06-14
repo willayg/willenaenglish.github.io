@@ -502,37 +502,16 @@ function endGame() {
 }
 
 async function submitScore(forcedName) {
-  const submitBtn = document.getElementById('submitBtn');
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.style.display = 'none';
-  }
+  const nameInput = document.getElementById('nameInput');
+  const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
 
-  let name = forcedName || nameInput.value || 'Anonymous';
-  if (typeof name !== 'string') name = nameInput.value || 'Anonymous';
-
-  // Submit score
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "PresentGame1" })
+    body: JSON.stringify({ name: user_name, score, game: "PresentGame1", user_id })
   });
-
-  // Display high scores
-  async function displayHighScores() {
-    const response = await fetch('/.netlify/functions/submit_score?game=PresentGame1');
-    const data = await response.json();
-    if (response.ok) {
-      highscoresList.innerHTML = '';
-      data.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        highscoresList.appendChild(li);
-      });
-    } else {
-      highscoresList.innerHTML = '<li>Failed to load scores</li>';
-    }
-  }
 }
 
 async function displayHighScores() {
