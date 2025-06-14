@@ -31,7 +31,7 @@ exports.handler = async (event) => {
     } else {
       return {
         statusCode: 200,
-        body: JSON.stringify({ status: "name_taken" })
+        body: JSON.stringify({ status: "wrong_password" }) // <-- changed!
       };
     }
   }
