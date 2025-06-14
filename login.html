@@ -103,8 +103,8 @@
       if (response.ok && result.status === 'login') {
         storeUser(result.user.id, result.user.name, stayLoggedIn);
         window.location.href = "index.html";
-      } else if (response.ok && result.status === 'name_taken') {
-        alert("이 이름은 이미 사용 중입니다. 다른 이름을 입력해 주세요.");
+      } else if (response.ok && result.status === 'wrong_password') {
+        alert("비밀번호가 올바르지 않습니다."); // "The password is incorrect."
       } else if (response.ok && result.status === 'created') {
         storeUser(result.user.id, result.user.name, stayLoggedIn);
         window.location.href = "profile-s.html"; // Redirect new users to profile setup
