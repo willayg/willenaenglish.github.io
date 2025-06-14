@@ -536,48 +536,73 @@ function endGame() {
   const feedback = document.getElementById("feedback");
   feedback.textContent = "";
 
-  // Show name input and submit button
-  const nameInput = document.createElement("input");
-  nameInput.type = "text";
-  nameInput.placeholder = "Your name";
-  nameInput.id = "nameInput";
-  nameInput.style.margin = "20px auto";
-  nameInput.style.padding = "16px";
-  nameInput.style.borderRadius = "10px";
-  nameInput.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      submitBtn.click();
-    }
+  // Check if user is logged in
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
+  if (user_id && user_name) {
+    // Autosubmit for logged-in user
+    submitScore(user_name, user_id);
+  } else {
+    // Show name input and submit button for guests
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "Your name";
+    nameInput.id = "nameInput";
+    nameInput.style.margin = "20px auto";
+    nameInput.style.padding = "16px";
+    nameInput.style.borderRadius = "10px";
+    nameInput.addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitBtn.click();
+      }
+    });
+
+    const submitBtn = document.createElement("button");
+    submitBtn.textContent = "Submit Score";
+    submitBtn.className = "start-button";
+    submitBtn.style.fontSize = "20px";
+    submitBtn.style.padding = "8px 16px";
+    submitBtn.style.marginTop = "10px";
+    submitBtn.onclick = async () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert("Please enter your name!");
+        return;
+      }
+      await submitScore(name, null);
+      submitBtn.style.display = "none";
+      nameInput.style.display = "none";
+      // Add replay button
+      const playAgainBtn = document.createElement("button");
+      playAgainBtn.textContent = "Play Again";
+      playAgainBtn.className = "start-button";
+      playAgainBtn.style.zIndex = "1001";
+      playAgainBtn.style.position = "relative";
+      playAgainBtn.style.pointerEvents = "auto";
+      playAgainBtn.onclick = () => location.reload();
+      feedback.appendChild(playAgainBtn);
+    };
+
+    const container = document.getElementById("feedback");
+    container.appendChild(document.createElement("br"));
+    container.appendChild(nameInput);
+    container.appendChild(submitBtn);
+  }
+}
+
+// New submitScore function
+async function submitScore(name, user_id) {
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "cutie_past_tense", user_id })
   });
-
-  const submitBtn = document.createElement("button");
-  submitBtn.textContent = "Submit Score";
-  submitBtn.className = "start-button";
-  submitBtn.style.fontSize = "20px";
-  submitBtn.style.padding = "8px 16px";
-  submitBtn.style.marginTop = "10px";
-  submitBtn.onclick = async () => {
-    const name = document.getElementById("nameInput").value.trim();
-    if (!name) {
-      alert("Please enter your name!");
-      return;
-    }
-
-    const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
-const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
-
-await fetch('/.netlify/functions/submit_score', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name: user_name, score, game: "cutie_past_tense", user_id })
-});
-
-    window.score = score;
-    submitBtn.style.display = "none"; // Hide the submit button
-    nameInput.style.display = "none"; // Hide the name input
-
-    // Now add the replay button
+  window.score = score;
+  // Optionally, you can show the play again button here for logged-in users
+  if (user_id) {
+    const feedback = document.getElementById("feedback");
     const playAgainBtn = document.createElement("button");
     playAgainBtn.textContent = "Play Again";
     playAgainBtn.className = "start-button";
@@ -586,12 +611,7 @@ await fetch('/.netlify/functions/submit_score', {
     playAgainBtn.style.pointerEvents = "auto";
     playAgainBtn.onclick = () => location.reload();
     feedback.appendChild(playAgainBtn);
-  };
-
-  const container = document.getElementById("feedback");
-  container.appendChild(document.createElement("br"));
-  container.appendChild(nameInput);
-  container.appendChild(submitBtn);
+  }
 }
 
 function toggleHighScores() {

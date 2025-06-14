@@ -272,16 +272,3 @@ async function playFeedbackAudio(phrase, type) {
     // console.warn("Audio not found:", url);
   });
 }
-
-async function submitScore(forcedName) {
-  const nameInput = document.getElementById('nameInput');
-  const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
-  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
-  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
-
-  await fetch('/.netlify/functions/submit_score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: user_name, score, game: "4_b_game", user_id })
-  });
-}
