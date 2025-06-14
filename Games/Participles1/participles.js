@@ -244,15 +244,11 @@ window.addEventListener('DOMContentLoaded', function() {
     if (!name) {
       name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
     }
-    // Get user info if logged in
-    const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
-    const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
-
     submitBtn.disabled = true;
     await fetch('/.netlify/functions/submit_score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: user_name, score, game: "ParticiplesGame", user_id })
+      body: JSON.stringify({ name, score, game: "ParticiplesGame" })
     });
     submitBtn.style.display = 'none';
     nameInput.style.display = 'none';
