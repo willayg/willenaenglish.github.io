@@ -454,7 +454,7 @@
       margin-top: 26px;
       width: 74px;
     /* Add drop shadow */
-      filter: drop-shadow(0 8px 50px rgba(7, 2, 29, 0.25));
+      filter: drop-shadow(0 1px 2px rgba(3, 0, 14, 0.25));
   }
 </style>
   </style>
@@ -481,22 +481,11 @@
         <span class="avatar-edit-label" title="Change Avatar">🎨</span>
       </div>
       <!-- Display user name under avatar -->
-      <div id="profileUserName" style="font-size:1.25em; font-weight:700; margin-bottom:4px; color:#7a5cfa;"></div>
       <!-- Display user id under avatar -->
-      <div id="profileUserId" style="font-size:0.98em; color:#888; margin-bottom:18px;"></div>
       <!-- Login Name (required) -->
       <div class="profile-field">
-        <label class="profile-label" for="loginNameInput">로그인 아이디 (Login Name) <span style="color:red">*</span></label>
-        <input id="loginNameInput" class="profile-input" placeholder="아이디를 입력하세요" required />
-      </div>
 
-      <!-- Password (required) -->
-      <div class="profile-field">
-        <label class="profile-label" for="passwordInput">비밀번호 (Password) <span style="color:red">*</span></label>
-        <input id="passwordInput" class="profile-input" type="password" placeholder="비밀번호를 입력하세요" required />
-      </div>
 
-      <!-- Korean Name (optional) -->
       <div class="profile-field">
         <label class="profile-label" for="koreanNameInput">이름(한글)</label>
         <input id="koreanNameInput" class="profile-input" placeholder="예: 김지민" />
@@ -581,7 +570,7 @@
           </select>
         </div>
       </div>
-      <button class="save-btn" onclick="alert('저장되었습니다! (데모)')">저장</button>
+      <button class="save-btn" id="resetPasswordBtn" type="button">비밀번호 재설정 (Reset Password)</button>
 
       <!-- Activity Section Filter Buttons -->
       <div class="activity-filter-slider" id="activityFilterSlider">
@@ -607,8 +596,31 @@
           </tbody>
         </table>
       </div>
-      <a href="index.html"><img src="Logo.png" class="logo" alt="Logo"></a>
-    </div>
+      <a href="index.html"></a>
+        <img src="Assets/Images/logo.png" class="logo" alt="Logo" style="display: block; margin: 24px auto;" />
+      <!-- Place logout button here, inside .box -->
+      <div
+        style="
+          margin: 32px auto 0 auto;
+          background: #fff;
+          color: #000;
+          border: 2px solid #222;
+          border-radius: 22px;
+          font-size: 1em;
+          padding: 10px 32px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(44,44,44,0.07);
+          font-weight: 600;
+          display: block;
+          width: fit-content;
+          transition: background 0.18s, color 0.18s, border 0.18s;
+          text-align: center;
+        "
+        onclick="logoutUser()"
+      >
+        로그아웃
+      </div>
+    </div> <!-- This is the end of .box -->
   </div>
   <!-- Overlay -->
   <div class="overlay-bg" id="avatarOverlay" aria-hidden="true" tabindex="-1">
@@ -620,6 +632,26 @@
       <div style="font-size:.97em;color:#7a5cfa;">Click your favorite to select!</div>
     </div>
   </div>
+  <!-- Reset Password Overlay -->
+  <div class="overlay-bg" id="resetPasswordOverlay" aria-hidden="true" tabindex="-1">
+    <div class="overlay-window" role="dialog" aria-modal="true" aria-labelledby="resetPasswordOverlayTitle">
+      <button class="close-btn" id="closeResetOverlayBtn" aria-label="Close">&times;</button>
+      <div class="overlay-title" id="resetPasswordOverlayTitle">비밀번호 재설정</div>
+      <div style="margin-bottom: 16px; font-size: 1em; color: #2e2a3c;">
+        새로운 비밀번호를 입력하고 확인 버튼을 클릭하세요.
+      </div>
+      <input type="password" id="newPasswordInput" class="profile-input" placeholder="새 비밀번호" style="margin-bottom: 18px;" />
+      <button class="save-btn" id="submitResetPasswordBtn" type="button" style="width: 100%;">확인</button>
+    </div>
+  </div>
+</div>
+<script>
+function logoutUser() {
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = "login.html";
+}
+</script>
   <script>
     // THEME and NAV logic
     const themeSelect = document.getElementById("themeSelect");
@@ -797,6 +829,48 @@
     });
     document.addEventListener('keydown', function(e){
       if(avatarOverlay.getAttribute("aria-hidden") === "false" && e.key === "Escape") closeOverlay();
+    });
+
+    // Reset Password Overlay logic
+    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+    const resetPasswordOverlay = document.getElementById('resetPasswordOverlay');
+    const closeResetOverlayBtn = document.getElementById('closeResetOverlayBtn');
+    const submitResetPasswordBtn = document.getElementById('submitResetPasswordBtn');
+
+    resetPasswordBtn.addEventListener('click', () => {
+      resetPasswordOverlay.style.display = 'flex';
+      resetPasswordOverlay.setAttribute('aria-hidden', 'false');
+      document.getElementById('newPasswordInput').value = '';
+      setTimeout(() => document.getElementById('newPasswordInput').focus(), 100);
+    });
+    closeResetOverlayBtn.addEventListener('click', () => {
+      resetPasswordOverlay.style.display = 'none';
+      resetPasswordOverlay.setAttribute('aria-hidden', 'true');
+    });
+    resetPasswordOverlay.addEventListener('mousedown', function(e){
+      if(e.target === resetPasswordOverlay) {
+        resetPasswordOverlay.style.display = 'none';
+        resetPasswordOverlay.setAttribute('aria-hidden', 'true');
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if(resetPasswordOverlay.getAttribute("aria-hidden") === "false" && e.key === "Escape") {
+        resetPasswordOverlay.style.display = 'none';
+        resetPasswordOverlay.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    // Handle password reset submission (replace with your backend logic)
+    submitResetPasswordBtn.addEventListener('click', async () => {
+      const newPassword = document.getElementById('newPasswordInput').value;
+      if (!newPassword) {
+        alert('새 비밀번호를 입력하세요.');
+        return;
+      }
+      // TODO: Send newPassword to your backend to update the password
+      alert('비밀번호가 재설정되었습니다! (데모)');
+      resetPasswordOverlay.style.display = 'none';
+      resetPasswordOverlay.setAttribute('aria-hidden', 'true');
     });
 
     // --- Activity Section Data as JS arrays ---
