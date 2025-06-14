@@ -590,6 +590,9 @@ function endGame() {
     container.appendChild(nameInput);
     container.appendChild(submitBtn);
   }
+
+  // Restore the high score button after the game ends
+  document.getElementById("toggleScoresBtn").style.display = "block";
 }
 
 // New submitScore function

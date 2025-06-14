@@ -146,11 +146,46 @@ function endGame() {
   endScreen.style.display = 'block';
   finalScoreSpan.textContent = score;
   displayHighScores();
-  // Show submit, hide play again at first
-  submitBtn.style.display = '';
-  playAgainBtn.style.display = 'none';
-  nameInput.style.display = '';
-  if (timer) clearInterval(timer);
+
+  // Check if user is logged in
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  const nameInput = document.getElementById('nameInput');
+  if (user_id && user_name) {
+    // Autosubmit for logged-in user
+    if (nameInput) {
+      nameInput.value = user_name;
+      nameInput.style.display = 'none';
+    }
+    if (submitBtn) submitBtn.style.display = 'none';
+    submitScore(user_name, user_id);
+  } else {
+    // Show input and button for guests
+    if (nameInput) {
+      nameInput.value = '';
+      nameInput.style.display = 'block';
+      nameInput.focus();
+    }
+    if (submitBtn) submitBtn.style.display = 'inline-block';
+  }
+}
+
+async function submitScore(forcedName, forcedUserId) {
+  const nameInput = document.getElementById('nameInput');
+  const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
+  const user_id = forcedUserId || null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.disabled = true;
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "4_b_game", user_id }) // <-- set your game name here
+  });
+  if (submitBtn) submitBtn.style.display = 'none';
+  if (nameInput) nameInput.style.display = 'none';
+  displayHighScores();
 }
 
 // Highscore functions
@@ -272,3 +307,12 @@ async function playFeedbackAudio(phrase, type) {
     // console.warn("Audio not found:", url);
   });
 }
+
+// Attach handler on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.onclick = () => submitScore();
+  }
+});

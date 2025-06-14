@@ -304,82 +304,55 @@ function endGame() {
   endGameSound.play();
   displayHighScores();
 
-  // Check for logged-in user
-  const loggedInName = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+  // Check if user is logged in
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
   const submitBtn = document.getElementById('submitBtn');
-  if (loggedInName) {
-    nameInput.value = loggedInName;
-    nameInput.style.display = 'none';
+  const nameInput = document.getElementById('nameInput');
+  if (user_id && user_name) {
+    // Autosubmit for logged-in user
+    if (nameInput) {
+      nameInput.value = user_name;
+      nameInput.style.display = 'none';
+    }
     if (submitBtn) submitBtn.style.display = 'none';
-    submitScore(loggedInName); // auto-submit
+    submitScore(user_name, user_id);
   } else {
-    nameInput.style.display = 'block';
+    // Show input and button for guests
+    if (nameInput) {
+      nameInput.value = '';
+      nameInput.style.display = 'block';
+      nameInput.focus();
+    }
     if (submitBtn) submitBtn.style.display = 'inline-block';
   }
 }
 
-async function submitScore(forcedName) {
+async function submitScore(forcedName, forcedUserId) {
   const nameInput = document.getElementById('nameInput');
   const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
-  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
-  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
-
+  const user_id = forcedUserId || null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.disabled = true;
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: user_name, score, game: "SchoolStuffGame", user_id })
+    body: JSON.stringify({ name, score, game: "GameName", user_id }) // <-- set your game name here
   });
+  if (submitBtn) submitBtn.style.display = 'none';
+  if (nameInput) nameInput.style.display = 'none';
+  displayHighScores();
 }
 
-function displayHighScores() {
-  // Display high scores
-  async function displayHighScores() {
-    const response = await fetch('/.netlify/functions/submit_score?game=SchoolStuffGame');
-    const data = await response.json();
-    if (response.ok) {
-      highscoresList.innerHTML = '';
-      data.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        highscoresList.appendChild(li);
-      });
-    } else {
-      highscoresList.innerHTML = '<li>Failed to load scores</li>';
-    }
-  }
-}
-
-function resetGame() {
-  document.getElementById('restartButton').style.display = 'none';
-  nameInput.value = '';
-  scoreDisplay.textContent = '0';
-  timerDisplay.textContent = '30';
-  startScreen.style.display = 'block';
-  quizScreen.style.display = 'none';
-  endScreen.style.display = 'none';
-  nameInput.style.display = 'block';
-  const submitBtn = document.getElementById('submitBtn'); // FIXED
-  if (submitBtn) submitBtn.style.display = 'inline-block'; // FIXED
-  highscoresList.innerHTML = '';
-}
+// Attach handler on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
-  startScreen.style.display = 'block';
-  quizScreen.style.display = 'none';
-  endScreen.style.display = 'none';
-  emoji.textContent = '';
-  options.innerHTML = '';
-  scoreDisplay.textContent = '0';
-  timerDisplay.textContent = '30';
-  nameInput.style.display = 'none';
-  highscoresList.innerHTML = '';
-
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) {
     submitBtn.style.display = 'none';
-    submitBtn.addEventListener('click', () => submitScore()); // <-- FIX: use arrow function
+    submitBtn.onclick = () => submitScore();
   }
 });
-
   </script>
 </body>
 </html>
