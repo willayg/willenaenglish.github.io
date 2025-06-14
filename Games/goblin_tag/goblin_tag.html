@@ -83,8 +83,8 @@
   <div id="endScreen" style="display:none;">
     <p>Your final score: <span id="finalScore"></span></p>
     <div id="nameEntry">
-      <input type="text" id="playerName" placeholder="Enter your name" class="btn">
-      <button id="submitBtn" class="btn" onclick="saveScore()">Submit Score</button>
+      <input type="text" id="nameInput" placeholder="Enter your name" class="btn">
+      <button id="submitBtn" class="btn">Submit Score</button>
     </div>
     <div id="highScores"></div>
   </div>
@@ -255,6 +255,62 @@ function startGame() {
   showQuestion();
   startTimer();
 }
+
+function endGame() {
+  // Hide game UI, show end screen, play sounds, etc.
+  // ...your end game logic...
+
+  displayHighScores();
+
+  // Check if user is logged in
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  const nameInput = document.getElementById('nameInput');
+  if (user_id && user_name) {
+    // Autosubmit for logged-in user
+    if (nameInput) {
+      nameInput.value = user_name;
+      nameInput.style.display = 'none';
+    }
+    if (submitBtn) submitBtn.style.display = 'none';
+    submitScore(user_name, user_id);
+  } else {
+    // Show input and button for guests
+    if (nameInput) {
+      nameInput.value = '';
+      nameInput.style.display = 'block';
+      nameInput.focus();
+    }
+    if (submitBtn) submitBtn.style.display = 'inline-block';
+  }
+}
+
+async function submitScore(forcedName, forcedUserId) {
+  const nameInput = document.getElementById('nameInput');
+  const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
+  const user_id = forcedUserId || null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.disabled = true;
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "goblin_tag", user_id }) // <-- set your game name here
+  });
+  if (submitBtn) submitBtn.style.display = 'none';
+  if (nameInput) nameInput.style.display = 'none';
+  displayHighScores();
+}
+
+// Attach handler on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.onclick = () => submitScore();
+  }
+});
   </script>
 </body>
 </html>
