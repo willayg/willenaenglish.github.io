@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>프로필 이모지 아바타 피커</title>
+  <style>
+    :root { --header-height: 64px; }
+    html, body {
+      width: 100vw;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+      background: #f8f5ef;
+      color: #2e2a3c;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+    .header {
+      width: 100vw;
+      max-width: 100vw;
+      box-sizing: border-box;
+      height: var(--header-height);
+      background: #2e2a3c;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 14px;
+      position: fixed; top: 0; left: 0; z-index: 10;
+      box-shadow: 0 2px 8px rgba(40,40,60,0.09);
+      gap: 14px;
+    }
+    .home-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 6px;
+      font-size: 2.1em;
+      color: #fff;
+      border-radius: 50%;
+      transition: background 0.15s, color 0.15s;
+      margin-right: 7px;
+      text-decoration: none;
+      outline: none;
+    }
+    .home-link:focus, .home-link:hover {
+      background: #7a5cfa;
+      color: #fff;
+    }
+    .activity-nav {
+      display: flex;
+      gap: 24px; /* Wider gap for header nav */
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      padding: 8px 16px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1em;
+      cursor: pointer;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.15s;
+      outline: none;
+      position: relative;
+    }
+    .nav-btn.active, .nav-btn:hover {
+      background: #7a5cfa;
+      color: #fff;
+    }
+    .header-logout-btn {
+      background: #fff;
+      color: #2e2a3c;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 15px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 5px rgba(44,44,44,0.08);
+      transition: background 0.15s, color 0.15s;
+      margin-left: 10px;
+    }
+    .header-logout-btn:hover { background: #7a5cfa; color: #fff; }
+    @media (max-width:850px) {
+      .activity-nav { gap: 10px; }
+      .header { flex-wrap: wrap; height: auto; padding: 4px 2px;}
+      .nav-btn { padding: 7px 7px; font-size: .95em; }
+    }
+    @media (max-width:480px) {
+      .header { flex-direction: column; gap: 0; }
+      .activity-nav { flex-wrap: wrap; gap: 4px; }
+    }
+
+    .main-content {
+      margin-top: var(--header-height);
+      min-height: calc(100vh - var(--header-height));
+      width: 100vw;
+      max-width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    .box {
+      background: #f8f5ef;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%; max-width: 400px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      box-shadow: 0 4px 24px rgba(44,44,44,0.11);
+      margin-top: 18px;
+      transition: background 0.3s, color 0.3s;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    .avatar-wrapper {
+      position: relative;
+      margin-bottom: 18px; margin-top: 12px;
+      cursor: pointer;
+      border-radius: 50%; outline: none;
+      box-shadow: 0 2px 10px rgba(44,44,44,0.09);
+      transition: box-shadow 0.2s;
+    }
+    .avatar-wrapper:focus { box-shadow: 0 0 0 3px #7a5cfa; }
+    .emoji-avatar {
+      font-size: 4.5rem;
+      width: 96px; height: 96px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      border: 3px solid #2e2a3c;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+      transition: border 0.2s, background 0.3s;
+    }
+    .avatar-edit-label {
+      position: absolute; bottom: 4px; right: 8px;
+      background: #7a5cfa; color: #fff; border-radius: 50%;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      font-size: 17px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(44,44,44,0.08); pointer-events: none;
+    }
+    .profile-field { margin-bottom: 15px; width: 100%; text-align: left; }
+    .profile-label { font-size: 1em; color: #2e2a3c; font-weight: 600; display: block; margin-bottom: 5px; }
+    .profile-input {
+      background: #f8f5ef; border: 1.5px solid #2e2a3c; border-radius: 6px;
+      padding: 9px; width: 100%; box-sizing: border-box; font-size: 1.1em; margin-bottom: 6px;
+      transition: background 0.3s, color 0.3s;
+    }
+    .save-btn {
+      width: 100%; background: #2e2a3c; color: #fff; border: none;
+      border-radius: 6px; font-size: 1em; padding: 9px 0; font-weight: bold; cursor: pointer; margin-bottom: 15px;
+      transition: background 0.3s, color 0.3s;
+    }
+    .prefs-section { width: 100%; margin-bottom: 18px; background: #f2e8ff; padding: 16px 10px; border-radius: 10px; transition: background 0.3s, color 0.3s;}
+    .prefs-label { display: block; font-size: 1em; margin-bottom: 8px; font-weight: bold; color: #7a5cfa; }
+    .prefs-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 1em; justify-content: space-between; }
+    .theme-select { font-size: 1em; border-radius: 6px; padding: 6px 10px; border: 1px solid #2e2a3c; background: #fff; color: #2e2a3c; }
+
+    /* Filter buttons for activity sections (score chart) */
+    .activity-filter-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 6px; /* LESS gap for score filter row */
+      margin: 18px 0 10px 0;
+    }
+    .activity-filter-btn {
+      background: #eee;
+      color: #7a5cfa;
+      border: 2px solid #d1d1d1;
+      border-radius: 18px;
+      padding: 7px 12px;
+      font-size: 1em;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.16s, border 0.16s, color 0.16s;
+      outline: none;
+      min-width: 70px;
+    }
+    .activity-filter-btn.active, .activity-filter-btn:focus {
+      background: #7a5cfa;
+      border: 2px solid #7a5cfa;
+      color: #fff;
+    }
+    /* Scrollable activity list */
+    .activity-list-container {
+      width: 100%;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(44,44,44,0.07);
+      padding: 8px 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    .activity-list {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .activity-list th, .activity-list td {
+      padding: 10px 8px;
+      text-align: left;
+      font-size: 1em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .activity-list th {
+      color: #7a5cfa;
+      font-weight: 700;
+      background: #f2e8ff;
+      border-bottom: 2px solid #eee;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .activity-list tr:not(:last-child) td {
+      border-bottom: 1px solid #ececec;
+    }
+    .activity-list td.activity-badges {
+      font-size: 1.2em;
+    }
+    .logo { margin-top: 26px; width: 74px; }
+
+    /* Overlay styles */
+    .overlay-bg {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(34,30,60,0.45); z-index: 1000;
+      display: flex; justify-content: center; align-items: center; animation: fadeIn 0.25s;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .overlay-window {
+      background: #f8f5ef; border-radius: 13px;
+      box-shadow: 0 8px 48px rgba(44,44,44,0.28);
+      padding: 30px 20px 24px 20px; min-width: 285px; max-width: 98vw; width: 375px;
+      text-align: center; position: relative; animation: popIn 0.22s;
+      margin-top: var(--header-height);
+    }
+    @keyframes popIn { from { transform: scale(0.92); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+    .overlay-title { font-size: 1.15em; font-weight: 700; margin-bottom: 16px; color: #2e2a3c; }
+    .emoji-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .emoji-filter-btn {
+      background: #eee;
+      color: #333;
+      border: 2px solid #d1d1d1;
+      border-radius: 18px;
+      padding: 7px 16px;
+      font-size: 1em;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.16s, border 0.16s, color 0.16s;
+      outline: none;
+    }
+    .emoji-filter-btn.selected,
+    .emoji-filter-btn:focus {
+      background: #7a5cfa;
+      border: 2px solid #7a5cfa;
+      color: #fff;
+    }
+    .emoji-grid {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 16px;
+      max-height: 260px; overflow-y: auto; padding-bottom: 6px;
+    }
+    .emoji-choice {
+      width: 56px; height: 56px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem; cursor: pointer; border: 2.5px solid #d1d1d1; transition: border 0.18s, transform 0.13s;
+    }
+    .emoji-choice.selected {
+      border: 3px solid #7a5cfa;
+      transform: scale(1.12);
+      box-shadow: 0 4px 16px #7a5cfa33;
+    }
+    .close-btn {
+      position: absolute; top: 15px; right: 17px;
+      background: #7a5cfa; color: #fff; border: none; border-radius: 50%;
+      width: 28px; height: 28px; font-size: 1.1em; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .close-btn:hover { background: #4226a5; }
+    .overlay-bg[aria-hidden="true"] { display: none !important; }
+    @media (max-width:500px) {
+      .overlay-window { width: 99vw; min-width: unset; }
+      .box { max-width: 99vw;}
+      .header { padding: 0 8px;}
+      .activity-list th, .activity-list td { padding: 8px 6px; font-size: .97em;}
+      .activity-list-container { max-height: 160px; }
+      .activity-nav { gap: 8px !important; }
+    }
+    /* THEME STYLES (unchanged - see previous versions for full list) */
+    body.theme-default        { background: #f8f5ef; color: #2e2a3c; }
+    body.theme-default .box  { background: #f8f5ef; color: #2e2a3c; }
+    body.theme-default .profile-label, 
+    body.theme-default .prefs-label { color: #2e2a3c;}
+    body.theme-default .prefs-section { background: #f2e8ff;}
+    body.theme-default .emoji-avatar { border: 3px solid #2e2a3c; background: #fff; }
+    body.theme-candy        { background: #ffe5fa; color: #a1256e; }
+    body.theme-candy .box   { background: #fff0fa; color: #a1256e; }
+    body.theme-candy .prefs-section { background: #ffe8fb;}
+    body.theme-candy .emoji-avatar { border: 3px solid #e75480; background: #fff4fa; }
+    body.theme-neon         { background: #0f0f1c; color: #39ff14; }
+    body.theme-neon .box    { background: #171738; color: #39ff14; }
+    body.theme-neon .prefs-section { background: #1a1a2e;}
+    body.theme-neon .emoji-avatar { border: 3px solid #39ff14; background: #10101c; }
+    body.theme-pastel       { background: #e6f0ff; color: #4e5b6e; }
+    body.theme-pastel .box  { background: #f7faff; color: #4e5b6e; }
+    body.theme-pastel .prefs-section { background: #e1e7f0;}
+    body.theme-pastel .emoji-avatar { border: 3px solid #b5cddb; background: #f7faff; }
+    body.theme-midnight     { background: #181824; color: #f8f8fa; }
+    body.theme-midnight .box { background: #212134; color: #f8f8fa; }
+    body.theme-midnight .prefs-section { background: #22223b;}
+    body.theme-midnight .emoji-avatar { border: 3px solid #f8f8fa; background: #181824; }
+    body.theme-sunset       { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); color: #fff; }
+    body.theme-sunset .box  { background: rgba(255,153,102,0.85); color: #fff; }
+    body.theme-sunset .prefs-section { background: #ffd1b3;}
+    body.theme-sunset .emoji-avatar { border: 3px solid #ff5e62; background: #fff6f0; }
+    body.theme-ocean        { background: #3c8dad; color: #fff; }
+    body.theme-ocean .box   { background: #b3e0ff; color: #20475a; }
+    body.theme-ocean .prefs-section { background: #85c1e9;}
+    body.theme-ocean .emoji-avatar { border: 3px solid #20475a; background: #b3e0ff; }
+    body.theme-rainbow      { background: linear-gradient(90deg, #ff6b6b 0%, #f6d365 20%, #48c6ef 40%, #a17fe0 60%, #f7971e 80%, #12c2e9 100%); color: #222;}
+    body.theme-rainbow .box { background: #fff; color: #222;}
+    body.theme-rainbow .prefs-section { background: #f6d365;}
+    body.theme-rainbow .emoji-avatar { border: 3px solid #ff6b6b; background: #fff; }
+    body.theme-space        { background: #1d2330; color: #e0e0e0; }
+    body.theme-space .box   { background: #232946; color: #e0e0e0; }
+    body.theme-space .prefs-section { background: #2d3250;}
+    body.theme-space .emoji-avatar { border: 3px solid #e0e0e0; background: #232946; }
+    body.theme-autumn       { background: #fff6e6; color: #a65c00; }
+    body.theme-autumn .box  { background: #ffe1b3; color: #a65c00; }
+    body.theme-autumn .prefs-section { background: #ffe5b4;}
+    body.theme-autumn .emoji-avatar { border: 3px solid #a65c00; background: #fff6e6; }
+    body.theme-spring       { background: #e8f7e4; color: #4e8a42; }
+    body.theme-spring .box  { background: #e0ffe6; color: #4e8a42; }
+    body.theme-spring .prefs-section { background: #d7ffd9;}
+    body.theme-spring .emoji-avatar { border: 3px solid #4e8a42; background: #e0ffe6; }
+    body.theme-summer       { background: #fffbe6; color: #347fc4; }
+    body.theme-summer .box  { background: #d9f5ff; color: #347fc4; }
+    body.theme-summer .prefs-section { background: #fff2b0;}
+    body.theme-summer .emoji-avatar { border: 3px solid #347fc4; background: #fffbe6; }
+    body.theme-winter       { background: #e6f7ff; color: #2c3e50; }
+    body.theme-winter .box  { background: #eaf6fb; color: #2c3e50; }
+    body.theme-winter .prefs-section { background: #d2eafd;}
+    body.theme-winter .emoji-avatar { border: 3px solid #2c3e50; background: #e6f7ff; }
+    body.theme-forest       { background: #e9f5ec; color: #2b5a3e; }
+    body.theme-forest .box  { background: #d2f7c5; color: #2b5a3e; }
+    body.theme-forest .prefs-section { background: #b9e7c1;}
+    body.theme-forest .emoji-avatar { border: 3px solid #2b5a3e; background: #d2f7c5; }
+    body.theme-desert       { background: #fff4e1; color: #b6862a; }
+    body.theme-desert .box  { background: #ffe0b2; color: #b6862a; }
+    body.theme-desert .prefs-section { background: #ffe8cc;}
+    body.theme-desert .emoji-avatar { border: 3px solid #b6862a; background: #fff4e1; }
+    body.theme-lava         { background: #2e0900; color: #ff7b25; }
+    body.theme-lava .box    { background: #ffae70; color: #2e0900; }
+    body.theme-lava .prefs-section { background: #ffdab3;}
+    body.theme-lava .emoji-avatar { border: 3px solid #ff7b25; background: #fff4e1; }
+    body.theme-ice          { background: #e0f7fa; color: #007e9f; }
+    body.theme-ice .box     { background: #b2ebf2; color: #007e9f; }
+    body.theme-ice .prefs-section { background: #e0f7fa;}
+    body.theme-ice .emoji-avatar { border: 3px solid #007e9f; background: #b2ebf2; }
+    body.theme-retro        { background: #fbeec1; color: #76520e; }
+    body.theme-retro .box   { background: #fff4d2; color: #76520e; }
+    body.theme-retro .prefs-section { background: #fbeec1;}
+    body.theme-retro .emoji-avatar { border: 3px solid #76520e; background: #fff4d2; }
+    body.theme-vaporwave    { background: linear-gradient(135deg, #ff8ae2 0%, #8afff3 100%); color: #2c1946; }
+    body.theme-vaporwave .box { background: #fff6fc; color: #2c1946; }
+    body.theme-vaporwave .prefs-section { background: #e0beff;}
+    body.theme-vaporwave .emoji-avatar { border: 3px solid #ff8ae2; background: #fff6fc; }
+    body.theme-minimal      { background: #fff; color: #222; }
+    body.theme-minimal .box { background: #fff; color: #222;}
+    body.theme-minimal .prefs-section { background: #f2f2f2;}
+    body.theme-minimal .emoji-avatar { border: 3px solid #aaa; background: #fff; }
+    body.theme-comic        { background: #f9f871; color: #1b0a26; }
+    body.theme-comic .box   { background: #ffd6e0; color: #1b0a26; }
+    body.theme-comic .prefs-section { background: #fff6c1;}
+    body.theme-comic .emoji-avatar { border: 3px solid #ff74a6; background: #ffd6e0; }
+    body.theme-galaxy       { background: linear-gradient(120deg, #23074d, #cc5333); color: #fff;}
+    body.theme-galaxy .box  { background: #2c1946; color: #fff;}
+    body.theme-galaxy .prefs-section { background: #301860;}
+    body.theme-galaxy .emoji-avatar { border: 3px solid #cc5333; background: #2c1946;}
+    body.theme-jungle       { background: #c8e6c9; color: #2e563c;}
+    body.theme-jungle .box  { background: #81c784; color: #2e563c;}
+    body.theme-jungle .prefs-section { background: #a5d6a7;}
+    body.theme-jungle .emoji-avatar { border: 3px solid #388e3c; background: #81c784;}
+    body.theme-mountain     { background: #ebe7e1; color: #4a4e4d;}
+    body.theme-mountain .box { background: #cfd8dc; color: #4a4e4d;}
+    body.theme-mountain .prefs-section { background: #b0bec5;}
+    body.theme-mountain .emoji-avatar { border: 3px solid #4a4e4d; background: #cfd8dc;}
+    body.theme-halloween    { background: #1a1a1a; color: #ff7518;}
+    body.theme-halloween .box { background: #323232; color: #ff7518;}
+    body.theme-halloween .prefs-section { background: #ff7518;}
+    body.theme-halloween .emoji-avatar { border: 3px solid #ff7518; background: #323232;}
+    body.theme-holiday      { background: #e0f7ec; color: #b71c1c;}
+    body.theme-holiday .box { background: #ffebee; color: #b71c1c;}
+    body.theme-holiday .prefs-section { background: #fffde7;}
+    body.theme-holiday .emoji-avatar { border: 3px solid #b71c1c; background: #ffebee;}
+    body.theme-valentine    { background: #ffe0e9; color: #c2185b;}
+    body.theme-valentine .box { background: #fff0f6; color: #c2185b;}
+    body.theme-valentine .prefs-section { background: #ffb6d5;}
+    body.theme-valentine .emoji-avatar { border: 3px solid #c2185b; background: #fff0f6;}
+    body.theme-cyberpunk    { background: #16132d; color: #ff2ab6;}
+    body.theme-cyberpunk .box { background: #1e1a38; color: #ff2ab6;}
+    body.theme-cyberpunk .prefs-section { background: #3e1b4c;}
+    body.theme-cyberpunk .emoji-avatar { border: 3px solid #ff2ab6; background: #1e1a38;}
+    body.theme-military     { background: #3e4730; color: #d5d5be;}
+    body.theme-military .box { background: #6c7a3c; color: #d5d5be;}
+    body.theme-military .prefs-section { background: #d5d5be;}
+    body.theme-military .emoji-avatar { border: 3px solid #d5d5be; background: #6c7a3c;}
+    body.theme-metal        { background: #434343; color: #cfd8dc;}
+    body.theme-metal .box   { background: #616161; color: #cfd8dc;}
+    body.theme-metal .prefs-section { background: #b0bec5;}
+    body.theme-metal .emoji-avatar { border: 3px solid #cfd8dc; background: #616161;}
+    body.theme-bunnyfox     { background: #fffbed; color: #e684ae;}
+    body.theme-bunnyfox .box { background: #fff0f6; color: #e684ae;}
+    body.theme-bunnyfox .prefs-section { background: #ffe7f7;}
+    body.theme-bunnyfox .emoji-avatar { border: 3px solid #e684ae; background: #fff0f6;}
+    body.theme-cutiebunny   { background: #fef6fd; color: #ee82ee;}
+    body.theme-cutiebunny .box { background: #ffe2fb; color: #ee82ee;}
+    body.theme-cutiebunny .prefs-section { background: #ffe7fe;}
+    body.theme-cutiebunny .emoji-avatar { border: 3px solid #ee82ee; background: #ffe2fb;}
+    body.theme-sea          { background: #e0f7fa; color: #007e9f;}
+    body.theme-sea .box     { background: #b2ebf2; color: #007e9f;}
+    body.theme-sea .prefs-section { background: #e0f7fa;}
+    body.theme-sea .emoji-avatar { border: 3px solid #007e9f; background: #b2ebf2;}
+    body.theme-retroarcade  { background: #181e3d; color: #f8f8fa;}
+    body.theme-retroarcade .box { background: #232946; color: #f8f8fa;}
+    body.theme-retroarcade .prefs-section { background: #e9e9f6;}
+    body.theme-retroarcade .emoji-avatar { border: 3px solid #f8f8fa; background: #232946;}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="home-link" title="홈" aria-label="홈">
+      <svg width="28" height="28" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M2.5 8.5L10 2.5L17.5 8.5V17C17.5 17.2761 17.2761 17.5 17 17.5H13C12.7239 17.5 12.5 17.2761 12.5 17V13.5H7.5V17C7.5 17.2761 7.27614 17.5 7 17.5H3C2.72386 17.5 2.5 17.2761 2.5 17V8.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <nav class="activity-nav">
+      <a href="play.html" class="nav-btn">Play</a>
+      <a href="challenge.html" class="nav-btn">Challenge</a>
+      <a href="study.html" class="nav-btn">Study</a>
+      <a href="quiz.html" class="nav-btn">Quiz</a>
+    </nav>
+    <button class="header-logout-btn" onclick="window.location.href='login.html'">로그아웃</button>
+  </div>
+  <div class="main-content">
+    <div class="box">
+      <h2 style="margin-bottom:18px;">프로필</h2>
+      <div class="avatar-wrapper" id="avatarOpen" tabindex="0" aria-label="Change Avatar">
+        <span id="emojiAvatar" class="emoji-avatar" title="Change Avatar">🐱</span>
+        <span class="avatar-edit-label" title="Change Avatar">🎨</span>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="koreanNameInput">이름(한글) <span style="color:red">*</span></label>
+        <input id="koreanNameInput" class="profile-input" placeholder="예: 김지민" value="김지민" />
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="englishNameInput">로그인 아이디(영어)</label>
+        <input id="englishNameInput" class="profile-input" placeholder="예: JamesKim" value="JamesKim" />
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="emailInput">이메일</label>
+        <input id="emailInput" class="profile-input" placeholder="example@email.com" value="jimin@myschool.ac.kr" />
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="classInput">학급</label>
+        <input id="classInput" class="profile-input" placeholder="예: 4A" value="4A" />
+      </div>
+      <!-- Preferences Section -->
+      <div class="prefs-section">
+        <span class="prefs-label">Fun Preferences</span>
+        <div class="prefs-row">
+          <span>Theme</span>
+          <select id="themeSelect" class="theme-select">
+            <option value="default">Default</option>
+            <option value="candy">Candy</option>
+            <option value="neon">Neon</option>
+            <option value="pastel">Pastel</option>
+            <option value="midnight">Midnight</option>
+            <option value="sunset">Sunset</option>
+            <option value="ocean">Ocean</option>
+            <option value="rainbow">Rainbow</option>
+            <option value="space">Space</option>
+            <option value="autumn">Autumn</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="winter">Winter</option>
+            <option value="forest">Forest</option>
+            <option value="desert">Desert</option>
+            <option value="lava">Lava</option>
+            <option value="ice">Ice</option>
+            <option value="retro">Retro</option>
+            <option value="vaporwave">Vaporwave</option>
+            <option value="minimal">Minimal</option>
+            <option value="comic">Comic</option>
+            <option value="galaxy">Galaxy</option>
+            <option value="jungle">Jungle</option>
+            <option value="mountain">Mountain</option>
+            <option value="halloween">Halloween</option>
+            <option value="holiday">Holiday</option>
+            <option value="valentine">Valentine</option>
+            <option value="cyberpunk">Cyberpunk</option>
+            <option value="military">Military</option>
+            <option value="metal">Metal</option>
+            <option value="bunnyfox">Bunny Fox</option>
+            <option value="cutiebunny">Cutie Bunny</option>
+            <option value="sea">Sea</option>
+            <option value="retroarcade">Retro Arcade</option>
+          </select>
+        </div>
+      </div>
+      <button class="save-btn" onclick="alert('저장되었습니다! (데모)')">저장</button>
+
+      <!-- Activity Section Filter Buttons -->
+      <div class="activity-filter-row">
+        <button class="activity-filter-btn active" data-section="play" type="button">Play</button>
+        <button class="activity-filter-btn" data-section="challenge" type="button">Challenge</button>
+        <button class="activity-filter-btn" data-section="study" type="button">Study</button>
+        <button class="activity-filter-btn" data-section="quiz" type="button">Quiz</button>
+      </div>
+      <!-- Activity Progress Section as Scrollable List -->
+      <div class="activity-list-container">
+        <table class="activity-list" id="activityListTable">
+          <thead>
+            <tr>
+              <th>Fun Activity/Game</th>
+              <th>Points/Progress</th>
+              <th>Badges</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+      <a href="index.html"><img src="Logo.png" class="logo" alt="Logo"></a>
+    </div>
+  </div>
+  <!-- Overlay -->
+  <div class="overlay-bg" id="avatarOverlay" aria-hidden="true" tabindex="-1">
+    <div class="overlay-window" role="dialog" aria-modal="true" aria-labelledby="avatarOverlayTitle">
+      <button class="close-btn" id="closeOverlayBtn" aria-label="Close">&times;</button>
+      <div class="overlay-title" id="avatarOverlayTitle">Choose your fun avatar emoji!</div>
+      <div class="emoji-filters" id="emojiFilters"></div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+      <div style="font-size:.97em;color:#7a5cfa;">Click your favorite to select!</div>
+    </div>
+  </div>
+  <script>
+    // THEME and NAV logic
+    const themeSelect = document.getElementById("themeSelect");
+    themeSelect.addEventListener("change", function() {
+      document.body.className = "theme-" + themeSelect.value;
+      localStorage.setItem('selectedTheme', themeSelect.value);
+    });
+    // Restore theme on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('selectedTheme') || "default";
+      document.body.className = "theme-" + savedTheme;
+      themeSelect.value = savedTheme;
+      highlightCurrentNav();
+      showActivitySection("play");
+    });
+
+    // NAV highlighting
+    function highlightCurrentNav() {
+      const path = window.location.pathname;
+      document.querySelectorAll('.nav-btn').forEach(link => {
+        link.classList.remove('active');
+        if (
+          (path.includes('play') && link.href.includes('play')) ||
+          (path.includes('challenge') && link.href.includes('challenge')) ||
+          (path.includes('study') && link.href.includes('study')) ||
+          (path.includes('quiz') && link.href.includes('quiz'))
+        ) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    // Emoji avatar logic (unchanged)
+    const emojiAvatar = document.getElementById("emojiAvatar");
+    const avatarOverlay = document.getElementById("avatarOverlay");
+    const emojiGrid = document.getElementById("emojiGrid");
+    const emojiFilters = document.getElementById("emojiFilters");
+    const avatarOpen = document.getElementById("avatarOpen");
+    const closeOverlayBtn = document.getElementById("closeOverlayBtn");
+    // ... (rest of emoji picker code unchanged from previous version)
+    const monsters = [
+      "👾","👽","👹","👺","👻","💀","😈","🤡","🧌",
+      "🧟","🧟‍♂️","🧟‍♀️","🧛","🧛‍♂️","🧛‍♀️","🐲","🦖","🐉","🦇","🦹","🦹‍♂️","🦹‍♀️"
+    ];
+    const animals = [
+      "🐱","🐶","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐵",
+      "🦄","🐸","🐧","🐢","🐙","🐠","🐥","🦉","🦜","🐮",
+      "🐷","🐘","🦓","🦒","🦕","🦖","🦋","🐝","🦝","🦡","🦦","🦥","🐺","🐯","🦁","🐲","🐺","🦇"
+    ];
+    const fantasy = [
+      "👽","🤖","🦄","🧙‍♂️","🧙‍♀️","🧚","🧚‍♂️","🧚‍♀️",
+      "🧛","🧛‍♂️","🧛‍♀️","🧜","🧜‍♂️","🧜‍♀️","🧞","🧞‍♂️","🧞‍♀️","🧟","🧟‍♂️","🧟‍♀️",
+      "🦸","🦸‍♂️","🦸‍♀️","🦹","🦹‍♂️","🦹‍♀️","🧝","🧝‍♂️","🧝‍♀️","🥷","👑","🐉","🐲"
+    ];
+    const people = [
+      "🧑‍🚀","🧑‍🎤","🧑‍🚒","🧑‍✈️","🧑‍🌾","🧑‍🍳",
+      "👦","👧","🧒","👨‍🎨","👩‍🎨","👨‍🚀","👩‍🚀","👨‍✈️","👩‍✈️","👨‍🍳","👩‍🍳",
+      "👨‍🌾","👩‍🌾","👨‍🚒","👩‍🚒","👨‍🎤","👩‍🎤",
+      "👸","🤴","👳","👳‍♂️","👳‍♀️","🧕","👮","👮‍♂️","👮‍♀️",
+      "👷","👷‍♂️","👷‍♀️","💂","💂‍♂️","💂‍♀️",
+      "🕵️","🕵️‍♂️","🕵️‍♀️",
+      "🧑‍🦱","🧑‍🦰","🧑‍🦳","🧑‍🦲",
+      "🧑‍⚕️","👨‍⚕️","👩‍⚕️","🧑‍🏫","👨‍🏫","👩‍🏫","🧑‍🔬","👨‍🔬","👩‍🔬",
+      "🧑‍💻","👨‍💻","👩‍💻","🧑‍🔧","👨‍🔧","👩‍🔧","🧑‍🏭","👨‍🏭","👩‍🏭",
+      "🧑‍🎓","👨‍🎓","👩‍🎓","🧑‍⚖️","👨‍⚖️","👩‍⚖️","🧑‍🦯","👨‍🦯","👩‍🦯",
+      "🧑‍🦼","👨‍🦼","👩‍🦼","🧑‍🦽","👨‍🦽","👩‍🦽",
+      "👶","👵","👴","🧓","👩","👨","🧑"
+    ];
+    const emojiCategories = [
+      {
+        key: "All",
+        label: "All",
+        emoji: "⭐",
+        emojis: Array.from(new Set([
+          ...animals,
+          ...monsters,
+          ...fantasy,
+          ...people
+        ]))
+      },
+      {
+        key: "Animals",
+        label: "Animals",
+        emoji: "🐾",
+        emojis: Array.from(new Set(animals))
+      },
+      {
+        key: "Monsters",
+        label: "Monsters",
+        emoji: "👾",
+        emojis: Array.from(new Set(monsters))
+      },
+      {
+        key: "Fantasy",
+        label: "Fantasy",
+        emoji: "🧙",
+        emojis: Array.from(new Set(fantasy))
+      },
+      {
+        key: "People",
+        label: "People",
+        emoji: "🧑",
+        emojis: Array.from(new Set(people))
+      }
+    ];
+    let selectedEmoji = localStorage.getItem('selectedEmojiAvatar') || "🐱";
+    let filterKey = "All";
+    function renderEmojiFilters() {
+      emojiFilters.innerHTML = "";
+      emojiCategories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = "emoji-filter-btn" + (filterKey === cat.key ? " selected" : "");
+        btn.innerHTML = `${cat.emoji} ${cat.label}`;
+        btn.addEventListener('click', () => {
+          filterKey = cat.key;
+          renderEmojiFilters();
+          renderEmojiGrid();
+          btn.focus();
+        });
+        btn.tabIndex = 0;
+        btn.setAttribute("type", "button");
+        btn.setAttribute("aria-label", `${cat.label} filter`);
+        emojiFilters.appendChild(btn);
+      });
+    }
+    function renderEmojiGrid() {
+      emojiGrid.innerHTML = "";
+      const cat = emojiCategories.find(c => c.key === filterKey);
+      (cat ? cat.emojis : []).forEach(emoji => {
+        const span = document.createElement('span');
+        span.className = "emoji-choice" + (selectedEmoji === emoji ? " selected" : "");
+        span.innerText = emoji;
+        span.tabIndex = 0;
+        span.setAttribute("role", "button");
+        span.setAttribute("aria-label", emoji + " avatar");
+        span.addEventListener('click', () => selectEmoji(emoji));
+        span.addEventListener('keydown', (e) => {
+          if(e.key === "Enter" || e.key === " ") {
+            e.preventDefault(); selectEmoji(emoji);
+          }
+        });
+        emojiGrid.appendChild(span);
+      });
+    }
+    function selectEmoji(emoji) {
+      selectedEmoji = emoji;
+      emojiAvatar.innerText = emoji;
+      localStorage.setItem('selectedEmojiAvatar', emoji);
+      renderEmojiGrid();
+      closeOverlay();
+    }
+    function openOverlay() {
+      avatarOverlay.setAttribute("aria-hidden", "false");
+      avatarOverlay.style.display = "flex";
+      renderEmojiFilters();
+      renderEmojiGrid();
+      setTimeout(()=> {
+        const firstSelectable = emojiGrid.querySelector('.emoji-choice');
+        if(firstSelectable) firstSelectable.focus();
+      }, 50);
+      document.body.style.overflow = 'hidden';
+    }
+    function closeOverlay() {
+      avatarOverlay.setAttribute("aria-hidden", "true");
+      avatarOverlay.style.display = "none";
+      document.body.style.overflow = '';
+      avatarOpen.focus();
+    }
+    avatarOpen.addEventListener('click', openOverlay);
+    avatarOpen.addEventListener('keydown', e => {
+      if(e.key === "Enter" || e.key === " ") { e.preventDefault(); openOverlay(); }
+    });
+    closeOverlayBtn.addEventListener('click', closeOverlay);
+    avatarOverlay.addEventListener('mousedown', function(e){
+      if(e.target === avatarOverlay) closeOverlay();
+    });
+    document.addEventListener('keydown', function(e){
+      if(avatarOverlay.getAttribute("aria-hidden") === "false" && e.key === "Escape") closeOverlay();
+    });
+
+    // --- Activity Section Data as JS arrays ---
+    const ACTIVITY_DATA = {
+      play: [
+        { name: "Word Sprint", progress: "Points: 120", badges: "🏅" },
+        { name: "Memory Match", progress: "Points: 88", badges: "🥈" },
+        { name: "Run Rabbit", progress: "Points: 70", badges: "🏅" }
+      ],
+      challenge: [
+        { name: "Spelling Bee", progress: "Progress: 8/10", badges: "🥇 🏆" },
+        { name: "Speed Typing", progress: "Progress: 5/10", badges: "🥉" }
+      ],
+      study: [
+        { name: "Flashcards", progress: "Progress: 45%", badges: "🎖️" },
+        { name: "Listening Drill", progress: "Progress: 70%", badges: "🏅" }
+      ],
+      quiz: [
+        { name: "Quiz 1", progress: "Score: 93", badges: "🥇" },
+        { name: "Quiz 2", progress: "Score: 85", badges: "🥈" }
+      ]
+    };
+
+    function showActivitySection(section) {
+      // update filter buttons
+      document.querySelectorAll('.activity-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-section') === section) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      // render table rows
+      const tbody = document.querySelector('#activityListTable tbody');
+      tbody.innerHTML = '';
+      (ACTIVITY_DATA[section] || []).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          `<td>${row.name}</td>
+           <td>${row.progress}</td>
+           <td class="activity-badges">${row.badges}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    document.querySelectorAll('.activity-filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        showActivitySection(this.getAttribute('data-section'));
+      });
+    });
+    // Set default avatar on load
+    emojiAvatar.innerText = selectedEmoji;
+  </script>
+</body>
+</html>
