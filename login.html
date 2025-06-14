@@ -107,7 +107,7 @@
         alert("이 이름은 이미 사용 중입니다. 다른 이름을 입력해 주세요.");
       } else if (response.ok && result.status === 'created') {
         storeUser(result.user.id, result.user.name, stayLoggedIn);
-        window.location.href = "index.html";
+        window.location.href = "profile-s.html"; // Redirect new users to profile setup
       } else {
         alert("계정을 생성할 수 없습니다.");
       }

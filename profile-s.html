@@ -18,6 +18,8 @@
       margin: 0; padding: 0;
       min-height: 100vh;
       transition: background 0.3s, color 0.3s;
+      /* Prevent horizontal scroll on mobile */
+      overflow-x: hidden;
     }
     .header {
       width: 100vw;
@@ -78,20 +80,6 @@
       background: #7a5cfa;
       color: #fff;
     }
-    .header-logout-btn {
-      background: #fff;
-      color: #2e2a3c;
-      border: none;
-      border-radius: 6px;
-      padding: 7px 15px;
-      font-size: 1em;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 1px 5px rgba(44,44,44,0.08);
-      transition: background 0.15s, color 0.15s;
-      margin-left: 10px;
-    }
-    .header-logout-btn:hover { background: #7a5cfa; color: #fff; }
     @media (max-width:850px) {
       .activity-nav { gap: 10px; }
       .header { flex-wrap: wrap; height: auto; padding: 4px 2px;}
@@ -169,25 +157,8 @@
     .theme-select { font-size: 1em; border-radius: 6px; padding: 6px 10px; border: 1px solid #2e2a3c; background: #fff; color: #2e2a3c; }
 
     /* Filter buttons for activity sections (score chart) */
-    .activity-filter-row {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 6px; /* LESS gap for score filter row */
-      margin: 18px 0 10px 0;
-    }
-    .activity-filter-btn {
-      background: #eee;
-      color: #7a5cfa;
-      border: 2px solid #d1d1d1;
-      border-radius: 18px;
-      padding: 7px 12px;
-      font-size: 1em;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.16s, border 0.16s, color 0.16s;
-      outline: none;
-      min-width: 70px;
+
+
     }
     .activity-filter-btn.active, .activity-filter-btn:focus {
       background: #7a5cfa;
@@ -219,6 +190,21 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .activity-list th:nth-child(1),
+    .activity-list td:nth-child(1) {
+      width: 40%;
+      min-width: 90px;
+    }
+    .activity-list th:nth-child(2),
+    .activity-list td:nth-child(2) {
+      width: 35%;
+      min-width: 70px;
+    }
+    .activity-list th:nth-child(3),
+    .activity-list td:nth-child(3) {
+      width: 25%;
+      min-width: 50px;
     }
     .activity-list th {
       color: #7a5cfa;
@@ -303,7 +289,7 @@
       .overlay-window { width: 99vw; min-width: unset; }
       .box { max-width: 99vw;}
       .header { padding: 0 8px;}
-      .activity-list th, .activity-list td { padding: 8px 6px; font-size: .97em;}
+      .activity-list th, .activity-list td { font-size: .93em; }
       .activity-list-container { max-height: 160px; }
       .activity-nav { gap: 8px !important; }
     }
@@ -446,6 +432,31 @@
     body.theme-retroarcade .box { background: #232946; color: #f8f8fa;}
     body.theme-retroarcade .prefs-section { background: #e9e9f6;}
     body.theme-retroarcade .emoji-avatar { border: 3px solid #f8f8fa; background: #232946;}
+    .activity-filter-slider {
+      display: flex;
+      overflow-x: auto;
+      gap: 16px;
+      padding: 10px 0 14px 0;
+      margin: 0 0 10px 0;
+      scrollbar-width: thin; /* Show thin scrollbar on desktop */
+      -ms-overflow-style: auto;
+      -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    }
+    .activity-filter-slider::-webkit-scrollbar {
+      height: 6px;
+      background: transparent;
+    }
+    .activity-filter-slider::-webkit-scrollbar-thumb {
+      background: #eee;
+      border-radius: 3px;
+    }
+    .logo {
+      margin-top: 26px;
+      width: 74px;
+    /* Add drop shadow */
+      filter: drop-shadow(0 8px 50px rgba(7, 2, 29, 0.25));
+  }
+</style>
   </style>
 </head>
 <body>
@@ -461,30 +472,71 @@
       <a href="study.html" class="nav-btn">Study</a>
       <a href="quiz.html" class="nav-btn">Quiz</a>
     </nav>
-    <button class="header-logout-btn" onclick="window.location.href='login.html'">로그아웃</button>
   </div>
   <div class="main-content">
     <div class="box">
-      <h2 style="margin-bottom:18px;">프로필</h2>
+      <h2 id="profilePageTitle" style="margin-bottom:18px;"></h2>
       <div class="avatar-wrapper" id="avatarOpen" tabindex="0" aria-label="Change Avatar">
         <span id="emojiAvatar" class="emoji-avatar" title="Change Avatar">🐱</span>
         <span class="avatar-edit-label" title="Change Avatar">🎨</span>
       </div>
+      <!-- Display user name under avatar -->
+      <div id="profileUserName" style="font-size:1.25em; font-weight:700; margin-bottom:4px; color:#7a5cfa;"></div>
+      <!-- Display user id under avatar -->
+      <div id="profileUserId" style="font-size:0.98em; color:#888; margin-bottom:18px;"></div>
+      <!-- Login Name (required) -->
       <div class="profile-field">
-        <label class="profile-label" for="koreanNameInput">이름(한글) <span style="color:red">*</span></label>
-        <input id="koreanNameInput" class="profile-input" placeholder="예: 김지민" value="김지민" />
+        <label class="profile-label" for="loginNameInput">로그인 아이디 (Login Name) <span style="color:red">*</span></label>
+        <input id="loginNameInput" class="profile-input" placeholder="아이디를 입력하세요" required />
       </div>
+
+      <!-- Password (required) -->
       <div class="profile-field">
-        <label class="profile-label" for="englishNameInput">로그인 아이디(영어)</label>
-        <input id="englishNameInput" class="profile-input" placeholder="예: JamesKim" value="JamesKim" />
+        <label class="profile-label" for="passwordInput">비밀번호 (Password) <span style="color:red">*</span></label>
+        <input id="passwordInput" class="profile-input" type="password" placeholder="비밀번호를 입력하세요" required />
       </div>
+
+      <!-- Korean Name (optional) -->
+      <div class="profile-field">
+        <label class="profile-label" for="koreanNameInput">이름(한글)</label>
+        <input id="koreanNameInput" class="profile-input" placeholder="예: 김지민" />
+      </div>
+      <!-- Removed the login id field -->
       <div class="profile-field">
         <label class="profile-label" for="emailInput">이메일</label>
         <input id="emailInput" class="profile-input" placeholder="example@email.com" value="jimin@myschool.ac.kr" />
       </div>
+      <!-- Add this above the class name field -->
       <div class="profile-field">
-        <label class="profile-label" for="classInput">학급</label>
-        <input id="classInput" class="profile-input" placeholder="예: 4A" value="4A" />
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="willenaStudentCheckbox" style="width:18px;height:18px;accent-color:#7a5cfa;">
+          I am a Willena Student / 저는 윌레나 학생입니다
+        </label>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="classInput">반이르</label>
+        <select id="classInput" class="profile-input" disabled>
+          <option value="">Select your class</option>
+          <option>Brown</option>
+          <option>Stanford</option>
+          <option>Manchester</option>
+          <option>Melbourne</option>
+          <option>New York</option>
+          <option>Hawayy</option>
+          <option>Boston</option>
+          <option>Paris</option>
+          <option>Sydney</option>
+          <option>Berkeley</option>
+          <option>Chicago</option>
+          <option>London</option>
+          <option>Cambridge</option>
+          <option>Yale</option>
+          <option>Trinity</option>
+          <option>Washington</option>
+          <option>Oxford</option>
+          <option>MIT</option>
+          <option>Harvard</option>
+        </select>
       </div>
       <!-- Preferences Section -->
       <div class="prefs-section">
@@ -532,19 +584,21 @@
       <button class="save-btn" onclick="alert('저장되었습니다! (데모)')">저장</button>
 
       <!-- Activity Section Filter Buttons -->
-      <div class="activity-filter-row">
-        <button class="activity-filter-btn active" data-section="play" type="button">Play</button>
-        <button class="activity-filter-btn" data-section="challenge" type="button">Challenge</button>
-        <button class="activity-filter-btn" data-section="study" type="button">Study</button>
-        <button class="activity-filter-btn" data-section="quiz" type="button">Quiz</button>
+      <div class="activity-filter-slider" id="activityFilterSlider">
+        <span class="activity-filter-text active" data-section="all">전체</span>
+        <span class="activity-filter-text" data-section="recent">최근</span>
+        <span class="activity-filter-text" data-section="play">Play</span>
+        <span class="activity-filter-text" data-section="challenge">Challenge</span>
+        <span class="activity-filter-text" data-section="study">Study</span>
+        <span class="activity-filter-text" data-section="quiz">Quiz</span>
       </div>
       <!-- Activity Progress Section as Scrollable List -->
       <div class="activity-list-container">
         <table class="activity-list" id="activityListTable">
           <thead>
             <tr>
-              <th>Fun Activity/Game</th>
-              <th>Points/Progress</th>
+              <th>Activity</th>
+              <th>Points</th>
               <th>Badges</th>
             </tr>
           </thead>
@@ -605,7 +659,6 @@
     const emojiFilters = document.getElementById("emojiFilters");
     const avatarOpen = document.getElementById("avatarOpen");
     const closeOverlayBtn = document.getElementById("closeOverlayBtn");
-    // ... (rest of emoji picker code unchanged from previous version)
     const monsters = [
       "👾","👽","👹","👺","👻","💀","😈","🤡","🧌",
       "🧟","🧟‍♂️","🧟‍♀️","🧛","🧛‍♂️","🧛‍♀️","🐲","🦖","🐉","🦇","🦹","🦹‍♂️","🦹‍♀️"
@@ -748,6 +801,36 @@
 
     // --- Activity Section Data as JS arrays ---
     const ACTIVITY_DATA = {
+      all: [
+        // Combine all activities here if you want, or leave empty
+        ...(
+          [].concat(
+            [
+              { name: "Word Sprint", progress: "Points: 120", badges: "🏅" },
+              { name: "Memory Match", progress: "Points: 88", badges: "🥈" },
+              { name: "Run Rabbit", progress: "Points: 70", badges: "🏅" }
+            ],
+            [
+              { name: "Spelling Bee", progress: "Progress: 8/10", badges: "🥇 🏆" },
+              { name: "Speed Typing", progress: "Progress: 5/10", badges: "🥉" }
+            ],
+            [
+              { name: "Flashcards", progress: "Progress: 45%", badges: "🎖️" },
+              { name: "Listening Drill", progress: "Progress: 70%", badges: "🏅" }
+            ],
+            [
+              { name: "Quiz 1", progress: "Score: 93", badges: "🥇" },
+              { name: "Quiz 2", progress: "Score: 85", badges: "🥈" }
+            ]
+          ).flat()
+        )
+      ],
+      recent: [
+        // Show the most recent activities (example: last 3)
+        { name: "Quiz 2", progress: "Score: 85", badges: "🥈" },
+        { name: "Listening Drill", progress: "Progress: 70%", badges: "🏅" },
+        { name: "Speed Typing", progress: "Progress: 5/10", badges: "🥉" }
+      ],
       play: [
         { name: "Word Sprint", progress: "Points: 120", badges: "🏅" },
         { name: "Memory Match", progress: "Points: 88", badges: "🥈" },
@@ -768,13 +851,9 @@
     };
 
     function showActivitySection(section) {
-      // update filter buttons
-      document.querySelectorAll('.activity-filter-btn').forEach(btn => {
-        if (btn.getAttribute('data-section') === section) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
+      // update filter pills
+      document.querySelectorAll('.activity-filter-text').forEach(span => {
+        span.classList.toggle('active', span.getAttribute('data-section') === section);
       });
       // render table rows
       const tbody = document.querySelector('#activityListTable tbody');
@@ -788,13 +867,63 @@
         tbody.appendChild(tr);
       });
     }
-    document.querySelectorAll('.activity-filter-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
+    document.querySelectorAll('.activity-filter-text').forEach(span => {
+      span.addEventListener('click', function() {
         showActivitySection(this.getAttribute('data-section'));
       });
     });
+
     // Set default avatar on load
     emojiAvatar.innerText = selectedEmoji;
+
+    // Display user name and id under avatar (from storage)
+    function setProfileUserName() {
+      const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+      const id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || '';
+      document.getElementById('profileUserName').innerText = name;
+      document.getElementById('profileUserId').innerText = id ? `ID: ${id}` : '';
+      // Set page title to user name
+      document.getElementById('profilePageTitle').innerText = name || '프로필';
+    }
+    setProfileUserName();
+
+    // Enable/disable class dropdown based on checkbox
+    document.getElementById('willenaStudentCheckbox').addEventListener('change', function() {
+      document.getElementById('classInput').disabled = !this.checked;
+    });
+
+    async function saveProfile() {
+  // Gather profile data
+  const profile = {
+    name: document.getElementById('loginNameInput').value.trim(),
+    password: document.getElementById('passwordInput').value,
+    avatar: document.getElementById('emojiAvatar').innerText,
+    korean_name: document.getElementById('koreanNameInput').value.trim(),
+    email: document.getElementById('emailInput').value.trim(),
+    is_willena_student: document.getElementById('willenaStudentCheckbox').checked,
+    class: document.getElementById('classInput').value,
+    theme: document.getElementById('themeSelect').value
+  };
+
+  // Basic validation
+  if (!profile.name || !profile.password || !profile.avatar) {
+    alert('로그인 아이디, 비밀번호, 아바타는 필수입니다.');
+    return;
+  }
+
+  // Send to Netlify function (adjust endpoint if needed)
+  const res = await fetch('/.netlify/functions/save_profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile)
+  });
+  const result = await res.json();
+  if (result.success) {
+    alert('저장되었습니다!');
+  } else {
+    alert('저장에 실패했습니다: ' + (result.error || 'Unknown error'));
+  }
+}
   </script>
 </body>
 </html>
