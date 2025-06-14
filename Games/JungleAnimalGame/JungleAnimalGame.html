@@ -326,13 +326,15 @@ function endGame() {
 }
 
 async function submitScore(forcedName) {
-  const name = forcedName || nameInput.value || 'Anonymous';
-  console.log("Submit button clicked");
+  const nameInput = document.getElementById('nameInput');
+  const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
 
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "JungleAnimalGame" })
+    body: JSON.stringify({ name: user_name, score, game: "JungleAnimalGame", user_id })
   });
 }
 

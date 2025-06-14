@@ -16,11 +16,12 @@ async function submitScore() {
   const nameInput = getNameInput();
   const name = nameInput ? nameInput.value : 'Anonymous';
   const scoreValue = typeof score !== "undefined" ? score : 0;
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
 
   const response = await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score: scoreValue, game: window.game })
+    body: JSON.stringify({ name, score: scoreValue, game: window.game, user_id })
   });
   const result = await response.json();
 
@@ -46,7 +47,7 @@ async function displayHighScores() {
     highScoresList.innerHTML = '';
     data.forEach(entry => {
       const li = document.createElement('li');
-      li.textContent = `${entry.name}: ${entry.score}`;
+      li.textContent = `${entry.name}: ${entry.score} ${entry.badge || ''}`;
       highScoresList.appendChild(li);
     });
   } else {
@@ -58,17 +59,40 @@ async function displayHighScores() {
 
 const { createClient } = require('@supabase/supabase-js');
 
+// Badge rules: default and per-game overrides
+const badgeRules = {
+  // Example override for a specific game:
+  // EmojiGame: [
+  //   { min: 2000, badge: '🥉' },
+  //   { min: 5000, badge: '🥈' },
+  //   { min: 9000, badge: '🥇' }
+  // ]
+};
+
+const defaultBadgeRules = [
+  { min: 5000, badge: '🥇' },
+  { min: 3000, badge: '🥈' },
+  { min: 1000, badge: '🥉' }
+];
+
+function getBadge(game, score) {
+  const rules = badgeRules[game] || defaultBadgeRules;
+  for (const rule of rules) {
+    if (score >= rule.min) return rule.badge;
+  }
+  return '';
+}
+
 exports.handler = async (event) => {
   const supabaseUrl = process.env.supabase_url;
   const supabaseKey = process.env.supabase_key;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   if (event.httpMethod === 'POST') {
-    // Insert new score submission
-    const { name, score, game } = JSON.parse(event.body);
+    const { name, score, game, user_id } = JSON.parse(event.body);
     const { data, error } = await supabase
       .from('Scores')
-      .insert([{ name, score, game }]);
+      .insert([{ name, score, game, user_id }]);
     if (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
@@ -76,16 +100,20 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod === 'GET') {
-    // Show only highest score per name for this game
     const game = event.queryStringParameters.game || '';
-    // Call the Postgres function get_high_scores, which you must define in Supabase SQL editor:
-    // See instructions in chat for SQL needed!
     const { data, error } = await supabase
       .rpc('get_high_scores', { this_game: game });
     if (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
-    return { statusCode: 200, body: JSON.stringify(data) };
+
+    // Assign badges using per-game or default rules
+    const withBadges = (data || []).map(entry => ({
+      ...entry,
+      badge: getBadge(entry.game, entry.score)
+    }));
+
+    return { statusCode: 200, body: JSON.stringify(withBadges) };
   }
 
   return { statusCode: 405, body: 'Method Not Allowed' };

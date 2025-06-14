@@ -272,22 +272,17 @@
       document.getElementById('playAgainBtn').style.display = 'none';
     }
 
-    async function submitScore() {
-      const name = nameInput.value || 'Anonymous';
-      // Submit score to Netlify function
+    async function submitScore(forcedName) {
+      const nameInput = document.getElementById('nameInput');
+      const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
+      const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+      const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || name;
+
       await fetch('/.netlify/functions/submit_score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, score, game: "PastTenseGame" })
+        body: JSON.stringify({ name: user_name, score, game: "PastTenseGame", user_id })
       });
-
-      // Display high scores using Netlify function
-      await displayHighScores();
-
-      // Hide input and button after submitting, show Play Again
-      nameInput.style.display = 'none';
-      document.getElementById('submitScoreBtn').style.display = 'none';
-      document.getElementById('playAgainBtn').style.display = 'inline-block';
     }
 
     async function displayHighScores() {
