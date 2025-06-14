@@ -59,7 +59,7 @@ header {
 
     .swiper {
       width: 100%;
-      height: 35vh; /* was 70vh */
+      height: 50vh; /* was 70vh */
       margin-top: 2px;
       position: relative;
       background-color: white;
@@ -608,9 +608,15 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
 .choose-role-options {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 0px;
   max-width: 500px;
-  margin: 0 auto;
+  margin: 25px auto 0 auto; /* Add top margin here */
+}
+
+@media (max-width: 600px) {
+  .choose-role-options {
+    margin: 80px auto 0 auto; /* More space on mobile if you want */
+  }
 }
 
 .role-link {
@@ -630,6 +636,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
   position: relative;
   z-index: 1;
   font-family: 'Pretendard', 'Nanum Myeongjo', 'Poppins', 'Inter', 'sans-serif';
+  text-shadow: 0 4px 5px rgba(122, 92, 250, 0.18), 0 2px 8px rgba(46,43,63,0.12);
 }
 .role-link:hover, .role-link:focus {
   background: none;
@@ -651,9 +658,9 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
 
   <!-- New Section Below Main Swiper -->
   <section id="welcomeSection" style="background:#ffffff; color:#2e2b3f; padding:40px 0; text-align:center;">
-    <h2 style="font-size:2rem; font-weight:700; margin-bottom:16px;">Welcome to Willena</h2>
+    <h2 style="font-size:2rem; font-weight:700; margin-bottom:16px;"></h2>
     <p style="font-size:1.15rem; max-width:600px; margin:0 auto;">
-      윌레나는 아이들이 언어로 놀고, 새로운 세상을 상상하며, 배움의 즐거움을 발견하는 곳입니다.
+     
     </p>
   </section>
 
@@ -684,7 +691,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
   </div>
 
   <!-- Activity Swiper -->
-  <div class="activity-grid" data-aos="fade-up" style="margin: 60px auto 80px auto;">
+  <div class="activity-grid" data-aos="fade-up" style="margin: 100px auto 130px auto;">
   <a class="activity-card" href="playzone.html">
     <img src="Assets/Images/Play.png" alt="Play">
     <div class="card-caption">Play Zone</div>
@@ -698,8 +705,9 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
     <div class="card-caption">Study Zone</div>
   </a>
   <a class="activity-card" href="quizzone.html">
-    <img src="Assets/Images/THINK.jpg" alt="Think">
     <div class="card-caption">Quiz Zone</div>
+    <img src="Assets/Images/THINK.jpg" alt="Think">
+    
   </a>
 </div>
   <!-- Main Sections -->
@@ -1178,26 +1186,5 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 }
 </style>
-
-<!-- New Activity Grid Section -->
-<div class="activity-grid" data-aos="fade-up" style="margin: 100px auto 100px auto;">
-  <a class="activity-card" href="playzone.html">
-    <img src="Assets/Images/Play.png" alt="Play">
-    <div class="card-caption">Play Zone</div>
-  </a>
-  <a class="activity-card" href="challengezone.html">
-    <img src="Assets/Images/CHALLENGE.jpg" alt="Challenge">
-    <div class="card-caption">Challenge Zone</div>
-  </a>
-  <a class="activity-card" href="studyzone.html">
-    <img src="Assets/Images/QUIZ.jpg" alt="Quiz">
-    <div class="card-caption">Study Zone</div>
-  </a>
-  <a class="activity-card" href="quizzone.html">
-    <img src="Assets/Images/THINK.jpg" alt="Think">
-    <div class="card-caption">Quiz Zone</div>
-  </a>
-</div>
-
 </body>
 </html>

@@ -1,5 +1,6 @@
 // filepath: netlify/functions/auth_user.js
 const { createClient } = require('@supabase/supabase-js');
+const bcrypt = require('bcryptjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -13,14 +14,16 @@ exports.handler = async (event) => {
   const { name, password } = JSON.parse(event.body);
 
   // Check if user exists
-  const { data: existing, error: findError } = await supabase
+  const { data: existing } = await supabase
     .from('users')
     .select('id, name, password')
     .eq('name', name)
     .single();
 
   if (existing) {
-    if (existing.password === password) {
+    // Compare hashed password
+    const valid = await bcrypt.compare(password, existing.password);
+    if (valid) {
       return {
         statusCode: 200,
         body: JSON.stringify({ status: "login", user: { id: existing.id, name: existing.name } })
@@ -33,10 +36,13 @@ exports.handler = async (event) => {
     }
   }
 
+  // Hash password before storing
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   // Create new user
   const { data: created, error: insertError } = await supabase
     .from('users')
-    .insert([{ name, password, avatar: "🐱" }])
+    .insert([{ name, password: hashedPassword, avatar: "🐱" }])
     .select('id, name')
     .single();
 
