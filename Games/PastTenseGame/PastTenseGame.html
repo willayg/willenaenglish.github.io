@@ -289,7 +289,7 @@
       quizScreen.style.display = 'none';
       endScreen.style.display = 'block';
       finalScore.textContent = score;
-      playEndingAudio(score); // <-- Play ending sound based on score
+      playEndingAudio(score);
       displayHighScores();
 
       // Check if user is logged in
@@ -298,6 +298,8 @@
 
       const submitBtn = document.getElementById('submitScoreBtn');
       const nameInput = document.getElementById('nameInput');
+      const playAgainBtn = document.getElementById('playAgainBtn');
+
       if (user_id && user_name) {
         // Autosubmit for logged-in user
         if (nameInput) {
@@ -305,15 +307,17 @@
           nameInput.style.display = 'none';
         }
         if (submitBtn) submitBtn.style.display = 'none';
+        if (playAgainBtn) playAgainBtn.style.display = 'inline-block';
         submitScore(user_name, user_id);
       } else {
-        // Show input and button for guests
+        // Show input and buttons for guests
         if (nameInput) {
           nameInput.value = '';
           nameInput.style.display = 'block';
           nameInput.focus();
         }
         if (submitBtn) submitBtn.style.display = 'inline-block';
+        if (playAgainBtn) playAgainBtn.style.display = 'inline-block';
       }
     }
 
