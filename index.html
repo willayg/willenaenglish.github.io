@@ -1023,6 +1023,70 @@ document.addEventListener('DOMContentLoaded', function () {
 renderUserBox();
   </script>
   <script>
+async function fetchAndShowAvatar() {
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!user_id) return;
+
+  // Call your Netlify function to get user info from Supabase
+  const res = await fetch('/.netlify/functions/supabase_proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      table: 'users',
+      action: 'get_avatar',
+      user_id: user_id
+    })
+  });
+  const data = await res.json();
+  if (data && data.data && data.data.length > 0) {
+    const user = data.data[0];
+    renderUserBoxWithAvatar(user.name, user.avatar_url);
+  }
+}
+
+function renderUserBoxWithAvatar(name, avatarUrl) {
+  const userBox = document.getElementById('userBox');
+  userBox.innerHTML = `
+    <div class="user-dropdown" id="userDropdown">
+      <button class="user-dropdown-btn" id="userDropdownBtn">
+        <img src="${avatarUrl}" alt="avatar" class="user-avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">
+        <span>${name}</span>
+      </button>
+      <div class="user-dropdown-menu" id="userDropdownMenu">
+        <a href="profile-s.html">프로필</a>
+        <button id="logoutLink" type="button">로그아웃</button>
+      </div>
+    </div>
+  `;
+  // Dropdown toggle
+  const dropdown = document.getElementById('userDropdown');
+  const btn = document.getElementById('userDropdownBtn');
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  };
+  // Logout logic
+  document.getElementById('logoutLink').onclick = function(e) {
+    e.preventDefault();
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('user_name');
+    localStorage.removeItem('user_avatar');
+    sessionStorage.removeItem('user_id');
+    sessionStorage.removeItem('user_name');
+    sessionStorage.removeItem('user_avatar');
+    renderUserBox();
+  };
+  // Close dropdown on outside click
+  document.addEventListener('click', function closeDropdown(e) {
+    if (!dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  }, { once: true });
+}
+
+document.addEventListener('DOMContentLoaded', fetchAndShowAvatar);
+  </script>
+  <script>
 document.addEventListener('DOMContentLoaded', function () {
   const section = document.getElementById('playEnglishSection');
   const items = section.querySelectorAll('.play-extra-item');
@@ -1246,9 +1310,8 @@ document.getElementById('closeLoginPrompt').onclick = function() {
 };
 document.getElementById('continueWithoutLogin').onclick = function() {
   document.getElementById('loginPromptOverlay').style.display = 'none';
-  // Optionally, scroll to the section or follow the link
-  document.getElementById('studentRole').setAttribute('href', '#playEnglishSection');
-  document.getElementById('studentRole').click();
+  // Smooth scroll to the playEnglishSection
+  document.getElementById('playEnglishSection').scrollIntoView({ behavior: 'smooth' });
 };
 </script>
 <!-- Add this CSS to your <style> section -->
