@@ -17,12 +17,6 @@
       --light-beige: #f9f5ec;
     }
 
-   {
-      margin: 0;push
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--background);
@@ -559,16 +553,16 @@ h1 {
   </script>
 </head>
 <body>
+  <!-- Move this block ABOVE the header -->
+  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:2000;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.95);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #0002;">
+    <a id="userProfileLink" href="login.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+      <span id="userAvatar" style="font-size:2rem; margin-right:6px;">🙂</span>
+      <span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;">로그인 / 가입</span>
+    </a>
+  </div>
+
   <header style="position:relative;">
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
-    <div id="userBox" style="position:absolute; top:16px; right:20px; font-size:0.8rem; display:flex; align-items:center; gap:10px;">
-    <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
-<span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;"></span>
-    </div>
-    <button id="langToggle"
-      style="position: absolute; right: 18px; bottom: 8px; background: none; border: none; color: #f3f0f2; font-size: 0.9rem; cursor: pointer; padding: 0; line-height: 1.1;">
-      Eng
-    </button>
   </header>
 
   <!-- Top Swiper -->
@@ -654,8 +648,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
   <!-- New Section: Two Options (학생 / 학부모) -->
   <section id="chooseRoleSection">
     <div class="choose-role-options">
-      <a href="#playEnglishSection" class="role-link" id="studentRole">학생</a>
-      <a href="#aboutWillenaSection" class="role-link" id="parentRole">학부모</a>
+      <a href="#playEnglishSection" class="role-link" id="studentRole">학생존</a>
     </div>
   </section>
 
@@ -973,132 +966,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setLanguage(current === 'en' ? 'ko' : 'en');
   };
 
-  setLanguage(detectLanguage());
-  </script>
-  <script>
-  // User login UI logic
-  function renderUserBox() {
-  const userBox = document.getElementById('userBox');
-  const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
-  const avatar = localStorage.getItem('user_avatar');
-  const userAvatarSpan = document.getElementById('userAvatar');
-const userNameSpan = document.getElementById('userName');
-if (userAvatarSpan) userAvatarSpan.textContent = avatar;
-if (userNameSpan) userNameSpan.textContent = name || '';
-  userBox.innerHTML = '';
-  if (name) {
-    userBox.innerHTML = `
-      <div class="user-dropdown" id="userDropdown">
-        <button class="user-dropdown-btn" id="userDropdownBtn">
-          <span class="user-avatar">${avatar}</span>
-          <span>${name}</span>
-        </button>
-        <div class="user-dropdown-menu" id="userDropdownMenu">
-          <a href="profile-s.html">프로필</a>
-          <button id="logoutLink" type="button">로그아웃</button>
-        </div>
-      </div>
-    `;
-    // Dropdown toggle
-    const dropdown = document.getElementById('userDropdown');
-    const btn = document.getElementById('userDropdownBtn');
-    btn.onclick = function(e) {
-      e.stopPropagation();
-      dropdown.classList.toggle('open');
-    };
-    // Logout logic
-    document.getElementById('logoutLink').onclick = function(e) {
-      e.preventDefault();
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('user_name');
-      localStorage.removeItem('user_avatar');
-      sessionStorage.removeItem('user_id');
-      sessionStorage.removeItem('user_name');
-      sessionStorage.removeItem('user_avatar');
-      renderUserBox();
-    };
-    // Close dropdown on outside click
-    document.addEventListener('click', function closeDropdown(e) {
-      if (!dropdown.contains(e.target)) {
-        dropdown.classList.remove('open');
-      }
-    }, { once: true });
-  } else {
-    userBox.innerHTML = `<a href="login.html" style="color:#f3f0f2; text-decoration:underline;">로그인/가입</a>`;
-  }
-}
-renderUserBox();
-  </script>
-  <script>
-async function fetchAndShowAvatar() {
-  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
-  if (!user_id) return;
 
-  // Call your Netlify function to get user info from Supabase
-  const res = await fetch('/.netlify/functions/supabase_proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      table: 'users',
-      action: 'get_avatar',
-      user_id: user_id
-    })
-  });
-  const data = await res.json();
-  if (data && data.data && data.data.length > 0) {
-    const user = data.data[0];
-    renderUserBoxWithAvatar(user.name, user.avatar_url);
-  }
-}
 
-function renderUserBoxWithAvatar(name, avatarUrl) {
-  const userBox = document.getElementById('userBox');
-  // Check if avatarUrl looks like a URL or an emoji
-  const isUrl = avatarUrl && (avatarUrl.startsWith('http') || avatarUrl.startsWith('data:'));
-  userBox.innerHTML = `
-    <div class="user-dropdown" id="userDropdown">
-      <button class="user-dropdown-btn" id="userDropdownBtn">
-        ${isUrl
-          ? `<img src="${avatarUrl}" alt="avatar" class="user-avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">`
-          : `<span class="user-avatar" style="font-size:1.6rem; margin-right:2px; vertical-align:middle;">${avatarUrl}</span>`
-        }
-        <span>${name}</span>
-      </button>
-      <div class="user-dropdown-menu" id="userDropdownMenu">
-        <a href="profile-s.html">프로필</a>
-        <button id="logoutLink" type="button">로그아웃</button>
-      </div>
-    </div>
-  `;
-  // Dropdown toggle
-  const dropdown = document.getElementById('userDropdown');
-  const btn = document.getElementById('userDropdownBtn');
-  btn.onclick = function(e) {
-    e.stopPropagation();
-    dropdown.classList.toggle('open');
-  };
-  // Logout logic
-  document.getElementById('logoutLink').onclick = function(e) {
-    e.preventDefault();
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('user_name');
-    localStorage.removeItem('user_avatar');
-    sessionStorage.removeItem('user_id');
-    sessionStorage.removeItem('user_name');
-    sessionStorage.removeItem('user_avatar');
-    renderUserBox();
-  };
-  // Close dropdown on outside click
-  document.addEventListener('click', function closeDropdown(e) {
-    if (!dropdown.contains(e.target)) {
-      dropdown.classList.remove('open');
-    }
-  }, { once: true });
-}
-
-document.addEventListener('DOMContentLoaded', fetchAndShowAvatar);
-  </script>
-  <script>
 document.addEventListener('DOMContentLoaded', function () {
   const section = document.getElementById('playEnglishSection');
   const items = section.querySelectorAll('.play-extra-item');
@@ -1292,6 +1161,50 @@ document.addEventListener('DOMContentLoaded', function () {
     gap: 8px;
     padding: 0 2vw;
   }
+}
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+  const avatar = localStorage.getItem('user_avatar') || '🙂';
+  const userAvatarSpan = document.getElementById('userAvatar');
+  const userNameSpan = document.getElementById('userName');
+  const userProfileLink = document.getElementById('userProfileLink');
+
+  if (userId) {
+    try {
+      const res = await fetch('/.netlify/functions/supabase_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: 'users',
+          action: 'get_avatar',
+          user_id: userId
+        })
+      });
+      const result = await res.json();
+      if (result && result.data && result.data.length > 0) {
+        const user = result.data[0];
+        userNameSpan.textContent = user.name;
+        userAvatarSpan.textContent = user.avatar;
+        userProfileLink.href = "profile-s.html";
+        return;
+      }
+    } catch (e) {
+      // fallback to below
+    }
+  }
+  // Not logged in or fetch failed
+  userAvatarSpan.textContent = avatar;
+  userNameSpan.textContent = name || "로그인 / 가입";
+  userProfileLink.href = "login.html";
+});
+</script>
+
+<!-- Login Prompt Overlay -->
 <div id="loginPromptOverlay" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(46,43,63,0.38); backdrop-filter:blur(2px); align-items:center; justify-content:center;">
   <div style="background:#fff; border-radius:18px; max-width:340px; width:90vw; margin:auto; padding:32px 18px 24px 18px; box-shadow:0 8px 32px rgba(46,43,63,0.18); text-align:center; position:relative;">
     <button id="closeLoginPrompt" style="position:absolute; top:10px; right:16px; background:none; border:none; font-size:1.6rem; color:#2e2b3f; cursor:pointer;">&times;</button>
@@ -1302,83 +1215,22 @@ document.addEventListener('DOMContentLoaded', function () {
     <button id="continueWithoutLogin" style="margin-top:10px; background:none; border:none; color:#7a5cfa; font-size:1rem; cursor:pointer;">계속 이용하기</button>
   </div>
 </div>
-
 <script>
-// filepath: c:\Users\WILLIAM\Documents\Willena Website\willenaenglish.github.io\index.html
 document.getElementById('studentRole').addEventListener('click', function(e) {
-  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
-  if (!user_id) {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!userId) {
     e.preventDefault();
     document.getElementById('loginPromptOverlay').style.display = 'flex';
   }
 });
-
 document.getElementById('closeLoginPrompt').onclick = function() {
   document.getElementById('loginPromptOverlay').style.display = 'none';
 };
 document.getElementById('continueWithoutLogin').onclick = function() {
   document.getElementById('loginPromptOverlay').style.display = 'none';
-  // Smooth scroll to the playEnglishSection
+  // Optionally, scroll to 학생존 or continue
   document.getElementById('playEnglishSection').scrollIntoView({ behavior: 'smooth' });
 };
 </script>
-<!-- Add this CSS to your <style> section -->
-<style>
-.user-dropdown {
-  position: relative;
-  display: inline-block;
-}
-.user-dropdown-btn {
-  background: none;
-  border: none;
-  color: #f3f0f2;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-}
-.user-avatar {
-  font-size: 1.6rem;
-  margin-right: 2px;
-  vertical-align: middle;
-}
-.user-dropdown-menu {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: 120%;
-  background: #fff;
-  color: #2e2b3f;
-  min-width: 120px;
-  border-radius: 10px;
-  box-shadow: 0 4px 18px rgba(46,43,63,0.13);
-  z-index: 1001;
-  padding: 8px 0;
-  text-align: left;
-}
-.user-dropdown-menu a,
-.user-dropdown-menu button {
-  display: block;
-  width: 100%;
-  background: none;
-  border: none;
-  color: #2e2b3f;
-  padding: 10px 18px;
-  text-align: left;
-  font-size: 1rem;
-  cursor: pointer;
-  text-decoration: none;
-}
-.user-dropdown-menu a:hover,
-.user-dropdown-menu button:hover {
-  background: #f3f0f2;
-}
-.user-dropdown.open .user-dropdown-menu {
-  display: block;
-}
-</style>
 </body>
 </html>
