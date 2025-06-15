@@ -467,19 +467,28 @@ function checkAnswer(choice) {
     correctSound.play();
     score += 200;
     scoreDisplay.textContent = score;
+    playFeedbackAudio("correct");
     setTimeout(nextQuestion, 500);
   } else {
-    wrongSound.currentTime = 0;
-    wrongSound.play();
     score -= 100;
     scoreDisplay.textContent = score;
+    playFeedbackAudio("wrong");
     setTimeout(nextQuestion, 500);
   }
 }
 
 function endGame() {
-  // Hide game UI, show end screen, play sounds, etc.
-  // ...your end game logic...
+  // Stop the timer
+  if (timer) clearInterval(timer);
+
+  // Hide quiz UI, show end screen
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+  finalScore.textContent = score;
+
+  endGameSound.currentTime = 0;
+  endGameSound.play();
+  playEndingAudio(score);
 
   displayHighScores();
 
@@ -533,6 +542,97 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function resetGame() {
+  score = 0;
+  timeLeft = 30;
+  usedQuestions = [];
+  endScreen.style.display = 'none';
+  startScreen.style.display = 'block';
+  document.querySelector('.status-bar').style.display = 'none';
+  // Optionally reset other UI elements if needed
+}
+
+function displayHighScores() {
+  fetch('/.netlify/functions/submit_score?game=presentgame1')
+    .then(response => response.json())
+    .then(data => {
+      highscoresList.innerHTML = '';
+      // Keep only the highest score per player
+      const bestScores = {};
+      data.forEach(entry => {
+        if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+          bestScores[entry.name] = entry;
+        }
+      });
+      // Convert to array and sort by score descending, then take top 10
+      const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+      sorted.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name}: ${entry.score}`;
+        highscoresList.appendChild(li);
+      });
+    })
+    .catch(() => {
+      highscoresList.innerHTML = '<li>Failed to load scores</li>';
+    });
+}
+
+function playFeedbackAudio(type) {
+  const correctFiles = [
+    "good_job.mp3",
+    "great_work.mp3",
+    "nice_job.mp3",
+    "youre_good.mp3",
+    "well_done.mp3"
+  ];
+  const wrongFiles = [
+    "close_one.mp3",
+    "huge_mistake.mp3",
+    "not_the_answer.mp3",
+    "oh_man.mp3",
+    "wrong.mp3"
+  ];
+  const bonusFiles = [
+    "bonus1.mp3",
+    "bonus2.mp3",
+    "bonus3.mp3"
+  ];
+
+  let fileList;
+  if (type === "correct") {
+    fileList = correctFiles;
+  } else if (type === "wrong") {
+    fileList = wrongFiles;
+  } else if (type === "bonus") {
+    fileList = bonusFiles;
+  }
+
+  if (!fileList) return;
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(() => {});
+}
+
+function playEndingAudio(score) {
+  let file = "";
+  if (score < 0) {
+    file = "button_smash.mp3";
+  } else if (score <= 1000) {
+    file = "nicetry.mp3";
+  } else if (score <= 2000) {
+    file = "prettygood.mp3";
+  } else if (score <= 3000) {
+    file = "great.mp3";
+  } else if (score <= 4500) {
+    file = "Amazing.mp3";
+  } else {
+    file = "Best.mp3";
+  }
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(() => {});
+}
   </script>
 </body>
 </html>
