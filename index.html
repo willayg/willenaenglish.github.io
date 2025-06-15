@@ -367,6 +367,14 @@ h1 {
   height: 100%;
   justify-content: flex-start;
 }
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
 /* Overlay styles for card-stack */
 .card-stack {
@@ -559,7 +567,7 @@ h1 {
   <!-- Move this block ABOVE the header -->
   <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:2000;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.95);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #0002;">
     <a id="userProfileLink" href="login.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
-      <span id="userAvatar" style="font-size:2rem; margin-right:6px;">🙂</span>
+      <span id="userAvatar" style="font-size:1.5rem; margin-right:6px;">🙂</span>
       <span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;">로그인 / 가입</span>
     </a>
   </div>
@@ -689,7 +697,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
   </div>
   </div>
 
-  <!-- Activity Swiper -->
+<div class="card-container">
   <div class="activity-grid" data-aos="fade-up" style="margin: 100px auto 130px auto;">
   <a class="activity-card" href="playzone.html">
     <img src="Assets/Images/Play.png" alt="Play">
