@@ -23,6 +23,7 @@ let timer = null;
 let timeLeft = 25; // 25 seconds for the whole game
 let soundMuted = false;
 let musicMuted = false;
+let streak = 0; // Track correct answers in a row
 
 const correctSound = new Audio('../../Assets/Audio/right.mp3');
 const wrongSound = new Audio('../../Assets/Audio/wrong.mp3');
@@ -124,12 +125,31 @@ function checkAnswer(choice, btnClicked) {
     btnClicked.style.backgroundColor = '#e53935';
     btnClicked.style.color = '#fff';
     const response = wrongResponses[Math.floor(Math.random() * wrongResponses.length)];
-    playFeedbackAudio(response, 'wrong');   // only play the voice
+    playFeedbackAudio(response, 'wrong');
     score -= 100;
+    streak = 0; // Reset streak on wrong answer
   } else {
     const response = correctResponses[Math.floor(Math.random() * correctResponses.length)];
-    playFeedbackAudio(response, 'correct'); // only play the voice
+    playFeedbackAudio(response, 'correct');
     score += 300;
+    streak++; // Increment streak
+
+    // Bonus: +1 second for every 3 correct in a row
+    if (streak > 0 && streak % 3 === 0) {
+      timeLeft += 1;
+      timerSpan.textContent = timeLeft;
+      // Optional: Visual feedback
+      timerSpan.style.color = "#4caf50";
+      setTimeout(() => { timerSpan.style.color = ""; }, 600);
+    }
+    // Bonus: +500 points for every 5 correct in a row
+    if (streak > 0 && streak % 5 === 0) {
+      score += 500;
+      scoreSpan.textContent = score;
+      // Optional: Visual feedback
+      scoreSpan.style.color = "#ff9800";
+      setTimeout(() => { scoreSpan.style.color = ""; }, 600);
+    }
   }
 
   scoreSpan.textContent = score;
@@ -145,7 +165,11 @@ function endGame() {
   quizScreen.style.display = 'none';
   endScreen.style.display = 'block';
   finalScoreSpan.textContent = score;
+  playEndingAudio(score); // <-- Add this line
   displayHighScores();
+
+  // Show the Play Again button
+  playAgainBtn.style.display = 'inline-block';
 
   // Check if user is logged in
   const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
@@ -308,6 +332,26 @@ async function playFeedbackAudio(phrase, type) {
   });
 }
 
+function playEndingAudio(score) {
+  let file = "";
+  if (score < 0) {
+    file = "button_smash.mp3";
+  } else if (score <= 1000) {
+    file = "nicetry.mp3";
+  } else if (score <= 2000) {
+    file = "prettygood.mp3";
+  } else if (score <= 3000) {
+    file = "great.mp3";
+  } else if (score <= 4500) {
+    file = "Amazing.mp3";
+  } else {
+    file = "Best.mp3";
+  }
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
+
 // Attach handler on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
@@ -316,3 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.onclick = () => submitScore();
   }
 });
+
+playAgainBtn.onclick = function() {
+  // Reset everything and start a new game
+  startGame();
+  playAgainBtn.style.display = 'none';
+};
