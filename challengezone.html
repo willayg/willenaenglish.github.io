@@ -182,6 +182,10 @@
     Phone: 031-8041-2203<br>
     © 2025 Willena 원어민 영어학원. All rights reserved.
   </div>
+  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:100;display:none;align-items:center;gap:10px;background:rgba(24,28,41,0.97);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #00ffe733;">
+    <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
+    <span id="userName" style="font-weight:600;color:#00ffe7;font-size:1.1em;"></span>
+  </div>
   <script>
   // Enable overlays on tap/click for mobile
   document.addEventListener('DOMContentLoaded', function() {
@@ -226,6 +230,17 @@
       cards.forEach(card => observer.observe(card));
     });
   }
+  </script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const userName = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+    const userAvatar = localStorage.getItem('user_avatar') || sessionStorage.getItem('user_avatar');
+    if (userName && userAvatar) {
+      document.getElementById('userName').textContent = userName;
+      document.getElementById('userAvatar').textContent = userAvatar;
+      document.getElementById('userProfile').style.display = 'flex';
+    }
+  });
   </script>
 </body>
 </html>

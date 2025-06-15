@@ -176,6 +176,10 @@
     Phone: 031-8041-2203<br>
     © 2025 Willena 원어민 영어학원. All rights reserved.
   </div>
+  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:100;display:none;align-items:center;gap:10px;background:rgba(255,255,255,0.95);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #0002;">
+    <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
+    <span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;"></span>
+  </div>
   <script>
   // Enable overlays on tap/click for mobile
   document.addEventListener('DOMContentLoaded', function() {
@@ -224,5 +228,32 @@
     });
   }
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!userId) return;
+
+  try {
+    const res = await fetch('/.netlify/functions/supabase_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'users',
+        action: 'get_avatar',
+        user_id: userId
+      })
+    });
+    const result = await res.json();
+    if (result && result.data && result.data.length > 0) {
+      const user = result.data[0];
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userAvatar').textContent = user.avatar; // Use .avatar for emoji
+      document.getElementById('userProfile').style.display = 'flex';
+    }
+  } catch (e) {
+    document.getElementById('userProfile').style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>
