@@ -317,24 +317,23 @@ input:checked + .slider:before {
   <script type="module" src="participles.js"></script>
   <script>
 function endGame() {
-  // Hide game UI, show end screen, play sounds, etc.
-  // ...your end game logic...
-
   displayHighScores();
 
-  // Check if user is logged in
   const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
   const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
-
   const submitBtn = document.getElementById('submitBtn');
   const nameInput = document.getElementById('nameInput');
+
   if (user_id && user_name) {
-    // Autosubmit for logged-in user
+    // Hide input and button, auto-submit for logged-in user
     if (nameInput) {
       nameInput.value = user_name;
       nameInput.style.display = 'none';
     }
-    if (submitBtn) submitBtn.style.display = 'none';
+    if (submitBtn) {
+      submitBtn.style.display = 'none';
+      submitBtn.disabled = true;
+    }
     submitScore(user_name, user_id);
   } else {
     // Show input and button for guests
@@ -343,34 +342,12 @@ function endGame() {
       nameInput.style.display = 'block';
       nameInput.focus();
     }
-    if (submitBtn) submitBtn.style.display = 'inline-block';
+    if (submitBtn) {
+      submitBtn.style.display = 'inline-block';
+      submitBtn.disabled = false;
+    }
   }
 }
-
-async function submitScore(forcedName, forcedUserId) {
-  const nameInput = document.getElementById('nameInput');
-  const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
-  const user_id = forcedUserId || null;
-  const submitBtn = document.getElementById('submitBtn');
-  if (submitBtn) submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "participles", user_id }) // <-- set your game name here
-  });
-  if (submitBtn) submitBtn.style.display = 'none';
-  if (nameInput) nameInput.style.display = 'none';
-  displayHighScores();
-}
-
-// Attach handler on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-  const submitBtn = document.getElementById('submitBtn');
-  if (submitBtn) {
-    submitBtn.style.display = 'none';
-    submitBtn.onclick = () => submitScore();
-  }
-});
-  </script>
+</script>
 </body>
 </html>
