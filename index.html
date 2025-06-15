@@ -1046,10 +1046,15 @@ async function fetchAndShowAvatar() {
 
 function renderUserBoxWithAvatar(name, avatarUrl) {
   const userBox = document.getElementById('userBox');
+  // Check if avatarUrl looks like a URL or an emoji
+  const isUrl = avatarUrl && (avatarUrl.startsWith('http') || avatarUrl.startsWith('data:'));
   userBox.innerHTML = `
     <div class="user-dropdown" id="userDropdown">
       <button class="user-dropdown-btn" id="userDropdownBtn">
-        <img src="${avatarUrl}" alt="avatar" class="user-avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">
+        ${isUrl
+          ? `<img src="${avatarUrl}" alt="avatar" class="user-avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">`
+          : `<span class="user-avatar" style="font-size:1.6rem; margin-right:2px; vertical-align:middle;">${avatarUrl || '🙂'}</span>`
+        }
         <span>${name}</span>
       </button>
       <div class="user-dropdown-menu" id="userDropdownMenu">

@@ -242,5 +242,39 @@
     }
   });
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!userId) return;
+
+  try {
+    const res = await fetch('/.netlify/functions/supabase_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'users',
+        action: 'get_avatar',
+        user_id: userId
+      })
+    });
+    const result = await res.json();
+    if (result && result.data && result.data.length > 0) {
+      const user = result.data[0];
+      document.getElementById('userName').textContent = user.name;
+      const avatarEl = document.getElementById('userAvatar');
+      const avatar = user.avatar;
+      // Show emoji or image
+      if (avatar && (avatar.startsWith('http') || avatar.startsWith('data:'))) {
+        avatarEl.innerHTML = `<img src="${avatar}" alt="avatar" style="width:2.2em;height:2.2em;border-radius:50%;vertical-align:middle;">`;
+      } else {
+        avatarEl.textContent = avatar || '🙂';
+      }
+      document.getElementById('userProfile').style.display = 'flex';
+    }
+  } catch (e) {
+    document.getElementById('userProfile').style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>
