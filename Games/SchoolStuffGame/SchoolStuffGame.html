@@ -435,8 +435,60 @@ function playEndingAudio(score) {
   audio.play().catch(() => {});
 }
 
+function resetGame() {
+  endScreen.style.display = 'none';
+  startScreen.style.display = 'block';
+  score = 0;
+  timeLeft = 30;
+  scoreDisplay.textContent = score;
+  timerDisplay.textContent = timeLeft;
+  usedQuestions = [];
+  if (kids1) kids1.pause();
+}
 window.resetGame = resetGame;
   </script>
   <script src="../../netlify/functions/submit_score.js"></script>
+<script>
+// Override to filter top 10, no duplicate names (case-insensitive)
+window.displayHighScores = async function() {
+  const highscoresList = document.getElementById('highscores');
+  highscoresList.innerHTML = '<li>Loading...</li>';
+  try {
+    const response = await fetch('/.netlify/functions/submit_score?game=SchoolStuffGame');
+    if (!response.ok) {
+      highscoresList.innerHTML = '<li>Failed to load scores</li>';
+      return;
+    }
+    const data = await response.json();
+    highscoresList.innerHTML = '';
+
+    // Keep only the highest score per player (case-insensitive)
+    const bestScores = {};
+    (Array.isArray(data) ? data : []).forEach(entry => {
+      const nameKey = (entry.name || 'Anonymous').trim().toLowerCase();
+      if (!bestScores[nameKey] || entry.score > bestScores[nameKey].score) {
+        bestScores[nameKey] = entry;
+      }
+    });
+
+    // Sort and take top 10
+    const sorted = Object.values(bestScores)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    sorted.forEach((entry, i) => {
+      const li = document.createElement('li');
+      li.textContent = `${i + 1}. ${entry.name || 'Anonymous'} - ${entry.score}`;
+      highscoresList.appendChild(li);
+    });
+
+    if (sorted.length === 0) {
+      highscoresList.innerHTML = '<li>No scores yet</li>';
+    }
+  } catch (e) {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+  }
+};
+</script>
 </body>
 </html>
