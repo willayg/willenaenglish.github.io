@@ -178,16 +178,20 @@ async function displayHighScores() {
     const data = await response.json();
     highscoresList.innerHTML = '';
 
-    // Keep only the highest score per player
+    // Keep only the highest score per player (case-insensitive)
     const bestScores = {};
     (Array.isArray(data) ? data : []).forEach(entry => {
-      if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
-        bestScores[entry.name] = entry;
+      const nameKey = (entry.name || 'Anonymous').trim().toLowerCase();
+      if (!bestScores[nameKey] || entry.score > bestScores[nameKey].score) {
+        bestScores[nameKey] = entry;
       }
     });
 
     // Convert to array and sort by score descending, then take top 10
-    const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+    const sorted = Object.values(bestScores)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
     sorted.forEach((entry, i) => {
       const li = document.createElement('li');
       li.textContent = `${i + 1}. ${entry.name || 'Anonymous'} - ${entry.score}`;
