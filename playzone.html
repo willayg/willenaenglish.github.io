@@ -255,5 +255,14 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 });
 </script>
+  <script>
+// This replaces the previous userBox logic
+const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+const avatar = localStorage.getItem('user_avatar') || '🙂';
+const userAvatarSpan = document.getElementById('userAvatar');
+const userNameSpan = document.getElementById('userName');
+if (userAvatarSpan) userAvatarSpan.textContent = avatar;
+if (userNameSpan) userNameSpan.textContent = name || '';
+  </script>
 </body>
 </html>

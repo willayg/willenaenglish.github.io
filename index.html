@@ -561,7 +561,10 @@ h1 {
 <body>
   <header style="position:relative;">
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
-    <div id="userBox" style="position:absolute; top:16px; right:20px; font-size:0.8rem; display:flex; align-items:center; gap:10px;"></div>
+    <div id="userBox" style="position:absolute; top:16px; right:20px; font-size:0.8rem; display:flex; align-items:center; gap:10px;">
+    <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
+<span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;"></span>
+    </div>
     <button id="langToggle"
       style="position: absolute; right: 18px; bottom: 8px; background: none; border: none; color: #f3f0f2; font-size: 0.9rem; cursor: pointer; padding: 0; line-height: 1.1;">
       Eng
@@ -978,6 +981,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const userBox = document.getElementById('userBox');
   const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
   const avatar = localStorage.getItem('user_avatar') || '🙂';
+  const userAvatarSpan = document.getElementById('userAvatar');
+const userNameSpan = document.getElementById('userName');
+if (userAvatarSpan) userAvatarSpan.textContent = avatar;
+if (userNameSpan) userNameSpan.textContent = name || '';
   userBox.innerHTML = '';
   if (name) {
     userBox.innerHTML = `
@@ -1285,10 +1292,6 @@ document.addEventListener('DOMContentLoaded', function () {
     gap: 8px;
     padding: 0 2vw;
   }
-}
-</style>
-
-<!-- Login Prompt Overlay -->
 <div id="loginPromptOverlay" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(46,43,63,0.38); backdrop-filter:blur(2px); align-items:center; justify-content:center;">
   <div style="background:#fff; border-radius:18px; max-width:340px; width:90vw; margin:auto; padding:32px 18px 24px 18px; box-shadow:0 8px 32px rgba(46,43,63,0.18); text-align:center; position:relative;">
     <button id="closeLoginPrompt" style="position:absolute; top:10px; right:16px; background:none; border:none; font-size:1.6rem; color:#2e2b3f; cursor:pointer;">&times;</button>
