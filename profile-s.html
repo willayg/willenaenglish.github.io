@@ -221,7 +221,7 @@
     .activity-list td.activity-badges {
       font-size: 1.2em;
     }
-    .logo { margin-top: 26px; width: 74px; }
+    .logo { margin-top: 26px; width: 100px; }
 
     /* Overlay styles */
     .overlay-bg {
@@ -452,7 +452,7 @@
     }
     .logo {
       margin-top: 26px;
-      width: 74px;
+      width: 180px;
     /* Add drop shadow */
       filter: drop-shadow(0 1px 2px rgba(3, 0, 14, 0.25));
   }
@@ -475,25 +475,24 @@
   </div>
   <div class="main-content">
     <div class="box">
-      <h2 id="profilePageTitle" style="margin-bottom:18px;"></h2>
+      <!-- Display user name and id above avatar -->
+      <div style="margin-bottom: 6px;">
+        <div id="profileUserName" style="font-size:1.3em;font-weight:700;"></div>
+        <div id="profileUserId" style="font-size:.95em;color:#7a5cfa;"></div>
+      </div>
       <div class="avatar-wrapper" id="avatarOpen" tabindex="0" aria-label="Change Avatar">
         <span id="emojiAvatar" class="emoji-avatar" title="Change Avatar">🐱</span>
         <span class="avatar-edit-label" title="Change Avatar">🎨</span>
       </div>
-      <!-- Display user name under avatar -->
-      <!-- Display user id under avatar -->
-      <!-- Login Name (required) -->
-      <div class="profile-field">
-
-
+      <h2 id="profilePageTitle" style="margin-bottom:18px;"></h2>
+      <!-- ...rest of your profile fields... -->
       <div class="profile-field">
         <label class="profile-label" for="koreanNameInput">이름(한글)</label>
-        <input id="koreanNameInput" class="profile-input" placeholder="예: 김지민" />
+        <input id="koreanNameInput" class="profile-input" />
       </div>
-      <!-- Removed the login id field -->
       <div class="profile-field">
         <label class="profile-label" for="emailInput">이메일</label>
-        <input id="emailInput" class="profile-input" placeholder="example@email.com" value="jimin@myschool.ac.kr" />
+        <input id="emailInput" class="profile-input" />
       </div>
       <!-- Add this above the class name field -->
       <div class="profile-field">
@@ -570,9 +569,11 @@
           </select>
         </div>
       </div>
+      <button class="save-btn" id="saveProfileBtn" type="button">저장하기</button>
       <button class="save-btn" id="resetPasswordBtn" type="button">비밀번호 재설정 (Reset Password)</button>
 
       <!-- Activity Section Filter Buttons -->
+      <!--
       <div class="activity-filter-slider" id="activityFilterSlider">
         <span class="activity-filter-text active" data-section="all">전체</span>
         <span class="activity-filter-text" data-section="recent">최근</span>
@@ -581,6 +582,7 @@
         <span class="activity-filter-text" data-section="study">Study</span>
         <span class="activity-filter-text" data-section="quiz">Quiz</span>
       </div>
+      -->
       <!-- Activity Progress Section as Scrollable List -->
       <div class="activity-list-container">
         <table class="activity-list" id="activityListTable">
@@ -644,6 +646,8 @@
       <button class="save-btn" id="submitResetPasswordBtn" type="button" style="width: 100%;">확인</button>
     </div>
   </div>
+<!-- Success/Error Popup -->
+<div id="savePopup" style="display:none; position:fixed; left:50%; top:24px; transform:translateX(-50%); background:#7a5cfa; color:#fff; padding:16px 32px; border-radius:12px; font-size:1.1em; z-index:2000; box-shadow:0 4px 18px rgba(46,43,63,0.13);"></div>
 </div>
 <script>
 function logoutUser() {
@@ -873,6 +877,49 @@ function logoutUser() {
       resetPasswordOverlay.setAttribute('aria-hidden', 'true');
     });
 
+    /*
+const ACTIVITY_DATA = {
+  all: [
+    // Combine all activities here if you want, or leave empty
+    ...(
+      [].concat(
+        [
+
+        ]
+      ).flat()
+    )
+  ],
+  recent: [
+    // Show the most recent activities (example: last 3)
+
+  ]
+};
+
+function showActivitySection(section) {
+  // update filter pills
+  document.querySelectorAll('.activity-filter-text').forEach(span => {
+    span.classList.toggle('active', span.getAttribute('data-section') === section);
+  });
+  // render table rows
+  const tbody = document.querySelector('#activityListTable tbody');
+  tbody.innerHTML = '';
+  (ACTIVITY_DATA[section] || []).forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td>${row.name}</td>
+       <td>${row.progress}</td>
+       <td class="activity-badges">${row.badges}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+document.querySelectorAll('.activity-filter-text').forEach(span => {
+  span.addEventListener('click', function() {
+    document.querySelectorAll('.activity-filter-text').forEach(s => s.classList.remove('active'));
+    this.classList.add('active');
+    loadUserScores(); // Always reload all scores for now
+  });
+});
+*/
     // --- Activity Section Data as JS arrays ---
     const ACTIVITY_DATA = {
       all: [
@@ -880,47 +927,14 @@ function logoutUser() {
         ...(
           [].concat(
             [
-              { name: "Word Sprint", progress: "Points: 120", badges: "🏅" },
-              { name: "Memory Match", progress: "Points: 88", badges: "🥈" },
-              { name: "Run Rabbit", progress: "Points: 70", badges: "🏅" }
-            ],
-            [
-              { name: "Spelling Bee", progress: "Progress: 8/10", badges: "🥇 🏆" },
-              { name: "Speed Typing", progress: "Progress: 5/10", badges: "🥉" }
-            ],
-            [
-              { name: "Flashcards", progress: "Progress: 45%", badges: "🎖️" },
-              { name: "Listening Drill", progress: "Progress: 70%", badges: "🏅" }
-            ],
-            [
-              { name: "Quiz 1", progress: "Score: 93", badges: "🥇" },
-              { name: "Quiz 2", progress: "Score: 85", badges: "🥈" }
+
             ]
           ).flat()
         )
       ],
       recent: [
         // Show the most recent activities (example: last 3)
-        { name: "Quiz 2", progress: "Score: 85", badges: "🥈" },
-        { name: "Listening Drill", progress: "Progress: 70%", badges: "🏅" },
-        { name: "Speed Typing", progress: "Progress: 5/10", badges: "🥉" }
-      ],
-      play: [
-        { name: "Word Sprint", progress: "Points: 120", badges: "🏅" },
-        { name: "Memory Match", progress: "Points: 88", badges: "🥈" },
-        { name: "Run Rabbit", progress: "Points: 70", badges: "🏅" }
-      ],
-      challenge: [
-        { name: "Spelling Bee", progress: "Progress: 8/10", badges: "🥇 🏆" },
-        { name: "Speed Typing", progress: "Progress: 5/10", badges: "🥉" }
-      ],
-      study: [
-        { name: "Flashcards", progress: "Progress: 45%", badges: "🎖️" },
-        { name: "Listening Drill", progress: "Progress: 70%", badges: "🏅" }
-      ],
-      quiz: [
-        { name: "Quiz 1", progress: "Score: 93", badges: "🥇" },
-        { name: "Quiz 2", progress: "Score: 85", badges: "🥈" }
+
       ]
     };
 
@@ -943,7 +957,9 @@ function logoutUser() {
     }
     document.querySelectorAll('.activity-filter-text').forEach(span => {
       span.addEventListener('click', function() {
-        showActivitySection(this.getAttribute('data-section'));
+        document.querySelectorAll('.activity-filter-text').forEach(s => s.classList.remove('active'));
+        this.classList.add('active');
+        loadUserScores(); // Always reload all scores for now
       });
     });
 
@@ -965,6 +981,15 @@ function logoutUser() {
     document.getElementById('willenaStudentCheckbox').addEventListener('change', function() {
       document.getElementById('classInput').disabled = !this.checked;
     });
+    // Ensure the dropdown is enabled/disabled on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      const checkbox = document.getElementById('willenaStudentCheckbox');
+      const classInput = document.getElementById('classInput');
+      classInput.disabled = !checkbox.checked;
+      checkbox.addEventListener('change', function() {
+        classInput.disabled = !this.checked;
+      });
+    });
 
     async function saveProfile() {
   // Gather profile data
@@ -981,23 +1006,69 @@ function logoutUser() {
 
   // Basic validation
   if (!profile.name || !profile.password || !profile.avatar) {
-    alert('로그인 아이디, 비밀번호, 아바타는 필수입니다.');
+    showSavePopup('로그인 아이디, 비밀번호, 아바타는 필수입니다.', false);
     return;
   }
 
-  // Send to Netlify function (adjust endpoint if needed)
-  const res = await fetch('/.netlify/functions/save_profile', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(profile)
-  });
-  const result = await res.json();
-  if (result.success) {
-    alert('저장되었습니다!');
-  } else {
-    alert('저장에 실패했습니다: ' + (result.error || 'Unknown error'));
+  try {
+    const res = await fetch('/.netlify/functions/save_profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    });
+    const result = await res.json();
+    if (result.success) {
+      showSavePopup('저장되었습니다!', true);
+    } else {
+      showSavePopup('저장에 실패했습니다: ' + (result.error || 'Unknown error'), false);
+    }
+  } catch (e) {
+    showSavePopup('저장에 실패했습니다: 네트워크 오류', false);
   }
 }
+document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+  </script>
+  <script>
+window.showSavePopup = function(message, success = true) {
+  const popup = document.getElementById('savePopup');
+  popup.textContent = message;
+  popup.style.background = success ? '#7a5cfa' : '#e74c3c';
+  popup.style.display = 'block';
+  setTimeout(() => { popup.style.display = 'none'; }, 1800);
+}
+  </script>
+  <script>
+async function loadUserScores() {
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!user_id) return;
+
+  // Fetch all scores for this user
+  const response = await fetch('/.netlify/functions/submit_score?user_id=' + encodeURIComponent(user_id));
+  const data = await response.json();
+
+  const tbody = document.querySelector('#activityListTable tbody');
+  tbody.innerHTML = '';
+
+  if (response.ok && Array.isArray(data)) {
+    data.forEach(entry => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${entry.game}</td>
+        <td>${entry.score}</td>
+        <td class="activity-badges">${entry.badge || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } else {
+    // Optionally show a message if no scores
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="3">No scores yet.</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// Call this on page load
+window.addEventListener('DOMContentLoaded', loadUserScores);
   </script>
 </body>
 </html>
