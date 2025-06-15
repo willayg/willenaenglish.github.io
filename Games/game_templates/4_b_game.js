@@ -219,7 +219,8 @@ function displayHighScores() {
     .then(res => res.json())
     .then(data => {
       highscoresList.innerHTML = '';
-      (data || []).slice(0, 10).forEach(entry => {
+      const sorted = (data || []).sort((a, b) => b.score - a.score); // ✅ sort descending
+      sorted.slice(0, 10).forEach(entry => {
         const li = document.createElement('li');
         li.textContent = `${entry.name}: ${entry.score}`;
         highscoresList.appendChild(li);
