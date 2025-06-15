@@ -219,14 +219,28 @@ function displayHighScores() {
     .then(res => res.json())
     .then(data => {
       highscoresList.innerHTML = '';
-      const sorted = (data || []).sort((a, b) => b.score - a.score); // ✅ sort descending
-      sorted.slice(0, 10).forEach(entry => {
+
+      // Group by name and keep the highest score for each
+      const topScoresMap = {};
+      (data || []).forEach(entry => {
+        if (!topScoresMap[entry.name] || entry.score > topScoresMap[entry.name].score) {
+          topScoresMap[entry.name] = entry;
+        }
+      });
+
+      // Convert to array and sort
+      const uniqueTopScores = Object.values(topScoresMap)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+
+      uniqueTopScores.forEach(entry => {
         const li = document.createElement('li');
         li.textContent = `${entry.name}: ${entry.score}`;
         highscoresList.appendChild(li);
       });
     });
 }
+
 
 submitBtn.onclick = function() {
   const name = nameInput.value.trim();
