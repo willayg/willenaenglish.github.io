@@ -467,10 +467,10 @@
       </svg>
     </a>
     <nav class="activity-nav">
-      <a href="play.html" class="nav-btn">Play</a>
-      <a href="challenge.html" class="nav-btn">Challenge</a>
-      <a href="study.html" class="nav-btn">Study</a>
-      <a href="quiz.html" class="nav-btn">Quiz</a>
+      <a href="playzone.html" class="nav-btn">Play</a>
+      <a href="challengezone.html" class="nav-btn">Challenge</a>
+      <a href="coming_soon.html" class="nav-btn">Study</a>
+      <a href="coming_soon.html" class="nav-btn">Quiz</a>
     </nav>
   </div>
   <div class="main-content">
@@ -992,8 +992,8 @@ document.querySelectorAll('.activity-filter-text').forEach(span => {
 
     async function saveProfile() {
   const profile = {
-    // Use the name from storage or Korean name field as fallback
-    name: localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || document.getElementById('koreanNameInput').value.trim(),
+    id: localStorage.getItem('user_id') || sessionStorage.getItem('user_id'),
+    name: document.getElementById('profileUserName').innerText,
     avatar: document.getElementById('emojiAvatar').innerText,
     Korean_name: document.getElementById('koreanNameInput').value.trim(),
     email: document.getElementById('emailInput').value.trim(),

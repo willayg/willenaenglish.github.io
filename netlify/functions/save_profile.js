@@ -11,10 +11,21 @@ exports.handler = async (event) => {
 
   const data = JSON.parse(event.body);
 
+  const profile = {
+    id: data.id,
+    name: data.name,
+    avatar: data.avatar,
+    Korean_name: data.Korean_name,
+    email: data.email,
+    is_willena_student: data.is_willena_student,
+    class: data.class,
+    theme: data.theme
+  };
+
   // Upsert user profile (insert or update by name)
   const { error } = await supabase
     .from('users')
-    .upsert([data], { onConflict: ['name'] });
+    .upsert([profile], { onConflict: ['id'] });
 
   if (error) {
     return {
