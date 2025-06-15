@@ -980,7 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderUserBox() {
   const userBox = document.getElementById('userBox');
   const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
-  const avatar = localStorage.getItem('user_avatar') || '🙂';
+  const avatar = localStorage.getItem('user_avatar');
   const userAvatarSpan = document.getElementById('userAvatar');
 const userNameSpan = document.getElementById('userName');
 if (userAvatarSpan) userAvatarSpan.textContent = avatar;
@@ -1060,7 +1060,7 @@ function renderUserBoxWithAvatar(name, avatarUrl) {
       <button class="user-dropdown-btn" id="userDropdownBtn">
         ${isUrl
           ? `<img src="${avatarUrl}" alt="avatar" class="user-avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">`
-          : `<span class="user-avatar" style="font-size:1.6rem; margin-right:2px; vertical-align:middle;">${avatarUrl || '🙂'}</span>`
+          : `<span class="user-avatar" style="font-size:1.6rem; margin-right:2px; vertical-align:middle;">${avatarUrl}</span>`
         }
         <span>${name}</span>
       </button>
