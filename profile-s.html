@@ -478,7 +478,6 @@
       <!-- Display user name and id above avatar -->
       <div style="margin-bottom: 6px;">
         <div id="profileUserName" style="font-size:1.3em;font-weight:700;"></div>
-        <div id="profileUserId" style="font-size:.95em;color:#7a5cfa;"></div>
       </div>
       <div class="avatar-wrapper" id="avatarOpen" tabindex="0" aria-label="Change Avatar">
         <span id="emojiAvatar" class="emoji-avatar" title="Change Avatar">🐱</span>
@@ -969,10 +968,10 @@ document.querySelectorAll('.activity-filter-text').forEach(span => {
     // Display user name and id under avatar (from storage)
     function setProfileUserName() {
       const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
-      const id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || '';
       document.getElementById('profileUserName').innerText = name;
-      document.getElementById('profileUserId').innerText = id ? `ID: ${id}` : '';
-      // Set page title to user name
+      // Remove or comment out the ID line:
+      // const id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || '';
+      // document.getElementById('profileUserId').innerText = id ? `ID: ${id}` : '';
       document.getElementById('profilePageTitle').innerText = name || '프로필';
     }
     setProfileUserName();
@@ -992,12 +991,11 @@ document.querySelectorAll('.activity-filter-text').forEach(span => {
     });
 
     async function saveProfile() {
-  // Gather profile data
   const profile = {
-    name: document.getElementById('loginNameInput').value.trim(),
-    password: document.getElementById('passwordInput').value,
+    // Use the name from storage or Korean name field as fallback
+    name: localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || document.getElementById('koreanNameInput').value.trim(),
     avatar: document.getElementById('emojiAvatar').innerText,
-    korean_name: document.getElementById('koreanNameInput').value.trim(),
+    Korean_name: document.getElementById('koreanNameInput').value.trim(),
     email: document.getElementById('emailInput').value.trim(),
     is_willena_student: document.getElementById('willenaStudentCheckbox').checked,
     class: document.getElementById('classInput').value,
@@ -1005,8 +1003,8 @@ document.querySelectorAll('.activity-filter-text').forEach(span => {
   };
 
   // Basic validation
-  if (!profile.name || !profile.password || !profile.avatar) {
-    showSavePopup('로그인 아이디, 비밀번호, 아바타는 필수입니다.', false);
+  if (!profile.name || !profile.avatar) {
+    showSavePopup('이름과 아바타는 필수입니다.', false);
     return;
   }
 
