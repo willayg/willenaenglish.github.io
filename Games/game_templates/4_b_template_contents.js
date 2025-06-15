@@ -28,7 +28,7 @@ export const toyWords = [
   { word: "doll", icon: "🧸", label: "teddy bear" },
   { word: "game", icon: "🎮", label: "game controller" },
   { word: "puzzle", icon: "🧩", label: "puzzle piece" },
-  { word: "swing", icon: "⛺", label: "swing set" },
+  { word: "tent", icon: "⛺", label: "tent" },
   { word: "bike", icon: "🚲", label: "bike" },
   { word: "kite", icon: "🪁", label: "kite" },
   { word: "drum", icon: "🥁", label: "drum" },

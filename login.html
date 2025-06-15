@@ -101,7 +101,22 @@
       const result = await response.json();
 
       if (response.ok && result.status === 'login') {
-        storeUser(result.user.id, result.user.name, stayLoggedIn);
+        // Fetch profile to get avatar
+        const profileRes = await fetch('/.netlify/functions/supabase_proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            table: 'users',
+            action: 'get_avatar',
+            user_id: result.user.id
+          })
+        });
+        const profileData = await profileRes.json();
+        let avatar = '';
+        if (profileData && profileData.data && profileData.data.length > 0) {
+          avatar = profileData.data[0].avatar;
+        }
+        storeUser(result.user.id, result.user.name, stayLoggedIn, avatar);
         window.location.href = "index.html";
       } else if (response.ok && result.status === 'name_taken') {
         alert("이 이름은 이미 사용 중입니다. 다른 이름을 입력해 주세요.");
@@ -113,10 +128,11 @@
       }
     }
 
-    function storeUser(id, name, persist) {
+    function storeUser(id, name, persist, avatar) {
       const storage = persist ? localStorage : sessionStorage;
       storage.setItem("user_id", id);
       storage.setItem("user_name", name);
+      if (avatar) storage.setItem("user_avatar", avatar);
     }
   </script>
 </body>

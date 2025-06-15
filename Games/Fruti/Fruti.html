@@ -90,11 +90,11 @@ body {
 }
 #soundToggle {
   position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 18px;
+  left: 18px;
+  transform: none;
   z-index: 20;
-  font-size: 2em;
+  font-size: 1em;      /* Half the original 2em */
   background: none;
   border: none;
   color: #388e3c;
@@ -187,6 +187,7 @@ let timer;
 let timeLeft = 30;
 let currentQuestion;
 let usedQuestions = [];
+let streak = 0; // Track correct answers in a row
 const startScreen = document.getElementById('startScreen');
 const quizScreen = document.getElementById('quizScreen');
 const endScreen = document.getElementById('endScreen');
@@ -284,14 +285,25 @@ function checkAnswer(choice) {
     }
   });
   if (choice === currentQuestion.answer) {
+    streak++; // Increment streak
+    if (streak % 3 === 0) {
+      timeLeft += 1;
+      timerDisplay.textContent = timeLeft;
+      // Optional: Visual feedback for bonus time
+      timerDisplay.style.color = "#4caf50";
+      setTimeout(() => { timerDisplay.style.color = ""; }, 600);
+    }
     correctSound.currentTime = 0;
     correctSound.play();
+    playFeedbackAudio("correct");
     score += 200;
     scoreDisplay.textContent = score;
     setTimeout(nextQuestion, 500);
   } else {
+    streak = 0; // Reset streak on wrong answer
     wrongSound.currentTime = 0;
     wrongSound.play();
+    playFeedbackAudio("wrong");
     score -= 100;
     scoreDisplay.textContent = score;
     setTimeout(nextQuestion, 500);
@@ -306,6 +318,7 @@ function endGame() {
   finalScore.textContent = score;
   endGameSound.currentTime = 0;
   endGameSound.play();
+  playEndingAudio(score); // <-- Add this line
   displayHighScores();
 
   // Check if user is logged in
@@ -356,7 +369,16 @@ async function displayHighScores() {
   }
   const data = await response.json();
   highscoresList.innerHTML = '';
+  // Keep only the highest score per player
+  const bestScores = {};
   data.forEach(entry => {
+    if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+      bestScores[entry.name] = entry;
+    }
+  });
+  // Convert to array and sort by score descending, then take top 10
+  const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+  sorted.forEach(entry => {
     const li = document.createElement('li');
     li.textContent = `${entry.name}: ${entry.score}`;
     highscoresList.appendChild(li);
@@ -395,6 +417,67 @@ function resetGame() {
   highscoresList.innerHTML = '';
 }
 
+function playFeedbackAudio(type) {
+  // Arrays of local audio file names
+  const correctFiles = [
+    "good_job.mp3",
+    "great_work.mp3",
+    "nice_job.mp3",
+    "youre_good.mp3",
+    "well_done.mp3"
+  ];
+  const wrongFiles = [
+    "close_one.mp3",
+    "huge_mistake.mp3",
+    "not_the_answer.mp3",
+    "oh_man.mp3",
+    "wrong.mp3"
+  ];
+  const bonusFiles = [
+    "bonus1.mp3",
+    "bonus2.mp3",
+    "bonus3.mp3"
+  ];
+
+  // Pick a random file based on type
+  let fileList;
+  if (type === "correct") {
+    fileList = correctFiles;
+  } else if (type === "wrong") {
+    fileList = wrongFiles;
+  } else if (type === "bonus") {
+    fileList = bonusFiles;
+  }
+
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = "../../Assets/Audio/voices/rabbit/" + file; // Adjust path if needed
+
+  const audio = new Audio(url);
+  audio.play().catch(e => {
+    // Optionally log or ignore errors if file not found
+    // console.warn("Audio not found:", url);
+  });
+}
+
+function playEndingAudio(score) {
+  let file = "";
+  if (score < 0) {
+    file = "button_smash.mp3";
+  } else if (score <= 1000) {
+    file = "nicetry.mp3";
+  } else if (score <= 2000) {
+    file = "prettygood.mp3";
+  } else if (score <= 3000) {
+    file = "great.mp3";
+  } else if (score <= 4500) {
+    file = "Amazing.mp3";
+  } else {
+    file = "Best.mp3";
+  }
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
   </script>
 </body>
 </html>

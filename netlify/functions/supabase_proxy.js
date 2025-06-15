@@ -49,6 +49,25 @@ exports.handler = async (event) => {
     };
   }
 
+  if (body.action === "get_avatar") {
+    const { user_id } = body;
+    const { data, error } = await supabase
+      .from("users")
+      .select("name, avatar")
+      .eq("id", user_id)
+      .limit(1);
+    if (error || !data) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: "User not found" }),
+      };
+    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ data }),
+    };
+  }
+
   let result;
 
   try {

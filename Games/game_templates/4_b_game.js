@@ -1,5 +1,6 @@
 import * as wordData from './4_b_template_contents.js';
 
+const startBtn = document.getElementById('startBtn');
 const startScreen = document.getElementById('startScreen');
 const quizScreen = document.getElementById('quizScreen');
 const endScreen = document.getElementById('endScreen');

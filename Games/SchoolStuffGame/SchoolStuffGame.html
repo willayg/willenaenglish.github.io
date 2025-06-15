@@ -130,9 +130,8 @@ body {
       <p>Top Scores:</p>
       <ol id="highscores"></ol>
       <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
-      <button id="submitBtn">Submit Score</button>
-
-      <button onclick="resetGame()">Play Again</button>
+      <button id="submitBtn" style="display:none;">확인</button>
+      <button id="playAgainBtn">Play Again</button>
     </div>
   </div>
   
@@ -302,7 +301,7 @@ function endGame() {
   finalScore.textContent = score;
   endGameSound.currentTime = 0;
   endGameSound.play();
-  playEndingAudio(score); // Play ending audio based on score
+  playEndingAudio(score);
   displayHighScores();
 
   // Check if user is logged in
@@ -318,15 +317,14 @@ function endGame() {
     submitScore(user_name, user_id);
   } else {
     // Show input and button for guests
-    if (nameInput) {
-      nameInput.value = '';
-      nameInput.style.display = 'block';
-      nameInput.focus();
-    }
+    nameInput.value = '';
+    nameInput.style.display = 'block';
+    nameInput.focus();
     if (submitBtn) submitBtn.style.display = 'inline-block';
   }
 }
 
+/*
 async function submitScore(forcedName, forcedUserId) {
   const nameInput = document.getElementById('nameInput');
   const name = forcedName || (nameInput ? nameInput.value : '') || 'Anonymous';
@@ -342,6 +340,34 @@ async function submitScore(forcedName, forcedUserId) {
   if (nameInput) nameInput.style.display = 'none';
   displayHighScores();
 }
+*/
+
+/*
+function displayHighScores() {
+  fetch('/.netlify/functions/submit_score?game=SchoolStuffGame')
+    .then(response => response.json())
+    .then(data => {
+      highscoresList.innerHTML = '';
+      // Keep only the highest score per player
+      const bestScores = {};
+      data.forEach(entry => {
+        if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+          bestScores[entry.name] = entry;
+        }
+      });
+      // Convert to array and sort by score descending, then take top 10
+      const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+      sorted.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name}: ${entry.score}`;
+        highscoresList.appendChild(li);
+      });
+    })
+    .catch(() => {
+      highscoresList.innerHTML = '<li>Failed to load scores</li>';
+    });
+}
+*/
 
 // Attach handler on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -350,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.style.display = 'none';
     submitBtn.onclick = () => submitScore();
   }
+  document.getElementById('playAgainBtn').addEventListener('click', resetGame);
 });
 
 function playFeedbackAudio(type) {
@@ -407,6 +434,9 @@ function playEndingAudio(score) {
   const audio = new Audio(url);
   audio.play().catch(() => {});
 }
+
+window.resetGame = resetGame;
   </script>
+  <script src="../../netlify/functions/submit_score.js"></script>
 </body>
 </html>

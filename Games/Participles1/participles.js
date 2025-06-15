@@ -11,6 +11,7 @@ let timeLeft = 25; // 25 seconds for the whole game
 let soundMuted = false;
 let musicMuted = true; // Default music to muted
 let questionStartTime = 0;
+let correctStreak = 0;
 
 const correctResponses = [
   "Nice job!", "You're Awesome!", "Wow! That was right!", "You got it right!", "That's the correct answer. Cool!"
@@ -58,6 +59,7 @@ function startGame() {
     }
   }, 1000);
   showQuestion();
+  correctStreak = 0;
 }
 
 function showQuestion() {
@@ -96,6 +98,7 @@ function checkAnswer(choice, btnClicked) {
       penalty = 200;
       score -= penalty;
     }
+    correctStreak = 0; // reset streak on wrong answer
   } else {
     playFeedbackAudio('correct');
     score += 300;
@@ -105,6 +108,16 @@ function checkAnswer(choice, btnClicked) {
     }
     btnClicked.style.backgroundColor = '#43a047';
     btnClicked.style.color = '#fff';
+    correctStreak++;
+    // 1 second bonus for every 3 right answers
+    if (correctStreak > 0 && correctStreak % 3 === 0) {
+      timeLeft += 1;
+      timerSpan.textContent = timeLeft;
+    }
+    // 500 point bonus for every 5 right answers
+    if (correctStreak > 0 && correctStreak % 5 === 0) {
+      score += 500;
+    }
   }
   scoreSpan.textContent = score;
   setTimeout(nextQuestion, 500);
@@ -163,24 +176,25 @@ async function displayHighScores() {
       return;
     }
     const data = await response.json();
-    // LOG THE RESPONSE TO DEBUG
-    console.log("High scores response:", data);
     highscoresList.innerHTML = '';
 
-    // ---- ADJUST THIS SECTION DEPENDING ON YOUR BACKEND RESPONSE ----
-    // Uncomment the line that matches your backend response format:
-    
-    // let scoresArray = data.scores || [];      // If backend: {scores: [...]}
-    // let scoresArray = data.data || [];        // If backend: {data: [...]}
-    let scoresArray = Array.isArray(data) ? data : []; // If backend: [...]
+    // Keep only the highest score per player
+    const bestScores = {};
+    (Array.isArray(data) ? data : []).forEach(entry => {
+      if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+        bestScores[entry.name] = entry;
+      }
+    });
 
-    scoresArray.forEach((entry, i) => {
+    // Convert to array and sort by score descending, then take top 10
+    const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+    sorted.forEach((entry, i) => {
       const li = document.createElement('li');
       li.textContent = `${i + 1}. ${entry.name || 'Anonymous'} - ${entry.score}`;
       highscoresList.appendChild(li);
     });
 
-    if (scoresArray.length === 0) {
+    if (sorted.length === 0) {
       highscoresList.innerHTML = '<li>No scores yet</li>';
     }
   } catch (e) {

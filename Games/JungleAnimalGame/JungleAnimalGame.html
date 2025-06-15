@@ -88,11 +88,11 @@ body {
 }
 #soundToggle {
   position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 18px;
+  left: 18px;
+  transform: none;
   z-index: 20;
-  font-size: 2em;
+  font-size: 1em;      /* Half the original 2em */
   background: none;
   border: none;
   color: #388e3c;
@@ -202,7 +202,7 @@ const nameInput = document.getElementById('nameInput');
 
 // Sound setup
 const correctSound = new Audio('../../Assets/Audio/right.mp3');
-const wrongSound = new Audio('../../Assets/Audio/wrong.mp3');
+const wrongSound = new Audio('../../Assets/Audio/wrong1.mp3');
 const endGameSound = new Audio('../../Assets/Audio/endgame.mp3');
 const jungleMusic = new Audio('../../Assets/Audio/junglemusic.mp3');
 jungleMusic.loop = true;
@@ -288,12 +288,14 @@ function checkAnswer(choice) {
   if (choice === currentQuestion.answer) {
     correctSound.currentTime = 0;
     correctSound.play();
+    playFeedbackAudio("correct");
     score += 200;
     scoreDisplay.textContent = score;
     setTimeout(nextQuestion, 500);
   } else {
     wrongSound.currentTime = 0;
     wrongSound.play();
+    playFeedbackAudio("wrong");
     score -= 100;
     scoreDisplay.textContent = score;
     setTimeout(nextQuestion, 500);
@@ -308,6 +310,7 @@ function endGame() {
   finalScore.textContent = score;
   endGameSound.currentTime = 0;
   endGameSound.play();
+  playEndingAudio(score);
   displayHighScores();
 
   // Check if user is logged in
@@ -353,17 +356,26 @@ async function submitScore(forcedName, forcedUserId) {
 
 async function displayHighScores() {
   const response = await fetch('/.netlify/functions/submit_score?game=JungleAnimalGame');
-  const data = await response.json();
-  if (response.ok) {
-    highscoresList.innerHTML = '';
-    data.forEach(entry => {
-      const li = document.createElement('li');
-      li.textContent = `${entry.name}: ${entry.score}`;
-      highscoresList.appendChild(li);
-    });
-  } else {
-    console.error('Failed to fetch scores:', data.error);
+  if (!response.ok) {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+    return;
   }
+  const data = await response.json();
+  highscoresList.innerHTML = '';
+  // Keep only the highest score per player
+  const bestScores = {};
+  data.forEach(entry => {
+    if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+      bestScores[entry.name] = entry;
+    }
+  });
+  // Convert to array and sort by score descending, then take top 10
+  const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+  sorted.forEach(entry => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.name}: ${entry.score}`;
+    highscoresList.appendChild(li);
+  });
 }
 
 
@@ -398,6 +410,49 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function playFeedbackAudio(type) {
+  if (!soundOn) return;
+  const correctFiles = [
+    "good_job.mp3",
+    "great_work.mp3",
+    "nice_job.mp3",
+    "youre_good.mp3",
+    "well_done.mp3"
+  ];
+  const wrongFiles = [
+    "close_one.mp3",
+    "huge_mistake.mp3",
+    "not_the_answer.mp3",
+    "oh_man.mp3",
+    "wrong.mp3"
+  ];
+  let fileList = type === "correct" ? correctFiles : wrongFiles;
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
+
+function playEndingAudio(score) {
+  if (!soundOn) return;
+  let file = "";
+  if (score < 0) {
+    file = "button_smash.mp3";
+  } else if (score <= 1000) {
+    file = "nicetry.mp3";
+  } else if (score <= 2000) {
+    file = "prettygood.mp3";
+  } else if (score <= 3000) {
+    file = "great.mp3";
+  } else if (score <= 4500) {
+    file = "Amazing.mp3";
+  } else {
+    file = "Best.mp3";
+  }
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
   </script>
 </body>
 </html>

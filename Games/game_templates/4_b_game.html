@@ -246,7 +246,7 @@ input:checked + .slider:before {
     <button id="startBtn">Start Game</button>
   </div>
 
-  <div id="quizScreen">
+  <div id="quizScreen" style="display:none;">
     <div class="status-bar">
       <div class="status-item"><span id="timer">20</span>s</div>
       <div id="emoji"></div>
@@ -281,37 +281,5 @@ input:checked + .slider:before {
 <audio id="bgMusic" src="../../Assets/audio/pianopoly.mp3" autoplay loop></audio>
 
   <script type="module" src="4_b_game.js"></script>
-  </script>
 </body>
 </html>
-<script>
-let soundMuted = false; // Make sure this is set
-
-async function playFeedbackAudio(phrase, type) {
-  if (soundMuted) return;
-
-  const correctFiles = [
-    "good_job.mp3",
-    "great_work.mp3",
-    "nice_job.mp3",
-    "youre_good.mp3",
-    "well_done.mp3"
-  ];
-  const wrongFiles = [
-    "close_one.mp3",
-    "huge_mistake.mp3",
-    "not_the_answer.mp3",
-    "oh_man.mp3",
-    "wrong.mp3"
-  ];
-
-  let fileList = type === "correct" ? correctFiles : wrongFiles;
-  let file = fileList[Math.floor(Math.random() * fileList.length)];
-  let url = "../../Assets/Audio/voices/rabbit/" + file;
-
-  const audio = new Audio(url);
-  audio.play().catch(e => {
-    console.warn("Audio not found or not allowed to play:", url, e);
-  });
-}
-</script>
