@@ -101,18 +101,19 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'GET') {
     const game = event.queryStringParameters.game || '';
-    const { data, error } = await supabase
-      .rpc('get_high_scores', { this_game: game });
+    const user_id = event.queryStringParameters.user_id || '';
+    let query = supabase.from('Scores').select('*');
+    if (game) query = query.eq('game', game);
+    if (user_id) query = query.eq('user_id', user_id);
+    const { data, error } = await query;
     if (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
-
     // Assign badges using per-game or default rules
     const withBadges = (data || []).map(entry => ({
       ...entry,
       badge: getBadge(entry.game, entry.score)
     }));
-
     return { statusCode: 200, body: JSON.stringify(withBadges) };
   }
 

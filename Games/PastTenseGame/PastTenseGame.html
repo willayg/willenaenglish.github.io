@@ -302,7 +302,7 @@
       await fetch('/.netlify/functions/submit_score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, score, game: "GameName", user_id }) // <-- set your game name here
+        body: JSON.stringify({ name, score, game: "PastTenseGame", user_id }) // <-- set your game name here
       });
       if (submitBtn) submitBtn.style.display = 'none';
       if (nameInput) nameInput.style.display = 'none';
