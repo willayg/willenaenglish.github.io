@@ -237,27 +237,37 @@
   animation: fadeOutScale 0.5s ease forwards;
 }
 
-.start-button,
-.option-button {
-    font-size: 64px !important;
-    padding: 24px 48px !important;
-    border-radius: 24px !important;
-  }
 
-  @media (max-width: 600px) {
-    .start-button,
-    .option-button {
-      font-size: 48px !important;
-      padding: 18px 24px !important;
-      border-radius: 18px !important;
-    }
-  }
 
-  /* Show/Hide High Scores button half size */
-  #toggleScoresBtn {
-    font-size: 9px !important;
-    padding: 3px 6px !important;
-  }
+/* Dedicated style for the high scores toggle button */
+.toggle-scores-btn {
+  font-size: 13px !important;
+  padding: 6px 8px !important;
+  border-radius: 5px !important;
+  background-color: #8d094b !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 2px 4px 10px rgba(2, 1, 1, 0.2) !important;
+  cursor: pointer !important;
+  z-index: 1002 !important;
+}
+.toggle-scores-btn:hover {
+  background-color: #a81e6a;
+}
+
+/* REMOVE or COMMENT OUT this block:
+#toggleScoresBtn {
+  font-size: 14px !important;
+  padding: 7px 15px !important;
+  border-radius: 7px !important;
+  background-color: #8d094b !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 2px 4px 10px rgba(2, 1, 1, 0.2) !important;
+  cursor: pointer !important;
+  z-index: 1002 !important;
+}
+*/
   </style> 
 
 </head>
@@ -283,8 +293,11 @@
       <button id="closeScoresBtn" class="start-button" style="margin-top: 20px;">Close</button>
     </div>
   </div>
-  <button id="toggleScoresBtn" class="start-button" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 18px; padding: 6px 12px;">Show/Hide High Scores</button>
+</button>
   <div id="floating-container"></div>
+  <button id="toggleScoresBtn" class="toggle-scores-btn" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);">
+  Show/Hide High Scores
+</button>
   <script>
   window.game = "cutie_past_tense";
   </script>
