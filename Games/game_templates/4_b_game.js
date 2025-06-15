@@ -206,7 +206,7 @@ async function submitScore(forcedName, forcedUserId) {
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "4_b_game", user_id }) // <-- set your game name here
+    body: JSON.stringify({ name, score, game: "EmojiGame", user_id }) // <-- set your game name here
   });
   if (submitBtn) submitBtn.style.display = 'none';
   if (nameInput) nameInput.style.display = 'none';
