@@ -373,21 +373,6 @@ h1 {
   position: relative;
   overflow: hidden;
 }
-.card-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(46,43,63,0.72);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s;
-  padding: 18px;
-  text-align: center;
-  font-size: 1.1rem;
-}
 .card-stack:hover .card-overlay,
 .card-stack:focus-within .card-overlay {
   opacity: 1;
@@ -401,11 +386,11 @@ h1 {
 .card-stack img {
   width: 100%;
   height: auto;
-  max-height: 80%;
+  max-height: 100%;
   object-fit: contain;
-  border-radius: 24px;
+  border-radius: 0px;
   background: #fff;
-  box-shadow: 0 6px 18px rgba(100, 100, 100, 0.10);
+  box-shadow: 0 0px 0px rgba(100, 100, 100, 0.10);
 }
 
 .card-caption {
@@ -502,7 +487,7 @@ h1 {
   .card {
     display: inline-block;
     border: 2px solid black;
-    border-radius: 12px;
+    border-radius: 0px;
     overflow: hidden;
     padding: 0;
     margin: 10px;
