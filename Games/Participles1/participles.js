@@ -150,6 +150,16 @@ function endGame() {
   playAgainBtn.style.display = '';
   nameInput.style.display = '';
   if (timer) clearInterval(timer);
+
+  // --- AUTO SUBMIT IF LOGGED IN ---
+  // Replace this with your actual login detection logic
+  if (window.loggedInUser && window.loggedInUser.name) {
+    nameInput.value = window.loggedInUser.name;
+    submitBtn.style.display = 'none';
+    nameInput.style.display = 'none';
+    playAgainBtn.style.display = 'none';
+    submitScore(); // Call the submitScore function automatically
+  }
 }
 
 function playFeedbackAudio(type) {
@@ -257,23 +267,6 @@ window.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  async function submitScore() {
-    let name = nameInput.value.trim();
-    if (!name) {
-      name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
-    }
-    submitBtn.disabled = true;
-    await fetch('/.netlify/functions/submit_score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score, game: "ParticiplesGame" })
-    });
-    submitBtn.style.display = 'none';
-    nameInput.style.display = 'none';
-    displayHighScores();
-    playAgainBtn.style.display = '';
-  }
-
   if (submitBtn) submitBtn.addEventListener('click', submitScore);
 
   if (playAgainBtn) {
@@ -299,3 +292,26 @@ window.addEventListener('DOMContentLoaded', function() {
     if (endScreen) endScreen.style.display = 'none';
   };
 });
+
+// Move submitScore outside DOMContentLoaded so endGame can call it
+async function submitScore() {
+  let name = nameInput.value.trim();
+  if (!name) {
+    // Use logged-in name if available
+    if (window.loggedInUser && window.loggedInUser.name) {
+      name = window.loggedInUser.name;
+    } else {
+      name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
+    }
+  }
+  submitBtn.disabled = true;
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "ParticiplesGame" })
+  });
+  submitBtn.style.display = 'none';
+  nameInput.style.display = 'none';
+  displayHighScores();
+  playAgainBtn.style.display = '';
+}
