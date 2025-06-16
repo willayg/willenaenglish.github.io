@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reading Passage with Questions</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #container {
+      display: flex;
+      height: 100vh;
+    }
+    #reading-column {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+      background: #ffffff;
+      display: flex;
+      justify-content: center; /* Center the content horizontally */
+      align-items: flex-start;
+    }
+    #quiz-column {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .question-box {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .question {
+      font-weight: bold;
+    }
+    .page-label {
+      font-size: 0.9em;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .options label {
+      display: block;
+      margin: 8px 0;
+      padding: 5px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .correct {
+      background-color: #c8f7c5;
+    }
+    .incorrect {
+      background-color: #f7c5c5;
+    }
+    #result {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    #reading-passage {
+      max-width: 840px; /* 40% wider than 600px */
+      width: 100%;
+      background: #f9f7f3;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #0001;
+      font-size: 1.1em;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      margin: 32px auto;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="reading-column">
+      <!-- <h2>The Adventure of Three Students</h2> -->
+      <pre id="reading-passage"></pre>
+    </div>
+    <div id="quiz-column">
+      <div id="quiz-container"></div>
+      <div id="result"></div>
+    </div>
+  </div>
+  <script>
+    const questions = [
+      // Page 1
+      { q: "(Page 1) Why did Mr Soames visit Holmes and Watson?", options: ["He wanted to invite them to dinner.", "He was worried about a student’s health.", "He had a personal problem.", "He needed help with a university problem.", "He was looking for a new job."], answer: 3 },
+      { q: "(Page 1) Why didn’t Mr Soames want to go to the police?", options: ["The police were too far away.", "He didn’t think they could help.", "He didn’t want the media to know about the problem.", "He was afraid of the students.", "He thought Holmes was a better policeman."], answer: 2 },
+      { q: "(Page 1) What surprised Mr Soames about Holmes?", options: ["That Holmes already knew who did it.", "That Holmes remembered the exam questions.", "That Holmes wanted to call the police.", "That Holmes knew the positions of the pages.", "That Holmes didn’t want to help."], answer: 3 },
+      { q: "(Page 1) What clues did Mr Soames find?", options: ["A student’s name tag and homework.", "A notebook and footprints.", "A ball of clay, pencil wood, and a long scratch.", "A broken lock and spilled ink.", "A pair of glasses and a knife."], answer: 2 },
+      // Page 2
+      { q: "(Page 2) Who came to see Mr Soames in the morning?", options: ["McLaren", "Sherlock Holmes", "Watson", "Daulat Ras", "Gilchrist"], answer: 3 },
+      { q: "(Page 2) What does Soames say about Daulat Ras and the exam questions?", options: ["He took one of the pages.", "He definitely saw the answers.", "He might have seen the questions but didn’t touch them.", "He copied all the questions.", "He denied seeing anything."], answer: 2 },
+      { q: "(Page 2) What did Holmes discover about the window?", options: ["It was broken.", "It was too low for someone to see in.", "It was too high to see in clearly.", "Someone had entered through it.", "It was locked from the outside."], answer: 2 },
+      { q: "(Page 2) How many students live in the building above Mr Soames?", options: ["One", "Two", "Three", "Four", "Five"], answer: 2 },
+      { q: "(Page 2) Why did the man take the first page to the table near the window?", options: ["He needed light to read it.", "He wanted to throw it out the window.", "He wanted to be able to see if Soames was returning.", "He was trying to steal the paper.", "He wanted to clean the table first."], answer: 2 },
+      { q: "(Page 2) What happened while the intruder was writing?", options: ["He broke his pen.", "He finished writing all the questions.", "He saw Holmes and got scared.", "His pencil broke and he had to sharpen it.", "He dropped the clay on the floor."], answer: 3 },
+      { q: "(Page 2) What object was found on the desk?", options: ["A sharpener", "A key", "A ball of clay", "A piece of glass", "A knife"], answer: 2 },
+      { q: "(Page 2) Where does the extra door in the room lead?", options: ["To the library", "To the hallway", "To the classroom", "To the garden", "To Soames’s bedroom"], answer: 4 },
+      // Page 3
+      { q: "(Page 3) What did Holmes find in the bedroom?", options: ["A broken pencil", "A student hiding", "A locked window", "A cupboard large enough to hide in", "The missing exam paper"], answer: 3 },
+      { q: "(Page 3) What does Holmes think the man did after Soames returned?", options: ["He escaped through the window.", "He hid in the cupboard and left later.", "He confronted Soames.", "He waited in the hallway.", "He stole all three pages."], answer: 1 },
+      { q: "(Page 3) What do we learn about the students?", options: ["Only one of them is taking the exam.", "They all share a room.", "They all must pass Soames's door.", "They live in another building.", "Only two are in the building today."], answer: 2 },
+      { q: "(Page 3) Which student is known for being athletic?", options: ["McLaren", "Soames", "Holmes", "Daulat Ras", "Gilchrist"], answer: 4 },
+      { q: "(Page 3) What is Soames’s attitude toward accusing McLaren?", options: ["He is sure McLaren did it.", "He refuses to consider McLaren.", "He angrily blames McLaren.", "He reluctantly says it’s possible.", "He laughs at the idea."], answer: 3 },
+      { q: "(Page 3) What does Holmes ask Soames to do?", options: ["Warn the students", "Lie to the police", "Pretend he is a visitor", "Call the other detectives", "Bring all three students down"], answer: 2 },
+      { q: "(Page 3) Why won’t the students be surprised by the visit?", options: ["They are expecting detectives.", "The building often gets visitors.", "Soames already warned them.", "Holmes is famous.", "They saw Holmes through the window."], answer: 1 },
+      { q: "(Page 3) What happened to Holmes’s pencil in Gilchrist’s room?", options: ["He lost it.", "He gave it to Gilchrist.", "It broke.", "He threw it away.", "He forgot it in the hallway."], answer: 2 },
+      // Page 4
+      { q: "(Page 4) What did Holmes ask Gilchrist for?", options: ["A ruler", "A book", "A new eraser", "A knife and another pencil", "A magnifying glass"], answer: 3 },
+      { q: "(Page 4) What did McLaren do when they visited his room?", options: ["Welcomed them in", "Pretended to be sick", "Yelled at them to go away", "Hid in the cupboard", "Asked for help"], answer: 2 },
+      { q: "(Page 4) What was Holmes trying to find out?", options: ["Who had the pencil", "The exam scores", "Each student’s hair color", "The height of McLaren", "Whether McLaren was rich"], answer: 3 },
+      { q: "(Page 4) What did Holmes tell Soames at the end of the visit?", options: ["He needed more time", "He was leaving the case", "He had solved the mystery", "The exam must be cancelled", "He suspected Daulat Ras"], answer: 2 },
+      { q: "(Page 4) Who did Watson think might have done it?", options: ["Holmes", "Gilchrist", "McLaren", "Daulat Ras", "Soames"], answer: 3 },
+      { q: "(Page 4) Why does Holmes think Daulat Ras was nervous?", options: ["He was guilty.", "He failed the last exam.", "He couldn’t speak English.", "He had been accused before.", "He was just scared of strangers."], answer: 4 },
+      { q: "(Page 4) What did Holmes find in the morning?", options: ["A blue pencil", "A torn exam page", "A pair of shoes", "Three balls of clay", "A knife with initials"], answer: 3 },
+      { q: "(Page 4) What does Watson notice about the clay?", options: ["They are different colors", "The new one is missing", "One of them is fake", "There were only two the day before", "They are made of paper"], answer: 3 },
+      // Page 5
+      { q: "(Page 5) What did Holmes begin to do when Gilchrist entered?", options: ["Show evidence from the scene", "Accuse Daulat Ras directly", "Tell Gilchrist a story about the case", "Ask Gilchrist to leave", "Tell Soames to call the police"], answer: 2 },
+      { q: "(Page 5) How did Gilchrist see the questions?", options: ["Through the open door", "A friend told him", "From inside the room", "By looking through the window while passing", "He found them in the trash"], answer: 3 },
+      { q: "(Page 5) What evidence linked Gilchrist to the scene?", options: ["A torn piece of paper", "A fingerprint on the key", "Marks from his shoes and clay", "A witness who saw him", "A blue pencil in his pocket"], answer: 2 },
+      { q: "(Page 5) Why does Gilchrist say he looked at the questions?", options: ["He thought it was a joke", "He wanted revenge on Soames", "He needed to pass to help his family", "He was pressured by McLaren", "He wanted to prove he was clever"], answer: 2 },
+      { q: "(Page 5) What does Gilchrist decide to do after confessing?", options: ["Retake the exam", "Work for Holmes", "Apologize to the university", "Leave school and move abroad", "Hide the truth"], answer: 3 },
+      { q: "(Page 5) How does Holmes end the case?", options: ["By reporting Gilchrist to the police", "By punishing all three students", "By forgiving Gilchrist and leaving", "By postponing the exam", "By calling for another investigation"], answer: 2 }
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result');
+
+    function loadQuestion() {
+      if (current >= questions.length) {
+        quizContainer.innerHTML = '';
+        resultContainer.textContent = `You scored ${score} out of ${questions.length}.`;
+        return;
+      }
+
+      const q = questions[current];
+      quizContainer.innerHTML = `
+        <div class="question-box">
+          <div class="page-label">${q.q.split(')')[0]})</div>
+          <div class="question">${q.q.split(')').slice(1).join(')')}</div>
+          <div class="options">
+            ${q.options.map((opt, i) => `
+              <label><input type="radio" name="option" value="${i}"> ${opt}</label>
+            `).join('')}
+          </div>
+          <button onclick="submitAnswer()">Submit</button>
+        </div>
+      `;
+    }
+
+    function submitAnswer() {
+      const selected = document.querySelector('input[name=option]:checked');
+      if (!selected) return alert("Please select an answer.");
+
+      const selectedIndex = parseInt(selected.value);
+      const labels = document.querySelectorAll('.options label');
+      labels.forEach((label, i) => {
+        label.classList.remove('correct', 'incorrect');
+        if (i === questions[current].answer) {
+          label.classList.add('correct');
+        } else if (i === selectedIndex) {
+          label.classList.add('incorrect');
+        }
+      });
+
+      if (selectedIndex === questions[current].answer) score++;
+
+      document.querySelectorAll('input[name=option]').forEach(input => input.disabled = true);
+
+      const btn = document.querySelector('button');
+      btn.textContent = 'Next';
+      btn.onclick = () => {
+        current++;
+        loadQuestion();
+      };
+    }
+
+    loadQuestion();
+  </script>
+  <script type="module">
+    import { readingPassage } from './sherlock_holmes.js';
+    document.getElementById('reading-passage').textContent = readingPassage;
+  </script>
+</body>
+</html>
