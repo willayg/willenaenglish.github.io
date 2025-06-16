@@ -146,19 +146,25 @@ function endGame() {
   finalScoreSpan.textContent = score;
   playEndGameVoice(score);
   displayHighScores(); // Update high scores from server
-  submitBtn.style.display = '';
-  playAgainBtn.style.display = '';
-  nameInput.style.display = '';
   if (timer) clearInterval(timer);
 
   // --- AUTO SUBMIT IF LOGGED IN ---
-  // Replace this with your actual login detection logic
   if (window.loggedInUser && window.loggedInUser.name) {
     nameInput.value = window.loggedInUser.name;
     submitBtn.style.display = 'none';
     nameInput.style.display = 'none';
     playAgainBtn.style.display = 'none';
-    submitScore(); // Call the submitScore function automatically
+    // Only submit if not already submitted
+    if (!endGame._submitted) {
+      endGame._submitted = true;
+      submitScore();
+    }
+  } else {
+    // Show input and button for manual submission
+    submitBtn.style.display = '';
+    nameInput.style.display = '';
+    playAgainBtn.style.display = '';
+    endGame._submitted = false;
   }
 }
 
