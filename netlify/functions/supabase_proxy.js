@@ -5,6 +5,49 @@ exports.handler = async (event) => {
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // 1. LIST TEACHER FILES HANDLER - PLACE THIS NEAR THE TOP!
+  if (
+    event.httpMethod === 'GET' &&
+    event.path &&
+    event.path.includes('list_teacher_files')
+  ) {
+    const { prefix = '', limit = 20, offset = 0 } = event.queryStringParameters || {};
+
+    const { data, error } = await supabase.storage
+      .from('teacher-files')
+      .list(prefix, {
+        limit: Number(limit),
+        offset: Number(offset),
+        sortBy: { column: 'name', order: 'asc' }
+      });
+
+    if (error) {
+      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    }
+
+    const filesWithUrls = [];
+    for (const file of data) {
+      if (file.name) {
+        const filePath = prefix ? `${prefix}/${file.name}` : file.name;
+        const { data: signedData } = await supabase.storage
+          .from('teacher-files')
+          .createSignedUrl(filePath, 3600);
+        filesWithUrls.push({
+          name: file.name,
+          path: filePath,
+          url: signedData?.signedUrl || null,
+          updated_at: file.updated_at,
+          metadata: file.metadata
+        });
+      }
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify(filesWithUrls)
+    };
+  }
+
   // Dedicated POST handler for Scores table
   if (
     event.httpMethod === 'POST' &&
@@ -20,6 +63,32 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
       }
       return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    } catch (err) {
+      return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
+  if (
+    event.httpMethod === 'POST' &&
+    event.path &&
+    event.path.includes('upload_teacher_file')
+  ) {
+    // Parse multipart/form-data (you may need a library like busboy or formidable)
+    // For simplicity, let's assume you send base64 file data and filename in JSON
+
+    try {
+      const { fileName, fileDataBase64 } = JSON.parse(event.body);
+      const buffer = Buffer.from(fileDataBase64, 'base64');
+      const { data, error } = await supabase.storage
+        .from('teacher-files')
+        .upload(`uploads/${Date.now()}_${fileName}`, buffer, {
+          contentType: 'application/octet-stream',
+          upsert: false,
+        });
+      if (error) {
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      }
+      return { statusCode: 200, body: JSON.stringify({ path: data.path }) };
     } catch (err) {
       return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
     }
