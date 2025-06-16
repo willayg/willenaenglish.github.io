@@ -218,6 +218,7 @@
             `).join('')}
           </div>
           <button onclick="submitAnswer()">Submit</button>
+          <button onclick="skipQuestion()" style="margin-left:10px;">Skip</button>
         </div>
       `;
       resultContainer.textContent = '';
@@ -238,6 +239,11 @@
       }
       current++;
       setTimeout(loadQuestion, 1000);
+    };
+
+    window.skipQuestion = function() {
+      current++;
+      loadQuestion();
     };
 
     loadQuestion();
