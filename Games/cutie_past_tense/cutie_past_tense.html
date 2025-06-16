@@ -3,691 +3,519 @@
 <head>
   <meta charset="UTF-8">
   <title>🐶🐰 Past Tense Cuteness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     html, body {
-      max-width: 100vw;
-      max-height: 100vh;
-      overflow-x: hidden;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
-    @media (max-width: 768px) {
-  h1 {
-    font-size: 40px;
-  }
-  .question {
-    font-size: 28px;
-    padding: 12px;
-  }
-  .option-button {
-    font-size: 20px;
-    padding: 8px 16px;
-  }
-  .scoreboard, .feedback {
-    font-size: 24px;
-  }
-  .timer {
-    font-size: 18px;
-  }
-}
-    @media (max-width: 600px) {
-  h1 {
-    font-size: 32px;
-  }
-  .question {
-    font-size: 24px;
-    padding: 10px;
-  }
-  .option-button, .start-button {
-    font-size: 24px;
-    padding: 16px 24px;
-    width: 90%;
-    max-width: 340px;
-  }
-  .scoreboard, .feedback {
-    font-size: 32px;
-  }
-  .timer {
-    font-size: 22px;
-  }
-}
-      .question {
-        font-size: 36px;
-        padding: 16px;
-      }
-      .option-button {
-        font-size: 24px;
-        padding: 10px 20px;
-      }
-      .scoreboard, .feedback {
-        font-size: 28px;
-      }
-    }
-    @media (orientation: portrait) and (max-width: 600px) {
-      .start-button, .option-button {
-        width: 80%;
-        max-width: 300px;
-      }
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
     }
     body {
       font-family: 'Fredoka One', cursive;
+      background: url('../../Assets/Images/backgrounds/twilightclouds.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #8d094b;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    #logo {
+      width: 100px;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .container {
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 20px;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(255, 255, 255, 0.281);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      height: 70vh;           /* Set height to half the viewport */
+      min-height: 320px;      /* Optional: minimum height for small screens */
+      max-height: 90vh;       /* Prevents overflow on very short screens */
+      overflow-y: auto;       /* Scroll inside container if content is too tall */
+      box-sizing: border-box;
+    }
+    #quizScreen, #endScreen {
+      display: none;
+    }
+    button {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2em;
+      padding: 10px 20px;
+      background-color: #f7c5e0;
+      color: #8d094b;
+      border: none;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 1px 3px 6px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding-top: 16px;
+      padding-bottom: 16px;
+      font-size: 1.4em;
+      background-color: #f7c5e0;
+      color: #8d094b;
+    }
+    .options {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      background: url('../../Assets/Images/backgrounds/twilightclouds.png') no-repeat center center fixed;
-      background-size: cover;
-      margin: 0;
+    }
+    button:hover,
+    .options button:hover {
+      background-color: #ff69b4;
+      color: #fff;
+      transform: scale(1.04);
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .status-item {
+      font-size: 2em;
+      font-weight: bold;
+      width: 80px;
       text-align: center;
-      overflow: hidden;
-    }
-    h1 {
-      font-size: 40px;
-      color: #f3f0f2;
-      text-shadow: 2px 2px #360216;
-    }
-    .start-button {
-      font-size: 32px;
-      padding: 12px 24px;
-      margin-top: 20px;
-      border: none;
-      border-radius: 12px;
-      background-color: #8d094b;
-      color: white;
-      box-shadow: 2px 4px 10px rgba(2, 1, 1, 0.2);
-      cursor: pointer;
     }
     .question {
-      font-size: 60px; /* 25% larger than previous 48px */
-      margin: 20px;
+      font-size: 2em;
+      margin: 20px 0;
       color: #8e44ad;
       background-color: #ffffffcc;
       padding: 20px;
       border-radius: 20px;
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
-    .options {
-      margin-top: 20px;
-    }
-    .option-button {
-      font-size: 36px;
-      margin: 14px;
-      padding: 24px 36px;
-      border: none;
-      border-radius: 16px;
-      background-color: #f7c5e0;
-      cursor: pointer;
-      box-shadow: 1px 3px 6px rgba(0,0,0,0.2);
-    }
-    .option-button:hover {
-      background-color: #ff69b4;
-      color: #fff;
-    }
-    .feedback {
-      margin-top: 20px;
-      font-size: 32px;
-      color: #f8daea;
+    #nameInput {
+      display: block;
+      margin: 20px auto;
+      text-align: center;
+      font-size: 1.2em;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 320px;
     }
     .scoreboard {
-      font-size: 48px;
+      font-size: 2em;
       margin-top: 30px;
-      color: #ffcbe5;
+      color: #8d094b;
       font-weight: bold;
     }
     .timer {
-      font-size: 24px;
+      font-size: 1.2em;
       margin-top: 5px;
     }
-    .float-points {
-      position: absolute;
-      font-size: 48px;
-      pointer-events: none;
+    .feedback {
+      margin-top: 20px;
+      font-size: 1.3em;
+      color: #8d094b;
+      min-height: 2em;
     }
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-60px); }
-    }
-    @keyframes floatDown {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(60px); }
-    }
-    .high-score-section {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 20px;}
-    .high-score-box {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      width: 45%;
-      max-width: 320px;
-      text-align: left;
-      font-size: 20px;
-      color: #333;
-    }
-
-    .container {
-      max-width: 420px;
-      width: 96vw;
-      margin: 32px auto 0 auto;
-      background: rgba(255,255,255,0.85);
-      border-radius: 18px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-      padding: 24px 8px 32px 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    #soundToggle {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 20;
+      font-size: 1.5em;
+      background: none;
+      border: none;
+      color: #8d094b;
+      cursor: pointer;
+      box-shadow: none;
+      margin: 0;
+      padding: 0;
     }
     @media (max-width: 600px) {
       .container {
         max-width: 99vw;
+        width: 99vw;
         padding: 8px 2vw 16px 2vw;
       }
+      .options button {
+        font-size: 1.1em;
+        padding: 14px 0;
+      }
+      .question {
+        font-size: 1.2em;
+      }
+      .scoreboard {
+        font-size: 1.5em;
+      }
     }
-
-  .high-score-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.high-score-popup {
-  border: 2px solid #444;
-  background-color: rgba(255, 245, 249, 0.6); backdrop-filter: blur(6px);
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  max-width: 700px;
-  width: 90%;
-  text-align: center;
-}
-
-
-@keyframes fadeInScale {
-  0% { opacity: 0; transform: scale(0.8); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-.animated-popup {
-  animation: fadeInScale 0.6s ease forwards;
-}
-
-.animated-box {
-  animation: fadeInScale 0.8s ease forwards;
-}
-
-@keyframes fadeOutScale {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.8); }
-}
-
-.fade-out {
-  animation: fadeOutScale 0.5s ease forwards;
-}
-
-
-
-/* Dedicated style for the high scores toggle button */
-.toggle-scores-btn {
-  font-size: 13px !important;
-  padding: 6px 8px !important;
-  border-radius: 5px !important;
-  background-color: #8d094b !important;
-  color: white !important;
-  border: none !important;
-  box-shadow: 2px 4px 10px rgba(2, 1, 1, 0.2) !important;
-  cursor: pointer !important;
-  z-index: 1002 !important;
-}
-.toggle-scores-btn:hover {
-  background-color: #a81e6a;
-}
-@media (max-width: 600px) {
-  .toggle-scores-btn {
-    font-size: 28px !important;
-    padding: 14px 24px !important;
-    border-radius: 14px !important;
-  }
-}
-
-/* REMOVE or COMMENT OUT this block:
-#toggleScoresBtn {
-  font-size: 14px !important;
-  padding: 7px 15px !important;
-  border-radius: 7px !important;
-  background-color: #8d094b !important;
-  color: white !important;
-  border: none !important;
-  box-shadow: 2px 4px 10px rgba(2, 1, 1, 0.2) !important;
-  cursor: pointer !important;
-  z-index: 1002 !important;
-}
-*/
-  </style> 
-
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 </head>
 <body>
-  <a href="../../playzone.html">
-    <img src="../../Assets/Images/Logo.png" alt="Willena Logo" id="logo" style="display:block; margin: 32px auto 0 auto; max-width:180px; width:30vw;">
-  </a>
-  <h1 id="gameTitle">🐶🐰 Past Tense Cuteness</h1>
-  <div id="championBanner" style="margin-top: 10px; font-size: 20px; color: #333; background-color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 12px; backdrop-filter: blur(4px);">Current Champion: 🏆 <span id="championName">-</span></div>
-  
-  <button class="start-button" id="startBtn">Start Game</button>
-  <div class="question" id="questionText" style="display:none;"></div>
-  <div class="options" id="options"></div>
-  <div class="feedback" id="feedback"></div>
-  <div class="scoreboard" id="scoreboard" style="display: none;">Score: <span id="score">0</span></div>
-  <div class="timer" id="timer" style="display: none;">Time: <span id="timeLeft">35</span>s</div>
-  <div class="high-score-overlay" id="highScores" style="display: none;">
-    <div class="high-score-popup animated-popup">
-      <div class="high-score-box animated-box" style="backdrop-filter: blur(10px); background-color: rgba(173, 216, 230, 0.6); margin: 0 auto; overflow-y: auto; max-height: 400px; background-color: rgba(173, 216, 230, 0.3); border: 2px solid silver">
-        <h2>All-Time Top Scores</h2>
-        <ol id="highscores"></ol> <!-- This is the ID highscores.js expects -->
-      </div>
-      <button id="closeScoresBtn" class="start-button" style="margin-top: 20px;">Close</button>
-    </div>
+<a href="../../playzone.html">
+  <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
+</a>
+<button id="soundToggle" title="Toggle Sound">🔊</button>
+<div class="container">
+  <div id="startScreen">
+    <h1>🐶🐰 Past Tense Cuteness</h1>
+    <button onclick="startGame()">Start Game</button>
   </div>
-</button>
-  <div id="floating-container"></div>
-  <button id="toggleScoresBtn" class="toggle-scores-btn" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);">
-  Show/Hide High Scores
-</button>
-  <script>
-  window.game = "cutie_past_tense";
-  </script>
-  <script src="../../js/highscores.js"></script>
-  <script>
-let score = 0;
-let combo = 0;
-let timeLeft = 35;
-let timerInterval;
-let shuffledQuestions = [];
-let questionPointer = 0;
-let synth;
-
-const correctSound = new Audio("../../Assets/audio/voices/rabbit/good_job.mp3");
-const wrongSound = new Audio("../../Assets/audio/wrong.mp3");
-
+  <div id="quizScreen">
+    <div class="status-bar">
+      <div class="status-item"><span id="timer">35</span>s</div>
+      <div class="status-item scoreboard"><span id="score">0</span></div>
+    </div>
+    <div class="question" id="questionText"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button id="restartButton" onclick="resetGame()" style="display: none; margin-top: 10px;">Restart</button>
+  </div>
+  <div id="endScreen">
+    <h2>Game Over!</h2>
+    <p>Your score: <span id="finalScore"></span></p>
+    <p>Top Scores:</p>
+    <ol id="highscores"></ol>
+    <input type="text" id="nameInput" placeholder="Enter your name">
+    <button id="submitBtn">Submit Score</button>
+    <button onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+<audio id="bgMusic" src="../../Assets/Audio/sneakingout.mp3" loop></audio>
+<script>
 const questions = [
-  { sentence: "Yesterday, I ___ to the park.", answer: "went" },
-  { sentence: "They ___ all the cookies.", answer: "ate" },
-  { sentence: "She ___ her ankle during the soccer game.", answer: "hurt" },
-  { sentence: "They ___ TV until midnight.", answer: "watched" },
-  { sentence: "He ___ his homework before dinner.", answer: "finished" },
-  { sentence: "We ___ a lot of fun at the party.", answer: "had" },
-  { sentence: "Did you ___ the movie last night?", answer: "enjoy" },
-  { sentence: "She ___ a letter to her friend.", answer: "wrote" },
-  { sentence: "We ___ a snowman yesterday.", answer: "built" },
-  { sentence: "I ___ pizza for dinner.", answer: "ate" },
-  { sentence: "They ___ the race.", answer: "won" },
-  { sentence: "You ___ me yesterday, remember?", answer: "called" },
-  { sentence: "Did she ___ the story?", answer: "tell" },
-  { sentence: "He ___ the ball far.", answer: "threw" },
-  { sentence: "I ___ my keys on the bus.", answer: "lost" },
-  { sentence: "We ___ to music all evening.", answer: "listened" },
-  { sentence: "They ___ their homework together.", answer: "did" },
-  { sentence: "She didn't ___ the homework.", answer: "do" },
-  { sentence: "He didn't ___ to class.", answer: "go" },
-  { sentence: "Did you ___ your grandma?", answer: "visit" },
-  { sentence: "She ___ a cake for us.", answer: "baked" },
-  { sentence: "I ___ a strange sound outside.", answer: "heard" },
-  { sentence: "They didn't ___ the rules.", answer: "follow" },
-  { sentence: "We ___ a great time!", answer: "had" },
-  { sentence: "He ___ his bike to school.", answer: "rode" },
-  { sentence: "I didn't ___ the question.", answer: "understand" },
-  { sentence: "She ___ up late.", answer: "woke" },
-  { sentence: "Did they ___ the window?", answer: "break" },
-  { sentence: "He ___ the book three times.", answer: "read" },
-  { sentence: "He ___ his shoes before entering.", answer: "removed" },
-  { sentence: "We ___ the house at 6 PM.", answer: "left" },
-  { sentence: "She ___ the door loudly.", answer: "closed" },
-  { sentence: "They ___ their hands before eating.", answer: "washed" },
-  { sentence: "I ___ the whole book in one night.", answer: "read" },
-  { sentence: "He ___ all the money.", answer: "spent" },
-  { sentence: "We ___ the answer together.", answer: "found" },
-  { sentence: "She ___ her room yesterday.", answer: "cleaned" },
-  { sentence: "They ___ their bikes to the park.", answer: "rode" }
+  { sentence: "Yesterday, I ___ to the park.", answer: "went", choices: ["went", "go"] },
+  { sentence: "They ___ all the cookies.", answer: "ate", choices: ["ate", "eat"] },
+  { sentence: "She ___ her ankle during the soccer game.", answer: "hurt", choices: ["hurt", "hurts"] },
+  { sentence: "They ___ TV until midnight.", answer: "watched", choices: ["watched", "watch"] },
+  { sentence: "He ___ his homework before dinner.", answer: "finished", choices: ["finished", "finish"] },
+  { sentence: "We ___ a lot of fun at the party.", answer: "had", choices: ["had", "have"] },
+  { sentence: "Did you ___ the movie last night?", answer: "enjoy", choices: ["enjoy", "enjoyed"] },
+  { sentence: "She ___ a letter to her friend.", answer: "wrote", choices: ["wrote", "write"] },
+  { sentence: "We ___ a snowman yesterday.", answer: "built", choices: ["built", "build"] },
+  { sentence: "I ___ pizza for dinner.", answer: "ate", choices: ["ate", "eat"] },
+  { sentence: "They ___ the race.", answer: "won", choices: ["won", "win"] },
+  { sentence: "You ___ me yesterday, remember?", answer: "called", choices: ["called", "call"] },
+  { sentence: "Did she ___ the story?", answer: "tell", choices: ["tell", "told"] },
+  { sentence: "He ___ the ball far.", answer: "threw", choices: ["threw", "throw"] },
+  { sentence: "I ___ my keys on the bus.", answer: "lost", choices: ["lost", "lose"] },
+  { sentence: "We ___ to music all evening.", answer: "listened", choices: ["listened", "listen"] },
+  { sentence: "They ___ their homework together.", answer: "did", choices: ["did", "do"] },
+  { sentence: "She didn't ___ the homework.", answer: "do", choices: ["do", "did"] },
+  { sentence: "He didn't ___ to class.", answer: "go", choices: ["go", "went"] },
+  { sentence: "Did you ___ your grandma?", answer: "visit", choices: ["visit", "visited"] },
+  { sentence: "She ___ a cake for us.", answer: "baked", choices: ["baked", "bake"] },
+  { sentence: "I ___ a strange sound outside.", answer: "heard", choices: ["heard", "hear"] },
+  { sentence: "They didn't ___ the rules.", answer: "follow", choices: ["follow", "followed"] },
+  { sentence: "We ___ a great time!", answer: "had", choices: ["had", "have"] },
+  { sentence: "He ___ his bike to school.", answer: "rode", choices: ["rode", "ride"] },
+  { sentence: "I didn't ___ the question.", answer: "understand", choices: ["understand", "understood"] },
+  { sentence: "She ___ up late.", answer: "woke", choices: ["woke", "wake"] },
+  { sentence: "Did they ___ the window?", answer: "break", choices: ["break", "broke"] },
+  { sentence: "He ___ the book three times.", answer: "read", choices: ["read", "reads"] },
+  { sentence: "He ___ his shoes before entering.", answer: "removed", choices: ["removed", "remove"] },
+  { sentence: "We ___ the house at 6 PM.", answer: "left", choices: ["left", "leave"] },
+  { sentence: "She ___ the door loudly.", answer: "closed", choices: ["closed", "close"] },
+  { sentence: "They ___ their hands before eating.", answer: "washed", choices: ["washed", "wash"] },
+  { sentence: "I ___ the whole book in one night.", answer: "read", choices: ["read", "reads"] },
+  { sentence: "He ___ all the money.", answer: "spent", choices: ["spent", "spend"] },
+  { sentence: "We ___ the answer together.", answer: "found", choices: ["found", "find"] },
+  { sentence: "She ___ her room yesterday.", answer: "cleaned", choices: ["cleaned", "clean"] },
+  { sentence: "They ___ their bikes to the park.", answer: "rode", choices: ["rode", "ride"] }
 ];
 
+let score = 0;
+let timer;
+let timeLeft = 35;
+let currentQuestion;
+let usedQuestions = [];
+let streak = 0;
+const startScreen = document.getElementById('startScreen');
+const quizScreen = document.getElementById('quizScreen');
+const endScreen = document.getElementById('endScreen');
+const options = document.getElementById('options');
+const timerDisplay = document.getElementById('timer');
+const scoreDisplay = document.getElementById('score');
+const finalScore = document.getElementById('finalScore');
+const highscoresList = document.getElementById('highscores');
+const nameInput = document.getElementById('nameInput');
+const feedback = document.getElementById('feedback');
 
+// Sound setup
+const correctSound = new Audio('../../Assets/audio/voices/rabbit/good_job.mp3');
+const wrongSound = new Audio('../../Assets/audio/wrong.mp3');
+const endGameSound = new Audio('../../Assets/audio/endgame.mp3');
+const music = document.getElementById('bgMusic');
+music.loop = true;
+music.volume = 0.5;
+let soundOn = true;
+const soundToggle = document.getElementById('soundToggle');
+soundToggle.onclick = function() {
+  soundOn = !soundOn;
+  correctSound.muted = !soundOn;
+  wrongSound.muted = !soundOn;
+  endGameSound.muted = !soundOn;
+  music.muted = !soundOn;
+  soundToggle.textContent = soundOn ? '🔊' : '🔇';
+};
+correctSound.muted = !soundOn;
+wrongSound.muted = !soundOn;
+endGameSound.muted = !soundOn;
+music.muted = !soundOn;
 
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+function startGame() {
+  score = 0;
+  timeLeft = 35;
+  endScreen.style.display = 'none';
+  startScreen.style.display = 'none';
+  // Start background music if not already playing
+  if (music.paused && soundOn) {
+    music.currentTime = 0;
+    music.play().catch(()=>{});
   }
-  return array;
-}
-
-function floatPoints(text, x, y, color = '#ff1493', size = '48px') {
-  const float = document.createElement("div");
-  float.className = "float-points";
-  float.style.left = `${x}px`;
-  float.style.top = `${y}px`;
-  float.style.color = color;
-  float.style.fontSize = size;
-  float.style.animation = text.startsWith('-') ? 'floatDown 1s ease-out forwards' : 'floatUp 1s ease-out forwards';
-  document.getElementById("floating-container").appendChild(float);
-  float.textContent = text;
-  setTimeout(() => float.remove(), 1000);
-}
-
-function startGame(tense = 'past') {
-  document.getElementById("toggleScoresBtn").style.display = "none";
-  document.getElementById("scoreboard").style.display = "block";
-  document.getElementById("timer").style.display = "block";
-  document.getElementById("gameTitle").style.display = "none";
-  document.getElementById("startBtn").style.display = "none";
-  document.getElementById("questionText").style.display = "block";
-  document.getElementById("score").textContent = score;
-  document.getElementById("timeLeft").textContent = timeLeft;
-
-  const seen = new Set();
-  shuffledQuestions = shuffle(questions.filter(q => {
-    if (seen.has(q.sentence)) return false;
-    seen.add(q.sentence);
-    return true;
-  }));
-  questionPointer = 0;
-  startTimer();
-  displayQuestion();
-}
-
-function startTimer() {
-  timerInterval = setInterval(() => {
+  // Clear any existing timer before starting a new one
+  if (timer) clearInterval(timer);
+  usedQuestions = [];
+  quizScreen.style.display = 'block';
+  scoreDisplay.textContent = score;
+  timerDisplay.textContent = timeLeft;
+  feedback.textContent = '';
+  nextQuestion();
+  timer = setInterval(() => {
     timeLeft--;
-    document.getElementById("timeLeft").textContent = timeLeft;
+    timerDisplay.textContent = timeLeft;
     if (timeLeft <= 0) {
-      clearInterval(timerInterval);
       endGame();
     }
   }, 1000);
 }
 
-function displayQuestion() {
-  document.getElementById("options").dataset.locked = "false";
-  const q = shuffledQuestions[questionPointer];
-  document.getElementById("questionText").textContent = q.sentence;
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-
-  const allAnswers = [...new Set(questions.map(q => q.answer).filter(a => a !== q.answer))];
-  const baseForm = q.answer;
-  let alternative = '';
-  if (baseForm === 'went') alternative = 'go';
-  else if (baseForm === 'go') alternative = 'went';
-  else if (baseForm === 'ate') alternative = 'eat';
-  else if (baseForm === 'eat') alternative = 'ate';
-  else if (baseForm === 'hurt') alternative = 'hurt';
-  else if (baseForm === 'hurt') alternative = 'hurt';
-  else if (baseForm === 'watched') alternative = 'watch';
-  else if (baseForm === 'watch') alternative = 'watched';
-  else if (baseForm === 'finished') alternative = 'finish';
-  else if (baseForm === 'finish') alternative = 'finished';
-  else if (baseForm === 'had') alternative = 'have';
-  else if (baseForm === 'have') alternative = 'had';
-  else if (baseForm === 'enjoy') alternative = 'enjoyed';
-  else if (baseForm === 'enjoyed') alternative = 'enjoy';
-  else if (baseForm === 'wrote') alternative = 'write';
-  else if (baseForm === 'write') alternative = 'wrote';
-  else if (baseForm === 'built') alternative = 'build';
-  else if (baseForm === 'build') alternative = 'built';
-  else if (baseForm === 'won') alternative = 'win';
-  else if (baseForm === 'win') alternative = 'won';
-  else if (baseForm === 'called') alternative = 'call';
-  else if (baseForm === 'call') alternative = 'called';
-  else if (baseForm === 'tell') alternative = 'told';
-  else if (baseForm === 'told') alternative = 'tell';
-  else if (baseForm === 'threw') alternative = 'throw';
-  else if (baseForm === 'throw') alternative = 'threw';
-  else if (baseForm === 'lost') alternative = 'lose';
-  else if (baseForm === 'lose') alternative = 'lost';
-  else if (baseForm === 'listened') alternative = 'listen';
-  else if (baseForm === 'listen') alternative = 'listened';
-  else if (baseForm === 'did') alternative = 'do';
-  else if (baseForm === 'do') alternative = 'did';
-  else if (baseForm === 'does') alternative = 'do';
-  else if (baseForm === 'visit') alternative = 'visited';
-  else if (baseForm === 'visited') alternative = 'visit';
-  else if (baseForm === 'baked') alternative = 'bake';
-  else if (baseForm === 'bake') alternative = 'baked';
-  else if (baseForm === 'heard') alternative = 'hear';
-  else if (baseForm === 'hear') alternative = 'heard';
-  else if (baseForm === 'follow') alternative = 'followed';
-  else if (baseForm === 'followed') alternative = 'follow';
-  else if (baseForm === 'rode') alternative = 'ride';
-  else if (baseForm === 'ride') alternative = 'rode';
-  else if (baseForm === 'understand') alternative = 'understands';
-  else if (baseForm === 'understands') alternative = 'understand';
-  else if (baseForm === 'woke') alternative = 'wake';
-  else if (baseForm === 'wake') alternative = 'woke';
-  else if (baseForm === 'break') alternative = 'broke';
-  else if (baseForm === 'broke') alternative = 'break';
-  else if (baseForm === 'read') alternative = 'read';
-  else if (baseForm === 'removed') alternative = 'remove';
-  else if (baseForm === 'remove') alternative = 'removed';
-  else if (baseForm === 'left') alternative = 'leave';
-  else if (baseForm === 'leave') alternative = 'left';
-  else if (baseForm === 'closed') alternative = 'close';
-  else if (baseForm === 'close') alternative = 'closed';
-  else if (baseForm === 'washed') alternative = 'wash';
-  else if (baseForm === 'wash') alternative = 'washed';
-  else if (baseForm === 'spent') alternative = 'spend';
-  else if (baseForm === 'spend') alternative = 'spent';
-  else if (baseForm === 'found') alternative = 'find';
-  else if (baseForm === 'find') alternative = 'found';
-  else if (baseForm === 'cleaned') alternative = 'clean';
-  else if (baseForm === 'clean') alternative = 'cleaned';
-  else alternative = '???';
-  const choices = shuffle([q.answer, alternative]);
-
-  choices.forEach(choice => {
-    const btn = document.createElement("button");
-    btn.className = "option-button";
+function nextQuestion() {
+  if (usedQuestions.length === questions.length) {
+    endGame();
+    return;
+  }
+  let index;
+  do {
+    index = Math.floor(Math.random() * questions.length);
+  } while (usedQuestions.includes(index));
+  usedQuestions.push(index);
+  currentQuestion = questions[index];
+  document.getElementById('questionText').textContent = currentQuestion.sentence;
+  options.innerHTML = '';
+  const shuffledChoices = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
+  shuffledChoices.forEach(choice => {
+    const btn = document.createElement('button');
     btn.textContent = choice;
-    btn.onclick = () => checkAnswer(choice, q);
-    optionsDiv.appendChild(btn);
+    btn.onclick = () => checkAnswer(choice);
+    options.appendChild(btn);
   });
 }
 
-function checkAnswer(selected, question) {
-  if (document.getElementById("options").dataset.locked === "true") return;
-  document.getElementById("options").dataset.locked = "true";
-  const full = question.sentence.replace("___", question.answer);
-  const feedback = document.getElementById("feedback");
-
-  if (selected === question.answer) {
-    combo++;
-    let multiplier = 1;
-    if (combo >= 6) multiplier = 4;
-    else if (combo >= 3) multiplier = 2;
-    const points = 300 * multiplier;
-    score += points;
+function checkAnswer(choice) {
+  const buttons = document.querySelectorAll('#options button');
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === currentQuestion.answer) {
+      btn.style.backgroundColor = '#4caf50';
+      btn.style.color = '#000';
+    } else if (btn.textContent === choice) {
+      btn.style.backgroundColor = '#e53935';
+    }
+  });
+  if (choice === currentQuestion.answer) {
+    streak++;
+    if (streak % 3 === 0) {
+      timeLeft += 1;
+      timerDisplay.textContent = timeLeft;
+      timerDisplay.style.color = "#4caf50";
+      setTimeout(() => { timerDisplay.style.color = ""; }, 600);
+    }
     correctSound.currentTime = 0;
     correctSound.play();
-    let fontSize = 48;
-    if (multiplier === 2) fontSize = 72;
-    if (multiplier === 3) fontSize = 96;
-    if (multiplier === 4) fontSize = 120;
-    floatPoints(`+${points}`, window.innerWidth/2, window.innerHeight/2, '#ff1493', `${fontSize}px`);
-    feedback.textContent = multiplier > 1 ? `🎉 Correct! Combo x${multiplier}!` : `🎉 Correct!`;
+    playFeedbackAudio("correct");
+    score += 200;
+    scoreDisplay.textContent = score;
+    feedback.textContent = streak > 1 ? `🎉 Combo x${streak}!` : `🎉 Correct!`;
+    setTimeout(nextQuestion, 500);
   } else {
-    combo = 0;
-    score -= 300;
-    timeLeft = Math.max(0, timeLeft - 3);
+    streak = 0;
     wrongSound.currentTime = 0;
     wrongSound.play();
+    playFeedbackAudio("wrong");
+    score -= 100;
+    scoreDisplay.textContent = score;
     feedback.textContent = "😢 You got that one wrong.";
-    floatPoints("-300", window.innerWidth/2, window.innerHeight/2 + 60, '#ff0000', '64px');
+    setTimeout(nextQuestion, 500);
   }
-
-  document.getElementById("score").textContent = score;
-
-  setTimeout(() => {
-    questionPointer++;
-    if (questionPointer >= shuffledQuestions.length) {
-      if (timerInterval) clearInterval(timerInterval);
-      timeLeft = 0;
-      document.getElementById("timeLeft").textContent = timeLeft;
-      endGame();
-      return;
-    }
-    displayQuestion();
-  }, 200);
 }
 
 function endGame() {
-  if (window.speechSynthesis) speechSynthesis.cancel();
-  document.getElementById("questionText").style.display = "none";
-  document.getElementById("options").style.display = "none";
-  const feedback = document.getElementById("feedback");
-  feedback.textContent = "";
+  clearInterval(timer);
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+  finalScore.textContent = score;
+  endGameSound.currentTime = 0;
+  endGameSound.play();
+  playEndingAudio(score);
+  displayHighScores();
 
   // Check if user is logged in
   const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
   const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
 
+  const submitBtn = document.getElementById('submitBtn');
   if (user_id && user_name) {
-    // Autosubmit for logged-in user
+    nameInput.value = user_name;
+    nameInput.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'none';
     submitScore(user_name, user_id);
   } else {
-    // Show name input and submit button for guests
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.placeholder = "Your name";
-    nameInput.id = "nameInput";
-    nameInput.style.margin = "20px auto";
-    nameInput.style.padding = "16px";
-    nameInput.style.borderRadius = "10px";
-    nameInput.addEventListener("keypress", function(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        submitBtn.click();
-      }
-    });
-
-    const submitBtn = document.createElement("button");
-    submitBtn.textContent = "Submit Score";
-    submitBtn.className = "start-button";
-    submitBtn.style.fontSize = "20px";
-    submitBtn.style.padding = "8px 16px";
-    submitBtn.style.marginTop = "10px";
-    submitBtn.onclick = async () => {
-      const name = nameInput.value.trim();
-      if (!name) {
-        alert("Please enter your name!");
-        return;
-      }
-      await submitScore(name, null);
-      submitBtn.style.display = "none";
-      nameInput.style.display = "none";
-      // Add replay button
-      const playAgainBtn = document.createElement("button");
-      playAgainBtn.textContent = "Play Again";
-      playAgainBtn.className = "start-button";
-      playAgainBtn.style.zIndex = "1001";
-      playAgainBtn.style.position = "relative";
-      playAgainBtn.style.pointerEvents = "auto";
-      playAgainBtn.onclick = () => location.reload();
-      feedback.appendChild(playAgainBtn);
-    };
-
-    const container = document.getElementById("feedback");
-    container.appendChild(document.createElement("br"));
-    container.appendChild(nameInput);
-    container.appendChild(submitBtn);
+    nameInput.value = '';
+    nameInput.style.display = 'block';
+    nameInput.focus();
+    if (submitBtn) submitBtn.style.display = 'inline-block';
   }
-
-  // Restore the high score button after the game ends
-  document.getElementById("toggleScoresBtn").style.display = "block";
 }
 
-// New submitScore function
-async function submitScore(name, user_id) {
+async function submitScore(forcedName, forcedUserId) {
+  const name = forcedName || nameInput.value || 'Anonymous';
+  const user_id = forcedUserId || null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+  }
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "cutie_past_tense", user_id })
   });
-  window.score = score;
-  // Optionally, you can show the play again button here for logged-in users
-  if (user_id) {
-    const feedback = document.getElementById("feedback");
-    const playAgainBtn = document.createElement("button");
-    playAgainBtn.textContent = "Play Again";
-    playAgainBtn.className = "start-button";
-    playAgainBtn.style.zIndex = "1001";
-    playAgainBtn.style.position = "relative";
-    playAgainBtn.style.pointerEvents = "auto";
-    playAgainBtn.onclick = () => location.reload();
-    feedback.appendChild(playAgainBtn);
-  }
-}
-
-function toggleHighScores() {
-  const highScoreSection = document.getElementById("highScores");
-  const isHidden = (highScoreSection.style.display === "none" || highScoreSection.style.display === '');
-  if (isHidden) {
-    displayHighScores();
-    highScoreSection.style.display = "flex";
-    highScoreSection.classList.remove("fade-out");
-    highScoreSection.classList.add("animated-popup");
-  } else {
-    highScoreSection.classList.remove("animated-popup");
-    highScoreSection.classList.add("fade-out");
-    setTimeout(() => {
-      highScoreSection.style.display = "none";
-      highScoreSection.classList.remove("fade-out");
-    }, 500);
-  }
-}
-
-// Optional: updateChampion using Supabase
-async function updateChampion() {
-  const response = await fetch('/.netlify/functions/get_champion?game=' + encodeURIComponent(window.game));
-  const data = await response.json();
-  document.getElementById("championName").textContent = (data && data[0]) ? data[0].name : "-";
-}
-
-// Display high scores
-async function displayHighScores() {
-  const highscoresList = document.getElementById('highscores');
-  const response = await fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
-  const data = await response.json();
-  if (response.ok) {
-    highscoresList.innerHTML = '';
-    data.forEach(entry => {
-      const li = document.createElement('li');
-      li.textContent = `${entry.name}: ${entry.score}`;
-      highscoresList.appendChild(li);
-    });
-  } else {
-    highscoresList.innerHTML = '<li>Failed to load scores</li>';
-  }
-}
-
-// Setup event listeners after DOM is loaded
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById("startBtn").addEventListener("click", startGame);
-  document.getElementById("toggleScoresBtn").addEventListener("click", toggleHighScores);
-  document.getElementById("closeScoresBtn").addEventListener("click", toggleHighScores);
+  if (submitBtn) submitBtn.style.display = 'none';
+  nameInput.style.display = 'none';
   displayHighScores();
-  updateChampion();
+}
+
+async function displayHighScores() {
+  const response = await fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
+  if (!response.ok) {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+    return;
+  }
+  const data = await response.json();
+  highscoresList.innerHTML = '';
+  // Keep only the highest score per player
+  const bestScores = {};
+  data.forEach(entry => {
+    if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+      bestScores[entry.name] = entry;
+    }
+  });
+  // Convert to array and sort by score descending, then take top 10
+  const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+  sorted.forEach(entry => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.name}: ${entry.score}`;
+    highscoresList.appendChild(li);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  startScreen.style.display = 'block';
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  options.innerHTML = '';
+  scoreDisplay.textContent = '0';
+  timerDisplay.textContent = '35';
+  nameInput.style.display = 'none';
+  highscoresList.innerHTML = '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.onclick = () => submitScore();
+  }
 });
-  </script>
+
+function resetGame() {
+  nameInput.value = '';
+  scoreDisplay.textContent = '0';
+  timerDisplay.textContent = '35';
+  startScreen.style.display = 'block';
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  nameInput.style.display = 'none';
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.style.display = 'none';
+  highscoresList.innerHTML = '';
+  feedback.textContent = '';
+}
+
+function playFeedbackAudio(type) {
+  // Arrays of local audio file names
+  const correctFiles = [
+    "good_job.mp3",
+    "great_work.mp3",
+    "nice_job.mp3",
+    "youre_good.mp3",
+    "well_done.mp3"
+  ];
+  const wrongFiles = [
+    "close_one.mp3",
+    "huge_mistake.mp3",
+    "not_the_answer.mp3",
+    "oh_man.mp3",
+    "wrong.mp3"
+  ];
+
+  // Pick a random file based on type
+  let fileList;
+  if (type === "correct") {
+    fileList = correctFiles;
+  } else if (type === "wrong") {
+    fileList = wrongFiles;
+  }
+
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
+
+function playEndingAudio(score) {
+  let file = "";
+  if (score < 0) {
+    file = "button_smash.mp3";
+  } else if (score <= 1000) {
+    file = "nicetry.mp3";
+  } else if (score <= 2000) {
+    file = "prettygood.mp3";
+  } else if (score <= 3000) {
+    file = "great.mp3";
+  } else if (score <= 4500) {
+    file = "Amazing.mp3";
+  } else {
+    file = "Best.mp3";
+  }
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
+</script>
 </body>
 </html>
-
