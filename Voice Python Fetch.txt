@@ -1,0 +1,58 @@
+
+import requests
+import os
+
+# Get your secrets from environment variables
+API_KEY = os.getenv("sk_874b510e13c2bcf8c5996024b02392991ee8e49d25df7662")
+VOICE_ID = os.getenv("8j74BTqU7XqD2faIlSD4")
+
+# Check if secrets are loaded
+if not API_KEY or not VOICE_ID:
+    raise ValueError("Missing ELEVEN_API_KEY or ELEVEN_VOICE_ID environment variable.")
+
+# Dictionary of sergeant-style lines
+lines = {
+    "pos_1": "Hmph. You got it right. About time.",
+    "pos_2": "Well, well... looks like you're not completely hopeless after all.",
+    "pos_3": "Correct. Try not to look so surprised.",
+    "pos_4": "That's more like it. Don't let it go to your head.",
+    "pos_5": "You’re finally listening. Miracles do happen.",
+    
+    "neg_1": "Wrong. Again. I’m not even mad—just disappointed.",
+    "neg_2": "Do you even read the question or just guess for sport?",
+    "neg_3": "Nope. That was about as useful as a screen door on a submarine.",
+    "neg_4": "Incorrect. Try using your brain this time.",
+    "neg_5": "You're consistent—I’ll give you that. Consistently wrong.",
+
+    "end_bad": "That was an embarrassment. I've seen better answers from a brick.",
+    "end_fair": "Not awful. Still a long road ahead, recruit.",
+    "end_good": "Solid work. You might just survive basic training.",
+    "end_outstanding": "Outstanding. If I had a medal, I’d almost consider giving it to you."
+}
+
+headers = {
+    "xi-api-key": API_KEY,
+    "Content-Type": "application/json"
+}
+
+# Generate and save MP3s
+for filename, text in lines.items():
+    print(f"Generating: {filename}...")
+    response = requests.post(
+        f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}/stream",
+        headers=headers,
+        json={
+            "text": text,
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.75
+            }
+        }
+    )
+
+    if response.status_code == 200:
+        with open(f"{filename}.mp3", "wb") as f:
+            f.write(response.content)
+        print(f"Saved: {filename}.mp3")
+    else:
+        print(f"Failed: {filename} - {response.status_code} - {response.text}")
