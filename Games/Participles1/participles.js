@@ -145,22 +145,24 @@ function endGame() {
   endScreen.style.display = 'block';
   finalScoreSpan.textContent = score;
   playEndGameVoice(score);
-  displayHighScores(); // Update high scores from server
+  displayHighScores();
   if (timer) clearInterval(timer);
 
-  // --- AUTO SUBMIT IF LOGGED IN ---
-  if (window.loggedInUser && window.loggedInUser.name) {
-    nameInput.value = window.loggedInUser.name;
-    submitBtn.style.display = 'none';
+  // --- AUTO SUBMIT IF LOGGED IN (Fruti style) ---
+  // Try to get user info from storage
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
+  if (user_id && user_name) {
+    nameInput.value = user_name;
     nameInput.style.display = 'none';
+    submitBtn.style.display = 'none';
     playAgainBtn.style.display = 'none';
-    // Only submit if not already submitted
     if (!endGame._submitted) {
       endGame._submitted = true;
-      submitScore();
+      submitScore(user_name, user_id);
     }
   } else {
-    // Show input and button for manual submission
     submitBtn.style.display = '';
     nameInput.style.display = '';
     playAgainBtn.style.display = '';
@@ -300,21 +302,17 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // Move submitScore outside DOMContentLoaded so endGame can call it
-async function submitScore() {
-  let name = nameInput.value.trim();
+async function submitScore(forcedName, forcedUserId) {
+  let name = forcedName || nameInput.value.trim();
   if (!name) {
-    // Use logged-in name if available
-    if (window.loggedInUser && window.loggedInUser.name) {
-      name = window.loggedInUser.name;
-    } else {
-      name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
-    }
+    name = funnyNames[Math.floor(Math.random() * funnyNames.length)];
   }
+  const user_id = forcedUserId || null;
   submitBtn.disabled = true;
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "ParticiplesGame" })
+    body: JSON.stringify({ name, score, game: "ParticiplesGame", user_id })
   });
   submitBtn.style.display = 'none';
   nameInput.style.display = 'none';
