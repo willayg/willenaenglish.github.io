@@ -121,8 +121,7 @@
         aspect-ratio: 1 / 1;
       }
       .game-overlay {
-        font-size: 2.4rem !important; /* Twice as large as before */
-        padding: 10vw 4vw;
+        display: none !important;
       }
     }
   </style>
@@ -205,8 +204,8 @@
   });
   </script>
   <script>
-  // Only run on mobile
-  if (window.innerWidth <= 700) {
+  // Only run on mobile    Overlay removed, uncomment to put back in
+  /*if (window.innerWidth <= 700) {
     document.addEventListener('DOMContentLoaded', function() {
       const cards = document.querySelectorAll('.game-card');
       // The rootMargin will create a "center band" where the overlay is active
@@ -218,7 +217,7 @@
             entry.target.classList.add('show-overlay');
           } else {
             entry.target.classList.remove('show-overlay');
-          }
+          }*/
         });
       }, {
         root: null,
