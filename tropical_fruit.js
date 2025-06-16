@@ -32,8 +32,3 @@ This includes growing altogether new varieties of apples for the market.
 * Korea Meteorological Administration 기상청
 * the Agricultural Technology Center 농업기술센터
 `;
-
-git add .
-git commit -m "Update files and content"
-git pull --rebase
-git push
