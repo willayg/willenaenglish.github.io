@@ -2,6 +2,12 @@ const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
   console.log('Received event:', event.httpMethod, event.path);
+  console.log('Event body:', event.body);
+  console.log('Env:', {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_KEY: process.env.SUPABASE_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
@@ -20,9 +26,11 @@ exports.handler = async (event) => {
             contentType: 'application/octet-stream',
             upsert: false,
           });
+
         if (error) {
-          return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+          throw error;
         }
+
         return { statusCode: 200, body: JSON.stringify({ path: data.path }) };
       } catch (err) {
         return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
