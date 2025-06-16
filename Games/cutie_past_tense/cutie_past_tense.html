@@ -340,6 +340,23 @@ function checkAnswer(choice) {
   });
   if (choice === currentQuestion.answer) {
     streak++;
+    // Combo bonus logic
+    let comboBonus = 0;
+    if (streak === 3) {
+      comboBonus = 500;
+    } else if (streak === 6) {
+      comboBonus = 1000;
+    } else if (streak === 9) {
+      comboBonus = 1500;
+    } else if (streak === 12) {
+      comboBonus = 2000;
+    }
+    if (comboBonus > 0) {
+      score += comboBonus;
+      feedback.textContent = `🔥 Combo x${streak}! +${comboBonus} bonus!`;
+    } else {
+      feedback.textContent = streak > 1 ? `🎉 Combo x${streak}!` : `🎉 Correct!`;
+    }
     if (streak % 3 === 0) {
       timeLeft += 1;
       timerDisplay.textContent = timeLeft;
@@ -351,7 +368,6 @@ function checkAnswer(choice) {
     playFeedbackAudio("correct");
     score += 200;
     scoreDisplay.textContent = score;
-    feedback.textContent = streak > 1 ? `🎉 Combo x${streak}!` : `🎉 Correct!`;
     setTimeout(nextQuestion, 500);
   } else {
     streak = 0;
