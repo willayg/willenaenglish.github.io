@@ -1,17 +1,33 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
+  console.log('Received event:', event.httpMethod, event.path);
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 1. LIST TEACHER FILES HANDLER - PLACE THIS NEAR THE TOP!
-    if (
-      event.httpMethod === 'GET' &&
-      event.path &&
-      event.path.includes('list_teacher_files')
-    ) {
+    if (event.path.endsWith('/upload_teacher_file') && event.httpMethod === 'POST') {
+      // Parse multipart/form-data (you may need a library like busboy or formidable)
+      // For simplicity, let's assume you send base64 file data and filename in JSON
+
+      try {
+        const { fileName, fileDataBase64 } = JSON.parse(event.body);
+        const buffer = Buffer.from(fileDataBase64, 'base64');
+        const { data, error } = await supabase.storage
+          .from('teacher-files')
+          .upload(`uploads/${Date.now()}_${fileName}`, buffer, {
+            contentType: 'application/octet-stream',
+            upsert: false,
+          });
+        if (error) {
+          return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ path: data.path }) };
+      } catch (err) {
+        return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
+      }
+    } else if (event.path.endsWith('/list_teacher_files') && event.httpMethod === 'GET') {
       const { prefix = '', limit = 20, offset = 0 } = event.queryStringParameters || {};
 
       const { data, error } = await supabase.storage
@@ -47,149 +63,14 @@ exports.handler = async (event) => {
         statusCode: 200,
         body: JSON.stringify(filesWithUrls)
       };
-    }
-
-    // Dedicated POST handler for Scores table
-    if (
-      event.httpMethod === 'POST' &&
-      event.path &&
-      event.path.includes('submit_score')
-    ) {
-      try {
-        const { name, score, game } = JSON.parse(event.body);
-        const { error } = await supabase
-          .from('Scores')
-          .insert([{ name, score, game }]);
-        if (error) {
-          return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true }) };
-      } catch (err) {
-        return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
-      }
-    }
-
-    if (
-      event.httpMethod === 'POST' &&
-      event.path &&
-      event.path.includes('upload_teacher_file')
-    ) {
-      // Parse multipart/form-data (you may need a library like busboy or formidable)
-      // For simplicity, let's assume you send base64 file data and filename in JSON
-
-      try {
-        const { fileName, fileDataBase64 } = JSON.parse(event.body);
-        const buffer = Buffer.from(fileDataBase64, 'base64');
-        const { data, error } = await supabase.storage
-          .from('teacher-files')
-          .upload(`uploads/${Date.now()}_${fileName}`, buffer, {
-            contentType: 'application/octet-stream',
-            upsert: false,
-          });
-        if (error) {
-          return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ path: data.path }) };
-      } catch (err) {
-        return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
-      }
-    }
-
-    const method = event.httpMethod;
-    const body = event.body ? JSON.parse(event.body) : {};
-    const table = body.table || 'users'; // Default table
-
-    if (body.action === "login") {
-      const { name, password } = body;
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("name", name)
-        .eq("password", password)
-        .single();
-      if (error || !data) {
-        return {
-          statusCode: 401,
-          body: JSON.stringify({ status: "not_found" }),
-        };
-      }
+    } else {
       return {
-        statusCode: 200,
-        body: JSON.stringify({ status: "success", user: data }),
+        statusCode: 405,
+        body: JSON.stringify({ error: 'Method Not Allowed' }),
       };
     }
-
-    if (body.action === "get_avatar") {
-      const { user_id } = body;
-      const { data, error } = await supabase
-        .from("users")
-        .select("name, avatar")
-        .eq("id", user_id)
-        .limit(1);
-      if (error || !data) {
-        return {
-          statusCode: 404,
-          body: JSON.stringify({ error: "User not found" }),
-        };
-      }
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ data }),
-      };
-    }
-
-    let result;
-
-    try {
-      if (method === 'GET') {
-        const { data, error } = await supabase
-          .from(table)
-          .select('*')
-          .limit(body.limit || 10);
-        if (error) throw error;
-        result = { data };
-      } else if (method === 'POST') {
-        const { data, error } = await supabase
-          .from(table)
-          .insert(body.values)
-          .select();
-        if (error) throw error;
-        result = { data };
-      } else if (method === 'PUT') {
-        const { data, error } = await supabase
-          .from(table)
-          .update(body.values)
-          .match(body.match);
-        if (error) throw error;
-        result = { data };
-      } else if (method === 'DELETE') {
-        const { data, error } = await supabase
-          .from(table)
-          .delete()
-          .match(body.match);
-        if (error) throw error;
-        result = { data };
-      } else {
-        return { statusCode: 405, body: 'Method Not Allowed' };
-      }
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify(result),
-      };
-    } catch (error) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: error.message }),
-      };
-    }
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Success' }),
-    };
   } catch (error) {
-    console.error('Upload error:', error); // <-- This logs the error to Netlify logs
+    console.error('Upload error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message || String(error) }),
