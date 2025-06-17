@@ -115,32 +115,5 @@
   </footer>
 
   <script src="teacher_dashboard.js"></script>
-  <script>
-    // Dynamically load the header
-    fetch('Components/header.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('header-container').innerHTML = html;
-      });
-
-    // Update file list rendering logic
-    function renderFileList(files) {
-      const fileList = document.getElementById('fileList');
-      fileList.innerHTML = ''; // Clear existing list
-      if (files.length === 0) {
-        fileList.innerHTML = '<li class="text-gray-500">No files found.</li>';
-      } else {
-        files.forEach(file => {
-          const li = document.createElement('li');
-          li.className = 'p-2 rounded-lg bg-white shadow flex justify-between items-center';
-          li.innerHTML = `
-            <span class="font-medium text-[#2e2b3f]">${file.name}</span>
-            <span class="text-xs text-gray-500">${file.size} bytes</span>
-          `;
-          fileList.appendChild(li);
-        });
-      }
-    }
-  </script>
 </body>
 </html>
