@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Willena 원어민 영어학원</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+</head>
+<body>
+  <div id="header-container"></div>
+  <!-- Main Swiper (2 slides only) -->
+  <div class="swiper main-swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <a href="#aboutWillenaSection" id="moonScrollLink" style="display:block;">
+          <img src="Assets/Images/moon.jpg" class="slide-moon" alt="Moon" style="cursor:pointer;">
+        </a>
+      </div>
+      <div class="swiper-slide">
+        <a href="#programSection" id="girlsScrollLink" style="display:block;">
+          <img src="Assets/Images/Girls.jpg" class="slide-girls" alt="Girls">
+        </a>
+      </div>
+    </div>
+    <div class="swiper-pagination"></div>
+  </div>
+
+  <!-- Students' Activity Zone (학생 활동 존) -->
+  <section id="activityZone" style="width:100vw;min-height:calc(100vh - 350px);background:#f9f5ec;display:flex;align-items:center;justify-content:center;">
+    <h2 style="font-size:2.2rem;font-weight:800;color:#2e2b3f;">학생 활동 존</h2>
+  </section>
+
+  <!-- Welcome Section -->
+  <section id="welcomeSection" style="background:#ffffff; color:#2e2b3f; padding:40px 0; text-align:center;">
+    <h2 style="font-size:2rem; font-weight:700; margin-bottom:16px;"></h2>
+    <p style="font-size:1.15rem; max-width:600px; margin:0 auto;">
+      <!-- Welcome text here -->
+    </p>
+  </section>
+
+  <!-- About Willena Section -->
+  <div id="aboutWillenaSection" style="background: var(--primary); color: white; width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 40px 0;">
+    <div style="max-width: 700px; width: 90%; padding: 0 16px; text-align: left;">
+      <div style="font-size: 2rem; font-weight: 700; margin-bottom: 40px;">What is Willena?</div>
+      <div style="font-size: 1.15rem; line-height: 2;">
+        윌레나 영어에서는 단순히 단어를 암기하는 것을 넘어, 무한한 가능성의 문을 여는 학습을 믿습니다. 저희의 목표는 창의적인 탐구와 흥미로운 수업을 통해 영어에 대한 평생의 사랑을 심어주는 것입니다.<br><br>
+        모든 아이는 특별하며, 각 학생이 자신감을 찾고 자신의 목소리를 발견할 수 있도록 돕는 수업 방식을 제공합니다.<br><br>
+        호기심을 자극하고 실생활에서 사용할 수 있는 소통 능력을 기르는 과정을 통해 영어 학습이 즐거운 모험이 되도록 합니다.<br><br>
+        윌레나의 열정적인 선생님들은 실수를 성공으로 나아가는 디딤돌로 삼을 수 있도록 지지해주는 수업 분위기를 만들어줍니다.<br><br>
+        윌레나에서 학생들은 단순히 언어를 배우는 것이 아니라, 세상과 연결될 새로운 방법을 발견하게 될 것입니다.<br><br>
+        윌레나와 함께 자녀의 미래를 위한 첫걸음을 시작해 보세요. 그 여정은 지금 시작됩니다!
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Slideshow (no animation, just slides) -->
+  <div class="photo-slideshow" id="photoSlideshow">
+    <div class="swiper photo-swiper" style="height:100%;">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <img src="Assets/Images/lobby.jpg" alt="Lobby" class="autopan-img">
+        </div>
+        <div class="swiper-slide">
+          <img src="Assets/Images/LibraryMap.jpg" alt="Library Map" class="autopan-img">
+        </div>
+        <div class="swiper-slide">
+          <img src="Assets/Images/libraryinner.jpg" alt="Library Inner" class="autopan-img">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Program Section -->
+  <div class="container program-section" id="programSection" style="background: var(--light-beige); width: 100vw; max-width: 100vw; margin-left: calc(50% - 50vw); padding: 60px 0 80px 0;">
+    <h1 style="text-align:center;">Program</h1>
+    <div class="program-stack">
+      <div class="bubble library">
+        <div class="bubble-title">Library</div>
+        <div class="bubble-content">
+          독서는 영어의 자연스러운 습득으로<br>
+          읽기, 쓰기, 듣기, 말하기 능력을<br>
+          향상시키기에 중요합니다!<br><br>
+          윌레에서는 원서독서로,<br>
+          엘레에서는 온라인독서로<br>
+          아이의 목표를 경험할 수 있고,<br>
+          자신감도 키워주세요!
+        </div>
+      </div>
+      <div class="bubble special">
+        <div class="bubble-title">Special</div>
+        <div class="bubble-content">
+          모든반 영어로 수업<br>
+          영어 일기<br>
+          국제 공인 자격증반<br>
+          Event Days<br>
+          영어마을<br>
+          해외 영어 캠프
+        </div>
+      </div>
+      <div class="bubble how">
+        <div class="bubble-title">How?</div>
+        <div class="bubble-content">
+          주5회 원어민-한국인 매일 교차<br>
+          수업 학생이 주인공인 수업<br>
+          액티비티 중심 수업<br>
+          (말하기, 읽기, 듣기, 쓰기, 문법)<br>
+          프로젝트
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" id="footerContact">
+    <p style="margin-top: 12px; font-size: 0.9rem;">
+      Phone: 031-8041-2203<br>
+      © 2025 Willena 원어민 영어학원. All rights reserved.
+    </p>
+  </div>
+
+  <script src="main.js"></script>
+  <script>
+  fetch('components/header.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('header-container').innerHTML = html;
+
+      // User profile logic (runs after header is loaded)
+      const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+      const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+      const userAvatarSpan = document.getElementById('userAvatar');
+      const userNameSpan = document.getElementById('userName');
+      const userProfileLink = document.getElementById('userProfileLink');
+
+      if (userId && name) {
+        userNameSpan.textContent = name;
+        userProfileLink.href = "profile-s.html";
+      } else {
+        userNameSpan.textContent = "로그인 / 가입";
+        userProfileLink.href = "login.html";
+      }
+    });
+</script>
+</body>
+</html>
