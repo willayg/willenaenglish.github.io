@@ -27,6 +27,9 @@
       <button id="exportPdfBtn" class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]">
         🖨️ <span class="hidden sm:inline">Export PDF</span>
       </button>
+      <button id="openWorksheetExport" class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]">
+        🖨️ <span class="hidden sm:inline">Export Worksheet</span>
+      </button>
       <div class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded">
         🧮 <span id="tokenMeter" class="font-bold">1234</span>
       </div>
@@ -201,6 +204,25 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- Export Worksheet Modal -->
+  <div id="worksheetExportModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+      <h2 class="text-xl font-bold mb-4">Export Worksheet</h2>
+      <label class="block mb-2 font-semibold">Worksheet Title</label>
+      <input id="worksheetTitle" class="border rounded w-full p-2 mb-4" placeholder="e.g. Wordsearch Worksheet">
+      <label class="block mb-2 font-semibold">Instructions</label>
+      <textarea id="worksheetInstructions" class="border rounded w-full p-2 mb-4" rows="2" placeholder="e.g. Find all the words in the puzzle."></textarea>
+      <div class="flex gap-2 justify-end">
+        <button id="worksheetPreviewBtn" class="px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]">Preview</button>
+        <button id="worksheetExportPdfBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Export PDF</button>
+        <button id="worksheetCancelBtn" class="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="worksheetPreviewArea" class="hidden">
+    <!-- Logo, title, instructions, puzzle, etc. will be injected here -->
   </div>
 
   <footer class="text-center py-6 bg-[#f0f0f0] text-[#777] text-sm">

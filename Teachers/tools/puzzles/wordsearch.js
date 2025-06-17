@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (workspace) {
       workspace.scrollIntoView({ behavior: "smooth" });
       document.getElementById('generatedBlocks').innerHTML = `
-        <div class="p-4 bg-white rounded shadow text-[#555]">
+        <div id="puzzleExport" class="p-4 bg-white rounded shadow text-[#555]">
           <div class="font-bold mb-2">🧩 Wordsearch Puzzle</div>
           ${html}
         </div>
