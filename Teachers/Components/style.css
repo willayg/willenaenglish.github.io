@@ -1,0 +1,44 @@
+body, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Pretendard', 'Nanum Myeongjo', 'Poppins', sans-serif;
+}
+
+/* Optional: Highlight active sidebar button */
+#sidebar .tool-btn.active,
+#sidebar .tool-btn:focus {
+  background-color: #d6d2e0;
+}
+
+/* Hide scrollbars for a cleaner look */
+body, main {
+  scrollbar-width: thin;
+  scrollbar-color: #edeaf6 #f9f5ec;
+}
+
+#topbar {
+  background-color: rgba(46,43,63,0.92) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+#topbar img {
+  height: 56px;
+}
+#topbar .text-xl {
+  color: #fff !important;
+}
+#main-content.side-layout {
+  flex-direction: row;
+}
+#main-content.stack-layout {
+  flex-direction: column;
+}
+#tool-panels {
+  min-width: 260px;
+  max-width: 340px;
+}
+
+.wordsearch-font-sans { font-family: sans-serif; }
+.wordsearch-font-mono { font-family: monospace; }
+.wordsearch-font-comic { font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif; }
+.wordsearch-font-nanum { font-family: "Nanum Pen Script", cursive, sans-serif; }
