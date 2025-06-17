@@ -42,3 +42,18 @@ body, main {
 .wordsearch-font-mono { font-family: monospace; }
 .wordsearch-font-comic { font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif; }
 .wordsearch-font-nanum { font-family: "Nanum Pen Script", cursive, sans-serif; }
+
+#worksheetPreviewArea {
+  background: #fff;
+  padding: 32px;
+  width: 800px;
+  margin: 0 auto;
+  font-family: 'Nanum Pen Script', Arial, sans-serif;
+  color: #222;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+#worksheetPreviewArea .logo {
+  width: 120px;
+  margin-bottom: 16px;
+}
