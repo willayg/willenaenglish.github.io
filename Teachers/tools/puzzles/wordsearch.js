@@ -78,12 +78,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const workspace = document.getElementById('workspace');
     if (workspace) {
       workspace.scrollIntoView({ behavior: "smooth" });
-      document.getElementById('generatedBlocks').innerHTML = `
-        <div id="puzzleExport" class="p-4 bg-white rounded shadow text-[#555]">
-          <div class="font-bold mb-2">🧩 Wordsearch Puzzle</div>
-          ${html}
-        </div>
-      `;
+      const templateSelect = document.getElementById('templateSelect');
+      const templateIdx = templateSelect ? templateSelect.selectedIndex : 0;
+      const template = window.worksheetTemplates?.[templateIdx] || window.worksheetTemplates[0];
+      const title = document.getElementById('worksheetTitle')?.value || 'Wordsearch Worksheet';
+      const instructions = document.getElementById('worksheetInstructions')?.value || 'Find all the words in the puzzle.';
+      const worksheetHTML = template.render({
+        title,
+        instructions,
+        puzzle: `<div id="puzzleExport">${html}</div>`,
+        orientation: worksheetOrientation // pass this to your template
+      });
+      document.getElementById('generatedBlocks').innerHTML = worksheetHTML;
     }
 
     // Remove or comment out this line:
@@ -138,4 +144,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return grid;
   }
+
+  let worksheetOrientation = 'portrait';
+
+  // Update the orientation handlers:
+  document.getElementById('setPortrait').onclick = () => {
+    worksheetOrientation = 'portrait';
+    const previewArea = document.getElementById('worksheetPreviewArea');
+    previewArea.classList.remove('a4-landscape');
+    previewArea.classList.add('a4-portrait');
+    updateWorksheetPreview();
+  };
+  document.getElementById('setLandscape').onclick = () => {
+    worksheetOrientation = 'landscape';
+    const previewArea = document.getElementById('worksheetPreviewArea');
+    previewArea.classList.remove('a4-portrait');
+    previewArea.classList.add('a4-landscape');
+    updateWorksheetPreview();
+  };
 });

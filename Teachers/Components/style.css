@@ -57,3 +57,21 @@ body, main {
   width: 120px;
   margin-bottom: 16px;
 }
+
+/* Portrait and landscape worksheet preview styles */
+.a4-portrait {
+  width: 794px;
+  height: 1123px;
+  margin: 32px auto;
+  background: #fff;
+  box-shadow: 0 0 8px #ccc;
+  padding: 32px;
+}
+.a4-landscape {
+  width: 1123px;
+  height: 794px;
+  margin: 32px auto;
+  background: #fff;
+  box-shadow: 0 0 8px #ccc;
+  padding: 32px;
+}
