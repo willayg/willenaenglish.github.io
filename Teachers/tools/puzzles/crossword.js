@@ -18,4 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // TODO: Add crossword generation logic here!
   });
+
+  const output = document.getElementById('crossworkdOutput');
+  if (output) {
+    output.innerHTML = html;
+  }
 });

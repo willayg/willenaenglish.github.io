@@ -89,11 +89,27 @@ document.addEventListener('DOMContentLoaded', () => {
         puzzle: `<div id="puzzleExport">${html}</div>`,
         orientation: worksheetOrientation // pass this to your template
       });
-      document.getElementById('generatedBlocks').innerHTML = worksheetHTML;
     }
 
-    // Remove or comment out this line:
-    // document.getElementById('wordsearchOutput').innerHTML = html;
+    const output = document.getElementById('wordsearchOutput');
+    if (output) {
+      output.innerHTML = html;
+    }
+
+    const preview = document.getElementById('worksheetPreviewArea');
+    if (preview) {
+      // Use your worksheet template for the preview
+      const template = window.worksheetTemplates?.[0]; // or use selected template if you have a selector
+      const title = 'Wordsearch Worksheet'; // or get from input
+      const instructions = 'Find all the words in the puzzle.'; // or get from input
+      const worksheetHTML = template.render({
+        title,
+        instructions,
+        puzzle: `<div id="puzzleExport">${html}</div>`,
+        orientation: worksheetOrientation
+      });
+      preview.innerHTML = worksheetHTML;
+    }
   };
 
   // Improved wordsearch grid generator: random placement, horizontal/vertical
@@ -162,4 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
     previewArea.classList.add('a4-landscape');
     updateWorksheetPreview();
   };
+
+  // Set initial size for preview area
+  const initialSize = document.getElementById('wordsearchGridSize').value;
+  document.getElementById('worksheetPreviewArea').style.width = `${initialSize * 40}px`;
+  document.getElementById('worksheetPreviewArea').style.height = `${initialSize * 40}px`;
 });

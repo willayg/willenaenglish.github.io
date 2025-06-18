@@ -14,11 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // e.g. vocab: 'side',
   };
 
+  // Hide all panels
   function showPanel(panel) {
     document.querySelectorAll('.tool-panel').forEach(el => el.classList.add('hidden'));
     const active = document.getElementById('panel-' + panel);
     if (active) active.classList.remove('hidden');
-    // Set layout
+    // Highlight active sidebar button
+    document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
+    if (btn) btn.classList.add('active');
     setMainLayout(panelLayout[panel] || 'stack');
   }
 
@@ -73,9 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Preview Worksheet
-  const previewBtn = document.getElementById('worksheetPreviewBtn');
-  if (previewBtn) {
-    previewBtn.onclick = () => {
+  const worksheetPreviewBtn = document.getElementById('worksheetPreviewBtn');
+  const previewBtn = document.getElementById('previewBtn');
+  if (worksheetPreviewBtn) {
+    worksheetPreviewBtn.onclick = () => {
       updateWorksheetPreview();
       const preview = document.getElementById('worksheetPreviewArea');
       preview.classList.remove('hidden');
@@ -246,5 +251,35 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.save((titleInput.value || 'worksheet') + '.pdf');
     };
   }
+
+  // Puzzle tab switching logic
+  const crosswordTab = document.getElementById('crosswordTab');
+  const wordsearchTab = document.getElementById('wordsearchTab');
+  const crosswordMaker = document.getElementById('crosswordMaker');
+  const wordsearchMaker = document.getElementById('wordsearchMaker');
+
+  if (crosswordTab && wordsearchTab && crosswordMaker && wordsearchMaker) {
+    crosswordTab.onclick = () => {
+      crosswordMaker.classList.remove('hidden');
+      wordsearchMaker.classList.add('hidden');
+      crosswordTab.classList.add('bg-[#d6d2e0]');
+      wordsearchTab.classList.remove('bg-[#d6d2e0]');
+    };
+    wordsearchTab.onclick = () => {
+      wordsearchMaker.classList.remove('hidden');
+      crosswordMaker.classList.add('hidden');
+      wordsearchTab.classList.add('bg-[#d6d2e0]');
+      crosswordTab.classList.remove('bg-[#d6d2e0]');
+    };
+    // Show crossword by default
+    crosswordMaker.classList.remove('hidden');
+    wordsearchMaker.classList.add('hidden');
+    crosswordTab.classList.add('bg-[#d6d2e0]');
+    wordsearchTab.classList.remove('bg-[#d6d2e0]');
+  }
+
+  console.log("main1.js loaded");
 });
+
+.hidden { display: none !important; }
 
