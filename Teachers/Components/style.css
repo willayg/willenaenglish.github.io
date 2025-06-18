@@ -38,10 +38,11 @@ body, main {
   max-width: 340px;
 }
 
-.wordsearch-font-sans { font-family: sans-serif; }
-.wordsearch-font-mono { font-family: monospace; }
-.wordsearch-font-comic { font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif; }
-.wordsearch-font-nanum { font-family: "Nanum Pen Script", cursive, sans-serif; }
+/* Font classes */
+.wordsearch-font-sans { font-family: 'Poppins', Arial, sans-serif; }
+.wordsearch-font-mono { font-family: 'Courier New', Courier, monospace; }
+.wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif; }
+.wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive; }
 
 #worksheetPreviewArea {
   background: #fff;
@@ -125,7 +126,28 @@ body, main {
   z-index: 20;
 }
 
+#toolbar {
+  display: flex;
+  gap: 18px; /* or whatever spacing you like */
+}
+
 .puzzle-maker { display: none; }
 .puzzle-maker.active { display: block; }
 
 .hidden { display: none !important; }
+
+/* Table and cell styling */
+.wordsearch-table {
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+.wordsearch-table td {
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #222;
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 1.3rem;
+}
