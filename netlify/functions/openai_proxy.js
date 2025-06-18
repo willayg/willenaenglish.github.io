@@ -1,7 +1,8 @@
 const fetch = require('node-fetch');
 
+const OPENAI_API = process.env.OPENAI_API;
+
 exports.handler = async (event) => {
-  const OPENAI_API = process.env.openai_api;
   const body = event.body ? JSON.parse(event.body) : {};
   const endpoint = body.endpoint || 'chat/completions'; // default to chat
 
@@ -9,9 +10,8 @@ exports.handler = async (event) => {
   let fetchOptions = {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API}`,
-      // Content-Type may need to be changed for audio uploads
-      'Content-Type': body.contentType || 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API}`
     },
     body: body.rawBody ? body.rawBody : JSON.stringify(body.payload),
   };
