@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('generateWordsearch').onclick = () => {
-    console.log("Button clicked!");
     const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
     const caseOpt = document.getElementById('wordsearchCase').value;
     const fontOpt = document.getElementById('wordsearchFont').value;
@@ -79,62 +78,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const workspace = document.getElementById('workspace');
     if (workspace) {
       workspace.scrollIntoView({ behavior: "smooth" });
-      const templateSelect = document.getElementById('templateSelect');
-      const templateIdx = templateSelect ? templateSelect.selectedIndex : 0;
-      const template = window.worksheetTemplates?.[templateIdx] || window.worksheetTemplates[0];
-      const title = document.getElementById('worksheetTitle')?.value || 'Wordsearch Worksheet';
-      const instructions = document.getElementById('worksheetInstructions')?.value || 'Find all the words in the puzzle.';
-      const worksheetHTML = template.render({
-        title,
-        instructions,
-        puzzle: `<div id="puzzleExport">${html}</div>`,
-        orientation: worksheetOrientation // pass this to your template
-      });
-      workspace.innerHTML = worksheetHTML;
+      document.getElementById('generatedBlocks').innerHTML = `
+        <div id="puzzleExport" class="p-4 bg-white rounded shadow text-[#555]">
+          <div class="font-bold mb-2">🧩 Wordsearch Puzzle</div>
+          ${html}
+        </div>
+      `;
     }
 
-    const output = document.getElementById('wordsearchOutput');
-    if (output) {
-      output.innerHTML = html;
-    }
-
-    const preview = document.getElementById('worksheetPreviewArea');
-    if (preview) {
-      // Use your worksheet template for the preview
-      const template = window.worksheetTemplates?.[0]; // or use selected template if you have a selector
-      const title = 'Wordsearch Worksheet'; // or get from input
-      const instructions = 'Find all the words in the puzzle.'; // or get from input
-      const worksheetHTML = template.render({
-        title,
-        instructions,
-        puzzle: `<div id="puzzleExport">${html}</div>`,
-        orientation: worksheetOrientation
-      });
-      preview.innerHTML = worksheetHTML;
-    }
+    // Remove or comment out this line:
+    // document.getElementById('wordsearchOutput').innerHTML = html;
   };
 
   // Improved wordsearch grid generator: random placement, horizontal/vertical
-  function generateWordsearchGrid(words, size = 12) {
-    const grid = Array.from({length: size}, () => Array(size).fill(''));
-    words.forEach((word, idx) => {
-      if (idx < size) {
-        for (let i = 0; i < word.length && i < size; i++) {
-          grid[idx][i] = word[i].toUpperCase();
+  function generateWordsearchGrid(words, size, caseOpt) {
+    const alphabet = caseOpt === 'upper' ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : "abcdefghijklmnopqrstuvwxyz";
+    let grid = Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => alphabet[Math.floor(Math.random() * alphabet.length)])
+    );
+
+    // Try to place each word randomly, horizontal or vertical
+    words.forEach(word => {
+      let placed = false, attempts = 0;
+      while (!placed && attempts < 100) {
+        attempts++;
+        const dir = Math.random() < 0.5 ? 'H' : 'V';
+        const maxStart = size - word.length;
+        let row = Math.floor(Math.random() * size);
+        let col = Math.floor(Math.random() * size);
+        if (dir === 'H' && col <= maxStart) {
+          // Check if fits
+          let fits = true;
+          for (let i = 0; i < word.length; i++) {
+            if (grid[row][col + i] !== alphabet[Math.floor(Math.random() * alphabet.length)]) {
+              fits = true; // allow overwrite for simplicity
+            }
+          }
+          // Place
+          for (let i = 0; i < word.length; i++) {
+            grid[row][col + i] = word[i];
+          }
+          placed = true;
+        } else if (dir === 'V' && row <= maxStart) {
+          // Check if fits
+          let fits = true;
+          for (let i = 0; i < word.length; i++) {
+            if (grid[row + i][col] !== alphabet[Math.floor(Math.random() * alphabet.length)]) {
+              fits = true; // allow overwrite for simplicity
+            }
+          }
+          // Place
+          for (let i = 0; i < word.length; i++) {
+            grid[row + i][col] = word[i];
+          }
+          placed = true;
         }
       }
     });
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        if (!grid[r][c]) {
-          grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
-        }
-      }
-    }
+
     return grid;
   }
-
-  let worksheetOrientation = 'portrait';
 });
-
