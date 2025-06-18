@@ -113,8 +113,11 @@
     <!-- Worksheet Preview Area (hidden by default) -->
     <div class="flex-1 flex flex-col items-center">
       <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:sticky;top:56px;z-index:20;">
-        <button id="printWorksheetBtn">Print</button>
-        <button id="downloadWorksheetPdfBtn">Download PDF</button>
+        <div id="toolbar">
+          <input id="worksheetTitle" type="text" placeholder="Worksheet Title" style="font-size:1.1em; padding:4px 10px; border-radius:6px; border:1px solid #ccc; margin-right:18px;">
+          <button id="printWorksheetBtn">Print</button>
+          <button id="downloadWorksheetPdfBtn">Download PDF</button>
+        </div>
       </div>
       <div id="worksheetPreviewArea" style="background: white; width: 794px; height: 1123px; box-shadow: 0 0 8px #bbb; border-radius: 8px; overflow: auto; position: relative;">
         <!-- The puzzle will be injected here -->

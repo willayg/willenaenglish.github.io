@@ -65,11 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render the grid as a table with the font class on both table and td
     let html = `<div class="mb-2">Grid size: <b>${size} x ${size}</b></div>`;
     html += `<div class="mb-2">Words: <b>${words.join(', ') || 'None'}</b></div>`;
-    html += `<table class="border border-collapse mx-auto ${fontClass}" style="font-size:1.3rem;">`;
+    html += `<table class="wordsearch-table ${fontClass}">`;
     for (let row of grid) {
       html += '<tr>';
       for (let cell of row) {
-        html += `<td class="border w-8 h-8 text-center select-none ${fontClass}">${cell}</td>`;
+        html += `<td class="${fontClass}">${cell}</td>`;
       }
       html += '</tr>';
     }
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const templateSelect = document.getElementById('templateSelect');
       const templateIdx = templateSelect ? templateSelect.selectedIndex : 0;
       const template = window.worksheetTemplates?.[templateIdx] || window.worksheetTemplates[0];
-      const title = document.getElementById('worksheetTitle')?.value || 'Wordsearch Worksheet';
+      const title = document.getElementById('worksheetTitle')?.value || "Wordsearch Worksheet";
       const instructions = document.getElementById('worksheetInstructions')?.value || 'Find all the words in the puzzle.';
       const worksheetHTML = template.render({
         title,
@@ -100,10 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const preview = document.getElementById('worksheetPreviewArea');
     if (preview) {
-      // Use your worksheet template for the preview
-      const template = window.worksheetTemplates?.[0]; // or use selected template if you have a selector
-      const title = 'Wordsearch Worksheet'; // or get from input
-      const instructions = 'Find all the words in the puzzle.'; // or get from input
+      const template = window.worksheetTemplates?.[0];
+      const title = document.getElementById('worksheetTitle')?.value || "Wordsearch Worksheet";
+      const instructions = document.getElementById('worksheetInstructions')?.value || 'Find all the words in the puzzle.';
       const worksheetHTML = template.render({
         title,
         instructions,

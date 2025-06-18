@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     printBtn.onclick = () => {
       const previewArea = document.getElementById('worksheetPreviewArea');
       const printContents = `
-        <div style="width:794px;min-height:1123px;margin:auto;background:#fff;">
+        <div style="width:794px;min-height:1123px;margin:auto;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           ${previewArea.innerHTML}
         </div>
       `;
@@ -14,8 +14,29 @@ document.addEventListener('DOMContentLoaded', () => {
         <html>
           <head>
             <title>Print Worksheet</title>
+            <!-- Google Fonts -->
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
             <style>
               body { background: #fff; margin: 0; padding: 0; }
+              .wordsearch-font-sans { font-family: 'Poppins', Arial, sans-serif; }
+              .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace; }
+              .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif; }
+              .wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive; }
+              .wordsearch-table {
+                margin: 0 auto;
+                border-collapse: collapse;
+              }
+              .wordsearch-table td {
+                width: 32px;
+                height: 32px;
+                text-align: center;
+                vertical-align: middle;
+                border: 1px solid #222;
+                padding: 0;
+                box-sizing: border-box;
+                font-size: 1.3rem;
+              }
               @media print {
                 body { background: #fff; }
                 div { box-shadow: none !important; }
