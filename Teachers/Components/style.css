@@ -75,3 +75,57 @@ body, main {
   box-shadow: 0 0 8px #ccc;
   padding: 32px;
 }
+
+#sidebar .tool-btn {
+  font-family: 'Poppins', 'Glacial Indifference', Arial, sans-serif;
+  font-size: 0.825rem; /* 25% smaller than 1.1rem */
+  font-weight: 500;
+  width: 100%;
+  text-align: right;
+  padding: 0.6rem 1.2rem 0.6rem 0.5rem;
+  background: none;
+  border: none;
+  color: #2e2b3f;
+  transition: background 0.2s, color 0.2s;
+  border-radius: 0.375rem;
+  margin-bottom: 0;
+  cursor: pointer;
+  line-height: 2.2; /* increased line spacing */
+  border-bottom: 1px solid #e5e5e5; /* subtle gray line */
+}
+#sidebar .tool-btn:last-child {
+  border-bottom: none;
+}
+#sidebar .tool-btn.active,
+#sidebar .tool-btn:hover {
+  background: #e5e5ea;
+  color: #1a1826;
+}
+#sidebar {
+  min-width: 120px;
+  width: 135px;
+  align-items: flex-end;
+  background: #edeaf6;
+  border-right: 1px solid #d6d2e0;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+#worksheetMenuBar {
+  width: 100%;
+  background: #f0ebff;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding-left: 32px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 56px; /* match your topbar height */
+  z-index: 20;
+}
+
+.puzzle-maker { display: none; }
+.puzzle-maker.active { display: block; }
+
+.hidden { display: none !important; }

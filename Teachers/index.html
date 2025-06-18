@@ -1,266 +1,158 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Willena Lesson Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Willena Lesson Generator Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind (for utility classes, optional) -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Custom styles -->
   <link rel="stylesheet" href="components/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+  <!-- Google Fonts for worksheet templates -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#f9f5ec] text-[#2e2b3f] min-h-screen">
+<body class="bg-[#f9f5ec] min-h-screen">
 
-  <!-- Top Bar -->
-  <header id="topbar" class="flex items-center justify-between px-6 py-3 shadow z-10"
-        style="background-color:rgba(46,43,63,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
-    <div class="flex items-center gap-4">
-      <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="h-12" style="height:56px;">
-      <span class="text-xl font-bold text-white">Lesson Planner</span>
-    </div>
-    <div class="flex items-center gap-3" id="header-actions">
-      <button class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]" id="saveBtn">
-        💾 <span class="hidden sm:inline">Save</span>
-      </button>
-      <button class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]" id="exportBtn">
-        ⬇️ <span class="hidden sm:inline">Export</span>
-      </button>
-      <button id="exportPdfBtn" class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]">
-        🖨️ <span class="hidden sm:inline">Export PDF</span>
-      </button>
-      <button id="openWorksheetExport" class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]">
-        🖨️ <span class="hidden sm:inline">Export Worksheet</span>
-      </button>
-      <div class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded">
-        🧮 <span id="tokenMeter" class="font-bold">1234</span>
-      </div>
-      <div class="flex items-center gap-1 px-3 py-1 bg-[#edeaf6] rounded cursor-pointer" id="userMenu">
-        👤 <span class="hidden sm:inline">Teacher</span>
-      </div>
-    </div>
-  </header>
+  <!-- Topbar -->
+  <nav id="topbar" class="flex items-center px-6 py-2 shadow sticky top-0 z-30 bg-[#2e2b3f]">
+    <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="h-10 select-none mr-4" draggable="false">
+    <span class="text-xl font-bold tracking-wide">Willena Lesson Planner</span>
+  </nav>
 
-  <div class="flex h-[calc(100vh-56px)]">
+  <main id="main-content" class="flex side-layout min-h-screen">
     <!-- Sidebar -->
-    <aside id="sidebar" class="flex flex-col items-center bg-[#edeaf6] border-r border-[#bbb] w-20 sm:w-24 py-4 space-y-2">
-      <button class="tool-btn" id="panel-files-btn" data-panel="files">
-        <span class="text-2xl">📂</span>
-        <span class="text-xs mt-1 block">Files</span>
-      </button>
-      <button class="tool-btn" id="panel-vocab-btn" data-panel="vocab">
-        <span class="text-2xl">📚</span>
-        <span class="text-xs mt-1 block">Vocab</span>
-      </button>
-      <button class="tool-btn" id="panel-comp-btn" data-panel="comp">
-        <span class="text-2xl">🧠</span>
-        <span class="text-xs mt-1 block">Comp</span>
-      </button>
-      <button class="tool-btn" id="panel-grammar-btn" data-panel="grammar">
-        <span class="text-2xl">🧪</span>
-        <span class="text-xs mt-1 block">Grammar</span>
-      </button>
-      <button class="tool-btn" id="panel-worksheets-btn" data-panel="worksheets">
-        <span class="text-2xl">🧾</span>
-        <span class="text-xs mt-1 block">Worksheets</span>
-      </button>
-      <button class="tool-btn" id="panel-comm-btn" data-panel="comm">
-        <span class="text-2xl">🗣️</span>
-        <span class="text-xs mt-1 block">Comm</span>
-      </button>
-      <button class="tool-btn" id="panel-creative-btn" data-panel="creative">
-        <span class="text-2xl">🎨</span>
-        <span class="text-xs mt-1 block">Creative</span>
-      </button>
-      <button class="tool-btn" id="panel-games-btn" data-panel="games">
-        <span class="text-2xl">🎮</span>
-        <span class="text-xs mt-1 block">Games</span>
-      </button>
-      <button class="tool-btn" id="panel-puzzles-btn" data-panel="puzzles">
-        <span class="text-2xl">🧩</span>
-        <span class="text-xs mt-1 block">Puzzles</span>
-      </button>
-      <button class="tool-btn" id="panel-onscreen-btn" data-panel="onscreen">
-        <span class="text-2xl">🖥️</span>
-        <span class="text-xs mt-1 block">On-screen</span>
-      </button>
+    <aside id="sidebar" class="flex flex-col py-6">
+      <button class="tool-btn" data-panel="files">Files</button>
+      <button class="tool-btn" data-panel="puzzles">Puzzles</button>
+      <button class="tool-btn" data-panel="games">Games</button>
+      <button class="tool-btn" data-panel="creative">Creative</button>
     </aside>
 
-    <!-- Main Workspace -->
-    <main id="main-content" class="flex flex-row items-stretch bg-[#f9f5ec] p-0 sm:p-6 overflow-auto gap-6 flex-1">
-      <!-- Tool Panels on the left, now narrow -->
-      <section id="tool-panels" class="w-80 max-w-xs">
-        <!-- All your tool panels go here, e.g. -->
-        <section id="panel-files" class="tool-panel mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">📂 Files</h2>
-            <div class="flex flex-col sm:flex-row gap-4">
-              <div>
-                <label class="block mb-2 font-semibold">Upload Reading</label>
-                <input type="file" id="fileUpload" class="mb-2">
-                <button class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Upload</button>
-              </div>
-              <div>
-                <label class="block mb-2 font-semibold">Select Existing</label>
-                <select id="fileSelect" class="border rounded px-2 py-1 w-full">
-                  <option>Sample Reading 1</option>
-                  <option>Sample Reading 2</option>
-                </select>
-              </div>
-            </div>
-            <div class="mt-4">
-              <label class="block mb-2 font-semibold">Your Files</label>
-              <ul id="fileList" class="space-y-1">
-                <li class="flex items-center gap-2">
-                  <span>2024-Reading1.pdf</span>
-                  <a href="#" class="text-blue-600 underline text-xs">Download</a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-        <section id="panel-vocab" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">📚 Vocabulary</h2>
-            <div class="text-sm text-[#555]">Word activities and tools will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-comp" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🧠 Comprehension</h2>
-            <div class="text-sm text-[#555]">Q&A and comprehension tools will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-grammar" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🧪 Grammar</h2>
-            <div class="text-sm text-[#555]">Grammar activities will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-worksheets" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🧾 Worksheets</h2>
-            <div class="text-sm text-[#555]">Worksheet tools will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-comm" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🗣️ Communicative</h2>
-            <div class="text-sm text-[#555]">Partner talk, roleplay, and interview tools will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-creative" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🎨 Creative</h2>
-            <div class="text-sm text-[#555]">Story prompts, draw & describe, and creative tools will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-games" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🎮 Games</h2>
-            <div class="text-sm text-[#555]">Games and interactive activities will appear here.</div>
-          </div>
-        </section>
-        <section id="panel-puzzles" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🧩 Puzzles</h2>
-            <div class="flex gap-4 mb-4">
-              <button id="crosswordTab" class="puzzle-tab px-3 py-1 rounded bg-[#edeaf6] font-semibold">Crossword</button>
-              <button id="wordsearchTab" class="puzzle-tab px-3 py-1 rounded bg-[#edeaf6] font-semibold">Wordsearch</button>
-            </div>
-            <div id="crosswordMaker" class="puzzle-maker">
-              <!-- Your crossword maker UI here -->
-              <div class="mb-2 font-semibold">Crossword Maker</div>
-              <label class="block mb-1">Grid Size</label>
-              <select id="crosswordGridSize" class="border rounded px-2 py-1 mb-2">
-                <option value="8">8 x 8</option>
-                <option value="10" selected>10 x 10</option>
-                <option value="12">12 x 12</option>
-                <option value="15">15 x 15</option>
-              </select>
-              <textarea id="crosswordWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
-              <button id="generateCrossword" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Crossword</button>
-              <div id="crosswordOutput" class="mt-4"></div>
-            </div>
-            <div id="wordsearchMaker" class="tool-panel"></div>
-          </div>
-        </section>
-        <section id="panel-onscreen" class="tool-panel hidden mb-4">
-          <div class="bg-white rounded shadow p-4">
-            <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🖥️ On-screen</h2>
-            <div class="text-sm text-[#555]">Fullscreen quiz, spinner, and on-screen tools will appear here.</div>
-          </div>
-        </section>
-      </section>
-      <!-- Main editor area, now wider -->
-      <section id="editor-area" class="flex-1 flex flex-col p-4">
-        <!-- Google Docs-style header -->
-        <div id="docsHeader" class="flex items-center gap-4 px-6 py-2 bg-white shadow sticky top-0 z-30">
-          <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="h-8 select-none" draggable="false">
-          <input id="worksheetTitleInput" class="text-lg font-bold border-0 bg-transparent focus:ring-0 px-2 py-1" value="Untitled Worksheet" style="width:220px;">
-          <div class="flex items-center gap-2 ml-6">
-            <button id="previewBtn" class="px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]" title="Preview">👁️ Preview</button>
-            <button id="setPortrait" class="px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]" title="Portrait">🧾</button>
-            <button id="setLandscape" class="px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]" title="Landscape">🖼️</button>
-            <button id="downloadBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]" title="Download PDF">⬇️ Download</button>
-          </div>
-        </div>
-        <div class="flex-1 overflow-auto">
-          <div class="flex justify-between items-center mb-4">
-            <!-- Font Family -->
-            <div>
-              <label for="fontSelect" class="mr-2">A</label>
-              <select id="fontSelect" class="border rounded px-2 py-1">
-                <option value="sans">Sans-serif</option>
-                <option value="serif">Serif</option>
-                <option value="comic">Comic Sans</option>
-                <option value="nanum">Nanum Pen</option>
-              </select>
-            </div>
-            <!-- Font Color -->
-            <div>
-              <label for="fontColor" class="mr-2">🎨</label>
-              <input type="color" id="fontColor" value="#222222">
-            </div>
-          </div>
-          <div id="generatedBlocks" class="space-y-4">
-            <div class="p-4 bg-white rounded shadow text-[#555] text-center">[Generated activities will appear here]</div>
-          </div>
+    <!-- Tool Panels -->
+    <section id="tool-panels" class="flex-1 p-8">
+      <!-- Files Panel -->
+      <section id="panel-files" class="tool-panel hidden mb-4">
+        <h2 class="text-lg font-bold mb-2">Files</h2>
+        <input type="file" id="fileUpload" class="mb-2">
+        <button id="uploadBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Upload</button>
+        <div class="mt-4">
+          <b>Your Files</b>
+          <ul id="fileList"></ul>
         </div>
       </section>
-    </main>
-  </div>
 
-  <!-- Export Worksheet Modal -->
-  <div id="worksheetExportModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-      <h2 class="text-xl font-bold mb-4">Export Worksheet</h2>
-      <label class="block mb-2 font-semibold">Worksheet Title</label>
-      <input id="worksheetTitle-modal" class="border rounded w-full p-2 mb-4" placeholder="e.g. Wordsearch Worksheet">
-      <label class="block mb-2 font-semibold">Instructions</label>
-      <textarea id="worksheetInstructions-modal" class="border rounded w-full p-2 mb-4" rows="2" placeholder="e.g. Find all the words in the puzzle."></textarea>
-      <label class="block mb-2 font-semibold">Worksheet Style</label>
-      <select id="templateSelect-modal" class="border rounded w-full p-2 mb-4"></select>
-      <div class="flex gap-2 justify-end">
-        <button id="worksheetPreviewBtn-modal" class="px-3 py-1 bg-[#edeaf6] rounded hover:bg-[#d6d2e0]">Preview</button>
-        <button id="worksheetExportPdfBtn-modal" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Export PDF</button>
-        <button id="worksheetCancelBtn-modal" class="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+      <!-- Puzzles Panel -->
+      <section id="panel-puzzles" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🧩 Puzzles</h2>
+          <div class="flex flex-row gap-8">
+            <!-- Controls column -->
+            <div class="min-w-[260px] max-w-[340px]">
+              <div class="flex gap-4 mb-4">
+                <button id="crosswordTab" class="puzzle-tab px-3 py-1 rounded bg-[#edeaf6] font-semibold">Crossword</button>
+                <button id="wordsearchTab" class="puzzle-tab px-3 py-1 rounded bg-[#edeaf6] font-semibold">Wordsearch</button>
+              </div>
+              <div id="crosswordMaker">
+                <div class="mb-2 font-semibold">Crossword Maker</div>
+                <label class="block mb-1">Grid Size</label>
+                <select id="crosswordGridSize" class="border rounded px-2 py-1 mb-2">
+                  <option value="8">8 x 8</option>
+                  <option value="10" selected>10 x 10</option>
+                  <option value="12">12 x 12</option>
+                  <option value="15">15 x 15</option>
+                </select>
+                <textarea id="crosswordWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+                <button id="generateCrossword" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Crossword</button>
+              </div>
+              <div id="wordsearchMaker" class="hidden">
+                <div class="mb-2 font-semibold">Wordsearch Maker</div>
+                <label class="block mb-1">Grid Size</label>
+                <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
+                  <option value="8">8 x 8</option>
+                  <option value="10" selected>10 x 10</option>
+                  <option value="12">12 x 12</option>
+                  <option value="15">15 x 15</option>
+                </select>
+                <label class="block mb-1">Letter Case</label>
+                <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
+                  <option value="upper">UPPERCASE</option>
+                  <option value="lower">lowercase</option>
+                </select>
+                <label class="block mb-1">Font</label>
+                <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
+                  <option value="sans">Sans-serif (Default)</option>
+                  <option value="mono">Monospace</option>
+                  <option value="comic">Comic Sans MS</option>
+                  <option value="nanum">Nanum Pen Script</option>
+                </select>
+                <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+                <button id="generateWordsearch" class="px-4 py-2 bg-[#edeaf6] text-black font-bold rounded shadow hover:bg-[#827e9b]">Generate Wordsearch</button>
+              </div>
+            </div>
+            <!-- Output column -->
+            <div class="flex-1 min-w-[320px]">
+              <div id="crosswordOutput" class="mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Games Panel -->
+      <section id="panel-games" class="tool-panel hidden mb-4">
+        <h2 class="text-lg font-bold mb-2">Games</h2>
+        <p>[Games tool coming soon]</p>
+      </section>
+
+      <!-- Creative Panel -->
+      <section id="panel-creative" class="tool-panel hidden mb-4">
+        <h2 class="text-lg font-bold mb-2">Creative</h2>
+        <p>[Creative tool coming soon]</p>
+      </section>
+    </section>
+
+    <!-- Worksheet Preview Area (hidden by default) -->
+    <div class="flex-1 flex flex-col items-center">
+      <div id="worksheetMenuBar">
+        <span class="text-[#2e2b3f] font-semibold">Worksheet Menu (add buttons here)</span>
+      </div>
+      <div id="worksheetPreviewArea"
+           style="background: white; width: 794px; height: 1123px; box-shadow: 0 0 8px #bbb; border-radius: 8px; overflow: auto; position: relative;">
+        <!-- The puzzle will be injected here -->
       </div>
     </div>
-  </div>
-  <div id="worksheetPreviewArea" class="hidden">
-    <!-- Logo, title, instructions, puzzle, etc. will be injected here -->
-  </div>
+  </main>
 
-  <footer class="text-center py-6 bg-[#f0f0f0] text-[#777] text-sm">
-    Phone: 031-8041-2203<br>
-    © 2025 Willena 원어민 영어학원. All rights reserved.
-  </footer>
+  <!-- Workspace Section -->
+  <section id="workspace" class="flex-1 bg-[#f9f5ec] rounded-lg shadow-inner p-6">
+  </section>
 
-  <script src="components/header.js"></script>
+  <!-- Worksheet Templates -->
   <script src="components/worksheetTemplates.js"></script>
-  <script src="components/main.js"></script>
+  <script src="components/main1.js"></script>
   <script src="tools/puzzles/index.js"></script>
   <script src="tools/puzzles/wordsearch.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="tools/puzzles/crossword.js"></script>
+  <script>
+    // Ensure the first panel is shown on load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Show the Files panel by default
+      const showPanel = (panel) => {
+        document.querySelectorAll('.tool-panel').forEach(el => el.classList.add('hidden'));
+        const active = document.getElementById('panel-' + panel);
+        if (active) active.classList.remove('hidden');
+        document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
+        if (btn) btn.classList.add('active');
+      };
+      // Sidebar button click handlers
+      document.querySelectorAll('#sidebar .tool-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const panel = this.getAttribute('data-panel');
+          showPanel(panel);
+        });
+      });
+      showPanel('files');
+    });
+  </script>
 </body>
 </html>
