@@ -44,7 +44,7 @@
       <!-- Puzzles Panel -->
       <section id="panel-puzzles" class="tool-panel hidden mb-4">
         <div class="bg-white rounded shadow p-4">
-          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">🧩 Puzzles</h2>
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Puzzles</h2>
           <div class="flex flex-row gap-8">
             <!-- Controls column -->
             <div class="min-w-[260px] max-w-[340px]">
@@ -63,6 +63,13 @@
                 </select>
                 <textarea id="crosswordWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
                 <button id="generateCrossword" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Crossword</button>
+                <div id="aiChatBoxCrossword" class="mt-4 p-2 border rounded bg-[#f6f6fa] text-sm">
+                  <div id="aiChatMessagesCrossword" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+                  <div class="flex gap-2">
+                    <input id="aiChatInputCrossword" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Ask AI for help...">
+                    <button id="aiChatSendCrossword" class="bg-[#2e2b3f] text-white px-3 py-1 rounded">Send</button>
+                  </div>
+                </div>
               </div>
               <div id="wordsearchMaker" class="hidden">
                 <div class="mb-2 font-semibold">Wordsearch Maker</div>
@@ -85,8 +92,36 @@
                   <option value="comic">Comic Sans MS</option>
                   <option value="nanum">Nanum Pen Script</option>
                 </select>
+                <!-- NEW: Puzzle Size Control -->
+                <label class="block mb-1">Puzzle Size</label>
+                <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
+                  <option value="1">Normal</option>
+                  <option value="1.2">Large</option>
+                  <option value="0.8">Small</option>
+                </select>
+                <!-- NEW: Alignment Controls -->
+                <label class="block mb-1">Puzzle Alignment</label>
+                <select id="wordsearchAlign" class="border rounded px-2 py-1 mb-2">
+                  <option value="left">Left</option>
+                  <option value="center" selected>Center</option>
+                  <option value="right">Right</option>
+                </select>
+                <label class="block mb-1">Hints Alignment</label>
+                <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
+                  <option value="left">Left</option>
+                  <option value="center" selected>Center</option>
+                  <option value="right">Right</option>
+                </select>
                 <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
-                <button id="generateWordsearch" class="px-4 py-2 bg-[#edeaf6] text-black font-bold rounded shadow hover:bg-[#827e9b]">Generate Wordsearch</button>
+                <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
+                <div id="aiChatBoxWordsearch" class="mt-4 p-2 border rounded bg-[#f6f6fa] text-sm">
+                  <div id="aiChatMessagesWordsearch" style="height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+                  <div class="flex gap-2">
+                    <input id="aiChatInputWordsearch" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Ask AI for help...">
+                    <button id="aiChatSendWordsearch" class="bg-[#2e2b3f] text-[#f6f6fa] px-3 py-1 rounded">Send</button>
+                  </div>
+                </div>
+              
               </div>
             </div>
             <!-- Output column -->

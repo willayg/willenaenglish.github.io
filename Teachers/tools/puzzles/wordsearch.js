@@ -11,40 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(link);
   }
 
-  // Render the Wordsearch Maker UI (if not already rendered)
-  if (!document.getElementById('generateWordsearch')) {
-    wordsearchMaker.innerHTML = `
-      <div class="mb-2 font-semibold">Wordsearch Maker</div>
-      <label class="block mb-1">Grid Size</label>
-      <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
-        <option value="8">8 x 8</option>
-        <option value="10" selected>10 x 10</option>
-        <option value="12">12 x 12</option>
-        <option value="15">15 x 15</option>
-      </select>
-      <label class="block mb-1">Letter Case</label>
-      <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
-        <option value="upper">UPPERCASE</option>
-        <option value="lower">lowercase</option>
-      </select>
-      <label class="block mb-1">Font</label>
-      <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
-        <option value="sans">Sans-serif (Default)</option>
-        <option value="mono">Monospace</option>
-        <option value="comic">Comic Sans MS</option>
-        <option value="nanum">Nanum Pen Script</option>
-      </select>
-      <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
-      <button id="generateWordsearch" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Wordsearch</button>
-      <div id="wordsearchOutput" class="mt-4"></div>
-    `;
-  }
 
   document.getElementById('generateWordsearch').onclick = () => {
-    console.log("Button clicked!");
     const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
     const caseOpt = document.getElementById('wordsearchCase').value;
     const fontOpt = document.getElementById('wordsearchFont').value;
+    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1");
+    const align = document.getElementById('wordsearchAlign')?.value || "center";
+    const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
     let words = document.getElementById('wordsearchWords').value
       .split('\n')
       .map(w => w.trim())
@@ -62,9 +36,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fontOpt === 'comic') fontClass = 'wordsearch-font-comic';
     if (fontOpt === 'nanum') fontClass = 'wordsearch-font-nanum';
 
-    // Render the grid as a table with the font class on both table and td
-    let html = `<div class="mb-2">Grid size: <b>${size} x ${size}</b></div>`;
-    html += `<div class="mb-2">Words: <b>${words.join(', ') || 'None'}</b></div>`;
+    // Alignment CSS
+    let alignStyle = "text-align:center;";
+    if (align === "left") alignStyle = "text-align:left;";
+    if (align === "right") alignStyle = "text-align:right;";
+    let hintsAlignStyle = "text-align:center;";
+    if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";
+    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";
+
+    // Build the HTML for the hints/words list
+    let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
+
+    // Add a container div for alignment
+    html += `<div style="width:100%; text-align:${align};">`;
+    // The inline-block div allows scaling and keeps the table together
+    html += `<div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:top left;">`;
     html += `<table class="wordsearch-table ${fontClass}">`;
     for (let row of grid) {
       html += '<tr>';
@@ -73,25 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       html += '</tr>';
     }
-    html += '</table>';
-
-    // Show in lesson workspace only
-    const workspace = document.getElementById('workspace');
-    if (workspace) {
-      workspace.scrollIntoView({ behavior: "smooth" });
-      const templateSelect = document.getElementById('templateSelect');
-      const templateIdx = templateSelect ? templateSelect.selectedIndex : 0;
-      const template = window.worksheetTemplates?.[templateIdx] || window.worksheetTemplates[0];
-      const title = document.getElementById('worksheetTitle')?.value || "Wordsearch Worksheet";
-      const instructions = document.getElementById('worksheetInstructions')?.value || 'Find all the words in the puzzle.';
-      const worksheetHTML = template.render({
-        title,
-        instructions,
-        puzzle: `<div id="puzzleExport">${html}</div>`,
-        orientation: worksheetOrientation // pass this to your template
-      });
-      workspace.innerHTML = worksheetHTML;
-    }
+    html += '</table></div></div>';
 
     const output = document.getElementById('wordsearchOutput');
     if (output) {
@@ -135,5 +103,90 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let worksheetOrientation = 'portrait';
+
+  function setupAIChatBox() {
+    const input = document.getElementById('aiChatInput');
+    const sendBtn = document.getElementById('aiChatSend');
+    const messages = document.getElementById('aiChatMessages');
+    if (!input || !sendBtn || !messages) return;
+
+    sendBtn.onclick = async () => {
+      const userMsg = input.value.trim();
+      if (!userMsg) return;
+      messages.innerHTML += `<div class="mb-1"><b>You:</b> ${userMsg}</div>`;
+      input.value = '';
+      messages.innerHTML += `<div class="mb-1"><b>AI:</b> <span id="aiTyping">...</span></div>`;
+      messages.scrollTop = messages.scrollHeight;
+
+      // Call your backend or OpenAI API here
+      // For demo, just echo the prompt
+      // Replace this with your actual API call
+      let aiReply = "This is a demo AI response. (Integrate OpenAI API here.)";
+
+      // Example: Uncomment and use fetch to your backend or OpenAI API
+      /*
+      const response = await fetch('/your-backend-endpoint', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({prompt: userMsg})
+      });
+      const data = await response.json();
+      let aiReply = data.reply;
+      */
+
+      // Replace the typing indicator with the AI reply
+      messages.innerHTML = messages.innerHTML.replace('<span id="aiTyping">...</span>', aiReply);
+      messages.scrollTop = messages.scrollHeight;
+    };
+  }
+
+  // Example for Wordsearch AI chat box
+  function setupAIChatBoxWordsearch() {
+    const input = document.getElementById('aiChatInputWordsearch');
+    const sendBtn = document.getElementById('aiChatSendWordsearch');
+    const messages = document.getElementById('aiChatMessagesWordsearch');
+    if (!input || !sendBtn || !messages) return;
+
+    sendBtn.onclick = async () => {
+      const userMsg = input.value.trim();
+      if (!userMsg) return;
+      messages.innerHTML += `<div class="mb-1"><b>You:</b> ${userMsg}</div>`;
+      input.value = '';
+      messages.innerHTML += `<div class="mb-1"><b>AI:</b> <span id="aiTypingWordsearch">...</span></div>`;
+      messages.scrollTop = messages.scrollHeight;
+
+      // Call your Netlify OpenAI proxy
+      let aiReply = '';
+      try {
+        const response = await fetch('/.netlify/functions/openai_proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: 'chat/completions',
+            payload: {
+              model: 'gpt-3.5-turbo',
+              messages: [
+                { role: 'system', content: 'You are a helpful teaching assistant.' },
+                { role: 'user', content: userMsg }
+              ],
+              max_tokens: 150
+            }
+          })
+        });
+        const data = await response.json();
+        aiReply = data.data.choices?.[0]?.message?.content || "Sorry, I couldn't get a response.";
+      } catch (e) {
+        aiReply = "Sorry, there was an error contacting the AI.";
+      }
+
+      messages.innerHTML = messages.innerHTML.replace('<span id="aiTypingWordsearch">...</span>', aiReply);
+      messages.scrollTop = messages.scrollHeight;
+    };
+  }
+
+  // Call this after the DOM is loaded and after the chat box is rendered
+  setupAIChatBox();
+  setupAIChatBoxWordsearch();
 });
+<button id="aiChatSendWordsearch" class="bg-[#edeaf6] text-[#2e2b3f] px-3 py-1 rounded font-semibold hover:bg-[#d6d2e0]">Send</button>
 
