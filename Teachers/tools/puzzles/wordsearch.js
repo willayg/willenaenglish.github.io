@@ -200,6 +200,56 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  // 1. Generate words from category prompt using OpenAI
+  document.getElementById('generateCategoryWordsBtn').onclick = async () => {
+    const prompt = document.getElementById('categoryPrompt').value.trim();
+    if (!prompt) return alert("Please enter a category prompt.");
+    // Call OpenAI (or your proxy)
+    const response = await fetch('/.netlify/functions/openai_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: 'chat/completions',
+        payload: {
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful teaching assistant.' },
+            { role: 'user', content: `List ${prompt}, one per line, no numbering or punctuation.` }
+          ],
+          max_tokens: 100
+        }
+      })
+    });
+    const data = await response.json();
+    const aiWords = data.data.choices?.[0]?.message?.content || '';
+    document.getElementById('wordsearchWords').value = aiWords.trim();
+  };
+
+  // 2. Extract difficult words from passage using OpenAI
+  document.getElementById('extractDifficultWordsBtn').onclick = async () => {
+    const passage = document.getElementById('passageInput').value.trim();
+    if (!passage) return alert("Please paste a passage.");
+    // Call OpenAI (or your proxy)
+    const response = await fetch('/.netlify/functions/openai_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: 'chat/completions',
+        payload: {
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful teaching assistant.' },
+            { role: 'user', content: `From the following passage, extract the 10 most difficult or advanced words (one per line, no numbering):\n\n${passage}` }
+          ],
+          max_tokens: 100
+        }
+      })
+    });
+    const data = await response.json();
+    const aiWords = data.data.choices?.[0]?.message?.content || '';
+    document.getElementById('wordsearchWords').value = aiWords.trim();
+  };
+
   // Call this after the DOM is loaded and after the chat box is rendered
   setupAIChatBox();
   setupAIChatBoxWordsearch();

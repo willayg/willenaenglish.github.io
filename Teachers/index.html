@@ -112,15 +112,22 @@
                   <option value="center" selected>Center</option>
                   <option value="right">Right</option>
                 </select>
+                
+                <!-- Category-based word generation -->
+                <div style="margin-bottom:10px;">
+                  <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
+                  <button id="generateCategoryWordsBtn">Generate Words</button>
+                </div>
+
+                <!-- Passage-based word extraction -->
+                <div style="margin-bottom:10px;">
+                  <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
+                  <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
+                </div>
+
+                <!-- Existing word list textarea (for the puzzle) -->
                 <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
                 <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
-                <div id="aiChatBoxWordsearch" class="mt-4 p-2 border rounded bg-[#f6f6fa] text-sm">
-                  <div id="aiChatMessagesWordsearch" style="height:120px;overflow-y:auto;margin-bottom:8px;"></div>
-                  <div class="flex gap-2">
-                    <input id="aiChatInputWordsearch" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Ask AI for help...">
-                    <button id="aiChatSendWordsearch" class="bg-[#2e2b3f] text-[#f6f6fa] px-3 py-1 rounded">Send</button>
-                  </div>
-                </div>
               
               </div>
             </div>
