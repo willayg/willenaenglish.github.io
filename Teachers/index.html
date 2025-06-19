@@ -9,7 +9,7 @@
   <!-- Custom styles -->
   <link rel="stylesheet" href="components/style.css">
   <!-- Google Fonts for worksheet templates -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-[#f9f5ec] min-h-screen">
 
@@ -91,6 +91,7 @@
                   <option value="mono">Monospace</option>
                   <option value="comic">Comic Sans MS</option>
                   <option value="nanum">Nanum Pen Script</option>
+                  <option value="poppins">Poppins</option>
                 </select>
                 <!-- NEW: Puzzle Size Control -->
                 <label class="block mb-1">Puzzle Size</label>
@@ -114,15 +115,19 @@
                 </select>
                 
                 <!-- Category-based word generation -->
-                <div style="margin-bottom:10px;">
+                <div style="border:1px solid #bbb; border-radius:6px; padding:8px; margin-bottom:10px;">
                   <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
                   <button id="generateCategoryWordsBtn">Generate Words</button>
                 </div>
 
                 <!-- Passage-based word extraction -->
-                <div style="margin-bottom:10px;">
+                <div style="border:1px solid #bbb; border-radius:6px; padding:8px; margin-bottom:10px;">
                   <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
-                  <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
+                  <div style="margin-top:6px;">
+                    <button id="extractEasyWordsBtn">Make it Easy</button>
+                    <button id="extractMediumWordsBtn">Make it Normal</button>
+                    <button id="extractHardWordsBtn">Make it Hard</button>
+                  </div>
                 </div>
 
                 <!-- Existing word list textarea (for the puzzle) -->

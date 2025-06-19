@@ -43,6 +43,7 @@ body, main {
 .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace; }
 .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif; }
 .wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive; }
+.wordsearch-font-poppins { font-family: 'Poppins', Arial, sans-serif; }
 
 #worksheetPreviewArea {
   background: #fff;
