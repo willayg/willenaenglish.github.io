@@ -106,6 +106,26 @@
       transform: scale(0.97);
       box-shadow: 0 2px 8px #0008;
     }
+    #submitBtn, #playAgainBtn {
+      font-size: 1.3em;
+      padding: 18px 38px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(90deg, #ff9800 60%, #7f7fff 100%);
+      color: #232a3b;
+      font-weight: bold;
+      margin: 16px 0 8px 0;
+      cursor: pointer;
+      box-shadow: 0 4px 24px #0006, 0 1.5px 0 #fff4;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.2s;
+    }
+    #playAgainBtn {
+      background: linear-gradient(90deg, #ff9800 60%, #ffe066 100%);
+    }
+    #submitBtn:active, #playAgainBtn:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px #0008;
+    }
   </style>
 </head>
 <body>
@@ -135,6 +155,7 @@
     <button id="nextBtn" style="display:none;">Next</button>
     <div id="result"></div>
     <button id="restartBtn" style="display:none;">Restart</button>
+    <button id="backBtn" style="margin-left:8px;">Back to Menu</button>
   </div>
   <div class="container" id="endScreen" style="display:none;">
     <h2>Game Over!</h2>
@@ -142,8 +163,8 @@
     <p>Top Scores:</p>
     <ol id="highscores"></ol>
     <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
-    <button id="submitBtn">Submit Score</button>
-    <button id="playAgainBtn">Play Again</button>
+    <button id="submitBtn" style="font-size:1.3em; padding:18px 38px; border-radius:16px; background:linear-gradient(90deg,#ff9800 60%,#7f7fff 100%);color:#232a3b;font-weight:bold;display:inline-block;margin:16px 0 8px 0;">확인</button>
+    <button id="playAgainBtn" style="font-size:1.3em; padding:18px 38px; border-radius:16px; background:linear-gradient(90deg,#ff9800 60%,#ffe066 100%);color:#232a3b;font-weight:bold;display:none;">Play Again</button>
   </div>
   <script type="module" src="EB4.js"></script>
 </body>

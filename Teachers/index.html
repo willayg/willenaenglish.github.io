@@ -9,7 +9,7 @@
   <!-- Custom styles -->
   <link rel="stylesheet" href="components/style.css">
   <!-- Google Fonts for worksheet templates -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
 </head>
 <body class="bg-[#f9f5ec] min-h-screen">
 
@@ -91,7 +91,6 @@
                   <option value="mono">Monospace</option>
                   <option value="comic">Comic Sans MS</option>
                   <option value="nanum">Nanum Pen Script</option>
-                  <option value="poppins">Poppins</option>
                 </select>
                 <!-- NEW: Puzzle Size Control -->
                 <label class="block mb-1">Puzzle Size</label>
@@ -115,19 +114,15 @@
                 </select>
                 
                 <!-- Category-based word generation -->
-                <div style="border:1px solid #bbb; border-radius:6px; padding:8px; margin-bottom:10px;">
+                <div style="margin-bottom:10px;">
                   <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
                   <button id="generateCategoryWordsBtn">Generate Words</button>
                 </div>
 
                 <!-- Passage-based word extraction -->
-                <div style="border:1px solid #bbb; border-radius:6px; padding:8px; margin-bottom:10px;">
+                <div style="margin-bottom:10px;">
                   <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
-                  <div style="margin-top:6px;">
-                    <button id="extractEasyWordsBtn">Make it Easy</button>
-                    <button id="extractMediumWordsBtn">Make it Normal</button>
-                    <button id="extractHardWordsBtn">Make it Hard</button>
-                  </div>
+                  <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
                 </div>
 
                 <!-- Existing word list textarea (for the puzzle) -->
@@ -161,7 +156,6 @@
     <div class="flex-1 flex flex-col items-center">
       <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:sticky;top:56px;z-index:20;">
         <div id="toolbar">
-          <input id="worksheetTitle" type="text" placeholder="Worksheet Title" style="font-size:1.1em; padding:4px 10px; border-radius:6px; border:1px solid #ccc; margin-right:18px;">
           <button id="printWorksheetBtn">Print</button>
           <button id="downloadWorksheetPdfBtn">Download PDF</button>
         </div>
