@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EB4 Unscramble Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #232a3b;
+      color: #fff;
+      text-align: center;
+      margin: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 60px auto;
+      background: rgba(0,0,0,0.7);
+      border-radius: 18px;
+      padding: 24px;
+    }
+    .chunks, .answer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin: 24px 0;
+      min-height: 48px;
+    }
+    .chunks button, .answer button {
+      font-size: 1.1em;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 2px solid #ff9800;
+      background: #232a3b;
+      color: #fff;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .chunks button:active, .answer button:active {
+      background: #ff9800;
+      color: #232a3b;
+    }
+    #score { font-size: 1.2em; margin-bottom: 10px; }
+    #checkBtn, #nextBtn, #restartBtn {
+      margin-top: 18px;
+      font-size: 1.1em;
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #ff9800;
+      color: #232a3b;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    #checkBtn:disabled, #nextBtn:disabled {
+      background: #888;
+      color: #ccc;
+      cursor: not-allowed;
+    }
+    #result { font-size: 1.2em; margin: 16px 0; min-height: 32px; }
+    .mode-btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      align-items: center;
+      justify-content: center;
+    }
+    .mode-btn {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.3em;
+      padding: 22px 38px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(90deg, #ff9800 60%, #ff4fd8 100%);
+      color: #232a3b;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 24px #0006, 0 1.5px 0 #fff4;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.2s;
+      position: relative;
+      min-width: 260px;
+      text-align: left;
+    }
+    .mode-btn span {
+      font-size: 1.5em;
+      margin-right: 16px;
+      vertical-align: middle;
+    }
+    .mode-btn .mode-desc {
+      font-size: 0.85em;
+      color: #232a3b;
+      opacity: 0.85;
+      margin-top: 8px;
+      font-weight: 400;
+    }
+    .mode-btn.practice {
+      background: linear-gradient(90deg, #ff9800 60%, #ffe066 100%);
+    }
+    .mode-btn.game {
+      background: linear-gradient(90deg, #ff4fd8 60%, #7f7fff 100%);
+    }
+    .mode-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px #0008;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="modeScreen">
+    <h1 style="margin-bottom:32px; font-size:2.2em; letter-spacing:1px;">EB4 Unscramble Game</h1>
+    <p style="font-size:1.2em; margin-bottom:36px; color:#ff9800;">
+      Choose a mode to begin:
+    </p>
+    <div class="mode-btn-row">
+      <button id="practiceModeBtn" class="mode-btn practice">
+        <span>📝</span> Practice Mode
+        <div class="mode-desc">10 random sentences, no score, see your results at the end.</div>
+      </button>
+      <button id="gameModeBtn" class="mode-btn game">
+        <span>🎮</span> Game Mode
+        <div class="mode-desc">All sentences, score points, challenge yourself!</div>
+      </button>
+    </div>
+  </div>
+  <div class="container">
+    <h1>Unscramble the Sentence!</h1>
+    <div id="timer" style="font-size:1.3em; margin-bottom:10px; color:#ff9800; display:none;"></div>
+    <div id="score"></div>
+    <div class="answer" id="answer"></div>
+    <div class="chunks" id="chunks"></div>
+    <button id="checkBtn" disabled>Check</button>
+    <button id="nextBtn" style="display:none;">Next</button>
+    <div id="result"></div>
+    <button id="restartBtn" style="display:none;">Restart</button>
+  </div>
+  <div class="container" id="endScreen" style="display:none;">
+    <h2>Game Over!</h2>
+    <p>Your score: <span id="finalScore"></span></p>
+    <p>Top Scores:</p>
+    <ol id="highscores"></ol>
+    <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
+    <button id="submitBtn">Submit Score</button>
+    <button id="playAgainBtn">Play Again</button>
+  </div>
+  <script type="module" src="EB4.js"></script>
+</body>
+</html>
