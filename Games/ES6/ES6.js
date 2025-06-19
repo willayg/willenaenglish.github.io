@@ -14,7 +14,7 @@ let practiceResults = [];
 let practiceRight = [];
 let practiceWrong = [];
 let timer = null;
-let timeLeft = 45;
+let timeLeft = 60;
 
 const modeScreen = document.getElementById('modeScreen');
 const practiceModeBtn = document.getElementById('practiceModeBtn');
@@ -167,7 +167,7 @@ function startGame() {
   questions = shuffle(es6Sentences);
   current = 0;
   score = 0;
-  timeLeft = 45;
+  timeLeft = 60;
   timerDiv.textContent = `Time: ${timeLeft}s`;
   restartBtn.textContent = "Restart";
   showQuestion();
@@ -200,7 +200,7 @@ async function displayHighScores() {
   if (!highscoresList) return;
   highscoresList.innerHTML = '<li>Loading...</li>';
   try {
-    const response = await fetch('/.netlify/functions/submit_score?game=EB4');
+    const response = await fetch('/.netlify/functions/submit_score?game=ES6');
     if (!response.ok) {
       highscoresList.innerHTML = '<li>Failed to load scores</li>';
       return;
@@ -232,7 +232,7 @@ async function submitScore() {
   await fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, score, game: "EB4" })
+    body: JSON.stringify({ name, score, game: "ES6" })
   });
   submitBtn.style.display = 'none';
   nameInput.style.display = 'none';
