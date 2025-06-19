@@ -185,14 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove numbers and punctuation, just in case
         const cleaned = aiReply
           .replace(/^\d+[\).\s-]*/gm, '') // remove leading numbers
-          .replace(/[•\-–●]/g, '')       // remove bullet points
+          .replace(/[•\-–●]/g, '')        // remove bullet points
           .split('\n')
           .map(w => w.trim())
           .filter(Boolean)
           .join('\n');
-        // Fill the word box
-        const wordBox = document.getElementById('wordsearchWords');
-        if (wordBox) wordBox.value = cleaned;
+        document.getElementById('wordsearchWords').value = cleaned;
       }
 
       messages.innerHTML = messages.innerHTML.replace('<span id="aiTypingWordsearch">...</span>', aiReply);
