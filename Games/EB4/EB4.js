@@ -36,6 +36,7 @@ const highscoresList = document.getElementById('highscores');
 const nameInput = document.getElementById('nameInput');
 const submitBtn = document.getElementById('submitBtn');
 const playAgainBtn = document.getElementById('playAgainBtn');
+const backBtn = document.getElementById('backBtn');
 
 function showScore() {
   if (mode === "game") {
@@ -191,6 +192,7 @@ function endGame() {
   nameInput.value = '';
   nameInput.style.display = 'block';
   submitBtn.style.display = 'inline-block';
+  playAgainBtn.style.display = "none"; // Hide by default
   displayHighScores();
 }
 
@@ -234,6 +236,7 @@ async function submitScore() {
   });
   submitBtn.style.display = 'none';
   nameInput.style.display = 'none';
+  playAgainBtn.style.display = 'inline-block'; // Show after submit
   displayHighScores();
 }
 
@@ -304,3 +307,12 @@ gameModeBtn.onclick = () => {
 
 container.style.display = "none";
 modeScreen.style.display = "block";
+
+backBtn.onclick = () => {
+  if (timer) clearInterval(timer);
+  container.style.display = "none";
+  endScreen.style.display = "none";
+  modeScreen.style.display = "block";
+  score = 0;
+  timeLeft = 60;
+};
