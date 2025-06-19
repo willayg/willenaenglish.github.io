@@ -139,6 +139,19 @@ function checkAnswer() {
     Array.from(chunksDiv.children).forEach(btn => btn.disabled = true);
     Array.from(answerDiv.children).forEach(btn => btn.disabled = true);
   }
+
+  // Play the mp3 for this sentence
+  const mp3File = `mp3s/${safeFilename(questions[current].original)}.mp3`;
+  const audio = new Audio(mp3File);
+  audio.play();
+}
+
+// Add this helper function near the top of your file:
+function safeFilename(text) {
+  return text.trim()
+    .replace(/ /g, "_")
+    .replace(/[\\/*?:"<>|']/g, "")
+    .slice(0, 100);
 }
 
 checkBtn.onclick = () => {
