@@ -184,10 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Try to extract a list of words (one per line, no numbering)
         // Remove numbers and punctuation, just in case
         const cleaned = aiReply
-          .replace(/^\d+[\).\s-]*/gm, '') // remove leading numbers
-          .replace(/[•\-–●]/g, '')        // remove bullet points
+          .replace(/^\d+[\).\s-]*/gm, '')
+          .replace(/[•\-–●]/g, '')
           .split('\n')
-          .map(w => w.trim())
+          .map(w => w.replace(/[^A-Za-z]/g, '').trim()) // keep only letters
           .filter(Boolean)
           .join('\n');
         document.getElementById('wordsearchWords').value = cleaned;
@@ -226,30 +226,48 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Extract difficult words from passage using OpenAI
   document.getElementById('extractDifficultWordsBtn').onclick = async () => {
     const passage = document.getElementById('passageInput').value.trim();
-    if (!passage) return alert("Please paste a passage.");
-    // Call OpenAI (or your proxy)
-    const response = await fetch('/.netlify/functions/openai_proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endpoint: 'chat/completions',
-        payload: {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { role: 'system', content: 'You are a helpful teaching assistant.' },
-            { role: 'user', content: `From the following passage, extract the 10 most difficult or advanced words (one per line, no numbering):\n\n${passage}` }
-          ],
-          max_tokens: 100
-        }
-      })
-    });
-    const data = await response.json();
-    const aiWords = data.data.choices?.[0]?.message?.content || '';
-    document.getElementById('wordsearchWords').value = aiWords.trim();
+    async function extractWords(difficulty) {
+      if (!passage) return alert("Please paste a passage.");
+      let prompt = '';
+      if (difficulty === 'easy') prompt = "Extract 10 of the simplest words from this passage (one per line, no numbering):\n\n" + passage;
+      if (difficulty === 'medium') prompt = "Extract 10 medium-difficulty words from this passage (one per line, no numbering):\n\n" + passage;
+      if (difficulty === 'hard') prompt = "Extract the 10 most difficult or advanced words from this passage (one per line, no numbering):\n\n" + passage;
+      // Call OpenAI (or your proxy)
+      const response = await fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: 'chat/completions',
+          payload: {
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { role: 'system', content: 'You are a helpful teaching assistant.' },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 100
+          }
+        })
+      });
+      const data = await response.json();
+      const aiWords = data.data.choices?.[0]?.message?.content || '';
+      document.getElementById('wordsearchWords').value = aiWords.trim();
+    }
+    extractWords('hard'); // default to hard
   };
 
   // Call this after the DOM is loaded and after the chat box is rendered
   setupAIChatBox();
   setupAIChatBoxWordsearch();
+
+  // Enter key submits category prompt
+  const categoryInput = document.getElementById('categoryPrompt');
+  if (categoryInput) {
+    categoryInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('generateCategoryWordsBtn').click();
+      }
+    });
+  }
 });
 
