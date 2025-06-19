@@ -148,8 +148,8 @@ body, main {
   border: 1px solid #222;
   padding: 0;
   box-sizing: border-box;
-  font-size: 1.3rem;
-  color: #2e2b3f !important; /* Force dark blue */
+  font-size: 1.04rem; /* 20% smaller than 1.3rem */
+  color: #2e2b3f !important;
 }
 
 #wordsearchMaker {

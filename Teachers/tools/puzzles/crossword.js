@@ -62,11 +62,11 @@ function setupAIChatBox() {
 }
 
 // Example for Wordsearch AI chat box
-function setupAIChatBoxWordsearch() {
+/*function setupAIChatBoxWordsearch() {
   const input = document.getElementById('aiChatInputWordsearch');
   const sendBtn = document.getElementById('aiChatSendWordsearch');
   const messages = document.getElementById('aiChatMessagesWordsearch');
-  if (!input || !sendBtn || !messages) return;
+  if (!input || !sendBtn || !messages) return;*/
 
   sendBtn.onclick = async () => {
     const userMsg = input.value.trim();
