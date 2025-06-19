@@ -179,6 +179,22 @@ document.addEventListener('DOMContentLoaded', () => {
         aiReply = "Sorry, there was an error contacting the AI.";
       }
 
+      // After: aiReply = ...;
+      if (aiReply) {
+        // Try to extract a list of words (one per line, no numbering)
+        // Remove numbers and punctuation, just in case
+        const cleaned = aiReply
+          .replace(/^\d+[\).\s-]*/gm, '') // remove leading numbers
+          .replace(/[•\-–●]/g, '')       // remove bullet points
+          .split('\n')
+          .map(w => w.trim())
+          .filter(Boolean)
+          .join('\n');
+        // Fill the word box
+        const wordBox = document.getElementById('wordsearchWords');
+        if (wordBox) wordBox.value = cleaned;
+      }
+
       messages.innerHTML = messages.innerHTML.replace('<span id="aiTypingWordsearch">...</span>', aiReply);
       messages.scrollTop = messages.scrollHeight;
     };
@@ -188,5 +204,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setupAIChatBox();
   setupAIChatBoxWordsearch();
 });
-<button id="aiChatSendWordsearch" class="bg-[#edeaf6] text-[#2e2b3f] px-3 py-1 rounded font-semibold hover:bg-[#d6d2e0]">Send</button>
 
