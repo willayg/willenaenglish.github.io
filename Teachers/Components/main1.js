@@ -3,7 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const printBtn = document.getElementById('printWorksheetBtn');
   if (printBtn) {
     printBtn.onclick = () => {
-      const previewArea = document.getElementById('worksheetPreviewArea');
+      // Find the visible worksheet preview
+      const previewArea = document.querySelector('.worksheet-preview:not(.hidden)');
+      if (!previewArea) return;
       const printContents = `
         <div style="width:794px;min-height:1123px;margin:auto;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           ${previewArea.innerHTML}
@@ -56,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const pdfBtn = document.getElementById('downloadWorksheetPdfBtn');
   if (pdfBtn) {
     pdfBtn.onclick = async () => {
-      const preview = document.getElementById('worksheetPreviewArea');
+      const preview = document.querySelector('.worksheet-preview:not(.hidden)');
+      if (!preview) return;
       preview.classList.remove('hidden');
       await new Promise(resolve => setTimeout(resolve, 100));
       const canvas = await html2canvas(preview, { scale: 2, backgroundColor: "#fff" });
@@ -73,5 +76,36 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.save('worksheet.pdf');
     };
   }
+
+  document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Hide all tool panels
+      document.querySelectorAll('.tool-panel').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+
+      // Hide all worksheet previews
+      document.querySelectorAll('.worksheet-preview').forEach(preview => {
+        preview.classList.add('hidden');
+      });
+
+      // Remove active from all buttons
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+
+      // Show the selected panel
+      const panelId = btn.dataset.panel;
+      const panel = document.getElementById('panel-' + panelId);
+      if (panel) {
+        panel.classList.remove('hidden');
+        btn.classList.add('active');
+      }
+    });
+  });
+
+  // Generate Wordsearch
+  document.getElementById('generateWordsearch').onclick = () => {
+    console.log('GenerateWordsearch CLICKED!');
+    // Your existing code for generating wordsearch goes here
+  };
 });
 

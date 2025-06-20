@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const wordsearchMaker = document.getElementById('wordsearchMaker');
-  if (!wordsearchMaker) return;
+
+  console.log('Wordsearch.js loaded and DOM ready!');
 
   // Add Google Fonts for handwriting
   if (!document.getElementById('nanum-pen-font')) {
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
       output.innerHTML = html;
     }
 
-    const preview = document.getElementById('worksheetPreviewArea');
+    const preview = document.getElementById('worksheetPreviewArea-wordsearch');
     if (preview) {
       const template = window.worksheetTemplates?.[0];
       const title = document.getElementById('worksheetTitle')?.value || "Wordsearch Worksheet";
