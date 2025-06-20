@@ -79,6 +79,7 @@
 
           <label class="block mb-1">Paste Reading Passage</label>
           <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
+          <button id="extractWordTestWordsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2">Extract Words with AI</button>
           <label class="block mb-1">Number of Words to Extract</label>
           <input type="number" id="wordTestNumWords" class="border rounded px-2 py-1 mb-2" min="3" max="30" value="10" style="width:80px;">
           <button id="generateWordTestBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] mb-2">Generate Word Test</button>
@@ -93,33 +94,50 @@
 
       <!-- Wordsearch Panel (new) -->
       <section id="panel-wordsearch" class="tool-panel hidden mb-4">
+        <div class="mb-3">
+          <label for="wordsearchTitle" class="block font-semibold mb-1">Worksheet Title</label>
+          <input type="text" id="wordsearchTitle" class="w-full px-3 py-2 border rounded" placeholder="Wordsearch Worksheet">
+        </div>
+        <div class="mb-3">
+          <label for="wordsearchInstructions" class="block font-semibold mb-1">Instructions</label>
+          <input type="text" id="wordsearchInstructions" class="w-full px-3 py-2 border rounded" placeholder="Find all the words in the puzzle below.">
+        </div>
         <div class="mb-2 font-semibold">Wordsearch Maker</div>
-        <label class="block mb-1">Grid Size</label>
-        <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
-          <option value="8">8 x 8</option>
-          <option value="10" selected>10 x 10</option>
-          <option value="12">12 x 12</option>
-          <option value="15">15 x 15</option>
-        </select>
-        <label class="block mb-1">Letter Case</label>
-        <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
-          <option value="upper">UPPERCASE</option>
-          <option value="lower">lowercase</option>
-        </select>
-        <label class="block mb-1">Font</label>
-        <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
-          <option value="sans">Sans-serif (Default)</option>
-          <option value="mono">Monospace</option>
-          <option value="comic">Comic Sans MS</option>
-          <option value="nanum">Nanum Pen Script</option>
-        </select>
-        <!-- NEW: Puzzle Size Control -->
-        <label class="block mb-1">Puzzle Size</label>
-        <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
-          <option value="1">Normal</option>
-          <option value="1.2">Large</option>
-          <option value="0.8">Small</option>
-        </select>
+        <!-- Example for Wordsearch panel -->
+        <div class="toolbar-row">
+          <label>Grid Size
+            <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
+              <option value="8">8 x 8</option>
+              <option value="10" selected>10 x 10</option>
+              <option value="12">12 x 12</option>
+              <option value="15">15 x 15</option>
+            </select>
+          </label>
+          <label>Letter Case
+            <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
+              <option value="upper">UPPERCASE</option>
+              <option value="lower">lowercase</option>
+            </select>
+          </label>
+        </div>
+        <div class="toolbar-row">
+          <label>Font
+            <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
+              <option value="sans">Sans-serif (Default)</option>
+              <option value="mono">Monospace</option>
+              <option value="comic">Comic Sans MS</option>
+              <option value="nanum">Nanum Pen Script</option>
+            </select>
+          </label>
+          <!-- NEW: Puzzle Size Control -->
+          <label>Puzzle Size
+            <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
+              <option value="1">Normal</option>
+              <option value="1.2">Large</option>
+              <option value="0.8">Small</option>
+            </select>
+          </label>
+        </div>
         <!-- NEW: Alignment Controls -->
         <label class="block mb-1">Puzzle Alignment</label>
         <select id="wordsearchAlign" class="border rounded px-2 py-1 mb-2">
