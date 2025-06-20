@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
     const caseOpt = document.getElementById('wordsearchCase').value;
     const fontOpt = document.getElementById('wordsearchFont').value;
-    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1");
+    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1.3");
     const align = document.getElementById('wordsearchAlign')?.value || "center";
     const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
     let words = document.getElementById('wordsearchWords').value
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         min-height: 500px; /* Adjust as needed for your worksheet size */
         width: 100%;
       ">
-        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:top left;">
+        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:center;">
           <table class="wordsearch-table ${fontClass}">
             ${grid.map(row => `
               <tr>
@@ -79,9 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (preview) {
       preview.classList.remove('hidden');
       // Use worksheet template
-      const template = window.worksheetTemplates?.[0];
-      const title = document.getElementById('wordsearchTitle')?.value?.trim() || "Wordsearch Worksheet";
-      const instructions = document.getElementById('wordsearchInstructions')?.value?.trim() || "Find all the words in the puzzle below.";
+      const templateIndex = parseInt(document.getElementById('wordsearchTemplate')?.value || "0", 10);
+      const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
+      const title = document.getElementById('wordsearchTitle')?.value?.trim() || "";
+      const instructions = document.getElementById('wordsearchInstructions')?.value?.trim() || "";
       preview.innerHTML = template.render({
         title,
         instructions,
@@ -325,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
     const caseOpt = document.getElementById('wordsearchCase').value;
     const fontOpt = document.getElementById('wordsearchFont').value;
-    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1");
+    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "2");
     const align = document.getElementById('wordsearchAlign')?.value || "center";
     const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
     let words = document.getElementById('wordsearchWords').value
@@ -358,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         min-height: 500px; /* Adjust as needed for your worksheet size */
         width: 100%;
       ">
-        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:top left;">
+        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:center;">
           <table class="wordsearch-table ${fontClass}">
             ${grid.map(row => `
               <tr>
@@ -373,9 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const preview = document.getElementById('worksheetPreviewArea-wordsearch');
     if (preview) {
       preview.classList.remove('hidden');
-      const template = window.worksheetTemplates?.[0];
-      const title = document.getElementById('wordsearchTitle')?.value?.trim() || "Wordsearch Worksheet";
-      const instructions = document.getElementById('wordsearchInstructions')?.value?.trim() || "Find all the words in the puzzle below.";
+      const templateIndex = parseInt(document.getElementById('wordsearchTemplate')?.value || "0", 10);
+      const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
+      const title = document.getElementById('wordsearchTitle')?.value?.trim() || "";
+      const instructions = document.getElementById('wordsearchInstructions')?.value?.trim() || "";
       preview.innerHTML = template.render({
         title,
         instructions,
@@ -396,7 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'wordsearchHintsAlign',
     'wordsearchWords',
     'wordsearchTitle',
-    'wordsearchInstructions'
+    'wordsearchInstructions',
+    'wordsearchTemplate' // <-- add this line
   ];
 
   ids.forEach(id => {

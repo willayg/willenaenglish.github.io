@@ -3,8 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const words = document.getElementById('wordTestWords').value.trim();
     const passage = document.getElementById('wordTestPassage').value.trim();
     const preview = document.getElementById('worksheetPreviewArea-tests');
-    const title = document.getElementById('wordTestTitle').value.trim() || "Word Test Worksheet";
+    const title = document.getElementById('wordTestTitle').value.trim() || "";
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
+    const fontSizeScale = parseFloat(document.getElementById('wordTestFontSize')?.value || "1");
+    const layout = document.getElementById('wordTestLayout')?.value || "default";
     if (!words || !preview) {
       preview.innerHTML = "<div class='text-gray-400'>Enter or generate some words to preview worksheet.</div>";
       return;
@@ -16,31 +18,184 @@ document.addEventListener('DOMContentLoaded', () => {
       return { eng: eng || '', kor: kor || '' };
     }).filter(pair => pair.eng && pair.kor);
 
-    const puzzle = `
-      ${passage ? `<div style="margin-bottom:18px;"><b>Passage:</b><div style="border:1px solid #ccc;border-radius:6px;padding:8px 12px;background:#f9f9f9;margin-top:4px;">${passage.replace(/\n/g, "<br>")}</div></div>` : ""}
-      <div style="margin-bottom:18px;"><b>Vocabulary Words:</b>
-        <table style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:6px 12px;border-bottom:2px solid #333;">English</th>
-              <th style="text-align:left;padding:6px 12px;border-bottom:2px solid #333;">Korean</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${wordPairs.map(pair => `
+    let puzzle = "";
+
+    if (layout === "4col") {
+      const half = Math.ceil(wordPairs.length / 2);
+      const left = wordPairs.slice(0, half);
+      const right = wordPairs.slice(half);
+
+      while (left.length < right.length) left.push({ eng: "", kor: "" });
+      while (right.length < left.length) right.push({ eng: "", kor: "" });
+
+      puzzle = `
+        <div style="margin-bottom:18px;"><b>Vocabulary Words (4 Columns):</b>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
               <tr>
-                <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${pair.eng}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${pair.kor}</td>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+            </thead>
+            <tbody>
+              ${left.map((pair, i) => `
+                <tr>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (layout === "images") {
+      puzzle = `
+        <div style="margin-bottom:18px;"><b>Vocabulary Words with Images:</b>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${wordPairs.map((pair, i) => `
+                <tr>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                    ${pair.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(pair.eng)}" alt="${pair.eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                  </td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (layout === "4col-images") {
+      // Split the wordPairs array in half
+      const half = Math.ceil(wordPairs.length / 2);
+      const left = wordPairs.slice(0, half);
+      const right = wordPairs.slice(half);
+
+      // Pad the shorter side so both have the same length
+      while (left.length < right.length) left.push({ eng: "", kor: "" });
+      while (right.length < left.length) right.push({ eng: "", kor: "" });
+
+      puzzle = `
+        <div style="margin-bottom:18px;"><b>Vocabulary Words (4 Columns with Images):</b>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English Image</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean Image</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${left.map((pair, i) => `
+                <tr>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                    ${pair.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(pair.eng)}" alt="${pair.eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                  </td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                    ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (layout === "6col-images") {
+      const half = Math.ceil(wordPairs.length / 2);
+      const left = wordPairs.slice(0, half);
+      const right = wordPairs.slice(half);
+
+      while (left.length < right.length) left.push({ eng: "", kor: "" });
+      while (right.length < left.length) right.push({ eng: "", kor: "" });
+
+      puzzle = `
+        <div style="margin-bottom:18px;"><b>Vocabulary Words (6 Columns with Images):</b>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${left.map((pair, i) => `
+                <tr>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                    ${pair.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(pair.eng)}" alt="${pair.eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                  </td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                    ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                  </td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
+                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      // Default layout
+      puzzle = `
+        ${passage ? `<div style="margin-bottom:18px;"><b>Passage:</b><div style="border:1px solid #ccc;border-radius:6px;padding:8px 12px;background:#f9f9f9;margin-top:4px;">${passage.replace(/\n/g, "<br>")}</div></div>` : ""}
+        <div style="margin-bottom:18px;"><b>Vocabulary Words:</b>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px 12px;border-bottom:2px solid #333;">#</th>
+                <th style="text-align:left;padding:6px 12px;border-bottom:2px solid #333;">English</th>
+                <th style="text-align:left;padding:6px 12px;border-bottom:2px solid #333;">Korean</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${wordPairs.map((pair, i) => `
+                <tr>
+                  <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${i + 1}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${pair.kor}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
     // Use your worksheet template
-    const template = window.worksheetTemplates?.[0];
-    const instructions = "Study the English and Korean words below.";
+    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "0", 10);
+    const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
+    const instructions = "";
     preview.innerHTML = template.render({
       title,
       instructions,
@@ -50,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Apply font to worksheet preview
     preview.style.fontFamily = font;
+    preview.style.fontSize = `${fontSizeScale}em`;
 
     // Optionally, scale the preview
     if (typeof scaleWorksheetPreview === "function") scaleWorksheetPreview();
@@ -103,8 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
     'wordTestWords',
     'wordTestPassage',
     'wordTestTitle',
-    'wordTestFont'
-    // Add more IDs here if needed
+    'wordTestFont',
+    'wordTestFontSize',
+    'wordTestLayout',
+    'wordTestTemplate' // <-- add this line
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
