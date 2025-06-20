@@ -132,9 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
               model: 'gpt-3.5-turbo',
               messages: [
                 { role: 'system', content: 'You are a helpful teaching assistant.' },
-                { role: 'user', content: `Extract the ${numWords} most important vocabulary words from this passage (one per line, no numbering):\n\n${passage}` }
+                { role: 'user', content: `Extract the ${numWords} most important English vocabulary words from this passage. For each word, provide the Korean translation, formatted as: english, korean (one per line, no numbering):\n\n${passage}` }
               ],
-              max_tokens: 100
+              max_tokens: 200
             }
           })
         });
