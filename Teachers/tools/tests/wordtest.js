@@ -57,71 +57,17 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     } else if (layout === "images") {
-      puzzle = `
-        <div style="margin-bottom:18px;"><b>Vocabulary Words with Images:</b>
-          <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${wordPairs.map((pair, i) => `
-                <tr>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1}</td>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${pair.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(pair.eng)}" alt="${pair.eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
-                  </td>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
+      buildWordTableWithPixabay(wordPairs).then(tableHtml => {
+        preview.innerHTML = template.render({
+          title,
+          instructions,
+          puzzle: tableHtml,
+          orientation: "portrait"
+        });
+      });
+      return;
     } else if (layout === "4col-images") {
-      // Split the wordPairs array in half
-      const half = Math.ceil(wordPairs.length / 2);
-      const left = wordPairs.slice(0, half);
-      const right = wordPairs.slice(half);
-
-      // Pad the shorter side so both have the same length
-      while (left.length < right.length) left.push({ eng: "", kor: "" });
-      while (right.length < left.length) right.push({ eng: "", kor: "" });
-
-      puzzle = `
-        <div style="margin-bottom:18px;"><b>Vocabulary Words (4 Columns with Images):</b>
-          <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English Image</th>
-                <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean Image</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${left.map((pair, i) => `
-                <tr>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${pair.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(pair.eng)}" alt="${pair.eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
-                  </td>
-                  <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (layout === "6col-images") {
+      // Split wordPairs in half for left/right columns
       const half = Math.ceil(wordPairs.length / 2);
       const left = wordPairs.slice(0, half);
       const right = wordPairs.slice(half);
@@ -129,8 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
       while (left.length < right.length) left.push({ eng: "", kor: "" });
       while (right.length < left.length) right.push({ eng: "", kor: "" });
 
-      puzzle = `
-        <div style="margin-bottom:18px;"><b>Vocabulary Words (6 Columns with Images):</b>
+      // Fetch images for both left and right columns
+      Promise.all([
+        Promise.all(left.map(pair => getPixabayImage(pair.eng))),
+        Promise.all(right.map(pair => getPixabayImage(pair.eng)))
+      ]).then(([leftImages, rightImages]) => {
+        const tableHtml = `
           <table style="width:100%;border-collapse:collapse;">
             <thead>
               <tr>
@@ -149,13 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tr>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${pair.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(pair.eng)}" alt="${pair.eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                    ${leftImages[i] ? `<img src="${leftImages[i]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
                   </td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                    ${rightImages[i] ? `<img src="${rightImages[i]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
                   </td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
@@ -163,8 +113,70 @@ document.addEventListener('DOMContentLoaded', () => {
               `).join('')}
             </tbody>
           </table>
-        </div>
-      `;
+        `;
+        preview.innerHTML = template.render({
+          title,
+          instructions,
+          puzzle: tableHtml,
+          orientation: "portrait"
+        });
+      });
+      return;
+    } else if (layout === "6col-images") {
+      const half = Math.ceil(wordPairs.length / 2);
+      const left = wordPairs.slice(0, half);
+      const right = wordPairs.slice(half);
+
+      while (left.length < right.length) left.push({ eng: "", kor: "" });
+      while (right.length < left.length) right.push({ eng: "", kor: "" });
+
+      Promise.all([
+        Promise.all(left.map(pair => getPixabayImage(pair.eng))),
+        Promise.all(right.map(pair => getPixabayImage(pair.eng)))
+      ]).then(([leftImages, rightImages]) => {
+        const tableHtml = `
+          <div style="margin-bottom:18px;"><b>Vocabulary Words (6 Columns with Images):</b>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
+                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${left.map((pair, i) => `
+                  <tr>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                      ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}                    </td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                      ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                    </td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
+                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+        preview.innerHTML = template.render({
+          title,
+          instructions,
+          puzzle: tableHtml,
+          orientation: "portrait"
+        });
+      });
+      return;
     } else {
       // Default layout
       puzzle = `
@@ -337,3 +349,34 @@ function scaleWorksheetPreview() {
 
 // Call scaleWorksheetPreview on window resize
 window.addEventListener('resize', scaleWorksheetPreview);
+
+// Replace YOUR_PIXABAY_API_KEY with your actual key
+async function getPixabayImage(query) {
+  const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}`);
+  const data = await res.json();
+  return data.image;
+}
+
+async function buildWordTableWithPixabay(wordPairs) {
+  const images = await Promise.all(wordPairs.map(pair => getPixabayImage(pair.eng)));
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>English</th>
+          <th>Korean</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${wordPairs.map((pair, i) => `
+          <tr>
+            <td>${images[i] ? `<img src="${images[i]}" style="width:40px;height:40px;object-fit:cover;">` : ''}</td>
+            <td>${pair.eng}</td>
+            <td>${pair.kor}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
