@@ -222,6 +222,7 @@
     <p style="font-size:1.2em; margin-bottom:36px; color:#ff9800;">
       Choose a mode to begin:
     </p>
+    <button id="showHighscoresBtn" class="mode-btn" style="margin-bottom:18px;">🏆 View Highscores</button>
     <div class="mode-btn-row">
       <button id="practiceModeBtn" class="mode-btn practice">
         <span>📝</span> Practice Mode
@@ -260,6 +261,13 @@
       🔊 Voices On/Off
     </label>
   </div>
+  <div id="highscoreOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#232a3b; border:3px solid #ff9800; border-radius:18px; max-width:400px; width:90vw; margin:auto; padding:32px 24px; color:#ffe600; text-align:center; position:relative;">
+      <h2 style="margin-bottom:18px;">🏆 Top Scores</h2>
+      <ol id="overlayHighscores" style="text-align:left; margin-bottom:24px;"></ol>
+      <button id="closeHighscoreOverlay" style="font-size:1.1em; padding:10px 28px; border-radius:10px; border:none; background:#ff9800; color:#232a3b; font-weight:bold; cursor:pointer;">Close</button>
+    </div>
+  </div>
   <script type="module" src="LG6.js"></script>
   <script>
     let voicesOn = true;
@@ -267,6 +275,43 @@
     voiceToggle.addEventListener('change', () => {
       voicesOn = voiceToggle.checked;
     });
+
+    const showHighscoresBtn = document.getElementById('showHighscoresBtn');
+    const highscoreOverlay = document.getElementById('highscoreOverlay');
+    const overlayHighscores = document.getElementById('overlayHighscores');
+    const closeHighscoreOverlay = document.getElementById('closeHighscoreOverlay');
+
+    showHighscoresBtn.onclick = async () => {
+      highscoreOverlay.style.display = "flex";
+      overlayHighscores.innerHTML = "<li>Loading...</li>";
+      try {
+        const response = await fetch('/.netlify/functions/submit_score?game=LG6');
+        if (!response.ok) {
+          overlayHighscores.innerHTML = "<li>Failed to load scores</li>";
+          return;
+        }
+        const data = await response.json();
+        const bestScores = {};
+        data.forEach(entry => {
+          if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+            bestScores[entry.name] = entry;
+          }
+        });
+        const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+        overlayHighscores.innerHTML = "";
+        sorted.forEach(entry => {
+          const li = document.createElement('li');
+          li.textContent = `${entry.name}: ${entry.score}`;
+          overlayHighscores.appendChild(li);
+        });
+      } catch (e) {
+        overlayHighscores.innerHTML = "<li>Failed to load scores</li>";
+      }
+    };
+
+    closeHighscoreOverlay.onclick = () => {
+      highscoreOverlay.style.display = "none";
+    };
   </script>
 </body>
 </html>
