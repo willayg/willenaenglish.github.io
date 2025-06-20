@@ -77,6 +77,14 @@
             <option value="'Noto Sans KR', sans-serif">Noto Sans KR</option>
           </select>
 
+          <!-- New Font Size Selector -->
+          <label for="wordTestFontSize" class="block font-semibold mb-1">Font Size</label>
+          <select id="wordTestFontSize" class="border rounded px-2 py-1 mb-2">
+            <option value="1">Normal</option>
+            <option value="0.8">Small</option>
+            <option value="0.65">Quite Small</option>
+          </select>
+
           <label class="block mb-1">Paste Reading Passage</label>
           <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
           <button id="extractWordTestWordsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2">Extract Words with AI</button>
@@ -89,6 +97,28 @@
           <!-- Add this after your wordTestWords textarea in the Word Test panel -->
           <button id="makeWordListBtn" class="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-900 mb-2">Make Word List</button>
           <div id="wordTestStatus" class="text-sm text-gray-500"></div>
+
+          <!-- New: Worksheet Layout Selector -->
+          <label for="wordTestLayout" class="block font-semibold mb-1">Worksheet Layout</label>
+          <select id="wordTestLayout" class="w-full px-3 py-2 border rounded mb-2">
+            <option value="default">Default Table</option>
+            <option value="4col">4 Columns (Eng/Kor/Eng/Kor)</option>
+            <option value="6col-images">6 Columns with Images</option>
+            <option value="images">With Images</option>
+          </select>
+
+          <!-- New: Worksheet Template Selector -->
+          <label for="wordTestTemplate" class="block font-semibold mb-1">Worksheet Template</label>
+          <select id="wordTestTemplate" class="w-full px-3 py-2 border rounded mb-2">
+            <option value="0">Classic</option>
+            <option value="1">Minimal</option>
+            <option value="2">Line</option>
+            <option value="3">Elegant Left Bar</option>
+            <option value="4">Playful Dots</option>
+            <option value="5">Modern Shadow Card</option>
+            <option value="6">Classic Bottom</option>
+            <option value="7">Minimal Bottom</option>
+          </select>
         </div>
       </section>
 
@@ -96,11 +126,11 @@
       <section id="panel-wordsearch" class="tool-panel hidden mb-4">
         <div class="mb-3">
           <label for="wordsearchTitle" class="block font-semibold mb-1">Worksheet Title</label>
-          <input type="text" id="wordsearchTitle" class="w-full px-3 py-2 border rounded" placeholder="Wordsearch Worksheet">
+          <input type="text" id="wordsearchTitle" class="w-full px-3 py-2 border rounded" placeholder="">
         </div>
         <div class="mb-3">
           <label for="wordsearchInstructions" class="block font-semibold mb-1">Instructions</label>
-          <input type="text" id="wordsearchInstructions" class="w-full px-3 py-2 border rounded" placeholder="Find all the words in the puzzle below.">
+          <input type="text" id="wordsearchInstructions" class="w-full px-3 py-2 border rounded" placeholder="">
         </div>
         <div class="mb-2 font-semibold">Wordsearch Maker</div>
         <!-- Example for Wordsearch panel -->
@@ -129,27 +159,31 @@
               <option value="nanum">Nanum Pen Script</option>
             </select>
           </label>
-          <!-- NEW: Puzzle Size Control -->
           <label>Puzzle Size
             <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
               <option value="1">Normal</option>
               <option value="1.2">Large</option>
+              <option value="1.5">Extra Large</option>
               <option value="0.8">Small</option>
+            </select>
+          </label>
+          <!-- NEW: Template Dropdown -->
+          <label>Worksheet Template
+            <select id="wordsearchTemplate" class="border rounded px-2 py-1 mb-2">
+              <option value="0">Classic</option>
+              <option value="1">Minimal</option>
+              <option value="2">Logo Right Blue Line</option>
+              <option value="3">Modern Shadow Card</option>
+              <option value="4">Playful Dots</option>
+              <option value="5">Elegant Left Bar</option>
             </select>
           </label>
         </div>
         <!-- NEW: Alignment Controls -->
-        <label class="block mb-1">Puzzle Alignment</label>
-        <select id="wordsearchAlign" class="border rounded px-2 py-1 mb-2">
-          <option value="left">Left</option>
-          <option value="center" selected>Center</option>
-          <option value="right">Right</option>
-        </select>
         <label class="block mb-1">Hints Alignment</label>
         <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
-          <option value="left">Left</option>
-          <option value="center" selected>Center</option>
-          <option value="right">Right</option>
+          <option value="top" selected>Top</option>
+          <option value="bottom">Bottom</option>
         </select>
         
         <!-- Category-based word generation -->
