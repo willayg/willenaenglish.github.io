@@ -47,19 +47,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Build the HTML for the hints/words list
     let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
 
-    // Add a container div for alignment
-    html += `<div style="width:100%; text-align:${align};">`;
-    // The inline-block div allows scaling and keeps the table together
-    html += `<div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:top left;">`;
-    html += `<table class="wordsearch-table ${fontClass}">`;
-    for (let row of grid) {
-      html += '<tr>';
-      for (let cell of row) {
-        html += `<td class="${fontClass}">${cell}</td>`;
-      }
-      html += '</tr>';
-    }
-    html += '</table></div></div>';
+    // Add a flex container for vertical and horizontal centering
+    html += `
+      <div style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 500px; /* Adjust as needed for your worksheet size */
+        width: 100%;
+      ">
+        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:top left;">
+          <table class="wordsearch-table ${fontClass}">
+            ${grid.map(row => `
+              <tr>
+                ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+      </div>
+    `;
 
     const output = document.getElementById('wordsearchOutput');
     if (output) {
@@ -68,30 +75,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const preview = document.getElementById('worksheetPreviewArea-wordsearch');
     if (preview) {
+      preview.classList.remove('hidden');
+      // Use worksheet template
       const template = window.worksheetTemplates?.[0];
-      const title = document.getElementById('worksheetTitle')?.value || "Wordsearch Worksheet";
-      const instructions = document.getElementById('worksheetInstructions')?.value || 'Find all the words in the puzzle.';
-      const worksheetHTML = template.render({
+      const title = document.getElementById('wordsearchTitle')?.value?.trim() || "Wordsearch Worksheet";
+      const instructions = document.getElementById('wordsearchInstructions')?.value?.trim() || "Find all the words in the puzzle below.";
+      preview.innerHTML = template.render({
         title,
         instructions,
-        puzzle: `<div id="puzzleExport">${html}</div>`,
-        orientation: worksheetOrientation
+        puzzle: html,
+        orientation: "portrait"
       });
-      preview.innerHTML = worksheetHTML;
+      preview.classList.add('worksheet-preview');
     }
   };
 
   // Improved wordsearch grid generator: random placement, horizontal/vertical
-  function generateWordsearchGrid(words, size = 12) {
+  function generateWordsearchGrid(words, size = 12, caseOpt = 'upper') {
     const grid = Array.from({length: size}, () => Array(size).fill(''));
     words.forEach((word, idx) => {
       if (idx < size) {
         for (let i = 0; i < word.length && i < size; i++) {
-          grid[idx][i] = word[i].toUpperCase();
+          grid[idx][i] = caseOpt === 'upper' ? word[i].toUpperCase() : word[i].toLowerCase();
         }
       }
     });
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const alphabet = caseOpt === 'upper' ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : "abcdefghijklmnopqrstuvwxyz";
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if (!grid[r][c]) {
@@ -254,6 +263,96 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     extractWords('hard'); // default to hard
   };
+
+  // Function to generate the worksheet preview (refactor your existing code into this)
+  function updateWordsearchPreview() {
+    const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
+    const caseOpt = document.getElementById('wordsearchCase').value;
+    const fontOpt = document.getElementById('wordsearchFont').value;
+    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1");
+    const align = document.getElementById('wordsearchAlign')?.value || "center";
+    const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
+    let words = document.getElementById('wordsearchWords').value
+      .split('\n')
+      .map(w => w.trim())
+      .filter(Boolean);
+
+    words = words.map(w => caseOpt === 'upper' ? w.toUpperCase() : w.toLowerCase());
+    const grid = generateWordsearchGrid(words, size, caseOpt);
+
+    let fontClass = 'wordsearch-font-sans';
+    if (fontOpt === 'mono') fontClass = 'wordsearch-font-mono';
+    if (fontOpt === 'comic') fontClass = 'wordsearch-font-comic';
+    if (fontOpt === 'nanum') fontClass = 'wordsearch-font-nanum';
+
+    let alignStyle = "text-align:center;";
+    if (align === "left") alignStyle = "text-align:left;";
+    if (align === "right") alignStyle = "text-align:right;";
+    let hintsAlignStyle = "text-align:center;";
+    if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";
+    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";
+
+    let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
+    // Add a flex container for vertical and horizontal centering
+    html += `
+      <div style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 500px; /* Adjust as needed for your worksheet size */
+        width: 100%;
+      ">
+        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:top left;">
+          <table class="wordsearch-table ${fontClass}">
+            ${grid.map(row => `
+              <tr>
+                ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+      </div>
+    `;
+
+    const preview = document.getElementById('worksheetPreviewArea-wordsearch');
+    if (preview) {
+      preview.classList.remove('hidden');
+      const template = window.worksheetTemplates?.[0];
+      const title = document.getElementById('wordsearchTitle')?.value?.trim() || "Wordsearch Worksheet";
+      const instructions = document.getElementById('wordsearchInstructions')?.value?.trim() || "Find all the words in the puzzle below.";
+      preview.innerHTML = template.render({
+        title,
+        instructions,
+        puzzle: html,
+        orientation: "portrait"
+      });
+      preview.classList.add('worksheet-preview');
+    }
+  }
+
+  // List of input/select IDs to watch for changes
+  const ids = [
+    'wordsearchGridSize',
+    'wordsearchCase',
+    'wordsearchFont',
+    'wordsearchSize',
+    'wordsearchAlign',
+    'wordsearchHintsAlign',
+    'wordsearchWords',
+    'wordsearchTitle',
+    'wordsearchInstructions'
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateWordsearchPreview);
+      el.addEventListener('change', updateWordsearchPreview);
+    }
+  });
+
+  // Optionally, call once on load to show preview immediately
+  updateWordsearchPreview();
 
   // Call this after the DOM is loaded and after the chat box is rendered
   setupAIChatBox();

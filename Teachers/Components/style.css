@@ -80,7 +80,7 @@ body, main {
 
 #sidebar .tool-btn {
   font-family: 'Poppins', 'Glacial Indifference', Arial, sans-serif;
-  font-size: 0.825rem; /* 25% smaller than 1.1rem */
+  font-size: 0.8rem; /* 25% smaller than 1.1rem */
   font-weight: 500;
   width: 100%;
   text-align: right;
@@ -177,4 +177,58 @@ body, main {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   display: block;
+}
+
+/* Wordsearch toolbar font and size */
+#panel-wordsearch button,
+#panel-wordsearch select,
+#panel-wordsearch textarea,
+#panel-wordsearch label {
+  font-size: 0.7rem;      /* Adjust size as needed */
+  font-family: 'Poppins', Arial, sans-serif; /* Or your preferred font */
+}
+
+/* Wordtest toolbar font and size */
+#panel-tests button,
+#panel-tests select,
+#panel-tests textarea,
+#panel-tests label {
+  font-size: 0.7rem;      /* Adjust size as needed */
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+/* Add outline to text input areas in Wordsearch and Wordtest toolbars */
+#panel-wordsearch input[type="text"],
+#panel-wordsearch textarea,
+#panel-tests input[type="text"],
+#panel-tests textarea {
+  border: 1.5px solid #b6aee0;
+  border-radius: 5px;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.2s;
+  padding: 0.3rem 0.5rem;
+}
+
+#panel-wordsearch input[type="text"]:focus,
+#panel-wordsearch textarea:focus,
+#panel-tests input[type="text"]:focus,
+#panel-tests textarea:focus {
+  border-color: #6c63b5;
+  box-shadow: 0 0 0 2px #edeaf6;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px; /* vertical and horizontal gap */
+  margin-bottom: 10px;
+  align-items: flex-end;
+}
+
+.toolbar-row label {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  flex: 1 1 0;
 }

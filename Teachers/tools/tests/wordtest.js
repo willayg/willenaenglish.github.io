@@ -1,15 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const makeWordListBtn = document.getElementById('makeWordListBtn');
-  if (!makeWordListBtn) return;
-
-  makeWordListBtn.addEventListener('click', () => {
+  function updateWordTestPreview() {
     const words = document.getElementById('wordTestWords').value.trim();
     const passage = document.getElementById('wordTestPassage').value.trim();
     const preview = document.getElementById('worksheetPreviewArea-tests');
     const title = document.getElementById('wordTestTitle').value.trim() || "Word Test Worksheet";
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
     if (!words || !preview) {
-      alert("Please enter or generate some words first.");
+      preview.innerHTML = "<div class='text-gray-400'>Enter or generate some words to preview worksheet.</div>";
       return;
     }
 
@@ -93,7 +90,68 @@ document.addEventListener('DOMContentLoaded', () => {
       link.href = 'https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap';
       document.head.appendChild(link);
     }
+  }
+
+  // Button still works (for users who expect it)
+  const makeWordListBtn = document.getElementById('makeWordListBtn');
+  if (makeWordListBtn) {
+    makeWordListBtn.addEventListener('click', updateWordTestPreview);
+  }
+
+  // Live update: listen for changes on all relevant fields
+  [
+    'wordTestWords',
+    'wordTestPassage',
+    'wordTestTitle',
+    'wordTestFont'
+    // Add more IDs here if needed
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateWordTestPreview);
+      el.addEventListener('change', updateWordTestPreview);
+    }
   });
+
+  // --- AI Extract Words for Word Test ---
+  const extractBtn = document.getElementById('extractWordTestWordsBtn');
+  if (extractBtn) {
+    extractBtn.onclick = async () => {
+      const passage = document.getElementById('wordTestPassage').value.trim();
+      const numWords = document.getElementById('wordTestNumWords').value || 10;
+      if (!passage) return alert("Please paste a passage.");
+      extractBtn.disabled = true;
+      extractBtn.textContent = "Extracting...";
+      try {
+        const response = await fetch('/.netlify/functions/openai_proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: 'chat/completions',
+            payload: {
+              model: 'gpt-3.5-turbo',
+              messages: [
+                { role: 'system', content: 'You are a helpful teaching assistant.' },
+                { role: 'user', content: `Extract the ${numWords} most important vocabulary words from this passage (one per line, no numbering):\n\n${passage}` }
+              ],
+              max_tokens: 100
+            }
+          })
+        });
+        const data = await response.json();
+        const aiWords = data.data.choices?.[0]?.message?.content || '';
+        document.getElementById('wordTestWords').value = aiWords.trim();
+        updateWordTestPreview(); // Update preview after AI fills words
+      } catch (e) {
+        alert("AI extraction failed.");
+      }
+      extractBtn.disabled = false;
+      extractBtn.textContent = "Extract Words with AI";
+    };
+  }
+
+  // Initial preview on page load
+  updateWordTestPreview();
 });
 
 function scaleWorksheetPreview() {
