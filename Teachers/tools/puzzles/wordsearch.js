@@ -28,7 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     words = words.map(w => caseOpt === 'upper' ? w.toUpperCase() : w.toLowerCase());
 
     // Generate the wordsearch grid
-    const grid = generateWordsearchGrid(words, size, caseOpt);
+    const allowDiagonals = document.getElementById('wordsearchAllowDiagonals')?.checked;
+    const allowBackwards = document.getElementById('wordsearchAllowBackwards')?.checked;
+    const grid = generateWordsearchGrid(words, size, caseOpt, allowDiagonals, allowBackwards);
 
     // Font CSS class
     let fontClass = 'wordsearch-font-sans';
@@ -91,15 +93,69 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Improved wordsearch grid generator: random placement, horizontal/vertical
-  function generateWordsearchGrid(words, size = 12, caseOpt = 'upper') {
-    const grid = Array.from({length: size}, () => Array(size).fill(''));
-    words.forEach((word, idx) => {
-      if (idx < size) {
-        for (let i = 0; i < word.length && i < size; i++) {
-          grid[idx][i] = caseOpt === 'upper' ? word[i].toUpperCase() : word[i].toLowerCase();
+  function generateWordsearchGrid(words, size = 12, caseOpt = 'upper', allowDiagonals = false, allowBackwards = false) {
+    // Initialize empty grid
+    const grid = Array.from({ length: size }, () => Array(size).fill(''));
+    // Directions: right, down, (optionally diagonals)
+    let directions = [
+      { dr: 0, dc: 1 },   // right
+      { dr: 1, dc: 0 },   // down
+    ];
+    if (allowDiagonals) {
+      directions.push(
+        { dr: 1, dc: 1 },   // down-right
+        { dr: 1, dc: -1 }   // down-left
+      );
+    }
+    // If backwards allowed, add left and up (and diagonals if enabled)
+    if (allowBackwards) {
+      directions.push(
+        { dr: 0, dc: -1 },  // left
+        { dr: -1, dc: 0 }   // up
+      );
+      if (allowDiagonals) {
+        directions.push(
+          { dr: -1, dc: 1 },  // up-right
+          { dr: -1, dc: -1 }  // up-left
+        );
+      }
+    }
+
+    function canPlace(word, row, col, dr, dc) {
+      for (let i = 0; i < word.length; i++) {
+        const r = row + dr * i;
+        const c = col + dc * i;
+        if (r < 0 || r >= size || c < 0 || c >= size) return false;
+        if (grid[r][c] && grid[r][c] !== word[i]) return false;
+      }
+      return true;
+    }
+
+    function placeWord(word) {
+      // Try up to 100 times to place the word
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const dir = directions[Math.floor(Math.random() * directions.length)];
+        const maxRow = dir.dr === 0 ? size : size - (dir.dr * (word.length - 1));
+        const maxCol = dir.dc === 0 ? size : size - (dir.dc * (word.length - 1));
+        const row = Math.floor(Math.random() * maxRow);
+        const col = Math.floor(Math.random() * maxCol);
+        if (canPlace(word, row, col, dir.dr, dir.dc)) {
+          for (let i = 0; i < word.length; i++) {
+            grid[row + dir.dr * i][col + dir.dc * i] = word[i];
+          }
+          return true;
         }
       }
-    });
+      return false; // Could not place word
+    }
+
+    // Prepare words (case)
+    words = words.map(w => caseOpt === 'upper' ? w.toUpperCase() : w.toLowerCase());
+
+    // Place each word
+    words.forEach(word => placeWord(word));
+
+    // Fill empty cells with random letters
     const alphabet = caseOpt === 'upper' ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : "abcdefghijklmnopqrstuvwxyz";
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
