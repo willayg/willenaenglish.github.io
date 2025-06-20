@@ -26,10 +26,13 @@
       <button class="tool-btn" data-panel="puzzles">Puzzles</button>
       <button class="tool-btn" data-panel="games">Games</button>
       <button class="tool-btn" data-panel="creative">Creative</button>
+      <button class="tool-btn" data-panel="tests">Tests</button> <!-- Add this line -->
+      <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
+      <button class="tool-btn" data-panel="crossword">Crossword</button>
     </aside>
 
-    <!-- Tool Panels -->
-    <section id="tool-panels" class="flex-1 p-8">
+    <!-- Tool Panels (left column) -->
+    <section id="tool-panels" class="w-[400px] max-w-xs p-8">
       <!-- Files Panel -->
       <section id="panel-files" class="tool-panel hidden mb-4">
         <h2 class="text-lg font-bold mb-2">Files</h2>
@@ -41,103 +44,7 @@
         </div>
       </section>
 
-      <!-- Puzzles Panel -->
-      <section id="panel-puzzles" class="tool-panel hidden mb-4">
-        <div class="bg-white rounded shadow p-4">
-          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Puzzles</h2>
-          <div class="flex flex-row gap-8">
-            <!-- Controls column -->
-            <div class="min-w-[260px] max-w-[340px]">
-              <div class="flex gap-4 mb-4">
-                <button id="crosswordTab" class="puzzle-tab px-3 py-1 rounded bg-[#edeaf6] font-semibold">Crossword</button>
-                <button id="wordsearchTab" class="puzzle-tab px-3 py-1 rounded bg-[#edeaf6] font-semibold">Wordsearch</button>
-              </div>
-              <div id="crosswordMaker">
-                <div class="mb-2 font-semibold">Crossword Maker</div>
-                <label class="block mb-1">Grid Size</label>
-                <select id="crosswordGridSize" class="border rounded px-2 py-1 mb-2">
-                  <option value="8">8 x 8</option>
-                  <option value="10" selected>10 x 10</option>
-                  <option value="12">12 x 12</option>
-                  <option value="15">15 x 15</option>
-                </select>
-                <textarea id="crosswordWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
-                <button id="generateCrossword" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Crossword</button>
-                <div id="aiChatBoxCrossword" class="mt-4 p-2 border rounded bg-[#f6f6fa] text-sm">
-                  <div id="aiChatMessagesCrossword" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
-                  <div class="flex gap-2">
-                    <input id="aiChatInputCrossword" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Ask AI for help...">
-                    <button id="aiChatSendCrossword" class="bg-[#2e2b3f] text-white px-3 py-1 rounded">Send</button>
-                  </div>
-                </div>
-              </div>
-              <div id="wordsearchMaker" class="hidden">
-                <div class="mb-2 font-semibold">Wordsearch Maker</div>
-                <label class="block mb-1">Grid Size</label>
-                <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
-                  <option value="8">8 x 8</option>
-                  <option value="10" selected>10 x 10</option>
-                  <option value="12">12 x 12</option>
-                  <option value="15">15 x 15</option>
-                </select>
-                <label class="block mb-1">Letter Case</label>
-                <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
-                  <option value="upper">UPPERCASE</option>
-                  <option value="lower">lowercase</option>
-                </select>
-                <label class="block mb-1">Font</label>
-                <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
-                  <option value="sans">Sans-serif (Default)</option>
-                  <option value="mono">Monospace</option>
-                  <option value="comic">Comic Sans MS</option>
-                  <option value="nanum">Nanum Pen Script</option>
-                </select>
-                <!-- NEW: Puzzle Size Control -->
-                <label class="block mb-1">Puzzle Size</label>
-                <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
-                  <option value="1">Normal</option>
-                  <option value="1.2">Large</option>
-                  <option value="0.8">Small</option>
-                </select>
-                <!-- NEW: Alignment Controls -->
-                <label class="block mb-1">Puzzle Alignment</label>
-                <select id="wordsearchAlign" class="border rounded px-2 py-1 mb-2">
-                  <option value="left">Left</option>
-                  <option value="center" selected>Center</option>
-                  <option value="right">Right</option>
-                </select>
-                <label class="block mb-1">Hints Alignment</label>
-                <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
-                  <option value="left">Left</option>
-                  <option value="center" selected>Center</option>
-                  <option value="right">Right</option>
-                </select>
-                
-                <!-- Category-based word generation -->
-                <div style="margin-bottom:10px;">
-                  <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
-                  <button id="generateCategoryWordsBtn">Generate Words</button>
-                </div>
 
-                <!-- Passage-based word extraction -->
-                <div style="margin-bottom:10px;">
-                  <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
-                  <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
-                </div>
-
-                <!-- Existing word list textarea (for the puzzle) -->
-                <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
-                <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
-              
-              </div>
-            </div>
-            <!-- Output column -->
-            <div class="flex-1 min-w-[320px]">
-              <div id="crosswordOutput" class="mt-2"></div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- Games Panel -->
       <section id="panel-games" class="tool-panel hidden mb-4">
@@ -150,20 +57,136 @@
         <h2 class="text-lg font-bold mb-2">Creative</h2>
         <p>[Creative tool coming soon]</p>
       </section>
+
+      <!-- Tests Panel -->
+      <section id="panel-tests" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Word Test Generator</h2>
+          <!-- Add these at the top of your Word Test panel -->
+          <label class="block mb-1 mt-2">Worksheet Title</label>
+          <input type="text" id="wordTestTitle" class="border rounded w-full p-2 mb-2" placeholder="Enter worksheet title" />
+
+          <label class="block mb-1">Font</label>
+          <select id="wordTestFont" class="border rounded w-full p-2 mb-2">
+            <option value="'Poppins', sans-serif">Poppins</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Glacial Indifference', sans-serif">Glacial Indifference</option>
+            <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans</option>
+            <option value="'Roboto', sans-serif">Roboto</option>
+            <option value="'Nanum Gothic', sans-serif">Nanum Gothic</option>
+            <option value="'Noto Sans KR', sans-serif">Noto Sans KR</option>
+          </select>
+
+          <label class="block mb-1">Paste Reading Passage</label>
+          <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
+          <label class="block mb-1">Number of Words to Extract</label>
+          <input type="number" id="wordTestNumWords" class="border rounded px-2 py-1 mb-2" min="3" max="30" value="10" style="width:80px;">
+          <button id="generateWordTestBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] mb-2">Generate Word Test</button>
+          <!-- Add the new button here -->
+          <label class="block mb-1">Word Box (editable)</label>
+          <textarea id="wordTestWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Extracted words will appear here"></textarea>
+          <!-- Add this after your wordTestWords textarea in the Word Test panel -->
+          <button id="makeWordListBtn" class="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-900 mb-2">Make Word List</button>
+          <div id="wordTestStatus" class="text-sm text-gray-500"></div>
+        </div>
+      </section>
+
+      <!-- Wordsearch Panel (new) -->
+      <section id="panel-wordsearch" class="tool-panel hidden mb-4">
+        <div class="mb-2 font-semibold">Wordsearch Maker</div>
+        <label class="block mb-1">Grid Size</label>
+        <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
+          <option value="8">8 x 8</option>
+          <option value="10" selected>10 x 10</option>
+          <option value="12">12 x 12</option>
+          <option value="15">15 x 15</option>
+        </select>
+        <label class="block mb-1">Letter Case</label>
+        <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
+          <option value="upper">UPPERCASE</option>
+          <option value="lower">lowercase</option>
+        </select>
+        <label class="block mb-1">Font</label>
+        <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
+          <option value="sans">Sans-serif (Default)</option>
+          <option value="mono">Monospace</option>
+          <option value="comic">Comic Sans MS</option>
+          <option value="nanum">Nanum Pen Script</option>
+        </select>
+        <!-- NEW: Puzzle Size Control -->
+        <label class="block mb-1">Puzzle Size</label>
+        <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
+          <option value="1">Normal</option>
+          <option value="1.2">Large</option>
+          <option value="0.8">Small</option>
+        </select>
+        <!-- NEW: Alignment Controls -->
+        <label class="block mb-1">Puzzle Alignment</label>
+        <select id="wordsearchAlign" class="border rounded px-2 py-1 mb-2">
+          <option value="left">Left</option>
+          <option value="center" selected>Center</option>
+          <option value="right">Right</option>
+        </select>
+        <label class="block mb-1">Hints Alignment</label>
+        <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
+          <option value="left">Left</option>
+          <option value="center" selected>Center</option>
+          <option value="right">Right</option>
+        </select>
+        
+        <!-- Category-based word generation -->
+        <div style="margin-bottom:10px;">
+          <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
+          <button id="generateCategoryWordsBtn">Generate Words</button>
+        </div>
+
+        <!-- Passage-based word extraction -->
+        <div style="margin-bottom:10px;">
+          <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
+          <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
+        </div>
+
+        <!-- Existing word list textarea (for the puzzle) -->
+        <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+        <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
+      
+      </section>
+
+      <!-- Crossword Panel (new) -->
+      <section id="panel-crossword" class="tool-panel hidden mb-4">
+        <div class="mb-2 font-semibold">Crossword Maker</div>
+        <label class="block mb-1">Grid Size</label>
+        <select id="crosswordGridSize" class="border rounded px-2 py-1 mb-2">
+          <option value="8">8 x 8</option>
+          <option value="10" selected>10 x 10</option>
+          <option value="12">12 x 12</option>
+          <option value="15">15 x 15</option>
+        </select>
+        <textarea id="crosswordWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+        <button id="generateCrossword" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Crossword</button>
+        <div id="aiChatBoxCrossword" class="mt-4 p-2 border rounded bg-[#f6f6fa] text-sm">
+          <div id="aiChatMessagesCrossword" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+          <div class="flex gap-2">
+            <input id="aiChatInputCrossword" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Ask AI for help...">
+            <button id="aiChatSendCrossword" class="bg-[#2e2b3f] text-white px-3 py-1 rounded">Send</button>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <!-- Worksheet Preview Area (hidden by default) -->
-    <div class="flex-1 flex flex-col items-center">
+    <!-- Worksheet Preview Area (right column) -->
+    <section id="worksheet-preview-column" class="flex-1 flex flex-col items-center justify-start">
       <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:sticky;top:56px;z-index:20;">
         <div id="toolbar">
           <button id="printWorksheetBtn">Print</button>
           <button id="downloadWorksheetPdfBtn">Download PDF</button>
         </div>
       </div>
-      <div id="worksheetPreviewArea" style="background: white; width: 794px; height: 1123px; box-shadow: 0 0 8px #bbb; border-radius: 8px; overflow: auto; position: relative;">
-        <!-- The puzzle will be injected here -->
-      </div>
-    </div>
+      <div id="worksheetPreviewArea-tests" class="worksheet-preview hidden"></div>
+      <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden"></div>
+      <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden"></div>
+      <!-- Add more as needed -->
+    </section>
   </main>
 
   <!-- Workspace Section -->
@@ -178,14 +201,23 @@
   <script src="tools/puzzles/index.js"></script>
   <script src="tools/puzzles/wordsearch.js"></script>
   <script src="tools/puzzles/crossword.js"></script>
+  <script src="tools/tests/wordtest.js"></script>
   <script>
     // Ensure the first panel is shown on load
     document.addEventListener('DOMContentLoaded', function() {
       // Show the Files panel by default
       const showPanel = (panel) => {
+        // Hide all tool panels
         document.querySelectorAll('.tool-panel').forEach(el => el.classList.add('hidden'));
+        // Hide all worksheet previews
+        document.querySelectorAll('.worksheet-preview').forEach(el => el.classList.add('hidden'));
+        // Show the selected panel
         const active = document.getElementById('panel-' + panel);
         if (active) active.classList.remove('hidden');
+        // Show the worksheet preview for this panel, if it exists
+        const preview = document.getElementById(`worksheetPreviewArea-${panel}`);
+        if (preview) preview.classList.remove('hidden');
+        // Update sidebar button active state
         document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
         if (btn) btn.classList.add('active');
@@ -199,6 +231,7 @@
       });
       showPanel('files');
     });
+
   </script>
 </body>
 </html>

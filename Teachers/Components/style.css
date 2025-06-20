@@ -166,3 +166,15 @@ body, main {
 #wordsearchMaker button {
   padding: 0.25rem 0.8rem;
 }
+
+.worksheet-preview {
+  background: #fff;
+  padding: 32px;
+  width: 800px;
+  margin: 32px auto;
+  font-family: 'Nanum Pen Script', Arial, sans-serif;
+  color: #222;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: block;
+}
