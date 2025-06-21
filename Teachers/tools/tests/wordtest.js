@@ -142,30 +142,31 @@ document.addEventListener('DOMContentLoaded', () => {
             <table style="width:100%;border-collapse:collapse;">
               <thead>
                 <tr>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">#</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Image</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">English</th>
-                  <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;">Korean</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">#</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">Image</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">English</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">#</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">Image</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">English</th>
+                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">Korean</th>
                 </tr>
               </thead>
               <tbody>
                 ${left.map((pair, i) => `
-                  <tr>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                      ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}                    </td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                      ${right[i]?.eng ? `<img src="https://source.unsplash.com/40x40/?${encodeURIComponent(right[i].eng)}" alt="${right[i].eng}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                  <tr style="height:80px;">
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">
+                      ${leftImages[i] ? `<img src="${leftImages[i]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ""}
                     </td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
-                    <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">
+                      ${rightImages[i] ? `<img src="${rightImages[i]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ""}
+                    </td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -349,10 +350,16 @@ function scaleWorksheetPreview() {
 // Call scaleWorksheetPreview on window resize
 window.addEventListener('resize', scaleWorksheetPreview);
 
-// Replace YOUR_PIXABAY_API_KEY with your actual key
+// --- Add this cache object at the top of your script (outside functions) ---
+const imageCache = {};
+
+// Replace getPixabayImage with a cached version:
 async function getPixabayImage(query) {
+  if (!query) return "";
+  if (imageCache[query]) return imageCache[query];
   const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}`);
   const data = await res.json();
+  imageCache[query] = data.image;
   return data.image;
 }
 
