@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixabay Test</title>
+</head>
+<body>
+  <h2>Pixabay Illustration Test (Educational Bias)</h2>
+  <input type="text" id="wordInput" placeholder="Enter a word" />
+  <button id="fetchBtn">Get Illustration</button>
+  <div id="result" style="margin-top: 20px;"></div>
+  <div style="margin-top:10px;color:#888;">
+    <small>Images will be illustrations, biased toward educational content.</small>
+  </div>
+
+  <script>
+    document.getElementById('fetchBtn').onclick = async function() {
+      const word = document.getElementById('wordInput').value.trim();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = 'Loading...';
+      if (!word) {
+        resultDiv.innerHTML = 'Please enter a word.';
+        return;
+      }
+      try {
+        // The Netlify function now returns illustration/education-biased images
+        const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word)}`);
+        const data = await res.json();
+        if (data.image) {
+          resultDiv.innerHTML = `<img src="${data.image}" alt="Pixabay illustration for ${word}" style="max-width:150px;max-height:150px;"><br><small>${data.image}</small>`;
+        } else {
+          resultDiv.innerHTML = 'No illustration found for this word.';
+        }
+      } catch (e) {
+        resultDiv.innerHTML = 'Error fetching image.';
+      }
+    };
+  </script>
+</body>
+</html>
