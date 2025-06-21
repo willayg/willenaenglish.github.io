@@ -395,3 +395,12 @@ function applyPreviewFontStyles(preview, font, fontSizeScale) {
   preview.style.fontFamily = font;
   preview.style.fontSize = `${fontSizeScale}em`;
 }
+
+// After rendering the table with images:
+document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
+  img.addEventListener('click', async function() {
+    const word = this.getAttribute('data-word');
+    delete imageCache[word]; // Remove cached image
+    this.src = await getPixabayImage(word); // Fetch and show new image
+  });
+});
