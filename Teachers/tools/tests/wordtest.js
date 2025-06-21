@@ -387,7 +387,7 @@ window.addEventListener('resize', scaleWorksheetPreview);
 // --- At the top, change imageCache to store arrays:
 const imageCache = {}; // { word: { images: [...], index: 0 } }
 
-/*async function getOpenBayImage(query, next = false) {
+async function getOpenBayImage(query, next = false) {
   if (!query) return "";
   if (!imageCache[query] || next) {
     const res = await fetch(`/.netlify/functions/openbay?q=${encodeURIComponent(query)}`);
@@ -399,7 +399,7 @@ const imageCache = {}; // { word: { images: [...], index: 0 } }
     imageCache[query].index = (imageCache[query].index + 1) % imageCache[query].images.length;
   }
   return imageCache[query].images[imageCache[query].index] || "";
-}*/
+}
 
 async function buildWordTableWithPixabay(wordPairs) {
   const images = await Promise.all(wordPairs.map(pair => getOpenBayImage(pair.eng)));
