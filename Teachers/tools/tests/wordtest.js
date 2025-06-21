@@ -73,8 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
           img.addEventListener('click', async function() {
             const word = this.getAttribute('data-word');
-            delete imageCache[word];
-            this.src = await getPixabayImage(word);
+            this.src = await getPixabayImage(word, true); // true = get next/random image
           });
         });
       });
@@ -138,8 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
           img.addEventListener('click', async function() {
             const word = this.getAttribute('data-word');
-            delete imageCache[word];
-            this.src = await getPixabayImage(word);
+            this.src = await getPixabayImage(word, true); // true = get next/random image
           });
         });
       });
@@ -204,8 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
           img.addEventListener('click', async function() {
             const word = this.getAttribute('data-word');
-            delete imageCache[word];
-            this.src = await getPixabayImage(word);
+            this.src = await getPixabayImage(word, true); // true = get next/random image
           });
         });
       });
@@ -387,21 +384,25 @@ function scaleWorksheetPreview() {
 // Call scaleWorksheetPreview on window resize
 window.addEventListener('resize', scaleWorksheetPreview);
 
-// --- Add this cache object at the top of your script (outside functions) ---
-const imageCache = {};
+// --- At the top, change imageCache to store arrays:
+const imageCache = {}; // { word: { images: [...], index: 0 } }
 
-// Replace getPixabayImage with a cached version:
-async function getPixabayImage(query) {
+async function getPixabayImage(query, next = false) {
   if (!query) return "";
-  if (imageCache[query]) return imageCache[query];
-
-  // Get selected image type from dropdown
-  const imageType = document.getElementById('pixabayImageType')?.value || "all";
-
-  const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular`);
-  const data = await res.json();
-  imageCache[query] = data.image;
-  return data.image;
+  if (!imageCache[query] || next) {
+    // Get selected image type from dropdown
+    const imageType = document.getElementById('pixabayImageType')?.value || "all";
+    // Randomize page for more variety
+    const page = Math.floor(Math.random() * 5) + 1;
+    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5&page=${page}`);
+    const data = await res.json();
+    imageCache[query] = { images: data.images || [], index: 0 };
+  }
+  // Pick a random image if next==true, else use index 0
+  if (next && imageCache[query].images.length > 1) {
+    imageCache[query].index = (imageCache[query].index + 1) % imageCache[query].images.length;
+  }
+  return imageCache[query].images[imageCache[query].index] || "";
 }
 
 async function buildWordTableWithPixabay(wordPairs) {

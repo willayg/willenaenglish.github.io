@@ -10,14 +10,13 @@ exports.handler = async function(event, context) {
 
   // You can add more filters here as needed (orientation, category, colors, etc.)
 
-  const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=${perPage}&safesearch=${safesearch}&order=${order}`;
-
+  const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=5&safesearch=${safesearch}&order=${order}&page=${Math.floor(Math.random()*5)+1}`;
   try {
     const res = await fetch(url);
     const data = await res.json();
     return {
       statusCode: 200,
-      body: JSON.stringify({ image: data.hits?.[0]?.webformatURL || "" })
+      body: JSON.stringify({ images: data.hits.map(hit => hit.webformatURL) })
     };
   } catch (e) {
     return {

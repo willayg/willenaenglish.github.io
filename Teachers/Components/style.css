@@ -179,6 +179,24 @@ body, main {
   display: block;
 }
 
+#worksheetPreviewWrapper,
+.worksheet-preview {
+  width: 794px !important;
+  height: 1123px !important;
+  max-width: 794px !important;
+  max-height: 1123px !important;
+  overflow: hidden;
+}
+.worksheet-preview table {
+  max-width: 100%;
+  table-layout: fixed;
+}
+.worksheet-preview img {
+  max-width: 100%;
+  max-height: 80px;
+  height: auto;
+}
+
 /* Wordsearch toolbar font and size */
 #panel-wordsearch button,
 #panel-wordsearch select,
