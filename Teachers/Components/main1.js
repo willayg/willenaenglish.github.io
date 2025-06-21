@@ -60,9 +60,16 @@ document.addEventListener('DOMContentLoaded', () => {
     pdfBtn.onclick = async () => {
       const preview = document.querySelector('.worksheet-preview:not(.hidden)');
       if (!preview) return;
-      preview.classList.remove('hidden');
+
+      // --- SCALE PREVIEW TO A4 ---
+      const originalWidth = preview.style.width;
+      const originalHeight = preview.style.height;
+      const originalTransform = preview.style.transform;
+      preview.style.width = "794px";
+      preview.style.height = "1123px";
+      preview.style.transform = "scale(1)";
+
       await new Promise(resolve => setTimeout(resolve, 100));
-      // Use useCORS: true to allow external images
       const canvas = await html2canvas(preview, { scale: 2, backgroundColor: "#fff", useCORS: true });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new window.jspdf.jsPDF({
@@ -70,26 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
         unit: 'pt',
         format: 'a4'
       });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = canvas.height * (imgWidth / canvas.width);
-
-      let position = 0;
-      // Add pages if content is taller than one page
-      while (position < imgHeight) {
-        pdf.addImage(
-          imgData,
-          'PNG',
-          0,
-          -position,
-          imgWidth,
-          imgHeight
-        );
-        position += pageHeight;
-        if (position < imgHeight) pdf.addPage();
-      }
+      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
       pdf.save('worksheet.pdf');
+
+      // --- RESTORE ORIGINAL STYLES ---
+      preview.style.width = originalWidth;
+      preview.style.height = originalHeight;
+      preview.style.transform = originalTransform;
     };
   }
 
