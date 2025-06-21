@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
           img.addEventListener('click', async function() {
             const word = this.getAttribute('data-word');
-            this.src = await getPixabayImage(word, true); // true = get next/random image
+            this.src = await getOpenBayImage(word, true); // true = get next/random image
           });
         });
       });
@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Fetch images for both left and right columns
       Promise.all([
-        Promise.all(left.map(pair => getPixabayImage(pair.eng))),
-        Promise.all(right.map(pair => getPixabayImage(pair.eng)))
+        Promise.all(left.map(pair => getOpenBayImage(pair.eng))),
+        Promise.all(right.map(pair => getOpenBayImage(pair.eng)))
       ]).then(([leftImages, rightImages]) => {
         const tableHtml = `
           <table style="width:100%;border-collapse:collapse;">
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
           img.addEventListener('click', async function() {
             const word = this.getAttribute('data-word');
-            this.src = await getPixabayImage(word, true); // true = get next/random image
+            this.src = await getOpenBayImage(word, true); // true = get next/random image
           });
         });
       });
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
       while (right.length < left.length) right.push({ eng: "", kor: "" });
 
       Promise.all([
-        Promise.all(left.map(pair => getPixabayImage(pair.eng))),
-        Promise.all(right.map(pair => getPixabayImage(pair.eng)))
+        Promise.all(left.map(pair => getOpenBayImage(pair.eng))),
+        Promise.all(right.map(pair => getOpenBayImage(pair.eng)))
       ]).then(([leftImages, rightImages]) => {
         const tableHtml = `
           <div style="margin-bottom:18px;"><b>Vocabulary Words (6 Columns with Images):</b>
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
           img.addEventListener('click', async function() {
             const word = this.getAttribute('data-word');
-            this.src = await getPixabayImage(word, true); // true = get next/random image
+            this.src = await getOpenBayImage(word, true); // true = get next/random image
           });
         });
       });
@@ -241,6 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
       orientation: "portrait"
     });
     applyPreviewFontStyles(preview, font, fontSizeScale);
+
+    // Optionally, scale the preview
+    if (typeof scaleWorksheetPreview === "function") scaleWorksheetPreview();
 
     // Dynamically load Google Fonts if needed
     if (font.includes('Poppins') && !document.getElementById('font-poppins')) {
@@ -355,29 +358,75 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function scaleWorksheetPreview() {
+  const wrapper = document.getElementById('worksheetPreviewWrapper');
+  const preview = document.getElementById('worksheetPreviewArea-tests');
+  if (!wrapper || !preview) return;
+
+  // A4 size in px
+  const a4Width = 794;
+  const a4Height = 1123;
+
+  // Get available space
+  const wrapperWidth = wrapper.clientWidth;
+  const wrapperHeight = wrapper.clientHeight;
+
+  // Calculate scale to fit
+  const scale = Math.min(
+    wrapperWidth / a4Width,
+    wrapperHeight / a4Height,
+    1 // never upscale, only downscale
+  );
+
+  preview.style.transform = `scale(${scale})`;
+}
+
+// Call scaleWorksheetPreview on window resize
+window.addEventListener('resize', scaleWorksheetPreview);
+
 // --- At the top, change imageCache to store arrays:
 const imageCache = {}; // { word: { images: [...], index: 0 } }
 
-async function getPixabayImage(query, next = false) {
+/*async function getOpenBayImage(query, next = false) {
   if (!query) return "";
   if (!imageCache[query] || next) {
-    // Get selected image type from dropdown
-    const imageType = document.getElementById('pixabayImageType')?.value || "all";
-    // Randomize page for more variety
-    const page = Math.floor(Math.random() * 5) + 1;
-    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5&page=${page}`);
+    const res = await fetch(`/.netlify/functions/openbay?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     imageCache[query] = { images: data.images || [], index: 0 };
   }
-  // Pick a random image if next==true, else use index 0
+  // Cycle through images if next==true
   if (next && imageCache[query].images.length > 1) {
     imageCache[query].index = (imageCache[query].index + 1) % imageCache[query].images.length;
   }
   return imageCache[query].images[imageCache[query].index] || "";
-}
+}*/
 
 async function buildWordTableWithPixabay(wordPairs) {
-  const images = await Promise.all(wordPairs.map(pair => getPixabayImage(pair.eng)));
+  const images = await Promise.all(wordPairs.map(pair => getOpenBayImage(pair.eng)));
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>English</th>
+          <th>Korean</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${wordPairs.map((pair, i) => `
+          <tr>
+            <td>${images[i] ? `<img src="${images[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">` : ''}</td>
+            <td>${pair.eng}</td>
+            <td>${pair.kor}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function buildWordTableWithImages(wordPairs) {
+  const images = await Promise.all(wordPairs.map(pair => getOpenBayImage(pair.eng)));
   return `
     <table>
       <thead>
