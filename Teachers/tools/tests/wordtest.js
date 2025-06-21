@@ -125,6 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
           orientation: "portrait"
         });
         applyPreviewFontStyles(preview, font, fontSizeScale);
+
+        document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
+          img.addEventListener('click', async function() {
+            const word = this.getAttribute('data-word');
+            delete imageCache[word];
+            this.src = await getPixabayImage(word);
+          });
+        });
       });
       return;
     } else if (layout === "6col-images") {
