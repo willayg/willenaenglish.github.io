@@ -242,9 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     applyPreviewFontStyles(preview, font, fontSizeScale);
 
-    // Optionally, scale the preview
-    if (typeof scaleWorksheetPreview === "function") scaleWorksheetPreview();
-
     // Dynamically load Google Fonts if needed
     if (font.includes('Poppins') && !document.getElementById('font-poppins')) {
       const link = document.createElement('link');
@@ -357,32 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-function scaleWorksheetPreview() {
-  const wrapper = document.getElementById('worksheetPreviewWrapper');
-  const preview = document.getElementById('worksheetPreviewArea-tests');
-  if (!wrapper || !preview) return;
-
-  // A4 size in px
-  const a4Width = 794;
-  const a4Height = 1123;
-
-  // Get available space
-  const wrapperWidth = wrapper.clientWidth;
-  const wrapperHeight = wrapper.clientHeight;
-
-  // Calculate scale to fit
-  const scale = Math.min(
-    wrapperWidth / a4Width,
-    wrapperHeight / a4Height,
-    1 // never upscale, only downscale
-  );
-
-  preview.style.transform = `scale(${scale})`;
-}
-
-// Call scaleWorksheetPreview on window resize
-window.addEventListener('resize', scaleWorksheetPreview);
 
 // --- At the top, change imageCache to store arrays:
 const imageCache = {}; // { word: { images: [...], index: 0 } }
