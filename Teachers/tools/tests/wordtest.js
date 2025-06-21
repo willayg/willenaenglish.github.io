@@ -357,7 +357,11 @@ const imageCache = {};
 async function getPixabayImage(query) {
   if (!query) return "";
   if (imageCache[query]) return imageCache[query];
-  const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}`);
+
+  // Get selected image type from dropdown
+  const imageType = document.getElementById('pixabayImageType')?.value || "all";
+
+  const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular`);
   const data = await res.json();
   imageCache[query] = data.image;
   return data.image;
