@@ -101,7 +101,7 @@
             <option value="photo">Photos</option>
             <option value="illustration">Illustrations</option>
           </select>
-          <button id="refreshImagesBtn" class="btn w-full bg-blue-500 text-white rounded py-2 mt-3 padding 10">Refresh Images</button>
+          <button id="refreshImagesBtn" class="btn w-full bg-blue-500 text-white rounded py-2 mt-3">Refresh Images</button>
           <div id="wordTestStatus" class="text-sm text-gray-500"></div>
 
           <!-- New: Worksheet Layout Selector -->
@@ -244,7 +244,9 @@
           <button id="downloadWorksheetPdfBtn">Download PDF</button>
         </div>
       </div>
-      <div id="worksheetPreviewArea-tests" class="worksheet-preview hidden"></div>
+      <div id="worksheetPreviewWrapper" style="width:794px;height:1123px;display:flex;align-items:center;justify-content:center;">
+        <div id="worksheetPreviewArea-tests" class="worksheet-preview hidden"></div>
+      </div>
       <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden"></div>
       <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden"></div>
       <!-- Add more as needed -->
