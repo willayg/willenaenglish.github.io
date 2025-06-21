@@ -159,13 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   <tr style="height:80px;">
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">
-                      ${leftImages[i] ? `<img src="${leftImages[i]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ""}
+                      ${leftImages[i] ? `<img src="${leftImages[i]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">` : ""}
                     </td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">
-                      ${rightImages[i] ? `<img src="${rightImages[i]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ""}
+                      ${rightImages[i] ? `<img src="${rightImages[i]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;" class="pixabay-refresh-img" data-word="${right[i]?.eng}">` : ""}
                     </td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
                     <td style="padding:12px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
@@ -322,6 +322,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial preview on page load
   updateWordTestPreview();
+
+  // Refresh Images Button
+  const refreshBtn = document.getElementById('refreshImagesBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      // Clear all cached images
+      Object.keys(imageCache).forEach(key => delete imageCache[key]);
+      // Re-render the worksheet preview (assuming you have a function for this)
+      updateWordTestPreview();
+    });
+  }
 });
 
 function scaleWorksheetPreview() {
@@ -396,11 +407,11 @@ function applyPreviewFontStyles(preview, font, fontSizeScale) {
   preview.style.fontSize = `${fontSizeScale}em`;
 }
 
-// After rendering the table with images:
+// Add click-to-refresh for images
 document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
   img.addEventListener('click', async function() {
     const word = this.getAttribute('data-word');
-    delete imageCache[word]; // Remove cached image
-    this.src = await getPixabayImage(word); // Fetch and show new image
+    delete imageCache[word];
+    this.src = await getPixabayImage(word);
   });
 });

@@ -62,34 +62,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!preview) return;
       preview.classList.remove('hidden');
       await new Promise(resolve => setTimeout(resolve, 100));
-      html2canvas(document.getElementById('worksheet-preview'), { useCORS: true }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'pt',
-          format: 'a4'
-        });
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-
-        let position = 0;
-        // If content is taller than one page, add pages as needed
-        while (position < imgHeight) {
-          pdf.addImage(
-            imgData,
-            'PNG',
-            0,
-            -position,
-            imgWidth,
-            imgHeight
-          );
-          position += pageHeight;
-          if (position < imgHeight) pdf.addPage();
-        }
-        pdf.save('worksheet.pdf');
+      // Use useCORS: true to allow external images
+      const canvas = await html2canvas(preview, { scale: 2, backgroundColor: "#fff", useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
       });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = canvas.height * (imgWidth / canvas.width);
+
+      let position = 0;
+      // Add pages if content is taller than one page
+      while (position < imgHeight) {
+        pdf.addImage(
+          imgData,
+          'PNG',
+          0,
+          -position,
+          imgWidth,
+          imgHeight
+        );
+        position += pageHeight;
+        if (position < imgHeight) pdf.addPage();
+      }
+      pdf.save('worksheet.pdf');
     };
   }
 
