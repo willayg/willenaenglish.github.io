@@ -68,6 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
           orientation: "portrait"
         });
         applyPreviewFontStyles(preview, font, fontSizeScale);
+
+        // Attach click handler for refresh
+        document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
+          img.addEventListener('click', async function() {
+            const word = this.getAttribute('data-word');
+            delete imageCache[word];
+            this.src = await getPixabayImage(word);
+          });
+        });
       });
       return;
     } else if (layout === "4col-images") {
@@ -103,13 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tr>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng ? (i + 1) : ""}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${leftImages[i] ? `<img src="${leftImages[i]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                    ${leftImages[i] ? `<img src="${leftImages[i]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">` : ""}
                   </td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd; border-right:2px solid #333;">${pair.kor}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng ? (i + 1 + half) : ""}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
-                    ${rightImages[i] ? `<img src="${rightImages[i]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ""}
+                    ${rightImages[i] ? `<img src="${rightImages[i]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:pointer;" class="pixabay-refresh-img" data-word="${right[i]?.eng}">` : ""}
                   </td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
                   <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
@@ -190,6 +199,15 @@ document.addEventListener('DOMContentLoaded', () => {
           orientation: "portrait"
         });
         applyPreviewFontStyles(preview, font, fontSizeScale);
+
+        // Attach click handler for refresh
+        document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
+          img.addEventListener('click', async function() {
+            const word = this.getAttribute('data-word');
+            delete imageCache[word];
+            this.src = await getPixabayImage(word);
+          });
+        });
       });
       return;
     } else {
@@ -400,7 +418,7 @@ async function buildWordTableWithPixabay(wordPairs) {
       <tbody>
         ${wordPairs.map((pair, i) => `
           <tr>
-            <td>${images[i] ? `<img src="${images[i]}" style="width:40px;height:40px;object-fit:cover;">` : ''}</td>
+            <td>${images[i] ? `<img src="${images[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">` : ''}</td>
             <td>${pair.eng}</td>
             <td>${pair.kor}</td>
           </tr>
@@ -414,12 +432,3 @@ function applyPreviewFontStyles(preview, font, fontSizeScale) {
   preview.style.fontFamily = font;
   preview.style.fontSize = `${fontSizeScale}em`;
 }
-
-// Add click-to-refresh for images
-document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
-  img.addEventListener('click', async function() {
-    const word = this.getAttribute('data-word');
-    delete imageCache[word];
-    this.src = await getPixabayImage(word);
-  });
-});

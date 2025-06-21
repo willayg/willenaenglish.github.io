@@ -58,32 +58,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const pdfBtn = document.getElementById('downloadWorksheetPdfBtn');
   if (pdfBtn) {
     pdfBtn.onclick = async () => {
-      const preview = document.querySelector('.worksheet-preview:not(.hidden)');
-      if (!preview) return;
+      const wrapper = document.getElementById('worksheetPreviewWrapper');
+      if (!wrapper) return;
 
-      // --- SCALE PREVIEW TO A4 ---
-      const originalWidth = preview.style.width;
-      const originalHeight = preview.style.height;
-      const originalTransform = preview.style.transform;
-      preview.style.width = "794px";
-      preview.style.height = "1123px";
-      preview.style.transform = "scale(1)";
+      // Ensure wrapper is visible and sized
+      wrapper.style.width = "794px";
+      wrapper.style.height = "1123px";
 
       await new Promise(resolve => setTimeout(resolve, 100));
-      const canvas = await html2canvas(preview, { scale: 2, backgroundColor: "#fff", useCORS: true });
+      const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#fff", useCORS: true });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new window.jspdf.jsPDF({
         orientation: 'portrait',
         unit: 'pt',
-        format: 'a4'
+        format: [794, 1123]
       });
       pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
       pdf.save('worksheet.pdf');
-
-      // --- RESTORE ORIGINAL STYLES ---
-      preview.style.width = originalWidth;
-      preview.style.height = originalHeight;
-      preview.style.transform = originalTransform;
     };
   }
 
