@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
           puzzle: tableHtml,
           orientation: "portrait"
         });
+        applyPreviewFontStyles(preview, font, fontSizeScale);
       });
       return;
     } else if (layout === "4col-images") {
@@ -123,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
           puzzle: tableHtml,
           orientation: "portrait"
         });
+        applyPreviewFontStyles(preview, font, fontSizeScale);
       });
       return;
     } else if (layout === "6col-images") {
@@ -142,14 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <table style="width:100%;border-collapse:collapse;">
               <thead>
                 <tr>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">#</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">Image</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">English</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">#</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">Image</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">English</th>
-                  <th style="text-align:left;padding:10px 8px;border-bottom:2px solid #333;">Korean</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">#</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">Image</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">English</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333; border-right:2px solid #333;">Korean</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">#</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">Image</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">English</th>
+                  <th style="text-align:left;padding:9px 8px;border-bottom:2px solid #333;">Korean</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
           puzzle: tableHtml,
           orientation: "portrait"
         });
+        applyPreviewFontStyles(preview, font, fontSizeScale);
       });
       return;
     } else {
@@ -214,10 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
       puzzle,
       orientation: "portrait"
     });
-
-    // Apply font to worksheet preview
-    preview.style.fontFamily = font;
-    preview.style.fontSize = `${fontSizeScale}em`;
+    applyPreviewFontStyles(preview, font, fontSizeScale);
 
     // Optionally, scale the preview
     if (typeof scaleWorksheetPreview === "function") scaleWorksheetPreview();
@@ -385,4 +385,9 @@ async function buildWordTableWithPixabay(wordPairs) {
       </tbody>
     </table>
   `;
+}
+
+function applyPreviewFontStyles(preview, font, fontSizeScale) {
+  preview.style.fontFamily = font;
+  preview.style.fontSize = `${fontSizeScale}em`;
 }
