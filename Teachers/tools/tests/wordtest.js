@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
     const fontSizeScale = parseFloat(document.getElementById('wordTestFontSize')?.value || "1");
     const layout = document.getElementById('wordTestLayout')?.value || "default";
+    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "0", 10);
+    const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
+    const instructions = "";
     if (!words || !preview) {
       preview.innerHTML = "<div class='text-gray-400'>Enter or generate some words to preview worksheet.</div>";
       return;
@@ -204,10 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
 
-    // Use your worksheet template
-    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "0", 10);
-    const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
-    const instructions = "";
     preview.innerHTML = template.render({
       title,
       instructions,
