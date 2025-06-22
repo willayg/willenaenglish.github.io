@@ -152,9 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
       while (right.length < left.length) {
         right.push({ eng: "", kor: "" });
       }
-      // Fetch images for all words (left and right)
-      const leftImages = await Promise.all(left.map(pair => getPixabayImage(pair.eng)));
-      const rightImages = await Promise.all(right.map(pair => getPixabayImage(pair.eng)));
+      // Use original wordPairs for images (not maskedPairs)
+      const leftImages = await Promise.all(wordPairs.slice(0, half).map(pair => getPixabayImage(pair.eng)));
+      const rightImages = await Promise.all(wordPairs.slice(half).map(pair => getPixabayImage(pair.eng)));
 
       const tableHtml = `
         <table style="width:100%;border-collapse:collapse;">
@@ -162,10 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <tr>
               <th style="padding:8px 8px;border-bottom:2px solid #333;">#</th>
               <th style="padding:8px 8px;border-bottom:2px solid #333;">Image</th>
-              <th style="padding:8px 8px;border-bottom:2px solid #333;">Word</th>
+              <th style="padding:8px 8px;border-bottom:2px solid #333;">English</th>
+              <th style="padding:8px 8px;border-bottom:2px solid #333;">Korean</th>
               <th style="padding:8px 8px;border-bottom:2px solid #333;">#</th>
               <th style="padding:8px 8px;border-bottom:2px solid #333;">Image</th>
-              <th style="padding:8px 8px;border-bottom:2px solid #333;">Word</th>
+              <th style="padding:8px 8px;border-bottom:2px solid #333;">English</th>
+              <th style="padding:8px 8px;border-bottom:2px solid #333;">Korean</th>
             </tr>
           </thead>
           <tbody>
@@ -174,17 +176,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1}</td>
                 <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
                   ${leftImages[i] && leftImages[i].startsWith('http')
-                    ? `<img src="${leftImages[i]}" style="width:55px;height:55px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">`
+                    ? `<img src="${leftImages[i]}" style="width:55px;height:55px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${wordPairs[i].eng}">`
                     : (leftImages[i] ? `<span style="font-size:2em;">${leftImages[i]}</span>` : '')}
                 </td>
                 <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
-                <td style="padding:16px 8px;border-bottom:1px solid #ddd;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
-                <td style="padding:16px 8px;border-bottom:1px solid #ddd;">
+                <td class="toggle-word" data-index="${i}" data-lang="kor" style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
+                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
+                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
                   ${rightImages[i] && rightImages[i].startsWith('http')
-                    ? `<img src="${rightImages[i]}" style="width:55px;height:55px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${right[i]?.eng}">`
+                    ? `<img src="${rightImages[i]}" style="width:55px;height:55px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${wordPairs[i + half]?.eng}">`
                     : (rightImages[i] ? `<span style="font-size:2em;">${rightImages[i]}</span>` : '')}
                 </td>
                 <td class="toggle-word" data-index="${i + half}" data-lang="eng" style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
+                <td class="toggle-word" data-index="${i + half}" data-lang="kor" style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.kor || ""}</td>
               </tr>
             `).join('')}
           </tbody>
