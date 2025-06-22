@@ -302,19 +302,17 @@ const worksheetTemplates = [
 // Make available globally
 window.worksheetTemplates = worksheetTemplates;
 
-// Template selection and rendering logic
+// Only run template preview logic if on the Wordsearch page
 const templateSelect = document.getElementById("wordsearchTemplate");
 const previewArea = document.getElementById("templatePreview");
 
-function renderTemplate() {
-  const selectedOption = templateSelect.options[templateSelect.selectedIndex];
-  const template = worksheetTemplates[selectedOption.value];
-  previewArea.innerHTML = template.render({ title: "Sample Title", instructions: "Sample instructions.", puzzle: "Sample puzzle content." });
+if (templateSelect && previewArea) {
+  function renderTemplate() {
+    const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+    const template = worksheetTemplates[selectedOption.value];
+    previewArea.innerHTML = template.render({ title: "Sample Title", instructions: "Sample instructions.", puzzle: "Sample puzzle content." });
+  }
+  templateSelect.addEventListener("change", renderTemplate);
+  renderTemplate();
 }
-
-// Event listener for template selection
-templateSelect.addEventListener("change", renderTemplate);
-
-// Initial render
-renderTemplate();
 

@@ -245,3 +245,23 @@ body, main {
   min-width: 120px;
   flex: 1 1 0;
 }
+
+/* Ensure worksheet tables align perfectly */
+.worksheet-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.worksheet-preview th, .worksheet-preview td {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  box-sizing: border-box;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+}
+.worksheet-preview th {
+  border-bottom: 2px solid #333;
+  background: #fafaff;
+}
