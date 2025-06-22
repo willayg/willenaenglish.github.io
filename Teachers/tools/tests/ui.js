@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
     const instructions = "";
     const testMode = document.getElementById('wordTestMode')?.value || "none";
-    const imageType = document.getElementById('wordTestImageType')?.value || "all";
     if (!words || !preview) {
       preview.innerHTML = "<div class='text-gray-400'>Enter or generate some words to preview worksheet.</div>";
       return;
@@ -155,14 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const leftImages = await Promise.all(left.map(pair => getPixabayImage(pair.eng)));
       const rightImages = await Promise.all(right.map(pair => getPixabayImage(pair.eng)));
 
-      function getImageCycleArray(word, imageUrl) {
-        const emoticons = getEmoticonsForWord(word);
-        if (imageType === "emoticon") return emoticons;
-        if (imageType === "photo") return [imageUrl];
-        // "all": emoticons first, then image if available
-        return emoticons.concat(imageUrl && imageUrl.startsWith('http') ? [imageUrl] : []);
-      }
-
       const tableHtml = `
         <table style="width:100%;border-collapse:collapse;">
           <thead>
@@ -176,44 +167,24 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           </thead>
           <tbody>
-            ${left.map((pair, i) => {
-              const leftCycle = getImageCycleArray(pair.eng, leftImages[i]);
-              const rightCycle = getImageCycleArray(right[i]?.eng, rightImages[i]);
-              return `
-                <tr>
-                  <td style="padding:18px 8px; min-height:48px;">${i + 1}</td>
-                  <td style="padding:18px 8px; min-height:48px;">
-                    <span class="cycle-img" 
-                      data-word="${pair.eng}" 
-                      data-index="${i}" 
-                      data-side="left"
-                      data-cycle='${JSON.stringify(leftCycle)}'
-                      data-cycle-pos="0"
-                      style="font-size:2em;cursor:pointer;">
-                      ${leftCycle[0] && leftCycle[0].startsWith("http")
-                        ? `<img src="${leftCycle[0]}" style="width:40px;height:40px;object-fit:cover;">`
-                        : leftCycle[0] || ""}
-                    </span>
-                  </td>
-                  <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:18px 8px; min-height:48px;">${pair.eng}</td>
-                  <td style="padding:18px 8px; min-height:48px;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
-                  <td style="padding:18px 8px; min-height:48px;">
-                    <span class="cycle-img" 
-                      data-word="${right[i]?.eng}" 
-                      data-index="${i}" 
-                      data-side="right"
-                      data-cycle='${JSON.stringify(rightCycle)}'
-                      data-cycle-pos="0"
-                      style="font-size:2em;cursor:pointer;">
-                      ${rightCycle[0] && rightCycle[0].startsWith("http")
-                        ? `<img src="${rightCycle[0]}" style="width:40px;height:40px;object-fit:cover;">`
-                        : rightCycle[0] || ""}
-                    </span>
-                  </td>
-                  <td class="toggle-word" data-index="${i + half}" data-lang="eng" style="padding:18px 8px; min-height:48px;">${right[i]?.eng || ""}</td>
-                </tr>
-              `;
-            }).join('')}
+            ${left.map((pair, i) => `
+              <tr>
+                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1}</td>
+                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                  ${leftImages[i] && leftImages[i].startsWith('http')
+                    ? `<img src="${leftImages[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">`
+                    : (leftImages[i] ? `<span style="font-size:2em;">${leftImages[i]}</span>` : '')}
+                </td>
+                <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
+                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                  ${rightImages[i] && rightImages[i].startsWith('http')
+                    ? `<img src="${rightImages[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${right[i]?.eng}">`
+                    : (rightImages[i] ? `<span style="font-size:2em;">${rightImages[i]}</span>` : '')}
+                </td>
+                <td class="toggle-word" data-index="${i + half}" data-lang="eng" style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
       `;
@@ -225,19 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
 
-      // Image/emoticon cycler
-      document.querySelectorAll('.cycle-img').forEach(span => {
-        span.addEventListener('click', function() {
-          let cycle = JSON.parse(this.getAttribute('data-cycle'));
-          let pos = parseInt(this.getAttribute('data-cycle-pos'), 10) || 0;
-          pos = (pos + 1) % cycle.length;
-          this.setAttribute('data-cycle-pos', pos);
-          // Update display
-          if (cycle[pos] && cycle[pos].startsWith("http")) {
-            this.innerHTML = `<img src="${cycle[pos]}" style="width:40px;height:40px;object-fit:cover;">`;
-          } else {
-            this.innerHTML = cycle[pos] || "";
-          }
+      // Attach click handler for refresh
+      document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
+        img.addEventListener('click', async function() {
+          const word = this.getAttribute('data-word');
+          this.src = await getPixabayImage(word, true);
         });
       });
       return;
@@ -319,11 +282,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // Scale on window resize
   window.addEventListener('resize', scaleWorksheetPreview);
 });
-
-function getEmoticon(word) {
-  if (/apple/i.test(word)) return "🍎";
-  if (/dog/i.test(word)) return "🐶";
-  if (/cat/i.test(word)) return "🐱";
-  // ...add more if you want...
-  return "⭐"; // fallback
-}
