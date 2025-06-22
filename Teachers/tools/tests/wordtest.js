@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "0", 10);
     const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
     const instructions = "";
+    const testMode = document.getElementById('wordTestMode')?.value || "none";
     if (!words || !preview) {
       preview.innerHTML = "<div class='text-gray-400'>Enter or generate some words to preview worksheet.</div>";
       return;
@@ -21,12 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return { eng: eng || '', kor: kor || '' };
     }).filter(pair => pair.eng && pair.kor);
 
+    // Mask words based on test mode
+    const maskedPairs = maskWordPairs(wordPairs, testMode);
+
     let puzzle = "";
 
     if (layout === "4col") {
-      const half = Math.ceil(wordPairs.length / 2);
-      const left = wordPairs.slice(0, half);
-      const right = wordPairs.slice(half);
+      const half = Math.ceil(maskedPairs.length / 2);
+      const left = maskedPairs.slice(0, half);
+      const right = maskedPairs.slice(half);
 
       while (left.length < right.length) left.push({ eng: "", kor: "" });
       while (right.length < left.length) right.push({ eng: "", kor: "" });
@@ -60,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     } else if (layout === "images") {
-      buildWordTableWithPixabay(wordPairs).then(tableHtml => {
+      buildWordTableWithPixabay(maskedPairs).then(tableHtml => {
         preview.innerHTML = template.render({
           title,
           instructions,
@@ -80,17 +84,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     } else if (layout === "4col-images") {
       // Split wordPairs in half for left/right columns
-      const half = Math.ceil(wordPairs.length / 2);
-      const left = wordPairs.slice(0, half);
-      const right = wordPairs.slice(half);
+      const half = Math.ceil(maskedPairs.length / 2);
+      const left = maskedPairs.slice(0, half);
+      const right = maskedPairs.slice(half);
 
       while (left.length < right.length) left.push({ eng: "", kor: "" });
       while (right.length < left.length) right.push({ eng: "", kor: "" });
 
       // Fetch images for both left and right columns
       Promise.all([
-        Promise.all(left.map(pair => getOpenBayImage(pair.eng))),
-        Promise.all(right.map(pair => getOpenBayImage(pair.eng)))
+        Promise.all(left.map(pair => getPixabayImage(pair.eng))),
+        Promise.all(right.map(pair => getPixabayImage(pair.eng)))
       ]).then(([leftImages, rightImages]) => {
         const tableHtml = `
           <table style="width:100%;border-collapse:collapse;">
@@ -143,9 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       return;
     } else if (layout === "6col-images") {
-      const half = Math.ceil(wordPairs.length / 2);
-      const left = wordPairs.slice(0, half);
-      const right = wordPairs.slice(half);
+      const half = Math.ceil(maskedPairs.length / 2);
+      const left = maskedPairs.slice(0, half);
+      const right = maskedPairs.slice(half);
 
       while (left.length < right.length) left.push({ eng: "", kor: "" });
       while (right.length < left.length) right.push({ eng: "", kor: "" });
@@ -221,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </tr>
             </thead>
             <tbody>
-              ${wordPairs.map((pair, i) => `
+              ${maskedPairs.map((pair, i) => `
                 <tr>
                   <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${i + 1}</td>
                   <td style="padding:8px 12px;border-bottom:1px solid #ddd;">${pair.eng}</td>
@@ -297,7 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'wordTestFont',
     'wordTestFontSize',
     'wordTestLayout',
-    'wordTestTemplate' // <-- add this line
+    'wordTestTemplate',
+    'wordTestMode' // <-- add this
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -387,46 +392,26 @@ window.addEventListener('resize', scaleWorksheetPreview);
 // --- At the top, change imageCache to store arrays:
 const imageCache = {}; // { word: { images: [...], index: 0 } }
 
-async function getOpenBayImage(query, next = false) {
+/*async function getOpenBayImage(query, next = false) {
   if (!query) return "";
   if (!imageCache[query] || next) {
-    const res = await fetch(`/.netlify/functions/openbay?q=${encodeURIComponent(query)}`);
+    // Get selected image type from dropdown
+    const imageType = document.getElementById('pixabayImageType')?.value || "all";
+    // Randomize page for more variety
+    const page = Math.floor(Math.random() * 5) + 1;
+    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5&page=${page}`);
     const data = await res.json();
     imageCache[query] = { images: data.images || [], index: 0 };
   }
-  // Cycle through images if next==true
+  // Pick a random image if next==true, else use index 0
   if (next && imageCache[query].images.length > 1) {
     imageCache[query].index = (imageCache[query].index + 1) % imageCache[query].images.length;
   }
   return imageCache[query].images[imageCache[query].index] || "";
-}
+}*/
 
 async function buildWordTableWithPixabay(wordPairs) {
-  const images = await Promise.all(wordPairs.map(pair => getOpenBayImage(pair.eng)));
-  return `
-    <table>
-      <thead>
-        <tr>
-          <th>Image</th>
-          <th>English</th>
-          <th>Korean</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${wordPairs.map((pair, i) => `
-          <tr>
-            <td>${images[i] ? `<img src="${images[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">` : ''}</td>
-            <td>${pair.eng}</td>
-            <td>${pair.kor}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-}
-
-async function buildWordTableWithImages(wordPairs) {
-  const images = await Promise.all(wordPairs.map(pair => getOpenBayImage(pair.eng)));
+  const images = await Promise.all(wordPairs.map(pair => getPixabayImage(pair.eng)));
   return `
     <table>
       <thead>
@@ -452,4 +437,19 @@ async function buildWordTableWithImages(wordPairs) {
 function applyPreviewFontStyles(preview, font, fontSizeScale) {
   preview.style.fontFamily = font;
   preview.style.fontSize = `${fontSizeScale}em`;
+}
+
+function maskWordPairs(wordPairs, testMode) {
+  if (testMode === "none") return wordPairs;
+  return wordPairs.map(pair => {
+    if (testMode === "hide-eng") {
+      return { ...pair, eng: "" };
+    } else if (testMode === "hide-kor") {
+      return { ...pair, kor: "" };
+    } else if (testMode === "random") {
+      if (Math.random() < 0.5) return { ...pair, eng: "" };
+      else return { ...pair, kor: "" };
+    }
+    return pair;
+  });
 }
