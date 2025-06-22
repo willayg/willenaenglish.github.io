@@ -68,7 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ${maskedPairs.map((pair, i) => `
               <tr>
                 <td style="padding:8px;border-bottom:1px solid #ddd;">${i + 1}</td>
-                <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
+                <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px;border-bottom:1px solid #ddd;">
+                  ${pair.eng ? pair.eng : ""}
+                </td>
                 <td class="toggle-word" data-index="${i}" data-lang="kor" style="padding:8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
               </tr>
             `).join('')}
@@ -172,14 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1}</td>
                 <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
                   ${leftImages[i] && leftImages[i].startsWith('http')
-                    ? `<img src="${leftImages[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">`
+                    ? `<img src="${leftImages[i]}" style="width:55px;height:55px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${pair.eng}">`
                     : (leftImages[i] ? `<span style="font-size:2em;">${leftImages[i]}</span>` : '')}
                 </td>
                 <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px 8px;border-bottom:1px solid #ddd;">${pair.eng}</td>
-                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
-                <td style="padding:8px 8px;border-bottom:1px solid #ddd;">
+                <td style="padding:16px 8px;border-bottom:1px solid #ddd;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
+                <td style="padding:16px 8px;border-bottom:1px solid #ddd;">
                   ${rightImages[i] && rightImages[i].startsWith('http')
-                    ? `<img src="${rightImages[i]}" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${right[i]?.eng}">`
+                    ? `<img src="${rightImages[i]}" style="width:55px;height:55px;object-fit:cover;cursor:pointer;" class="pixabay-refresh-img" data-word="${right[i]?.eng}">`
                     : (rightImages[i] ? `<span style="font-size:2em;">${rightImages[i]}</span>` : '')}
                 </td>
                 <td class="toggle-word" data-index="${i + half}" data-lang="eng" style="padding:8px 8px;border-bottom:1px solid #ddd;">${right[i]?.eng || ""}</td>

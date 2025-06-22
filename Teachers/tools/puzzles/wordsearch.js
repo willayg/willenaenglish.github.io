@@ -59,13 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
         width: 100%;
       ">
         <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:center;">
-          <table class="wordsearch-table ${fontClass}">
-            ${grid.map(row => `
-              <tr>
-                ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
-              </tr>
-            `).join('')}
-          </table>
+          <div class="wordsearch-container">
+            <table class="wordsearch-table ${fontClass}">
+              ${grid.map(row => `
+                <tr>
+                  ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </table>
+          </div>
         </div>
       </div>
     `;
@@ -360,13 +362,15 @@ document.addEventListener('DOMContentLoaded', () => {
         width: 100%;
       ">
         <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:center;">
-          <table class="wordsearch-table ${fontClass}">
-            ${grid.map(row => `
-              <tr>
-                ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
-              </tr>
-            `).join('')}
-          </table>
+          <div class="wordsearch-container">
+            <table class="wordsearch-table ${fontClass}">
+              ${grid.map(row => `
+                <tr>
+                  ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </table>
+          </div>
         </div>
       </div>
     `;
