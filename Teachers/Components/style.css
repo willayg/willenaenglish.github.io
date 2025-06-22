@@ -146,11 +146,13 @@ body, main {
   height: 32px;
   text-align: center;
   vertical-align: middle;
-  border: 1px solid #222;
+  border: 1.5px solid #222;
+  background: #fff;
   padding: 0;
   box-sizing: border-box;
-  font-size: 1.04rem; /* 20% smaller than 1.3rem */
-  color: #2e2b3f !important;
+  font-size: 1.1rem;      /* Adjusted for better fit */
+  line-height: 32px;      /* Exactly matches cell height */
+  margin: 0;              /* Ensure no margin */
 }
 
 #wordsearchMaker {
@@ -264,4 +266,18 @@ body, main {
 .worksheet-preview th {
   border-bottom: 2px solid #333;
   background: #fafaff;
+}
+
+.wordsearch-container {
+  display: block;
+  background: #fafaff;
+  border: 2.5px solid #b6aee0;
+  border-radius: 8px;
+  padding: 24px 24px 18px 24px;
+  margin: 32px auto;           /* Center horizontally with margin */
+  box-shadow: 0 2px 8px rgba(46,43,63,0.06);
+  max-width: max-content;      /* Only as wide as the content */
+}
+.wordsearch-table {
+  margin: 0 auto;              /* Center the table inside the container */
 }
