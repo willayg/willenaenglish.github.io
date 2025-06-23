@@ -228,6 +228,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Example save function
+  async function saveWorksheet(worksheetData) {
+    const { data, error } = await supabase
+      .from('worksheets')
+      .insert([worksheetData]);
+    if (error) {
+      console.error('Error saving worksheet:', error);
+      // Show error to user
+    } else {
+      console.log('Worksheet saved:', data);
+      // Show success to user
+    }
+  }
+
   // Button still works (for users who expect it)
   const makeWordListBtn = document.getElementById('makeWordListBtn');
   if (makeWordListBtn) {

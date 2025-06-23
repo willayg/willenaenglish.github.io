@@ -8,9 +8,18 @@ export async function extractWordsWithAI(passage, numWords = 10) {
         model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: 'You are a helpful teaching assistant.' },
-          { role: 'user', content: `Extract the ${numWords} most important English vocabulary words from this passage. For each word, provide the Korean translation, formatted as: english, korean (one per line, no numbering):\n\n${passage}` }
+          { role: 'user', content: `
+Extract exactly ${numWords} important English words and short phrases (not just single words) that are relevant and meaningful in the context of the following passage.
+For each, provide the English word or phrase, then a comma, then the Korean translation.
+Return each pair on a new line in the format: english, korean
+Do not stop until you have listed exactly ${numWords} items, unless there are not enough in the passage.
+Do not summarize or group items. List each word or phrase separately, one per line, until you reach ${numWords}.
+
+Passage:
+${passage}
+` }
         ],
-        max_tokens: 200
+        max_tokens: 1500 // Large enough for 40+ pairs
       }
     })
   });
