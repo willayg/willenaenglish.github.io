@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Worksheet Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-6">
+  <h2 class="text-xl font-bold mb-4">Worksheet Manager</h2>
+  <div id="managerContent">
+    <!-- Dynamically show save/search/load UI here -->
+    <div id="saveUI" style="display:none;">
+      <form id="saveWorksheetForm" class="space-y-2">
+        <input type="text" id="worksheetTitle" placeholder="Worksheet Title" class="border p-1 w-full" required>
+        <input type="text" id="worksheetBook" placeholder="Book" class="border p-1 w-full">
+        <input type="text" id="worksheetUnit" placeholder="Unit" class="border p-1 w-full">
+        <input type="text" id="worksheetLanguagePoint" placeholder="Language Point" class="border p-1 w-full">
+        <textarea id="worksheetNotes" placeholder="Notes (optional)" class="border p-1 w-full"></textarea>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Save</button>
+      </form>
+    </div>
+    <div id="loadUI" style="display:none;">
+      <div class="flex flex-wrap gap-2 mb-2">
+        <input type="text" id="searchQuery" placeholder="Title..." class="border p-1 flex-1 min-w-[120px]">
+        <input type="text" id="searchBook" placeholder="Book..." class="border p-1 flex-1 min-w-[100px]">
+        <input type="text" id="searchUnit" placeholder="Unit..." class="border p-1 flex-1 min-w-[80px]">
+        <select id="searchType" class="border p-1 flex-1 min-w-[120px]">
+          <option value="">All Types</option>
+          <option value="wordsearch">Wordsearch</option>
+          <option value="wordtest">Word Test</option>
+          <!-- Add more types as needed -->
+        </select>
+        <input type="date" id="searchDateFrom" class="border p-1">
+        <input type="date" id="searchDateTo" class="border p-1">
+        <input type="text" id="searchLanguagePoint" placeholder="Language Point..." class="border p-1 flex-1 min-w-[100px]">
+        <input type="text" id="searchCreatedBy" placeholder="Created By..." class="border p-1 flex-1 min-w-[100px]">
+        <input type="text" id="searchTags" placeholder="Tags..." class="border p-1 flex-1 min-w-[100px]">
+      </div>
+      <div id="worksheetList" style="max-height:300px;overflow-y:auto;"></div>
+    </div>
+  </div>
+  <!-- Add Save and Load buttons -->
+  <button id="saveBtn">Save Worksheet</button>
+  <button id="loadBtn">Load Worksheet</button>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+const mode = params.get('mode'); // 'save' or 'load'
+
+if (mode === 'save') {
+  document.getElementById('saveBtn').style.display = '';
+  document.getElementById('loadBtn').style.display = 'none';
+} else if (mode === 'load') {
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('loadBtn').style.display = '';
+}
+
+    document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
+    document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
+
+    document.getElementById('saveWorksheetForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const worksheet = window.opener.getCurrentWorksheetData();
+  worksheet.title = document.getElementById('worksheetTitle').value;
+  worksheet.notes = document.getElementById('worksheetNotes').value;
+  worksheet.book = document.getElementById('worksheetBook').value;
+  worksheet.unit = document.getElementById('worksheetUnit').value;
+  worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
+
+  // Defensive: convert to array if it's a string
+  if (typeof worksheet.words === "string") {
+    worksheet.words = worksheet.words.split('\n').filter(w => w.trim() !== "");
+  }
+  worksheet.words = Array.isArray(worksheet.words)
+    ? worksheet.words.map(w => w.trim()).filter(w => w !== "")
+    : (typeof worksheet.words === "string"
+        ? worksheet.words.split('\n').map(w => w.trim()).filter(w => w !== "")
+        : []);
+
+  // Save
+  const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(worksheet)
+  });
+  const result = await res.json();
+  if (result.success) {
+    alert('Worksheet saved!');
+    window.close();
+  } else {
+    alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
+  }
+};
+
+    if (mode === 'load') {
+  const searchBox = document.getElementById('searchQuery');
+  const listDiv = document.getElementById('worksheetList');
+
+  // Function to render worksheet buttons
+  function renderList(data) {
+  const listDiv = document.getElementById('worksheetList');
+  listDiv.innerHTML = '';
+  if (!data.length) {
+    listDiv.innerHTML = '<div class="text-gray-400 p-2">No worksheets found.</div>';
+    return;
+  }
+
+  // Table header
+  const table = document.createElement('table');
+  table.className = 'min-w-full text-sm border';
+  table.innerHTML = `
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="px-2 py-1 border">Title</th>
+        <th class="px-2 py-1 border">Created</th>
+        <th class="px-2 py-1 border">Type</th>
+        <th class="px-2 py-1 border">Book</th>
+        <th class="px-2 py-1 border">Unit</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  // Table rows
+  data.forEach(ws => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-blue-50 cursor-pointer';
+    tr.onclick = () => {
+      window.opener.loadWorksheet(ws);
+      window.close();
+    };
+    tr.innerHTML = `
+      <td class="px-2 py-1 border">${ws.title || ''}</td>
+      <td class="px-2 py-1 border">${ws.created_at ? ws.created_at.split('T')[0] : ''}</td>
+      <td class="px-2 py-1 border">${ws.worksheet_type || ''}</td>
+      <td class="px-2 py-1 border">${ws.book || ''}</td>
+      <td class="px-2 py-1 border">${ws.unit || ''}</td>
+    `;
+    table.querySelector('tbody').appendChild(tr);
+  });
+
+  listDiv.appendChild(table);
+}
+
+  // Fetch and show all worksheets on load
+  let allWorksheets = [];
+  fetch('/.netlify/functions/supabase_proxy/list_worksheets')
+    .then(res => res.json())
+    .then(result => {
+      console.log('Loaded worksheets:', result);
+      if (result.success) {
+        allWorksheets = result.data;
+        renderList(allWorksheets);
+      }
+    });
+
+  // Search function
+  function doSearch() {
+  const q = document.getElementById('searchQuery').value.trim().toLowerCase();
+  const book = document.getElementById('searchBook').value.trim().toLowerCase();
+  const unit = document.getElementById('searchUnit').value.trim().toLowerCase();
+  const type = document.getElementById('searchType').value;
+  const dateFrom = document.getElementById('searchDateFrom').value;
+  const dateTo = document.getElementById('searchDateTo').value;
+  const languagePoint = document.getElementById('searchLanguagePoint').value.trim().toLowerCase();
+  const createdBy = document.getElementById('searchCreatedBy').value.trim().toLowerCase();
+  const tags = document.getElementById('searchTags').value.trim().toLowerCase();
+
+  let filtered = allWorksheets.filter(ws => {
+    let match = true;
+    if (q && !(ws.title || '').toLowerCase().includes(q)) match = false;
+    if (book && !(ws.book || '').toLowerCase().includes(book)) match = false;
+    if (unit && !(ws.unit || '').toLowerCase().includes(unit)) match = false;
+    if (type && ws.worksheet_type !== type) match = false;
+    if (dateFrom && (!ws.created_at || ws.created_at < dateFrom)) match = false;
+    if (dateTo && (!ws.created_at || ws.created_at > dateTo)) match = false;
+    if (languagePoint && !(ws.language_point || '').toLowerCase().includes(languagePoint)) match = false;
+    if (createdBy && !(ws.created_by || '').toLowerCase().includes(createdBy)) match = false;
+    if (tags && !(ws.tags || '').toLowerCase().includes(tags)) match = false;
+    return match;
+  });
+  renderList(filtered);
+}
+
+  // Trigger search on input or Enter
+  searchBox.addEventListener('input', doSearch);
+  searchBox.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      doSearch();
+    }
+  });
+
+  ['searchQuery','searchBook','searchUnit','searchType','searchDateFrom','searchDateTo','searchLanguagePoint','searchCreatedBy','searchTags'].forEach(id => {
+  document.getElementById(id).addEventListener('input', doSearch);
+});
+
+}
+
+    // Auto-complete the title field with the worksheet title from the main window
+    if (mode === 'save' && window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
+      const worksheet = window.opener.getCurrentWorksheetData();
+      if (worksheet && worksheet.title) {
+        document.getElementById('worksheetTitle').value = worksheet.title;
+      }
+    }
+
+    function getCurrentWorksheetData() {
+  // Detect which panel is active
+  if (!document.querySelector('.tool-panel:not(.hidden)')) return {};
+
+  if (!document.getElementById('panel-wordtest').classList.contains('hidden')) {
+    // Word Test panel
+    return {
+      worksheet_type: 'wordtest',
+      title: document.getElementById('wordTestTitle')?.value || "",
+      passage_text: document.getElementById('wordTestPassage')?.value || "",
+      words: document.getElementById('wordTestWords')?.value
+  ? document.getElementById('wordTestWords').value.split('\n').filter(w => w.trim())
+  : [],
+      // ...other Word Test fields
+    };
+  } else if (!document.getElementById('panel-wordsearch').classList.contains('hidden')) {
+    // Wordsearch panel
+    return {
+      worksheet_type: 'wordsearch',
+      title: document.getElementById('wordsearchTitle')?.value || "",
+      words: document.getElementById('wordsearchWords')?.value.split('\n').filter(w => w.trim()) || [],
+      grid_size: document.getElementById('wordsearchGridSize')?.value || 12,
+      // ...other Wordsearch fields
+    };
+  }
+  // Add more panels as needed...
+
+  return {};
+}
+window.getCurrentWorksheetData = getCurrentWorksheetData;
+
+async function saveWorksheet() {
+  if (window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
+    const worksheet = window.opener.getCurrentWorksheetData();
+    console.log('Saving worksheet:', worksheet); // Debug: See what is being sent
+
+    const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(worksheet)
+    });
+    const result = await res.json();
+    if (result.error) {
+      alert('Error saving worksheet: ' + result.error);
+    } else {
+      alert('Worksheet saved!');
+      window.close();
+    }
+  } else {
+    alert('Cannot access worksheet data from the main window.');
+  }
+}
+
+// Call saveWorksheet() when the manager loads, or attach to a Save button
+
+document.getElementById('saveBtn').onclick = saveWorksheet;
+document.getElementById('loadBtn').onclick = loadWorksheet;
+  </script>
+</body>
+</html>

@@ -71,17 +71,81 @@ exports.handler = async (event) => {
         statusCode: 200,
         body: JSON.stringify(filesWithUrls)
       };
+    } else if (event.path.endsWith('/save_worksheet') && event.httpMethod === 'POST') {
+      try {
+        const worksheet = JSON.parse(event.body);
+        console.log('worksheet.words:', worksheet.words, typeof worksheet.words); // <--- Add this line
+
+        // Always normalize worksheet.words to an array of trimmed strings
+        if (typeof worksheet.words === "string") {
+          worksheet.words = worksheet.words
+            .split('\n')
+            .map(w => w.trim())
+            .filter(w => w.length > 0);
+        } else if (Array.isArray(worksheet.words)) {
+          worksheet.words = worksheet.words
+            .map(w => typeof w === "string" ? w.trim() : "")
+            .filter(w => w.length > 0);
+        } else {
+          worksheet.words = [];
+        }
+
+        // If language_point should be an array:
+        if ('language_point' in worksheet) {
+          if (typeof worksheet.language_point === "string") {
+            worksheet.language_point = worksheet.language_point.trim() !== ""
+              ? [worksheet.language_point.trim()]
+              : [];
+          } else if (!Array.isArray(worksheet.language_point)) {
+            worksheet.language_point = [];
+          }
+        }
+
+        const { data, error } = await supabase
+          .from('worksheets')
+          .insert([worksheet]);
+        if (error) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({ success: false, error: error.message })
+          };
+        }
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ success: true, data })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    } else if (event.path.endsWith('/list_worksheets') && event.httpMethod === 'GET') {
+      try {
+        const { data, error } = await supabase
+          .from('worksheets')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) {
+          return {
+            statusCode: 500,
+            body: JSON.stringify({ success: false, error: error.message })
+          };
+        }
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ success: true, data })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
     } else {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: 'Method Not Allowed' }),
-      };
+      return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }
-  } catch (error) {
-    console.error('Upload error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message || String(error) }),
-    };
+  } catch (err) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
   }
 };

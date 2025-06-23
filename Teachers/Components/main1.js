@@ -118,10 +118,100 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Generate Wordsearch
-  document.getElementById('generateWordsearch').onclick = () => {
-    console.log('GenerateWordsearch CLICKED!');
-    // Your existing code for generating wordsearch goes here
+  function getCurrentWorksheetData() {
+    // --- WORD TEST ---
+    if (!document.getElementById('panel-tests').classList.contains('hidden')) {
+      return {
+        worksheet_type: 'wordtest',
+        title: document.getElementById('wordTestTitle')?.value || "",
+        passage_text: document.getElementById('wordTestPassage')?.value || "",
+        words: document.getElementById('wordTestWords')?.value
+          ? document.getElementById('wordTestWords').value.split('\n').map(w => w.trim()).filter(w => w)
+          : [],
+        settings: {
+          font: document.getElementById('wordTestFont')?.value || "",
+          font_size: document.getElementById('wordTestFontSize')?.value || "",
+          layout: document.getElementById('wordTestLayout')?.value || "",
+          template: document.getElementById('wordTestTemplate')?.value || "",
+          num_words: document.getElementById('wordTestNumWords')?.value || "",
+          image_type: document.getElementById('pixabayImageType')?.value || "",
+          test_mode: document.getElementById('wordTestMode')?.value || ""
+        }
+      };
+    }
+    // --- WORDSEARCH ---
+    if (!document.getElementById('panel-wordsearch').classList.contains('hidden')) {
+      return {
+        worksheet_type: 'wordsearch',
+        title: document.getElementById('wordsearchTitle')?.value || "",
+        words: document.getElementById('wordsearchWords')?.value
+          ? document.getElementById('wordsearchWords').value.split('\n').map(w => w.trim()).filter(w => w)
+          : [],
+        settings: {
+          grid_size: document.getElementById('wordsearchGridSize')?.value || 12,
+          letter_case: document.getElementById('wordsearchCase')?.value || "upper",
+          font: document.getElementById('wordsearchFont')?.value || "sans",
+          puzzle_size: document.getElementById('wordsearchSize')?.value || "1",
+          template: document.getElementById('wordsearchTemplate')?.value || "0",
+          hints_alignment: document.getElementById('wordsearchHintsAlign')?.value || "top"
+        }
+      };
+    }
+    return {};
+  }
+  window.getCurrentWorksheetData = getCurrentWorksheetData;
+
+  if (window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
+    const worksheet = window.opener.getCurrentWorksheetData();
+    // ... continue
+  } else {
+    alert("Cannot access worksheet data from the main window.");
+  }
+
+  window.loadWorksheet = function(worksheet) {
+    if (worksheet.worksheet_type === 'wordsearch') {
+      // Activate the wordsearch panel
+      document.querySelectorAll('.tool-panel').forEach(panel => panel.classList.add('hidden'));
+      document.getElementById('panel-wordsearch').classList.remove('hidden');
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('.tool-btn[data-panel="wordsearch"]').classList.add('active');
+
+      // Fill fields using the correct property names
+      document.getElementById('wordsearchTitle').value = worksheet.title || "";
+      document.getElementById('wordsearchWords').value = (worksheet.words || []).join('\n');
+      const s = worksheet.settings || {};
+      document.getElementById('wordsearchGridSize').value = s.grid_size || "12";
+      document.getElementById('wordsearchCase').value = s.letter_case || "upper";
+      document.getElementById('wordsearchFont').value = s.font || "sans";
+      document.getElementById('wordsearchSize').value = s.puzzle_size || "1";
+      document.getElementById('wordsearchTemplate').value = s.template || "0";
+      document.getElementById('wordsearchHintsAlign').value = s.hints_alignment || "top";
+
+      // Immediately generate the worksheet preview
+      if (typeof window.generateWordsearch === 'function') window.generateWordsearch();
+    } else if (worksheet.worksheet_type === 'wordtest') {
+      // Show the word test panel
+      document.querySelectorAll('.tool-panel').forEach(panel => panel.classList.add('hidden'));
+      document.getElementById('panel-tests').classList.remove('hidden');
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('.tool-btn[data-panel="tests"]').classList.add('active');
+
+      // Fill fields
+      document.getElementById('wordTestTitle').value = worksheet.title || "";
+      document.getElementById('wordTestPassage').value = worksheet.passage_text || "";
+      document.getElementById('wordTestWords').value = (worksheet.words || []).join('\n');
+
+      // Settings (if present)
+      const s = worksheet.settings || {};
+      document.getElementById('wordTestFont').value = s.font || "";
+      document.getElementById('wordTestFontSize').value = s.font_size || "";
+      document.getElementById('wordTestLayout').value = s.layout || "";
+      document.getElementById('wordTestTemplate').value = s.template || "";
+      document.getElementById('wordTestNumWords').value = s.num_words || "";
+      document.getElementById('pixabayImageType').value = s.image_type || "";
+      document.getElementById('wordTestMode').value = s.test_mode || "";
+    }
+    // Add more types as needed
   };
 });
 
