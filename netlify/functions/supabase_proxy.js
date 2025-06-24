@@ -1,13 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
+  console.log('=== FUNCTION START ===');
   console.log('Received event:', event.httpMethod, event.path);
   console.log('Event body:', event.body);
-  console.log('Env:', {
-    SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_KEY: process.env.SUPABASE_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  console.log('Environment check:', {
+    SUPABASE_URL: process.env.SUPABASE_URL ? 'PRESENT' : 'MISSING',
+    SUPABASE_KEY: process.env.SUPABASE_KEY ? 'PRESENT' : 'MISSING', 
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'PRESENT' : 'MISSING',
+    NODE_ENV: process.env.NODE_ENV
   });
+  
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
@@ -140,12 +143,27 @@ exports.handler = async (event) => {
         return {
           statusCode: 500,
           body: JSON.stringify({ success: false, error: err.message })
-        };
-      }
+        };      }
+    } else if (event.path.endsWith('/debug') && event.httpMethod === 'GET') {
+      // Debug endpoint to check environment variables
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          hasSupabaseUrl: !!process.env.SUPABASE_URL,
+          hasSupabaseKey: !!process.env.SUPABASE_KEY,
+          hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          nodeEnv: process.env.NODE_ENV,
+          // Don't expose actual values for security
+          supabaseUrlPrefix: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 20) + '...' : 'MISSING'
+        })
+      };
     } else {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
-    }
-  } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
+    }  } catch (err) {
+    console.log('=== FUNCTION ERROR ===');
+    console.log('Error message:', err.message);
+    console.log('Error stack:', err.stack);
+    console.log('=== END ERROR ===');
+    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
   }
 };

@@ -286,9 +286,11 @@ document.addEventListener('DOMContentLoaded', () => {
       extractBtn.textContent = "Extract Words with AI";
     };
   }
-
   // Initial preview on page load
   updateWordTestPreview();
+
+  // Make the function globally accessible for loadWorksheet
+  window.updateWordTestPreview = updateWordTestPreview;
 
   // Refresh Images Button
   const refreshBtn = document.getElementById('refreshImagesBtn');

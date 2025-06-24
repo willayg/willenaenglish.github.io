@@ -42,8 +42,28 @@ body, main {
 .wordsearch-font-sans { font-family: 'Poppins', Arial, sans-serif; }
 .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace; }
 .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif; }
-.wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive; }
+.wordsearch-font-nanum { 
+  font-family: 'Nanum Pen Script', cursive; 
+  /* Nanum Pen Script may need special handling for baseline */
+}
 .wordsearch-font-poppins { font-family: 'Poppins', Arial, sans-serif; }
+
+/* Ensure consistent baseline for all wordsearch fonts */
+.wordsearch-table .wordsearch-font-sans,
+.wordsearch-table .wordsearch-font-mono,
+.wordsearch-table .wordsearch-font-comic,
+.wordsearch-table .wordsearch-font-nanum,
+.wordsearch-table .wordsearch-font-poppins {
+  line-height: 32px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1.1rem;
+}
+/* Special handling for Nanum Pen Script which may have different baseline */
+.wordsearch-table .wordsearch-font-nanum {
+  line-height: 28px; /* Slightly adjust for this font */
+  padding-top: 2px;  /* Fine-tune vertical position */
+}
 
 #worksheetPreviewArea {
   background: #fff;
@@ -153,6 +173,12 @@ body, main {
   font-size: 1.1rem;      /* Adjusted for better fit */
   line-height: 32px;      /* Exactly matches cell height */
   margin: 0;              /* Ensure no margin */
+  display: table-cell;    /* Ensure proper table cell display */
+}
+.wordsearch-table td * {
+  line-height: 32px;
+  text-align: center;
+  vertical-align: middle;
 }
 
 #wordsearchMaker {

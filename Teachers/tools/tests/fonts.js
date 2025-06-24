@@ -24,13 +24,23 @@ export function loadGoogleFont(font) {
 
 export function scaleWorksheetPreview() {
   const wrapper = document.getElementById('worksheetPreviewWrapper');
-  const preview = document.getElementById('worksheetPreviewArea-tests');
-  if (!wrapper || !preview) return;
-  const a4Width = 794, a4Height = 1123;
-  const scale = Math.min(
-    wrapper.clientWidth / a4Width,
-    wrapper.clientHeight / a4Height,
-    1
-  );
-  preview.style.transform = `scale(${scale})`;
+  const previews = document.querySelectorAll('.worksheet-preview');
+  if (!wrapper) return;
+  
+  const a4Width = 794;
+  const containerWidth = wrapper.clientWidth;
+  const scale = Math.min(containerWidth / a4Width, 1);
+  
+  previews.forEach(preview => {
+    if (preview) {
+      preview.style.transform = `scale(${scale})`;
+      preview.style.transformOrigin = 'top left';
+      
+      // Adjust wrapper height based on scaled content
+      if (!preview.classList.contains('hidden')) {
+        const contentHeight = preview.scrollHeight;
+        wrapper.style.height = `${Math.max(contentHeight * scale, 1123 * scale)}px`;
+      }
+    }
+  });
 }
