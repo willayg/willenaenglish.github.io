@@ -8,6 +8,86 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <!-- Custom styles -->
   <link rel="stylesheet" href="components/style.css">
+  <!-- Custom overrides for smaller layout -->
+  <style>
+    /* Make overall text 20% smaller and left-aligned */
+    body {
+      font-size: 0.8rem; /* 20% smaller than default 1rem */
+      text-align: left;
+    }
+    
+    /* Make sidebar narrower */
+    #sidebar {
+      width: 120px; /* Reduced from default width */
+      min-width: 120px;
+    }
+    
+    /* Adjust sidebar buttons for smaller width */
+    #sidebar .tool-btn {
+      font-size: 0.7rem; /* 20% smaller */
+      padding: 0.4rem 0.8rem;
+      text-align: left; /* Left align button text */
+      line-height: 1.4;
+    }
+    
+    /* Adjust tool panels width to compensate */
+    #tool-panels {
+      min-width: 280px; /* Slightly larger to balance smaller sidebar */
+      max-width: 360px;
+    }
+    
+    /* Make all text elements 20% smaller and left-aligned */
+    h1, h2, h3, h4, h5, h6 {
+      font-size: calc(1em * 0.8);
+      text-align: left;
+    }
+    
+    /* Ensure form elements are smaller and left-aligned */
+    input, textarea, select, button, label {
+      font-size: 0.8rem;
+      text-align: left;
+    }
+    
+    /* Toolbar buttons smaller */
+    #toolbar button {
+      font-size: 0.7rem;
+      padding: 0.4rem 0.8rem;
+    }
+    
+    /* Panel content smaller */
+    .tool-panel {
+      font-size: 0.8rem;
+    }
+      .tool-panel h2 {
+      font-size: 1rem; /* Proportionally smaller */
+    }
+    
+    /* Multi-page worksheet support */
+    .worksheet-preview {
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    /* Page break indicator for multi-page content */
+    .page-break {
+      border-top: 2px dashed #ccc;
+      margin: 20px 0;
+      position: relative;
+      page-break-before: always;
+    }
+    
+    .page-break::after {
+      content: "Page Break";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f9f5ec;
+      padding: 0 10px;
+      font-size: 0.7rem;
+      color: #666;
+    }
+  </style>
   <!-- Google Fonts for worksheet templates -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
 </head>
@@ -21,12 +101,12 @@
 
   <main id="main-content" class="flex side-layout min-h-screen">
     <!-- Sidebar -->
-    <aside id="sidebar" class="flex flex-col py-6">
-      <button class="tool-btn" data-panel="files">Files</button>
+    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>
       <button class="tool-btn" data-panel="puzzles">Puzzles</button>
       <button class="tool-btn" data-panel="games">Games</button>
       <button class="tool-btn" data-panel="creative">Creative</button>
       <button class="tool-btn" data-panel="tests">Word Tests</button> <!-- Add this line -->
+      <button class="tool-btn" data-panel="reading">Reading</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
       <button class="tool-btn" data-panel="crossword">Crossword</button>
     </aside>
@@ -133,7 +213,92 @@
             <option value="hide-eng">Hide English</option>
             <option value="hide-kor">Hide Korean</option>
             <option value="random">Hide Randomly</option>
+          </select>        </div>
+      </section>
+
+      <!-- Reading Panel (new) -->
+      <section id="panel-reading" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Reading Worksheet Generator</h2>
+          
+          <!-- Worksheet Title -->
+          <label class="block mb-1 mt-2">Worksheet Title</label>
+          <input type="text" id="readingTitle" class="border rounded w-full p-2 mb-2" placeholder="Enter worksheet title" />
+
+          <!-- Font Selection -->
+          <label class="block mb-1">Font</label>
+          <select id="readingFont" class="border rounded w-full p-2 mb-2">
+            <option value="'Poppins', sans-serif">Poppins</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Roboto', sans-serif">Roboto</option>
           </select>
+
+          <!-- Font Size -->
+          <label for="readingFontSize" class="block font-semibold mb-1">Font Size</label>
+          <select id="readingFontSize" class="border rounded px-2 py-1 mb-2">
+            <option value="1">Normal</option>
+            <option value="0.9">Small</option>
+            <option value="0.8">Quite Small</option>
+            <option value="1.1">Large</option>
+          </select>          <!-- Reading Passage Input -->
+          <label class="block mb-1">Reading Passage</label>
+          <textarea id="readingPassage" class="border rounded w-full p-2 mb-2" rows="6" placeholder="Paste or type your reading passage here"></textarea>
+
+          <!-- Include Passage Option -->
+          <label class="flex items-center mb-2">
+            <input type="checkbox" id="includePassage" checked> Include passage in worksheet
+          </label>
+
+          <!-- Question Generation Settings -->
+          <div class="border-t pt-3 mt-3">
+            <h3 class="font-semibold mb-2">Question Generation</h3>
+            
+            <!-- Number of Questions -->
+            <label class="block mb-1">Number of Questions</label>
+            <input type="number" id="readingNumQuestions" class="border rounded px-2 py-1 mb-2" min="1" max="20" value="5" style="width:80px;">
+
+            <!-- Question Categories -->
+            <label class="block mb-1">Question Categories (check all that apply)</label>
+            <div class="mb-2 space-y-1">
+              <label class="flex items-center"><input type="checkbox" id="categoryComprehension" checked> Comprehension Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryVocabulary"> Vocabulary Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryGrammar"> Grammar Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryInference"> Inference Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryMainIdea"> Main Idea Questions</label>
+            </div>
+
+            <!-- Question Format -->
+            <label class="block mb-1">Question Format</label>
+            <select id="readingQuestionFormat" class="border rounded w-full p-2 mb-2">
+              <option value="multiple-choice">Multiple Choice</option>
+              <option value="fill-blanks">Fill in the Blanks</option>
+              <option value="circle-word">Circle the Correct Word</option>
+              <option value="short-answer">Short Answer</option>
+              <option value="mixed">Mixed Format</option>
+            </select>
+
+            <!-- Generate Questions Button -->
+            <button id="generateQuestionsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2 w-full">Generate Questions with AI</button>
+            
+            <!-- Generated Questions Area -->
+            <label class="block mb-1">Generated Questions (editable)</label>
+            <textarea id="readingQuestions" class="border rounded w-full p-2 mb-2" rows="8" placeholder="Generated questions will appear here"></textarea>
+          </div>
+
+          <!-- Worksheet Template -->
+          <label for="readingTemplate" class="block font-semibold mb-1">Worksheet Template</label>
+          <select id="readingTemplate" class="w-full px-3 py-2 border rounded mb-2">
+            <option value="0">Classic</option>
+            <option value="1">Minimal</option>
+            <option value="2">Modern</option>
+            <option value="3">Academic</option>
+            <option value="4">Student Friendly</option>
+          </select>
+
+          <!-- Generate Worksheet Button -->
+          <button id="generateReadingWorksheet" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">Generate Reading Worksheet</button>
         </div>
       </section>
 
@@ -254,11 +419,11 @@
           <button id="saveWorksheetBtn">Save</button>
           <button id="loadWorksheetBtn">Load</button>
         </div>
-      </div>
-      <div id="worksheetPreviewWrapper" style="width:794px; height:1123px; position:relative;">
-        <div id="worksheetPreviewArea-tests" class="worksheet-preview" style="width:100%; height:100%;"></div>
-        <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; height:100%;"></div>
-        <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden" style="width:100%; height:100%;"></div>
+      </div>      <div id="worksheetPreviewWrapper" style="width:794px; min-height:1123px; position:relative;">
+        <div id="worksheetPreviewArea-tests" class="worksheet-preview" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-reading" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
       </div>
     </section>
   </main>
@@ -269,13 +434,13 @@
 
   <!-- Worksheet Templates -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="components/worksheetTemplates.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  <script src="components/worksheetTemplates.js"></script>
   <script src="components/main1.js"></script>
   <script src="tools/puzzles/index.js"></script>
   <script src="tools/puzzles/wordsearch.js"></script>
   <script src="tools/puzzles/crossword.js"></script>
   <script type="module" src="tools/tests/wordtest.js"></script>
+  <script type="module" src="tools/reading/reading.js"></script>
   <script>
     // Ensure the first panel is shown on load
     document.addEventListener('DOMContentLoaded', function() {

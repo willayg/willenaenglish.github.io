@@ -258,6 +258,29 @@ async function saveWorksheet() {
   }
 }
 
+async function loadWorksheet() {
+  try {
+    const res = await fetch('/.netlify/functions/supabase_proxy/list_worksheets');
+    const result = await res.json();
+    
+    if (result.success && result.data && result.data.length > 0) {
+      // For now, just load the first worksheet (you can enhance this with a selection UI)
+      const worksheet = result.data[0];
+      
+      if (window.opener && typeof window.opener.loadWorksheet === 'function') {
+        window.opener.loadWorksheet(worksheet);
+        window.close();
+      } else {
+        alert('Cannot access the main window to load worksheet.');
+      }
+    } else {
+      alert('No worksheets found or error loading worksheets.');
+    }
+  } catch (error) {
+    alert('Error loading worksheets: ' + error.message);
+  }
+}
+
 // Call saveWorksheet() when the manager loads, or attach to a Save button
 
 document.getElementById('saveBtn').onclick = saveWorksheet;

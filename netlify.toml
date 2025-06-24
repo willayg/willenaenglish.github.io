@@ -7,3 +7,10 @@
 
 [context.production.environment]
   NODE_VERSION = "18"
+
+[context.dev.environment]
+  NODE_VERSION = "18"
+
+# Ensure environment variables are loaded from .env file
+[dev]
+  framework = "#static"
