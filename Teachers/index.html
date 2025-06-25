@@ -206,13 +206,11 @@
   </nav>
 
   <main id="main-content" class="flex side-layout min-h-screen">
-    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>
-      <button class="tool-btn" data-panel="puzzles">Puzzles</button>
+    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>      <button class="tool-btn" data-panel="puzzles">Puzzles</button>
       <button class="tool-btn" data-panel="games">Games</button>
       <button class="tool-btn" data-panel="creative">Creative</button>
       <button class="tool-btn" data-panel="tests">Word Tests</button> <!-- Add this line -->      <button class="tool-btn" data-panel="reading">Reading</button>
-      <button class="tool-btn" data-panel="reading2">Reading 2.0</button>
-      <button class="tool-btn" data-panel="passage">Passage Builder</button>
+      <button class="tool-btn" data-panel="passage">Reading 3.0</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
       <button class="tool-btn" data-panel="crossword">Crossword</button>
     </aside>
@@ -407,47 +405,36 @@
 
           <!-- Generate Worksheet Button -->
           <button id="generateReadingWorksheet" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">Generate Reading Worksheet</button>        </div>
-      </section>
-
-      <!-- Passage Builder Panel -->
+      </section>      <!-- Reading 3.0 Panel -->
       <section id="panel-passage" class="tool-panel hidden mb-4">
         <div class="bg-white rounded shadow p-4">
-          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Passage Builder</h2>
-          <p class="text-sm text-gray-600 mb-4">Create multi-page documents with professional formatting.</p>
-          
-          <button id="openPassageBuilder" class="px-4 py-2 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">
-            Open Passage Builder
-          </button>
-        </div>
-      </section>
-
-      <!-- Reading 2.0 Panel -->
-      <section id="panel-reading2" class="tool-panel hidden mb-4">
-        <div class="bg-white rounded shadow p-4">
-          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">📚 Reading Worksheet Builder 2.0</h2>
-          <p class="text-sm text-gray-600 mb-4">Advanced multi-page reading comprehension worksheet creator with AI question generation and professional formatting.</p>
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Reading 3.0</h2>
+          <p class="text-sm text-gray-600 mb-4">Advanced multi-page reading comprehension tool with AI features, customizable fonts, and professional formatting.</p>
           
           <div class="space-y-2 text-sm text-gray-700 mb-4">
             <div class="flex items-center gap-2">
               <span class="text-green-500">✓</span>
-              <span>True multi-page layout with no content overflow</span>
+              <span>Multi-page layout with smart pagination</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-green-500">✓</span>
-              <span>AI-powered question generation</span>
+              <span>10 customizable fonts & 6 font sizes</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>AI-powered content tools</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-green-500">✓</span>
               <span>Professional print & PDF export</span>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-green-500">✓</span>
-              <span>Real-time preview with multiple fonts</span>
-            </div>
           </div>
           
-          <button id="openReading2Builder" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded hover:from-blue-600 hover:to-purple-700 w-full font-semibold">
-            🚀 Open Reading Builder 2.0
+          <button id="openPassageBuilder" class="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded hover:from-green-600 hover:to-blue-700 w-full font-semibold">
+            Open Reading 3.0
+          </button>
+        </div>
+      </section>
           </button>
         </div>
       </section>
@@ -617,18 +604,11 @@
           const panel = this.getAttribute('data-panel');
           showPanel(panel);
         });
-      });      showPanel('files');
-      
-      // Passage Builder button handler
+      });      showPanel('files');      
+      // Reading 3.0 button handler
       document.getElementById('openPassageBuilder').addEventListener('click', function() {
-        // Open the passage builder in a new window
-        window.open('tools/passage/passage.html', '_blank', 'width=1200,height=800');
-      });
-      
-      // Reading 2.0 Builder button handler
-      document.getElementById('openReading2Builder').addEventListener('click', function() {
-        // Open the reading 2.0 builder in a new window
-        window.open('tools/reading2/reading2.html', '_blank', 'width=1400,height=900');
+        // Open the reading 3.0 tool in a new window
+        window.open('tools/passage/passage.html', '_blank', 'width=1400,height=900');
       });
     });
 
