@@ -54,15 +54,41 @@ body, main {
 .wordsearch-table .wordsearch-font-comic,
 .wordsearch-table .wordsearch-font-nanum,
 .wordsearch-table .wordsearch-font-poppins {
-  line-height: 32px;
-  text-align: center;
-  vertical-align: middle;
-  font-size: 1.1rem;
+  line-height: 32px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 1.1rem !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: 1.5px solid #222 !important;
+  background: #fff !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  display: table-cell !important;
 }
+
+/* Font family definitions */
+.wordsearch-table .wordsearch-font-sans {
+  font-family: 'Poppins', Arial, sans-serif !important;
+}
+.wordsearch-table .wordsearch-font-mono {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+.wordsearch-table .wordsearch-font-comic {
+  font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif !important;
+}
+.wordsearch-table .wordsearch-font-nanum {
+  font-family: 'Nanum Pen Script', cursive !important;
+}
+.wordsearch-table .wordsearch-font-poppins {
+  font-family: 'Poppins', Arial, sans-serif !important;
+}
+
 /* Special handling for Nanum Pen Script which may have different baseline */
 .wordsearch-table .wordsearch-font-nanum {
-  line-height: 28px; /* Slightly adjust for this font */
-  padding-top: 2px;  /* Fine-tune vertical position */
+  line-height: 28px !important; /* Slightly adjust for this font */
+  padding-top: 2px !important;  /* Fine-tune vertical position */
 }
 
 #worksheetPreviewArea {
@@ -150,6 +176,37 @@ body, main {
 #toolbar {
   display: flex;
   gap: 18px; /* or whatever spacing you like */
+}
+
+/* Toolbar button styling */
+#toolbar button {
+  padding: 8px 16px;
+  margin: 0 4px;
+  background: #2e2b3f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+#toolbar button:hover {
+  background: #827e9b;
+}
+
+#toolbar button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Answer key button styling */
+#printAnswerKeyBtn {
+  background: #7c3aed !important;
+}
+
+#printAnswerKeyBtn:hover {
+  background: #5b21b6 !important;
 }
 
 .puzzle-maker { display: none; }
@@ -274,10 +331,10 @@ body, main {
   flex: 1 1 0;
 }
 
-/* Ensure worksheet tables align perfectly */
+/* Ensure worksheet tables align perfectly across all templates and modes */
 .worksheet-preview table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: collapse !important;
   table-layout: fixed;
 }
 .worksheet-preview th, .worksheet-preview td {
@@ -294,16 +351,240 @@ body, main {
   background: #fafaff;
 }
 
+/* Override any template-specific styling for wordsearch grids */
+.worksheet-preview .wordsearch-table,
+.worksheet-preview .wordsearch-table td {
+  width: auto !important;
+  height: auto !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  border-collapse: collapse !important;
+}
+
+.worksheet-preview .wordsearch-table td {
+  width: 32px !important;
+  height: 32px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  border: 1.5px solid #222 !important;
+  background: #fff !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  font-size: 1.1rem !important;
+  line-height: 32px !important;
+  margin: 0 !important;
+  display: table-cell !important;
+}
+
 .wordsearch-container {
-  display: block;
-  background: #fafaff;
-  border: 2.5px solid #b6aee0;
-  border-radius: 8px;
-  padding: 24px 24px 18px 24px;
-  margin: 32px auto;           /* Center horizontally with margin */
-  box-shadow: 0 2px 8px rgba(46,43,63,0.06);
-  max-width: max-content;      /* Only as wide as the content */
+  display: block !important;
+  background: #fafaff !important;
+  border: 2.5px solid #b6aee0 !important;
+  border-radius: 8px !important;
+  padding: 24px 24px 18px 24px !important;
+  margin: 32px auto !important;           /* Center horizontally with margin */
+  box-shadow: 0 2px 8px rgba(46,43,63,0.06) !important;
+  max-width: max-content !important;      /* Only as wide as the content */
 }
 .wordsearch-table {
-  margin: 0 auto;              /* Center the table inside the container */
+  margin: 0 auto !important;              /* Center the table inside the container */
+  border-collapse: collapse !important;
+}
+
+/* Ensure wordsearch containers look the same in all rendering modes */
+@media print {
+  .wordsearch-container {
+    display: block !important;
+    background: #fafaff !important;
+    border: 2.5px solid #b6aee0 !important;
+    border-radius: 8px !important;
+    padding: 24px !important;
+    margin: 20px auto !important;
+    box-shadow: none !important;
+    max-width: max-content !important;
+  }
+  
+  .wordsearch-table {
+    margin: 0 auto !important;
+    border-collapse: collapse !important;
+    width: auto !important;
+  }
+  
+  .wordsearch-table td {
+    width: 32px !important;
+    height: 32px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    border: 1.5px solid #222 !important;
+    background: #fff !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    font-size: 1.1rem !important;
+    line-height: 32px !important;
+    margin: 0 !important;
+    display: table-cell !important;
+  }
+  
+  /* Ensure fonts render correctly in PDF */
+  .wordsearch-table .wordsearch-font-sans {
+    font-family: "Poppins", Arial, sans-serif !important;
+  }
+  .wordsearch-table .wordsearch-font-mono {
+    font-family: "Courier New", Courier, monospace !important;
+  }
+  .wordsearch-table .wordsearch-font-comic {
+    font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;
+  }
+  .wordsearch-table .wordsearch-font-nanum {
+    font-family: "Nanum Pen Script", cursive !important;
+    line-height: 28px !important;
+    padding-top: 2px !important;
+  }
+}
+
+/* Multi-page worksheet support */
+.multi-page-worksheet {
+  background: #fff;
+  width: 794px;
+  margin: 0 auto;
+}
+
+.worksheet-page {
+  width: 794px;
+  height: 1123px; /* Fixed height - standard A4 at 96 DPI */
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+  page-break-after: always;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.worksheet-page:last-child {
+  margin-bottom: 0;
+}
+
+.worksheet-page:not(:last-child)::after {
+  content: "Page Break - Content continues on next page";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f0ebff;
+  color: #7c3aed;
+  padding: 5px 15px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #7c3aed;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+/* Add a visual separator between pages in preview */
+.worksheet-page:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #7c3aed, transparent);
+  z-index: 99;
+}
+
+.page-header {
+  flex-shrink: 0;
+  padding: 32px 32px 20px 32px;
+}
+
+.page-content {
+  flex: 1 1 auto;
+  padding: 0 32px;
+  overflow: hidden; /* Critical: hide any overflow */
+  max-height: calc(1123px - 200px); /* Account for header and footer space */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.page-footer {
+  flex-shrink: 0;
+  padding: 20px 32px 32px 32px;
+  margin-top: auto;
+  border-top: 1px solid #eee;
+  text-align: center;
+  color: #888;
+  font-size: 0.95rem;
+  font-family: 'Glacial Indifference', Arial, sans-serif;
+}
+
+.page-number {
+  position: absolute;
+  bottom: 15px;
+  right: 32px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Print styles for multi-page */
+@media print {
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .multi-page-worksheet {
+    width: 100% !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+  
+  .worksheet-page {
+    width: 210mm !important; /* A4 width */
+    height: 297mm !important; /* A4 height */
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+  }
+  
+  .worksheet-page:last-child {
+    page-break-after: auto !important;
+  }
+  
+  .worksheet-page::after,
+  .worksheet-page::before {
+    display: none !important;
+  }
+  
+  .page-content {
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+    padding: 0 32px !important;
+  }
+  
+  .page-header {
+    flex-shrink: 0 !important;
+    padding: 32px 32px 20px 32px !important;
+  }
+  
+  .page-footer {
+    flex-shrink: 0 !important;
+    padding: 20px 32px 32px 32px !important;
+    margin-top: auto !important;
+  }
+  
+  /* Hide preview-only elements */
+  .page-break-indicator {
+    display: none !important;
+  }
 }

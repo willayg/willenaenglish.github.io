@@ -44,6 +44,14 @@ Requirements:
 - Ensure questions test understanding of the passage content
 - For multiple choice questions, put the question on one line, then each option (a, b, c, d) on separate lines below it
 
+IMPORTANT: At the end of your response, add a section labeled "ANSWER KEY:" followed by the answers in this format:
+1. [correct answer]
+2. [correct answer]
+3. [correct answer]
+
+For multiple choice, just put the letter (a, b, c, or d).
+For other question types, provide the complete answer.
+
 Example format for multiple choice:
 1. What is the main topic of the passage?
 a) Sports
@@ -74,16 +82,28 @@ Please generate the questions now:`;
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
+    }    const result = await response.json();
     const data = result.data;
     
     if (data.error) {
       throw new Error(data.error.message || 'OpenAI API error');
     }
 
-    return data.choices[0].message.content.trim();
+    const content = data.choices[0].message.content.trim();
+    
+    // Separate questions and answers
+    const answerKeyMatch = content.match(/ANSWER KEY:?\s*([\s\S]*?)$/i);
+    let questions = content;
+    let answers = '';
+    
+    if (answerKeyMatch) {
+      // Remove answer key from questions
+      questions = content.replace(/ANSWER KEY:?\s*[\s\S]*$/i, '').trim();
+      // Extract answers
+      answers = answerKeyMatch[1].trim();
+    }
+    
+    return { questions, answers };
   } catch (error) {
     console.error('AI question generation error:', error);
     throw error;

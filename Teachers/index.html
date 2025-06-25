@@ -86,6 +86,112 @@
       padding: 0 10px;
       font-size: 0.7rem;
       color: #666;
+    }  </style>
+  <!-- Universal Wordsearch Styling - Ensures consistent rendering in all modes -->
+  <style>
+    /* Force consistent wordsearch styling across all rendering contexts */
+    .wordsearch-table,
+    .worksheet-preview .wordsearch-table {
+      margin: 0 auto !important;
+      border-collapse: collapse !important;
+      width: auto !important;
+    }
+      .wordsearch-table td,
+    .worksheet-preview .wordsearch-table td {
+      width: 32px !important;
+      height: 32px !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+      border: 1.5px solid #222 !important;
+      background: #fff !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      font-size: 1.1rem !important;
+      line-height: 32px !important;
+      margin: 0 !important;
+      display: table-cell !important;
+    }
+    
+    /* Ensure font styles are applied properly */
+    .wordsearch-table .wordsearch-font-sans,
+    .worksheet-preview .wordsearch-table .wordsearch-font-sans {
+      font-family: "Poppins", Arial, sans-serif !important;
+    }
+    .wordsearch-table .wordsearch-font-mono,
+    .worksheet-preview .wordsearch-table .wordsearch-font-mono {
+      font-family: "Courier New", Courier, monospace !important;
+    }
+    .wordsearch-table .wordsearch-font-comic,
+    .worksheet-preview .wordsearch-table .wordsearch-font-comic {
+      font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;
+    }
+    .wordsearch-table .wordsearch-font-nanum,
+    .worksheet-preview .wordsearch-table .wordsearch-font-nanum {
+      font-family: "Nanum Pen Script", cursive !important;
+      line-height: 28px !important;
+      padding-top: 2px !important;
+    }
+    
+    .wordsearch-container,
+    .worksheet-preview .wordsearch-container {
+      display: block !important;
+      background: #fafaff !important;
+      border: 2.5px solid #b6aee0 !important;
+      border-radius: 8px !important;
+      padding: 24px !important;
+      margin: 20px auto !important;
+      box-shadow: 0 2px 8px rgba(46,43,63,0.06) !important;
+      max-width: max-content !important;
+    }
+      /* Print-specific rules */
+    @media print {
+      .wordsearch-table {
+        margin: 0 auto !important;
+        border-collapse: collapse !important;
+        width: auto !important;
+      }
+      
+      .wordsearch-table td {
+        width: 32px !important;
+        height: 32px !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        border: 1.5px solid #222 !important;
+        background: #fff !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        font-size: 1.1rem !important;
+        line-height: 32px !important;
+        margin: 0 !important;
+        display: table-cell !important;
+      }
+      
+      /* PDF-specific font rendering */
+      .wordsearch-table .wordsearch-font-sans {
+        font-family: "Poppins", Arial, sans-serif !important;
+      }
+      .wordsearch-table .wordsearch-font-mono {
+        font-family: "Courier New", Courier, monospace !important;
+      }
+      .wordsearch-table .wordsearch-font-comic {
+        font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;
+      }
+      .wordsearch-table .wordsearch-font-nanum {
+        font-family: "Nanum Pen Script", cursive !important;
+        line-height: 28px !important;
+        padding-top: 2px !important;
+      }
+      
+      .wordsearch-container {
+        display: block !important;
+        background: #fafaff !important;
+        border: 2.5px solid #b6aee0 !important;
+        border-radius: 8px !important;
+        padding: 24px !important;
+        margin: 20px auto !important;
+        box-shadow: none !important;
+        max-width: max-content !important;
+      }
     }
   </style>
   <!-- Google Fonts for worksheet templates -->
@@ -100,13 +206,13 @@
   </nav>
 
   <main id="main-content" class="flex side-layout min-h-screen">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>
+    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>
       <button class="tool-btn" data-panel="puzzles">Puzzles</button>
       <button class="tool-btn" data-panel="games">Games</button>
       <button class="tool-btn" data-panel="creative">Creative</button>
-      <button class="tool-btn" data-panel="tests">Word Tests</button> <!-- Add this line -->
-      <button class="tool-btn" data-panel="reading">Reading</button>
+      <button class="tool-btn" data-panel="tests">Word Tests</button> <!-- Add this line -->      <button class="tool-btn" data-panel="reading">Reading</button>
+      <button class="tool-btn" data-panel="reading2">Reading 2.0</button>
+      <button class="tool-btn" data-panel="passage">Passage Builder</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
       <button class="tool-btn" data-panel="crossword">Crossword</button>
     </aside>
@@ -281,13 +387,14 @@
 
             <!-- Generate Questions Button -->
             <button id="generateQuestionsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2 w-full">Generate Questions with AI</button>
-            
-            <!-- Generated Questions Area -->
+              <!-- Generated Questions Area -->
             <label class="block mb-1">Generated Questions (editable)</label>
             <textarea id="readingQuestions" class="border rounded w-full p-2 mb-2" rows="8" placeholder="Generated questions will appear here"></textarea>
-          </div>
-
-          <!-- Worksheet Template -->
+            
+            <!-- Answer Key Area -->
+            <label class="block mb-1">Answer Key (one answer per line)</label>
+            <textarea id="readingAnswers" class="border rounded w-full p-2 mb-2" rows="5" placeholder="1. Answer to question 1&#10;2. Answer to question 2&#10;3. Answer to question 3"></textarea>
+          </div>          <!-- Worksheet Template -->
           <label for="readingTemplate" class="block font-semibold mb-1">Worksheet Template</label>
           <select id="readingTemplate" class="w-full px-3 py-2 border rounded mb-2">
             <option value="0">Classic</option>
@@ -295,10 +402,53 @@
             <option value="2">Modern</option>
             <option value="3">Academic</option>
             <option value="4">Student Friendly</option>
+            <option value="8">Multi-Page Classic</option>
           </select>
 
           <!-- Generate Worksheet Button -->
-          <button id="generateReadingWorksheet" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">Generate Reading Worksheet</button>
+          <button id="generateReadingWorksheet" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">Generate Reading Worksheet</button>        </div>
+      </section>
+
+      <!-- Passage Builder Panel -->
+      <section id="panel-passage" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Passage Builder</h2>
+          <p class="text-sm text-gray-600 mb-4">Create multi-page documents with professional formatting.</p>
+          
+          <button id="openPassageBuilder" class="px-4 py-2 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">
+            Open Passage Builder
+          </button>
+        </div>
+      </section>
+
+      <!-- Reading 2.0 Panel -->
+      <section id="panel-reading2" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">📚 Reading Worksheet Builder 2.0</h2>
+          <p class="text-sm text-gray-600 mb-4">Advanced multi-page reading comprehension worksheet creator with AI question generation and professional formatting.</p>
+          
+          <div class="space-y-2 text-sm text-gray-700 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>True multi-page layout with no content overflow</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>AI-powered question generation</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Professional print & PDF export</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Real-time preview with multiple fonts</span>
+            </div>
+          </div>
+          
+          <button id="openReading2Builder" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded hover:from-blue-600 hover:to-purple-700 w-full font-semibold">
+            🚀 Open Reading Builder 2.0
+          </button>
         </div>
       </section>
 
@@ -412,10 +562,10 @@
 
     <!-- Worksheet Preview Area (right column) -->
     <section id="worksheet-preview-column" class="flex-1 flex flex-col items-center justify-start">
-      <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:sticky;top:56px;z-index:20;">
-        <div id="toolbar">
+      <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:sticky;top:56px;z-index:20;">        <div id="toolbar">
           <button id="printWorksheetBtn">Print</button>
           <button id="downloadWorksheetPdfBtn">Download PDF</button>
+          <button id="printAnswerKeyBtn" style="display: none;">Print Answer Key</button>
           <button id="saveWorksheetBtn">Save</button>
           <button id="loadWorksheetBtn">Load</button>
         </div>
@@ -467,8 +617,19 @@
           const panel = this.getAttribute('data-panel');
           showPanel(panel);
         });
+      });      showPanel('files');
+      
+      // Passage Builder button handler
+      document.getElementById('openPassageBuilder').addEventListener('click', function() {
+        // Open the passage builder in a new window
+        window.open('tools/passage/passage.html', '_blank', 'width=1200,height=800');
       });
-      showPanel('files');
+      
+      // Reading 2.0 Builder button handler
+      document.getElementById('openReading2Builder').addEventListener('click', function() {
+        // Open the reading 2.0 builder in a new window
+        window.open('tools/reading2/reading2.html', '_blank', 'width=1400,height=900');
+      });
     });
 
   </script>

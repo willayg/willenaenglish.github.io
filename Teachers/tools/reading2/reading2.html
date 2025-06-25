@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Worksheet Builder 2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../Components/style.css">
+    <style>
+        .reading2-container {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .reading2-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .reading2-header {
+            background: linear-gradient(135deg, #2e2b3f 0%, #4a47a3 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .reading2-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 800px;
+        }
+          .reading2-controls {
+            padding: 30px;
+            background: #f8fafc;
+            border-right: 2px solid #e2e8f0;
+            overflow-y: auto;
+            max-height: 800px;
+        }
+          .reading2-preview {
+            padding: 0;
+            background: #f7fafc;
+            overflow: hidden;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .preview-controls {
+            background: #2e2b3f;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        
+        .preview-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .preview-nav button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preview-nav button:hover:not(:disabled) {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        
+        .preview-nav button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .page-indicator {
+            font-size: 14px;
+            font-weight: 500;
+            background: rgba(255,255,255,0.1);
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .zoom-controls button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            background: #e2e8f0;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .preview-pages {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            padding: 20px;
+            min-height: 100%;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .control-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .control-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .control-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .control-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .control-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-print {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        .btn-pdf {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+        
+        .preview-pages {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .preview-page {
+            width: 600px;
+            height: 849px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transform: scale(0.75);
+            transform-origin: top center;
+            margin-bottom: -170px;
+        }
+        
+        .preview-page:last-child {
+            margin-bottom: 0;
+        }
+        
+        .page-break-indicator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reading2-container">
+        <div class="reading2-card">
+            <div class="reading2-header">
+                <h1 style="font-size: 2.5rem; font-weight: 700; margin: 0;">📚 Reading Worksheet Builder 2.0</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Create professional multi-page reading comprehension worksheets</p>
+            </div>
+            
+            <div class="reading2-content">
+                <!-- Controls Panel -->
+                <div class="reading2-controls">
+                    <!-- Title Section -->
+                    <div class="control-group">
+                        <label class="control-label">📝 Worksheet Title</label>
+                        <input type="text" id="reading2Title" class="control-input" placeholder="Enter worksheet title" value="Reading Comprehension">
+                    </div>
+                    
+                    <!-- Reading Passage Section -->
+                    <div class="control-group">
+                        <label class="control-label">📖 Reading Passage</label>
+                        <textarea id="reading2Passage" class="control-input control-textarea" placeholder="Paste or type your reading passage here..."></textarea>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="reading2IncludePassage" checked>
+                            <label for="reading2IncludePassage" class="control-label" style="margin: 0;">Include passage in worksheet</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions Section -->
+                    <div class="control-group">
+                        <label class="control-label">❓ Questions</label>
+                        <textarea id="reading2Questions" class="control-input control-textarea" placeholder="Enter questions here...&#10;&#10;Format:&#10;1. Question text?&#10;a) Option A&#10;b) Option B&#10;c) Option C&#10;d) Option D&#10;&#10;2. Another question?"></textarea>
+                        <button id="reading2GenerateBtn" class="control-button">🤖 Generate Questions with AI</button>
+                    </div>
+                    
+                    <!-- AI Settings -->
+                    <div class="control-group">
+                        <label class="control-label">🎯 AI Question Settings</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Number of Questions</label>
+                                <input type="number" id="reading2NumQuestions" class="control-input" min="1" max="20" value="5" style="padding: 8px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Format</label>
+                                <select id="reading2QuestionFormat" class="control-input" style="padding: 8px;">
+                                    <option value="multiple-choice">Multiple Choice</option>
+                                    <option value="short-answer">Short Answer</option>
+                                    <option value="mixed">Mixed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+                            <label><input type="checkbox" id="reading2CategoryComprehension" checked> Comprehension</label>
+                            <label><input type="checkbox" id="reading2CategoryVocabulary" checked> Vocabulary</label>
+                            <label><input type="checkbox" id="reading2CategoryGrammar"> Grammar</label>
+                            <label><input type="checkbox" id="reading2CategoryInference" checked> Inference</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Formatting Section -->
+                    <div class="control-group">
+                        <label class="control-label">🎨 Formatting</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Font Family</label>
+                                <select id="reading2Font" class="control-input" style="padding: 8px;">
+                                    <option value="'Poppins', sans-serif">Poppins</option>
+                                    <option value="'Arial', sans-serif">Arial</option>
+                                    <option value="'Times New Roman', serif">Times New Roman</option>
+                                    <option value="'Georgia', serif">Georgia</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Font Size</label>
+                                <select id="reading2FontSize" class="control-input" style="padding: 8px;">
+                                    <option value="0.8">Small</option>
+                                    <option value="1.0" selected>Normal</option>
+                                    <option value="1.2">Large</option>
+                                    <option value="1.4">Extra Large</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="reading2PrintBtn" class="control-button btn-print">🖨️ Print</button>
+                        <button id="reading2PdfBtn" class="control-button btn-pdf">📄 PDF</button>
+                    </div>
+                </div>
+                  <!-- Preview Panel -->
+                <div class="reading2-preview">
+                    <!-- Preview Controls -->
+                    <div class="preview-controls">
+                        <div class="preview-nav">
+                            <button id="prevPageBtn">← Previous</button>
+                            <div class="page-indicator">
+                                <span id="currentPageNum">1</span> of <span id="totalPagesNum">1</span>
+                            </div>
+                            <button id="nextPageBtn">Next →</button>
+                        </div>
+                        <div class="zoom-controls">
+                            <button id="zoomOutBtn">-</button>
+                            <span id="zoomLevel">80%</span>
+                            <button id="zoomInBtn">+</button>
+                            <button id="fitWidthBtn">Fit Width</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Content -->
+                    <div class="preview-content">
+                        <div id="reading2PreviewArea" class="preview-pages">
+                            <div style="text-align: center; color: #666; padding: 60px 20px;">
+                                <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
+                                <h3>Preview will appear here</h3>
+                                <p>Enter a reading passage and questions to see the worksheet preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="reading2_clean.js"></script>
+</body>
+</html>
