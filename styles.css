@@ -12,14 +12,14 @@ body {
   color: var(--text);
   margin: 0;
   padding: 0;
-  padding-top: 70px; /* Same as header height */
+  padding-top: 35px; /* Same as header height */
 }
 
 header {
   background-color: rgba(46, 43, 63, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  padding: 10px 3%;
+  padding: 8px 3%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -28,7 +28,7 @@ header {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 70px;
+  height: 35px;
   z-index: 1000;
 }
 
