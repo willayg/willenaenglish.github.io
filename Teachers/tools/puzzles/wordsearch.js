@@ -11,12 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(link);
   }
 
+  // Helper function to get font-specific CSS styles
+  function getFontStyle(fontOpt) {
+    switch(fontOpt) {
+      case 'sans':
+        return 'font-family: "Poppins", Arial, sans-serif !important;';
+      case 'mono':
+        return 'font-family: "Courier New", Courier, monospace !important;';
+      case 'comic':
+        return 'font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;';
+      case 'nanum':
+        return 'font-family: "Nanum Pen Script", cursive !important; line-height: 28px !important; padding-top: 2px !important;';
+      default:
+        return 'font-family: "Poppins", Arial, sans-serif !important;';
+    }
+  }
 
   document.getElementById('generateWordsearch').onclick = () => {
     const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
     const caseOpt = document.getElementById('wordsearchCase').value;
     const fontOpt = document.getElementById('wordsearchFont').value;
-    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1.3");
+    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1.0");
     const align = document.getElementById('wordsearchAlign')?.value || "center";
     const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
     let words = document.getElementById('wordsearchWords').value
@@ -44,30 +59,53 @@ document.addEventListener('DOMContentLoaded', () => {
     if (align === "right") alignStyle = "text-align:right;";
     let hintsAlignStyle = "text-align:center;";
     if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";
-    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";
-
-    // Build the HTML for the hints/words list
+    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";    // Build the HTML for the hints/words list
     let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
 
-    // Add a flex container for vertical and horizontal centering
+    // Add a centered container with consistent styling for all rendering modes
     html += `
       <div style="
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 500px; /* Adjust as needed for your worksheet size */
         width: 100%;
+        margin: 20px 0;
       ">
-        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:center;">
-          <div class="wordsearch-container">
-            <table class="wordsearch-table ${fontClass}">
-              ${grid.map(row => `
-                <tr>
-                  ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
-                </tr>
-              `).join('')}
-            </table>
-          </div>
+        <div class="wordsearch-container" style="
+          display: block;
+          background: #fafaff;
+          border: 2.5px solid #b6aee0;
+          border-radius: 8px;
+          padding: 24px;
+          margin: 0 auto;
+          box-shadow: 0 2px 8px rgba(46,43,63,0.06);
+          max-width: max-content;
+          transform: scale(${sizeScale});
+          transform-origin: center;        ">
+          <table class="wordsearch-table ${fontClass}" style="
+            margin: 0 auto;
+            border-collapse: collapse;
+          ">
+            ${grid.map(row => `
+              <tr>
+                ${row.map(cell => `<td class="${fontClass}" style="
+                  width: 32px;
+                  height: 32px;
+                  text-align: center !important;
+                  vertical-align: middle !important;
+                  border: 1.5px solid #222;
+                  background: #fff;
+                  padding: 0;
+                  box-sizing: border-box;
+                  font-size: 1.1rem;
+                  line-height: 32px !important;
+                  margin: 0;
+                  display: table-cell;
+                  ${getFontStyle(fontOpt)}
+                ">${cell}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </table>
         </div>
       </div>
     `;
@@ -322,13 +360,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     extractWords('hard'); // default to hard
   };
-
   // Function to generate the worksheet preview (refactor your existing code into this)
   function updateWordsearchPreview() {
     const size = parseInt(document.getElementById('wordsearchGridSize').value, 10);
     const caseOpt = document.getElementById('wordsearchCase').value;
     const fontOpt = document.getElementById('wordsearchFont').value;
-    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "2");
+    const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1.0");
     const align = document.getElementById('wordsearchAlign')?.value || "center";
     const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
     let words = document.getElementById('wordsearchWords').value
@@ -348,29 +385,53 @@ document.addEventListener('DOMContentLoaded', () => {
     if (align === "left") alignStyle = "text-align:left;";
     if (align === "right") alignStyle = "text-align:right;";
     let hintsAlignStyle = "text-align:center;";
-    if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";
-    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";
+    if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";
 
     let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
-    // Add a flex container for vertical and horizontal centering
+    // Add a centered container with consistent styling for all rendering modes
     html += `
       <div style="
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 500px; /* Adjust as needed for your worksheet size */
         width: 100%;
+        margin: 20px 0;
       ">
-        <div style="display:inline-block; transform:scale(${sizeScale}); transform-origin:center;">
-          <div class="wordsearch-container">
-            <table class="wordsearch-table ${fontClass}">
-              ${grid.map(row => `
-                <tr>
-                  ${row.map(cell => `<td class="${fontClass}">${cell}</td>`).join('')}
-                </tr>
-              `).join('')}
-            </table>
-          </div>
+        <div class="wordsearch-container" style="
+          display: block;
+          background: #fafaff;
+          border: 2.5px solid #b6aee0;
+          border-radius: 8px;
+          padding: 24px;
+          margin: 0 auto;
+          box-shadow: 0 2px 8px rgba(46,43,63,0.06);
+          max-width: max-content;
+          transform: scale(${sizeScale});
+          transform-origin: center;
+        ">
+          <table class="wordsearch-table ${fontClass}" style="
+            margin: 0 auto;
+            border-collapse: collapse;          ">
+            ${grid.map(row => `
+              <tr>
+                ${row.map(cell => `<td class="${fontClass}" style="
+                  width: 32px;
+                  height: 32px;
+                  text-align: center !important;
+                  vertical-align: middle !important;
+                  border: 1.5px solid #222;
+                  background: #fff;
+                  padding: 0;
+                  box-sizing: border-box;
+                  font-size: 1.1rem;
+                  line-height: 32px !important;
+                  margin: 0;
+                  display: table-cell;
+                  ${getFontStyle(fontOpt)}
+                ">${cell}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </table>
         </div>
       </div>
     `;
@@ -391,28 +452,45 @@ document.addEventListener('DOMContentLoaded', () => {
       preview.classList.add('worksheet-preview');
     }
   }
-
   // List of input/select IDs to watch for changes
   const ids = [
     'wordsearchGridSize',
     'wordsearchCase',
     'wordsearchFont',
     'wordsearchSize',
-    'wordsearchAlign',
-    'wordsearchHintsAlign',
-    'wordsearchWords',
+    'wordsearchTemplate',
     'wordsearchTitle',
     'wordsearchInstructions',
-    'wordsearchTemplate' // <-- add this line
+    'wordsearchWords',
+    'wordsearchAlign',
+    'wordsearchHintsAlign'
   ];
 
+  // Set up automatic preview updates when settings change
   ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', updateWordsearchPreview);
-      el.addEventListener('change', updateWordsearchPreview);
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('change', updateWordsearchPreview);
+      element.addEventListener('input', updateWordsearchPreview);
     }
   });
+
+  // Also trigger update when checkboxes change
+  const checkboxes = ['wordsearchAllowDiagonals', 'wordsearchAllowBackwards'];
+  checkboxes.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('change', updateWordsearchPreview);
+    }
+  });
+
+  // Make updateWordsearchPreview available globally
+  window.updateWordsearchPreview = updateWordsearchPreview;
+  
+  // Also make the main generation function available globally for main1.js
+  window.generateWordsearch = () => {
+    document.getElementById('generateWordsearch').click();
+  };
 
   // Optionally, call once on load to show preview immediately
   updateWordsearchPreview();

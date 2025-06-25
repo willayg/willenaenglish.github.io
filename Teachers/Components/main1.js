@@ -34,8 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
       let fontSize = actualFontSize || `${16 * fontSizeScale}px`;
       
       const currentTransform = computedStyle.transform;
-      
-      // Create a temporary full-size version for printing that matches preview exactly
+        // Create a temporary full-size version for printing that matches preview exactly
       const printContent = previewArea.cloneNode(true);
       
       // Calculate the current scale from transform
@@ -47,12 +46,26 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
           scale = values[0]; // First value is scaleX
         }
       }
-        // Apply the same scale to print to match preview
-      const printContents = `
-        <div style="width:794px;min-height:1123px;margin:auto;background:#fff;page-break-after:always;transform:scale(${scale});transform-origin:top left;font-family:${fontFamily};font-size:${fontSize};">
-          ${printContent.innerHTML}
-        </div>
-      `;
+      
+      // Check if this is a multi-page worksheet
+      const isMultiPage = printContent.querySelector('.multi-page-worksheet');
+      
+      let printContents;
+      if (isMultiPage) {
+        // For multi-page worksheets, don't apply transform scaling
+        printContents = `
+          <div style="font-family:${fontFamily};font-size:${fontSize};">
+            ${printContent.innerHTML}
+          </div>
+        `;
+      } else {
+        // Apply the same scale to print to match preview for single-page worksheets
+        printContents = `
+          <div style="width:794px;min-height:1123px;margin:auto;background:#fff;page-break-after:always;transform:scale(${scale});transform-origin:top left;font-family:${fontFamily};font-size:${fontSize};">
+            ${printContent.innerHTML}
+          </div>
+        `;
+      }
       const win = window.open('', '', 'width=900,height=1200');
       win.document.write(`
         <html>
@@ -116,38 +129,64 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
                 margin: 0 auto;
                 border-collapse: collapse;
               }              .wordsearch-table td {
-                width: 32px;
-                height: 32px;
-                text-align: center;
-                vertical-align: middle;
-                border: 1.5px solid #222;
-                background: #fff;
-                padding: 0;
-                box-sizing: border-box;
-                font-size: 1.1rem;
-                line-height: 32px;
-                margin: 0;
-                display: table-cell;
+                width: 32px !important;
+                height: 32px !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                border: 1.5px solid #222 !important;
+                background: #fff !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                font-size: 1.1rem !important;
+                line-height: 32px !important;
+                margin: 0 !important;
+                display: table-cell !important;
               }
               .wordsearch-table td * {
-                line-height: 32px;
-                text-align: center;
-                vertical-align: middle;
+                line-height: 32px !important;
+                text-align: center !important;
+                vertical-align: middle !important;
               }              /* Ensure consistent baseline for all wordsearch fonts */
               .wordsearch-table .wordsearch-font-sans,
               .wordsearch-table .wordsearch-font-mono,
               .wordsearch-table .wordsearch-font-comic,
               .wordsearch-table .wordsearch-font-nanum,
               .wordsearch-table .wordsearch-font-poppins {
-                line-height: 32px;
-                text-align: center;
-                vertical-align: middle;
-                font-size: 1.1rem;
+                line-height: 32px !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                font-size: 1.1rem !important;
+                width: 32px !important;
+                height: 32px !important;
+                border: 1.5px solid #222 !important;
+                background: #fff !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+                display: table-cell !important;
               }
+              
+              /* Font family definitions */
+              .wordsearch-table .wordsearch-font-sans {
+                font-family: 'Poppins', Arial, sans-serif !important;
+              }
+              .wordsearch-table .wordsearch-font-mono {
+                font-family: 'Courier New', Courier, monospace !important;
+              }
+              .wordsearch-table .wordsearch-font-comic {
+                font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif !important;
+              }
+              .wordsearch-table .wordsearch-font-nanum {
+                font-family: 'Nanum Pen Script', cursive !important;
+              }
+              .wordsearch-table .wordsearch-font-poppins {
+                font-family: 'Poppins', Arial, sans-serif !important;
+              }
+              
               /* Special handling for Nanum Pen Script which may have different baseline */
               .wordsearch-table .wordsearch-font-nanum {
-                line-height: 28px; /* Slightly adjust for this font */
-                padding-top: 2px;  /* Fine-tune vertical position */
+                line-height: 28px !important; /* Slightly adjust for this font */
+                padding-top: 2px !important;  /* Fine-tune vertical position */
               }
               table {
                 border-collapse: collapse;
@@ -192,8 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
     pdfBtn.onclick = async () => {
       const preview = document.querySelector('.worksheet-preview:not(.hidden)');
       if (!preview) return;
-      
-      // Create a temporary container for PDF generation at full size
+        // Create a temporary container for PDF generation at full size
       const tempContainer = document.createElement('div');
       tempContainer.style.position = 'fixed';
       tempContainer.style.top = '-9999px';
@@ -210,68 +248,21 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
         // Wait for fonts and images to load
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Capture at full resolution
-        const canvas = await html2canvas(tempContainer, { 
-          scale: 2, 
-          backgroundColor: "#fff", 
-          useCORS: true,
-          width: 794,
-          height: tempContainer.scrollHeight,
-          logging: false
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new window.jspdf.jsPDF({
-          orientation: 'portrait',
-          unit: 'pt',
-          format: 'a4'
-        });
-        
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = canvas.height * (imgWidth / canvas.width);
-
-        let position = 0;
-        let pageNumber = 1;
-        
-        // Add pages if content is taller than one page
-        while (position < imgHeight) {
-          if (pageNumber > 1) {
-            pdf.addPage();
-          }
-          
-          pdf.addImage(
-            imgData,
-            'PNG',
-            0,
-            -position,
-            imgWidth,
-            imgHeight
-          );
-          
-          position += pageHeight;
-          pageNumber++;
+        // Check if this is a multi-page worksheet
+        const isMultiPage = tempContainer.querySelector('.multi-page-worksheet');
+          if (isMultiPage) {
+          // Handle multi-page PDF generation
+          await generateMultiPagePDF(tempContainer, getWorksheetTitle());
+        } else {
+          // Handle single-page PDF generation
+          await generateSinglePagePDF(tempContainer, getWorksheetTitle());
         }
-        
-        // Get worksheet title for naming
-        let worksheetTitle = 'worksheet';
-        const activePanel = document.querySelector('.tool-panel:not(.hidden)');
-        if (activePanel) {
-          const titleInput = activePanel.querySelector('[id$="Title"]');
-          if (titleInput && titleInput.value.trim()) {
-            worksheetTitle = titleInput.value.trim().replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
-          }
-        }
-        
-        pdf.save(`${worksheetTitle}.pdf`);
       } finally {
         // Clean up temporary container
         document.body.removeChild(tempContainer);
       }
     };
   }
-
   document.querySelectorAll('.tool-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       // Hide all tool panels
@@ -294,6 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
         panel.classList.remove('hidden');
         btn.classList.add('active');
       }
+      
+      // Update answer key button visibility
+      updateAnswerKeyButtonVisibility();
     });
   });
 
@@ -329,19 +323,19 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
           grid_size: document.getElementById('wordsearchGridSize')?.value || 12,
           letter_case: document.getElementById('wordsearchCase')?.value || "upper",
           font: document.getElementById('wordsearchFont')?.value || "sans",
-          puzzle_size: document.getElementById('wordsearchSize')?.value || "1",
+          puzzle_size: document.getElementById('wordsearchSize')?.value || "1.0",
           template: document.getElementById('wordsearchTemplate')?.value || "0",
           hints_alignment: document.getElementById('wordsearchHintsAlign')?.value || "top"
         }
       };
-    }
-    // --- READING ---
+    }    // --- READING ---
     if (!document.getElementById('panel-reading').classList.contains('hidden')) {
       return {
         worksheet_type: 'reading',
         title: document.getElementById('readingTitle')?.value || "",
         passage_text: document.getElementById('readingPassage')?.value || "",
         questions: document.getElementById('readingQuestions')?.value || "",
+        answers: document.getElementById('readingAnswers')?.value || "",
         settings: {
           font: document.getElementById('readingFont')?.value || "",
           font_size: document.getElementById('readingFontSize')?.value || "",
@@ -384,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
       document.getElementById('wordsearchGridSize').value = s.grid_size || "12";
       document.getElementById('wordsearchCase').value = s.letter_case || "upper";
       document.getElementById('wordsearchFont').value = s.font || "sans";
-      document.getElementById('wordsearchSize').value = s.puzzle_size || "1";      document.getElementById('wordsearchTemplate').value = s.template || "0";
+      document.getElementById('wordsearchSize').value = s.puzzle_size || "1.0";      document.getElementById('wordsearchTemplate').value = s.template || "0";
       document.getElementById('wordsearchHintsAlign').value = s.hints_alignment || "top";
 
       // Switch to the correct preview area
@@ -431,12 +425,11 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
       document.querySelectorAll('.tool-panel').forEach(panel => panel.classList.add('hidden'));
       document.getElementById('panel-reading').classList.remove('hidden');
       document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelector('.tool-btn[data-panel="reading"]').classList.add('active');
-
-      // Fill fields
+      document.querySelector('.tool-btn[data-panel="reading"]').classList.add('active');      // Fill fields
       document.getElementById('readingTitle').value = worksheet.title || "";
       document.getElementById('readingPassage').value = worksheet.passage_text || "";
       document.getElementById('readingQuestions').value = worksheet.questions || "";
+      document.getElementById('readingAnswers').value = worksheet.answers || "";
 
       // Settings (if present)
       const s = worksheet.settings || {};
@@ -458,16 +451,277 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
       document.querySelectorAll('.worksheet-preview').forEach(preview => {
         preview.classList.add('hidden');
       });
-      document.getElementById('worksheetPreviewArea-reading').classList.remove('hidden');
-
-      // Trigger preview update
+      document.getElementById('worksheetPreviewArea-reading').classList.remove('hidden');      // Trigger preview update
       setTimeout(() => {
         if (window.updateReadingPreview && typeof window.updateReadingPreview === 'function') {
           window.updateReadingPreview();
         }
       }, 100);
+      
+      // Update answer key button visibility
+      updateAnswerKeyButtonVisibility();
     }
     // Add more types as needed
   };
+
+  // PRINT ANSWER KEY (for reading worksheets)
+  const printAnswerKeyBtn = document.getElementById('printAnswerKeyBtn');
+  if (printAnswerKeyBtn) {
+    printAnswerKeyBtn.onclick = () => {
+      // Only proceed if we're on the reading panel
+      if (document.getElementById('panel-reading').classList.contains('hidden')) {
+        alert('Answer key is only available for reading worksheets.');
+        return;
+      }
+
+      const title = document.getElementById('readingTitle')?.value || "Reading Comprehension";
+      const answers = document.getElementById('readingAnswers')?.value || "";
+      const questions = document.getElementById('readingQuestions')?.value || "";
+      
+      if (!answers.trim()) {
+        alert('No answer key available. Please generate questions with AI or manually enter answers.');
+        return;
+      }
+
+      // Get font settings
+      let fontFamily = "'Poppins', sans-serif";
+      const fontSelect = document.getElementById('readingFont');
+      if (fontSelect) {
+        fontFamily = fontSelect.value;
+      }      const answerKeyContent = `
+        <div class="worksheet-page">
+          <div class="page-header" style="padding:40px 40px 20px 40px;">
+            <div style="text-align:center;margin-bottom:30px;">
+              <img src="../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:120px;margin-bottom:20px;">
+              <h1 style="font-size:24px;font-weight:bold;margin-bottom:10px;">${title} - Answer Key</h1>
+              <div style="border-bottom:2px solid #333;width:60%;margin:0 auto;"></div>
+            </div>
+          </div>
+          
+          <div class="page-content" style="padding:0 40px;">
+            <div style="margin-bottom:30px;">
+              <h2 style="font-size:18px;font-weight:bold;margin-bottom:15px;">Answers:</h2>
+              <div style="padding:20px;background:#f9f9f9;border-left:4px solid #2e2b3f;">
+                ${formatAnswersForPrint(answers)}
+              </div>
+            </div>
+          </div>
+          
+          <div class="page-footer" style="margin-top:auto;padding:20px 40px 40px 40px;border-top:1px solid #eee;text-align:center;color:#666;font-size:14px;">
+            <p>Willena 원어민 영어학원 | 031-8041-2203 | www.willenaenglish.com</p>
+          </div>
+        </div>
+      `;
+
+      const win = window.open('', '', 'width=900,height=1200');
+      win.document.write(`
+        <html>
+          <head>
+            <title>Answer Key - ${title}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+            <style>
+              body { 
+                background: #fff; 
+                margin: 0; 
+                padding: 0; 
+                font-family: ${fontFamily};
+                font-size: 16px;
+                line-height: 1.6;
+              }
+              @media print {
+                body { 
+                  background: #fff; 
+                  -webkit-print-color-adjust: exact;
+                  color-adjust: exact;
+                }
+                @page {
+                  margin: 0.5in;
+                  size: A4;
+                }
+              }
+            </style>
+          </head>          <body onload="window.print();" style="font-family:${fontFamily};font-size:16px;line-height:1.6;">
+            ${answerKeyContent}
+          </body>
+        </html>
+      `);
+      win.document.close();
+    };
+  }
+  // Helper function to format answers for printing
+  function formatAnswersForPrint(answers) {
+    if (!answers) return '';
+    
+    return answers.split('\n')
+      .map(line => line.trim())
+      .filter(line => line)
+      .map((line, index) => {
+        // Add some visual styling based on content
+        let style = "margin-bottom:12px;font-size:16px;";
+        
+        // If line starts with a number, make it bold
+        if (/^\d+\./.test(line)) {
+          style += "font-weight:bold;color:#2e2b3f;";
+        }
+        
+        // If line looks like a multiple choice answer (just a letter), emphasize it
+        if (/^[a-d]$/i.test(line.trim())) {
+          style += "font-weight:bold;font-size:18px;color:#7c3aed;background:#f3f0ff;padding:8px 12px;border-radius:4px;display:inline-block;";
+        }
+        
+        return `<div style="${style}">${line}</div>`;
+      })
+      .join('');
+  }
+
+  // Show/hide answer key button based on active panel
+  function updateAnswerKeyButtonVisibility() {
+    const answerKeyBtn = document.getElementById('printAnswerKeyBtn');
+    if (!answerKeyBtn) return;
+    
+    const isReadingPanelActive = !document.getElementById('panel-reading').classList.contains('hidden');
+    answerKeyBtn.style.display = isReadingPanelActive ? 'inline-block' : 'none';
+  }
+
+  // Initial update of answer key button visibility
+  updateAnswerKeyButtonVisibility();
+
+  // Auto-generate basic answer key for manual questions
+  function generateBasicAnswerKey() {
+    const questions = document.getElementById('readingQuestions')?.value || "";
+    const answersField = document.getElementById('readingAnswers');
+    
+    if (!questions.trim() || answersField?.value.trim()) {
+      return; // Don't overwrite existing answers
+    }
+
+    // Count questions and generate placeholder answers
+    const questionCount = (questions.match(/^\s*\d+\./gm) || []).length;
+    if (questionCount === 0) return;
+
+    const basicAnswers = [];
+    for (let i = 1; i <= questionCount; i++) {
+      basicAnswers.push(`${i}. [Answer ${i}]`);
+    }
+    
+    if (answersField) {
+      answersField.value = basicAnswers.join('\n');
+    }
+  }
+
+  // Add event listener to auto-generate basic answer key when questions are added manually
+  const questionsField = document.getElementById('readingQuestions');
+  if (questionsField) {
+    questionsField.addEventListener('input', () => {
+      // Only auto-generate if answers field is empty
+      const answersField = document.getElementById('readingAnswers');
+      if (answersField && !answersField.value.trim()) {
+        setTimeout(generateBasicAnswerKey, 500); // Small delay to avoid constant updates
+      }
+    });
+  }
+
+  // Helper function for single-page PDF generation
+  async function generateSinglePagePDF(container, title) {
+    // Capture at full resolution
+    const canvas = await html2canvas(container, { 
+      scale: 2, 
+      backgroundColor: "#fff", 
+      useCORS: true,
+      width: 794,
+      height: container.scrollHeight,
+      logging: false
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new window.jspdf.jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    });
+    
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = canvas.height * (imgWidth / canvas.width);
+
+    let position = 0;
+    let pageNumber = 1;
+    
+    // Add pages if content is taller than one page
+    while (position < imgHeight) {
+      if (pageNumber > 1) {
+        pdf.addPage();
+      }
+      
+      pdf.addImage(
+        imgData,
+        'PNG',
+        0,
+        -position,
+        imgWidth,
+        imgHeight
+      );
+      
+      position += pageHeight;
+      pageNumber++;
+    }
+    
+    pdf.save(`${title || 'worksheet'}.pdf`);
+  }
+
+  // Helper function for multi-page PDF generation
+  async function generateMultiPagePDF(container, title) {
+    const pages = container.querySelectorAll('.worksheet-page');
+    const pdf = new window.jspdf.jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    });
+
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) {
+        pdf.addPage();
+      }
+
+      // Capture each page individually
+      const canvas = await html2canvas(pages[i], { 
+        scale: 2, 
+        backgroundColor: "#fff", 
+        useCORS: true,
+        width: 794,
+        height: 1123,
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(
+        imgData,
+        'PNG',
+        0,
+        0,
+        pageWidth,
+        pageHeight
+      );
+    }
+    
+    pdf.save(`${title || 'worksheet'}.pdf`);
+  }
+
+  // Helper function to get worksheet title for naming
+  function getWorksheetTitle() {
+    let worksheetTitle = 'worksheet';
+    const activePanel = document.querySelector('.tool-panel:not(.hidden)');
+    if (activePanel) {
+      const titleInput = activePanel.querySelector('[id$="Title"]');
+      if (titleInput && titleInput.value.trim()) {
+        worksheetTitle = titleInput.value.trim().replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
+      }
+    }
+    return worksheetTitle;
+  }
 });
 

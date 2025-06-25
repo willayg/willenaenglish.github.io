@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passage Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .controls h2 {
+            margin: 0 0 20px 0;
+            color: #2e2b3f;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Poppins', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        .form-group textarea {
+            min-height: 300px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            background: #2e2b3f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #1a1940;
+        }
+        
+        .btn.secondary {
+            background: #6c757d;
+        }
+        
+        .btn.secondary:hover {
+            background: #545b62;
+        }
+        
+        .preview {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            min-height: 800px;
+        }
+        
+        .preview h3 {
+            margin: 0 0 20px 0;
+            color: #2e2b3f;
+        }
+        
+        /* Passage page styles */
+        .passage-page {
+            width: 794px;
+            height: 1123px;
+            margin: 0 auto 20px auto;
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+        }
+        
+        .passage-page:last-child {
+            margin-bottom: 0;
+        }
+        
+        .page-header {
+            padding: 30px 40px 20px 40px;
+            flex-shrink: 0;
+        }
+        
+        .page-header.first-page {
+            padding-bottom: 30px;
+        }
+        
+        .page-header.continuation {
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .student-info span {
+            border-bottom: 1px solid #ccc;
+            min-width: 120px;
+            display: inline-block;
+            padding-bottom: 2px;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2e2b3f;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+        
+        .page-content {
+            flex: 1 1 auto;
+            padding: 0 40px;
+            overflow: hidden;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .page-footer {
+            padding: 15px 40px 30px 40px;
+            flex-shrink: 0;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            position: relative;
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 40px;
+            font-weight: 500;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                display: block;
+            }
+            
+            .controls {
+                display: none;
+            }
+            
+            .preview h3 {
+                display: none;
+            }
+            
+            .passage-page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+            
+            .passage-page:last-child {
+                page-break-after: auto;
+            }
+        }
+        
+        .page-break-indicator {
+            text-align: center;
+            color: #7c3aed;
+            background: #f0ebff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px dashed #7c3aed;
+            font-size: 14px;
+        }
+        
+        @media print {
+            .page-break-indicator {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <h2>Passage Builder</h2>
+            
+            <div class="form-group">
+                <label for="passageTitle">Title (First Page Only)</label>
+                <input type="text" id="passageTitle" placeholder="Enter passage title" value="Reading Passage">
+            </div>
+            
+            <div class="form-group">
+                <label for="passageContent">Passage Content</label>
+                <textarea id="passageContent" placeholder="Enter your passage text here...">Once upon a time, in a small village nestled between rolling hills and a sparkling river, there lived a young girl named Maya. Maya had always been curious about the world beyond her village, especially the mysterious forest that bordered their home.
+
+Every morning, Maya would wake up early and help her grandmother tend to their small garden. Her grandmother, whom everyone called Nani, was known throughout the village for her wisdom and her ability to grow the most beautiful flowers anyone had ever seen.
+
+One particular morning, as Maya was watering the roses, she noticed something unusual. A small, silver key was buried beneath the soil near the oldest rose bush. The key seemed to shimmer in the morning sunlight, almost as if it were calling to her.
+
+"Nani," Maya called excitedly, "look what I found!"
+
+Her grandmother examined the key carefully, turning it over in her weathered hands. "This is no ordinary key, my dear," she said with a mysterious smile. "This key has been waiting for the right person to find it."
+
+"What does it open?" Maya asked, her eyes wide with curiosity.
+
+"That, my child, is something you must discover for yourself. But I will tell you this – the key will only work when you truly need it to."
+
+Maya spent the rest of the day thinking about the key and what it might unlock. She carried it with her everywhere, feeling its smooth surface in her pocket. That evening, as she sat by her bedroom window looking out at the forest, she made a decision.
+
+The next morning, Maya told her grandmother that she wanted to explore the forest to see if the key might open something there. Nani nodded approvingly. "I was wondering when you would ask," she said. "Take this with you." She handed Maya a small compass. "It will help you find your way back home."
+
+As Maya entered the forest, she was amazed by its beauty. Tall trees stretched up toward the sky, their leaves creating a natural canopy that filtered the sunlight into dancing patterns on the forest floor. Birds sang melodious songs, and butterflies fluttered from flower to flower.
+
+After walking for what felt like hours, Maya came upon a clearing where an old, ornate door stood by itself – not attached to any building, just standing there in the middle of the forest. The door was made of dark wood with intricate carvings of vines and flowers.
+
+Maya's heart raced as she approached the door. There, right in the center, was a small silver keyhole that looked like it would be a perfect match for her key. With trembling hands, she inserted the key and turned it.
+
+The door opened with a soft creak, revealing not another part of the forest, but a beautiful garden unlike anything Maya had ever seen. Flowers of every color imaginable bloomed in perfect harmony, and a gentle breeze carried the most delightful fragrance she had ever smelled.
+
+In the center of the garden stood a magnificent tree with golden fruit hanging from its branches. Beneath the tree sat a wise-looking owl who turned to look at Maya as she stepped through the doorway.
+
+"Welcome, young seeker," the owl said in a voice that was both gentle and commanding. "I have been waiting for you."</textarea>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="generatePassage()">Generate Passage</button>
+                <button class="btn secondary" onclick="printPassage()">Print</button>
+                <button class="btn secondary" onclick="downloadPDF()">Download PDF</button>
+            </div>
+        </div>
+        
+        <div class="preview">
+            <h3>Preview</h3>
+            <div id="passagePreview">
+                <!-- Generated passage will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="passage.js"></script>
+</body>
+</html>
