@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passage Builder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Reading 3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Source+Sans+Pro:wght@400;600;700&family=Ubuntu:wght@400;500;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -44,9 +44,9 @@
             font-weight: 500;
             color: #333;
         }
-        
-        .form-group input,
-        .form-group textarea {
+          .form-group input,
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 8px 12px;
             border: 1px solid #ddd;
@@ -236,13 +236,41 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="controls">
-            <h2>Passage Builder</h2>
+    <div class="container">        <div class="controls">
+            <h2>Reading 3.0</h2>
             
             <div class="form-group">
                 <label for="passageTitle">Title (First Page Only)</label>
                 <input type="text" id="passageTitle" placeholder="Enter passage title" value="Reading Passage">
+            </div>
+            
+            <!-- Font Controls -->
+            <div class="form-group">
+                <label for="passageFont">Font Family</label>
+                <select id="passageFont">
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Lato', sans-serif">Lato</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                    <option value="'Nunito', sans-serif">Nunito</option>
+                    <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+                    <option value="'Ubuntu', sans-serif">Ubuntu</option>
+                    <option value="'Merriweather', serif">Merriweather</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="passageFontSize">Font Size</label>
+                <select id="passageFontSize">
+                    <option value="12">Extra Small (12px)</option>
+                    <option value="14">Small (14px)</option>
+                    <option value="16" selected>Normal (16px)</option>
+                    <option value="18">Large (18px)</option>
+                    <option value="20">Extra Large (20px)</option>
+                    <option value="22">XXL (22px)</option>
+                </select>
             </div>
             
             <div class="form-group">
@@ -278,6 +306,29 @@ In the center of the garden stood a magnificent tree with golden fruit hanging f
 "Welcome, young seeker," the owl said in a voice that was both gentle and commanding. "I have been waiting for you."</textarea>
             </div>
             
+            <!-- AI Tools Section -->
+            <div class="form-group" style="border-top: 2px solid #e0e0e0; padding-top: 15px; margin-top: 20px;">                <h3 style="color: #2e2b3f; margin: 0 0 15px 0; font-size: 16px;">AI Tools</h3>
+                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Advanced AI tools for content creation and analysis.</p>
+                <button class="btn secondary" onclick="alert('Story builder coming in next update!')" style="width: 100%; margin-bottom: 8px;">
+                    Build a Story (Coming Soon)
+                </button>
+                <button class="btn" onclick="showQuestionGenerator()" style="width: 100%; margin-bottom: 8px;">
+                    Generate Questions
+                </button>                <button class="btn secondary" onclick="alert('AI vocabulary extraction coming in next update!')" style="width: 100%;">
+                    Extract Vocabulary (Coming Soon)
+                </button>
+                
+                <!-- Question Results Display -->
+                <div id="questionResults" style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745; display: none;">
+                    <h4 style="margin: 0 0 10px 0; color: #2e2b3f; font-size: 14px;">✅ Questions Generated!</h4>
+                    <div id="questionContent" style="max-height: 150px; overflow-y: auto; font-size: 12px; background: white; padding: 8px; border-radius: 4px; margin-bottom: 10px; white-space: pre-wrap; font-family: 'Courier New', monospace;"></div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="insertQuestionsAtEnd()" class="btn" style="flex: 1; padding: 8px; font-size: 12px;">Insert at End</button>
+                        <button onclick="copyQuestions()" class="btn secondary" style="flex: 1; padding: 8px; font-size: 12px;">Copy</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="margin-top: 20px;">
                 <button class="btn" onclick="generatePassage()">Generate Passage</button>
                 <button class="btn secondary" onclick="printPassage()">Print</button>
@@ -289,6 +340,68 @@ In the center of the garden stood a magnificent tree with golden fruit hanging f
             <h3>Preview</h3>
             <div id="passagePreview">
                 <!-- Generated passage will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Generator Modal -->
+    <div id="questionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #2e2b3f;">Question Generator</h3>
+                <button onclick="hideQuestionGenerator()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Question Type:</label>
+                <select id="questionType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    <option value="multiple-choice">Multiple Choice</option>
+                    <option value="written">Written Answers</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px; color: #2e2b3f;">Question Categories:</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="comprehension" checked>
+                        <span>Comprehension</span>
+                        <input type="number" id="comprehensionCount" value="2" min="0" max="10" style="width: 50px; margin-left: 10px;">
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="detail" checked>
+                        <span>Detail</span>
+                        <input type="number" id="detailCount" value="2" min="0" max="10" style="width: 50px; margin-left: 10px;">
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="inference">
+                        <span>Inference</span>
+                        <input type="number" id="inferenceCount" value="1" min="0" max="10" style="width: 50px; margin-left: 10px;">
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="grammar">
+                        <span>Grammar</span>
+                        <input type="number" id="grammarCount" value="1" min="0" max="10" style="width: 50px; margin-left: 10px;">
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="mainIdea">
+                        <span>Main Idea</span>
+                        <input type="number" id="mainIdeaCount" value="1" min="0" max="10" style="width: 50px; margin-left: 10px;">
+                    </label>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="hideQuestionGenerator()" class="btn secondary">Cancel</button>
+                <button onclick="generateQuestions()" class="btn">Generate Questions</button>
+            </div>
+              <div id="questionResults" style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; display: none;">
+                <h4 style="margin-top: 0;">Generated Questions:</h4>
+                <div id="questionContent" style="white-space: pre-wrap; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 15px; line-height: 1.6; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; background: white; border-radius: 3px;"></div>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button onclick="copyQuestions()" class="btn secondary">Copy to Clipboard</button>
+                    <button onclick="insertQuestionsAtEnd()" class="btn">Insert at End</button>
+                </div>
             </div>
         </div>
     </div>
