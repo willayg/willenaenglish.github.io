@@ -157,6 +157,16 @@ body, main {
   border-right: 1px solid #d6d2e0;
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
+  position: fixed;
+  top: 56px; /* Height of topbar */
+  left: 0;
+  height: calc(100vh - 56px);
+  z-index: 10;
+}
+
+/* Adjust main content to account for fixed sidebar */
+#main-content {
+  margin-left: 135px;
 }
 
 #worksheetMenuBar {

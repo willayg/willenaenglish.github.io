@@ -25,9 +25,8 @@ const worksheetTemplates = [
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-    ">
-      <img src="../Assets/Images/color-logo1.png" alt="Willena Logo" style="display:block;margin:0 auto 16px auto;width:110px;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-family:'Glacial Indifference', Arial, sans-serif; font-size:1.05rem; color:#222;">
+    ">      <img src="../Assets/Images/color-logo1.png" alt="Willena Logo" style="display:block;margin:0 auto 16px auto;width:110px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-family:'Glacial Indifference', Arial, sans-serif; font-size:1.05rem; color:#222;">
         <span>Name: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:120px;">&nbsp;</span></span>
         <span>Date: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:90px;">&nbsp;</span></span>
       </div>
@@ -241,18 +240,21 @@ const worksheetTemplates = [
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-      ">
-        <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-family:'Glacial Indifference', Arial, sans-serif; font-size:1.05rem; color:#222;">
+      ">        <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-family:'Glacial Indifference', Arial, sans-serif; font-size:1.05rem; color:#222;">
           <span>Name: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:120px;">&nbsp;</span></span>
           <span>Date: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:90px;">&nbsp;</span></span>
         </div>
-        ${title && title.trim() ? `<h1 style="font-size:1.2rem;font-weight:bold;text-align:center;margin-bottom:10px;color:#2e2b3f;letter-spacing:1px;">${title}</h1>` : ""}
-        ${instructions && instructions.trim() ? `<div style="margin-bottom:28px;color:#444;font-size:1.1rem;text-align:center;">${instructions}</div>` : ""}
-        <div style="flex:1 1 auto; margin-bottom:32px;">${puzzle || ''}</div>
-        <footer style="border-top:1px solid #eee;margin-top:auto;padding-top:12px;text-align:center;color:#888;font-size:0.95rem;font-family:'Glacial Indifference', Arial, sans-serif;position:relative;">
-          Willena 원어민 영어학원 | 031-8041-2203 | www.willenaenglish.com
-          <div style="width:100%;text-align:center;margin-top:10px;">
-            <img src="../Assets/Images/color-logo1.png" alt="Willena Logo" style="display:inline-block;width:110px;">
+        ${title && title.trim() ? `<h1 style="font-size:1.2rem;font-weight:bold;text-align:center;margin-bottom:15px;color:#2e2b3f;letter-spacing:1px;">${title}</h1>` : ""}
+        ${instructions && instructions.trim() ? `<div style="margin-bottom:20px;color:#444;font-size:1.1rem;text-align:center;">${instructions}</div>` : ""}        <div style="flex:1 1 auto; margin-bottom:32px;">${puzzle || ''}</div>
+        <footer style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:742px;border-top:1px solid #eee;padding-top:12px;color:#888;font-size:0.95rem;font-family:'Glacial Indifference', Arial, sans-serif;background:#fff;z-index:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="flex:1;text-align:left;">
+              <img src="../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:90px;">
+            </div>
+            <div style="flex:2;text-align:center;">
+              Willena 원어민 영어학원 | 031-8041-2203 | www.willenaenglish.com
+            </div>
+            <div style="flex:1;"></div>
           </div>
         </footer>
       </div>
