@@ -205,11 +205,11 @@
     <span class="text-xl font-bold tracking-wide">Willena Lesson Planner</span>
   </nav>
 
-  <main id="main-content" class="flex side-layout min-h-screen">
-    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>      <button class="tool-btn" data-panel="puzzles">Puzzles</button>
+  <main id="main-content" class="flex side-layout min-h-screen">    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>      <button class="tool-btn" data-panel="puzzles">Puzzles</button>
       <button class="tool-btn" data-panel="games">Games</button>
       <button class="tool-btn" data-panel="creative">Creative</button>
-      <button class="tool-btn" data-panel="tests">Word Tests</button> <!-- Add this line -->      <button class="tool-btn" data-panel="reading">Reading</button>
+      <button class="tool-btn" data-panel="tests">Word Tests</button>
+      <button class="tool-btn" data-panel="planner">Lesson Planner</button>      <button class="tool-btn" data-panel="reading">Reading</button>
       <button class="tool-btn" data-panel="passage">Reading 3.0</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
       <button class="tool-btn" data-panel="crossword">Crossword</button>
@@ -259,15 +259,16 @@
             <option value="'Roboto', sans-serif">Roboto</option>
             <option value="'Nanum Gothic', sans-serif">Nanum Gothic</option>
             <option value="'Noto Sans KR', sans-serif">Noto Sans KR</option>
-          </select>
-
-          <!-- New Font Size Selector -->
+          </select>          <!-- Font Size Slider -->
           <label for="wordTestFontSize" class="block font-semibold mb-1">Font Size</label>
-          <select id="wordTestFontSize" class="border rounded px-2 py-1 mb-2">
-            <option value="1">Normal</option>
-            <option value="0.8">Small</option>
-            <option value="0.65">Quite Small</option>
-          </select>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-sm">Small</span>
+            <input type="range" id="wordTestFontSize" min="0.6" max="1.4" step="0.1" value="1.0" class="flex-1">
+            <span class="text-sm">Large</span>
+          </div>
+          <div class="text-center text-sm text-gray-600 mb-2">
+            <span id="fontSizeValue">1.0x</span>
+          </div>
 
           <label class="block mb-1">Paste Reading Passage</label>
           <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
@@ -285,32 +286,97 @@
             <option value="photo">Photos</option>
             <option value="illustration">Illustrations</option>
           </select>
-          <button id="refreshImagesBtn" class="btn w-full bg-blue-500 text-white rounded py-2 mt-3">Refresh Images</button>
-          <div id="wordTestStatus" class="text-sm text-gray-500"></div>
-
-          <!-- New: Worksheet Layout Selector -->
-          <label for="wordTestLayout" class="block font-semibold py-2 mb-3">Worksheet Layout</label>
-          <select id="wordTestLayout" class="w-full px-3 py-2 border rounded mb-2">
+          <button id="refreshImagesBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2 w-full">Refresh Images</button>
+          <div id="wordTestStatus" class="text-sm text-gray-500"></div>          <!-- New: Worksheet Layout Selector -->
+          <label for="wordTestLayout" class="block font-semibold py-2 mb-3">Worksheet Layout</label>          <select id="wordTestLayout" class="w-full px-3 py-2 border rounded mb-2">
             <option value="default">Default Table</option>
             <option value="4col">4 Columns (Eng/Kor/Eng/Kor)</option>
-            <option value="6col-images">6 Columns with Images</option>
+            <option value="6col-images">Picture Test</option>
             <option value="images">With Images</option>
-          </select>
+            <option value="picture-quiz">Picture Quiz</option>
+            <option value="picture-matching">Picture Matching</option>
+          </select>          <!-- Remix Button for Picture Matching (only visible when Picture Matching is selected) -->
+          <div id="remixMatchingControls" style="display: none;">
+            <button id="remixMatchingBtn" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mb-2 w-full">
+              🎲 Remix Words
+            </button>
+            <!-- Line Spacing Slider for Picture Matching -->
+            <label for="lineSpacingSlider" class="block font-semibold mb-1">Line Spacing</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Tight</span>
+              <input type="range" id="lineSpacingSlider" min="15" max="50" value="25" class="flex-1">
+              <span class="text-sm">Wide</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="lineSpacingValue">25px</span>
+            </div>
+          </div>          <!-- Picture Quiz Image Size Slider -->
+          <div id="pictureQuizControls" style="display: none;">
+            <label for="pictureQuizImageSize" class="block font-semibold mb-1">Picture Size</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Small</span>
+              <input type="range" id="pictureQuizImageSize" min="40" max="120" value="55" class="flex-1">
+              <span class="text-sm">Large</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureSizeValue">55px</span>
+            </div>
+          </div>
 
-          <!-- New: Worksheet Template Selector -->
-          <label for="wordTestTemplate" class="block font-semibold mb-1">Worksheet Template</label>
-          <select id="wordTestTemplate" class="w-full px-3 py-2 border rounded mb-2">
+          <!-- Picture Test Controls -->
+          <div id="pictureTestControls" style="display: none;">
+            <!-- Picture Size Slider -->
+            <label for="pictureTestImageSize" class="block font-semibold mb-1">Picture Size</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Small</span>
+              <input type="range" id="pictureTestImageSize" min="40" max="120" value="55" class="flex-1">
+              <span class="text-sm">Large</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureTestSizeValue">55px</span>
+            </div>
+
+            <!-- Row Height Slider -->
+            <label for="pictureTestRowHeight" class="block font-semibold mb-1">Row Height</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Compact</span>
+              <input type="range" id="pictureTestRowHeight" min="40" max="100" value="60" class="flex-1">
+              <span class="text-sm">Spacious</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureTestRowHeightValue">60px</span>
+            </div>
+
+            <!-- Text Size Slider -->
+            <label for="pictureTestTextSize" class="block font-semibold mb-1">Text Size</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Small</span>
+              <input type="range" id="pictureTestTextSize" min="0.7" max="1.5" step="0.1" value="1.0" class="flex-1">
+              <span class="text-sm">Large</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureTestTextSizeValue">1.0x</span>
+            </div>
+
+            <!-- Test Mode -->
+            <label for="pictureTestMode" class="block font-semibold mb-1">Test Mode</label>
+            <select id="pictureTestMode" class="w-full px-3 py-2 border rounded mb-2">
+              <option value="none">Show All Words</option>
+              <option value="hide-random">Hide Random Letters</option>
+              <option value="hide-vowels">Hide Vowels</option>
+              <option value="hide-consonants">Hide Consonants</option>
+            </select>
+          </div><!-- New: Worksheet Template Selector -->
+          <label for="wordTestTemplate" class="block font-semibold mb-1">Worksheet Template</label>          <select id="wordTestTemplate" class="w-full px-3 py-2 border rounded mb-2">
             <option value="0">Classic</option>
             <option value="1">Minimal</option>
             <option value="2">Line</option>
             <option value="3">Elegant Left Bar</option>
             <option value="4">Playful Dots</option>
-            <option value="5">Modern Shadow Card</option>
+            <option value="5" selected>Modern Shadow Card</option>
             <option value="6">Classic Bottom</option>
             <option value="7">Minimal Bottom</option>
-          </select>
-
-          <!-- Add near your layout/font controls -->
+          </select>          <!-- Add near your layout/font controls -->
           <label for="wordTestMode">Test Mode:</label>
           <select id="wordTestMode">
             <option value="none">Show All</option>
@@ -318,6 +384,54 @@
             <option value="hide-kor">Hide Korean</option>
             <option value="random">Hide Randomly</option>
           </select>        </div>
+      </section>      <!-- Lesson Planner Panel -->
+      <section id="panel-planner" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">📋 Lesson Planner</h2>
+          
+          <!-- Basic Lesson Info -->
+          <div class="border-b pb-3 mb-3">
+            <label class="block mb-1 font-semibold">Class Name</label>
+            <input type="text" id="plannerClassName" class="border rounded w-full p-2 mb-2" placeholder="e.g. Elementary A1" />
+            
+            <label class="block mb-1 font-semibold">Date</label>
+            <input type="date" id="plannerDate" class="border rounded w-full p-2 mb-2" />
+            
+            <label class="block mb-1 font-semibold">Lesson Duration</label>
+            <select id="plannerDuration" class="border rounded w-full p-2 mb-2">
+              <option value="50">50 minutes</option>
+              <option value="80">80 minutes</option>
+              <option value="custom">Custom</option>
+            </select>
+            
+            <div id="customDurationDiv" class="hidden">
+              <input type="number" id="customDuration" class="border rounded px-2 py-1" min="10" max="180" placeholder="Minutes">
+            </div>
+          </div>
+
+          <!-- AI-Powered Content Generation -->
+          <div class="mb-3">
+            <label class="block mb-1 font-semibold">Lesson Topic *</label>
+            <input type="text" id="plannerTopic" class="border rounded w-full p-2 mb-2" placeholder="e.g. Past tense verbs, Shopping vocabulary, Job interviews" />
+            
+            <label class="block mb-1 font-semibold">Teaching Preferences (Optional)</label>
+            <textarea id="plannerActivities" class="border rounded w-full p-2 mb-2" rows="2" placeholder="e.g. I like role-plays, avoid grammar drilling, students need more speaking practice"></textarea>
+            
+            <button id="generateLessonPlan" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 mb-2 w-full">
+              🤖 Generate Lesson Plan with AI
+            </button>
+          </div><!-- Generated Lesson Plan -->
+          <div class="border-t pt-3">
+            <div class="flex gap-2 mb-2">
+              <button id="editLessonPlan" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex-1">✏️ Edit Plan</button>
+              <button id="printLessonPlan" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 flex-1">🖨️ Print</button>
+            </div>
+            
+            <div id="lessonPlanOutput" class="border rounded p-3 bg-gray-50 min-h-[200px] text-sm">
+              <p class="text-gray-500 italic">Your AI-generated lesson plan will appear here...</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Reading Panel (new) -->
@@ -437,92 +551,91 @@
       </section>
           </button>
         </div>
-      </section>
-
-      <!-- Wordsearch Panel (new) -->
+      </section>      <!-- Wordsearch Panel (new) -->
       <section id="panel-wordsearch" class="tool-panel hidden mb-4">
-        <div class="mb-3">
-          <label for="wordsearchTitle" class="block font-semibold mb-1">Worksheet Title</label>
-          <input type="text" id="wordsearchTitle" class="w-full px-3 py-2 border rounded" placeholder="">
-        </div>
-        <div class="mb-3">
-          <label for="wordsearchInstructions" class="block font-semibold mb-1">Instructions</label>
-          <input type="text" id="wordsearchInstructions" class="w-full px-3 py-2 border rounded" placeholder="">
-        </div>
-        <div class="mb-2 font-semibold">Wordsearch Maker</div>
-        <!-- Example for Wordsearch panel -->
-        <div class="toolbar-row">
-          <label>Grid Size
-            <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
-              <option value="8">8 x 8</option>
-              <option value="10" selected>10 x 10</option>
-              <option value="12">12 x 12</option>
-              <option value="15">15 x 15</option>
-            </select>
-          </label>
-          <label>Letter Case
-            <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
-              <option value="upper">UPPERCASE</option>
-              <option value="lower">lowercase</option>
-            </select>
-          </label>
-        </div>
-        <div class="toolbar-row">
-          <label>Font
-            <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
-              <option value="sans">Sans-serif (Default)</option>
-              <option value="mono">Monospace</option>
-              <option value="comic">Comic Sans MS</option>
-              <option value="nanum">Nanum Pen Script</option>
-            </select>
-          </label>
-          <label>Puzzle Size
-            <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
-              <option value="1">Normal</option>
-              <option value="1.2">Large</option>
-              <option value="1.5">Extra Large</option>
-              <option value="0.8">Small</option>
-            </select>
-          </label>
-          <!-- NEW: Template Dropdown -->
-          <label>Worksheet Template
-            <select id="wordsearchTemplate" class="border rounded px-2 py-1 mb-2">
-              <option value="0">Classic</option>
-              <option value="1">Minimal</option>
-              <option value="2">Logo Right Blue Line</option>
-              <option value="3">Modern Shadow Card</option>
-              <option value="4">Playful Dots</option>
-              <option value="5">Elegant Left Bar</option>
-            </select>
-          </label>
-        </div>
-        <!-- NEW: Alignment Controls -->
-        <label class="block mb-1">Hints Alignment</label>
-        <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
-          <option value="top" selected>Top</option>
-          <option value="bottom">Bottom</option>
-        </select>
-        
-        <!-- Category-based word generation -->
-        <div style="margin-bottom:10px;">
-          <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
-          <button id="generateCategoryWordsBtn">Generate Words</button>
-        </div>
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Wordsearch Maker</h2>
+          <div class="mb-3">
+            <label for="wordsearchTitle" class="block font-semibold mb-1">Worksheet Title</label>
+            <input type="text" id="wordsearchTitle" class="w-full px-3 py-2 border rounded" placeholder="">
+          </div>
+          <div class="mb-3">
+            <label for="wordsearchInstructions" class="block font-semibold mb-1">Instructions</label>
+            <input type="text" id="wordsearchInstructions" class="w-full px-3 py-2 border rounded" placeholder="">
+          </div>
+          <!-- Example for Wordsearch panel -->
+          <div class="toolbar-row">
+            <label>Grid Size
+              <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
+                <option value="8">8 x 8</option>
+                <option value="10" selected>10 x 10</option>
+                <option value="12">12 x 12</option>
+                <option value="15">15 x 15</option>
+              </select>
+            </label>
+            <label>Letter Case
+              <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
+                <option value="upper">UPPERCASE</option>
+                <option value="lower">lowercase</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar-row">
+            <label>Font
+              <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
+                <option value="sans">Sans-serif (Default)</option>
+                <option value="mono">Monospace</option>
+                <option value="comic">Comic Sans MS</option>
+                <option value="nanum">Nanum Pen Script</option>
+              </select>
+            </label>
+            <label>Puzzle Size
+              <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
+                <option value="1">Normal</option>
+                <option value="1.2">Large</option>
+                <option value="1.5">Extra Large</option>
+                <option value="0.8">Small</option>
+              </select>
+            </label>
+            <!-- NEW: Template Dropdown -->
+            <label>Worksheet Template
+              <select id="wordsearchTemplate" class="border rounded px-2 py-1 mb-2">
+                <option value="0">Classic</option>
+                <option value="1">Minimal</option>
+                <option value="2">Logo Right Blue Line</option>
+                <option value="3">Modern Shadow Card</option>
+                <option value="4">Playful Dots</option>
+                <option value="5">Elegant Left Bar</option>
+              </select>
+            </label>
+          </div>
+          <!-- NEW: Alignment Controls -->
+          <label class="block mb-1">Hints Alignment</label>
+          <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
+            <option value="top" selected>Top</option>
+            <option value="bottom">Bottom</option>
+          </select>
+          
+          <!-- Category-based word generation -->
+          <div style="margin-bottom:10px;">
+            <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
+            <button id="generateCategoryWordsBtn">Generate Words</button>
+          </div>
 
-        <!-- Passage-based word extraction -->
-        <div style="margin-bottom:10px;">
-          <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
-          <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
-        </div>
+          <!-- Passage-based word extraction -->
+          <div style="margin-bottom:10px;">
+            <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
+            <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
+          </div>
 
-        <!-- Existing word list textarea (for the puzzle) -->
-        <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
-        <div class="mb-2">
-          <label><input type="checkbox" id="wordsearchAllowDiagonals"> Allow Diagonals</label>
-          <label class="ml-4"><input type="checkbox" id="wordsearchAllowBackwards"> Allow Backwards Words</label>
+          <!-- Existing word list textarea (for the puzzle) -->
+          <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+          <div class="mb-2">
+            <label><input type="checkbox" id="wordsearchAllowDiagonals"> Allow Diagonals</label>
+            <label class="ml-4"><input type="checkbox" id="wordsearchAllowBackwards"> Allow Backwards Words</label>
+          </div>
+          <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
         </div>
-        <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
-      
       </section>
 
       <!-- Crossword Panel (new) -->
@@ -556,8 +669,8 @@
           <button id="saveWorksheetBtn">Save</button>
           <button id="loadWorksheetBtn">Load</button>
         </div>
-      </div>      <div id="worksheetPreviewWrapper" style="width:794px; min-height:1123px; position:relative;">
-        <div id="worksheetPreviewArea-tests" class="worksheet-preview" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+      </div>      <div id="worksheetPreviewWrapper" style="width:794px; min-height:1123px; position:relative;">        <div id="worksheetPreviewArea-tests" class="worksheet-preview" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-planner" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-reading" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
@@ -568,7 +681,6 @@
   <!-- Workspace Section -->
   <section id="workspace" class="flex-1 bg-[#f9f5ec] rounded-lg shadow-inner p-6">
   </section>
-
   <!-- Worksheet Templates -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  <script src="components/worksheetTemplates.js"></script>
@@ -578,6 +690,7 @@
   <script src="tools/puzzles/crossword.js"></script>
   <script type="module" src="tools/tests/wordtest.js"></script>
   <script type="module" src="tools/reading/reading.js"></script>
+  <script src="tools/planner/planner.js"></script>
   <script>
     // Ensure the first panel is shown on load
     document.addEventListener('DOMContentLoaded', function() {
@@ -605,6 +718,27 @@
           showPanel(panel);
         });
       });      showPanel('files');      
+      
+      // Set current date for lesson planner
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('plannerDate');
+      if (dateInput) {
+        dateInput.value = today;
+      }
+
+      // Custom duration toggle
+      const durationSelect = document.getElementById('plannerDuration');
+      const customDurationDiv = document.getElementById('customDurationDiv');
+      if (durationSelect && customDurationDiv) {
+        durationSelect.addEventListener('change', function() {
+          if (this.value === 'custom') {
+            customDurationDiv.classList.remove('hidden');
+          } else {
+            customDurationDiv.classList.add('hidden');
+          }
+        });
+      }
+      
       // Reading 3.0 button handler
       document.getElementById('openPassageBuilder').addEventListener('click', function() {
         // Open the reading 3.0 tool in a new window

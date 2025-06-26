@@ -789,7 +789,7 @@ Generate the questions now following the exact format specified:`;
             body: JSON.stringify({
                 endpoint: 'chat/completions',
                 payload: {
-                    model: 'gpt-4',
+                    model: 'gpt-4o-mini',  // Changed from 'gpt-4' - much cheaper!
                     messages: [{ role: 'user', content: prompt }],
                     max_tokens: 2000,
                     temperature: 0.3
