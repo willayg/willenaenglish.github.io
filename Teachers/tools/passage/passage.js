@@ -1,104 +1,202 @@
 // Passage Builder JavaScript - Built for Multi-Page from the Ground Up
 
 function generatePassage() {
-    const title = document.getElementById('passageTitle').value.trim();
-    const content = document.getElementById('passageContent').value.trim();
-    const fontFamily = document.getElementById('passageFont').value;
-    const fontSize = document.getElementById('passageFontSize').value + 'px';
-    
-    if (!content) {
-        alert('Please enter some passage content.');
-        return;
+    try {
+        const title = document.getElementById('passageTitle').value.trim();
+        const content = document.getElementById('passageContent').value.trim();
+        const fontFamily = document.getElementById('passageFont').value;
+        const fontSize = document.getElementById('passageFontSize').value + 'px';
+        
+        console.log('Generate passage called with:', { title, content: content.substring(0, 50) + '...', fontFamily, fontSize });
+        
+        if (!content) {
+            const preview = document.getElementById('passagePreview');
+            preview.innerHTML = '<div style="padding: 20px; color: #666; text-align: center;">Enter passage content to see preview</div>';
+            return;
+        }
+        
+        // Generate the multi-page passage with font settings
+        const pages = createMultiPagePassage(title, content, fontFamily, fontSize);
+        console.log('Generated pages:', pages.length);
+        
+        // Display in preview
+        const preview = document.getElementById('passagePreview');
+        if (pages && pages.length > 0) {
+            preview.innerHTML = pages.join('<div class="page-break-indicator">Page Break - Content continues on next page</div>');
+        } else {
+            preview.innerHTML = '<div style="padding: 20px; color: #red; text-align: center;">Error: No pages generated</div>';
+        }
+    } catch (error) {
+        console.error('Error in generatePassage:', error);
+        const preview = document.getElementById('passagePreview');
+        preview.innerHTML = `<div style="padding: 20px; color: red; text-align: center;">Error: ${error.message}</div>`;
     }
-    
-    // Generate the multi-page passage with font settings
-    const pages = createMultiPagePassage(title, content, fontFamily, fontSize);
-    
-    // Display in preview
-    const preview = document.getElementById('passagePreview');
-    preview.innerHTML = pages.join('<div class="page-break-indicator">Page Break - Content continues on next page</div>');
 }
 
 function createMultiPagePassage(title, content, fontFamily, fontSize) {
-    // Create a test page to measure real available space with the selected font
-    const testPage = createTestPage(title, true, fontFamily, fontSize);
-    document.body.appendChild(testPage);
-    
-    const pages = [];
-    const contentParts = splitContentIntoChunks(content);
-    
-    let currentPageContent = '';
-    let partIndex = 0;
-    let pageNumber = 1;    while (partIndex < contentParts.length) {
-        const part = contentParts[partIndex];
+    try {
+        console.log('Creating multi-page passage:', { title, fontFamily, fontSize });
         
-        // Handle paragraph breaks
-        if (part === '\n\n') {
-            currentPageContent += '\n\n';
-            partIndex++;
-            continue;
-        }
+        // Create a test page to measure real available space with the selected font
+        const testPage = createTestPage(title, true, fontFamily, fontSize);
+        document.body.appendChild(testPage);
         
-        // Determine the separator based on whether we're continuing a sentence or starting new content
-        let separator = '';
-        if (currentPageContent) {
-            // If current content doesn't end with paragraph break, add appropriate separator
-            if (!currentPageContent.endsWith('\n\n')) {
-                // If the part starts with punctuation or current content ends with sentence, just add space
-                if (part.match(/^[.!?]/) || currentPageContent.match(/[.!?]\s*$/)) {
-                    separator = ' ';
-                } else {
-                    separator = ' ';
+        const pages = [];
+        let remainingContent = content;
+        let pageNumber = 1;
+        
+        console.log('Starting pagination with content length:', remainingContent.length);
+        
+        while (remainingContent.trim().length > 0) {
+            const isFirstPage = pageNumber === 1;
+            
+            console.log(`Processing page ${pageNumber}, remaining content: ${remainingContent.length} chars`);
+            
+            // Set up the test page for current page type
+            if (!isFirstPage) {
+                updateTestPageForContinuation(testPage);
+            }
+            
+            // Find the maximum content that fits on this page
+            const pageContent = findMaxContentForPage(testPage, remainingContent, fontFamily, fontSize);
+            console.log(`Page ${pageNumber} content length:`, pageContent.length);
+            
+            if (pageContent.trim().length === 0) {
+                // Safety check - if no content fits, break to avoid infinite loop
+                console.error('No content fits on page', pageNumber);
+                break;
+            }
+            
+            // Create the page
+            const pageHtml = createPassagePage(title, formatTextContent(pageContent, fontFamily, fontSize), pageNumber, 0, isFirstPage, fontFamily, fontSize);
+            pages.push(pageHtml);
+            
+            // Find the exact position where this content ends in the original text
+            // This prevents cutting words in half
+            const contentIndex = remainingContent.indexOf(pageContent);
+            if (contentIndex === 0) {
+                // Perfect match at the beginning
+                remainingContent = remainingContent.substring(pageContent.length).trim();
+            } else {
+                // Fallback: find where the page content actually ends
+                let endPosition = pageContent.length;
+                
+                // If the content ends mid-word, find the end of the current word
+                if (endPosition < remainingContent.length && 
+                    remainingContent[endPosition] !== ' ' && 
+                    remainingContent[endPosition] !== '\n') {
+                    
+                    // Find the next space or end of content
+                    while (endPosition < remainingContent.length && 
+                           remainingContent[endPosition] !== ' ' && 
+                           remainingContent[endPosition] !== '\n') {
+                        endPosition++;
+                    }
                 }
+                
+                remainingContent = remainingContent.substring(endPosition).trim();
+            }
+            
+            pageNumber++;
+            
+            // Safety check to prevent infinite loops
+            if (pageNumber > 50) {
+                console.error('Too many pages generated, stopping at 50');
+                break;
             }
         }
         
-        const testContent = currentPageContent + separator + part;
+        console.log('Final page count:', pages.length);
         
-        // Test if this content fits on current page
-        const contentDiv = testPage.querySelector('.page-content');
+        // Update all pages with correct total page count
+        const totalPages = pages.length;
+        const updatedPages = pages.map((page, index) => {
+            return page.replace(/Page \d+ of \d+/, `Page ${index + 1} of ${totalPages}`);
+        });
+        
+        // Clean up test page
+        document.body.removeChild(testPage);
+        
+        return updatedPages;
+    } catch (error) {
+        console.error('Error in createMultiPagePassage:', error);
+        return [`<div style="padding: 20px; color: red;">Error creating pages: ${error.message}</div>`];
+    }
+}
+
+function findMaxContentForPage(testPage, content, fontFamily, fontSize) {
+    const contentDiv = testPage.querySelector('.page-content');
+    
+    // Try to break at paragraph boundaries first
+    const paragraphs = content.split(/\n\s*\n/);
+    let paragraphCount = paragraphs.length;
+    let bestFit = '';
+    
+    // Start with all paragraphs and work backwards
+    while (paragraphCount > 0) {
+        const testContent = paragraphs.slice(0, paragraphCount).join('\n\n');
+        
+        // Test if this content fits
         contentDiv.innerHTML = formatTextContent(testContent, fontFamily, fontSize);
+        contentDiv.offsetHeight; // Force layout
         
-        // Force layout recalculation
-        contentDiv.offsetHeight;
+        const fits = contentDiv.scrollHeight <= contentDiv.clientHeight;
         
-        // Check if content overflows the available space
-        const overflows = contentDiv.scrollHeight > contentDiv.clientHeight;
-          if (overflows && currentPageContent !== '') {
-            // Current page is full - save it and start new page
-            const isFirstPage = pageNumber === 1;
-            pages.push(createPassagePage(title, formatTextContent(currentPageContent, fontFamily, fontSize), pageNumber, 0, isFirstPage, fontFamily, fontSize));
-            
-            // Reset for new page - start with the current part
-            currentPageContent = part;
-            pageNumber++;
-            
-            // Update test page for continuation page (no title)
-            updateTestPageForContinuation(testPage);
-            
-            // Move to next part since we've handled this one
-            partIndex++;
-        } else {
-            // Part fits - add it to current page
-            currentPageContent = testContent;
-            partIndex++;
+        if (fits) {
+            bestFit = testContent;
+            break;
         }
-    }// Add final page if it has content
-    if (currentPageContent && currentPageContent.trim()) {
-        const isFirstPage = pageNumber === 1;
-        pages.push(createPassagePage(title, formatTextContent(currentPageContent, fontFamily, fontSize), pageNumber, 0, isFirstPage, fontFamily, fontSize));
+        
+        paragraphCount--;
     }
     
-    // Update all pages with correct total page count
-    const totalPages = pages.length;
-    const updatedPages = pages.map((page, index) => {
-        return page.replace(/Page \d+ of \d+/, `Page ${index + 1} of ${totalPages}`);
-    });
+    // If no complete paragraphs fit, try sentence-by-sentence within the first paragraph
+    if (!bestFit && paragraphs.length > 0) {
+        const firstParagraph = paragraphs[0];
+        const sentences = firstParagraph.split(/(?<=[.!?])\s+/);
+        let sentenceCount = sentences.length;
+        
+        while (sentenceCount > 0) {
+            const testContent = sentences.slice(0, sentenceCount).join(' ');
+            
+            contentDiv.innerHTML = formatTextContent(testContent, fontFamily, fontSize);
+            contentDiv.offsetHeight;
+            
+            const fits = contentDiv.scrollHeight <= contentDiv.clientHeight;
+            
+            if (fits) {
+                bestFit = testContent;
+                break;
+            }
+            
+            sentenceCount--;
+        }
+    }
     
-    // Clean up test page
-    document.body.removeChild(testPage);
+    // Last resort: word-by-word from the beginning
+    if (!bestFit) {
+        const words = content.split(' ');
+        let wordCount = Math.min(20, words.length); // Start smaller
+        
+        while (wordCount > 0) {
+            const testContent = words.slice(0, wordCount).join(' ');
+            
+            contentDiv.innerHTML = formatTextContent(testContent, fontFamily, fontSize);
+            contentDiv.offsetHeight;
+            
+            const fits = contentDiv.scrollHeight <= contentDiv.clientHeight;
+            
+            if (fits) {
+                bestFit = testContent;
+                break;
+            }
+            
+            wordCount--;
+        }
+    }
     
-    return updatedPages;
+    console.log(`Best fit found: ${bestFit.length} characters from ${content.length} total`);
+    return bestFit;
 }
 
 function createTestPage(title, isFirstPage, fontFamily = "'Poppins', sans-serif", fontSize = "16px") {
@@ -213,7 +311,9 @@ function updateTestPageForContinuation(testPage) {
     `;
 }
 
-function createPassagePage(title, content, pageNumber, totalPages, isFirstPage, fontFamily = "'Poppins', sans-serif", fontSize = "16px") {    return `        <div class="passage-page" style="font-family: ${fontFamily} !important;">
+function createPassagePage(title, content, pageNumber, totalPages, isFirstPage, fontFamily = "'Poppins', sans-serif", fontSize = "16px") {
+    return `
+        <div class="passage-page" style="font-family: ${fontFamily} !important;">
             <div class="page-header ${isFirstPage ? 'first-page' : 'continuation'}">
                 <img src="../../../Assets/Images/color-logo1.png" alt="Willena" class="logo">
                 <div class="student-info">
@@ -282,18 +382,58 @@ function splitContentIntoChunks(content) {
 function formatTextContent(content, fontFamily, fontSize) {
     if (!content || content.trim().length === 0) return '';
     
-    // Split content into paragraphs while preserving structure
-    const paragraphs = content.split(/\n\s*\n/);
+    // Check if this content contains multiple choice questions
+    const hasMultipleChoice = /^\s*[a-d]\)\s/.test(content) || content.includes('a)') || content.includes('READING COMPREHENSION');
     
-    return paragraphs
-        .map(para => para.trim())
-        .filter(para => para.length > 0)
-        .map(para => {
-            // Clean up extra spaces and format the paragraph
-            const cleanPara = para.replace(/\s+/g, ' ').trim();
-            return `<p style="margin-bottom: 16px; text-align: justify; line-height: 1.5; font-family: inherit; font-size: inherit;">${cleanPara}</p>`;
-        })
-        .join('');
+    if (hasMultipleChoice) {
+        // Special formatting for questions and answers
+        const lines = content.split('\n');
+        const formattedLines = [];
+        
+        for (let line of lines) {
+            line = line.trim();
+            if (!line) {
+                formattedLines.push('<br>');
+                continue;
+            }
+            
+            // Format question numbers
+            if (/^\d+\.\s/.test(line)) {
+                formattedLines.push(`<p style="margin: 20px 0 10px 0; font-weight: 600; font-family: inherit; font-size: inherit;">${line}</p>`);
+            }
+            // Format multiple choice options
+            else if (/^[a-d]\)\s/.test(line)) {
+                formattedLines.push(`<p style="margin: 5px 0 5px 20px; font-family: inherit; font-size: inherit;">${line}</p>`);
+            }
+            // Format section headers
+            else if (line.includes('READING COMPREHENSION') || line.includes('ANSWER KEY')) {
+                formattedLines.push(`<p style="margin: 30px 0 20px 0; font-weight: 700; text-align: center; font-family: inherit; font-size: inherit;">${line}</p>`);
+            }
+            // Format separator lines
+            else if (/^[─═-]{10,}$/.test(line)) {
+                formattedLines.push(`<hr style="margin: 20px 0; border: 1px solid #ccc;">`);
+            }
+            // Regular text
+            else {
+                formattedLines.push(`<p style="margin-bottom: 16px; text-align: justify; line-height: 1.5; font-family: inherit; font-size: inherit;">${line}</p>`);
+            }
+        }
+        
+        return formattedLines.join('');
+    } else {
+        // Regular passage formatting
+        const paragraphs = content.split(/\n\s*\n/);
+        
+        return paragraphs
+            .map(para => para.trim())
+            .filter(para => para.length > 0)
+            .map(para => {
+                // Clean up extra spaces and format the paragraph
+                const cleanPara = para.replace(/\s+/g, ' ').trim();
+                return `<p style="margin-bottom: 16px; text-align: justify; line-height: 1.5; font-family: inherit; font-size: inherit;">${cleanPara}</p>`;
+            })
+            .join('');
+    }
 }
 
 function printPassage() {
@@ -734,18 +874,54 @@ function showToast(message) {
 
 // Auto-generate passage on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+    
+    // Check if required elements exist
+    const elements = {
+        passageTitle: document.getElementById('passageTitle'),
+        passageContent: document.getElementById('passageContent'),
+        passageFont: document.getElementById('passageFont'),
+        passageFontSize: document.getElementById('passageFontSize'),
+        passagePreview: document.getElementById('passagePreview')
+    };
+    
+    console.log('Elements found:', elements);
+    
+    // Check for missing elements
+    const missing = Object.keys(elements).filter(key => !elements[key]);
+    if (missing.length > 0) {
+        console.error('Missing elements:', missing);
+        if (elements.passagePreview) {
+            elements.passagePreview.innerHTML = `<div style="padding: 20px; color: red;">Missing form elements: ${missing.join(', ')}</div>`;
+        }
+        return;
+    }
+    
     // Initialize undo/redo system
     initializeUndoRedo();
     
+    // Set default content if empty
+    if (!elements.passageContent.value.trim()) {
+        elements.passageContent.value = `Maya was nine years old when she found the old key in her grandmother's attic. It was a peculiar thing – made of a metal she couldn't identify, with intricate designs carved into its surface. The key seemed to shimmer in the dusty afternoon light that filtered through the small attic window.
+
+"What does it open?" Maya asked, her eyes wide with curiosity.
+
+"That, my child, is something you must discover for yourself. But I will tell you this – the key will only work when you truly need it to."
+
+Maya spent the rest of the day thinking about the key and what it might unlock. She carried it with her everywhere, feeling its smooth surface in her pocket. That evening, as she sat by her bedroom window looking out at the forest, she made a decision.
+
+The next morning, Maya told her grandmother that she wanted to explore the forest to see if the key might open something there. Nani nodded approvingly. "I was wondering when you would ask," she said. "Take this with you." She handed Maya a small compass. "It will help you find your way back home."`;
+    }
+    
     generatePassage();
       // Add live preview on input change - with immediate font regeneration
-    document.getElementById('passageTitle').addEventListener('input', generatePassage);
-    document.getElementById('passageContent').addEventListener('input', debounce(generatePassage, 500));
-    document.getElementById('passageFont').addEventListener('change', function() {
+    elements.passageTitle.addEventListener('input', generatePassage);
+    elements.passageContent.addEventListener('input', debounce(generatePassage, 500));
+    elements.passageFont.addEventListener('change', function() {
         // Immediate regeneration for font changes to ensure proper pagination
         generatePassage();
     });
-    document.getElementById('passageFontSize').addEventListener('change', function() {
+    elements.passageFontSize.addEventListener('change', function() {
         // Immediate regeneration for font size changes to ensure proper pagination
         generatePassage();
     });
@@ -942,15 +1118,17 @@ function insertQuestionsAtEnd() {
 // Function to clean up and format question text
 function formatQuestionsText(text, questionType) {
     if (questionType === 'multiple-choice') {
-        // More aggressive approach to split options that are on the same line
+        // First, clean up any formatting issues
         let processed = text;
         
-        // Split on patterns like "; b)" or " b)" or "; c)" etc.
-        processed = processed.replace(/;\s*([a-d]\))/g, '\n$1');
-        processed = processed.replace(/\s+([b-d]\))/g, '\n$1');
+        // Split options that might be concatenated
+        processed = processed.replace(/([a-d]\)[^a-d\n]*?)\s+([a-d]\))/g, '$1\n$2');
         
-        // Also handle direct concatenation like "option a) next option b)"
-        processed = processed.replace(/([a-d]\)[^a-d]*?)\s+([a-d]\))/g, '$1\n$2');
+        // Handle semicolon separators
+        processed = processed.replace(/;\s*([a-d]\))/g, '\n$1');
+        
+        // Handle space before options
+        processed = processed.replace(/\s+([b-d]\))/g, '\n$1');
         
         const lines = processed.split('\n');
         const formattedLines = [];
@@ -958,26 +1136,21 @@ function formatQuestionsText(text, questionType) {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             
-            if (!line) {
-                continue;
-            }
+            if (!line) continue;
             
             // Check if this is a question (starts with number and dot)
             if (/^\d+\.\s/.test(line)) {
                 // Add spacing before question (except first one)
                 if (formattedLines.length > 0) {
-                    formattedLines.push(''); // Empty line for spacing
+                    formattedLines.push('');
                 }
                 formattedLines.push(line);
                 formattedLines.push(''); // Empty line after question
             }
             // Check if this is an answer option (starts with a), b), c), d))
             else if (/^[a-d]\)\s/.test(line)) {
-                // Convert a) to a: format and clean up any trailing punctuation
-                let convertedLine = line.replace(/^([a-d])\)\s/, '$1: ');
-                // Remove trailing semicolons or other punctuation that might be left over
-                convertedLine = convertedLine.replace(/[;,]\s*$/, '');
-                formattedLines.push(convertedLine);
+                // Keep the original a) format but ensure it's on its own line
+                formattedLines.push(line);
             }
             // Check if this is the answer key
             else if (line.includes('ANSWER KEY')) {
