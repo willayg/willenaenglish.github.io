@@ -37,6 +37,139 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
         // Create a temporary full-size version for printing that matches preview exactly
       const printContent = previewArea.cloneNode(true);
       
+      // Fix "2 Lists (Side by Side)" layout alignment
+      const twoListsTables = printContent.querySelectorAll('table.two-lists-table');
+      twoListsTables.forEach(table => {
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.tableLayout = 'fixed';
+        
+        // Ensure column widths are consistent
+        const colgroups = table.querySelectorAll('colgroup col');
+        const widths = ['8%', '27%', '27%', '3%', '8%', '27%'];
+        colgroups.forEach((col, index) => {
+          if (widths[index]) {
+            col.style.width = widths[index];
+          }
+        });
+      });
+
+      // Fix Picture Test layout images to stay within table cell bounds
+      const pictureTestImages = printContent.querySelectorAll('img.picture-test-img');
+      pictureTestImages.forEach(img => {
+        img.style.maxWidth = '100%';
+        img.style.width = '80px';
+        img.style.height = '80px';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        img.style.boxSizing = 'border-box';
+      });
+      
+      // Ensure Picture Test table cells don't overflow
+      const pictureTestCellsOld = printContent.querySelectorAll('td');
+      pictureTestCellsOld.forEach(td => {
+        if (td.querySelector('img.picture-test-img')) {
+          td.style.overflow = 'hidden';
+          td.style.boxSizing = 'border-box';
+          td.style.verticalAlign = 'middle';
+        }
+      });
+      
+      // Fix "With Images" layout for print consistency
+      const withImagesImages = printContent.querySelectorAll('img.with-images-img');
+      withImagesImages.forEach(img => {
+        img.style.maxWidth = '85%';
+        img.style.maxHeight = '50px';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        img.style.margin = '2px auto';
+        img.style.boxSizing = 'border-box';
+        img.style.borderRadius = '3px';
+        img.style.border = '1px solid #ccc';
+      });
+      
+      // Ensure "With Images" table cells have proper alignment and padding
+      const withImagesCells = printContent.querySelectorAll('.with-images-cell, .with-images-text, .with-images-number');
+      withImagesCells.forEach(cell => {
+        cell.style.verticalAlign = 'middle';
+        cell.style.textAlign = 'center';
+        cell.style.boxSizing = 'border-box';
+        cell.style.overflow = 'hidden';
+        
+        if (cell.classList.contains('with-images-text')) {
+          cell.style.lineHeight = '1.3';
+          cell.style.wordBreak = 'break-word';
+          cell.style.paddingLeft = '8px';
+          cell.style.paddingRight = '8px';
+        }
+        
+        if (cell.classList.contains('with-images-number')) {
+          cell.style.fontSize = '0.85em';
+        }
+      });
+      
+      // Ensure "With Images" table rows have consistent height
+      const withImagesRows = printContent.querySelectorAll('.with-images-row');
+      withImagesRows.forEach(row => {
+        row.style.minHeight = '60px';
+        row.style.height = 'auto';
+      });
+      
+      // Fix "Picture List" layout for print consistency
+      const pictureListImages = printContent.querySelectorAll('img.picture-list-img');
+      pictureListImages.forEach(img => {
+        img.style.maxWidth = '85%';
+        img.style.maxHeight = '90px';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        img.style.boxSizing = 'border-box';
+        img.style.borderRadius = '8px';
+        img.style.border = '2px solid #ddd';
+        img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+      });
+      
+      // Ensure Picture List table cells have proper formatting
+      const pictureListCells = printContent.querySelectorAll('.picture-list-image-cell, .picture-list-text, .picture-list-number');
+      pictureListCells.forEach(cell => {
+        cell.style.verticalAlign = 'middle';
+        cell.style.boxSizing = 'border-box';
+        cell.style.padding = '15px 8px';
+        
+        if (cell.classList.contains('picture-list-text')) {
+          cell.style.textAlign = 'center';
+          cell.style.lineHeight = '1.4';
+          cell.style.wordBreak = 'break-word';
+          cell.style.paddingLeft = '12px';
+          cell.style.paddingRight = '12px';
+          cell.style.fontSize = '1.1em';
+          cell.style.fontWeight = '500';
+        }
+        
+        if (cell.classList.contains('picture-list-number')) {
+          cell.style.textAlign = 'center';
+          cell.style.fontSize = '1.1em';
+          cell.style.fontWeight = '500';
+        }
+        
+        if (cell.classList.contains('picture-list-image-cell')) {
+          cell.style.textAlign = 'center';
+        }
+      });
+      
+      // Ensure Picture List table rows have proper spacing and avoid page breaks
+      const pictureListRows = printContent.querySelectorAll('.picture-list-row');
+      pictureListRows.forEach(row => {
+        row.style.minHeight = '120px';
+        row.style.height = 'auto';
+        row.style.pageBreakInside = 'avoid';
+      });
+      
       // Calculate the current scale from transform
       let scale = 1;
       if (currentTransform && currentTransform !== 'none') {
@@ -206,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {  // PRINT WORKSHEET
                   background: #fff; 
                   -webkit-print-color-adjust: exact;
                   color-adjust: exact;
-                  line-height: 1.6;
                 }
                 div { box-shadow: none !important; }
                 p { line-height: 1.6 !important; }

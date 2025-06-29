@@ -65,9 +65,20 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }
-    // Use robust multi-page rendering for reading worksheets
-    const multiPageContent = `<div class="multi-page-worksheet">${createReadingWorksheetPages(title, worksheetContent, font, fontSizeScale)}</div>`;
-    preview.innerHTML = multiPageContent;
+
+    // --- FIX: Use template for single-page, multi-page for overflow ---
+    // Create a temporary element to check if content fits on one page
+    const temp = document.createElement('div');
+    temp.style.cssText = `position:absolute;visibility:hidden;width:794px;height:1123px;left:-9999px;top:-9999px;font-family:${font};font-size:${fontSizeScale}em;`;
+    // Remove any font-family from the template output to avoid override
+    let templateHtml = template.render({
+      title,
+      instructions: "",
+      puzzle: worksheetContent,
+      orientation: "portrait"
+    });
+    templateHtml = templateHtml.replace(/font-family:[^;"']+;?/gi, '');
+    preview.innerHTML = `<div class="worksheet-preview" style="font-family:${font};font-size:${fontSizeScale}em;">${templateHtml}</div>`;
     
     // Apply font styles to the preview area
     applyPreviewFontStyles(preview, font, fontSizeScale);

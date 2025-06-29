@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="text-gray-400 p-4">
                 Enter a reading passage and generate questions to preview the worksheet.
                 <br><br>
-                <strong>Sample text to test font changes:</strong>
-                <br>This text shows how the selected font and size will appear in your worksheet.
+                <strong>Worksheet:</strong>
+                <br>Your worksheet will appear here.
                 <br>Font: ${font}
                 <br>Size scale: ${fontSizeScale}
               </div>
