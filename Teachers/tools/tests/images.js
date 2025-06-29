@@ -33,3 +33,9 @@ export async function getPixabayImage(query, next = false) {
 export function clearImageCache() {
   Object.keys(imageCache).forEach(key => delete imageCache[key]);
 }
+
+// Legacy/compatibility: support getPixabayImage(word, forceRefresh) signature
+// (forceRefresh = true triggers next image)
+export async function getPixabayImageCompat(word, forceRefresh = false) {
+  return await getPixabayImage(word, forceRefresh);
+}

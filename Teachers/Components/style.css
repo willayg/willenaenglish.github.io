@@ -597,4 +597,156 @@ body, main {
   .page-break-indicator {
     display: none !important;
   }
+
+  /* Adjustments for "2 Lists (Side by Side)" layout in print */
+  .two-lists-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+  }
+  
+  .two-lists-table colgroup col:nth-child(1) { width: 5% !important; } /* Number column */
+  .two-lists-table colgroup col:nth-child(2) { width: 25% !important; } /* English column */
+  .two-lists-table colgroup col:nth-child(3) { width: 25% !important; } /* Korean column */
+  .two-lists-table colgroup col:nth-child(4) { width: 3% !important; } /* Divider column */
+  .two-lists-table colgroup col:nth-child(5) { width: 5% !important; } /* Number column */
+  .two-lists-table colgroup col:nth-child(6) { width: 25% !important; } /* English column */
+  .two-lists-table colgroup col:nth-child(7) { width: 25% !important; } /* Korean column */
+  
+  .two-lists-table th,
+  .two-lists-table td {
+    padding: 8px !important;
+    border-bottom: 1px solid #ddd !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+  }
+  
+  .two-lists-table th {
+    border-bottom: 2px solid #333 !important;
+  }
+  
+  .two-lists-table td:nth-child(4) {
+    border-left: 2px solid #e0e0e0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  /* Adjustments for "Picture Test" layout in print */
+  .picture-test-img,
+  .worksheet-preview img.picture-test-img {
+    max-width: 100% !important;
+    width: 80px !important;
+    height: 80px !important;
+    object-fit: cover !important;
+    margin: 0 auto !important;
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+
+  .worksheet-preview img {
+    max-width: 100% !important;
+    width: 80px !important; /* Match preview image size */
+    height: 80px !important;
+    object-fit: cover !important;
+    margin: 0 auto !important; /* Center align images */
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+
+  .worksheet-preview table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+  }
+
+  .worksheet-preview td {
+    padding: 8px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    border: 1px solid #ddd !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Picture Test (6col-images) layout print styles */
+  .picture-test-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 auto !important;
+  }
+  
+  .picture-test-table colgroup col:nth-child(1),
+  .picture-test-table colgroup col:nth-child(5) {
+    width: 5% !important; /* Number columns */
+  }
+  
+  .picture-test-table colgroup col:nth-child(2),
+  .picture-test-table colgroup col:nth-child(6) {
+    width: 20% !important; /* Image columns */
+  }
+  
+  .picture-test-table colgroup col:nth-child(3),
+  .picture-test-table colgroup col:nth-child(7) {
+    width: 20% !important; /* English columns */
+  }
+  
+  .picture-test-table colgroup col:nth-child(4),
+  .picture-test-table colgroup col:nth-child(8) {
+    width: 20% !important; /* Korean columns */
+  }
+  
+  .picture-test-table th {
+    padding: 4px 2px !important;
+    border-bottom: 2px solid #333 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-weight: bold !important;
+  }
+  
+  .picture-test-row {
+    min-height: 60px !important;
+    height: auto !important;
+  }
+  
+  .picture-test-table td {
+    padding: 2px 1px !important;
+    border-bottom: 1px solid #ddd !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  .picture-test-number {
+    font-size: 0.85em !important;
+    font-weight: normal !important;
+  }
+  
+  .picture-test-image-cell {
+    position: relative !important;
+  }
+  
+  .picture-test-img {
+    max-width: 85% !important;
+    max-height: 50px !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: cover !important;
+    border-radius: 3px !important;
+    border: 1px solid #ccc !important;
+    display: block !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+  
+  .picture-test-text {
+    line-height: 1.2 !important;
+    word-break: break-word !important;
+    hyphens: auto !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
 }

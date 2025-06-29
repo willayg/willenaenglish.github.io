@@ -1,4 +1,4 @@
-import { buildWordTableWithPixabay, maskWordPairs } from './worksheet.js';
+import { buildWordTableWithPixabay, maskWordPairs, hideRandomLetters } from './worksheet.js';
 import { applyPreviewFontStyles, loadGoogleFont, scaleWorksheetPreview } from './fonts.js';
 import { getPixabayImage, clearImageCache, imageCache } from './images.js';
 import { extractWordsWithAI } from './ai.js';
@@ -12,11 +12,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const preview = document.getElementById('worksheetPreviewArea-tests');
     const title = document.getElementById('wordTestTitle').value.trim() || "";
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
-    const fontSizeScale = parseFloat(document.getElementById('wordTestFontSize')?.value || "1");
-    const layout = document.getElementById('wordTestLayout')?.value || "default";    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "5", 10);
+    const fontSizeSliderEl = document.getElementById('wordTestFontSizeSlider');
+    const fontSizeScale = fontSizeSliderEl ? parseFloat(fontSizeSliderEl.value) : 1;
+    let layout = document.getElementById('wordTestLayout')?.value || "basic-table-layout";    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "5", 10);
     const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[5];
     const instructions = "";
     const testMode = document.getElementById('wordTestMode')?.value || "none";
+    let numLettersToHide = 1;
+    if (testMode === 'hide-random-letters') {
+      const numInput = document.getElementById('numLettersToHide');
+      if (numInput) {
+        numLettersToHide = parseInt(numInput.value, 10) || 1;
+      }
+    }
     if (!words || !preview) {
       preview.innerHTML = "<div class='text-gray-400'>Enter or generate some words to preview worksheet.</div>";
       return;
@@ -29,11 +37,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }).filter(pair => pair.eng && pair.kor);
 
     // Mask words based on test mode
-    const maskedPairs = maskWordPairs(wordPairs, testMode);
+    const maskedPairs = maskWordPairs(wordPairs, testMode, numLettersToHide);
 
     // Render table (example for images layout)
     if (layout === "images") {
-      const tableHtml = await buildWordTableWithPixabay(maskedPairs);
+      // Get slider values for image size and gap
+      const imageSize = document.getElementById('testImageSizeSlider')?.value || 80;
+      const imageGap = document.getElementById('testImageGapSlider')?.value || 16;
+      // Pass imageSize to builder, and inject image size and gap after rendering
+      let tableHtml = await buildWordTableWithPixabay(wordPairs, maskedPairs, imageSize);
+      // Inject image size into all <img> tags and gap as padding-bottom on all <td> in non-header rows
+      tableHtml = tableHtml.replace(/<img([^>]*)style="([^"]*)"/g, (match, attrs, style) => {
+        // Ensure width and height are set from slider
+        let newStyle = style.replace(/width:\d+px;/, '').replace(/height:\d+px;/, '');
+        newStyle = `width:${imageSize}px;height:${imageSize}px;` + newStyle;
+        return `<img${attrs}style="${newStyle}"`;
+      });
+      // Add padding-bottom to all <td> in non-header rows for vertical gap
+      tableHtml = tableHtml.replace(/<tr(.*?)>(.*?)<\/tr>/gs, (match, attrs, inner) => {
+        // Only add gap if not header row
+        if (attrs.includes('th')) return match;
+        // Add padding-bottom to all <td>
+        const newInner = inner.replace(/<td(.*?)>/g, (tdMatch, tdAttrs) => `<td${tdAttrs} style=\"padding-bottom:${imageGap}px;\">`);
+        return `<tr${attrs}>${newInner}</tr>`;
+      });
       preview.innerHTML = template.render({
         title,
         instructions,
@@ -41,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
-
       // Attach click handler for refresh
       document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
         img.addEventListener('click', async function() {
@@ -52,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // --- DEFAULT TABLE LAYOUT ---
+    // --- BASIC TABLE LAYOUT ---
     if (layout === "default") {
       const tableHtml = `
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
@@ -86,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // --- 4 COLUMN LAYOUT ---
+    // --- TWO LISTS LAYOUT (SIDE BY SIDE) ---
     if (layout === "4col") {
       const half = Math.ceil(maskedPairs.length / 2);
       const left = maskedPairs.slice(0, half);
@@ -96,37 +122,37 @@ document.addEventListener('DOMContentLoaded', () => {
         right.push({ eng: "", kor: "" });
       }
       const tableHtml = `
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        <table class="two-lists-table" style="width:100%;border-collapse:collapse;table-layout:fixed;">
           <colgroup>
-            <col style="width:7%;">
-            <col style="width:28%;">
-            <col style="width:28%;">
-            <col style="width:2%;"> <!-- For the vertical divider -->
-            <col style="width:7%;">
-            <col style="width:28%;">
-            <col style="width:28%;">
+            <col style="width:5%;">
+            <col style="width:25%;">
+            <col style="width:25%;">
+            <col style="width:3%;"> <!-- For the vertical divider -->
+            <col style="width:5%;">
+            <col style="width:25%;">
+            <col style="width:25%;">
           </colgroup>
           <thead>
             <tr>
-              <th>#</th>
-              <th>English</th>
-              <th>Korean</th>
-              <th style="background:transparent;border:none;"></th>
-              <th>#</th>
-              <th>English</th>
-              <th>Korean</th>
+              <th style="padding:8px;border-bottom:2px solid #333;text-align:center;">#</th>
+              <th style="padding:8px;border-bottom:2px solid #333;text-align:center;">English</th>
+              <th style="padding:8px;border-bottom:2px solid #333;text-align:center;">Korean</th>
+              <th style="background:transparent;border:none;padding:0;"></th>
+              <th style="padding:8px;border-bottom:2px solid #333;text-align:center;">#</th>
+              <th style="padding:8px;border-bottom:2px solid #333;text-align:center;">English</th>
+              <th style="padding:8px;border-bottom:2px solid #333;text-align:center;">Korean</th>
             </tr>
           </thead>
           <tbody>
             ${left.map((pair, i) => `
               <tr>
-                <td>${i + 1}</td>
-                <td class="toggle-word" data-index="${i}" data-lang="eng">${pair.eng}</td>
-                <td class="toggle-word" data-index="${i}" data-lang="kor">${pair.kor}</td>
-                <td style="border-left:2px solid #e0e0e0;background:transparent;"></td>
-                <td>${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
-                <td class="toggle-word" data-index="${i + half}" data-lang="eng">${right[i]?.eng || ""}</td>
-                <td class="toggle-word" data-index="${i + half}" data-lang="kor">${right[i]?.kor || ""}</td>
+                <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${i + 1}</td>
+                <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${pair.eng}</td>
+                <td class="toggle-word" data-index="${i}" data-lang="kor" style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${pair.kor}</td>
+                <td style="border-left:2px solid #e0e0e0;background:transparent;border-bottom:none;padding:0;"></td>
+                <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
+                <td class="toggle-word" data-index="${i + half}" data-lang="eng" style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${right[i]?.eng || ""}</td>
+                <td class="toggle-word" data-index="${i + half}" data-lang="kor" style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${right[i]?.kor || ""}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -140,14 +166,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
       return;
-    }    // --- 6 COLUMN WITH IMAGES LAYOUT ---
+    }    // --- SIX COLUMN WITH IMAGES LAYOUT ---
+    // --- PICTURE TEST LAYOUT (6 COLUMNS WITH IMAGES) ---
     if (layout === "6col-images") {
-      // Get controls for Picture Test
-      const imageSize = document.getElementById('pictureTestImageSize')?.value || 55;
-      const rowHeight = document.getElementById('pictureTestRowHeight')?.value || 60;
-      const textSizeScale = parseFloat(document.getElementById('pictureTestTextSize')?.value || "1.0");
-      const testMode = document.getElementById('pictureTestMode')?.value || "none";
-      
+      // Get controls for Picture Test - use available controls or defaults
+      const imageSize = document.getElementById('testImageSizeSlider')?.value || 80;
+      const imageGap = document.getElementById('testImageGapSlider')?.value || 16;
+      const rowHeight = 60; // Fixed row height for Picture Test
+      const textSize = 1; // Fixed text size for Picture Test
+      const testMode = document.getElementById('wordTestMode')?.value || "none";
+      const numLettersToHide = parseInt(document.getElementById('numLettersToHide')?.value || "1", 10);
+
       const half = Math.ceil(maskedPairs.length / 2);
       const left = maskedPairs.slice(0, half);
       const right = maskedPairs.slice(half);
@@ -175,13 +204,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return text.replace(/[aeiouAEIOU]/g, '_');
           case "hide-consonants":
             return text.replace(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]/g, '_');
+          case "hide-random-letters":
+            return hideRandomLetters(text, numLettersToHide);
+          case "hide-random-letter":
+            return text.split('').map((char, idx) => {
+              if (idx === 0) return char;
+              if (char.match(/[a-zA-Z]/) && Math.random() < 0.4) {
+                return '_';
+              }
+              return char;
+            }).join('');
           default:
             return text;
         }
       };
 
       const tableHtml = `
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        <table class="picture-test-table" style="width:100%;border-collapse:collapse;table-layout:fixed;">
           <colgroup>
             <col style="width:5%;">   <!-- # column -->
             <col style="width:20%;">  <!-- Image column -->
@@ -194,35 +233,36 @@ document.addEventListener('DOMContentLoaded', () => {
           </colgroup>
           <thead>
             <tr>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">#</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">Image</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">English</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">Korean</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">#</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">Image</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">English</th>
-              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSizeScale}em;text-align:center;">Korean</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">#</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">Image</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">English</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">Korean</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">#</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">Image</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">English</th>
+              <th style="padding:4px 2px;border-bottom:2px solid #333;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">Korean</th>
             </tr>
           </thead>
           <tbody>
             ${left.map((pair, i) => `
-              <tr style="height:${rowHeight}px;">
-                <td style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;font-size:${0.85 * textSizeScale}em;">${i + 1}</td>
-                <td style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;">
+              <tr class="picture-test-row" style="height:${Math.max(rowHeight, parseInt(imageSize) + 12)}px;">
+                <td class="picture-test-number" style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;vertical-align:middle;font-size:${0.85 * textSize}em;">${i + 1}</td>
+                <td class="picture-test-image-cell" style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;vertical-align:middle;">
                   ${leftImages[i] && leftImages[i].startsWith('http')
-                    ? `<img src="${leftImages[i]}" style="width:${Math.round(imageSize * 1.8)}px;height:${imageSize}px;object-fit:cover;cursor:pointer;border-radius:3px;border:1px solid #ccc;" class="pixabay-refresh-img" data-word="${wordPairs[i].eng}">`
+                    ? `<img src="${leftImages[i]}" style="max-width:90%;width:${imageSize}px;height:${imageSize}px;object-fit:cover;cursor:pointer;border-radius:3px;border:1px solid #ccc;display:block;margin:0 auto;" class="pixabay-refresh-img picture-test-img" data-word="${wordPairs[i].eng}">`
                     : (leftImages[i] ? `<span style="font-size:1.5em;">${leftImages[i]}</span>` : '')}
                 </td>
-                <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSizeScale}em;text-align:center;">${applyTestMode(pair.eng)}</td>
-                <td class="toggle-word" data-index="${i}" data-lang="kor" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSizeScale}em;text-align:center;">${pair.kor}</td>
-                <td style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;font-size:${0.85 * textSizeScale}em;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
-                <td style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;">
+                <td class="toggle-word picture-test-text" data-index="${i}" data-lang="eng" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">${applyTestMode(pair.eng)}</td>
+                <td class="toggle-word picture-test-text" data-index="${i}" data-lang="kor" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">${pair.kor}</td>
+                <td class="picture-test-number" style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;vertical-align:middle;font-size:${0.85 * textSize}em;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
+                <td class="picture-test-image-cell" style="padding:2px 1px;border-bottom:1px solid #ddd;text-align:center;vertical-align:middle;">
                   ${rightImages[i] && rightImages[i].startsWith('http')
-                    ? `<img src="${rightImages[i]}" style="width:${Math.round(imageSize * 1.8)}px;height:${imageSize}px;object-fit:cover;cursor:pointer;border-radius:3px;border:1px solid #ccc;" class="pixabay-refresh-img" data-word="${wordPairs[i + half]?.eng}">`
+                    ? `<img src="${rightImages[i]}" style="max-width:90%;width:${imageSize}px;height:${imageSize}px;object-fit:cover;cursor:pointer;border-radius:3px;border:1px solid #ccc;display:block;margin:0 auto;" class="pixabay-refresh-img picture-test-img" data-word="${wordPairs[i + half]?.eng}">`
                     : (rightImages[i] ? `<span style="font-size:1.5em;">${rightImages[i]}</span>` : '')}
                 </td>
-                <td class="toggle-word" data-index="${i + half}" data-lang="eng" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSizeScale}em;text-align:center;">${applyTestMode(right[i]?.eng || "")}</td>
-                <td class="toggle-word" data-index="${i + half}" data-lang="kor" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSizeScale}em;text-align:center;">${right[i]?.kor || ""}</td>              </tr>
+                <td class="toggle-word picture-test-text" data-index="${i + half}" data-lang="eng" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">${applyTestMode(right[i]?.eng || "")}</td>
+                <td class="toggle-word picture-test-text" data-index="${i + half}" data-lang="kor" style="padding:2px 4px;border-bottom:1px solid #ddd;font-size:${0.9 * textSize}em;text-align:center;vertical-align:middle;">${right[i]?.kor || ""}</td>
+              </tr>
             `).join('')}
           </tbody>
         </table>
@@ -234,26 +274,23 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
-
-      // Attach click handler for refresh
       document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
         img.addEventListener('click', async function() {
           const word = this.getAttribute('data-word');
           this.src = await getPixabayImage(word, true);
-        });      });
+        });
+      });
       return;
     }    // --- PICTURE QUIZ LAYOUT ---
     if (layout === "picture-quiz") {
       // Get images for all words (limit to 12)
       const limitedWordPairs = wordPairs.slice(0, 12);
       const wordImages = await Promise.all(limitedWordPairs.map(pair => getPixabayImage(pair.eng)));
-      
-      // Get current image size from slider or default
-      const imageSize = document.getElementById('pictureQuizImageSize')?.value || 140;
-      
+      // Use testImageSizeSlider and testImageGapSlider for size and vertical gap
+      const imageSize = document.getElementById('testImageSizeSlider')?.value || 140;
+      const imageGap = document.getElementById('testImageGapSlider')?.value || 16;
       // Check if we should hide English words
       const shouldHideEnglish = testMode === 'hide-eng';
-      
       const tableHtml = `
         <!-- Compact Word Box - Hide if English is hidden -->
         ${!shouldHideEnglish ? `
@@ -267,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ` : ''}
         
         <!-- Pictures section -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 25px; justify-items: center; align-items: start;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); row-gap: ${imageGap}px; column-gap: 25px; justify-items: center; align-items: start;">
           ${limitedWordPairs.map((pair, i) => `
             <div style="text-align: center; padding: 10px; display: flex; flex-direction: column; align-items: center;">
               <div style="margin-bottom: 15px; display: flex; justify-content: center; align-items: center;">
@@ -275,13 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
                   ? `<img src="${wordImages[i]}" style="width:${imageSize}px;height:${imageSize}px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #ddd;" class="pixabay-refresh-img" data-word="${pair.eng}">`
                   : (wordImages[i] ? `<span style="font-size:4em;">${wordImages[i]}</span>` : `<div style="width:${imageSize}px;height:${imageSize}px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;font-size:14px;">${pair.eng}</div>`)}
               </div>
-              <div style="width: 120px; border-bottom: 2px solid #333; height: 25px; display: flex; align-items: end;">
-              </div>
+              <div style="width: 120px; border-bottom: 2px solid #333; height: 25px; display: flex; align-items: end;"></div>
             </div>
           `).join('')}
         </div>
       `;
-      
       preview.innerHTML = template.render({
         title,
         instructions: "",
@@ -289,8 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
-
-      // Attach click handler for refresh
       document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
         img.addEventListener('click', async function() {
           const word = this.getAttribute('data-word');
@@ -303,25 +336,20 @@ document.addEventListener('DOMContentLoaded', () => {
       // Get images for all words (limit to 8 for better layout)
       const limitedWordPairs = wordPairs.slice(0, 8);
       const wordImages = await Promise.all(limitedWordPairs.map(pair => getPixabayImage(pair.eng)));
-      
-      // Get current image size from slider or default
-      const imageSize = document.getElementById('pictureQuizImageSize')?.value || 80;
-      
-      // Get current line spacing from slider or default
-      const lineSpacing = document.getElementById('lineSpacingSlider')?.value || 25;
-      
+      // Use testImageSizeSlider and testImageGapSlider for size and vertical gap
+      const imageSize = document.getElementById('testImageSizeSlider')?.value || 80;
+      const imageGap = document.getElementById('testImageGapSlider')?.value || 16;
       // Shuffle the words for the right column to create a matching challenge
       const shuffledWords = [...limitedWordPairs].sort(() => Math.random() - 0.5);
-      
-      // Calculate consistent spacing based on number of items and line spacing
+      // Calculate consistent spacing based on number of items and vertical gap
       const itemHeight = Math.max(parseInt(imageSize) + 20, 60);
-      const totalHeight = limitedWordPairs.length * itemHeight + (limitedWordPairs.length - 1) * parseInt(lineSpacing);
-        const tableHtml = `        
+      const totalHeight = limitedWordPairs.length * itemHeight + (limitedWordPairs.length - 1) * parseInt(imageGap);
+      const tableHtml = `        
         <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; padding: 20px;">
           <!-- Left column - Images -->
-          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px;">
+          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${imageGap}px;">
             ${limitedWordPairs.map((pair, i) => `
-              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px;">
+              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px; margin-bottom: ${i < limitedWordPairs.length - 1 ? imageGap : 0}px;">
                 <div style="display: flex; align-items: center;">
                   ${wordImages[i] && wordImages[i].startsWith('http')
                     ? `<img src="${wordImages[i]}" style="width:${imageSize}px;height:${imageSize}px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #ddd;box-shadow:0 2px 4px rgba(0,0,0,0.1);" class="pixabay-refresh-img" data-word="${pair.eng}">`
@@ -331,18 +359,16 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `).join('')}
           </div>
-          
           <!-- Middle section - connecting space -->
           <div style="width: 30%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
             <div style="color: #ccc; font-size: 14px; text-align: center; font-style: italic;">
               Draw lines<br>to connect
             </div>
           </div>
-          
           <!-- Right column - Words -->
-          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px;">
+          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${imageGap}px;">
             ${shuffledWords.map((pair, i) => `
-              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px;">
+              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px; margin-bottom: ${i < shuffledWords.length - 1 ? imageGap : 0}px;">
                 <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
                 <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
                   ${pair.eng}
@@ -352,14 +378,103 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `;
-      
       preview.innerHTML = template.render({
         title,
         instructions: "",
         puzzle: tableHtml,
         orientation: "portrait"
       });
-      applyPreviewFontStyles(preview, font, fontSizeScale);      // Attach click handler for refresh
+      applyPreviewFontStyles(preview, font, fontSizeScale);
+      document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
+        img.addEventListener('click', async function() {
+          const word = this.getAttribute('data-word');
+          this.src = await getPixabayImage(word, true);
+        });
+      });
+      return;
+    }
+    // --- PICTURE LIST LAYOUT ---
+    if (layout === "picture-list") {
+      // Get controls for picture list
+      const imageSize = document.getElementById('testImageSizeSlider')?.value || 100;
+      const imageGap = document.getElementById('testImageGapSlider')?.value || 20;
+      const testMode = document.getElementById('wordTestMode')?.value || "none";
+      const numLettersToHide = parseInt(document.getElementById('numLettersToHide')?.value || "1", 10);
+
+      // Get images for all words
+      const wordImages = await Promise.all(wordPairs.map(pair => getPixabayImage(pair.eng)));
+
+      // Apply test mode transformations to text
+      const applyTestMode = (text) => {
+        if (!text || testMode === "none") return text;
+        
+        switch (testMode) {
+          case "hide-random":
+            return text.split('').map(char => {
+              if (char.match(/[a-zA-Z]/) && Math.random() < 0.3) {
+                return '_';
+              }
+              return char;
+            }).join('');
+          case "hide-vowels":
+            return text.replace(/[aeiouAEIOU]/g, '_');
+          case "hide-consonants":
+            return text.replace(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]/g, '_');
+          case "hide-random-letters":
+            return hideRandomLetters(text, numLettersToHide);
+          case "hide-random-letter":
+            return text.split('').map((char, idx) => {
+              if (idx === 0) return char;
+              if (char.match(/[a-zA-Z]/) && Math.random() < 0.4) {
+                return '_';
+              }
+              return char;
+            }).join('');
+          default:
+            return text;
+        }
+      };
+
+      const tableHtml = `
+        <table class="picture-list-table" style="width:100%;border-collapse:collapse;table-layout:fixed;">
+          <colgroup>
+            <col style="width:8%;">   <!-- # column -->
+            <col style="width:30%;">  <!-- Image column -->
+            <col style="width:31%;">  <!-- English column -->
+            <col style="width:31%;">  <!-- Korean column -->
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;vertical-align:middle;font-weight:bold;">#</th>
+              <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;vertical-align:middle;font-weight:bold;">Picture</th>
+              <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;vertical-align:middle;font-weight:bold;">English</th>
+              <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;vertical-align:middle;font-weight:bold;">Korean</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${wordPairs.map((pair, i) => `
+              <tr class="picture-list-row" style="min-height:${Math.max(120, parseInt(imageSize) + 40)}px;">
+                <td class="picture-list-number" style="padding:15px 8px;border-bottom:1px solid #ddd;text-align:center;vertical-align:middle;font-size:1.1em;font-weight:500;">${i + 1}</td>
+                <td class="picture-list-image-cell" style="padding:15px 8px;border-bottom:1px solid #ddd;text-align:center;vertical-align:middle;">
+                  ${wordImages[i] && wordImages[i].startsWith('http')
+                    ? `<img src="${wordImages[i]}" style="max-width:90%;width:${imageSize}px;height:${imageSize}px;object-fit:cover;cursor:pointer;border-radius:8px;border:2px solid #ddd;display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.1);" class="pixabay-refresh-img picture-list-img" data-word="${pair.eng}">`
+                    : (wordImages[i] ? `<span style="font-size:2em;">${wordImages[i]}</span>` : `<div style="width:${imageSize}px;height:${imageSize}px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;margin:0 auto;font-size:14px;color:#666;">${pair.eng}</div>`)}
+                </td>
+                <td class="toggle-word picture-list-text" data-index="${i}" data-lang="eng" style="padding:15px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;vertical-align:middle;line-height:1.4;font-weight:500;">${applyTestMode(pair.eng)}</td>
+                <td class="toggle-word picture-list-text" data-index="${i}" data-lang="kor" style="padding:15px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;vertical-align:middle;line-height:1.4;font-weight:500;">${pair.kor}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      
+      preview.innerHTML = template.render({
+        title,
+        instructions,
+        puzzle: tableHtml,
+        orientation: "portrait"
+      });
+      applyPreviewFontStyles(preview, font, fontSizeScale);
       document.querySelectorAll('.pixabay-refresh-img').forEach(img => {
         img.addEventListener('click', async function() {
           const word = this.getAttribute('data-word');
@@ -421,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show appropriate controls based on layout
       if (layoutSelect.value === 'picture-quiz' || layoutSelect.value === 'picture-matching') {
         pictureQuizControls.style.display = 'block';
-      } else if (layoutSelect.value === '6col-images') {
+      } else if (layoutSelect.value === 'six-column-images-layout') {
         pictureTestControls.style.display = 'block';
       }
       
@@ -440,14 +555,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Font size slider with value display
-  const fontSizeSlider = document.getElementById('wordTestFontSize');
-  const fontSizeValue = document.getElementById('fontSizeValue');
-  if (fontSizeSlider && fontSizeValue) {
+  // Replace font size dropdown with a slider
+  const fontSizeDropdown = document.getElementById('wordTestFontSize');
+  if (fontSizeDropdown && !document.getElementById('wordTestFontSizeSlider')) {
+    // Hide the dropdown
+    fontSizeDropdown.style.display = 'none';
+    // Insert the slider after the dropdown
+    const sliderWrapper = document.createElement('div');
+    sliderWrapper.className = 'mb-2';
+    sliderWrapper.innerHTML = `
+      <label for="wordTestFontSizeSlider" class="block font-semibold mb-1">Font Size</label>
+      <div class="flex items-center gap-2 mb-2">
+        <span style="font-size:0.9em;">Small</span>
+        <input type="range" id="wordTestFontSizeSlider" min="0.6" max="2.0" step="0.01" value="1" style="vertical-align:middle; width: 120px;">
+        <span id="wordTestFontSizeValue">1.00x</span>
+        <span style="font-size:1.2em;">Large</span>
+      </div>
+    `;
+    fontSizeDropdown.parentNode.insertBefore(sliderWrapper, fontSizeDropdown.nextSibling);
+    // Listen for slider changes
+    const fontSizeSlider = document.getElementById('wordTestFontSizeSlider');
+    const fontSizeValue = document.getElementById('wordTestFontSizeValue');
     fontSizeSlider.addEventListener('input', () => {
-      fontSizeValue.textContent = fontSizeSlider.value + 'x';
+      fontSizeValue.textContent = parseFloat(fontSizeSlider.value).toFixed(2) + 'x';
+      fontSizeDropdown.value = fontSizeSlider.value; // keep in sync for code
       updateWordTestPreview();
     });
+    // Sync slider with dropdown value on load
+    fontSizeSlider.value = fontSizeDropdown.value || '1';
+    fontSizeValue.textContent = parseFloat(fontSizeSlider.value).toFixed(2) + 'x';
   }
 
   // Picture Test Controls
@@ -493,22 +629,35 @@ document.addEventListener('DOMContentLoaded', () => {
     'wordTestPassage',
     'wordTestTitle',
     'wordTestFont',
-    'wordTestFontSize',
     'wordTestLayout',
     'wordTestTemplate',
     'wordTestMode',
+    'numLettersToHide',
     'pictureQuizImageSize',
     'lineSpacingSlider',
     'pictureTestImageSize',
     'pictureTestRowHeight',
     'pictureTestTextSize',
-    'pictureTestMode'
+    'pictureTestMode',
+    'wordTestFontSizeSlider'
   ].forEach(id => {
     const el = document.getElementById(id);if (el) {
       el.addEventListener('input', updateWordTestPreview);
       el.addEventListener('change', updateWordTestPreview);
     }
   });
+
+  // Show/hide the number of letters input based on test mode
+  const modeSelect = document.getElementById('wordTestMode');
+  const numGroup = document.getElementById('numLettersToHideGroup');
+  if (modeSelect && numGroup) {
+    modeSelect.addEventListener('change', function() {
+      numGroup.style.display = (modeSelect.value === 'hide-random-letters') ? 'block' : 'none';
+      updateWordTestPreview();
+    });
+    // Initial state
+    numGroup.style.display = (modeSelect.value === 'hide-random-letters') ? 'block' : 'none';
+  }
 
   // AI Extract Words for Word Test
   const extractBtn = document.getElementById('extractWordTestWordsBtn');
@@ -553,4 +702,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // Scale on window resize
   window.addEventListener('resize', scaleWorksheetPreview);
+
+  // Add image size and gap sliders to the tests panel controls (after layout selector)
+  const testsPanel = document.getElementById('panel-tests');
+  if (testsPanel && !document.getElementById('testImageSizeSlider')) {
+    const sliderWrapper = document.createElement('div');
+    sliderWrapper.className = 'mb-2';
+    sliderWrapper.innerHTML = `
+      <label for="testImageSizeSlider" class="block font-semibold mb-1">Image Size</label>
+      <div class="flex items-center gap-2 mb-2">
+        <input type="range" id="testImageSizeSlider" min="40" max="200" value="80" style="vertical-align:middle;">
+        <span id="testImageSizeValue">80px</span>
+      </div>
+      <label for="testImageGapSlider" class="block font-semibold mb-1">Image Gap</label>
+      <div class="flex items-center gap-2 mb-2">
+        <input type="range" id="testImageGapSlider" min="0" max="80" value="16" style="vertical-align:middle;">
+        <span id="testImageGapValue">16px</span>
+      </div>
+    `;
+    // Insert after the layout selector
+    const layoutSelect = document.getElementById('wordTestLayout');
+    if (layoutSelect && layoutSelect.parentNode) {
+      layoutSelect.parentNode.insertBefore(sliderWrapper, layoutSelect.nextSibling);
+    } else {
+      testsPanel.appendChild(sliderWrapper);
+    }
+    // Listen for slider changes
+    const testImageSizeSlider = document.getElementById('testImageSizeSlider');
+    const testImageSizeValue = document.getElementById('testImageSizeValue');
+    testImageSizeSlider.addEventListener('input', () => {
+      testImageSizeValue.textContent = testImageSizeSlider.value + 'px';
+      updateWordTestPreview();
+    });
+    const testImageGapSlider = document.getElementById('testImageGapSlider');
+    const testImageGapValue = document.getElementById('testImageGapValue');
+    testImageGapSlider.addEventListener('input', () => {
+      testImageGapValue.textContent = testImageGapSlider.value + 'px';
+      updateWordTestPreview();
+    });
+  }
 }); // End of DOMContentLoaded
