@@ -4,6 +4,7 @@ import { applyPreviewFontStyles, loadGoogleFont, scaleWorksheetPreview } from '.
 
 document.addEventListener('DOMContentLoaded', () => {
     async function updateReadingPreview() {
+    console.log('updateReadingPreview called');
     const passage = document.getElementById('readingPassage').value.trim();
     const questions = document.getElementById('readingQuestions').value.trim();
     const includePassage = document.getElementById('includePassage').checked;
@@ -11,20 +12,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.getElementById('readingTitle').value.trim() || "Reading Comprehension";
     const font = document.getElementById('readingFont').value || "'Poppins', sans-serif";
     const fontSizeScale = parseFloat(document.getElementById('readingFontSize')?.value || "1");
+    console.log('Font values:', { font, fontSizeScale });
     const templateIndex = parseInt(document.getElementById('readingTemplate')?.value || "0", 10);
     const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[0];
 
     if (!passage && !questions) {
-      preview.innerHTML = "<div class='text-gray-400 p-4'>Enter a reading passage and generate questions to preview the worksheet.</div>";
+      preview.innerHTML = `
+        <div class="multi-page-worksheet">
+          <div class="worksheet-page">
+            <div class="page-header">
+              <h1 style="font-weight: bold; text-align: center; margin-bottom: 10px; color: #2e2b3f; letter-spacing: 1px;">${title}</h1>
+            </div>
+            <div class="page-content" style="padding: 20px;">
+              <div class="text-gray-400 p-4">
+                Enter a reading passage and generate questions to preview the worksheet.
+                <br><br>
+                <strong>Sample text to test font changes:</strong>
+                <br>This text shows how the selected font and size will appear in your worksheet.
+                <br>Font: ${font}
+                <br>Size scale: ${fontSizeScale}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
       return;
     }
 
     // Format the questions for display
-    const formattedQuestions = formatQuestions(questions);
+    const formattedQuestions = formatQuestions(questions, font, fontSizeScale);
     
     // Build the worksheet content
     let worksheetContent = "";
-      // Add passage section if requested
+    // Add passage section if requested
     if (includePassage && passage) {
       worksheetContent += `
         <div style="margin-bottom: 20px;">
@@ -44,96 +64,64 @@ document.addEventListener('DOMContentLoaded', () => {
           ${formattedQuestions}
         </div>
       `;
-    }    // Use robust multi-page rendering for reading worksheets
-    const multiPageContent = createReadingWorksheetPages(title, worksheetContent, font, fontSizeScale);
+    }
+    // Use robust multi-page rendering for reading worksheets
+    const multiPageContent = `<div class="multi-page-worksheet">${createReadingWorksheetPages(title, worksheetContent, font, fontSizeScale)}</div>`;
     preview.innerHTML = multiPageContent;
+    
+    // Apply font styles to the preview area
+    applyPreviewFontStyles(preview, font, fontSizeScale);
     
     // Load Google Font if needed
     loadGoogleFont(font);
     
     // Scale preview
     scaleWorksheetPreview();
-  }  function formatQuestions(questionsText) {
+  }  function formatQuestions(questionsText, font, fontSizeScale) {
     if (!questionsText.trim()) return "";
-    
     const lines = questionsText.split('\n').filter(line => line.trim());
     let questionNumber = 1;
     let result = "";
     let currentQuestion = "";
     let currentOptions = [];
-    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
-      // Check if this line is an option (starts with a), b), c), etc. or A), B), C), etc.)
       const isOption = /^[a-dA-D]\)/.test(line);
-      
       if (isOption) {
-        // This is an option, add it to current options
         currentOptions.push(line);
       } else {
-        // This is a new question
-        // First, process any pending question with options
         if (currentQuestion && currentOptions.length > 0) {
-          // Format the previous question with horizontal options
           const optionsHtml = currentOptions.map(opt => 
             `<span style="margin-right: 30px; display: inline-block;">${opt}</span>`
           ).join('');
-          
           result += `<div style="margin-bottom: 18px;">
-            <div style="margin-bottom: 8px;">
-              <strong>${/^\d+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong>
-            </div>
-            <div style="margin-left: 20px; line-height: 1.8;">
-              ${optionsHtml}
-            </div>
+            <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
+            <div style="margin-left: 20px; line-height: 1.8;">${optionsHtml}</div>
           </div>`;
-          
           currentOptions = [];
         } else if (currentQuestion) {
-          // Process regular question without options
           result += `<div style="margin-bottom: 18px;">
-            <div style="margin-bottom: 8px;">
-              <strong>${/^\d+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong>
-            </div>
-            <div style="margin-left: 20px;">
-              Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span>
-            </div>
+            <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
+            <div style="margin-left: 20px;">Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span></div>
           </div>`;
         }
-        
-        // Set the new current question
         currentQuestion = line;
       }
     }
-    
-    // Process the last question
     if (currentQuestion && currentOptions.length > 0) {
-      // Format question with horizontal options
       const optionsHtml = currentOptions.map(opt => 
         `<span style="margin-right: 30px; display: inline-block;">${opt}</span>`
       ).join('');
-      
       result += `<div style="margin-bottom: 18px;">
-        <div style="margin-bottom: 8px;">
-          <strong>${/^\d+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong>
-        </div>
-        <div style="margin-left: 20px; line-height: 1.8;">
-          ${optionsHtml}
-        </div>
+        <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
+        <div style="margin-left: 20px; line-height: 1.8;">${optionsHtml}</div>
       </div>`;
     } else if (currentQuestion) {
-      // Process regular question without options
       result += `<div style="margin-bottom: 18px;">
-        <div style="margin-bottom: 8px;">
-          <strong>${/^\d+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong>
-        </div>
-        <div style="margin-left: 20px;">
-          Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span>
-        </div>
+        <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
+        <div style="margin-left: 20px;">Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span></div>
       </div>`;
     }
-    
     return result;
   }
 
@@ -219,23 +207,23 @@ function createReadingWorksheetPages(title, content, font, fontSizeScale) {
   console.log('Creating reading worksheet pages with content:', content.substring(0, 100) + '...');
   
   if (!content) {
-    return '<div class="multi-page-worksheet"><div class="worksheet-page"><div class="page-header"></div><div class="page-content"></div><div class="page-footer"></div></div></div>';
+    return `<div class="multi-page-worksheet" style="font-family: ${font}; font-size: ${fontSizeScale}em;"><div class="worksheet-page"><div class="page-header"></div><div class="page-content"></div><div class="page-footer"></div></div></div>`;
   }
   
   // Create pages by actually filling them one by one
   const pages = fillReadingPagesSequentially(title, content, font, fontSizeScale);
   console.log('Generated pages:', pages.length);
-    let html = '<div class="multi-page-worksheet">';
+    let html = `<div class="multi-page-worksheet" style="font-family: ${font}; font-size: ${fontSizeScale}em;">`;
   
   pages.forEach((pageContent, index) => {
     console.log(`Page ${index + 1} content length:`, pageContent.length);
     html += `
-      <div class="worksheet-page">
-        ${renderReadingPageHeader(title, index)}
-        <div class="page-content">
+      <div class="worksheet-page" style="font-family: ${font}; font-size: ${fontSizeScale}em;">
+        ${renderReadingPageHeader(title, index, font, fontSizeScale)}
+        <div class="page-content" style="font-family: ${font}; font-size: ${fontSizeScale}em;">
           ${pageContent}
         </div>
-        ${renderReadingPageFooter(index + 1, pages.length)}
+        ${renderReadingPageFooter(index + 1, pages.length, font, fontSizeScale)}
       </div>
     `;
     
@@ -434,30 +422,30 @@ function parseReadingContentIntoSmallParts(content) {
   return parts.filter(part => part && part.trim());
 }
 
-function renderReadingPageHeader(title, pageIndex) {
+function renderReadingPageHeader(title, pageIndex, font, fontSizeScale) {
   const isFirstPage = pageIndex === 0;
   
-  let headerHtml = '<div class="page-header">';
+  let headerHtml = `<div class="page-header" style="font-family: ${font}; font-size: ${fontSizeScale}em;">`;
   
   if (isFirstPage) {
     // Full header with logo, title, etc. on first page
     headerHtml += `
       <img src="../Assets/Images/color-logo1.png" alt="Willena Logo" style="display:block;margin:0 auto 16px auto;width:110px;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-family:'Glacial Indifference', Arial, sans-serif; font-size:1.05rem; color:#222;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-family:${font}; font-size:${0.95 * fontSizeScale}em; color:#222;">
         <span>Name: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:120px;">&nbsp;</span></span>
         <span>Date: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:90px;">&nbsp;</span></span>
       </div>
-      <h1 style="font-size:2.2rem;font-weight:bold;text-align:center;margin-bottom:10px;color:#2e2b3f;letter-spacing:1px;">${title || ""}</h1>
+      <h1 style="font-size:${2.2 * fontSizeScale}em;font-weight:bold;text-align:center;margin-bottom:10px;color:#2e2b3f;letter-spacing:1px;font-family:${font};">${title || ""}</h1>
     `;
   } else {
     // Continuation page header
     headerHtml += `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; padding-bottom:15px; border-bottom:2px solid #2e2b3f;">
         <div>
-          <h2 style="font-size:1.6rem;font-weight:bold;color:#2e2b3f;margin:0;letter-spacing:0.5px;">${title || ""}</h2>
-          <div style="font-size:0.9rem;color:#666;margin-top:4px;">continued from previous page</div>
+          <h2 style="font-size:${1.6 * fontSizeScale}em;font-weight:bold;color:#2e2b3f;margin:0;letter-spacing:0.5px;font-family:${font};">${title || ""}</h2>
+          <div style="font-size:${0.9 * fontSizeScale}em;color:#666;margin-top:4px;font-family:${font};">continued from previous page</div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px; font-size:0.95rem; color:#222;">
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:${0.95 * fontSizeScale}em; color:#222;font-family:${font};">
           <span>Name: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:100px;">&nbsp;</span></span>
           <span>Date: <span style="display:inline-block; border-bottom:1px solid #bbb; min-width:80px;">&nbsp;</span></span>
         </div>
@@ -469,11 +457,11 @@ function renderReadingPageHeader(title, pageIndex) {
   return headerHtml;
 }
 
-function renderReadingPageFooter(pageNumber, totalPages) {
+function renderReadingPageFooter(pageNumber, totalPages, font, fontSizeScale) {
   return `
-    <div class="page-footer">
+    <div class="page-footer" style="font-family: ${font}; font-size: ${0.95 * fontSizeScale}em;">
       Willena 원어민 영어학원 | 031-8041-2203 | www.willenaenglish.com
-      <div class="page-number">Page ${pageNumber} of ${totalPages}</div>
+      <div class="page-number" style="font-family: ${font}; font-size: ${0.9 * fontSizeScale}em;">Page ${pageNumber} of ${totalPages}</div>
     </div>
   `;
 }
