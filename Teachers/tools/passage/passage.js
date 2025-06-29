@@ -1,11 +1,19 @@
 // Passage Builder JavaScript - Built for Multi-Page from the Ground Up
 
+import { extractQuestionsWithAI } from './ai.js';
+
 function generatePassage() {
     try {
         const title = document.getElementById('passageTitle').value.trim();
         const content = document.getElementById('passageContent').value.trim();
         const fontFamily = document.getElementById('passageFont').value;
         const fontSize = document.getElementById('passageFontSize').value + 'px';
+        // Get questions from the editable box
+        const questionsBox = document.getElementById('questionsBox');
+        let questions = '';
+        if (questionsBox) {
+            questions = questionsBox.value.trim();
+        }
         
         console.log('Generate passage called with:', { title, content: content.substring(0, 50) + '...', fontFamily, fontSize });
         
@@ -16,13 +24,20 @@ function generatePassage() {
         }
         
         // Generate the multi-page passage with font settings
-        const pages = createMultiPagePassage(title, content, fontFamily, fontSize);
-        console.log('Generated pages:', pages.length);
-        
+        const passagePages = createMultiPagePassage(title, content, fontFamily, fontSize);
+        let allPages = [...passagePages];
+        // Paginate questions as their own pages if present
+        if (questions) {
+            const questionsPages = paginateQuestions(questions, fontFamily, fontSize);
+            allPages = allPages.concat(questionsPages);
+        }
+        // Update page numbers for all pages
+        const totalPages = allPages.length;
+        allPages = allPages.map((page, idx) => page.replace(/Page \d+ of \d+/, `Page ${idx + 1} of ${totalPages}`));
         // Display in preview
         const preview = document.getElementById('passagePreview');
-        if (pages && pages.length > 0) {
-            preview.innerHTML = pages.join('<div class="page-break-indicator">Page Break - Content continues on next page</div>');
+        if (allPages && allPages.length > 0) {
+            preview.innerHTML = allPages.join('<div class="page-break-indicator">Page Break - Content continues on next page</div>');
         } else {
             preview.innerHTML = '<div style="padding: 20px; color: #red; text-align: center;">Error: No pages generated</div>';
         }
@@ -31,6 +46,49 @@ function generatePassage() {
         const preview = document.getElementById('passagePreview');
         preview.innerHTML = `<div style="padding: 20px; color: red; text-align: center;">Error: ${error.message}</div>`;
     }
+}
+
+function paginateQuestions(questions, fontFamily, fontSize) {
+    // Add a header to the first page of questions
+    const header = 'Questions:';
+    const formattedQuestions = questions.trim();
+    // Use the same pagination logic as passage, but with a header on the first page
+    const pages = [];
+    // Split questions into paragraphs for better pagination
+    const questionParagraphs = formattedQuestions.split(/\n{2,}/g).map(q => q.trim()).filter(q => q.length > 0);
+    let remaining = questionParagraphs.slice();
+    let pageNumber = 1;
+    let isFirstPage = true;
+    while (remaining.length > 0) {
+        // Create a test page for questions
+        const testPage = createTestPage('', false, fontFamily, fontSize);
+        const contentDiv = testPage.querySelector('.page-content');
+        let fitCount = 0;
+        // Try to fit as many question paragraphs as possible
+        for (let i = 1; i <= remaining.length; i++) {
+            let testContent = remaining.slice(0, i).join('\n\n');
+            if (isFirstPage) {
+                testContent = header + '\n\n' + testContent;
+            }
+            contentDiv.innerHTML = formatTextContent(testContent, fontFamily, fontSize);
+            contentDiv.offsetHeight;
+            if (contentDiv.scrollHeight <= contentDiv.clientHeight) {
+                fitCount = i;
+            } else {
+                break;
+            }
+        }
+        if (fitCount === 0) fitCount = 1; // Always fit at least one
+        let pageContent = remaining.slice(0, fitCount).join('\n\n');
+        if (isFirstPage) {
+            pageContent = header + '\n\n' + pageContent;
+        }
+        const pageHtml = createPassagePage('', formatTextContent(pageContent, fontFamily, fontSize), 0, 0, false, fontFamily, fontSize);
+        pages.push(pageHtml);
+        remaining = remaining.slice(fitCount);
+        isFirstPage = false;
+    }
+    return pages;
 }
 
 function createMultiPagePassage(title, content, fontFamily, fontSize) {
@@ -618,11 +676,6 @@ async function downloadPDF() {
 }
 
 // Question Generator Functions
-// Question Insertion System Variables
-let insertionMode = false;
-let generatedQuestions = '';
-let insertionPoints = [];
-
 // Undo/Redo System
 let undoStack = [];
 let redoStack = [];
@@ -631,11 +684,15 @@ let isUndoRedoAction = false;
 
 // Enhanced Question Generator Functions
 function showQuestionGenerator() {
-    document.getElementById('questionModal').style.display = 'block';
+  document.getElementById('questionModal').style.display = 'block';
+}
+function hideQuestionGenerator() {
+  document.getElementById('questionModal').style.display = 'none';
 }
 
-function hideQuestionGenerator() {    document.getElementById('questionModal').style.display = 'none';
-}
+// Attach to window so HTML onclick works
+window.showQuestionGenerator = showQuestionGenerator;
+window.hideQuestionGenerator = hideQuestionGenerator;
 
 // Simplified question insertion system - questions auto-insert at end
 // (Removed complex insertion mode functions - now using insertQuestionsAtEnd())
@@ -643,15 +700,12 @@ function hideQuestionGenerator() {    document.getElementById('questionModal').s
 // Function to clear inserted questions from passage content
 function clearQuestionsFromPassage() {
     saveState(); // Save current state for undo
-    
     const content = document.getElementById('passageContent').value;
-    
     // Remove question sections using regex for both old and new formats
     const cleanedContent = content
         .replace(/\n{2,}─{50}\nREADING COMPREHENSION QUESTIONS\n─{50}\n[\s\S]*$/g, '') // New format
         .replace(/═{39}\s*READING COMPREHENSION QUESTIONS\s*═{39}[\s\S]*?═{39}\s*END OF QUESTIONS\s*═{39}/g, '') // Old format        .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
         .trim();
-    
     document.getElementById('passageContent').value = cleanedContent;
     generatePassage(); // Refresh preview
     showToast('Questions removed from passage.');
@@ -660,178 +714,64 @@ function clearQuestionsFromPassage() {
 // Simplified system - removed complex insertion functions  
 // Now using direct insertion at end with simple separator
 
-async function generateQuestions() {
-    const content = document.getElementById('passageContent').value.trim();
-    if (!content) {
-        alert('Please enter passage content first.');
-        return;
-    }
+async function generateQuestions(event) {
+  const content = document.getElementById('passageContent').value.trim();
+  const questionType = document.getElementById('questionType').value || 'multiple-choice';
+  const numComprehension = parseInt(document.getElementById('comprehensionCount').value || 0);
+  const numDetail = parseInt(document.getElementById('detailCount').value || 0);
+  const numInference = parseInt(document.getElementById('inferenceCount').value || 0);
+  const numGrammar = parseInt(document.getElementById('grammarCount').value || 0);
+  const numMainIdea = parseInt(document.getElementById('mainIdeaCount').value || 0);
+  const numQuestions = numComprehension + numDetail + numInference + numGrammar + numMainIdea || 5;
 
-    const questionType = document.getElementById('questionType').value;
-    const categories = [];
-    
-    // Collect selected categories and their counts
-    if (document.getElementById('comprehension').checked && document.getElementById('comprehensionCount').value > 0) {
-        categories.push({ type: 'comprehension', count: parseInt(document.getElementById('comprehensionCount').value) });
-    }
-    if (document.getElementById('detail').checked && document.getElementById('detailCount').value > 0) {
-        categories.push({ type: 'detail', count: parseInt(document.getElementById('detailCount').value) });
-    }
-    if (document.getElementById('inference').checked && document.getElementById('inferenceCount').value > 0) {
-        categories.push({ type: 'inference', count: parseInt(document.getElementById('inferenceCount').value) });
-    }
-    if (document.getElementById('grammar').checked && document.getElementById('grammarCount').value > 0) {
-        categories.push({ type: 'grammar', count: parseInt(document.getElementById('grammarCount').value) });
-    }
-    if (document.getElementById('mainIdea').checked && document.getElementById('mainIdeaCount').value > 0) {
-        categories.push({ type: 'main idea', count: parseInt(document.getElementById('mainIdeaCount').value) });
-    }
+  if (!content) {
+    alert('Please enter passage content first.');
+    return;
+  }
 
-    if (categories.length === 0) {
-        alert('Please select at least one question category with a count greater than 0.');
-        return;
-    }
-
-    const generateBtn = event.target;
+  let generateBtn = null;
+  if (event && event.target) {
+    generateBtn = event.target;
+  } else {
+    generateBtn = document.getElementById('generateQuestionsBtn');
+  }
+  if (generateBtn) {
     generateBtn.disabled = true;
     generateBtn.textContent = 'Generating...';
+  }
 
-    try {        const questions = await generateQuestionsWithAI(content, categories, questionType);
-        generatedQuestions = questions;
-          // Hide modal first
-        hideQuestionGenerator();        // Show question results in main interface (outside modal)
-        document.getElementById('questionContent').textContent = questions;
-        document.getElementById('questionResults').style.display = 'block';
-        
-        showToast('Questions generated successfully! Click "Insert at End" to add them to your passage.');
-    } catch (error) {
-        console.error('Error generating questions:', error);
-        alert('Failed to generate questions. Please try again.');
-    } finally {
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Generate Questions';
+  try {
+    let allQuestions = [];
+    // Generate grammar questions separately if requested
+    if (numGrammar > 0) {
+      const grammarPrompt = `Generate exactly ${numGrammar} ESL-style grammar questions based on the passage below. Each question should focus on a common ESL grammar point (verb tense, articles, prepositions, subject-verb agreement, etc.) and be clear and accessible for English learners. Format as numbered questions with four multiple-choice options (a-d). Do NOT repeat content questions.\n\nPassage:\n${content}`;
+      const grammarResult = await extractQuestionsWithAI(content, numGrammar, [], 'grammar', grammarPrompt);
+      allQuestions.push(grammarResult.questions.trim());
     }
-}
-
-async function generateQuestionsWithAI(passage, categories, questionType) {
-    const totalQuestions = categories.reduce((sum, cat) => sum + cat.count, 0);
-    const categoryText = categories.map(cat => `${cat.count} ${cat.type} questions`).join(', ');
-      let formatInstructions = '';    if (questionType === 'multiple-choice') {
-        formatInstructions = `Create multiple choice questions with 4 options (a, b, c, d). Format them EXACTLY like this:
-
-1. Question text here?
-
-a) First option
-b) Second option  
-c) Third option
-d) Fourth option
-
-2. Second question text here?
-
-a) First option
-b) Second option
-c) Third option
-d) Fourth option
-
-IMPORTANT FORMATTING RULES:
-- Put a blank line after each question
-- Put each answer option on its own line
-- Put a blank line between each complete question set
-- Do NOT put extra spaces or formatting`;
-    } else {
-        formatInstructions = `Create written answer questions that require 1-3 sentence responses. Format them EXACTLY like this:
-
-1. Question text here?
-
-2. Second question text here?
-
-3. Third question text here?
-
-IMPORTANT: Put each question on its own line with a blank line between questions.`;
-    }    const prompt = `Based on the following reading passage, create exactly ${totalQuestions} questions with this EXACT breakdown: ${categoryText}.
-
-${formatInstructions}
-
-Reading Passage:
-"${passage}"
-
-STRICT REQUIREMENTS:
-- Create EXACTLY the number of questions specified for each category
-- ${categories.map(cat => `${cat.count} ${cat.type} questions`).join('\n- ')}
-- Questions must be clearly categorized and test different skills
-- Number each question (1., 2., 3., etc.) in sequence
-- Make questions engaging and appropriate for the reading level
-- Ensure questions directly relate to the passage content
-
-CATEGORY DEFINITIONS:
-- Comprehension: General understanding questions about main ideas and themes
-- Detail: Specific factual questions about information stated in the passage
-- Inference: Questions requiring reading between the lines or drawing conclusions
-- Grammar: Questions about sentence structure, word usage, or language mechanics
-- Main Idea: Questions about the central theme or purpose of the passage
-
-${questionType === 'multiple-choice' ? `
-ANSWER KEY REQUIREMENTS:
-- At the end, add a section labeled "ANSWER KEY:"
-- List answers in this exact format:
-1. a
-2. c
-3. b
-(continue for all questions)
-- Ensure answer key has ${totalQuestions} answers` : ''}
-
-Generate the questions now following the exact format specified:`;
-
-    try {
-        const response = await fetch('/.netlify/functions/openai_proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                endpoint: 'chat/completions',
-                payload: {
-                    model: 'gpt-4o-mini',  // Changed from 'gpt-4' - much cheaper!
-                    messages: [{ role: 'user', content: prompt }],
-                    max_tokens: 2000,
-                    temperature: 0.3
-                }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        const data = result.data;
-
-        if (data.error) {
-            throw new Error(data.error.message || 'OpenAI API error');
-        }
-
-        let generatedText = data.choices[0].message.content.trim();
-        
-        // Post-process to ensure proper formatting
-        generatedText = formatQuestionsText(generatedText, questionType);
-        
-        return generatedText;
-    } catch (error) {
-        console.error('AI question generation error:', error);
-        throw error;
+    // Generate other questions (comprehension, detail, inference, main idea)
+    const otherCount = numComprehension + numDetail + numInference + numMainIdea;
+    if (otherCount > 0) {
+      const otherPrompt = `Generate exactly ${otherCount} reading comprehension questions (including main idea, detail, inference, and content questions as appropriate) based on the passage below. Format as numbered questions with four multiple-choice options (a-d). Do NOT include grammar questions.\n\nPassage:\n${content}`;
+      const otherResult = await extractQuestionsWithAI(content, otherCount, [], 'comprehension', otherPrompt);
+      allQuestions.push(otherResult.questions.trim());
     }
-}
-
-function copyQuestions() {
-    if (!generatedQuestions) {
-        alert('No questions to copy.');
-        return;
+    // Combine and clean up
+    const questionsBox = document.getElementById('questionsBox');
+    if (questionsBox) {
+      questionsBox.value = allQuestions.filter(Boolean).join('\n\n');
     }
-    
-    navigator.clipboard.writeText(generatedQuestions).then(() => {
-        showToast('Questions copied to clipboard!');
-    }).catch(err => {
-        console.error('Failed to copy: ', err);
-        alert('Failed to copy to clipboard');
-    });
+    generatePassage();
+    showToast('Questions generated and preview updated!');
+    hideQuestionGenerator();
+  } catch (error) {
+    console.error('AI question generation failed:', error);
+    alert('Failed to generate questions. Please try again.');
+  } finally {
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'Generate Questions';
+    }
+  }
 }
 
 function showToast(message) {
@@ -870,8 +810,6 @@ function showToast(message) {
     }, 3000);
 }
 
-// ...existing code...
-
 // Auto-generate passage on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing...');
@@ -906,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 "What does it open?" Maya asked, her eyes wide with curiosity.
 
-"That, my child, is something you must discover for yourself. But I will tell you this – the key will only work when you truly need it to."
+"That, my child,
 
 Maya spent the rest of the day thinking about the key and what it might unlock. She carried it with her everywhere, feeling its smooth surface in her pocket. That evening, as she sat by her bedroom window looking out at the forest, she made a decision.
 
@@ -926,6 +864,12 @@ The next morning, Maya told her grandmother that she wanted to explore the fores
         generatePassage();
     });
     
+    // Add live preview for questions box
+    const questionsBox = document.getElementById('questionsBox');
+    if (questionsBox) {
+        questionsBox.addEventListener('input', generatePassage);
+    }
+    
     // Update undo/redo buttons initially
     updateUndoRedoButtons();
 });
@@ -943,73 +887,6 @@ function debounce(func, wait) {
     };
 }
 
-function updatePassageWithQuestions() {
-    const content = document.getElementById('passageContent').value.trim();
-    const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim());
-    
-    let newContent = '';
-    let insertedAtStart = false;
-    
-    // Sort insertion points by position for proper ordering
-    insertionPoints.sort((a, b) => {
-        if (a.position === 'start') return -1;
-        if (b.position === 'start') return 1;
-        if (a.position === 'end') return 1;
-        if (b.position === 'end') return -1;
-        
-        const aIndex = parseInt(a.position.split('-')[1]);
-        const bIndex = parseInt(b.position.split('-')[1]);
-        return aIndex - bIndex;
-    });
-    
-    // Process insertions
-    insertionPoints.forEach(insertion => {
-        if (insertion.position === 'start' && !insertedAtStart) {
-            newContent = formatQuestionsForInsertion(insertion.content) + '\n\n' + content;
-            insertedAtStart = true;
-        }
-    });
-    
-    // If no start insertion, build content paragraph by paragraph
-    if (!insertedAtStart) {
-        let result = [];
-        
-        paragraphs.forEach((paragraph, index) => {
-            result.push(paragraph);
-            
-            // Check if there's an insertion after this paragraph
-            const afterInsertion = insertionPoints.find(ip => ip.position === `after-${index}`);
-            if (afterInsertion) {
-                result.push(formatQuestionsForInsertion(afterInsertion.content));
-            }
-        });
-        
-        // Check for end insertion
-        const endInsertion = insertionPoints.find(ip => ip.position === 'end');
-        if (endInsertion) {
-            result.push(formatQuestionsForInsertion(endInsertion.content));
-        }
-        
-        newContent = result.join('\n\n');
-    }
-    
-    document.getElementById('passageContent').value = newContent;
-}
-
-function formatQuestionsForInsertion(questions) {
-    return `
-═══════════════════════════════════════
-         READING COMPREHENSION QUESTIONS
-═══════════════════════════════════════
-
-${questions.trim()}
-
-═══════════════════════════════════════
-               END OF QUESTIONS
-═══════════════════════════════════════`;
-}
-
-// Initialize undo/redo system
 function initializeUndoRedo() {
     currentContent = document.getElementById('passageContent').value;
     
@@ -1091,30 +968,6 @@ function updateUndoRedoButtons() {
     }
 }
 
-// Simplified question insertion - auto-insert at end
-function insertQuestionsAtEnd() {
-    if (!generatedQuestions) {
-        alert('No questions available to insert.');
-        return;
-    }
-    
-    saveState(); // Save current state for undo
-    
-    const content = document.getElementById('passageContent').value.trim();
-    const separator = '\n\n' + '─'.repeat(50) + '\n';
-    
-    const questionSection = separator + 'READING COMPREHENSION QUESTIONS\n' + '─'.repeat(50) + '\n\n' + generatedQuestions;
-    
-    const newContent = content + questionSection;
-    document.getElementById('passageContent').value = newContent;
-    generatePassage(); // Refresh preview
-    
-    // Hide question results interface
-    document.getElementById('questionResults').style.display = 'none';
-    
-    showToast('Questions inserted at the end of the passage!');
-}
-
 // Function to clean up and format question text
 function formatQuestionsText(text, questionType) {
     if (questionType === 'multiple-choice') {
@@ -1193,3 +1046,6 @@ function formatQuestionsText(text, questionType) {
         return formattedLines.join('\n');
     }
 }
+
+window.generateQuestions = generateQuestions;
+window.copyQuestions = copyQuestions;
