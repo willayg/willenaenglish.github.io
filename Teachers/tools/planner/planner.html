@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willena Lesson Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .planner-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            padding: 32px;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .preview-area {
+            flex: 1;
+            padding: 32px;
+            background: white;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .toggle-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .toggle-btn.active {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .toggle-btn.inactive {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .action-btn {
+            padding: 10px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            color: #374151;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        /* Lesson Plan Styles */
+        .lesson-header {
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            padding: 24px;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .lesson-header h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .lesson-info {
+            background: #f8f9fa;
+            padding: 24px;
+            border: 1px solid #e9ecef;
+            border-radius: 0 0 12px 12px;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .lesson-info p {
+            margin: 8px 0;
+        }
+        
+        .activity-box {
+            display: flex;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .time-box {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 24px;
+            width: 140px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .content-box {
+            padding: 24px;
+            flex: 1;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            color: #2e2b3f;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .activity-item {
+            margin: 24px 0;
+            padding: 24px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .activity-item h3 {
+            color: #2e2b3f;
+            margin-bottom: 16px;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .activity-item p {
+            margin: 12px 0;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-top: 100px;
+            padding: 40px;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                display: block;
+            }
+            .preview-area {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="planner-card">
+            <div class="header">
+                <h1>Willena Lesson Planner</h1>
+                <p>Create professional ESL lesson plans with AI assistance</p>
+            </div>
+            
+            <div class="main-content">
+                <!-- Sidebar Controls -->
+                <div class="sidebar">
+                    <!-- Language Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Language</label>
+                        <div class="toggle-buttons">
+                            <button id="englishMode" class="toggle-btn active">English</button>
+                            <button id="koreanMode" class="toggle-btn inactive">한국어</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Mode Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Planning Mode</label>
+                        <div class="toggle-buttons">
+                            <button id="fullPlanMode" class="toggle-btn active">Full Lesson Plan</button>
+                            <button id="activityMode" class="toggle-btn inactive">Activity Ideas</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Full Plan Controls -->
+                    <div id="fullPlanControls">
+                        <div class="form-group">
+                            <label class="form-label">Class Name</label>
+                            <input type="text" id="plannerClassName" class="form-input" placeholder="e.g. Brown Class">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" id="plannerDate" class="form-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Lesson Duration</label>
+                            <select id="plannerDuration" class="form-select">
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="50" selected>50 minutes (Standard)</option>
+                                <option value="60">60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="custom">Custom Duration</option>
+                            </select>
+                        </div>
+                        
+                        <div id="customDuration" style="display: none;">
+                            <div class="form-group">
+                                <input type="number" id="customDurationInput" class="form-input" placeholder="Enter minutes" min="10" max="180">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Lesson Topic *</label>
+                            <input type="text" id="plannerTopic" class="form-input" placeholder="e.g. Learning the long a sound">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Teaching Preferences (Optional)</label>
+                            <textarea id="plannerActivities" class="form-textarea" rows="3" placeholder="e.g. I want to teach them with chants"></textarea>
+                        </div>
+                        
+                        <button id="generateLessonPlan" class="generate-btn">Generate Full Lesson Plan</button>
+                    </div>
+                      <!-- Activity Ideas Controls -->
+                    <div id="activityControls" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">What are you teaching today?</label>
+                            <textarea id="currentActivity" class="form-textarea" rows="4" placeholder="Describe what you want activity ideas for..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Number of Activity Ideas</label>
+                            <select id="activityCount" class="form-select">
+                                <option value="1">1 Activity Idea</option>
+                                <option value="2">2 Activity Ideas</option>
+                                <option value="3">3 Activity Ideas</option>
+                                <option value="4" selected>4 Activity Ideas</option>
+                                <option value="5">5 Activity Ideas</option>
+                            </select>
+                        </div>
+                        
+                        <button id="generateActivities" class="generate-btn">Get Activity Ideas</button>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="editLessonPlan" class="action-btn">Edit</button>
+                        <button id="printLessonPlan" class="action-btn">Print</button>
+                        <button id="saveLessonPlan" class="action-btn">Save</button>
+                    </div>
+                </div>
+                
+                <!-- Preview Area -->
+                <div class="preview-area">
+                    <div id="lessonPlanOutput">
+                        <div class="empty-state">
+                            <div class="icon">📝</div>
+                            <h3>Ready to Create Your Lesson Plan</h3>
+                            <p>Fill in the details on the left and click generate to create a professional lesson plan with AI assistance.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="planner-standalone.js"></script>
+</body>
+</html>
