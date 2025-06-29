@@ -1,8 +1,7 @@
 // AI Question Generation for Reading Worksheets
 
 export async function extractQuestionsWithAI(passage, numQuestions = 5, categories = ['comprehension'], questionFormat = 'multiple-choice') {
-  const categoryText = categories.join(', ');
-    let formatInstructions = '';
+  let formatInstructions = '';
   switch (questionFormat) {
     case 'multiple-choice':
       formatInstructions = `Create multiple choice questions with 4 options (a, b, c, d). Format them like this:
@@ -28,9 +27,38 @@ Put each question on its own line, then each option (a, b, c, d) on separate lin
       formatInstructions = 'Create a mix of question types: multiple choice, fill-in-the-blank, and short answer.';
       break;
   }
-  const prompt = `
-Based on the following reading passage, create exactly ${numQuestions} questions focusing on: ${categoryText}.
 
+  // If grammar is selected, override the prompt with grammar-specific instructions
+  let prompt = '';
+  if (categories.length === 1 && categories[0] === 'grammar') {
+    prompt = `
+Create ${numQuestions} grammar exercises for ESL kids based on the following short passage. These should be fill-in-the-blank, sentence correction, or sentence transformation activities that test basic grammar like verb tense, articles, or sentence structure. Each exercise should include four multiple choice answers (A–D) and the correct answer should be clearly marked. Keep the language suitable for intermediate-level ESL learners aged 9–13.
+
+Reading Passage:
+"${passage}"
+
+Requirements:
+- Exercises should be clear and appropriate for the reading level
+- Number each exercise (1., 2., 3., etc.)
+- Make exercises engaging and educational
+- Ensure exercises test understanding of grammar in the passage
+
+IMPORTANT: At the end of your response, add a section labeled "ANSWER KEY:" followed by the answers in this format:
+1. [correct answer]
+2. [correct answer]
+3. [correct answer]
+
+For multiple choice, just put the letter (a, b, c, or d).
+For other question types, provide the complete answer.
+
+Please generate the exercises now:
+`;
+  } else {
+    // Use the regular prompt for other categories
+    const categoryInstructions = getCategoryInstructions(categories, numQuestions);
+    prompt = `
+Based on the following reading passage, create exactly ${numQuestions} questions.
+${categoryInstructions}
 ${formatInstructions}
 
 Reading Passage:
@@ -38,7 +66,6 @@ Reading Passage:
 
 Requirements:
 - Questions should be clear and appropriate for the reading level
-- Focus on the specified categories: ${categoryText}
 - Number each question (1., 2., 3., etc.)
 - Make questions engaging and educational
 - Ensure questions test understanding of the passage content
@@ -60,6 +87,8 @@ c) History
 d) Literature
 
 Please generate the questions now:`;
+  }
+
   try {
     const response = await fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
@@ -107,5 +136,28 @@ Please generate the questions now:`;
   } catch (error) {
     console.error('AI question generation error:', error);
     throw error;
+  }
+}
+
+function getCategoryInstructions(categories, numQuestions) {
+  if (!categories || categories.length === 0) return '';
+  if (categories.length === 1) {
+    switch (categories[0]) {
+      case 'comprehension':
+        return 'Focus on reading comprehension questions that check understanding of the passage.';
+      case 'vocabulary':
+        return 'Focus on vocabulary questions that test the meaning of words or phrases from the passage.';
+      case 'grammar':
+        return 'Focus on grammar questions related to the passage.';
+      case 'inference':
+        return 'Focus on inference questions that require students to read between the lines.';
+      case 'main idea':
+        return 'Focus on main idea questions that test understanding of the overall point or theme.';
+      default:
+        return '';
+    }
+  } else {
+    // Multiple categories
+    return 'Mix the following question types: ' + categories.join(', ') + '. Distribute the ' + numQuestions + ' questions as evenly as possible among these categories.';
   }
 }
