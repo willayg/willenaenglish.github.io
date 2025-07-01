@@ -4,6 +4,7 @@ import { getPixabayImage, clearImageCache, imageCache } from './images.js';
 import { extractWordsWithAI } from './ai.js';
 
 const hiddenWords = {};
+const lockedWords = new Set(); // Track locked words that should be preserved
 
 document.addEventListener('DOMContentLoaded', () => {
   async function updateWordTestPreview() {
@@ -75,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }
 
@@ -109,6 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }
 
@@ -165,6 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }    // --- SIX COLUMN WITH IMAGES LAYOUT ---
     // --- PICTURE TEST LAYOUT (6 COLUMNS WITH IMAGES) ---
@@ -280,6 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }    // --- PICTURE QUIZ LAYOUT ---
     if (layout === "picture-quiz") {
@@ -330,6 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }    // --- PICTURE MATCHING LAYOUT ---
     if (layout === "picture-matching") {
@@ -391,6 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }
     // --- PICTURE LIST LAYOUT ---
@@ -481,6 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      // Attach word locking handlers
+      attachWordLockingHandlers();
       return;
     }
 
@@ -490,14 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dynamically load Google Fonts if needed
     loadGoogleFont(font);
 
-    // Attach click-to-hide for words
-    document.querySelectorAll('.toggle-word').forEach(cell => {
-      cell.addEventListener('click', function() {
-        const key = `${this.dataset.index}-${this.dataset.lang}`;
-        hiddenWords[key] = !hiddenWords[key];
-        updateWordTestPreview();
-      });
-    });
+    // Attach click-to-hide for words and word locking (right-click or ctrl+click)
+    attachWordLockingHandlers();
   }
   // Example save function
   async function saveWorksheet(worksheetData) {
@@ -665,13 +674,47 @@ document.addEventListener('DOMContentLoaded', () => {
     extractBtn.onclick = async () => {
       const passage = document.getElementById('wordTestPassage').value.trim();
       const numWords = document.getElementById('wordTestNumWords').value || 10;
+      const difficulty = document.getElementById('wordTestDifficulty')?.value || 'medium';
       if (!passage) return alert("Please paste a passage.");
+      
+      // Get existing words and preserve locked ones
+      const existingWords = document.getElementById('wordTestWords').value.trim();
+      const existingPairs = existingWords.split('\n').map(line => {
+        const [eng, kor] = line.split(',').map(w => w?.trim());
+        return { eng: eng || '', kor: kor || '' };
+      }).filter(pair => pair.eng && pair.kor);
+      
+      // Filter out locked words from existing pairs
+      const lockedPairs = existingPairs.filter(pair => 
+        lockedWords.has(pair.eng) || lockedWords.has(pair.kor)
+      );
+      
+      // Calculate how many new words we need
+      const wordsToExtract = Math.max(1, numWords - lockedPairs.length);
+      
       extractBtn.disabled = true;
       extractBtn.textContent = "Extracting...";
       try {
-        const aiWords = await extractWordsWithAI(passage, numWords);
-        document.getElementById('wordTestWords').value = aiWords.trim();
+        const aiWords = await extractWordsWithAI(passage, wordsToExtract, difficulty);
+        
+        // Parse AI-generated words
+        const newPairs = aiWords.trim().split('\n').map(line => {
+          const [eng, kor] = line.split(',').map(w => w?.trim());
+          return { eng: eng || '', kor: kor || '' };
+        }).filter(pair => pair.eng && pair.kor);
+        
+        // Combine locked pairs with new pairs
+        const allPairs = [...lockedPairs, ...newPairs];
+        
+        // Convert back to text format
+        const combinedWords = allPairs.map(pair => `${pair.eng}, ${pair.kor}`).join('\n');
+        
+        document.getElementById('wordTestWords').value = combinedWords;
         updateWordTestPreview();
+        
+        if (lockedPairs.length > 0) {
+          console.log(`Preserved ${lockedPairs.length} locked words, extracted ${newPairs.length} new words`);
+        }
       } catch (e) {
         alert("AI extraction failed.");
       }
@@ -741,4 +784,128 @@ document.addEventListener('DOMContentLoaded', () => {
       updateWordTestPreview();
     });
   }
+
+  // Clear Locks Button
+  const clearLocksBtn = document.getElementById('clearLocksBtn');
+  if (clearLocksBtn) {
+    clearLocksBtn.onclick = () => {
+      lockedWords.clear();
+      updateWordTestPreview();
+      console.log('All word locks cleared');
+    };
+  }
+
+  // Test Locking Button
+  const testLockingBtn = document.getElementById('testLockingBtn');
+  if (testLockingBtn) {
+    testLockingBtn.onclick = () => {
+      console.log('=== TESTING WORD LOCKING ===');
+      const cells = document.querySelectorAll('.toggle-word');
+      console.log('Found', cells.length, 'toggle-word cells for testing');
+      
+      cells.forEach((cell, index) => {
+        const style = window.getComputedStyle(cell);
+        console.log(`Cell ${index}: text="${cell.textContent.trim()}", cursor="${style.cursor}", classes="${cell.className}"`);
+      });
+      
+      if (cells.length > 0) {
+        console.log('Forcing attachment of handlers...');
+        attachWordLockingHandlers();
+      }
+    };
+  }
+
+  // Function to attach word locking handlers
+  function attachWordLockingHandlers() {
+    console.log('=== ATTACH WORD LOCKING HANDLERS CALLED ===');
+    const preview = document.getElementById('worksheetPreviewArea-tests');
+    console.log('Preview element:', preview);
+    
+    const cells = document.querySelectorAll('.toggle-word');
+    console.log('Found', cells.length, 'toggle-word cells');
+    console.log('Cells:', cells);
+    
+    cells.forEach((cell, index) => {
+      console.log(`Processing cell ${index}:`, cell.textContent.trim(), cell);
+      
+      // Check current styles
+      const computedStyle = window.getComputedStyle(cell);
+      console.log(`Cell ${index} cursor style:`, computedStyle.cursor);
+      
+      // Remove any existing event listeners by cloning the node
+      const newCell = cell.cloneNode(true);
+      cell.parentNode.replaceChild(newCell, cell);
+      
+      // Force cursor style
+      newCell.style.cursor = 'pointer';
+      newCell.style.setProperty('cursor', 'pointer', 'important');
+      console.log(`Cell ${index} after setting cursor:`, newCell.style.cursor);
+      
+      // Left click to lock/unlock words
+      newCell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        console.log('Cell clicked:', this.textContent.trim());
+        
+        const wordText = this.textContent.trim();
+        if (wordText) {
+          if (lockedWords.has(wordText)) {
+            lockedWords.delete(wordText);
+            this.classList.remove('locked');
+            this.style.backgroundColor = '';
+            this.style.border = '';
+            this.title = '';
+            console.log('Unlocked word:', wordText);
+          } else {
+            lockedWords.add(wordText);
+            this.classList.add('locked');
+            this.style.backgroundColor = '#e3f2fd';
+            this.style.border = '2px solid #2196f3';
+            this.title = 'Locked - will be preserved during AI extraction';
+            console.log('Locked word:', wordText);
+          }
+          console.log('All locked words:', Array.from(lockedWords));
+        }
+      });
+      
+      // Right-click to lock/unlock words
+      newCell.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Cell right-clicked:', this.textContent.trim());
+        
+        const wordText = this.textContent.trim();
+        if (wordText) {
+          if (lockedWords.has(wordText)) {
+            lockedWords.delete(wordText);
+            this.classList.remove('locked');
+            this.style.backgroundColor = '';
+            this.style.border = '';
+            this.title = '';
+            console.log('Unlocked word (right-click):', wordText);
+          } else {
+            lockedWords.add(wordText);
+            this.classList.add('locked');
+            this.style.backgroundColor = '#e3f2fd';
+            this.style.border = '2px solid #2196f3';
+            this.title = 'Locked - will be preserved during AI extraction';
+            console.log('Locked word (right-click):', wordText);
+          }
+          console.log('All locked words:', Array.from(lockedWords));
+        }
+      });
+      
+      // Apply locked styling if word is already locked
+      const wordText = newCell.textContent.trim();
+      if (wordText && lockedWords.has(wordText)) {
+        newCell.classList.add('locked');
+        newCell.style.backgroundColor = '#e3f2fd';
+        newCell.style.border = '2px solid #2196f3';
+        newCell.title = 'Locked - will be preserved during AI extraction';
+      }
+      
+      // Make sure the cell looks clickable
+      newCell.style.cursor = 'pointer';
+    });
+  }
+
 }); // End of DOMContentLoaded

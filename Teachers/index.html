@@ -273,6 +273,34 @@
       flex: 1 !important;
       padding: 12px !important;
     }
+    
+    /* Make word cells clickable and interactive */
+    .toggle-word {
+      cursor: pointer !important;
+      transition: background-color 0.2s ease !important;
+      user-select: none !important;
+      position: relative !important;
+    }
+    
+    .toggle-word:hover {
+      background-color: #f5f5f5 !important;
+      transform: scale(1.02) !important;
+    }
+    
+    .toggle-word.locked {
+      background-color: #e3f2fd !important;
+      border: 2px solid #2196f3 !important;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.3) !important;
+    }
+    
+    /* Hide locked word styling when printing */
+    @media print {
+      .toggle-word.locked {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
   </style>
   <!-- Google Fonts for worksheet templates -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
@@ -286,14 +314,19 @@
   </nav>
 
   <main id="main-content" class="flex side-layout min-h-screen">
-    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">      <button class="tool-btn" data-panel="files">Files</button>      <button class="tool-btn" data-panel="puzzles">Puzzles</button>      <button class="tool-btn" data-panel="games">Games</button>
-      <button class="tool-btn" data-panel="creative">Creative</button>
-      <button class="tool-btn" data-panel="tests">Word Tests</button>
+    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">
+      <!-- Hidden buttons -->
+      <!-- <button class="tool-btn" data-panel="files">Files</button> -->
+      <!-- <button class="tool-btn" data-panel="puzzles">Puzzles</button> -->
+      <!-- <button class="tool-btn" data-panel="games">Games</button> -->
+      <!-- <button class="tool-btn" data-panel="creative">Creative</button> -->
+      <!-- <button class="tool-btn" data-panel="crossword">Crossword</button> -->
+
+      <!-- Updated button -->
+      <button class="tool-btn" data-panel="tests">Word Worksheets</button>
       <button class="tool-btn" data-panel="planner">Lesson Planner</button>
       <button class="tool-btn" data-panel="reading">Reading</button>
-      <button class="tool-btn" data-panel="passage">Reading 3.0</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
-      <button class="tool-btn" data-panel="crossword">Crossword</button>
     </aside>    <!-- Tool Panels (left column) -->
     <section id="tool-panels">
       <!-- Files Panel -->
@@ -348,9 +381,21 @@
             <option value="0.65">Quite Small</option>
           </select>
 
+          <!-- Difficulty Level Selector -->
+          <label for="wordTestDifficulty" class="block font-semibold mb-1">AI Extraction Difficulty</label>
+          <select id="wordTestDifficulty" class="border rounded w-full p-2 mb-2">
+            <option value="easy">Too Easy</option>
+            <option value="medium">Easy</option>
+            <option value="hard" selected>Best 1</option>
+            <option value="x">Best 2</option>
+          </select>
+
           <label class="block mb-1">Paste Reading Passage</label>
           <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
           <button id="extractWordTestWordsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2">Extract Words with AI</button>
+          <button id="clearLocksBtn" class="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 mb-2 ml-2 text-xs">Clear Locks</button>
+          <button id="testLockingBtn" class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 mb-2 ml-2 text-xs">Test Locking</button>
+          <div class="text-xs text-gray-600 mb-2">💡 Tip: Click words in the preview to lock them. Locked words will be preserved when extracting again.</div>
           <label class="block mb-1">Number of Words to Extract</label>
           <input type="number" id="wordTestNumWords" class="border rounded px-2 py-1 mb-2" min="3" max="30" value="10" style="width:80px;">
           <button id="generateWordTestBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] mb-2">Generate Word Test</button>
@@ -404,14 +449,14 @@
             </div>
           </div><!-- New: Worksheet Template Selector -->
           <label for="wordTestTemplate" class="block font-semibold mb-1">Worksheet Template</label>          <select id="wordTestTemplate" class="w-full px-3 py-2 border rounded mb-2">
-            <option value="0">Classic</option>
-            <option value="1">Minimal</option>
-            <option value="2">Line</option>
-            <option value="3">Elegant Left Bar</option>
-            <option value="4">Playful Dots</option>
-            <option value="5" selected>Modern Shadow Card</option>
-            <option value="6">Classic Bottom</option>
-            <option value="7">Minimal Bottom</option>
+             <option value="0">Design 1</option>
+            <option value="1">Design 2</option>
+            <option value="2">Design 3</option>
+            <option value="3">Design 4</option>
+            <option value="4">Design 5</option>
+            <option value="5" selected>Design 6</option>
+            <option value="6">Design 7</option>
+            <option value="7">Design 8</option>
           </select>
 
           <!-- Add near your layout/font controls -->
@@ -622,8 +667,8 @@
           <!-- Existing word list textarea (for the puzzle) -->
           <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
           <div class="mb-2">
-            <label><input type="checkbox" id="wordsearchAllowDiagonals"> Allow Diagonals</label>
-            <label class="ml-4"><input type="checkbox" id="wordsearchAllowBackwards"> Allow Backwards Words</label>
+            <label><input id="wordsearchAllowDiagonals" type="checkbox"> Allow Diagonals</label>
+            <label class="ml-4"><input id="wordsearchAllowBackwards" type="checkbox"> Allow Backwards Words</label>
           </div>
           <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
         </div>
@@ -769,6 +814,236 @@ document.getElementById('saveWorksheetBtn').onclick = function() {
 document.getElementById('loadWorksheetBtn').onclick = function() {
   window.open('worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
 };
+</script>
+<script>
+function generateWordList(passage, numItems, difficulty = 'medium') {
+  let prompt = '';
+  
+  switch(difficulty) {
+    case 'easy':
+      prompt = `
+You are an ESL teacher working with beginner English learners. From the passage below, extract exactly ${numItems} simple and useful words that are:
+
+- Basic vocabulary that beginners should learn
+- Common everyday words and simple phrases
+- High-frequency words that appear often in English
+- Simple verbs, nouns, and adjectives
+- Basic prepositions (in, on, at, with, etc.)
+
+Focus on words that are:
+- 1-2 syllables when possible
+- Commonly used in daily conversation
+- Essential for basic communication
+- Easy to pronounce and remember
+
+Avoid complex vocabulary, idioms, or advanced grammar structures.
+
+Format as a simple numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'medium':
+      prompt = `
+You are an ESL teacher working with intermediate English learners. From the passage below, extract exactly ${numItems} moderately challenging words and phrases that include:
+
+- Intermediate vocabulary (2-3 syllables)
+- Common phrasal verbs (look up, turn on, etc.)
+- Simple idiomatic expressions
+- Useful prepositional phrases
+- Common collocations (strong coffee, heavy rain)
+- Connecting words (however, therefore, although)
+
+Focus on words and phrases that:
+- Are commonly used but not too basic
+- Help students express more complex ideas
+- Are useful for academic and everyday contexts
+- Build on beginner vocabulary
+
+Avoid overly simple words or highly advanced terminology.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'hard':
+      prompt = `
+You are an ESL teacher working with advanced English learners. From the passage below, extract exactly ${numItems} challenging and sophisticated words and phrases including:
+
+- Advanced vocabulary and less common words
+- Complex phrasal verbs and their variations
+- Sophisticated idiomatic expressions
+- Advanced prepositional and adverbial phrases
+- Academic and formal language structures
+- Complex conjunctions and discourse markers
+- Nuanced collocations and expressions
+
+Focus on language that:
+- Appears in academic, professional, or literary contexts
+- Requires deeper understanding of English nuances
+- Helps students sound more fluent and natural
+- Challenges students to expand their vocabulary range
+- Includes subtle meaning differences and connotations
+
+Prioritize multi-word expressions, complex grammar structures, and sophisticated vocabulary.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'x':
+      prompt = `
+You are an ESL teacher helping Korean students in elementary and middle school.
+
+From the passage below, extract exactly ${numItems} useful words and phrases for learning English. 
+Don't just pick vocabulary nouns. Include:
+
+- Uncommon or challenging vocabulary (nouns, verbs, adjectives)
+- Phrasal verbs (like "make up", "carry out")
+- Prepositional phrases (like "at the correct time", "in 1970")
+- Conjunctions and linking expressions (like "since then", "although")
+- Common expressions or collocations (like "plan their day", "reach our wrists")
+
+Avoid repeating very similar words or listing only nouns. Include full phrases where useful.
+
+Group your list into 5 categories:
+1. Vocabulary
+2. Prepositional Phrases
+3. Phrasal Verbs
+4. Linking Words & Conjunctions
+5. Expressions & Collocations
+
+Keep the list numbered and organized clearly.
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    default:
+      // Default to medium difficulty
+      prompt = `
+You are an ESL teacher working with intermediate English learners. From the passage below, extract exactly ${numItems} moderately challenging words and phrases that include:
+
+- Intermediate vocabulary (2-3 syllables)
+- Common phrasal verbs (look up, turn on, etc.)
+- Simple idiomatic expressions
+- Useful prepositional phrases
+- Common collocations (strong coffee, heavy rain)
+- Connecting words (however, therefore, although)
+
+Focus on words and phrases that:
+- Are commonly used but not too basic
+- Help students express more complex ideas
+- Are useful for academic and everyday contexts
+- Build on beginner vocabulary
+
+Avoid overly simple words or highly advanced terminology.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+  }
+  
+  let wordList = callAI(prompt);
+
+  // Filter out duplicates
+  wordList = [...new Set(wordList)];
+
+  // Filter for contextual relevance
+  const keywords = passage.split(/\s+/).map(word => word.toLowerCase());
+  wordList = wordList.filter(word => {
+    const lowerWord = word.toLowerCase();
+    return keywords.some(keyword => lowerWord.includes(keyword));
+  });
+
+  // Filter for difficulty level (only for easy and medium modes)
+  if (difficulty === 'easy' || difficulty === 'medium') {
+    const easyWords = ['time', 'plan', 'dog', 'walk', 'is'];
+    wordList = wordList.filter(word => !easyWords.includes(word.toLowerCase()));
+  }
+
+  // Adjust the list to match the requested number of items
+  wordList = adjustWordList(wordList, numItems);
+
+  return wordList;
+}
+
+function adjustWordList(wordList, numItems) {
+  if (wordList.length < numItems) {
+    const additionalItems = getAdditionalESLItems(numItems - wordList.length);
+    return wordList.concat(additionalItems);
+  } else if (wordList.length > numItems) {
+    return wordList.slice(0, numItems);
+  }
+  return wordList;
+}
+
+const commonPhrases = [
+  'look forward to', 'in addition to', 'as a result', 'on the other hand', 
+  'take care of', 'run out of', 'get along with', 'make up for'
+];
+
+function prioritizePhrases(wordList) {
+  return wordList.filter(item => commonPhrases.includes(item) || item.split(' ').length > 1);
+}
+
+function getAdditionalESLItems(count) {
+  // Mock function to generate additional ESL items
+  const additionalItems = [
+    'carry out', 'at the correct time', 'since then', 'make up for', 'take care of'
+  ];
+  return additionalItems.slice(0, count);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const templateDropdown = document.getElementById('wordTestTemplate');
+  if (templateDropdown) {
+    templateDropdown.value = '2'; // Set "Line" as the default template
+  }
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const password = 'will123'; // Set your password here
+    const userPassword = prompt('Please enter the password to access this page:');
+
+    if (userPassword !== password) {
+      alert('Incorrect password. You will be redirected.');
+      window.location.href = '../index.html'; // Redirect to homepage or another page
+    }
+  });
 </script>
 
 </body>
