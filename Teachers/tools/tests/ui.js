@@ -4,7 +4,79 @@ import { getPixabayImage, clearImageCache, imageCache } from './images.js';
 import { extractWordsWithAI } from './ai.js';
 
 const hiddenWords = {};
-const lockedWords = new Set(); // Track locked words that should be preserved
+
+// Duplicate Highlighter - Shows teachers if there are duplicate words
+function highlightDuplicates() {
+  const wordsTextarea = document.getElementById('wordTestWords');
+  if (!wordsTextarea) return;
+  
+  const words = wordsTextarea.value.trim();
+  
+  if (!words) {
+    const duplicateWarning = document.getElementById('duplicateWarning');
+    if (duplicateWarning) {
+      duplicateWarning.style.display = 'none';
+    }
+    return;
+  }
+  
+  const lines = words.split('\n').filter(line => line.trim());
+  const englishWords = {};
+  const duplicates = new Set();
+  
+  // Find duplicates
+  lines.forEach((line, index) => {
+    const [eng] = line.split(',').map(w => w?.trim());
+    if (eng) {
+      const lowerEng = eng.toLowerCase();
+      if (englishWords[lowerEng]) {
+        duplicates.add(lowerEng);
+        duplicates.add(englishWords[lowerEng].word.toLowerCase());
+      } else {
+        englishWords[lowerEng] = { word: eng, index };
+      }
+    }
+  });
+  
+  // Show duplicate warning if any found
+  const duplicateWarning = document.getElementById('duplicateWarning');
+  if (duplicates.size > 0) {
+    const duplicateList = Array.from(duplicates).join(', ');
+    if (duplicateWarning) {
+      duplicateWarning.innerHTML = `⚠️ Duplicate words found: <strong>${duplicateList}</strong>`;
+      duplicateWarning.style.display = 'block';
+      duplicateWarning.style.color = '#d97706';
+      duplicateWarning.style.backgroundColor = '#fef3c7';
+      duplicateWarning.style.padding = '8px';
+      duplicateWarning.style.borderRadius = '4px';
+      duplicateWarning.style.border = '1px solid #f59e0b';
+      duplicateWarning.style.marginBottom = '10px';
+    }
+    console.log('Duplicates found:', duplicateList);
+  } else {
+    if (duplicateWarning) {
+      duplicateWarning.style.display = 'none';
+    }
+  }
+}
+
+// Helper function to find duplicate words
+function findDuplicateWords(wordPairs) {
+  const englishWords = {};
+  const duplicates = new Set();
+  
+  wordPairs.forEach((pair, index) => {
+    const lowerEng = pair.eng.toLowerCase();
+    if (englishWords[lowerEng]) {
+      duplicates.add(lowerEng);
+      duplicates.add(englishWords[lowerEng].word.toLowerCase());
+    } else {
+      englishWords[lowerEng] = { word: pair.eng, index };
+    }
+  });
+  
+  return duplicates;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   async function updateWordTestPreview() {
@@ -15,7 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
     const fontSizeSliderEl = document.getElementById('wordTestFontSizeSlider');
     const fontSizeScale = fontSizeSliderEl ? parseFloat(fontSizeSliderEl.value) : 1;
-    let layout = document.getElementById('wordTestLayout')?.value || "basic-table-layout";    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "5", 10);
+    let layout = document.getElementById('wordTestLayout')?.value || "4col"; // Default layout is "4col" (Two Lists Side by Side)
+    const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "5", 10);
     const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[5];
     const instructions = "";
     const testMode = document.getElementById('wordTestMode')?.value || "none";
@@ -31,11 +104,50 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Split lines, then split each line into English and Korean
-    const wordPairs = words.split('\n').map(line => {
-      const [eng, kor] = line.split(',').map(w => w.trim());
-      return { eng: eng || '', kor: kor || '' };
-    }).filter(pair => pair.eng && pair.kor);
+    // Sanitize and filter words to prevent prompt pollution
+    const lines = words.split('\n').filter(line => {
+      // Remove empty lines and lines that don't contain a comma (likely not word pairs)
+      const trimmedLine = line.trim();
+      return trimmedLine && trimmedLine.includes(',');
+    });
+
+    const sanitizedWords = lines.map(line => {
+      const parts = line.split(',');
+      if (parts.length < 2) return null;
+      
+      const eng = parts[0].trim();
+      const kor = parts[1].trim();
+      
+      // Filter out common prompt words/phrases that might leak in
+      const promptWords = ['generate', 'create', 'make', 'words', 'vocabulary', 'list', 'english', 'korean', 'please', 'can you', 'help', 'assistant'];
+      const isPromptPollution = promptWords.some(word => 
+        eng.toLowerCase().includes(word) || kor.toLowerCase().includes(word)
+      );
+      
+      // Ensure English contains only valid characters and Korean contains Korean characters
+      const validEng = /^[a-zA-Z0-9\s\-']+$/.test(eng);
+      const validKor = /[가-힣]/.test(kor);
+      
+      if (!isPromptPollution && validEng && validKor && eng.length > 0 && kor.length > 0) {
+        return { eng, kor };
+      }
+      return null;
+    }).filter(pair => pair !== null);
+
+    const wordPairs = sanitizedWords.map(pair => ({
+      eng: pair.eng.replace(/[^a-zA-Z0-9\s\-']/g, '').trim(),
+      kor: pair.kor.replace(/[^가-힣\s]/g, '').trim()
+    })).filter(pair => pair.eng && pair.kor);
+
+    // Find duplicates for highlighting
+    const duplicateWords = findDuplicateWords(wordPairs);
+    
+    // Helper function to get cell style with duplicate highlighting
+    const getCellStyle = (word, baseStyle) => {
+      const isDuplicate = duplicateWords.has(word.toLowerCase());
+      const duplicateStyle = isDuplicate ? 'background-color: #ea580c !important; color: white !important;' : '';
+      return `${baseStyle}${duplicateStyle}`;
+    };
 
     // Mask words based on test mode
     const maskedPairs = maskWordPairs(wordPairs, testMode, numLettersToHide);
@@ -76,8 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }
 
@@ -96,10 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ${maskedPairs.map((pair, i) => `
               <tr>
                 <td style="padding:8px;border-bottom:1px solid #ddd;">${i + 1}</td>
-                <td class="toggle-word" data-index="${i}" data-lang="eng" style="padding:8px;border-bottom:1px solid #ddd;">
+                <td class="toggle-word" data-index="${i}" data-lang="eng" style="${getCellStyle(pair.eng, 'padding:8px;border-bottom:1px solid #ddd;')}">
                   ${pair.eng ? pair.eng : ""}
                 </td>
-                <td class="toggle-word" data-index="${i}" data-lang="kor" style="padding:8px;border-bottom:1px solid #ddd;">${pair.kor}</td>
+                <td class="toggle-word" data-index="${i}" data-lang="kor" style="${getCellStyle(pair.kor, 'padding:8px;border-bottom:1px solid #ddd;')}">${pair.kor}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -112,8 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }
 
@@ -170,8 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }    // --- SIX COLUMN WITH IMAGES LAYOUT ---
     // --- PICTURE TEST LAYOUT (6 COLUMNS WITH IMAGES) ---
@@ -287,8 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }    // --- PICTURE QUIZ LAYOUT ---
     if (layout === "picture-quiz") {
@@ -339,8 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }    // --- PICTURE MATCHING LAYOUT ---
     if (layout === "picture-matching") {
@@ -402,8 +504,6 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }
     // --- PICTURE LIST LAYOUT ---
@@ -494,8 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
-      // Attach word locking handlers
-      attachWordLockingHandlers();
       return;
     }
 
@@ -506,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadGoogleFont(font);
 
     // Attach click-to-hide for words and word locking (right-click or ctrl+click)
-    attachWordLockingHandlers();
+    // Removed the function definition and all calls to attachWordLockingHandlers
   }
   // Example save function
   async function saveWorksheet(worksheetData) {
@@ -668,55 +766,120 @@ document.addEventListener('DOMContentLoaded', () => {
     numGroup.style.display = (modeSelect.value === 'hide-random-letters') ? 'block' : 'none';
   }
 
-  // AI Extract Words for Word Test
+  // AI Extract Words for Word Test - Difficulty-based extraction 
   const extractBtn = document.getElementById('extractWordTestWordsBtn');
   if (extractBtn) {
     extractBtn.onclick = async () => {
       const passage = document.getElementById('wordTestPassage').value.trim();
-      const numWords = document.getElementById('wordTestNumWords').value || 10;
+      const numWords = parseInt(document.getElementById('wordTestNumWords').value || 10);
       const difficulty = document.getElementById('wordTestDifficulty')?.value || 'medium';
       if (!passage) return alert("Please paste a passage.");
       
-      // Get existing words and preserve locked ones
+      // Get existing words - all words are preserved by default now
       const existingWords = document.getElementById('wordTestWords').value.trim();
       const existingPairs = existingWords.split('\n').map(line => {
         const [eng, kor] = line.split(',').map(w => w?.trim());
         return { eng: eng || '', kor: kor || '' };
       }).filter(pair => pair.eng && pair.kor);
       
-      // Filter out locked words from existing pairs
-      const lockedPairs = existingPairs.filter(pair => 
-        lockedWords.has(pair.eng) || lockedWords.has(pair.kor)
-      );
+      // All existing words are preserved (they act as "locked" by default)
+      const preservedPairs = existingPairs;
       
       // Calculate how many new words we need
-      const wordsToExtract = Math.max(1, numWords - lockedPairs.length);
+      const wordsToExtract = Math.max(1, numWords - preservedPairs.length);
       
       extractBtn.disabled = true;
-      extractBtn.textContent = "Extracting...";
+      
       try {
-        const aiWords = await extractWordsWithAI(passage, wordsToExtract, difficulty);
+        const allNewPairs = [];
+        const existingWordsText = preservedPairs.map(p => p.eng.toLowerCase()).join(', ');
+        let difficultWordsCount = 0; // Track for logging
         
-        // Parse AI-generated words
-        const newPairs = aiWords.trim().split('\n').map(line => {
-          const [eng, kor] = line.split(',').map(w => w?.trim());
-          return { eng: eng || '', kor: kor || '' };
-        }).filter(pair => pair.eng && pair.kor);
+        // Check if this is a difficult level (best1 or best2) vs easier levels (word list)
+        const isDifficultLevel = difficulty === 'best1' || difficulty === 'best2';
         
-        // Combine locked pairs with new pairs
-        const allPairs = [...lockedPairs, ...newPairs];
+        if (isDifficultLevel) {
+          // Two-phase extraction for difficult levels (best1 and best2)
+          extractBtn.textContent = "Extracting difficult words...";
+          
+          // Phase 1: Extract difficult words first (60% of needed words)
+          difficultWordsCount = Math.ceil(wordsToExtract * 0.6);
+          if (difficultWordsCount > 0) {
+            const difficultPrompt = `From this passage, extract exactly ${difficultWordsCount} DIFFICULT English vocabulary words with Korean translations. Format: english, korean (one per line). Avoid these existing words: ${existingWordsText}. Focus on advanced, complex, or challenging vocabulary that would test students' knowledge.
+
+Passage: ${passage}`;
+            
+            const difficultWords = await extractWordsWithAI(difficultPrompt, difficultWordsCount, 'difficult');
+            const difficultPairs = difficultWords.trim().split('\n').map(line => {
+              const [eng, kor] = line.split(',').map(w => w?.trim());
+              return { eng: eng || '', kor: kor || '' };
+            }).filter(pair => pair.eng && pair.kor);
+            
+            allNewPairs.push(...difficultPairs);
+          }
+          
+          // Phase 2: Extract intermediate words for remaining slots
+          const remainingCount = wordsToExtract - allNewPairs.length;
+          if (remainingCount > 0) {
+            extractBtn.textContent = "Extracting intermediate words...";
+            
+            const usedWordsText = [...preservedPairs, ...allNewPairs].map(p => p.eng.toLowerCase()).join(', ');
+            const intermediatePrompt = `From this passage, extract exactly ${remainingCount} INTERMEDIATE English vocabulary words with Korean translations. Format: english, korean (one per line). Avoid these existing words: ${usedWordsText}. Focus on moderately challenging vocabulary suitable for intermediate learners.
+
+Passage: ${passage}`;
+            
+            const intermediateWords = await extractWordsWithAI(intermediatePrompt, remainingCount, 'intermediate');
+            const intermediatePairs = intermediateWords.trim().split('\n').map(line => {
+              const [eng, kor] = line.split(',').map(w => w?.trim());
+              return { eng: eng || '', kor: kor || '' };
+            }).filter(pair => pair.eng && pair.kor);
+            
+            allNewPairs.push(...intermediatePairs);
+          }
+        } else {
+          // Simple extraction for easier levels (word list and other levels)
+          extractBtn.textContent = "Extracting words...";
+          
+          const levelLabel = difficulty === 'word-list' ? 'BASIC' : 'COMMON';
+          const simplePrompt = `From this passage, extract exactly ${wordsToExtract} ${levelLabel} English vocabulary words with Korean translations. Format: english, korean (one per line). Avoid these existing words: ${existingWordsText}. Focus on simple, everyday vocabulary that students can easily understand and learn.
+
+Passage: ${passage}`;
+          
+          const simpleWords = await extractWordsWithAI(simplePrompt, wordsToExtract, difficulty);
+          const simplePairs = simpleWords.trim().split('\n').map(line => {
+            const [eng, kor] = line.split(',').map(w => w?.trim());
+            return { eng: eng || '', kor: kor || '' };
+          }).filter(pair => pair.eng && pair.kor);
+          
+          allNewPairs.push(...simplePairs);
+        }
+        
+        // Filter out any duplicates that might have slipped through
+        const existingEngWords = new Set(preservedPairs.map(p => p.eng.toLowerCase()));
+        const filteredNewPairs = allNewPairs.filter(pair => 
+          !existingEngWords.has(pair.eng.toLowerCase()) && 
+          pair.eng && pair.kor
+        );
+        
+        // Combine preserved pairs with new pairs
+        const allPairs = [...preservedPairs, ...filteredNewPairs];
         
         // Convert back to text format
         const combinedWords = allPairs.map(pair => `${pair.eng}, ${pair.kor}`).join('\n');
         
         document.getElementById('wordTestWords').value = combinedWords;
         updateWordTestPreview();
+        highlightDuplicates(); // Check for duplicates after extraction
         
-        if (lockedPairs.length > 0) {
-          console.log(`Preserved ${lockedPairs.length} locked words, extracted ${newPairs.length} new words`);
+        if (isDifficultLevel) {
+          console.log(`Two-phase extraction complete: ${preservedPairs.length} preserved, ${filteredNewPairs.length} new words (${difficultWordsCount} difficult, ${filteredNewPairs.length - difficultWordsCount} intermediate)`);
+        } else {
+          console.log(`Simple extraction complete: ${preservedPairs.length} preserved, ${filteredNewPairs.length} new words`);
         }
+        
       } catch (e) {
-        alert("AI extraction failed.");
+        console.error('AI extraction error:', e);
+        alert("AI extraction failed. Please try again.");
       }
       extractBtn.disabled = false;
       extractBtn.textContent = "Extract Words with AI";
@@ -785,127 +948,220 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Clear Locks Button
-  const clearLocksBtn = document.getElementById('clearLocksBtn');
-  if (clearLocksBtn) {
-    clearLocksBtn.onclick = () => {
-      lockedWords.clear();
-      updateWordTestPreview();
-      console.log('All word locks cleared');
-    };
+  // Add duplicate warning element if it doesn't exist
+  const wordsTextarea = document.getElementById('wordTestWords');
+  if (wordsTextarea && !document.getElementById('duplicateWarning')) {
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'duplicateWarning';
+    warningDiv.style.display = 'none';
+    wordsTextarea.parentNode.insertBefore(warningDiv, wordsTextarea);
   }
 
-  // Test Locking Button
-  const testLockingBtn = document.getElementById('testLockingBtn');
-  if (testLockingBtn) {
-    testLockingBtn.onclick = () => {
-      console.log('=== TESTING WORD LOCKING ===');
-      const cells = document.querySelectorAll('.toggle-word');
-      console.log('Found', cells.length, 'toggle-word cells for testing');
-      
-      cells.forEach((cell, index) => {
-        const style = window.getComputedStyle(cell);
-        console.log(`Cell ${index}: text="${cell.textContent.trim()}", cursor="${style.cursor}", classes="${cell.className}"`);
-      });
-      
-      if (cells.length > 0) {
-        console.log('Forcing attachment of handlers...');
-        attachWordLockingHandlers();
+  // Add Clear All button if it doesn't exist
+  if (!document.getElementById('clearAllBtn')) {
+    const extractBtn = document.getElementById('extractWordTestWordsBtn');
+    if (extractBtn) {
+      const clearAllBtn = document.createElement('button');
+      clearAllBtn.id = 'clearAllBtn';
+      clearAllBtn.textContent = 'Clear All';
+      clearAllBtn.className = 'bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-2';
+      clearAllBtn.style.marginLeft = '10px';
+      extractBtn.parentNode.insertBefore(clearAllBtn, extractBtn.nextSibling);
+    }
+  }
+
+  // Clear All Button - Deletes everything in the word list
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  if (clearAllBtn) {
+    clearAllBtn.onclick = () => {
+      if (confirm('Are you sure you want to delete all words? This action cannot be undone.')) {
+        document.getElementById('wordTestWords').value = '';
+        updateWordTestPreview();
+        console.log('All words cleared');
       }
     };
   }
 
-  // Function to attach word locking handlers
+  // Check for duplicates whenever words change
+  if (wordsTextarea) {
+    wordsTextarea.addEventListener('input', highlightDuplicates);
+    wordsTextarea.addEventListener('change', highlightDuplicates);
+  }
+
+  // Function to attach word editing and deletion handlers
   function attachWordLockingHandlers() {
-    console.log('=== ATTACH WORD LOCKING HANDLERS CALLED ===');
+    console.log('=== ATTACH WORD EDITING/DELETION HANDLERS CALLED ===');
     const preview = document.getElementById('worksheetPreviewArea-tests');
     console.log('Preview element:', preview);
     
     const cells = document.querySelectorAll('.toggle-word');
     console.log('Found', cells.length, 'toggle-word cells');
-    console.log('Cells:', cells);
     
     cells.forEach((cell, index) => {
       console.log(`Processing cell ${index}:`, cell.textContent.trim(), cell);
-      
-      // Check current styles
-      const computedStyle = window.getComputedStyle(cell);
-      console.log(`Cell ${index} cursor style:`, computedStyle.cursor);
       
       // Remove any existing event listeners by cloning the node
       const newCell = cell.cloneNode(true);
       cell.parentNode.replaceChild(newCell, cell);
       
-      // Force cursor style
+      // Make cell look clickable
       newCell.style.cursor = 'pointer';
       newCell.style.setProperty('cursor', 'pointer', 'important');
-      console.log(`Cell ${index} after setting cursor:`, newCell.style.cursor);
+      newCell.title = 'Left-click to edit, Right-click to delete word pair';
       
-      // Left click to lock/unlock words
+      // Left click to edit inline
       newCell.addEventListener('click', function(e) {
         e.stopPropagation();
-        console.log('Cell clicked:', this.textContent.trim());
         
-        const wordText = this.textContent.trim();
-        if (wordText) {
-          if (lockedWords.has(wordText)) {
-            lockedWords.delete(wordText);
-            this.classList.remove('locked');
-            this.style.backgroundColor = '';
-            this.style.border = '';
-            this.title = '';
-            console.log('Unlocked word:', wordText);
-          } else {
-            lockedWords.add(wordText);
-            this.classList.add('locked');
-            this.style.backgroundColor = '#e3f2fd';
-            this.style.border = '2px solid #2196f3';
-            this.title = 'Locked - will be preserved during AI extraction';
-            console.log('Locked word:', wordText);
+        // Don't edit if already editing
+        if (this.querySelector('input')) return;
+        
+        const originalText = this.textContent.trim();
+        console.log('Cell clicked for editing:', originalText);
+        
+        // Create input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = originalText;
+        input.style.width = '100%';
+        input.style.border = '1px solid #ccc';
+        input.style.padding = '2px';
+        input.style.fontSize = 'inherit';
+        input.style.fontFamily = 'inherit';
+        
+        // Replace cell content with input
+        this.innerHTML = '';
+        this.appendChild(input);
+        input.focus();
+        input.select();
+        
+        // Save on Enter or blur
+        const saveEdit = () => {
+          const newText = input.value.trim();
+          if (newText !== originalText) {
+            updateWordInTextarea(originalText, newText, this);
           }
-          console.log('All locked words:', Array.from(lockedWords));
-        }
+          this.textContent = newText || originalText;
+        };
+        
+        // Cancel on Escape
+        const cancelEdit = () => {
+          this.textContent = originalText;
+        };
+        
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEdit();
+          }
+        });
       });
       
-      // Right-click to lock/unlock words
+      // Right click to delete entire word pair
       newCell.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Cell right-clicked:', this.textContent.trim());
+        console.log('Cell right-clicked for deletion:', this.textContent.trim());
         
-        const wordText = this.textContent.trim();
-        if (wordText) {
-          if (lockedWords.has(wordText)) {
-            lockedWords.delete(wordText);
-            this.classList.remove('locked');
-            this.style.backgroundColor = '';
-            this.style.border = '';
-            this.title = '';
-            console.log('Unlocked word (right-click):', wordText);
+        // Get the data-index from this cell
+        const cellIndex = parseInt(this.getAttribute('data-index'));
+        const cellLang = this.getAttribute('data-lang');
+        
+        console.log(`Cell info: index=${cellIndex}, lang=${cellLang}`);
+        
+        if (!isNaN(cellIndex)) {
+          // Get current words from textarea
+          const wordsTextarea = document.getElementById('wordTestWords');
+          const currentWords = wordsTextarea.value.trim();
+          const lines = currentWords.split('\n').filter(line => line.trim());
+          
+          // Check if the index is valid
+          if (cellIndex >= 0 && cellIndex < lines.length) {
+            // Remove the word pair at this index
+            const deletedLine = lines[cellIndex];
+            lines.splice(cellIndex, 1);
+            
+            wordsTextarea.value = lines.join('\n');
+            
+            // Update the preview
+            updateWordTestPreview();
+            
+            console.log(`Deleted word pair at index ${cellIndex}: ${deletedLine}`);
           } else {
-            lockedWords.add(wordText);
-            this.classList.add('locked');
-            this.style.backgroundColor = '#e3f2fd';
-            this.style.border = '2px solid #2196f3';
-            this.title = 'Locked - will be preserved during AI extraction';
-            console.log('Locked word (right-click):', wordText);
+            console.log(`Invalid index ${cellIndex} for deletion`);
           }
-          console.log('All locked words:', Array.from(lockedWords));
+        } else {
+          console.log('Could not determine cell index for deletion');
         }
       });
-      
-      // Apply locked styling if word is already locked
-      const wordText = newCell.textContent.trim();
-      if (wordText && lockedWords.has(wordText)) {
-        newCell.classList.add('locked');
-        newCell.style.backgroundColor = '#e3f2fd';
-        newCell.style.border = '2px solid #2196f3';
-        newCell.title = 'Locked - will be preserved during AI extraction';
-      }
-      
-      // Make sure the cell looks clickable
-      newCell.style.cursor = 'pointer';
     });
   }
 
+  // Helper function to update a word in the textarea when edited inline
+  function updateWordInTextarea(originalText, newText, clickedCell) {
+    const wordsTextarea = document.getElementById('wordTestWords');
+    const currentWords = wordsTextarea.value.trim();
+    
+    // Get the data-index and data-lang from the clicked cell
+    const cellIndex = parseInt(clickedCell.getAttribute('data-index'));
+    const cellLang = clickedCell.getAttribute('data-lang');
+    
+    console.log(`Updating word: index=${cellIndex}, lang=${cellLang}, original="${originalText}", new="${newText}"`);
+    
+    if (!isNaN(cellIndex)) {
+      const lines = currentWords.split('\n').filter(line => line.trim());
+      
+      // Check if the index is valid
+      if (cellIndex >= 0 && cellIndex < lines.length) {
+        const line = lines[cellIndex];
+        const [eng, kor] = line.split(',').map(w => w.trim());
+        
+        // Update the appropriate part based on language
+        let newEng = eng;
+        let newKor = kor;
+        
+        if (cellLang === 'eng') {
+          newEng = newText;
+        } else if (cellLang === 'kor') {
+          newKor = newText;
+        }
+        
+        // Replace the line in the textarea
+        lines[cellIndex] = `${newEng}, ${newKor}`;
+        wordsTextarea.value = lines.join('\n');
+        
+        // Update the preview
+        updateWordTestPreview();
+        
+        console.log(`Updated word pair at index ${cellIndex}: ${eng}, ${kor} -> ${newEng}, ${newKor}`);
+      } else {
+        console.log(`Invalid index ${cellIndex} for editing`);
+      }
+    } else {
+      console.log('Could not determine cell index for editing');
+    }
+  }
+
+  // Difficulty dropdown update
+  const difficultyDropdown = document.getElementById('wordTestDifficulty');
+  if (difficultyDropdown) {
+    // Update dropdown options dynamically
+    difficultyDropdown.innerHTML = `
+      <option value="word-list">Word List</option>
+      <option value="best1">Best 1</option>
+      <option value="best2">Best 2</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    `;
+  }
+
+  // Remove references to Clear Locks and Test Locking buttons
+  const clearLocksBtn = document.getElementById('clearLocksBtn');
+  const testLockingBtn = document.getElementById('testLockingBtn');
+  if (clearLocksBtn) clearLocksBtn.remove();
+  if (testLockingBtn) testLockingBtn.remove();
 }); // End of DOMContentLoaded
