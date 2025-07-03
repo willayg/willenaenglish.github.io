@@ -343,6 +343,7 @@
       <button class="tool-btn" data-panel="planner">Lesson Planner</button>
       <button class="tool-btn" data-panel="reading">Reading</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
+      <button class="tool-btn" data-panel="flashcard">Flash Cards</button>
     </aside>    <!-- Tool Panels (left column) -->
     <section id="tool-panels">
       <!-- Files Panel -->
@@ -687,6 +688,37 @@
           </button>
         </div>
       </section>
+
+      <!-- Flash Card Panel -->
+      <section id="panel-flashcard" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-4">Flash Card Maker</h2>
+          <p class="text-sm text-gray-600 mb-4">Create professional flashcards with images, supporting multiple cards per page and AI word generation.</p>
+          
+          <div class="space-y-2 text-sm text-gray-700 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>AI-powered word generation</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Automatic image integration</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Multi-page support (2, 4, 8 cards per page)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Professional print & PDF export</span>
+            </div>
+          </div>
+          
+          <button id="openFlashCardMaker" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded hover:from-orange-600 hover:to-red-700 w-full font-semibold">
+            Open Flash Card Maker
+          </button>
+        </div>
+      </section>
     </section>
 
     <!-- Worksheet Preview Area (right column) -->
@@ -786,6 +818,17 @@
         <div id="worksheetPreviewArea-reading" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-flashcard" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;">
+          <div style="padding: 40px; text-align: center; color: #6b7280;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🃏</div>
+            <h3 style="color: #374151; margin-bottom: 12px;">Flash Card Maker</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 24px;">The flash card maker is now available as a standalone tool for better focus and usability.</p>
+            <button onclick="window.open('tools/flashcard/flashcard.html', '_blank', 'width=1400,height=900')" 
+                    style="background: linear-gradient(135deg, #f97316, #dc2626); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+              Open Flash Card Maker
+            </button>
+          </div>
+        </div>
         <div id="worksheetPreviewArea-planner" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;">
           <div style="padding: 40px; text-align: center; color: #6b7280;">
             <div style="font-size: 4rem; margin-bottom: 20px;">📝</div>
@@ -861,6 +904,12 @@
       document.getElementById('openLessonPlanner').addEventListener('click', function() {
         // Open the lesson planner tool in a new window
         window.open('tools/planner/planner.html', '_blank', 'width=1400,height=900');
+      });
+      
+      // Flash Card Maker button handler
+      document.getElementById('openFlashCardMaker').addEventListener('click', function() {
+        // Open the flash card maker tool in a new window
+        window.open('tools/flashcard/flashcard.html', '_blank', 'width=1400,height=900');
       });
     });
 

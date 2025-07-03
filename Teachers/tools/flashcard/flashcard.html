@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flash Card Maker - Willena</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <!-- html2canvas for converting HTML to canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    .flashcard {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      page-break-inside: avoid;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .flashcard-image {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      min-height: 60%;
+      padding: 8px;
+      position: relative;
+    }
+    
+    .flashcard-image img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: transform 0.2s ease;
+    }
+    
+    .flashcard-image img:hover {
+      transform: scale(1.05);
+    }
+    
+    .flashcard-image [onclick] {
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    
+    .flashcard-image [onclick]:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+    
+    .flashcard-text {
+      padding: 12px;
+      text-align: center;
+      background: white;
+      min-height: 40%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .flashcard-english {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    
+    .flashcard-korean {
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 400;
+    }
+    
+    .page-container {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 8mm;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .cards-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8mm;
+      flex: 1;
+    }
+    
+    .cards-grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 6mm;
+      flex: 1;
+    }
+    
+    .cards-grid-8 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 3mm;
+      flex: 1;
+    }
+    
+    .flashcard-grid-2 {
+      min-height: 140mm;
+    }
+    
+    .flashcard-grid-4 {
+      min-height: 130mm;
+    }
+    
+    .flashcard-grid-8 {
+      min-height: 60mm;
+    }
+    
+    @media print {
+      body { 
+        margin: 0; 
+        background: white !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+      }
+      .page-container { 
+        box-shadow: none; 
+        margin: 0;
+        padding: 8mm;
+        width: 210mm;
+        min-height: 297mm;
+        page-break-after: always;
+        display: flex;
+        flex-direction: column;
+        break-inside: avoid;
+      }
+      .page-container:last-child {
+        page-break-after: auto;
+      }
+      .no-print { 
+        display: none !important; 
+      }
+      .cards-grid-2,
+      .cards-grid-4,
+      .cards-grid-8 {
+        flex: 1;
+      }
+      
+      /* Hide all interactive elements and hover effects for print */
+      .flashcard-image img {
+        cursor: default !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      
+      .flashcard-image img:hover {
+        transform: none !important;
+      }
+      
+      .flashcard-image [onclick] {
+        cursor: default !important;
+        transition: none !important;
+      }
+      
+      .flashcard-image [onclick]:hover {
+        transform: none !important;
+        opacity: 1 !important;
+      }
+      
+      /* Hide click indicators and counters */
+      .image-counter,
+      .click-hint {
+        display: none !important;
+      }
+      
+      /* Ensure consistent card sizing */
+      .flashcard {
+        border: 2px solid #e5e7eb !important;
+        border-radius: 12px !important;
+        background: white !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+      
+      .flashcard-image {
+        background: #f9fafb !important;
+        border-bottom: 1px solid #e5e7eb !important;
+      }
+      
+      .flashcard-text {
+        background: white !important;
+      }
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <img src="../../../Assets/Images/Logo.png" alt="Willena Logo" class="h-10">
+          <h1 class="text-2xl font-bold text-gray-900">Flash Card Maker</h1>
+        </div>
+        <div class="flex space-x-3">
+          <button id="printBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Print Cards
+          </button>
+          <button id="downloadPdfBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      
+      <!-- Control Panel -->
+      <div class="lg:col-span-1 space-y-6 no-print">
+        
+        <!-- Word Input Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-lg font-semibold mb-4">Word Input</h2>
+          
+          <!-- AI Word Generation -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">AI Word Generation</label>
+            <div class="space-y-2">
+              <input type="text" id="aiPrompt" placeholder="e.g., 10 animals, 15 food items" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <button id="generateWordsBtn" class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center">
+                <span class="button-text">Generate Words with AI</span>
+                <span class="loading-spinner hidden ml-2">
+                  <div class="loading"></div>
+                </span>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Manual Word Input -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Manual Word Input</label>
+            <textarea id="wordList" rows="8" placeholder="Enter word pairs, one per line:&#10;apple, 사과&#10;book, 책&#10;cat, 고양이"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <p class="text-xs text-blue-600 mt-1">💡 <strong>Tip:</strong> Korean words are used for image searches to find more relevant educational images!</p>
+          </div>
+          
+          <!-- Cards Per Page -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Cards Per Page</label>
+            <select id="cardsPerPage" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="2">2 Cards Per Page</option>
+              <option value="4" selected>4 Cards Per Page</option>
+              <option value="8">8 Cards Per Page</option>
+            </select>
+          </div>
+          
+          <!-- Generate Button -->
+          <button id="generateCardsBtn" class="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors font-semibold">
+            Generate Flash Cards
+          </button>
+          
+          <!-- Word Count Display -->
+          <div id="wordCount" class="mt-3 text-sm text-gray-600"></div>
+          
+          <!-- Status Display -->
+          <div id="statusDisplay" class="mt-2 p-2 text-xs bg-gray-50 rounded border"></div>
+        </div>
+        
+        <!-- Settings Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-lg font-semibold mb-4">Settings</h2>
+          
+          <!-- Font Size -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Font Size</label>
+            <select id="fontSize" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+          
+          <!-- Show Korean -->
+          <div class="mb-4">
+            <label class="flex items-center">
+              <input type="checkbox" id="showKorean" checked class="mr-2">
+              <span class="text-sm font-medium text-gray-700">Show Korean Translation</span>
+            </label>
+          </div>
+          
+          <!-- Image Quality -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Image Quality</label>
+            <select id="imageQuality" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value="webformat">Standard (Fast)</option>
+              <option value="fullHD" selected>High Quality</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Preview Section -->
+      <div class="lg:col-span-3">
+        <div class="bg-white rounded-lg shadow">
+          <div class="p-6 border-b">
+            <h2 class="text-lg font-semibold">Flash Card Preview</h2>
+            <p class="text-gray-600 mt-1">Generated cards will appear here</p>
+            <p class="text-sm text-blue-600 mt-2">
+              💡 <strong>Tip:</strong> Click on any image to cycle through alternative educational images
+            </p>
+          </div>
+          
+          <!-- Loading State -->
+          <div id="loadingState" class="hidden p-12 text-center">
+            <div class="loading mx-auto mb-4"></div>
+            <p class="text-gray-600">Generating flash cards...</p>
+          </div>
+          
+          <!-- Preview Container -->
+          <div id="previewContainer" class="overflow-auto" style="max-height: 80vh;">
+            <div id="flashCardPreview"></div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script src="flashcard.js"></script>
+</body>
+</html>
