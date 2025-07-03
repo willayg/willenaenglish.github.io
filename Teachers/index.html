@@ -18,6 +18,13 @@
     
     /* Make sidebar narrower */
     #sidebar {
+      position: fixed;
+      top: 56px; /* Adjust based on the topbar height */
+      left: 0;
+      height: calc(100vh - 56px); /* Full height minus topbar */
+      overflow-y: auto;
+      background-color: #ecedf9; /* Match the background */
+      z-index: 10;
       width: 120px; /* Reduced from default width */
       min-width: 120px;
     }
@@ -54,16 +61,37 @@
     
     /* Toolbar buttons smaller */
     #toolbar button {
-      font-size: 0.7rem;
-      padding: 0.4rem 0.8rem;
+      font-size: 0.56rem; /* 20% smaller than 0.7rem */
+      padding: 0.32rem 0.64rem; /* 20% smaller padding */
     }
     
     /* Panel content smaller */
     .tool-panel {
-      font-size: 0.8rem;
+      font-size: 0.72rem; /* 10% smaller: 0.8rem * 0.9 = 0.72rem */
     }
       .tool-panel h2 {
-      font-size: 1rem; /* Proportionally smaller */
+      font-size: 0.9rem; /* 10% smaller: 1rem * 0.9 = 0.9rem */
+    }
+    
+    /* Make all form elements in tool panels smaller */
+    #tool-panels input, 
+    #tool-panels textarea, 
+    #tool-panels select, 
+    #tool-panels button, 
+    #tool-panels label {
+      font-size: 0.72rem !important; /* 10% smaller */
+      padding: 0.27rem 0.45rem !important; /* 10% smaller: 0.3rem 0.5rem * 0.9 */
+    }
+    
+    /* Specific adjustments for sliders and range inputs */
+    #tool-panels input[type="range"] {
+      height: 0.36rem !important; /* 10% smaller: 0.4rem * 0.9 */
+      padding: 0 !important;
+    }
+    
+    /* Smaller headings in tool panels */
+    #tool-panels h3 {
+      font-size: 0.65rem !important; /* 10% smaller: 0.72rem * 0.9 */
     }
     
     /* Multi-page worksheet support */
@@ -80,19 +108,6 @@
       page-break-before: always;
     }
     
-    .page-break::after {
-      content: "Page Break";
-      position: absolute;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #f9f5ec;
-      padding: 0 10px;
-      font-size: 0.7rem;
-      color: #666;
-    }  </style>
-  <!-- Universal Wordsearch Styling - Ensures consistent rendering in all modes -->
-  <style>
     /* Force consistent wordsearch styling across all rendering contexts */
     .wordsearch-table,
     .worksheet-preview .wordsearch-table {
@@ -265,8 +280,9 @@
     }
     
     #tool-panels {
-      width: 300px !important; /* Reduce width */
-      padding: 12px !important; /* Reduce padding */
+      width: 270px !important; /* 10% smaller: 300px * 0.9 = 270px */
+      padding: 10.8px !important; /* 10% smaller: 12px * 0.9 = 10.8px */
+      font-size: 0.72rem !important; /* 10% smaller: 0.8rem * 0.9 = 0.72rem */
     }
     
     #worksheet-preview-column {
@@ -357,117 +373,60 @@
       <!-- Tests Panel -->
       <section id="panel-tests" class="tool-panel hidden mb-4">
         <div class="bg-white rounded shadow p-4">
-          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Word Test Generator</h2>
-          <!-- Add these at the top of your Word Test panel -->
-          <label class="block mb-1 mt-2">Worksheet Title</label>
-          <input type="text" id="wordTestTitle" class="border rounded w-full p-2 mb-2" placeholder="Enter worksheet title" />
+          <h2 class="font-bold text-lg mb-4 flex items-center gap-2">Word Worksheets</h2>
+          
+          <!-- Basic Settings Section -->
+          <div class="mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">Title</h3>
+            <input type="text" id="wordTestTitle" class="border rounded w-full p-2 mb-2" placeholder="Enter worksheet title" />
+          </div>
 
-          <label class="block mb-1">Font</label>
-          <select id="wordTestFont" class="border rounded w-full p-2 mb-2">
-            <option value="'Poppins', sans-serif">Poppins</option>
-            <option value="Arial, sans-serif">Arial</option>
-            <option value="'Glacial Indifference', sans-serif">Glacial Indifference</option>
-            <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans</option>
-            <option value="'Roboto', sans-serif">Roboto</option>
-            <option value="'Nanum Gothic', sans-serif">Nanum Gothic</option>
-            <option value="'Noto Sans KR', sans-serif">Noto Sans KR</option>
-          </select>
+          <!-- AI Word Extraction Section -->
+          <div class="mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">AI Extraction</h3>
 
-          <!-- New Font Size Selector -->
-          <label for="wordTestFontSize" class="block font-semibold mb-1">Font Size</label>
-          <select id="wordTestFontSize" class="border rounded px-2 py-1 mb-2">
-            <option value="1">Normal</option>
-            <option value="0.8">Small</option>
-            <option value="0.65">Quite Small</option>
-          </select>
+            <label for="wordTestDifficulty" class="block mb-1">Difficulty</label>
+            <select id="wordTestDifficulty" class="border rounded w-full p-2 mb-2">
+              <option value="easy">Easy</option>
+              <option value="medium">Normal</option>
+              <option value="hard" selected>Best 1</option>
+              <option value="x">Best 2</option>
+            </select>
 
-          <!-- Difficulty Level Selector -->
-          <label for="wordTestDifficulty" class="block font-semibold mb-1">AI Extraction Difficulty</label>
-          <select id="wordTestDifficulty" class="border rounded w-full p-2 mb-2">
-            <option value="easy">Too Easy</option>
-            <option value="medium">Easy</option>
-            <option value="hard" selected>Best 1</option>
-            <option value="x">Best 2</option>
-          </select>
+            <label class="block mb-1">Reading Passage</label>
+            <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
 
-          <label class="block mb-1">Paste Reading Passage</label>
-          <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
-          <button id="extractWordTestWordsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2">Extract Words with AI</button>
-          <button id="clearLocksBtn" class="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 mb-2 ml-2 text-xs">Clear Locks</button>
-          <button id="testLockingBtn" class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 mb-2 ml-2 text-xs">Test Locking</button>
-          <div class="text-xs text-gray-600 mb-2">💡 Tip: Click words in the preview to lock them. Locked words will be preserved when extracting again.</div>
-          <label class="block mb-1">Number of Words to Extract</label>
-          <input type="number" id="wordTestNumWords" class="border rounded px-2 py-1 mb-2" min="3" max="30" value="10" style="width:80px;">
-          <button id="generateWordTestBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] mb-2">Generate Word Test</button>
-          <!-- Add the new button here -->
-          <label class="block mb-1">Word Box (editable)</label>
-          <textarea id="wordTestWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Extracted words will appear here"></textarea>
-          <!-- After the "Word Box (editable)" textarea and before "Make Word List" button -->
-          <label for="pixabayImageType" class="block mb-1">Image Type</label>
-          <select id="pixabayImageType" class="border rounded w-full p-2 mb-2">
-            <option value="all">All</option>
-            <option value="photo">Photos</option>
-            <option value="illustration">Illustrations</option>
-          </select>
-          <button id="refreshImagesBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2 w-full">Refresh Images</button>
-          <div id="wordTestStatus" class="text-sm text-gray-500"></div>          <!-- New: Worksheet Layout Selector -->
-          <label for="wordTestLayout" class="block font-semibold py-2 mb-3">Worksheet Layout</label>          <select id="wordTestLayout" class="w-full px-3 py-2 border rounded mb-2">
-            <option value="default">Default Table</option>
-            <option value="4col">2 Lists (Side by Side)</option>
-            <option value="6col-images">Picture Test</option>
-            <option value="images">With Images</option>
-            <option value="picture-list">Picture List</option>
-            <option value="picture-quiz">Picture Quiz</option>
-            <option value="picture-matching">Picture Matching</option>
-          </select>          <!-- Remix Button for Picture Matching (only visible when Picture Matching is selected) -->
-          <div id="remixMatchingControls" style="display: none;">
-            <button id="remixMatchingBtn" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mb-2 w-full">
-              Remix Words
-            </button>
-            <!-- Line Spacing Slider for Picture Matching -->
-            <label for="lineSpacingSlider" class="block font-semibold mb-1">Line Spacing</label>
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-sm">Tight</span>
-              <input type="range" id="lineSpacingSlider" min="15" max="50" value="25" class="flex-1">
-              <span class="text-sm">Wide</span>
-            </div>
-            <div class="text-center text-sm text-gray-600 mb-2">
-              <span id="lineSpacingValue">25px</span>
+            <div class="flex flex-col gap-2 mb-2">
+              <label for="wordTestNumWords" class="block mb-1">Number of Words</label>
+              <input type="number" id="wordTestNumWords" class="border rounded px-2 py-1" min="3" max="30" value="10" style="width:80px;">
+
+              <button id="extractWordTestWordsBtn" class="px-3 py-1 text-white rounded hover:bg-[#4f46e5]" style="background-color: #2e2b3f !important;">Extract Words with AI</button>
             </div>
           </div>
 
-          <!-- Picture Quiz Image Size Slider -->
-          <div id="pictureQuizControls" style="display: none;">
-            <label for="pictureQuizImageSize" class="block font-semibold mb-1">Picture Size</label>
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-sm">Small</span>
-              <input type="range" id="pictureQuizImageSize" min="40" max="120" value="55" class="flex-1">
-              <span class="text-sm">Large</span>
-            </div>
-            <div class="text-center text-sm text-gray-600 mb-2">
-              <span id="pictureSizeValue">55px</span>
-            </div>
-          </div><!-- New: Worksheet Template Selector -->
-          <label for="wordTestTemplate" class="block font-semibold mb-1">Worksheet Template</label>          <select id="wordTestTemplate" class="w-full px-3 py-2 border rounded mb-2">
-             <option value="0">Design 1</option>
-            <option value="1">Design 2</option>
-            <option value="2">Design 3</option>
-            <option value="3">Design 4</option>
-            <option value="4">Design 5</option>
-            <option value="5" selected>Design 6</option>
-            <option value="6">Design 7</option>
-            <option value="7">Design 8</option>
-          </select>
+          <!-- Word List Section -->
+          <div class="mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">Word List</h3>
+            <textarea id="wordTestWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Extracted words will appear here"></textarea>
+          </div>
 
-          <!-- Add near your layout/font controls -->
-          <label for="wordTestMode">Test Mode:</label>
-          <select id="wordTestMode">
-            <option value="none">Show All</option>
-            <option value="hide-eng">Hide English</option>
-            <option value="hide-kor">Hide Korean</option>
-            <option value="random">Hide Randomly</option>
-            <option value="hide-random-letter">Hide Random Letter</option>
-          </select>        </div>
+          <!-- Test Mode Section -->
+          <div class="mb-4">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">Test Mode</h3>
+            <select id="wordTestMode" class="border rounded w-full p-2 mb-2">
+              <option value="none">Show All</option>
+              <option value="hide-eng">Hide English</option>
+              <option value="hide-kor">Hide Korean</option>
+              <option value="random">Hide Randomly</option>
+              <option value="hide-random-letter">Hide Random Letter</option>
+            </select>
+          </div>
+
+          <!-- Layout & Appearance Section moved to right panel -->
+
+          <!-- Image Settings Section moved to right panel -->
+
+          <div id="wordTestStatus" class="text-sm text-gray-500"></div>        </div>
       </section>
 
       <!-- Reading Panel (new) -->
@@ -490,7 +449,6 @@
           </select>
 
           <!-- Font Size -->
-          <label for="readingFontSize" class="block font-semibold mb-1">Font Size</label>
           <select id="readingFontSize" class="border rounded px-2 py-1 mb-2">
             <option value="1">Normal</option>
             <option value="0.9">Small</option>
@@ -547,9 +505,10 @@
           <select id="readingTemplate" class="w-full px-3 py-2 border rounded mb-2">
             <option value="0">Classic</option>
             <option value="1">Minimal</option>
-            <option value="2">Modern</option>
-            <option value="3">Academic</option>
-            <option value="4">Student Friendly</option>
+            <option value="2" selected>Logo Right Blue Line</option>
+            <option value="3">Modern Shadow Card</option>
+            <option value="4">Playful Dots</option>
+            <option value="5">Elegant Left Bar</option>
             <option value="8">Multi-Page Classic</option>
           </select>
 
@@ -625,32 +584,18 @@
                 <option value="nanum">Nanum Pen Script</option>
               </select>
             </label>
-            <label>Puzzle Size
-              <select id="wordsearchSize" class="border rounded px-2 py-1 mb-2">
-                <option value="1">Normal</option>
-                <option value="1.2">Large</option>
-                <option value="1.5">Extra Large</option>
-                <option value="0.8">Small</option>
-              </select>
-            </label>
             <!-- NEW: Template Dropdown -->
             <label>Worksheet Template
               <select id="wordsearchTemplate" class="border rounded px-2 py-1 mb-2">
                 <option value="0">Classic</option>
                 <option value="1">Minimal</option>
-                <option value="2">Logo Right Blue Line</option>
+                <option value="2" selected>Logo Right Blue Line</option>
                 <option value="3">Modern Shadow Card</option>
                 <option value="4">Playful Dots</option>
                 <option value="5">Elegant Left Bar</option>
               </select>
             </label>
           </div>
-          <!-- NEW: Alignment Controls -->
-          <label class="block mb-1">Hints Alignment</label>
-          <select id="wordsearchHintsAlign" class="border rounded px-2 py-1 mb-2">
-            <option value="top" selected>Top</option>
-            <option value="bottom">Bottom</option>
-          </select>
           
           <!-- Category-based word generation -->
           <div style="margin-bottom:10px;">
@@ -670,7 +615,27 @@
             <label><input id="wordsearchAllowDiagonals" type="checkbox"> Allow Diagonals</label>
             <label class="ml-4"><input id="wordsearchAllowBackwards" type="checkbox"> Allow Backwards Words</label>
           </div>
-          <button id="generateWordsearch" class="px-3 py-1 bg-[#edeaf6] text-[#2e2b3f] rounded font-semibold hover:bg-[#d6d2e0]">Generate Wordsearch</button>
+          
+          <!-- Wordsearch sizing and positioning sliders -->
+          <div class="mb-3">
+            <label class="block mb-1 text-sm font-semibold">Wordsearch Size</label>
+            <input type="range" id="wordsearchSizeSlider" min="0.5" max="2" step="0.1" value="1" class="w-full mb-1">
+            <div class="text-xs text-gray-600 text-center">
+              <span id="wordsearchSizeValue">100%</span>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="block mb-1 text-sm font-semibold">Vertical Position</label>
+            <input type="range" id="wordsearchPositionSlider" min="-100" max="100" step="10" value="0" class="w-full mb-1">
+            <div class="text-xs text-gray-600 text-center">
+              <span id="wordsearchPositionValue">Center</span>
+            </div>
+          </div>
+          
+          <button id="generateWordsearch" class="px-3 py-1 rounded font-semibold hover:bg-[#827e9b]" style="background-color: #2e2b3f !important; color: white !important;">Generate Wordsearch</button>
+          <!-- Highlight Answers Button -->
+          <button id="highlightAnswers" class="px-3 py-1 rounded font-semibold hover:bg-[#827e9b]" style="background-color: #2e2b3f !important; color: white !important;">Show Answers</button>
         </div>
       </section>
 
@@ -726,14 +691,96 @@
 
     <!-- Worksheet Preview Area (right column) -->
     <section id="worksheet-preview-column" class="flex-1 flex flex-col items-center justify-start">
-      <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:sticky;top:56px;z-index:20;">        <div id="toolbar">
+      <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:fixed;top:56px;z-index:25;left:135px;right:0;">        <div id="toolbar">
           <button id="printWorksheetBtn">Print</button>
           <button id="downloadWorksheetPdfBtn">Download PDF</button>
           <button id="printAnswerKeyBtn" style="display: none;">Print Answer Key</button>
           <button id="saveWorksheetBtn">Save</button>
           <button id="loadWorksheetBtn">Load</button>
         </div>
-      </div>      <div id="worksheetPreviewWrapper" style="width:794px; min-height:1123px; position:relative;">
+      </div>      <!-- Compact Control Panel for Layout & Image Settings -->
+      <div id="worksheet-control-panel" class="w-full bg-white border-b border-gray-200 shadow-sm mb-2" style="display: none; position: fixed; top: 104px; z-index: 24; left: 135px; right: 0;">
+        <div class="px-2 py-1" style="font-size: 0.75rem;">
+          <div class="flex gap-1 items-center justify-start flex-wrap">
+            <!-- Layout Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Layout:</span>
+              <select id="wordTestLayout" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 77px;">
+                <option value="default">Default Table</option>
+                <option value="4col">2 Lists (Side by Side)</option>
+                <option value="6col-images">Picture Test</option>
+                <option value="images">With Images</option>
+                <option value="picture-list">Picture List</option>
+                <option value="picture-quiz">Picture Quiz</option>
+                <option value="picture-matching">Picture Matching</option>
+              </select>
+            </div>
+
+            <!-- Font Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Font:</span>
+              <select id="wordTestFont" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 66px;">
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Glacial Indifference', sans-serif">Glacial</option>
+                <option value="'Comic Sans MS', cursive, sans-serif">Comic</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Nanum Gothic', sans-serif">Nanum</option>
+                <option value="'Noto Sans KR', sans-serif">Noto</option>
+              </select>
+            </div>
+
+            <!-- Font Size Slider (no labels) -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Size:</span>
+              <input type="range" id="wordTestFontSize" min="0.6" max="2.0" step="0.01" value="1" style="width: 55px; height: 13px;">
+            </div>
+
+            <!-- Template Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Template:</span>
+              <select id="wordTestTemplate" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 55px;">
+                <option value="0">Design 1</option>
+                <option value="1">Design 2</option>
+                <option value="2">Design 3</option>
+                <option value="3">Design 4</option>
+                <option value="4">Design 5</option>
+                <option value="5" selected>Design 6</option>
+                <option value="6">Design 7</option>
+                <option value="7">Design 8</option>
+              </select>
+            </div>
+
+            <!-- Image Size Slider -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Image Size:</span>
+              <input type="range" id="testImageSizeSlider" min="40" max="200" value="80" style="width: 55px; height: 13px;">
+            </div>
+
+            <!-- Image Gap Slider -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Gap:</span>
+              <input type="range" id="testImageGapSlider" min="0" max="80" value="16" style="width: 55px; height: 13px;">
+            </div>
+
+            <!-- Separator -->
+            <div style="height: 16px; width: 1px; background-color: #d1d5db; margin: 0 3px;"></div>
+
+            <!-- Image Type Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Images:</span>
+              <select id="pixabayImageType" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 55px;">
+                <option value="all">All</option>
+                <option value="photo">Photos</option>
+                <option value="illustration">Illustrations</option>
+              </select>
+            </div>
+
+            <!-- Refresh Button -->
+            <button id="refreshImagesBtn" style="font-size: 0.61rem; padding: 1px 4px; background-color: #7c3aed; color: white; border: none; border-radius: 2px; cursor: pointer; height: 20px;">Refresh</button>
+          </div>
+        </div>
+      </div>      <div id="worksheetPreviewWrapper" style="width:794px; min-height:1123px; position:relative; margin-top: 100px;">
         <div id="worksheetPreviewArea-tests" class="worksheet-preview" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-reading" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
@@ -785,6 +832,16 @@
         document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
         if (btn) btn.classList.add('active');
+        
+        // Show/hide control panel for Word Worksheets tool
+        const controlPanel = document.getElementById('worksheet-control-panel');
+        if (controlPanel) {
+          if (panel === 'tests') {
+            controlPanel.style.display = 'block';
+          } else {
+            controlPanel.style.display = 'none';
+          }
+        }
       };
       // Sidebar button click handlers
       document.querySelectorAll('#sidebar .tool-btn').forEach(btn => {
@@ -1036,15 +1093,36 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const password = 'will123'; // Set your password here
-    const userPassword = prompt('Please enter the password to access this page:');
-
-    if (userPassword !== password) {
-      alert('Incorrect password. You will be redirected.');
-      window.location.href = '../index.html'; // Redirect to homepage or another page
-    }
+    // Removed password protection logic
   });
 </script>
 
-</body>
-</html>
+<!-- Special Layout Controls (conditionally visible) -->
+          <div id="remixMatchingControls" style="display: none;">
+            <button id="remixMatchingBtn" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mb-2 w-full">
+              Remix Words
+            </button>
+            <label for="lineSpacingSlider" class="block mb-1">Line Spacing</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Tight</span>
+              <input type="range" id="lineSpacingSlider" min="15" max="50" value="25" class="flex-1">
+              <span class="text-sm">Wide</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="lineSpacingValue">25px</span>
+            </div>
+          </div>
+
+          <div id="pictureQuizControls" style="display: none;">
+            <label for="pictureQuizImageSize" class="block mb-1">Picture Size</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Small</span>
+              <input type="range" id="pictureQuizImageSize" min="40" max="120" value="55" class="flex-1">
+              <span class="text-sm">Large</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureSizeValue">55px</span>
+            </div>
+          </div>
+        </div>
+      </div>

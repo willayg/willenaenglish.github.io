@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const preview = document.getElementById('worksheetPreviewArea-tests');
     const title = document.getElementById('wordTestTitle').value.trim() || "";
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
-    const fontSizeSliderEl = document.getElementById('wordTestFontSizeSlider');
+    const fontSizeSliderEl = document.getElementById('wordTestFontSize'); // Changed from wordTestFontSizeSlider
     const fontSizeScale = fontSizeSliderEl ? parseFloat(fontSizeSliderEl.value) : 1;
     let layout = document.getElementById('wordTestLayout')?.value || "4col"; // Default layout is "4col" (Two Lists Side by Side)
     const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "5", 10);
@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      attachWordLockingHandlers();
       return;
     }
 
@@ -222,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
+      attachWordLockingHandlers();
       return;
     }
 
@@ -278,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         orientation: "portrait"
       });
       applyPreviewFontStyles(preview, font, fontSizeScale);
+      attachWordLockingHandlers();
       return;
     }    // --- SIX COLUMN WITH IMAGES LAYOUT ---
     // --- PICTURE TEST LAYOUT (6 COLUMNS WITH IMAGES) ---
@@ -393,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      attachWordLockingHandlers();
       return;
     }    // --- PICTURE QUIZ LAYOUT ---
     if (layout === "picture-quiz") {
@@ -594,6 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
           this.src = await getPixabayImage(word, true);
         });
       });
+      attachWordLockingHandlers();
       return;
     }
 
@@ -603,8 +608,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dynamically load Google Fonts if needed
     loadGoogleFont(font);
 
-    // Attach click-to-hide for words and word locking (right-click or ctrl+click)
-    // Removed the function definition and all calls to attachWordLockingHandlers
+    // Attach click handlers for editing and deleting words
+    attachWordLockingHandlers();
   }
   // Example save function
   async function saveWorksheet(worksheetData) {
@@ -662,35 +667,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Replace font size dropdown with a slider
+  // Set up font size slider in control panel (no duplicate creation needed)
   const fontSizeDropdown = document.getElementById('wordTestFontSize');
-  if (fontSizeDropdown && !document.getElementById('wordTestFontSizeSlider')) {
-    // Hide the dropdown
-    fontSizeDropdown.style.display = 'none';
-    // Insert the slider after the dropdown
-    const sliderWrapper = document.createElement('div');
-    sliderWrapper.className = 'mb-2';
-    sliderWrapper.innerHTML = `
-      <label for="wordTestFontSizeSlider" class="block font-semibold mb-1">Font Size</label>
-      <div class="flex items-center gap-2 mb-2">
-        <span style="font-size:0.9em;">Small</span>
-        <input type="range" id="wordTestFontSizeSlider" min="0.6" max="2.0" step="0.01" value="1" style="vertical-align:middle; width: 120px;">
-        <span id="wordTestFontSizeValue">1.00x</span>
-        <span style="font-size:1.2em;">Large</span>
-      </div>
-    `;
-    fontSizeDropdown.parentNode.insertBefore(sliderWrapper, fontSizeDropdown.nextSibling);
-    // Listen for slider changes
-    const fontSizeSlider = document.getElementById('wordTestFontSizeSlider');
-    const fontSizeValue = document.getElementById('wordTestFontSizeValue');
+  const fontSizeSlider = document.getElementById('wordTestFontSize'); // Same ID as slider in control panel
+  
+  if (fontSizeSlider) {
     fontSizeSlider.addEventListener('input', () => {
-      fontSizeValue.textContent = parseFloat(fontSizeSlider.value).toFixed(2) + 'x';
-      fontSizeDropdown.value = fontSizeSlider.value; // keep in sync for code
       updateWordTestPreview();
     });
-    // Sync slider with dropdown value on load
-    fontSizeSlider.value = fontSizeDropdown.value || '1';
-    fontSizeValue.textContent = parseFloat(fontSizeSlider.value).toFixed(2) + 'x';
+    // Set initial value
+    fontSizeSlider.value = '1';
+  }
+
+  // Set up font dropdown in control panel
+  const fontSelect = document.getElementById('wordTestFont');
+  if (fontSelect) {
+    fontSelect.addEventListener('change', () => {
+      updateWordTestPreview();
+    });
+  }
+
+  // Set up image gap slider
+  const imageGapSlider = document.getElementById('testImageGapSlider');
+  if (imageGapSlider) {
+    imageGapSlider.addEventListener('input', () => {
+      updateWordTestPreview();
+    });
   }
 
   // Picture Test Controls
@@ -746,7 +748,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'pictureTestRowHeight',
     'pictureTestTextSize',
     'pictureTestMode',
-    'wordTestFontSizeSlider'
+    'wordTestFontSize', // Changed from wordTestFontSizeSlider
+    'testImageSizeSlider',
+    'testImageGapSlider'
   ].forEach(id => {
     const el = document.getElementById(id);if (el) {
       el.addEventListener('input', updateWordTestPreview);
@@ -909,41 +913,18 @@ Passage: ${passage}`;
   // Scale on window resize
   window.addEventListener('resize', scaleWorksheetPreview);
 
-  // Add image size and gap sliders to the tests panel controls (after layout selector)
-  const testsPanel = document.getElementById('panel-tests');
-  if (testsPanel && !document.getElementById('testImageSizeSlider')) {
-    const sliderWrapper = document.createElement('div');
-    sliderWrapper.className = 'mb-2';
-    sliderWrapper.innerHTML = `
-      <label for="testImageSizeSlider" class="block font-semibold mb-1">Image Size</label>
-      <div class="flex items-center gap-2 mb-2">
-        <input type="range" id="testImageSizeSlider" min="40" max="200" value="80" style="vertical-align:middle;">
-        <span id="testImageSizeValue">80px</span>
-      </div>
-      <label for="testImageGapSlider" class="block font-semibold mb-1">Image Gap</label>
-      <div class="flex items-center gap-2 mb-2">
-        <input type="range" id="testImageGapSlider" min="0" max="80" value="16" style="vertical-align:middle;">
-        <span id="testImageGapValue">16px</span>
-      </div>
-    `;
-    // Insert after the layout selector
-    const layoutSelect = document.getElementById('wordTestLayout');
-    if (layoutSelect && layoutSelect.parentNode) {
-      layoutSelect.parentNode.insertBefore(sliderWrapper, layoutSelect.nextSibling);
-    } else {
-      testsPanel.appendChild(sliderWrapper);
-    }
-    // Listen for slider changes
-    const testImageSizeSlider = document.getElementById('testImageSizeSlider');
-    const testImageSizeValue = document.getElementById('testImageSizeValue');
+  // Set up event listeners for sliders in control panel (they're now in HTML)
+  const testImageSizeSlider = document.getElementById('testImageSizeSlider');
+  const testImageGapSlider = document.getElementById('testImageGapSlider');
+  
+  if (testImageSizeSlider) {
     testImageSizeSlider.addEventListener('input', () => {
-      testImageSizeValue.textContent = testImageSizeSlider.value + 'px';
       updateWordTestPreview();
     });
-    const testImageGapSlider = document.getElementById('testImageGapSlider');
-    const testImageGapValue = document.getElementById('testImageGapValue');
+  }
+  
+  if (testImageGapSlider) {
     testImageGapSlider.addEventListener('input', () => {
-      testImageGapValue.textContent = testImageGapSlider.value + 'px';
       updateWordTestPreview();
     });
   }
@@ -1151,11 +1132,10 @@ Passage: ${passage}`;
   if (difficultyDropdown) {
     // Update dropdown options dynamically
     difficultyDropdown.innerHTML = `
-      <option value="word-list">Word List</option>
-      <option value="best1">Best 1</option>
-      <option value="best2">Best 2</option>
+      <option value="easy">Easy</option>
       <option value="medium">Medium</option>
       <option value="hard">Hard</option>
+      <option value="x">X Hard</option>
     `;
   }
 
@@ -1164,4 +1144,7 @@ Passage: ${passage}`;
   const testLockingBtn = document.getElementById('testLockingBtn');
   if (clearLocksBtn) clearLocksBtn.remove();
   if (testLockingBtn) testLockingBtn.remove();
+
+  // Ensure handlers are attached after rendering toggle-word elements
+  attachWordLockingHandlers();
 }); // End of DOMContentLoaded

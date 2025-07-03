@@ -34,6 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sizeScale = parseFloat(document.getElementById('wordsearchSize')?.value || "1.0");
     const align = document.getElementById('wordsearchAlign')?.value || "center";
     const hintsAlign = document.getElementById('wordsearchHintsAlign')?.value || "center";
+    
+    // Get slider values for custom sizing and positioning
+    const customSizeScale = parseFloat(document.getElementById('wordsearchSizeSlider')?.value || 1);
+    const customPosition = parseInt(document.getElementById('wordsearchPositionSlider')?.value || 0);
+    
     let words = document.getElementById('wordsearchWords').value
       .split('\n')
       .map(w => w.trim())
@@ -60,7 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let hintsAlignStyle = "text-align:center;";
     if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";
     if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";    // Build the HTML for the hints/words list
-    let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
+    // Apply font and size to the hints/word list
+    let html = `<div class="mb-2" style="${hintsAlignStyle}; font-family: ${getFontStyle(fontOpt)}; font-size: ${sizeScale}em;">Words: <b>${words.join(', ') || 'None'}</b></div>`;
 
     // Add a centered container with consistent styling for all rendering modes
     html += `
@@ -80,8 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
           margin: 0 auto;
           box-shadow: 0 2px 8px rgba(46,43,63,0.06);
           max-width: max-content;
-          transform: scale(${sizeScale});
-          transform-origin: center;        ">
+          transform: scale(${customSizeScale});
+          transform-origin: center top;        ">
           <table class="wordsearch-table ${fontClass}" style="
             margin: 0 auto;
             border-collapse: collapse;
@@ -131,10 +137,26 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       preview.classList.add('worksheet-preview');
     }
+    
+    // Reset highlight state when new wordsearch is generated
+    isHighlighted = false;
+    const highlightBtn = document.getElementById('highlightAnswers');
+    if (highlightBtn) {
+      highlightBtn.textContent = 'Show Answers';
+    }
+    
+    console.log(`Reset highlight state. Button text: ${highlightBtn ? highlightBtn.textContent : 'Button not found'}`);
   };
+
+  // Store word placements for highlighting and track highlight state
+  let wordPlacements = [];
+  let isHighlighted = false;
 
   // Improved wordsearch grid generator: random placement, horizontal/vertical
   function generateWordsearchGrid(words, size = 12, caseOpt = 'upper', allowDiagonals = false, allowBackwards = false) {
+    // Reset word placements
+    wordPlacements = [];
+    
     // Initialize empty grid
     const grid = Array.from({ length: size }, () => Array(size).fill(''));
     // Directions: right, down, (optionally diagonals)
@@ -181,9 +203,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = Math.floor(Math.random() * maxRow);
         const col = Math.floor(Math.random() * maxCol);
         if (canPlace(word, row, col, dir.dr, dir.dc)) {
+          // Store word placement for highlighting
+          const placement = { word, positions: [] };
           for (let i = 0; i < word.length; i++) {
-            grid[row + dir.dr * i][col + dir.dc * i] = word[i];
+            const r = row + dir.dr * i;
+            const c = col + dir.dc * i;
+            grid[r][c] = word[i];
+            placement.positions.push({ row: r, col: c });
           }
+          wordPlacements.push(placement);
+          console.log(`Placed word "${word}" at positions:`, placement.positions);
           return true;
         }
       }
@@ -205,6 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
+    
+    console.log(`Generated grid with ${wordPlacements.length} word placements:`, wordPlacements);
     return grid;
   }
 
@@ -387,7 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let hintsAlignStyle = "text-align:center;";
     if (hintsAlign === "left") hintsAlignStyle = "text-align:left;";    if (hintsAlign === "right") hintsAlignStyle = "text-align:right;";
 
-    let html = `<div class="mb-2" style="${hintsAlignStyle}">Words: <b>${words.join(', ') || 'None'}</b></div>`;
+    // Apply font and size to the hints/word list
+    let html = `<div class="mb-2" style="${hintsAlignStyle}; font-family: ${getFontStyle(fontOpt)}; font-size: ${sizeScale}em;">Words: <b>${words.join(', ') || 'None'}</b></div>`;
     // Add a centered container with consistent styling for all rendering modes
     html += `
       <div style="
@@ -404,10 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
           border-radius: 8px;
           padding: 24px;
           margin: 0 auto;
+          margin-top: ${customPosition}px;
           box-shadow: 0 2px 8px rgba(46,43,63,0.06);
           max-width: max-content;
-          transform: scale(${sizeScale});
-          transform-origin: center;
+          transform: scale(${customSizeScale});
+          transform-origin: center top;
         ">
           <table class="wordsearch-table ${fontClass}" style="
             margin: 0 auto;
@@ -455,8 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // List of input/select IDs to watch for changes
   const ids = [
     'wordsearchGridSize',
-    'wordsearchCase',
-    'wordsearchFont',
     'wordsearchSize',
     'wordsearchTemplate',
     'wordsearchTitle',
@@ -474,6 +505,18 @@ document.addEventListener('DOMContentLoaded', () => {
       element.addEventListener('input', updateWordsearchPreview);
     }
   });
+
+  // Special handling for font and case changes (live update without regenerating puzzle)
+  const fontElement = document.getElementById('wordsearchFont');
+  const caseElement = document.getElementById('wordsearchCase');
+  
+  if (fontElement) {
+    fontElement.addEventListener('change', updateWordsearchFontAndCase);
+  }
+  
+  if (caseElement) {
+    caseElement.addEventListener('change', updateWordsearchFontAndCase);
+  }
 
   // Also trigger update when checkboxes change
   const checkboxes = ['wordsearchAllowDiagonals', 'wordsearchAllowBackwards'];
@@ -508,6 +551,260 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('generateCategoryWordsBtn').click();
       }
     });
+  }
+
+  // Add wordsearch slider event listeners
+  const sizeSlider = document.getElementById('wordsearchSizeSlider');
+  const positionSlider = document.getElementById('wordsearchPositionSlider');
+  const sizeValue = document.getElementById('wordsearchSizeValue');
+  const positionValue = document.getElementById('wordsearchPositionValue');
+
+  if (sizeSlider && sizeValue) {
+    sizeSlider.addEventListener('input', () => {
+      const value = parseFloat(sizeSlider.value);
+      sizeValue.textContent = Math.round(value * 100) + '%';
+      updateWordsearchPreview();
+    });
+  }
+
+  if (positionSlider && positionValue) {
+    positionSlider.addEventListener('input', () => {
+      const value = parseInt(positionSlider.value);
+      if (value === 0) {
+        positionValue.textContent = 'Center';
+      } else if (value > 0) {
+        positionValue.textContent = `Down ${value}px`;
+      } else {
+        positionValue.textContent = `Up ${Math.abs(value)}px`;
+      }
+      updateWordsearchPreview();
+    });
+  }
+
+  // Function to update existing wordsearch preview with slider values
+  function updateWordsearchPreview() {
+    const preview = document.getElementById('worksheetPreviewArea-wordsearch');
+    if (!preview || preview.classList.contains('hidden')) return;
+
+    const container = preview.querySelector('.wordsearch-container');
+    if (!container) return;
+
+    const sizeScale = parseFloat(document.getElementById('wordsearchSizeSlider')?.value || 1);
+    const position = parseInt(document.getElementById('wordsearchPositionSlider')?.value || 0);
+
+    // Apply size scaling and vertical positioning dynamically
+    container.style.transform = `scale(${sizeScale}) translateY(${position}px)`;
+    container.style.transformOrigin = 'center top';
+
+    // Apply vertical positioning
+    container.style.marginTop = `${position}px`;
+  }
+
+  // Add event listener for Highlight Answers button (toggle functionality)
+  const highlightAnswersBtn = document.getElementById('highlightAnswers');
+  console.log('Highlight button found:', highlightAnswersBtn ? 'Yes' : 'No');
+  
+  if (highlightAnswersBtn) {
+    
+    function updateButtonText() {
+      const newText = isHighlighted ? 'Hide Answers' : 'Show Answers';
+      highlightAnswersBtn.textContent = newText;
+      console.log(`Button text updated to: "${newText}"`);
+    }
+    
+    function highlightAnswers() {
+      console.log('Highlighting answers...');
+      console.log('Current wordPlacements:', wordPlacements);
+      
+      const preview = document.getElementById('worksheetPreviewArea-wordsearch');
+      if (!preview || preview.classList.contains('hidden')) {
+        console.log('Preview not visible or not found');
+        return false;
+      }
+
+      const table = preview.querySelector('.wordsearch-table');
+      if (!table) {
+        console.log('No table found in preview');
+        return false;
+      }
+
+      if (!wordPlacements || wordPlacements.length === 0) {
+        console.log('No word placements available. Available:', wordPlacements);
+        alert('Please generate a wordsearch first before highlighting answers.');
+        return false;
+      }
+
+      let highlightedCount = 0;
+      wordPlacements.forEach((placement, index) => {
+        console.log(`Processing word ${index + 1}: "${placement.word}" with ${placement.positions.length} positions`);
+        placement.positions.forEach(pos => {
+          if (table.rows[pos.row] && table.rows[pos.row].cells[pos.col]) {
+            const cell = table.rows[pos.row].cells[pos.col];
+            cell.style.backgroundColor = 'orange';
+            cell.style.color = 'black';
+            cell.style.fontWeight = 'bold';
+            highlightedCount++;
+            console.log(`Highlighted cell at [${pos.row}, ${pos.col}] with letter "${cell.textContent}"`);
+          } else {
+            console.log(`Invalid position: [${pos.row}, ${pos.col}] - row or cell not found`);
+          }
+        });
+      });
+      
+      console.log(`Total highlighted cells: ${highlightedCount}`);
+      return true;
+    }
+    
+    function clearHighlights() {
+      console.log('Clearing highlights...');
+      const preview = document.getElementById('worksheetPreviewArea-wordsearch');
+      if (!preview) {
+        console.log('Preview not found');
+        return;
+      }
+
+      const table = preview.querySelector('.wordsearch-table');
+      if (!table) {
+        console.log('Table not found');
+        return;
+      }
+
+      const cells = table.querySelectorAll('td');
+      let clearedCount = 0;
+      cells.forEach(cell => {
+        if (cell.style.backgroundColor === 'orange') {
+          clearedCount++;
+        }
+        cell.style.backgroundColor = '#fff';
+        cell.style.color = 'black';
+        cell.style.fontWeight = 'normal';
+      });
+      
+      console.log(`Cleared highlights from ${clearedCount} cells`);
+    }
+    
+    highlightAnswersBtn.addEventListener('click', () => {
+      console.log('Highlight toggle button clicked!');
+      console.log('Current state - isHighlighted:', isHighlighted);
+      console.log('Button text before:', highlightAnswersBtn.textContent);
+      console.log('WordPlacements available:', wordPlacements.length);
+      
+      if (isHighlighted) {
+        // Clear highlights
+        clearHighlights();
+        isHighlighted = false;
+        console.log('Switched to: Clear mode');
+      } else {
+        // Show highlights
+        if (highlightAnswers()) {
+          isHighlighted = true;
+          console.log('Switched to: Highlight mode');
+        } else {
+          console.log('Failed to highlight - staying in clear mode');
+        }
+      }
+      
+      updateButtonText();
+      console.log('Button text after:', highlightAnswersBtn.textContent);
+      console.log('Final state - isHighlighted:', isHighlighted);
+      console.log('---');
+    });
+    
+    // Initialize button text
+    updateButtonText();
+  }
+
+  // Add border color cycling functionality
+  const borderColors = ['#b6aee0', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+  let currentBorderIndex = 0;
+
+  // Add click event to wordsearch container border
+  document.addEventListener('click', (e) => {
+    const container = e.target.closest('.wordsearch-container');
+    if (container && e.target === container) {
+      currentBorderIndex = (currentBorderIndex + 1) % borderColors.length;
+      container.style.borderColor = borderColors[currentBorderIndex];
+    }
+  });
+
+  // Add live font and case updates (without regenerating puzzle)
+  function updateWordsearchFontAndCase() {
+    console.log('Updating font and case...');
+    const preview = document.getElementById('worksheetPreviewArea-wordsearch');
+    if (!preview || preview.classList.contains('hidden')) {
+      console.log('Preview not available for font update');
+      return;
+    }
+
+    const table = preview.querySelector('.wordsearch-table');
+    if (!table) {
+      console.log('Table not found for font update');
+      return;
+    }
+
+    const fontOpt = document.getElementById('wordsearchFont').value;
+    const caseOpt = document.getElementById('wordsearchCase').value;
+    
+    console.log(`Applying font: ${fontOpt}, case: ${caseOpt}`);
+    
+    // Apply font changes
+    const cells = table.querySelectorAll('td');
+    let highlightedCells = 0;
+    
+    cells.forEach(cell => {
+      // Store current highlight state
+      const wasHighlighted = cell.style.backgroundColor === 'orange';
+      if (wasHighlighted) highlightedCells++;
+      
+      // Apply case change to existing content
+      if (caseOpt === 'upper') {
+        cell.textContent = cell.textContent.toUpperCase();
+      } else {
+        cell.textContent = cell.textContent.toLowerCase();
+      }
+      
+      // Apply font style
+      cell.style.removeProperty('font-family');
+      cell.classList.remove('wordsearch-font-sans', 'wordsearch-font-mono', 'wordsearch-font-comic', 'wordsearch-font-nanum');
+      
+      let fontClass = 'wordsearch-font-sans';
+      if (fontOpt === 'mono') fontClass = 'wordsearch-font-mono';
+      if (fontOpt === 'comic') fontClass = 'wordsearch-font-comic';
+      if (fontOpt === 'nanum') fontClass = 'wordsearch-font-nanum';
+      
+      cell.classList.add(fontClass);
+      
+      // Apply font style carefully to preserve highlights
+      const fontStyle = getFontStyle(fontOpt);
+      const fontStyleParts = fontStyle.split(';').filter(part => part.trim());
+      fontStyleParts.forEach(part => {
+        const [property, value] = part.split(':').map(s => s.trim().replace('!important', '').trim());
+        if (property && value && property !== 'color' && property !== 'background-color' && property !== 'font-weight') {
+          cell.style.setProperty(property, value, 'important');
+        }
+      });
+      
+      // Restore highlight if it was highlighted
+      if (wasHighlighted) {
+        cell.style.backgroundColor = 'orange';
+        cell.style.color = 'black';
+        cell.style.fontWeight = 'bold';
+      }
+    });
+    
+    console.log(`Font update complete. Preserved ${highlightedCells} highlighted cells.`);
+
+    // Update hints text
+    const hintsDiv = preview.querySelector('.mb-2');
+    if (hintsDiv) {
+      const words = document.getElementById('wordsearchWords').value
+        .split('\n')
+        .map(w => w.trim())
+        .filter(Boolean)
+        .map(w => caseOpt === 'upper' ? w.toUpperCase() : w.toLowerCase());
+      
+      hintsDiv.innerHTML = `Words: <b>${words.join(', ') || 'None'}</b>`;
+    }
   }
 });
 

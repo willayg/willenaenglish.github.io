@@ -71,7 +71,6 @@
   <div class="box">
     <h2>로그인 또는 회원가입</h2>
     <input type="text" id="username" placeholder="이름 입력" />
-    <input type="password" id="password" placeholder="비밀번호 입력" />
     <div class="checkbox-row">
       <input type="checkbox" id="stayLoggedIn" checked />
       <label for="stayLoggedIn">로그인 상태 유지</label>
@@ -85,18 +84,17 @@
   <script>
     async function handleAuth() {
       const name = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
       const stayLoggedIn = document.getElementById('stayLoggedIn').checked;
 
-      if (!name || !password) {
-        alert("이름과 비밀번호를 입력하세요.");
+      if (!name) {
+        alert("\uc774\ub984\uc744 \uc785\ub825\ud558\uc138\uc694.");
         return;
       }
 
       const response = await fetch('/.netlify/functions/auth_user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password })
+        body: JSON.stringify({ name })
       });
       const result = await response.json();
 
