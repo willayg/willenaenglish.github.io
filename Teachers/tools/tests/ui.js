@@ -104,31 +104,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Sanitize and filter words to remove unwanted prefixes like numbers, dots, or asterisks
+    // Sanitize and filter words to prevent prompt pollution
     const lines = words.split('\n').filter(line => {
+      // Remove empty lines and lines that don't contain a comma (likely not word pairs)
       const trimmedLine = line.trim();
       return trimmedLine && trimmedLine.includes(',');
     });
 
     const sanitizedWords = lines.map(line => {
-      // Remove unwanted prefixes (e.g., numbers, dots, asterisks)
-      const cleanedLine = line.replace(/^\s*[\d*]+[.)]?\s*/, '');
-      const parts = cleanedLine.split(',');
+      const parts = line.split(',');
       if (parts.length < 2) return null;
-
+      
       const eng = parts[0].trim();
       const kor = parts[1].trim();
-
+      
       // Filter out common prompt words/phrases that might leak in
       const promptWords = ['generate', 'create', 'make', 'words', 'vocabulary', 'list', 'english', 'korean', 'please', 'can you', 'help', 'assistant'];
       const isPromptPollution = promptWords.some(word => 
         eng.toLowerCase().includes(word) || kor.toLowerCase().includes(word)
       );
-
+      
       // Ensure English contains only valid characters and Korean contains Korean characters
       const validEng = /^[a-zA-Z0-9\s\-']+$/.test(eng);
       const validKor = /[가-힣]/.test(kor);
-
+      
       if (!isPromptPollution && validEng && validKor && eng.length > 0 && kor.length > 0) {
         return { eng, kor };
       }
@@ -603,79 +602,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // --- ENGLISH-KOREAN MATCHING LAYOUT ---
-    if (layout === "eng-kor-matching") {
-      // Get controls for matching layout
-      const imageGap = document.getElementById('testImageGapSlider')?.value || 20;
-      const testMode = document.getElementById('wordTestMode')?.value || "none";
-      
-      // Limit to reasonable number of words for matching (8-12 works well)
-      const limitedWordPairs = wordPairs.slice(0, 12);
-      
-      // Shuffle the Korean words to create a matching challenge
-      const shuffledKoreanWords = [...limitedWordPairs].map(pair => pair.kor).sort(() => Math.random() - 0.5);
-      
-      // Calculate consistent spacing
-      const itemHeight = 50;
-      const totalHeight = limitedWordPairs.length * itemHeight + (limitedWordPairs.length - 1) * parseInt(imageGap);
-      
-      const tableHtml = `        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 800px; margin: 0 auto; padding: 30px 20px;">
-          <!-- Left column - English words -->
-          <div style="width: 40%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; gap: ${imageGap}px;">
-            <div style="text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 20px; color: #2e2b3f;">
-              English
-            </div>
-            ${limitedWordPairs.map((pair, i) => `
-              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px; margin-bottom: ${i < limitedWordPairs.length - 1 ? imageGap : 0}px;">
-                <div style="padding: 15px 20px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-height: 50px; font-size: 1.1em;">
-                  <span class="toggle-word" data-index="${i}" data-lang="eng" style="width: 100%; text-align: center;">${pair.eng}</span>
-                </div>
-                <div style="width: 20px; height: 20px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
-              </div>
-            `).join('')}
-          </div>
-          
-          <!-- Middle section - connecting space -->
-          <div style="width: 20%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
-            <div style="color: #999; font-size: 16px; text-align: center; font-style: italic; line-height: 1.4;">
-              Draw lines<br>to match<br>the words
-            </div>
-          </div>
-          
-          <!-- Right column - Korean words (shuffled) -->
-          <div style="width: 40%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; gap: ${imageGap}px;">
-            <div style="text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 20px; color: #2e2b3f;">
-              한국어 (Korean)
-            </div>
-            ${shuffledKoreanWords.map((korWord, i) => `
-              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px; margin-bottom: ${i < shuffledKoreanWords.length - 1 ? imageGap : 0}px;">
-                <div style="width: 20px; height: 20px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
-                <div style="padding: 15px 20px; background: #fff3cd; border: 2px solid #ffeaa7; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-height: 50px; font-size: 1.1em;">
-                  <span style="width: 100%; text-align: center;">${korWord}</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        
-        <!-- Instructions at the bottom -->
-        <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center; font-size: 0.9em; color: #666;">
-          <strong>Instructions:</strong> Draw lines to connect each English word with its Korean translation.
-        </div>
-      `;
-      
-      preview.innerHTML = template.render({
-        title,
-        instructions: "",
-        puzzle: tableHtml,
-        orientation: "portrait"
-      });
-      applyPreviewFontStyles(preview, font, fontSizeScale);
-      attachWordLockingHandlers();
-      return;
-    }
-
     // Optionally, scale the preview
     scaleWorksheetPreview();
 
@@ -726,8 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pictureTestControls.style.display = 'block';
       }
       
-      // Show/hide remix button for Picture Matching and English-Korean Matching
-      if (layoutSelect.value === 'picture-matching' || layoutSelect.value === 'eng-kor-matching') {
+      // Show/hide remix button for Picture Matching
+      if (layoutSelect.value === 'picture-matching') {
         remixMatchingControls.style.display = 'block';
       }
     });
@@ -751,14 +677,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Set initial value
     fontSizeSlider.value = '1';
-  }
-
-  // Set up font dropdown in control panel
-  const fontSelect = document.getElementById('wordTestFont');
-  if (fontSelect) {
-    fontSelect.addEventListener('change', () => {
-      updateWordTestPreview();
-    });
   }
 
   // Set up image gap slider
@@ -977,7 +895,7 @@ Passage: ${passage}`;
     });
   }
 
-  // Remix Button for Picture Matching and English-Korean Matching
+  // Remix Button for Picture Matching
   const remixBtn = document.getElementById('remixMatchingBtn');
   if (remixBtn) {
     remixBtn.addEventListener('click', () => {

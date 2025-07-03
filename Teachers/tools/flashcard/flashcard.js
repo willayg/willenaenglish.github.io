@@ -339,120 +339,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Fetch multiple images from Pixabay with retry mechanism, favoring educational content
+  // Update Pixabay API call to fetch 10 images and mix 5 illustrations and 5 photos
   async function fetchImagesFromPixabay(englishWord, koreanWord, retries = 2) {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        // Use Korean as primary search term as it's often more descriptive, with English as fallback
         const searchWord = koreanWord || englishWord;
-        console.log(`🔍 Searching images for: "${searchWord}" (Korean: "${koreanWord}", English: "${englishWord}")`);
-        
-        // Favor illustrations and educational content
-        const imageTypes = ['illustration', 'vector', 'photo'];
-        const educationalTerms = ['education', 'learning', 'school', 'teaching', 'simple', 'cartoon'];
-        
-        let allImages = [];
-        
-        // Try different search strategies to get diverse educational images
-        for (let typeIndex = 0; typeIndex < imageTypes.length && allImages.length < 8; typeIndex++) {
-          const imageType = imageTypes[typeIndex];
-          
-          // Primary search with educational keywords using Korean term
-          for (let termIndex = 0; termIndex < educationalTerms.length && allImages.length < 8; termIndex++) {
-            const searchTerm = `${searchWord} ${educationalTerms[termIndex]}`;
-            const baseUrl = getBaseUrl();
-            const apiUrl = `${baseUrl}.netlify/functions/pixabay?q=${encodeURIComponent(searchTerm)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
-            
-            try {
-              const response = await fetch(apiUrl);
-              if (response.ok) {
-                const data = await response.json();
-                if (data.images && data.images.length > 0) {
-                  allImages.push(...data.images.slice(0, 3)); // Take up to 3 from each search
-                }
-              }
-            } catch (error) {
-              console.log(`Search failed for "${searchTerm}" with type ${imageType}:`, error);
-            }
-          }
-        }
-        
-        // If we don't have enough images, try a basic search with the primary search word
-        if (allImages.length < 5) {
-          const baseUrl = getBaseUrl();
-          const apiUrl = `${baseUrl}.netlify/functions/pixabay?q=${encodeURIComponent(searchWord)}&image_type=illustration&safesearch=true&order=popular&per_page=10`;
-          
-          console.log(`Basic search for "${searchWord}" from:`, apiUrl);
-          
-          const response = await fetch(apiUrl);
-          if (!response.ok) {
-            throw new Error(`Pixabay API HTTP ${response.status}: ${response.statusText}`);
-          }
+        console.log(`🔍 Searching Pixabay images for: "${searchWord}" (Korean: "${koreanWord}", English: "${englishWord}")`);
 
-          const data = await response.json();
-          if (data.images && data.images.length > 0) {
-            allImages.push(...data.images);
-          }
+        const baseUrl = getBaseUrl();
+        const photoApiUrl = `${baseUrl}.netlify/functions/pixabay?q=${encodeURIComponent(searchWord)}&image_type=photo&safesearch=true&per_page=5`;
+        const illustrationApiUrl = `${baseUrl}.netlify/functions/pixabay?q=${encodeURIComponent(searchWord)}&image_type=illustration&safesearch=true&per_page=5`;
+
+        console.log(`Pixabay Photo API URL: ${photoApiUrl}`);
+        console.log(`Pixabay Illustration API URL: ${illustrationApiUrl}`);
+
+        const [photoResponse, illustrationResponse] = await Promise.all([
+          fetch(photoApiUrl),
+          fetch(illustrationApiUrl)
+        ]);
+
+        if (!photoResponse.ok || !illustrationResponse.ok) {
+          throw new Error(`Pixabay API failed with status: ${photoResponse.status} (photo), ${illustrationResponse.status} (illustration)`);
         }
-        
-        // If still not enough images and we have both Korean and English, try the other language
-        if (allImages.length < 5 && koreanWord && englishWord && searchWord !== englishWord) {
-          const baseUrl = getBaseUrl();
-          const fallbackUrl = `${baseUrl}.netlify/functions/pixabay?q=${encodeURIComponent(englishWord)}&image_type=illustration&safesearch=true&order=popular&per_page=10`;
-          
-          console.log(`Fallback search for "${englishWord}" from:`, fallbackUrl);
-          
-          try {
-            const response = await fetch(fallbackUrl);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.images && data.images.length > 0) {
-                allImages.push(...data.images);
-              }
-            }
-          } catch (error) {
-            console.log(`Fallback search failed for "${englishWord}":`, error);
-          }
+
+        const photoData = await photoResponse.json();
+        const illustrationData = await illustrationResponse.json();
+
+        console.log(`Pixabay photo response for "${searchWord}":`, photoData);
+        console.log(`Pixabay illustration response for "${searchWord}":`, illustrationData);
+
+        const photoImages = photoData.images || [];
+        const illustrationImages = illustrationData.images || [];
+
+        const combinedImages = [...photoImages, ...illustrationImages];
+
+        if (combinedImages.length > 0) {
+          console.log(`✓ Found ${combinedImages.length} Pixabay images for "${searchWord}" (${photoImages.length} photos + ${illustrationImages.length} illustrations)`);
+          return combinedImages; // Return the array of image URLs
         }
-        
-        // Remove duplicates and filter valid URLs
-        const uniqueImages = [...new Set(allImages)]
-          .filter(image => image && typeof image === 'string' && image.startsWith('http'))
-          .slice(0, 8); // Keep up to 8 images per word
-        
-        console.log(`Found ${uniqueImages.length} images for "${searchWord}" (${englishWord}) (attempt ${attempt + 1})`);
-        
-        if (uniqueImages.length > 0) {
-          // Store all images in cache using English word as key for consistency
-          imageCache[englishWord] = uniqueImages;
-          currentImageIndex[englishWord] = 0;
-          return uniqueImages[0]; // Return the first image
-        }
-        
-        console.log('No valid images found for', searchWord, '/', englishWord, 'attempt', attempt + 1);
-        
-        // If this was the last attempt, return null
-        if (attempt === retries) {
-          return null;
-        }
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
       } catch (error) {
-        console.error(`Error fetching images for ${searchWord} (${englishWord}) (attempt ${attempt + 1}):`, error);
-        
-        // If this was the last attempt, return null
-        if (attempt === retries) {
-          return null;
-        }
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.error(`Error fetching images from Pixabay (attempt ${attempt + 1}):`, error);
       }
     }
-    
-    return null;
+
+    console.warn(`No Pixabay images found for "${englishWord}" after ${retries + 1} attempts.`);
+    return [];
   }
 
   // Combined function to fetch images from both OpenMoji and Pixabay
@@ -471,25 +402,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Then, get Pixabay images (photographic/illustration images)
     try {
       const pixabayImages = await fetchImagesFromPixabay(englishWord, koreanWord);
-      if (pixabayImages) {
-        // fetchImagesFromPixabay returns the first image, but we want all cached images
-        const cachedPixabayImages = imageCache[englishWord] || [];
-        allImages.push(...cachedPixabayImages);
-        console.log(`✓ Found ${cachedPixabayImages.length} Pixabay images`);
+      if (pixabayImages.length > 0) {
+        // Add all Pixabay images without filtering (they come from our secure endpoint)
+        allImages.push(...pixabayImages);
+        console.log(`✓ Found ${pixabayImages.length} Pixabay images`);
       }
     } catch (error) {
       console.warn('Pixabay search failed:', error);
     }
-    
-    // 3. Mix the images to get variety (OpenMoji first, then Pixabay)
+
+    // 3. Store and return the combined images
     if (allImages.length > 0) {
-      // Store mixed images in cache
-      imageCache[englishWord] = allImages.slice(0, 8); // Keep up to 8 total images
+      // Store all images in cache for cycling functionality
+      imageCache[englishWord] = allImages;
       currentImageIndex[englishWord] = 0;
       
       const totalImages = imageCache[englishWord].length;
       const openMojiCount = openMojiImages.length;
-      const pixabayCount = totalImages - openMojiCount;
+      const pixabayCount = allImages.length - openMojiCount;
       
       console.log(`🎨 Combined result: ${totalImages} total images (${openMojiCount} OpenMoji + ${pixabayCount} Pixabay)`);
       
@@ -618,9 +548,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Create HTML for a single page
   function createPageHtml(words, cardsPerPage, pageNumber) {
-    const showKorean = showKoreanCheckbox.checked;
-    const fontSize = fontSizeSelect.value;
-    
+    const showKorean = false; // Korean translation disabled for print and PDF
+    const fontSize = 'large'; // Default font size
+
     let gridClass, cardClass;
     switch (cardsPerPage) {
       case 2:
@@ -643,35 +573,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const cardsHtml = words.map(word => {
       const imageUrl = currentImages[word.english];
       const englishStyle = getFontSizeStyle(fontSize, 'english', cardsPerPage);
-      const koreanStyle = getFontSizeStyle(fontSize, 'korean', cardsPerPage);
-      const imageCount = imageCache[word.english] ? imageCache[word.english].length : 0;
-      const currentIndex = currentImageIndex[word.english] || 0;
-      
-      console.log('Rendering card for', word.english, 'with image:', imageUrl);
-      
+
       return `
         <div class="flashcard ${cardClass}">
           <div class="flashcard-image" style="position: relative;">
             ${imageUrl 
               ? `<img src="${imageUrl}" alt="${word.english}" 
-                     style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;" 
-                     onclick="changeCardImage('${word.english.replace(/'/g, "\\'")}', this)"
-                     onload="console.log('Image loaded successfully:', '${word.english}', this.src)" 
-                     onerror="console.error('Image failed to load for ${word.english}:', this.src); this.parentElement.innerHTML='<div class=\\'text-gray-400 text-4xl\\' style=\\'cursor: pointer;\\' onclick=\\'changeCardImage(\\'${word.english.replace(/'/g, "\\'")}\\', this)\\'>📷</div>'">`
-              : `<div class="text-gray-400 text-4xl" style="cursor: pointer;" onclick="changeCardImage('${word.english.replace(/'/g, "\\'")}', this)">📷</div>`
+                     style="max-width: 100%; max-height: 100%; object-fit: contain;">`
+              : `<div class="text-gray-400 text-4xl">📷</div>`
             }
-            ${imageCount > 1 ? `
-              <div style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px;">
-                ${currentIndex + 1}/${imageCount}
-              </div>
-              <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; padding: 1px 4px; border-radius: 8px; font-size: 8px;">
-                click to change
-              </div>
-            ` : ''}
           </div>
           <div class="flashcard-text">
             <div class="flashcard-english" style="${englishStyle}">${word.english}</div>
-            ${showKorean ? `<div class="flashcard-korean" style="${koreanStyle}">${word.korean}</div>` : ''}
           </div>
         </div>
       `;
@@ -720,6 +633,25 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Print functionality
+  function adjustPreviewForPrint() {
+    const previewContainer = document.getElementById('previewContainer');
+    const printContainer = previewContainer.cloneNode(true);
+    printContainer.style.width = '100%';
+    printContainer.style.height = 'auto';
+    printContainer.style.margin = '0';
+    printContainer.style.padding = '0';
+    printContainer.style.display = 'grid';
+    printContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+    printContainer.style.gap = '10px';
+
+    document.body.appendChild(printContainer);
+
+    setTimeout(() => {
+      window.print();
+      document.body.removeChild(printContainer);
+    }, 500);
+  }
+
   async function printCards() {
     if (currentWords.length === 0) {
       alert('Please generate flash cards first');
@@ -727,25 +659,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     try {
-      // Show loading state for print button
       const originalText = printBtn.textContent;
       printBtn.disabled = true;
       printBtn.textContent = 'Preparing to print...';
-      
-      // Wait for all images to load before printing
+
       await waitForImagesToLoad();
-      
+
       printBtn.textContent = 'Opening print dialog...';
-      
+
+      adjustPreviewForPrint();
+
       setTimeout(() => {
-        window.print();
-        // Reset button state after a short delay
-        setTimeout(() => {
-          printBtn.disabled = false;
-          printBtn.textContent = originalText;
-        }, 1000);
-      }, 500);
-      
+        printBtn.disabled = false;
+        printBtn.textContent = originalText;
+      }, 1000);
     } catch (error) {
       console.error('Error preparing to print:', error);
       printBtn.disabled = false;
@@ -933,41 +860,77 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Context menu creation
+  document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
+    const target = event.target;
+    if (target.tagName === 'IMG' && target.closest('.flashcard-image')) {
+      const word = target.alt;
+      createContextMenu(word, target);
+    }
+  });
+
+  function createContextMenu(word, element) {
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.position = 'absolute';
+    menu.style.top = `${event.clientY}px`;
+    menu.style.left = `${event.clientX}px`;
+    menu.style.background = '#fff';
+    menu.style.border = '1px solid #ccc';
+    menu.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+    menu.style.zIndex = '1000';
+
+    const searchAgainOption = document.createElement('div');
+    searchAgainOption.textContent = 'Search Again';
+    searchAgainOption.style.padding = '8px';
+    searchAgainOption.style.cursor = 'pointer';
+    searchAgainOption.addEventListener('click', async () => {
+      console.log(`Searching again for: ${word}`);
+      const images = await fetchCombinedImages(word, '');
+      if (images.length > 0) {
+        currentImages[word] = images[0];
+        imageCache[word] = images;
+        element.src = images[0];
+        console.log(`Updated image for ${word}`);
+      }
+      document.body.removeChild(menu);
+    });
+
+    const addKeywordOption = document.createElement('div');
+    addKeywordOption.textContent = 'Add Keyword to Search';
+    addKeywordOption.style.padding = '8px';
+    addKeywordOption.style.cursor = 'pointer';
+    addKeywordOption.addEventListener('click', () => {
+      const keyword = prompt('Enter a keyword to refine the search:', '');
+      if (keyword) {
+        console.log(`Adding keyword to search for ${word}: ${keyword}`);
+        const images = fetchCombinedImages(`${word} ${keyword}`, '');
+        if (images.length > 0) {
+          currentImages[word] = images[0];
+          imageCache[word] = images;
+          element.src = images[0];
+          console.log(`Updated image for ${word} with keyword: ${keyword}`);
+        }
+      }
+      document.body.removeChild(menu);
+    });
+
+    menu.appendChild(searchAgainOption);
+    menu.appendChild(addKeywordOption);
+
+    document.body.appendChild(menu);
+
+    document.addEventListener('click', () => {
+      if (menu.parentElement) {
+        document.body.removeChild(menu);
+      }
+    }, { once: true });
+  }
+
   // Global function to handle image changing (called from onclick)
   window.changeCardImage = function(word, element) {
-    console.log('Changing image for:', word);
-    
-    const newImageUrl = cycleImage(word);
-    
-    if (newImageUrl) {
-      // Find the image element and update it
-      const cardElement = element.closest('.flashcard');
-      const imageContainer = cardElement.querySelector('.flashcard-image');
-      
-      // Update the image counter
-      const imageCount = imageCache[word] ? imageCache[word].length : 0;
-      const currentIndex = currentImageIndex[word] || 0;
-      
-      // Update the HTML with new image and counter
-      imageContainer.innerHTML = `
-        <img src="${newImageUrl}" alt="${word}" 
-             style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;" 
-             onclick="changeCardImage('${word.replace(/'/g, "\\'")}', this)"
-             onload="console.log('New image loaded for ${word}:', this.src)" 
-             onerror="console.error('New image failed to load for ${word}:', this.src)">
-        ${imageCount > 1 ? `
-          <div style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px;">
-            ${currentIndex + 1}/${imageCount}
-          </div>
-          <div style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; padding: 1px 4px; border-radius: 8px; font-size: 8px;">
-            click to change
-          </div>
-        ` : ''}
-      `;
-    } else {
-      console.log('No alternative images available for:', word);
-      updateStatus(`No more images available for "${word}"`);
-    }
+    createContextMenu(word, element);
   };
 
   // Search for OpenMoji images based on word
@@ -1032,6 +995,11 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('Origin:', window.location.origin);
   console.log('Pathname:', window.location.pathname);
   
+  // Set default values for UI elements
+  fontSizeSelect.value = 'large';
+  showKoreanCheckbox.checked = false;
+  imageQualitySelect.value = 'standard';
+
   updateWordCount();
   updateStatus(`Initialized. Base URL: ${getBaseUrl()}`);
   

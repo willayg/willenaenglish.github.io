@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willena Grid Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .grid-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            padding: 32px;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .preview-area {
+            flex: 1;
+            padding: 32px;
+            background: white;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            color: #374151;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .team-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .team-color-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        /* Game Grid Styles */
+        .game-grid {
+            display: grid;
+            gap: 10px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .game-grid.grid-3x3 {
+            grid-template-columns: repeat(3, 150px);
+            grid-template-rows: repeat(3, 150px);
+            width: 490px;
+        }
+        
+        .game-grid.grid-4x4 {
+            grid-template-columns: repeat(4, 120px);
+            grid-template-rows: repeat(4, 120px);
+            width: 520px;
+        }
+        
+        .grid-square {
+            background-color: white;
+            border: 3px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .grid-square:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .grid-square.showing-word {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            color: #1976d2;
+        }
+        
+        .grid-square.showing-question {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+            color: #f57c00;
+            font-size: 14px;
+        }
+        
+        .grid-square.team-color {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-top: 100px;
+            padding: 40px;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none !important; }
+        
+        /* MASSIVE FULLSCREEN STYLES FOR CLASSROOM */
+        /* Removed inline fullscreen styles. Refer to grid_game.css for fullscreen layout. */
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                display: block;
+            }
+            .preview-area {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="grid-card">
+            <div class="header">
+                <h1>Willena Grid Game</h1>
+                <p>Interactive classroom vocabulary and question game</p>
+            </div>
+            
+            <div class="main-content">
+                <!-- Sidebar Controls -->
+                <div class="sidebar">
+                    <h2 class="font-bold text-lg mb-4" style="color: #2e2b3f;">Grid Game Setup</h2>
+
+                    <!-- Grid Size Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Grid Size</label>
+                        <select id="gridSize" class="form-select">
+                            <option value="3x3">3x3 (9 squares)</option>
+                            <option value="4x4">4x4 (16 squares)</option>
+                        </select>
+                    </div>
+
+                    <!-- AI Passage Extraction -->
+                    <div class="form-group">
+                        <label class="form-label">Reading Passage (for AI extraction)</label>
+                        <textarea id="passageInput" class="form-textarea" rows="4" placeholder="Paste your reading passage here for AI to extract words and questions"></textarea>
+                        <button id="extractBtn" class="generate-btn">
+                            <span class="button-text">Extract Words and Questions with AI</span>
+                            <span class="loading-spinner hidden"></span>
+                        </button>
+                    </div>
+
+                    <!-- Manual Input -->
+                    <div class="form-group">
+                        <label class="form-label">Vocabulary Words</label>
+                        <textarea id="vocabInput" class="form-textarea" rows="3" placeholder="Enter vocabulary words (one per line)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Questions</label>
+                        <textarea id="questionsInput" class="form-textarea" rows="3" placeholder="Enter questions (one per line)"></textarea>
+                    </div>
+
+                    <!-- Team Setup -->
+                    <div class="form-group">
+                        <label class="form-label">Team Setup (Optional)</label>
+                        <input type="text" id="teamNameInput" class="form-input" placeholder="Enter team name" style="margin-bottom: 8px;">
+                        <input type="color" id="teamColorInput" class="form-input" value="#ff0000" style="margin-bottom: 8px;">
+                        <button id="addTeamBtn" class="action-btn" style="width: 100%; margin-bottom: 8px;">Add Team</button>
+                        <div id="teamList"></div>
+                    </div>
+
+                    <!-- Customization -->
+                    <div class="form-group">
+                        <label class="form-label">Grid Background Color</label>
+                        <input type="color" id="gridColorPicker" class="form-input" value="#f0f0f0">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Font Style</label>
+                        <select id="fontPicker" class="form-select">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Comic Sans MS">Comic Sans</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                    </div>
+
+                    <!-- Generate Game Button -->
+                    <button id="generateGameBtn" class="generate-btn">
+                        <span class="button-text">Generate Game</span>
+                        <span class="loading-spinner hidden"></span>
+                    </button>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="saveSetupBtn" class="action-btn">Save</button>
+                        <button id="loadSetupBtn" class="action-btn">Load</button>
+                        <button id="resetGameBtn" class="action-btn">Reset</button>
+                    </div>
+                </div>
+                
+                <!-- Preview Area -->
+                <div class="preview-area">
+                    <div id="gamePreviewArea">
+                        <div class="empty-state">
+                            <div class="icon">🎯</div>
+                            <h3>Ready to Create Your Grid Game</h3>
+                            <p>Enter vocabulary words and questions, then click "Generate Game" to start playing.</p>
+                            <p style="font-size: 0.9rem; margin-top: 16px; opacity: 0.7;">
+                                <strong>How to play:</strong><br>
+                                • Click squares to reveal questions<br>
+                                • Right-click to assign team colors<br>
+                                • Use fullscreen mode for classroom projection
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="grid_game_fixed.js"></script>
+    <link rel="stylesheet" href="grid_game.css">
+</body>
+</html>

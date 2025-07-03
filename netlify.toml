@@ -14,3 +14,4 @@
 # Ensure environment variables are loaded from .env file
 [dev]
   framework = "#static"
+  port = 9000
