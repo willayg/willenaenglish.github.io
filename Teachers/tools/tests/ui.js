@@ -104,30 +104,31 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Sanitize and filter words to prevent prompt pollution
+    // Sanitize and filter words to remove unwanted prefixes like numbers, dots, or asterisks
     const lines = words.split('\n').filter(line => {
-      // Remove empty lines and lines that don't contain a comma (likely not word pairs)
       const trimmedLine = line.trim();
       return trimmedLine && trimmedLine.includes(',');
     });
 
     const sanitizedWords = lines.map(line => {
-      const parts = line.split(',');
+      // Remove unwanted prefixes (e.g., numbers, dots, asterisks)
+      const cleanedLine = line.replace(/^\s*[\d*]+[.)]?\s*/, '');
+      const parts = cleanedLine.split(',');
       if (parts.length < 2) return null;
-      
+
       const eng = parts[0].trim();
       const kor = parts[1].trim();
-      
+
       // Filter out common prompt words/phrases that might leak in
       const promptWords = ['generate', 'create', 'make', 'words', 'vocabulary', 'list', 'english', 'korean', 'please', 'can you', 'help', 'assistant'];
       const isPromptPollution = promptWords.some(word => 
         eng.toLowerCase().includes(word) || kor.toLowerCase().includes(word)
       );
-      
+
       // Ensure English contains only valid characters and Korean contains Korean characters
       const validEng = /^[a-zA-Z0-9\s\-']+$/.test(eng);
       const validKor = /[가-힣]/.test(kor);
-      
+
       if (!isPromptPollution && validEng && validKor && eng.length > 0 && kor.length > 0) {
         return { eng, kor };
       }
