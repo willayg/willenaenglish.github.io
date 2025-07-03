@@ -1,6 +1,31 @@
 export function applyPreviewFontStyles(preview, font, fontSizeScale) {
-  preview.style.fontFamily = font;
-  preview.style.fontSize = `${fontSizeScale}em`;
+  // Apply font to the main preview container
+  preview.style.setProperty('font-family', font, 'important');
+  preview.style.setProperty('font-size', `${fontSizeScale}em`, 'important');
+  
+  // Apply font to all text elements inside the preview with high specificity
+  const textSelectors = [
+    'td', 'th', 'p', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    '.toggle-word', 'table', 'tbody', 'thead', 'tr'
+  ];
+  
+  textSelectors.forEach(selector => {
+    const elements = preview.querySelectorAll(selector);
+    elements.forEach(element => {
+      element.style.setProperty('font-family', font, 'important');
+      element.style.setProperty('font-size', `${fontSizeScale}em`, 'important');
+    });
+  });
+  
+  // Include the hints/word list div in font application
+  const hintsSelector = ['.mb-2'];
+  hintsSelector.forEach(selector => {
+    const elements = preview.querySelectorAll(selector);
+    elements.forEach(element => {
+      element.style.setProperty('font-family', font, 'important');
+      element.style.setProperty('font-size', `${fontSizeScale}em`, 'important');
+    });
+  });
 }
 
 export function loadGoogleFont(font) {
