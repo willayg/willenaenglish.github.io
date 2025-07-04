@@ -343,8 +343,6 @@
       <button class="tool-btn" data-panel="planner">Lesson Planner</button>
       <button class="tool-btn" data-panel="reading">Reading</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
-      <button class="tool-btn" data-panel="flashcard">Flash Cards</button>
-      <button class="tool-btn" data-panel="grid_game">Grid Game</button>
     </aside>    <!-- Tool Panels (left column) -->
     <section id="tool-panels">
       <!-- Files Panel -->
@@ -689,50 +687,6 @@
           </button>
         </div>
       </section>
-
-      <!-- Flash Card Panel -->
-      <section id="panel-flashcard" class="tool-panel hidden mb-4">
-        <div class="bg-white rounded shadow p-4">
-          <h2 class="font-bold text-lg mb-4">Flash Card Maker</h2>
-          <p class="text-sm text-gray-600 mb-4">Create professional flashcards with images, supporting multiple cards per page and AI word generation.</p>
-          
-          <div class="space-y-2 text-sm text-gray-700 mb-4">
-            <div class="flex items-center gap-2">
-              <span class="text-green-500">✓</span>
-              <span>AI-powered word generation</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-green-500">✓</span>
-              <span>Automatic image integration</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-green-500">✓</span>
-              <span>Multi-page support (2, 4, 8 cards per page)</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-green-500">✓</span>
-              <span>Professional print & PDF export</span>
-            </div>
-          </div>
-          
-          <button id="openFlashCardMaker" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded hover:from-orange-600 hover:to-red-700 w-full font-semibold">
-            Open Flash Card Maker
-          </button>
-        </div>
-      </section>
-
-      <!-- Grid Game Panel -->
-      <section id="panel-grid_game" class="tool-panel hidden mb-4">
-        <div style="padding: 40px; text-align: center; color: #6b7280;">
-          <div style="font-size: 4rem; margin-bottom: 20px;">🎮</div>
-          <h3 style="color: #374151; margin-bottom: 12px;">Grid Game</h3>
-          <p style="font-size: 1.1rem; margin-bottom: 24px;">The grid game is now available as a standalone tool for better focus and usability.</p>
-          <button onclick="window.open('tools/grid_game/grid_game.html', '_blank', 'width=1400,height=900')" 
-                  style="background: linear-gradient(135deg, #34d399, #10b981); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">
-            Open Grid Game
-          </button>
-        </div>
-      </section>
     </section>
 
     <!-- Worksheet Preview Area (right column) -->
@@ -832,17 +786,6 @@
         <div id="worksheetPreviewArea-reading" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
         <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
-        <div id="worksheetPreviewArea-flashcard" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;">
-          <div style="padding: 40px; text-align: center; color: #6b7280;">
-            <div style="font-size: 4rem; margin-bottom: 20px;">🃏</div>
-            <h3 style="color: #374151; margin-bottom: 12px;">Flash Card Maker</h3>
-            <p style="font-size: 1.1rem; margin-bottom: 24px;">The flash card maker is now available as a standalone tool for better focus and usability.</p>
-            <button onclick="window.open('tools/flashcard/flashcard.html', '_blank', 'width=1400,height=900')" 
-                    style="background: linear-gradient(135deg, #f97316, #dc2626); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">
-              Open Flash Card Maker
-            </button>
-          </div>
-        </div>
         <div id="worksheetPreviewArea-planner" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;">
           <div style="padding: 40px; text-align: center; color: #6b7280;">
             <div style="font-size: 4rem; margin-bottom: 20px;">📝</div>
@@ -890,27 +833,297 @@
         document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
         if (btn) btn.classList.add('active');
-
-        // Show/hide control panel for specific tools
+        
+        // Show/hide control panel for Word Worksheets tool
         const controlPanel = document.getElementById('worksheet-control-panel');
-        if (panel === 'tests' || panel === 'reading') {
-          controlPanel.style.display = 'flex';
-        } else {
-          controlPanel.style.display = 'none';
+        if (controlPanel) {
+          if (panel === 'tests') {
+            controlPanel.style.display = 'block';
+          } else {
+            controlPanel.style.display = 'none';
+          }
         }
-      }
-
-      // Show the initial panel
-      showPanel('tests');
-
-      // Sidebar button click event
+      };
+      // Sidebar button click handlers
       document.querySelectorAll('#sidebar .tool-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
           const panel = this.getAttribute('data-panel');
           showPanel(panel);
-        });
+        });      });      showPanel('files');      
+      
+      // Reading 3.0 button handler
+      document.getElementById('openPassageBuilder').addEventListener('click', function() {
+        // Open the reading 3.0 tool in a new window
+        window.open('tools/passage/passage.html', '_blank', 'width=1400,height=900');
+      });
+      
+      // Lesson Planner button handler
+      document.getElementById('openLessonPlanner').addEventListener('click', function() {
+        // Open the lesson planner tool in a new window
+        window.open('tools/planner/planner.html', '_blank', 'width=1400,height=900');
       });
     });
+
   </script>
-</body>
-</html>
+  <script>
+document.getElementById('saveWorksheetBtn').onclick = function() {
+  window.open('worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+};
+document.getElementById('loadWorksheetBtn').onclick = function() {
+  window.open('worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+};
+</script>
+<script>
+function generateWordList(passage, numItems, difficulty = 'medium') {
+  let prompt = '';
+  
+  switch(difficulty) {
+    case 'easy':
+      prompt = `
+You are an ESL teacher working with beginner English learners. From the passage below, extract exactly ${numItems} simple and useful words that are:
+
+- Basic vocabulary that beginners should learn
+- Common everyday words and simple phrases
+- High-frequency words that appear often in English
+- Simple verbs, nouns, and adjectives
+- Basic prepositions (in, on, at, with, etc.)
+
+Focus on words that are:
+- 1-2 syllables when possible
+- Commonly used in daily conversation
+- Essential for basic communication
+- Easy to pronounce and remember
+
+Avoid complex vocabulary, idioms, or advanced grammar structures.
+
+Format as a simple numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'medium':
+      prompt = `
+You are an ESL teacher working with intermediate English learners. From the passage below, extract exactly ${numItems} moderately challenging words and phrases that include:
+
+- Intermediate vocabulary (2-3 syllables)
+- Common phrasal verbs (look up, turn on, etc.)
+- Simple idiomatic expressions
+- Useful prepositional phrases
+- Common collocations (strong coffee, heavy rain)
+- Connecting words (however, therefore, although)
+
+Focus on words and phrases that:
+- Are commonly used but not too basic
+- Help students express more complex ideas
+- Are useful for academic and everyday contexts
+- Build on beginner vocabulary
+
+Avoid overly simple words or highly advanced terminology.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'hard':
+      prompt = `
+You are an ESL teacher working with advanced English learners. From the passage below, extract exactly ${numItems} challenging and sophisticated words and phrases including:
+
+- Advanced vocabulary and less common words
+- Complex phrasal verbs and their variations
+- Sophisticated idiomatic expressions
+- Advanced prepositional and adverbial phrases
+- Academic and formal language structures
+- Complex conjunctions and discourse markers
+- Nuanced collocations and expressions
+
+Focus on language that:
+- Appears in academic, professional, or literary contexts
+- Requires deeper understanding of English nuances
+- Helps students sound more fluent and natural
+- Challenges students to expand their vocabulary range
+- Includes subtle meaning differences and connotations
+
+Prioritize multi-word expressions, complex grammar structures, and sophisticated vocabulary.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'x':
+      prompt = `
+You are an ESL teacher helping Korean students in elementary and middle school.
+
+From the passage below, extract exactly ${numItems} useful words and phrases for learning English. 
+Don't just pick vocabulary nouns. Include:
+
+- Uncommon or challenging vocabulary (nouns, verbs, adjectives)
+- Phrasal verbs (like "make up", "carry out")
+- Prepositional phrases (like "at the correct time", "in 1970")
+- Conjunctions and linking expressions (like "since then", "although")
+- Common expressions or collocations (like "plan their day", "reach our wrists")
+
+Avoid repeating very similar words or listing only nouns. Include full phrases where useful.
+
+Group your list into 5 categories:
+1. Vocabulary
+2. Prepositional Phrases
+3. Phrasal Verbs
+4. Linking Words & Conjunctions
+5. Expressions & Collocations
+
+Keep the list numbered and organized clearly.
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    default:
+      // Default to medium difficulty
+      prompt = `
+You are an ESL teacher working with intermediate English learners. From the passage below, extract exactly ${numItems} moderately challenging words and phrases that include:
+
+- Intermediate vocabulary (2-3 syllables)
+- Common phrasal verbs (look up, turn on, etc.)
+- Simple idiomatic expressions
+- Useful prepositional phrases
+- Common collocations (strong coffee, heavy rain)
+- Connecting words (however, therefore, although)
+
+Focus on words and phrases that:
+- Are commonly used but not too basic
+- Help students express more complex ideas
+- Are useful for academic and everyday contexts
+- Build on beginner vocabulary
+
+Avoid overly simple words or highly advanced terminology.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+  }
+  
+  let wordList = callAI(prompt);
+
+  // Filter out duplicates
+  wordList = [...new Set(wordList)];
+
+  // Filter for contextual relevance
+  const keywords = passage.split(/\s+/).map(word => word.toLowerCase());
+  wordList = wordList.filter(word => {
+    const lowerWord = word.toLowerCase();
+    return keywords.some(keyword => lowerWord.includes(keyword));
+  });
+
+  // Filter for difficulty level (only for easy and medium modes)
+  if (difficulty === 'easy' || difficulty === 'medium') {
+    const easyWords = ['time', 'plan', 'dog', 'walk', 'is'];
+    wordList = wordList.filter(word => !easyWords.includes(word.toLowerCase()));
+  }
+
+  // Adjust the list to match the requested number of items
+  wordList = adjustWordList(wordList, numItems);
+
+  return wordList;
+}
+
+function adjustWordList(wordList, numItems) {
+  if (wordList.length < numItems) {
+    const additionalItems = getAdditionalESLItems(numItems - wordList.length);
+    return wordList.concat(additionalItems);
+  } else if (wordList.length > numItems) {
+    return wordList.slice(0, numItems);
+  }
+  return wordList;
+}
+
+const commonPhrases = [
+  'look forward to', 'in addition to', 'as a result', 'on the other hand', 
+  'take care of', 'run out of', 'get along with', 'make up for'
+];
+
+function prioritizePhrases(wordList) {
+  return wordList.filter(item => commonPhrases.includes(item) || item.split(' ').length > 1);
+}
+
+function getAdditionalESLItems(count) {
+  // Mock function to generate additional ESL items
+  const additionalItems = [
+    'carry out', 'at the correct time', 'since then', 'make up for', 'take care of'
+  ];
+  return additionalItems.slice(0, count);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const templateDropdown = document.getElementById('wordTestTemplate');
+  if (templateDropdown) {
+    templateDropdown.value = '2'; // Set "Line" as the default template
+  }
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Removed password protection logic
+  });
+</script>
+
+<!-- Special Layout Controls (conditionally visible) -->
+          <div id="remixMatchingControls" style="display: none;">
+            <button id="remixMatchingBtn" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mb-2 w-full">
+              Remix Words
+            </button>
+            <label for="lineSpacingSlider" class="block mb-1">Line Spacing</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Tight</span>
+              <input type="range" id="lineSpacingSlider" min="15" max="50" value="25" class="flex-1">
+              <span class="text-sm">Wide</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="lineSpacingValue">25px</span>
+            </div>
+          </div>
+
+          <div id="pictureQuizControls" style="display: none;">
+            <label for="pictureQuizImageSize" class="block mb-1">Picture Size</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Small</span>
+              <input type="range" id="pictureQuizImageSize" min="40" max="120" value="55" class="flex-1">
+              <span class="text-sm">Large</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureSizeValue">55px</span>
+            </div>
+          </div>
+        </div>
+      </div>
