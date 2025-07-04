@@ -877,6 +877,27 @@
         document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
         if (btn) btn.classList.add('active');
-        
-        // Show/hide control panel for Word Worksheets tool
+
+        // Show/hide control panel for specific tools
         const controlPanel = document.getElementById('worksheet-control-panel');
+        if (panel === 'tests' || panel === 'reading') {
+          controlPanel.style.display = 'flex';
+        } else {
+          controlPanel.style.display = 'none';
+        }
+      }
+
+      // Show the initial panel
+      showPanel('tests');
+
+      // Sidebar button click event
+      document.querySelectorAll('#sidebar .tool-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const panel = this.getAttribute('data-panel');
+          showPanel(panel);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
