@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Worksheet Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="app-card">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">
+                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                </div>
+                <h1>Word Worksheet Generator</h1>
+                <div class="menu-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <!-- Top Action Bar -->
+            <div class="top-actions">
+                <span class="action-link" id="loadBtn">Load</span>
+                <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="printBtn">Print</span>
+                <span class="action-link" id="pdfBtn">PDF</span>
+            </div>
+
+            <!-- Floating Toolbar -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+
+                <div class="font-size-controls">
+                    <button class="size-btn" id="decreaseFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInput" value="15">
+                    <button class="size-btn" id="increaseFontBtn">+</button>
+                </div>
+
+                <select class="toolbar-select" id="designSelect">
+                    <option value="Design 1">Design 1</option>
+                    <option value="Design 2">Design 2</option>
+                    <option value="Design 3">Design 3</option>
+                </select>
+
+                <div class="layout-group">
+                    <select class="layout-select" id="layoutSelect">
+                        <option value="default">Default Table</option>
+                        <option value="4col">2 Lists (Side by Side)</option>
+                        <option value="6col-images">Picture Cards</option>
+                        <!-- <option value="images">With Images</option> -->
+                        <option value="picture-list">Picture List</option>
+                        <option value="picture-list-2col">Picture List (2 Columns)</option>
+                        <option value="picture-quiz">Picture Quiz</option>
+                        <option value="picture-matching">Picture Matching</option>
+                        <option value="eng-kor-matching">English-Korean Matching</option>
+                    </select>
+                </div>
+
+                <div class="slider-group">
+                    <label>Image Gap</label>
+                    <input type="range" class="slider" id="imageGapSlider" min="0" max="50" value="25">
+                </div>
+
+                <div class="slider-group">
+                    <label>Size</label>
+                    <input type="range" class="slider" id="imageSizeSlider" min="30" max="150" value="50">
+                </div>
+
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+                <select class="test-mode-select" id="testModeSelect" style="margin-left:8px;">
+                    <option value="none">Test Mode Off</option>
+                    <option value="hide-eng">Hide English</option>
+                    <option value="hide-kor">Hide Korean</option>
+                    <option value="hide-all">Hide All</option>
+                    <option value="hide-random-letters">Hide Random Letters</option>
+                    <option value="hide-random-lang">Hide Random (Eng/Kor)</option>
+                </select>
+
+                <style>
+                /* Match toolbar select style */
+                .test-mode-select, #numLettersToHide {
+                    padding: 3px 8px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    background: #f8fafc;
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                    color: #222;
+                    outline: none;
+                    margin-left: 8px;
+                    transition: border 0.2s, box-shadow 0.2s;
+                }
+                .test-mode-select:focus, #numLettersToHide:focus {
+                    border-color: #4299e1;
+                    box-shadow: 0 0 0 2px #bee3f8;
+                }
+                #numLettersToHide {
+                    width: 36px;
+                    min-width: 0;
+                    display: inline-block;
+                    vertical-align: middle;
+                    font-size: 13px;
+                    padding: 3px 6px;
+                }
+                </style>
+
+                <style>
+                /* Match toolbar select style */
+                .test-mode-select {
+                    padding: 6px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    background: #f8fafc;
+                    font-family: inherit;
+                    font-size: 15px;
+                    color: #222;
+                    outline: none;
+                    margin-left: 8px;
+                    transition: border 0.2s, box-shadow 0.2s;
+                }
+                .test-mode-select:focus {
+                    border-color: #4299e1;
+                    box-shadow: 0 0 0 2px #bee3f8;
+                }
+                </style>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="titleInput" placeholder="Enter title">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Passage Text</label>
+                        <textarea class="textarea-field" id="passageInput" placeholder="Insert passage here..."></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Difficulty and Number of Words</label>
+                        <select class="select-field" id="difficultySelect">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                        <input type="number" class="number-input" id="wordCountInput" value="10">
+                    </div>
+
+                    <div class="button-group">
+                        <button class="extract-btn" id="extractBtn">Extract Words</button>
+                        <button class="clear-btn" id="clearBtn">Clear All</button>
+                    </div>
+
+                    <div class="word-list-container">
+                        <div class="word-list-header">Word List</div>
+                        <textarea class="textarea-field" id="wordListTextarea" placeholder="Words will appear here after extraction, or you can type them manually in format: english, korean" rows="10" style="resize: vertical; font-family: monospace; font-size: 12px;"></textarea>
+                        <div id="duplicateWarning" style="display: none; margin-top: 5px; padding: 8px; background-color: #fef3c7; color: #d97706; border-radius: 4px; font-size: 12px;"></div>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="preview-area" id="previewArea">
+                    <div class="preview-placeholder">
+                        <p>Preview will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="wordtest.js"></script>
+</body>
+</html>

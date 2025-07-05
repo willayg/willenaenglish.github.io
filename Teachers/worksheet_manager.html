@@ -149,7 +149,8 @@ if (mode === 'save') {
     .then(result => {
       console.log('Loaded worksheets:', result);
       if (result.success) {
-        allWorksheets = result.data;
+        // Only show worksheets of type 'wordtest'
+        allWorksheets = result.data.filter(ws => ws.worksheet_type === 'wordtest');
         renderList(allWorksheets);
       }
     });
