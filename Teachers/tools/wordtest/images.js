@@ -1,0 +1,588 @@
+// Image handling functions for word worksheet generator
+
+// Simple emoji map for fallback
+const emojiMap = {
+    apple: "🍎", dog: "🐶", cat: "🐱", book: "📚", car: "🚗", 
+    house: "🏠", tree: "🌳", sun: "☀️", moon: "🌙", star: "⭐",
+    water: "💧", fire: "🔥", flower: "🌸", fish: "🐠", bird: "🐦",
+    food: "🍎", eat: "🍽️", drink: "🥤", sleep: "😴", run: "🏃",
+    walk: "🚶", happy: "😊", sad: "😢", big: "🔍", small: "🔎"
+};
+
+// Image functions - these will be set from imported modules
+let getPixabayImage = null;
+let imageCache = {};
+
+// Image cycling state
+let imageAlternatives = {}; // Store multiple image options for each word
+let currentImageIndex = {}; // Track current image index for each word
+
+// Helper function to get placeholder image
+function getPlaceholderImage(index, label = null, currentSettings = { imageSize: 50 }) {
+    const displayLabel = label || `Image ${index + 1}`;
+    return `<div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;font-size:14px;color:#666;">
+        ${displayLabel}
+    </div>`;
+}
+
+// Helper function to get image URL with fallback
+async function getImageUrl(word, index, refresh = false, currentSettings = { imageSize: 50 }) {
+    if (!word) return getPlaceholderImage(index, null, currentSettings);
+    
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    
+    // Initialize image alternatives if not exists
+    if (!imageAlternatives[wordKey]) {
+        imageAlternatives[wordKey] = [];
+        currentImageIndex[wordKey] = 0;
+    }
+    
+    // If we need to refresh or don't have alternatives yet, load them
+    if (refresh || imageAlternatives[wordKey].length === 0) {
+        await loadImageAlternatives(word, wordKey, null, currentSettings);
+    }
+    
+    // Return current image
+    const currentIndex = currentImageIndex[wordKey] || 0;
+    return imageAlternatives[wordKey][currentIndex] || getPlaceholderImage(index, null, currentSettings);
+}
+
+// Load multiple image alternatives for a word (emoji first, 6 English, blank last)
+async function loadImageAlternatives(word, wordKey, kor = null, currentSettings = { imageSize: 50 }) {
+    const alternatives = [];
+    
+    // Check if we already have an emoji preserved (from right-click refresh)
+    const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
+                          imageAlternatives[wordKey][0].includes('<div') && 
+                          imageAlternatives[wordKey][0].includes('font-size') ? 
+                          imageAlternatives[wordKey][0] : null;
+    
+    if (existingEmoji) {
+        // Use the existing emoji
+        alternatives.push(existingEmoji);
+    } else {
+        // First, try emoji map
+        const emoji = emojiMap[word.toLowerCase()];
+        if (emoji) {
+            alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
+        }
+    }
+    
+    // Get 6 English images
+    if (getPixabayImage) {
+        try {
+            const englishVariations = [
+                word, 
+                `${word} illustration`, 
+                `${word} icon`,
+                `${word} cartoon`,
+                `${word} symbol`,
+                `${word} drawing`
+            ];
+            for (let i = 0; i < englishVariations.length; i++) {
+                try {
+                    const imageUrl = await getPixabayImage(englishVariations[i], true);
+                    if (imageUrl && imageUrl.startsWith('http')) {
+                        alternatives.push(imageUrl);
+                    } else if (imageUrl && imageUrl.length === 1) {
+                        alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
+                    }
+                } catch (error) {
+                    console.warn('Error getting English image for:', englishVariations[i], error);
+                }
+            }
+        } catch (error) {
+            console.warn('Error getting English images for:', word, error);
+        }
+    }
+    
+    // Add blank option last - just a white empty box
+    alternatives.push('<div style="width:' + currentSettings.imageSize + 'px;height:' + currentSettings.imageSize + 'px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>');
+    
+    // Add placeholder as last option if needed
+    const index = parseInt(wordKey.split('_').pop()) || 0;
+    while (alternatives.length < 8) {
+        alternatives.push(getPlaceholderImage(index, `Option ${alternatives.length}`));
+    }
+    imageAlternatives[wordKey] = alternatives.slice(0, 8); // Keep only first 8 (emoji + 6 English + blank)
+}
+
+// Cycle to next image for a specific word
+function cycleImage(word, index, updatePreviewCallback) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    
+    if (imageAlternatives[wordKey] && imageAlternatives[wordKey].length > 0) {
+        currentImageIndex[wordKey] = (currentImageIndex[wordKey] + 1) % imageAlternatives[wordKey].length;
+        
+        // Instead of full preview update, just update this specific image
+        updateSingleImage(word, index, updatePreviewCallback);
+    }
+}
+
+// Function to update only a single image without full preview refresh
+function updateSingleImage(word, index, updatePreviewCallback) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    const currentIndex = currentImageIndex[wordKey] || 0;
+    const newImageUrl = imageAlternatives[wordKey][currentIndex];
+    
+    if (!newImageUrl) {
+        updatePreviewCallback(); // Fallback to full update
+        return;
+    }
+    
+    // Find the specific image container to update
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) return;
+    
+    // Look for image containers with matching data attributes
+    const imageContainers = previewArea.querySelectorAll('.image-drop-zone');
+    let targetContainer = null;
+    
+    // Find the container that matches this word and index
+    for (let container of imageContainers) {
+        const containerWord = container.getAttribute('data-word');
+        const containerIndex = parseInt(container.getAttribute('data-index'));
+        if (containerWord === word && containerIndex === index) {
+            targetContainer = container;
+            break;
+        }
+    }
+    
+    if (targetContainer) {
+        // Update only this specific image
+        const newImageHtml = renderImage(newImageUrl, index, word, null, window.currentSettings || { imageSize: 50 });
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newImageHtml;
+        const newImageContainer = tempDiv.firstElementChild;
+        
+        if (newImageContainer) {
+            targetContainer.parentNode.replaceChild(newImageContainer, targetContainer);
+            
+            // Re-enable drag and drop for the new element
+            if (window.enableImageDragAndDrop) {
+                window.enableImageDragAndDrop(() => {});
+            }
+        }
+    } else {
+        // Fallback to full update if we can't find the specific container
+        updatePreviewCallback();
+    }
+}
+
+// Helper function to render an image
+function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
+    const clickHandler = word ? `onclick="cycleImage('${word}', ${index})"` : '';
+    const clickStyle = word ? 'cursor: pointer; transition: transform 0.2s;' : '';
+    const hoverStyle = word ? 'onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'"' : '';
+    
+    // Add drag and drop instruction (hidden when printing)
+    const dragInstruction = word ? '<div class="drag-instructions print-hide">Drag & drop image here or click to cycle</div>' : '';
+    
+    if (imageUrl.startsWith('<div')) {
+        // It's an emoji or placeholder div - update font size and add click handler
+        if (imageUrl.includes('font-size:')) {
+            const updatedImageUrl = imageUrl.replace(/font-size:\s*\d+px/, `font-size: ${currentSettings.imageSize * 0.8}px`);
+            if (word) {
+                return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${updatedImageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle}>`)}</div>`;
+            }
+            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${updatedImageUrl}</div>`;
+        }
+        if (word) {
+            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${imageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle}>`)}</div>`;
+        }
+        return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${imageUrl}</div>`;
+    }
+    // It's a real image URL
+    return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">
+        ${dragInstruction}
+        <img src="${imageUrl}" style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;${clickStyle}" alt="Image ${index + 1}" ${clickHandler} ${hoverStyle} title="${word ? `Click to cycle through ${word} images or drag & drop to replace` : ''}">
+    </div>`;
+}
+
+// Function to refresh only currently visible images (not all alternatives)
+async function refreshImages(updatePreviewCallback) {
+    console.log('Refreshing currently visible images...');
+    const previewArea = document.getElementById('previewArea');
+    if (previewArea) {
+        previewArea.innerHTML = '<div class="preview-placeholder"><p>Loading new images...</p></div>';
+    }
+    
+    // Instead of clearing everything, we'll only refresh the currently visible images
+    // by adding new alternatives to the existing ones
+    
+    // Get the current word list from the preview to know which images to refresh
+    const currentWords = window.currentWords || [];
+    
+    // For each word that has current alternatives, add more options
+    for (let i = 0; i < currentWords.length; i++) {
+        const word = currentWords[i]?.eng || currentWords[i]?._originalEng;
+        if (word) {
+            const wordKey = `${word.toLowerCase()}_${i}`;
+            
+            // Only refresh if this word already has alternatives (meaning it's been loaded)
+            if (imageAlternatives[wordKey] && imageAlternatives[wordKey].length > 0) {
+                // Add more image alternatives without clearing existing ones
+                try {
+                    await addMoreImageAlternatives(word, wordKey, null, window.currentSettings || { imageSize: 50 });
+                } catch (error) {
+                    console.warn('Error adding more alternatives for:', word, error);
+                }
+            }
+        }
+    }
+    
+    // Small delay to show loading message
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Update preview with refreshed images
+    await updatePreviewCallback();
+}
+
+// Helper function to add more image alternatives without clearing existing ones
+async function addMoreImageAlternatives(word, wordKey, kor = null, currentSettings = { imageSize: 50 }) {
+    // Get 6 more English images with different search terms
+    if (getPixabayImage) {
+        try {
+            const newSearchTerms = [
+                `${word} photo`, 
+                `${word} image`, 
+                `${word} vector`,
+                `${word} art`,
+                `${word} picture`,
+                `${word} graphic`
+            ];
+            
+            const newAlternatives = [];
+            for (let i = 0; i < newSearchTerms.length; i++) {
+                try {
+                    const imageUrl = await getPixabayImage(newSearchTerms[i], true);
+                    if (imageUrl && imageUrl.startsWith('http')) {
+                        newAlternatives.push(imageUrl);
+                    } else if (imageUrl && imageUrl.length === 1) {
+                        newAlternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
+                    }
+                } catch (error) {
+                    console.warn('Error getting new image for:', newSearchTerms[i], error);
+                }
+            }
+            
+            // Add the new alternatives to the existing ones (but avoid duplicates)
+            const existingAlternatives = imageAlternatives[wordKey] || [];
+            const uniqueNewAlternatives = newAlternatives.filter(alt => 
+                !existingAlternatives.includes(alt)
+            );
+            
+            // Insert new alternatives after the first few existing ones
+            if (uniqueNewAlternatives.length > 0) {
+                const insertIndex = Math.min(3, existingAlternatives.length);
+                imageAlternatives[wordKey] = [
+                    ...existingAlternatives.slice(0, insertIndex),
+                    ...uniqueNewAlternatives,
+                    ...existingAlternatives.slice(insertIndex)
+                ];
+                
+                // Limit total alternatives to prevent memory issues
+                if (imageAlternatives[wordKey].length > 15) {
+                    imageAlternatives[wordKey] = imageAlternatives[wordKey].slice(0, 15);
+                }
+            }
+        } catch (error) {
+            console.warn('Error adding more alternatives for:', word, error);
+        }
+    }
+}
+
+// Helper to refresh images for a single word/index
+async function refreshImageForWord(word, index, forceNewKey = false, kor = null, currentSettings, updatePreviewCallback) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    
+    // Show loading spinner
+    showImageLoadingSpinner(word, index);
+    
+    if (forceNewKey) {
+        // When refreshing images on right-click, preserve the emoji if it exists
+        const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
+                              imageAlternatives[wordKey][0].includes('<div') && 
+                              imageAlternatives[wordKey][0].includes('font-size') ? 
+                              imageAlternatives[wordKey][0] : null;
+        
+        // Reset imageAlternatives and currentImageIndex for this slot
+        imageAlternatives[wordKey] = [];
+        currentImageIndex[wordKey] = 0;
+        
+        // If we had an emoji, preserve it
+        if (existingEmoji) {
+            imageAlternatives[wordKey].push(existingEmoji);
+        }
+    }
+
+    try {
+        // Fetch new images (6 English + emoji + blank)
+        await loadImageAlternatives(word, wordKey, kor, currentSettings);
+    } finally {
+        // Hide loading spinner
+        hideImageLoadingSpinner(word, index);
+        updatePreviewCallback();
+    }
+}
+
+// Helper functions to show/hide loading spinner
+function showImageLoadingSpinner(word, index) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) return;
+    
+    // Find all image containers for this word index
+    const imageContainers = previewArea.querySelectorAll('.image-container');
+    if (imageContainers[index]) {
+        const imageContainer = imageContainers[index];
+        // Make sure the container has relative positioning
+        imageContainer.style.position = 'relative';
+        
+        // Remove existing spinner if any
+        const existingSpinner = imageContainer.querySelector('.image-loading-overlay');
+        if (existingSpinner) {
+            existingSpinner.remove();
+        }
+        
+        // Add spinner overlay
+        const spinnerOverlay = document.createElement('div');
+        spinnerOverlay.className = 'image-loading-overlay';
+        spinnerOverlay.innerHTML = '<div class="image-loading-spinner"></div>';
+        imageContainer.appendChild(spinnerOverlay);
+    }
+}
+
+function hideImageLoadingSpinner(word, index) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) return;
+    
+    // Find all image containers for this word index
+    const imageContainers = previewArea.querySelectorAll('.image-container');
+    if (imageContainers[index]) {
+        const imageContainer = imageContainers[index];
+        const existingSpinner = imageContainer.querySelector('.image-loading-overlay');
+        if (existingSpinner) {
+            existingSpinner.remove();
+        }
+    }
+}
+
+// Enhanced drag and drop functionality for images
+function enableImageDragAndDrop(updatePreviewCallback) {
+    // Remove existing listeners first
+    document.querySelectorAll('.image-drop-zone').forEach(zone => {
+        // Clone node to remove all event listeners
+        const newZone = zone.cloneNode(true);
+        zone.parentNode.replaceChild(newZone, zone);
+    });
+    
+    // Add enhanced drag and drop listeners
+    document.querySelectorAll('.image-drop-zone').forEach(zone => {
+        // Make the zone more visually obvious as a drop target
+        zone.style.border = '2px dashed transparent';
+        zone.style.transition = 'all 0.3s ease';
+        zone.title = 'Drag and drop an image here to replace this picture';
+        
+        // Prevent default drag behaviors on the zone
+        zone.addEventListener('dragenter', e => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.add('dragover');
+            zone.style.border = '2px dashed #4299e1';
+            zone.style.backgroundColor = '#e6f0fa';
+            zone.style.borderRadius = '8px';
+        });
+        
+        zone.addEventListener('dragleave', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only remove styles if we're actually leaving the zone (not entering child elements)
+            if (!zone.contains(e.relatedTarget)) {
+                zone.classList.remove('dragover');
+                zone.style.border = '2px dashed transparent';
+                zone.style.backgroundColor = '';
+                zone.style.borderRadius = '';
+            }
+        });
+        
+        zone.addEventListener('drop', async e => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove('dragover');
+            zone.style.border = '2px dashed transparent';
+            zone.style.backgroundColor = '';
+            zone.style.borderRadius = '';
+            
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Please drop an image file (JPG, PNG, GIF, etc.)');
+                return;
+            }
+            
+            // Check file size (limit to 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image file is too large. Please use an image smaller than 5MB.');
+                return;
+            }
+            
+            const word = zone.getAttribute('data-word');
+            const index = parseInt(zone.getAttribute('data-index'));
+            
+            if (!word || isNaN(index)) {
+                console.error('Invalid word or index for image drop');
+                return;
+            }
+            
+            // Show loading indicator
+            showImageLoadingSpinner(word, index);
+            
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                try {
+                    const wordKey = `${word.toLowerCase()}_${index}`;
+                    const imageDataUrl = ev.target.result;
+                    
+                    // Validate the image data
+                    if (!imageDataUrl || !imageDataUrl.startsWith('data:image/')) {
+                        throw new Error('Invalid image data');
+                    }
+                    
+                    // Initialize alternatives array if it doesn't exist
+                    if (!imageAlternatives[wordKey]) {
+                        imageAlternatives[wordKey] = [];
+                    }
+                    
+                    // Insert the new image at the front of alternatives
+                    imageAlternatives[wordKey].unshift(imageDataUrl);
+                    currentImageIndex[wordKey] = 0;
+                    
+                    // Update preview
+                    await updatePreviewCallback();
+                    
+                    // Show success feedback with animation
+                    zone.classList.add('drag-success');
+                    zone.style.border = '2px solid #48bb78';
+                    zone.style.backgroundColor = '#e6fffa';
+                    
+                    // Show success message temporarily
+                    const successMsg = document.createElement('div');
+                    successMsg.innerHTML = '✅ Image replaced successfully!';
+                    successMsg.style.cssText = `
+                        position: absolute;
+                        top: -35px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: #48bb78;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        white-space: nowrap;
+                        z-index: 20;
+                        animation: fadeInOut 2s ease-in-out;
+                    `;
+                    zone.appendChild(successMsg);
+                    
+                    setTimeout(() => {
+                        zone.classList.remove('drag-success');
+                        zone.style.border = '2px dashed transparent';
+                        zone.style.backgroundColor = '';
+                        if (successMsg.parentNode) {
+                            successMsg.parentNode.removeChild(successMsg);
+                        }
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('Error processing dropped image:', error);
+                    alert('Error processing the dropped image. Please try again.');
+                } finally {
+                    // Hide loading indicator
+                    hideImageLoadingSpinner(word, index);
+                }
+            };
+            
+            reader.onerror = function() {
+                console.error('Error reading dropped file');
+                alert('Error reading the dropped file. Please try again.');
+                hideImageLoadingSpinner(word, index);
+            };
+            
+            reader.readAsDataURL(file);
+        });
+        
+        // Add hover effects for better UX
+        zone.addEventListener('mouseenter', e => {
+            if (!zone.classList.contains('dragover')) {
+                zone.style.border = '2px dashed #cbd5e0';
+                zone.style.backgroundColor = '#f7fafc';
+            }
+        });
+        
+        zone.addEventListener('mouseleave', e => {
+            if (!zone.classList.contains('dragover')) {
+                zone.style.border = '2px dashed transparent';
+                zone.style.backgroundColor = '';
+            }
+        });
+    });
+}
+
+// Initialize image module functions
+function initializeImageModule(pixabayFn, cache) {
+    getPixabayImage = pixabayFn;
+    imageCache = cache;
+}
+
+// Function to completely clear all images (for when users want to start fresh)
+async function clearAllImages(updatePreviewCallback) {
+    console.log('Clearing all images...');
+    const previewArea = document.getElementById('previewArea');
+    if (previewArea) {
+        previewArea.innerHTML = '<div class="preview-placeholder"><p>Clearing all images...</p></div>';
+    }
+    
+    // Clear image cache and alternatives completely
+    if (imageCache) {
+        Object.keys(imageCache).forEach(key => delete imageCache[key]);
+    }
+    
+    // Clear image alternatives to force reload
+    imageAlternatives = {};
+    currentImageIndex = {};
+    
+    // Small delay to show loading message
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Update preview with new images
+    await updatePreviewCallback();
+}
+
+// Export all functions
+export {
+    emojiMap,
+    imageAlternatives,
+    currentImageIndex,
+    getPlaceholderImage,
+    getImageUrl,
+    loadImageAlternatives,
+    addMoreImageAlternatives,
+    cycleImage,
+    renderImage,
+    refreshImages,
+    refreshImageForWord,
+    showImageLoadingSpinner,
+    hideImageLoadingSpinner,
+    enableImageDragAndDrop,
+    initializeImageModule,
+    clearAllImages
+};

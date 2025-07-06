@@ -1,0 +1,655 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.planner-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.app-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+}
+
+.header {
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  color: white;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.menu-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.menu-icon span {
+  width: 24px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+}
+
+.top-actions {
+  background: #4a5568;
+  padding: 12px 32px;
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.action-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-link:hover {
+  opacity: 0.8;
+}
+
+.floating-toolbar {
+  background: #e8f4f8;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e1e8ed;
+  position: relative;
+  cursor: default;
+}
+
+.toolbar-select {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #4a5568;
+  min-width: 100px;
+}
+
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.size-btn {
+  background: white;
+  border: none;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.size-btn:hover {
+  background: #f7fafc;
+}
+
+.font-size-input {
+  border: none;
+  padding: 8px 12px;
+  width: 50px;
+  text-align: center;
+  font-size: 14px;
+  color: #4a5568;
+  border-left: 1px solid #cbd5e0;
+  border-right: 1px solid #cbd5e0;
+}
+
+.layout-btn {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.layout-btn:hover {
+  background: #f7fafc;
+}
+
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-group label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.slider {
+  width: 80px;
+  height: 4px;
+  background: #cbd5e0;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #4299e1;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.refresh-btn {
+  background: #e2e8f0;
+  border: 1px solid #cbd5e0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #cbd5e0;
+}
+
+.test-mode-btn {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.test-mode-btn:hover {
+  background: #f7fafc;
+}
+
+.main-content {
+  display: flex;
+  min-height: 600px;
+}
+
+.sidebar {
+  width: 320px;
+  background: #f8f9fa;
+  padding: 24px;
+  border-right: 1px solid #e1e8ed;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.input-field, .textarea-field, .select-field, .number-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #4a5568;
+  background: white;
+  box-sizing: border-box;
+}
+
+.input-field:focus, .textarea-field:focus, .select-field:focus, .number-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.textarea-field {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.number-input {
+  width: 80px;
+  margin-top: 8px;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.extract-btn {
+  background: #4a5568;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.extract-btn:hover {
+  background: #2d3748;
+}
+
+.clear-btn {
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clear-btn:hover {
+  background: #c53030;
+}
+
+.word-list-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+}
+
+.word-list-header {
+  background: #f7fafc;
+  padding: 12px 16px;
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.word-list {
+  padding: 16px;
+  min-height: 150px;
+  color: #718096;
+  font-size: 14px;
+}
+
+.preview-area {
+  flex: 1;
+  background: white;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Make preview area wider for better table display */
+  min-width: 900px;
+  max-width: 1200px;
+}
+
+/* Table styles for worksheet preview */
+.worksheet-preview table {
+  width: 100% !important;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: inherit;
+  margin: 0 auto;
+  min-width: 800px; /* Ensure minimum width for tables */
+}
+
+/* Image-based layout table styles */
+.worksheet-preview table[style*="width:100%"] {
+  min-width: 850px; /* Wider for image layouts */
+}
+
+/* Column width overrides for image layouts */
+.worksheet-preview table colgroup col {
+  min-width: 80px;
+}
+
+.worksheet-preview table th,
+.worksheet-preview table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  word-wrap: break-word;
+  vertical-align: middle;
+}
+
+.worksheet-preview table th {
+  border-bottom: 2px solid #333;
+  font-weight: bold;
+  background: #f8f9fa;
+}
+
+/* Specific styles for picture columns to prevent squashing */
+.worksheet-preview table td[style*="text-align:center"] {
+  min-width: 100px;
+}
+
+/* Matching layout styles */
+.worksheet-preview .matching-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.worksheet-preview .matching-section {
+  min-width: 450px;
+}
+
+.worksheet-preview .matching-item {
+  min-width: 200px;
+  padding: 10px;
+}
+
+/* English-Korean matching specific styles */
+.worksheet-preview .eng-kor-matching {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.worksheet-preview .eng-kor-matching .column {
+  min-width: 300px;
+}
+
+/* Picture test and with images layout styles */
+.worksheet-preview .image-grid {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.worksheet-preview .image-grid .grid-item {
+  min-width: 180px;
+  padding: 15px;
+}
+
+/* Layout group and dropdown styles */
+.layout-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layout-group label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.layout-select {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 120px;
+}
+
+.layout-select:hover {
+  background: #f7fafc;
+}
+
+.layout-select:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+/* Enhanced drag and drop styles */
+.image-drop-zone {
+  position: relative;
+  transition: all 0.3s ease;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.image-drop-zone:hover {
+  border: 2px dashed #cbd5e0;
+  background: #f7fafc;
+}
+
+.image-drop-zone.dragover {
+  border: 2px dashed #4299e1 !important;
+  background: #e6f0fa !important;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(66, 153, 225, 0.3);
+  transform: scale(1.02);
+}
+
+.image-drop-zone::before {
+  content: '📁 Drop image here';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.image-drop-zone:hover::before,
+.image-drop-zone.dragover::before {
+  opacity: 1;
+}
+
+.image-drop-zone.dragover::before {
+  content: '📁 Drop to replace image';
+  background: rgba(66, 153, 225, 0.9);
+}
+
+/* Test mode controls styles */
+.test-mode-select, #numLettersToHide {
+  padding: 3px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: #222;
+  outline: none;
+  margin-left: 8px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.test-mode-select:focus, #numLettersToHide:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px #bee3f8;
+}
+
+#numLettersToHide {
+  width: 36px;
+  min-width: 0;
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 13px;
+  padding: 3px 6px;
+}
+
+/* Print-specific styles */
+@media print {
+  .worksheet-preview {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Picture Cards print layout */
+  .worksheet-preview .picture-cards-grid {
+    margin: 0 auto !important;
+    padding: 10px !important;
+    /* Remove the fixed gap - let the dynamic gap from JS take effect */
+  }
+  
+  .worksheet-preview .picture-card {
+    width: 200px !important;
+    height: 240px !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+    border: 1px solid #333 !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Adjust header for print */
+  .worksheet-preview .worksheet-header {
+    margin-bottom: 20px !important;
+    padding: 10px !important;
+    border-bottom: 1px solid #333 !important;
+  }
+  
+  .worksheet-preview .worksheet-header img {
+    height: 35px !important;
+  }
+  
+  .worksheet-preview .worksheet-header h2 {
+    font-size: 1.4em !important;
+  }
+  
+  /* Make name/date fields smaller in print */
+  .worksheet-preview .worksheet-header div[style*="min-width: 220px"] {
+    min-width: 180px !important;
+  }
+  
+  .worksheet-preview .worksheet-header span[style*="font-size: 0.9em"] {
+    font-size: 0.8em !important;
+  }
+  
+  /* Grid layouts for print */
+  .worksheet-preview [style*="grid-template-columns"] {
+    gap: 10px !important;
+  }
+  
+  /* Hide interactive elements when printing */
+  .print-hide,
+  .drag-instructions,
+  .dup-overlay-screen,
+  .image-loading-overlay,
+  .image-loading-spinner {
+    display: none !important;
+  }
+  
+  /* Remove hover effects and interactive styles for print */
+  .image-drop-zone {
+    border: none !important;
+    background: transparent !important;
+    cursor: default !important;
+  }
+  
+  .image-drop-zone img {
+    cursor: default !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  /* Ensure images print properly */
+  .image-drop-zone img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Other image layouts for print */
+  .worksheet-preview .image-grid-item {
+    width: 180px !important;
+    height: 220px !important;
+    padding: 10px !important;
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1200px) {
+  .preview-area {
+    min-width: 800px;
+  }
+  
+  .worksheet-preview table {
+    min-width: 750px;
+  }
+}
+
+@media (max-width: 900px) {
+  .preview-area {
+    min-width: 700px;
+  }
+  
+  .worksheet-preview table {
+    min-width: 650px;
+  }
+}
