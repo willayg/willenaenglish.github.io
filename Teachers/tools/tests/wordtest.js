@@ -75,7 +75,10 @@ async function getImageUrl(word, index, refresh = false) {
     
     // If we need to refresh or don't have alternatives yet, load them
     if (refresh || imageAlternatives[wordKey].length === 0) {
-        await loadImageAlternatives(word, wordKey);
+        // Get the Korean word from currentWords if available
+        const currentWord = currentWords.find(w => w.eng.toLowerCase() === word.toLowerCase());
+        const koreanWord = currentWord ? currentWord.kor : null;
+        await loadImageAlternatives(word, wordKey, koreanWord);
     }
     
     // Return current image
@@ -83,53 +86,64 @@ async function getImageUrl(word, index, refresh = false) {
     return imageAlternatives[wordKey][currentIndex] || getPlaceholderImage(index);
 }
 
-// Load multiple image alternatives for a word
-async function loadImageAlternatives(word, wordKey) {
+// Load multiple image alternatives for a word (emoji first, 6 English, blank last)
+async function loadImageAlternatives(word, wordKey, kor = null) {
     const alternatives = [];
     
-    // First, try emoji map
-    const emoji = emojiMap[word.toLowerCase()];
-    if (emoji) {
-        alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
+    // Check if we already have an emoji preserved (from right-click refresh)
+    const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
+                          imageAlternatives[wordKey][0].includes('<div') && 
+                          imageAlternatives[wordKey][0].includes('font-size') ? 
+                          imageAlternatives[wordKey][0] : null;
+    
+    if (existingEmoji) {
+        // Use the existing emoji
+        alternatives.push(existingEmoji);
+    } else {
+        // First, try emoji map
+        const emoji = emojiMap[word.toLowerCase()];
+        if (emoji) {
+            alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
+        }
     }
     
-    // Then try Pixabay if available (get multiple images)
+    // Get 6 English images
     if (getPixabayImage) {
         try {
-            // Try to get multiple variations by adding different search terms
-            const searchVariations = [
-                word,
-                `${word} illustration`,
+            const englishVariations = [
+                word, 
+                `${word} illustration`, 
                 `${word} icon`,
                 `${word} cartoon`,
-                `${word} symbol`
+                `${word} symbol`,
+                `${word} drawing`
             ];
-            // Only use the first 5 variations
-            for (let i = 0; i < Math.min(searchVariations.length, 5); i++) {
+            for (let i = 0; i < englishVariations.length; i++) {
                 try {
-                    const imageUrl = await getPixabayImage(searchVariations[i], true);
+                    const imageUrl = await getPixabayImage(englishVariations[i], true);
                     if (imageUrl && imageUrl.startsWith('http')) {
                         alternatives.push(imageUrl);
                     } else if (imageUrl && imageUrl.length === 1) {
-                        // It's an emoji from Pixabay
                         alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
                     }
                 } catch (error) {
-                    console.warn('Error getting image variation for:', searchVariations[i], error);
+                    console.warn('Error getting English image for:', englishVariations[i], error);
                 }
             }
         } catch (error) {
-            console.warn('Error getting image alternatives for:', word, error);
+            console.warn('Error getting English images for:', word, error);
         }
     }
-    // Add placeholder as last option
+    
+    // Add blank option last - just a white empty box
+    alternatives.push('<div style="width:' + currentSettings.imageSize + 'px;height:' + currentSettings.imageSize + 'px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>');
+    
+    // Add placeholder as last option if needed
     const index = parseInt(wordKey.split('_').pop()) || 0;
-    alternatives.push(getPlaceholderImage(index));
-    // Ensure we have at least 5 options by adding variations
-    while (alternatives.length < 5) {
-        alternatives.push(getPlaceholderImage(index, `Option ${alternatives.length + 1}`));
+    while (alternatives.length < 8) {
+        alternatives.push(getPlaceholderImage(index, `Option ${alternatives.length}`));
     }
-    imageAlternatives[wordKey] = alternatives.slice(0, 5); // Keep only first 5
+    imageAlternatives[wordKey] = alternatives.slice(0, 8); // Keep only first 8 (emoji + 6 English + blank)
 }
 
 // Cycle to next image for a specific word
@@ -195,25 +209,101 @@ function showImageContextMenu(e, word, index, kor) {
     imageContextMenu.style.fontFamily = 'Arial, sans-serif';
     imageContextMenu.style.fontSize = '15px';
     imageContextMenu.style.padding = '4px 0';
-    imageContextMenu.innerHTML = `
-        <div class="context-menu-item" data-action="search-again" style="padding:8px 18px;cursor:pointer;">Search again</div>
-        <div class="context-menu-item" data-action="search-keyword" style="padding:8px 18px;cursor:pointer;">Search with new keyword</div>
-        <div class="context-menu-item" data-action="search-korean" style="padding:8px 18px;cursor:pointer;">Search with Korean</div>
-    `;
-    document.body.appendChild(imageContextMenu);
-    // Handle menu actions
-    imageContextMenu.addEventListener('click', async function(ev) {
-        const action = ev.target.getAttribute('data-action');
-        if (!action) return;
+    
+    // Create menu items with individual click handlers
+    const searchAgainItem = document.createElement('div');
+    searchAgainItem.className = 'context-menu-item';
+    searchAgainItem.setAttribute('data-action', 'search-again');
+    searchAgainItem.style.padding = '8px 18px';
+    searchAgainItem.style.cursor = 'pointer';
+    searchAgainItem.textContent = 'Search again';
+    searchAgainItem.addEventListener('click', async function(ev) {
+        console.log('Direct click on Search again'); // Debug
+        ev.stopPropagation();
         hideImageContextMenu();
+        await refreshImageForWord(word, index, true);
+    });
+
+    const searchKeywordItem = document.createElement('div');
+    searchKeywordItem.className = 'context-menu-item';
+    searchKeywordItem.setAttribute('data-action', 'search-keyword');
+    searchKeywordItem.style.padding = '8px 18px';
+    searchKeywordItem.style.cursor = 'pointer';
+    searchKeywordItem.textContent = 'Search with new keyword';
+    searchKeywordItem.addEventListener('click', async function(ev) {
+        console.log('Direct click on Search with new keyword'); // Debug
+        ev.stopPropagation();
+        hideImageContextMenu();
+        const newKeyword = prompt('Enter a new keyword for image search:', word);
+        if (newKeyword && newKeyword.trim()) {
+            await refreshImageForWord(newKeyword.trim(), index, true);
+        }
+    });
+
+    const searchKoreanItem = document.createElement('div');
+    searchKoreanItem.className = 'context-menu-item';
+    searchKoreanItem.setAttribute('data-action', 'search-korean');
+    searchKoreanItem.style.padding = '8px 18px';
+    searchKoreanItem.style.cursor = 'pointer';
+    searchKoreanItem.textContent = 'Search with Korean';
+    searchKoreanItem.addEventListener('click', async function(ev) {
+        console.log('Direct click on Search with Korean'); // Debug
+        ev.stopPropagation();
+        hideImageContextMenu();
+        if (kor && kor.trim()) {
+            await refreshImageForWord(kor.trim(), index, true);
+        } else {
+            alert('No Korean translation available for this word.');
+        }
+    });
+
+    // Clear existing menu items and add new ones
+    imageContextMenu.innerHTML = '';
+    imageContextMenu.appendChild(searchAgainItem);
+    imageContextMenu.appendChild(searchKeywordItem);
+    imageContextMenu.appendChild(searchKoreanItem);
+    
+    document.body.appendChild(imageContextMenu);
+    // Handle menu actions - try event delegation approach
+    imageContextMenu.addEventListener('click', async function(ev) {
+        console.log('=== CONTEXT MENU CLICK EVENT ==='); // Debug
+        console.log('Event target:', ev.target); // Debug
+        console.log('Event target tagName:', ev.target.tagName); // Debug
+        console.log('Event target className:', ev.target.className); // Debug
+        console.log('Event target innerHTML:', ev.target.innerHTML); // Debug
+        
+        // Try to find the menu item (could be the target or a parent)
+        let menuItem = ev.target;
+        while (menuItem && menuItem !== imageContextMenu) {
+            console.log('Checking element:', menuItem, 'data-action:', menuItem.getAttribute('data-action')); // Debug
+            if (menuItem.getAttribute('data-action')) {
+                break;
+            }
+            menuItem = menuItem.parentElement;
+        }
+        
+        const action = menuItem ? menuItem.getAttribute('data-action') : null;
+        console.log('Final action found:', action); // Debug
+        
+        if (!action) {
+            console.log('No action found, returning'); // Debug
+            return;
+        }
+        
+        hideImageContextMenu();
+        console.log('About to execute action:', action); // Debug
+        
         if (action === 'search-again') {
+            console.log('Executing search-again for word:', word); // Debug
             await refreshImageForWord(word, index, true); // Always force refresh from Pixabay
         } else if (action === 'search-keyword') {
+            console.log('Executing search-keyword for word:', word); // Debug
             const newKeyword = prompt('Enter a new keyword for image search:', word);
             if (newKeyword && newKeyword.trim()) {
                 await refreshImageForWord(newKeyword.trim(), index, true);
             }
         } else if (action === 'search-korean') {
+            console.log('Executing search-korean for word:', word, 'kor:', kor); // Debug
             if (kor && kor.trim()) {
                 await refreshImageForWord(kor.trim(), index, true);
             } else {
@@ -233,19 +323,37 @@ function hideImageContextMenu() {
     }
 }
 // Helper to refresh images for a single word/index
-async function refreshImageForWord(word, index, forceNewKey = false) {
+async function refreshImageForWord(word, index, forceNewKey = false, kor = null) {
     const wordKey = `${word.toLowerCase()}_${index}`;
+    
+    // Show loading spinner
+    showImageLoadingSpinner(word, index);
+    
     if (forceNewKey) {
-        // If searching with a new keyword, reset imageAlternatives and currentImageIndex for this slot
-        imageAlternatives[wordKey] = undefined;
+        // When refreshing images on right-click, preserve the emoji if it exists
+        const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
+                              imageAlternatives[wordKey][0].includes('<div') && 
+                              imageAlternatives[wordKey][0].includes('font-size') ? 
+                              imageAlternatives[wordKey][0] : null;
+        
+        // Reset imageAlternatives and currentImageIndex for this slot
+        imageAlternatives[wordKey] = [];
         currentImageIndex[wordKey] = 0;
-    } else {
-        // For search again, just clear alternatives to force reload
-        imageAlternatives[wordKey] = undefined;
-        currentImageIndex[wordKey] = 0;
+        
+        // If we had an emoji, preserve it
+        if (existingEmoji) {
+            imageAlternatives[wordKey].push(existingEmoji);
+        }
     }
-    await getImageUrl(word, index, true);
-    updatePreview();
+
+    try {
+        // Fetch new images (6 English + emoji + blank)
+        await loadImageAlternatives(word, wordKey, kor);
+    } finally {
+        // Hide loading spinner
+        hideImageLoadingSpinner(word, index);
+        updatePreview();
+    }
 }
 
 // Helper function to render an image (with right-click context menu)
@@ -272,10 +380,10 @@ function renderImage(imageUrl, index, word = null, kor = null) {
     // It's a real image URL
     return `<img src="${imageUrl}" style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;${clickStyle}" alt="Image ${index + 1}" ${clickHandler} ${hoverStyle} ${contextHandler} title="${word ? `Click to cycle through ${word} images` : ''}">`;
 }
-// Expose handler globally
-window.handleImageContextMenu = function(event, word, index, kor) {
+// Expose handler globally - only refresh images on right click, no menu
+window.handleImageContextMenu = async function(event, word, index, kor) {
     event.preventDefault();
-    showImageContextMenu(event, word, index, kor);
+    await refreshImageForWord(word, index, true, kor);
 };
 
 // Add context menu CSS
@@ -307,6 +415,36 @@ if (!document.getElementById('custom-image-context-menu-style')) {
     @keyframes fadeInMenu {
         from { opacity: 0; transform: scale(0.98); }
         to { opacity: 1; transform: scale(1); }
+    }
+    .image-loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 10;
+    }
+    .image-loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        z-index: 9;
+    }
+    @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
     `;
     document.head.appendChild(style);
@@ -1124,6 +1262,26 @@ function addWordCellInteractivity(previewArea) {
             currentWords.splice(idx, 1);
             // Update textarea to reflect the change
             document.getElementById('wordListTextarea').value = currentWords.map(word => `${word.eng}, ${word.kor}`).join('\n');
+            // Clear image alternatives for deleted word and shift remaining ones
+            const newImageAlternatives = {};
+            const newCurrentImageIndex = {};
+            Object.keys(imageAlternatives).forEach(key => {
+                const [word, indexStr] = key.split('_');
+                const index = parseInt(indexStr);
+                if (index < idx) {
+                    // Keep images for words before deleted word
+                    newImageAlternatives[key] = imageAlternatives[key];
+                    newCurrentImageIndex[key] = currentImageIndex[key];
+                } else if (index > idx) {
+                    // Shift images for words after deleted word
+                    const newKey = `${word}_${index - 1}`;
+                    newImageAlternatives[newKey] = imageAlternatives[key];
+                    newCurrentImageIndex[newKey] = currentImageIndex[key];
+                }
+                // Skip index === idx (deleted word)
+            });
+            imageAlternatives = newImageAlternatives;
+            currentImageIndex = newCurrentImageIndex;
             updatePreview();
         }
     });
@@ -1193,6 +1351,49 @@ function worksheetUndoKeyHandler(e) {
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         undoWorksheetEdit();
+    }
+}
+
+// Helper functions to show/hide loading spinner
+function showImageLoadingSpinner(word, index) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) return;
+    
+    // Find all image containers for this word index
+    const imageContainers = previewArea.querySelectorAll('.image-container');
+    if (imageContainers[index]) {
+        const imageContainer = imageContainers[index];
+        // Make sure the container has relative positioning
+        imageContainer.style.position = 'relative';
+        
+        // Remove existing spinner if any
+        const existingSpinner = imageContainer.querySelector('.image-loading-overlay');
+        if (existingSpinner) {
+            existingSpinner.remove();
+        }
+        
+        // Add spinner overlay
+        const spinnerOverlay = document.createElement('div');
+        spinnerOverlay.className = 'image-loading-overlay';
+        spinnerOverlay.innerHTML = '<div class="image-loading-spinner"></div>';
+        imageContainer.appendChild(spinnerOverlay);
+    }
+}
+
+function hideImageLoadingSpinner(word, index) {
+    const wordKey = `${word.toLowerCase()}_${index}`;
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) return;
+    
+    // Find all image containers for this word index
+    const imageContainers = previewArea.querySelectorAll('.image-container');
+    if (imageContainers[index]) {
+        const imageContainer = imageContainers[index];
+        const spinnerOverlay = imageContainer.querySelector('.image-loading-overlay');
+        if (spinnerOverlay) {
+            spinnerOverlay.remove();
+        }
     }
 }
 
@@ -1444,8 +1645,8 @@ async function generateWorksheetHTML(title, wordPairs) {
                         <tr style="min-height:${rowHeight}px;">
                             <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;font-size:1.1em;font-weight:500;">${i + 1}</td>
                             <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;">
-                                <div style="display:flex;align-items:center;justify-content:center;margin:0 auto;">
-                                    ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng)}
+                                <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
+                                    ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor)}
                                 </div>
                             </td>
                             <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
@@ -1532,17 +1733,17 @@ async function generateWorksheetHTML(title, wordPairs) {
                         <tr style="min-height:${Math.max(currentSettings.imageSize + currentSettings.imageGap, 100)}px;">
                             <td style="padding:${Math.max(currentSettings.imageGap/2, 5)}px 4px;border-bottom:1px solid #ddd;text-align:center;font-size:1em;font-weight:500;">${i + 1}</td>
                             <td style="padding:${Math.max(currentSettings.imageGap/2, 5)}px 4px;border-bottom:1px solid #ddd;text-align:center;">
-                                <div style="display:flex;align-items:center;justify-content:center;margin:0 auto;">
-                                    ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng)}
+                                <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
+                                    ${renderImage(pair.imageUrl, i, left[i]?._originalEng || left[i]?.eng, left[i]?.kor)}
                                 </div>
                             </td>
-                            <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:${Math.max(currentSettings.imageGap/2, 5)}px 8px;border-bottom:1px solid #ddd;font-size:1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(left[i]?.eng || '______', isDupEngL)}</td>
-                            <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:${Math.max(currentSettings.imageGap/2, 5)}px 8px;border-bottom:1px solid #ddd;font-size:1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(left[i]?.kor || '______', isDupKorL)}</td>
+                            <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:${Math.max(currentSettings.imageGap/2, 5)}px 8px;border-bottom:1px solid #ddd;font-size:1em;text-align:center;font-weight:500;cursor:pointer;">${isBlank ? '' : highlightCell(left[i]?.eng || '______', isDupEngL)}</td>
+                            <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:${Math.max(currentSettings.imageGap/2, 5)}px 8px;border-bottom:1px solid #ddd;font-size:1em;text-align:center;font-weight:500;cursor:pointer;">${isBlank ? '' : highlightCell(left[i]?.kor || '______', isDupKorL)}</td>
                             <td style="border-left:2px solid #e0e0e0;background:transparent;border-bottom:none;padding:0;"></td>
                             <td style="padding:${Math.max(currentSettings.imageGap/2, 5)}px 4px;border-bottom:1px solid #ddd;text-align:center;font-size:1em;font-weight:500;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
                             <td style="padding:${Math.max(currentSettings.imageGap/2, 5)}px 4px;border-bottom:1px solid #ddd;text-align:center;">
-                                <div style="display:flex;align-items:center;justify-content:center;margin:0 auto;">
-                                    ${isBlank ? '' : (rightPairsWithImages[i] && rightPairsWithImages[i].imageUrl ? renderImage(rightPairsWithImages[i].imageUrl, i + half, rightPairsWithImages[i]._originalEng || rightPairsWithImages[i].eng) : "")}
+                                <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
+                                    ${isBlank ? '' : (rightPairsWithImages[i] && rightPairsWithImages[i].imageUrl ? renderImage(rightPairsWithImages[i].imageUrl, i + half, right[i]?._originalEng || right[i]?.eng, right[i]?.kor) : "")}
                                 </div>
                             </td>
                             <td class="word-cell" data-index="${i + half}" data-lang="eng" style="position:relative;padding:${Math.max(currentSettings.imageGap/2, 5)}px 8px;border-bottom:1px solid #ddd;font-size:1em;text-align:center;font-weight:500;cursor:pointer;">${isBlank ? '' : highlightCell(right[i]?.eng || '______', isDupEngR)}</td>
@@ -1591,8 +1792,8 @@ async function generateWorksheetHTML(title, wordPairs) {
                 <div class="picture-quiz-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); row-gap: ${currentSettings.imageGap}px; column-gap: 15px; padding: 20px; width: 100%; max-width: 750px; margin: 0 auto; place-items: center;">
                     ${pairsWithImages.map((pair, i) => `
                         <div class="quiz-item" style="text-align: center; padding: 10px; width: 220px; height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 160px;">
-                                ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng)}
+                            <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 160px; position: relative;">
+                                ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor)}
                             </div>
                             <div style="width: 120px; border-bottom: 2px solid #333; height: 25px; margin-top: 15px;"></div>
                         </div>
@@ -1632,8 +1833,8 @@ async function generateWorksheetHTML(title, wordPairs) {
                 <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${currentSettings.imageGap}px;">
                     ${pairsWithImages.map((pair, i) => `
                         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px;">
-                            <div style="display: flex; align-items: center;">
-                                ${renderImage(pair.imageUrl, i, pair.eng)}
+                            <div class="image-container" style="display: flex; align-items: center; position: relative;">
+                                ${renderImage(pair.imageUrl, i, pair.eng, pair.kor)}
                             </div>
                             <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
                         </div>
@@ -1749,8 +1950,8 @@ async function generateWorksheetHTML(title, wordPairs) {
                         align-items: center;
                         justify-content: space-between;
                     ">
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 180px;">
-                            ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng)}
+                        <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 180px; position: relative;">
+                            ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor)}
                         </div>
                         <div style="width: 100%; text-align: center; margin-top: 10px;">
                             <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 6px; word-wrap: break-word;">${pair.eng || '______'}</div>
@@ -1838,15 +2039,15 @@ async function generateWorksheetHTML(title, wordPairs) {
                     
                     return `
                         <div class="word-card" style="
-                            padding: 15px;
-                            border: 1px solid #e2e8f0;
+                            padding: 10px;
+                            border: 1px solid #ccc;
                             border-radius: 8px;
                             text-align: center;
                             background: white;
                             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                         ">
                             <div style="margin-bottom: 12px; display: flex; justify-content: center; align-items: center;">
-                                ${renderImage(pair.imageUrl, index, pair.eng)}
+                                ${renderImage(pair.imageUrl, index, pair.eng, pair.kor)}
                             </div>
                             <div style="font-weight: bold; margin-bottom: 5px;">${displayWord}</div>
                             <div style="color: #666; font-size: 0.9em;">${displayKorean}</div>

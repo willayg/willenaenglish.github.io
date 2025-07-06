@@ -207,35 +207,11 @@ if (mode === 'save') {
     }
 
     function getCurrentWorksheetData() {
-  // Detect which panel is active
-  if (!document.querySelector('.tool-panel:not(.hidden)')) return {};
-
-  if (!document.getElementById('panel-wordtest').classList.contains('hidden')) {
-    // Word Test panel
-    return {
-      worksheet_type: 'wordtest',
-      title: document.getElementById('wordTestTitle')?.value || "",
-      passage_text: document.getElementById('wordTestPassage')?.value || "",
-      words: document.getElementById('wordTestWords')?.value
-  ? document.getElementById('wordTestWords').value.split('\n').filter(w => w.trim())
-  : [],
-      // ...other Word Test fields
-    };
-  } else if (!document.getElementById('panel-wordsearch').classList.contains('hidden')) {
-    // Wordsearch panel
-    return {
-      worksheet_type: 'wordsearch',
-      title: document.getElementById('wordsearchTitle')?.value || "",
-      words: document.getElementById('wordsearchWords')?.value.split('\n').filter(w => w.trim()) || [],
-      grid_size: document.getElementById('wordsearchGridSize')?.value || 12,
-      // ...other Wordsearch fields
-    };
-  }
-  // Add more panels as needed...
-
-  return {};
-}
-window.getCurrentWorksheetData = getCurrentWorksheetData;
+      // This should get data from the actual wordtest.js window
+      // The elements we need are: titleInput, passageInput, wordListTextarea
+      return {};  // Return empty - we'll let the main window handle this
+    }
+    window.getCurrentWorksheetData = getCurrentWorksheetData;
 
 async function saveWorksheet() {
   if (window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
