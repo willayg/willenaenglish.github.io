@@ -1,28 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Search Preview</title>
+  <meta charset="UTF-8">
+  <title>Bing Image Search</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-    input, button { font-size: 1rem; padding: 8px; margin: 10px; }
-    iframe { width: 100%; height: 500px; border: none; margin-top: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2em;
+    }
+    input {
+      padding: 10px;
+      width: 60%;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>Search a Word to See the Image</h1>
-  <input type="text" id="wordInput" placeholder="Enter a word" />
-  <button onclick="searchImage()">Search</button>
-  <iframe id="imageFrame"></iframe>
+  <h1>Search for an Image</h1>
+  <input type="text" id="searchTerm" placeholder="Enter a word or phrase">
+  <button onclick="searchBing()">Search</button>
 
   <script>
-    function searchImage() {
-      const word = document.getElementById('wordInput').value.trim();
-      if (!word) return;
-      const query = encodeURIComponent(word + " site:unsplash.com OR site:pixabay.com");
-      const url = `https://duckduckgo.com/?q=${query}&iar=images&iax=images&ia=images`;
-      document.getElementById('imageFrame').src = url;
+    function searchBing() {
+      const query = document.getElementById('searchTerm').value.trim();
+      if (!query) return;
+      const url = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}`;
+      window.open(url, '_blank'); // Opens new tab (works in Acode preview browser)
     }
   </script>
 </body>
