@@ -2,37 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bing Image Search</title>
+  <title>Drag-and-Drop Worksheet</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
+      font-family: sans-serif;
       padding: 2em;
+      background: #f9f9f9;
     }
-    input {
+    .worksheet {
+      display: flex;
+      gap: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .dropzone {
+      flex: 1;
+      border: 2px dashed #aaa;
+      background: #fff;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1rem;
+      color: #666;
+      transition: border-color 0.3s;
       padding: 10px;
-      width: 60%;
-      font-size: 1rem;
     }
-    button {
-      padding: 10px 20px;
+    .dropzone.dragover {
+      border-color: green;
+    }
+    .dropzone img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .textbox {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .textbox textarea {
+      width: 100%;
+      height: 100%;
+      padding: 10px;
       font-size: 1rem;
-      margin-left: 10px;
+      resize: vertical;
+    }
+    h2 {
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Search for an Image</h1>
-  <input type="text" id="searchTerm" placeholder="Enter a word or phrase">
-  <button onclick="searchBing()">Search</button>
+
+  <h2>Drag an Image from Google → Drop on the Left → Write on the Right</h2>
+
+  <div class="worksheet">
+    <div class="dropzone" id="dropzone">Drop an image here</div>
+    <div class="textbox">
+      <textarea placeholder="Write a sentence or describe the image..."></textarea>
+    </div>
+  </div>
 
   <script>
-    function searchBing() {
-      const query = document.getElementById('searchTerm').value.trim();
-      if (!query) return;
-      const url = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}`;
-      window.open(url, '_blank'); // Opens new tab (works in Acode preview browser)
-    }
+    const dropzone = document.getElementById('dropzone');
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+
+      const imageUrl = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+
+      if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('data:'))) {
+        dropzone.innerHTML = `<img src="${imageUrl}" alt="Dropped Image" />`;
+      } else {
+        dropzone.textContent = 'Not a valid image!';
+      }
+    });
   </script>
+
 </body>
 </html>
