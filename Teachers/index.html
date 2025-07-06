@@ -343,6 +343,7 @@
       <button class="tool-btn" data-panel="planner">Lesson Planner</button>
       <button class="tool-btn" data-panel="reading">Reading</button>
       <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
+      <button class="tool-btn" data-panel="vocab">Vocab</button>
     </aside>    <!-- Tool Panels (left column) -->
     <section id="tool-panels">
       <!-- Files Panel -->
@@ -687,6 +688,18 @@
           </button>
         </div>
       </section>
+
+      <!-- Vocabulary Panel (new) -->
+      <section id="panel-vocab" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Vocabulary Tool</h2>
+          <p class="text-sm text-gray-600 mb-4">Enhance your vocabulary with interactive worksheets and tools.</p>
+          <button onclick="window.open('tools/tests/wordtest.html', '_blank', 'width=1400,height=900')" 
+                  class="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded hover:from-green-600 hover:to-blue-700 w-full font-semibold">
+            Open Vocabulary Tool
+          </button>
+        </div>
+      </section>
     </section>
 
     <!-- Worksheet Preview Area (right column) -->
@@ -861,6 +874,11 @@
       document.getElementById('openLessonPlanner').addEventListener('click', function() {
         // Open the lesson planner tool in a new window
         window.open('tools/planner/planner.html', '_blank', 'width=1400,height=900');
+      });
+      
+      // Word Worksheets button handler
+      document.getElementById('openWordWorksheets').addEventListener('click', function() {
+        window.open('tools/tests/wordtest.html', '_blank', 'width=1400,height=900');
       });
     });
 
