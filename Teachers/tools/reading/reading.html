@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Worksheet Generator</title>
+    <link rel="stylesheet" href="../tests/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="app-card">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">
+                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                </div>
+                <h1>Reading Worksheet Generator</h1>
+                <div class="menu-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <!-- Top Action Bar -->
+            <div class="top-actions">
+                <span class="action-link" id="loadBtn">Load</span>
+                <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="printBtn">Print</span>
+                <span class="action-link" id="pdfBtn">PDF</span>
+            </div>
+
+            <!-- Floating Toolbar -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+
+                <div class="font-size-controls">
+                    <button class="size-btn" id="decreaseFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInput" value="12" min="8" max="18" step="1">
+                    <button class="size-btn" id="increaseFontBtn">+</button>
+                </div>
+
+                <select class="toolbar-select" id="templateSelect">
+                    <option value="0">Design 1</option>
+                    <option value="1">Design 2</option>
+                    <option value="2">Design 3</option>
+                </select>
+
+                <div class="layout-group">
+                    <select class="layout-select" id="layoutSelect">
+                        <option value="default">Standard Layout</option>
+                        <option value="two-column">Two Column</option>
+                        <option value="large-text">Large Text</option>
+                    </select>
+                </div>
+
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+                
+                <select class="test-mode-select" id="testModeSelect">
+                    <option value="none">Test Mode Off</option>
+                    <option value="cloze">Cloze Test (Blank test)</option>
+                </select>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="readingTitle" placeholder="Enter worksheet title">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Reading Passage</label>
+                        <textarea class="textarea-field" id="readingPassage" placeholder="Enter reading passage here..." rows="8"></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="includePassage" checked>
+                            Include passage in worksheet
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Question Categories</label>
+                        <select class="select-field" id="categorySelect" multiple>
+                            <option value="comprehension">Comprehension</option>
+                            <option value="vocabulary">Vocabulary</option>
+                            <option value="grammar">Grammar</option>
+                            <option value="inference">Inference</option>
+                            <option value="main-idea">Main Idea</option>
+                        </select>
+                        <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">Hold Ctrl/Cmd to select multiple categories</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Number of Questions</label>
+                        <input type="number" class="number-input" id="numQuestions" value="5" min="1" max="20">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Question Format</label>
+                        <select class="select-field" id="questionFormat">
+                            <option value="multiple-choice">Multiple Choice</option>
+                            <option value="fill-blanks">Fill in the Blanks</option>
+                            <option value="short-answer">Short Answer</option>
+                            <option value="mixed">Mixed Format</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="extract-btn" id="generateQuestionsBtn">Generate Questions</button>
+                        <button class="clear-btn" id="clearBtn">Clear All</button>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Questions</label>
+                        <textarea class="textarea-field" id="readingQuestions" placeholder="Generated questions will appear here, or type your own..." rows="8"></textarea>
+                        <div class="button-group" style="margin-top: 8px;">
+                            <button class="layout-btn" id="addSectionBreakBtn">Add New Part</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Answer Key</label>
+                        <textarea class="textarea-field" id="readingAnswers" placeholder="Answer key will appear here..." rows="4"></textarea>
+                        <div class="button-group" style="margin-top: 8px;">
+                            <button class="layout-btn" id="printAnswerKeyBtn" type="button">Print Answer Key</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="preview-area" id="worksheetPreviewArea-reading">
+                    <div class="preview-placeholder">
+                        <p>Preview will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="reading.js"></script>
+    <script type="module" src="ai.js"></script>
+    <script>
+        // Enhanced functionality for reading module
+        document.addEventListener('DOMContentLoaded', () => {
+            // Font size controls
+            const fontSizeInput = document.getElementById('fontSizeInput');
+            const decreaseFontBtn = document.getElementById('decreaseFontBtn');
+            const increaseFontBtn = document.getElementById('increaseFontBtn');
+            
+            if (decreaseFontBtn) {
+                decreaseFontBtn.addEventListener('click', () => {
+                    const currentSize = parseInt(fontSizeInput.value);
+                    if (currentSize > 8) {
+                        fontSizeInput.value = currentSize - 1;
+                        fontSizeInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+            
+            if (increaseFontBtn) {
+                increaseFontBtn.addEventListener('click', () => {
+                    const currentSize = parseInt(fontSizeInput.value);
+                    if (currentSize < 24) {
+                        fontSizeInput.value = currentSize + 1;
+                        fontSizeInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+
+            // Add section break functionality
+            const addSectionBreakBtn = document.getElementById('addSectionBreakBtn');
+            const questionsTextarea = document.getElementById('readingQuestions');
+            
+            if (addSectionBreakBtn) {
+                addSectionBreakBtn.addEventListener('click', () => {
+                    const currentText = questionsTextarea.value;
+                    const sectionBreak = '\n--- Section Break ---\n';
+                    questionsTextarea.value = currentText + sectionBreak;
+                    questionsTextarea.dispatchEvent(new Event('input'));
+                });
+            }
+
+            // Right-click to remove questions in preview
+            const previewArea = document.getElementById('worksheetPreviewArea-reading');
+            if (previewArea) {
+                previewArea.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    
+                    // Find if the clicked element is a question
+                    let questionElement = e.target;
+                    while (questionElement && !questionElement.classList.contains('question-item')) {
+                        questionElement = questionElement.parentElement;
+                    }
+                    
+                    if (questionElement) {
+                        const questionNumber = questionElement.dataset.questionNumber;
+                        if (questionNumber) {
+                            removeQuestionFromList(parseInt(questionNumber));
+                        }
+                    }
+                });
+            }
+
+            // Action buttons
+            const printBtn = document.getElementById('printBtn');
+            const pdfBtn = document.getElementById('pdfBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const loadBtn = document.getElementById('loadBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+
+            if (printBtn) {
+                printBtn.addEventListener('click', () => {
+                    printReadingWorksheet();
+                });
+            }
+
+            if (pdfBtn) {
+                pdfBtn.addEventListener('click', () => {
+                    // This would need to be implemented with a PDF library
+                    alert('PDF export feature coming soon!');
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+                });
+            }
+
+            if (loadBtn) {
+                loadBtn.addEventListener('click', () => {
+                    window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=900,height=700');
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    if (window.updateReadingPreview) {
+                        window.updateReadingPreview();
+                    }
+                });
+            }
+        });
+
+        // Helper functions
+        function removeQuestionFromList(questionNumber) {
+            const questionsTextarea = document.getElementById('readingQuestions');
+            const questions = questionsTextarea.value.split('\n');
+            
+            // Find and remove the question
+            let currentQuestionNum = 0;
+            let startIndex = -1;
+            let endIndex = -1;
+            
+            for (let i = 0; i < questions.length; i++) {
+                if (questions[i].match(/^\d+\./)) {
+                    currentQuestionNum++;
+                    if (currentQuestionNum === questionNumber) {
+                        startIndex = i;
+                        // Find the end of this question (next numbered question or end of array)
+                        for (let j = i + 1; j < questions.length; j++) {
+                            if (questions[j].match(/^\d+\./)) {
+                                endIndex = j;
+                                break;
+                            }
+                        }
+                        if (endIndex === -1) endIndex = questions.length;
+                        break;
+                    }
+                }
+            }
+            
+            if (startIndex !== -1) {
+                questions.splice(startIndex, endIndex - startIndex);
+                questionsTextarea.value = questions.join('\n');
+                questionsTextarea.dispatchEvent(new Event('input'));
+            }
+        }
+
+        function saveWorksheet() {
+            const data = {
+                title: document.getElementById('readingTitle').value,
+                passage: document.getElementById('readingPassage').value,
+                questions: document.getElementById('readingQuestions').value,
+                answers: document.getElementById('readingAnswers').value,
+                includePassage: document.getElementById('includePassage').checked,
+                font: document.getElementById('fontSelect').value,
+                fontSize: document.getElementById('fontSizeInput').value,
+                template: document.getElementById('templateSelect').value
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'reading_worksheet.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadWorksheet() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            document.getElementById('readingTitle').value = data.title || '';
+                            document.getElementById('readingPassage').value = data.passage || '';
+                            document.getElementById('readingQuestions').value = data.questions || '';
+                            document.getElementById('readingAnswers').value = data.answers || '';
+                            document.getElementById('includePassage').checked = data.includePassage !== false;
+                            document.getElementById('fontSelect').value = data.font || 'Poppins';
+                            document.getElementById('fontSizeInput').value = data.fontSize || '15';
+                            document.getElementById('templateSelect').value = data.template || '0';
+                            
+                            // Trigger preview update
+                            if (window.updateReadingPreview) {
+                                window.updateReadingPreview();
+                            }
+                        } catch (error) {
+                            alert('Error loading file: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+    </script>
+</body>
+</html>

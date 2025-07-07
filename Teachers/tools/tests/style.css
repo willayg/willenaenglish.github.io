@@ -90,7 +90,7 @@ body {
 }
 
 .floating-toolbar {
-  background: #e8f4f8;
+  background: #ffd1e6;
   padding: 12px 24px;
   display: flex;
   align-items: center;
@@ -224,6 +224,28 @@ body {
 }
 
 .test-mode-btn:hover {
+  background: #f7fafc;
+}
+
+.test-mode-select {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #4a5568;
+  min-width: 100px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.test-mode-select:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+.test-mode-select:hover {
   background: #f7fafc;
 }
 

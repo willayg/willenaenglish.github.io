@@ -29,6 +29,7 @@
           <option value="">All Types</option>
           <option value="wordsearch">Wordsearch</option>
           <option value="wordtest">Word Test</option>
+          <option value="reading">Reading</option>
           <!-- Add more types as needed -->
         </select>
         <input type="date" id="searchDateFrom" class="border p-1">
@@ -144,13 +145,33 @@ if (mode === 'save') {
 
   // Fetch and show all worksheets on load
   let allWorksheets = [];
+  
+  // Determine which worksheet type to filter by based on the opener window
+  let filterType = null;
+  if (window.opener) {
+    // Check if we're in reading mode by looking for reading-specific elements
+    const openerDoc = window.opener.document;
+    if (openerDoc.getElementById('readingTitle') && openerDoc.getElementById('readingPassage')) {
+      filterType = 'reading';
+    } else if (openerDoc.getElementById('wordListTextarea') || openerDoc.getElementById('wordTestWords')) {
+      filterType = 'wordtest';
+    } else if (openerDoc.getElementById('wordsearchWords')) {
+      filterType = 'wordsearch';
+    }
+  }
+  
   fetch('/.netlify/functions/supabase_proxy/list_worksheets')
     .then(res => res.json())
     .then(result => {
       console.log('Loaded worksheets:', result);
       if (result.success) {
-        // Only show worksheets of type 'wordtest'
-        allWorksheets = result.data.filter(ws => ws.worksheet_type === 'wordtest');
+        // Filter worksheets by type if we detected one
+        if (filterType) {
+          allWorksheets = result.data.filter(ws => ws.worksheet_type === filterType);
+        } else {
+          // Default to all worksheets if we can't determine the type
+          allWorksheets = result.data;
+        }
         renderList(allWorksheets);
       }
     });
@@ -200,9 +221,13 @@ if (mode === 'save') {
 
     // Auto-complete the title field with the worksheet title from the main window
     if (mode === 'save' && window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
-      const worksheet = window.opener.getCurrentWorksheetData();
-      if (worksheet && worksheet.title) {
-        document.getElementById('worksheetTitle').value = worksheet.title;
+      try {
+        const worksheet = window.opener.getCurrentWorksheetData();
+        if (worksheet && worksheet.title) {
+          document.getElementById('worksheetTitle').value = worksheet.title;
+        }
+      } catch (e) {
+        console.warn('Failed to get worksheet data for title auto-completion:', e);
       }
     }
 
