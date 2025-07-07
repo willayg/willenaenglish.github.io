@@ -1,0 +1,75 @@
+READING MODULE TODO LIST - Issues to Fix:
+
+1. Template naming and logo positioning [DONE]
+   - Rename templates from "Template 1/2/3" to "Design 1/2/3" [DONE]
+   - Design 2 is missing the logo - add it right-oriented [DONE]
+
+2. Page flicker on live preview [DONE]
+   - Editing anything causes whole page to flicker [DONE]
+   - Live preview updating mechanism needs optimization [DONE]
+
+3. Questions should be additive [DONE]
+   - Currently replacing questions instead of adding [DONE]
+   - If I add 5 questions then add 5 more, should show 10 total [DONE]
+
+4. Section break formatting [DONE]
+   - Should be labeled "Part A", "Part B", etc. [DONE]
+   - Should be thin line with no other symbols [DONE]
+
+5. Question deletion and renumbering [DONE]
+   - Delete works but causes flicker [DONE]
+   - Need auto-renumbering after deletion (1,2,4 should become 1,2,3) [DONE]
+   - When I attempt to delete a question from part B, a question deletes from part A instead. [DONE]
+   - Make test editible in the preview window if left clicked on. [DONE]
+   - Don't prompt. Just delete. Dont ask me if im sure. [DONE]
+
+6. Font/font size changes cause flicker [DONE]
+   - Same flicker issue as live preview [DONE]
+   - Move "Include Passage In Worksheet" To just under the passage input [DONE]
+
+7. Font size range expansion [DONE]
+   - Currently only offers 3 sizes [DONE]
+   - Should offer every size from 8 to 18 [DONE]
+   - Default should be 12 [DONE]
+
+8. Load/Save integration [DONE]
+   - Currently working locally only [DONE]
+   - Need to hook up to Supabase database [DONE]
+
+9. Print functionality scope
+   - Currently processing entire page [DONE]
+   - Should only process the preview area [DONE]
+   - Add PDF functionality 
+   - Answer key doesnt update when I delete a question [DONE]
+11. Make the Light blue area light green for differenciation
+
+12. Make a special answer key popup page for printing
+10. Two column layout implementation
+    - Questions should run down two columns on page
+    - Requires robust page handling and numbering
+    - Complex feature but would be valuable
+
+11. Answer key doesnt update when I delete a question\
+
+12. Add PDF functionality 
+
+13. Fix the error where each new set of questions creates a new totle even without a section break. (AI had trouble understanding this one and fixing it so delayed.)
+
+14. AI Prompts need an overhall
+     -Need to work on both the format and content of each type of question
+     -Include area for teachers to prompt for questions.
+
+14.a Smart test mode to include cloze tests and translation tests. and unscramble tests
+
+15. Clear all should clear all the questions allowing us to start fresh
+
+
+15. Still some flicker on edits. Title causes flicker, change of font and delet question
+
+16. Burger makes a dropdown that allows you to go to main menu. Login logout et
+
+17. Move section break button
+
+18. Allow edits in the preview of titles
+
+STATUS: Ready to tackle one by one
