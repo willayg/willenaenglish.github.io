@@ -87,12 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const font = document.getElementById('wordTestFont').value || "'Poppins', sans-serif";
     const fontSizeSliderEl = document.getElementById('wordTestFontSize'); // Changed from wordTestFontSizeSlider
     const fontSizeScale = fontSizeSliderEl ? parseFloat(fontSizeSliderEl.value) : 1;
-    let layout = document.getElementById('wordTestLayout')?.value || "4col"; // Default layout is "4col" (Two Lists Side by Side)
+    let layout = document.getElementById('wordTestLayout')?.value || "eng-kor-matching"; // Default layout is "eng-kor-matching" (Picture Matching with circles in middle)
     const templateIndex = parseInt(document.getElementById('wordTestTemplate')?.value || "5", 10);
     const template = window.worksheetTemplates?.[templateIndex] || window.worksheetTemplates[5];
     const instructions = "";
     const testMode = document.getElementById('wordTestMode')?.value || "none";
     let numLettersToHide = 1;
+    
     if (testMode === 'hide-random-letters') {
       const numInput = document.getElementById('numLettersToHide');
       if (numInput) {
@@ -453,41 +454,44 @@ document.addEventListener('DOMContentLoaded', () => {
       // Get images for all words (limit to 8 for better layout)
       const limitedWordPairs = wordPairs.slice(0, 8);
       const wordImages = await Promise.all(limitedWordPairs.map(pair => getPixabayImage(pair.eng)));
-      // Use testImageSizeSlider and testImageGapSlider for size and vertical gap
-      const imageSize = document.getElementById('testImageSizeSlider')?.value || 80;
-      const imageGap = document.getElementById('testImageGapSlider')?.value || 16;
+      // Use testImageSizeSlider and testImageGapSlider for size and vertical gap - limit max sizes
+      const imageSize = Math.min(document.getElementById('testImageSizeSlider')?.value || 80, 120); // Max 120px
+      const imageGap = Math.min(document.getElementById('testImageGapSlider')?.value || 16, 40); // Max 40px gap
       // Shuffle the words for the right column to create a matching challenge
       const shuffledWords = [...limitedWordPairs].sort(() => Math.random() - 0.5);
       // Calculate consistent spacing based on number of items and vertical gap
       const itemHeight = Math.max(parseInt(imageSize) + 20, 60);
       const totalHeight = limitedWordPairs.length * itemHeight + (limitedWordPairs.length - 1) * parseInt(imageGap);
       const tableHtml = `        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; padding: 20px; font-family: ${font}; font-size: ${Math.min(16 * fontSizeScale, 24)}px;">
           <!-- Left column - Images -->
-          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${imageGap}px;">
+          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; row-gap: ${imageGap}px;">
             ${limitedWordPairs.map((pair, i) => `
-              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px; margin-bottom: ${i < limitedWordPairs.length - 1 ? imageGap : 0}px;">
+              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px; margin-bottom: ${imageGap}px;">
                 <div style="display: flex; align-items: center;">
                   ${wordImages[i] && wordImages[i].startsWith('http')
                     ? `<img src="${wordImages[i]}" style="width:${imageSize}px;height:${imageSize}px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #ddd;box-shadow:0 2px 4px rgba(0,0,0,0.1);" class="pixabay-refresh-img" data-word="${pair.eng}">`
-                    : (wordImages[i] ? `<span style="font-size:${imageSize * 0.8}px;">${wordImages[i]}</span>` : `<div style="width:${imageSize}px;height:${imageSize}px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;font-size:12px;">${pair.eng}</div>`)}
+                    : (wordImages[i] ? `<span style="font-size:${Math.min(imageSize * 0.8, 48)}px;">${wordImages[i]}</span>` : `<div style="width:${imageSize}px;height:${imageSize}px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;font-size:12px;">${pair.eng}</div>`)}
                 </div>
-                <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
               </div>
             `).join('')}
           </div>
-          <!-- Middle section - connecting space -->
-          <div style="width: 30%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
-            <div style="color: #ccc; font-size: 14px; text-align: center; font-style: italic;">
-              Draw lines<br>to connect
+          <!-- Middle section - connecting circles -->
+          <div style="width: 30%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; row-gap: ${imageGap}px;">
+            <div style="color: #999; font-size: ${Math.min(12 * fontSizeScale, 16)}px; text-align: center; font-style: italic; margin-bottom: 10px; font-family: ${font};">
+              Draw lines to connect
             </div>
+            ${limitedWordPairs.map((pair, i) => `
+              <div style="height: ${itemHeight}px; display: flex; align-items: center; margin-bottom: ${imageGap}px;">
+                <div style="width: 20px; height: 20px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
+              </div>
+            `).join('')}
           </div>
           <!-- Right column - Words -->
-          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${imageGap}px;">
+          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; row-gap: ${imageGap}px;">
             ${shuffledWords.map((pair, i) => `
-              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px; margin-bottom: ${i < shuffledWords.length - 1 ? imageGap : 0}px;">
-                <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
-                <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
+              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px; margin-bottom: ${imageGap}px;">
+                <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; font-family: ${font}; font-size: ${Math.min(16 * fontSizeScale, 24)}px;">
                   ${pair.eng}
                 </div>
               </div>
@@ -602,6 +606,63 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // --- ENG-KOR MATCHING LAYOUT ---
+    if (layout === "eng-kor-matching") {
+      const shuffledPairs = [...wordPairs].sort(() => Math.random() - 0.5);
+      const shuffledKorean = shuffledPairs.map(pair => pair.kor).sort(() => Math.random() - 0.5);
+      
+      // Use sliders for size and gap control - limit max sizes
+      const imageGap = Math.min(document.getElementById('testImageGapSlider')?.value || 16, 40); // Max 40px gap
+      const itemHeight = 60; // Fixed height for consistency
+
+      const tableHtml = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; padding: 20px; font-family: ${font}; font-size: ${Math.min(16 * fontSizeScale, 24)}px;">
+          <!-- Left column - English words -->
+          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; row-gap: ${imageGap}px;">
+            ${shuffledPairs.map((pair, i) => `
+              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px; margin-bottom: ${imageGap}px;">
+                <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; font-family: ${font}; font-size: ${Math.min(16 * fontSizeScale, 24)}px;">
+                  ${pair.eng}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Middle section - connecting circles -->
+          <div style="width: 30%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; row-gap: ${imageGap}px;">
+            <div style="color: #999; font-size: ${Math.min(12 * fontSizeScale, 16)}px; text-align: center; font-style: italic; margin-bottom: 10px; font-family: ${font};">
+              Draw lines to connect
+            </div>
+            ${shuffledPairs.map((pair, i) => `
+              <div style="height: ${itemHeight}px; display: flex; align-items: center; margin-bottom: ${imageGap}px;">
+                <div style="width: 20px; height: 20px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Right column - Korean words -->
+          <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; row-gap: ${imageGap}px;">
+            ${shuffledKorean.map((kor, i) => `
+              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px; margin-bottom: ${imageGap}px;">
+                <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; font-family: ${font}; font-size: ${Math.min(16 * fontSizeScale, 24)}px;">
+                  ${kor}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      preview.innerHTML = template.render({
+        title,
+        instructions,
+        puzzle: tableHtml,
+        orientation: "portrait"
+      });
+      applyPreviewFontStyles(preview, font, fontSizeScale);
+      return;
+    }
+
     // Optionally, scale the preview
     scaleWorksheetPreview();
 
@@ -650,6 +711,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pictureQuizControls.style.display = 'block';
       } else if (layoutSelect.value === 'six-column-images-layout') {
         pictureTestControls.style.display = 'block';
+      } else if (layoutSelect.value === 'eng-kor-matching') {
+        pictureQuizControls.style.display = 'block'; // Show gap and font controls for eng-kor-matching
       }
       
       // Show/hide remix button for Picture Matching
@@ -657,6 +720,27 @@ document.addEventListener('DOMContentLoaded', () => {
         remixMatchingControls.style.display = 'block';
       }
     });
+    
+    // Initialize controls on page load
+    // Hide all control panels first
+    pictureQuizControls.style.display = 'none';
+    pictureTestControls.style.display = 'none';
+    if (remixMatchingControls) remixMatchingControls.style.display = 'none';
+    
+    // Show appropriate controls based on initial layout
+    const initialLayout = layoutSelect.value || 'eng-kor-matching';
+    if (initialLayout === 'picture-quiz' || initialLayout === 'picture-matching') {
+      pictureQuizControls.style.display = 'block';
+    } else if (initialLayout === 'six-column-images-layout') {
+      pictureTestControls.style.display = 'block';
+    } else if (initialLayout === 'eng-kor-matching') {
+      pictureQuizControls.style.display = 'block'; // Show gap and font controls for eng-kor-matching
+    }
+    
+    // Show/hide remix button for Picture Matching
+    if (initialLayout === 'picture-matching') {
+      if (remixMatchingControls) remixMatchingControls.style.display = 'block';
+    }
   }
 
   // Update size value display and trigger preview update
@@ -964,7 +1048,7 @@ Passage: ${passage}`;
   // Function to attach word editing and deletion handlers
   function attachWordLockingHandlers() {
     console.log('=== ATTACH WORD EDITING/DELETION HANDLERS CALLED ===');
-    const preview = document.getElementById('worksheetPreviewArea-tests');
+    const preview = document.getElementById('worksheetPreviewArea');
     console.log('Preview element:', preview);
     
     const cells = document.querySelectorAll('.toggle-word');
