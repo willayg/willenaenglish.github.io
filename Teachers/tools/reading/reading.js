@@ -166,27 +166,58 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentQ = -1;
         let found = false;
         const newAnswerLines = [];
+        
+        // Track absolute question number for simple numbered answers
+        let absoluteQuestionNum = 0;
+        let targetAbsoluteNum = 0;
+        
+        // Calculate target absolute question number
+        for (let s = 0; s < sectionIdx; s++) {
+          const sectionLines = newLines.filter(line => /^Part [A-Z]:/.test(line));
+          if (s < sectionLines.length) {
+            targetAbsoluteNum += newLines.filter(line => /^\d+\./.test(line) && 
+              newLines.indexOf(line) > newLines.indexOf(sectionLines[s]) && 
+              (s + 1 >= sectionLines.length || newLines.indexOf(line) < newLines.indexOf(sectionLines[s + 1]))).length;
+          }
+        }
+        targetAbsoluteNum += questionIdx + 1;
+        
         for (let i = 0; i < answerLines.length; i++) {
           const line = answerLines[i];
+          
+          // Handle section-based answers
           if (/^Part [A-Z]:/.test(line)) {
             currentSection++;
             currentQ = -1;
             newAnswerLines.push(line);
             continue;
           }
+          
+          // Handle numbered answers
           if (/^\d+\./.test(line)) {
+            absoluteQuestionNum++;
             currentQ++;
+            
+            // Skip if this is the answer to delete (section-based)
             if (currentSection === sectionIdx && currentQ === questionIdx && !found) {
               found = true;
-              continue; // skip this answer line
+              continue;
+            }
+            
+            // Skip if this is the answer to delete (absolute numbering)
+            if (absoluteQuestionNum === targetAbsoluteNum && !found) {
+              found = true;
+              continue;
             }
           }
+          
           newAnswerLines.push(line);
         }
         answersTextarea.value = newAnswerLines.join('\n');
       }
       
       renumberQuestionsInTextarea();
+      renumberAnswerKey();
     }
 
     // Helper: Make questions editable in preview
@@ -651,6 +682,64 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+  // Print worksheet function
+function printReadingWorksheet() {
+  const preview = document.getElementById('worksheetPreviewArea-reading');
+  if (!preview || !preview.innerHTML.trim()) {
+    alert('No worksheet to print. Please generate a worksheet first.');
+    return;
+  }
+
+  const title = document.getElementById('readingTitle')?.value || "Reading Worksheet";
+  const font = document.getElementById('fontSelect')?.value || "'Poppins', sans-serif";
+  const fontSize = document.getElementById('fontSizeInput')?.value || "12";
+
+  const printWindow = window.open('', '', 'width=800,height=1000');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${title}</title>
+        <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap' rel='stylesheet'>
+        <style>
+          body {
+            font-family: ${font};
+            margin: 0.5in;
+            background: #fff;
+            font-size: ${fontSize}px;
+            line-height: 1.5;
+          }
+          .worksheet-preview {
+            width: 100% !important;
+            max-width: none !important;
+            transform: none !important;
+          }
+          @media print {
+            body {
+              margin: 0.5in;
+            }
+            .worksheet-preview {
+              page-break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+      <body onload='window.print(); window.close();'>
+        ${preview.innerHTML}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+// Attach print button functionality
+const printBtn = document.getElementById('printWorksheetBtn');
+if (printBtn) {
+  printBtn.addEventListener('click', printReadingWorksheet);
+}
+
+// Make function globally accessible
+window.printReadingWorksheet = printReadingWorksheet;
+
   // Initial preview
   updateReadingPreview();
 
@@ -776,3 +865,28 @@ function loadWorksheet(worksheet) {
     window.updateReadingPreview && window.updateReadingPreview();
   }, 100);
 }
+
+// Helper: Renumber answer key to match questions
+    function renumberAnswerKey() {
+      const answersTextarea = document.getElementById('readingAnswers');
+      if (!answersTextarea) return;
+      
+      const answerLines = answersTextarea.value.split('\n');
+      let answerNumber = 1;
+      let sectionCount = 0;
+      
+      const newAnswerLines = answerLines.map(line => {
+        if (/^Part [A-Z]:/.test(line)) {
+          sectionCount++;
+          answerNumber = 1;
+          return line;
+        }
+        if (/^\d+\./.test(line)) {
+          const answerText = line.replace(/^\d+\.\s*/, '');
+          return `${answerNumber++}. ${answerText}`;
+        }
+        return line;
+      });
+      
+      answersTextarea.value = newAnswerLines.join('\n');
+    }

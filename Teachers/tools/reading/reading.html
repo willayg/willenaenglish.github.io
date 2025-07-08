@@ -288,7 +288,42 @@
             if (startIndex !== -1) {
                 questions.splice(startIndex, endIndex - startIndex);
                 questionsTextarea.value = questions.join('\n');
+                
+                // Also remove corresponding answer from answer key
+                removeAnswerFromKey(questionNumber);
+                
                 questionsTextarea.dispatchEvent(new Event('input'));
+            }
+        }
+
+        // Function to remove answer from answer key when question is deleted
+        function removeAnswerFromKey(questionNumber) {
+            const answersTextarea = document.getElementById('readingAnswers');
+            if (!answersTextarea) return;
+            
+            const answerLines = answersTextarea.value.split('\n');
+            let currentQuestionNum = 0;
+            let answerIndex = -1;
+            
+            // Find the answer line to remove
+            for (let i = 0; i < answerLines.length; i++) {
+                const line = answerLines[i].trim();
+                if (line.match(/^\d+\./)) {
+                    currentQuestionNum++;
+                    if (currentQuestionNum === questionNumber) {
+                        answerIndex = i;
+                        break;
+                    }
+                } else if (line.match(/^Part [A-Z]:/)) {
+                    // Reset question numbering for new sections
+                    currentQuestionNum = 0;
+                }
+            }
+            
+            // Remove the answer line if found
+            if (answerIndex !== -1) {
+                answerLines.splice(answerIndex, 1);
+                answersTextarea.value = answerLines.join('\n');
             }
         }
 
