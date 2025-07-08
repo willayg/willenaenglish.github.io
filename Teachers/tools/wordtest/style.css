@@ -562,10 +562,79 @@ body {
   
   .worksheet-preview .picture-card {
     width: 200px !important;
-    height: 240px !important;
-    padding: 12px !important;
+    height: 220px !important; /* Reduced height for 9 cards */
+    padding: 10px !important;
     box-shadow: none !important;
     border: 1px solid #333 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure images inside picture cards are visible and sized correctly */
+  .worksheet-preview .picture-card img,
+  .worksheet-preview .picture-card-5col img {
+    display: block !important;
+    max-width: 100% !important;
+    max-height: 120px !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Page breaks for picture cards */
+  .worksheet-preview .picture-cards-page {
+    page-break-before: auto;
+  }
+  
+  .worksheet-preview .picture-cards-page[style*="page-break-before: always"] {
+    page-break-before: always !important;
+  }
+  
+  /* Page breaks for picture quiz */
+  .worksheet-preview .picture-quiz-page {
+    page-break-before: auto;
+  }
+  
+  .worksheet-preview .picture-quiz-page[style*="page-break-before: always"] {
+    page-break-before: always !important;
+  }
+  
+  /* Picture quiz item styling for print */
+  .worksheet-preview .quiz-item {
+    page-break-inside: avoid;
+  }
+  
+  /* Page breaks for 5-column picture cards */
+  .worksheet-preview .picture-cards-page-5col {
+    page-break-before: auto;
+  }
+  
+  .worksheet-preview .picture-cards-page-5col[style*="page-break-before: always"] {
+    page-break-before: always !important;
+  }
+  
+  /* Picture cards 5-column styling for print */
+  .worksheet-preview .picture-card-5col {
+    width: 140px !important;
+    height: 180px !important;
+    padding: 8px !important;
+    box-shadow: none !important;
+    border: 1px solid #333 !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Page breaks for 5-column picture quiz */
+  .worksheet-preview .picture-quiz-page-5col {
+    page-break-before: auto;
+  }
+  
+  .worksheet-preview .picture-quiz-page-5col[style*="page-break-before: always"] {
+    page-break-before: always !important;
+  }
+  
+  /* Picture quiz 5-column item styling for print */
+  .worksheet-preview .quiz-item-5col {
     page-break-inside: avoid;
   }
   
@@ -596,6 +665,36 @@ body {
   /* Grid layouts for print */
   .worksheet-preview [style*="grid-template-columns"] {
     gap: 10px !important;
+  }
+  
+  /* Table styles for print - match preview exactly */
+  .worksheet-preview table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    font-size: inherit !important;
+    margin: 0 auto !important;
+  }
+  
+  .worksheet-preview table th,
+  .worksheet-preview table td {
+    padding: 12px 8px !important;
+    border-bottom: 1px solid #ddd !important;
+    text-align: center !important;
+    word-wrap: break-word !important;
+    vertical-align: middle !important;
+  }
+  
+  /* Prevent number columns from wrapping */
+  .worksheet-preview table td[style*="white-space:nowrap"] {
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+  }
+  
+  .worksheet-preview table th {
+    border-bottom: 2px solid #333 !important;
+    font-weight: bold !important;
+    background: #f8f9fa !important;
   }
   
   /* Hide interactive elements when printing */

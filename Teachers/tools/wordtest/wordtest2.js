@@ -343,7 +343,7 @@ function initializeEventListeners() {
     document.getElementById('pdfBtn').addEventListener('click', generatePDF);
 
     // Form inputs
-    document.getElementById('titleInput').addEventListener('input', updatePreviewStyles);
+    document.getElementById('titleInput').addEventListener('input', updatePreview);
     document.getElementById('passageInput').addEventListener('input', updatePreviewStyles);
     document.getElementById('difficultySelect').addEventListener('change', updatePreviewStyles);
     document.getElementById('wordCountInput').addEventListener('change', updatePreviewStyles);
@@ -674,6 +674,18 @@ function updateImageSize() {
     if (slider) {
         currentSettings.imageSize = parseInt(slider.value);
         console.log('Image size updated to:', currentSettings.imageSize);
+        
+        // Force update all image sizes when slider is used
+        const previewArea = document.getElementById('previewArea');
+        if (previewArea) {
+            const images = previewArea.querySelectorAll('.image-drop-zone img');
+            images.forEach(img => {
+                img.removeAttribute('data-custom-size');
+                img.style.width = currentSettings.imageSize + 'px';
+                img.style.height = currentSettings.imageSize + 'px';
+            });
+        }
+        
         updatePreviewStyles();
     }
 }
@@ -922,7 +934,7 @@ async function updatePreview() {
     
     // Show loading spinner for image-based layouts
     const layout = currentSettings.layout;
-    const imageBasedLayouts = ['picture-list', 'picture-list-2col', 'picture-quiz', 'picture-matching', '6col-images'];
+    const imageBasedLayouts = ['picture-list', 'picture-list-2col', 'picture-quiz', 'picture-quiz-5col', 'picture-matching', '6col-images', '5col-images'];
     
     if (imageBasedLayouts.includes(layout)) {
         previewArea.innerHTML = '<div class="preview-placeholder"><p>Loading images...</p></div>';
@@ -981,11 +993,15 @@ async function updatePreviewStyles() {
             }
         });
         
-        // Update image sizes if they exist
+        // Update image sizes if they exist - only if explicitly updating size
         const images = worksheetPreview.querySelectorAll('.image-drop-zone img');
         images.forEach(img => {
-            img.style.width = currentSettings.imageSize + 'px';
-            img.style.height = currentSettings.imageSize + 'px';
+            // Only update size if the image doesn't have a custom size set
+            // or if we're explicitly updating from the size slider
+            if (!img.hasAttribute('data-custom-size')) {
+                img.style.width = currentSettings.imageSize + 'px';
+                img.style.height = currentSettings.imageSize + 'px';
+            }
         });
         
         // Update emoji font sizes
@@ -1005,7 +1021,7 @@ async function updatePreviewStyles() {
         });
         
         // Update grid gaps for image-based layouts
-        const gridElements = worksheetPreview.querySelectorAll('.picture-quiz-grid, .picture-cards-grid');
+        const gridElements = worksheetPreview.querySelectorAll('.picture-quiz-grid, .picture-cards-grid, .picture-quiz-grid-5col, .picture-cards-grid-5col');
         gridElements.forEach(grid => {
             grid.style.rowGap = currentSettings.imageGap + 'px';
         });
@@ -1272,13 +1288,13 @@ async function generateWorksheetHTML(title, wordPairs) {
         const tableHtml = `
             <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                 <colgroup>
-                    <col style="width:5%;">
-                    <col style="width:25%;">
-                    <col style="width:25%;">
+                    <col style="width:8%;">
+                    <col style="width:23%;">
+                    <col style="width:23%;">
                     <col style="width:3%;">
-                    <col style="width:5%;">
-                    <col style="width:25%;">
-                    <col style="width:25%;">
+                    <col style="width:8%;">
+                    <col style="width:23%;">
+                    <col style="width:23%;">
                 </colgroup>
                 <thead>
                     <tr>
@@ -1299,11 +1315,11 @@ async function generateWorksheetHTML(title, wordPairs) {
                         const isDupKorR = isDuplicateKor(right[i]?.kor);
                         return `
                         <tr>
-                            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${i + 1}</td>
+                            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;white-space:nowrap;">${i + 1}</td>
                             <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${highlightCell(left[i]?.eng || '______', isDupEngL)}</td>
                             <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${highlightCell(left[i]?.kor || '______', isDupKorL)}</td>
                             <td style="border-left:2px solid #e0e0e0;background:transparent;border-bottom:none;padding:0;"></td>
-                            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
+                            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;white-space:nowrap;">${i + 1 + half <= maskedPairs.length ? i + 1 + half : ""}</td>
                             <td class="word-cell" data-index="${i + half}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${highlightCell(right[i]?.eng || '______', isDupEngR)}</td>
                             <td class="word-cell" data-index="${i + half}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${highlightCell(right[i]?.kor || '______', isDupKorR)}</td>
                         </tr>
@@ -1471,7 +1487,8 @@ async function generateWorksheetHTML(title, wordPairs) {
     // --- PICTURE QUIZ LAYOUT ---
     if (layout === "picture-quiz") {
         try {
-            const limitedWordPairs = maskedPairs.slice(0, 12);
+            // Remove the 12-card limit to show all images
+            const limitedWordPairs = maskedPairs;
             if (!Array.isArray(limitedWordPairs) || limitedWordPairs.length === 0) {
                 return `<div class='preview-placeholder'><p>No words available for Picture Quiz layout.</p></div>`;
             }
@@ -1493,18 +1510,31 @@ async function generateWorksheetHTML(title, wordPairs) {
                 </div>
             `;
             
+            // Group quiz items for better page breaks (9 items per page)
+            const itemsPerPage = 9;
+            const pages = [];
+            for (let i = 0; i < pairsWithImages.length; i += itemsPerPage) {
+                pages.push(pairsWithImages.slice(i, i + itemsPerPage));
+            }
+            
+            const gridHtml = pages.map((pageItems, pageIndex) => `
+                <div class="picture-quiz-page" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
+                    <div class="picture-quiz-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); row-gap: ${currentSettings.imageGap}px; column-gap: 15px; padding: 20px; width: 100%; max-width: 750px; margin: 0 auto; place-items: center;">
+                        ${pageItems.map((pair, i) => `
+                            <div class="quiz-item" style="text-align: center; padding: 10px; width: 220px; height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                                <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 170px; position: relative;">
+                                    ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, currentSettings)}
+                                </div>
+                                <div style="width: 120px; border-bottom: 2px solid #333; height: 25px; margin-top: 8px;"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
             const tableHtml = `
                 ${wordBoxHtml}
-                <div class="picture-quiz-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); row-gap: ${currentSettings.imageGap}px; column-gap: 15px; padding: 20px; width: 100%; max-width: 750px; margin: 0 auto; place-items: center;">
-                    ${pairsWithImages.map((pair, i) => `
-                        <div class="quiz-item" style="text-align: center; padding: 10px; width: 220px; height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                            <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 160px; position: relative;">
-                                ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor, currentSettings)}
-                            </div>
-                            <div style="width: 120px; border-bottom: 2px solid #333; height: 25px; margin-top: 15px;"></div>
-                        </div>
-                    `).join('')}
-                </div>
+                ${gridHtml}
             `;
             return `
                 <div class="worksheet-preview" style="${style}">
@@ -1517,41 +1547,234 @@ async function generateWorksheetHTML(title, wordPairs) {
         }
     }
     
-    // --- PICTURE MATCHING LAYOUT ---
-    if (layout === "picture-matching") {
-        const limitedWordPairs = maskedPairs.slice(0, 8);
-        const shuffledWords = [...limitedWordPairs].sort(() => Math.random() - 0.5);
-        const itemHeight = Math.max(currentSettings.imageSize + 20, 60);
-        const totalHeight = limitedWordPairs.length * itemHeight + (limitedWordPairs.length - 1) * currentSettings.imageGap;
+    // --- 5COL IMAGES LAYOUT (Picture Cards - 5 per row) ---
+    if (layout === "5col-images") {
+        // Create custom settings for Picture Cards with larger image size
+        const pictureCard5Settings = {
+            ...currentSettings,
+            imageSize: 110  // Use appropriate images for 5-per-row Picture Cards layout
+        };
         
-        const imagePromises = limitedWordPairs.map(async (pair, i) => {
-            const imageUrl = await getImageUrl(pair.eng, i, false, currentSettings);
+        const imagePromises = maskedPairs.map(async (pair, i) => {
+            const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureCard5Settings);
             return { ...pair, imageUrl, index: i };
         });
         const pairsWithImages = await Promise.all(imagePromises);
         
+        const cardWidth = 160;
+        const cardHeight = 200;
+        const baseGap = Math.max(currentSettings.imageGap, 10);
+        const dynamicPadding = Math.max(15, baseGap / 2);
+        
+        // Group cards for better page breaks (15 cards per page - 3 rows of 5)
+        const cardsPerPage = 15;
+        const pages = [];
+        for (let i = 0; i < pairsWithImages.length; i += cardsPerPage) {
+            pages.push(pairsWithImages.slice(i, i + cardsPerPage));
+        }
+        
+        const gridHtml = pages.map((pageCards, pageIndex) => `
+            <div class="picture-cards-page-5col" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
+                <div class="picture-cards-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${baseGap}px; column-gap: 10px; padding: ${dynamicPadding}px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
+                    ${pageCards.map((pair, i) => `
+                        <div class="picture-card-5col" style="
+                            padding: 10px;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 8px;
+                            background: white;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                            width: ${cardWidth}px;
+                            height: ${cardHeight}px;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        ">
+                            <div class="image-container" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; position: relative; flex-shrink: 0;">
+                                ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCard5Settings)}
+                            </div>
+                            <div style="flex: 1; text-align: left;">
+                                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 4px; word-wrap: break-word;">${pair.eng || '______'}</div>
+                                <div style="color: #555; font-size: 0.8em; word-wrap: break-word;">${pair.kor || '______'}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+        
+        return `
+            <div class="worksheet-preview" style="${style}">
+                ${generateWorksheetHeader(title)}
+                ${gridHtml}
+            </div>
+        `;
+    }
+    
+    // --- 6COL IMAGES LAYOUT (Picture Cards - 3 per row) ---
+    if (layout === "6col-images") {
+        // Create custom settings for Picture Cards with larger image size
+        const pictureCardSettings = {
+            ...currentSettings,
+            imageSize: 150  // Use larger images for Picture Cards layout
+        };
+        
+        const imagePromises = maskedPairs.map(async (pair, i) => {
+            const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureCardSettings);
+            return { ...pair, imageUrl, index: i };
+        });
+        const pairsWithImages = await Promise.all(imagePromises);
+        
+        const cardWidth = 220;
+        const cardHeight = 260;
+        const baseGap = Math.max(currentSettings.imageGap, 15);
+        const dynamicPadding = Math.max(20, baseGap / 2);
+        
+        // Group cards for better page breaks (9 cards per page - 3 rows of 3)
+        const cardsPerPage = 9;
+        const pages = [];
+        for (let i = 0; i < pairsWithImages.length; i += cardsPerPage) {
+            pages.push(pairsWithImages.slice(i, i + cardsPerPage));
+        }
+        
+        const gridHtml = pages.map((pageCards, pageIndex) => `
+            <div class="picture-cards-page" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
+                <div class="picture-cards-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); row-gap: ${baseGap}px; column-gap: 15px; padding: ${dynamicPadding}px; width: 100%; max-width: 750px; margin: 0 auto; place-items: center;">
+                    ${pageCards.map((pair, i) => `
+                        <div class="picture-card" style="
+                            padding: 15px;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 8px;
+                            text-align: center;
+                            background: white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            width: ${cardWidth}px;
+                            height: ${cardHeight}px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-between;
+                        ">
+                            <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 180px; position: relative;">
+                                ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCardSettings)}
+                            </div>
+                            <div style="width: 100px; border-bottom: 2px solid #333; height: 20px; margin-top: 10px;"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+        
+        return `
+            <div class="worksheet-preview" style="${style}">
+                ${generateWorksheetHeader(title)}
+                ${gridHtml}
+            </div>
+        `;
+    }
+    
+    // --- PICTURE QUIZ LAYOUT (5 per row) ---
+    if (layout === "picture-quiz-5col") {
+        try {
+            // Remove the limit to show all images
+            const limitedWordPairs = maskedPairs;
+            if (!Array.isArray(limitedWordPairs) || limitedWordPairs.length === 0) {
+                return `<div class='preview-placeholder'><p>No words available for Picture Quiz (5 per row) layout.</p></div>`;
+            }
+            
+            const pairsWithImages = await Promise.all(limitedWordPairs.map(async (pair, i) => {
+                try {
+                    const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, currentSettings);
+                    return { ...pair, imageUrl, index: i };
+                } catch (err) {
+                    return { ...pair, imageUrl: getPlaceholderImage(i), index: i };
+                }
+            }));
+            
+            const wordBoxHtml = `
+                <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">
+                        ${pairsWithImages.map(pair => `<span style="padding: 2px 6px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.8em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Group quiz items for better page breaks (15 items per page - 3 rows of 5)
+            const itemsPerPage = 15;
+            const pages = [];
+            for (let i = 0; i < pairsWithImages.length; i += itemsPerPage) {
+                pages.push(pairsWithImages.slice(i, i + itemsPerPage));
+            }
+            
+            const gridHtml = pages.map((pageItems, pageIndex) => `
+                <div class="picture-quiz-page-5col" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
+                    <div class="picture-quiz-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${currentSettings.imageGap}px; column-gap: 10px; padding: 20px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
+                        ${pageItems.map((pair, i) => `
+                            <div class="quiz-item-5col" style="text-align: center; padding: 8px; width: 160px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                                <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 130px; position: relative;">
+                                    ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, currentSettings)}
+                                </div>
+                                <div style="width: 100px; border-bottom: 2px solid #333; height: 20px; margin-top: 6px;"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            const tableHtml = `
+                ${wordBoxHtml}
+                ${gridHtml}
+            `;
+            
+            return `
+                <div class="worksheet-preview" style="${style}">
+                    ${generateWorksheetHeader(title)}
+                    ${tableHtml}
+                </div>
+            `;
+        } catch (err) {
+            return `<div class='preview-placeholder'><p>Error loading Picture Quiz (5 per row) layout.<br>${err && err.message ? err.message : err}</p></div>`;
+        }
+    }
+    
+    // --- PICTURE MATCHING LAYOUT ---
+    if (layout === "picture-matching") {
+        const limitedWordPairs = maskedPairs.slice(0, 10);
+        const shuffledEnglish = [...limitedWordPairs].sort(() => Math.random() - 0.5);
+        
+        const imagePromises = limitedWordPairs.map(async (pair, i) => {
+            const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, currentSettings);
+            return { ...pair, imageUrl, index: i };
+        });
+        const pairsWithImages = await Promise.all(imagePromises);
+        
+        const itemHeight = Math.max(80, currentSettings.imageGap + 60);
+        const actualGap = currentSettings.imageGap;
+        const totalHeight = pairsWithImages.length * itemHeight + (pairsWithImages.length - 1) * actualGap;
+        
         const tableHtml = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 800px; margin: 0 auto; padding: 20px; min-width: 700px;">
-                <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${currentSettings.imageGap}px;">
+                <div style="width: 40%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${actualGap}px;">
                     ${pairsWithImages.map((pair, i) => `
                         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px;">
-                            <div class="image-container" style="display: flex; align-items: center; position: relative;">
-                                ${renderImage(pair.imageUrl, i, pair.eng, pair.kor, currentSettings)}
+                            <div style="padding: ${Math.max(10, actualGap/2)}px 15px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; min-height: 60px; justify-content: center;">
+                                <div class="image-container" style="display: flex; align-items: center; justify-content: center;">
+                                    ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor, currentSettings)}
+                                </div>
                             </div>
                             <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
                         </div>
                     `).join('')}
                 </div>
-                <div style="width: 30%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 20%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
                     <div style="color: #ccc; font-size: 14px; text-align: center; font-style: italic;">
                         Draw lines<br>to connect
                     </div>
                 </div>
-                <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${currentSettings.imageGap}px;">
-                    ${shuffledWords.map((pair, i) => `
+                <div style="width: 40%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${actualGap}px;">
+                    ${shuffledEnglish.map((pair, i) => `
                         <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px;">
                             <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
-                            <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
+                            <div style="padding: ${Math.max(10, actualGap/2)}px 15px; background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; min-height: 60px;">
                                 ${pair.eng || 'word'}
                             </div>
                         </div>
@@ -1563,55 +1786,8 @@ async function generateWorksheetHTML(title, wordPairs) {
         return `
             <div class="worksheet-preview" style="${style}">
                 ${generateWorksheetHeader(title)}
+                ${printStyle}
                 ${tableHtml}
-            </div>
-        `;
-    }
-    
-    // --- 6COL IMAGES LAYOUT (Picture Cards) ---
-    if (layout === "6col-images") {
-        const limitedWordPairs = maskedPairs.slice(0, 12);
-        const imagePromises = limitedWordPairs.map(async (pair, i) => {
-            const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, currentSettings);
-            return { ...pair, imageUrl, index: i };
-        });
-        const pairsWithImages = await Promise.all(imagePromises);
-        
-        const cardWidth = 220;
-        const baseGap = Math.max(currentSettings.imageGap, 15);
-        const dynamicPadding = Math.max(20, baseGap / 2);
-        const gridHtml = `
-            <div class="picture-cards-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); row-gap: ${baseGap}px; column-gap: 15px; padding: ${dynamicPadding}px; width: 100%; max-width: 750px; margin: 0 auto; place-items: center;">
-                ${pairsWithImages.map((pair, i) => `
-                    <div class="picture-card" style="
-                        padding: 15px;
-                        border: 2px solid #e2e8f0;
-                        border-radius: 8px;
-                        text-align: center;
-                        background: white;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        width: ${cardWidth}px;
-                        height: 260px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: space-between;
-                    ">
-                        <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 180px; position: relative;">
-                            ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor, currentSettings)}
-                        </div>
-                        <div style="width: 100%; text-align: center; margin-top: 10px;">
-                            <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 6px; word-wrap: break-word;">${pair.eng || '______'}</div>
-                            <div style="color: #555; font-size: 0.9em; word-wrap: break-word;">${pair.kor || '______'}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        return `
-            <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
-                ${gridHtml}
             </div>
         `;
     }
@@ -1632,7 +1808,7 @@ async function generateWorksheetHTML(title, wordPairs) {
                             <div style="padding: ${Math.max(10, actualGap/2)}px 15px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
                                 ${pair.eng || 'word'}
                             </div>
-                            <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius:  50%; background: white; flex-shrink: 0;"></div>
+                            <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
                         </div>
                     `).join('')}
                 </div>
@@ -1717,10 +1893,13 @@ function generateWorksheetHeader(title) {
             titleFont = 'Arial, sans-serif';
     }
     
+    // Get the absolute path to the logo for printing
+    const logoPath = new URL('../../../Assets/Images/color-logo.png', window.location.href).href;
+    
     return `
         <div class="worksheet-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding: 20px; border-bottom: 2px solid #e2e8f0;">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="../../../Assets/Images/color-logo.png" alt="Willena Logo" style="height: ${logoHeight}; width: auto;">
+                <img src="${logoPath}" alt="Willena Logo" style="height: ${logoHeight}; width: auto;">
                 <h2 style="margin: 0; font-size: ${titleSize}; color: #2d3748; font-family: ${titleFont};">${title}</h2>
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px; min-width: 220px;">
@@ -1745,10 +1924,46 @@ function getPlaceholderImage(index, label = null) {
     </div>`;
 }
 
+// Wait for all images in the preview area to load before printing
+function waitForPreviewImagesToLoad(timeout = 5000) {
+    return new Promise((resolve) => {
+        const previewArea = document.getElementById('previewArea');
+        if (!previewArea) return resolve();
+        const images = previewArea.querySelectorAll('img');
+        if (images.length === 0) return resolve();
+        let loaded = 0;
+        let done = false;
+        function checkDone() {
+            if (!done && loaded >= images.length) {
+                done = true;
+                resolve();
+            }
+        }
+        images.forEach((img) => {
+            if (img.complete && img.naturalWidth !== 0) {
+                loaded++;
+                checkDone();
+            } else {
+                img.addEventListener('load', () => {
+                    loaded++;
+                    checkDone();
+                });
+                img.addEventListener('error', () => {
+                    loaded++;
+                    checkDone();
+                });
+            }
+        });
+        // Fallback in case some images never load
+        setTimeout(() => {
+            if (!done) resolve();
+        }, timeout);
+    });
+}
+
 function printFile() {
     const layout = currentSettings.layout;
-    const imageBasedLayouts = ['picture-list', 'picture-list-2col', 'picture-quiz', 'picture-matching', '6col-images'];
-    
+    const imageBasedLayouts = ['picture-list', 'picture-list-2col', 'picture-quiz', 'picture-quiz-5col', 'picture-matching', '6col-images', '5col-images'];
     if (imageBasedLayouts.includes(layout)) {
         // Show loading message for image-based layouts
         const loadingMessage = document.createElement('div');
@@ -1766,137 +1981,162 @@ function printFile() {
             <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;"></div>
         `;
         document.body.appendChild(loadingMessage);
-        
-        // Allow a short delay for images to load
-        setTimeout(() => {
+        waitForPreviewImagesToLoad(5000).then(() => {
             document.body.removeChild(loadingMessage);
             performPrint();
-        }, 1000);
+        });
     } else {
         performPrint();
     }
 }
 
 function performPrint() {
-    const previewContent = document.getElementById('previewArea').innerHTML;
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    // Get the preview content
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) {
+        alert('No preview content to print');
+        return;
+    }
+    
+    // Check if current layout is a 5-in-a-row layout that benefits from landscape mode
+    const currentLayout = document.getElementById('layoutSelect').value;
+    const landscapeLayouts = ['5col-images', 'picture-quiz-5col'];
+    const isLandscapeLayout = landscapeLayouts.includes(currentLayout);
+    
+    // Create a new window for printing with only the preview content
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    // Get the worksheet content
+    const worksheetContent = previewArea.innerHTML;
+    
+    // Create the print document with proper styling
+    const printDocument = `
+        <!DOCTYPE html>
         <html>
-            <head>
-                <title>Word Worksheet</title>
-                <style>
-                    /* Base styles */
-                    body { 
-                        font-family: ${currentSettings.font}; 
-                        padding: 20px; 
-                        margin: 0;
-                        line-height: 1.5;
-                    }
-                    
-                    /* Worksheet styles */
-                    .worksheet-preview { 
-                        max-width: 800px; 
-                        margin: 0 auto; 
-                        font-family: ${currentSettings.font};
-                        font-size: ${currentSettings.fontSize}px;
-                        line-height: 1.5;
-                    }
-                    
-                    /* Table styles */
-                    table { 
-                        width: 100%; 
-                        border-collapse: collapse; 
-                        table-layout: fixed;
-                    }
-                    th, td { 
-                        border: 1px solid #ccc; 
-                        padding: 8px; 
-                        text-align: left; 
-                        word-wrap: break-word;
-                    }
-                    th {
-                        background-color: #f8f9fa;
-                        font-weight: bold;
-                        border-bottom: 2px solid #333;
-                    }
-                    
-                    /* Image styles */
-                    .image-drop-zone {
-                        display: inline-block;
-                        border: none !important;
-                        background: transparent !important;
-                    }
-                    .image-drop-zone img {
-                        border: 1px solid #ddd;
-                        border-radius: 8px;
-                        object-fit: cover;
-                    }
-                    
-                    /* Grid layouts */
-                    .picture-quiz-grid,
-                    .picture-cards-grid {
-                        display: grid;
-                        gap: 15px;
-                        place-items: center;
-                    }
-                    .picture-quiz-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                    }
-                    .picture-cards-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                    }
-                    
-                    /* Hide interactive elements */
-                    .print-hide,
-                    .drag-instructions,
-                    .dup-overlay-screen,
-                    .image-loading-overlay,
-                    .image-loading-spinner {
-                        display: none !important;
-                    }
-                    
-                    /* Print-specific styles */
-                    @media print { 
-                        body { 
-                            margin: 0; 
-                            padding: 15px;
-                            font-size: ${Math.max(currentSettings.fontSize - 1, 10)}px;
-                        }
-                        .worksheet-preview {
-                            max-width: none;
-                            width: 100%;
-                        }
-                        
-                        /* Page break options */
-                        .page-break-before { page-break-before: always; }
-                        .page-break-after { page-break-after: always; }
-                        .page-break-avoid { page-break-inside: avoid; }
-                        
-                        /* Table rows should avoid breaking */
-                        tr { page-break-inside: avoid; }
-                        
-                        /* Keep headers with content */
-                        thead { display: table-header-group; }
-                        
-                        /* Specific layout adjustments */
-                        .picture-quiz-grid,
-                        .picture-cards-grid {
-                            gap: 10px;
-                        }
-                        
-                        /* Ensure images print properly */
-                        .image-drop-zone img {
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                    }
-                </style>
-            </head>
-            <body>${previewContent}</body>
+        <head>
+            <title>Worksheet</title>
+            <style>
+                @page {
+                    size: A4${isLandscapeLayout ? ' landscape' : ''};
+                    margin: 0.5in;
+                }
+                
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background: white;
+                }
+                
+                .worksheet-preview {
+                    width: 100%;
+                    max-width: none;
+                    margin: 0;
+                    padding: 0;
+                    background: white;
+                }
+                
+                /* Hide drag instructions and interactive elements for print */
+                .drag-instructions,
+                .print-hide {
+                    display: none !important;
+                }
+                
+                /* Ensure proper page breaks */
+                .picture-cards-page,
+                .picture-cards-page-5col,
+                .picture-quiz-page,
+                .picture-quiz-page-5col {
+                    page-break-before: auto;
+                    page-break-after: auto;
+                    page-break-inside: avoid;
+                }
+                
+                .picture-cards-page:not(:first-child),
+                .picture-cards-page-5col:not(:first-child),
+                .picture-quiz-page:not(:first-child),
+                .picture-quiz-page-5col:not(:first-child) {
+                    page-break-before: always;
+                }
+                
+                /* Table styling for print */
+                table {
+                    page-break-inside: avoid;
+                    border-collapse: collapse;
+                }
+                
+                thead {
+                    display: table-header-group;
+                }
+                
+                tr {
+                    page-break-inside: avoid;
+                }
+                
+                /* Image styling for print */
+                img {
+                    max-width: 100%;
+                    height: auto;
+                    page-break-inside: avoid;
+                }
+                
+                /* Remove interactive styling */
+                .word-cell:hover,
+                img:hover {
+                    transform: none !important;
+                    cursor: default !important;
+                }
+                
+                /* Remove any onclick attributes and interactive elements */
+                [onclick] {
+                    cursor: default !important;
+                    pointer-events: none !important;
+                }
+                
+                /* Ensure proper grid layouts for print */
+                .picture-cards-grid,
+                .picture-cards-grid-5col,
+                .picture-quiz-grid,
+                .picture-quiz-grid-5col {
+                    display: grid !important;
+                    width: 100% !important;
+                    margin: 0 auto !important;
+                }
+                
+                /* Ensure cards don't break across pages */
+                .picture-card,
+                .picture-card-5col,
+                .quiz-item,
+                .quiz-item-5col {
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                
+                /* Remove duplicate overlay for print */
+                .dup-overlay-screen {
+                    display: none !important;
+                }
+            </style>
+        </head>
+        <body>
+            ${worksheetContent}
+            <script>
+                // Auto-print when ready
+                window.addEventListener('load', function() {
+                    // Wait a moment for images to load
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 1000);
+                });
+            </script>
+        </body>
         </html>
-    `);
+    `;
+    
+    // Write the document to the print window
+    printWindow.document.write(printDocument);
     printWindow.document.close();
-    printWindow.print();
 }
 
 function generatePDF() {
