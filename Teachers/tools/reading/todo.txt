@@ -41,17 +41,22 @@ READING MODULE TODO LIST - Issues to Fix:
    - Should only process the preview area [DONE]
    - Add PDF functionality 
    - Answer key doesnt update when I delete a question [DONE]
-11. Make the Light blue area light green for differenciation
 
-12. Make a special answer key popup page for printing
+
+11. Make the Light blue area light green for differenciation [DONE]
+
+12. Make a special answer key popup page for printing [DONE]
+
 10. Two column layout implementation
-    - Questions should run down two columns on page
+    - Questions and passage should run down two columns on page
     - Requires robust page handling and numbering
     - Complex feature but would be valuable
 
-11. Answer key doesnt update when I delete a question\
+11. Answer key doesnt update when I delete a question. [DONE]
 
-12. Add PDF functionality 
+12. Print and PDF
+    - Add PDF logic
+    - Title needs to load in the ws manager 
 
 13. Fix the error where each new set of questions creates a new totle even without a section break. (AI had trouble understanding this one and fixing it so delayed.)
 
@@ -59,7 +64,7 @@ READING MODULE TODO LIST - Issues to Fix:
      -Need to work on both the format and content of each type of question
      -Include area for teachers to prompt for questions.
 
-14.a Smart test mode to include cloze tests and translation tests. and unscramble tests
+14.a Smart test mode to include cloze tests [DONE] and translation tests. and unscramble tests
 
 15. Clear all should clear all the questions allowing us to start fresh
 
