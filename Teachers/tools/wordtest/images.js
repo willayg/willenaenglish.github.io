@@ -114,57 +114,30 @@ function cycleImage(word, index, updatePreviewCallback) {
     if (imageAlternatives[wordKey] && imageAlternatives[wordKey].length > 0) {
         currentImageIndex[wordKey] = (currentImageIndex[wordKey] + 1) % imageAlternatives[wordKey].length;
         
-        // Instead of full preview update, just update this specific image
-        updateSingleImage(word, index, updatePreviewCallback);
-    }
-}
-
-// Function to update only a single image without full preview refresh
-function updateSingleImage(word, index, updatePreviewCallback) {
-    const wordKey = `${word.toLowerCase()}_${index}`;
-    const currentIndex = currentImageIndex[wordKey] || 0;
-    const newImageUrl = imageAlternatives[wordKey][currentIndex];
-    
-    if (!newImageUrl) {
-        updatePreviewCallback(); // Fallback to full update
-        return;
-    }
-    
-    // Find the specific image container to update
-    const previewArea = document.getElementById('previewArea');
-    if (!previewArea) return;
-    
-    // Look for image containers with matching data attributes
-    const imageContainers = previewArea.querySelectorAll('.image-drop-zone');
-    let targetContainer = null;
-    
-    // Find the container that matches this word and index
-    for (let container of imageContainers) {
-        const containerWord = container.getAttribute('data-word');
-        const containerIndex = parseInt(container.getAttribute('data-index'));
-        if (containerWord === word && containerIndex === index) {
-            targetContainer = container;
-            break;
-        }
-    }
-    
-    if (targetContainer) {
-        // Update only this specific image
-        const newImageHtml = renderImage(newImageUrl, index, word, null, window.currentSettings || { imageSize: 50 });
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = newImageHtml;
-        const newImageContainer = tempDiv.firstElementChild;
-        
-        if (newImageContainer) {
-            targetContainer.parentNode.replaceChild(newImageContainer, targetContainer);
-            
-            // Re-enable drag and drop for the new element
-            if (window.enableImageDragAndDrop) {
-                window.enableImageDragAndDrop(() => {});
+        // Instead of full preview update, just update the specific image
+        const targetZone = document.querySelector(`[data-word="${word}"][data-index="${index}"]`);
+        if (targetZone) {
+            const currentImg = targetZone.querySelector('img');
+            if (currentImg) {
+                // Store current size before updating
+                const currentWidth = currentImg.style.width;
+                const currentHeight = currentImg.style.height;
+                
+                // Update the image source
+                const newImageUrl = imageAlternatives[wordKey][currentImageIndex[wordKey]];
+                currentImg.src = newImageUrl;
+                
+                // Preserve the current size
+                if (currentWidth && currentHeight) {
+                    currentImg.style.width = currentWidth;
+                    currentImg.style.height = currentHeight;
+                }
+                
+                return; // Skip full preview update
             }
         }
-    } else {
-        // Fallback to full update if we can't find the specific container
+        
+        // Fallback to full update if targeted update fails
         updatePreviewCallback();
     }
 }

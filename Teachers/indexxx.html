@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Willena Lesson Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind (for utility classes, optional) -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="components/style.css">
+  <!-- Custom overrides for smaller layout -->
+  <style>
+    /* Make overall text 20% smaller and left-aligned */
+    body {
+      font-size: 0.8rem; /* 20% smaller than default 1rem */
+      text-align: left;
+    }
+    
+    /* Make sidebar narrower */
+    #sidebar {
+      position: fixed;
+      top: 56px; /* Adjust based on the topbar height */
+      left: 0;
+      height: calc(100vh - 56px); /* Full height minus topbar */
+      overflow-y: auto;
+      background-color: #ecedf9; /* Match the background */
+      z-index: 10;
+      width: 120px; /* Reduced from default width */
+      min-width: 120px;
+    }
+    
+    /* Adjust sidebar buttons for smaller width */
+    #sidebar .tool-btn {
+      font-size: 0.7rem; /* 20% smaller */
+      padding: 0.4rem 0.8rem;
+      text-align: left; /* Left align button text */
+      line-height: 1.4;
+    }    /* Fix main layout to prevent spacing issues */
+    #main-content {
+      display: flex !important;
+      gap: 8px !important; /* Consistent small gap for breathing room */
+    }
+
+    /* Ensure consistent layout */
+    #worksheet-preview-column {
+      flex: 1 !important;
+      margin-left: 0 !important;
+    }
+    
+    /* Make all text elements 20% smaller and left-aligned */
+    h1, h2, h3, h4, h5, h6 {
+      font-size: calc(1em * 0.8);
+      text-align: left;
+    }
+    
+    /* Ensure form elements are smaller and left-aligned */
+    input, textarea, select, button, label {
+      font-size: 0.8rem;
+      text-align: left;
+    }
+    
+    /* Toolbar buttons smaller */
+    #toolbar button {
+      font-size: 0.56rem; /* 20% smaller than 0.7rem */
+      padding: 0.32rem 0.64rem; /* 20% smaller padding */
+    }
+    
+    /* Panel content smaller */
+    .tool-panel {
+      font-size: 0.72rem; /* 10% smaller: 0.8rem * 0.9 = 0.72rem */
+    }
+      .tool-panel h2 {
+      font-size: 0.9rem; /* 10% smaller: 1rem * 0.9 = 0.9rem */
+    }
+    
+    /* Make all form elements in tool panels smaller */
+    #tool-panels input, 
+    #tool-panels textarea, 
+    #tool-panels select, 
+    #tool-panels button, 
+    #tool-panels label {
+      font-size: 0.72rem !important; /* 10% smaller */
+      padding: 0.27rem 0.45rem !important; /* 10% smaller: 0.3rem 0.5rem * 0.9 */
+    }
+    
+    /* Specific adjustments for sliders and range inputs */
+    #tool-panels input[type="range"] {
+      height: 0.36rem !important; /* 10% smaller: 0.4rem * 0.9 */
+      padding: 0 !important;
+    }
+    
+    /* Smaller headings in tool panels */
+    #tool-panels h3 {
+      font-size: 0.65rem !important; /* 10% smaller: 0.72rem * 0.9 */
+    }
+    
+    /* Multi-page worksheet support */
+    .worksheet-preview {
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    /* Page break indicator for multi-page content */
+    .page-break {
+      border-top: 2px dashed #ccc;
+      margin: 20px 0;
+      position: relative;
+      page-break-before: always;
+    }
+    
+    /* Force consistent wordsearch styling across all rendering contexts */
+    .wordsearch-table,
+    .worksheet-preview .wordsearch-table {
+      margin: 0 auto !important;
+      border-collapse: collapse !important;
+      width: auto !important;
+    }
+      .wordsearch-table td,
+    .worksheet-preview .wordsearch-table td {
+      width: 32px !important;
+      height: 32px !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+      border: 1.5px solid #222 !important;
+      background: #fff !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      font-size: 1.1rem !important;
+      line-height: 32px !important;
+      margin: 0 !important;
+      display: table-cell !important;
+    }
+    
+    /* Ensure font styles are applied properly */
+    .wordsearch-table .wordsearch-font-sans,
+    .worksheet-preview .wordsearch-table .wordsearch-font-sans {
+      font-family: "Poppins", Arial, sans-serif !important;
+    }
+    .wordsearch-table .wordsearch-font-mono,
+    .worksheet-preview .wordsearch-table .wordsearch-font-mono {
+      font-family: "Courier New", Courier, monospace !important;
+    }
+    .wordsearch-table .wordsearch-font-comic,
+    .worksheet-preview .wordsearch-table .wordsearch-font-comic {
+      font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;
+    }
+    .wordsearch-table .wordsearch-font-nanum,
+    .worksheet-preview .wordsearch-table .wordsearch-font-nanum {
+      font-family: "Nanum Pen Script", cursive !important;
+      line-height: 28px !important;
+      padding-top: 2px !important;
+    }
+    
+    .wordsearch-container,
+    .worksheet-preview .wordsearch-container {
+      display: block !important;
+      background: #fafaff !important;
+      border: 2.5px solid #b6aee0 !important;
+      border-radius: 8px !important;
+      padding: 24px !important;
+      margin: 20px auto !important;
+      box-shadow: 0 2px 8px rgba(46,43,63,0.06) !important;
+      max-width: max-content !important;
+    }
+      /* Print-specific rules */
+    @media print {
+      .wordsearch-table {
+        margin: 0 auto !important;
+        border-collapse: collapse !important;
+        width: auto !important;
+      }
+      
+      .wordsearch-table td {
+        width: 32px !important;
+        height: 32px !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        border: 1.5px solid #222 !important;
+        background: #fff !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        font-size: 1.1rem !important;
+        line-height: 32px !important;
+        margin: 0 !important;
+        display: table-cell !important;
+      }
+      
+      /* PDF-specific font rendering */
+      .wordsearch-table .wordsearch-font-sans {
+        font-family: "Poppins", Arial, sans-serif !important;
+      }
+      .wordsearch-table .wordsearch-font-mono {
+        font-family: "Courier New", Courier, monospace !important;
+      }
+      .wordsearch-table .wordsearch-font-comic {
+        font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;
+      }
+      .wordsearch-table .wordsearch-font-nanum {
+        font-family: "Nanum Pen Script", cursive !important;
+        line-height: 28px !important;
+        padding-top: 2px !important;
+      }
+      
+      .wordsearch-container {
+        display: block !important;
+        background: #fafaff !important;
+        border: 2.5px solid #b6aee0 !important;
+        border-radius: 8px !important;
+        padding: 24px !important;
+        margin: 20px auto !important;
+        box-shadow: none !important;        max-width: max-content !important;
+      }
+    }    /* Lesson Planner Styles */
+    .lesson-header { 
+      background: #2e2b3f; 
+      color: white; 
+      padding: 15px; 
+      border-radius: 8px 8px 0 0;
+      margin-bottom: 0;
+      font-size: 18px;
+    }
+    .lesson-info { 
+      background: #f8f9fa; 
+      padding: 15px; 
+      border: 1px solid #ddd;
+      border-radius: 0 0 8px 8px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .activity-box { 
+      display: flex; 
+      border: 2px solid #ddd; 
+      border-radius: 12px; 
+      margin-bottom: 20px; 
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .time-box { 
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 20px; 
+      width: 140px; 
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .content-box { 
+      padding: 20px; 
+      flex: 1;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    .section-title { 
+      font-weight: bold; 
+      color: #2e2b3f; 
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    .activity-item { 
+      margin: 20px 0; 
+      padding: 25px;
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .activity-item h3 {
+      color: #2e2b3f;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }    .activity-item p {
+      margin: 10px 0;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+    
+    #tool-panels {
+      width: 270px !important; /* 10% smaller: 300px * 0.9 = 270px */
+      padding: 10.8px !important; /* 10% smaller: 12px * 0.9 = 10.8px */
+      font-size: 0.72rem !important; /* 10% smaller: 0.8rem * 0.9 = 0.72rem */
+    }
+    
+    #worksheet-preview-column {
+      flex: 1 !important;
+      padding: 12px !important;
+    }
+    
+    /* Make word cells clickable and interactive */
+    .toggle-word {
+      cursor: pointer !important;
+      transition: background-color 0.2s ease !important;
+      user-select: none !important;
+      position: relative !important;
+    }
+    
+    .toggle-word:hover {
+      background-color: #f5f5f5 !important;
+      transform: scale(1.02) !important;
+    }
+    
+    .toggle-word.locked {
+      background-color: #e3f2fd !important;
+      border: 2px solid #2196f3 !important;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.3) !important;
+    }
+    
+    /* Hide locked word styling when printing */
+    @media print {
+      .toggle-word.locked {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+  <!-- Google Fonts for worksheet templates -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#f9f5ec] min-h-screen">
+
+  <!-- Topbar -->
+  <nav id="topbar" class="flex items-center px-6 py-2 shadow sticky top-0 z-30 bg-[#2e2b3f]">
+    <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="h-10 select-none mr-4" draggable="false">
+    <span class="text-xl font-bold tracking-wide">Willena Lesson Planner</span>
+  </nav>
+
+  <main id="main-content" class="flex side-layout min-h-screen">
+    <!-- Sidebar -->    <aside id="sidebar" class="flex flex-col py-6">
+      <!-- Hidden buttons -->
+      <!-- <button class="tool-btn" data-panel="files">Files</button> -->
+      <!-- <button class="tool-btn" data-panel="puzzles">Puzzles</button> -->
+      <!-- <button class="tool-btn" data-panel="games">Games</button> -->
+      <!-- <button class="tool-btn" data-panel="creative">Creative</button> -->
+      <!-- <button class="tool-btn" data-panel="crossword">Crossword</button> -->
+
+      <!-- Updated button -->
+      <button class="tool-btn" data-panel="tests">Word Worksheets</button>
+      <button class="tool-btn" data-panel="planner">Lesson Planner</button>
+      <button class="tool-btn" data-panel="reading">Reading</button>
+      <button class="tool-btn" data-panel="wordsearch">Wordsearch</button>
+      <button class="tool-btn" data-panel="vocab">Vocab</button>
+    </aside>    <!-- Tool Panels (left column) -->
+    <section id="tool-panels">
+      <!-- Files Panel -->
+      <section id="panel-files" class="tool-panel hidden mb-4">
+        <h2 class="text-lg font-bold mb-2">Files</h2>
+        <input type="file" id="fileUpload" class="mb-2">
+        <button id="uploadBtn" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Upload</button>
+        <div class="mt-4">
+          <b>Your Files</b>
+          <ul id="fileList"></ul>
+        </div>
+      </section>
+
+
+
+      <!-- Games Panel -->
+      <section id="panel-games" class="tool-panel hidden mb-4">
+        <h2 class="text-lg font-bold mb-2">Games</h2>
+        <p>[Games tool coming soon]</p>
+      </section>
+
+      <!-- Creative Panel -->
+      <section id="panel-creative" class="tool-panel hidden mb-4">
+        <h2 class="text-lg font-bold mb-2">Creative</h2>
+        <p>[Creative tool coming soon]</p>
+      </section>
+
+      <!-- Tests Panel -->
+      <section id="panel-tests" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-4 flex items-center gap-2">Word Worksheets</h2>
+          
+          <!-- Basic Settings Section -->
+          <div class="mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">Title</h3>
+            <input type="text" id="wordTestTitle" class="border rounded w-full p-2 mb-2" placeholder="Enter worksheet title" />
+          </div>
+
+          <!-- AI Word Extraction Section -->
+          <div class="mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">AI Extraction</h3>
+
+            <label for="wordTestDifficulty" class="block mb-1">Difficulty</label>
+            <select id="wordTestDifficulty" class="border rounded w-full p-2 mb-2">
+              <option value="easy">Easy</option>
+              <option value="medium">Normal</option>
+              <option value="hard" selected>Best 1</option>
+              <option value="x">Best 2</option>
+            </select>
+
+            <label class="block mb-1">Reading Passage</label>
+            <textarea id="wordTestPassage" class="border rounded w-full p-2 mb-2" rows="4" placeholder="Paste your reading passage here"></textarea>
+
+            <div class="flex flex-col gap-2 mb-2">
+              <label for="wordTestNumWords" class="block mb-1">Number of Words</label>
+              <input type="number" id="wordTestNumWords" class="border rounded px-2 py-1" min="3" max="30" value="10" style="width:80px;">
+
+              <button id="extractWordTestWordsBtn" class="px-3 py-1 text-white rounded hover:bg-[#4f46e5]" style="background-color: #2e2b3f !important;">Extract Words with AI</button>
+            </div>
+          </div>
+
+          <!-- Word List Section -->
+          <div class="mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">Word List</h3>
+            <textarea id="wordTestWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Extracted words will appear here"></textarea>
+          </div>
+
+          <!-- Test Mode Section -->
+          <div class="mb-4">
+            <h3 class="font-semibold text-md mb-2 text-gray-700">Test Mode</h3>
+            <select id="wordTestMode" class="border rounded w-full p-2 mb-2">
+              <option value="none">Show All</option>
+              <option value="hide-eng">Hide English</option>
+              <option value="hide-kor">Hide Korean</option>
+              <option value="random">Hide Randomly</option>
+              <option value="hide-random-letter">Hide Random Letter</option>
+            </select>
+          </div>
+
+          <!-- Layout & Appearance Section moved to right panel -->
+
+          <!-- Image Settings Section moved to right panel -->
+
+          <div id="wordTestStatus" class="text-sm text-gray-500"></div>        </div>
+      </section>
+
+      <!-- Reading Panel (new) -->
+      <section id="panel-reading" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Reading Worksheet Generator</h2>
+          
+          <!-- Worksheet Title -->
+          <label class="block mb-1 mt-2">Worksheet Title</label>
+          <input type="text" id="readingTitle" class="border rounded w-full p-2 mb-2" placeholder="Enter worksheet title" />
+
+          <!-- Font Selection -->
+          <label class="block mb-1">Font</label>
+          <select id="readingFont" class="border rounded w-full p-2 mb-2">
+            <option value="'Poppins', sans-serif">Poppins</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Roboto', sans-serif">Roboto</option>
+          </select>
+
+          <!-- Font Size -->
+          <select id="readingFontSize" class="border rounded px-2 py-1 mb-2">
+            <option value="1">Normal</option>
+            <option value="0.9">Small</option>
+            <option value="0.8">Quite Small</option>
+            <option value="1.1">Large</option>
+          </select>          <!-- Reading Passage Input -->
+          <label class="block mb-1">Reading Passage</label>
+          <textarea id="readingPassage" class="border rounded w-full p-2 mb-2" rows="6" placeholder="Paste or type your reading passage here"></textarea>
+
+          <!-- Include Passage Option -->
+          <label class="flex items-center mb-2">
+            <input type="checkbox" id="includePassage" checked> Include passage in worksheet
+          </label>
+
+          <!-- Question Generation Settings -->
+          <div class="border-t pt-3 mt-3">
+            <h3 class="font-semibold mb-2">Question Generation</h3>
+            
+            <!-- Number of Questions -->
+            <label class="block mb-1">Number of Questions</label>
+            <input type="number" id="readingNumQuestions" class="border rounded px-2 py-1 mb-2" min="1" max="20" value="5" style="width:80px;">
+
+            <!-- Question Categories -->
+            <label class="block mb-1">Question Categories (check all that apply)</label>
+            <div class="mb-2 space-y-1">
+              <label class="flex items-center"><input type="checkbox" id="categoryComprehension" checked> Comprehension Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryVocabulary"> Vocabulary Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryGrammar"> Grammar Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryInference"> Inference Questions</label>
+              <label class="flex items-center"><input type="checkbox" id="categoryMainIdea"> Main Idea Questions</label>
+            </div>
+
+            <!-- Question Format -->
+            <label class="block mb-1">Question Format</label>
+            <select id="readingQuestionFormat" class="border rounded w-full p-2 mb-2">
+              <option value="multiple-choice">Multiple Choice</option>
+              <option value="fill-blanks">Fill in the Blanks</option>
+              <option value="circle-word">Circle the Correct Word</option>
+              <option value="short-answer">Short Answer</option>
+              <option value="mixed">Mixed Format</option>
+            </select>
+
+            <!-- Generate Questions Button -->
+            <button id="generateQuestionsBtn" class="px-3 py-1 bg-purple-700 text-white rounded hover:bg-purple-900 mb-2 w-full">Generate Questions with AI</button>
+              <!-- Generated Questions Area -->
+            <label class="block mb-1">Generated Questions (editable)</label>
+            <textarea id="readingQuestions" class="border rounded w-full p-2 mb-2" rows="8" placeholder="Generated questions will appear here"></textarea>
+            
+            <!-- Answer Key Area -->
+            <label class="block mb-1">Answer Key (one answer per line)</label>
+            <textarea id="readingAnswers" class="border rounded w-full p-2 mb-2" rows="5" placeholder="1. Answer to question 1&#10;2. Answer to question 2&#10;3. Answer to question 3"></textarea>
+          </div>          <!-- Worksheet Template -->
+          <label for="readingTemplate" class="block font-semibold mb-1">Worksheet Template</label>
+          <select id="readingTemplate" class="w-full px-3 py-2 border rounded mb-2">
+            <option value="0">Classic</option>
+            <option value="1">Minimal</option>
+            <option value="2" selected>Logo Right Blue Line</option>
+            <option value="3">Modern Shadow Card</option>
+            <option value="4">Playful Dots</option>
+            <option value="5">Elegant Left Bar</option>
+            <option value="8">Multi-Page Classic</option>
+          </select>
+
+          <!-- Generate Worksheet Button -->
+          <button id="generateReadingWorksheet" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b] w-full">Generate Reading Worksheet</button>        </div>
+      </section>      <!-- Reading 3.0 Panel -->
+      <section id="panel-passage" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Reading 3.0</h2>
+          <p class="text-sm text-gray-600 mb-4">Advanced multi-page reading comprehension tool with AI features, customizable fonts, and professional formatting.</p>
+          
+          <div class="space-y-2 text-sm text-gray-700 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Multi-page layout with smart pagination</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>10 customizable fonts & 6 font sizes</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>AI-powered content tools</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Professional print & PDF export</span>
+            </div>
+          </div>
+          
+          <button id="openPassageBuilder" class="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded hover:from-green-600 hover:to-blue-700 w-full font-semibold">
+            Open Reading 3.0
+          </button>
+        </div>
+      </section>
+          </button>
+        </div>
+      </section>      <!-- Wordsearch Panel (new) -->
+      <section id="panel-wordsearch" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Wordsearch Maker</h2>
+          <div class="mb-3">
+            <label for="wordsearchTitle" class="block font-semibold mb-1">Worksheet Title</label>
+            <input type="text" id="wordsearchTitle" class="w-full px-3 py-2 border rounded" placeholder="">
+          </div>
+          <div class="mb-3">
+            <label for="wordsearchInstructions" class="block font-semibold mb-1">Instructions</label>
+            <input type="text" id="wordsearchInstructions" class="w-full px-3 py-2 border rounded" placeholder="">
+          </div>
+          <!-- Example for Wordsearch panel -->
+          <div class="toolbar-row">
+            <label>Grid Size
+              <select id="wordsearchGridSize" class="border rounded px-2 py-1 mb-2">
+                <option value="8">8 x 8</option>
+                <option value="10" selected>10 x 10</option>
+                <option value="12">12 x 12</option>
+                <option value="15">15 x 15</option>
+              </select>
+            </label>
+            <label>Letter Case
+              <select id="wordsearchCase" class="border rounded px-2 py-1 mb-2">
+                <option value="upper">UPPERCASE</option>
+                <option value="lower">lowercase</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar-row">
+            <label>Font
+              <select id="wordsearchFont" class="border rounded px-2 py-1 mb-2">
+                <option value="sans">Sans-serif (Default)</option>
+                <option value="mono">Monospace</option>
+                <option value="comic">Comic Sans MS</option>
+                <option value="nanum">Nanum Pen Script</option>
+              </select>
+            </label>
+            <!-- NEW: Template Dropdown -->
+            <label>Worksheet Template
+              <select id="wordsearchTemplate" class="border rounded px-2 py-1 mb-2">
+                <option value="0">Classic</option>
+                <option value="1">Minimal</option>
+                <option value="2" selected>Logo Right Blue Line</option>
+                <option value="3">Modern Shadow Card</option>
+                <option value="4">Playful Dots</option>
+                <option value="5">Elegant Left Bar</option>
+              </select>
+            </label>
+          </div>
+          
+          <!-- Category-based word generation -->
+          <div style="margin-bottom:10px;">
+            <input id="categoryPrompt" type="text" placeholder="e.g. 10 sea animals" style="width:60%;">
+            <button id="generateCategoryWordsBtn">Generate Words</button>
+          </div>
+
+          <!-- Passage-based word extraction -->
+          <div style="margin-bottom:10px;">
+            <textarea id="passageInput" rows="4" placeholder="Paste your reading passage here" style="width:100%;"></textarea>
+            <button id="extractDifficultWordsBtn">Extract Difficult Words</button>
+          </div>
+
+          <!-- Existing word list textarea (for the puzzle) -->
+          <textarea id="wordsearchWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+          <div class="mb-2">
+            <label><input id="wordsearchAllowDiagonals" type="checkbox"> Allow Diagonals</label>
+            <label class="ml-4"><input id="wordsearchAllowBackwards" type="checkbox"> Allow Backwards Words</label>
+          </div>
+          
+          <!-- Wordsearch sizing and positioning sliders -->
+          <div class="mb-3">
+            <label class="block mb-1 text-sm font-semibold">Wordsearch Size</label>
+            <input type="range" id="wordsearchSizeSlider" min="0.5" max="2" step="0.1" value="1" class="w-full mb-1">
+            <div class="text-xs text-gray-600 text-center">
+              <span id="wordsearchSizeValue">100%</span>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="block mb-1 text-sm font-semibold">Vertical Position</label>
+            <input type="range" id="wordsearchPositionSlider" min="-100" max="100" step="10" value="0" class="w-full mb-1">
+            <div class="text-xs text-gray-600 text-center">
+              <span id="wordsearchPositionValue">Center</span>
+            </div>
+          </div>
+          
+          <button id="generateWordsearch" class="px-3 py-1 rounded font-semibold hover:bg-[#827e9b]" style="background-color: #2e2b3f !important; color: white !important;">Generate Wordsearch</button>
+          <!-- Highlight Answers Button -->
+          <button id="highlightAnswers" class="px-3 py-1 rounded font-semibold hover:bg-[#827e9b]" style="background-color: #2e2b3f !important; color: white !important;">Show Answers</button>
+        </div>
+      </section>
+
+      <!-- Crossword Panel (new) -->
+      <section id="panel-crossword" class="tool-panel hidden mb-4">
+        <div class="mb-2 font-semibold">Crossword Maker</div>
+        <label class="block mb-1">Grid Size</label>
+        <select id="crosswordGridSize" class="border rounded px-2 py-1 mb-2">
+          <option value="8">8 x 8</option>
+          <option value="10" selected>10 x 10</option>
+          <option value="12">12 x 12</option>
+          <option value="15">15 x 15</option>
+        </select>
+        <textarea id="crosswordWords" class="border rounded w-full p-2 mb-2" rows="3" placeholder="Enter words, one per line"></textarea>
+        <button id="generateCrossword" class="px-3 py-1 bg-[#2e2b3f] text-white rounded hover:bg-[#827e9b]">Generate Crossword</button>
+        <div id="aiChatBoxCrossword" class="mt-4 p-2 border rounded bg-[#f6f6fa] text-sm">
+          <div id="aiChatMessagesCrossword" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+          <div class="flex gap-2">
+            <input id="aiChatInputCrossword" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Ask AI for help...">
+            <button id="aiChatSendCrossword" class="bg-[#2e2b3f] text-white px-3 py-1 rounded">Send</button>
+          </div>        </div>
+      </section>      <!-- Lesson Planner Panel -->
+      <section id="panel-planner" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-4">Lesson Planner</h2>
+          <p class="text-sm text-gray-600 mb-4">Professional ESL lesson plan generator with AI assistance, supporting both English and Korean languages.</p>
+          
+          <div class="space-y-2 text-sm text-gray-700 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Direct Korean & English AI generation</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Full lesson plans & activity ideas</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Beginner-friendly interface</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500">✓</span>
+              <span>Professional print & save options</span>
+            </div>
+          </div>
+          
+          <button id="openLessonPlanner" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded hover:from-purple-600 hover:to-blue-700 w-full font-semibold">
+            Open Lesson Planner
+          </button>
+        </div>
+      </section>
+
+      <!-- Vocabulary Panel (new) -->
+      <section id="panel-vocab" class="tool-panel hidden mb-4">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="font-bold text-lg mb-2 flex items-center gap-2">Vocabulary Tool</h2>
+          <p class="text-sm text-gray-600 mb-4">Enhance your vocabulary with interactive worksheets and tools.</p>
+          <button onclick="window.open('tools/wordtest/wordtest2.html', '_blank', 'width=1400,height=900')" 
+                  class="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded hover:from-green-600 hover:to-blue-700 w-full font-semibold">
+            Open Vocabulary Tool
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <!-- Worksheet Preview Area (right column) -->
+    <section id="worksheet-preview-column" class="flex-1 flex flex-col items-center justify-start">
+      <div id="worksheetMenuBar" style="width:100%;background:#f0ebff;height:48px;display:flex;align-items:center;padding-left:32px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);position:fixed;top:56px;z-index:25;left:135px;right:0;">        <div id="toolbar">
+          <button id="printWorksheetBtn">Print</button>
+          <button id="downloadWorksheetPdfBtn">Download PDF</button>
+          <button id="printAnswerKeyBtn" style="display: none;">Print Answer Key</button>
+          <button id="saveWorksheetBtn">Save</button>
+          <button id="loadWorksheetBtn">Load</button>
+        </div>
+      </div>      <!-- Compact Control Panel for Layout & Image Settings -->
+      <div id="worksheet-control-panel" class="w-full bg-white border-b border-gray-200 shadow-sm mb-2" style="display: none; position: fixed; top: 104px; z-index: 24; left: 135px; right: 0;">
+        <div class="px-2 py-1" style="font-size: 0.75rem;">
+          <div class="flex gap-1 items-center justify-start flex-wrap">
+            <!-- Layout Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Layout:</span>
+              <select id="wordTestLayout" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 77px;">
+                <option value="default">Default Table</option>
+                <option value="4col">2 Lists (Side by Side)</option>
+                <option value="6col-images">Picture Test</option>
+                <option value="images">With Images</option>
+                <option value="picture-list">Picture List</option>
+                <option value="picture-quiz">Picture Quiz</option>
+                <option value="picture-matching">Picture Matching</option>
+                <option value="eng-kor-matching">English-Korean Matching</option>
+              </select>
+            </div>
+
+            <!-- Font Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Font:</span>
+              <select id="wordTestFont" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 66px;">
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Glacial Indifference', sans-serif">Glacial</option>
+                <option value="'Comic Sans MS', cursive, sans-serif">Comic</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Nanum Gothic', sans-serif">Nanum</option>
+                <option value="'Noto Sans KR', sans-serif">Noto</option>
+              </select>
+            </div>
+
+            <!-- Font Size Slider (no labels) -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Size:</span>
+              <input type="range" id="wordTestFontSize" min="0.6" max="2.0" step="0.01" value="1" style="width: 55px; height: 13px;">
+            </div>
+
+            <!-- Template Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Template:</span>
+              <select id="wordTestTemplate" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 55px;">
+                <option value="0">Design 1</option>
+                <option value="1">Design 2</option>
+                <option value="2">Design 3</option>
+                <option value="3">Design 4</option>
+                <option value="4">Design 5</option>
+                <option value="5" selected>Design 6</option>
+                <option value="6">Design 7</option>
+                <option value="7">Design 8</option>
+              </select>
+            </div>
+
+            <!-- Image Size Slider -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Image Size:</span>
+              <input type="range" id="testImageSizeSlider" min="40" max="200" value="80" style="width: 55px; height: 13px;">
+            </div>
+
+            <!-- Image Gap Slider -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Gap:</span>
+              <input type="range" id="testImageGapSlider" min="0" max="80" value="16" style="width: 55px; height: 13px;">
+            </div>
+
+            <!-- Separator -->
+            <div style="height: 16px; width: 1px; background-color: #d1d5db; margin: 0 3px;"></div>
+
+            <!-- Image Type Control -->
+            <div class="flex items-center gap-1">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #374151; white-space: nowrap;">Images:</span>
+              <select id="pixabayImageType" style="font-size: 0.64rem; padding: 1px 2px; border: 1px solid #d1d5db; border-radius: 2px; min-width: 55px;">
+                <option value="all">All</option>
+                <option value="photo">Photos</option>
+                <option value="illustration">Illustrations</option>
+              </select>
+            </div>
+
+            <!-- Refresh Button -->
+            <button id="refreshImagesBtn" style="font-size: 0.61rem; padding: 1px 4px; background-color: #7c3aed; color: white; border: none; border-radius: 2px; cursor: pointer; height: 20px;">Refresh</button>
+          </div>
+        </div>
+      </div>      <div id="worksheetPreviewWrapper" style="width:794px; min-height:1123px; position:relative; margin-top: 100px;">
+        <div id="worksheetPreviewArea-tests" class="worksheet-preview" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-reading" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-wordsearch" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-crossword" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;"></div>
+        <div id="worksheetPreviewArea-planner" class="worksheet-preview hidden" style="width:100%; min-height:100%; background:#fff; overflow:visible;">
+          <div style="padding: 40px; text-align: center; color: #6b7280;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">📝</div>
+            <h3 style="color: #374151; margin-bottom: 12px;">Lesson Planner</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 24px;">The lesson planner is now available as a standalone tool for better focus and usability.</p>
+            <button onclick="window.open('tools/planner/planner.html', '_blank', 'width=1400,height=900')" 
+                    style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+              Open Lesson Planner
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Workspace Section -->
+  <section id="workspace" class="flex-1 bg-[#f9f5ec] rounded-lg shadow-inner p-6">
+  </section>
+
+  <!-- Worksheet Templates -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  <script src="components/worksheetTemplates.js"></script>
+  <script src="components/main1.js"></script>
+  <script src="tools/puzzles/index.js"></script>
+  <script src="tools/puzzles/wordsearch.js"></script>
+  <script src="tools/puzzles/crossword.js"></script>
+  <script type="module" src="tools/tests/wordtest.js"></script>
+  <script type="module" src="tools/reading/reading.js"></script>
+  <script>
+    // Ensure the first panel is shown on load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Show the Files panel by default
+      const showPanel = (panel) => {
+        // Hide all tool panels
+        document.querySelectorAll('.tool-panel').forEach(el => el.classList.add('hidden'));
+        // Hide all worksheet previews
+        document.querySelectorAll('.worksheet-preview').forEach(el => el.classList.add('hidden'));
+        // Show the selected panel
+        const active = document.getElementById('panel-' + panel);
+        if (active) active.classList.remove('hidden');
+        // Show the worksheet preview for this panel, if it exists
+        const preview = document.getElementById(`worksheetPreviewArea-${panel}`);
+        if (preview) preview.classList.remove('hidden');
+        // Update sidebar button active state
+        document.querySelectorAll('#sidebar .tool-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`#sidebar .tool-btn[data-panel="${panel}"]`);
+        if (btn) btn.classList.add('active');
+        
+        // Show/hide control panel for Word Worksheets tool
+        const controlPanel = document.getElementById('worksheet-control-panel');
+        if (controlPanel) {
+          if (panel === 'tests') {
+            controlPanel.style.display = 'block';
+          } else {
+            controlPanel.style.display = 'none';
+          }
+        }
+      };
+      // Sidebar button click handlers
+      document.querySelectorAll('#sidebar .tool-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const panel = this.getAttribute('data-panel');
+          showPanel(panel);
+        });      });      showPanel('files');      
+      
+      // Reading 3.0 button handler
+      document.getElementById('openPassageBuilder').addEventListener('click', function() {
+        // Open the reading 3.0 tool in a new window
+        window.open('tools/passage/passage.html', '_blank', 'width=1400,height=900');
+      });
+      
+      // Lesson Planner button handler
+      document.getElementById('openLessonPlanner').addEventListener('click', function() {
+        // Open the lesson planner tool in a new window
+        window.open('tools/planner/planner.html', '_blank', 'width=1400,height=900');
+      });
+      
+      // Word Worksheets button handler
+      document.getElementById('openWordWorksheets').addEventListener('click', function() {
+        window.open('tools/tests/wordtest.html', '_blank', 'width=1400,height=900');
+      });
+    });
+
+  </script>
+  <script>
+document.getElementById('saveWorksheetBtn').onclick = function() {
+  window.open('worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+};
+document.getElementById('loadWorksheetBtn').onclick = function() {
+  window.open('worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+};
+</script>
+<script>
+function generateWordList(passage, numItems, difficulty = 'medium') {
+  let prompt = '';
+  
+  switch(difficulty) {
+    case 'easy':
+      prompt = `
+You are an ESL teacher working with beginner English learners. From the passage below, extract exactly ${numItems} simple and useful words that are:
+
+- Basic vocabulary that beginners should learn
+- Common everyday words and simple phrases
+- High-frequency words that appear often in English
+- Simple verbs, nouns, and adjectives
+- Basic prepositions (in, on, at, with, etc.)
+
+Focus on words that are:
+- 1-2 syllables when possible
+- Commonly used in daily conversation
+- Essential for basic communication
+- Easy to pronounce and remember
+
+Avoid complex vocabulary, idioms, or advanced grammar structures.
+
+Format as a simple numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'medium':
+      prompt = `
+You are an ESL teacher working with intermediate English learners. From the passage below, extract exactly ${numItems} moderately challenging words and phrases that include:
+
+- Intermediate vocabulary (2-3 syllables)
+- Common phrasal verbs (look up, turn on, etc.)
+- Simple idiomatic expressions
+- Useful prepositional phrases
+- Common collocations (strong coffee, heavy rain)
+- Connecting words (however, therefore, although)
+
+Focus on words and phrases that:
+- Are commonly used but not too basic
+- Help students express more complex ideas
+- Are useful for academic and everyday contexts
+- Build on beginner vocabulary
+
+Avoid overly simple words or highly advanced terminology.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'hard':
+      prompt = `
+You are an ESL teacher working with advanced English learners. From the passage below, extract exactly ${numItems} challenging and sophisticated words and phrases including:
+
+- Advanced vocabulary and less common words
+- Complex phrasal verbs and their variations
+- Sophisticated idiomatic expressions
+- Advanced prepositional and adverbial phrases
+- Academic and formal language structures
+- Complex conjunctions and discourse markers
+- Nuanced collocations and expressions
+
+Focus on language that:
+- Appears in academic, professional, or literary contexts
+- Requires deeper understanding of English nuances
+- Helps students sound more fluent and natural
+- Challenges students to expand their vocabulary range
+- Includes subtle meaning differences and connotations
+
+Prioritize multi-word expressions, complex grammar structures, and sophisticated vocabulary.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    case 'x':
+      prompt = `
+You are an ESL teacher helping Korean students in elementary and middle school.
+
+From the passage below, extract exactly ${numItems} useful words and phrases for learning English. 
+Don't just pick vocabulary nouns. Include:
+
+- Uncommon or challenging vocabulary (nouns, verbs, adjectives)
+- Phrasal verbs (like "make up", "carry out")
+- Prepositional phrases (like "at the correct time", "in 1970")
+- Conjunctions and linking expressions (like "since then", "although")
+- Common expressions or collocations (like "plan their day", "reach our wrists")
+
+Avoid repeating very similar words or listing only nouns. Include full phrases where useful.
+
+Group your list into 5 categories:
+1. Vocabulary
+2. Prepositional Phrases
+3. Phrasal Verbs
+4. Linking Words & Conjunctions
+5. Expressions & Collocations
+
+Keep the list numbered and organized clearly.
+
+Text:
+---
+${passage}
+---
+      `;
+      break;
+      
+    default:
+      // Default to medium difficulty
+      prompt = `
+You are an ESL teacher working with intermediate English learners. From the passage below, extract exactly ${numItems} moderately challenging words and phrases that include:
+
+- Intermediate vocabulary (2-3 syllables)
+- Common phrasal verbs (look up, turn on, etc.)
+- Simple idiomatic expressions
+- Useful prepositional phrases
+- Common collocations (strong coffee, heavy rain)
+- Connecting words (however, therefore, although)
+
+Focus on words and phrases that:
+- Are commonly used but not too basic
+- Help students express more complex ideas
+- Are useful for academic and everyday contexts
+- Build on beginner vocabulary
+
+Avoid overly simple words or highly advanced terminology.
+
+Format as a numbered list:
+1. word/phrase
+2. word/phrase
+...
+
+Text:
+---
+${passage}
+---
+      `;
+  }
+  
+  let wordList = callAI(prompt);
+
+  // Filter out duplicates
+  wordList = [...new Set(wordList)];
+
+  // Filter for contextual relevance
+  const keywords = passage.split(/\s+/).map(word => word.toLowerCase());
+  wordList = wordList.filter(word => {
+    const lowerWord = word.toLowerCase();
+    return keywords.some(keyword => lowerWord.includes(keyword));
+  });
+
+  // Filter for difficulty level (only for easy and medium modes)
+  if (difficulty === 'easy' || difficulty === 'medium') {
+    const easyWords = ['time', 'plan', 'dog', 'walk', 'is'];
+    wordList = wordList.filter(word => !easyWords.includes(word.toLowerCase()));
+  }
+
+  // Adjust the list to match the requested number of items
+  wordList = adjustWordList(wordList, numItems);
+
+  return wordList;
+}
+
+function adjustWordList(wordList, numItems) {
+  if (wordList.length < numItems) {
+    const additionalItems = getAdditionalESLItems(numItems - wordList.length);
+    return wordList.concat(additionalItems);
+  } else if (wordList.length > numItems) {
+    return wordList.slice(0, numItems);
+  }
+  return wordList;
+}
+
+const commonPhrases = [
+  'look forward to', 'in addition to', 'as a result', 'on the other hand', 
+  'take care of', 'run out of', 'get along with', 'make up for'
+];
+
+function prioritizePhrases(wordList) {
+  return wordList.filter(item => commonPhrases.includes(item) || item.split(' ').length > 1);
+}
+
+function getAdditionalESLItems(count) {
+  // Mock function to generate additional ESL items
+  const additionalItems = [
+    'carry out', 'at the correct time', 'since then', 'make up for', 'take care of'
+  ];
+  return additionalItems.slice(0, count);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const templateDropdown = document.getElementById('wordTestTemplate');
+  if (templateDropdown) {
+    templateDropdown.value = '2'; // Set "Line" as the default template
+  }
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Removed password protection logic
+  });
+</script>
+
+<!-- Special Layout Controls (conditionally visible) -->
+          <div id="remixMatchingControls" style="display: none;">
+            <button id="remixMatchingBtn" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mb-2 w-full">
+              Remix Words
+            </button>
+            <label for="lineSpacingSlider" class="block mb-1">Line Spacing</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Tight</span>
+              <input type="range" id="lineSpacingSlider" min="15" max="50" value="25" class="flex-1">
+              <span class="text-sm">Wide</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="lineSpacingValue">25px</span>
+            </div>
+          </div>
+
+          <div id="pictureQuizControls" style="display: none;">
+            <label for="pictureQuizImageSize" class="block mb-1">Picture Size</label>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm">Small</span>
+              <input type="range" id="pictureQuizImageSize" min="40" max="120" value="55" class="flex-1">
+              <span class="text-sm">Large</span>
+            </div>
+            <div class="text-center text-sm text-gray-600 mb-2">
+              <span id="pictureSizeValue">55px</span>
+            </div>
+          </div>
+        </div>
+      </div>
