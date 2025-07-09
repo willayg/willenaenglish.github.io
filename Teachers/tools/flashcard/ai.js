@@ -254,3 +254,138 @@ export function optimizeCardOrder(cards, strategy = 'difficulty') {
     
     return optimized;
 }
+
+// AI topic-based word generation
+export async function generateWordsFromTopic(topic, count = 20) {
+    try {
+        console.log(`Generating ${count} words for topic: ${topic}`);
+        
+        // Check if we're in local development
+        const isLocalDevelopment = window.location.protocol === 'file:' || 
+                                 window.location.hostname === 'localhost' || 
+                                 window.location.hostname === '127.0.0.1';
+        
+        if (isLocalDevelopment) {
+            // Use predefined word sets for local development
+            return generateWordsFromTopicLocal(topic, count);
+        }
+        
+        // Try to use OpenAI proxy for production
+        const response = await fetch('/.netlify/functions/openai_proxy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: `Generate exactly ${count} common English words related to the topic "${topic}". Return only the words, one per line, no numbering, no explanations.`,
+                maxTokens: 200
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.choices && data.choices[0] && data.choices[0].text) {
+                const words = data.choices[0].text
+                    .trim()
+                    .split('\n')
+                    .map(word => word.trim())
+                    .filter(word => word.length > 0)
+                    .slice(0, count);
+                return words;
+            }
+        }
+        
+        // Fallback to local generation if API fails
+        console.log('AI API failed, using local fallback');
+        return generateWordsFromTopicLocal(topic, count);
+        
+    } catch (error) {
+        console.error('Error generating words from topic:', error);
+        return generateWordsFromTopicLocal(topic, count);
+    }
+}
+
+function generateWordsFromTopicLocal(topic, count = 20) {
+    const topicWords = {
+        food: [
+            'apple', 'banana', 'orange', 'grape', 'strawberry', 'bread', 'milk', 'cheese', 'butter', 'egg',
+            'chicken', 'beef', 'fish', 'rice', 'pasta', 'pizza', 'sandwich', 'soup', 'salad', 'cake',
+            'cookie', 'chocolate', 'ice cream', 'coffee', 'tea', 'water', 'juice', 'potato', 'carrot', 'tomato'
+        ],
+        animals: [
+            'dog', 'cat', 'bird', 'fish', 'rabbit', 'horse', 'cow', 'pig', 'sheep', 'goat',
+            'chicken', 'duck', 'elephant', 'lion', 'tiger', 'bear', 'wolf', 'fox', 'deer', 'mouse',
+            'rat', 'hamster', 'guinea pig', 'frog', 'snake', 'turtle', 'spider', 'butterfly', 'bee', 'ant'
+        ],
+        colors: [
+            'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'black', 'white',
+            'gray', 'grey', 'silver', 'gold', 'violet', 'indigo', 'turquoise', 'navy', 'lime', 'maroon',
+            'beige', 'tan', 'coral', 'salmon', 'crimson', 'azure', 'cyan', 'magenta', 'olive', 'teal'
+        ],
+        transportation: [
+            'car', 'bus', 'train', 'plane', 'boat', 'ship', 'bicycle', 'motorcycle', 'truck', 'taxi',
+            'subway', 'helicopter', 'rocket', 'scooter', 'skateboard', 'rollerblade', 'wagon', 'cart', 'sled', 'canoe',
+            'yacht', 'ferry', 'tram', 'van', 'ambulance', 'fire truck', 'police car', 'limousine', 'pickup truck', 'trailer'
+        ],
+        body: [
+            'head', 'face', 'eye', 'nose', 'mouth', 'ear', 'hair', 'neck', 'shoulder', 'arm',
+            'hand', 'finger', 'thumb', 'chest', 'back', 'stomach', 'leg', 'knee', 'foot', 'toe',
+            'elbow', 'wrist', 'ankle', 'skin', 'teeth', 'tongue', 'lip', 'chin', 'forehead', 'cheek'
+        ],
+        clothes: [
+            'shirt', 'pants', 'dress', 'skirt', 'jacket', 'coat', 'sweater', 'hat', 'cap', 'shoes',
+            'socks', 'underwear', 'bra', 'tie', 'belt', 'gloves', 'scarf', 'boots', 'sandals', 'shorts',
+            'jeans', 'suit', 'uniform', 'pajamas', 'robe', 'vest', 'cardigan', 'hoodie', 'tank top', 'leggings'
+        ],
+        house: [
+            'house', 'room', 'kitchen', 'bedroom', 'bathroom', 'living room', 'dining room', 'garage', 'garden', 'yard',
+            'door', 'window', 'wall', 'floor', 'ceiling', 'roof', 'stairs', 'table', 'chair', 'bed',
+            'sofa', 'couch', 'refrigerator', 'stove', 'oven', 'sink', 'toilet', 'shower', 'bathtub', 'mirror'
+        ],
+        school: [
+            'school', 'classroom', 'teacher', 'student', 'book', 'notebook', 'pencil', 'pen', 'eraser', 'ruler',
+            'desk', 'chair', 'blackboard', 'whiteboard', 'computer', 'tablet', 'calculator', 'backpack', 'homework', 'test',
+            'exam', 'grade', 'lesson', 'subject', 'math', 'science', 'history', 'english', 'art', 'music'
+        ],
+        nature: [
+            'tree', 'flower', 'grass', 'leaf', 'branch', 'root', 'seed', 'fruit', 'forest', 'mountain',
+            'river', 'lake', 'ocean', 'sea', 'beach', 'island', 'rock', 'stone', 'sand', 'sky',
+            'cloud', 'sun', 'moon', 'star', 'rain', 'snow', 'wind', 'storm', 'rainbow', 'earth'
+        ],
+        sports: [
+            'football', 'basketball', 'baseball', 'tennis', 'soccer', 'golf', 'swimming', 'running', 'cycling', 'skiing',
+            'boxing', 'wrestling', 'volleyball', 'hockey', 'cricket', 'badminton', 'ping pong', 'bowling', 'surfing', 'diving',
+            'gymnastics', 'dancing', 'yoga', 'martial arts', 'archery', 'fishing', 'hunting', 'hiking', 'climbing', 'skating'
+        ]
+    };
+    
+    const topicKey = topic.toLowerCase();
+    let words = [];
+    
+    // Direct topic match
+    if (topicWords[topicKey]) {
+        words = [...topicWords[topicKey]];
+    } else {
+        // Partial matches
+        for (const [key, wordList] of Object.entries(topicWords)) {
+            if (key.includes(topicKey) || topicKey.includes(key)) {
+                words = [...wordList];
+                break;
+            }
+        }
+        
+        // If no match found, combine some common categories
+        if (words.length === 0) {
+            words = [
+                ...topicWords.food.slice(0, 5),
+                ...topicWords.animals.slice(0, 5),
+                ...topicWords.colors.slice(0, 5),
+                ...topicWords.house.slice(0, 5)
+            ];
+        }
+    }
+    
+    // Shuffle and limit to requested count
+    const shuffled = words.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+}

@@ -37,13 +37,59 @@ export class LayoutManager {
         let imageHTML = '';
         if (card.imageUrl) {
             if (settings.imageOnly) {
-                imageHTML = `<img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image" style="height: 100%; width: 100%; object-fit: cover;">`;
+                imageHTML = `
+                    <div class="image-drop-zone" data-word="${card.english}" data-index="${index}" style="position: relative;">
+                        <div class="drag-instructions">Drag & drop image here or click to cycle</div>
+                        <img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image" style="height: 100%; width: 100%; object-fit: cover; cursor: pointer;" onclick="window.cycleCardImage?.(${index})">
+                    </div>
+                `;
             } else {
-                imageHTML = `<img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image">`;
+                imageHTML = `
+                    <div class="image-drop-zone" data-word="${card.english}" data-index="${index}" style="position: relative;">
+                        <div class="drag-instructions">Drag & drop image here or click to cycle</div>
+                        <img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image" style="cursor: pointer;" onclick="window.cycleCardImage?.(${index})">
+                    </div>
+                `;
             }
         } else {
-            if (!settings.imageOnly) {
-                imageHTML = `<div class="flashcard-placeholder">📷 No image</div>`;
+            // Show loading spinner if image is being loaded, placeholder if not
+            const imageManager = window.app?.imageManager;
+            const isLoading = imageManager && imageManager.loadingImages && imageManager.loadingImages.has(card.english);
+            
+            if (isLoading) {
+                imageHTML = `
+                    <div class="image-drop-zone" data-word="${card.english}" data-index="${index}" style="position: relative;">
+                        <div class="flashcard-loading" style="
+                            width: 100%;
+                            height: 120px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                            position: relative;
+                        ">
+                            <div class="loading-spinner" style="
+                                width: 24px;
+                                height: 24px;
+                                border: 3px solid #e9ecef;
+                                border-top: 3px solid #007bff;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                            "></div>
+                            <div style="position: absolute; bottom: 8px; font-size: 12px; color: #666;">
+                                Loading ${card.english}...
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (!settings.imageOnly) {
+                imageHTML = `
+                    <div class="image-drop-zone" data-word="${card.english}" data-index="${index}" style="position: relative;">
+                        <div class="drag-instructions">Drag & drop image here</div>
+                        <div class="flashcard-placeholder">No image</div>
+                    </div>
+                `;
             }
         }
 
@@ -52,19 +98,13 @@ export class LayoutManager {
             textHTML = `
                 <div class="flashcard-text">
                     <div class="flashcard-english">${this.escapeHtml(card.english)}</div>
-                    ${settings.showKorean && card.korean ? 
-                        `<div class="flashcard-korean">${this.escapeHtml(card.korean)}</div>` : 
-                        ''
-                    }
+                    ${settings.showKorean && card.korean ? `<div class="flashcard-korean">${this.escapeHtml(card.korean)}</div>` : ''}
                 </div>
             `;
         }
 
         return `
-            <div class="flashcard ${imageOnlyClass}" 
-                 data-card-index="${index}" 
-                 style="${style}">
-                <div class="image-drop-hint">Drop image here</div>
+            <div class="flashcard ${imageOnlyClass}" style="${style}">
                 ${imageHTML}
                 ${textHTML}
             </div>
@@ -72,182 +112,72 @@ export class LayoutManager {
     }
 
     applyCustomStyles(gridElement, settings, cardWidth, cardHeight) {
-        // Remove any existing custom style element
-        const existingStyle = document.getElementById('flashcard-custom-styles');
+        const layout = this.layouts[settings.layout] || this.layouts['4-card'];
+        
+        // Remove any existing custom styles
+        let styleId = 'flashcard-custom-styles';
+        let existingStyle = document.getElementById(styleId);
         if (existingStyle) {
             existingStyle.remove();
         }
 
-        // Create new style element
+        // Create new custom styles
         const style = document.createElement('style');
-        style.id = 'flashcard-custom-styles';
+        style.id = styleId;
         
-        const layout = this.layouts[settings.layout] || this.layouts['4-card'];
-        const gap = Math.max(10, Math.round(cardWidth * 0.08)); // Responsive gap
+        // Determine grid columns based on layout
+        let columns = layout.columns;
+        if (settings.layout === '2-card') columns = 1; // Stack vertically for printing
+        if (settings.layout === '8-card') columns = 4;
         
         style.textContent = `
             .flashcard-grid.layout-${settings.layout} {
-                grid-template-columns: repeat(${layout.columns}, ${cardWidth}px);
-                gap: ${gap}px;
-                justify-content: center;
+                grid-template-columns: repeat(${columns}, 1fr);
+                gap: 20px;
+                justify-items: center;
             }
             
-            .flashcard-grid .flashcard {
+            .flashcard-grid.layout-${settings.layout} .flashcard {
                 width: ${cardWidth}px !important;
                 height: ${cardHeight}px !important;
+                font-family: ${settings.font} !important;
+                font-size: ${settings.fontSize}px !important;
             }
             
-            .flashcard-grid .flashcard-image {
-                max-height: ${settings.imageOnly ? '100%' : Math.round(cardHeight * 0.6)}px;
+            .flashcard-grid.layout-${settings.layout} .flashcard-image {
+                ${settings.imageOnly ? `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                ` : `
+                    width: 100%;
+                    height: 120px;
+                    object-fit: cover;
+                `}
             }
-            
-            .flashcard-grid .flashcard-english {
-                font-size: ${settings.fontSize}px;
+
+            .flashcard-grid.layout-${settings.layout} .flashcard.image-only {
+                padding: 0;
             }
-            
-            .flashcard-grid .flashcard-korean {
-                font-size: ${Math.round(settings.fontSize * 0.85)}px;
+
+            .flashcard-grid.layout-${settings.layout} .flashcard.image-only .flashcard-image {
+                border-radius: 8px;
+            }
+
+            @media print {
+                .flashcard-grid.layout-${settings.layout} {
+                    ${settings.layout === '2-card' ? 'grid-template-columns: 1fr 1fr;' : ''}
+                    gap: 10px;
+                }
             }
         `;
         
         document.head.appendChild(style);
     }
 
-    // Get layout configuration for print
-    getLayoutConfig(layoutType) {
-        return this.layouts[layoutType] || this.layouts['4-card'];
-    }
-
-    // Calculate optimal grid size for given container
-    calculateOptimalLayout(containerWidth, containerHeight, cardCount, aspectRatio = 1.2) {
-        const layouts = [];
-        
-        // Try different column configurations
-        for (let cols = 1; cols <= Math.min(8, cardCount); cols++) {
-            const rows = Math.ceil(cardCount / cols);
-            const cardWidth = (containerWidth - (cols - 1) * 20) / cols; // 20px gap
-            const cardHeight = cardWidth * aspectRatio;
-            const totalHeight = rows * cardHeight + (rows - 1) * 20;
-            
-            if (totalHeight <= containerHeight && cardWidth >= 100) {
-                layouts.push({
-                    columns: cols,
-                    rows: rows,
-                    cardWidth: Math.floor(cardWidth),
-                    cardHeight: Math.floor(cardHeight),
-                    totalHeight: totalHeight,
-                    efficiency: (cardCount / (cols * rows)) * (cardWidth / 300) // Preference for larger cards
-                });
-            }
-        }
-        
-        // Return layout with best efficiency
-        return layouts.sort((a, b) => b.efficiency - a.efficiency)[0];
-    }
-
-    // Generate print-optimized layout
-    generatePrintLayout(cards, settings) {
-        const layout = this.getLayoutConfig(settings.layout);
-        const cardsPerPage = this.getCardsPerPage(settings.layout);
-        const pages = [];
-        
-        for (let i = 0; i < cards.length; i += cardsPerPage) {
-            const pageCards = cards.slice(i, i + cardsPerPage);
-            pages.push({
-                cards: pageCards,
-                startIndex: i
-            });
-        }
-        
-        return pages;
-    }
-
-    getCardsPerPage(layoutType) {
-        switch (layoutType) {
-            case '2-card': return 2;
-            case '4-card': return 4;
-            case '8-card': return 8;
-            default: return 4;
-        }
-    }
-
-    // Create layout selector options
-    getLayoutOptions() {
-        return [
-            { value: '2-card', label: '2 Card Mode (Landscape)', description: '2 large cards side by side' },
-            { value: '4-card', label: '4 Card Mode (Portrait)', description: '2x2 grid of medium cards' },
-            { value: '8-card', label: '8 Card Mode (Portrait)', description: '4x2 grid of small cards' }
-        ];
-    }
-
-    // Validate layout settings
-    validateLayoutSettings(settings) {
-        const errors = [];
-        
-        if (!this.layouts[settings.layout]) {
-            errors.push('Invalid layout type');
-        }
-        
-        if (settings.cardSize < 50 || settings.cardSize > 500) {
-            errors.push('Card size must be between 50 and 500');
-        }
-        
-        if (settings.fontSize < 6 || settings.fontSize > 72) {
-            errors.push('Font size must be between 6 and 72');
-        }
-        
-        return errors;
-    }
-
-    // Get recommended layout for card count
-    getRecommendedLayout(cardCount) {
-        if (cardCount <= 2) return '2-card';
-        if (cardCount <= 4) return '4-card';
-        return '8-card';
-    }
-
-    // Escape HTML to prevent XSS
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    // Get layout dimensions for external use
-    getLayoutDimensions(layoutType, cardSize = 200) {
-        const layout = this.layouts[layoutType] || this.layouts['4-card'];
-        const sizeMultiplier = cardSize / 200;
-        
-        return {
-            columns: layout.columns,
-            cardWidth: Math.round(layout.cardWidth * sizeMultiplier),
-            cardHeight: Math.round(layout.cardHeight * sizeMultiplier),
-            gap: Math.max(10, Math.round(layout.cardWidth * sizeMultiplier * 0.08))
-        };
-    }
-
-    // Create responsive breakpoints
-    createResponsiveRules(settings) {
-        const layout = this.layouts[settings.layout];
-        const baseCardWidth = layout.cardWidth * (settings.cardSize / 200);
-        
-        return {
-            desktop: {
-                minWidth: '1200px',
-                columns: layout.columns,
-                cardWidth: baseCardWidth
-            },
-            tablet: {
-                maxWidth: '1199px',
-                minWidth: '768px',
-                columns: Math.max(2, layout.columns - 1),
-                cardWidth: baseCardWidth * 0.9
-            },
-            mobile: {
-                maxWidth: '767px',
-                columns: Math.min(2, layout.columns),
-                cardWidth: baseCardWidth * 0.8
-            }
-        };
     }
 }

@@ -1,19 +1,23 @@
 export class ImageManager {
     constructor() {
-        this.pixabayApiKey = '46654113-8b5fc7c7c1f26479982af7c7f'; // Same as wordtest
+        // Remove the hardcoded API key - use Netlify function instead
         this.imageCache = new Map();
         this.loadingImages = new Set();
     }
 
-    async addImagesWithAI(cards) {
+    async addImagesWithAI(cards, showAlerts = true) {
         if (!cards || cards.length === 0) {
-            alert('No cards available to add images to.');
+            if (showAlerts) {
+                alert('No cards available to add images to.');
+            }
             return;
         }
 
         const cardsWithoutImages = cards.filter(card => !card.imageUrl);
         if (cardsWithoutImages.length === 0) {
-            alert('All cards already have images.');
+            if (showAlerts) {
+                alert('All cards already have images.');
+            }
             return;
         }
 
@@ -30,14 +34,16 @@ export class ImageManager {
             }
         } catch (error) {
             console.error('Error adding images:', error);
-            alert('Error fetching images. Please try again.');
+            if (showAlerts) {
+                alert('Error fetching images. Please try again.');
+            }
         } finally {
             this.showLoadingIndicator(false);
         }
     }
 
     async fetchImageForCard(card) {
-        if (!card || !card.english) return;
+        if (!card || !card.english || card.imageUrl) return;
 
         this.loadingImages.add(card.english);
         
@@ -46,6 +52,7 @@ export class ImageManager {
             const cacheKey = card.english.toLowerCase();
             if (this.imageCache.has(cacheKey)) {
                 card.imageUrl = this.imageCache.get(cacheKey);
+                this.loadingImages.delete(card.english);
                 return;
             }
 
@@ -53,6 +60,8 @@ export class ImageManager {
             if (imageUrl) {
                 card.imageUrl = imageUrl;
                 this.imageCache.set(cacheKey, imageUrl);
+            } else {
+                console.log(`No image found for "${card.english}"`);
             }
         } catch (error) {
             console.error(`Error fetching image for "${card.english}":`, error);
@@ -64,34 +73,133 @@ export class ImageManager {
     async searchPixabayImage(query) {
         try {
             const cleanQuery = this.cleanSearchQuery(query);
-            const url = `https://pixabay.com/api/?key=${this.pixabayApiKey}&q=${encodeURIComponent(cleanQuery)}&image_type=photo&category=all&safesearch=true&per_page=20&min_width=300&min_height=200`;
+            console.log(`Searching for image: "${cleanQuery}"`);
             
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Pixabay API error: ${response.status}`);
+            // Try Pixabay first if we have network access
+            try {
+                const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(cleanQuery)}&image_type=photo&safesearch=true&per_page=5`;
+                console.log(`Fetching from: ${url}`);
+                
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`Search results for "${cleanQuery}":`, data);
+                    
+                    if (data.images && data.images.length > 0) {
+                        // Return a random image from the results
+                        const randomImage = data.images[Math.floor(Math.random() * data.images.length)];
+                        console.log(`Selected image for "${cleanQuery}":`, randomImage);
+                        return randomImage;
+                    } else if (data.hits && data.hits.length > 0) {
+                        // Handle direct Pixabay response format
+                        const randomImage = data.hits[Math.floor(Math.random() * data.hits.length)];
+                        const imageUrl = randomImage.webformatURL || randomImage.largeImageURL || randomImage.fullHDURL;
+                        console.log(`Selected Pixabay image for "${cleanQuery}":`, imageUrl);
+                        return imageUrl;
+                    }
+                }
+            } catch (networkError) {
+                console.log('Network request failed, using fallback');
             }
             
-            const data = await response.json();
-            
-            if (data.hits && data.hits.length > 0) {
-                // Prefer images with good aspect ratios for flashcards
-                const suitableImages = data.hits.filter(hit => {
-                    const aspectRatio = hit.imageWidth / hit.imageHeight;
-                    return aspectRatio >= 0.8 && aspectRatio <= 2.0; // Not too narrow or wide
-                });
-                
-                const selectedImages = suitableImages.length > 0 ? suitableImages : data.hits;
-                const randomImage = selectedImages[Math.floor(Math.random() * selectedImages.length)];
-                
-                // Use webformatURL for good quality but reasonable size
-                return randomImage.webformatURL;
-            }
-            
-            return null;
+            // Fallback to local images
+            console.log(`Using fallback for "${cleanQuery}"`);
+            return await this.getLocalFallbackImage(cleanQuery);
         } catch (error) {
             console.error('Pixabay search error:', error);
-            return null;
+            // Fallback to local development images if API fails
+            return await this.getLocalFallbackImage(cleanQuery);
         }
+    }
+
+    // Fallback method for local development or when API fails
+    async getLocalFallbackImage(query) {
+        const cleanQuery = query.toLowerCase().trim();
+        
+        // Simple emoji map for common words (like wordtest)
+        const emojiMap = {
+            apple: "🍎", dog: "🐶", cat: "🐱", book: "📚", car: "🚗", 
+            house: "🏠", tree: "🌳", sun: "☀️", moon: "🌙", star: "⭐",
+            water: "💧", fire: "🔥", flower: "🌸", fish: "🐠", bird: "🐦",
+            food: "🍎", eat: "🍽️", drink: "🥤", sleep: "😴", run: "🏃",
+            walk: "🚶", happy: "😊", sad: "😢", big: "🔍", small: "🔎",
+            banana: "🍌", orange: "🍊", grape: "🍇", strawberry: "🍓", 
+            chair: "🪑", table: "🪑", window: "🪟", door: "🚪", bed: "🛏️",
+            school: "🏫", hospital: "🏥", store: "🏪", park: "🏞️", beach: "🏖️",
+            phone: "📱", computer: "💻", camera: "📷", watch: "⌚", bag: "👜"
+        };
+        
+        // Check for direct emoji match
+        if (emojiMap[cleanQuery]) {
+            console.log(`Using emoji for "${cleanQuery}": ${emojiMap[cleanQuery]}`);
+            return this.createEmojiImageUrl(emojiMap[cleanQuery]);
+        }
+        
+        // Try to find partial matches
+        for (const [key, emoji] of Object.entries(emojiMap)) {
+            if (key.includes(cleanQuery) || cleanQuery.includes(key)) {
+                console.log(`Using partial match emoji for "${cleanQuery}": ${emoji}`);
+                return this.createEmojiImageUrl(emoji);
+            }
+        }
+        
+        // Fallback to Unsplash (doesn't require API key for basic usage)
+        try {
+            const unsplashUrl = `https://source.unsplash.com/200x200/?${encodeURIComponent(cleanQuery)}`;
+            console.log(`Using Unsplash fallback for "${cleanQuery}"`);
+            return unsplashUrl;
+        } catch (error) {
+            console.warn('Unsplash fallback failed:', error);
+        }
+        
+        // Final fallback - placeholder image
+        console.log(`Using placeholder for "${cleanQuery}"`);
+        return this.createPlaceholderImageUrl(cleanQuery);
+    }
+
+    // Create a data URL with emoji
+    createEmojiImageUrl(emoji) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        
+        // Fill background
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, 200, 200);
+        
+        // Draw emoji
+        ctx.font = '120px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#000';
+        ctx.fillText(emoji, 100, 100);
+        
+        return canvas.toDataURL();
+    }
+
+    // Create a placeholder image URL
+    createPlaceholderImageUrl(text) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        
+        // Fill background
+        ctx.fillStyle = '#e9ecef';
+        ctx.fillRect(0, 0, 200, 200);
+        
+        // Draw text
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#6c757d';
+        ctx.fillText('Image', 100, 80);
+        ctx.font = '14px Arial';
+        ctx.fillText(text, 100, 120);
+        
+        return canvas.toDataURL();
     }
 
     cleanSearchQuery(query) {

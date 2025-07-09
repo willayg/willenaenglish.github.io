@@ -85,7 +85,7 @@ Wordtest Tool TODO List (Detailed)
 
 10. Have a full-screen view for the 5 card layout in a new tab.
 
-11. In the 5 card layout for the landscape print it only prints one row per page after the first page
+11. ✅In the 5 card layout for the landscape print it only prints one row per page after the first page
 
 17. Landscape mode suggestion for 5-in-a-row layouts  ✅ DONE (December 16, 2024)
    - [x] Added automatic landscape mode for 5col-images and picture-quiz-5col layouts.
@@ -108,3 +108,41 @@ Wordtest Tool TODO List (Detailed)
    - [x] Implemented proper image loading and display with English word labels.
    - [x] Added shuffled Korean words on the right side for matching exercise.
    - Picture Matching layout now works correctly with images, English words, and Korean matching options.
+
+   20. The print is breaking the page at the title leaving a long blank first page on long word lists and long picture lists.  ✅ DONE (July 10, 2025)
+   - [x] Implemented smart page break logic that allows content to flow naturally from the header.
+   - [x] Changed tables from page-break-inside:avoid to page-break-inside:auto to allow breaking.
+   - [x] Added logic to keep first few table rows with header using page-break-before:avoid.
+   - [x] Implemented table chunking for long word lists (20 rows per chunk for default, 15 for 4-column, 12 for picture lists).
+   - [x] Multiple smaller tables instead of one large table prevents forced page breaks.
+   - [x] Added proper spacing between table chunks for clean layout.
+   - [x] Maintained proper numbering across table chunks.
+   - [x] Applied improvements to Default Table, Two Lists (Side by Side), and Picture List layouts.
+   - Print now flows naturally from header to content without leaving blank first pages on long lists.
+   21. Images all messed up in 5 row modes  ✅ DONE (July 10, 2025)
+   - [x] Fixed Picture Quiz (5 per row) layout that was missing printStyle variable.
+   - [x] Significantly reduced vertical gaps between images for landscape layout optimization.
+   - [x] Changed row-gap from full imageGap to imageGap/3 (minimum 3px) for tighter spacing.
+   - [x] Reduced item heights from 200px to 150px for better fit in landscape mode.
+   - [x] Optimized padding and margins for 5-column layout (10px padding, 8px column gap).
+   - [x] Added specific print CSS for quiz-item-5col with width 130px, height 140px.
+   - [x] Improved image container max-height to 100px for print optimization.
+   - [x] Enhanced grid layout to use full width (max-width: 100%) for landscape printing.
+   - [x] ULTRA-COMPACT VERSION: Further optimized to fit 20 images per page (4 rows of 5).
+   - [x] Reduced vertical gap to imageGap/5 (minimum 2px) for maximum density.
+   - [x] Decreased item dimensions to 130px width, 120px height for ultra-compact layout.
+   - [x] Print optimizations: 120px width, 110px height, 4px gaps, 80px image containers.
+   - [x] Reduced writing line width to 90px and height to 15px for space efficiency.
+   - [x] ULTRA-COMPACT HEADER: Implemented compact header with 30px logo, 18px title, 11px labels.
+   - [x] Integrated ultra-compact header into Picture Quiz (5 per row) layout for maximum space efficiency.
+   - [x] Added print styles for ultra-compact header and word box (25px logo, 16px title, 10px labels).
+   - [x] Word box also made ultra-compact with smaller padding, gaps, and 0.75em font size.
+   - Picture Quiz (5 per row) now fits 20 images per page with ultra-compact spacing optimized for landscape orientation. 
+   22. Images need to include names on Picture cards  ✅ DONE (July 10, 2025)
+   - [x] Fixed Picture Cards (5 per row) print layout with proper page break logic.
+   - [x] Removed artificial page chunking that was causing inefficient space usage (only 5 cards per page after first page).
+   - [x] Changed to single continuous grid layout that allows browser to break pages naturally.
+   - [x] Fixed image centering and text stacking in picture cards with proper flex layout.
+   - [x] Images now horizontally and vertically centered in each card with text below.
+   - [x] Removed restrictive page-break-inside:avoid CSS that prevented natural grid flow.
+   - Picture Cards (5 per row) now efficiently fills each page with maximum cards and proper layout.

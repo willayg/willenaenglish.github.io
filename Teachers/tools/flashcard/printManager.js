@@ -15,15 +15,23 @@ export class PrintManager {
             return;
         }
 
-        const printContent = this.generatePrintHTML(cards, settings);
-        
+        // Inject a script to auto-close after printing
+        const printContent = this.generatePrintHTML(cards, settings).replace(
+            /<\/body>/i,
+            `<script>
+                window.addEventListener('afterprint', function() { setTimeout(() => window.close(), 200); });
+                // Fallback for browsers that don't fire afterprint
+                window.onload = function() {
+                  setTimeout(function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 500);
+                  }, 200);
+                };
+            <\/script></body>`
+        );
+
         printWindow.document.write(printContent);
         printWindow.document.close();
-        
-        // Wait for images to load before printing
-        this.waitForImages(printWindow).then(() => {
-            printWindow.print();
-        });
     }
 
     exportToPDF(cards, settings) {
@@ -57,6 +65,88 @@ export class PrintManager {
     }
 
     getPrintStyles(settings, layout) {
+        // Special case for 2-card layout: 2 cards per page, each covers half the page
+        if (settings.layout === '2-card') {
+            return `
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                html, body {
+                    width: 100vw;
+                    height: 100vh;
+                    background: white;
+                }
+                .print-container {
+                    width: 100vw;
+                    height: 100vh;
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .flashcard-grid {
+                    display: flex;
+                    flex-direction: column;
+                    width: 100vw;
+                    height: 100vh;
+                }
+                .flashcard {
+                    flex: 1 1 50%;
+                    width: 100vw;
+                    height: 50vh;
+                    box-sizing: border-box;
+                    border: 2px solid #222;
+                    border-radius: 0;
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    background: white;
+                    page-break-inside: avoid;
+                }
+                .flashcard-image {
+                    max-width: 90%;
+                    max-height: 60%;
+                    object-fit: contain;
+                    margin-bottom: 8px;
+                }
+                .flashcard-text {
+                    width: 100%;
+                    text-align: center;
+                }
+                .flashcard-english {
+                    font-size: 2.5vw;
+                    font-weight: 600;
+                    color: #222;
+                    margin-bottom: 4px;
+                }
+                .flashcard-korean {
+                    font-size: 2vw;
+                    color: #666;
+                }
+                .flashcard-placeholder {
+                    width: 100%;
+                    height: 80px;
+                    background: #f0f0f0;
+                    border: 2px dashed #ccc;
+                    border-radius: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #666;
+                    font-size: 18px;
+                    margin-bottom: 8px;
+                }
+                .page-break {
+                    page-break-before: always;
+                }
+            `;
+        }
+        // Default for other layouts
         return `
             * {
                 margin: 0;
@@ -210,12 +300,8 @@ export class PrintManager {
     }
 
     generatePrintHeader(title) {
-        return `
-            <div class="print-header">
-                <h1>${this.escapeHtml(title)}</h1>
-                <div class="subtitle">Flashcard Practice Set</div>
-            </div>
-        `;
+        // Remove all print header/title/subtitle for print view
+        return '';
     }
 
     generatePrintContent(cards, settings, layout) {
@@ -275,12 +361,8 @@ export class PrintManager {
     }
 
     generateNameDateLine() {
-        return `
-            <div class="name-date-line">
-                <div>Name: _______________________</div>
-                <div>Date: _______________________</div>
-            </div>
-        `;
+        // Remove name/date line for print view
+        return '';
     }
 
     waitForImages(printWindow) {
