@@ -30,6 +30,7 @@
           <option value="wordsearch">Wordsearch</option>
           <option value="wordtest">Word Test</option>
           <option value="reading">Reading</option>
+          <option value="grid_game">Grid Game</option>
           <!-- Add more types as needed -->
         </select>
         <input type="date" id="searchDateFrom" class="border p-1">
@@ -157,6 +158,8 @@ if (mode === 'save') {
       filterType = 'wordtest';
     } else if (openerDoc.getElementById('wordsearchWords')) {
       filterType = 'wordsearch';
+    } else if (openerDoc.getElementById('gridSize') && openerDoc.getElementById('vocabInput')) {
+      filterType = 'grid_game';
     }
   }
   

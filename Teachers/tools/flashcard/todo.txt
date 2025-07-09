@@ -1,0 +1,26 @@
+✅ COMPLETED ITEMS:
+1. ✅ Make the style of the module cohesive with the other modules.
+2. ✅ Have the flashcards work in various modes.
+3. ✅ Implement a drag and drop system for the flashcards so that we can drag and drop images into the grid.
+4. ✅ There should be at least 3 layouts:
+   a. ✅ Landscape 1+1 image mode named "2 card mode".
+   b. ✅ 2x2 portrait mode named "4 card mode".
+   c. ✅ 4x4 portrait mode named "8 card mode".
+5. ✅ Korean toggle functionality (off by default)
+6. ✅ Image-only mode toggle
+7. ✅ AI image integration using Pixabay proxy
+8. ✅ Save/Load functionality using Supabase proxy
+9. ✅ Print and PDF functionality
+10. ✅ Font customization and sizing
+
+🔄 POTENTIAL FUTURE ENHANCEMENTS:
+- Add flip animation for flashcards
+- Implement spaced repetition algorithm
+- Add audio pronunciation support
+- Create study mode with progress tracking
+- Add collaborative sharing features
+- Implement card templates for different subjects
+- Add import/export from popular flashcard formats
+- Create mobile-responsive touch interactions
+- Add keyboard shortcuts for power users
+- Implement batch operations for large card sets

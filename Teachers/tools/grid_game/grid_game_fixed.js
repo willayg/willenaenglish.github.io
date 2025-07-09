@@ -519,120 +519,136 @@ Passage: ${passage}`
         }
     }
 
-    // Save and load functionality
-    async function saveSetup() {
-        const title = prompt('Enter a name for this grid setup:');
-        if (!title) return;
-
-        const setupData = {
-            title: title,
-            type: 'grid_game',
-            gridSize: gridSize,
-            words: currentWords,
-            questions: currentQuestions,
-            teams: currentTeams,
-            gridColor: gridColorPicker.value,
-            font: fontPicker.value
-        };
-
-        try {
-            const baseUrl = getBaseUrl();
-            const response = await fetch(`${baseUrl}/.netlify/functions/supabase_proxy`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'save_worksheet',
-                    title: title,
-                    type: 'grid_game',
-                    content: setupData
-                })
-            });
-
-            if (response.ok) {
-                alert('Grid setup saved successfully!');
-            } else {
-                throw new Error('Failed to save');
-            }
-        } catch (error) {
-            console.error('Save error:', error);
-            alert('Failed to save grid setup. Saving to local storage instead.');
-            
-            // Fallback to localStorage
-            localStorage.setItem(`grid_game_${title}`, JSON.stringify(setupData));
-            alert('Grid setup saved to local storage!');
-        }
+    // Save and load functionality - Updated to match wordtest pattern
+    function saveSetup() {
+        // Open worksheet manager for saving
+        window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
     }
 
-    async function loadSetup() {
+    function loadSetup() {
+        // Open worksheet manager for loading
+        window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+    }
+
+    // Function to get current grid game data for saving
+    window.getCurrentWorksheetData = function() {
+        return {
+            worksheet_type: 'grid_game',
+            title: '', // Will be filled by worksheet manager
+            passage_text: document.getElementById('passageInput').value || '',
+            words: currentWords,
+            layout: 'grid_game',
+            settings: {
+                gridSize: gridSize,
+                questions: currentQuestions,
+                teams: currentTeams,
+                gridColor: gridColorPicker.value,
+                font: fontPicker.value,
+                vocabInput: document.getElementById('vocabInput').value || '',
+                questionsInput: document.getElementById('questionsInput').value || ''
+            },
+            notes: `Grid Game - ${gridSize} with ${currentWords.length} words and ${currentQuestions.length} questions`
+        };
+    };
+
+    // Function to load worksheet data
+    window.loadWorksheetData = function(worksheetData) {
         try {
-            const baseUrl = getBaseUrl();
-            const response = await fetch(`${baseUrl}/.netlify/functions/supabase_proxy?action=list_worksheets&type=grid_game`);
+            console.log('Loading worksheet data:', worksheetData);
             
-            let setups = [];
+            // Load basic data
+            if (worksheetData.passage_text) {
+                document.getElementById('passageInput').value = worksheetData.passage_text;
+            }
             
-            if (response.ok) {
-                const data = await response.json();
-                setups = data.worksheets || [];
+            if (worksheetData.words && Array.isArray(worksheetData.words)) {
+                currentWords = worksheetData.words;
+                console.log('Loaded words:', currentWords);
             }
 
-            // Also check localStorage
-            const localSetups = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('grid_game_')) {
-                    const setupData = JSON.parse(localStorage.getItem(key));
-                    localSetups.push({
-                        title: key.replace('grid_game_', ''),
-                        content: setupData,
-                        source: 'local'
-                    });
+            // Load settings
+            if (worksheetData.settings) {
+                const settings = worksheetData.settings;
+                console.log('Loading settings:', settings);
+                
+                // Grid size
+                if (settings.gridSize) {
+                    gridSize = settings.gridSize;
+                    document.getElementById('gridSize').value = gridSize;
+                }
+
+                // Questions
+                if (settings.questions && Array.isArray(settings.questions)) {
+                    currentQuestions = settings.questions;
+                    console.log('Loaded questions:', currentQuestions);
+                }
+
+                // Teams
+                if (settings.teams && Array.isArray(settings.teams)) {
+                    currentTeams = settings.teams;
+                    updateTeamList();
+                }
+
+                // Grid color
+                if (settings.gridColor) {
+                    gridColorPicker.value = settings.gridColor;
+                }
+
+                // Font
+                if (settings.font) {
+                    fontPicker.value = settings.font;
+                }
+
+                // Input fields
+                if (settings.vocabInput) {
+                    document.getElementById('vocabInput').value = settings.vocabInput;
+                }
+
+                if (settings.questionsInput) {
+                    document.getElementById('questionsInput').value = settings.questionsInput;
                 }
             }
 
-            setups = [...setups, ...localSetups];
+            // Update the word and question lists in UI
+            document.getElementById('vocabInput').value = currentWords.join('\n');
+            document.getElementById('questionsInput').value = currentQuestions.join('\n');
 
-            if (setups.length === 0) {
-                alert('No saved grid setups found.');
-                return;
+            // Ensure we have enough questions for the words
+            if (currentQuestions.length < currentWords.length) {
+                console.log('Generating default questions for missing words');
+                while (currentQuestions.length < currentWords.length) {
+                    currentQuestions.push(`What does "${currentWords[currentQuestions.length]}" mean?`);
+                }
             }
 
-            // Create selection dialog
-            const setupNames = setups.map(s => `${s.title} ${s.source ? '(local)' : ''}`);
-            const selectedTitle = prompt(`Select a setup to load:\n${setupNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}\n\nEnter the number:`);
-            
-            if (!selectedTitle) return;
-            
-            const setupIndex = parseInt(selectedTitle) - 1;
-            if (setupIndex < 0 || setupIndex >= setups.length) {
-                alert('Invalid selection');
-                return;
+            // Update UI
+            console.log('About to generate grid. Words count:', currentWords.length);
+            if (currentWords.length > 0) {
+                generateGrid();
+                console.log('Grid generated successfully');
+            } else {
+                console.log('No words to generate grid');
             }
-
-            const selectedSetup = setups[setupIndex];
-            const content = selectedSetup.content;
-
-            // Load the setup
-            gridSize = content.gridSize || '3x3';
-            currentWords = content.words || [];
-            currentQuestions = content.questions || [];
-            currentTeams = content.teams || [];
-
-            gridSizeSelect.value = gridSize;
-            vocabInput.value = currentWords.join('\n');
-            questionsInput.value = currentQuestions.join('\n');
-            gridColorPicker.value = content.gridColor || '#f0f0f0';
-            fontPicker.value = content.font || 'Arial';
-
-            updateTeamList();
-            alert('Grid setup loaded successfully!');
-
+            alert('Grid game loaded successfully!');
+            
         } catch (error) {
-            console.error('Load error:', error);
-            alert('Failed to load grid setups');
+            console.error('Error loading worksheet data:', error);
+            alert('Error loading grid game data: ' + error.message);
         }
-    }
+    };
+
+    // Function that worksheet manager expects (following wordtest pattern)
+    window.loadWorksheet = function(worksheet) {
+        console.log('loadWorksheet called with:', worksheet);
+        window.loadWorksheetData(worksheet);
+    };
+
+    // Message handler for worksheet manager communication
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'worksheet_loaded' && event.data.worksheet) {
+            window.loadWorksheetData(event.data.worksheet);
+        }
+    });
 
     function resetSetup() {
         if (confirm('Are you sure you want to reset all settings and clear the game?')) {
