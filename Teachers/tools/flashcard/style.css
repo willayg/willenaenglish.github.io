@@ -83,7 +83,7 @@ body {
 }
 
 .floating-toolbar {
-  background: #e8f4f8;
+  background: #f9edfc;
   padding: 12px 24px;
   display: flex;
   align-items: center;
@@ -580,6 +580,57 @@ body {
 }
 
 /* Image drop zones in flashcards */
+.image-drop-zone {
+  position: relative;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.image-drop-zone:hover {
+  border-color: #cbd5e0;
+  background-color: #f7fafc;
+}
+
+.image-drop-zone.dragover {
+  border-color: #4299e1;
+  background-color: #e6f0fa;
+}
+
+.image-drop-zone.drag-success {
+  border-color: #48bb78 !important;
+  background-color: #e6fffa !important;
+  animation: success-pulse 1.5s ease-in-out;
+}
+
+@keyframes success-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.drag-instructions {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.image-drop-zone:hover .drag-instructions {
+  opacity: 1;
+}
+
+/* Legacy flashcard drag styles - keep for backward compatibility */
 .flashcard.dragover {
   border-color: #4299e1;
   background: #e6f0fa;
@@ -608,56 +659,90 @@ body {
 
 /* Print styles */
 @media print {
-  body {
-    background: white;
+  body, html {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
   }
-  
-  .container {
-    max-width: 100%;
-    padding: 0;
-  }
-  
-  .header, .top-actions, .floating-toolbar, .sidebar {
-    display: none;
-  }
-  
-  .app-card {
-    box-shadow: none;
-    border: none;
-    border-radius: 0;
-  }
-  
-  .main-content {
-    min-height: auto;
-  }
-  
-  .preview-area {
-    padding: 20px;
-    min-width: auto;
-  }
-  
-  .flashcard-grid {
-    gap: 15px;
-  }
-  
-  .flashcard {
-    box-shadow: none;
-    border: 2px solid #333;
-    page-break-inside: avoid;
-  }
-  
-  .flashcard:hover {
-    transform: none;
-    box-shadow: none;
-  }
-  
-  .flashcard-image {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .drop-overlay {
+  /* Hide everything except the flashcard grid and cards */
+  body > *:not(.flashcard-grid),
+  .container,
+  .header,
+  .top-actions,
+  .floating-toolbar,
+  .sidebar,
+  .preview-placeholder,
+  .drop-overlay,
+  .drop-message,
+  .placeholder-content,
+  .main-content,
+  .app-card,
+  .button-group,
+  .card-list-container,
+  .card-list-header,
+  .card-list,
+  .card-item,
+  .preview-area,
+  .drag-instructions,
+  .image-drop-hint {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+  .flashcard-grid {
+    display: grid !important;
+    gap: 15px !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    position: static !important;
+  }
+  .flashcard {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: white !important;
+    border: 2px solid #333 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    position: static !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  .flashcard-image {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: none !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    margin-bottom: 12px !important;
+  }
+  .flashcard-placeholder,
+  .drag-instructions,
+  .image-drop-hint {
+    display: none !important;
+  }
+  /* Remove all extra lines, overlays, and UI */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background: none !important;
+    border-radius: 0 !important;
+    outline: none !important;
   }
 }
 

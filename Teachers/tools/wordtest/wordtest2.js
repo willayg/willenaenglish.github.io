@@ -1243,48 +1243,88 @@ async function generateWorksheetHTML(title, wordPairs) {
 
     // --- BASIC TABLE LAYOUT ---
     if (layout === "default") {
-        const tableHtml = `
-            <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                <thead>
-                    <tr>
-                        <th style="width:10%;padding:8px;border-bottom:2px solid #333;">#</th>
-                        <th style="width:45%;padding:8px;border-bottom:2px solid #333;">English</th>
-                        <th style="width:45%;padding:8px;border-bottom:2px solid #333;">Korean</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${maskedPairs.map((pair, i) => {
-                        const isDupEng = isDuplicateEng(wordPairs[i]?.eng);
-                        const isDupKor = isDuplicateKor(wordPairs[i]?.kor);
-                        return `
+        // For long lists, break into chunks for better page breaks
+        const ROWS_PER_CHUNK = 20; // Max rows per table chunk
+        let tablesHtml = '';
+        
+        if (maskedPairs.length <= ROWS_PER_CHUNK) {
+            // Single table for shorter lists
+            tablesHtml = `
+                <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                    <thead>
                         <tr>
-                            <td style="padding:8px;border-bottom:1px solid #ddd;">${i + 1}</td>
-                            <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
-                            <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
+                            <th style="width:10%;padding:8px;border-bottom:2px solid #333;">#</th>
+                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">English</th>
+                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">Korean</th>
                         </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        `;
+                    </thead>
+                    <tbody>
+                        ${maskedPairs.map((pair, i) => {
+                            const isDupEng = isDuplicateEng(wordPairs[i]?.eng);
+                            const isDupKor = isDuplicateKor(wordPairs[i]?.kor);
+                            return `
+                            <tr>
+                                <td style="padding:8px;border-bottom:1px solid #ddd;">${i + 1}</td>
+                                <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
+                                <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
+                            </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else {
+            // Multiple tables for longer lists
+            const chunks = [];
+            for (let i = 0; i < maskedPairs.length; i += ROWS_PER_CHUNK) {
+                chunks.push(maskedPairs.slice(i, i + ROWS_PER_CHUNK));
+            }
+            
+            tablesHtml = chunks.map((chunk, chunkIndex) => `
+                <table style="width:100%;border-collapse:collapse;table-layout:fixed;${chunkIndex > 0 ? 'margin-top:20px;' : ''}">
+                    <thead>
+                        <tr>
+                            <th style="width:10%;padding:8px;border-bottom:2px solid #333;">#</th>
+                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">English</th>
+                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">Korean</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${chunk.map((pair, i) => {
+                            const globalIndex = chunkIndex * ROWS_PER_CHUNK + i;
+                            const isDupEng = isDuplicateEng(wordPairs[globalIndex]?.eng);
+                            const isDupKor = isDuplicateKor(wordPairs[globalIndex]?.kor);
+                            return `
+                            <tr>
+                                <td style="padding:8px;border-bottom:1px solid #ddd;">${globalIndex + 1}</td>
+                                <td class="word-cell" data-index="${globalIndex}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
+                                <td class="word-cell" data-index="${globalIndex}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
+                            </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `).join('');
+        }
+        
         return `
             <div class="worksheet-preview" style="${style}">
                 ${generateWorksheetHeader(title)}
                 ${printStyle}
-                ${tableHtml}
+                ${tablesHtml}
             </div>
         `;
     }
     
     // --- TWO LISTS LAYOUT (SIDE BY SIDE) ---
     if (layout === "4col") {
+        // Single table for all rows, let browser handle page breaks
         const half = Math.ceil(maskedPairs.length / 2);
         const left = maskedPairs.slice(0, half);
         const right = maskedPairs.slice(half);
         while (right.length < left.length) {
             right.push({ eng: "", kor: "" });
         }
-        
         const tableHtml = `
             <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                 <colgroup>
@@ -1350,47 +1390,100 @@ async function generateWorksheetHTML(title, wordPairs) {
         const pairsWithImages = await Promise.all(imagePromises);
         const rowHeight = Math.max(currentSettings.imageSize + currentSettings.imageGap, 100);
         const cellPadding = Math.max(currentSettings.imageGap / 2, 8);
-        const tableHtml = `
-            <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:850px;">
-                <colgroup>
-                    <col style="width:8%;min-width:60px;">
-                    <col style="width:30%;min-width:200px;">
-                    <col style="width:31%;min-width:220px;">
-                    <col style="width:31%;min-width:220px;">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">#</th>
-                        <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Picture</th>
-                        <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">English</th>
-                        <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Korean</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${pairsWithImages.map((pair, i) => {
-                        const isDupEng = isDuplicateEng(wordPairs[i]?.eng);
-                        const isDupKor = isDuplicateKor(wordPairs[i]?.kor);
-                        return `
-                        <tr style="min-height:${rowHeight}px;">
-                            <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;font-size:1.1em;font-weight:500;">${i + 1}</td>
-                            <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;">
-                                <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
-                                    ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor, currentSettings)}
-                                </div>
-                            </td>
-                            <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
-                            <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
+        
+        // Break long picture lists into chunks
+        const ROWS_PER_CHUNK = 12; // Max rows per table chunk for picture lists
+        let tablesHtml = '';
+        
+        if (pairsWithImages.length <= ROWS_PER_CHUNK) {
+            // Single table for shorter lists
+            tablesHtml = `
+                <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:850px;">
+                    <colgroup>
+                        <col style="width:8%;min-width:60px;">
+                        <col style="width:30%;min-width:200px;">
+                        <col style="width:31%;min-width:220px;">
+                        <col style="width:31%;min-width:220px;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">#</th>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Picture</th>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">English</th>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Korean</th>
                         </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        `;
+                    </thead>
+                    <tbody>
+                        ${pairsWithImages.map((pair, i) => {
+                            const isDupEng = isDuplicateEng(wordPairs[i]?.eng);
+                            const isDupKor = isDuplicateKor(wordPairs[i]?.kor);
+                            return `
+                            <tr style="min-height:${rowHeight}px;">
+                                <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;font-size:1.1em;font-weight:500;">${i + 1}</td>
+                                <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;">
+                                    <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
+                                        ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor, currentSettings)}
+                                    </div>
+                                </td>
+                                <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
+                                <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
+                            </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else {
+            // Multiple tables for longer lists
+            const chunks = [];
+            for (let i = 0; i < pairsWithImages.length; i += ROWS_PER_CHUNK) {
+                chunks.push(pairsWithImages.slice(i, i + ROWS_PER_CHUNK));
+            }
+            
+            tablesHtml = chunks.map((chunk, chunkIndex) => `
+                <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:850px;${chunkIndex > 0 ? 'margin-top:20px;' : ''}">
+                    <colgroup>
+                        <col style="width:8%;min-width:60px;">
+                        <col style="width:30%;min-width:200px;">
+                        <col style="width:31%;min-width:220px;">
+                        <col style="width:31%;min-width:220px;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">#</th>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Picture</th>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">English</th>
+                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Korean</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${chunk.map((pair, i) => {
+                            const globalIndex = chunkIndex * ROWS_PER_CHUNK + i;
+                            const isDupEng = isDuplicateEng(wordPairs[globalIndex]?.eng);
+                            const isDupKor = isDuplicateKor(wordPairs[globalIndex]?.kor);
+                            return `
+                            <tr style="min-height:${rowHeight}px;">
+                                <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;font-size:1.1em;font-weight:500;">${globalIndex + 1}</td>
+                                <td style="padding:${cellPadding}px 8px;border-bottom:1px solid #ddd;text-align:center;">
+                                    <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
+                                        ${renderImage(pair.imageUrl, globalIndex, pair._originalEng || pair.eng, pair.kor, currentSettings)}
+                                    </div>
+                                </td>
+                                <td class="word-cell" data-index="${globalIndex}" data-lang="eng" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
+                                <td class="word-cell" data-index="${globalIndex}" data-lang="kor" style="position:relative;padding:${cellPadding}px 12px;border-bottom:1px solid #ddd;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
+                            </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `).join('');
+        }
+        
         return `
             <div class="worksheet-preview" style="${style}">
                 ${generateWorksheetHeader(title)}
                 ${printStyle}
-                ${tableHtml}
+                ${tablesHtml}
             </div>
         `;
     }
@@ -1566,41 +1659,49 @@ async function generateWorksheetHTML(title, wordPairs) {
         const baseGap = Math.max(currentSettings.imageGap, 10);
         const dynamicPadding = Math.max(15, baseGap / 2);
         
-        // Group cards for better page breaks (15 cards per page - 3 rows of 5)
-        const cardsPerPage = 15;
-        const pages = [];
-        for (let i = 0; i < pairsWithImages.length; i += cardsPerPage) {
-            pages.push(pairsWithImages.slice(i, i + cardsPerPage));
-        }
-        
-        const gridHtml = pages.map((pageCards, pageIndex) => `
-            <div class="picture-cards-page-5col" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
-                <div class="picture-cards-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${baseGap}px; column-gap: 10px; padding: ${dynamicPadding}px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
-                    ${pageCards.map((pair, i) => `
-                        <div class="picture-card-5col" style="
-                            padding: 10px;
-                            border: 2px solid #e2e8f0;
-                            border-radius: 8px;
-                            background: white;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                            width: ${cardWidth}px;
-                            height: ${cardHeight}px;
+        // Use single continuous grid (no artificial page breaks)
+        const gridHtml = `
+            <div class="picture-cards-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${baseGap}px; column-gap: 10px; padding: ${dynamicPadding}px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
+                ${pairsWithImages.map((pair, i) => {
+                    // Show blank only if hide-eng mode is on, otherwise always show English name
+                    const showEng = currentSettings.testMode === 'hide-eng' ? '' : (pair.eng || pair._originalEng || '______');
+                    return `
+                    <div class="picture-card-5col" style="
+                        padding: 10px;
+                        border: 2px solid #e2e8f0;
+                        border-radius: 8px;
+                        background: white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        width: ${cardWidth}px;
+                        height: ${cardHeight}px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0;
+                    ">
+                        <div class="image-container" style="
                             display: flex;
                             align-items: center;
-                            gap: 10px;
+                            justify-content: center;
+                            width: 100%;
+                            height: 110px;
+                            min-height: 80px;
+                            max-height: 120px;
+                            margin-bottom: 8px;
+                            flex-shrink: 0;
                         ">
-                            <div class="image-container" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; position: relative; flex-shrink: 0;">
-                                ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCard5Settings)}
-                            </div>
-                            <div style="flex: 1; text-align: left;">
-                                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 4px; word-wrap: break-word;">${pair.eng || '______'}</div>
-                                <div style="color: #555; font-size: 0.8em; word-wrap: break-word;">${pair.kor || '______'}</div>
-                            </div>
+                            ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCard5Settings)}
                         </div>
-                    `).join('')}
-                </div>
+                        <div style="width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                            <div style="font-weight: bold; font-size: 0.95em; margin-bottom: 2px; word-wrap: break-word;">${showEng}</div>
+                            <div style="color: #555; font-size: 0.85em; word-wrap: break-word;">${pair.kor || '______'}</div>
+                        </div>
+                    </div>
+                    `;
+                }).join('')}
             </div>
-        `).join('');
+        `;
         
         return `
             <div class="worksheet-preview" style="${style}">
@@ -1639,7 +1740,10 @@ async function generateWorksheetHTML(title, wordPairs) {
         const gridHtml = pages.map((pageCards, pageIndex) => `
             <div class="picture-cards-page" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
                 <div class="picture-cards-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); row-gap: ${baseGap}px; column-gap: 15px; padding: ${dynamicPadding}px; width: 100%; max-width: 750px; margin: 0 auto; place-items: center;">
-                    ${pageCards.map((pair, i) => `
+                    ${pageCards.map((pair, i) => {
+                        // Show blank only if hide-eng mode is on, otherwise always show English name
+                        const showEng = currentSettings.testMode === 'hide-eng' ? '' : (pair.eng || pair._originalEng || '______');
+                        return `
                         <div class="picture-card" style="
                             padding: 15px;
                             border: 2px solid #e2e8f0;
@@ -1657,9 +1761,10 @@ async function generateWorksheetHTML(title, wordPairs) {
                             <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 180px; position: relative;">
                                 ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCardSettings)}
                             </div>
-                            <div style="width: 100px; border-bottom: 2px solid #333; height: 20px; margin-top: 10px;"></div>
+                            <div style="font-weight: bold; font-size: 1em; margin-top: 8px; word-wrap: break-word;">${showEng}</div>
                         </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `).join('');
@@ -1691,29 +1796,32 @@ async function generateWorksheetHTML(title, wordPairs) {
             }));
             
             const wordBoxHtml = `
-                <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">
-                        ${pairsWithImages.map(pair => `<span style="padding: 2px 6px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.8em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
+                <div style="margin-bottom: 10px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;">
+                        ${pairsWithImages.map(pair => `<span style="padding: 1px 4px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
                     </div>
                 </div>
             `;
             
-            // Group quiz items for better page breaks (15 items per page - 3 rows of 5)
-            const itemsPerPage = 15;
+            // Group quiz items for better page breaks (20 items per page - 4 rows of 5)
+            const itemsPerPage = 20;
             const pages = [];
             for (let i = 0; i < pairsWithImages.length; i += itemsPerPage) {
                 pages.push(pairsWithImages.slice(i, i + itemsPerPage));
             }
             
+            // Ultra-compact vertical gap for maximum density (20 items per page)
+            const ultraCompactGap = Math.max(Math.floor(currentSettings.imageGap / 5), 2);
+            
             const gridHtml = pages.map((pageItems, pageIndex) => `
                 <div class="picture-quiz-page-5col" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
-                    <div class="picture-quiz-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${currentSettings.imageGap}px; column-gap: 10px; padding: 20px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
+                    <div class="picture-quiz-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${ultraCompactGap}px; column-gap: 6px; padding: 8px; width: 100%; max-width: 100%; margin: 0 auto; place-items: center;">
                         ${pageItems.map((pair, i) => `
-                            <div class="quiz-item-5col" style="text-align: center; padding: 8px; width: 160px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
-                                <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 130px; position: relative;">
+                            <div class="quiz-item-5col" style="text-align: center; padding: 2px; width: 130px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                                <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 90px; position: relative;">
                                     ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, currentSettings)}
                                 </div>
-                                <div style="width: 100px; border-bottom: 2px solid #333; height: 20px; margin-top: 6px;"></div>
+                                <div style="width: 90px; border-bottom: 2px solid #333; height: 15px; margin-top: 2px;"></div>
                             </div>
                         `).join('')}
                     </div>
@@ -1727,7 +1835,8 @@ async function generateWorksheetHTML(title, wordPairs) {
             
             return `
                 <div class="worksheet-preview" style="${style}">
-                    ${generateWorksheetHeader(title)}
+                    ${generateWorksheetHeader(title, true)}
+                    ${printStyle}
                     ${tableHtml}
                 </div>
             `;
@@ -1862,54 +1971,67 @@ async function generateWorksheetHTML(title, wordPairs) {
 }
 
 // Generate worksheet header with logo, name, and date
-function generateWorksheetHeader(title) {
+function generateWorksheetHeader(title, isUltraCompact = false) {
     const design = currentSettings.design;
     
-    let logoHeight, titleSize, labelSize, titleFont;
+    let logoHeight, titleSize, labelSize, titleFont, marginBottom, padding;
     
-    switch(design) {
-        case 'Design 1':
-            logoHeight = '50px';
-            titleSize = '24px';
-            labelSize = '14px';
-            titleFont = 'Arial, sans-serif';
-            break;
-        case 'Design 2':
-            logoHeight = '45px';
-            titleSize = '28px';
-            labelSize = '16px';
-            titleFont = 'Georgia, serif';
-            break;
-        case 'Design 3':
-            logoHeight = '55px';
-            titleSize = '22px';
-            labelSize = '12px';
-            titleFont = 'Poppins, sans-serif';
-            break;
-        default:
-            logoHeight = '50px';
-            titleSize = '24px';
-            labelSize = '14px';
-            titleFont = 'Arial, sans-serif';
+    if (isUltraCompact) {
+        // Ultra-compact settings for 5-per-row layout
+        logoHeight = '30px';
+        titleSize = '18px';
+        labelSize = '11px';
+        titleFont = 'Arial, sans-serif';
+        marginBottom = '15px';
+        padding = '8px';
+    } else {
+        // Regular settings based on design
+        switch(design) {
+            case 'Design 1':
+                logoHeight = '50px';
+                titleSize = '24px';
+                labelSize = '14px';
+                titleFont = 'Arial, sans-serif';
+                break;
+            case 'Design 2':
+                logoHeight = '45px';
+                titleSize = '28px';
+                labelSize = '16px';
+                titleFont = 'Georgia, serif';
+                break;
+            case 'Design 3':
+                logoHeight = '55px';
+                titleSize = '22px';
+                labelSize = '12px';
+                titleFont = 'Poppins, sans-serif';
+                break;
+            default:
+                logoHeight = '50px';
+                titleSize = '24px';
+                labelSize = '14px';
+                titleFont = 'Arial, sans-serif';
+        }
+        marginBottom = '30px';
+        padding = '20px';
     }
     
     // Get the absolute path to the logo for printing
     const logoPath = new URL('../../../Assets/Images/color-logo.png', window.location.href).href;
     
     return `
-        <div class="worksheet-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding: 20px; border-bottom: 2px solid #e2e8f0;">
-            <div style="display: flex; align-items: center; gap: 15px;">
+        <div class="worksheet-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${marginBottom}; padding: ${padding}; border-bottom: ${isUltraCompact ? '1px' : '2px'} solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: ${isUltraCompact ? '8px' : '15px'};">
                 <img src="${logoPath}" alt="Willena Logo" style="height: ${logoHeight}; width: auto;">
                 <h2 style="margin: 0; font-size: ${titleSize}; color: #2d3748; font-family: ${titleFont};">${title}</h2>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 220px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-weight: bold; min-width: 50px; font-size: ${labelSize}; font-family: ${titleFont};">Name:</span>
-                    <div style="flex: 1; border-bottom: 2px solid #333; height: 20px;"></div>
+            <div style="display: flex; flex-direction: column; gap: ${isUltraCompact ? '4px' : '8px'}; min-width: ${isUltraCompact ? '180px' : '220px'};">
+                <div style="display: flex; align-items: center; gap: ${isUltraCompact ? '4px' : '8px'};">
+                    <span style="font-weight: bold; min-width: ${isUltraCompact ? '40px' : '50px'}; font-size: ${labelSize}; font-family: ${titleFont};">Name:</span>
+                    <div style="flex: 1; border-bottom: 2px solid #333; height: ${isUltraCompact ? '16px' : '20px'};"></div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-weight: bold; min-width: 50px; font-size: ${labelSize}; font-family: ${titleFont};">Date:</span>
-                    <div style="flex: 1; border-bottom: 2px solid #333; height: 20px;"></div>
+                <div style="display: flex; align-items: center; gap: ${isUltraCompact ? '4px' : '8px'};">
+                    <span style="font-weight: bold; min-width: ${isUltraCompact ? '40px' : '50px'}; font-size: ${labelSize}; font-family: ${titleFont};">Date:</span>
+                    <div style="flex: 1; border-bottom: 2px solid #333; height: ${isUltraCompact ? '16px' : '20px'};"></div>
                 </div>
             </div>
         </div>
@@ -2042,35 +2164,67 @@ function performPrint() {
                     display: none !important;
                 }
                 
-                /* Ensure proper page breaks */
+                /* Smart page break logic */
+                .worksheet-header {
+                    page-break-after: avoid;
+                    page-break-inside: avoid;
+                    margin-bottom: 20px;
+                }
+                
+                /* Allow tables to break across pages for long content */
+                table {
+                    page-break-inside: auto;
+                    border-collapse: collapse;
+                    page-break-before: auto;
+                    margin-bottom: 10px;
+                }
+                
+                /* Keep table headers with content */
+                thead {
+                    display: table-header-group;
+                    page-break-after: avoid;
+                }
+                
+                /* Allow table rows to break, but avoid breaking within a row */
+                tr {
+                    page-break-inside: avoid;
+                    page-break-before: auto;
+                }
+                
+                /* Ensure first few rows stay with header */
+                tbody tr:nth-child(-n+3) {
+                    page-break-before: avoid;
+                }
+                
+                /* Prevent orphaned single rows */
+                tbody tr:nth-last-child(-n+2) {
+                    page-break-before: avoid;
+                }
+                
+                /* Better spacing for chunked tables */
+                table:not(:first-of-type) {
+                    page-break-before: auto;
+                    margin-top: 20px;
+                }
+                
+                /* Better page breaks for picture layouts */
+                .picture-cards-page,
                 .picture-cards-page,
                 .picture-cards-page-5col,
                 .picture-quiz-page,
                 .picture-quiz-page-5col {
                     page-break-before: auto;
                     page-break-after: auto;
-                    page-break-inside: avoid;
+                    /* page-break-inside: avoid;  <-- Allow breaking inside grid for better fill */
                 }
                 
                 .picture-cards-page:not(:first-child),
                 .picture-cards-page-5col:not(:first-child),
+                .picture-cards-page:not(:first-child),
                 .picture-quiz-page:not(:first-child),
                 .picture-quiz-page-5col:not(:first-child) {
-                    page-break-before: always;
-                }
-                
-                /* Table styling for print */
-                table {
-                    page-break-inside: avoid;
-                    border-collapse: collapse;
-                }
-                
-                thead {
-                    display: table-header-group;
-                }
-                
-                tr {
-                    page-break-inside: avoid;
+                    /* Remove forced page breaks for natural grid flow */
+                    page-break-before: auto;
                 }
                 
                 /* Image styling for print */
@@ -2101,6 +2255,65 @@ function performPrint() {
                     display: grid !important;
                     width: 100% !important;
                     margin: 0 auto !important;
+                }
+                
+                /* Ultra-compact header for 5-column layouts */
+                .picture-quiz-5col .worksheet-header {
+                    margin-bottom: 12px !important;
+                    padding: 6px !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
+                }
+                
+                .picture-quiz-5col .worksheet-header img {
+                    height: 25px !important;
+                }
+                
+                .picture-quiz-5col .worksheet-header h2 {
+                    font-size: 16px !important;
+                }
+                
+                .picture-quiz-5col .worksheet-header span {
+                    font-size: 10px !important;
+                    min-width: 35px !important;
+                }
+                
+                .picture-quiz-5col .worksheet-header div[style*="border-bottom"] {
+                    height: 14px !important;
+                }
+                
+                /* Compact word box for 5-column layouts */
+                .picture-quiz-5col div[style*="background: #f9f9f9"] {
+                    margin-bottom: 8px !important;
+                    padding: 4px !important;
+                }
+                
+                .picture-quiz-5col div[style*="background: #f9f9f9"] span {
+                    padding: 1px 3px !important;
+                    font-size: 0.7em !important;
+                }
+                
+                /* Optimize 5-column layouts for landscape printing */
+                .picture-quiz-grid-5col {
+                    row-gap: 4px !important;
+                    column-gap: 4px !important;
+                    padding: 6px !important;
+                    max-width: 100% !important;
+                }
+                
+                .quiz-item-5col {
+                    width: 120px !important;
+                    height: 110px !important;
+                    padding: 1px !important;
+                }
+                
+                .quiz-item-5col .image-container {
+                    max-height: 80px !important;
+                }
+                
+                .quiz-item-5col div[style*="border-bottom"] {
+                    width: 85px !important;
+                    height: 12px !important;
+                    margin-top: 1px !important;
                 }
                 
                 /* Ensure cards don't break across pages */

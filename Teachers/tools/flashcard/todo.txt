@@ -1,17 +1,23 @@
 ✅ COMPLETED ITEMS:
 1. ✅ Make the style of the module cohesive with the other modules.
-2. ✅ Have the flashcards work in various modes.
-3. ✅ Implement a drag and drop system for the flashcards so that we can drag and drop images into the grid.
-4. ✅ There should be at least 3 layouts:
-   a. ✅ Landscape 1+1 image mode named "2 card mode".
-   b. ✅ 2x2 portrait mode named "4 card mode".
-   c. ✅ 4x4 portrait mode named "8 card mode".
-5. ✅ Korean toggle functionality (off by default)
+2. Have the flashcards work in various modes.
+3. ✅ Implement a drag and drop system for the flashcards so that we can drag and drop images into the grid - Enhanced drag and drop system implemented similar to wordtest with visual feedback, file validation, loading indicators, and success animations
+4.  There should be at least 3 layouts:
+   a.  Landscape 1+1 image mode named "2 card mode".
+   b.  2x2 portrait mode named "4 card mode".
+   c.  4x4 portrait mode named "8 card mode".
+5.  Korean toggle functionality (off by default)
 6. ✅ Image-only mode toggle
-7. ✅ AI image integration using Pixabay proxy
-8. ✅ Save/Load functionality using Supabase proxy
-9. ✅ Print and PDF functionality
-10. ✅ Font customization and sizing
+7.  ✅AI image integration using Pixabay proxy
+8. Save/Load functionality using Supabase proxy
+9.  Print and PDF functionality
+10.  Font customization and sizing
+11.  ✅Auto-load images on card generation - Images now automatically fetch when cards are generated or loaded, with individual loading indicators similar to wordtest system
+12. ✅Cards overlap in the preview mode
+13. Cards dont follow the flash card layout that i want
+14. ✅Ensure that all cards are the same size
+15. ✅Delete button doesnt work on words. Also allow right click to delete
+16. Font resizing doesnt work
 
 🔄 POTENTIAL FUTURE ENHANCEMENTS:
 - Add flip animation for flashcards

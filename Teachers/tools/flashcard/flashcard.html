@@ -52,15 +52,16 @@
 
                 <div class="layout-group">
                     <select class="layout-select" id="layoutSelect">
-                        <option value="2-card">2 Card Mode</option>
+                        <option value="2-card">2x2 Portrait</option>
                         <option value="4-card">4 Card Mode</option>
                         <option value="8-card">8 Card Mode</option>
                     </select>
                 </div>
 
                 <div class="slider-group">
-                    <label>Card Size</label>
-                    <input type="range" class="slider" id="cardSizeSlider" min="100" max="300" value="200">
+                    <label for="imageZoomSlider" style="font-size: 15px;">Image Zoom</label>
+                    <input type="range" class="slider" id="imageZoomSlider" min="0.5" max="2" step="0.01" value="1" style="width: 180px;">
+                    <span id="imageZoomValue" style="font-size: 14px;">1.00x</span>
                 </div>
 
                 <div class="toggle-group">
@@ -93,12 +94,33 @@
 
                     <div class="input-group">
                         <label>Word List</label>
-                        <textarea class="textarea-field" id="wordListInput" placeholder="Enter words (one per line):&#10;apple&#10;banana&#10;cat&#10;dog"></textarea>
+                        <textarea class="textarea-field" id="wordListInput" placeholder="Enter words (one per line):&#10;apple&#10;banana&#10;cat&#10;dog">apple
+banana
+cat
+dog
+book
+car
+house
+tree</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Generate from Topic</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" class="input-field" id="topicInput" placeholder="e.g., food, animals, colors..." style="flex: 1;">
+                            <select class="toolbar-select" id="wordCountSelect" style="width: 70px;">
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="20" selected>20</option>
+                                <option value="25">25</option>
+                                <option value="30">30</option>
+                            </select>
+                            <button class="secondary-btn" id="generateFromTopicBtn" style="padding: 8px 12px; white-space: nowrap;">Generate</button>
+                        </div>
                     </div>
 
                     <div class="button-group">
                         <button class="primary-btn" id="generateCardsBtn">Generate Cards</button>
-                        <button class="secondary-btn" id="addImagesBtn">Add Images</button>
                         <button class="secondary-btn" id="clearCardsBtn">Clear Cards</button>
                     </div>
 
@@ -140,6 +162,6 @@
         </div>
     </div>
 
-    <script type="module" src="flashcard.js"></script>
+    <script src="flashcard-simple.js"></script>
 </body>
 </html>
