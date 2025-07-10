@@ -8,19 +8,97 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <script>
+    // Feedback modal loader for Reading Worksheet Generator
+    window.showFeedbackModal = async function() {
+      // Load feedback modal HTML if not already present
+      if (!document.getElementById('feedback-modal')) {
+        const resp = await fetch('/Teachers/components/feedback-modal.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+      }
+
+      // Show the modal
+      const modal = document.getElementById('feedback-modal');
+      if (!modal) return;
+      modal.style.display = 'block';
+
+      // Close modal handler
+      const closeBtn = modal.querySelector('.close');
+      if (closeBtn) {
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+      }
+      window.onclick = function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+
+      // Submit handler
+      const submitBtn = modal.querySelector('#feedback-submit');
+      if (submitBtn) {
+        submitBtn.onclick = async function() {
+          const feedbackText = modal.querySelector('#feedback-text').value;
+          // Collect reading worksheet state
+          const state = {
+            title: document.getElementById('readingTitle')?.value || '',
+            passage: document.getElementById('readingPassage')?.value || '',
+            questions: document.getElementById('readingQuestions')?.value || '',
+            answers: document.getElementById('readingAnswers')?.value || '',
+            includePassage: document.getElementById('includePassage')?.checked || false,
+            font: document.getElementById('fontSelect')?.value || '',
+            fontSize: document.getElementById('fontSizeInput')?.value || '',
+            template: document.getElementById('templateSelect')?.value || '',
+            layout: document.getElementById('layoutSelect')?.value || '',
+            testMode: document.getElementById('testModeSelect')?.value || '',
+            numQuestions: document.getElementById('numQuestions')?.value || '',
+            questionFormat: document.getElementById('questionFormat')?.value || '',
+            categories: Array.from(document.getElementById('categorySelect')?.selectedOptions || []).map(opt => opt.value)
+          };
+          // Submit to Supabase (assumes feedbackSubmitToSupabase is globally available)
+          if (window.feedbackSubmitToSupabase) {
+            await window.feedbackSubmitToSupabase({
+              module: 'reading',
+              feedback: feedbackText,
+              state
+            });
+          }
+          modal.style.display = 'none';
+          modal.querySelector('#feedback-text').value = '';
+          alert('Thank you for your feedback!');
+        };
+      }
+    };
+    </script>
     <div class="container">
         <div class="app-card">
             <!-- Header -->
-            <div class="header">
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
                 <div class="logo">
                     <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
                 </div>
-                <h1>Reading Worksheet Generator</h1>
-                <div class="menu-icon">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+                <h1 style="flex:1; text-align:center; margin:0;">Reading Worksheet Generator</h1>
+                <!-- Burger Menu Component (vertically centered in header, inside container) -->
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
 
             <!-- Top Action Bar -->
@@ -381,6 +459,102 @@
             };
             input.click();
         }
+
+        // Feedback modal loader for burger menu integration
+window.showFeedbackModal = function() {
+  // Prevent multiple modals
+  if (document.getElementById('feedback-modal-bg')) return;
+  // Try to find the template in DOM first
+  let template = document.getElementById('feedback-modal-template');
+  if (!template) {
+    // If not found, fetch and inject it
+    fetch('/Teachers/components/feedback-modal.html')
+      .then(resp => resp.text())
+      .then(html => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+        showFeedbackModal(); // Call again now that template is present
+      });
+    return;
+  }
+  // Clone and show modal
+  const modalNode = template.content.cloneNode(true);
+  document.body.appendChild(modalNode);
+  // Add close/cancel handlers
+  const bg = document.getElementById('feedbackModalBg');
+  if (!bg) return;
+  const closeBtn = bg.querySelector('#feedbackModalCloseBtn');
+  const cancelBtn = bg.querySelector('#feedbackCancelBtn');
+  function closeModal() { bg.remove(); }
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  // Optional: focus textarea
+  const textarea = bg.querySelector('textarea');
+  if (textarea) textarea.focus();
+
+  // Feedback submit handler
+  const submitBtn = bg.querySelector('#feedbackSubmitBtn');
+  if (submitBtn) {
+    submitBtn.onclick = async function() {
+      const feedbackText = textarea.value.trim();
+      if (!feedbackText) {
+        alert('Please enter your feedback.');
+        textarea.focus();
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      // Prepare feedback payload
+      // Gather tool state (settings)
+      let toolState = {};
+      try {
+        toolState = {
+          title: document.getElementById('readingTitle')?.value || '',
+          passage: document.getElementById('readingPassage')?.value || '',
+          questions: document.getElementById('readingQuestions')?.value || '',
+          answers: document.getElementById('readingAnswers')?.value || '',
+          includePassage: document.getElementById('includePassage')?.checked,
+          font: document.getElementById('fontSelect')?.value || '',
+          fontSize: document.getElementById('fontSizeInput')?.value || '',
+          template: document.getElementById('templateSelect')?.value || '',
+          layout: document.getElementById('layoutSelect')?.value || '',
+          testMode: document.getElementById('testModeSelect')?.value || ''
+        };
+      } catch (e) { toolState = {}; }
+      const payload = {
+        feedback: feedbackText,
+        module: 'reading',
+        page_url: window.location.pathname,
+        tool_state: toolState,
+        user_id: null // Optionally set if you have auth
+      };
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+          submitBtn.textContent = 'Sent!';
+          setTimeout(closeModal, 900);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send';
+          alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send';
+        alert('Network error: ' + err.message);
+      }
+    };
+  }
+};
     </script>
 </body>
 </html>

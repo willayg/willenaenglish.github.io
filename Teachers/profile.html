@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #fff;
+      font-family: 'Poppins', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      padding: 0;
+    }
+    .dashboard-outer-container {
+      background: #39384a;
+      border-radius: 32px;
+      border: 2px solid #b0bfc4;
+      margin: 20px auto;
+      max-width: 95vw;
+      width: 95vw;
+      min-height: 90vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      box-shadow: 0 4px 32px 0 rgba(30,41,59,0.13);
+    }
+    .dashboard-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 40px 32px 32px 32px;
+      width: 100%;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 2px 12px rgba(30,41,59,0.08);
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .logo-img {
+      height: 48px;
+      width: auto;
+    }
+    h2 {
+      color: #39384a;
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    .profile-form label {
+      font-weight: 600;
+      margin-top: 18px;
+      display: block;
+      color: #39384a;
+    }
+    .profile-form input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 16px;
+      border: 1px solid #b0bfc4;
+      border-radius: 6px;
+      font-size: 16px;
+      background: #f6f7fb;
+    }
+    .profile-form button {
+      width: 100%;
+      padding: 12px;
+      background: #5a4ad1;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .profile-form .success { color: #388e3c; margin-bottom: 10px; text-align: center; }
+    .profile-form .error { color: #d32f2f; margin-bottom: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-outer-container">
+    <div class="dashboard-container">
+      <div class="profile-header">
+        <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="logo-img">
+        <h2>Teacher Profile</h2>
+      </div>
+      <form class="profile-form" id="profileForm">
+        <div id="profileMessage"></div>
+        <label for="name">Name</label>
+        <input type="text" id="name" required>
+        <label for="email">Email Address</label>
+        <input type="email" id="email" required>
+        <label for="password">New Password</label>
+        <input type="password" id="password" placeholder="Leave blank to keep current password">
+        <button type="submit">Update Profile</button>
+      </form>
+    </div>
+  </div>
+  <script type="module">
+    import { loginTeacher } from './login.js';
+    const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_proxy';
+    const profileForm = document.getElementById('profileForm');
+    const profileMessage = document.getElementById('profileMessage');
+    // Assume user is already logged in and userId is stored in localStorage
+    let userId = localStorage.getItem('userId');
+    let userEmail = '';
+    async function fetchProfile() {
+      // Fetch current profile info from proxy
+      const res = await fetch(`${SUPABASE_PROXY_URL}?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+      const result = await res.json();
+      if (res.ok && result.success) {
+        document.getElementById('email').value = result.email;
+        userEmail = result.email;
+        if (result.name) {
+          document.getElementById('name').value = result.name;
+        }
+      }
+    }
+    if (userId) fetchProfile();
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      profileMessage.textContent = '';
+      profileMessage.className = '';
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      // Update name, email and/or password via proxy
+      const res = await fetch(SUPABASE_PROXY_URL + '?action=update_profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, name, email, password })
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        profileMessage.textContent = 'Profile updated successfully!';
+        profileMessage.className = 'success';
+        if (email) userEmail = email;
+        document.getElementById('password').value = '';
+      } else {
+        profileMessage.textContent = result.error || 'Update failed.';
+        profileMessage.className = 'error';
+      }
+    });
+  </script>
+</body>
+</html>

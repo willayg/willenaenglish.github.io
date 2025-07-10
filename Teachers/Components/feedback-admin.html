@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Admin - Willena Tools</title>
+  <link rel="stylesheet" href="/Teachers/components/style.css">
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
+    .admin-container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 32px; }
+    h1 { text-align: center; color: #1976d2; margin-bottom: 24px; }
+    .feedback-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .feedback-table th, .feedback-table td { padding: 10px 12px; border-bottom: 1px solid #e0e0e0; text-align: left; }
+    .feedback-table th { background: #f0f6ff; color: #1976d2; font-weight: 600; }
+    .feedback-table tr:last-child td { border-bottom: none; }
+    .feedback-row { transition: background 0.2s; }
+    .feedback-row:hover { background: #f5faff; }
+    .tool-state-details { font-size: 0.95em; color: #444; background: #f8f8fa; border-radius: 6px; padding: 8px; margin-top: 6px; white-space: pre-wrap; }
+    .search-bar { margin-bottom: 18px; display: flex; gap: 10px; }
+    .search-bar input { flex: 1; padding: 8px 12px; border-radius: 5px; border: 1px solid #d0d0d0; font-size: 1em; }
+    .search-bar button { padding: 8px 18px; border-radius: 5px; border: none; background: #1976d2; color: #fff; font-size: 1em; cursor: pointer; }
+    .search-bar button:hover { background: #1256a3; }
+    .json-toggle { color: #1976d2; cursor: pointer; font-size: 0.95em; margin-left: 8px; }
+    .json-toggle:hover { text-decoration: underline; }
+    .json-collapsed { display: none; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <h1>Feedback Admin</h1>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search feedback, module, or user...">
+      <select id="statusFilter" style="min-width:120px;">
+        <option value="all">All Statuses</option>
+        <option value="new">New</option>
+        <option value="urgent">Urgent</option>
+        <option value="fixed">Fixed</option>
+        <option value="unfixed">Unfixed</option>
+        <option value="ignore">Ignore</option>
+      </select>
+      <select id="moduleFilter" style="min-width:120px;"><option value="all">All Modules</option></select>
+      <button id="refreshBtn">Refresh</button>
+    </div>
+    <table class="feedback-table" id="feedbackTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Feedback</th>
+          <th>Module</th>
+          <th>Tool State</th>
+          <th>User</th>
+          <th>Page</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="feedbackTableBody">
+        <tr><td colspan="7" style="text-align:center; color:#888;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <script type="module" src="/Teachers/components/feedback-admin.js"></script>
+</body>
+</html>
