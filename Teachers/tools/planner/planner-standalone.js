@@ -745,3 +745,95 @@ function setupSaveButton() {
     });
   }
 }
+
+// Feedback modal loader for burger menu integration
+window.showFeedbackModal = function() {
+  // Prevent multiple modals
+  if (document.getElementById('feedback-modal-bg')) return;
+  // Try to find the template in DOM first
+  let template = document.getElementById('feedback-modal-template');
+  if (!template) {
+    // If not found, fetch and inject it
+    fetch('/Teachers/components/feedback-modal.html')
+      .then(resp => resp.text())
+      .then(html => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+        showFeedbackModal(); // Call again now that template is present
+      });
+    return;
+  }
+  // Clone and show modal
+  const modalNode = template.content.cloneNode(true);
+  document.body.appendChild(modalNode);
+  // Add close/cancel handlers
+  const bg = document.getElementById('feedbackModalBg');
+  if (!bg) return;
+  const closeBtn = bg.querySelector('#feedbackModalCloseBtn');
+  const cancelBtn = bg.querySelector('#feedbackCancelBtn');
+  function closeModal() { bg.remove(); }
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  // Optional: focus textarea
+  const textarea = bg.querySelector('textarea');
+  if (textarea) textarea.focus();
+
+  // Feedback submit handler
+  const submitBtn = bg.querySelector('#feedbackSubmitBtn');
+  if (submitBtn) {
+    submitBtn.onclick = async function() {
+      const feedbackText = textarea.value.trim();
+      if (!feedbackText) {
+        alert('Please enter your feedback.');
+        textarea.focus();
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      // Prepare feedback payload
+      // Gather tool state (settings)
+      let toolState = {};
+      try {
+        toolState = {
+          className: document.getElementById('plannerClassName')?.value || '',
+          date: document.getElementById('plannerDate')?.value || '',
+          duration: document.getElementById('plannerDuration')?.value || '',
+          topic: document.getElementById('plannerTopic')?.value || '',
+          activities: document.getElementById('plannerActivities')?.value || '',
+          mode: document.getElementById('fullPlanMode')?.classList.contains('active') ? 'full' : 'activity'
+        };
+      } catch (e) { toolState = {}; }
+      const payload = {
+        feedback: feedbackText,
+        module: 'planner',
+        page_url: window.location.pathname,
+        tool_state: toolState,
+        user_id: null // Optionally set if you have auth
+      };
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+          submitBtn.textContent = 'Sent!';
+          setTimeout(closeModal, 900);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send';
+          alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send';
+        alert('Network error: ' + err.message);
+      }
+    };
+  }
+};

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Login</title>
+  <link rel="stylesheet" href="../tests/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { background: #f6f7fb; font-family: 'Poppins', sans-serif; }
+    .login-container {
+      max-width: 400px; margin: 60px auto; background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(60,60,90,0.08); padding: 32px 28px;
+    }
+    .login-container h2 { text-align: center; margin-bottom: 24px; }
+    .login-container label { font-weight: 600; margin-top: 12px; display: block; }
+    .login-container input {
+      width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 16px;
+      border: 1px solid #ccc; border-radius: 5px; font-size: 16px;
+    }
+    .login-container button {
+      width: 100%; padding: 12px; background: #5a4ad1; color: #fff;
+      border: none; border-radius: 5px; font-size: 18px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    .login-container .error { color: #d32f2f; margin-bottom: 10px; text-align: center; }
+    .login-container .success { color: #388e3c; margin-bottom: 10px; text-align: center; }
+    .login-container .role-info { text-align: center; margin-top: 16px; color: #666; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Teacher Login</h2>
+    <div id="loginError" class="error" style="display:none;"></div>
+    <form id="loginForm">
+      <label for="login">Email or Username</label>
+      <input type="text" id="login" required autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="current-password">
+      <button type="submit">Login</button>
+    </form>
+    <div class="role-info" id="roleInfo"></div>
+  </div>
+    <script type="module" src="./login.js"></script>
+    <script type="module">
+      import { loginTeacher, getUserRole } from './login.js';
+      const loginForm = document.getElementById('loginForm');
+      const loginError = document.getElementById('loginError');
+      const roleInfo = document.getElementById('roleInfo');
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginError.style.display = 'none';
+        roleInfo.textContent = '';
+        const loginValue = document.getElementById('login').value.trim();
+        const password = document.getElementById('password').value;
+        let email = loginValue;
+        // If not an email, look up by username
+        if (!loginValue.includes('@')) {
+          // Call proxy to get email by username
+          const res = await fetch('/.netlify/functions/supabase_proxy?action=get_email_by_username&username=' + encodeURIComponent(loginValue));
+          const result = await res.json();
+          if (!res.ok || !result.success) {
+            loginError.textContent = result.error || 'Username not found';
+            loginError.style.display = 'block';
+            return;
+          }
+          email = result.email;
+        }
+        try {
+          const loginRes = await loginTeacher(email, password);
+          const userId = loginRes.user.id;
+          const role = await getUserRole(userId);
+          localStorage.setItem('userRole', role);
+          roleInfo.textContent = `Logged in as: ${role}`;
+          if (role === 'admin') {
+            window.location.href = '/Teachers/components/feedback-admin.html';
+          } else {
+            window.location.href = '/Teachers/index.html';
+          }
+        } catch (err) {
+          loginError.textContent = err.message;
+          loginError.style.display = 'block';
+        }
+      });
+    </script>
+</body>
+</html>

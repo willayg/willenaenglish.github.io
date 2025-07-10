@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { background: #f6f7fb; font-family: 'Poppins', sans-serif; }
+    .signup-container {
+      max-width: 400px; margin: 60px auto; background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(60,60,90,0.08); padding: 32px 28px;
+    }
+    .signup-container h2 { text-align: center; margin-bottom: 24px; }
+    .signup-container label { font-weight: 600; margin-top: 12px; display: block; }
+    .signup-container input {
+      width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 16px;
+      border: 1px solid #ccc; border-radius: 5px; font-size: 16px;
+    }
+    .signup-container button {
+      width: 100%; padding: 12px; background: #5a4ad1; color: #fff;
+      border: none; border-radius: 5px; font-size: 18px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    .signup-container .error { color: #d32f2f; margin-bottom: 10px; text-align: center; }
+    .signup-container .success { color: #388e3c; margin-bottom: 10px; text-align: center; }
+    .signup-container .or { text-align: center; margin: 18px 0; color: #888; }
+    .google-btn {
+      width: 100%; padding: 12px; background: #fff; color: #444;
+      border: 1px solid #ccc; border-radius: 5px; font-size: 18px; font-weight: 600;
+      cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .google-btn img { width: 22px; height: 22px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <div class="signup-container">
+    <h2>Sign Up</h2>
+    <div id="signupError" class="error" style="display:none;"></div>
+    <form id="signupForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="new-password">
+      <button type="submit">Sign Up</button>
+    </form>
+    <div class="or">or</div>
+    <button class="google-btn" id="googleSignUpBtn"><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo">Sign up with Google</button>
+    <div class="success" id="signupSuccess" style="display:none;"></div>
+  </div>
+  <script type="module">
+    // TODO: Replace with your Supabase project URL and anon key
+    const SUPABASE_URL = 'https://YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const signupForm = document.getElementById('signupForm');
+    const signupError = document.getElementById('signupError');
+    const signupSuccess = document.getElementById('signupSuccess');
+    const googleSignUpBtn = document.getElementById('googleSignUpBtn');
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      signupError.style.display = 'none';
+      signupSuccess.style.display = 'none';
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        signupError.textContent = error.message;
+        signupError.style.display = 'block';
+        return;
+      }
+      signupSuccess.textContent = 'Sign up successful! Please check your email to confirm your account.';
+      signupSuccess.style.display = 'block';
+      signupForm.reset();
+    });
+
+    googleSignUpBtn.addEventListener('click', async () => {
+      signupError.style.display = 'none';
+      signupSuccess.style.display = 'none';
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+      if (error) {
+        signupError.textContent = error.message;
+        signupError.style.display = 'block';
+      }
+      // On success, user will be redirected by Supabase
+    });
+  </script>
+</body>
+</html>

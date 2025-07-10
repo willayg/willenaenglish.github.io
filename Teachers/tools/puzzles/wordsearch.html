@@ -6,6 +6,23 @@
     <title>Wordsearch Generator</title>
     <link rel="stylesheet" href="../tests/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
     <style>
         /* Override preview area to stack vertically */
         .preview-area {
@@ -173,16 +190,13 @@
     <div class="container">
         <div class="app-card">
             <!-- Header -->
-            <div class="header">
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
                 <div class="logo">
                     <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
                 </div>
-                <h1>Wordsearch Generator</h1>
-                <div class="menu-icon">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+                <h1 style="flex:1; text-align:center; margin:0;">Wordsearch Generator</h1>
+                <!-- Burger Menu Component (vertically centered in header, inside container) -->
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
 
             <!-- Top Action Bar -->
@@ -319,6 +333,104 @@
     </div>
 
     <script src="wordsearch-standalone.js"></script>
+    <script>
+// Feedback modal loader for burger menu integration
+window.showFeedbackModal = function() {
+  // Prevent multiple modals
+  if (document.getElementById('feedback-modal-bg')) return;
+  // Try to find the template in DOM first
+  let template = document.getElementById('feedback-modal-template');
+  if (!template) {
+    // If not found, fetch and inject it
+    fetch('/Teachers/components/feedback-modal.html')
+      .then(resp => resp.text())
+      .then(html => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+        showFeedbackModal(); // Call again now that template is present
+      });
+    return;
+  }
+  // Clone and show modal
+  const modalNode = template.content.cloneNode(true);
+  document.body.appendChild(modalNode);
+  // Add close/cancel handlers
+  const bg = document.getElementById('feedbackModalBg');
+  if (!bg) return;
+  const closeBtn = bg.querySelector('#feedbackModalCloseBtn');
+  const cancelBtn = bg.querySelector('#feedbackCancelBtn');
+  function closeModal() { bg.remove(); }
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  // Optional: focus textarea
+  const textarea = bg.querySelector('textarea');
+  if (textarea) textarea.focus();
+
+  // Feedback submit handler
+  const submitBtn = bg.querySelector('#feedbackSubmitBtn');
+  if (submitBtn) {
+    submitBtn.onclick = async function() {
+      const feedbackText = textarea.value.trim();
+      if (!feedbackText) {
+        alert('Please enter your feedback.');
+        textarea.focus();
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      // Prepare feedback payload
+      // Gather tool state (settings)
+      let toolState = {};
+      try {
+        toolState = {
+          title: document.getElementById('wordsearchTitle')?.value || '',
+          instructions: document.getElementById('wordsearchInstructions')?.value || '',
+          words: document.getElementById('wordsearchWords')?.value || '',
+          gridSize: document.getElementById('wordsearchGridSize')?.value || '',
+          font: document.getElementById('wordsearchFont')?.value || '',
+          template: document.getElementById('wordsearchTemplate')?.value || '',
+          case: document.getElementById('wordsearchCase')?.value || '',
+          allowDiagonals: document.getElementById('wordsearchAllowDiagonals')?.checked,
+          allowBackwards: document.getElementById('wordsearchAllowBackwards')?.checked,
+          size: document.getElementById('wordsearchSizeSlider')?.value || '',
+          position: document.getElementById('wordsearchPositionSlider')?.value || ''
+        };
+      } catch (e) { toolState = {}; }
+      const payload = {
+        feedback: feedbackText,
+        module: 'wordsearch',
+        page_url: window.location.pathname,
+        tool_state: toolState,
+        user_id: null // Optionally set if you have auth
+      };
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+          submitBtn.textContent = 'Sent!';
+          setTimeout(closeModal, 900);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send';
+          alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send';
+        alert('Network error: ' + err.message);
+      }
+    };
+  }
+};
+    </script>
     <script>
         // Enhanced functionality for wordsearch module
         document.addEventListener('DOMContentLoaded', () => {
@@ -497,6 +609,120 @@
                         window.onload = function() {
                             window.print();
  }
+    </script>
+</body>
+</html>
+`;
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+        }
+
+        function saveWordsearch() {
+            const title = document.getElementById('wordsearchTitle').value.trim();
+            const words = document.getElementById('wordsearchWords').value.trim();
+
+            if (!title) {
+                alert('Please enter a title for the worksheet.');
+                return;
+            }
+
+            if (!words) {
+                alert('Please enter some words to generate the wordsearch.');
+                return;
+            }
+
+            // Create a blob from the current worksheet content
+            const blob = new Blob([
+                `Title: ${title}\n` +
+                `Words:\n${words}\n` +
+                `Instructions: ${document.getElementById('wordsearchInstructions').value.trim()}\n` +
+                `Grid Size: ${document.getElementById('wordsearchGridSize').value}\n` +
+                `Font: ${document.getElementById('wordsearchFont').value}\n` +
+                `Template: ${document.getElementById('wordsearchTemplate').value}\n` +
+                `Case: ${document.getElementById('wordsearchCase').value}\n` +
+                `Allow Diagonals: ${document.getElementById('wordsearchAllowDiagonals').checked}\n` +
+                `Allow Backwards: ${document.getElementById('wordsearchAllowBackwards').checked}\n` +
+                `Size: ${document.getElementById('wordsearchSizeSlider').value}\n` +
+                `Position: ${document.getElementById('wordsearchPositionSlider').value}\n`
+            ], { type: 'text/plain;charset=utf-8' });
+
+            // Use FileSaver.js to save the file
+            saveAs(blob, `${title}-wordsearch.txt`);
+        }
+
+        function loadWordsearch() {
+            // Create an invisible file input element
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.txt';
+            fileInput.style.display = 'none';
+
+            document.body.appendChild(fileInput);
+            fileInput.click();
+
+            fileInput.onchange = async () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    // Simple parser: assumes first line is title, second is words, rest are settings
+                    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+                    if (lines.length < 2) {
+                        alert('Invalid file format. Please ensure the file contains at least a title and words.');
+                        return;
+                    }
+
+                    document.getElementById('wordsearchTitle').value = lines[0].replace(/^Title:\s*/, '');
+                    document.getElementById('wordsearchWords').value = lines[1].replace(/^Words:\s*/, '');
+
+                    // Parse settings (key: value pairs)
+                    const settings = lines.slice(2).map(line => line.split(/:\s*/)).filter(pair => pair.length === 2);
+                    settings.forEach(([key, value]) => {
+                        switch (key.toLowerCase()) {
+                            case 'gridsize':
+                                document.getElementById('wordsearchGridSize').value = value;
+                                break;
+                            case 'font':
+                                document.getElementById('wordsearchFont').value = value;
+                                break;
+                            case 'template':
+                                document.getElementById('wordsearchTemplate').value = value;
+                                break;
+                            case 'case':
+                                document.getElementById('wordsearchCase').value = value;
+                                break;
+                            case 'allow diagonals':
+                                document.getElementById('wordsearchAllowDiagonals').checked = value === 'true';
+                                break;
+                            case 'allow backwards':
+                                document.getElementById('wordsearchAllowBackwards').checked = value === 'true';
+                                break;
+                            case 'size':
+                                document.getElementById('wordsearchSizeSlider').value = value;
+                                break;
+                            case 'position':
+                                document.getElementById('wordsearchPositionSlider').value = value;
+                                break;
+                        }
+                    });
+
+                    // Update preview
+                    if (window.updateWordsearchPreview) {
+                        window.updateWordsearchPreview();
+                    }
+                };
+
+                reader.readAsText(file);
+            };
+
+            // Remove the file input element after a short delay to allow file selection
+            setTimeout(() => {
+                document.body.removeChild(fileInput);
+            }, 1000);
+        }
     </script>
 </body>
 </html>
