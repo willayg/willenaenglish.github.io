@@ -9,8 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "backblaze-b2": "^1.7.1",
-    "multiparty": "^4.2.3"
+    "backblaze-b2": "^1.7.1"
   },
   "description": ""
 }
