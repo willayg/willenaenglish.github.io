@@ -1,116 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>B2 File Manager</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input[type="file"] { margin-bottom: 10px; }
+    .file-list { margin-top: 20px; }
+  </style>
 </head>
 <body>
   <h2>B2 File Manager</h2>
 
-  <input type="file" id="fileInput" multiple>
+  <input type="file" id="fileInput" />
   <button onclick="uploadFile()">Upload</button>
-  <button onclick="loadFiles()">Refresh File List</button>
-  <ul id="fileList"></ul>
+  <button onclick="listFiles()">Refresh List</button>
+
+  <div class="file-list" id="fileList"></div>
 
   <script>
+    const proxyUrl = "/.netlify/functions/b2_proxy";
 
     async function uploadFile() {
-      const fileInput = document.getElementById('fileInput');
-      if (!fileInput.files.length) return alert('No file selected');
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return alert("Choose a file first.");
 
-      for (const file of fileInput.files) {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const res = await fetch('/.netlify/functions/b2_proxy?filename=' + encodeURIComponent(file.name), {
-            method: 'POST',
-            headers: {
-              'Content-Type': file.type || 'application/octet-stream'
-            },
-            body: arrayBuffer
-          });
-          
-          let result;
-          try {
-            result = await res.json();
-          } catch (jsonError) {
-            // Only try to read text if we haven't already read the response
-            if (!res.bodyUsed) {
-              const text = await res.text();
-              console.error('Server response (not JSON):', text);
-              alert(`Upload failed for ${file.name}: Server returned: ${text}`);
-            } else {
-              console.error('Failed to parse JSON and response body already read');
-              alert(`Upload failed for ${file.name}: Invalid server response`);
-            }
-            continue;
-          }
-          
-          if (!res.ok) {
-            alert(`Upload failed for ${file.name}: ${result.error || res.statusText}`);
-          } else {
-            console.log(`Upload successful for ${file.name}:`, result);
-          }
-        } catch (error) {
-          console.error(`Error uploading ${file.name}:`, error);
-          alert(`Error uploading ${file.name}: ${error.message}`);
-        }
-      }
-      alert('Upload complete!');
-      loadFiles();
-    }
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const base64 = reader.result.split(',')[1];
 
-
-    async function loadFiles() {
-      try {
-        const res = await fetch('/.netlify/functions/b2_proxy');
-        
-        if (!res.ok) {
-          let errorText;
-          try {
-            const errorData = await res.json();
-            errorText = errorData.error || res.statusText;
-          } catch {
-            errorText = await res.text();
-          }
-          throw new Error(`Failed to load files: ${errorText}`);
-        }
-        
-        const files = await res.json();
-
-        const fileList = document.getElementById('fileList');
-        fileList.innerHTML = '';
-
-        // Replace with your actual bucket name (from Netlify env)
-        const BUCKET_NAME = 'willena'; // <-- CHANGE THIS
-        const B2_URL = `https://f000.backblazeb2.com/file/${BUCKET_NAME}/`;
-
-        files.forEach(file => {
-          const li = document.createElement('li');
-          const link = document.createElement('a');
-          link.href = B2_URL + encodeURIComponent(file.fileName);
-          link.target = '_blank';
-          link.textContent = file.fileName;
-
-          // Download button
-          const dlBtn = document.createElement('button');
-          dlBtn.textContent = 'Download';
-          dlBtn.onclick = () => {
-            window.open(link.href, '_blank');
-          };
-
-          li.appendChild(link);
-          li.appendChild(document.createTextNode(' '));
-          li.appendChild(dlBtn);
-          fileList.appendChild(li);
+        const res = await fetch(proxyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            base64: base64,
+          }),
         });
-      } catch (error) {
-        console.error('Error loading files:', error);
-        alert('Error loading files: ' + error.message);
-        document.getElementById('fileList').innerHTML = '<li>Error loading files. Check console for details.</li>';
-      }
+
+        const data = await res.json();
+        alert(data.message || "Upload complete.");
+        listFiles();
+      };
+
+      reader.readAsDataURL(file);
     }
 
-    loadFiles();
+    async function listFiles() {
+      const res = await fetch(proxyUrl);
+      const data = await res.json();
+      const list = document.getElementById("fileList");
+      list.innerHTML = "<h3>Files:</h3>";
+
+      if (!data.files || data.files.length === 0) {
+        list.innerHTML += "<p>No files found.</p>";
+        return;
+      }
+
+      const ul = document.createElement("ul");
+      data.files.forEach(file => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${file.url}" target="_blank">${file.key}</a> (${Math.round(file.size / 1024)} KB)`;
+        ul.appendChild(li);
+      });
+      list.appendChild(ul);
+    }
+
+    // Load files on page load
+    window.onload = listFiles;
   </script>
 </body>
 </html>
