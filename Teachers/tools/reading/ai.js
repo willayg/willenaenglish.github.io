@@ -1,92 +1,71 @@
 // AI Question Generation for Reading Worksheets
 
-export async function extractQuestionsWithAI(passage, numQuestions = 5, categories = ['comprehension'], questionFormat = 'multiple-choice') {
-  let formatInstructions = '';
-  switch (questionFormat) {
-    case 'multiple-choice':
-      formatInstructions = `Create multiple choice questions with 4 options (a, b, c, d). Format them like this:
-      
-Question text here?
-a) First option
-b) Second option  
-c) Third option
-d) Fourth option
-
-Put each question on its own line, then each option (a, b, c, d) on separate lines below it.`;
-      break;
-    case 'fill-blanks':
-      formatInstructions = 'Create fill-in-the-blank questions with clear blanks (______) for missing words.';
-      break;
-    case 'circle-word':
-      formatInstructions = 'Create questions where students circle the correct word from 2-3 options in parentheses.';
-      break;
-    case 'short-answer':
-      formatInstructions = 'Create short answer questions that require 1-2 sentence responses.';
-      break;
-    case 'mixed':
-      formatInstructions = 'Create a mix of question types: multiple choice, fill-in-the-blank, and short answer.';
-      break;
-  }
-
-  // If grammar is selected, override the prompt with grammar-specific instructions
+// Advanced prompt support: if advancedPrompt is provided, use it directly (with minimal formatting requirements)
+export async function extractQuestionsWithAI(passage, numQuestions = 5, categories = ['comprehension'], questionFormat = 'multiple-choice', advancedPrompt = null) {
   let prompt = '';
-  if (categories.length === 1 && categories[0] === 'grammar') {
-    prompt = `
-Create ${numQuestions} grammar exercises for ESL kids based on the following short passage. These should be fill-in-the-blank, sentence correction, or sentence transformation activities that test basic grammar like verb tense, articles, or sentence structure. Each exercise should include four multiple choice answers (A–D) and the correct answer should be clearly marked. Keep the language suitable for intermediate-level ESL learners aged 9–13.
+  const categoryMap = {
+    'comprehension-choose-word-mc': {
+      instructions: `Create comprehension questions as multiple choice, where the student must choose the correct word to complete a sentence about the passage. For each question:
+1. Write a sentence about the passage with a blank (_______) for a key word.
+2. Provide 4 options (a, b, c, d) with only one correct answer.
+3. Do NOT use sentences directly from the passage.
+4. Do NOT ask about vocabulary meaning, grammar, or inference. Only test comprehension of the passage by choosing the correct word.
+5. Each question should look like this: "Sentence about the passage with blank _______" followed by options a) b) c) d).
+`,
+      example: `1. The main character felt ____ after losing his book.\na) sad\nb) happy\nc) angry\nd) excited\n2. The story takes place in a ____ near the river.\na) village\nb) city\nc) forest\nd) desert`
+    },
+    'vocabulary-sentence-mc': {
+      instructions: `Create vocabulary-in-context questions as multiple choice. For each question:
+1. Select a challenging word from the passage.
+2. Write a NEW sentence (not from the passage) that uses the word in context, but leave the target word as a blank (_______).
+3. Provide 4 options (a, b, c, d): one correct word (the target word from the passage) and three distractors (other words from the passage).
+4. Do NOT ask about the meaning, definition, or comprehension of the passage.
+5. Do NOT create comprehension, grammar, or inference questions. Only ask which word fits the blank in the sentence.
+6. Do NOT use sentences from the passage.
+7. Each question should look like this: "Sentence with blank _______" followed by options a) b) c) d).
+`,
+      example: `1. The scientist made an important ____ in her research.\na) discovery\nb) mistake\nc) journey\nd) promise\n2. The children were filled with ____ as they entered the amusement park.\na) excitement\nb) fear\nc) boredom\nd) sadness`
+    },
+    'comprehension-mc': {
+      instructions: 'Create comprehension questions as multiple choice with 4 options (a, b, c, d).',
+      example: '1. What is the main idea of the passage?\na) Option 1\nb) Option 2\nc) Option 3\nd) Option 4'
+    },
+    'comprehension-sa': {
+      instructions: 'Create comprehension questions as short answer (1-2 sentences).',
+      example: '1. Explain why the main character was worried.'
+    },
+    'vocabulary-mc': {
+      instructions: `Create ONLY vocabulary questions as multiple choice with 4 options (a, b, c, d). Do NOT include comprehension, grammar, or inference questions. Use these types:\n- What does the word X mean in the passage?\n- Which word is closest to the meaning of X?\n- Which word is the opposite meaning of X?\nReplace X with words from the passage.`,
+      example: `1. What does the word "astonished" mean in the passage?\na) surprised\nb) tired\nc) angry\nd) bored\n2. Which word is closest to the meaning of "brave"?\na) cowardly\nb) strong\nc) weak\nd) shy\n3. Which word is the opposite meaning of "happy"?\na) sad\nb) excited\nc) joyful\nd) pleased`
+    },
+    'grammar-mc': {
+      instructions: 'Create grammar questions as multiple choice, focusing on verb tense, articles, or sentence structure.',
+      example: '1. Which sentence is correct?\na) ...\nb) ...\nc) ...\nd) ...'
+    },
+    'grammar-correction': {
+      instructions: 'Create grammar questions as sentence correction or transformation.',
+      example: '1. Correct the error: "He go to school every day."'
+    },
+    'inference-sa': {
+      instructions: 'Create inference questions as short answer.',
+      example: '1. What can you infer about the character\'s feelings?'
+    },
+    'main-idea-mc': {
+      instructions: 'Create main idea questions as multiple choice.',
+      example: '1. What is the main idea?\na) ...\nb) ...\nc) ...\nd) ...'
+    }
+    // Add more as needed
+  };
 
-Reading Passage:
-"${passage}"
-
-Requirements:
-- Exercises should be clear and appropriate for the reading level
-- Number each exercise (1., 2., 3., etc.)
-- Make exercises engaging and educational
-- Ensure exercises test understanding of grammar in the passage
-
-IMPORTANT: At the end of your response, add a section labeled "ANSWER KEY:" followed by the answers in this format:
-1. [correct answer]
-2. [correct answer]
-3. [correct answer]
-
-For multiple choice, just put the letter (a, b, c, or d).
-For other question types, provide the complete answer.
-
-Please generate the exercises now:
-`;
+  if (advancedPrompt && typeof advancedPrompt === 'string' && advancedPrompt.trim().length > 0) {
+    // Use the user's advanced prompt directly, with NO extra filtering or requirements
+    prompt = `${advancedPrompt}\n\nReading Passage:\n"${passage}"`;
   } else {
-    // Use the regular prompt for other categories
-    const categoryInstructions = getCategoryInstructions(categories, numQuestions);
-    prompt = `
-Based on the following reading passage, create exactly ${numQuestions} questions.
-${categoryInstructions}
-${formatInstructions}
-
-Reading Passage:
-"${passage}"
-
-Requirements:
-- Questions should be clear and appropriate for the reading level
-- Number each question (1., 2., 3., etc.)
-- Make questions engaging and educational
-- Ensure questions test understanding of the passage content
-- For multiple choice questions, put the question on one line, then each option (a, b, c, d) on separate lines below it
-
-IMPORTANT: At the end of your response, add a section labeled "ANSWER KEY:" followed by the answers in this format:
-1. [correct answer]
-2. [correct answer]
-3. [correct answer]
-
-For multiple choice, just put the letter (a, b, c, or d).
-For other question types, provide the complete answer.
-
-Example format for multiple choice:
-1. What is the main topic of the passage?
-a) Sports
-b) Science
-c) History
-d) Literature
-
-Please generate the questions now:`;
+    // Default: use category-based prompt
+    // Assume only one category is selected for simplicity
+    const selectedCat = categories[0];
+    const catConfig = categoryMap[selectedCat] || { instructions: '', example: '' };
+    prompt = `Based on the following reading passage, create exactly ${numQuestions} questions.\n${catConfig.instructions}\n\nReading Passage:\n"${passage}"\n\nRequirements:\n- Questions should be clear and appropriate for the reading level\n- Number each question (1., 2., 3., etc.)\n- Make questions engaging and educational\n- Ensure questions test understanding of the passage content\n\nIMPORTANT: At the end of your response, add a section labeled "ANSWER KEY:" followed by the answers in this format:\n1. [correct answer]\n2. [correct answer]\n3. [correct answer]\n\nFor multiple choice, just put the letter (a, b, c, or d).\nFor other question types, provide the complete answer.\n\nExample:\n${catConfig.example}\n\nPlease generate the questions now:`;
   }
 
   try {

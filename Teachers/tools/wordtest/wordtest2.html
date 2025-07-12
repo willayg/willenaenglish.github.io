@@ -6,6 +6,36 @@
     <title>Word Worksheet Generator</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    .picture-matching-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-auto-rows: 1fr;
+      gap: var(--image-gap, 10px);
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .picture-matching-grid img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      max-height: 180px;
+    }
+    @media print {
+      .picture-matching-grid {
+        page-break-inside: avoid;
+        height: 100vh;
+        width: 100vw;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        grid-auto-rows: 1fr;
+        gap: var(--image-gap, 10px);
+      }
+      .picture-matching-grid img {
+        max-height: 140px;
+      }
+    }
+    </style>
 </head>
 <body>
     <!-- Load shared burger menu component -->
@@ -89,6 +119,8 @@
                 <div class="slider-group">
                     <label>Image Gap</label>
                     <input type="range" class="slider" id="imageGapSlider" min="0" max="50" value="25">
+                    <!-- To allow negative gap, use min="-20" -->
+                    <!-- <input type="range" class="slider" id="imageGapSlider" min="-20" max="50" value="25"> -->
                 </div>
 
                 <div class="slider-group">
@@ -307,5 +339,76 @@
     };
     </script>
     <script type="module" src="wordtest2.js"></script>
+    <script>
+    // Improved double-click event for Google Image search in preview area
+    document.addEventListener('DOMContentLoaded', function() {
+      const previewArea = document.getElementById('previewArea');
+      if (previewArea) {
+        previewArea.addEventListener('dblclick', function(e) {
+          let card = e.target;
+          // Traverse up to find a likely word cell (td, th, span, div, or any element with text)
+          while (card && card !== previewArea && !(card.tagName === 'TD' || card.tagName === 'TH' || card.tagName === 'SPAN' || card.tagName === 'DIV' || card.classList?.contains('word-card') || card.classList?.contains('card-item'))) {
+            card = card.parentElement;
+          }
+          if (card && card !== previewArea) {
+            // Try to get the word from the card
+            let word = '';
+            // If card has a data-word attribute, use it
+            if (card.dataset && card.dataset.word) {
+              word = card.dataset.word;
+            } else {
+              // Otherwise, try to find the word in the card text
+              // Remove any non-word characters, take first word
+              word = card.textContent.trim().split(/\s|,/)[0];
+            }
+            if (word) {
+              const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
+              window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
+            }
+          }
+        });
+      }
+    });
+    </script>
+    <script>
+    function updatePictureMatchingGrid() {
+      const grid = document.querySelector('.picture-matching-grid');
+      if (!grid) return;
+      // Get gap from slider
+      const gap = document.getElementById('imageGapSlider')?.value || 10;
+      grid.style.setProperty('--image-gap', gap + 'px');
+      // Count images
+      const images = grid.querySelectorAll('img');
+      const count = images.length;
+      // Calculate columns to fit all images on one page (max 1 row if possible)
+      let columns = count;
+      if (count > 8) {
+        // For more than 8, use 2 rows
+        columns = Math.ceil(count / 2);
+        grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+        grid.style.gridAutoRows = '1fr';
+      } else {
+        grid.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+        grid.style.gridAutoRows = '1fr';
+      }
+      // Resize images to fit
+      images.forEach(img => {
+        img.style.maxHeight = '180px';
+        img.style.width = '100%';
+        img.style.objectFit = 'contain';
+      });
+    }
+    // Update grid on slider change and after preview refresh
+    const gapSlider = document.getElementById('imageGapSlider');
+    if (gapSlider) {
+      gapSlider.addEventListener('input', updatePictureMatchingGrid);
+    }
+    document.getElementById('refreshBtn')?.addEventListener('click', function() {
+      setTimeout(updatePictureMatchingGrid, 100);
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(updatePictureMatchingGrid, 500);
+    });
+    </script>
 </body>
 </html>

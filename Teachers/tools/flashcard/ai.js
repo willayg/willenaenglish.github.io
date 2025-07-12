@@ -259,33 +259,41 @@ export function optimizeCardOrder(cards, strategy = 'difficulty') {
 export async function generateWordsFromTopic(topic, count = 20) {
     try {
         console.log(`Generating ${count} words for topic: ${topic}`);
-        
-        // Check if we're in local development
-        const isLocalDevelopment = window.location.protocol === 'file:' || 
-                                 window.location.hostname === 'localhost' || 
-                                 window.location.hostname === '127.0.0.1';
-        
-        if (isLocalDevelopment) {
-            // Use predefined word sets for local development
+
+        // Only treat file:// protocol as local fallback
+        const isFileProtocol = window.location.protocol === 'file:';
+
+        if (isFileProtocol) {
+            // Use predefined word sets for local file browsing only
             return generateWordsFromTopicLocal(topic, count);
         }
-        
-        // Try to use OpenAI proxy for production
+
+        // Use OpenAI proxy for production
         const response = await fetch('/.netlify/functions/openai_proxy', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                prompt: `Generate exactly ${count} common English words related to the topic "${topic}". Return only the words, one per line, no numbering, no explanations.`,
-                maxTokens: 200
+                endpoint: 'chat/completions',
+                payload: {
+                    model: 'gpt-3.5-turbo',
+                    messages: [
+                        { role: 'system', content: 'You are a helpful assistant for generating vocabulary lists.' },
+                        { role: 'user', content: `Give me a list of exactly ${count} common English words about "${topic}". Only output the words, one per line, no numbering, no explanations.` }
+                    ],
+                    max_tokens: 256,
+                    temperature: 0.7
+                }
             })
         });
-        
+
         if (response.ok) {
             const data = await response.json();
-            if (data.choices && data.choices[0] && data.choices[0].text) {
-                const words = data.choices[0].text
+            // OpenAI proxy returns { data: { choices: [...] } }
+            const choices = data.data && data.data.choices;
+            if (choices && choices[0] && choices[0].message && choices[0].message.content) {
+                const words = choices[0].message.content
                     .trim()
                     .split('\n')
                     .map(word => word.trim())
@@ -294,11 +302,11 @@ export async function generateWordsFromTopic(topic, count = 20) {
                 return words;
             }
         }
-        
+
         // Fallback to local generation if API fails
         console.log('AI API failed, using local fallback');
         return generateWordsFromTopicLocal(topic, count);
-        
+
     } catch (error) {
         console.error('Error generating words from topic:', error);
         return generateWordsFromTopicLocal(topic, count);

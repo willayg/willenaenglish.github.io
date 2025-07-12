@@ -31,6 +31,7 @@
           <option value="wordtest">Word Test</option>
           <option value="reading">Reading</option>
           <option value="grid_game">Grid Game</option>
+          <option value="flashcard">Flashcard</option>
           <!-- Add more types as needed -->
         </select>
         <input type="date" id="searchDateFrom" class="border p-1">
@@ -79,7 +80,21 @@ if (mode === 'save') {
         ? worksheet.words.split('\n').map(w => w.trim()).filter(w => w !== "")
         : []);
 
-  // Save
+  // Uniqueness: check for existing worksheet with same title and type
+  let existingId = null;
+  try {
+    const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets');
+    const checkData = await checkRes.json();
+    if (checkData.success && Array.isArray(checkData.data)) {
+      const found = checkData.data.find(ws => ws.title === worksheet.title && ws.worksheet_type === worksheet.worksheet_type);
+      if (found) existingId = found.id;
+    }
+  } catch (e) { /* ignore */ }
+
+  // If found, set id for update
+  if (existingId) worksheet.id = existingId;
+
+  // Save (will update if id is present)
   const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -87,7 +102,7 @@ if (mode === 'save') {
   });
   const result = await res.json();
   if (result.success) {
-    alert('Worksheet saved!');
+    alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
     window.close();
   } else {
     alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
@@ -100,49 +115,60 @@ if (mode === 'save') {
 
   // Function to render worksheet buttons
   function renderList(data) {
-  const listDiv = document.getElementById('worksheetList');
-  listDiv.innerHTML = '';
-  if (!data.length) {
-    listDiv.innerHTML = '<div class="text-gray-400 p-2">No worksheets found.</div>';
-    return;
-  }
+    const listDiv = document.getElementById('worksheetList');
+    listDiv.innerHTML = '';
+    if (!data.length) {
+      listDiv.innerHTML = '<div class="text-gray-400 p-2">No worksheets found.</div>';
+      return;
+    }
 
-  // Table header
-  const table = document.createElement('table');
-  table.className = 'min-w-full text-sm border';
-  table.innerHTML = `
-    <thead>
-      <tr class="bg-gray-100">
-        <th class="px-2 py-1 border">Title</th>
-        <th class="px-2 py-1 border">Created</th>
-        <th class="px-2 py-1 border">Type</th>
-        <th class="px-2 py-1 border">Book</th>
-        <th class="px-2 py-1 border">Unit</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  `;
+    // Deduplicate: only show latest worksheet per title/type
+    const deduped = [];
+    const seen = {};
+    data.forEach(ws => {
+      const key = ws.title + '|' + ws.worksheet_type;
+      if (!seen[key] || (ws.updated_at && ws.updated_at > seen[key].updated_at)) {
+        seen[key] = ws;
+      }
+    });
+    for (const key in seen) deduped.push(seen[key]);
 
-  // Table rows
-  data.forEach(ws => {
-    const tr = document.createElement('tr');
-    tr.className = 'hover:bg-blue-50 cursor-pointer';
-    tr.onclick = () => {
-      window.opener.loadWorksheet(ws);
-      window.close();
-    };
-    tr.innerHTML = `
-      <td class="px-2 py-1 border">${ws.title || ''}</td>
-      <td class="px-2 py-1 border">${ws.created_at ? ws.created_at.split('T')[0] : ''}</td>
-      <td class="px-2 py-1 border">${ws.worksheet_type || ''}</td>
-      <td class="px-2 py-1 border">${ws.book || ''}</td>
-      <td class="px-2 py-1 border">${ws.unit || ''}</td>
+    // Table header
+    const table = document.createElement('table');
+    table.className = 'min-w-full text-sm border';
+    table.innerHTML = `
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="px-2 py-1 border">Title</th>
+          <th class="px-2 py-1 border">Created</th>
+          <th class="px-2 py-1 border">Type</th>
+          <th class="px-2 py-1 border">Book</th>
+          <th class="px-2 py-1 border">Unit</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
     `;
-    table.querySelector('tbody').appendChild(tr);
-  });
 
-  listDiv.appendChild(table);
-}
+    // Table rows
+    deduped.forEach(ws => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-blue-50 cursor-pointer';
+      tr.onclick = () => {
+        window.opener.loadWorksheet(ws);
+        window.close();
+      };
+      tr.innerHTML = `
+        <td class="px-2 py-1 border">${ws.title || ''}</td>
+        <td class="px-2 py-1 border">${ws.created_at ? ws.created_at.split('T')[0] : ''}</td>
+        <td class="px-2 py-1 border">${ws.worksheet_type || ''}</td>
+        <td class="px-2 py-1 border">${ws.book || ''}</td>
+        <td class="px-2 py-1 border">${ws.unit || ''}</td>
+      `;
+      table.querySelector('tbody').appendChild(tr);
+    });
+
+    listDiv.appendChild(table);
+  }
 
   // Fetch and show all worksheets on load
   let allWorksheets = [];
@@ -160,6 +186,8 @@ if (mode === 'save') {
       filterType = 'wordsearch';
     } else if (openerDoc.getElementById('gridSize') && openerDoc.getElementById('vocabInput')) {
       filterType = 'grid_game';
+    } else if (openerDoc.getElementById('flashcardGrid') && openerDoc.getElementById('titleInput') && openerDoc.getElementById('wordListInput')) {
+      filterType = 'flashcard';
     }
   }
   

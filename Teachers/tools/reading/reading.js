@@ -471,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
             questionIdx++;
             result += `<div class="question-item" data-section-idx="${sectionIdx}" data-question-idx="${questionIdx}" style="margin-bottom: 18px;">
               <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
-              <div style="margin-left: 20px;">Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span></div>
             </div>`;
           }
           currentQuestion = "";
@@ -495,7 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
             questionIdx++;
             result += `<div class="question-item" data-section-idx="${sectionIdx}" data-question-idx="${questionIdx}" style="margin-bottom: 18px;">
               <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
-              <div style="margin-left: 20px;">Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span></div>
             </div>`;
           }
           currentQuestion = "";
@@ -518,7 +516,6 @@ document.addEventListener('DOMContentLoaded', () => {
             questionIdx++;
             result += `<div class="question-item" data-section-idx="${sectionIdx}" data-question-idx="${questionIdx}" style="margin-bottom: 18px;">
               <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
-              <div style="margin-left: 20px;">Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span></div>
             </div>`;
           }
           currentQuestion = line;
@@ -536,7 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
         questionIdx++;
         result += `<div class="question-item" data-section-idx="${sectionIdx}" data-question-idx="${questionIdx}" style="margin-bottom: 18px;">
           <div style="margin-bottom: 8px;"><strong>${/^[\d]+\./.test(currentQuestion) ? currentQuestion : `${questionNumber++}. ${currentQuestion}`}</strong></div>
-          <div style="margin-left: 20px;">Answer: <span style="display: inline-block; width: 300px; border-bottom: 1px solid #000; height: 16px;"></span></div>
         </div>`;
       }
       return result;
@@ -548,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedOptions = Array.from(categorySelect.selectedOptions);
     return selectedOptions.map(option => option.value);
   }
+
 
   // Live update: listen for changes on all relevant fields
   [
@@ -569,6 +566,24 @@ document.addEventListener('DOMContentLoaded', () => {
       el.addEventListener('change', updateReadingPreview);
     }
   });
+
+  // Clear All button functionality
+  const clearBtn = document.getElementById('clearBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const questionsTextarea = document.getElementById('readingQuestions');
+      const answersTextarea = document.getElementById('readingAnswers');
+      if (questionsTextarea) {
+        questionsTextarea.value = '';
+        questionsTextarea.dispatchEvent(new Event('input'));
+      }
+      if (answersTextarea) {
+        answersTextarea.value = '';
+        answersTextarea.dispatchEvent(new Event('input'));
+      }
+      window.updateReadingPreview && window.updateReadingPreview();
+    });
+  }
 
   // Generate Questions with AI
   const generateBtn = document.getElementById('generateQuestionsBtn');

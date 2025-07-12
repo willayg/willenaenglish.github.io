@@ -1,3 +1,19 @@
+  // Add PDF function for header link
+  const pdfHeaderLink = document.getElementById('pdfLessonPlanLink');
+  if (pdfHeaderLink) {
+    pdfHeaderLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      const preview = document.getElementById('lessonPlanOutput');
+      if (!preview || !preview.innerHTML.trim() || preview.innerHTML.includes('Ready to Create')) {
+        alert('Please generate a lesson plan first.');
+        return;
+      }
+      const pdfWindow = window.open('', '_blank');
+      pdfWindow.document.write(`<!DOCTYPE html><html><head><title>Lesson Plan PDF</title><link href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css' rel='stylesheet'><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:white;}</style></head><body>${preview.innerHTML}<script>window.onload=function(){window.print();}</script></body></html>`);
+      pdfWindow.document.close();
+      pdfWindow.focus();
+    });
+  }
 // Willena Lesson Planner - Standalone Version
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Willena Lesson Planner loaded');
@@ -138,6 +154,23 @@ document.addEventListener('DOMContentLoaded', function() {
   setupEditButton();
   setupPrintButton();
   setupSaveButton();
+
+  // Add print function for header link
+  const printHeaderLink = document.getElementById('printLessonPlanLink');
+  if (printHeaderLink) {
+    printHeaderLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      const preview = document.getElementById('lessonPlanOutput');
+      if (!preview || !preview.innerHTML.trim() || preview.innerHTML.includes('Ready to Create')) {
+        alert('Please generate a lesson plan first.');
+        return;
+      }
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`<!DOCTYPE html><html><head><title>Lesson Plan</title><link href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css' rel='stylesheet'><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:white;}</style></head><body>${preview.innerHTML}<script>window.onload=function(){window.print();}</script></body></html>`);
+      printWindow.document.close();
+      printWindow.focus();
+    });
+  }
 });
 
 // OpenAI Integration

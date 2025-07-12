@@ -59,7 +59,7 @@
         // If not an email, look up by username
         if (!loginValue.includes('@')) {
           // Call proxy to get email by username
-          const res = await fetch('/.netlify/functions/supabase_proxy?action=get_email_by_username&username=' + encodeURIComponent(loginValue));
+          const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_email_by_username&username=' + encodeURIComponent(loginValue));
           const result = await res.json();
           if (!res.ok || !result.success) {
             loginError.textContent = result.error || 'Username not found';
@@ -72,6 +72,7 @@
           const loginRes = await loginTeacher(email, password);
           const userId = loginRes.user.id;
           const role = await getUserRole(userId);
+          localStorage.setItem('userId', userId);
           localStorage.setItem('userRole', role);
           roleInfo.textContent = `Logged in as: ${role}`;
           if (role === 'admin') {

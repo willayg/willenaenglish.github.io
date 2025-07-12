@@ -65,6 +65,100 @@ export class PrintManager {
     }
 
     getPrintStyles(settings, layout) {
+        // Special case for 8-card layout: force landscape printing
+        if (settings.layout === '8-card') {
+            return `
+                @page { size: landscape; }
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: ${settings.font || 'Poppins'}, sans-serif;
+                    font-size: ${settings.fontSize || 18}px;
+                    line-height: 1.4;
+                    color: #333;
+                    background: white;
+                }
+                .print-container {
+                    max-width: 297mm;
+                    margin: 0 auto;
+                    padding: 10mm;
+                }
+                .flashcard-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 10px;
+                    margin-top: 20px;
+                }
+                .flashcard {
+                    border: 2px solid #333;
+                    border-radius: 8px;
+                    padding: 12px;
+                    background: white;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    min-height: 160px;
+                    page-break-inside: avoid;
+                }
+                .flashcard-image {
+                    max-width: 100%;
+                    max-height: ${settings.imageOnly ? '100%' : '60%'};
+                    object-fit: contain;
+                    border-radius: 4px;
+                    margin-bottom: ${settings.imageOnly ? '0' : '8px'};
+                }
+                .flashcard-text {
+                    width: 100%;
+                    ${settings.imageOnly ? 'display: none;' : ''}
+                }
+                .flashcard-english {
+                    font-size: ${settings.fontSize}px;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 4px;
+                }
+                .flashcard-korean {
+                    font-size: ${Math.round(settings.fontSize * 0.85)}px;
+                    color: #666;
+                    ${settings.showKorean ? '' : 'display: none;'}
+                }
+                .flashcard-placeholder {
+                    width: 100%;
+                    height: 80px;
+                    background: #f0f0f0;
+                    border: 2px dashed #ccc;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #666;
+                    font-size: 14px;
+                    margin-bottom: 8px;
+                }
+                .page-break {
+                    page-break-before: always;
+                }
+                @media print {
+                    .print-container {
+                        max-width: 100%;
+                        padding: 10mm;
+                    }
+                    .flashcard {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .flashcard-image {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                }
+            `;
+        }
         // Special case for 2-card layout: 2 cards per page, each covers half the page
         if (settings.layout === '2-card') {
             return `

@@ -461,6 +461,58 @@ body {
   max-width: 800px;
 }
 
+.flashcard-grid.layout-1x2-portrait {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    gap: 0 !important;
+    background: white !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}    .flashcard-grid.layout-vertical-cards {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center;
+        width: 100%;
+        gap: 24px; /* or whatever vertical spacing you want */
+    }
+    .flashcard-grid.layout-vertical-cards .flashcard {
+        width: 405px !important;
+        height: 440px !important;
+        max-width: 405px !important;
+        max-height: 440px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: inherit;
+        border: 2px solid #222;
+        border-radius: 12px;
+        margin: 0;
+        background: white;
+        page-break-inside: avoid;
+        padding: 0;
+        overflow: hidden;
+    }
+    .flashcard-grid.layout-vertical-cards .flashcard-image {
+        width: 90%;
+        height: 260px;
+        object-fit: contain;
+        border-radius: 8px;
+        margin: 16px 0 8px 0;
+        background: #f7fafc;
+    }
+    .flashcard-grid.layout-vertical-cards .flashcard-text {
+        width: 90%;
+        text-align: center;
+        margin: 0 auto;
+        font-size: 20px;
+        color: #222;
+    }
+
 .flashcard {
   background: white;
   border: 2px solid #e2e8f0;
@@ -774,5 +826,23 @@ body {
   .flashcard-grid.layout-8-card {
     grid-template-columns: repeat(2, 1fr);
     max-width: 400px;
+  }
+}
+
+.flashcard-grid.layout-vertical-cards {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  width: 100%;
+  gap: 24px; /* or whatever vertical spacing you want */
+}
+
+@media print {
+  .flashcard-grid.layout-vertical-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center;
+    width: 100%;
+    gap: 0 !important;
   }
 }

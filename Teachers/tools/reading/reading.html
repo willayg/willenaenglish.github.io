@@ -131,7 +131,7 @@
                 <select class="toolbar-select" id="templateSelect">
                     <option value="0">Design 1</option>
                     <option value="1">Design 2</option>
-                    <option value="2">Design 3</option>
+                    <option value="2" selected>Design 3</option>
                 </select>
 
                 <div class="layout-group">
@@ -162,6 +162,84 @@
                     <div class="input-group">
                         <label>Reading Passage</label>
                         <textarea class="textarea-field" id="readingPassage" placeholder="Enter reading passage here..." rows="8"></textarea>
+                        <div id="advancedPromptToggle" style="margin-top:8px; cursor:pointer; color:#2e2b3f; font-weight:500; font-size:14px; display:inline-block;">
+                          + Advanced Prompt Options
+                        </div>
+                        <div id="advancedPromptBox" style="display:none; margin-top:8px;">
+                          <label for="advancedPromptInput" style="font-size:13px; color:#444; font-weight:500;">Advanced AI Prompt (optional)</label>
+                          <textarea id="advancedPromptInput" class="textarea-field" rows="3" placeholder="Add extra instructions for AI question generation..."></textarea>
+                          <button id="sendAdvancedPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
+                        </div>
+                        <script>
+                          document.addEventListener('DOMContentLoaded', function() {
+                            const toggle = document.getElementById('advancedPromptToggle');
+                            const box = document.getElementById('advancedPromptBox');
+                            if (toggle && box) {
+                              toggle.onclick = function() {
+                                if (box.style.display === 'none') {
+                                  box.style.display = 'block';
+                                  toggle.textContent = '- Hide Advanced Prompt Options';
+                                } else {
+                                  box.style.display = 'none';
+                                  toggle.textContent = '+ Advanced Prompt Options';
+                                }
+                              };
+                            }
+
+                            // Advanced Prompt Send Button
+                            const sendBtn = document.getElementById('sendAdvancedPromptBtn');
+                            if (sendBtn) {
+                              sendBtn.onclick = async function() {
+                                const passage = document.getElementById('readingPassage').value.trim();
+                                const promptText = document.getElementById('advancedPromptInput').value.trim();
+                                if (!passage) {
+                                  alert('Please enter a reading passage first.');
+                                  return;
+                                }
+                                if (!promptText) {
+                                  alert('Please enter your advanced prompt.');
+                                  return;
+                                }
+                                sendBtn.disabled = true;
+                                sendBtn.textContent = 'Sending...';
+                                try {
+                                  // ESL-focused prompt
+                                  const eslPrompt = `Create ESL-based questions and exercises for young ESL learners based on the following passage. Questions should be clear, simple, and engaging for kids.\n\n${promptText}`;
+                                  const response = await fetch('/.netlify/functions/openai_proxy', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      endpoint: 'chat/completions',
+                                      payload: {
+                                        model: 'gpt-3.5-turbo',
+                                        messages: [
+                                          { role: 'user', content: `Passage:\n${passage}\n\n${eslPrompt}` }
+                                        ],
+                                        max_tokens: 1000,
+                                        temperature: 0.7
+                                      }
+                                    })
+                                  });
+                                  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                  const result = await response.json();
+                                  const data = result.data;
+                                  if (data.error) throw new Error(data.error.message || 'OpenAI API error');
+                                  const content = data.choices[0].message.content.trim();
+                                  // Insert questions into textarea and update preview
+                                  const questionsTextarea = document.getElementById('readingQuestions');
+                                  const existingQuestions = questionsTextarea.value.trim();
+                                  const updatedQuestions = existingQuestions ? `${existingQuestions}\n\n${content}` : content;
+                                  questionsTextarea.value = updatedQuestions;
+                                  if (window.updateReadingPreview) window.updateReadingPreview();
+                                } catch (err) {
+                                  alert('AI prompt failed: ' + err.message);
+                                }
+                                sendBtn.disabled = false;
+                                sendBtn.textContent = 'Send Prompt to AI';
+                              };
+                            }
+                          });
+                        </script>
                     </div>
 
                     <div class="input-group">
@@ -172,15 +250,19 @@
                     </div>
 
                     <div class="input-group">
-                        <label>Question Categories</label>
-                        <select class="select-field" id="categorySelect" multiple>
-                            <option value="comprehension">Comprehension</option>
-                            <option value="vocabulary">Vocabulary</option>
-                            <option value="grammar">Grammar</option>
-                            <option value="inference">Inference</option>
-                            <option value="main-idea">Main Idea</option>
+                        <label>Question Type</label>
+                        <select class="select-field" id="categorySelect">
+    <option value="comprehension-mc">Comprehension (Multiple Choice)</option>
+    <option value="comprehension-choose-word-mc">Comprehension (Choose the Word)</option>
+    <option value="comprehension-sa">Comprehension (Short Answer)</option>
+                            <option value="vocabulary-mc">Vocabulary (Multiple Choice)</option>
+                            <option value="vocabulary-sentence-mc">Vocab in Sentences (Multiple Choice)</option>
+                            <option value="grammar-mc">Grammar (Multiple Choice)</option>
+                            <option value="grammar-correction">Grammar (Correction)</option>
+                            <option value="inference-sa">Inference (Short Answer)</option>
+                            <option value="main-idea-mc">Main Idea (Multiple Choice)</option>
                         </select>
-                        <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">Hold Ctrl/Cmd to select multiple categories</small>
+                        <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">Select the type of questions to generate</small>
                     </div>
 
                     <div class="input-group">
@@ -189,13 +271,7 @@
                     </div>
 
                     <div class="input-group">
-                        <label>Question Format</label>
-                        <select class="select-field" id="questionFormat">
-                            <option value="multiple-choice">Multiple Choice</option>
-                            <option value="fill-blanks">Fill in the Blanks</option>
-                            <option value="short-answer">Short Answer</option>
-                            <option value="mixed">Mixed Format</option>
-                        </select>
+                        <!-- Removed Question Format selector, now handled by category -->
                     </div>
 
                     <div class="button-group">
@@ -207,7 +283,7 @@
                         <label>Questions</label>
                         <textarea class="textarea-field" id="readingQuestions" placeholder="Generated questions will appear here, or type your own..." rows="8"></textarea>
                         <div class="button-group" style="margin-top: 8px;">
-                            <button class="layout-btn" id="addSectionBreakBtn">Add New Part</button>
+                            <button class="extract-btn" id="addSectionBreakBtn">Add New Part</button>
                         </div>
                     </div>
 
@@ -215,7 +291,7 @@
                         <label>Answer Key</label>
                         <textarea class="textarea-field" id="readingAnswers" placeholder="Answer key will appear here..." rows="4"></textarea>
                         <div class="button-group" style="margin-top: 8px;">
-                            <button class="layout-btn" id="printAnswerKeyBtn" type="button">Print Answer Key</button>
+                            <button class="extract-btn" id="printAnswerKeyBtn" type="button">Print Answer Key</button>
                         </div>
                     </div>
                 </div>
@@ -273,6 +349,17 @@
                 });
             }
 
+            // Clear All button functionality
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    const questionsTextarea = document.getElementById('readingQuestions');
+                    if (questionsTextarea) {
+                        questionsTextarea.value = '';
+                        questionsTextarea.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
             // Right-click to remove questions in preview
             const previewArea = document.getElementById('worksheetPreviewArea-reading');
             if (previewArea) {
@@ -300,6 +387,7 @@
             const saveBtn = document.getElementById('saveBtn');
             const loadBtn = document.getElementById('loadBtn');
             const refreshBtn = document.getElementById('refreshBtn');
+            const generateQuestionsBtn = document.getElementById('generateQuestionsBtn');
 
             if (printBtn) {
                 printBtn.addEventListener('click', () => {
@@ -331,6 +419,63 @@
                     if (window.updateReadingPreview) {
                         window.updateReadingPreview();
                     }
+                });
+            }
+
+            // Hook up Generate Questions button to new prompt system
+            if (generateQuestionsBtn) {
+                generateQuestionsBtn.addEventListener('click', async () => {
+                    const passage = document.getElementById('readingPassage').value;
+                    const numQuestions = parseInt(document.getElementById('numQuestions').value) || 5;
+                    const categorySelect = document.getElementById('categorySelect');
+                    const selectedCategory = categorySelect.value;
+                    // Use new AI prompt system
+                    let extractQuestionsWithAI = window.extractQuestionsWithAI;
+                    if (!extractQuestionsWithAI) {
+                        try {
+                            // Try to import if not found on window
+                            const mod = await import('./ai.js');
+                            extractQuestionsWithAI = mod.extractQuestionsWithAI;
+                            window.extractQuestionsWithAI = extractQuestionsWithAI;
+                        } catch (e) {
+                            alert('AI question generation is not available.');
+                            return;
+                        }
+                    }
+                    generateQuestionsBtn.disabled = true;
+                    generateQuestionsBtn.textContent = 'Generating...';
+                    try {
+                        const result = await extractQuestionsWithAI(
+                            passage,
+                            numQuestions,
+                            [selectedCategory]
+                        );
+                        const questionsTextarea = document.getElementById('readingQuestions');
+                        const answersTextarea = document.getElementById('readingAnswers');
+                        // Append new questions and answers instead of replacing
+                        if (result.questions) {
+                            if (questionsTextarea.value.trim()) {
+                                questionsTextarea.value += '\n' + result.questions;
+                            } else {
+                                questionsTextarea.value = result.questions;
+                            }
+                        }
+                        if (result.answers) {
+                            if (answersTextarea.value.trim()) {
+                                answersTextarea.value += '\n' + result.answers;
+                            } else {
+                                answersTextarea.value = result.answers;
+                            }
+                        }
+                        // Update preview if available
+                        if (window.updateReadingPreview) {
+                            window.updateReadingPreview();
+                        }
+                    } catch (err) {
+                        alert('Error generating questions: ' + err.message);
+                    }
+                    generateQuestionsBtn.disabled = false;
+                    generateQuestionsBtn.textContent = 'Generate Questions';
                 });
             }
         });

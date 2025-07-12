@@ -1,6 +1,6 @@
 // login.js - Handles teacher login using Netlify Supabase proxy
 
-const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_proxy';
+const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_proxy_fixed';
 
 async function loginTeacher(email, password) {
   // Call Supabase Auth via proxy (you may need to add a new endpoint for this)
