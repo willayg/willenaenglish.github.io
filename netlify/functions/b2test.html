@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>B2 File Manager</title>
+</head>
+<body>
+  <h2>B2 File Manager</h2>
+  <input type="file" id="fileInput">
+  <button onclick="uploadFile()">Upload</button>
+  <button onclick="loadFiles()">Refresh File List</button>
+  <ul id="fileList"></ul>
+
+  <script>
+    async function uploadFile() {
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput.files.length) return alert('No file selected');
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      const res = await fetch('/.netlify/functions/b2_proxy', {
+        method: 'POST',
+        body: formData
+      });
+
+      const text = await res.text();
+      alert(text);
+      loadFiles();
+    }
+
+    async function loadFiles() {
+      const res = await fetch('/.netlify/functions/b2_proxy');
+      const files = await res.json();
+
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+
+      files.forEach(file => {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = `https://f000.backblazeb2.com/file/YOUR_BUCKET_NAME/${file.fileName}`;
+        link.target = '_blank';
+        link.textContent = file.fileName;
+        li.appendChild(link);
+        fileList.appendChild(li);
+      });
+    }
+
+    loadFiles();
+  </script>
+</body>
+</html>

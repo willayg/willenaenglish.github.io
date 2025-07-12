@@ -1,65 +1,72 @@
 const B2 = require('backblaze-b2');
+const multiparty = require('multiparty');
+const fs = require('fs');
 
 const b2 = new B2({
   applicationKeyId: process.env.b2_key_id,
   applicationKey: process.env.b2_app_key,
 });
-const BUCKET_NAME = process.env.b2_bucket_name || "willena";
 
-console.log('b2_key_id:', process.env.b2_key_id);
-console.log('b2_app_key:', process.env.b2_app_key ? 'set' : 'not set');
-console.log('b2_bucket_name:', process.env.b2_bucket_name);
-console.log("ELEVEN_LABS_API_KEY:", !!process.env.ELEVEN_LABS_API_KEY);
-console.log("ELEVEN_LABS_VOICE_ID:", process.env.ELEVEN_LABS_VOICE_ID);
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
-console.log("SUPABASE_KEY:", !!process.env.SUPABASE_KEY);
-
-exports.handler = async (event, context) => {
-  const { filename, audioBase64 } = JSON.parse(event.body);
-  console.log("Request body:", event.body);
-
+exports.handler = async (event) => {
   try {
     await b2.authorize();
-    const buckets = await b2.listBuckets();
-    console.log('Buckets found:', buckets.data.buckets.map(b => b.bucketName));
-    const bucket = buckets.data.buckets.find(b => b.bucketName === BUCKET_NAME);
-    if (!bucket) {
-      return {
-        statusCode: 404,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ error: "Bucket not found" })
-      };
-    }
-    const bucketId = bucket.bucketId;
 
-    // Check if file exists
-    const files = await b2.listFileNames({ bucketId, maxFileCount: 1000 });
-    const file = files.data.files.find(f => f.fileName === filename);
-    if (file) {
+    // Get the bucket ID from the name
+    const bucketInfo = await b2.getBucket({ bucketName: process.env.b2_bucket_name });
+    const bucketId = bucketInfo.data.bucketId;
+
+    if (event.httpMethod === 'GET') {
+      const files = await b2.listFileNames({ bucketId });
       return {
         statusCode: 200,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ url: `https://f000.backblazeb2.com/file/${BUCKET_NAME}/${filename}` })
+        body: JSON.stringify(files.data.files),
       };
     }
 
-    // Upload if not exists
-    const uploadUrlRes = await b2.getUploadUrl({ bucketId });
-    await b2.uploadFile({
-      uploadUrl: uploadUrlRes.data.uploadUrl,
-      uploadAuthToken: uploadUrlRes.data.authorizationToken,
-      fileName: filename,
-      data: Buffer.from(audioBase64, 'base64'),
-      mime: 'audio/mpeg',
-    });
+    if (event.httpMethod === 'POST') {
+      const form = new multiparty.Form();
+      return new Promise((resolve, reject) => {
+        form.parse({ headers: event.headers, body: Buffer.from(event.body, 'base64') }, async (err, fields, files) => {
+          if (err) {
+            return reject({
+              statusCode: 500,
+              body: JSON.stringify({ error: 'Form parsing error' }),
+            });
+          }
+
+          const file = files.file[0];
+          const uploadUrlRes = await b2.getUploadUrl({ bucketId });
+          const uploadUrl = uploadUrlRes.data.uploadUrl;
+          const uploadAuthToken = uploadUrlRes.data.authorizationToken;
+
+          const fileData = fs.readFileSync(file.path);
+          const fileName = file.originalFilename;
+
+          await b2.uploadFile({
+            uploadUrl,
+            uploadAuthToken,
+            fileName,
+            data: fileData,
+            mime: file.headers['content-type'],
+          });
+
+          return resolve({
+            statusCode: 200,
+            body: JSON.stringify({ message: 'File uploaded successfully' }),
+          });
+        });
+      });
+    }
 
     return {
-      statusCode: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ url: `https://f000.backblazeb2.com/file/${BUCKET_NAME}/${filename}` })
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   } catch (err) {
-    console.error("Error in get_feedback_audio:", err);
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    console.error(err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message || 'Unknown error' }),
+    };
   }
 };

@@ -1,3 +1,77 @@
+// --- Sectioned Worksheet State ---
+window.readingWorksheetSections = [];
+
+function getNextSectionLetter() {
+  return String.fromCharCode(65 + window.readingWorksheetSections.length); // 'A', 'B', ...
+}
+
+function getSectionInfo(category) {
+  switch (category) {
+    case 'comprehension-mc': return { title: 'Comprehension (Multiple Choice)', instructions: 'Read the passage and answer the following multiple choice questions.' };
+    case 'comprehension-choose-word-mc': return { title: 'Comprehension (Choose the Word)', instructions: 'Choose the correct word to complete each sentence.' };
+    case 'comprehension-sa': return { title: 'Comprehension (Short Answer)', instructions: 'Answer the following questions in complete sentences.' };
+    case 'vocabulary-mc': return { title: 'Vocabulary (Multiple Choice)', instructions: 'Choose the correct meaning for each word.' };
+    case 'vocabulary-context-mc': return { title: 'Vocab in Context (Multiple Choice)', instructions: 'Choose the correct word for each sentence.' };
+    case 'grammar-mc': return { title: 'Grammar (Multiple Choice)', instructions: 'Choose the correct answer for each grammar question.' };
+    case 'grammar-correction': return { title: 'Grammar (Correction)', instructions: 'Correct the mistakes in each sentence.' };
+    case 'grammar-unscramble': return { title: 'Grammar Unscramble', instructions: 'Unscramble the words to make correct sentences.' };
+    case 'inference-sa': return { title: 'Inference (Short Answer)', instructions: 'Answer the inference questions based on the passage.' };
+    case 'inference-mc': return { title: 'Inference (Multiple Choice)', instructions: 'Choose the best answer for each inference question.' };
+    default: return { title: '', instructions: '' };
+  }
+}
+
+window.updateReadingPreview = function() {
+  const previewArea = document.getElementById('worksheetPreviewArea-reading');
+  if (!previewArea) return;
+  previewArea.innerHTML = '';
+  // Optionally show passage at top
+  const includePassage = document.getElementById('includePassage')?.checked;
+  const passage = document.getElementById('readingPassage')?.value.trim();
+  if (includePassage && passage) {
+    const passageDiv = document.createElement('div');
+    passageDiv.className = 'worksheet-passage';
+    passageDiv.innerHTML = `<h3>Reading Passage</h3><div>${passage.replace(/\n/g, '<br>')}</div>`;
+    previewArea.appendChild(passageDiv);
+  }
+  // Render each section
+  window.readingWorksheetSections.forEach((section) => {
+    const sectionDiv = document.createElement('div');
+    sectionDiv.className = 'worksheet-section';
+    sectionDiv.innerHTML = `
+      <h3>Part ${section.letter}: ${section.title}</h3>
+      <div class="section-instructions">${section.instructions}</div>
+      <ol class="section-questions">
+        ${section.questions.map(q => {
+          // Format multiple choice (including inference-mc) options on new lines with spacing
+          if (typeof q === 'string' && /\n[a-dA-D]\)/.test('\n' + q)) {
+            // Split question from options
+            const match = q.match(/^(.*?)(?=(?:\n[a-dA-D]\)))/s);
+            const questionText = match ? match[1].trim() : q;
+            // Find all options
+            const options = Array.from(q.matchAll(/^[a-dA-D]\)[^\n]*/gm)).map(opt => opt[0].trim());
+            return `<li style="margin-bottom:18px;">
+              <div style="margin-bottom:6px;"><strong>${questionText}</strong></div>
+              <div style="margin-left:18px;">
+                ${options.map(opt => `<div style="margin-bottom:14px;">${opt}</div>`).join('')}
+              </div>
+            </li>`;
+          } else {
+            return `<li>${q}</li>`;
+          }
+        }).join('')}
+      </ol>
+      ${section.answers && section.answers.length ? `<details><summary>Answer Key</summary><ol>${section.answers.map(a => `<li>${a}</li>`).join('')}</ol></details>` : ''}
+    `;
+    previewArea.appendChild(sectionDiv);
+  });
+  if (window.readingWorksheetSections.length === 0) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'preview-placeholder';
+    placeholder.innerHTML = '<p>Preview will appear here</p>';
+    previewArea.appendChild(placeholder);
+  }
+};
 // Reading Worksheet Generator
 import { extractQuestionsWithAI } from './ai.js';
 import { applyPreviewFontStyles, loadGoogleFont, scaleWorksheetPreview } from '../tests/fonts.js';
@@ -220,52 +294,10 @@ document.addEventListener('DOMContentLoaded', () => {
       renumberAnswerKey();
     }
 
-    // Helper: Make questions editable in preview
+    // Helper: Make questions editable in preview (REMOVED - replaced by enableInlineEditingInPreview)
     function makeQuestionsEditableInPreview() {
-      const preview = document.getElementById('worksheetPreviewArea-reading');
-      if (!preview) return;
-      // Delegate click events
-      preview.addEventListener('click', function(e) {
-        const qItem = e.target.closest('.question-item');
-        if (qItem && e.button === 0) { // left click
-          const sectionIdx = parseInt(qItem.getAttribute('data-section-idx'), 10);
-          const questionIdx = parseInt(qItem.getAttribute('data-question-idx'), 10);
-          if (isNaN(sectionIdx) || isNaN(questionIdx)) return;
-          // Find the question text
-          const textarea = document.getElementById('readingQuestions');
-          if (!textarea) return;
-          const lines = textarea.value.split('\n');
-          let currentSection = -1;
-          let currentQ = -1;
-          let lineIdx = -1;
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (/^Part [A-Z]:/.test(line)) {
-              currentSection++;
-              currentQ = -1;
-              continue;
-            }
-            if (line.includes('--- Section Break ---')) continue;
-            if (/^\d+\./.test(line)) {
-              currentQ++;
-              if (currentSection === sectionIdx && currentQ === questionIdx) {
-                lineIdx = i;
-                break;
-              }
-            }
-          }
-          if (lineIdx === -1) return;
-          // Prompt for new text
-          const oldText = lines[lineIdx].replace(/^\d+\.\s*/, '');
-          const newText = prompt('Edit question:', oldText);
-          if (newText !== null && newText.trim() !== '') {
-            lines[lineIdx] = `${lines[lineIdx].match(/^\d+\./)[0]} ${newText.trim()}`;
-            textarea.value = lines.join('\n');
-            renumberQuestionsInTextarea();
-            window.updateReadingPreview && window.updateReadingPreview();
-          }
-        }
-      });
+      // This function is now replaced by enableInlineEditingInPreview()
+      // No longer adding click handlers here to avoid conflicts
     }
 
     // Helper: Attach right-click delete to preview questions
@@ -292,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Call once on load
     setTimeout(() => {
       attachDeleteHandlerToPreview();
-      makeQuestionsEditableInPreview();
+      // makeQuestionsEditableInPreview(); // REMOVED - causes popup conflicts
     }, 300);
 
     async function updateReadingPreview() {
@@ -367,7 +399,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formattedQuestions) {
           worksheetContent += `
             <div>
-              <h3 style="font-weight: bold; margin-bottom: 15px;">Questions:</h3>
               ${formattedQuestions}
             </div>
           `;
@@ -421,6 +452,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Check if inline editing is currently active - don't update if so
+      const previewElement = document.getElementById('worksheetPreviewArea-reading');
+      if (previewElement && (previewElement.querySelector('textarea') || previewElement.querySelector('input[type="text"]'))) {
+        return; // Skip update while editing
+      }
+
       // Only update if content has changed
       if (templateHtml !== lastPreviewHtml) {
         if (rafId) cancelAnimationFrame(rafId);
@@ -433,7 +470,22 @@ document.addEventListener('DOMContentLoaded', () => {
           lastWorksheetContent = worksheetContentKey;
           lastFont = font;
           lastFontSizeScale = fontSizePx;
+          
+          // Reset inline editing flag since DOM was replaced
+          preview._inlineEditingEnabled = false;
+          
+          // After preview is updated, enable inline editing
+          setTimeout(() => {
+            enableInlineEditingInPreview();
+          }, 100);
         });
+      } else {
+        // Content hasn't changed, but still need to enable editing if not already done
+        if (!previewElement._inlineEditingEnabled) {
+          setTimeout(() => {
+            enableInlineEditingInPreview();
+          }, 100);
+        }
       }
     }
 
@@ -447,6 +499,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatQuestions(questionsText, font, fontSizeScale) {
       if (!questionsText.trim()) return "";
+      
+      // Check if we're dealing with grammar unscramble format
+      const selectedCategories = getSelectedCategories();
+      const isGrammarUnscramble = selectedCategories.includes('grammar-unscramble');
+      
+      if (isGrammarUnscramble) {
+        // Special formatting for grammar unscramble
+        const lines = questionsText.split('\n').filter(line => line.trim());
+        let result = "<div class='grammar-unscramble-questions'>";
+        let questionNumber = 1;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          // Skip section headers, only process numbered lines
+          if (/^\d+\./.test(line)) {
+            // Extract the scrambled chunks
+            const parts = line.split(/^\d+\.\s*/);
+            if (parts.length > 1) {
+              const scrambledText = parts[1].split('/').map(chunk => chunk.trim()).join(' / ');
+              result += `<div class="question-item" style="margin-bottom: 18px;">
+                <div style="margin-bottom: 8px;"><strong>${questionNumber++}. __________________________________________________________</strong></div>
+                <div style="margin-left: 20px; line-height: 1.8; border-left: 3px solid #ddd; padding-left: 12px;">
+                  ${scrambledText}
+                </div>
+              </div>`;
+            }
+          }
+        }
+        
+        result += "</div>";
+        return result;
+      }
+      
+      // Original formatting for other question types
       const lines = questionsText.split('\n').filter(line => line.trim());
       let questionNumber = 1;
       let result = "";
@@ -454,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let currentOptions = [];
       let sectionIdx = -1;
       let questionIdx = -1;
+      
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         // Section header
@@ -585,75 +672,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Generate Questions with AI
+  // Generate Questions with AI (sectioned)
   const generateBtn = document.getElementById('generateQuestionsBtn');
   if (generateBtn) {
     generateBtn.onclick = async () => {
       const passage = document.getElementById('readingPassage').value.trim();
       const numQuestions = document.getElementById('numQuestions').value || 5;
-      const questionFormat = document.getElementById('questionFormat').value || 'multiple-choice';
-      const categories = getSelectedCategories();
-
+      const categorySelect = document.getElementById('categorySelect');
+      const selectedCategory = categorySelect.value;
       if (!passage) return alert("Please enter a reading passage first.");
-      if (categories.length === 0) return alert("Please select at least one question category.");
-
+      if (!selectedCategory) return alert("Please select a question type.");
       generateBtn.disabled = true;
       generateBtn.textContent = "Generating Questions...";
       try {
-        const result = await extractQuestionsWithAI(passage, numQuestions, categories, questionFormat);
-
-        const existingQuestions = document.getElementById('readingQuestions').value.trim();
-        const existingAnswers = document.getElementById('readingAnswers').value.trim();
-
-        const newQuestions = result.questions.trim();
-        const newAnswers = result.answers.trim();
-
-        const updatedQuestions = existingQuestions
-          ? `${existingQuestions}\n\n${newQuestions}`
-          : newQuestions;
-
-        const updatedAnswers = existingAnswers
-          ? `${existingAnswers}\n\n${newAnswers}`
-          : newAnswers;
-
-        const questionLines = updatedQuestions.split('\n');
-        let sectionCount = 0;
-        let questionNumber = 1;
-        let hasFirstSection = false;
-
-        const renumberedQuestions = questionLines.map(line => {
-          // Check if this is the first question and we haven't added Part A yet
-          if (/^\d+\.\s/.test(line) && !hasFirstSection) {
-            hasFirstSection = true;
-            sectionCount = 1;
-            return `Part A: Questions\n\n${questionNumber++}. ${line.replace(/^\d+\.\s/, '')}`;
-          }
-
-          if (line.includes('--- Section Break ---')) {
-            sectionCount++;
-            questionNumber = 1; // Reset numbering after section break
-            return `Part ${String.fromCharCode(65 + sectionCount - 1)}: Questions`;
-          }
-
-          if (/^\d+\.\s/.test(line)) {
-            return `${questionNumber++}. ${line.replace(/^\d+\.\s/, '')}`;
-          }
-
-          return line;
-        }).join('\n');
-
-        document.getElementById('readingQuestions').value = renumberedQuestions;
-        document.getElementById('readingAnswers').value = updatedAnswers;
-
-        updateReadingPreview();
+        const result = await extractQuestionsWithAI(passage, numQuestions, [selectedCategory]);
+        // Parse questions and answers into arrays
+        const questionsArr = result.questions
+          ? result.questions.split(/\n\s*\d+\.\s*/).filter(q => q.trim()).map((q, i) => (i === 0 && result.questions.match(/^\d+\./)) ? q : q)
+          : [];
+        const answersArr = result.answers
+          ? result.answers.split(/\n\s*\d+\.\s*/).filter(a => a.trim()).map((a, i) => (i === 0 && result.answers.match(/^\d+\./)) ? a : a)
+          : [];
+        // Get section info
+        const sectionLetter = getNextSectionLetter();
+        const sectionInfo = getSectionInfo(selectedCategory);
+        // Add new section object
+        window.readingWorksheetSections.push({
+          letter: sectionLetter,
+          title: sectionInfo.title,
+          instructions: sectionInfo.instructions,
+          questions: questionsArr,
+          answers: answersArr
+        });
+        // Update preview
+        window.updateReadingPreview();
       } catch (e) {
         console.error('AI question generation failed:', e);
         alert("AI question generation failed. Please try again.");
       }
-
       generateBtn.disabled = false;
       generateBtn.textContent = "Generate Questions";
     };
+  }
+  // Remove Add Section Break button and related logic
+  const addSectionBreakBtn = document.getElementById('addSectionBreakBtn');
+  if (addSectionBreakBtn) {
+    addSectionBreakBtn.style.display = 'none';
+    addSectionBreakBtn.disabled = true;
   }
 
   // Generate Worksheet Button
@@ -672,7 +737,30 @@ document.addEventListener('DOMContentLoaded', () => {
           alert('No answer key found. Please add answers first.');
           return;
         }
-        const formattedAnswers = answers.split('\n').map(line => `<div style='margin-bottom:8px;'>${line}</div>`).join('');
+        
+        // Check if we're dealing with grammar unscramble format
+        const selectedCategories = getSelectedCategories();
+        const isGrammarUnscramble = selectedCategories.includes('grammar-unscramble');
+        
+        let formattedAnswers = '';
+        if (isGrammarUnscramble) {
+          // Format grammar unscramble answers as complete sentences
+          const answerLines = answers.split('\n').filter(line => line.trim());
+          formattedAnswers = '<h3>Grammar Unscramble Answers:</h3><ol style="margin-left: 20px;">';
+          for (const line of answerLines) {
+            if (/^\d+\./.test(line)) {
+              const parts = line.split(/^\d+\.\s*/);
+              if (parts.length > 1) {
+                formattedAnswers += `<li style="margin-bottom: 8px;">${parts[1]}</li>`;
+              }
+            }
+          }
+          formattedAnswers += '</ol>';
+        } else {
+          // Default formatting for other question types
+          formattedAnswers = answers.split('\n').map(line => `<div style='margin-bottom:8px;'>${line}</div>`).join('');
+        }
+        
         const printWindow = window.open('', '', 'width=800,height=1000');
         printWindow.document.write(`
           <html>
@@ -758,8 +846,14 @@ window.printReadingWorksheet = printReadingWorksheet;
   // Initial preview
   updateReadingPreview();
 
+  // Enable inline editing after initial preview
+  setTimeout(() => {
+    enableInlineEditingInPreview();
+  }, 200);
+
   // Make function globally accessible for loadWorksheet
   window.updateReadingPreview = updateReadingPreview;
+  window.enableInlineEditingInPreview = enableInlineEditingInPreview;
 
   // Scale on window resize
   window.addEventListener('resize', scaleWorksheetPreview);
@@ -905,3 +999,217 @@ function loadWorksheet(worksheet) {
       
       answersTextarea.value = newAnswerLines.join('\n');
     }
+
+    // Inline editing for questions and answers in preview
+function enableInlineEditingInPreview() {
+  const preview = document.getElementById('worksheetPreviewArea-reading');
+  if (!preview) return;
+
+  // Check if already enabled to prevent duplicate handlers
+  if (preview._inlineEditingEnabled) {
+    return;
+  }
+
+  // Mark as enabled first
+  preview._inlineEditingEnabled = true;
+
+  // Add event delegation for inline editing (use addEventListener for better compatibility)
+  preview.addEventListener('click', function handleInlineEditClick(e) {
+    // Prevent double-click issues
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+      return;
+    }
+
+    // Edit question text (clicking on the question)
+    const questionDiv = e.target.closest('strong');
+    if (questionDiv) {
+      const qItem = questionDiv.closest('.question-item');
+      if (!qItem || qItem.querySelector('textarea')) return;
+      
+      const fullText = questionDiv.textContent;
+      const questionMatch = fullText.match(/^(\d+\.\s*)(.*)/);
+      const questionNumber = questionMatch ? questionMatch[1] : '';
+      const questionText = questionMatch ? questionMatch[2] : fullText;
+      
+      const textarea = document.createElement('textarea');
+      textarea.value = questionText;
+      textarea.style.cssText = `
+        width: 95%; 
+        min-height: 40px; 
+        font-size: inherit; 
+        font-family: inherit; 
+        border: 2px solid #007acc; 
+        border-radius: 4px; 
+        padding: 8px; 
+        resize: vertical;
+        outline: none;
+        background: #f8f9fa;
+      `;
+      
+      questionDiv.style.display = 'none';
+      questionDiv.parentNode.insertBefore(textarea, questionDiv);
+      textarea.focus();
+      textarea.select();
+      
+      function saveQuestionEdit() {
+        const newText = textarea.value.trim();
+        questionDiv.textContent = questionNumber + newText;
+        questionDiv.style.display = '';
+        textarea.remove();
+        
+        // Update the textarea without causing a full preview refresh
+        updateQuestionInTextarea(qItem, questionText, newText);
+      }
+      
+      textarea.addEventListener('blur', saveQuestionEdit);
+      textarea.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Enter' && !ev.shiftKey) {
+          ev.preventDefault();
+          saveQuestionEdit();
+        } else if (ev.key === 'Escape') {
+          questionDiv.style.display = '';
+          textarea.remove();
+        }
+      });
+      
+      e.stopPropagation();
+      return;
+    }
+
+    // Edit answer options (clicking on a), b), c), d) choices)
+    const optionSpan = e.target.closest('span');
+    if (optionSpan && optionSpan.textContent.match(/^[a-dA-D]\)/)) {
+      const qItem = optionSpan.closest('.question-item');
+      if (!qItem || optionSpan.querySelector('input')) return;
+      
+      const oldOptionText = optionSpan.textContent;
+      const optionMatch = oldOptionText.match(/^([a-dA-D]\)\s*)(.*)/);
+      const optionPrefix = optionMatch ? optionMatch[1] : '';
+      const optionContent = optionMatch ? optionMatch[2] : oldOptionText;
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = optionContent;
+      input.style.cssText = `
+        width: 300px; 
+        font-size: inherit; 
+        font-family: inherit; 
+        border: 2px solid #007acc; 
+        border-radius: 4px; 
+        padding: 4px 8px; 
+        outline: none;
+        background: #f8f9fa;
+      `;
+      
+      optionSpan.style.display = 'none';
+      optionSpan.parentNode.insertBefore(input, optionSpan);
+      input.focus();
+      input.select();
+      
+      function saveOptionEdit() {
+        const newContent = input.value.trim();
+        const newOptionText = optionPrefix + newContent;
+        optionSpan.textContent = newOptionText;
+        optionSpan.style.display = '';
+        input.remove();
+        
+        // Update the textarea without causing a full preview refresh
+        updateOptionInTextarea(qItem, oldOptionText, newOptionText);
+      }
+      
+      input.addEventListener('blur', saveOptionEdit);
+      input.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          saveOptionEdit();
+        } else if (ev.key === 'Escape') {
+          optionSpan.style.display = '';
+          input.remove();
+        }
+      });
+      
+      e.stopPropagation();
+      return;
+    }
+  });
+}
+
+function updateQuestionInTextarea(questionItem, oldText, newText) {
+  if (oldText === newText) return;
+  
+  const textarea = document.getElementById('readingQuestions');
+  if (!textarea) return;
+  
+  const sectionIdx = parseInt(questionItem.getAttribute('data-section-idx') || '0');
+  const questionIdx = parseInt(questionItem.getAttribute('data-question-idx') || '0');
+  
+  const lines = textarea.value.split('\n');
+  let currentSectionIdx = -1;
+  let currentQuestionIdx = -1;
+  let foundQuestion = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Track section headers
+    if (/^Part [A-Z]:/i.test(line)) {
+      currentSectionIdx++;
+      currentQuestionIdx = -1;
+      continue;
+    }
+    
+    // Skip section breaks
+    if (line.includes('--- Section Break ---')) {
+      continue;
+    }
+    
+    // Skip option lines
+    if (/^[a-dA-D]\)/.test(line)) {
+      continue;
+    }
+    
+    // Check if this is a question line (not empty, not section header, not option)
+    if (line && !(/^Part [A-Z]:/i.test(line)) && !line.includes('--- Section Break ---') && !(/^[a-dA-D]\)/.test(line))) {
+      currentQuestionIdx++;
+      
+      // If this is our target question
+      if (currentSectionIdx === sectionIdx && currentQuestionIdx === questionIdx) {
+        // Extract question number if present
+        const questionMatch = line.match(/^(\d+\.\s*)(.*)/);
+        const questionNumber = questionMatch ? questionMatch[1] : '';
+        const questionContent = questionMatch ? questionMatch[2] : line;
+        
+        // Only update if the content matches our old text
+        if (questionContent.trim() === oldText.trim()) {
+          lines[i] = questionNumber + newText;
+          foundQuestion = true;
+          break;
+        }
+      }
+    }
+  }
+  
+  // If we found and updated the question, update the textarea
+  if (foundQuestion) {
+    textarea.value = lines.join('\n');
+  }
+}
+
+function updateOptionInTextarea(questionItem, oldOptionText, newOptionText) {
+  if (oldOptionText === newOptionText) return;
+  
+  const textarea = document.getElementById('readingQuestions');
+  if (!textarea) return;
+  
+  const lines = textarea.value.split('\n');
+  
+  // Find and replace the option text
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === oldOptionText.trim()) {
+      lines[i] = newOptionText;
+      break;
+    }
+  }
+  
+  textarea.value = lines.join('\n');
+}
