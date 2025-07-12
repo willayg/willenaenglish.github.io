@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Willena Grid Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Load shared burger menu component -->
     <script type="module">
@@ -24,7 +25,7 @@
     </script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
@@ -70,12 +71,26 @@
             background: #f8f9fa;
             padding: 32px;
             border-right: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
         }
         
         .preview-area {
             flex: 1;
             padding: 32px;
             background: white;
+            position: relative;
+        }
+        /* Sticky grid container */
+        .sticky-grid {
+            position: fixed;
+            top: 160px;
+            right: 380px;
+            z-index: 1000;
+            box-shadow: 0 4px 24px rgba(46,43,63,0.10);
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
         }
         
         .form-group {
@@ -87,16 +102,39 @@
             font-weight: 600;
             color: #374151;
             margin-bottom: 8px;
-            font-size: 0.9rem;
+            font-size: 0.81rem;
         }
         
         .form-input, .form-select, .form-textarea {
             width: 100%;
-            padding: 12px 16px;
+            padding: 10px 14px;
             border: 2px solid #e5e7eb;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.81rem;
             transition: border-color 0.2s;
+        }
+
+        /* Make color inputs visually distinct */
+        .form-input[type="color"] {
+            width: 25px;
+            height: 25px;
+            padding: 0;
+            border-radius: 50%;
+            border: 1.5px solid #e5e7eb;
+            box-shadow: 0 1px 4px rgba(46,43,63,0.08);
+            cursor: pointer;
+            vertical-align: middle;
+            margin-right: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input[type="color"]:hover, .form-input[type="color"]:focus {
+            border-color: #4a4458;
+            box-shadow: 0 2px 8px rgba(46,43,63,0.15);
+        }
+        }
+        .form-input[type="color"]:hover, .form-input[type="color"]:focus {
+            border-color: #4a4458;
+        }
         }
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -107,28 +145,30 @@
         
         .generate-btn {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #10b981, #059669);
+            padding: 8px 0;
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.86rem;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 16px;
+            margin-top: 10px;
         }
         
         .generate-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 20px rgba(46, 43, 63, 0.25);
+            filter: brightness(1.08);
         }
         
         .generate-btn:disabled {
-            background: #9ca3af;
+            background: linear-gradient(135deg, #6b6a74, #a3a1b2);
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            color: #e5e7eb;
         }
         
         .action-buttons {
@@ -139,19 +179,27 @@
         
         .action-btn {
             flex: 1;
-            padding: 10px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            background: white;
-            color: #374151;
+            padding: 7px 10px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
             font-weight: 500;
             cursor: pointer;
+            font-size: 0.83rem;
             transition: all 0.2s;
         }
         
         .action-btn:hover {
-            background: #f3f4f6;
-            border-color: #9ca3af;
+            filter: brightness(1.08);
+            box-shadow: 0 4px 12px rgba(46, 43, 63, 0.18);
+        }
+        
+        .action-btn:disabled {
+            background: linear-gradient(135deg, #6b6a74, #a3a1b2);
+            color: #e5e7eb;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
         .team-item {
@@ -160,7 +208,7 @@
             background: #f8f9fa;
             border-radius: 6px;
             border: 1px solid #e9ecef;
-            font-size: 0.85rem;
+            font-size: 0.77rem;
             display: flex;
             align-items: center;
         }
@@ -290,7 +338,11 @@
         <div class="grid-card">
             <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
                 <h1 style="flex:1; text-align:center; margin:0;">Willena Grid Game</h1>
-                <p style="flex:2; text-align:center; margin:0; opacity:0.9;">Interactive classroom vocabulary and question game</p>
+                <!-- Top Action Bar: Load/Save -->
+                <div class="top-actions" style="position:absolute; left:50%; bottom:12px; transform:translateX(-50%); z-index:9999; display:flex; gap:32px; align-items:flex-end;">
+                  <span class="action-link" id="loadBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">Load</span>
+                  <span class="action-link" id="saveBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">Save</span>
+                </div>
                 <!-- Burger Menu Component (vertically centered in header, inside container) -->
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
@@ -314,7 +366,17 @@
                         <label class="form-label">Reading Passage (for AI extraction)</label>
                         <textarea id="passageInput" class="form-textarea" rows="4" placeholder="Paste your reading passage here for AI to extract words and questions"></textarea>
                         <button id="extractBtn" class="generate-btn">
-                            <span class="button-text">Extract Words and Questions with AI</span>
+                            <span class="button-text">Extract Words and Questions</span>
+                            <span class="loading-spinner hidden"></span>
+                        </button>
+                    </div>
+
+                    <!-- AI Grid Generator (moved just below extract) -->
+                    <div class="form-group">
+                        <label class="form-label">AI Grid Generator</label>
+                        <textarea id="aiGridPrompt" class="form-textarea" rows="2" placeholder="Describe the type of questions and answers you want (e.g. grammar, vocabulary, topic, etc)"></textarea>
+                        <button id="generateGridAI" class="generate-btn" style="margin-top:8px;">
+                            <span class="button-text">Generate Quiz</span>
                             <span class="loading-spinner hidden"></span>
                         </button>
                     </div>
@@ -340,6 +402,13 @@
                     </div>
 
                     <!-- Customization -->
+                    <div class="form-group">
+                        <label class="form-label">Card Layout</label>
+                        <select id="cardLayoutPicker" class="form-select">
+                            <option value="word-top">Word Top / Question Bottom</option>
+                            <option value="question-top">Question Top / Word Bottom</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Grid Background Color</label>
                         <input type="color" id="gridColorPicker" class="form-input" value="#f0f0f0">
@@ -372,7 +441,7 @@
                 
                 <!-- Preview Area -->
                 <div class="preview-area">
-                    <div id="gamePreviewArea">
+                    <div id="gamePreviewArea" class="sticky-grid">
                         <div class="empty-state">
                             <div class="icon">🎯</div>
                             <h3>Ready to Create Your Grid Game</h3>
@@ -391,6 +460,108 @@
     </div>
     
     <script src="grid_game_fixed.js"></script>
+    <script>
+      // Card layout picker integration
+      document.addEventListener('DOMContentLoaded', function() {
+        var cardLayoutPicker = document.getElementById('cardLayoutPicker');
+        if (cardLayoutPicker) {
+          // Save selection to localStorage for persistence (optional)
+          cardLayoutPicker.addEventListener('change', function() {
+            localStorage.setItem('gridGameCardLayout', cardLayoutPicker.value);
+          });
+          // Load previous selection
+          var savedLayout = localStorage.getItem('gridGameCardLayout');
+          if (savedLayout) cardLayoutPicker.value = savedLayout;
+        }
+      });
+      // AI Grid Generator logic
+      document.addEventListener('DOMContentLoaded', function() {
+        var aiBtn = document.getElementById('generateGridAI');
+        var aiPrompt = document.getElementById('aiGridPrompt');
+        var gridSizeSelect = document.getElementById('gridSize');
+        var vocabInput = document.getElementById('vocabInput');
+        var questionsInput = document.getElementById('questionsInput');
+        if (aiBtn) {
+          aiBtn.onclick = async function() {
+            var prompt = aiPrompt.value.trim();
+            var gridSize = gridSizeSelect.value === '4x4' ? 16 : 9;
+            if (!prompt) {
+              alert('Please describe the type of questions and answers you want.');
+              aiPrompt.focus();
+              return;
+            }
+            aiBtn.disabled = true;
+            aiBtn.querySelector('.button-text').textContent = 'Generating...';
+            aiBtn.querySelector('.loading-spinner').classList.remove('hidden');
+            try {
+              const response = await fetch('/.netlify/functions/openai_proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  endpoint: 'chat/completions',
+                  payload: {
+                    model: 'gpt-3.5-turbo',
+                    messages: [
+                      {
+                        role: 'user',
+                        content:
+                          `You are an ESL teacher assistant. Based on the following description, generate exactly ${gridSize} question and answer pairs suitable for a classroom grid game.\n\nDescription: ${prompt}\n\nFormat your response exactly like this:\n\nQUESTIONS:\nquestion1\nquestion2\n...\nANSWERS:\nanswer1\nanswer2\n...`
+                      }
+                    ],
+                    max_tokens: 800,
+                    temperature: 0.7
+                  }
+                })
+              });
+              const result = await response.json();
+              const aiText = result.data?.choices?.[0]?.message?.content || result.choices?.[0]?.message?.content || result.data?.content || result.content;
+              if (!aiText) throw new Error('No response from AI');
+              // Parse AI response
+              const qMatch = aiText.match(/QUESTIONS:\s*([\s\S]*?)(?=ANSWERS:|$)/i);
+              const aMatch = aiText.match(/ANSWERS:\s*([\s\S]*?)$/i);
+              if (qMatch && aMatch) {
+                const questions = qMatch[1].trim().split(/\n+/).map(q => q.trim()).filter(q => q);
+                const answers = aMatch[1].trim().split(/\n+/).map(a => a.trim()).filter(a => a);
+                if (questions.length === gridSize && answers.length === gridSize) {
+                  questionsInput.value = questions.join('\n');
+                  vocabInput.value = answers.join('\n');
+                } else {
+                  alert('AI did not return the correct number of questions/answers.');
+                }
+              } else {
+                alert('Could not parse AI response.');
+              }
+            } catch (err) {
+              alert('AI error: ' + err.message);
+            } finally {
+              aiBtn.disabled = false;
+              aiBtn.querySelector('.button-text').textContent = 'Generate Grid';
+              aiBtn.querySelector('.loading-spinner').classList.add('hidden');
+            }
+          };
+        }
+      });
+    </script>
+    <script>
+      // Connect all Load/Save buttons (top and sidebar) to worksheet manager
+      document.addEventListener('DOMContentLoaded', function() {
+        function openWorksheetManager(mode) {
+          if (mode === 'save') {
+            window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+          } else {
+            window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+          }
+        }
+        function connectLoadSave(btnId, mode) {
+          var btn = document.getElementById(btnId);
+          if (btn) btn.onclick = function() { openWorksheetManager(mode); };
+        }
+        connectLoadSave('saveBtn', 'save');
+        connectLoadSave('loadBtn', 'load');
+        connectLoadSave('saveSetupBtn', 'save');
+        connectLoadSave('loadSetupBtn', 'load');
+      });
+    </script>
     <link rel="stylesheet" href="grid_game.css">
     
     <script>

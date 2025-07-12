@@ -308,6 +308,14 @@
                   <h1 style="margin:0;">Willena Lesson Planner</h1>
                   <p style="margin:0;">Create professional ESL lesson plans with AI assistance</p>
                 </div>
+                <!-- Top Action Bar (text links, like wordsearch.html) -->
+                <div class="top-actions" style="position:absolute; left:32px; bottom:12px; z-index:9999; display:flex; gap:20px; align-items:flex-end;">
+                    <span class="action-link" id="editLessonPlanLink" style="font-size:1rem; cursor:pointer;">Edit</span>
+                    <span class="action-link" id="printLessonPlanLink" style="font-size:1rem; cursor:pointer;">Print</span>
+                    <span class="action-link" id="saveLessonPlanLink" style="font-size:1rem; cursor:pointer;">Save</span>
+                    <span class="action-link" id="loadLessonPlanLink" style="font-size:1rem; cursor:pointer;">Load</span>
+                    <span class="action-link" id="pdfLessonPlanLink" style="font-size:1rem; cursor:pointer;">PDF</span>
+                </div>
                 <!-- Burger Menu Component (vertically centered in header, inside container) -->
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
@@ -396,12 +404,8 @@
                         <button id="generateActivities" class="generate-btn">Get Activity Ideas</button>
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div class="action-buttons">
-                        <button id="editLessonPlan" class="action-btn">Edit</button>
-                        <button id="printLessonPlan" class="action-btn">Print</button>
-                        <button id="saveLessonPlan" class="action-btn">Save</button>
-                    </div>
+                    <!-- Action Buttons (moved to header, so remove here) -->
+                    <!-- ...existing code... -->
                 </div>
                 
                 <!-- Preview Area -->
@@ -419,5 +423,120 @@
     </div>
     
     <script src="planner-standalone.js"></script>
+    <script>
+    // Open Worksheet Manager for Save/Load
+    function openWorksheetManager(mode) {
+        const url = "/Teachers/worksheet_manager.html?mode=" + mode;
+        window.open(url, "worksheetManager", "width=800,height=600");
+    }
+    document.getElementById("saveLessonPlanLink").onclick = function(e) {
+        e.preventDefault();
+        openWorksheetManager("save");
+    };
+    document.getElementById("loadLessonPlanLink").onclick = function(e) {
+        e.preventDefault();
+        openWorksheetManager("load");
+    };
+    // Provide worksheet data for manager
+    window.getCurrentWorksheetData = function() {
+        // Gather lesson plan data from form fields
+        const title = document.getElementById("plannerTopic")?.value || "";
+        const className = document.getElementById("plannerClassName")?.value || "";
+        const date = document.getElementById("plannerDate")?.value || "";
+        let duration = document.getElementById("plannerDuration")?.value || "";
+        const customDuration = document.getElementById("customDurationInput")?.value || "";
+        if (duration === "custom") duration = customDuration;
+        const activities = document.getElementById("plannerActivities")?.value || "";
+        // Save only activities in passage_text
+        const settings = JSON.stringify({
+            class_name: className,
+            date,
+            duration
+        });
+        return {
+            title,
+            passage_text: activities,
+            worksheet_type: "lessonplan",
+            settings
+        };
+    };
+    window.loadWorksheet = function(ws) {
+        // Load worksheet data into planner fields
+        document.getElementById("plannerTopic").value = ws.title || "";
+        // Load settings if present
+        if (ws.settings) {
+            try {
+                const settingsObj = JSON.parse(ws.settings);
+                document.getElementById("plannerClassName").value = settingsObj.class_name || "";
+                document.getElementById("plannerDate").value = settingsObj.date || "";
+                if (settingsObj.duration) {
+                    const durationSelect = document.getElementById("plannerDuration");
+                    if (["30","45","50","60","90"].includes(settingsObj.duration)) {
+                        durationSelect.value = settingsObj.duration;
+                        document.getElementById("customDuration").style.display = "none";
+                    } else {
+                        durationSelect.value = "custom";
+                        document.getElementById("customDuration").style.display = "block";
+                        document.getElementById("customDurationInput").value = settingsObj.duration;
+                    }
+                }
+            } catch (e) {}
+        } else {
+            document.getElementById("plannerClassName").value = ws.class_name || "";
+            document.getElementById("plannerDate").value = ws.date || "";
+            if (ws.duration) {
+                const durationSelect = document.getElementById("plannerDuration");
+                if (["30","45","50","60","90"].includes(ws.duration)) {
+                    durationSelect.value = ws.duration;
+                    document.getElementById("customDuration").style.display = "none";
+                } else {
+                    durationSelect.value = "custom";
+                    document.getElementById("customDuration").style.display = "block";
+                    document.getElementById("customDurationInput").value = ws.duration;
+                }
+            }
+        }
+        // Use passage_text for lesson plan/activities
+        let topic = "";
+        let activities = "";
+        if (ws.passage_text) {
+            // Try to split topic and activities if possible
+            const topicMatch = ws.passage_text.match(/Lesson Topic:\s*(.*)/i);
+            if (topicMatch) topic = topicMatch[1].trim();
+            const activitiesMatch = ws.passage_text.match(/Activities:\s*([\s\S]*)/i);
+            if (activitiesMatch) activities = activitiesMatch[1].trim();
+            // Fallback if not split
+            if (!topic && !activities) {
+                topic = ws.passage_text;
+            }
+            document.getElementById("plannerTopic").value = topic;
+            document.getElementById("plannerActivities").value = activities;
+        } else {
+            document.getElementById("plannerActivities").value = ws.activities || "";
+        }
+
+        // Immediately update the preview area with the loaded lesson plan
+        // Simulate clicking the Generate button, but without regenerating from AI
+        // Use the current form field values to render the preview
+        const lessonPlanOutput = document.getElementById("lessonPlanOutput");
+        // Compose preview HTML (same as what would be generated)
+        let previewHTML = "";
+        // Header
+        previewHTML += `<div class='lesson-header'><h2>${topic || "Lesson Plan"}</h2></div>`;
+        // Info
+        previewHTML += `<div class='lesson-info'>`;
+        previewHTML += `<p><strong>Class Name:</strong> ${document.getElementById("plannerClassName").value}</p>`;
+        previewHTML += `<p><strong>Date:</strong> ${document.getElementById("plannerDate").value}</p>`;
+        let durationVal = document.getElementById("plannerDuration").value;
+        if (durationVal === "custom") durationVal = document.getElementById("customDurationInput").value;
+        previewHTML += `<p><strong>Duration:</strong> ${durationVal} minutes</p>`;
+        previewHTML += `</div>`;
+        // Activities
+        if (activities) {
+            previewHTML += `<div class='activity-item'><h3>Activities</h3><p>${activities.replace(/\n/g, "<br>")}</p></div>`;
+        }
+        lessonPlanOutput.innerHTML = previewHTML;
+    };
+    </script>
 </body>
 </html>

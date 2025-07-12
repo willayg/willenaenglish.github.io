@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard Generator</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+    /* Ensure the preview area fills the viewport for 1x2-portrait */
+    .preview-area.full-portrait {
+        width: 100vw;
+        height: 100vh;
+        min-height: 100vh;
+        background: white;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -51,7 +63,7 @@
                     <option value="Arial">Arial</option>
                     <option value="Times New Roman">Times New Roman</option>
                     <option value="Calibri">Calibri</option>
-                    <option value="Poppins">Poppins</option>
+                    <option value="Poppins" selected>Poppins</option>
                     <option value="Verdana">Verdana</option>
                     <option value="Garamond">Garamond</option>
                     <option value="Comic Sans MS">Comic Sans MS</option>
@@ -66,9 +78,10 @@
 
                 <div class="layout-group">
                     <select class="layout-select" id="layoutSelect">
-                        <option value="2-card">2x2 Portrait</option>
-                        <option value="4-card">4 Card Mode</option>
-                        <option value="8-card">8 Card Mode</option>
+                        <option value="1-card">1 Card Per Page</option>
+                        <option value="2-card">4 Cards Per Page</option>
+                        <option value="1x2-portrait">2 Cards Per Page</option>
+                        <option value="8-card">8 Cards Per Page</option>
                     </select>
                 </div>
 
@@ -101,9 +114,27 @@
             <div class="main-content">
                 <!-- Sidebar -->
                 <div class="sidebar">
+
                     <div class="input-group">
                         <label>Card Set Title</label>
                         <input type="text" class="input-field" id="titleInput" placeholder="Enter flashcard set title">
+                    </div>
+
+                    <!-- AI Assistant Section (moved here) -->
+                    <div class="input-group" id="aiAssistantGroup">
+                        <label for="aiTopicInput" style="font-weight: 500; font-size: 15px; margin-bottom: 4px;">AI: Generate words from topic</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" class="input-field" id="aiTopicInput" placeholder="e.g., food, animals, colors..." style="flex: 1;">
+                            <select class="toolbar-select" id="aiWordCountSelect" style="width: 70px;">
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="20" selected>20</option>
+                                <option value="25">25</option>
+                                <option value="30">30</option>
+                            </select>
+                            <button class="secondary-btn" id="aiGenerateBtn" style="padding: 8px 12px; white-space: nowrap;">AI Generate</button>
+                        </div>
+                        <div id="aiStatusArea" style="margin-top: 6px; font-size: 14px; color: #333; min-height: 18px;"></div>
                     </div>
 
                     <div class="input-group">
@@ -118,20 +149,6 @@ house
 tree</textarea>
                     </div>
 
-                    <div class="input-group">
-                        <label>Generate from Topic</label>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" class="input-field" id="topicInput" placeholder="e.g., food, animals, colors..." style="flex: 1;">
-                            <select class="toolbar-select" id="wordCountSelect" style="width: 70px;">
-                                <option value="10">10</option>
-                                <option value="15">15</option>
-                                <option value="20" selected>20</option>
-                                <option value="25">25</option>
-                                <option value="30">30</option>
-                            </select>
-                            <button class="secondary-btn" id="generateFromTopicBtn" style="padding: 8px 12px; white-space: nowrap;">Generate</button>
-                        </div>
-                    </div>
 
                     <div class="button-group">
                         <button class="primary-btn" id="generateCardsBtn">Generate Cards</button>
@@ -177,5 +194,325 @@ tree</textarea>
     </div>
 
     <script src="flashcard-simple.js"></script>
+    <script src="../../components/feedback.js"></script>
+    <!-- html2pdf.js for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="module">
+    import { generateWordsFromTopic } from './ai.js';
+    document.addEventListener('DOMContentLoaded', function() {
+        const aiBtn = document.getElementById('aiGenerateBtn');
+        const aiInput = document.getElementById('aiTopicInput');
+        const aiCount = document.getElementById('aiWordCountSelect');
+        const aiStatus = document.getElementById('aiStatusArea');
+        const wordListInput = document.getElementById('wordListInput');
+
+        aiBtn.addEventListener('click', async function() {
+            const topic = aiInput.value.trim();
+            const count = parseInt(aiCount.value, 10) || 20;
+            if (!topic) {
+                aiStatus.textContent = 'Please enter a topic.';
+                return;
+            }
+            aiStatus.textContent = 'Generating words...';
+            aiBtn.disabled = true;
+            try {
+                const words = await generateWordsFromTopic(topic, count);
+                if (words && words.length > 0) {
+                    wordListInput.value = words.join('\n');
+                    aiStatus.textContent = `Generated ${words.length} words.`;
+                } else {
+                    aiStatus.textContent = 'No words generated.';
+                }
+            } catch (err) {
+                aiStatus.textContent = 'Error: ' + err.message;
+            }
+            aiBtn.disabled = false;
+        });
+        aiInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') aiBtn.click();
+        });
+
+        // Add save and load functionality
+
+        const saveBtn = document.getElementById('saveBtn');
+        const loadBtn = document.getElementById('loadBtn');
+        const pdfBtn = document.getElementById('pdfBtn');
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                openWorksheetManager('save');
+            });
+        }
+
+        if (loadBtn) {
+            loadBtn.addEventListener('click', function() {
+                openWorksheetManager('load');
+            });
+        }
+
+        if (pdfBtn) {
+            pdfBtn.addEventListener('click', async function() {
+                const grid = document.getElementById('flashcardGrid');
+                if (!grid || grid.children.length === 0) {
+                    alert('No flashcards to export.');
+                    return;
+                }
+                // Clone the grid for PDF export to avoid UI issues
+                const clone = grid.cloneNode(true);
+                clone.style.display = 'block';
+                clone.style.background = '#fff';
+                clone.style.width = '100%';
+                clone.style.padding = '20px';
+                // Create a container for PDF rendering
+                const pdfContainer = document.createElement('div');
+                pdfContainer.appendChild(clone);
+                // Use html2pdf to generate and download the PDF
+                const opt = {
+                    margin:       0.5,
+                    filename:     'flashcards.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 },
+                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(pdfContainer).save();
+            });
+        }
+
+        // Add double-click event to flashcards for Google Image search
+        const grid = document.getElementById('flashcardGrid');
+        if (grid) {
+            // Use event delegation to handle clicks on dynamically generated cards
+            grid.addEventListener('dblclick', function(e) {
+                let card = e.target;
+                // Traverse up to find the flashcard element
+                while (card && !card.classList.contains('flashcard')) {
+                    card = card.parentElement;
+                }
+                if (card && card.classList.contains('flashcard')) {
+                    // Get the card index from the ID
+                    const cardId = card.id; // should be like "flashcard-0"
+                    const index = cardId ? cardId.split('-')[1] : null;
+                    let word = '';
+                    if (index !== null && window.flashcards && window.flashcards[index]) {
+                        // Get word from flashcards array
+                        word = window.flashcards[index].english;
+                    } else {
+                        // Fallback: try to extract word from card content
+                        const textContent = card.textContent.trim();
+                        // Split by newlines and take the first non-empty line that's not "Drag image here"
+                        const lines = textContent.split('\n').map(line => line.trim()).filter(line => line && line !== 'Drag image here');
+                        if (lines.length > 0) {
+                            word = lines[0];
+                        }
+                    }
+                    if (word) {
+                        const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
+                        // Open in a new floating window (600x500, scrollbars/resizable)
+                        window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
+                    }
+                }
+            });
+        }
+
+    });
+    
+    // Function to open worksheet manager
+    function openWorksheetManager(mode) {
+        const url = `/Teachers/worksheet_manager.html?mode=${mode}`;
+        const features = 'width=800,height=600,scrollbars=yes,resizable=yes';
+        window.open(url, 'WorksheetManager', features);
+    }
+
+    // Function to get current worksheet data for saving
+    function getCurrentWorksheetData() {
+        const titleInput = document.getElementById('titleInput');
+        const wordListInput = document.getElementById('wordListInput');
+        const fontSelect = document.getElementById('fontSelect');
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        const layoutSelect = document.getElementById('layoutSelect');
+        const showKoreanToggle = document.getElementById('showKoreanToggle');
+        const imageOnlyToggle = document.getElementById('imageOnlyToggle');
+        const imageZoomSlider = document.getElementById('imageZoomSlider');
+
+        // Get words from the word list
+        const words = wordListInput.value.split('\n')
+            .map(word => word.trim())
+            .filter(word => word.length > 0);
+
+        // Compose all flashcard-related data into settings (JSON string)
+        const settings = {
+            flashcards: window.flashcards || [],
+            font: fontSelect.value,
+            fontSize: parseInt(fontSizeInput.value),
+            layout: layoutSelect.value,
+            showKorean: showKoreanToggle.checked,
+            imageOnly: imageOnlyToggle.checked,
+            imageZoom: parseFloat(imageZoomSlider.value)
+        };
+
+        return {
+            title: titleInput.value.trim() || 'Untitled Flashcard Set',
+            worksheet_type: 'flashcard',
+            words: words,
+            settings: JSON.stringify(settings),
+            created_at: new Date().toISOString()
+        };
+    }
+
+    // Function to load worksheet data
+    function loadWorksheet(worksheet) {
+        if (!worksheet || worksheet.worksheet_type !== 'flashcard') {
+            alert('Invalid flashcard worksheet data.');
+            return;
+        }
+
+        try {
+            const titleInput = document.getElementById('titleInput');
+            const wordListInput = document.getElementById('wordListInput');
+            const fontSelect = document.getElementById('fontSelect');
+            const fontSizeInput = document.getElementById('fontSizeInput');
+            const layoutSelect = document.getElementById('layoutSelect');
+            const showKoreanToggle = document.getElementById('showKoreanToggle');
+            const imageOnlyToggle = document.getElementById('imageOnlyToggle');
+            const imageZoomSlider = document.getElementById('imageZoomSlider');
+
+            // Load basic data
+            titleInput.value = worksheet.title || '';
+            
+            // Load words (direct field)
+            if (worksheet.words) {
+                wordListInput.value = Array.isArray(worksheet.words) 
+                    ? worksheet.words.join('\n') 
+                    : worksheet.words;
+            }
+
+            // Load flashcards if available (direct field)
+            if (worksheet.flashcards) {
+                window.flashcards = worksheet.flashcards;
+            }
+
+            // Load settings (parse from JSON string if needed)
+            if (worksheet.settings) {
+                let settings;
+                if (typeof worksheet.settings === 'string') {
+                    try {
+                        settings = JSON.parse(worksheet.settings);
+                    } catch (e) {
+                        console.warn('Could not parse settings:', e);
+                        settings = {};
+                    }
+                } else {
+                    settings = worksheet.settings;
+                }
+                
+                if (settings.font) fontSelect.value = settings.font;
+                if (settings.fontSize) fontSizeInput.value = settings.fontSize;
+                if (settings.layout) layoutSelect.value = settings.layout;
+                if (typeof settings.showKorean === 'boolean') showKoreanToggle.checked = settings.showKorean;
+                if (typeof settings.imageOnly === 'boolean') imageOnlyToggle.checked = settings.imageOnly;
+                if (settings.imageZoom) imageZoomSlider.value = settings.imageZoom;
+            }
+
+            // Fallback: handle old data structure
+            if (worksheet.data) {
+                // Load words
+                if (worksheet.data.words) {
+                    wordListInput.value = worksheet.data.words.join('\n');
+                }
+
+                // Load flashcards if available
+                if (worksheet.data.flashcards) {
+                    window.flashcards = worksheet.data.flashcards;
+                }
+
+                // Load settings
+                if (worksheet.data.settings) {
+                    const settings = worksheet.data.settings;
+                    if (settings.font) fontSelect.value = settings.font;
+                    if (settings.fontSize) fontSizeInput.value = settings.fontSize;
+                    if (settings.layout) layoutSelect.value = settings.layout;
+                    if (typeof settings.showKorean === 'boolean') showKoreanToggle.checked = settings.showKorean;
+                    if (typeof settings.imageOnly === 'boolean') imageOnlyToggle.checked = settings.imageOnly;
+                    if (settings.imageZoom) imageZoomSlider.value = settings.imageZoom;
+                }
+            }
+
+            // Trigger regeneration of cards with loaded data
+            if (typeof window.generateCards === 'function') {
+                window.generateCards();
+            } else {
+                // Fallback: trigger click on generate button
+                const generateBtn = document.getElementById('generateCardsBtn');
+                if (generateBtn) {
+                    generateBtn.click();
+                }
+            }
+
+            alert('Flashcard set loaded successfully!');
+        } catch (error) {
+            console.error('Error loading worksheet:', error);
+            alert('Error loading flashcard set: ' + error.message);
+        }
+    }
+
+    // Make functions available globally for worksheet manager
+    window.getCurrentWorksheetData = getCurrentWorksheetData;
+    window.loadWorksheet = loadWorksheet;
+    </script>
+    <script>
+        // Font and font size controls
+        const fontSelect = document.getElementById('fontSelect');
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        const decreaseFontBtn = document.getElementById('decreaseFontBtn');
+        const increaseFontBtn = document.getElementById('increaseFontBtn');
+        const showKoreanToggle = document.getElementById('showKoreanToggle');
+
+        function updateFlashcardFont() {
+            const grid = document.getElementById('flashcardGrid');
+            if (!grid) return;
+            const font = fontSelect.value;
+            const fontSize = parseInt(fontSizeInput.value, 10) || 18;
+            Array.from(grid.getElementsByClassName('flashcard')).forEach(card => {
+                card.style.fontFamily = font;
+                card.style.fontSize = fontSize + 'px';
+            });
+        }
+
+        fontSelect.addEventListener('change', updateFlashcardFont);
+        fontSizeInput.addEventListener('input', updateFlashcardFont);
+        decreaseFontBtn.addEventListener('click', function() {
+            let size = parseInt(fontSizeInput.value, 10) || 18;
+            size = Math.max(8, size - 1);
+            fontSizeInput.value = size;
+            updateFlashcardFont();
+        });
+        increaseFontBtn.addEventListener('click', function() {
+            let size = parseInt(fontSizeInput.value, 10) || 18;
+            size = Math.min(72, size + 1);
+            fontSizeInput.value = size;
+            updateFlashcardFont();
+        });
+
+        // Korean toggle functionality
+        function updateKoreanVisibility() {
+            const showKorean = showKoreanToggle.checked;
+            const grid = document.getElementById('flashcardGrid');
+            if (!grid) return;
+            Array.from(grid.getElementsByClassName('flashcard-korean')).forEach(elem => {
+                elem.style.display = showKorean ? '' : 'none';
+            });
+        }
+        showKoreanToggle.addEventListener('change', updateKoreanVisibility);
+
+        // Update font and Korean visibility on card generation
+        if (window.generateCards) {
+            const origGenerateCards = window.generateCards;
+            window.generateCards = function() {
+                origGenerateCards.apply(this, arguments);
+                updateFlashcardFont();
+                updateKoreanVisibility();
+            };
+        }
+    </script>
 </body>
 </html>

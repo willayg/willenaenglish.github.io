@@ -358,6 +358,18 @@ exports.handler = async (event) => {
           supabaseUrlPrefix: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 20) + '...' : 'MISSING'
         })
       };
+    } else if (event.queryStringParameters && event.queryStringParameters.action === 'google_oauth_signup') {
+      // You may need to use the supabase-js client in a browser, but for serverless, redirect manually:
+      const redirectTo = 'https://your-site.netlify.app/Teachers/signup.html'; // Set this to your real site
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const clientId = process.env.SUPABASE_CLIENT_ID; // Or get from your dashboard
+      // Build the Google OAuth URL manually:
+      const url = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+      return {
+        statusCode: 302,
+        headers: { Location: url },
+        body: ''
+      };
     } else {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }

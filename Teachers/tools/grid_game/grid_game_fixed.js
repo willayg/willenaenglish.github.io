@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadSetupBtn = document.getElementById('loadSetupBtn');
     const resetGameBtn = document.getElementById('resetGameBtn');
     const gamePreviewArea = document.getElementById('gamePreviewArea');
+    
+    // AI button elements
+    const aiGridInput = document.getElementById('aiGridInput');
+    const extractFromPassageBtn = document.getElementById('extractFromPassageBtn');
+    const generateFromPromptBtn = document.getElementById('generateFromPromptBtn');
 
     // Utility functions
     function getBaseUrl() {
@@ -251,51 +256,64 @@ Passage: ${passage}`
 
         const gameGrid = document.getElementById('gameGrid');
         
+        // Card layout option
+        const cardLayoutPicker = document.getElementById('cardLayoutPicker');
+        const cardLayout = cardLayoutPicker ? cardLayoutPicker.value : 'word-top';
+
         // Create grid squares
         currentWords.forEach((word, index) => {
             const square = document.createElement('div');
             square.className = 'grid-square showing-word';
-            square.textContent = word;
             square.style.fontFamily = fontPicker.value;
-            
-            let isShowingWord = true;
+
+            // Card content
+            let topText, bottomText;
+            if (cardLayout === 'word-top') {
+                topText = word;
+                bottomText = currentQuestions[index];
+            } else {
+                topText = currentQuestions[index];
+                bottomText = word;
+            }
+
+            // Initial state: show top
+            let isShowingTop = true;
             let teamColor = null;
 
-            // Left click - toggle word/question
+            // Render function
+            function renderCard() {
+                square.innerHTML = `<div style="font-size:1.1em;font-weight:600;">${isShowingTop ? topText : bottomText}</div>`;
+                square.className = `grid-square ${isShowingTop ? 'showing-word' : 'showing-question'}`;
+            }
+            renderCard();
+
+            // Left click - toggle top/bottom
             square.addEventListener('click', function() {
                 if (teamColor) return; // Don't toggle if team color is assigned
-                
-                isShowingWord = !isShowingWord;
-                square.textContent = isShowingWord ? word : currentQuestions[index];
-                square.className = `grid-square ${isShowingWord ? 'showing-word' : 'showing-question'}`;
+                isShowingTop = !isShowingTop;
+                renderCard();
             });
 
             // Right click - assign team color
             square.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
-                
                 if (currentTeams.length === 0) {
                     alert('Please add teams first to assign colors.');
                     return;
                 }
-
-                // Create team selection menu
                 showTeamSelectionMenu(e.clientX, e.clientY, function(selectedTeam) {
                     if (selectedTeam === 'reset') {
-                        // Reset to original state
                         teamColor = null;
                         square.style.backgroundColor = 'white';
                         square.style.color = 'inherit';
-                        square.className = 'grid-square showing-word';
-                        square.textContent = word;
-                        isShowingWord = true;
+                        isShowingTop = true;
+                        renderCard();
                     } else {
-                        // Assign team color
                         teamColor = selectedTeam.color;
                         square.style.backgroundColor = selectedTeam.color;
                         square.style.color = 'white';
                         square.className = 'grid-square team-color';
-                        square.textContent = selectedTeam.name;
+                        square.innerHTML = `<div style="font-size:1.1em;font-weight:600;">${selectedTeam.name}</div>`;
                     }
                 });
             });
@@ -683,7 +701,19 @@ Passage: ${passage}`
 
     extractBtn.addEventListener('click', extractWordsAndQuestions);
     addTeamBtn.addEventListener('click', addTeam);
-    generateGameBtn.addEventListener('click', generateGame);
+    
+    // Debug Generate Game Button
+    console.log('Generate Game Button:', generateGameBtn);
+    if (generateGameBtn) {
+        generateGameBtn.addEventListener('click', function() {
+            console.log('Generate Game button clicked!');
+            generateGame();
+        });
+        console.log('Generate Game event listener attached');
+    } else {
+        console.error('Generate Game button not found!');
+    }
+    
     saveSetupBtn.addEventListener('click', saveSetup);
     loadSetupBtn.addEventListener('click', loadSetup);
     resetGameBtn.addEventListener('click', resetSetup);

@@ -226,6 +226,13 @@ class FlashcardApp {
         grid.style.display = 'grid';
         
         this.layoutManager.updateLayout(grid, this.cardManager.cards, this.getSettings());
+        // For 1x2-portrait, force preview area to fill viewport
+        const previewArea = document.getElementById('previewArea');
+        if (this.getSettings().layout === '1x2-portrait') {
+            previewArea.classList.add('full-portrait');
+        } else {
+            previewArea.classList.remove('full-portrait');
+        }
         
         // Enable enhanced drag and drop for the updated cards
         this.setupImageDragAndDrop();
@@ -236,10 +243,11 @@ class FlashcardApp {
             font: document.getElementById('fontSelect').value,
             fontSize: parseInt(document.getElementById('fontSizeInput').value),
             layout: document.getElementById('layoutSelect').value,
-            cardSize: parseInt(document.getElementById('cardSizeSlider').value),
+            cardSize: parseInt(document.getElementById('cardSizeSlider') ? document.getElementById('cardSizeSlider').value : 200),
             showKorean: document.getElementById('showKoreanToggle').checked,
             imageOnly: document.getElementById('imageOnlyToggle').checked,
-            title: document.getElementById('titleInput').value.trim()
+            title: document.getElementById('titleInput').value.trim(),
+            imageZoom: parseFloat(document.getElementById('imageZoomSlider') ? document.getElementById('imageZoomSlider').value : 1)
         };
     }
 
