@@ -6,45 +6,108 @@
 </head>
 <body>
   <h2>B2 File Manager</h2>
-  <input type="file" id="fileInput">
+
+  <input type="file" id="fileInput" multiple>
   <button onclick="uploadFile()">Upload</button>
   <button onclick="loadFiles()">Refresh File List</button>
   <ul id="fileList"></ul>
 
   <script>
+
     async function uploadFile() {
       const fileInput = document.getElementById('fileInput');
       if (!fileInput.files.length) return alert('No file selected');
 
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-
-      const res = await fetch('/.netlify/functions/b2_proxy', {
-        method: 'POST',
-        body: formData
-      });
-
-      const text = await res.text();
-      alert(text);
+      for (const file of fileInput.files) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const res = await fetch('/.netlify/functions/b2_proxy?filename=' + encodeURIComponent(file.name), {
+            method: 'POST',
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream'
+            },
+            body: arrayBuffer
+          });
+          
+          let result;
+          try {
+            result = await res.json();
+          } catch (jsonError) {
+            // Only try to read text if we haven't already read the response
+            if (!res.bodyUsed) {
+              const text = await res.text();
+              console.error('Server response (not JSON):', text);
+              alert(`Upload failed for ${file.name}: Server returned: ${text}`);
+            } else {
+              console.error('Failed to parse JSON and response body already read');
+              alert(`Upload failed for ${file.name}: Invalid server response`);
+            }
+            continue;
+          }
+          
+          if (!res.ok) {
+            alert(`Upload failed for ${file.name}: ${result.error || res.statusText}`);
+          } else {
+            console.log(`Upload successful for ${file.name}:`, result);
+          }
+        } catch (error) {
+          console.error(`Error uploading ${file.name}:`, error);
+          alert(`Error uploading ${file.name}: ${error.message}`);
+        }
+      }
+      alert('Upload complete!');
       loadFiles();
     }
 
+
     async function loadFiles() {
-      const res = await fetch('/.netlify/functions/b2_proxy');
-      const files = await res.json();
+      try {
+        const res = await fetch('/.netlify/functions/b2_proxy');
+        
+        if (!res.ok) {
+          let errorText;
+          try {
+            const errorData = await res.json();
+            errorText = errorData.error || res.statusText;
+          } catch {
+            errorText = await res.text();
+          }
+          throw new Error(`Failed to load files: ${errorText}`);
+        }
+        
+        const files = await res.json();
 
-      const fileList = document.getElementById('fileList');
-      fileList.innerHTML = '';
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
 
-      files.forEach(file => {
-        const li = document.createElement('li');
-        const link = document.createElement('a');
-        link.href = `https://f000.backblazeb2.com/file/YOUR_BUCKET_NAME/${file.fileName}`;
-        link.target = '_blank';
-        link.textContent = file.fileName;
-        li.appendChild(link);
-        fileList.appendChild(li);
-      });
+        // Replace with your actual bucket name (from Netlify env)
+        const BUCKET_NAME = 'willena'; // <-- CHANGE THIS
+        const B2_URL = `https://f000.backblazeb2.com/file/${BUCKET_NAME}/`;
+
+        files.forEach(file => {
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = B2_URL + encodeURIComponent(file.fileName);
+          link.target = '_blank';
+          link.textContent = file.fileName;
+
+          // Download button
+          const dlBtn = document.createElement('button');
+          dlBtn.textContent = 'Download';
+          dlBtn.onclick = () => {
+            window.open(link.href, '_blank');
+          };
+
+          li.appendChild(link);
+          li.appendChild(document.createTextNode(' '));
+          li.appendChild(dlBtn);
+          fileList.appendChild(li);
+        });
+      } catch (error) {
+        console.error('Error loading files:', error);
+        alert('Error loading files: ' + error.message);
+        document.getElementById('fileList').innerHTML = '<li>Error loading files. Check console for details.</li>';
+      }
     }
 
     loadFiles();
