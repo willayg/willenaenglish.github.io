@@ -1,74 +1,93 @@
+// netlify/functions/b2_proxy.js
+const {
+  S3Client,
+  PutObjectCommand,
+  ListObjectsV2Command,
+} = require("@aws-sdk/client-s3");
 
-// Only require backblaze-b2, do NOT require multiparty (not needed)
-const B2 = require('backblaze-b2');
+// ────────────────────────────────────────────────────────────
+// 1.  Read ENV variables (set these in Netlify UI)
+// ────────────────────────────────────────────────────────────
+const accessKeyId     = process.env.B2_S3_KEY_ID;
+const secretAccessKey = process.env.B2_S3_SECRET_KEY;
+const region          = process.env.B2_S3_REGION;          // us-east-005
+const endpoint        = process.env.B2_S3_ENDPOINT;        // https://s3.us-east-005.backblazeb2.com
+const bucket          = process.env.B2_S3_BUCKET;          // willena
 
-const b2 = new B2({
-  applicationKeyId: process.env.b2_key_id,
-  applicationKey: process.env.b2_app_key,
+// ────────────────────────────────────────────────────────────
+// 2.  Create an S3 client that points to Backblaze
+// ────────────────────────────────────────────────────────────
+const s3 = new S3Client({
+  region,
+  endpoint,                 // custom B2 S3 URL
+  credentials: { accessKeyId, secretAccessKey },
+  forcePathStyle: true,     // required by Backblaze B2
 });
 
-exports.handler = async function (event) {
+// Helper: universal JSON response
+const jsonResponse = (statusCode, bodyObj) => ({
+  statusCode,
+  headers: {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+  },
+  body: JSON.stringify(bodyObj),
+});
+
+// ────────────────────────────────────────────────────────────
+// 3.  The Function Handler
+// ────────────────────────────────────────────────────────────
+exports.handler = async (event) => {
   try {
-    await b2.authorize(); // Required before any other call
+    // ──────── LIST FILES ────────
+    if (event.httpMethod === "GET") {
+      const list = await s3.send(
+        new ListObjectsV2Command({ Bucket: bucket, MaxKeys: 1000 })
+      );
 
-    const bucketName = process.env.b2_bucket_name;
+      const files = (list.Contents || []).map((f) => ({
+        key: f.Key,
+        size: f.Size,
+        lastModified: f.LastModified,
+        url: `${endpoint}/file/${bucket}/${encodeURIComponent(f.Key)}`,
+      }));
 
-    // Find the bucket ID
-    const allBuckets = await b2.listBuckets();
-    const bucket = allBuckets.data.buckets.find(
-      (b) => b.bucketName === bucketName
-    );
-    if (!bucket) {
-      throw new Error(`Bucket "${bucketName}" not found`);
-    }
-    const bucketId = bucket.bucketId;
-
-    // Handle upload
-    if (event.httpMethod === 'POST') {
-      const contentType = event.headers['content-type'] || event.headers['Content-Type'];
-      const body = Buffer.from(event.body, 'base64');
-      const fileName = event.queryStringParameters?.filename || 'untitled.dat';
-
-      // Get upload URL
-      const uploadAuth = await b2.getUploadUrl({ bucketId });
-
-      // Upload file
-      const uploadResponse = await b2.uploadFile({
-        uploadUrl: uploadAuth.data.uploadUrl,
-        uploadAuthToken: uploadAuth.data.authorizationToken,
-        fileName,
-        data: body,
-        mime: contentType,
-      });
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'Upload successful', fileName }),
-        headers: { 'Content-Type': 'application/json' },
-      };
+      return jsonResponse(200, { files });
     }
 
-    // Handle list
-    if (event.httpMethod === 'GET') {
-      const files = await b2.listFileNames({ bucketId, maxFileCount: 100 });
-      return {
-        statusCode: 200,
-        body: JSON.stringify(files.data.files),
-        headers: { 'Content-Type': 'application/json' },
-      };
+    // ──────── UPLOAD FILE ────────
+    if (event.httpMethod === "POST") {
+      // Expect JSON: { "filename": "name.ext", "base64": "AAA..." }
+      let body;
+      try {
+        body = JSON.parse(event.body);
+      } catch {
+        return jsonResponse(400, { error: "Invalid JSON in request body." });
+      }
+
+      const { filename, base64 } = body || {};
+      if (!filename || !base64)
+        return jsonResponse(400, { error: "Missing filename or base64 fields." });
+
+      const buffer = Buffer.from(base64, "base64");
+
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: filename,
+          Body: buffer,
+          ContentType: "application/octet-stream",
+        })
+      );
+
+      const fileUrl = `${endpoint}/file/${bucket}/${encodeURIComponent(filename)}`;
+      return jsonResponse(200, { message: "Upload successful", url: fileUrl });
     }
 
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method Not Allowed' }),
-      headers: { 'Content-Type': 'application/json' },
-    };
+    // ──────── Unsupported Methods ────────
+    return jsonResponse(405, { error: "Method Not Allowed" });
   } catch (err) {
-    console.error('B2 Proxy Error:', err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message || 'Unknown server error' }),
-      headers: { 'Content-Type': 'application/json' },
-    };
+    console.error("B2 S3 Proxy Error:", err);
+    return jsonResponse(500, { error: err.message || "Internal Server Error" });
   }
 };
