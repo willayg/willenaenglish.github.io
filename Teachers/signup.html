@@ -25,13 +25,6 @@
     .signup-container .error { color: #d32f2f; margin-bottom: 10px; text-align: center; }
     .signup-container .success { color: #388e3c; margin-bottom: 10px; text-align: center; }
     .signup-container .or { text-align: center; margin: 18px 0; color: #888; }
-    .google-btn {
-      width: 100%; padding: 12px; background: #fff; color: #444;
-      border: 1px solid #ccc; border-radius: 5px; font-size: 18px; font-weight: 600;
-      cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center;
-      gap: 10px;
-    }
-    .google-btn img { width: 22px; height: 22px; }
   </style>
 </head>
 <body>
@@ -41,23 +34,22 @@
     <form id="signupForm">
       <label for="name">Name</label>
       <input type="text" id="name" required>
+      <label for="username">Username</label>
+      <input type="text" id="username" required autocomplete="username">
       <label for="email">Email</label>
-      <input type="email" id="email" required autocomplete="username">
+      <input type="email" id="email" required autocomplete="email">
       <label for="password">Password</label>
       <input type="password" id="password" required autocomplete="new-password">
       <button type="submit">Sign Up</button>
     </form>
     <div class="or">or</div>
-    <button class="google-btn" id="googleSignUpBtn"><img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo">Sign up with Google</button>
     <div class="success" id="signupSuccess" style="display:none;"></div>
   </div>
-  <script type="module">
+  <script>
     const signupForm = document.getElementById('signupForm');
     const signupError = document.getElementById('signupError');
     const signupSuccess = document.getElementById('signupSuccess');
-    const googleSignUpBtn = document.getElementById('googleSignUpBtn');
 
-    // Use the Netlify proxy for all auth actions
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       signupError.style.display = 'none';
@@ -65,38 +57,38 @@
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      
+      const username = document.getElementById('username').value.trim();
+      // Use correct Netlify function path for local dev vs production
+      let functionPath = '/netlify/functions/supabase_proxy_fixed?action=signup';
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        functionPath = '/.netlify/functions/supabase_proxy_fixed?action=signup';
+      }
       try {
-        // Call proxy to sign up
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=signup', {
+        const response = await fetch(functionPath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, name })
+          body: JSON.stringify({ name, email, password, username })
         });
-        const result = await res.json();
-        if (!res.ok || !result.success) {
+        let result;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(text);
+        }
+        if (!response.ok || !result.success) {
           signupError.textContent = result.error || 'Sign up failed.';
           signupError.style.display = 'block';
           return;
         }
-        // Store user ID for future use
-        if (result.user && result.user.id) {
-          localStorage.setItem('userId', result.user.id);
-        }
-        signupSuccess.textContent = 'Sign up successful! Please check your email to confirm your account.';
+        signupSuccess.textContent = 'Sign up successful! Please check your email for a confirmation link.';
         signupSuccess.style.display = 'block';
         signupForm.reset();
       } catch (err) {
         signupError.textContent = 'Network error: ' + err.message;
         signupError.style.display = 'block';
       }
-    });
-
-    googleSignUpBtn.addEventListener('click', async () => {
-      signupError.style.display = 'none';
-      signupSuccess.style.display = 'none';
-      // Redirect to proxy endpoint for Google OAuth
-      window.location.href = '/.netlify/functions/supabase_proxy_fixed?action=google_oauth_signup';
     });
   </script>
 </body>

@@ -42,6 +42,18 @@ export function insertBurgerMenu(targetSelector = 'body') {
       // Let the link work normally
     };
   }
+
+  // Logout button logic
+  const logoutBtn = wrapper.querySelector('#logoutMenuBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = function(e) {
+      e.preventDefault();
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+      window.location.href = '/Teachers/login.html';
+      dropdown.style.display = 'none';
+    };
+  }
 }
 
 // If not using modules, you can expose insertBurgerMenu globally:

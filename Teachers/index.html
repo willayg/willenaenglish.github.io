@@ -258,7 +258,10 @@
                     <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="logo-img">
                 </div>
                 <h1>Teacher Dashboard</h1>
-                <div id="burger-menu-mount" style="position:relative; min-width:48px;"></div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span id="username-display" style="color:white; font-size:1.1rem; font-weight:500;"></span>
+                    <div id="burger-menu-mount" style="position:relative; min-width:48px;"></div>
+                </div>
             </div>
             
             <div class="nav-tabs">
@@ -306,13 +309,45 @@
                 </a>
                 <div class="tool-card coming-soon" data-tags="grammar listening speaking">
                     <div class="tool-title">Coming Soon</div>
-                    <img src="tools/assets/icons/lesson.png" alt="Coming Soon" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <img src="tools/assets/icons/soon.png" alt="Coming Soon" style="height:8em;margin:0.7em 0 0.5em 0;">
                     <div class="tool-overlay">This section will be available in a future update.</div>
                 </div>
             </div>
         </div>
     </div>
     <script type="module">
+      // Show username from localStorage (set at login)
+      document.addEventListener('DOMContentLoaded', async function() {
+        const usernameSpan = document.getElementById('username-display');
+        let username = '';
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          try {
+            const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+            const result = await res.json();
+            if (result.success && result.username) {
+              username = result.username;
+            } else if (result.success && result.name) {
+              username = result.name;
+            }
+          } catch (e) {
+            // fallback below
+          }
+        }
+        if (!username) {
+          // fallback to localStorage/email
+          username = localStorage.getItem('username') || '';
+          if (!username) {
+            const email = localStorage.getItem('userEmail');
+            if (email) {
+              username = email.split('@')[0];
+            }
+          }
+        }
+        if (username) {
+          usernameSpan.textContent = username;
+        }
+      });
       import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
@@ -326,6 +361,17 @@
       document.addEventListener('DOMContentLoaded', async function() {
         await ensureBurgerMenuTemplate();
         insertBurgerMenu('#burger-menu-mount');
+        // Update burger menu teacher login link if present
+        setTimeout(() => {
+          const burger = document.querySelector('burger-menu');
+          if (burger && burger.shadowRoot) {
+            const teacherLogin = burger.shadowRoot.querySelector('a[href*="Teachers/index.html"], a[href*="teachers/index.html"]');
+            if (teacherLogin) {
+              teacherLogin.setAttribute('href', '/Teachers/login.html');
+              teacherLogin.textContent = 'Teacher Login';
+            }
+          }
+        }, 500);
       });
     </script>
     <script>
