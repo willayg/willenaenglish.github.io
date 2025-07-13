@@ -1,371 +1,391 @@
 const { createClient } = require('@supabase/supabase-js');
+const { supabase: serviceRoleSupabaseFromModule } = require('./profile_backend.js');
 
 exports.handler = async (event) => {
-  console.log('=== FUNCTION START ===');
-  console.log('Received event:', event.httpMethod, event.path);
-  console.log('Event body:', event.body);
-  console.log('Environment check:', {
-    SUPABASE_URL: process.env.SUPABASE_URL ? 'PRESENT' : 'MISSING',
-    SUPABASE_KEY: process.env.SUPABASE_KEY ? 'PRESENT' : 'MISSING', 
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'PRESENT' : 'MISSING',
-    NODE_ENV: process.env.NODE_ENV
-  });
-  
   try {
+    // Initialize two Supabase clients as specified
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // --- FEEDBACK STATUS UPDATE ---
-    if (event.path.endsWith('/supabase_proxy') && event.httpMethod === 'POST' && event.queryStringParameters && event.queryStringParameters.feedback_update !== undefined) {
-      try {
-        const { id, status } = JSON.parse(event.body);
-        if (!id || !status) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'Missing id or status' }) };
-        }
-        const { data, error } = await supabase
-          .from('feedback')
-          .update({ status })
-          .eq('id', id)
-          .select();
-        if (error) {
-          return { statusCode: 400, body: JSON.stringify({ error: error.message }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true, data }) };
-      } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
-      }
-    }
-
-    // --- GET PROFILE (name, email, approval, role) ---
-    if (event.queryStringParameters && event.queryStringParameters.action === 'get_profile' && event.httpMethod === 'GET') {
-      try {
-        const userId = event.queryStringParameters.user_id;
-        if (!userId) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
-        }
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('name, email, approved, role')
-          .eq('id', userId)
-          .single();
-        if (error || !data) {
-          return { statusCode: 404, body: JSON.stringify({ success: false, error: 'User not found' }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true, name: data.name, email: data.email, approved: data.approved, role: data.role }) };
-      } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
-      }
-    }
-
-    // --- UPDATE PROFILE (name/email/password) ---
-    if (event.queryStringParameters && event.queryStringParameters.action === 'update_profile' && event.httpMethod === 'POST') {
-      try {
-        const { user_id, name, email, password } = JSON.parse(event.body);
-        if (!user_id) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
-        }
-        // Check if user is approved before allowing update
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('approved')
-          .eq('id', user_id)
-          .single();
-        if (profileError || !profile) {
-          return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
-        }
-        if (!profile.approved) {
-          return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
-        }
-        let updateError = null;
-        // Update name/email in profiles table
-        const updateFields = {};
-        if (typeof name === 'string' && name.length > 0) updateFields.name = name;
-        if (typeof email === 'string' && email.length > 0) updateFields.email = email;
-        if (Object.keys(updateFields).length > 0) {
-          const { error } = await supabase
-            .from('profiles')
-            .update(updateFields)
-            .eq('id', user_id);
-          if (error) updateError = error;
-        }
-        // Update password via Supabase Auth API
-        if (password) {
-          const { error } = await supabase.auth.admin.updateUser(user_id, { password });
-          if (error) updateError = error;
-        }
-        if (updateError) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: updateError.message }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true }) };
-      } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
-      }
-    }
-
-    // --- GET EMAIL BY USERNAME (only approved users) ---
-    if (event.queryStringParameters && event.queryStringParameters.action === 'get_email_by_username' && event.httpMethod === 'GET') {
-      try {
-        const username = event.queryStringParameters.username;
-        if (!username) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing username' }) };
-        }
-        // Look up email by username in 'profiles' table
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('email, approved')
-          .eq('username', username)
-          .single();
-        if (error || !data) {
-          return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Username not found' }) };
-        }
-        if (!data.approved) {
-          return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true, email: data.email }) };
-      } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
-      }
-    }
-
-    // --- TEACHER LOGIN (email/password, only approved users) ---
-    if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
-      try {
-        const { email, password } = JSON.parse(event.body);
-        if (!email || !password) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
-        }
-        // Check if user is approved before allowing login
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, approved')
-          .eq('email', email)
-          .single();
-        if (profileError || !profile) {
-          return { statusCode: 401, body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
-        }
-        if (!profile.approved) {
-          return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
-        }
-        // Use Supabase Auth API
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          return { statusCode: 401, body: JSON.stringify({ success: false, error: error.message }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true, user: data.user }) };
-      } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
-      }
-    }
-
-    // --- GET USER ROLE ---
-    if (event.queryStringParameters && event.queryStringParameters.action === 'get_role' && event.httpMethod === 'GET') {
-      try {
-        const userId = event.queryStringParameters.user_id;
-        if (!userId) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
-        }
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-        if (error) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
-        }
-        return { statusCode: 200, body: JSON.stringify({ success: true, role: data.role }) };
-      } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
-      }
-    }
-
-    if (event.path.endsWith('/upload_teacher_file') && event.httpMethod === 'POST') {
-      // Parse multipart/form-data (you may need a library like busboy or formidable)
-      // For simplicity, let's assume you send base64 file data and filename in JSON
-
-      try {
-        const { fileName, fileDataBase64 } = JSON.parse(event.body);
-        const buffer = Buffer.from(fileDataBase64, 'base64');
-        const { data, error } = await supabase.storage
-          .from('teacher-files')
-          .upload(`uploads/${Date.now()}_${fileName}`, buffer, {
-            contentType: 'application/octet-stream',
-            upsert: false,
-          });
-
-        if (error) {
-          throw error;
-        }
-
-        return { statusCode: 200, body: JSON.stringify({ path: data.path }) };
-      } catch (err) {
-        return { statusCode: 400, body: JSON.stringify({ error: err.message }) };
-      }
-    } else if (event.path.endsWith('/list_teacher_files') && event.httpMethod === 'GET') {
-      const { prefix = '', limit = 20, offset = 0 } = event.queryStringParameters || {};
-
-      const { data, error } = await supabase.storage
-        .from('teacher-files')
-        .list(prefix, {
-          limit: Number(limit),
-          offset: Number(offset),
-          sortBy: { column: 'name', order: 'asc' }
-        });
-
-      if (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-      }
-
-      const filesWithUrls = [];
-      for (const file of data) {
-        if (file.name) {
-          const filePath = prefix ? `${prefix}/${file.name}` : file.name;
-          const { data: signedData } = await supabase.storage
-            .from('teacher-files')
-            .createSignedUrl(filePath, 3600);
-          filesWithUrls.push({
-            name: file.name,
-            path: filePath,
-            url: signedData?.signedUrl || null,
-            updated_at: file.updated_at,
-            metadata: file.metadata
-          });
-        }
-      }
-
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
       return {
-        statusCode: 200,
-        body: JSON.stringify(filesWithUrls)
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, error: 'Missing Supabase configuration' })
       };
-    } else if ((event.path.endsWith('/save_worksheet') && event.httpMethod === 'POST') || (event.queryStringParameters && event.queryStringParameters.feedback !== undefined && event.httpMethod === 'POST')) {
+    }
+
+    // Anon client for auth operations
+    const anonSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Service-role client - use from module if available, otherwise create new one
+    const serviceRoleSupabase = serviceRoleSupabaseFromModule || createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Parse action from query parameters
+    const action = event.queryStringParameters?.action;
+    
+    if (!action) {
+      return {
+        statusCode: 404,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, error: 'Unknown action' })
+      };
+    }
+
+    // Handle signup action
+    if (action === 'signup' && event.httpMethod === 'POST') {
       try {
-        const body = JSON.parse(event.body);
-        // Feedback insert
-        if (body.action === 'insert_feedback' && body.data) {
-          const feedback = body.data;
-          const { data, error } = await supabase
-            .from('feedback')
-            .insert([feedback]);
-          if (error) {
-            return {
-              statusCode: 400,
-              body: JSON.stringify({ success: false, error: error.message })
-            };
-          }
-          return {
-            statusCode: 200,
-            body: JSON.stringify({ success: true, data })
-          };
-        }
-        // Worksheet insert (legacy)
-        const worksheet = body;
-        console.log('worksheet.words:', worksheet.words, typeof worksheet.words); // <--- Add this line
-
-        // Always normalize worksheet.words to an array of trimmed strings
-        if (typeof worksheet.words === "string") {
-          worksheet.words = worksheet.words
-            .split('\n')
-            .map(w => w.trim())
-            .filter(w => w.length > 0);
-        } else if (Array.isArray(worksheet.words)) {
-          worksheet.words = worksheet.words
-            .map(w => typeof w === "string" ? w.trim() : "")
-            .filter(w => w.length > 0);
-        } else {
-          worksheet.words = [];
-        }
-
-        // If language_point should be an array:
-        if ('language_point' in worksheet) {
-          if (typeof worksheet.language_point === "string") {
-            worksheet.language_point = worksheet.language_point.trim() !== ""
-              ? [worksheet.language_point.trim()]
-              : [];
-          } else if (!Array.isArray(worksheet.language_point)) {
-            worksheet.language_point = [];
-          }
-        }
-
-        const { data, error } = await supabase
-          .from('worksheets')
-          .insert([worksheet]);
-        if (error) {
+        const { email, password, name } = JSON.parse(event.body);
+        
+        if (!email || !password || !name) {
           return {
             statusCode: 400,
-            body: JSON.stringify({ success: false, error: error.message })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: 'Missing email, password, or name' })
           };
         }
-        return {
-          statusCode: 200,
-          body: JSON.stringify({ success: true, data })
-        };
-      } catch (err) {
-        return {
-          statusCode: 500,
-          body: JSON.stringify({ success: false, error: err.message })
-        };
-      }
-    } else if ((event.path.endsWith('/list_worksheets') && event.httpMethod === 'GET') || (event.queryStringParameters && event.queryStringParameters.feedback_list !== undefined && event.httpMethod === 'GET')) {
-      try {
-        // Feedback admin fetch
-        if (event.queryStringParameters && event.queryStringParameters.feedback_list !== undefined) {
-          const { data, error } = await supabase
-            .from('feedback')
-            .select('*')
-            .order('created_at', { ascending: false });
-          if (error) {
+
+        // Create user with anon client
+        const { data: authData, error: authError } = await anonSupabase.auth.signUp({
+          email,
+          password
+        });
+
+        if (authError) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: authError.message })
+          };
+        }
+
+        // If user creation successful, upsert profile with service-role client
+        if (authData.user) {
+          const { error: profileError } = await serviceRoleSupabase
+            .from('profiles')
+            .upsert({ 
+              id: authData.user.id, 
+              email, 
+              name 
+            });
+
+          if (profileError) {
             return {
-              statusCode: 500,
-              body: JSON.stringify({ error: error.message })
+              statusCode: 400,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ success: false, error: profileError.message })
             };
           }
-          return {
-            statusCode: 200,
-            body: JSON.stringify(data)
-          };
         }
-        // Worksheets fetch (legacy)
-        const { data, error } = await supabase
-          .from('worksheets')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) {
-          return {
-            statusCode: 500,
-            body: JSON.stringify({ success: false, error: error.message })
-          };
-        }
+
         return {
           statusCode: 200,
-          body: JSON.stringify({ success: true, data })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, user: authData.user })
         };
       } catch (err) {
         return {
           statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ success: false, error: err.message })
         };
       }
-    } else if (event.path.endsWith('/debug') && event.httpMethod === 'GET') {
-      // Debug endpoint to check environment variables
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          hasSupabaseUrl: !!process.env.SUPABASE_URL,
-          hasSupabaseKey: !!process.env.SUPABASE_KEY,
-          hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-          nodeEnv: process.env.NODE_ENV,
-          // Don't expose actual values for security
-          supabaseUrlPrefix: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 20) + '...' : 'MISSING'
-        })
-      };
-    } else {
-      return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }
+
+    // Handle login action
+    if (action === 'login' && event.httpMethod === 'POST') {
+      try {
+        const { email, password } = JSON.parse(event.body);
+        
+        if (!email || !password) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: 'Missing email or password' })
+          };
+        }
+
+        // Sign in with anon client
+        const { data, error } = await anonSupabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          return {
+            statusCode: 401,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: error.message })
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            success: true, 
+            session: data.session, 
+            user: data.user 
+          })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    }
+
+    // Handle Google OAuth signup
+    if (action === 'google_oauth_signup' && event.httpMethod === 'GET') {
+      try {
+        const redirectTo = process.env.SITE_URL + '/Teachers/index.html';
+        
+        // Try to generate redirect URL using Supabase client
+        const { data, error } = await anonSupabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectTo
+          }
+        });
+
+        if (error) {
+          // Fallback to manual URL construction
+          const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+          return {
+            statusCode: 302,
+            headers: { 'Location': authUrl }
+          };
+        }
+
+        return {
+          statusCode: 302,
+          headers: { 'Location': data.url }
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    }
+
+    // Handle get_email_by_username action
+    if (action === 'get_email_by_username' && event.httpMethod === 'GET') {
+      try {
+        const username = event.queryStringParameters?.username;
+        
+        if (!username) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: 'Missing username' })
+          };
+        }
+
+        // Query profiles table via service-role client
+        const { data, error } = await serviceRoleSupabase
+          .from('profiles')
+          .select('email')
+          .eq('username', username)
+          .single();
+
+        if (error) {
+          return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: error.message })
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, email: data.email })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    }
+
+    // Handle get_role action
+    if (action === 'get_role' && event.httpMethod === 'GET') {
+      try {
+        const user_id = event.queryStringParameters?.user_id;
+        
+        if (!user_id) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: 'Missing user_id' })
+          };
+        }
+
+        // Query profiles table via service-role client
+        const { data, error } = await serviceRoleSupabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user_id)
+          .single();
+
+        if (error) {
+          return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: error.message })
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, role: data.role })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    }
+
+    // Handle get_profile action
+    if (action === 'get_profile' && event.httpMethod === 'GET') {
+      try {
+        const user_id = event.queryStringParameters?.user_id;
+        
+        if (!user_id) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: 'Missing user_id' })
+          };
+        }
+
+        // Query profiles table via service-role client
+        const { data, error } = await serviceRoleSupabase
+          .from('profiles')
+          .select('email, name')
+          .eq('id', user_id)
+          .single();
+
+        if (error) {
+          return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: error.message })
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            success: true, 
+            email: data.email, 
+            name: data.name 
+          })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    }
+
+    // Handle update_profile action
+    if (action === 'update_profile' && event.httpMethod === 'POST') {
+      try {
+        const { user_id, name, email, password } = JSON.parse(event.body);
+        
+        if (!user_id) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: 'Missing user_id' })
+          };
+        }
+
+        let authUpdateResult = null;
+
+        // Update email or password via Supabase Auth API if provided
+        if (email || password) {
+          const updateData = {};
+          if (email) updateData.email = email;
+          if (password) updateData.password = password;
+
+          const { data: authData, error: authError } = await serviceRoleSupabase.auth.admin.updateUserById(
+            user_id, 
+            updateData
+          );
+
+          if (authError) {
+            return {
+              statusCode: 400,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ success: false, error: authError.message })
+            };
+          }
+          
+          authUpdateResult = authData;
+        }
+
+        // Upsert profiles table with new data
+        const profileData = { id: user_id };
+        if (name) profileData.name = name;
+        if (email) profileData.email = email;
+
+        const { error: profileError } = await serviceRoleSupabase
+          .from('profiles')
+          .upsert(profileData);
+
+        if (profileError) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, error: profileError.message })
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            success: true, 
+            user: authUpdateResult?.user || { id: user_id }
+          })
+        };
+      } catch (err) {
+        return {
+          statusCode: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, error: err.message })
+        };
+      }
+    }
+
+    // Handle unknown actions
+    return {
+      statusCode: 404,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, error: 'Unknown action' })
+    };
+
   } catch (err) {
-    console.log('=== FUNCTION ERROR ===');
-    console.log('Error message:', err.message);
-    console.log('Error stack:', err.stack);
-    console.log('=== END ERROR ===');
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, error: 'Internal server error: ' + err.message })
+    };
   }
 };
