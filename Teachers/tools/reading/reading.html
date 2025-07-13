@@ -259,7 +259,6 @@
     <option value="vocabulary-context-mc">Vocab in Context (Multiple Choice)</option>
     <option value="grammar-mc">Grammar (Multiple Choice)</option>
     <option value="grammar-correction">Grammar (Correction)</option>
-    <option value="grammar-unscramble">Grammar Unscramble</option>
     <option value="inference-mc">Inference (Multiple Choice)</option>
     <option value="inference-sa">Inference (Short Answer)</option>
                         </select>
@@ -366,13 +365,43 @@
             if (previewArea) {
                 previewArea.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
-                    
-                    // Find if the clicked element is a question
+                    // SECTION DELETE: right-click on section header
+                    let sectionHeader = e.target;
+                    while (sectionHeader && !sectionHeader.classList.contains('section-header')) {
+                        sectionHeader = sectionHeader.parentElement;
+                    }
+                    if (sectionHeader) {
+                        const sectionTitle = sectionHeader.textContent.trim();
+                        if (confirm(`Delete entire section "${sectionTitle}" and all its questions?`)) {
+                            const questionsTextarea = document.getElementById('readingQuestions');
+                            const lines = questionsTextarea.value.split('\n');
+                            let start = -1, end = lines.length;
+                            for (let i = 0; i < lines.length; i++) {
+                                if (lines[i].trim() === sectionTitle) {
+                                    start = i;
+                                    // Find next section or end
+                                    for (let j = i + 1; j < lines.length; j++) {
+                                        if (/^Part [A-Z]:/i.test(lines[j].trim())) {
+                                            end = j;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            if (start !== -1) {
+                                lines.splice(start, end - start);
+                                questionsTextarea.value = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+                                questionsTextarea.dispatchEvent(new Event('input'));
+                            }
+                        }
+                        return;
+                    }
+                    // QUESTION DELETE: right-click on question
                     let questionElement = e.target;
                     while (questionElement && !questionElement.classList.contains('question-item')) {
                         questionElement = questionElement.parentElement;
                     }
-                    
                     if (questionElement) {
                         const questionNumber = questionElement.dataset.questionNumber;
                         if (questionNumber) {
