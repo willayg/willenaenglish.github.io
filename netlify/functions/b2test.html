@@ -2,165 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>B2 Dual File Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B2 Cloud File Manager</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      background: #f0f4f8;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
     }
-    header {
-      background: #37474f;
-      color: white;
-      padding: 1rem;
+
+    h1 {
       text-align: center;
-      font-size: 1.2rem;
+      background: #34495e;
+      color: white;
+      margin: 0;
+      padding: 16px 0;
     }
-    .file-manager {
-      flex: 1;
+
+    .container {
       display: flex;
-      padding: 1rem;
-      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
     }
+
     .panel {
-      flex: 1;
       background: white;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 16px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      min-height: 300px;
     }
-    .panel-header {
-      background: #eeeeee;
-      padding: 0.5rem;
-      font-weight: bold;
-      text-align: center;
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 18px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 8px;
     }
-    .file-list {
-      flex: 1;
+
+    #deviceFiles, #b2Files {
+      margin-top: 12px;
+      max-height: 240px;
       overflow-y: auto;
-      padding: 1rem;
     }
-    .file-list li {
-      margin: 0.3rem 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+
+    .file-item {
+      padding: 6px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
     }
-    .controls {
-      padding: 0.5rem;
-      text-align: center;
-    }
-    button {
-      margin: 0.3rem;
-      padding: 0.4rem 1rem;
-      border: none;
-      border-radius: 3px;
-      background: #2196f3;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1976d2;
+
+    input[type="file"] {
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
-  <header>B2 Cloud File Manager</header>
-  <div class="file-manager">
-    <!-- Local Files -->
+  <h1>B2 Cloud File Manager</h1>
+
+  <div class="container">
     <div class="panel">
-      <div class="panel-header">Your Device</div>
-      <div class="controls">
-        <input type="file" id="local-files" multiple />
-      </div>
-      <ul class="file-list" id="local-list"></ul>
-      <div class="controls">
-        <button onclick="uploadFiles()">Upload Selected</button>
-      </div>
+      <h2>Your Device</h2>
+      <input type="file" id="deviceInput" multiple />
+      <div id="deviceFiles"></div>
     </div>
 
-    <!-- B2 Cloud Files -->
     <div class="panel">
-      <div class="panel-header">B2 Cloud</div>
-      <ul class="file-list" id="b2-list"></ul>
-      <div class="controls">
-        <button onclick="downloadSelected()">Download Selected</button>
-        <button onclick="refreshB2Files()">↻ Refresh</button>
-      </div>
+      <h2>B2 Cloud</h2>
+      <div id="b2Files">Loading...</div>
     </div>
   </div>
 
   <script>
-    const localInput = document.getElementById('local-files');
-    const localList = document.getElementById('local-list');
-    const b2List = document.getElementById('b2-list');
-    let selectedLocalFiles = [];
-    let selectedB2File = null;
+    const deviceInput = document.getElementById('deviceInput');
+    const deviceFiles = document.getElementById('deviceFiles');
+    const b2Files = document.getElementById('b2Files');
 
-    localInput.addEventListener('change', () => {
-      localList.innerHTML = '';
-      selectedLocalFiles = Array.from(localInput.files);
-      selectedLocalFiles.forEach(file => {
-        const li = document.createElement('li');
-        li.textContent = file.name;
-        localList.appendChild(li);
+    deviceInput.addEventListener('change', () => {
+      deviceFiles.innerHTML = '';
+      Array.from(deviceInput.files).forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.textContent = file.name;
+        deviceFiles.appendChild(item);
       });
     });
 
-    async function uploadFiles() {
-      for (const file of selectedLocalFiles) {
-        const base64 = await toBase64(file);
-        await fetch('/.netlify/functions/b2_proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: file.name, audioBase64: base64 })
+    async function fetchB2Files() {
+      try {
+        const response = await fetch('/.netlify/functions/b2_proxy');
+        const data = await response.json();
+
+        b2Files.innerHTML = '';
+
+        if (!data.files || data.files.length === 0) {
+          b2Files.textContent = 'No files found in B2 bucket.';
+          return;
+        }
+
+        data.files.forEach(file => {
+          const name = typeof file === 'string' ? file : file.fileName || JSON.stringify(file);
+          const item = document.createElement('div');
+          item.className = 'file-item';
+          item.textContent = name;
+          b2Files.appendChild(item);
         });
+      } catch (error) {
+        b2Files.innerHTML = 'Error loading B2 files.';
+        console.error('Failed to fetch B2 files:', error);
       }
-      alert('Upload complete');
-      refreshB2Files();
     }
 
-    async function refreshB2Files() {
-      b2List.innerHTML = '';
-      const res = await fetch('/.netlify/functions/b2_proxy?list=true');
-      const { files } = await res.json();
-      files.forEach(name => {
-        const li = document.createElement('li');
-        li.textContent = name;
-        li.onclick = () => {
-          document.querySelectorAll('#b2-list li').forEach(el => el.style.fontWeight = 'normal');
-          li.style.fontWeight = 'bold';
-          selectedB2File = name;
-        };
-        b2List.appendChild(li);
-      });
-    }
-
-    async function downloadSelected() {
-      if (!selectedB2File) return alert('No file selected');
-      const a = document.createElement('a');
-      a.href = `https://f000.backblazeb2.com/file/willena/${selectedB2File}`;
-      a.download = selectedB2File;
-      a.click();
-    }
-
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-      });
-    }
-
-    refreshB2Files();
+    fetchB2Files();
   </script>
 </body>
 </html>
