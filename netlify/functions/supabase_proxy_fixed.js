@@ -1,5 +1,4 @@
 const { createClient } = require('@supabase/supabase-js');
-const { supabase: serviceRoleClient } = require('./profile_backend.js');
 
 exports.handler = async (event) => {
   // Set proper JSON headers
@@ -37,10 +36,13 @@ exports.handler = async (event) => {
     // Get action from query parameters
     const action = event.queryStringParameters?.action;
 
-    // Create anon client for some operations
+    // Create clients
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const serviceRoleClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     switch (action) {
       // --- SIGNUP (POST) ---
