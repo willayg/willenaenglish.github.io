@@ -19,9 +19,9 @@
             border-radius: 32px;
             border: 2px solid #b0bfc4;
             margin: 20px auto;
-            max-width: 95vw;
-            width: 95vw;
-            min-height: 90vh;
+            max-width: 100vw;
+            width: 100vw;
+            min-height: 93vh;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -30,10 +30,11 @@
         }
         
         .dashboard-container {
-            max-width: 1400px;
+            max-width: 90vw;
             margin: 10px auto;
             padding: 0px 0px 20px 0px;
             width: 100%;
+            max-height: 90vh;
         }
         
         .dashboard-header {
@@ -118,13 +119,13 @@
         .content-area {
             background: white;
             border-radius: 0 0 8px 8px;
-            padding: 50px 40px 50px 40px;
+            padding: 100px 70px 50px 70px; /* Increase from 70px to 120px */
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 48px 48px;
             min-height: 500px;
             max-height: 2 * (120px + 48px) + 50px * 2; /* 2 rows of cards + gaps + padding */
-            height: 420px;
+            height: 460px;
             overflow-y: auto;
             align-items: start;
             grid-auto-rows: min-content;
@@ -141,9 +142,9 @@
             background: #fff;
         }
         .tool-card {
-            background: #d8ebeb;
+            background: #f7f7f7;
             border-radius: 16px;
-            border: 2px solid #b0bfc4;
+            border: 4px solid #b0bfc4;
             padding: 28px 20px;
             min-width: 220px;
             min-height: 120px;
@@ -189,11 +190,41 @@
             margin-bottom: 0.5em;
         }
         .tool-desc {
-            font-size: 1.02rem;
-            color: #46606a;
-            font-weight: 400;
-            line-height: 1.5;
+            display: none;
+        }
+        .tool-overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(57, 56, 74, 0.8);
+        .tool-card img {
+            box-shadow: 0 8px 24px 0 rgba(30,41,59,0.22);
+        }
+        .tool-card img[alt="Flashcard Builder"] {
+            outline: 4px solid #011013;
+            outline-offset: 4px;
+            border-radius: 12px;
+        }
+            color: #fff;
+            font-size: 1.18rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 16px;
+            border: 4px solid #b0bfc4;
+            box-sizing: border-box;
+            transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 2;
+            padding: 0 18px;
+        }
+        .tool-card {
+            position: relative;
         }
         
         @media (max-width: 900px) {
@@ -219,6 +250,7 @@
     </style>
 </head>
 <body>
+    <script src="tool-card-overlay.js"></script>
     <div class="dashboard-outer-container">
         <div class="dashboard-container">
             <div class="dashboard-header">
@@ -243,39 +275,39 @@
             
             <div class="content-area">
                 <a class="tool-card" data-tags="all reading vocabulary" href="tools/wordtest/wordtest2.html">
-                    <div class="tool-title">Word Worksheet builder</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">Create custom vocabulary worksheets with images and more.</div>
+                    <div class="tool-title">Word Builder</div>
+                    <img src="tools/assets/icons/wordtest.png" alt="Word Worksheet" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Create custom vocabulary worksheets with images and more.</div>
                 </a>
                 <a class="tool-card" data-tags="all vocabulary" href="tools/flashcard/flashcard.html">
                     <div class="tool-title">Flashcard Builder</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">Design and print flashcards for any word list.</div>
+                    <img src="tools/assets/icons/flashcard.png" alt="Flashcard Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Design and print flashcards for any word list.</div>
                 </a>
                 <a class="tool-card" data-tags="all planning" href="tools/planner/planner.html">
                     <div class="tool-title">Lesson Planner</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">Plan and organize your ESL lessons with AI help.</div>
+                    <img src="tools/assets/icons/lesson.png" alt="Lesson Planner" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Plan and organize your ESL lessons with AI help.</div>
                 </a>
                 <a class="tool-card" data-tags="all reading" href="tools/reading/reading.html">
-                    <div class="tool-title">Reading Passage</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">Generate and customize reading passages and questions.</div>
+                    <div class="tool-title">Reading Builder</div>
+                    <img src="tools/assets/icons/reading.png" alt="Reading Passage" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Generate and customize reading passages and questions.</div>
                 </a>
                 <a class="tool-card" data-tags="all activities vocabulary" href="tools/puzzles/wordsearch.html">
                     <div class="tool-title">Wordsearch Builder</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">Create printable wordsearch puzzles for your students.</div>
+                    <img src="tools/assets/icons/wordsearch.png" alt="Wordsearch Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Create printable wordsearch puzzles for your students.</div>
                 </a>
                 <a class="tool-card" data-tags="all on-screen activities" href="tools/grid_game/grid_game.html">
                     <div class="tool-title">Grid Game</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">Interactive classroom grid game for vocabulary and review.</div>
+                    <img src="tools/assets/icons/grid.png" alt="Grid Game" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Interactive classroom grid game for vocabulary and review.</div>
                 </a>
                 <div class="tool-card coming-soon" data-tags="grammar listening speaking">
                     <div class="tool-title">Coming Soon</div>
-                    <div style="height: 1em;"></div>
-                    <div class="tool-desc">This section will be available in a future update.</div>
+                    <img src="tools/assets/icons/lesson.png" alt="Coming Soon" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">This section will be available in a future update.</div>
                 </div>
             </div>
         </div>
