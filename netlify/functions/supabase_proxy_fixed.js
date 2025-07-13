@@ -6,15 +6,91 @@ exports.handler = async (event) => {
   console.log('Event body:', event.body);
   console.log('Environment check:', {
     SUPABASE_URL: process.env.SUPABASE_URL ? 'PRESENT' : 'MISSING',
-    SUPABASE_KEY: process.env.SUPABASE_KEY ? 'PRESENT' : 'MISSING', 
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? 'PRESENT' : 'MISSING',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'PRESENT' : 'MISSING',
     NODE_ENV: process.env.NODE_ENV
   });
   
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    // Create auth client for signup/login actions
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Create admin client for backend operations
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // --- TEACHER SIGNUP (email/password) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'signup' && event.httpMethod === 'POST') {
+      try {
+        const { email, password, name } = JSON.parse(event.body);
+        if (!email || !password || !name) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing email, password, or name' }) };
+        }
+        
+        // Use auth client for signup
+        const { data, error } = await authClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: name
+            }
+          }
+        });
+        
+        if (error) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+        }
+        
+        // Create profile entry if signup successful
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+              id: data.user.id,
+              email: email,
+              name: name,
+              approved: false, // Require approval
+              role: 'teacher'
+            }]);
+          
+          if (profileError) {
+            console.log('Profile creation error:', profileError);
+            // Don't fail the signup if profile creation fails
+          }
+        }
+        
+        return { statusCode: 200, body: JSON.stringify({ success: true, user: data.user }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // --- GOOGLE OAUTH SIGNUP ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'google_oauth_signup' && event.httpMethod === 'GET') {
+      try {
+        // Get the current domain from the event
+        const protocol = event.headers['x-forwarded-proto'] || 'https';
+        const host = event.headers.host;
+        const redirectTo = `${protocol}://${host}/Teachers/signup.html`;
+        
+        // Build Supabase OAuth URL
+        const oauthUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+        
+        return {
+          statusCode: 302,
+          headers: { 
+            Location: oauthUrl,
+            'Cache-Control': 'no-cache'
+          },
+          body: ''
+        };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
 
     // --- FEEDBACK STATUS UPDATE ---
     if (event.path.endsWith('/supabase_proxy') && event.httpMethod === 'POST' && event.queryStringParameters && event.queryStringParameters.feedback_update !== undefined) {
@@ -147,8 +223,8 @@ exports.handler = async (event) => {
         if (!profile.approved) {
           return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
-        // Use Supabase Auth API
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // Use auth client for login
+        const { data, error } = await authClient.auth.signInWithPassword({ email, password });
         if (error) {
           return { statusCode: 401, body: JSON.stringify({ success: false, error: error.message }) };
         }
