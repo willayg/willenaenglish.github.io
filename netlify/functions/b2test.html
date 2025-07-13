@@ -1,72 +1,166 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>B2 File Manager</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>B2 Dual File Manager</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input[type="file"] { margin-bottom: 10px; }
-    .file-list { margin-top: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #37474f;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+    .file-manager {
+      flex: 1;
+      display: flex;
+      padding: 1rem;
+      gap: 1rem;
+    }
+    .panel {
+      flex: 1;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #eeeeee;
+      padding: 0.5rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .file-list li {
+      margin: 0.3rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .controls {
+      padding: 0.5rem;
+      text-align: center;
+    }
+    button {
+      margin: 0.3rem;
+      padding: 0.4rem 1rem;
+      border: none;
+      border-radius: 3px;
+      background: #2196f3;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1976d2;
+    }
   </style>
 </head>
 <body>
-  <h2>B2 File Manager</h2>
+  <header>B2 Cloud File Manager</header>
+  <div class="file-manager">
+    <!-- Local Files -->
+    <div class="panel">
+      <div class="panel-header">Your Device</div>
+      <div class="controls">
+        <input type="file" id="local-files" multiple />
+      </div>
+      <ul class="file-list" id="local-list"></ul>
+      <div class="controls">
+        <button onclick="uploadFiles()">Upload Selected</button>
+      </div>
+    </div>
 
-  <input type="file" id="fileInput" />
-  <button onclick="uploadFile()">Upload</button>
-  <button onclick="listFiles()">Refresh List</button>
-
-  <div class="file-list" id="fileList"></div>
+    <!-- B2 Cloud Files -->
+    <div class="panel">
+      <div class="panel-header">B2 Cloud</div>
+      <ul class="file-list" id="b2-list"></ul>
+      <div class="controls">
+        <button onclick="downloadSelected()">Download Selected</button>
+        <button onclick="refreshB2Files()">↻ Refresh</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const proxyUrl = "/.netlify/functions/b2_proxy";
+    const localInput = document.getElementById('local-files');
+    const localList = document.getElementById('local-list');
+    const b2List = document.getElementById('b2-list');
+    let selectedLocalFiles = [];
+    let selectedB2File = null;
 
-    async function uploadFile() {
-      const file = document.getElementById("fileInput").files[0];
-      if (!file) return alert("Choose a file first.");
-
-      const reader = new FileReader();
-      reader.onload = async function () {
-        const base64 = reader.result.split(',')[1];
-
-        const res = await fetch(proxyUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            base64: base64,
-          }),
-        });
-
-        const data = await res.json();
-        alert(data.message || "Upload complete.");
-        listFiles();
-      };
-
-      reader.readAsDataURL(file);
-    }
-
-    async function listFiles() {
-      const res = await fetch(proxyUrl);
-      const data = await res.json();
-      const list = document.getElementById("fileList");
-      list.innerHTML = "<h3>Files:</h3>";
-
-      if (!data.files || data.files.length === 0) {
-        list.innerHTML += "<p>No files found.</p>";
-        return;
-      }
-
-      const ul = document.createElement("ul");
-      data.files.forEach(file => {
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="${file.url}" target="_blank">${file.key}</a> (${Math.round(file.size / 1024)} KB)`;
-        ul.appendChild(li);
+    localInput.addEventListener('change', () => {
+      localList.innerHTML = '';
+      selectedLocalFiles = Array.from(localInput.files);
+      selectedLocalFiles.forEach(file => {
+        const li = document.createElement('li');
+        li.textContent = file.name;
+        localList.appendChild(li);
       });
-      list.appendChild(ul);
+    });
+
+    async function uploadFiles() {
+      for (const file of selectedLocalFiles) {
+        const base64 = await toBase64(file);
+        await fetch('/.netlify/functions/b2_proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, audioBase64: base64 })
+        });
+      }
+      alert('Upload complete');
+      refreshB2Files();
     }
 
-    // Load files on page load
-    window.onload = listFiles;
+    async function refreshB2Files() {
+      b2List.innerHTML = '';
+      const res = await fetch('/.netlify/functions/b2_proxy?list=true');
+      const { files } = await res.json();
+      files.forEach(name => {
+        const li = document.createElement('li');
+        li.textContent = name;
+        li.onclick = () => {
+          document.querySelectorAll('#b2-list li').forEach(el => el.style.fontWeight = 'normal');
+          li.style.fontWeight = 'bold';
+          selectedB2File = name;
+        };
+        b2List.appendChild(li);
+      });
+    }
+
+    async function downloadSelected() {
+      if (!selectedB2File) return alert('No file selected');
+      const a = document.createElement('a');
+      a.href = `https://f000.backblazeb2.com/file/willena/${selectedB2File}`;
+      a.download = selectedB2File;
+      a.click();
+    }
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+      });
+    }
+
+    refreshB2Files();
   </script>
 </body>
 </html>
