@@ -46,13 +46,13 @@ exports.handler = async (event) => {
         }
         const { data, error } = await supabase
           .from('profiles')
-          .select('name, email, approved, role')
+          .select('name, email, approved, role, username')
           .eq('id', userId)
           .single();
         if (error || !data) {
           return { statusCode: 404, body: JSON.stringify({ success: false, error: 'User not found' }) };
         }
-        return { statusCode: 200, body: JSON.stringify({ success: true, name: data.name, email: data.email, approved: data.approved, role: data.role }) };
+        return { statusCode: 200, body: JSON.stringify({ success: true, name: data.name, email: data.email, approved: data.approved, role: data.role, username: data.username }) };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
       }
@@ -61,7 +61,7 @@ exports.handler = async (event) => {
     // --- UPDATE PROFILE (name/email/password) ---
     if (event.queryStringParameters && event.queryStringParameters.action === 'update_profile' && event.httpMethod === 'POST') {
       try {
-        const { user_id, name, email, password } = JSON.parse(event.body);
+        const { user_id, name, email, password, username } = JSON.parse(event.body);
         if (!user_id) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
         }
@@ -78,10 +78,11 @@ exports.handler = async (event) => {
           return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
         let updateError = null;
-        // Update name/email in profiles table
+        // Update name/email/username in profiles table
         const updateFields = {};
         if (typeof name === 'string' && name.length > 0) updateFields.name = name;
         if (typeof email === 'string' && email.length > 0) updateFields.email = email;
+        if (typeof username === 'string' && username.length > 0) updateFields.username = username;
         if (Object.keys(updateFields).length > 0) {
           const { error } = await supabase
             .from('profiles')
@@ -89,9 +90,9 @@ exports.handler = async (event) => {
             .eq('id', user_id);
           if (error) updateError = error;
         }
-        // Update password via Supabase Auth API
+        // Update password via Supabase Auth API (use updateUserById)
         if (password) {
-          const { error } = await supabase.auth.admin.updateUser(user_id, { password });
+          const { error } = await supabase.auth.admin.updateUserById(user_id, { password });
           if (error) updateError = error;
         }
         if (updateError) {
@@ -126,6 +127,53 @@ exports.handler = async (event) => {
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
       }
+    }
+
+    // --- SECURE SIGNUP (create user, send confirmation email, insert profile) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'signup' && event.httpMethod === 'POST') {
+      try {
+        const { email, password, name, username } = JSON.parse(event.body);
+        if (!email || !password || !name || !username) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing name, email, password, or username' }) };
+        }
+        // Create user in Supabase Auth (admin)
+        const { data: userData, error: signUpError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: false
+        });
+        if (signUpError || !userData || !userData.user) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: signUpError ? signUpError.message : 'Sign up failed' }) };
+        }
+        // Send confirmation email
+        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
+        if (inviteError) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: inviteError.message }) };
+        }
+        // Insert profile row with username
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ id: userData.user.id, email, name, username, approved: false, role: 'teacher' }]);
+        if (profileError) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: profileError.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true, user: { id: userData.user.id, email, name, username } }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // --- GOOGLE OAUTH SIGNUP ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'google_oauth_signup' && event.httpMethod === 'GET') {
+      // Redirect to Supabase Google OAuth URL
+      const redirectTo = `${process.env.SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(process.env.SUPABASE_OAUTH_REDIRECT || 'https://willenaenglish.github.io/Teachers/signup.html')}`;
+      return {
+        statusCode: 302,
+        headers: {
+          Location: redirectTo
+        },
+        body: ''
+      };
     }
 
     // --- TEACHER LOGIN (email/password, only approved users) ---
