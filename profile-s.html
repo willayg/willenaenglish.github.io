@@ -459,6 +459,15 @@
 </style>
   </style>
 </head>
+<script>
+  // Restrict access to approved users only
+  (function() {
+    const approved = localStorage.getItem('user_approved') || sessionStorage.getItem('user_approved');
+    if (approved !== 'true') {
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
 <body>
   <div class="header">
     <a href="index.html" class="home-link" title="홈" aria-label="홈">
@@ -487,11 +496,11 @@
       <!-- ...rest of your profile fields... -->
       <div class="profile-field">
         <label class="profile-label" for="koreanNameInput">이름(한글)</label>
-        <input id="koreanNameInput" class="profile-input" />
+        <input id="koreanNameInput" class="profile-input" name="koreanName" autocomplete="off" />
       </div>
       <div class="profile-field">
         <label class="profile-label" for="emailInput">이메일</label>
-        <input id="emailInput" class="profile-input" />
+        <input id="emailInput" class="profile-input" name="profileEmail" autocomplete="off" />
       </div>
       <!-- Add this above the class name field -->
       <div class="profile-field">

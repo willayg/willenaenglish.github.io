@@ -37,6 +37,51 @@ exports.handler = async (event) => {
       }
     }
 
+    // --- FEEDBACK LIST ---
+    if (event.queryStringParameters && event.queryStringParameters.feedback_list !== undefined && event.httpMethod === 'GET') {
+      try {
+        const { data, error } = await supabase
+          .from('feedback')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return { statusCode: 200, body: JSON.stringify(data || []) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+      }
+    }
+
+    // --- FEEDBACK INSERT ---
+    if (event.queryStringParameters && event.queryStringParameters.feedback !== undefined && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body);
+        const payload = body.data ? body.data : body;
+        const { feedback, module, user_id, username, tool_state, page_url } = payload;
+        
+        if (!feedback || !user_id) {
+          return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+        }
+
+        const { data, error } = await supabase
+          .from('feedback')
+          .insert([{
+            feedback,
+            module,
+            user_id,
+            username,
+            tool_state,
+            page_url,
+            status: 'new',
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        return { statusCode: 200, body: JSON.stringify({ success: true, data }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+      }
+    }
+
     // --- GET PROFILE (name, email, approval, role) ---
     if (event.queryStringParameters && event.queryStringParameters.action === 'get_profile' && event.httpMethod === 'GET') {
       try {
@@ -140,20 +185,16 @@ exports.handler = async (event) => {
         const { data: userData, error: signUpError } = await supabase.auth.admin.createUser({
           email,
           password,
-          email_confirm: false
+          email_confirm: false // Let Supabase send the standard confirmation email
         });
         if (signUpError || !userData || !userData.user) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: signUpError ? signUpError.message : 'Sign up failed' }) };
         }
-        // Send confirmation email
-        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
-        if (inviteError) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: inviteError.message }) };
-        }
+        // Do NOT send invite email; let Supabase send the confirmation email automatically
         // Insert profile row with username
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([{ id: userData.user.id, email, name, username, approved: false, role: 'teacher' }]);
+          .insert([{ id: userData.user.id, email, name, username, approved: true, role: 'teacher' }]);
         if (profileError) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: profileError.message }) };
         }

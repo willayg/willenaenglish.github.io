@@ -5,14 +5,14 @@ const STATUS_OPTIONS = [
 ];
 
 async function fetchFeedback() {
-  const resp = await fetch('/.netlify/functions/supabase_proxy?feedback_list', { method: 'GET' });
+  const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback_list', { method: 'GET' });
   const data = await resp.json();
   if (!Array.isArray(data)) return [];
   return data;
 }
 
 async function updateStatus(id, newStatus) {
-  const resp = await fetch('/.netlify/functions/supabase_proxy?feedback_update', {
+  const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback_update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, status: newStatus })
@@ -59,6 +59,7 @@ function renderTable(feedbacks, statusFilter, moduleFilter) {
       <td>${f.module||''}</td>
       <td>${renderToolState(f.tool_state)}</td>
       <td>${f.user_id||''}</td>
+      <td>${f.username||''}</td>
       <td>${f.page_url||''}</td>
       <td>${renderStatusDropdown(f.id, f.status||'new')}</td>
     </tr>

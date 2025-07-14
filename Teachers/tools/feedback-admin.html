@@ -26,6 +26,28 @@
   </style>
 </head>
 <body>
+  <script>
+    // Access control: only allow users with 'admin' role (case-insensitive)
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+        const result = await res.json();
+        // Defensive: check role strictly and case-insensitive
+        let role = (result && result.role) ? String(result.role).toLowerCase() : '';
+        if (!result.success || role !== 'admin') {
+          window.location.href = '/Teachers/index.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
   <div class="admin-container">
     <h1>Feedback Admin</h1>
     <div class="search-bar">

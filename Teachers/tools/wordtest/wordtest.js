@@ -1595,10 +1595,20 @@ async function generateWorksheetHTML(title, wordPairs) {
                 }
             }));
             
+            // Shuffle word box only
+            function shuffleArray(array) {
+                const arr = array.slice();
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+            const shuffledWordBox = shuffleArray(pairsWithImages);
             const wordBoxHtml = `
                 <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
                     <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">
-                        ${pairsWithImages.map(pair => `<span style="padding: 2px 6px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.8em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
+                        ${shuffledWordBox.map(pair => `<span style="padding: 2px 6px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.8em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
                     </div>
                 </div>
             `;
@@ -1795,10 +1805,20 @@ async function generateWorksheetHTML(title, wordPairs) {
                 }
             }));
             
+            // Shuffle word box only
+            function shuffleArray(array) {
+                const arr = array.slice();
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+            const shuffledWordBox = shuffleArray(pairsWithImages);
             const wordBoxHtml = `
                 <div style="margin-bottom: 10px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
                     <div style="display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;">
-                        ${pairsWithImages.map(pair => `<span style="padding: 1px 4px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
+                        ${shuffledWordBox.map(pair => `<span style="padding: 1px 4px; background: #fff; border: 1px solid #ddd; border-radius: 3px; font-size: 0.75em;">${pair._originalEng || pair.eng || 'word'}</span>`).join('')}
                     </div>
                 </div>
             `;
@@ -2119,45 +2139,71 @@ function performPrint() {
         alert('No preview content to print');
         return;
     }
-    
+
+    // Get selected font
+    const fontSelect = document.getElementById('fontSelect');
+    let selectedFont = fontSelect ? fontSelect.value : 'Arial';
+    let fontFamilyCSS = selectedFont;
+    let googleFontLink = '';
+    // Map dropdown value to Google Fonts if needed
+    if (selectedFont === 'Poppins') {
+        fontFamilyCSS = 'Poppins, Arial, sans-serif';
+        googleFontLink = '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
+    } else if (selectedFont === 'Caveat') {
+        fontFamilyCSS = 'Caveat, Arial, sans-serif';
+        googleFontLink = '<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">';
+    } else if (selectedFont === 'Comic Sans MS') {
+        fontFamilyCSS = '"Comic Sans MS", Arial, sans-serif';
+    } else if (selectedFont === 'Times New Roman') {
+        fontFamilyCSS = '"Times New Roman", Times, serif';
+    } else if (selectedFont === 'Calibri') {
+        fontFamilyCSS = 'Calibri, Arial, sans-serif';
+    } else if (selectedFont === 'Verdana') {
+        fontFamilyCSS = 'Verdana, Arial, sans-serif';
+    } else if (selectedFont === 'Garamond') {
+        fontFamilyCSS = 'Garamond, serif';
+    }
+
     // Check if current layout is a 5-in-a-row layout that benefits from landscape mode
     const currentLayout = document.getElementById('layoutSelect').value;
     const landscapeLayouts = ['5col-images', 'picture-quiz-5col'];
     const isLandscapeLayout = landscapeLayouts.includes(currentLayout);
-    
+
     // Create a new window for printing with only the preview content
     const printWindow = window.open('', '_blank', 'width=800,height=600');
-    
+
     // Get the worksheet content
     const worksheetContent = previewArea.innerHTML;
-    
+
     // Create the print document with proper styling
     const printDocument = `
         <!DOCTYPE html>
         <html>
         <head>
             <title>Worksheet</title>
+            ${googleFontLink}
             <style>
                 @page {
                     size: A4${isLandscapeLayout ? ' landscape' : ''};
                     margin: 0.5in;
                 }
-                
+
                 body {
-                    font-family: Arial, sans-serif;
+                    font-family: ${fontFamilyCSS};
                     margin: 0;
                     padding: 0;
                     background: white;
                 }
-                
+
                 .worksheet-preview {
                     width: 100%;
                     max-width: none;
                     margin: 0;
                     padding: 0;
                     background: white;
+                    font-family: ${fontFamilyCSS};
                 }
-                
+
                 /* Hide drag instructions and interactive elements for print */
                 .drag-instructions,
                 .print-hide {
@@ -2334,19 +2380,30 @@ function performPrint() {
         <body>
             ${worksheetContent}
             <script>
-                // Auto-print when ready
+                // Wait for web fonts to load before printing
+                function waitForFonts(fontName, callback) {
+                    if (document.fonts && fontName) {
+                        document.fonts.load('1em ' + fontName).then(function() {
+                            document.fonts.ready.then(callback);
+                        });
+                    } else {
+                        setTimeout(callback, 500);
+                    }
+                }
                 window.addEventListener('load', function() {
-                    // Wait a moment for images to load
-                    setTimeout(function() {
-                        window.print();
-                        window.close();
-                    }, 1000);
+                    var fontName = ${JSON.stringify(selectedFont)};
+                    waitForFonts(fontName, function() {
+                        setTimeout(function() {
+                            window.print();
+                            window.close();
+                        }, 100);
+                    });
                 });
             </script>
         </body>
         </html>
     `;
-    
+
     // Write the document to the print window
     printWindow.document.write(printDocument);
     printWindow.document.close();
