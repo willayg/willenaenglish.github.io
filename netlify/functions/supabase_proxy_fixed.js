@@ -185,7 +185,7 @@ exports.handler = async (event) => {
         const { data: userData, error: signUpError } = await supabase.auth.admin.createUser({
           email,
           password,
-          email_confirm: false // Let Supabase send the standard confirmation email
+          email_confirm: true
         });
         if (signUpError || !userData || !userData.user) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: signUpError ? signUpError.message : 'Sign up failed' }) };
