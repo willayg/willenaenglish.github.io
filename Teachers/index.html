@@ -251,6 +251,26 @@
 </head>
 <body>
     <script src="tool-card-overlay.js"></script>
+    <script>
+      // Access control: redirect if not logged in or not approved
+      (async function() {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          window.location.href = '/Teachers/login.html';
+          return;
+        }
+        try {
+          const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+          const result = await res.json();
+          if (!result.success || result.approved !== true) {
+            window.location.href = '/Teachers/profile.html';
+            return;
+          }
+        } catch (e) {
+          window.location.href = '/Teachers/login.html';
+        }
+      })();
+    </script>
     <div class="dashboard-outer-container">
         <div class="dashboard-container">
             <div class="dashboard-header">
@@ -320,15 +340,32 @@
       document.addEventListener('DOMContentLoaded', async function() {
         const usernameSpan = document.getElementById('username-display');
         let username = '';
-        const userId = localStorage.getItem('userId');
+        let name = '';
+        let userId = localStorage.getItem('userId');
         if (userId) {
           try {
             const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
             const result = await res.json();
-            if (result.success && result.username) {
-              username = result.username;
-            } else if (result.success && result.name) {
-              username = result.name;
+            if (result.success) {
+              if (result.username) {
+                username = result.username;
+                localStorage.setItem('username', username);
+              }
+              if (result.name) {
+                name = result.name;
+                localStorage.setItem('name', name);
+              }
+              if (result.email) {
+                localStorage.setItem('userEmail', result.email);
+              }
+              if (result.role) {
+                localStorage.setItem('userRole', result.role);
+              }
+              // Always set userId in case it changes
+              if (result.id) {
+                userId = result.id;
+                localStorage.setItem('userId', userId);
+              }
             }
           } catch (e) {
             // fallback below

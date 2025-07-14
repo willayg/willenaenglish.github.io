@@ -75,16 +75,36 @@
           result = await response.json();
         } else {
           const text = await response.text();
-          throw new Error(text);
+          try {
+            result = JSON.parse(text);
+          } catch {
+            throw new Error(text);
+          }
         }
-        if (!response.ok || !result.success) {
-          signupError.textContent = result.error || 'Sign up failed.';
+        // If result is a string (e.g. "{success:true,...}"), parse it
+        if (typeof result === 'string') {
+          try {
+            result = JSON.parse(result);
+          } catch {}
+        }
+        if (result && result.success) {
+          // Store userId in localStorage for profile page use
+          if (result.user && result.user.id) {
+            localStorage.setItem('userId', result.user.id);
+          }
+          signupSuccess.textContent = 'Sign up successful! Redirecting to your profile...';
+          signupSuccess.style.display = 'block';
+          signupForm.reset();
+          setTimeout(() => {
+            window.location.href = '/Teachers/profile.html';
+          }, 1200);
+        } else if (result && result.error) {
+          signupError.textContent = result.error;
           signupError.style.display = 'block';
-          return;
+        } else {
+          signupError.textContent = 'Sign up failed.';
+          signupError.style.display = 'block';
         }
-        signupSuccess.textContent = 'Sign up successful! Please check your email for a confirmation link.';
-        signupSuccess.style.display = 'block';
-        signupForm.reset();
       } catch (err) {
         signupError.textContent = 'Network error: ' + err.message;
         signupError.style.display = 'block';

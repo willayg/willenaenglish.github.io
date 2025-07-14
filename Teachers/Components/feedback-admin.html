@@ -26,7 +26,31 @@
   </style>
 </head>
 <body>
+  <script>
+    // Access control: only allow users with 'admin' role (case-insensitive)
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+        const result = await res.json();
+        let role = (result && result.role) ? String(result.role).toLowerCase() : '';
+        if (!result.success || role !== 'admin') {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
   <div class="admin-container">
+    <div style="width:100%; display:flex; justify-content:flex-end; margin-bottom:16px;">
+      <a href="/Teachers/index.html" class="dashboard-btn" style="background:#5a4ad1; color:#fff; font-weight:600; border:none; border-radius:6px; padding:10px 22px; font-size:1rem; text-decoration:none; box-shadow:0 2px 8px rgba(30,41,59,0.10); transition:background 0.2s;">Dashboard</a>
+    </div>
     <h1>Feedback Admin</h1>
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="Search feedback, module, or user...">
@@ -48,7 +72,8 @@
           <th>Feedback</th>
           <th>Module</th>
           <th>Tool State</th>
-          <th>User</th>
+          <th>User ID</th>
+          <th>Username</th>
           <th>Page</th>
           <th>Status</th>
         </tr>

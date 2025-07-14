@@ -1,0 +1,23 @@
+Signup Approval TODO List
+========================
+
+1. Create a Netlify Function (approve_user.js) to approve/disapprove users by updating the 'approved' field in Supabase. (DONE)
+
+2. Choose and set up an email service (SendGrid, Mailgun, or SMTP/Nodemailer) for sending admin alerts.
+
+3. Create a Netlify Function (send_signup_alert.js) to send an email to the admin with Approve/Disapprove links for each new signup.
+
+4. Add environment variables for email credentials and a secure approval token in Netlify settings.
+
+5. Update the signup backend logic to call send_signup_alert.js after a new user/profile is created.
+
+6. Test the workflow: sign up, receive the alert email, and approve/disapprove via the email buttons.
+
+7. (Optional) Add a confirmation page/message after clicking Approve/Disapprove.
+
+8. (Optional) Log all approval actions for auditing.
+
+Notes:
+- Secure the approval endpoint with a secret token.
+- Approve/Disapprove links should include the user ID and token as query parameters.
+- You can use Zapier/Make as an alternative to a custom email function.

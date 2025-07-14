@@ -187,6 +187,26 @@
     </style>
 </head>
 <body>
+  <script>
+    // Access control: only allow approved users
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
     <div class="container">
         <div class="app-card">
             <!-- Header -->
@@ -609,120 +629,6 @@ window.showFeedbackModal = function() {
                         window.onload = function() {
                             window.print();
  }
-    </script>
-</body>
-</html>
-`;
-            printWindow.document.write(printContent);
-            printWindow.document.close();
-            printWindow.focus();
-        }
-
-        function saveWordsearch() {
-            const title = document.getElementById('wordsearchTitle').value.trim();
-            const words = document.getElementById('wordsearchWords').value.trim();
-
-            if (!title) {
-                alert('Please enter a title for the worksheet.');
-                return;
-            }
-
-            if (!words) {
-                alert('Please enter some words to generate the wordsearch.');
-                return;
-            }
-
-            // Create a blob from the current worksheet content
-            const blob = new Blob([
-                `Title: ${title}\n` +
-                `Words:\n${words}\n` +
-                `Instructions: ${document.getElementById('wordsearchInstructions').value.trim()}\n` +
-                `Grid Size: ${document.getElementById('wordsearchGridSize').value}\n` +
-                `Font: ${document.getElementById('wordsearchFont').value}\n` +
-                `Template: ${document.getElementById('wordsearchTemplate').value}\n` +
-                `Case: ${document.getElementById('wordsearchCase').value}\n` +
-                `Allow Diagonals: ${document.getElementById('wordsearchAllowDiagonals').checked}\n` +
-                `Allow Backwards: ${document.getElementById('wordsearchAllowBackwards').checked}\n` +
-                `Size: ${document.getElementById('wordsearchSizeSlider').value}\n` +
-                `Position: ${document.getElementById('wordsearchPositionSlider').value}\n`
-            ], { type: 'text/plain;charset=utf-8' });
-
-            // Use FileSaver.js to save the file
-            saveAs(blob, `${title}-wordsearch.txt`);
-        }
-
-        function loadWordsearch() {
-            // Create an invisible file input element
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.txt';
-            fileInput.style.display = 'none';
-
-            document.body.appendChild(fileInput);
-            fileInput.click();
-
-            fileInput.onchange = async () => {
-                const file = fileInput.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const content = e.target.result;
-                    // Simple parser: assumes first line is title, second is words, rest are settings
-                    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-                    if (lines.length < 2) {
-                        alert('Invalid file format. Please ensure the file contains at least a title and words.');
-                        return;
-                    }
-
-                    document.getElementById('wordsearchTitle').value = lines[0].replace(/^Title:\s*/, '');
-                    document.getElementById('wordsearchWords').value = lines[1].replace(/^Words:\s*/, '');
-
-                    // Parse settings (key: value pairs)
-                    const settings = lines.slice(2).map(line => line.split(/:\s*/)).filter(pair => pair.length === 2);
-                    settings.forEach(([key, value]) => {
-                        switch (key.toLowerCase()) {
-                            case 'gridsize':
-                                document.getElementById('wordsearchGridSize').value = value;
-                                break;
-                            case 'font':
-                                document.getElementById('wordsearchFont').value = value;
-                                break;
-                            case 'template':
-                                document.getElementById('wordsearchTemplate').value = value;
-                                break;
-                            case 'case':
-                                document.getElementById('wordsearchCase').value = value;
-                                break;
-                            case 'allow diagonals':
-                                document.getElementById('wordsearchAllowDiagonals').checked = value === 'true';
-                                break;
-                            case 'allow backwards':
-                                document.getElementById('wordsearchAllowBackwards').checked = value === 'true';
-                                break;
-                            case 'size':
-                                document.getElementById('wordsearchSizeSlider').value = value;
-                                break;
-                            case 'position':
-                                document.getElementById('wordsearchPositionSlider').value = value;
-                                break;
-                        }
-                    });
-
-                    // Update preview
-                    if (window.updateWordsearchPreview) {
-                        window.updateWordsearchPreview();
-                    }
-                };
-
-                reader.readAsText(file);
-            };
-
-            // Remove the file input element after a short delay to allow file selection
-            setTimeout(() => {
-                document.body.removeChild(fileInput);
-            }, 1000);
-        }
     </script>
 </body>
 </html>
