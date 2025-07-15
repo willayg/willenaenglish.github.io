@@ -48,7 +48,7 @@ async function loadModules() {
     }
     
     try {
-        const imageModule = await import('./images.js');
+        const imageModule = await import('../tools/tests/images.js');
         getPixabayImage = imageModule.getPixabayImage;
         imageCache = imageModule.imageCache;
         console.log('Images module loaded successfully');
