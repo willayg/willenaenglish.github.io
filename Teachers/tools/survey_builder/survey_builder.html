@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESL Survey Builder</title>
+    <link rel="stylesheet" href="../tests/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="designs.css">
+    <style>
+        .design-7 {
+          border-radius: 32px !important;
+        }
+        .design-9 {
+          border-radius: 40px !important;
+        }
+        .design-10 {
+          border-radius: 40px !important;
+        }
+        .design-2 {
+          border-radius: 32px !important;
+        }
+        .design-4 {
+          border-radius: 40px !important;
+        }
+        .floating-toolbar {
+          background: #e6b0f3 !important;
+          border-color: #735e81 !important;
+        }
+        .preview-area {
+          min-width: 500px;
+          width: 100%;
+          min-height: 600px;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+          margin: 0 0 0 24px;
+          padding: 32px 32px 32px 32px;
+          overflow: auto;
+          display: flex;
+          align-items: flex-start;
+        }
+        .preview-area .preview-placeholder {
+          color: #aaa;
+          text-align: center;
+          margin-top: 100px;
+        }
+        .survey-questions {
+          white-space: pre-line;
+          margin-bottom: 16px;
+          line-height: 2.1;
+          font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+  <script>
+    // Print only the preview area
+    document.addEventListener('DOMContentLoaded', function() {
+      const printBtn = document.getElementById('printBtn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function() {
+          const preview = document.getElementById('surveyPreviewArea');
+          if (!preview) return;
+          const printWindow = window.open('', '', 'width=900,height=700');
+          printWindow.document.write('<html><head><title>Print Survey</title>');
+          // Copy stylesheets
+          document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+            printWindow.document.write(link.outerHTML);
+          });
+          printWindow.document.write('<style>body{margin:0;padding:0;} .preview-area{box-shadow:none;min-width:0;} .design-2{border-radius:32px !important;} .design-4{border-radius:40px !important;} .design-7{border-radius:32px !important;} .design-9{border-radius:40px !important;} .design-10{border-radius:40px !important;}</style>');
+          printWindow.document.write('</head><body>');
+          printWindow.document.write(preview.innerHTML);
+          printWindow.document.write('</body></html>');
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+        });
+      }
+    });
+    // Access control: only allow approved users
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <div class="container">
+        <div class="app-card">
+            <!-- Header -->
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+                <div class="logo">
+                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                </div>
+                <h1 style="flex:1; text-align:center; margin:0;">ESL Survey Builder</h1>
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+            </div>
+            <!-- Top Action Bar -->
+            <div class="top-actions">
+                <span class="action-link" id="loadBtn">Load</span>
+                <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="printBtn">Print</span>
+                <span class="action-link" id="pdfBtn">PDF</span>
+            </div>
+            <!-- Floating Toolbar -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+                <div class="font-size-controls">
+                    <button class="size-btn" id="decreaseFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInput" value="12" min="8" max="18" step="1">
+                    <button class="size-btn" id="increaseFontBtn">+</button>
+                </div>
+                <select class="toolbar-select" id="templateSelect">
+                    <option value="1">Design 1</option>
+                    <option value="2">Design 2</option>
+                    <option value="3">Design 3</option>
+                    <option value="4">Design 4</option>
+                    <option value="5">Design 5</option>
+                    <option value="6">Design 6</option>
+                    <option value="7">Design 7</option>
+                    <option value="8">Design 8</option>
+                    <option value="9">Design 9</option>
+                    <option value="10">Design 10</option>
+                </select>
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+            </div>
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="surveyTitle" placeholder="Enter survey title">
+                    </div>
+                    <div class="input-group" id="aiPromptGroup">
+                        <label for="aiPromptInput" style="font-size:13px; color:#444; font-weight:500;">AI Prompt (describe survey topic, give sample questions, or instructions)</label>
+                        <textarea id="aiPromptInput" class="textarea-field" rows="3" placeholder="e.g. Make 10 survey questions about travel. Or: Give me 5 yes/no questions about food preferences."></textarea>
+                        <button id="sendAIPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
+                    </div>
+                    
+                    
+                    <div class="input-group">
+                        <label>Questions</label>
+                        <textarea class="textarea-field" id="surveyQuestions" placeholder="Generated questions will appear here, or type your own..." rows="8"></textarea>
+                    </div>
+                </div>
+                <!-- Preview Area -->
+                <div class="preview-area" id="surveyPreviewArea">
+                    <div class="preview-placeholder" id="surveyPreviewPlaceholder">
+                        <p>Preview will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Survey preview logic with design templates
+    function updateSurveyPreview() {
+      const title = document.getElementById('surveyTitle')?.value || '';
+      const instructions = document.getElementById('surveyInstructions')?.value || '';
+      const questions = document.getElementById('surveyQuestions')?.value || '';
+      const font = document.getElementById('fontSelect')?.value || 'Poppins';
+      const fontSize = document.getElementById('fontSizeInput')?.value || '12';
+      const template = document.getElementById('templateSelect')?.value || '1';
+
+      let designClass = `design-${template}`;
+
+      let html = '';
+      // Split questions by line, ignore empty lines
+      let questionDivs = '';
+      if (questions.trim()) {
+        questionDivs = questions.split(/\r?\n/)
+          .map(q => q.trim())
+          .filter(q => q)
+          .map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`)
+          .join('');
+      } else {
+        questionDivs = '<i>No questions yet.</i>';
+      }
+      html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;">
+        <div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+            <div style="flex:1;text-align:center;">
+              <h1 style="font-size:1.8em;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'ESL Survey'}</h1>
+            </div>
+            <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;margin-left:30px;font-size:1em;min-width:180px;">
+              <span style="margin-bottom:8px;">Name: ________________</span>
+              <span>Date: ________________</span>
+            </div>
+          </div>
+        </div>
+        ${instructions ? `<div style='margin-bottom:10px;'><b>Instructions:</b> ${instructions}</div>` : ''}
+        <div style='margin-bottom:10px;'><b>Survey Questions:</b></div>
+        <div class="survey-questions">${questionDivs}</div>
+      </div>`;
+
+      const preview = document.getElementById('surveyPreviewArea');
+      if (preview) {
+        preview.innerHTML = html;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const ids = [
+        'surveyTitle',
+        'surveyInstructions',
+        'surveyQuestions',
+        'fontSelect',
+        'fontSizeInput',
+        'templateSelect'
+      ];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', updateSurveyPreview);
+          el.addEventListener('change', updateSurveyPreview);
+        }
+      });
+      updateSurveyPreview();
+      window.updateSurveyPreview = updateSurveyPreview;
+    });
+    </script>
+    <!-- AI prompt logic for survey generation (to be implemented in survey_ai.js) -->
+    <script type="module" src="survey_ai.js"></script>
+</body>
+</html>

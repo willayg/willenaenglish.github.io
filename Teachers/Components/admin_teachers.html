@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Manage Teachers</title>
+  <link rel="stylesheet" href="/Teachers/components/style.css">
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
+    .admin-container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 32px; }
+    h1 { text-align: center; color: #1976d2; margin-bottom: 24px; }
+    .teacher-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .teacher-table th, .teacher-table td { padding: 10px 12px; border-bottom: 1px solid #e0e0e0; text-align: left; }
+    .teacher-table th { background: #f0f6ff; color: #1976d2; font-weight: 600; }
+    .teacher-table tr:last-child td { border-bottom: none; }
+    .toggle-btn { padding: 6px 16px; border-radius: 5px; border: none; font-size: 1em; cursor: pointer; }
+    .toggle-btn.approved { background: #4caf50; color: #fff; }
+    .toggle-btn.disapproved { background: #f44336; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div style="width:100%; display:flex; justify-content:flex-end; margin-bottom:16px;">
+      <a href="/Teachers/components/admin-dashboard.html" class="dashboard-btn" style="background:#1976d2; color:#fff; font-weight:600; border:none; border-radius:6px; padding:10px 22px; font-size:1rem; text-decoration:none; box-shadow:0 2px 8px rgba(30,41,59,0.10); transition:background 0.2s;">Back to Admin Dashboard</a>
+    </div>
+    <h1>Manage Teachers</h1>
+    <table class="teacher-table" id="teacherTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Approved</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Teacher rows will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+  <script>
+    async function fetchTeachers() {
+      const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_teachers');
+      const teachers = await res.json();
+      const tbody = document.querySelector('#teacherTable tbody');
+      tbody.innerHTML = '';
+      teachers.forEach(teacher => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${teacher.name || ''}</td>
+          <td>${teacher.email || ''}</td>
+          <td>${teacher.approved ? 'Yes' : 'No'}</td>
+          <td>
+            <button class="toggle-btn ${teacher.approved ? 'approved' : 'disapproved'}" onclick="toggleApprove('${teacher.id}', ${teacher.approved})">
+              ${teacher.approved ? 'Disapprove' : 'Approve'}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function toggleApprove(id, currentStatus) {
+      const newStatus = !currentStatus;
+      await fetch('/.netlify/functions/supabase_proxy_fixed?action=update_teacher_approval', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, approved: newStatus })
+      });
+      fetchTeachers();
+    }
+
+    fetchTeachers();
+  </script>
+</body>
+</html>
