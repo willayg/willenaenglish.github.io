@@ -1,6 +1,6 @@
 // Word Worksheet Generator JavaScript - Main Controller
 // Import modules
-import { extractWordsWithAI } from '../wordtest/ai.js';
+import { extractWordsWithAI } from '../tools/wordtest/ai.js';
 import { 
     getImageUrl, 
     cycleImage, 
@@ -10,7 +10,7 @@ import {
     refreshImageForWord,
     enableImageDragAndDrop,
     initializeImageModule
-} from '../wordtest/images.js';
+} from '../tools/wordtest/images.js';
 
 // Fallback functions that will be overridden if imports work
 let maskWordPairs = function(wordPairs, testMode, numLettersToHide = 1) {
@@ -68,7 +68,7 @@ async function loadModules() {
     }
     
     try {
-        const imageModule = await import('./images.js');
+        const imageModule = await import('../tools/tests/images.js');
         initializeImageModule(imageModule.getPixabayImage, imageModule.imageCache);
         console.log('Images module loaded successfully');
     } catch (error) {

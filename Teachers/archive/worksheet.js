@@ -1,4 +1,4 @@
-import { getPixabayImage } from './images.js';
+import { getPixabayImage } from '../tools/tests/images.js';
 
 export function hideRandomLetters(word, numLettersToHide = 1) {
   if (!word || word.length < 2) return word;
