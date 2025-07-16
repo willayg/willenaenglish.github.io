@@ -12,7 +12,6 @@ const aiChatBoxHTML = `
 </div>
 `;
 
-
 function setupAIChatBox() {
   const mount = document.getElementById('aiChatSidebarMount');
   if (!mount) return;
@@ -66,13 +65,30 @@ function setupAIPrompt() {
   const promptInput = document.getElementById('aiPromptInput');
   const sendBtn = document.getElementById('sendAIPromptBtn');
   const questionsTextarea = document.getElementById('grammarQuestions');
+  const questionTypeSelect = document.getElementById('questionTypeSelect');
   if (!promptInput || !sendBtn || !questionsTextarea) return;
 
   sendBtn.onclick = async function() {
-    const promptText = promptInput.value.trim();
-    if (!promptText) {
+    let promptText = promptInput.value.trim();
+    if (!promptText && (!questionTypeSelect || questionTypeSelect.value === 'free')) {
       alert('Please enter your prompt.');
       return;
+    }
+    // Handle question type
+    if (questionTypeSelect) {
+      const type = questionTypeSelect.value;
+      if (type === 'mc') {
+        // Create multiple choice without labels - just clean format
+        promptText = `Create multiple choice grammar questions for ESL students about: ${promptText}. Format each question like this example (but don't use labels like "Question:" or "Answer:"):
+
+She gave the pen to _____.
+a) he  b) him  c) his  d) himself
+
+Just write questions and answer choices clearly.`;
+      } else if (type === 'fill') {
+        promptText = 'Make the questions fill in the blanks. ' + promptText;
+      }
+      // Free form does not modify promptText
     }
     sendBtn.disabled = true;
     sendBtn.textContent = 'Sending...';

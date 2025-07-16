@@ -97,6 +97,71 @@
       }
     })();
   </script>
+  <script>
+    // Feedback modal loader for Survey Builder (GLOBAL for burger menu)
+    window.showFeedbackModal = async function() {
+      if (!document.getElementById('feedbackModalBg')) {
+        const resp = await fetch('/Teachers/components/feedback-modal.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const template = tempDiv.querySelector('#feedback-modal-template');
+        if (template) {
+          const modalContent = template.content.cloneNode(true);
+          document.body.appendChild(modalContent);
+        }
+      }
+      const modal = document.getElementById('feedbackModalBg');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      
+      const closeBtn = document.getElementById('feedbackModalCloseBtn');
+      const cancelBtn = document.getElementById('feedbackCancelBtn');
+      const submitBtn = document.getElementById('feedbackSubmitBtn');
+      
+      function closeModal() {
+        modal.style.display = 'none';
+      }
+      
+      if (closeBtn) {
+        closeBtn.onclick = closeModal;
+      }
+      if (cancelBtn) {
+        cancelBtn.onclick = closeModal;
+      }
+      
+      // Close on background click
+      modal.onclick = function(event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+      
+      if (submitBtn) {
+        submitBtn.onclick = async function() {
+          const feedbackText = document.getElementById('feedbackText').value;
+          // Collect survey worksheet state
+          const state = {
+            title: document.getElementById('surveyTitle')?.value || '',
+            questions: document.getElementById('surveyQuestions')?.value || '',
+            font: document.getElementById('fontSelect')?.value || '',
+            fontSize: document.getElementById('fontSizeInput')?.value || '',
+            template: document.getElementById('templateSelect')?.value || ''
+          };
+          if (window.feedbackSubmitToSupabase) {
+            await window.feedbackSubmitToSupabase({
+              module: 'survey',
+              feedback: feedbackText,
+              state
+            });
+          }
+          closeModal();
+          document.getElementById('feedbackText').value = '';
+          alert('Thank you for your feedback!');
+        };
+      }
+    };
+  </script>
     <!-- Load shared burger menu component -->
     <script type="module">
       import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
@@ -258,6 +323,105 @@
       updateSurveyPreview();
       window.updateSurveyPreview = updateSurveyPreview;
     });
+    </script>
+    <script>
+        // Save and Load functionality using worksheet manager
+        document.addEventListener('DOMContentLoaded', function() {
+            const saveBtn = document.getElementById('saveBtn');
+            const loadBtn = document.getElementById('loadBtn');
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    openWorksheetManager('save');
+                });
+            }
+
+            if (loadBtn) {
+                loadBtn.addEventListener('click', function() {
+                    openWorksheetManager('load');
+                });
+            }
+        });
+
+        // Function to open worksheet manager
+        function openWorksheetManager(mode) {
+            const url = `/Teachers/worksheet_manager.html?mode=${mode}&type=survey`;
+            const features = 'width=800,height=600,scrollbars=yes,resizable=yes';
+            window.open(url, 'WorksheetManager', features);
+        }
+
+        // Function to get current worksheet data for saving
+        function getCurrentWorksheetData() {
+            const titleInput = document.getElementById('surveyTitle');
+            const questionsInput = document.getElementById('surveyQuestions');
+            const fontSelect = document.getElementById('fontSelect');
+            const fontSizeInput = document.getElementById('fontSizeInput');
+            const templateSelect = document.getElementById('templateSelect');
+
+            // Compose all survey-related data into settings (JSON string)
+            const settings = {
+                font: fontSelect?.value || 'Poppins',
+                fontSize: parseInt(fontSizeInput?.value) || 12,
+                template: templateSelect?.value || '1'
+            };
+
+            return {
+                title: titleInput?.value?.trim() || 'Untitled Survey',
+                worksheet_type: 'survey',
+                words: [], // Survey doesn't use words array
+                settings: JSON.stringify(settings),
+                questions: questionsInput?.value || '',
+                created_at: new Date().toISOString()
+            };
+        }
+
+        // Function to load worksheet data
+        function loadWorksheet(worksheet) {
+            if (!worksheet || worksheet.worksheet_type !== 'survey') {
+                alert('Invalid survey worksheet data.');
+                return;
+            }
+
+            try {
+                const titleInput = document.getElementById('surveyTitle');
+                const questionsInput = document.getElementById('surveyQuestions');
+                const fontSelect = document.getElementById('fontSelect');
+                const fontSizeInput = document.getElementById('fontSizeInput');
+                const templateSelect = document.getElementById('templateSelect');
+
+                // Load basic data
+                if (titleInput) titleInput.value = worksheet.title || '';
+                if (questionsInput) questionsInput.value = worksheet.questions || '';
+
+                // Load settings (parse from JSON string if needed)
+                if (worksheet.settings) {
+                    let settings;
+                    if (typeof worksheet.settings === 'string') {
+                        settings = JSON.parse(worksheet.settings);
+                    } else {
+                        settings = worksheet.settings;
+                    }
+                    
+                    if (settings.font && fontSelect) fontSelect.value = settings.font;
+                    if (settings.fontSize && fontSizeInput) fontSizeInput.value = settings.fontSize;
+                    if (settings.template && templateSelect) templateSelect.value = settings.template;
+                }
+
+                // Trigger regeneration of preview with loaded data
+                if (typeof window.updateSurveyPreview === 'function') {
+                    window.updateSurveyPreview();
+                }
+
+                alert('Survey loaded successfully!');
+            } catch (error) {
+                console.error('Error loading worksheet:', error);
+                alert('Error loading survey: ' + error.message);
+            }
+        }
+
+        // Make functions available globally for worksheet manager
+        window.getCurrentWorksheetData = getCurrentWorksheetData;
+        window.loadWorksheet = loadWorksheet;
     </script>
     <!-- AI prompt logic for survey generation (to be implemented in survey_ai.js) -->
     <script type="module" src="survey_ai.js"></script>
