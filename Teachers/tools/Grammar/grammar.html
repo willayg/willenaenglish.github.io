@@ -264,12 +264,17 @@
             <div class="main-content">
                 <!-- Sidebar -->
                 <div class="sidebar">
+                    <!-- Title at the top of the toolbar -->
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="grammarTitle" placeholder="Enter worksheet title">
+                    </div>
                     <!-- Flexible AI Prompt for Grammar Worksheet Generation -->
                     <div class="input-group" id="aiPromptGroup">
-                        <label for="aiPromptInput" style="font-size:13px; color:#444; font-weight:500;">AI Prompt (describe grammar point, give examples, or instructions)</label>
+                        <label for="aiPromptInput" style="font-size:13px; color:#444; font-weight:500;">Free Style Prompt (describe grammar point, give examples, or instructions to the AI)</label>
                         <textarea id="aiPromptInput" class="textarea-field" rows="3" placeholder="e.g. Make 10 questions using the present perfect. Or: Give me 5 error correction sentences about articles."></textarea>
                         <button id="sendAIPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
-                </div>
+                    </div>
     <!-- AI prompt handler for grammar worksheet (moved out of sidebar for valid HTML) -->
     <script type="module">
       import { showGrammarSectionModal, addGrammarSection } from './grammar-section-modal.js';
@@ -315,14 +320,6 @@
       window.addGrammarSection = addGrammarSection;
     </script>
                     <div class="input-group">
-                        <label>Title</label>
-                        <input type="text" class="input-field" id="grammarTitle" placeholder="Enter worksheet title">
-                    </div>
-                    <div class="input-group">
-                        <label>Instructions</label>
-                        <textarea class="textarea-field" id="grammarInstructions" placeholder="Enter instructions for students..." rows="3"></textarea>
-                    </div>
-                    <div class="input-group">
                         <label>Question Type</label>
                         <select class="select-field" id="questionTypeSelect">
                             <option value="fill-blank">Fill in the Blank</option>
@@ -339,6 +336,22 @@
                         <button class="extract-btn" id="generateQuestionsBtn">Generate Questions</button>
                         <button class="clear-btn" id="clearBtn">Clear All</button>
                     </div>
+                    <script>
+                    // Fix Clear All button to clear all fields and preview
+                    document.addEventListener('DOMContentLoaded', function() {
+                      const clearBtn = document.getElementById('clearBtn');
+                      if (clearBtn) {
+                        clearBtn.addEventListener('click', function() {
+                          document.getElementById('grammarTitle').value = '';
+                          document.getElementById('aiPromptInput').value = '';
+                          document.getElementById('grammarQuestions').value = '';
+                          document.getElementById('grammarAnswers').value = '';
+                          window.grammarSections = [];
+                          if (typeof window.updateGrammarPreview === 'function') window.updateGrammarPreview();
+                        });
+                      }
+                    });
+                    </script>
                     <div class="input-group">
                         <label>Questions</label>
                         <textarea class="textarea-field" id="grammarQuestions" placeholder="Generated questions will appear here, or type your own..." rows="8"></textarea>
@@ -359,6 +372,31 @@
                     <div class="preview-placeholder" id="grammarPreviewPlaceholder">
                         <p>Preview will appear here</p>
                     </div>
+                </div>
+                <script>
+                // Make preview content editable on left click and allow right-click to delete a section
+                document.addEventListener('DOMContentLoaded', function() {
+                  const preview = document.getElementById('worksheetPreviewArea-grammar');
+                  if (preview) {
+                    preview.addEventListener('click', function(e) {
+                      // Only enable editing if not already editable
+                      if (!preview.isContentEditable) {
+                        preview.contentEditable = 'true';
+                        preview.focus();
+                      }
+                    });
+                    // Right-click to delete a section
+                    preview.addEventListener('contextmenu', function(e) {
+                      // Find the closest section-box or grammar-questions div
+                      let section = e.target.closest('.section-box, .grammar-questions');
+                      if (section && preview.contains(section)) {
+                        e.preventDefault();
+                        section.remove();
+                      }
+                    });
+                  }
+                });
+                </script>
                 </div>
             </div>
         </div>
