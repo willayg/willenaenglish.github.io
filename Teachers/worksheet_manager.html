@@ -27,9 +27,11 @@
         <input type="text" id="searchUnit" placeholder="Unit..." class="border p-1 flex-1 min-w-[80px]">
         <select id="searchType" class="border p-1 flex-1 min-w-[120px]">
           <option value="">All Types</option>
+          <option value="grammar">Grammar</option>
+          <option value="survey">Survey</option>
+          <option value="reading">Reading</option>
           <option value="wordsearch">Wordsearch</option>
           <option value="wordtest">Word Test</option>
-          <option value="reading">Reading</option>
           <option value="grid_game">Grid Game</option>
           <option value="flashcard">Flashcard</option>
           <!-- Add more types as needed -->
@@ -176,10 +178,14 @@ if (mode === 'save') {
   // Determine which worksheet type to filter by based on the opener window
   let filterType = null;
   if (window.opener) {
-    // Check if we're in reading mode by looking for reading-specific elements
+    // Check the opener window for specific elements to determine worksheet type
     const openerDoc = window.opener.document;
     if (openerDoc.getElementById('readingTitle') && openerDoc.getElementById('readingPassage')) {
       filterType = 'reading';
+    } else if (openerDoc.getElementById('grammarTitle') && openerDoc.getElementById('grammarQuestions')) {
+      filterType = 'grammar';
+    } else if (openerDoc.getElementById('surveyTitle') && openerDoc.getElementById('surveyQuestions')) {
+      filterType = 'survey';
     } else if (openerDoc.getElementById('wordListTextarea') || openerDoc.getElementById('wordTestWords')) {
       filterType = 'wordtest';
     } else if (openerDoc.getElementById('wordsearchWords')) {
