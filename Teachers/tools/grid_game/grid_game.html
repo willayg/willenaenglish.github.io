@@ -24,6 +24,70 @@
       });
     </script>
     <style>
+        .floating-toolbar {
+          background: linear-gradient(135deg, #b2f7ef 0%, #5eead4 40%, #38bdf8 80%, #0ea5e9 100%) !important;
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          padding: 12px 24px;
+          border-radius: 14px;
+          margin-bottom: 18px;
+          box-shadow: 0 2px 1px 2px #0ea5e9, 0 0 2px 2px #38bdf8 inset, 0 1.5px 0 0 #b2f7ef inset;
+          border: 3px solid #dbe6eb;
+          background-clip: padding-box;
+          position: relative;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .floating-toolbar::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 14px;
+          pointer-events: none;
+          z-index: 0;
+          background: linear-gradient(120deg, #e0fcff 0%, #b2f7ef 30%, #38bdf8 60%, #0ea5e9 100%);
+          opacity: 0.55;
+        }
+        .floating-toolbar {
+          /* Extra metallic shine */
+          box-shadow: 0 2px 12px 2px #0ea5e9, 0 0 18px 2px #38bdf8 inset, 0 1.5px 0 0 #b2f7ef inset;
+        }
+        .floating-toolbar > * {
+          position: relative;
+          z-index: 1;
+        }
+        .toolbar-select {
+          font-size: 1em;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid #5e6add;
+          margin-right: 8px;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .font-size-controls {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .size-btn {
+          background: #b5bde05b;
+          border: 1px solid #3c59d8;
+          border-radius: 4px;
+          font-size: 1.1em;
+          width: 28px;
+          height: 28px;
+          cursor: pointer;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .font-size-input {
+          width: 40px;
+          text-align: center;
+          font-size: 1em;
+          border-radius: 4px;
+          border: 1px solid #2e2d2d;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
         body {
             font-family: 'Poppins', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -84,13 +148,15 @@
         /* Sticky grid container */
         .sticky-grid {
             position: fixed;
-            top: 160px;
-            right: 380px;
+            top: 230px;
+            right: 600px;
             z-index: 1000;
             box-shadow: 0 4px 24px rgba(46,43,63,0.10);
             background: white;
             border-radius: 16px;
             padding: 16px;
+            width: 650px;
+            max-width: 90vw;
         }
         
         .form-group {
@@ -331,6 +397,20 @@
                 padding: 0;
             }
         }
+        /* On smaller PC screens, make sticky grid static so it doesn't cover menus */
+        @media (max-width: 1400px) {
+          .sticky-grid {
+            position: static !important;
+            top: auto !important;
+            right: 500px;
+            margin: 0 auto 24px auto;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 0 2px 8px rgba(46,43,63,0.10);
+            border-radius: 16px;
+            padding: 16px;
+          }
+        }
     </style>
 </head>
 <body>
@@ -359,7 +439,7 @@
             <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
                 <h1 style="flex:1; text-align:center; margin:0;">Willena Grid Game</h1>
                 <!-- Top Action Bar: Load/Save -->
-                <div class="top-actions" style="position:absolute; left:50%; bottom:12px; transform:translateX(-50%); z-index:9999; display:flex; gap:32px; align-items:flex-end;">
+                <div class="top-actions" style="position:absolute; left:10%; bottom:12px; transform:translateX(-50%); z-index:9999; display:flex; gap:32px; align-items:flex-end;">
                   <span class="action-link" id="loadBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">Load</span>
                   <span class="action-link" id="saveBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">Save</span>
                 </div>
@@ -367,6 +447,34 @@
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
             
+            <!-- Floating Toolbar: now below header/title and above main-content -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+                <div class="font-size-controls">
+                    <label style="margin-right:4px;">Question Font</label>
+                    <button class="size-btn" id="decreaseQFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="qFontSizeInput" value="16" min="10" max="32" step="1">
+                    <button class="size-btn" id="increaseQFontBtn">+</button>
+                </div>
+                <div class="font-size-controls">
+                    <label style="margin-right:4px;">Answer Font</label>
+                    <button class="size-btn" id="decreaseAFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="aFontSizeInput" value="16" min="10" max="32" step="1">
+                    <button class="size-btn" id="increaseAFontBtn">+</button>
+                </div>
+                <!-- Color scheme removed -->
+    <!-- Color scheme logic removed -->
+                <button class="refresh-btn" id="refreshPreviewBtn" title="Refresh Preview" style="margin-left:12px;">↻</button>
+            </div>
             <div class="main-content">
                 <!-- Sidebar Controls -->
                 <div class="sidebar">
@@ -434,17 +542,6 @@
                         <input type="color" id="gridColorPicker" class="form-input" value="#f0f0f0">
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Font Style</label>
-                        <select id="fontPicker" class="form-select">
-                            <option value="Arial">Arial</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Comic Sans MS">Comic Sans</option>
-                            <option value="Georgia">Georgia</option>
-                            <option value="Verdana">Verdana</option>
-                        </select>
-                    </div>
-
                     <!-- Generate Game Button -->
                     <button id="generateGameBtn" class="generate-btn">
                         <span class="button-text">Generate Game</span>
@@ -480,6 +577,58 @@
     </div>
     
     <script src="grid_game_fixed.js"></script>
+    <script>
+    // Font and font size controls for grid game preview
+    function updateGridPreviewFont() {
+      const font = document.getElementById('fontSelect')?.value || 'Poppins';
+      const qSize = document.getElementById('qFontSizeInput')?.value || '16';
+      const aSize = document.getElementById('aFontSizeInput')?.value || '16';
+      // Apply font and font size to questions and answers in preview
+      const preview = document.getElementById('gamePreviewArea');
+      if (preview) {
+        // Questions
+        preview.querySelectorAll('.grid-square.showing-question').forEach(el => {
+          el.style.fontFamily = font + ',sans-serif';
+          el.style.fontSize = qSize + 'px';
+        });
+        // Answers
+        preview.querySelectorAll('.grid-square.showing-word').forEach(el => {
+          el.style.fontFamily = font + ',sans-serif';
+          el.style.fontSize = aSize + 'px';
+        });
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      // Font selector
+      const fontSelect = document.getElementById('fontSelect');
+      if (fontSelect) {
+        fontSelect.addEventListener('change', updateGridPreviewFont);
+      }
+      // Q font size controls
+      const qFontInput = document.getElementById('qFontSizeInput');
+      const decQBtn = document.getElementById('decreaseQFontBtn');
+      const incQBtn = document.getElementById('increaseQFontBtn');
+      if (decQBtn && qFontInput) decQBtn.onclick = function() { qFontInput.value = Math.max(10, parseInt(qFontInput.value)-1); qFontInput.dispatchEvent(new Event('input')); };
+      if (incQBtn && qFontInput) incQBtn.onclick = function() { qFontInput.value = Math.min(32, parseInt(qFontInput.value)+1); qFontInput.dispatchEvent(new Event('input')); };
+      if (qFontInput) qFontInput.addEventListener('input', updateGridPreviewFont);
+      // A font size controls
+      const aFontInput = document.getElementById('aFontSizeInput');
+      const decABtn = document.getElementById('decreaseAFontBtn');
+      const incABtn = document.getElementById('increaseAFontBtn');
+      if (decABtn && aFontInput) decABtn.onclick = function() { aFontInput.value = Math.max(10, parseInt(aFontInput.value)-1); aFontInput.dispatchEvent(new Event('input')); };
+      if (incABtn && aFontInput) incABtn.onclick = function() { aFontInput.value = Math.min(32, parseInt(aFontInput.value)+1); aFontInput.dispatchEvent(new Event('input')); };
+      if (aFontInput) aFontInput.addEventListener('input', updateGridPreviewFont);
+      // Manual refresh button
+      const refreshBtn = document.getElementById('refreshPreviewBtn');
+      if (refreshBtn) refreshBtn.onclick = updateGridPreviewFont;
+      // Initial font update
+      updateGridPreviewFont();
+      // Also update font after game is generated
+      const observer = new MutationObserver(updateGridPreviewFont);
+      const preview = document.getElementById('gamePreviewArea');
+      if (preview) observer.observe(preview, { childList: true, subtree: true });
+    });
+    </script>
     <script>
       // Card layout picker integration
       document.addEventListener('DOMContentLoaded', function() {

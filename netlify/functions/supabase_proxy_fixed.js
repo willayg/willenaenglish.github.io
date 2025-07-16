@@ -268,6 +268,42 @@ exports.handler = async (event) => {
       }
     }
 
+    // --- GET TEACHERS (for admin dashboard) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'get_teachers' && event.httpMethod === 'GET') {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, name, email, approved')
+          .eq('role', 'teacher');
+        if (error) {
+          return { statusCode: 500, body: JSON.stringify([]) };
+        }
+        return { statusCode: 200, body: JSON.stringify(data) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify([]) };
+      }
+    }
+
+    // --- UPDATE TEACHER APPROVAL (for admin dashboard) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'update_teacher_approval' && event.httpMethod === 'POST') {
+      try {
+        const { id, approved } = JSON.parse(event.body);
+        if (!id || typeof approved !== 'boolean') {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing id or approved' }) };
+        }
+        const { error } = await supabase
+          .from('profiles')
+          .update({ approved })
+          .eq('id', id);
+        if (error) {
+          return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
     if (event.path.endsWith('/upload_teacher_file') && event.httpMethod === 'POST') {
       // Parse multipart/form-data (you may need a library like busboy or formidable)
       // For simplicity, let's assume you send base64 file data and filename in JSON

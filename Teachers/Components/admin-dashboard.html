@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - Willena Tools</title>
+  <link rel="stylesheet" href="/Teachers/components/style.css">
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
+    .admin-container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 32px; }
+    h1 { text-align: center; color: #2d4053; margin-bottom: 24px; }
+    .admin-links { display: flex; flex-direction: column; gap: 18px; margin-top: 32px; }
+    .admin-link { background: #18293a; color: #fff; font-weight:600; border:none; border-radius:6px; padding:16px 0; font-size:1.1rem; text-align:center; text-decoration:none; box-shadow:0 2px 8px rgba(30,41,59,0.10); transition:background 0.2s; }
+    .admin-link:hover { background: #1c2938; }
+  </style>
+</head>
+<body>
+  <script>
+    // Access control: only allow users with 'admin' role
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+        const result = await res.json();
+        let role = (result && result.role) ? String(result.role).toLowerCase() : '';
+        if (!result.success || role !== 'admin') {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+  <div class="admin-container">
+    <h1>Admin Dashboard</h1>
+    <div class="admin-links">
+      <a href="/Teachers/components/feedback-admin.html" class="admin-link">Feedback Admin</a>
+      <a href="/Teachers/components/admin_teachers.html" class="admin-link">Manage Teachers</a>
+      <a href="/Teachers/index.html" class="admin-link">Teacher's Dashboard</a>
