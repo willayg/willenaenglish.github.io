@@ -23,34 +23,99 @@
           padding: 32px 32px 32px 32px;
           overflow: auto;
           display: flex;
-          align-items: flex-start;
+          flex-direction: column;
+          align-items: center;
+        }
+        /* A4 worksheet sizing for preview and print */
+        .a4-sheet {
+          width: 794px; /* A4 width at 96dpi */
+          min-height: 1123px; /* A4 height at 96dpi */
+          max-width: 100%;
+          margin: 0 auto;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        /* Print styles removed - now handled by print.js */
+        /* Two-column worksheet layout */
+        .two-column {
+          column-count: 2;
+          column-gap: 40px;
+          column-fill: balance;
+          height: auto;
+        }
+        /* Prevent header and answer key from being split by columns */
+        .worksheet-header, .answer-key-section {
+          column-span: all;
+          break-inside: avoid;
+        }
+        /* Make sure section boxes don't break across columns */
+        .section-box, .grammar-questions {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          margin-bottom: 15px;
         }
         .preview-area .preview-placeholder {
           color: #aaa;
           text-align: center;
           margin-top: 100px;
         }
-        /* Worksheet design styles (copied from reading module) */
-        .design-0 {
+        /* Worksheet section box styles */
+        .section-box.design-0 {
           background: #fffbe7;
           border: 2px solid #ffe08a;
           box-shadow: 0 2px 8px rgba(255, 224, 138, 0.12);
         }
-        .design-1 {
+        .section-box.design-1 {
           background: #f0f7ff;
           border: 2px solid #a3d1ff;
           box-shadow: 0 2px 8px rgba(163, 209, 255, 0.12);
         }
-        .design-2 {
+        .section-box.design-2 {
           background: #f9f6ff;
           border: 2px solid #c7bfff;
           box-shadow: 0 2px 8px rgba(199, 191, 255, 0.12);
+        }
+        .section-box {
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: 8px;
+          margin-bottom: 24px;
+          padding: 24px 20px 20px 20px;
+          display: block;
+        }
+        /* New: line between sections for design-4 */
+        .line-section {
+          border-bottom: 2px solid #bdbdbd;
+          margin-bottom: 24px;
+          padding-bottom: 18px;
         }
         .grammar-questions {
           white-space: pre-line;
           margin-bottom: 16px;
           line-height: 2.1;
           font-size: 1em;
+        }
+        /* All worksheet headers have a simple line */
+        .design-0 .worksheet-header,
+        .design-1 .worksheet-header,
+        .design-2 .worksheet-header,
+        .design-3 .worksheet-header,
+        .design-4 .worksheet-header {
+          border-bottom: 2px solid #d3d3d3;
+          padding-bottom: 12px;
+          margin-bottom: 18px !important;
+        }
+        .design-3 {
+          background: #fff;
+          border: none;
+          box-shadow: none;
+        }
+        /* Design-4: no box, just lines between sections */
+        .design-4 {
+          background: #fff;
+          border: none;
+          box-shadow: none;
         }
     </style>
 </head>
@@ -180,9 +245,11 @@
                     <button class="size-btn" id="increaseFontBtn">+</button>
                 </div>
                 <select class="toolbar-select" id="templateSelect">
-                    <option value="0">Design 1</option>
-                    <option value="1">Design 2</option>
-                    <option value="2" selected>Design 3</option>
+                    <option value="0">Design 1 (Yellow Box)</option>
+                    <option value="1">Design 2 (Blue Box)</option>
+                    <option value="2">Design 3 (Purple Box)</option>
+                    <option value="3">Design 4 (Simple Line)</option>
+                    <option value="4">Design 5 (Lines Between Parts)</option>
                 </select>
                 <div class="layout-group">
                     <select class="layout-select" id="layoutSelect">
@@ -203,44 +270,50 @@
                         <textarea id="aiPromptInput" class="textarea-field" rows="3" placeholder="e.g. Make 10 questions using the present perfect. Or: Give me 5 error correction sentences about articles."></textarea>
                         <button id="sendAIPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
                 </div>
-                <!-- AI prompt handler for grammar worksheet (moved out of sidebar for valid HTML) -->
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                  const aiBtn = document.getElementById('sendAIPromptBtn');
-                  const aiInput = document.getElementById('aiPromptInput');
-                  const questionsBox = document.getElementById('grammarQuestions');
-                  if (aiBtn && aiInput && questionsBox) {
-                    aiBtn.addEventListener('click', async function() {
-                      const prompt = aiInput.value.trim();
-                      if (!prompt) {
-                        aiInput.focus();
-                        return;
-                      }
-                      aiBtn.disabled = true;
-                      aiBtn.textContent = 'Thinking...';
-                      try {
-                        const res = await fetch('/.netlify/functions/openai_proxy', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ prompt, type: 'grammar' })
-                        });
-                        const data = await res.json();
-                        if (data && data.result) {
-                          questionsBox.value = data.result.trim();
-                          if (window.updateGrammarPreview) window.updateGrammarPreview();
-                        } else {
-                          alert('AI did not return any questions.');
-                        }
-                      } catch (e) {
-                        alert('Error contacting AI: ' + (e.message || e));
-                      } finally {
-                        aiBtn.disabled = false;
-                        aiBtn.textContent = 'Send Prompt to AI';
-                      }
-                    });
-                  }
+    <!-- AI prompt handler for grammar worksheet (moved out of sidebar for valid HTML) -->
+    <script type="module">
+      import { showGrammarSectionModal, addGrammarSection } from './grammar-section-modal.js';
+      let grammarSections = [];
+      window.grammarSections = grammarSections;
+      document.addEventListener('DOMContentLoaded', function() {
+        const aiBtn = document.getElementById('sendAIPromptBtn');
+        const aiInput = document.getElementById('aiPromptInput');
+        if (aiBtn && aiInput) {
+          aiBtn.addEventListener('click', async function() {
+            const prompt = aiInput.value.trim();
+            if (!prompt) {
+              aiInput.focus();
+              return;
+            }
+            aiBtn.disabled = true;
+            aiBtn.textContent = 'Thinking...';
+            try {
+              const res = await fetch('/.netlify/functions/openai_proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, type: 'grammar' })
+              });
+              const data = await res.json();
+              if (data && data.result) {
+                showGrammarSectionModal(data.result.trim(), function(editedQuestions) {
+                  grammarSections.push(editedQuestions);
+                  updateGrammarPreview();
                 });
-                </script>
+              } else {
+                alert('AI did not return any questions.');
+              }
+            } catch (e) {
+              alert('Error contacting AI: ' + (e.message || e));
+            } finally {
+              aiBtn.disabled = false;
+              aiBtn.textContent = 'Send Prompt to AI';
+            }
+          });
+        }
+      });
+      // Expose for preview update script
+      window.addGrammarSection = addGrammarSection;
+    </script>
                     <div class="input-group">
                         <label>Title</label>
                         <input type="text" class="input-field" id="grammarTitle" placeholder="Enter worksheet title">
@@ -291,53 +364,92 @@
         </div>
     </div>
     <!-- Grammar worksheet logic -->
-    <script type="module" src="grammar.js"></script>
+    <script type="module" src="./grammar.js"></script>
     <!-- AI prompt logic for grammar worksheet generation -->
-    <script type="module" src="ai.js"></script>
+    <script type="module" src="./ai.js"></script>
+    <!-- Section modal logic for grammar worksheet generation -->
+    <script type="module" src="./grammar-section-modal.js"></script>
+    <!-- Print logic for clean worksheet printing -->
+    <script src="./print.js"></script>
     <script>
-    // Grammar worksheet preview logic with design templates
-    function updateGrammarPreview() {
+    // Grammar worksheet preview function has been replaced with createGrammarPreview
+
+    // Create a simple preview update function to create a two-column layout
+    function createGrammarPreview() {
+      // Get all values
       const title = document.getElementById('grammarTitle')?.value || '';
       const instructions = document.getElementById('grammarInstructions')?.value || '';
-      const questions = document.getElementById('grammarQuestions')?.value || '';
       const answers = document.getElementById('grammarAnswers')?.value || '';
       const font = document.getElementById('fontSelect')?.value || 'Poppins';
       const fontSize = document.getElementById('fontSizeInput')?.value || '12';
       const template = document.getElementById('templateSelect')?.value || '0';
       const layout = document.getElementById('layoutSelect')?.value || 'default';
-
-      // Choose design class
-      let designClass = '';
-      if (template === '0') designClass = 'design-0';
-      else if (template === '1') designClass = 'design-1';
+      
+      // Get design classes
+      let designClass = 'design-0';
+      if (template === '1') designClass = 'design-1';
       else if (template === '2') designClass = 'design-2';
-
-      let html = '';
-      html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;">
-        <div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:60px;max-width:80px;">
-          <div style="flex:1;text-align:center;">
-            <h1 style="font-size:1.8em;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'Grammar Worksheet'}</h1>
-            <div style="display:flex;justify-content:space-between;margin:0 30px 0 30px;font-size:1em;">
-              <span>Name: ________________</span>
-              <span>Date: ________________</span>
-            </div>
-          </div>
-        </div>
-        ${instructions ? `<div style='margin-bottom:10px;'><b>Instructions:</b> ${instructions}</div>` : ''}
-        <div style='margin-bottom:10px;'><b>Questions:</b></div>
-        <div class="grammar-questions">${questions ? questions : '<i>No questions yet.</i>'}</div>
-        <div style='margin-top:18px;'><b>Answer Key:</b></div>
-        <div style='white-space:pre-line;'>${answers ? answers : '<i>No answer key yet.</i>'}</div>
-      </div>`;
-
+      else if (template === '3') designClass = 'design-3';
+      else if (template === '4') designClass = 'design-4';
+      
+      // Get layout class
+      let layoutClass = '';
+      if (layout === 'two-column') layoutClass = 'two-column';
+      
+      // Build sections HTML
+      let sectionsHtml = '';
+      let grammarSections = window.grammarSections || [];
+      let addGrammarSection = window.addGrammarSection;
+      if (grammarSections.length > 0 && typeof addGrammarSection === 'function') {
+        grammarSections.forEach(function(questions, idx) {
+          sectionsHtml += addGrammarSection(questions, idx);
+        });
+      } else {
+        // fallback to single questions textarea
+        const questions = document.getElementById('grammarQuestions')?.value || '';
+        sectionsHtml = '<div class="grammar-questions">' + (questions || '<i>No questions yet.</i>') + '</div>';
+      }
+      
+      // Create HTML
+      let html = '<div class="' + designClass + ' a4-sheet" style="width:100%;padding:24px;box-sizing:border-box;font-family:' + font + ',sans-serif;font-size:' + fontSize + 'px;">';
+      
+      // Add header
+      html += '<div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">';
+      html += '<img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:60px;max-width:80px;">';
+      html += '<div style="flex:1;text-align:center;">';
+      html += '<h1 style="font-size:2.4em;margin:0 0 5px 0;color:#2e2b3f;font-family:' + font + ',sans-serif;">' + (title || 'Grammar Worksheet') + '</h1>';
+      html += '<div style="display:flex;justify-content:space-between;margin:0 30px 0 30px;font-size:1em;">';
+      html += '<span>Name: ________________</span>';
+      html += '<span>Date: ________________</span>';
+      html += '</div></div></div>';
+      
+      // Add instructions if present
+      if (instructions) {
+        html += '<div style="margin-bottom:10px;"><b>Instructions:</b> ' + instructions + '</div>';
+      }
+      
+      // Add content section with two-column if selected
+      if (layout === 'two-column') {
+        html += '<div class="' + layoutClass + '" style="width:100%;">' + sectionsHtml + '</div>';
+      } else {
+        html += '<div>' + sectionsHtml + '</div>';
+      }
+      
+      // Add answer key
+      html += '<div class="answer-key-section" style="margin-top:18px;"><b>Answer Key:</b>';
+      html += '<div style="white-space:pre-line;">' + (answers || '<i>No answer key yet.</i>') + '</div></div>';
+      
+      // Close container
+      html += '</div>';
+      
+      // Update preview
       const preview = document.getElementById('worksheetPreviewArea-grammar');
       if (preview) {
         preview.innerHTML = html;
       }
     }
 
-    // Hook up preview updates to all relevant fields
+    // Hook up preview updates to all relevant fields and font size buttons
     document.addEventListener('DOMContentLoaded', function() {
       const ids = [
         'grammarTitle',
@@ -349,15 +461,51 @@
         'templateSelect',
         'layoutSelect'
       ];
-      ids.forEach(id => {
+      ids.forEach(function(id) {
         const el = document.getElementById(id);
         if (el) {
-          el.addEventListener('input', updateGrammarPreview);
-          el.addEventListener('change', updateGrammarPreview);
+          el.addEventListener('input', createGrammarPreview);
+          el.addEventListener('change', createGrammarPreview);
         }
       });
-      updateGrammarPreview();
-      window.updateGrammarPreview = updateGrammarPreview;
+
+      // Font size + and - buttons
+      const fontSizeInput = document.getElementById('fontSizeInput');
+      const increaseBtn = document.getElementById('increaseFontBtn');
+      const decreaseBtn = document.getElementById('decreaseFontBtn');
+      if (increaseBtn && fontSizeInput) {
+        increaseBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value, 10) || 12;
+          if (val < parseInt(fontSizeInput.max || '18', 10)) {
+            fontSizeInput.value = val + 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+      if (decreaseBtn && fontSizeInput) {
+        decreaseBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value, 10) || 12;
+          if (val > parseInt(fontSizeInput.min || '8', 10)) {
+            fontSizeInput.value = val - 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+
+      createGrammarPreview();
+      window.updateGrammarPreview = createGrammarPreview;
+      
+      // Print button functionality
+      const printBtn = document.getElementById('printBtn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function() {
+          if (window.printWorksheet) {
+            window.printWorksheet();
+          } else {
+            window.print(); // fallback
+          }
+        });
+      }
     });
     </script>
 </body>
