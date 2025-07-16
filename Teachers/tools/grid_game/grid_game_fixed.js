@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const addTeamBtn = document.getElementById('addTeamBtn');
     const teamList = document.getElementById('teamList');
     const gridColorPicker = document.getElementById('gridColorPicker');
-    const fontPicker = document.getElementById('fontPicker');
+    // Use fontSelect from toolbar as fontPicker
+    const fontPicker = document.getElementById('fontSelect');
     const generateGameBtn = document.getElementById('generateGameBtn');
     const saveSetupBtn = document.getElementById('saveSetupBtn');
     const loadSetupBtn = document.getElementById('loadSetupBtn');
@@ -247,7 +248,7 @@ Passage: ${passage}`
                     Reset Grid
                 </button>
             </div>
-            <div id="gameGrid" class="game-grid ${gridSize === '3x3' ? 'grid-3x3' : 'grid-4x4'}" style="background-color: ${gridColorPicker.value}; font-family: ${fontPicker.value};">
+            <div id="gameGrid" class="game-grid ${gridSize === '3x3' ? 'grid-3x3' : 'grid-4x4'}" style="background-color: ${gridColorPicker ? gridColorPicker.value : '#f0f0f0'}; font-family: ${fontPicker ? fontPicker.value : 'Poppins'};">
             </div>
         `;
 
@@ -259,6 +260,10 @@ Passage: ${passage}`
         // Card layout option
         const cardLayoutPicker = document.getElementById('cardLayoutPicker');
         const cardLayout = cardLayoutPicker ? cardLayoutPicker.value : 'word-top';
+
+        // Use default colors for question/answer
+        const questionColor = '#fff3e0';
+        const answerColor = '#e3f2fd';
 
         // Create grid squares
         currentWords.forEach((word, index) => {
@@ -284,6 +289,18 @@ Passage: ${passage}`
             function renderCard() {
                 square.innerHTML = `<div style="font-size:1.1em;font-weight:600;">${isShowingTop ? topText : bottomText}</div>`;
                 square.className = `grid-square ${isShowingTop ? 'showing-word' : 'showing-question'}`;
+                if (teamColor) {
+                    square.style.backgroundColor = teamColor;
+                    square.style.color = 'white';
+                } else {
+                    if (isShowingTop) {
+                        square.style.backgroundColor = answerColor;
+                        square.style.color = '';
+                    } else {
+                        square.style.backgroundColor = questionColor;
+                        square.style.color = '';
+                    }
+                }
             }
             renderCard();
 
@@ -304,14 +321,11 @@ Passage: ${passage}`
                 showTeamSelectionMenu(e.clientX, e.clientY, function(selectedTeam) {
                     if (selectedTeam === 'reset') {
                         teamColor = null;
-                        square.style.backgroundColor = 'white';
-                        square.style.color = 'inherit';
                         isShowingTop = true;
                         renderCard();
                     } else {
                         teamColor = selectedTeam.color;
-                        square.style.backgroundColor = selectedTeam.color;
-                        square.style.color = 'white';
+                        renderCard();
                         square.className = 'grid-square team-color';
                         square.innerHTML = `<div style="font-size:1.1em;font-weight:600;">${selectedTeam.name}</div>`;
                     }
