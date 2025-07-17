@@ -17,7 +17,7 @@ exports.handler = async (event) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --- FEEDBACK STATUS UPDATE ---
-    if (event.path.endsWith('/supabase_proxy') && event.httpMethod === 'POST' && event.queryStringParameters && event.queryStringParameters.feedback_update !== undefined) {
+    if (event.queryStringParameters && event.queryStringParameters.feedback_update !== undefined && event.httpMethod === 'POST') {
       try {
         const { id, status } = JSON.parse(event.body);
         if (!id || !status) {

@@ -48,64 +48,148 @@
     <script>
     // Feedback modal loader for Reading Worksheet Generator
     window.showFeedbackModal = async function() {
-      // Load feedback modal HTML if not already present
-      if (!document.getElementById('feedback-modal')) {
-        const resp = await fetch('/Teachers/components/feedback-modal.html');
-        const html = await resp.text();
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        document.body.appendChild(tempDiv.firstElementChild);
-      }
 
-      // Show the modal
-      const modal = document.getElementById('feedback-modal');
-      if (!modal) return;
-      modal.style.display = 'block';
 
-      // Close modal handler
-      const closeBtn = modal.querySelector('.close');
-      if (closeBtn) {
-        closeBtn.onclick = () => { modal.style.display = 'none'; };
-      }
-      window.onclick = function(event) {
-        if (event.target === modal) {
-          modal.style.display = 'none';
+
+        // Feedback modal functionality (copied from grammar/flashcard module for consistency)
+        // Prevent multiple modals
+        if (document.getElementById('feedback-modal-bg')) return;
+        // Modal HTML
+        const modalBg = document.createElement('div');
+        modalBg.id = 'feedback-modal-bg';
+        modalBg.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        modalBg.innerHTML = `
+            <div id="feedback-modal" style="background:#fff;padding:28px 24px 18px 24px;border-radius:10px;max-width:420px;width:95vw;box-shadow:0 4px 32px #0002;position:relative;">
+                <button id="feedback-modal-close" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>
+                <h2 style="margin-top:0;font-size:1.3em;">Send Feedback</h2>
+                <div style="font-size:15px;margin-bottom:10px;">Help us improve the Reading Worksheet tool!</div>
+                <textarea id="feedback-modal-text" placeholder="Enter your feedback..." style="width:100%;height:90px;padding:10px;border:1px solid #ccc;border-radius:5px;resize:vertical;font-size:15px;"></textarea>
+                <div id="feedback-modal-user" style="font-size:13px;color:#666;margin:8px 0 0 2px;"></div>
+                <div style="text-align:right;margin-top:16px;">
+                    <button id="feedback-modal-cancel" style="margin-right:10px;padding:7px 18px;border:1px solid #bbb;background:#fff;border-radius:4px;cursor:pointer;">Cancel</button>
+                    <button id="feedback-modal-submit" style="padding:7px 18px;background:#007cba;color:#fff;border:none;border-radius:4px;cursor:pointer;">Submit</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalBg);
+        const closeModal = () => { if (modalBg && modalBg.parentNode) modalBg.parentNode.removeChild(modalBg); };
+        document.getElementById('feedback-modal-close').onclick = closeModal;
+        document.getElementById('feedback-modal-cancel').onclick = closeModal;
+        document.getElementById('feedback-modal-text').focus();
+
+        // Show user info
+        let user_id = localStorage.getItem('userId') || '';
+        let username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+        const userDiv = document.getElementById('feedback-modal-user');
+        if (!user_id) {
+            userDiv.textContent = 'Not logged in';
+        } else if (username) {
+            userDiv.textContent = `From: ${username}`;
+        } else {
+            userDiv.textContent = '';
         }
-      };
 
-      // Submit handler
-      const submitBtn = modal.querySelector('#feedback-submit');
-      if (submitBtn) {
-        submitBtn.onclick = async function() {
-          const feedbackText = modal.querySelector('#feedback-text').value;
-          // Collect reading worksheet state
-          const state = {
-            title: document.getElementById('readingTitle')?.value || '',
-            passage: document.getElementById('readingPassage')?.value || '',
-            questions: document.getElementById('readingQuestions')?.value || '',
-            answers: document.getElementById('readingAnswers')?.value || '',
-            includePassage: document.getElementById('includePassage')?.checked || false,
-            font: document.getElementById('fontSelect')?.value || '',
-            fontSize: document.getElementById('fontSizeInput')?.value || '',
-            template: document.getElementById('templateSelect')?.value || '',
-            layout: document.getElementById('layoutSelect')?.value || '',
-            testMode: document.getElementById('testModeSelect')?.value || '',
-            numQuestions: document.getElementById('numQuestions')?.value || '',
-            questionFormat: document.getElementById('questionFormat')?.value || '',
-            categories: Array.from(document.getElementById('categorySelect')?.selectedOptions || []).map(opt => opt.value)
-          };
-          // Submit to Supabase (assumes feedbackSubmitToSupabase is globally available)
-          if (window.feedbackSubmitToSupabase) {
-            await window.feedbackSubmitToSupabase({
-              module: 'reading',
-              feedback: feedbackText,
-              state
-            });
-          }
-          modal.style.display = 'none';
-          modal.querySelector('#feedback-text').value = '';
-          alert('Thank you for your feedback!');
+        document.getElementById('feedback-modal-submit').onclick = async function() {
+            const feedbackText = document.getElementById('feedback-modal-text').value.trim();
+            if (!feedbackText) {
+                alert('Please enter some feedback.');
+                document.getElementById('feedback-modal-text').focus();
+                return;
+            }
+            // If not logged in, block submission
+            if (!user_id) {
+                alert('Please log in to submit feedback.');
+                return;
+            }
+            // If no username, try to fetch it from profile
+            if (!username) {
+                try {
+                    const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+                    const result = await res.json();
+                    if (result.success && result.username) {
+                        username = result.username;
+                        localStorage.setItem('username', username);
+                    } else if (result.success && result.name) {
+                        username = result.name;
+                        localStorage.setItem('name', username);
+                    } else {
+                        username = 'Anonymous User';
+                    }
+                } catch (e) {
+                    username = 'Anonymous User';
+                }
+            }
+            // Collect tool state
+            const toolState = {
+                title: document.getElementById('readingTitle')?.value || '',
+                passage: document.getElementById('readingPassage')?.value || '',
+                questions: document.getElementById('readingQuestions')?.value || '',
+                answers: document.getElementById('readingAnswers')?.value || '',
+                includePassage: document.getElementById('includePassage')?.checked,
+                font: document.getElementById('fontSelect')?.value || '',
+                fontSize: document.getElementById('fontSizeInput')?.value || '',
+                template: document.getElementById('templateSelect')?.value || '',
+                layout: document.getElementById('layoutSelect')?.value || '',
+                testMode: document.getElementById('testModeSelect')?.value || ''
+            };
+            const payload = {
+                feedback: feedbackText,
+                module: 'reading',
+                user_id,
+                username,
+                tool_state: JSON.stringify(toolState),
+                page_url: window.location.href
+            };
+            try {
+                const response = await fetch('/.netlify/functions/submit_feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'insert_feedback', data: payload })
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    closeModal();
+                    alert('Thank you for your feedback!');
+                } else {
+                    alert('Error submitting feedback: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
         };
+    };
+    
+    // Create global feedback submission function for reading
+    window.feedbackSubmitToSupabase = async function(data) {
+      const user_id = localStorage.getItem('userId') || '';
+      const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+      
+      const payload = {
+        feedback: data.feedback,
+        module: data.module || 'reading',
+        user_id,
+        username,
+        tool_state: data.state || data.tool_state,
+        page_url: window.location.href
+      };
+      
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          throw new Error(result.error || 'Failed to submit feedback');
+        }
+        return result;
+      } catch (err) {
+        console.error('Feedback submission error:', err);
+        throw err;
       }
     };
     </script>

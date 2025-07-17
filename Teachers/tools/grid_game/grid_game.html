@@ -537,10 +537,6 @@
                             <option value="question-top">Question Top / Word Bottom</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Grid Background Color</label>
-                        <input type="color" id="gridColorPicker" class="form-input" value="#f0f0f0">
-                    </div>
 
                     <!-- Generate Game Button -->
                     <button id="generateGameBtn" class="generate-btn">
@@ -797,10 +793,11 @@ window.showFeedbackModal = function() {
         module: 'grid_game',
         page_url: window.location.pathname,
         tool_state: toolState,
-        user_id: null // Optionally set if you have auth
+        user_id: localStorage.getItem('userId') || '',
+        username: localStorage.getItem('username') || localStorage.getItem('name') || ''
       };
       try {
-        const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

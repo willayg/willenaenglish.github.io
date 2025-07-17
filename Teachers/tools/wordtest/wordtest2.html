@@ -325,14 +325,15 @@
           
           const payload = {
             feedback: feedbackText,
-            module: 'word-worksheet',
+            module: 'wordtest',
             page_url: window.location.pathname,
             tool_state: toolState,
-            user_id: null // Optionally set if you have auth
+            user_id: localStorage.getItem('userId') || '',
+            username: localStorage.getItem('username') || localStorage.getItem('name') || ''
           };
           
           try {
-            const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

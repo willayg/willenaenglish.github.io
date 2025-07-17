@@ -304,6 +304,89 @@
       }
     })();
   </script>
+  <script>
+    // Feedback modal loader for Planner (GLOBAL for burger menu)
+    window.showFeedbackModal = async function() {
+      if (!document.getElementById('feedbackModalBg')) {
+        const resp = await fetch('/Teachers/components/feedback-modal.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const template = tempDiv.querySelector('#feedback-modal-template');
+        if (template) {
+          const modalContent = template.content.cloneNode(true);
+          document.body.appendChild(modalContent);
+        }
+      }
+      const modal = document.getElementById('feedbackModalBg');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      
+      const closeBtn = document.getElementById('feedbackModalCloseBtn');
+      const cancelBtn = document.getElementById('feedbackCancelBtn');
+      const submitBtn = document.getElementById('feedbackSubmitBtn');
+      
+      function closeModal() {
+        modal.style.display = 'none';
+      }
+      
+      if (closeBtn) {
+        closeBtn.onclick = closeModal;
+      }
+      if (cancelBtn) {
+        cancelBtn.onclick = closeModal;
+      }
+      
+      // Close on background click
+      modal.onclick = function(event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+      
+      if (submitBtn) {
+        submitBtn.onclick = async function() {
+          const feedbackText = document.getElementById('feedbackText').value;
+          // Collect planner state
+          const state = {
+            currentPlanner: window.currentPlannerData || {}
+          };
+          
+          // Get user_id and username from localStorage
+          const user_id = localStorage.getItem('userId') || '';
+          const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+          
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'insert_feedback',
+                data: {
+                  feedback: feedbackText,
+                  module: 'planner',
+                  user_id,
+                  username,
+                  tool_state: state,
+                  page_url: window.location.href
+                }
+              })
+            });
+            const result = await resp.json();
+            if (resp.ok && result.success) {
+              closeModal();
+              document.getElementById('feedbackText').value = '';
+              alert('Thank you for your feedback!');
+            } else {
+              alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+            }
+          } catch (err) {
+            alert('Network error: ' + err.message);
+          }
+        };
+      }
+    };
+  </script>
     <!-- Load shared burger menu component -->
     <script type="module">
       import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';

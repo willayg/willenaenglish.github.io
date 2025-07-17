@@ -148,17 +148,97 @@
             fontSize: document.getElementById('fontSizeInput')?.value || '',
             template: document.getElementById('templateSelect')?.value || ''
           };
-          if (window.feedbackSubmitToSupabase) {
-            await window.feedbackSubmitToSupabase({
-              module: 'survey',
-              feedback: feedbackText,
-              state
-            });
+          
+          // Get user_id and username from localStorage
+          let user_id = localStorage.getItem('userId') || '';
+          let username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+          
+          if (!user_id) {
+            alert('Please log in to submit feedback.');
+            return;
           }
-          closeModal();
-          document.getElementById('feedbackText').value = '';
-          alert('Thank you for your feedback!');
+          
+          // If no username, try to fetch it from profile
+          if (!username) {
+            try {
+              const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+              const result = await res.json();
+              if (result.success && result.username) {
+                username = result.username;
+                localStorage.setItem('username', username);
+              } else if (result.success && result.name) {
+                username = result.name;
+                localStorage.setItem('name', username);
+              } else {
+                username = 'Anonymous User';
+              }
+            } catch (e) {
+              username = 'Anonymous User';
+            }
+          }
+          
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'insert_feedback',
+                data: {
+                  feedback: feedbackText,
+                  module: 'survey_builder',
+                  user_id,
+                  username,
+                  tool_state: state,
+                  page_url: window.location.href
+                }
+              })
+            });
+            const result = await resp.json();
+            if (resp.ok && result.success) {
+              closeModal();
+              document.getElementById('feedbackText').value = '';
+              alert('Thank you for your feedback!');
+            } else {
+              alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+            }
+          } catch (err) {
+            alert('Network error: ' + err.message);
+          }
         };
+      }
+    };
+    
+    // Create global feedback submission function
+    window.feedbackSubmitToSupabase = async function(data) {
+      const user_id = localStorage.getItem('userId') || '';
+      const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+      
+      const payload = {
+        feedback: data.feedback,
+        module: data.module || 'survey_builder',
+        user_id,
+        username,
+        tool_state: data.state || data.tool_state,
+        page_url: window.location.href
+      };
+      
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          throw new Error(result.error || 'Failed to submit feedback');
+        }
+        return result;
+      } catch (err) {
+        console.error('Feedback submission error:', err);
+        throw err;
       }
     };
   </script>

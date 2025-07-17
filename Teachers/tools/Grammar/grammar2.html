@@ -208,17 +208,73 @@
             template: document.getElementById('templateSelect')?.value || '',
             layout: document.getElementById('layoutSelect')?.value || ''
           };
-          if (window.feedbackSubmitToSupabase) {
-            await window.feedbackSubmitToSupabase({
-              module: 'grammar',
-              feedback: feedbackText,
-              state
+          
+          // Get user_id and username from localStorage
+          const user_id = localStorage.getItem('userId') || '';
+          const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+          
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'insert_feedback',
+                data: {
+                  feedback: feedbackText,
+                  module: 'grammar',
+                  user_id,
+                  username,
+                  tool_state: state,
+                  page_url: window.location.href
+                }
+              })
             });
+            const result = await resp.json();
+            if (resp.ok && result.success) {
+              closeModal();
+              document.getElementById('feedbackText').value = '';
+              alert('Thank you for your feedback!');
+            } else {
+              alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+            }
+          } catch (err) {
+            alert('Network error: ' + err.message);
           }
-          closeModal();
-          document.getElementById('feedbackText').value = '';
-          alert('Thank you for your feedback!');
         };
+      }
+    };
+    
+    // Create global feedback submission function for grammar
+    window.feedbackSubmitToSupabase = async function(data) {
+      const user_id = localStorage.getItem('userId') || '';
+      const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+      
+      const payload = {
+        feedback: data.feedback,
+        module: data.module || 'grammar',
+        user_id,
+        username,
+        tool_state: data.state || data.tool_state,
+        page_url: window.location.href
+      };
+      
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          throw new Error(result.error || 'Failed to submit feedback');
+        }
+        return result;
+      } catch (err) {
+        console.error('Feedback submission error:', err);
+        throw err;
       }
     };
   </script>
