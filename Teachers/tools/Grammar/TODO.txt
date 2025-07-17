@@ -1,0 +1,4 @@
+TODO List for Grammar Worksheet Generator
+
+1. Add more modes (e.g., matching mode).
+2. Ensure print works on all computers as intended.

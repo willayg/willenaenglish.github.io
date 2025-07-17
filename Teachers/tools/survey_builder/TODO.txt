@@ -1,0 +1,9 @@
+TODO List for Survey Builder Improvements
+
+1. Open Question Mode (current): Each question is open-ended with a single answer line.
+2. Add 3 Choice Mode: Each question has three selectable options (e.g., Agree / Neither / Disagree).
+3. Add 5 Choice Mode: Each question has five selectable options (e.g., Strongly Agree / Agree / Neutral / Disagree / Strongly Disagree).
+4. Add Grid Mode: Each question is a row in a table with columns for multiple students (like the class survey image). Optionally, allow an image in the first column of each row.
+5. Add Survey Type Dropdown: Dropdown menu labeled "Survey Type" just below the prompt, changing the layout and preview as in grammar2.html.
+6. Add Image Support in Grid Mode: Allow user to add an image for each question row in grid mode.
+7. Make the font resizer not resize the header, name, and date (only resize questions/instructions).
