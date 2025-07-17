@@ -39,14 +39,33 @@ function renderStatusDropdown(id, currentStatus) {
   </select>`;
 }
 
-function renderTable(feedbacks, statusFilter, moduleFilter) {
+function renderTable(feedbacks, statusFilter, moduleFilter, searchValue) {
   const tbody = document.getElementById('feedbackTableBody');
   let filtered = feedbacks;
+  // Filter by status
   if (statusFilter && statusFilter !== 'all') {
-    filtered = filtered.filter(f => (f.status||'new') === statusFilter);
+    if (statusFilter === 'open') {
+      filtered = filtered.filter(f => {
+        const s = String(f.status).toLowerCase();
+        return s === 'new' || s === 'urgent';
+      });
+    } else {
+      filtered = filtered.filter(f => String(f.status).toLowerCase() === statusFilter);
+    }
   }
+  // Filter by module
   if (moduleFilter && moduleFilter !== 'all') {
     filtered = filtered.filter(f => (f.module||'') === moduleFilter);
+  }
+  // Filter by search
+  if (searchValue) {
+    const val = searchValue.trim().toLowerCase();
+    filtered = filtered.filter(f =>
+      (f.feedback||'').toLowerCase().includes(val) ||
+      (f.module||'').toLowerCase().includes(val) ||
+      (f.user_id||'').toLowerCase().includes(val) ||
+      (f.page_url||'').toLowerCase().includes(val)
+    );
   }
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">No feedback found.</td></tr>';
@@ -58,20 +77,19 @@ function renderTable(feedbacks, statusFilter, moduleFilter) {
       <td>${(f.feedback||'').replace(/</g,'&lt;')}</td>
       <td>${f.module||''}</td>
       <td>${renderToolState(f.tool_state)}</td>
-      <td>${f.user_id||''}</td>
       <td>${f.username||''}</td>
       <td>${f.page_url||''}</td>
-      <td>${renderStatusDropdown(f.id, f.status||'new')}</td>
+      <td>${renderStatusDropdown(f.id, f.status || 'new')}</td>
     </tr>
   `).join('');
 }
 
 async function loadAndRender() {
-  document.getElementById('feedbackTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">Loading...</td></tr>';
+  document.getElementById('feedbackTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#888;">Loading...</td></tr>';
   let feedbacks = await fetchFeedback();
   window._allFeedbacks = feedbacks;
-  renderTable(feedbacks, getStatusFilter(), getModuleFilter());
   populateModuleFilter(feedbacks);
+  renderTable(feedbacks, getStatusFilter(), getModuleFilter(), getSearchValue());
 }
 
 function getStatusFilter() {
@@ -80,41 +98,42 @@ function getStatusFilter() {
 function getModuleFilter() {
   return document.getElementById('moduleFilter').value;
 }
+function getSearchValue() {
+  return document.getElementById('searchInput').value || '';
+}
 function populateModuleFilter(feedbacks) {
   const select = document.getElementById('moduleFilter');
-  const modules = Array.from(new Set(feedbacks.map(f => f.module||'').filter(Boolean)));
+  // Always include these static modules
+  const staticModules = ['grammar', 'survey_builder'];
+  const dynamicModules = Array.from(new Set(feedbacks.map(f => f.module||'').filter(Boolean)));
+  // Merge and deduplicate
+  const modules = Array.from(new Set([...staticModules, ...dynamicModules]));
   select.innerHTML = '<option value="all">All Modules</option>' + modules.map(m => `<option value="${m}">${m}</option>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   loadAndRender();
   document.getElementById('refreshBtn').onclick = loadAndRender;
-  document.getElementById('searchInput').oninput = function() {
-    let val = this.value.trim().toLowerCase();
-    let feedbacks = window._allFeedbacks || [];
-    if (val) {
-      feedbacks = feedbacks.filter(f =>
-        (f.feedback||'').toLowerCase().includes(val) ||
-        (f.module||'').toLowerCase().includes(val) ||
-        (f.user_id||'').toLowerCase().includes(val) ||
-        (f.page_url||'').toLowerCase().includes(val)
-      );
-    }
-    renderTable(feedbacks, getStatusFilter(), getModuleFilter());
-  };
-  document.getElementById('statusFilter').onchange = function() {
-    renderTable(window._allFeedbacks || [], getStatusFilter(), getModuleFilter());
-  };
-  document.getElementById('moduleFilter').onchange = function() {
-    renderTable(window._allFeedbacks || [], getStatusFilter(), getModuleFilter());
-  };
+
+  function updateTable() {
+    renderTable(window._allFeedbacks || [], getStatusFilter(), getModuleFilter(), getSearchValue());
+  }
+
+  document.getElementById('searchInput').oninput = updateTable;
+  document.getElementById('statusFilter').onchange = updateTable;
+  document.getElementById('moduleFilter').onchange = updateTable;
+
   document.getElementById('feedbackTableBody').addEventListener('change', async function(e) {
     if (e.target.classList.contains('status-dropdown')) {
       const id = e.target.getAttribute('data-id');
       const newStatus = e.target.value;
       await updateStatus(id, newStatus);
-      // Optionally reload or update UI
-      loadAndRender();
+      // Update local data and re-render, don't reload all
+      if (window._allFeedbacks) {
+        const idx = window._allFeedbacks.findIndex(f => String(f.id) === String(id));
+        if (idx !== -1) window._allFeedbacks[idx].status = newStatus;
+      }
+      updateTable();
     }
   });
 });

@@ -513,6 +513,109 @@ tree</textarea>
                 updateKoreanVisibility();
             };
         }
+
+        // Feedback modal functionality (copied from grammar module for consistency)
+        window.showFeedbackModal = async function() {
+            // Prevent multiple modals
+            if (document.getElementById('feedback-modal-bg')) return;
+            // Modal HTML
+            const modalBg = document.createElement('div');
+            modalBg.id = 'feedback-modal-bg';
+            modalBg.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            modalBg.innerHTML = `
+                <div id="feedback-modal" style="background:#fff;padding:28px 24px 18px 24px;border-radius:10px;max-width:420px;width:95vw;box-shadow:0 4px 32px #0002;position:relative;">
+                    <button id="feedback-modal-close" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>
+                    <h2 style="margin-top:0;font-size:1.3em;">Send Feedback</h2>
+                    <div style="font-size:15px;margin-bottom:10px;">Help us improve the Flashcard tool!</div>
+                    <textarea id="feedback-modal-text" placeholder="Enter your feedback..." style="width:100%;height:90px;padding:10px;border:1px solid #ccc;border-radius:5px;resize:vertical;font-size:15px;"></textarea>
+                    <div id="feedback-modal-user" style="font-size:13px;color:#666;margin:8px 0 0 2px;"></div>
+                    <div style="text-align:right;margin-top:16px;">
+                        <button id="feedback-modal-cancel" style="margin-right:10px;padding:7px 18px;border:1px solid #bbb;background:#fff;border-radius:4px;cursor:pointer;">Cancel</button>
+                        <button id="feedback-modal-submit" style="padding:7px 18px;background:#007cba;color:#fff;border:none;border-radius:4px;cursor:pointer;">Submit</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalBg);
+            const closeModal = () => { if (modalBg && modalBg.parentNode) modalBg.parentNode.removeChild(modalBg); };
+            document.getElementById('feedback-modal-close').onclick = closeModal;
+            document.getElementById('feedback-modal-cancel').onclick = closeModal;
+            document.getElementById('feedback-modal-text').focus();
+
+            // Show user info
+            let user_id = localStorage.getItem('userId') || '';
+            let username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+            const userDiv = document.getElementById('feedback-modal-user');
+            if (!user_id) {
+                userDiv.textContent = 'Not logged in';
+            } else if (username) {
+                userDiv.textContent = `From: ${username}`;
+            } else {
+                userDiv.textContent = '';
+            }
+
+            document.getElementById('feedback-modal-submit').onclick = async function() {
+                const feedbackText = document.getElementById('feedback-modal-text').value.trim();
+                if (!feedbackText) {
+                    alert('Please enter some feedback.');
+                    document.getElementById('feedback-modal-text').focus();
+                    return;
+                }
+                // If not logged in, block submission
+                if (!user_id) {
+                    alert('Please log in to submit feedback.');
+                    return;
+                }
+                // If no username, try to fetch it from profile
+                if (!username) {
+                    try {
+                        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+                        const result = await res.json();
+                        if (result.success && result.username) {
+                            username = result.username;
+                            localStorage.setItem('username', username);
+                        } else if (result.success && result.name) {
+                            username = result.name;
+                            localStorage.setItem('name', username);
+                        } else {
+                            username = 'Anonymous User';
+                        }
+                    } catch (e) {
+                        username = 'Anonymous User';
+                    }
+                }
+                // Collect tool state
+                const toolState = {
+                    title: document.getElementById('titleInput')?.value || '',
+                    wordCount: (document.getElementById('wordListInput')?.value || '').split('\n').filter(w => w.trim()).length,
+                    layout: document.getElementById('layoutSelect')?.value || '',
+                    flashcardCount: document.getElementById('flashcardGrid')?.children.length || 0
+                };
+                const payload = {
+                    feedback: feedbackText,
+                    module: 'flashcard',
+                    user_id,
+                    username,
+                    tool_state: JSON.stringify(toolState),
+                    page_url: window.location.href
+                };
+                try {
+                    const response = await fetch('/.netlify/functions/submit_feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'insert_feedback', data: payload })
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        closeModal();
+                        alert('Thank you for your feedback!');
+                    } else {
+                        alert('Error submitting feedback: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Network error: ' + error.message);
+                }
+            };
+        };
     </script>
 </body>
 </html>

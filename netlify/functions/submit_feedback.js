@@ -25,12 +25,12 @@ exports.handler = async function(event, context) {
 
   // Support both direct and nested data property
   const payload = body.data ? body.data : body;
-  const { feedback, module, user_id, name, tool_state, page_url } = payload;
+  const { feedback, module, user_id, username, tool_state, page_url } = payload;
 
-  if (!feedback || !user_id) {
+  if (!feedback) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Missing required fields' })
+      body: JSON.stringify({ error: 'Missing feedback text' })
     };
   }
 
