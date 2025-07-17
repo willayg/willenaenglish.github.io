@@ -124,7 +124,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 4vmin;
+    font-size: 48px !important;
     font-weight: bold;
     text-align: center;
     padding: 15px;
@@ -146,7 +146,7 @@ body {
     background-color: #fff3e0;
     border-color: #ff9800;
     color: #f57c00;
-    font-size: 3vmin;
+    font-size: 42px !important;
 }
 
 .fullscreen-container .grid-square.team-color {
