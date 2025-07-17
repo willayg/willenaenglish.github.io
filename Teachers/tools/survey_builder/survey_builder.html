@@ -54,6 +54,7 @@
     </style>
 </head>
 <body>
+<script src="survey-section-modal.js"></script>
   <script>
     // Print only the preview area
     document.addEventListener('DOMContentLoaded', function() {
@@ -295,7 +296,7 @@
                 </div>
                 <select class="toolbar-select" id="templateSelect">
                     <option value="1">Design 1</option>
-                    <option value="2">Design 2</option>
+                    <option value="2" selected>Design 2</option>
                     <option value="3">Design 3</option>
                     <option value="4">Design 4</option>
                     <option value="5">Design 5</option>
@@ -318,6 +319,13 @@
                     <div class="input-group" id="aiPromptGroup">
                         <label for="aiPromptInput" style="font-size:13px; color:#444; font-weight:500;">AI Prompt (describe survey topic, give sample questions, or instructions)</label>
                         <textarea id="aiPromptInput" class="textarea-field" rows="3" placeholder="e.g. Make 10 survey questions about travel. Or: Give me 5 yes/no questions about food preferences."></textarea>
+                        <div style="margin:8px 0 0 0;">
+                          <label for="surveyTypeSelect" style="font-size:13px; color:#444; font-weight:500;">Survey Type:</label>
+                          <select id="surveyTypeSelect" class="select-field" style="margin-left:8px;">
+                            <option value="open">Open Question</option>
+                            <option value="mc">Multiple Choice</option>
+                          </select>
+                        </div>
                         <button id="sendAIPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
                     </div>
                     
@@ -341,35 +349,85 @@
     function updateSurveyPreview() {
       const title = document.getElementById('surveyTitle')?.value || '';
       const instructions = document.getElementById('surveyInstructions')?.value || '';
-      const questions = document.getElementById('surveyQuestions')?.value || '';
       const font = document.getElementById('fontSelect')?.value || 'Poppins';
       const fontSize = document.getElementById('fontSizeInput')?.value || '12';
-      const template = document.getElementById('templateSelect')?.value || '1';
+      const template = document.getElementById('templateSelect')?.value || '2';
 
       let designClass = `design-${template}`;
 
       let html = '';
-      // Split questions by line, ignore empty lines
+      // Survey type logic
+      const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
       let questionDivs = '';
       if (questions.trim()) {
-        questionDivs = questions.split(/\r?\n/)
-          .map(q => q.trim())
-          .filter(q => q)
-          .map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`)
-          .join('');
+        const lines = questions.split(/\r?\n/).map(q => q.trim());
+        if (surveyType === 'mc') {
+          // Improved Multiple Choice parsing: group each question with its options
+          questionDivs = '';
+          let qNum = 1;
+          let i = 0;
+          while (i < lines.length) {
+            // Detect question line: starts with number and period (e.g., 1. ...)
+            let qMatch = lines[i].match(/^(\d+)\.\s*(.*)$/);
+            if (qMatch) {
+              let qText = qMatch[2] || '';
+              let options = [];
+              let j = i + 1;
+              // Gather options: lines starting with A. B. C. etc
+              while (j < lines.length) {
+                let optMatch = lines[j].match(/^([A-Z])\.[ )]?\s*(.+)$/);
+                if (optMatch) {
+                  options.push(optMatch[2]);
+                  j++;
+                } else {
+                  break;
+                }
+              }
+              if (options.length > 0) {
+                // Render question and options inline
+                questionDivs += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:flex;gap:24px;flex-wrap:wrap;'>`;
+                // Always add 'Other: ____________' as the last option if not present
+                let hasOther = options.some(opt => opt.trim().toLowerCase().startsWith('other'));
+                if (!hasOther) {
+                  options.push('Other: ____________');
+                }
+                options.forEach((opt, k) => {
+                  questionDivs += `<label style='display:inline-flex;align-items:center;margin-right:18px;font-size:1em;'><input type='radio' name='q${qNum}' style='margin-right:6px;'>${opt}</label>`;
+                });
+                questionDivs += `</div></div>`;
+                i = j;
+                qNum++;
+              } else {
+                // No options, treat as open question
+                questionDivs += `<div style="margin-bottom:18px;">${qNum}. ${qText}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+                i++;
+                qNum++;
+              }
+            } else if (lines[i]) {
+              // Not a question line, treat as open question
+              questionDivs += `<div style="margin-bottom:18px;">${lines[i]}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+              i++;
+            } else {
+              i++;
+            }
+          }
+        } else {
+          // Open question mode (default)
+          questionDivs = lines.filter(q => q).map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`).join('');
+        }
       } else {
         questionDivs = '<i>No questions yet.</i>';
       }
-      html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;">
+      html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;" contenteditable="true" spellcheck="true">
         <div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
           <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">
           <div style="flex:1;display:flex;align-items:center;justify-content:center;">
             <div style="flex:1;text-align:center;">
-              <h1 style="font-size:1.8em;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'ESL Survey'}</h1>
+              <h1 style="font-size:1.8em !important;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'ESL Survey'}</h1>
             </div>
-            <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;margin-left:30px;font-size:1em;min-width:180px;">
-              <span style="margin-bottom:8px;">Name: ________________</span>
-              <span>Date: ________________</span>
+            <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;margin-left:30px;font-size:1em !important;min-width:180px;">
+              <span style="margin-bottom:8px;font-size:1em !important;">Name: ________________</span>
+              <span style="font-size:1em !important;">Date: ________________</span>
             </div>
           </div>
         </div>
@@ -391,7 +449,8 @@
         'surveyQuestions',
         'fontSelect',
         'fontSizeInput',
-        'templateSelect'
+        'templateSelect',
+        'surveyTypeSelect'
       ];
       ids.forEach(id => {
         const el = document.getElementById(id);
@@ -400,6 +459,30 @@
           el.addEventListener('change', updateSurveyPreview);
         }
       });
+
+      // Font size plus/minus button logic
+      const fontSizeInput = document.getElementById('fontSizeInput');
+      const decreaseFontBtn = document.getElementById('decreaseFontBtn');
+      const increaseFontBtn = document.getElementById('increaseFontBtn');
+      if (decreaseFontBtn && fontSizeInput) {
+        decreaseFontBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value) || 12;
+          if (val > parseInt(fontSizeInput.min)) {
+            fontSizeInput.value = val - 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+      if (increaseFontBtn && fontSizeInput) {
+        increaseFontBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value) || 12;
+          if (val < parseInt(fontSizeInput.max)) {
+            fontSizeInput.value = val + 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+
       updateSurveyPreview();
       window.updateSurveyPreview = updateSurveyPreview;
     });
@@ -503,7 +586,95 @@
         window.getCurrentWorksheetData = getCurrentWorksheetData;
         window.loadWorksheet = loadWorksheet;
     </script>
-    <!-- AI prompt logic for survey generation (to be implemented in survey_ai.js) -->
-    <script type="module" src="survey_ai.js"></script>
+    <script>
+// Section-based survey logic
+window.surveySections = window.surveySections || [];
+
+// Patch AI button to insert as new section
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const sendBtn = document.getElementById('sendAIPromptBtn');
+    const promptInput = document.getElementById('aiPromptInput');
+    if (!sendBtn || !promptInput) return;
+    sendBtn.onclick = async function() {
+      let promptText = promptInput.value.trim();
+      const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
+      if (!promptText) {
+        alert('Please enter your prompt.');
+        return;
+      }
+      // Add MC instructions if needed
+      if (surveyType === 'mc') {
+        promptText = `Create a set of ONLY multiple choice survey questions for ESL students. Each question MUST have several answer options (A, B, C, etc.) and must NOT be open-ended. Do not include answer keys. Format each question and its options clearly, for example:\n1. Question text\nA. Option1\nB. Option2\nC. Option3\n. Only output multiple choice questions with options, no open/freestyle questions. ` + (promptText ? ` Topic: ${promptText}` : '');
+      }
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+      try {
+        const response = await fetch('/.netlify/functions/openai_proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: 'chat/completions',
+            payload: {
+              model: 'gpt-3.5-turbo',
+              messages: [
+                { role: 'user', content: promptText }
+              ],
+              max_tokens: 600,
+              temperature: 0.7
+            }
+          })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const result = await response.json();
+        const data = result.data;
+        if (data.error) throw new Error(data.error.message || 'OpenAI API error');
+        const content = data.choices[0].message.content.trim();
+        // Show modal to insert as new section
+        window.showSurveySectionModal(content, function(title, questions) {
+          window.surveySections.push({ title, questions });
+          updateSurveyPreview();
+        });
+      } catch (err) {
+        alert('AI prompt failed: ' + err.message);
+      }
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send Prompt to AI';
+    };
+  });
+})();
+
+// Patch preview to use sections
+const origUpdateSurveyPreview = window.updateSurveyPreview;
+window.updateSurveyPreview = function() {
+  const title = document.getElementById('surveyTitle')?.value || '';
+  const instructions = document.getElementById('surveyInstructions')?.value || '';
+  const font = document.getElementById('fontSelect')?.value || 'Poppins';
+  const fontSize = document.getElementById('fontSizeInput')?.value || '12';
+  const template = document.getElementById('templateSelect')?.value || '2';
+  let designClass = `design-${template}`;
+  let html = '';
+  let questionDivs = window.renderSurveySections(window.surveySections);
+  html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;" contenteditable="true" spellcheck="true">
+    <div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+        <div style="flex:1;text-align:center;">
+          <h1 style="font-size:1.8em !important;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'ESL Survey'}</h1>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;margin-left:30px;font-size:1em !important;min-width:180px;">
+          <span style="margin-bottom:8px;font-size:1em !important;">Name: ________________</span>
+          <span style="font-size:1em !important;">Date: ________________</span>
+        </div>
+      </div>
+    </div>
+    ${instructions ? `<div style='margin-bottom:10px;'><b>Instructions:</b> ${instructions}</div>` : ''}
+    <div style='margin-bottom:10px;'><b>Survey Questions:</b></div>
+    <div class="survey-questions">${questionDivs}</div>
+  </div>`;
+  const preview = document.getElementById('surveyPreviewArea');
+  if (preview) preview.innerHTML = html;
+};
+</script>
 </body>
 </html>
