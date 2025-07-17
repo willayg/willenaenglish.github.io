@@ -236,19 +236,24 @@ Passage: ${passage}`
     function generateGrid() {
         const gridContainer = document.createElement('div');
         gridContainer.innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h3>Grid Game - ${gridSize.toUpperCase()}</h3>
-                <p style="font-size: 0.9rem; color: #666; margin: 10px 0;">
-                    Click squares to reveal questions • Right-click to assign team colors
-                </p>
-                <button id="fullscreenBtn" style="padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                    Enter Fullscreen
-                </button>
-                <button id="resetGridBtn" style="padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; margin-left: 8px;">
-                    Reset Grid
-                </button>
-            </div>
-            <div id="gameGrid" class="game-grid ${gridSize === '3x3' ? 'grid-3x3' : 'grid-4x4'}" style="background-color: ${gridColorPicker ? gridColorPicker.value : '#f0f0f0'}; font-family: ${fontPicker ? fontPicker.value : 'Poppins'};">
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                <div style="flex-shrink: 0; min-width: 200px;">
+                    <h3 style="margin: 0 0 15px 0;">Grid Game - ${gridSize.toUpperCase()}</h3>
+                    <p style="font-size: 0.9rem; color: #666; margin: 0 0 15px 0; line-height: 1.4;">
+                        Click squares to reveal questions<br>
+                        Right-click to assign team colors
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button id="fullscreenBtn" style="padding: 10px 16px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            Enter Fullscreen
+                        </button>
+                        <button id="resetGridBtn" style="padding: 10px 16px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            Reset Grid
+                        </button>
+                    </div>
+                </div>
+                <div id="gameGrid" class="game-grid ${gridSize === '3x3' ? 'grid-3x3' : 'grid-4x4'}" style="background-color: ${gridColorPicker ? gridColorPicker.value : '#f0f0f0'}; font-family: ${fontPicker ? fontPicker.value : 'Poppins'};">
+                </div>
             </div>
         `;
 
@@ -476,10 +481,51 @@ Passage: ${passage}`
         
         fullscreenContainer.appendChild(clonedGrid);
         document.body.appendChild(fullscreenContainer);
-        
+
+        // Apply selected font and scaled font size to fullscreen grid squares
+        const font = fontPicker ? fontPicker.value : 'Poppins';
+        // Get preview font size (default 16)
+        let previewFontSize = 16;
+        const previewSquare = document.querySelector('.game-grid .grid-square');
+        if (previewSquare) {
+            const computed = window.getComputedStyle(previewSquare);
+            previewFontSize = parseFloat(computed.fontSize) || 16;
+        }
+        const fullscreenFontSize = Math.round(previewFontSize * 1.7);
+        clonedGrid.querySelectorAll('.grid-square').forEach(el => {
+            el.style.fontFamily = font + ',sans-serif';
+            el.style.fontSize = fullscreenFontSize + 'px';
+        });
+
         // Hide original content
         document.querySelector('.container').style.display = 'none';
-        
+
+        // Helper to update fullscreen font size if preview font changes while fullscreen is open
+        function updateFullscreenFont() {
+            const fullscreenGrid = document.getElementById('fullscreenGrid');
+            if (fullscreenGrid) {
+                let previewFontSize = 16;
+                const previewSquare = document.querySelector('.game-grid .grid-square');
+                if (previewSquare) {
+                    const computed = window.getComputedStyle(previewSquare);
+                    previewFontSize = parseFloat(computed.fontSize) || 16;
+                }
+                const fullscreenFontSize = Math.round(previewFontSize * 1.7);
+                fullscreenGrid.querySelectorAll('.grid-square').forEach(el => {
+                    el.style.fontFamily = fontPicker.value + ',sans-serif';
+                    el.style.fontSize = fullscreenFontSize + 'px';
+                });
+            }
+        }
+        // Listen for font or font size changes
+        if (fontPicker) {
+            fontPicker.addEventListener('change', updateFullscreenFont);
+        }
+        const qFontInput = document.getElementById('qFontSizeInput');
+        const aFontInput = document.getElementById('aFontSizeInput');
+        if (qFontInput) qFontInput.addEventListener('input', updateFullscreenFont);
+        if (aFontInput) aFontInput.addEventListener('input', updateFullscreenFont);
+
         // Request fullscreen
         if (fullscreenContainer.requestFullscreen) {
             fullscreenContainer.requestFullscreen();
@@ -490,13 +536,24 @@ Passage: ${passage}`
         } else if (fullscreenContainer.mozRequestFullScreen) {
             fullscreenContainer.mozRequestFullScreen();
         }
-        
+
         // Listen for ESC key to exit fullscreen
         document.addEventListener('keydown', handleEscapeKey);
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('mozfullscreenchange', handleFullscreenChange);
         document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    // Update fullscreen font if fontPicker changes while fullscreen is open
+    if (fontPicker) {
+        fontPicker.addEventListener('change', function() {
+            const fullscreenGrid = document.getElementById('fullscreenGrid');
+            if (fullscreenGrid) {
+                fullscreenGrid.querySelectorAll('.grid-square').forEach(el => {
+                    el.style.fontFamily = fontPicker.value + ',sans-serif';
+                });
+            }
+        });
+    }
     }
     
     function handleEscapeKey(e) {
