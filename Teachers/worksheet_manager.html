@@ -72,6 +72,24 @@ if (mode === 'save') {
   worksheet.unit = document.getElementById('worksheetUnit').value;
   worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
 
+  // --- PATCH: For grammar worksheets, always save latest grammarSections as JSON if present ---
+  if (worksheet.worksheet_type === 'grammar' && window.opener) {
+    try {
+      const openerSections = window.opener.grammarSections;
+      if (Array.isArray(openerSections) && openerSections.length > 0) {
+        worksheet.questions = JSON.stringify(openerSections);
+      } else {
+        // fallback to textarea
+        const qEl = window.opener.document.getElementById('grammarQuestions');
+        worksheet.questions = qEl ? qEl.value || '' : '';
+      }
+    } catch (e) {
+      // fallback to textarea
+      const qEl = window.opener.document.getElementById('grammarQuestions');
+      worksheet.questions = qEl ? qEl.value || '' : '';
+    }
+  }
+
   // Defensive: convert to array if it's a string
   if (typeof worksheet.words === "string") {
     worksheet.words = worksheet.words.split('\n').filter(w => w.trim() !== "");
