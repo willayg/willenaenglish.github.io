@@ -2,21 +2,32 @@
 // Clean, reliable print functionality
 
 function printWorksheet() {
-  // Get the worksheet content
-  const worksheetContent = document.getElementById('worksheetPreviewArea-grammar');
-  if (!worksheetContent) {
-    alert('No worksheet content to print');
+  // Use the same content generation as preview
+  let worksheetHTML;
+  if (typeof window.createGrammarPreview === 'function') {
+    worksheetHTML = window.createGrammarPreview();
+  } else {
+    // Fallback: get existing preview content
+    const worksheetContent = document.getElementById('worksheetPreviewArea-grammar');
+    if (!worksheetContent) {
+      alert('No worksheet content to print');
+      return;
+    }
+    const worksheet = worksheetContent.querySelector('.a4-sheet');
+    if (!worksheet) {
+      alert('No worksheet found to print');
+      return;
+    }
+    worksheetHTML = worksheet.outerHTML;
+  }
+
+  // Check if we got valid HTML
+  if (!worksheetHTML || worksheetHTML.includes('undefined')) {
+    alert('Error: Invalid worksheet content generated');
     return;
   }
 
-  // Get the actual worksheet HTML (the a4-sheet div)
-  const worksheet = worksheetContent.querySelector('.a4-sheet');
-  if (!worksheet) {
-    alert('No worksheet found to print');
-    return;
-  }
-
-  // Get font and font size from preview
+  // Get font and font size from controls
   let font = 'Poppins';
   let fontSize = '12';
   const fontSelect = document.getElementById('fontSelect');
@@ -27,20 +38,29 @@ function printWorksheet() {
   // Create a new window for printing
   const printWindow = window.open('', '_blank', 'width=800,height=600');
 
-  // Write the print document
+  // Process the worksheet HTML to format multiple choice options like preview (options under question, on one line)
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = worksheetHTML;
+  const questionDivs = tempDiv.querySelectorAll('.grammar-questions');
+  questionDivs.forEach(div => {
+    // For each line, if it looks like a question with options (e.g., "Question text\na) ... b) ... c) ..."),
+    // move the options to a single line below the question.
+    div.innerHTML = div.innerHTML.replace(/([^\n]*)(\n|<br\s*\/?>)?\s*([a-h]\)[^<\n]*)/gi, function(match, question, br, options) {
+      // Keep all options on one line, separated by spaces
+      return question + '<br><span style="margin-left:18px;display:inline-block;">' + options.replace(/\s+/g, ' ') + '</span>';
+    });
+  });
+  worksheetHTML = tempDiv.innerHTML;
+
+  // Write the print document with same styles as preview
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
       <title>Grammar Worksheet</title>
+      <link rel="stylesheet" href="../tests/style.css">
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
         body {
           font-family: '${font}', 'Poppins', sans-serif;
           background: #fff;
@@ -49,72 +69,49 @@ function printWorksheet() {
           font-size: ${fontSize}px;
         }
 
-        .worksheet-container {
+        /* A4 worksheet sizing for print */
+        .a4-sheet {
           width: 100%;
           max-width: 210mm;
           margin: 0 auto;
           background: #fff;
+          box-shadow: none;
         }
 
-        /* Two-column layout */
+        /* Two-column worksheet layout */
         .two-column {
           column-count: 2;
           column-gap: 40px;
           column-fill: balance;
+          height: auto;
         }
 
         /* Prevent header and answer key from being split by columns */
         .worksheet-header, .answer-key-section {
           column-span: all;
-          break-inside: avoid;
-          page-break-inside: avoid;
         }
 
-        /* Keep worksheet content together */
-        .worksheet-container {
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-
-        /* Make sure sections don't break across columns */
-        .grammar-questions, .section-box {
-          break-inside: avoid;
-          page-break-inside: avoid;
+        /* Make sure section boxes don't break across columns */
+        .section-box, .grammar-questions {
           margin-bottom: 15px;
         }
 
-        /* Answer key on new page - only if there's content */
-        .answer-key-section {
-          margin-top: 50px;
+        /* Worksheet section box styles - same as preview */
+        .section-box.design-0 {
+          background: #ffffff;
+          border: 2px solid #ffe08a;
+          box-shadow: none;
         }
-
-        /* Only break to new page if answer key has actual content */
-        .answer-key-section:not(:empty) {
-          break-before: page;
-          page-break-before: always;
+        .section-box.design-1 {
+          background: #ffffff;
+          border: 2px solid #a3d1ff;
+          box-shadow: none;
         }
-
-        /* Print: All box designs have white background and neutral border */
-        .section-box.design-0,
-        .section-box.design-1,
         .section-box.design-2 {
-          background: #fff !important;
-          border: 2px solid #e0e0e0 !important;
-          box-shadow: none !important;
-        }
-
-        .design-3 {
-          background: #fff;
-          border: none;
+          background: #ffffff;
+          border: 2px solid #c7bfff;
           box-shadow: none;
         }
-
-        .design-4 {
-          background: #fff;
-          border: none;
-          box-shadow: none;
-        }
-
         .section-box {
           width: 100%;
           box-sizing: border-box;
@@ -131,61 +128,76 @@ function printWorksheet() {
           padding-bottom: 18px;
         }
 
-        /* Header styling - match preview exactly and prevent breaking */
-        .worksheet-header {
-          border-bottom: 2px solid #d3d3d3;
-          padding-bottom: 12px;
-          margin-bottom: 20px;
-          break-inside: avoid;
-          page-break-inside: avoid;
-          display: block !important;
+        .grammar-questions {
+          white-space: pre-line;
+          margin-bottom: 16px;
+          line-height: 1.6;
+          font-size: 1em;
         }
 
-        /* Ensure header content stays together */
-        .worksheet-header * {
-          break-inside: avoid;
-          page-break-inside: avoid;
+        /* Format multiple choice options horizontally like preview */
+        .grammar-questions {
+          word-spacing: 0.5em;
         }
 
-        /* All design headers have the same line styling */
-        .design-0 .worksheet-header,
-        .design-1 .worksheet-header,
-        .design-2 .worksheet-header,
+        /* Header styles - match preview exactly */
         .design-3 .worksheet-header,
         .design-4 .worksheet-header {
           border-bottom: 2px solid #d3d3d3;
           padding-bottom: 12px;
-          margin-bottom: 18px;
-          break-inside: avoid;
-          page-break-inside: avoid;
+          margin-bottom: 30px;
         }
 
-        /* Make sure text is readable */
-        .grammar-questions {
-          white-space: pre-line;
-          line-height: 2.1;
-          margin-bottom: 16px;
+        /* Increase spacing between header and content for all designs */
+        .worksheet-header {
+          margin-bottom: 30px;
+        }
+
+        /* Header box for boxed designs */
+        .header-box {
+          background: #fff;
+          border: 2px solid #ffe08a;
+          border-radius: 8px;
+          padding: 18px 18px 10px 18px;
+          margin-bottom: 24px;
+        }
+        .design-1 .header-box {
+          border: 2px solid #a3d1ff;
+        }
+        .design-2 .header-box {
+          border: 2px solid #c7bfff;
+        }
+        .design-3 {
+          background: #fff;
+          border: none;
+          box-shadow: none;
+        }
+        .design-4 {
+          background: #fff;
+          border: none;
+          box-shadow: none;
+        }
+
+        /* Answer key spacing */
+        .answer-key-section {
+          margin-top: 18px;
+          page-break-before: always;
+          break-before: page;
         }
 
         /* Ensure images print */
         img {
-          max-width: 100px;
+          max-width: 80px;
         }
 
         @page {
           margin: 15mm 10mm;
           size: A4;
         }
-
-        @page :first {
-          margin: 15mm 10mm;
-        }
       </style>
     </head>
     <body>
-      <div class="worksheet-container">
-        ${worksheet.innerHTML}
-      </div>
+      ${worksheetHTML}
     </body>
     </html>
   `);

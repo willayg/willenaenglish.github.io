@@ -78,13 +78,15 @@ function setupAIPrompt() {
     if (questionTypeSelect) {
       const type = questionTypeSelect.value;
       if (type === 'mc') {
-        // Create multiple choice without labels - just clean format
-        promptText = `Create multiple choice grammar questions for ESL students about: ${promptText}. Format each question like this example (but don't use labels like "Question:" or "Answer:"):
+        // Improved prompt for superlatives: require 'the _______' in the question stem and instruct the AI to use the definite article
+        promptText = `Create multiple choice grammar questions for ESL students about: ${promptText}.
 
-She gave the pen to _____.
-a) he  b) him  c) his  d) himself
+        If the question is about superlatives, always use 'the _______' in the blank and make sure the correct answer includes the definite article 'the' if required. Use this format for all superlative questions:
 
-Just write questions and answer choices clearly.`;
+        1. The cheetah is the _______ animal in the world.
+        a) fastest  b) faster  c) fastly  d) more fast
+
+        For other grammar points, use a clear blank and provide four options, only one of which is correct. Do not use labels like "Question:" or "Answer:". Just write questions and answer choices clearly.`;
       } else if (type === 'fill') {
         promptText = 'Make the questions fill in the blanks. ' + promptText;
       }
