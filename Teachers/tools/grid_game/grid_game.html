@@ -149,7 +149,7 @@
         .sticky-grid {
             position: fixed;
             top: 230px;
-            left: 650px;
+            left: 500px;
             z-index: 1000;
             box-shadow: 0 4px 24px rgba(46,43,63,0.10);
             background: white;
@@ -298,13 +298,13 @@
         
         .game-grid.grid-3x3 {
             grid-template-columns: repeat(3, 150px);
-            grid-template-rows: repeat(3, 150px);
+            grid-template-rows: repeat(3, 100px);
             width: 490px;
         }
         
         .game-grid.grid-4x4 {
-            grid-template-columns: repeat(4, 120px);
-            grid-template-rows: repeat(4, 120px);
+            grid-template-columns: repeat(4, 150px);
+            grid-template-rows: repeat(4, 100px);
             width: 520px;
         }
         
@@ -415,6 +415,34 @@
 </head>
 <body>
   <script>
+  // Sticky grid scroll adjustment: smoothly move sticky grid from 230px to 70px from top as user scrolls down
+  document.addEventListener('DOMContentLoaded', function() {
+    const stickyGrid = document.querySelector('.sticky-grid');
+    if (!stickyGrid) return;
+    const minTop = 20; // px
+    const maxTop = 230; // px
+    const scrollStart = 0; // px
+    const scrollEnd = 300; // px (after this, top stays at minTop)
+    function updateStickyGridPosition() {
+      const scrollY = window.scrollY || window.pageYOffset;
+      let newTop;
+      if (scrollY <= scrollStart) {
+        newTop = maxTop;
+      } else if (scrollY >= scrollEnd) {
+        newTop = minTop;
+      } else {
+        // Linear interpolate between maxTop and minTop
+        const t = (scrollY - scrollStart) / (scrollEnd - scrollStart);
+        newTop = maxTop + (minTop - maxTop) * t;
+      }
+      stickyGrid.style.top = newTop + 'px';
+    }
+    window.addEventListener('scroll', updateStickyGridPosition);
+    // Initial position
+    updateStickyGridPosition();
+  });
+  </script>
+  <script>
     // Access control: only allow approved users
     (async function() {
       const userId = localStorage.getItem('userId');
@@ -501,7 +529,7 @@
 
                     <!-- AI Grid Generator (moved just below extract) -->
                     <div class="form-group">
-                        <label class="form-label">AI Grid Generator</label>
+                        <label class="form-label">AI Quiz Maker</label>
                         <textarea id="aiGridPrompt" class="form-textarea" rows="2" placeholder="Describe the type of questions and answers you want (e.g. grammar, vocabulary, topic, etc)"></textarea>
                         <button id="generateGridAI" class="generate-btn" style="margin-top:8px;">
                             <span class="button-text">Generate Quiz</span>
