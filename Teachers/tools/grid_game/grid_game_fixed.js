@@ -20,8 +20,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Use fontSelect from toolbar as fontPicker
     const fontPicker = document.getElementById('fontSelect');
     const generateGameBtn = document.getElementById('generateGameBtn');
+    // Get button elements - both top buttons and setup buttons
     const saveSetupBtn = document.getElementById('saveSetupBtn');
     const loadSetupBtn = document.getElementById('loadSetupBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const loadBtn = document.getElementById('loadBtn');
     const resetGameBtn = document.getElementById('resetGameBtn');
     const gamePreviewArea = document.getElementById('gamePreviewArea');
     
@@ -610,34 +613,64 @@ Passage: ${passage}`
 
     // Save and load functionality - Updated to match wordtest pattern
     function saveSetup() {
-        // Open worksheet manager for saving
-        window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+        try {
+            console.log('Save button clicked - opening worksheet manager');
+            // Open worksheet manager for saving
+            window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+        } catch (error) {
+            console.error('Error in saveSetup:', error);
+            alert('Error opening save dialog: ' + error.message);
+        }
     }
 
     function loadSetup() {
-        // Open worksheet manager for loading
-        window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+        try {
+            console.log('Load button clicked - opening worksheet manager');
+            // Open worksheet manager for loading
+            window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+        } catch (error) {
+            console.error('Error in loadSetup:', error);
+            alert('Error opening load dialog: ' + error.message);
+        }
     }
 
     // Function to get current grid game data for saving
     window.getCurrentWorksheetData = function() {
-        return {
-            worksheet_type: 'grid_game',
-            title: '', // Will be filled by worksheet manager
-            passage_text: document.getElementById('passageInput').value || '',
-            words: currentWords,
-            layout: 'grid_game',
-            settings: {
-                gridSize: gridSize,
-                questions: currentQuestions,
-                teams: currentTeams,
-                gridColor: gridColorPicker.value,
-                font: fontPicker.value,
-                vocabInput: document.getElementById('vocabInput').value || '',
-                questionsInput: document.getElementById('questionsInput').value || ''
-            },
-            notes: `Grid Game - ${gridSize} with ${currentWords.length} words and ${currentQuestions.length} questions`
-        };
+        try {
+            console.log('getCurrentWorksheetData called');
+            console.log('Current words:', currentWords);
+            console.log('Current questions:', currentQuestions);
+            console.log('Current teams:', currentTeams);
+            
+            const passageElement = document.getElementById('passageInput');
+            const vocabElement = document.getElementById('vocabInput');
+            const questionsElement = document.getElementById('questionsInput');
+            
+            const data = {
+                worksheet_type: 'grid_game',
+                title: '', // Will be filled by worksheet manager
+                passage_text: passageElement ? passageElement.value || '' : '',
+                words: currentWords || [],
+                layout: 'grid_game',
+                settings: {
+                    gridSize: gridSize || '3x3',
+                    questions: currentQuestions || [],
+                    teams: currentTeams || [],
+                    gridColor: gridColorPicker ? gridColorPicker.value : '#ffffff',
+                    font: fontPicker ? fontPicker.value : 'Arial',
+                    vocabInput: vocabElement ? vocabElement.value || '' : '',
+                    questionsInput: questionsElement ? questionsElement.value || '' : ''
+                },
+                notes: `Grid Game - ${gridSize || '3x3'} with ${(currentWords || []).length} words and ${(currentQuestions || []).length} questions`
+            };
+            
+            console.log('Returning worksheet data:', data);
+            return data;
+        } catch (error) {
+            console.error('Error in getCurrentWorksheetData:', error);
+            alert('Error getting worksheet data: ' + error.message);
+            return null;
+        }
     };
 
     // Function to load worksheet data
@@ -645,9 +678,14 @@ Passage: ${passage}`
         try {
             console.log('Loading worksheet data:', worksheetData);
             
-            // Load basic data
+            // Load basic data with null checks
             if (worksheetData.passage_text) {
-                document.getElementById('passageInput').value = worksheetData.passage_text;
+                const passageInput = document.getElementById('passageInput');
+                if (passageInput) {
+                    passageInput.value = worksheetData.passage_text;
+                } else {
+                    console.warn('passageInput element not found');
+                }
             }
             
             if (worksheetData.words && Array.isArray(worksheetData.words)) {
@@ -663,7 +701,12 @@ Passage: ${passage}`
                 // Grid size
                 if (settings.gridSize) {
                     gridSize = settings.gridSize;
-                    document.getElementById('gridSize').value = gridSize;
+                    const gridSizeElement = document.getElementById('gridSize');
+                    if (gridSizeElement) {
+                        gridSizeElement.value = gridSize;
+                    } else {
+                        console.warn('gridSize element not found');
+                    }
                 }
 
                 // Questions
@@ -679,28 +722,54 @@ Passage: ${passage}`
                 }
 
                 // Grid color
-                if (settings.gridColor) {
+                if (settings.gridColor && gridColorPicker) {
                     gridColorPicker.value = settings.gridColor;
+                } else if (settings.gridColor) {
+                    console.warn('gridColorPicker element not found');
                 }
 
                 // Font
-                if (settings.font) {
+                if (settings.font && fontPicker) {
                     fontPicker.value = settings.font;
+                } else if (settings.font) {
+                    console.warn('fontPicker element not found');
                 }
 
                 // Input fields
                 if (settings.vocabInput) {
-                    document.getElementById('vocabInput').value = settings.vocabInput;
+                    const vocabInput = document.getElementById('vocabInput');
+                    if (vocabInput) {
+                        vocabInput.value = settings.vocabInput;
+                    } else {
+                        console.warn('vocabInput element not found');
+                    }
                 }
 
                 if (settings.questionsInput) {
-                    document.getElementById('questionsInput').value = settings.questionsInput;
+                    const questionsInput = document.getElementById('questionsInput');
+                    if (questionsInput) {
+                        questionsInput.value = settings.questionsInput;
+                    } else {
+                        console.warn('questionsInput element not found');
+                    }
                 }
             }
 
-            // Update the word and question lists in UI
-            document.getElementById('vocabInput').value = currentWords.join('\n');
-            document.getElementById('questionsInput').value = currentQuestions.join('\n');
+            // Update the word and question lists in UI with null checks
+            const vocabInputElement = document.getElementById('vocabInput');
+            const questionsInputElement = document.getElementById('questionsInput');
+            
+            if (vocabInputElement) {
+                vocabInputElement.value = currentWords.join('\n');
+            } else {
+                console.warn('vocabInput element not found for updating UI');
+            }
+            
+            if (questionsInputElement) {
+                questionsInputElement.value = currentQuestions.join('\n');
+            } else {
+                console.warn('questionsInput element not found for updating UI');
+            }
 
             // Ensure we have enough questions for the words
             if (currentQuestions.length < currentWords.length) {
@@ -785,9 +854,41 @@ Passage: ${passage}`
         console.error('Generate Game button not found!');
     }
     
-    saveSetupBtn.addEventListener('click', saveSetup);
-    loadSetupBtn.addEventListener('click', loadSetup);
-    resetGameBtn.addEventListener('click', resetSetup);
+    // Event listeners for save/load buttons (both sets)
+    if (saveSetupBtn) {
+        saveSetupBtn.addEventListener('click', saveSetup);
+        console.log('Save setup button event listener attached');
+    } else {
+        console.error('Save setup button not found!');
+    }
+    
+    if (loadSetupBtn) {
+        loadSetupBtn.addEventListener('click', loadSetup);
+        console.log('Load setup button event listener attached');
+    } else {
+        console.error('Load setup button not found!');
+    }
+
+    // Also attach to top save/load buttons
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveSetup);
+        console.log('Top save button event listener attached');
+    } else {
+        console.error('Top save button not found!');
+    }
+    
+    if (loadBtn) {
+        loadBtn.addEventListener('click', loadSetup);
+        console.log('Top load button event listener attached');
+    } else {
+        console.error('Top load button not found!');
+    }
+    
+    if (resetGameBtn) {
+        resetGameBtn.addEventListener('click', resetSetup);
+    } else {
+        console.error('Reset button not found!');
+    }
 
     // Allow Enter key to add team
     teamNameInput.addEventListener('keypress', function(e) {

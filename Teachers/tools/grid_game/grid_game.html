@@ -737,23 +737,7 @@
     </script>
     <script>
       // Connect all Load/Save buttons (top and sidebar) to worksheet manager
-      document.addEventListener('DOMContentLoaded', function() {
-        function openWorksheetManager(mode) {
-          if (mode === 'save') {
-            window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
-          } else {
-            window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
-          }
-        }
-        function connectLoadSave(btnId, mode) {
-          var btn = document.getElementById(btnId);
-          if (btn) btn.onclick = function() { openWorksheetManager(mode); };
-        }
-        connectLoadSave('saveBtn', 'save');
-        connectLoadSave('loadBtn', 'load');
-        connectLoadSave('saveSetupBtn', 'save');
-        connectLoadSave('loadSetupBtn', 'load');
-      });
+      // Save/load functionality is now handled in grid_game_fixed.js
     </script>
     <link rel="stylesheet" href="grid_game.css">
     
