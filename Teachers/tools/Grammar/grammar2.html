@@ -93,8 +93,9 @@
         .grammar-questions {
           white-space: pre-line;
           margin-bottom: 16px;
-          line-height: 2.1;
+          line-height: 1.6;
           font-size: 1em;
+          word-spacing: 0.5em;
         }
         /* All worksheet headers have a simple line */
         /* Only designs 3 and 4 have a horizontal line under the header */
@@ -102,7 +103,12 @@
         .design-4 .worksheet-header {
           border-bottom: 2px solid #d3d3d3;
           padding-bottom: 12px;
-          margin-bottom: 18px !important;
+          margin-bottom: 30px !important;
+        }
+        
+        /* Increase spacing between header and content for all designs */
+        .worksheet-header {
+          margin-bottom: 30px;
         }
         /* Header box for boxed designs: white center, border only, no colored background */
         .header-box {
@@ -644,35 +650,75 @@
                 document.addEventListener('DOMContentLoaded', function() {
                   const preview = document.getElementById('worksheetPreviewArea-grammar');
         if (preview) {
+          // Enable editing on click
           preview.addEventListener('click', function(e) {
-            // Only enable editing if not already editable
             if (!preview.isContentEditable) {
               preview.contentEditable = 'true';
               preview.focus();
             }
           });
+
+          // Save edits to grammarSections or questions textarea on blur or input
+          function persistPreviewEdits() {
+            // If using grammarSections, update their questions/answers from the preview
+            if (window.grammarSections && window.grammarSections.length > 0) {
+              // Find all section-boxes in the preview
+              const sectionDivs = preview.querySelectorAll('.section-box, .grammar-section');
+              sectionDivs.forEach((div, idx) => {
+                // Find the questions and answers inside each section
+                const questionsDiv = div.querySelector('.grammar-questions');
+                if (questionsDiv && window.grammarSections[idx]) {
+                  // Save the edited HTML/text back to the section
+                  // Remove any HTML tags for storage, keep line breaks
+                  let html = questionsDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+                  html = html.replace(/<[^>]+>/g, '');
+                  window.grammarSections[idx].questions = html;
+                }
+              });
+              // Also update the answer key textarea
+              const answerKeyTextarea = document.getElementById('grammarAnswers');
+              if (answerKeyTextarea) {
+                const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                answerKeyTextarea.value = allAnswers.join('\n\n');
+              }
+            } else {
+              // Fallback: update the manual questions textarea
+              const questionsTextarea = document.getElementById('grammarQuestions');
+              if (questionsTextarea) {
+                // Get the first .grammar-questions div
+                const qDiv = preview.querySelector('.grammar-questions');
+                if (qDiv) {
+                  let html = qDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+                  html = html.replace(/<[^>]+>/g, '');
+                  questionsTextarea.value = html;
+                }
+              }
+            }
+          }
+          preview.addEventListener('blur', persistPreviewEdits, true);
+          preview.addEventListener('input', persistPreviewEdits, true);
+
           // Right-click to delete a section
           preview.addEventListener('contextmenu', function(e) {
-            // Find the closest section-box or grammar-section div
             let section = e.target.closest('.section-box, .grammar-section');
             if (section && preview.contains(section) && section.hasAttribute('data-section-idx')) {
               e.preventDefault();
-              // Get the section index from the data attribute
               let idx = parseInt(section.getAttribute('data-section-idx'), 10);
               if (window.grammarSections && idx >= 0 && idx < window.grammarSections.length) {
-                // Remove from the grammarSections array
                 window.grammarSections.splice(idx, 1);
-                // Refresh the preview to rebuild all sections with correct indices
+                const answerKeyTextarea = document.getElementById('grammarAnswers');
+                if (answerKeyTextarea) {
+                  const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                  answerKeyTextarea.value = allAnswers.join('\n\n');
+                }
                 if (typeof window.updateGrammarPreview === 'function') {
                   window.updateGrammarPreview();
                 }
               }
             } else {
-              // Handle deletion of manual questions section (fallback)
               let section = e.target.closest('.grammar-questions');
               if (section && preview.contains(section)) {
                 e.preventDefault();
-                // Clear the manual questions textarea
                 const questionsTextarea = document.getElementById('grammarQuestions');
                 if (questionsTextarea) {
                   questionsTextarea.value = '';
@@ -703,13 +749,14 @@
 
     // Create a simple preview update function to create a two-column layout
     function createGrammarPreview() {
-      // Get all values
-      const title = document.getElementById('grammarTitle')?.value || '';
-      const answers = document.getElementById('grammarAnswers')?.value || '';
-      const font = document.getElementById('fontSelect')?.value || 'Poppins';
-      const fontSize = document.getElementById('fontSizeInput')?.value || '12';
-      const template = document.getElementById('templateSelect')?.value || '0';
-      const layout = document.getElementById('layoutSelect')?.value || 'default';
+      try {
+        // Get all values
+        const title = document.getElementById('grammarTitle')?.value || '';
+        const answers = document.getElementById('grammarAnswers')?.value || '';
+        const font = document.getElementById('fontSelect')?.value || 'Poppins';
+        const fontSize = document.getElementById('fontSizeInput')?.value || '12';
+        const template = document.getElementById('templateSelect')?.value || '0';
+        const layout = document.getElementById('layoutSelect')?.value || 'default';
       
       // Get design classes
       let designClass = 'design-0';
@@ -852,14 +899,24 @@
       const preview = document.getElementById('worksheetPreviewArea-grammar');
       if (preview) {
         preview.innerHTML = html;
-        // Add extra spacing between answer options in .grammar-questions
+        // Ensure multiple choice options always appear under the question, but on a single line
         const questionDivs = preview.querySelectorAll('.grammar-questions');
         questionDivs.forEach(div => {
-          // Replace all spaces between options with multiple non-breaking spaces
-          // This regex finds any space that comes before a new option letter
-          div.innerHTML = div.innerHTML.replace(/\s+([a-h]\))/gi, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$1');
+          // For each line, if it looks like a question with options (e.g., "Question text\na) ... b) ... c) ..."),
+          // move the options to a single line below the question.
+          div.innerHTML = div.innerHTML.replace(/([^\n]*)(\n|<br\s*\/?>)?\s*([a-h]\)[^<\n]*)/gi, function(match, question, br, options) {
+            // Keep all options on one line, separated by spaces
+            return question + '<br><span style="margin-left:18px;display:inline-block;">' + options.replace(/\s+/g, ' ') + '</span>';
+          });
         });
       }
+      
+      // Return the HTML for use by print function
+      return html;
+    } catch (error) {
+      console.error('Error in createGrammarPreview:', error);
+      return '<div class="a4-sheet" style="padding:24px;"><h1>Error generating preview</h1><p>' + error.message + '</p></div>';
+    }
     }
 
     // Hook up preview updates to all relevant fields and font size buttons
@@ -913,6 +970,7 @@
 
       createGrammarPreview();
       window.updateGrammarPreview = createGrammarPreview;
+      window.createGrammarPreview = createGrammarPreview; // Expose for print function
       
       // Print button functionality
       const printBtn = document.getElementById('printBtn');
