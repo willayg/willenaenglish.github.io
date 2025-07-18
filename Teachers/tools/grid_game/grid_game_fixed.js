@@ -326,18 +326,25 @@ Passage: ${passage}`
                     alert('Please add teams first to assign colors.');
                     return;
                 }
-                showTeamSelectionMenu(e.clientX, e.clientY, function(selectedTeam) {
-                    if (selectedTeam === 'reset') {
-                        teamColor = null;
-                        isShowingTop = true;
-                        renderCard();
-                    } else {
-                        teamColor = selectedTeam.color;
-                        renderCard();
-                        square.className = 'grid-square team-color';
-                        square.innerHTML = `<div style="font-size:1.1em;font-weight:600;">${selectedTeam.name}</div>`;
-                    }
-                });
+                // Cycle through teams on each right-click
+                let currentIndex = -1;
+                if (teamColor) {
+                    currentIndex = currentTeams.findIndex(t => t.color === teamColor);
+                }
+                let nextIndex = currentIndex + 1;
+                if (nextIndex >= currentTeams.length) {
+                    // Reset (no team)
+                    teamColor = null;
+                    isShowingTop = true;
+                    renderCard();
+                } else {
+                    // Assign next team
+                    const nextTeam = currentTeams[nextIndex];
+                    teamColor = nextTeam.color;
+                    renderCard();
+                    square.className = 'grid-square team-color';
+                    square.innerHTML = `<div style="font-size:1.1em;font-weight:600;">${nextTeam.name}</div>`;
+                }
             });
 
             gameGrid.appendChild(square);
