@@ -28,28 +28,17 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+
 .game-grid.grid-3x3 {
-<<<<<<< HEAD
     grid-template-columns: repeat(3, 150px);
-    grid-template-rows: repeat(3, 150px);
+    grid-template-rows: repeat(3, 100px);
     width: 490px;
 }
 
 .game-grid.grid-4x4 {
-    grid-template-columns: repeat(4, 120px);
-    grid-template-rows: repeat(4, 120px);
+    grid-template-columns: repeat(4, 150px);
+    grid-template-rows: repeat(4, 100px);
     width: 520px;
-=======
-    grid-template-columns: repeat(3, 90px);
-    grid-template-rows: repeat(3, 90px);
-    width: 350px;
-}
-
-.game-grid.grid-4x4 {
-    grid-template-columns: repeat(4, 70px);
-    grid-template-rows: repeat(4, 70px);
-    width: 400px;
->>>>>>> a819f02 (Improve AI prompt for superlatives: require 'the _______' in question stem and instruct AI to use the definite article)
 }
 
 .grid-square {
