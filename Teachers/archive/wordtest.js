@@ -811,11 +811,11 @@ function initializeEventListeners() {
     // Top action buttons
     // Save Worksheet button: open worksheet manager in save mode
     document.getElementById('saveBtn').addEventListener('click', function() {
-        window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+        window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=550');
     });
     // Load Worksheet button: open worksheet manager in load mode
     document.getElementById('loadBtn').addEventListener('click', function() {
-        window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+        window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=550');
     });
     document.getElementById('printBtn').addEventListener('click', printFile);
     document.getElementById('pdfBtn').addEventListener('click', generatePDF);

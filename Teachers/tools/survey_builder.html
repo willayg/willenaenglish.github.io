@@ -102,11 +102,52 @@
             </div>
             <!-- Top Action Bar -->
             <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
             </div>
+            <script>
+            // New button logic for Survey Builder
+            document.addEventListener('DOMContentLoaded', function() {
+              const newBtn = document.getElementById('newBtn');
+              if (newBtn) {
+                newBtn.addEventListener('click', function() {
+                  if (confirm('Are you sure you want to start a new survey?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+                    // Clear all main fields
+                    const idsToClear = [
+                      'titleInput',
+                      'instructionsInput',
+                      'fontSizeInput'
+                    ];
+                    idsToClear.forEach(id => {
+                      const el = document.getElementById(id);
+                      if (el) {
+                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+                      }
+                    });
+                    // Reset selects
+                    const selectsToReset = [
+                      'fontSelect',
+                      'templateSelect'
+                    ];
+                    selectsToReset.forEach(id => {
+                      const sel = document.getElementById(id);
+                      if (sel) sel.selectedIndex = 0;
+                    });
+                    // Clear questions list if present
+                    const questionsList = document.getElementById('questionsList');
+                    if (questionsList) questionsList.innerHTML = '';
+                    // Optionally clear preview area
+                    const preview = document.getElementById('previewArea');
+                    if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+                    if (window.updateSurveyPreview) window.updateSurveyPreview();
+                  }
+                });
+              }
+            });
+            </script>
             <!-- Floating Toolbar -->
             <div class="floating-toolbar" id="floatingToolbar">
                 <select class="toolbar-select" id="fontSelect">

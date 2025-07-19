@@ -623,7 +623,7 @@ Passage: ${passage}`
         try {
             console.log('Save button clicked - opening worksheet manager');
             // Open worksheet manager for saving
-            window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+            window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=550');
         } catch (error) {
             console.error('Error in saveSetup:', error);
             alert('Error opening save dialog: ' + error.message);
@@ -634,7 +634,7 @@ Passage: ${passage}`
         try {
             console.log('Load button clicked - opening worksheet manager');
             // Open worksheet manager for loading
-            window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+            window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=550');
         } catch (error) {
             console.error('Error in loadSetup:', error);
             alert('Error opening load dialog: ' + error.message);

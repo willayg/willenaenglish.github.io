@@ -894,7 +894,7 @@ function getCurrentWorksheetData() {
     categories: categories
   };
 
-  return {
+  const worksheetData = {
     worksheet_type: 'reading',
     title: title,
     passage_text: passage,
@@ -902,24 +902,42 @@ function getCurrentWorksheetData() {
     answers: answers,
     settings: JSON.stringify(settings)
   };
+  
+  // Include id if this worksheet was loaded from database (for updates)
+  if (window._currentWorksheetId) {
+    worksheetData.id = window._currentWorksheetId;
+  }
+  
+  return worksheetData;
 }
 
 // Loads a worksheet object into the UI (called by worksheet_manager.html)
 function loadWorksheet(worksheet) {
   if (!worksheet || worksheet.worksheet_type !== 'reading') return;
   
-  // Populate basic fields
-  if (document.getElementById('readingTitle')) {
-    document.getElementById('readingTitle').value = worksheet.title || "";
+  // Store worksheet id for updates
+  window._currentWorksheetId = worksheet.id || null;
+  
+  // Populate basic fields and dispatch events to update UI
+  const titleEl = document.getElementById('readingTitle');
+  if (titleEl) {
+    titleEl.value = worksheet.title || "";
+    titleEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  if (document.getElementById('readingPassage')) {
-    document.getElementById('readingPassage').value = worksheet.passage_text || "";
+  const passageEl = document.getElementById('readingPassage');
+  if (passageEl) {
+    passageEl.value = worksheet.passage_text || "";
+    passageEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  if (document.getElementById('readingQuestions')) {
-    document.getElementById('readingQuestions').value = worksheet.questions || "";
+  const questionsEl = document.getElementById('readingQuestions');
+  if (questionsEl) {
+    questionsEl.value = worksheet.questions || "";
+    questionsEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  if (document.getElementById('readingAnswers')) {
-    document.getElementById('readingAnswers').value = worksheet.answers || "";
+  const answersEl = document.getElementById('readingAnswers');
+  if (answersEl) {
+    answersEl.value = worksheet.answers || "";
+    answersEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   // Restore settings from worksheet.settings (JSON string)
@@ -934,39 +952,46 @@ function loadWorksheet(worksheet) {
   }
 
   // Restore font
-  if (settings.font && document.getElementById('fontSelect')) {
-    document.getElementById('fontSelect').value = settings.font;
+  const fontEl = document.getElementById('fontSelect');
+  if (settings.font && fontEl) {
+    fontEl.value = settings.font;
+    fontEl.dispatchEvent(new Event('change', { bubbles: true }));
   }
   
   // Restore font size
-  if (settings.font_size && document.getElementById('fontSizeInput')) {
-    document.getElementById('fontSizeInput').value = settings.font_size;
+  const fontSizeEl = document.getElementById('fontSizeInput');
+  if (settings.font_size && fontSizeEl) {
+    fontSizeEl.value = settings.font_size;
+    fontSizeEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
   
   // Restore template
-  if (settings.template && document.getElementById('templateSelect')) {
-    document.getElementById('templateSelect').value = settings.template;
+  const templateEl = document.getElementById('templateSelect');
+  if (settings.template && templateEl) {
+    templateEl.value = settings.template;
+    templateEl.dispatchEvent(new Event('change', { bubbles: true }));
   }
   
   // Restore include passage setting
-  if (settings.include_passage !== undefined && document.getElementById('includePassage')) {
-    document.getElementById('includePassage').checked = settings.include_passage;
+  const includePassageEl = document.getElementById('includePassage');
+  if (settings.include_passage !== undefined && includePassageEl) {
+    includePassageEl.checked = settings.include_passage;
+    includePassageEl.dispatchEvent(new Event('change', { bubbles: true }));
   }
   
   // Restore categories
-  if (settings.categories && Array.isArray(settings.categories)) {
-    const categorySelect = document.getElementById('categorySelect');
-    if (categorySelect) {
-      // Deselect all options first
-      categorySelect.querySelectorAll('option').forEach(option => option.selected = false);
-      // Select the options from the worksheet
-      settings.categories.forEach(category => {
-        const option = Array.from(categorySelect.options).find(opt => opt.value === category);
-        if (option) {
-          option.selected = true;
-        }
-      });
-    }
+  const categorySelect = document.getElementById('categorySelect');
+  if (settings.categories && Array.isArray(settings.categories) && categorySelect) {
+    // Deselect all options first
+    categorySelect.querySelectorAll('option').forEach(option => option.selected = false);
+    // Select the options from the worksheet
+    settings.categories.forEach(category => {
+      const option = Array.from(categorySelect.options).find(opt => opt.value === category);
+      if (option) {
+        option.selected = true;
+      }
+    });
+    categorySelect.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   // Trigger initial preview update
@@ -1213,3 +1238,7 @@ function updateOptionInTextarea(questionItem, oldOptionText, newOptionText) {
   
   textarea.value = lines.join('\n');
 }
+
+// --- Make worksheet save/load functions accessible to popup ---
+window.getCurrentWorksheetData = getCurrentWorksheetData;
+window.loadWorksheet = loadWorksheet;

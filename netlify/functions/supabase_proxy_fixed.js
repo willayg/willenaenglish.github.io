@@ -382,9 +382,9 @@ exports.handler = async (event) => {
             body: JSON.stringify({ success: true, data })
           };
         }
-        // Worksheet insert (legacy)
+        // Worksheet insert or update
         const worksheet = body;
-        console.log('worksheet.words:', worksheet.words, typeof worksheet.words); // <--- Add this line
+        console.log('worksheet.words:', worksheet.words, typeof worksheet.words);
 
         // Always normalize worksheet.words to an array of trimmed strings
         if (typeof worksheet.words === "string") {
@@ -411,9 +411,24 @@ exports.handler = async (event) => {
           }
         }
 
-        const { data, error } = await supabase
-          .from('worksheets')
-          .insert([worksheet]);
+        let data, error;
+        if (worksheet.id) {
+          // Update existing worksheet
+          const id = worksheet.id;
+          const updateObj = { ...worksheet };
+          delete updateObj.id;
+          ({ data, error } = await supabase
+            .from('worksheets')
+            .update(updateObj)
+            .eq('id', id)
+            .select());
+        } else {
+          // Insert new worksheet
+          if ('id' in worksheet) delete worksheet.id;
+          ({ data, error } = await supabase
+            .from('worksheets')
+            .insert([worksheet]));
+        }
         if (error) {
           return {
             statusCode: 400,

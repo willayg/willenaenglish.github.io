@@ -147,18 +147,23 @@ function renderImage(imageUrl, index, word = null, kor = null, currentSettings =
     const clickHandler = word ? `onclick="cycleImage('${word}', ${index})"` : '';
     const clickStyle = word ? 'cursor: pointer; transition: transform 0.2s;' : '';
     const hoverStyle = word ? 'onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'"' : '';
-    
+    const dblClickHandler = word ? `ondblclick=\"window.open('https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}','googleimg','width=700,height=600,scrollbars=yes,resizable=yes')\"` : '';
+
     // Add drag and drop instruction (hidden when printing)
     const dragInstruction = word ? '<div class="drag-instructions print-hide">Drag & drop image here or click to cycle</div>' : '';
-    
+
     if (imageUrl.startsWith('<div')) {
         // It's an emoji or placeholder div - update font size and add click handler
         if (imageUrl.includes('font-size:')) {
             const updatedImageUrl = imageUrl.replace(/font-size:\s*\d+px/, `font-size: ${currentSettings.imageSize * 0.8}px`);
             if (word) {
-                return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${updatedImageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle}>`)}</div>`;
+                return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${updatedImageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle} ${dblClickHandler}>`)}</div>`;
             }
             return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${updatedImageUrl}</div>`;
+        }
+        // If this is the blank option (white box), add double-click handler
+        if (imageUrl.includes('background:#fff') && word) {
+            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${imageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${dblClickHandler}>`)}</div>`;
         }
         if (word) {
             return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${imageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle}>`)}</div>`;

@@ -89,10 +89,129 @@
 
             <!-- Top Action Bar -->
             <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
+    <script>
+    // New button logic
+    document.addEventListener('DOMContentLoaded', function() {
+      const newBtn = document.getElementById('newBtn');
+      if (newBtn) {
+        newBtn.addEventListener('click', function() {
+          if (confirm('Are you sure you want to start a new worksheet?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+            // Clear all main fields
+            const idsToClear = [
+              'titleInput',
+              'passageInput',
+              'wordListTextarea',
+              'wordCountInput',
+              'fontSizeInput'
+            ];
+            idsToClear.forEach(id => {
+              const el = document.getElementById(id);
+              if (el) {
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+              }
+            });
+            // Reset selects
+            const selectsToReset = [
+              'difficultySelect',
+              'fontSelect',
+              'designSelect',
+              'layoutSelect'
+            ];
+            selectsToReset.forEach(id => {
+              const sel = document.getElementById(id);
+              if (sel) sel.selectedIndex = 0;
+            });
+            // Reset sliders
+            if (document.getElementById('imageGapSlider')) document.getElementById('imageGapSlider').value = '25';
+            if (document.getElementById('imageSizeSlider')) document.getElementById('imageSizeSlider').value = '50';
+            // Reset test mode
+            if (document.getElementById('testModeSelect')) document.getElementById('testModeSelect').selectedIndex = 0;
+            // Hide duplicate warning
+            const dupWarn = document.getElementById('duplicateWarning');
+            if (dupWarn) dupWarn.style.display = 'none';
+            // Optionally clear preview area
+            const preview = document.getElementById('previewArea');
+            if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+            if (window.updateWordtestPreview) window.updateWordtestPreview();
+          }
+        });
+      }
+    });
+    </script>
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
+    <script>
+    // Simple PDF export using print dialog - works exactly like Print button
+    document.addEventListener('DOMContentLoaded', function() {
+      const pdfBtn = document.getElementById('pdfBtn');
+      if (pdfBtn) {
+        pdfBtn.addEventListener('click', function() {
+          // Create a new window with just the preview content
+          const previewArea = document.getElementById('previewArea');
+          if (!previewArea) {
+            alert('Nothing to export.');
+            return;
+          }
+          
+          // Get the current styles
+          const styles = Array.from(document.styleSheets)
+            .map(styleSheet => {
+              try {
+                return Array.from(styleSheet.cssRules)
+                  .map(rule => rule.cssText)
+                  .join('');
+              } catch (e) {
+                return '';
+              }
+            })
+            .join('');
+          
+          // Create print window with just the preview content
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Worksheet</title>
+              <style>
+                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                ${styles}
+                @media print {
+                  body { margin: 0; padding: 0.5in; }
+                  .preview-area { 
+                    box-shadow: none !important; 
+                    border: none !important;
+                    background: white !important;
+                    width: 100% !important;
+                    max-width: none !important;
+                  }
+                  /* DON'T override grid gaps - preserve JavaScript inline styles */
+                }
+              </style>
+            </head>
+            <body>
+              ${previewArea.outerHTML}
+            </body>
+            </html>
+          `);
+          
+          printWindow.document.close();
+          
+          // Wait for content to load, then trigger print dialog
+          printWindow.onload = function() {
+            printWindow.print();
+            // Close window after print dialog closes
+            printWindow.onafterprint = function() {
+              printWindow.close();
+            };
+          };
+        });
+      }
+    });
+    </script>
             </div>
 
             <!-- Floating Toolbar -->

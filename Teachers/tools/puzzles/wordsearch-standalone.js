@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('saveBtn');
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
-      window.open('/Teachers/worksheet_manager.html?mode=save', 'worksheetManager', 'width=600,height=700');
+      window.open('/Teachers/worksheet_manager.html?mode=save', 'worksheetManager', 'width=1200,height=550');
     });
   }
 
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadBtn = document.getElementById('loadBtn');
   if (loadBtn) {
     loadBtn.addEventListener('click', () => {
-      window.open('/Teachers/worksheet_manager.html?mode=load', 'worksheetManager', 'width=900,height=700');
+      window.open('/Teachers/worksheet_manager.html?mode=load', 'worksheetManager', 'width=1200,height=550');
     });
   }
 
