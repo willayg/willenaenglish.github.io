@@ -1156,6 +1156,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const loadBtn = document.getElementById('loadBtn');
   function openWorksheetManager(mode) {
     const url = `/Teachers/worksheet_manager.html?mode=${mode}&type=grammar`;
+    window.open(url, 'worksheetManager', 'width=1200,height=550');
     const features = 'width=800,height=600,scrollbars=yes,resizable=yes';
     window.open(url, 'WorksheetManager', features);
   }

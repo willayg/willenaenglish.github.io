@@ -468,8 +468,40 @@
                 <h1 style="flex:1; text-align:center; margin:0;">Willena Grid Game</h1>
                 <!-- Top Action Bar: Load/Save -->
                 <div class="top-actions" style="position:absolute; left:10%; bottom:12px; transform:translateX(-50%); z-index:9999; display:flex; gap:32px; align-items:flex-end;">
+                  <span class="action-link" id="newBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">New</span>
                   <span class="action-link" id="loadBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">Load</span>
                   <span class="action-link" id="saveBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18);">Save</span>
+<script>
+// New button logic for Grid Game
+document.addEventListener('DOMContentLoaded', function() {
+  const newBtn = document.getElementById('newBtn');
+  if (newBtn) {
+    newBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to start a new grid game?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+        // Clear all main fields (adjust IDs as needed for grid game)
+        const idsToClear = [
+          'titleInput',
+          'questionInput',
+          'answerInput',
+          'qFontSizeInput',
+          'aFontSizeInput'
+        ];
+        idsToClear.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+          }
+        });
+        // Reset selects (if any)
+        // Optionally clear preview area
+        const preview = document.getElementById('previewArea');
+        if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+        if (window.updateGridGamePreview) window.updateGridGamePreview();
+      }
+    });
+  }
+});
+</script>
                 </div>
                 <!-- Burger Menu Component (vertically centered in header, inside container) -->
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>

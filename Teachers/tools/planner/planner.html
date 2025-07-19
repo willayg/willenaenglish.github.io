@@ -413,12 +413,45 @@
                 </div>
                 <!-- Top Action Bar (text links, like wordsearch.html) -->
                 <div class="top-actions" style="position:absolute; left:32px; bottom:12px; z-index:9999; display:flex; gap:20px; align-items:flex-end;">
+                    <span class="action-link" id="newBtn" style="font-size:1rem; cursor:pointer;">New</span>
                     <span class="action-link" id="editLessonPlanLink" style="font-size:1rem; cursor:pointer;">Edit</span>
                     <span class="action-link" id="printLessonPlanLink" style="font-size:1rem; cursor:pointer;">Print</span>
                     <span class="action-link" id="saveLessonPlanLink" style="font-size:1rem; cursor:pointer;">Save</span>
                     <span class="action-link" id="loadLessonPlanLink" style="font-size:1rem; cursor:pointer;">Load</span>
                     <span class="action-link" id="pdfLessonPlanLink" style="font-size:1rem; cursor:pointer;">PDF</span>
                 </div>
+                <script>
+                // New button logic for Planner
+                document.addEventListener('DOMContentLoaded', function() {
+                  const newBtn = document.getElementById('newBtn');
+                  if (newBtn) {
+                    newBtn.addEventListener('click', function() {
+                      if (confirm('Are you sure you want to start a new lesson plan?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+                        // Clear all main fields (adjust IDs as needed for planner)
+                        const idsToClear = [
+                          'classNameInput',
+                          'objectivesInput',
+                          'materialsInput',
+                          'proceduresInput',
+                          'assessmentInput',
+                          'notesInput'
+                        ];
+                        idsToClear.forEach(id => {
+                          const el = document.getElementById(id);
+                          if (el) {
+                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+                          }
+                        });
+                        // Reset selects (if any)
+                        // Optionally clear preview area
+                        const preview = document.getElementById('previewArea');
+                        if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+                        if (window.updatePlannerPreview) window.updatePlannerPreview();
+                      }
+                    });
+                  }
+                });
+                </script>
                 <!-- Burger Menu Component (vertically centered in header, inside container) -->
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
@@ -530,6 +563,7 @@
     // Open Worksheet Manager for Save/Load
     function openWorksheetManager(mode) {
         const url = "/Teachers/worksheet_manager.html?mode=" + mode;
+        window.open(url, 'worksheetManager', 'width=1200,height=550');
         window.open(url, "worksheetManager", "width=800,height=600");
     }
     document.getElementById("saveLessonPlanLink").onclick = function(e) {

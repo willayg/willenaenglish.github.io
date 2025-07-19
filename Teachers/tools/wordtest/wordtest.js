@@ -334,10 +334,10 @@ function initializeEventListeners() {
 
     // Top action buttons
     document.getElementById('saveBtn').addEventListener('click', function() {
-        window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=600,height=700');
+        window.open('../../worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=550');
     });
     document.getElementById('loadBtn').addEventListener('click', function() {
-        window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=800,height=700');
+        window.open('../../worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=550');
     });
     document.getElementById('printBtn').addEventListener('click', printFile);
     document.getElementById('pdfBtn').addEventListener('click', generatePDF);
@@ -1795,7 +1795,7 @@ async function generateWorksheetHTML(title, wordPairs) {
             if (!Array.isArray(limitedWordPairs) || limitedWordPairs.length === 0) {
                 return `<div class='preview-placeholder'><p>No words available for Picture Quiz (5 per row) layout.</p></div>`;
             }
-            
+            // Get images for all pairs
             const pairsWithImages = await Promise.all(limitedWordPairs.map(async (pair, i) => {
                 try {
                     const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, currentSettings);
@@ -1804,7 +1804,6 @@ async function generateWorksheetHTML(title, wordPairs) {
                     return { ...pair, imageUrl: getPlaceholderImage(i), index: i };
                 }
             }));
-            
             // Shuffle word box only
             function shuffleArray(array) {
                 const arr = array.slice();
@@ -1822,37 +1821,32 @@ async function generateWorksheetHTML(title, wordPairs) {
                     </div>
                 </div>
             `;
-            
             // Group quiz items for better page breaks (20 items per page - 4 rows of 5)
             const itemsPerPage = 20;
             const pages = [];
             for (let i = 0; i < pairsWithImages.length; i += itemsPerPage) {
                 pages.push(pairsWithImages.slice(i, i + itemsPerPage));
             }
-            
-            // Ultra-compact vertical gap for maximum density (20 items per page)
-            const ultraCompactGap = Math.max(Math.floor(currentSettings.imageGap / 5), 2);
-            
+            // Use normal image gap like other layouts - no more ultra-compact reduction
+            const normalGap = Math.max(currentSettings.imageGap, 2);
             const gridHtml = pages.map((pageItems, pageIndex) => `
                 <div class="picture-quiz-page-5col" style="page-break-before: ${pageIndex > 0 ? 'always' : 'auto'};">
-                    <div class="picture-quiz-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${ultraCompactGap}px; column-gap: 6px; padding: 8px; width: 100%; max-width: 100%; margin: 0 auto; place-items: center;">
+                    <div class="picture-quiz-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${normalGap}px; column-gap: 6px; padding: 8px; width: 100%; max-width: 100%; margin: 0 auto; place-items: center;">
                         ${pageItems.map((pair, i) => `
-                            <div class="quiz-item-5col" style="text-align: center; padding: 2px; width: 130px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
-                                <div class="image-container" style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 90px; position: relative;">
+                            <div class="quiz-item-5col" style="text-align: center; padding: 2px; width: 130px; height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                                <div class="image-container" style="flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 100%; height: 90px; position: relative;">
                                     ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, currentSettings)}
                                 </div>
-                                <div style="width: 90px; border-bottom: 2px solid #333; height: 15px; margin-top: 2px;"></div>
+                                <div style="width: 90px; border-bottom: 2px solid #333; height: 24px; margin-top: 8px; flex-shrink: 0;"></div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
             `).join('');
-            
             const tableHtml = `
                 ${wordBoxHtml}
                 ${gridHtml}
             `;
-            
             return `
                 <div class="worksheet-preview" style="${style}">
                     ${generateWorksheetHeader(title, true)}
@@ -2340,7 +2334,7 @@ function performPrint() {
                 
                 /* Optimize 5-column layouts for landscape printing */
                 .picture-quiz-grid-5col {
-                    row-gap: 4px !important;
+                    /* DON'T override row-gap - preserve JavaScript inline styles */
                     column-gap: 4px !important;
                     padding: 6px !important;
                     max-width: 100% !important;
@@ -2348,18 +2342,19 @@ function performPrint() {
                 
                 .quiz-item-5col {
                     width: 120px !important;
-                    height: 110px !important;
+                    height: 130px !important;
                     padding: 1px !important;
                 }
                 
                 .quiz-item-5col .image-container {
+                    height: 80px !important;
                     max-height: 80px !important;
                 }
                 
                 .quiz-item-5col div[style*="border-bottom"] {
                     width: 85px !important;
-                    height: 12px !important;
-                    margin-top: 1px !important;
+                    height: 24px !important;
+                    margin-top: 8px !important;
                 }
                 
                 /* Ensure cards don't break across pages */
@@ -2410,6 +2405,32 @@ function performPrint() {
 }
 
 function generatePDF() {
-    // This would require a PDF library like jsPDF
-    alert('PDF generation feature would be implemented with jsPDF library');
+    // Direct PDF export using html2pdf.js
+    const previewArea = document.getElementById('previewArea');
+    if (!previewArea) return;
+    
+    // Ensure html2pdf is loaded
+    if (typeof html2pdf === 'undefined') {
+        // Load the library if not already loaded
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = function() {
+            generatePDF(); // Call again after library loads
+        };
+        document.head.appendChild(script);
+        return;
+    }
+    
+    let title = document.getElementById('titleInput')?.value?.trim() || 'worksheet';
+    title = title.replace(/[^a-zA-Z0-9\-_ ]/g, '').replace(/\s+/g, '_');
+    
+    const opt = {
+        margin: 0.5,
+        filename: title + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(previewArea).save();
 }

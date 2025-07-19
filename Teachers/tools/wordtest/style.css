@@ -638,6 +638,8 @@ body {
     page-break-inside: avoid;
   }
   
+  /* Note: Dynamic gaps for .picture-quiz-grid-5col are preserved via JavaScript inline styles */
+  
   /* Adjust header for print */
   .worksheet-preview .worksheet-header {
     margin-bottom: 20px !important;
@@ -662,10 +664,7 @@ body {
     font-size: 0.8em !important;
   }
   
-  /* Grid layouts for print */
-  .worksheet-preview [style*="grid-template-columns"] {
-    gap: 10px !important;
-  }
+  /* Grid layouts for print - preserve dynamic gaps from JavaScript inline styles */
   
   /* Table styles for print - match preview exactly */
   .worksheet-preview table {
