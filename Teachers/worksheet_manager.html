@@ -72,6 +72,18 @@ if (mode === 'save') {
   worksheet.unit = document.getElementById('worksheetUnit').value;
   worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
 
+  // Set username from localStorage (match dashboard logic)
+  let username = localStorage.getItem('username') || '';
+  if (!username) {
+    const email = localStorage.getItem('userEmail');
+    if (email) {
+      username = email.split('@')[0];
+    }
+  }
+  if (username) {
+    worksheet.username = username;
+  }
+
   // --- PATCH: For grammar worksheets, always save latest grammarSections as JSON if present ---
   if (worksheet.worksheet_type === 'grammar' && window.opener) {
     try {
@@ -162,8 +174,11 @@ if (mode === 'save') {
           <th class="px-2 py-1 border">Title</th>
           <th class="px-2 py-1 border">Created</th>
           <th class="px-2 py-1 border">Type</th>
+          <th class="px-2 py-1 border">Layout</th>
           <th class="px-2 py-1 border">Book</th>
           <th class="px-2 py-1 border">Unit</th>
+          <th class="px-2 py-1 border">Username</th>
+          <th class="px-2 py-1 border">Delete</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -177,13 +192,91 @@ if (mode === 'save') {
         window.opener.loadWorksheet(ws);
         window.close();
       };
+
+      // Map worksheet_type to descriptive names
+      const typeDisplayNames = {
+        'wordtest': 'Word Sheet',
+        'wordsearch': 'Wordsearch',
+        'grammar': 'Grammar',
+        'survey': 'Survey',
+        'reading': 'Reading',
+        'grid_game': 'Grid Game',
+        'flashcard': 'Flashcard'
+      };
+      let typeDisplay = typeDisplayNames[ws.worksheet_type] || (ws.worksheet_type ? ws.worksheet_type.charAt(0).toUpperCase() + ws.worksheet_type.slice(1) : '');
+      if (ws.worksheet_type && /pic|picture/i.test(ws.worksheet_type)) {
+        typeDisplay = 'Picture Quiz';
+      }
+
+      // Map layout display to user-friendly names
+      let layoutDisplay = ws.layout || '';
+      const layoutKey = layoutDisplay.toLowerCase().replace(/\s+/g, '');
+      if (layoutKey === 'default' || layoutKey === '' || !layoutKey) {
+        layoutDisplay = 'Single List';
+      } else if (layoutKey === '4col') {
+        layoutDisplay = 'Double List';
+      } else if (layoutKey === '6col-images' || layoutKey === '6colimages') {
+        layoutDisplay = 'Picture Cards';
+      } else if (layoutKey === '5col-images' || layoutKey === '5colimages') {
+        layoutDisplay = 'Picture Cards (5 per row)';
+      } else if (layoutKey === 'picture-list') {
+        layoutDisplay = 'Picture List';
+      } else if (layoutKey === 'picture-list-2col') {
+        layoutDisplay = 'Picture List (Double)';
+      } else if (layoutKey === 'picture-quiz') {
+        layoutDisplay = 'Picture Quiz';
+      } else if (layoutKey === 'picture-quiz-5col') {
+        layoutDisplay = 'Picture Quiz (5 per row)';
+      } else if (layoutKey === 'picture-matching') {
+        layoutDisplay = 'Picture Matching';
+      } else if (layoutKey === 'eng-kor-matching' || layoutKey === 'koreanenglishmatching' || layoutKey === 'engkormatching') {
+        layoutDisplay = 'English-Korean Matching';
+      } else {
+        layoutDisplay = layoutDisplay.charAt(0).toUpperCase() + layoutDisplay.slice(1);
+      }
+
       tr.innerHTML = `
         <td class="px-2 py-1 border">${ws.title || ''}</td>
         <td class="px-2 py-1 border">${ws.created_at ? ws.created_at.split('T')[0] : ''}</td>
-        <td class="px-2 py-1 border">${ws.worksheet_type || ''}</td>
+        <td class="px-2 py-1 border">${typeDisplay}</td>
+        <td class="px-2 py-1 border">${layoutDisplay}</td>
         <td class="px-2 py-1 border">${ws.book || ''}</td>
         <td class="px-2 py-1 border">${ws.unit || ''}</td>
+        <td class="px-2 py-1 border">${ws.username || ''}</td>
+        <td class="px-2 py-1 border"><button class="delete-btn bg-red-500 text-white px-2 py-1 rounded" title="Delete Worksheet">Delete</button></td>
       `;
+      // Add delete logic
+      tr.querySelector('.delete-btn').onclick = async function(e) {
+        e.stopPropagation();
+        // Get current user
+        let currentUser = localStorage.getItem('username') || '';
+        if (!currentUser) {
+          const email = localStorage.getItem('userEmail');
+          if (email) currentUser = email.split('@')[0];
+        }
+        if (!currentUser || ws.username !== currentUser) {
+          alert('You can only delete worksheets you created.');
+          return;
+        }
+        if (!confirm('Are you sure you want to delete this worksheet? This cannot be undone.')) return;
+        // Call backend to delete
+        try {
+          const res = await fetch('/.netlify/functions/supabase_proxy/delete_worksheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: ws.id })
+          });
+          const result = await res.json();
+          if (result.success) {
+            alert('Worksheet deleted.');
+            tr.remove();
+          } else {
+            alert('Error deleting worksheet: ' + (result.error || 'Unknown error'));
+          }
+        } catch (err) {
+          alert('Network error: ' + err.message);
+        }
+      };
       table.querySelector('tbody').appendChild(tr);
     });
 
