@@ -251,12 +251,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.head.appendChild(style);
 
     // Add sample words for testing
-    const sampleWords = `apple, 사과
+   /* const sampleWords = `apple, 사과
 dog, 개
 cat, 고양이
 book, 책
 car, 자동차
-house, 집`;
+house, 집`;*/
 
     document.getElementById('wordListTextarea').value = sampleWords;
     updateCurrentWordsFromTextarea();

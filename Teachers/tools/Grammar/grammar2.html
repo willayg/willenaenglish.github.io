@@ -802,12 +802,19 @@ document.addEventListener('DOMContentLoaded', function() {
           preview.addEventListener('input', persistPreviewEdits, true);
 
           // Right-click to delete a section
+          // Undo stack for deleted sections
+          window.grammarSectionUndoStack = window.grammarSectionUndoStack || [];
           preview.addEventListener('contextmenu', function(e) {
             let section = e.target.closest('.section-box, .grammar-section');
             if (section && preview.contains(section) && section.hasAttribute('data-section-idx')) {
               e.preventDefault();
               let idx = parseInt(section.getAttribute('data-section-idx'), 10);
               if (window.grammarSections && idx >= 0 && idx < window.grammarSections.length) {
+                // Save a copy of the deleted section and its index
+                window.grammarSectionUndoStack.push({
+                  section: window.grammarSections[idx],
+                  index: idx
+                });
                 window.grammarSections.splice(idx, 1);
                 const answerKeyTextarea = document.getElementById('grammarAnswers');
                 if (answerKeyTextarea) {
@@ -829,6 +836,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.updateGrammarPreview();
                   }
                 }
+              }
+            }
+          });
+
+          // Undo (Ctrl+Z) for section deletion
+          document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+              if (window.grammarSectionUndoStack && window.grammarSectionUndoStack.length > 0) {
+                const last = window.grammarSectionUndoStack.pop();
+                if (last && last.section) {
+                  if (!window.grammarSections) window.grammarSections = [];
+                  // Insert back at the original index
+                  window.grammarSections.splice(last.index, 0, last.section);
+                  const answerKeyTextarea = document.getElementById('grammarAnswers');
+                  if (answerKeyTextarea) {
+                    const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                    answerKeyTextarea.value = allAnswers.join('\n\n');
+                  }
+                  if (typeof window.updateGrammarPreview === 'function') window.updateGrammarPreview();
+                }
+                e.preventDefault();
               }
             }
           });
