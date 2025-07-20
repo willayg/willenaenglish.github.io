@@ -205,8 +205,21 @@
                     </label>
                 </div>
 
+                <button class="secondary-btn" id="quizModeBtn" style="margin-left:12px;">Quiz Mode</button>
                 <button class="refresh-btn" id="refreshImagesBtn" title="Refresh Images">↻</button>
             </div>
+    <!-- Fullscreen Quiz Overlay -->
+    <div id="quizOverlay" style="display:none;position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#232526 0%,#414345 100%);align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:'Poppins',sans-serif;">
+        <div id="quizImageContainer" style="max-width:98vw;height:80vh;display:flex;align-items:center;justify-content:center;position:relative;"></div>
+        <!-- quizWordContainer overlay will be injected dynamically -->
+        <div style="margin-top:32px;display:flex;gap:16px;align-items:center;justify-content:center;">
+            <button id="quizPrevBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Previous</button>
+            <button id="quizRevealBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Reveal</button>
+            <button id="quizNextBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Next</button>
+            <button id="quizExitBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Exit Quiz</button>
+        </div>
+        <div id="quizProgress" style="margin-top:14px;font-size:1.08em;color:#ccc;font-family:'Poppins',sans-serif;"></div>
+    </div>
 
             <!-- Main Content -->
             <div class="main-content">
@@ -292,6 +305,301 @@ tree</textarea>
     </div>
 
     <script src="flashcard-simple.js"></script>
+<script>
+// Make flashcard words editable in preview
+document.addEventListener('DOMContentLoaded', function() {
+    // Undo stack for edits and deletes
+    let undoStack = [];
+    function makePreviewEditable() {
+        const grid = document.getElementById('flashcardGrid');
+        if (!grid) return;
+        // Remove previous listeners to avoid duplicates
+        Array.from(grid.getElementsByClassName('editable-word')).forEach(el => {
+            el.removeEventListener('blur', handleEdit);
+            el.removeEventListener('keydown', handleKeydown);
+            el.removeEventListener('click', handleLeftClickEdit);
+            el.removeEventListener('contextmenu', handleRightClickDelete);
+        });
+        // Add contenteditable to word elements
+        Array.from(grid.getElementsByClassName('flashcard-word')).forEach((el, idx) => {
+            el.contentEditable = 'false';
+            el.classList.add('editable-word');
+            el.setAttribute('spellcheck', 'false');
+            el.addEventListener('click', handleLeftClickEdit);
+            el.addEventListener('contextmenu', handleRightClickDelete);
+            el.addEventListener('blur', handleEdit);
+            el.addEventListener('keydown', handleKeydown);
+        });
+        // Add contenteditable to Korean if present
+        Array.from(grid.getElementsByClassName('flashcard-korean')).forEach((el, idx) => {
+            el.contentEditable = 'false';
+            el.classList.add('editable-word');
+            el.setAttribute('spellcheck', 'false');
+            el.addEventListener('click', handleLeftClickEdit);
+            el.addEventListener('contextmenu', handleRightClickDelete);
+            el.addEventListener('blur', handleEdit);
+            el.addEventListener('keydown', handleKeydown);
+        });
+        // Add right-click to card background as well
+        Array.from(grid.getElementsByClassName('flashcard')).forEach(card => {
+            card.addEventListener('contextmenu', handleRightClickDelete);
+        });
+    }
+
+    function handleLeftClickEdit(e) {
+        // Only left click
+        if (e.button !== 0) return;
+        e.target.contentEditable = 'true';
+        e.target.focus();
+        // Move cursor to end
+        document.execCommand && document.execCommand('selectAll', false, null);
+        document.getSelection().collapseToEnd();
+    }
+
+    function handleRightClickDelete(e) {
+        e.preventDefault();
+        // Find card index
+        let cardDiv = e.target.closest('.flashcard');
+        if (!cardDiv) return;
+        const idx = cardDiv.id && cardDiv.id.startsWith('flashcard-') ? parseInt(cardDiv.id.split('-')[1], 10) : null;
+        if (idx === null || !window.flashcards || !window.flashcards[idx]) return;
+        // Push to undo stack
+        undoStack.push({
+            type: 'delete',
+            card: { ...window.flashcards[idx] },
+            index: idx,
+            prevWordList: document.getElementById('wordListInput').value
+        });
+        // Remove card
+        window.flashcards.splice(idx, 1);
+        updateWordListFromFlashcards();
+        if (window.generateCards) window.generateCards();
+        else document.getElementById('generateCardsBtn')?.click();
+    }
+    function handleEdit(e) {
+        const el = e.target;
+        const cardDiv = el.closest('.flashcard');
+        if (!cardDiv) return;
+        const idx = cardDiv.id && cardDiv.id.startsWith('flashcard-') ? parseInt(cardDiv.id.split('-')[1], 10) : null;
+        if (idx === null || !window.flashcards || !window.flashcards[idx]) return;
+        // Save previous value for undo
+        let prev = { ...window.flashcards[idx] };
+        if (el.classList.contains('flashcard-word')) {
+            window.flashcards[idx].english = el.textContent.trim();
+        } else if (el.classList.contains('flashcard-korean')) {
+            window.flashcards[idx].korean = el.textContent.trim();
+        }
+        undoStack.push({
+            type: 'edit',
+            card: prev,
+            index: idx,
+            prevWordList: document.getElementById('wordListInput').value
+        });
+        updateWordListFromFlashcards();
+        if (window.generateCards) window.generateCards();
+        else document.getElementById('generateCardsBtn')?.click();
+    }
+    function handleKeydown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+        }
+        // Ctrl+Z for undo
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            handleUndo();
+        }
+    }
+
+    // Also allow global Ctrl+Z for undo
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            handleUndo();
+        }
+    });
+
+    function handleUndo() {
+        if (!undoStack.length) return;
+        const last = undoStack.pop();
+        if (last.type === 'delete') {
+            // Restore deleted card
+            window.flashcards.splice(last.index, 0, last.card);
+        } else if (last.type === 'edit') {
+            // Restore previous card value
+            window.flashcards[last.index] = last.card;
+        }
+        // Restore word list
+        document.getElementById('wordListInput').value = last.prevWordList;
+        if (window.generateCards) window.generateCards();
+        else document.getElementById('generateCardsBtn')?.click();
+    }
+    function updateWordListFromFlashcards() {
+        if (!window.flashcards) return;
+        const wordListInput = document.getElementById('wordListInput');
+        if (!wordListInput) return;
+        wordListInput.value = window.flashcards.map(card => {
+            if (card.korean) return card.english + ' - ' + card.korean;
+            return card.english;
+        }).join('\n');
+    }
+    // Patch generateCards to call makePreviewEditable after rendering
+    if (window.generateCards) {
+        const origGenerateCards = window.generateCards;
+        window.generateCards = function() {
+            origGenerateCards.apply(this, arguments);
+            setTimeout(makePreviewEditable, 0);
+        };
+    } else {
+        // fallback: try after DOMContentLoaded
+        setTimeout(makePreviewEditable, 1000);
+    }
+    // Also run after initial load in case cards are already present
+    setTimeout(makePreviewEditable, 500);
+});
+</script>
+<script>
+// Fullscreen Quiz Mode logic
+document.addEventListener('DOMContentLoaded', function() {
+    const quizBtn = document.getElementById('quizModeBtn');
+    const quizOverlay = document.getElementById('quizOverlay');
+    const quizImage = document.getElementById('quizImageContainer');
+    // quizWordContainer is now dynamic overlay
+    const quizPrev = document.getElementById('quizPrevBtn');
+    const quizNext = document.getElementById('quizNextBtn');
+    const quizReveal = document.getElementById('quizRevealBtn');
+    const quizExit = document.getElementById('quizExitBtn');
+    const quizProgress = document.getElementById('quizProgress');
+    let quizCards = [];
+    let quizIndex = 0;
+    let quizRevealed = false;
+
+    function getQuizCards() {
+        // Use window.flashcards if available, else parse from textarea
+        if (window.flashcards && Array.isArray(window.flashcards) && window.flashcards.length > 0) {
+            return window.flashcards;
+        }
+        const wordListInput = document.getElementById('wordListInput');
+        if (!wordListInput) return [];
+        return wordListInput.value.split('\n').map(line => {
+            const parts = line.split(' - ');
+            return { english: parts[0] ? parts[0].trim() : '', korean: parts[1] ? parts[1].trim() : '', image: '' };
+        }).filter(card => card.english);
+    }
+
+    function showQuizCard(idx) {
+        if (!quizCards.length) return;
+        quizIndex = Math.max(0, Math.min(idx, quizCards.length - 1));
+        const card = quizCards[quizIndex];
+        quizRevealed = false;
+        // Show image (try to get from flashcardGrid or card.image)
+        let imgSrc = '';
+        if (card.image) {
+            imgSrc = card.image;
+        } else {
+            // Try to get from DOM if available
+            const grid = document.getElementById('flashcardGrid');
+            if (grid) {
+                const cardDiv = grid.querySelector(`#flashcard-${quizIndex} img`);
+                if (cardDiv && cardDiv.src) imgSrc = cardDiv.src;
+            }
+        }
+        quizImage.innerHTML = imgSrc
+            ? `<img src="${imgSrc}" alt="Quiz Image" style="height:80vh;width:auto;max-width:96vw;border-radius:22px;box-shadow:0 4px 32px #000a;display:block;margin:0 auto;object-fit:contain;">`
+            : `<div style='font-size:2.3em;color:#888;background:#222;padding:70px 140px;border-radius:22px;font-family:Poppins,sans-serif;height:80vh;display:flex;align-items:center;justify-content:center;'>No Image</div>`;
+        // Remove any previous overlay
+        const oldOverlay = document.getElementById('quizWordOverlay');
+        if (oldOverlay && oldOverlay.parentNode) oldOverlay.parentNode.removeChild(oldOverlay);
+        quizReveal.style.display = '';
+        quizProgress.textContent = `Card ${quizIndex + 1} of ${quizCards.length}`;
+    }
+
+    function revealQuizWord() {
+        if (!quizCards.length) return;
+        const card = quizCards[quizIndex];
+        const showKorean = document.getElementById('showKoreanToggle')?.checked;
+        let text = card.english;
+        if (showKorean && card.korean) text += ' - ' + card.korean;
+        // Remove any previous overlay
+        const quizImage = document.getElementById('quizImageContainer');
+        const oldOverlay = document.getElementById('quizWordOverlay');
+        if (oldOverlay && oldOverlay.parentNode) oldOverlay.parentNode.removeChild(oldOverlay);
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'quizWordOverlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.background = 'rgba(30,30,30,0.18)';
+        overlay.innerHTML = `<div style="font-size:5vw;max-width:90vw;line-height:1.1;font-family:'Poppins',sans-serif;font-weight:700;color:#fff;text-shadow:0 2px 16px #000b,0 1px 0 #222;letter-spacing:0.01em;text-align:center;word-break:break-word;filter:drop-shadow(0 2px 8px #000a);background:rgba(30,30,30,0.38);border-radius:22px;padding:0.2em 0.5em;">${text}</div>`;
+        quizImage.appendChild(overlay);
+        quizRevealed = true;
+        quizReveal.style.display = 'none';
+    }
+
+    // Helper to request fullscreen
+    function enterFullscreen(elem) {
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    }
+    function exitFullscreen() {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+    if (quizBtn) {
+        quizBtn.addEventListener('click', function() {
+            quizCards = getQuizCards();
+            if (!quizCards.length) { alert('No cards to quiz.'); return; }
+            quizIndex = 0;
+            quizOverlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            // Enter true fullscreen
+            enterFullscreen(quizOverlay);
+            showQuizCard(quizIndex);
+        });
+    }
+    if (quizPrev) quizPrev.onclick = function() { showQuizCard(quizIndex - 1); };
+    if (quizNext) quizNext.onclick = function() { showQuizCard(quizIndex + 1); };
+    if (quizReveal) quizReveal.onclick = revealQuizWord;
+    if (quizExit) quizExit.onclick = function() {
+        quizOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+        exitFullscreen();
+    };
+    // Also allow clicking the image to reveal word
+    if (quizImage) quizImage.onclick = function() { if (!quizRevealed) revealQuizWord(); };
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (quizOverlay.style.display !== 'flex') return;
+        // Always allow Escape to exit quiz, even if focus is in a contenteditable
+        if (e.key === 'Escape') {
+            quizOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+            exitFullscreen();
+            e.preventDefault();
+            return;
+        }
+        // Only handle other keys if not editing a word
+        const active = document.activeElement;
+        const isEditing = active && active.isContentEditable;
+        if (!isEditing) {
+            if (e.key === 'ArrowRight') { showQuizCard(quizIndex + 1); }
+            if (e.key === 'ArrowLeft') { showQuizCard(quizIndex - 1); }
+            // Reveal on Enter, Down Arrow, or Spacebar
+            if ((e.key === 'Enter' || e.key === 'ArrowDown' || e.key === ' ') && !quizRevealed) { revealQuizWord(); }
+            // Spacebar should not scroll page
+            if (e.key === ' ') e.preventDefault();
+        }
+    });
+});
+</script>
     <script src="../../components/feedback.js"></script>
     <!-- html2pdf.js for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -379,10 +687,8 @@ tree</textarea>
         // Add double-click event to flashcards for Google Image search
         const grid = document.getElementById('flashcardGrid');
         if (grid) {
-            // Use event delegation to handle clicks on dynamically generated cards
             grid.addEventListener('dblclick', function(e) {
                 let card = e.target;
-                // Traverse up to find the flashcard element
                 while (card && !card.classList.contains('flashcard')) {
                     card = card.parentElement;
                 }
@@ -392,20 +698,19 @@ tree</textarea>
                     const index = cardId ? cardId.split('-')[1] : null;
                     let word = '';
                     if (index !== null && window.flashcards && window.flashcards[index]) {
-                        // Get word from flashcards array
+                        // Always use the English word from the flashcards array
                         word = window.flashcards[index].english;
-                    } else {
-                        // Fallback: try to extract word from card content
+                    }
+                    // Fallback: try to extract word from card content, but skip placeholders
+                    if (!word) {
                         const textContent = card.textContent.trim();
-                        // Split by newlines and take the first non-empty line that's not "Drag image here"
-                        const lines = textContent.split('\n').map(line => line.trim()).filter(line => line && line !== 'Drag image here');
+                        const lines = textContent.split('\n').map(line => line.trim()).filter(line => line && !/drag image here|no image/i.test(line));
                         if (lines.length > 0) {
                             word = lines[0];
                         }
                     }
                     if (word) {
                         const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
-                        // Open in a new floating window (600x500, scrollbars/resizable)
                         window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
                     }
                 }

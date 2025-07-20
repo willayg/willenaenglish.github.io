@@ -8,6 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="designs.css">
     <style>
+        /* Force MC options to always display in a horizontal line */
+        .survey-questions div[style*='display:inline-block'] label {
+          display: inline-block !important;
+          vertical-align: middle !important;
+          margin-right: 24px !important;
+          white-space: nowrap !important;
+        }
         .design-7 {
           border-radius: 32px !important;
         }
@@ -46,12 +53,12 @@
           margin-top: 100px;
         }
         .survey-questions {
-          white-space: pre-line;
           margin-bottom: 16px;
           line-height: 2.1;
           font-size: 1em;
         }
     </style>
+    <script src="survey_ai.js"></script>
 </head>
 <body>
 <script src="survey-section-modal.js"></script>
@@ -328,7 +335,26 @@
                             <option value="mc">Multiple Choice</option>
                           </select>
                         </div>
+                        <!-- TODO: Advanced Options menu temporarily removed. Revisit and improve in future. -->
                         <button id="sendAIPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
+  <script>
+    // Toggle advanced prompt section
+    document.addEventListener('DOMContentLoaded', function() {
+      var advBtn = document.getElementById('toggleAdvancedBtn');
+      var advSection = document.getElementById('advancedPromptSection');
+      if (advBtn && advSection) {
+        advBtn.onclick = function() {
+          if (advSection.style.display === 'none') {
+            advSection.style.display = 'block';
+            advBtn.textContent = 'Hide Advanced Options';
+          } else {
+            advSection.style.display = 'none';
+            advBtn.textContent = 'Show Advanced Options';
+          }
+        };
+      }
+    });
+  </script>
                     </div>
                     
                     
@@ -345,42 +371,43 @@
                 </div>
                 <script>
                 // CRITICAL: Define edit persistence function FIRST, before any preview logic
-                function persistPreviewEdits() {
-                  console.log('Saving preview edits...');
-                  const preview = document.getElementById('surveyPreviewArea');
-                  if (!preview) return;
-                  
-                  // If using surveySections, update their questions from the preview
-                  if (window.surveySections && window.surveySections.length > 0) {
-                    // Find all section-boxes in the preview (CORRECTED SELECTOR)
-                    const sectionDivs = preview.querySelectorAll('.survey-section-box');
-                    sectionDivs.forEach((div, idx) => {
-                      // Find the questions inside each section
-                      const questionsDiv = div.querySelector('.survey-questions');
-                      if (questionsDiv && window.surveySections[idx]) {
-                        // Save the edited HTML/text back to the section
-                        // Remove any HTML tags for storage, keep line breaks
-                        let html = questionsDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-                        html = html.replace(/<[^>]+>/g, '');
-                        window.surveySections[idx].questions = html;
-                        console.log(`Saved section ${idx}:`, html);
-                      }
-                    });
-                  } else {
-                    // Fallback: update the manual questions textarea
-                    const questionsTextarea = document.getElementById('surveyQuestions');
-                    if (questionsTextarea) {
-                      // Get the first .survey-questions div
-                      const qDiv = preview.querySelector('.survey-questions');
-                      if (qDiv) {
-                        let html = qDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-                        html = html.replace(/<[^>]+>/g, '');
-                        questionsTextarea.value = html;
-                        console.log('Saved textarea:', html);
-                      }
-                    }
-                  }
-                }
+function persistPreviewEdits() {
+  console.log('Saving preview edits...');
+  const preview = document.getElementById('surveyPreviewArea');
+  if (!preview) return;
+  const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
+  // If using surveySections, only persist edits for open question mode
+  if (window.surveySections && window.surveySections.length > 0) {
+    if (surveyType !== 'mc') {
+      // Only persist edits for open question mode
+      const sectionDivs = preview.querySelectorAll('.survey-section-box');
+      sectionDivs.forEach((div, idx) => {
+        const questionsDiv = div.querySelector('.survey-questions');
+        if (questionsDiv && window.surveySections[idx]) {
+          let html = questionsDiv.innerHTML.replace(/<br\s*\/?\>/gi, '\n');
+          html = html.replace(/<[^>]+>/g, '');
+          window.surveySections[idx].questions = html;
+          console.log(`Saved section ${idx}:`, html);
+        }
+      });
+    } else {
+      // Do NOT persist edits for MC mode (preserve original structure)
+      console.log('Skipping persist for MC mode to preserve formatting.');
+    }
+  } else {
+    // Fallback: update the manual questions textarea
+    const questionsTextarea = document.getElementById('surveyQuestions');
+    if (questionsTextarea) {
+      const qDiv = preview.querySelector('.survey-questions');
+      if (qDiv) {
+        let html = qDiv.innerHTML.replace(/<br\s*\/?\>/gi, '\n');
+        html = html.replace(/<[^>]+>/g, '');
+        questionsTextarea.value = html;
+        console.log('Saved textarea:', html);
+      }
+    }
+  }
+}
                 
                 // Make this function globally available
                 window.persistPreviewEdits = persistPreviewEdits;
@@ -409,10 +436,42 @@
                         e.preventDefault();
                         let idx = parseInt(section.getAttribute('data-section-idx'), 10);
                         if (window.surveySections && idx >= 0 && idx < window.surveySections.length) {
+                          // Undo stack for deleted sections
+                          window.surveySectionUndoStack = window.surveySectionUndoStack || [];
+                          // Save a copy of the deleted section and its index
+                          window.surveySectionUndoStack.push({
+                            section: window.surveySections[idx],
+                            index: idx
+                          });
                           window.surveySections.splice(idx, 1);
-                          if (typeof window.updateSurveyPreview === 'function') {
-                            window.updateSurveyPreview();
+                          const questionsTextarea = document.getElementById('surveyQuestions');
+                          if (questionsTextarea) questionsTextarea.value = '';
+                          // If no sections left, show placeholder immediately
+                          if (window.surveySections.length === 0) {
+                            preview.innerHTML = '<div class="preview-placeholder" id="surveyPreviewPlaceholder"><p>Preview will appear here</p></div>';
+                            if (preview.isContentEditable) preview.contentEditable = false;
+                          } else {
+                            if (typeof window.updateSurveyPreview === 'function') {
+                              window.updateSurveyPreview();
+                            }
                           }
+// Undo (Ctrl+Z) for section deletion
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    if (window.surveySectionUndoStack && window.surveySectionUndoStack.length > 0) {
+      const last = window.surveySectionUndoStack.pop();
+      if (last && last.section) {
+        if (!window.surveySections) window.surveySections = [];
+        // Insert back at the original index
+        window.surveySections.splice(last.index, 0, last.section);
+        const questionsTextarea = document.getElementById('surveyQuestions');
+        if (questionsTextarea) questionsTextarea.value = '';
+        if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
+      }
+      e.preventDefault();
+    }
+  }
+});
                         }
                       } else {
                         let section = e.target.closest('.survey-questions');
@@ -474,7 +533,6 @@
         } else {
           // fallback to single questions textarea
           const questions = document.getElementById('surveyQuestions')?.value || '';
-          
           if (questions.trim()) {
             const lines = questions.split(/\r?\n/).map(q => q.trim());
             if (surveyType === 'mc') {
@@ -497,14 +555,14 @@
                     }
                   }
                   if (options.length > 0) {
-                    questionsHtml += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:flex;gap:24px;flex-wrap:wrap;'>`;
+                    questionsHtml += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:inline-block;width:100%;'>`;
                     let hasOther = options.some(opt => opt.trim().toLowerCase().startsWith('other'));
                     if (!hasOther) {
                       options.push('Other: ____________');
                     }
-                    options.forEach((opt, k) => {
-                      questionsHtml += `<label style='display:inline-flex;align-items:center;margin-right:18px;font-size:1em;'><input type='radio' name='q${qNum}' style='margin-right:6px;'>${opt}</label>`;
-                    });
+                    questionsHtml += options.map((opt, k) =>
+                      `<label style='display:inline-block;vertical-align:middle;margin-right:24px;font-size:1em;white-space:nowrap;'><input type='radio' name='q${qNum}' style='margin-right:6px;'>${opt}</label>`
+                    ).join(' ');
                     questionsHtml += `</div></div>`;
                     i = j;
                     qNum++;
@@ -524,10 +582,15 @@
               // Open question mode
               questionsHtml = lines.filter(q => q).map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`).join('');
             }
+            questionsHtml = `<div class="survey-questions">${questionsHtml}</div>`;
           } else {
-            questionsHtml = '<i>No questions yet. Type in the Questions box or use AI to generate questions.</i>';
+            // If no questions and no sections, show placeholder and return early
+            const preview = document.getElementById('surveyPreviewArea');
+            if (preview) {
+              preview.innerHTML = '<div class="preview-placeholder" id="surveyPreviewPlaceholder"><p>Preview will appear here</p></div>';
+            }
+            return;
           }
-          questionsHtml = `<div class="survey-questions">${questionsHtml}</div>`;
         }
 
         // Create HTML
@@ -767,14 +830,60 @@ window.surveySections = window.surveySections || [];
 // Function to render a single survey section into HTML
 function addSurveySection(section, index) {
   if (!section) return '';
-  const titleHtml = section.title ? `<h3 class="section-title">${section.title}</h3>` : '';
-  // Basic formatting for questions: treat each line as a question with a line for an answer
-  const questionsHtml = section.questions
-    .split('\n')
-    .filter(q => q.trim() !== '')
-    .map(q => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`)
-    .join('');
-
+  // Generate Part A, Part B, ...
+  const partLabel = `Part ${String.fromCharCode(65 + (index % 26))}`;
+  const titleHtml = `<h3 class="section-title">${partLabel}${section.title ? ': ' + section.title : ''}</h3>`;
+  // Detect if this section is MC or open (try to auto-detect by looking for MC pattern)
+  const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
+  const lines = section.questions.split('\n').map(q => q.trim());
+  let questionsHtml = '';
+  if (surveyType === 'mc' || lines.some(l => /^[0-9]+\.\s*/.test(l) && lines.slice(1).some(opt => /^[A-E]\.\s*/.test(opt)))) {
+    // MC parsing logic (copied from main preview)
+    let qNum = 1;
+    let i = 0;
+    while (i < lines.length) {
+      let qMatch = lines[i].match(/^(\d+)\.\s*(.*)$/);
+      if (qMatch) {
+        let qText = qMatch[2] || '';
+        let options = [];
+        let j = i + 1;
+        while (j < lines.length) {
+          let optMatch = lines[j].match(/^([A-Z])\.[ )]?\s*(.+)$/);
+          if (optMatch) {
+            options.push(optMatch[2]);
+            j++;
+          } else {
+            break;
+          }
+        }
+        if (options.length > 0) {
+          questionsHtml += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:inline-block;width:100%;'>`;
+          let hasOther = options.some(opt => opt.trim().toLowerCase().startsWith('other'));
+          if (!hasOther) {
+            options.push('Other: ____________');
+          }
+          questionsHtml += options.map((opt, k) =>
+            `<label style='display:inline-block;vertical-align:middle;margin-right:24px;font-size:1em;white-space:nowrap;'><input type='radio' name='section${index}_q${qNum}' style='margin-right:6px;'>${opt}</label>`
+          ).join(' ');
+          questionsHtml += `</div></div>`;
+          i = j;
+          qNum++;
+        } else {
+          questionsHtml += `<div style="margin-bottom:18px;">${qNum}. ${qText}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+          i++;
+          qNum++;
+        }
+      } else if (lines[i]) {
+        questionsHtml += `<div style="margin-bottom:18px;">${lines[i]}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+        i++;
+      } else {
+        i++;
+      }
+    }
+  } else {
+    // Open question mode
+    questionsHtml = lines.filter(q => q).map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`).join('');
+  }
   return `
     <div class="survey-section-box" data-section-idx="${index}" style="border:1px solid #eee; padding:15px; margin-bottom:15px; border-radius:8px;">
       ${titleHtml}
@@ -793,6 +902,7 @@ window.addSurveySection = addSurveySection;
     const promptInput = document.getElementById('aiPromptInput');
     const questionsInput = document.getElementById('surveyQuestions');
     if (!sendBtn || !promptInput) return;
+    
     sendBtn.onclick = async function() {
       let promptText = promptInput.value.trim();
       const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
@@ -802,7 +912,7 @@ window.addSurveySection = addSurveySection;
       }
       // Add MC instructions if needed
       if (surveyType === 'mc') {
-        promptText = `Create a set of ONLY multiple choice survey questions for ESL students. Each question MUST have several answer options (A, B, C, etc.) and must NOT be open-ended. Do not include answer keys. Format each question and its options clearly, for example:\n1. Question text\nA. Option1\nB. Option2\nC. Option3\n. Only output multiple choice questions with options, no open/freestyle questions. ` + (promptText ? ` Topic: ${promptText}` : '');
+        promptText = `Create a set of ONLY multiple choice survey questions for ESL students. Each question MUST have exactly 5 answer options (A, B, C, D, E). The last option (E) must always be: Other: ____________. Do not include answer keys. Format each question and its options clearly, for example:\n1. Question text\nA. Option1\nB. Option2\nC. Option3\nD. Option4\nE. Other: ____________. Only output multiple choice questions with 5 options, no open/freestyle questions.` + (promptText ? ` Topic: ${promptText}` : '');
       }
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending...';
@@ -827,12 +937,14 @@ window.addSurveySection = addSurveySection;
         const data = result.data;
         if (data.error) throw new Error(data.error.message || 'OpenAI API error');
         const content = data.choices[0].message.content.trim();
-        // Show modal to insert as new section
+        
+        // Always use the modal since survey-section-modal.js should be loaded
+        console.log('Modal function available:', typeof window.showSurveySectionModal);
         window.showSurveySectionModal(content, function(title, questions) {
           window.surveySections.push({ title, questions });
           // Always clear textarea when using sections
           if (questionsInput) questionsInput.value = '';
-          updateSurveyPreview();
+          if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
         });
       } catch (err) {
         alert('AI prompt failed: ' + err.message);
@@ -856,24 +968,8 @@ window.updateSurveyPreview = function() {
 
 // Add right-click deletion of survey sections in preview (like grammar tool)
 document.addEventListener('DOMContentLoaded', function() {
-  const preview = document.getElementById('surveyPreviewArea');
-  if (!preview) return;
-  preview.addEventListener('contextmenu', function(e) {
-    let sectionDiv = e.target.closest('.survey-section-box');
-    if (sectionDiv && preview.contains(sectionDiv) && sectionDiv.hasAttribute('data-section-idx')) {
-      e.preventDefault();
-      let idx = parseInt(sectionDiv.getAttribute('data-section-idx'), 10);
-      if (window.surveySections && idx >= 0 && idx < window.surveySections.length) {
-        if (confirm('Delete this section?')) {
-          window.surveySections.splice(idx, 1);
-          // Always keep textarea cleared when using sections
-          const questionsInput = document.getElementById('surveyQuestions');
-          if (questionsInput) questionsInput.value = '';
-          if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
-        }
-      }
-    }
-  });
+  // Section deletion is already handled in the main preview event listener above
+  // No need for duplicate handler
 });
 </script>
 <script>
@@ -884,26 +980,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (newBtn) {
       newBtn.addEventListener('click', function() {
         if (confirm('Are you sure you want to start a new survey?\n\nAll unsaved changes will be lost.')) {
-          // Clear all fields and sections
-          const titleInput = document.getElementById('surveyTitle');
-          const questionsInput = document.getElementById('surveyQuestions');
-          const instructionsInput = document.getElementById('surveyInstructions');
-          const fontSelect = document.getElementById('fontSelect');
-          const fontSizeInput = document.getElementById('fontSizeInput');
-          const templateSelect = document.getElementById('templateSelect');
-          const surveyTypeSelect = document.getElementById('surveyTypeSelect');
-          // Reset all fields
-          if (titleInput) titleInput.value = '';
-          if (questionsInput) questionsInput.value = '';
-          if (instructionsInput) instructionsInput.value = '';
-          if (fontSelect) fontSelect.value = 'Poppins';
-          if (fontSizeInput) fontSizeInput.value = 12;
-          if (templateSelect) templateSelect.value = '2';
-          if (surveyTypeSelect) surveyTypeSelect.value = 'open';
-          // Clear sections
-          window.surveySections = [];
-          // Update preview
-          if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
+          window.location.reload();
         }
       });
     }

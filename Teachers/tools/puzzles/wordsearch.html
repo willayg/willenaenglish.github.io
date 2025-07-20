@@ -341,7 +341,15 @@
             <div class="main-content">
                 <!-- Sidebar -->
                 <div class="sidebar">
-                    <!-- AI Word Generation Section (moved above Title) -->
+
+
+                    <!-- Title at the top -->
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="wordsearchTitle" placeholder="Enter worksheet title">
+                    </div>
+
+                    <!-- AI Word Generation Section -->
                     <div class="input-group">
                         <label>AI Word Generation</label>
                         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -351,9 +359,18 @@
                         <small style="color: #666; font-size: 12px; display: block;">Enter a category to generate words automatically</small>
                     </div>
 
+                    <!-- Text Analysis Section (dropdown) -->
                     <div class="input-group">
-                        <label>Title</label>
-                        <input type="text" class="input-field" id="wordsearchTitle" placeholder="Enter worksheet title">
+                        <span id="toggleExtractWordsDropdown" style="display:block; width:100%; text-align:left; margin-bottom:6px; cursor:pointer; color:#3b3b8f; font-weight:500; font-size:15px; padding:4px 0; user-select:none;">
+                            ▸ Extract Words from Text
+                        </span>
+                        <div id="extractWordsDropdown" style="display:none; margin-top:0;">
+                            <label style="margin-bottom:4px;">Extract Words from Text</label>
+                            <textarea class="textarea-field" id="passageInput" placeholder="Paste text here to extract difficult words..." rows="4"></textarea>
+                            <div class="button-group" style="margin-top: 8px;">
+                                <button class="layout-btn" id="extractDifficultWordsBtn">Extract Words</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="input-group">
@@ -382,26 +399,6 @@
 
                     <div class="button-group">
                         <button class="extract-btn" id="generateWordsearch">Generate Wordsearch</button>
-                        <button class="clear-btn" id="clearBtn">Clear All</button>
-                    </div>
-
-                    <!-- AI Word Generation Section -->
-                    <div class="input-group">
-                        <label>AI Word Generation</label>
-                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                            <input type="text" class="input-field" id="categoryPrompt" placeholder="e.g., animals, food, colors" style="flex: 1;">
-                            <button class="extract-btn" id="generateCategoryWordsBtn" style="white-space: nowrap;">Generate</button>
-                        </div>
-                        <small style="color: #666; font-size: 12px; display: block;">Enter a category to generate words automatically</small>
-                    </div>
-
-                    <!-- Text Analysis Section -->
-                    <div class="input-group">
-                        <label>Extract Words from Text</label>
-                        <textarea class="textarea-field" id="passageInput" placeholder="Paste text here to extract difficult words..." rows="4"></textarea>
-                        <div class="button-group" style="margin-top: 8px;">
-                            <button class="layout-btn" id="extractDifficultWordsBtn">Extract Words</button>
-                        </div>
                     </div>
                 </div>
 
@@ -417,6 +414,27 @@
     </div>
 
     <script src="wordsearch-standalone.js"></script>
+    <script>
+    // Dropdown for Extract Words from Text (now a styled text link)
+    document.addEventListener('DOMContentLoaded', function() {
+      var toggleBtn = document.getElementById('toggleExtractWordsDropdown');
+      var dropdown = document.getElementById('extractWordsDropdown');
+      if (toggleBtn && dropdown) {
+        toggleBtn.addEventListener('click', function() {
+          var isOpen = dropdown.style.display === 'block';
+          dropdown.style.display = isOpen ? 'none' : 'block';
+          toggleBtn.innerHTML = (isOpen ? '▸' : '▾') + ' Extract Words from Text';
+        });
+        // Add hover effect
+        toggleBtn.addEventListener('mouseover', function() {
+          toggleBtn.style.textDecoration = 'underline';
+        });
+        toggleBtn.addEventListener('mouseout', function() {
+          toggleBtn.style.textDecoration = 'none';
+        });
+      }
+    });
+    </script>
     <script>
 // Feedback modal loader for burger menu integration
 window.showFeedbackModal = function() {
