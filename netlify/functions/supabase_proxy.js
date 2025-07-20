@@ -324,21 +324,97 @@ exports.handler = async (event) => {
             body: JSON.stringify(data)
           };
         }
-        // Worksheets fetch (legacy)
-        const { data, error } = await supabase
-          .from('worksheets')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) {
+        // Worksheets fetch with profiles JOIN
+        try {
+          console.log('Attempting to fetch worksheets with profiles JOIN...');
+          const { data, error } = await supabase
+            .from('worksheets')
+            .select(`
+              *,
+              profiles!worksheets_user_id_fkey (
+                username,
+                name
+              )
+            `)
+            .order('created_at', { ascending: false });
+          
+          console.log('JOIN query result:', { data: data?.slice(0, 2), error });
+          
+          if (error) {
+            // If JOIN fails, try alternative approach
+            console.warn('JOIN query failed, trying alternative approach:', error);
+            
+            // Get worksheets first
+            const { data: worksheets, error: worksheetsError } = await supabase
+              .from('worksheets')
+              .select('*')
+              .order('created_at', { ascending: false });
+            
+            if (worksheetsError) {
+              return {
+                statusCode: 500,
+                body: JSON.stringify({ success: false, error: worksheetsError.message })
+              };
+            }
+            
+            // Get all profiles
+            const { data: profiles, error: profilesError } = await supabase
+              .from('profiles')
+              .select('id, username, name');
+            
+            if (profilesError) {
+              console.warn('Could not fetch profiles:', profilesError);
+              // Just return worksheets with 'Unknown'
+              const transformedData = worksheets.map(worksheet => ({
+                ...worksheet,
+                created_by: 'Unknown'
+              }));
+              return {
+                statusCode: 200,
+                body: JSON.stringify({ success: true, data: transformedData })
+              };
+            }
+            
+            // Manually join the data
+            const profileMap = {};
+            profiles.forEach(profile => {
+              profileMap[profile.id] = profile;
+            });
+            
+            const transformedData = worksheets.map(worksheet => ({
+              ...worksheet,
+              created_by: worksheet.user_id && profileMap[worksheet.user_id] 
+                ? (profileMap[worksheet.user_id].username || profileMap[worksheet.user_id].name)
+                : 'Unknown'
+            }));
+            
+            console.log('Manual join result sample:', transformedData.slice(0, 2));
+            
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ success: true, data: transformedData })
+            };
+          }
+          
+          // Transform data to include created_by field
+          const transformedData = data.map(worksheet => ({
+            ...worksheet,
+            created_by: worksheet.profiles?.username || worksheet.profiles?.name || 'Unknown'
+          }));
+          
+          console.log('JOIN success, transformed sample:', transformedData.slice(0, 2));
+          
+          return {
+            statusCode: 200,
+            body: JSON.stringify({ success: true, data: transformedData })
+          };
+        } catch (err) {
+          console.error('Worksheets fetch error:', err);
           return {
             statusCode: 500,
-            body: JSON.stringify({ success: false, error: error.message })
+            body: JSON.stringify({ success: false, error: err.message })
           };
         }
-        return {
-          statusCode: 200,
-          body: JSON.stringify({ success: true, data })
-        };
       } catch (err) {
         return {
           statusCode: 500,
@@ -370,6 +446,24 @@ exports.handler = async (event) => {
         headers: { Location: url },
         body: ''
       };
+    } else if (event.path.endsWith('/delete_worksheet') && event.httpMethod === 'POST') {
+      // Minimal delete worksheet endpoint
+      try {
+        const { id } = JSON.parse(event.body);
+        if (!id) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing worksheet id' }) };
+        }
+        const { error } = await supabase
+          .from('worksheets')
+          .delete()
+          .eq('user_id', id);
+        if (error) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
     } else {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }

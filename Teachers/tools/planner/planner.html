@@ -419,6 +419,7 @@
                     <span class="action-link" id="saveLessonPlanLink" style="font-size:1rem; cursor:pointer;">Save</span>
                     <span class="action-link" id="loadLessonPlanLink" style="font-size:1rem; cursor:pointer;">Load</span>
                     <span class="action-link" id="pdfLessonPlanLink" style="font-size:1rem; cursor:pointer;">PDF</span>
+                    <span class="action-link" id="moreBtn" style="font-size:1rem; cursor:pointer; margin-left:auto;">More</span>
                 </div>
                 <script>
                 // New button logic for Planner
@@ -447,6 +448,55 @@
                         const preview = document.getElementById('previewArea');
                         if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
                         if (window.updatePlannerPreview) window.updatePlannerPreview();
+                      }
+                    });
+                  }
+                  
+                  // More button logic
+                  const moreBtn = document.getElementById('moreBtn');
+                  if (moreBtn) {
+                    moreBtn.addEventListener('click', async function() {
+                      if (!document.getElementById('moreToolsOverlay')) {
+                        try {
+                          const resp = await fetch('/Teachers/components/more-tools.html');
+                          const html = await resp.text();
+                          const tempDiv = document.createElement('div');
+                          tempDiv.innerHTML = html;
+                          const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                          if (overlay) document.body.appendChild(overlay);
+                          tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                          tempDiv.querySelectorAll('script').forEach(script => {
+                            const s = document.createElement('script');
+                            if (script.textContent) s.textContent = script.textContent;
+                            document.body.appendChild(s);
+                          });
+                          setTimeout(function() {
+                            var closeBtn = document.getElementById('closeMoreToolsBtn');
+                            var overlayDiv = document.getElementById('moreToolsOverlay');
+                            if (closeBtn && overlayDiv) {
+                              closeBtn.onclick = function() {
+                                overlayDiv.style.display = 'none';
+                                document.body.style.overflow = '';
+                              };
+                            }
+                          }, 100);
+                        } catch (e) { alert('Could not load More Tools.'); return; }
+                      }
+                      if (typeof showMoreToolsModal === 'function') {
+                        showMoreToolsModal();
+                      } else {
+                        const overlay = document.getElementById('moreToolsOverlay');
+                        if (overlay) {
+                          overlay.style.display = 'flex';
+                          document.body.style.overflow = 'hidden';
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          if (closeBtn) {
+                            closeBtn.onclick = function() {
+                              overlay.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }
                       }
                     });
                   }

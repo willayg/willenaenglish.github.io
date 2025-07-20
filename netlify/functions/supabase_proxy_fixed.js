@@ -382,9 +382,9 @@ exports.handler = async (event) => {
             body: JSON.stringify({ success: true, data })
           };
         }
-        // Worksheet insert or update
+        // Worksheet insert (legacy)
         const worksheet = body;
-        console.log('worksheet.words:', worksheet.words, typeof worksheet.words);
+        console.log('worksheet.words:', worksheet.words, typeof worksheet.words); // <--- Add this line
 
         // Always normalize worksheet.words to an array of trimmed strings
         if (typeof worksheet.words === "string") {
@@ -411,24 +411,9 @@ exports.handler = async (event) => {
           }
         }
 
-        let data, error;
-        if (worksheet.id) {
-          // Update existing worksheet
-          const id = worksheet.id;
-          const updateObj = { ...worksheet };
-          delete updateObj.id;
-          ({ data, error } = await supabase
-            .from('worksheets')
-            .update(updateObj)
-            .eq('id', id)
-            .select());
-        } else {
-          // Insert new worksheet
-          if ('id' in worksheet) delete worksheet.id;
-          ({ data, error } = await supabase
-            .from('worksheets')
-            .insert([worksheet]));
-        }
+        const { data, error } = await supabase
+          .from('worksheets')
+          .insert([worksheet]);
         if (error) {
           return {
             statusCode: 400,
@@ -498,6 +483,24 @@ exports.handler = async (event) => {
           supabaseUrlPrefix: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 20) + '...' : 'MISSING'
         })
       };
+    } else if (event.path.endsWith('/delete_worksheet') && event.httpMethod === 'POST') {
+      // Minimal delete worksheet endpoint
+      try {
+        const { id } = JSON.parse(event.body);
+        if (!id) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing worksheet id' }) };
+        }
+        const { error } = await supabase
+          .from('worksheets')
+          .delete()
+          .eq('id', id);
+        if (error) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
     } else {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
     }
