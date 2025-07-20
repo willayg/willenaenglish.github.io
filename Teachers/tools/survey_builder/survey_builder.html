@@ -267,15 +267,17 @@
                 <div class="logo">
                     <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
                 </div>
-                <h1 style="flex:1; text-align:center; margin:0;">ESL Survey Builder</h1>
+                <h1 style="flex:1; text-align:center; margin:0;">Survey Builder</h1>
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
             <!-- Top Action Bar -->
             <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
+                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
             </div>
             <!-- Floating Toolbar -->
             <div class="floating-toolbar" id="floatingToolbar">
@@ -341,107 +343,243 @@
                         <p>Preview will appear here</p>
                     </div>
                 </div>
+                <script>
+                // CRITICAL: Define edit persistence function FIRST, before any preview logic
+                function persistPreviewEdits() {
+                  console.log('Saving preview edits...');
+                  const preview = document.getElementById('surveyPreviewArea');
+                  if (!preview) return;
+                  
+                  // If using surveySections, update their questions from the preview
+                  if (window.surveySections && window.surveySections.length > 0) {
+                    // Find all section-boxes in the preview (CORRECTED SELECTOR)
+                    const sectionDivs = preview.querySelectorAll('.survey-section-box');
+                    sectionDivs.forEach((div, idx) => {
+                      // Find the questions inside each section
+                      const questionsDiv = div.querySelector('.survey-questions');
+                      if (questionsDiv && window.surveySections[idx]) {
+                        // Save the edited HTML/text back to the section
+                        // Remove any HTML tags for storage, keep line breaks
+                        let html = questionsDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+                        html = html.replace(/<[^>]+>/g, '');
+                        window.surveySections[idx].questions = html;
+                        console.log(`Saved section ${idx}:`, html);
+                      }
+                    });
+                  } else {
+                    // Fallback: update the manual questions textarea
+                    const questionsTextarea = document.getElementById('surveyQuestions');
+                    if (questionsTextarea) {
+                      // Get the first .survey-questions div
+                      const qDiv = preview.querySelector('.survey-questions');
+                      if (qDiv) {
+                        let html = qDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+                        html = html.replace(/<[^>]+>/g, '');
+                        questionsTextarea.value = html;
+                        console.log('Saved textarea:', html);
+                      }
+                    }
+                  }
+                }
+                
+                // Make this function globally available
+                window.persistPreviewEdits = persistPreviewEdits;
+
+                // Make preview content editable on left click and allow right-click to delete a section
+                document.addEventListener('DOMContentLoaded', function() {
+                  const preview = document.getElementById('surveyPreviewArea');
+                  if (preview) {
+                    // Enable editing on click
+                    preview.addEventListener('click', function(e) {
+                      if (!preview.isContentEditable) {
+                        preview.contentEditable = 'true';
+                        preview.focus();
+                      }
+                    });
+
+                    // Save edits immediately on any change
+                    preview.addEventListener('blur', persistPreviewEdits, true);
+                    preview.addEventListener('input', persistPreviewEdits, true);
+                    preview.addEventListener('keyup', persistPreviewEdits, true);
+
+                    // Right-click to delete a section
+                    preview.addEventListener('contextmenu', function(e) {
+                      let section = e.target.closest('.survey-section-box');
+                      if (section && preview.contains(section) && section.hasAttribute('data-section-idx')) {
+                        e.preventDefault();
+                        let idx = parseInt(section.getAttribute('data-section-idx'), 10);
+                        if (window.surveySections && idx >= 0 && idx < window.surveySections.length) {
+                          window.surveySections.splice(idx, 1);
+                          if (typeof window.updateSurveyPreview === 'function') {
+                            window.updateSurveyPreview();
+                          }
+                        }
+                      } else {
+                        let section = e.target.closest('.survey-questions');
+                        if (section && preview.contains(section)) {
+                          e.preventDefault();
+                          const questionsTextarea = document.getElementById('surveyQuestions');
+                          if (questionsTextarea) {
+                            questionsTextarea.value = '';
+                            if (typeof window.updateSurveyPreview === 'function') {
+                              window.updateSurveyPreview();
+                            }
+                          }
+                        }
+                      }
+                    });
+                  }
+                });
+                </script>
             </div>
         </div>
     </div>
     <script>
-    // Survey preview logic with design templates
-    function updateSurveyPreview() {
-      const title = document.getElementById('surveyTitle')?.value || '';
-      const instructions = document.getElementById('surveyInstructions')?.value || '';
-      const font = document.getElementById('fontSelect')?.value || 'Poppins';
-      const fontSize = document.getElementById('fontSizeInput')?.value || '12';
-      const template = document.getElementById('templateSelect')?.value || '2';
-
-      let designClass = `design-${template}`;
-
-      let html = '';
-      // Survey type logic
-      const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
-      let questionDivs = '';
-      if (questions.trim()) {
-        const lines = questions.split(/\r?\n/).map(q => q.trim());
-        if (surveyType === 'mc') {
-          // Improved Multiple Choice parsing: group each question with its options
-          questionDivs = '';
-          let qNum = 1;
-          let i = 0;
-          while (i < lines.length) {
-            // Detect question line: starts with number and period (e.g., 1. ...)
-            let qMatch = lines[i].match(/^(\d+)\.\s*(.*)$/);
-            if (qMatch) {
-              let qText = qMatch[2] || '';
-              let options = [];
-              let j = i + 1;
-              // Gather options: lines starting with A. B. C. etc
-              while (j < lines.length) {
-                let optMatch = lines[j].match(/^([A-Z])\.[ )]?\s*(.+)$/);
-                if (optMatch) {
-                  options.push(optMatch[2]);
-                  j++;
-                } else {
-                  break;
-                }
-              }
-              if (options.length > 0) {
-                // Render question and options inline
-                questionDivs += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:flex;gap:24px;flex-wrap:wrap;'>`;
-                // Always add 'Other: ____________' as the last option if not present
-                let hasOther = options.some(opt => opt.trim().toLowerCase().startsWith('other'));
-                if (!hasOther) {
-                  options.push('Other: ____________');
-                }
-                options.forEach((opt, k) => {
-                  questionDivs += `<label style='display:inline-flex;align-items:center;margin-right:18px;font-size:1em;'><input type='radio' name='q${qNum}' style='margin-right:6px;'>${opt}</label>`;
-                });
-                questionDivs += `</div></div>`;
-                i = j;
-                qNum++;
-              } else {
-                // No options, treat as open question
-                questionDivs += `<div style="margin-bottom:18px;">${qNum}. ${qText}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
-                i++;
-                qNum++;
-              }
-            } else if (lines[i]) {
-              // Not a question line, treat as open question
-              questionDivs += `<div style="margin-bottom:18px;">${lines[i]}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
-              i++;
-            } else {
-              i++;
-            }
-          }
-        } else {
-          // Open question mode (default)
-          questionDivs = lines.filter(q => q).map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`).join('');
-        }
-      } else {
-        questionDivs = '<i>No questions yet.</i>';
+    // Survey preview logic (mirrored from grammar2.html)
+    function createSurveyPreview() {
+      console.log('createSurveyPreview called');
+      
+      // CRITICAL: Save any existing edits FIRST before rebuilding
+      if (typeof window.persistPreviewEdits === 'function') {
+        window.persistPreviewEdits();
       }
-      html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;" contenteditable="true" spellcheck="true">
-        <div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">
-          <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-            <div style="flex:1;text-align:center;">
-              <h1 style="font-size:1.8em !important;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'ESL Survey'}</h1>
-            </div>
-            <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;margin-left:30px;font-size:1em !important;min-width:180px;">
-              <span style="margin-bottom:8px;font-size:1em !important;">Name: ________________</span>
-              <span style="font-size:1em !important;">Date: ________________</span>
-            </div>
-          </div>
-        </div>
-        ${instructions ? `<div style='margin-bottom:10px;'><b>Instructions:</b> ${instructions}</div>` : ''}
-        <div style='margin-bottom:10px;'><b>Survey Questions:</b></div>
-        <div class="survey-questions">${questionDivs}</div>
-      </div>`;
-
+      
       const preview = document.getElementById('surveyPreviewArea');
-      if (preview) {
-        preview.innerHTML = html;
+      console.log('Preview element found:', !!preview);
+      
+      try {
+        // Get all values
+        const title = document.getElementById('surveyTitle')?.value || '';
+        const instructions = document.getElementById('surveyInstructions')?.value || '';
+        const font = document.getElementById('fontSelect')?.value || 'Poppins';
+        const fontSize = document.getElementById('fontSizeInput')?.value || '12';
+        const template = document.getElementById('templateSelect')?.value || '2';
+        const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
+        
+        console.log('Values:', { title, font, fontSize, template, surveyType });
+        
+        // Get design class
+        let designClass = `design-${template}`;
+        
+        // Build questions HTML
+        let questionsHtml = '';
+        let surveySections = window.surveySections || [];
+        let addSurveySection = window.addSurveySection;
+        
+        if (surveySections.length > 0 && typeof addSurveySection === 'function') {
+          surveySections.forEach(function(section, idx) {
+            let html = addSurveySection(section, idx);
+            questionsHtml += html;
+          });
+        } else {
+          // fallback to single questions textarea
+          const questions = document.getElementById('surveyQuestions')?.value || '';
+          
+          if (questions.trim()) {
+            const lines = questions.split(/\r?\n/).map(q => q.trim());
+            if (surveyType === 'mc') {
+              // Multiple Choice parsing
+              let qNum = 1;
+              let i = 0;
+              while (i < lines.length) {
+                let qMatch = lines[i].match(/^(\d+)\.\s*(.*)$/);
+                if (qMatch) {
+                  let qText = qMatch[2] || '';
+                  let options = [];
+                  let j = i + 1;
+                  while (j < lines.length) {
+                    let optMatch = lines[j].match(/^([A-Z])\.[ )]?\s*(.+)$/);
+                    if (optMatch) {
+                      options.push(optMatch[2]);
+                      j++;
+                    } else {
+                      break;
+                    }
+                  }
+                  if (options.length > 0) {
+                    questionsHtml += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:flex;gap:24px;flex-wrap:wrap;'>`;
+                    let hasOther = options.some(opt => opt.trim().toLowerCase().startsWith('other'));
+                    if (!hasOther) {
+                      options.push('Other: ____________');
+                    }
+                    options.forEach((opt, k) => {
+                      questionsHtml += `<label style='display:inline-flex;align-items:center;margin-right:18px;font-size:1em;'><input type='radio' name='q${qNum}' style='margin-right:6px;'>${opt}</label>`;
+                    });
+                    questionsHtml += `</div></div>`;
+                    i = j;
+                    qNum++;
+                  } else {
+                    questionsHtml += `<div style="margin-bottom:18px;">${qNum}. ${qText}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+                    i++;
+                    qNum++;
+                  }
+                } else if (lines[i]) {
+                  questionsHtml += `<div style="margin-bottom:18px;">${lines[i]}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+                  i++;
+                } else {
+                  i++;
+                }
+              }
+            } else {
+              // Open question mode
+              questionsHtml = lines.filter(q => q).map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`).join('');
+            }
+          } else {
+            questionsHtml = '<i>No questions yet. Type in the Questions box or use AI to generate questions.</i>';
+          }
+          questionsHtml = `<div class="survey-questions">${questionsHtml}</div>`;
+        }
+
+        // Create HTML
+        let html = '<div class="' + designClass + ' a4-sheet" style="width:100%;padding:24px;box-sizing:border-box;font-family:' + font + ',sans-serif;font-size:' + fontSize + 'px;">';
+
+        // Add header
+        html += '<div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">';
+        html += '<img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">';
+        html += '<div style="flex:1;text-align:center;">';
+        html += '<h1 style="font-size:2.4em;margin:0 0 5px 0;color:#2e2b3f;font-family:' + font + ',sans-serif;">' + (title || 'Survey') + '</h1>';
+        html += '<div style="display:flex;justify-content:space-between;margin:0 30px 0 30px;font-size:1em;">';
+        html += '<span>Name: ________________</span>';
+        html += '<span>Date: ________________</span>';
+        html += '</div></div></div>';
+
+        // Add instructions if present
+        if (instructions) {
+          html += '<div style="margin-bottom:10px;"><b>Instructions:</b> ' + instructions + '</div>';
+        }
+
+        // Add content section
+        html += '<div style="margin-bottom:10px;"><b>Survey Questions:</b></div>';
+        html += '<div>' + questionsHtml + '</div>';
+
+        // Close container
+        html += '</div>';
+
+        console.log('Generated HTML length:', html.length);
+
+        // Update preview
+        const preview = document.getElementById('surveyPreviewArea');
+        if (preview) {
+          preview.innerHTML = html;
+          // Hide placeholder if it exists
+          const placeholder = document.getElementById('surveyPreviewPlaceholder');
+          if (placeholder) {
+            placeholder.style.display = 'none';
+          }
+          console.log('Preview updated successfully');
+        } else {
+          console.error('Preview element not found!');
+        }
+        
+        // Return the HTML for use by print function
+        return html;
+      } catch (error) {
+        console.error('Error in createSurveyPreview:', error);
+        return '<div class="a4-sheet" style="padding:24px;"><h1>Error generating preview</h1><p>' + error.message + '</p></div>';
       }
     }
 
+    // Hook up preview updates to all relevant fields and font size buttons
     document.addEventListener('DOMContentLoaded', function() {
       const ids = [
         'surveyTitle',
@@ -452,39 +590,47 @@
         'templateSelect',
         'surveyTypeSelect'
       ];
-      ids.forEach(id => {
+      ids.forEach(function(id) {
         const el = document.getElementById(id);
         if (el) {
-          el.addEventListener('input', updateSurveyPreview);
-          el.addEventListener('change', updateSurveyPreview);
+          el.addEventListener('input', createSurveyPreview);
+          el.addEventListener('change', createSurveyPreview);
         }
       });
 
-      // Font size plus/minus button logic
+      // Font size + and - buttons
       const fontSizeInput = document.getElementById('fontSizeInput');
-      const decreaseFontBtn = document.getElementById('decreaseFontBtn');
-      const increaseFontBtn = document.getElementById('increaseFontBtn');
-      if (decreaseFontBtn && fontSizeInput) {
-        decreaseFontBtn.addEventListener('click', function() {
-          let val = parseInt(fontSizeInput.value) || 12;
-          if (val > parseInt(fontSizeInput.min)) {
-            fontSizeInput.value = val - 1;
-            fontSizeInput.dispatchEvent(new Event('input'));
-          }
-        });
-      }
-      if (increaseFontBtn && fontSizeInput) {
-        increaseFontBtn.addEventListener('click', function() {
-          let val = parseInt(fontSizeInput.value) || 12;
-          if (val < parseInt(fontSizeInput.max)) {
+      const increaseBtn = document.getElementById('increaseFontBtn');
+      const decreaseBtn = document.getElementById('decreaseFontBtn');
+      if (increaseBtn && fontSizeInput) {
+        increaseBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value, 10) || 12;
+          if (val < parseInt(fontSizeInput.max || '18', 10)) {
             fontSizeInput.value = val + 1;
             fontSizeInput.dispatchEvent(new Event('input'));
           }
         });
       }
+      if (decreaseBtn && fontSizeInput) {
+        decreaseBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value, 10) || 12;
+          if (val > parseInt(fontSizeInput.min || '8', 10)) {
+            fontSizeInput.value = val - 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
 
-      updateSurveyPreview();
-      window.updateSurveyPreview = updateSurveyPreview;
+      createSurveyPreview();
+      
+      // Force hide placeholder and ensure preview is visible
+      const placeholder = document.getElementById('surveyPreviewPlaceholder');
+      if (placeholder) {
+        placeholder.style.display = 'none';
+      }
+      
+      window.updateSurveyPreview = createSurveyPreview;
+      window.createSurveyPreview = createSurveyPreview; // Expose for print function
     });
     </script>
     <script>
@@ -528,12 +674,24 @@
                 template: templateSelect?.value || '1'
             };
 
+            // Save sections if they exist, otherwise save textarea content
+            let questions = '';
+            if (window.surveySections && Array.isArray(window.surveySections) && window.surveySections.length > 0) {
+                try {
+                    questions = JSON.stringify(window.surveySections);
+                } catch (e) {
+                    questions = questionsInput?.value || '';
+                }
+            } else {
+                questions = questionsInput?.value || '';
+            }
+
             return {
                 title: titleInput?.value?.trim() || 'Untitled Survey',
                 worksheet_type: 'survey',
                 words: [], // Survey doesn't use words array
                 settings: JSON.stringify(settings),
-                questions: questionsInput?.value || '',
+                questions: questions,
                 created_at: new Date().toISOString()
             };
         }
@@ -544,18 +702,36 @@
                 alert('Invalid survey worksheet data.');
                 return;
             }
-
             try {
                 const titleInput = document.getElementById('surveyTitle');
                 const questionsInput = document.getElementById('surveyQuestions');
                 const fontSelect = document.getElementById('fontSelect');
                 const fontSizeInput = document.getElementById('fontSizeInput');
                 const templateSelect = document.getElementById('templateSelect');
-
-                // Load basic data
+                const instructionsInput = document.getElementById('surveyInstructions');
+                // Section-based logic (like grammar)
+                window.surveySections = [];
+                let loadedSections = [];
+                let isSectionJson = false;
+                if (worksheet.questions && worksheet.questions.trim().startsWith('[')) {
+                    try {
+                        loadedSections = JSON.parse(worksheet.questions);
+                        if (Array.isArray(loadedSections)) {
+                            window.surveySections = loadedSections;
+                            isSectionJson = true;
+                        }
+                    } catch (e) {
+                        window.surveySections = [];
+                    }
+                }
+                if (!isSectionJson) {
+                    window.surveySections = [];
+                    if (questionsInput) questionsInput.value = worksheet.questions || '';
+                } else {
+                    if (questionsInput) questionsInput.value = '';
+                }
                 if (titleInput) titleInput.value = worksheet.title || '';
-                if (questionsInput) questionsInput.value = worksheet.questions || '';
-
+                if (instructionsInput && worksheet.instructions) instructionsInput.value = worksheet.instructions;
                 // Load settings (parse from JSON string if needed)
                 if (worksheet.settings) {
                     let settings;
@@ -564,17 +740,15 @@
                     } else {
                         settings = worksheet.settings;
                     }
-                    
                     if (settings.font && fontSelect) fontSelect.value = settings.font;
                     if (settings.fontSize && fontSizeInput) fontSizeInput.value = settings.fontSize;
                     if (settings.template && templateSelect) templateSelect.value = settings.template;
                 }
-
-                // Trigger regeneration of preview with loaded data
-                if (typeof window.updateSurveyPreview === 'function') {
-                    window.updateSurveyPreview();
-                }
-
+                setTimeout(() => {
+                    if (typeof window.updateSurveyPreview === 'function') {
+                        window.updateSurveyPreview();
+                    }
+                }, 100);
                 alert('Survey loaded successfully!');
             } catch (error) {
                 console.error('Error loading worksheet:', error);
@@ -590,11 +764,34 @@
 // Section-based survey logic
 window.surveySections = window.surveySections || [];
 
+// Function to render a single survey section into HTML
+function addSurveySection(section, index) {
+  if (!section) return '';
+  const titleHtml = section.title ? `<h3 class="section-title">${section.title}</h3>` : '';
+  // Basic formatting for questions: treat each line as a question with a line for an answer
+  const questionsHtml = section.questions
+    .split('\n')
+    .filter(q => q.trim() !== '')
+    .map(q => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`)
+    .join('');
+
+  return `
+    <div class="survey-section-box" data-section-idx="${index}" style="border:1px solid #eee; padding:15px; margin-bottom:15px; border-radius:8px;">
+      ${titleHtml}
+      <div class="survey-questions">
+        ${questionsHtml}
+      </div>
+    </div>
+  `;
+}
+window.addSurveySection = addSurveySection;
+
 // Patch AI button to insert as new section
 (function() {
   document.addEventListener('DOMContentLoaded', function() {
     const sendBtn = document.getElementById('sendAIPromptBtn');
     const promptInput = document.getElementById('aiPromptInput');
+    const questionsInput = document.getElementById('surveyQuestions');
     if (!sendBtn || !promptInput) return;
     sendBtn.onclick = async function() {
       let promptText = promptInput.value.trim();
@@ -633,6 +830,8 @@ window.surveySections = window.surveySections || [];
         // Show modal to insert as new section
         window.showSurveySectionModal(content, function(title, questions) {
           window.surveySections.push({ title, questions });
+          // Always clear textarea when using sections
+          if (questionsInput) questionsInput.value = '';
           updateSurveyPreview();
         });
       } catch (err) {
@@ -644,37 +843,119 @@ window.surveySections = window.surveySections || [];
   });
 })();
 
-// Patch preview to use sections
+// Patch preview to use sections and keep textarea in sync
 const origUpdateSurveyPreview = window.updateSurveyPreview;
 window.updateSurveyPreview = function() {
-  const title = document.getElementById('surveyTitle')?.value || '';
-  const instructions = document.getElementById('surveyInstructions')?.value || '';
-  const font = document.getElementById('fontSelect')?.value || 'Poppins';
-  const fontSize = document.getElementById('fontSizeInput')?.value || '12';
-  const template = document.getElementById('templateSelect')?.value || '2';
-  let designClass = `design-${template}`;
-  let html = '';
-  let questionDivs = window.renderSurveySections(window.surveySections);
-  html += `<div class="${designClass}" style="width:100%;padding:24px;box-sizing:border-box;font-family:${font},sans-serif;font-size:${fontSize}px;min-height:500px;" contenteditable="true" spellcheck="true">
-    <div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-        <div style="flex:1;text-align:center;">
-          <h1 style="font-size:1.8em !important;margin:0 0 5px 0;color:#2e2b3f;">${title ? title : 'ESL Survey'}</h1>
-        </div>
-        <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;margin-left:30px;font-size:1em !important;min-width:180px;">
-          <span style="margin-bottom:8px;font-size:1em !important;">Name: ________________</span>
-          <span style="font-size:1em !important;">Date: ________________</span>
-        </div>
-      </div>
-    </div>
-    ${instructions ? `<div style='margin-bottom:10px;'><b>Instructions:</b> ${instructions}</div>` : ''}
-    <div style='margin-bottom:10px;'><b>Survey Questions:</b></div>
-    <div class="survey-questions">${questionDivs}</div>
-  </div>`;
-  const preview = document.getElementById('surveyPreviewArea');
-  if (preview) preview.innerHTML = html;
+  // Use the createSurveyPreview function which has the proper structure
+  if (typeof window.createSurveyPreview === 'function') {
+    window.createSurveyPreview();
+  } else if (typeof origUpdateSurveyPreview === 'function') {
+    origUpdateSurveyPreview();
+  }
 };
+
+// Add right-click deletion of survey sections in preview (like grammar tool)
+document.addEventListener('DOMContentLoaded', function() {
+  const preview = document.getElementById('surveyPreviewArea');
+  if (!preview) return;
+  preview.addEventListener('contextmenu', function(e) {
+    let sectionDiv = e.target.closest('.survey-section-box');
+    if (sectionDiv && preview.contains(sectionDiv) && sectionDiv.hasAttribute('data-section-idx')) {
+      e.preventDefault();
+      let idx = parseInt(sectionDiv.getAttribute('data-section-idx'), 10);
+      if (window.surveySections && idx >= 0 && idx < window.surveySections.length) {
+        if (confirm('Delete this section?')) {
+          window.surveySections.splice(idx, 1);
+          // Always keep textarea cleared when using sections
+          const questionsInput = document.getElementById('surveyQuestions');
+          if (questionsInput) questionsInput.value = '';
+          if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
+        }
+      }
+    }
+  });
+});
+</script>
+<script>
+// Add New and More button logic for Survey Builder
+  document.addEventListener('DOMContentLoaded', function() {
+    // New button logic
+    const newBtn = document.getElementById('newBtn');
+    if (newBtn) {
+      newBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to start a new survey?\n\nAll unsaved changes will be lost.')) {
+          // Clear all fields and sections
+          const titleInput = document.getElementById('surveyTitle');
+          const questionsInput = document.getElementById('surveyQuestions');
+          const instructionsInput = document.getElementById('surveyInstructions');
+          const fontSelect = document.getElementById('fontSelect');
+          const fontSizeInput = document.getElementById('fontSizeInput');
+          const templateSelect = document.getElementById('templateSelect');
+          const surveyTypeSelect = document.getElementById('surveyTypeSelect');
+          // Reset all fields
+          if (titleInput) titleInput.value = '';
+          if (questionsInput) questionsInput.value = '';
+          if (instructionsInput) instructionsInput.value = '';
+          if (fontSelect) fontSelect.value = 'Poppins';
+          if (fontSizeInput) fontSizeInput.value = 12;
+          if (templateSelect) templateSelect.value = '2';
+          if (surveyTypeSelect) surveyTypeSelect.value = 'open';
+          // Clear sections
+          window.surveySections = [];
+          // Update preview
+          if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
+        }
+      });
+    }
+    // More button logic
+    const moreBtn = document.getElementById('moreBtn');
+    if (moreBtn) {
+      moreBtn.addEventListener('click', async function() {
+        if (!document.getElementById('moreToolsOverlay')) {
+          try {
+            const resp = await fetch('/Teachers/components/more-tools.html');
+            const html = await resp.text();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const overlay = tempDiv.querySelector('#moreToolsOverlay');
+            if (overlay) document.body.appendChild(overlay);
+            tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+            tempDiv.querySelectorAll('script').forEach(script => {
+              const s = document.createElement('script');
+              if (script.textContent) s.textContent = script.textContent;
+              document.body.appendChild(s);
+            });
+            setTimeout(function() {
+              var closeBtn = document.getElementById('closeMoreToolsBtn');
+              var overlayDiv = document.getElementById('moreToolsOverlay');
+              if (closeBtn && overlayDiv) {
+                closeBtn.onclick = function() {
+                  overlayDiv.style.display = 'none';
+                  document.body.style.overflow = '';
+                };
+              }
+            }, 100);
+          } catch (e) { alert('Could not load More Tools.'); return; }
+        }
+        if (typeof showMoreToolsModal === 'function') {
+          showMoreToolsModal();
+        } else {
+          const overlay = document.getElementById('moreToolsOverlay');
+          if (overlay) {
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            var closeBtn = document.getElementById('closeMoreToolsBtn');
+            if (closeBtn) {
+              closeBtn.onclick = function() {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+              };
+            }
+          }
+        }
+      });
+    }
+  });
 </script>
 </body>
 </html>

@@ -241,7 +241,6 @@ Passage: ${passage}`
         gridContainer.innerHTML = `
             <div style="display: flex; gap: 20px; align-items: flex-start;">
                 <div style="flex-shrink: 0; min-width: 200px;">
-                    <h3 style="margin: 0 0 15px 0;">Grid Game - ${gridSize.toUpperCase()}</h3>
                     <p style="font-size: 0.9rem; color: #666; margin: 0 0 15px 0; line-height: 1.4;">
                         Click squares to reveal questions<br>
                         Right-click to assign team colors
@@ -351,6 +350,8 @@ Passage: ${passage}`
         });
 
         // Add fullscreen functionality
+        document.getElementById('fullscreenBtn').classList.add('toolbar-action-btn');
+        document.getElementById('resetGridBtn').classList.add('toolbar-action-btn');
         document.getElementById('fullscreenBtn').addEventListener('click', enterFullscreen);
         document.getElementById('resetGridBtn').addEventListener('click', resetGrid);
 

@@ -311,15 +311,107 @@
                 <div class="logo">
                     <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
                 </div>
-                <h1 style="flex:1; text-align:center; margin:0;">Grammar Worksheet Generator</h1>
+                <h1 style="flex:1; text-align:center; margin:0;">Grammar Builder</h1>
                 <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
             </div>
             <!-- Top Action Bar -->
             <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
+                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
+                <script>
+                // Attach More button to show the More Tools modal overlay
+                document.addEventListener('DOMContentLoaded', function() {
+                  // New button logic
+                  const newBtn = document.getElementById('newBtn');
+                  if (newBtn) {
+                    newBtn.addEventListener('click', function() {
+                      if (confirm('Are you sure you want to start a new worksheet? This will clear all current content.')) {
+                        // Reset all worksheet fields and state
+                        const title = document.getElementById('grammarTitle');
+                        if (title) title.value = '';
+                        const aiPrompt = document.getElementById('aiPromptInput');
+                        if (aiPrompt) aiPrompt.value = '';
+                        const questionType = document.getElementById('questionTypeSelect');
+                        if (questionType) questionType.value = 'free';
+                        const manualQuestions = document.getElementById('grammarQuestions');
+                        if (manualQuestions) manualQuestions.value = '';
+                        const answers = document.getElementById('grammarAnswers');
+                        if (answers) answers.value = '';
+                        const fontSelect = document.getElementById('fontSelect');
+                        if (fontSelect) fontSelect.value = 'Poppins';
+                        const fontSizeInput = document.getElementById('fontSizeInput');
+                        if (fontSizeInput) fontSizeInput.value = '12';
+                        const templateSelect = document.getElementById('templateSelect');
+                        if (templateSelect) templateSelect.value = '2';
+                        const layoutSelect = document.getElementById('layoutSelect');
+                        if (layoutSelect) layoutSelect.value = 'default';
+                        // Clear worksheet sections if used
+                        if (window.grammarSections) window.grammarSections.length = 0;
+                        // Update preview if function exists
+                        if (typeof window.updateGrammarPreview === 'function') window.updateGrammarPreview();
+                      }
+                    });
+                  }
+                  // More button logic
+                  const moreBtn = document.getElementById('moreBtn');
+                  if (!moreBtn) return;
+                  moreBtn.addEventListener('click', async function() {
+                    // If modal not present, fetch and inject it
+                    if (!document.getElementById('moreToolsOverlay')) {
+                      try {
+                        const resp = await fetch('/Teachers/components/more-tools.html');
+                        const html = await resp.text();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        // Only append the overlay div, not the whole HTML
+                        const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                        if (overlay) document.body.appendChild(overlay);
+                        // Also append any <style> tags (for modal styling)
+                        tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                        // Also append any <script> tags (for modal logic)
+                        tempDiv.querySelectorAll('script').forEach(script => {
+                          const s = document.createElement('script');
+                          if (script.textContent) s.textContent = script.textContent;
+                          document.body.appendChild(s);
+                        });
+                        // Attach close button handler immediately after injection
+                        setTimeout(function() {
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          var overlayDiv = document.getElementById('moreToolsOverlay');
+                          if (closeBtn && overlayDiv) {
+                            closeBtn.onclick = function() {
+                              overlayDiv.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }, 100);
+                      } catch (e) { alert('Could not load More Tools.'); return; }
+                    }
+                    if (typeof showMoreToolsModal === 'function') {
+                      showMoreToolsModal();
+                    } else {
+                      // fallback: try to show overlay directly
+                      const overlay = document.getElementById('moreToolsOverlay');
+                      if (overlay) {
+                        overlay.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        // Attach close button handler if not already
+                        var closeBtn = document.getElementById('closeMoreToolsBtn');
+                        if (closeBtn) {
+                          closeBtn.onclick = function() {
+                            overlay.style.display = 'none';
+                            document.body.style.overflow = '';
+                          };
+                        }
+                      }
+                    }
+                  });
+                });
+                </script>
             </div>
             <!-- Floating Toolbar -->
             <div class="floating-toolbar" id="floatingToolbar">

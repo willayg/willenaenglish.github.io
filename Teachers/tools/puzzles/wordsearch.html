@@ -226,43 +226,68 @@
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
+                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
             </div>
             <script>
-            // New button logic for Wordsearch
+            // New button logic for Wordsearch (refreshes the page)
             document.addEventListener('DOMContentLoaded', function() {
               const newBtn = document.getElementById('newBtn');
               if (newBtn) {
                 newBtn.addEventListener('click', function() {
                   if (confirm('Are you sure you want to start a new wordsearch?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
-                    // Clear all main fields
-                    const idsToClear = [
-                      'titleInput',
-                      'wordListTextarea'
-                    ];
-                    idsToClear.forEach(id => {
-                      const el = document.getElementById(id);
-                      if (el) {
-                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
-                      }
-                    });
-                    // Reset selects
-                    const selectsToReset = [
-                      'wordsearchFont',
-                      'wordsearchTemplate',
-                      'wordsearchCase',
-                      'wordsearchGridSize'
-                    ];
-                    selectsToReset.forEach(id => {
-                      const sel = document.getElementById(id);
-                      if (sel) sel.selectedIndex = 0;
-                    });
-                    // Optionally clear preview area
-                    const preview = document.getElementById('previewArea');
-                    if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
-                    if (window.updateWordsearchPreview) window.updateWordsearchPreview();
+                    window.location.reload();
                   }
                 });
               }
+
+                // More button logic
+                const moreBtn = document.getElementById('moreBtn');
+                if (moreBtn) {
+                  moreBtn.addEventListener('click', async function() {
+                    if (!document.getElementById('moreToolsOverlay')) {
+                      try {
+                        const resp = await fetch('/Teachers/components/more-tools.html');
+                        const html = await resp.text();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                        if (overlay) document.body.appendChild(overlay);
+                        tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                        tempDiv.querySelectorAll('script').forEach(script => {
+                          const s = document.createElement('script');
+                          if (script.textContent) s.textContent = script.textContent;
+                          document.body.appendChild(s);
+                        });
+                        setTimeout(function() {
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          var overlayDiv = document.getElementById('moreToolsOverlay');
+                          if (closeBtn && overlayDiv) {
+                            closeBtn.onclick = function() {
+                              overlayDiv.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }, 100);
+                      } catch (e) { alert('Could not load More Tools.'); return; }
+                    }
+                    if (typeof showMoreToolsModal === 'function') {
+                      showMoreToolsModal();
+                    } else {
+                      const overlay = document.getElementById('moreToolsOverlay');
+                      if (overlay) {
+                        overlay.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        var closeBtn = document.getElementById('closeMoreToolsBtn');
+                        if (closeBtn) {
+                          closeBtn.onclick = function() {
+                            overlay.style.display = 'none';
+                            document.body.style.overflow = '';
+                          };
+                        }
+                      }
+                    }
+                  });
+                }
             });
             </script>
 
