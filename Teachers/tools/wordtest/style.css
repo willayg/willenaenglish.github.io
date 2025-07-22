@@ -1,3 +1,14 @@
+.worksheet-preview .worksheet-header span {
+  /* Only layout/overflow properties here; all font/color handled by .title-style-* classes */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Worksheet Title Styles (1-10) */
+/* Worksheet Title Styles (0-10) */
 body {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(135deg, #7a7c85 0%, #54535c 100%);

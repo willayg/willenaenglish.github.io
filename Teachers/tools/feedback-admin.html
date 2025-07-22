@@ -97,6 +97,12 @@
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No feedback found.</td></tr>';
         return;
       }
+      // Sort: urgent feedbacks ("urgent" in feedback, case-insensitive) to top
+      feedbacks = feedbacks.slice().sort((a, b) => {
+        const aUrgent = (a.feedback||'').toLowerCase().includes('urgent') ? 1 : 0;
+        const bUrgent = (b.feedback||'').toLowerCase().includes('urgent') ? 1 : 0;
+        return bUrgent - aUrgent;
+      });
       tbody.innerHTML = feedbacks.map(f => `
         <tr class="feedback-row">
           <td>${formatDate(f.created_at)}</td>

@@ -81,7 +81,6 @@ let currentWords = [];
 let currentSettings = {
     font: 'Arial',
     fontSize: 15,
-    design: 'Design 1',
     layout: 'default',
     imageGap: 25,
     imageSize: 50,
@@ -268,7 +267,6 @@ function initializeEventListeners() {
     // Toolbar controls
     document.getElementById('fontSelect').addEventListener('change', updateFont);
     document.getElementById('fontSizeInput').addEventListener('change', updateFontSize);
-    document.getElementById('designSelect').addEventListener('change', updateDesign);
     document.getElementById('layoutSelect').addEventListener('change', updateLayout);
 
     // Image controls with immediate update
@@ -437,11 +435,10 @@ function getCurrentWorksheetData() {
     }
     
     // Only save worksheet_type, title, passage_text, words, layout, settings, and imageData
-    // settings: font, fontSize, design, imageSize, imageGap, testMode, numLettersToHide
+    // settings: font, fontSize, imageSize, imageGap, testMode, numLettersToHide
     const settings = {
         font: currentSettings.font,
         fontSize: currentSettings.fontSize,
-        design: currentSettings.design,
         imageSize: currentSettings.imageSize,
         imageGap: currentSettings.imageGap,
         testMode: currentSettings.testMode,
@@ -508,11 +505,6 @@ function loadWorksheet(worksheet) {
     if (settings.fontSize && document.getElementById('fontSizeInput')) {
         document.getElementById('fontSizeInput').value = settings.fontSize;
         currentSettings.fontSize = settings.fontSize;
-    }
-    // Restore design
-    if (settings.design && document.getElementById('designSelect')) {
-        document.getElementById('designSelect').value = settings.design;
-        currentSettings.design = settings.design;
     }
     // Restore image size
     if (settings.imageSize && document.getElementById('imageSizeSlider')) {
@@ -655,9 +647,22 @@ function decreaseFontSize() {
     }
 }
 
-function updateDesign() {
+async function updateDesign() {
+    // Always use the exact value from the dropdown
     currentSettings.design = document.getElementById('designSelect').value;
-    updatePreview();
+    console.log('Design changed to:', currentSettings.design);
+    
+    // Ensure fonts are loaded before updating preview
+    await ensureFontsLoaded();
+    
+    // Update preview
+    await updatePreview();
+    
+    // Also schedule another update after a short delay to ensure fonts are fully rendered
+    setTimeout(async () => {
+        console.log('Re-updating preview after design change delay');
+        await updatePreview();
+    }, 500);
 }
 
 function updateImageGap() {
@@ -953,6 +958,9 @@ async function updatePreview() {
     console.log('Preview updated');
 }
 
+// Make updatePreview globally accessible for font loading callbacks
+window.updatePreview = updatePreview;
+
 // Efficient preview update that preserves images when only styles change
 async function updatePreviewStyles() {
     console.log('updatePreviewStyles called - preserving images');
@@ -1239,77 +1247,46 @@ async function generateWorksheetHTML(title, wordPairs) {
         return `<span style="position:relative;display:inline-block;width:100%;">${overlay}<span style="position:relative;z-index:2;">${content}</span></span>`;
     }
 
-    const printStyle = `<style>@media print { .dup-overlay-screen { display: none !important; } }</style>`;
+    const printStyle = `<style>
+        @media print {
+            .dup-overlay-screen { display: none !important; }
+            .worksheet-preview th,
+            .worksheet-preview td {
+                text-align: left !important;
+            }
+        }
+    </style>`;
 
     // --- BASIC TABLE LAYOUT ---
     if (layout === "default") {
-        // For long lists, break into chunks for better page breaks
-        const ROWS_PER_CHUNK = 20; // Max rows per table chunk
-        let tablesHtml = '';
-        
-        if (maskedPairs.length <= ROWS_PER_CHUNK) {
-            // Single table for shorter lists
-            tablesHtml = `
-                <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                    <thead>
+        // Always use a single table, no chunking or repeated headers
+        const tablesHtml = `
+            <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                <thead>
+                    <tr>
+                        <th style="width:10%;padding:8px;border-bottom:2px solid #333;text-align:left;">#</th>
+                        <th style="width:45%;padding:8px;border-bottom:2px solid #333;text-align:left;">English</th>
+                        <th style="width:45%;padding:8px;border-bottom:2px solid #333;text-align:left;">Korean</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${maskedPairs.map((pair, i) => {
+                        const isDupEng = isDuplicateEng(wordPairs[i]?.eng);
+                        const isDupKor = isDuplicateKor(wordPairs[i]?.kor);
+                        return `
                         <tr>
-                            <th style="width:10%;padding:8px;border-bottom:2px solid #333;">#</th>
-                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">English</th>
-                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">Korean</th>
+                            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:left;">${i + 1}</td>
+                            <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;text-align:left;">${highlightCell(pair.eng || '______', isDupEng)}</td>
+                            <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;text-align:left;">${highlightCell(pair.kor || '______', isDupKor)}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${maskedPairs.map((pair, i) => {
-                            const isDupEng = isDuplicateEng(wordPairs[i]?.eng);
-                            const isDupKor = isDuplicateKor(wordPairs[i]?.kor);
-                            return `
-                            <tr>
-                                <td style="padding:8px;border-bottom:1px solid #ddd;">${i + 1}</td>
-                                <td class="word-cell" data-index="${i}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
-                                <td class="word-cell" data-index="${i}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
-                            </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        } else {
-            // Multiple tables for longer lists
-            const chunks = [];
-            for (let i = 0; i < maskedPairs.length; i += ROWS_PER_CHUNK) {
-                chunks.push(maskedPairs.slice(i, i + ROWS_PER_CHUNK));
-            }
-            
-            tablesHtml = chunks.map((chunk, chunkIndex) => `
-                <table style="width:100%;border-collapse:collapse;table-layout:fixed;${chunkIndex > 0 ? 'margin-top:20px;' : ''}">
-                    <thead>
-                        <tr>
-                            <th style="width:10%;padding:8px;border-bottom:2px solid #333;">#</th>
-                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">English</th>
-                            <th style="width:45%;padding:8px;border-bottom:2px solid #333;">Korean</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${chunk.map((pair, i) => {
-                            const globalIndex = chunkIndex * ROWS_PER_CHUNK + i;
-                            const isDupEng = isDuplicateEng(wordPairs[globalIndex]?.eng);
-                            const isDupKor = isDuplicateKor(wordPairs[globalIndex]?.kor);
-                            return `
-                            <tr>
-                                <td style="padding:8px;border-bottom:1px solid #ddd;">${globalIndex + 1}</td>
-                                <td class="word-cell" data-index="${globalIndex}" data-lang="eng" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.eng || '______', isDupEng)}</td>
-                                <td class="word-cell" data-index="${globalIndex}" data-lang="kor" style="position:relative;padding:8px;border-bottom:1px solid #ddd;cursor:pointer;">${highlightCell(pair.kor || '______', isDupKor)}</td>
-                            </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `).join('');
-        }
-        
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${printStyle}
                 ${tablesHtml}
             </div>
@@ -1370,7 +1347,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         `;
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${printStyle}
                 ${tableHtml}
             </div>
@@ -1481,7 +1458,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${printStyle}
                 ${tablesHtml}
             </div>
@@ -1570,7 +1547,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         `;
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${printStyle}
                 ${tableHtml}
             </div>
@@ -1641,7 +1618,7 @@ async function generateWorksheetHTML(title, wordPairs) {
             `;
             return `
                 <div class="worksheet-preview" style="${style}">
-                    ${generateWorksheetHeader(title)}
+                    ${await generateWorksheetHeader(title)}
                     ${tableHtml}
                 </div>
             `;
@@ -1715,7 +1692,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${gridHtml}
             </div>
         `;
@@ -1781,7 +1758,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${gridHtml}
             </div>
         `;
@@ -1849,7 +1826,7 @@ async function generateWorksheetHTML(title, wordPairs) {
             `;
             return `
                 <div class="worksheet-preview" style="${style}">
-                    ${generateWorksheetHeader(title, true)}
+                    ${await generateWorksheetHeader(title, true)}
                     ${printStyle}
                     ${tableHtml}
                 </div>
@@ -1908,7 +1885,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${printStyle}
                 ${tableHtml}
             </div>
@@ -1955,7 +1932,7 @@ async function generateWorksheetHTML(title, wordPairs) {
         
         return `
             <div class="worksheet-preview" style="${style}">
-                ${generateWorksheetHeader(title)}
+                ${await generateWorksheetHeader(title)}
                 ${tableHtml}
             </div>
         `;
@@ -1964,7 +1941,7 @@ async function generateWorksheetHTML(title, wordPairs) {
     // Default fallback - basic grid layout
     return `
         <div class="worksheet-preview" style="${style}">
-            ${generateWorksheetHeader(title)}
+            ${await generateWorksheetHeader(title)}
             <div class="word-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); row-gap: ${currentSettings.imageGap}px; column-gap: 15px;">
                 ${maskedPairs.map((pair, index) => `
                     <div class="word-card" style="
@@ -1984,72 +1961,112 @@ async function generateWorksheetHTML(title, wordPairs) {
     `;
 }
 
-// Generate worksheet header with logo, name, and date
-function generateWorksheetHeader(title, isUltraCompact = false) {
-    const design = currentSettings.design;
-    
-    let logoHeight, titleSize, labelSize, titleFont, marginBottom, padding;
-    
-    if (isUltraCompact) {
-        // Ultra-compact settings for 5-per-row layout
-        logoHeight = '30px';
-        titleSize = '18px';
-        labelSize = '11px';
-        titleFont = 'Arial, sans-serif';
-        marginBottom = '15px';
-        padding = '8px';
-    } else {
-        // Regular settings based on design
-        switch(design) {
-            case 'Design 1':
-                logoHeight = '50px';
-                titleSize = '24px';
-                labelSize = '14px';
-                titleFont = 'Arial, sans-serif';
-                break;
-            case 'Design 2':
-                logoHeight = '45px';
-                titleSize = '28px';
-                labelSize = '16px';
-                titleFont = 'Georgia, serif';
-                break;
-            case 'Design 3':
-                logoHeight = '55px';
-                titleSize = '22px';
-                labelSize = '12px';
-                titleFont = 'Poppins, sans-serif';
-                break;
-            default:
-                logoHeight = '50px';
-                titleSize = '24px';
-                labelSize = '14px';
-                titleFont = 'Arial, sans-serif';
+// Ensure Google Fonts are loaded before rendering
+async function ensureFontsLoaded() {
+    return new Promise((resolve) => {
+        const fontLinkId = 'worksheet-title-fonts';
+        
+        // Check if fonts are already loaded
+        if (document.getElementById(fontLinkId) && document.fonts) {
+            // If fonts are available and all are loaded, resolve immediately
+            const fontFamilies = ['Permanent Marker', 'Pacifico', 'Bangers', 'Luckiest Guy', 'Caveat', 'Poppins'];
+            const fontPromises = fontFamilies.map(font => 
+                document.fonts.load(`16px "${font}"`).catch(() => console.log(`Failed to load ${font}`))
+            );
+            
+            Promise.allSettled(fontPromises).then(() => {
+                console.log('All fonts ensured loaded');
+                resolve();
+            });
+            return;
         }
-        marginBottom = '30px';
-        padding = '20px';
-    }
-    
-    // Get the absolute path to the logo for printing
+        
+        // Load the fonts if not already loaded
+        if (!document.getElementById(fontLinkId)) {
+            const link = document.createElement('link');
+            link.id = fontLinkId;
+            link.rel = 'stylesheet';
+            link.href = 'https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap';
+            
+            link.addEventListener('load', () => {
+                console.log('Google Fonts CSS loaded');
+                
+                // Force font loading by creating hidden test elements
+                const testDiv = document.createElement('div');
+                testDiv.style.position = 'absolute';
+                testDiv.style.left = '-9999px';
+                testDiv.style.visibility = 'hidden';
+                testDiv.style.fontSize = '16px';
+                testDiv.innerHTML = `
+                    <span style="font-family: 'Permanent Marker', cursive;">Test</span>
+                    <span style="font-family: 'Pacifico', cursive;">Test</span>
+                    <span style="font-family: 'Bangers', fantasy;">Test</span>
+                    <span style="font-family: 'Luckiest Guy', fantasy;">Test</span>
+                    <span style="font-family: 'Caveat', cursive;">Test</span>
+                    <span style="font-family: 'Poppins', sans-serif;">Test</span>
+                `;
+                document.body.appendChild(testDiv);
+                
+                // Wait for fonts to be ready using document.fonts API if available
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(() => {
+                        console.log('All fonts ready via document.fonts API');
+                        document.body.removeChild(testDiv);
+                        resolve();
+                    });
+                } else {
+                    // Fallback timing for older browsers
+                    setTimeout(() => {
+                        console.log('Fonts loaded via timeout fallback');
+                        if (testDiv.parentNode) {
+                            document.body.removeChild(testDiv);
+                        }
+                        resolve();
+                    }, 1000);
+                }
+            });
+            
+            link.addEventListener('error', () => {
+                console.log('Failed to load Google Fonts CSS');
+                resolve(); // Continue anyway with fallback fonts
+            });
+            
+            document.head.appendChild(link);
+        } else {
+            // Font link exists, wait a bit and resolve
+            setTimeout(() => {
+                console.log('Font link exists, resolving');
+                resolve();
+            }, 100);
+        }
+    });
+}
+
+// Generate worksheet header with logo, name, and date
+async function generateWorksheetHeader(title, isUltraCompact = false) {
+    // Ensure fonts are loaded before proceeding
+    await ensureFontsLoaded();
+    let logoHeight = isUltraCompact ? '24px' : '32px';
     const logoPath = new URL('../../../Assets/Images/color-logo.png', window.location.href).href;
-    
-    return `
-        <div class="worksheet-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${marginBottom}; padding: ${padding}; border-bottom: ${isUltraCompact ? '1px' : '2px'} solid #e2e8f0;">
-            <div style="display: flex; align-items: center; gap: ${isUltraCompact ? '8px' : '15px'};">
-                <img src="${logoPath}" alt="Willena Logo" style="height: ${logoHeight}; width: auto;">
-                <h2 style="margin: 0; font-size: ${titleSize}; color: #2d3748; font-family: ${titleFont};">${title}</h2>
+    const headerHTML = `
+        <div class="worksheet-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding: 12px 20px 12px 10px; border-bottom: ${isUltraCompact ? '1px' : '2px'} solid #e2e8f0; gap: 15px; flex-wrap: nowrap; min-width:0;">
+            <div style="display: flex; align-items: center; gap: 15px; min-width:0; flex: 1 1 0;">
+                <img src="${logoPath}" alt="Willena Logo" style="height: ${logoHeight}; width: auto; flex-shrink:0;">
+                <span style="font-size: 28px; font-weight: 900; text-align: center; display: block; width: 100%;">${title || 'Worksheet Title'}</span>
             </div>
-            <div style="display: flex; flex-direction: column; gap: ${isUltraCompact ? '4px' : '8px'}; min-width: ${isUltraCompact ? '180px' : '220px'};">
-                <div style="display: flex; align-items: center; gap: ${isUltraCompact ? '4px' : '8px'};">
-                    <span style="font-weight: bold; min-width: ${isUltraCompact ? '40px' : '50px'}; font-size: ${labelSize}; font-family: ${titleFont};">Name:</span>
-                    <div style="flex: 1; border-bottom: 2px solid #333; height: ${isUltraCompact ? '16px' : '20px'};"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 90px; max-width: 120px; flex-shrink:1;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-weight: bold; min-width: 30px; font-size: 12px; font-family: Arial, Helvetica, sans-serif;">Name:</span>
+                    <div style="flex: 1; border-bottom: 2px solid #333; height: 14px;"></div>
                 </div>
-                <div style="display: flex; align-items: center; gap: ${isUltraCompact ? '4px' : '8px'};">
-                    <span style="font-weight: bold; min-width: ${isUltraCompact ? '40px' : '50px'}; font-size: ${labelSize}; font-family: ${titleFont};">Date:</span>
-                    <div style="flex: 1; border-bottom: 2px solid #333; height: ${isUltraCompact ? '16px' : '20px'};"></div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-weight: bold; min-width: 30px; font-size: 12px; font-family: Arial, Helvetica, sans-serif;">Date:</span>
+                    <div style="flex: 1; border-bottom: 2px solid #333; height: 14px;"></div>
                 </div>
             </div>
         </div>
     `;
+    return headerHTML;
 }
 
 // Helper function to get placeholder image (imported from images.js)
@@ -2139,13 +2156,15 @@ function performPrint() {
     let selectedFont = fontSelect ? fontSelect.value : 'Arial';
     let fontFamilyCSS = selectedFont;
     let googleFontLink = '';
-    // Map dropdown value to Google Fonts if needed
+    
+    // Always include ALL title style fonts, plus the selected preview font
+    googleFontLink = '<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
+    
+    // Map dropdown value to font-family CSS
     if (selectedFont === 'Poppins') {
         fontFamilyCSS = 'Poppins, Arial, sans-serif';
-        googleFontLink = '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
     } else if (selectedFont === 'Caveat') {
         fontFamilyCSS = 'Caveat, Arial, sans-serif';
-        googleFontLink = '<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">';
     } else if (selectedFont === 'Comic Sans MS') {
         fontFamilyCSS = '"Comic Sans MS", Arial, sans-serif';
     } else if (selectedFont === 'Times New Roman') {
@@ -2195,7 +2214,7 @@ function performPrint() {
                     margin: 0;
                     padding: 0;
                     background: white;
-                    font-family: ${fontFamilyCSS};
+                    /* Do not override font-family here - let title styles use their own fonts */
                 }
 
                 /* Hide drag instructions and interactive elements for print */
