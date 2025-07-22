@@ -33,6 +33,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const extractFromPassageBtn = document.getElementById('extractFromPassageBtn');
     const generateFromPromptBtn = document.getElementById('generateFromPromptBtn');
 
+    // Add Refresh Page button
+    const refreshBtn = document.createElement('button');
+    refreshBtn.textContent = 'Refresh Page';
+    refreshBtn.style = 'padding: 10px 16px; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin-top: 10px;';
+    refreshBtn.addEventListener('click', function() {
+        window.location.reload();
+    });
+    // Insert the button at the top of the left setup panel
+    const setupPanel = document.querySelector('.container .setup-panel, .setup-panel, #setupPanel, .grid-setup, .grid-setup-panel');
+    if (setupPanel) {
+        setupPanel.insertBefore(refreshBtn, setupPanel.firstChild);
+    } else {
+        // fallback: add to body if setup panel not found
+        document.body.insertBefore(refreshBtn, document.body.firstChild);
+    }
+
     // Utility functions
     function getBaseUrl() {
         return window.location.origin;
@@ -64,11 +80,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showLoading(extractBtn);
 
-        try {
+        async function fetchAndParseAI(retryNum = 0) {
             const baseUrl = getBaseUrl();
             const requiredCount = gridSize === '3x3' ? 9 : 16;
-            
-            // Fixed: Using the correct format for YOUR OpenAI proxy
+            // Use a stricter prompt for the AI
+            const prompt = `From the following passage, extract exactly ${requiredCount} vocabulary words and create exactly ${requiredCount} simple questions about the passage.\n\nFormat your response exactly like this (no extra text):\n\nWORDS:\nword1\nword2\n...\n\nQUESTIONS:\nWhat is word1?\nWhat does word2 mean?\n...\n\nIf you cannot find enough, repeat or invent simple words/questions to reach exactly ${requiredCount}.\n\nPassage: ${passage}`;
             const response = await fetch(`${baseUrl}/.netlify/functions/openai_proxy`, {
                 method: 'POST',
                 headers: {
@@ -81,21 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         messages: [
                             {
                                 role: "user",
-                                content: `From the following passage, extract exactly ${requiredCount} vocabulary words and create ${requiredCount} simple questions about the passage. 
-
-Format your response exactly like this:
-
-WORDS:
-word1
-word2
-word3
-
-QUESTIONS:
-What is word1?
-What does word2 mean?
-Where is word3?
-
-Passage: ${passage}`
+                                content: prompt
                             }
                         ],
                         max_tokens: 800,
@@ -103,65 +105,64 @@ Passage: ${passage}`
                     }
                 })
             });
-
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('OpenAI API Error:', response.status, errorText);
                 throw new Error(`AI service failed: ${response.status}`);
             }
-
             const result = await response.json();
-            console.log('OpenAI Response:', result);
-            
             // Extract from the nested response structure
             const aiText = result.data?.choices?.[0]?.message?.content || 
                           result.choices?.[0]?.message?.content || 
                           result.data?.content || 
                           result.content;
-
-            if (!aiText) {
-                console.error('No AI text found in response:', result);
-                throw new Error('No content received from AI service');
-            }
-
-            console.log('AI Text:', aiText);
-
-            // Parse AI response with better regex
-            const wordMatch = aiText.match(/WORDS:\s*([\s\S]*?)(?=QUESTIONS:|$)/i);
-            const questionMatch = aiText.match(/QUESTIONS:\s*([\s\S]*?)$/i);
-
-            if (wordMatch && questionMatch) {
-                const words = wordMatch[1].trim().split('\n')
-                    .map(w => w.replace(/^\d+\.?\s*/, '').trim())
-                    .filter(w => w && w.length > 0)
-                    .slice(0, requiredCount);
-                
-                const questions = questionMatch[1].trim().split('\n')
-                    .map(q => q.replace(/^\d+\.?\s*/, '').trim())
-                    .filter(q => q && q.length > 0)
-                    .slice(0, requiredCount);
-
-                vocabInput.value = words.join('\n');
-                questionsInput.value = questions.join('\n');
-                
-                alert(`Successfully extracted ${words.length} words and ${questions.length} questions!`);
-            } else {
-                // Fallback parsing
-                console.log('Fallback parsing for:', aiText);
-                const lines = aiText.split('\n').map(l => l.trim()).filter(l => l);
-                const midpoint = Math.ceil(lines.length / 2);
-                const words = lines.slice(0, midpoint).slice(0, requiredCount);
-                const questions = lines.slice(midpoint).slice(0, requiredCount);
-                
-                if (words.length > 0) {
-                    vocabInput.value = words.join('\n');
-                    questionsInput.value = questions.length > 0 ? questions.join('\n') : words.map(w => `What is ${w}?`).join('\n');
-                    alert('Extracted content (auto-formatted)');
+            let words = [];
+            let questions = [];
+            if (aiText) {
+                // Parse AI response
+                const wordMatch = aiText.match(/WORDS:\s*([\s\S]*?)(?=QUESTIONS:|$)/i);
+                const questionMatch = aiText.match(/QUESTIONS:\s*([\s\S]*?)$/i);
+                if (wordMatch && questionMatch) {
+                    words = wordMatch[1].trim().split('\n')
+                        .map(w => w.replace(/^\d+\.?\s*/, '').trim())
+                        .filter(w => w && w.length > 0);
+                    questions = questionMatch[1].trim().split('\n')
+                        .map(q => q.replace(/^\d+\.?\s*/, '').trim())
+                        .filter(q => q && q.length > 0);
                 } else {
-                    throw new Error('Could not parse AI response');
+                    // Fallback parsing
+                    const lines = aiText.split('\n').map(l => l.trim()).filter(l => l);
+                    const midpoint = Math.ceil(lines.length / 2);
+                    words = lines.slice(0, midpoint);
+                    questions = lines.slice(midpoint);
                 }
             }
-
+            // If not enough, retry up to 2 more times (only if AI gave us something)
+            if ((words.length < requiredCount || questions.length < requiredCount) && retryNum < 2 && aiText) {
+                console.warn(`AI returned only ${words.length} words and ${questions.length} questions. Retrying... (Attempt ${retryNum + 2}/3)`);
+                return await fetchAndParseAI(retryNum + 1);
+            }
+            // Always fill to requiredCount, even if arrays are empty
+            for (let i = words.length; i < requiredCount; i++) {
+                words.push(`Word${i + 1}`);
+            }
+            for (let i = questions.length; i < requiredCount; i++) {
+                questions.push(`What is ${words[i]}?`);
+            }
+            // Truncate if too many
+            words = words.slice(0, requiredCount);
+            questions = questions.slice(0, requiredCount);
+            // Extra: If in 4x4 mode, force 16 items
+            if (gridSize === '4x4') {
+                words = words.slice(0, 16);
+                questions = questions.slice(0, 16);
+            }
+            vocabInput.value = words.join('\n');
+            questionsInput.value = questions.join('\n');
+            alert(`Successfully extracted ${words.length} words and ${questions.length} questions!`);
+        }
+        try {
+            await fetchAndParseAI();
         } catch (error) {
             console.error('AI extraction error:', error);
             alert(`Failed to extract words and questions: ${error.message}`);

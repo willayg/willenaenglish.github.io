@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Builder</title>
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Preload critical Google Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load all custom fonts for worksheet title styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
     .picture-matching-grid {
       display: grid;
@@ -214,20 +220,7 @@
             alert('Nothing to export.');
             return;
           }
-          
-          // Get the current styles
-          const styles = Array.from(document.styleSheets)
-            .map(styleSheet => {
-              try {
-                return Array.from(styleSheet.cssRules)
-                  .map(rule => rule.cssText)
-                  .join('');
-              } catch (e) {
-                return '';
-              }
-            })
-            .join('');
-          
+
           // Create print window with just the preview content
           const printWindow = window.open('', '_blank');
           printWindow.document.write(`
@@ -235,9 +228,12 @@
             <html>
             <head>
               <title>Worksheet</title>
+              <!-- Include Google Fonts for title styles -->
+              <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+              <!-- Include all worksheet and title styles -->
+              <link rel="stylesheet" href="style.css">
               <style>
                 body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                ${styles}
                 @media print {
                   body { margin: 0; padding: 0.5in; }
                   .preview-area { 
@@ -246,6 +242,10 @@
                     background: white !important;
                     width: 100% !important;
                     max-width: none !important;
+                  }
+                  /* Remove any font-family override on worksheet-preview */
+                  .worksheet-preview {
+                    font-family: inherit !important;
                   }
                   /* DON'T override grid gaps - preserve JavaScript inline styles */
                 }
@@ -256,9 +256,9 @@
             </body>
             </html>
           `);
-          
+
           printWindow.document.close();
-          
+
           // Wait for content to load, then trigger print dialog
           printWindow.onload = function() {
             printWindow.print();
@@ -292,15 +292,10 @@
                     <button class="size-btn" id="increaseFontBtn">+</button>
                 </div>
 
-                <select class="toolbar-select" id="designSelect">
-                    <option value="Design 1">Design 1</option>
-                    <option value="Design 2">Design 2</option>
-                    <option value="Design 3">Design 3</option>
-                </select>
 
                 <div class="layout-group">
                     <select class="layout-select" id="layoutSelect">
-                        <option value="default">Default Table</option>
+                        <option value="default">Basic Word List</option>
                         <option value="4col">2 Lists (Side by Side)</option>
                         <option value="6col-images">Picture Cards</option>
                         <option value="5col-images">Picture Cards (5 per row)</option>

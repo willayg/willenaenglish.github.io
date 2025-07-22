@@ -67,6 +67,12 @@ function renderTable(feedbacks, statusFilter, moduleFilter, searchValue) {
       (f.page_url||'').toLowerCase().includes(val)
     );
   }
+  // Sort: urgent status to top
+  filtered = filtered.slice().sort((a, b) => {
+    const aUrgent = String(a.status).toLowerCase() === 'urgent' ? 1 : 0;
+    const bUrgent = String(b.status).toLowerCase() === 'urgent' ? 1 : 0;
+    return bUrgent - aUrgent;
+  });
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">No feedback found.</td></tr>';
     return;
