@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCR.space Text Extractor</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea, button { width: 100%; margin-top: 15px; }
+    textarea { height: 200px; font-size: 16px; }
+    #status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>📸 OCR.space Text Extractor</h2>
+
+  <input type="file" id="imageInput" accept="image/*" capture="environment" />
+  <div id="status">📁 Waiting for image...</div>
+
+  <textarea id="ocrOutput" placeholder="Extracted text will appear here..."></textarea>
+  <button onclick="copyText()">📋 Copy to Clipboard</button>
+
+  <script>
+    const status = document.getElementById("status");
+    const output = document.getElementById("ocrOutput");
+
+    document.getElementById("imageInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      status.textContent = "⏳ Uploading to OCR.space...";
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("language", "eng");
+      formData.append("isOverlayRequired", "false");
+
+      try {
+        const response = await fetch("https://api.ocr.space/parse/image", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.IsErroredOnProcessing) {
+          status.textContent = "❌ Error: " + result.ErrorMessage[0];
+        } else {
+          const parsedText = result.ParsedResults[0].ParsedText;
+          output.value = parsedText;
+          status.textContent = "✅ OCR complete!";
+        }
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Failed to connect to OCR.space";
+      }
+    });
+
+    function copyText() {
+      navigator.clipboard.writeText(output.value).then(() => {
+        alert("Text copied!");
+      });
+    }
+  </script>
+</body>
+</html>
