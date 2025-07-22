@@ -86,7 +86,20 @@ function setupAIPrompt() {
         1. The cheetah is the _______ animal in the world.
         a) fastest  b) faster  c) fastly  d) more fast
 
-        For other grammar points, use a clear blank and provide four options, only one of which is correct. Do not use labels like "Question:" or "Answer:". Just write questions and answer choices clearly.`;
+        For all questions:
+        - Randomize the position of the correct answer so it is sometimes a), b), c), or d) (not just a) or b)).
+        - Shuffle the order of all answer choices for every question, so the correct answer is not always in the same position.
+        - Avoid patterns: do not always put the correct answer in the first or second position.
+        - Use a clear blank in the question and provide four options, only one of which is correct.
+        - Do not use labels like "Question:" or "Answer:". Just write questions and answer choices clearly.
+
+        After all the questions, include an answer key in this format:
+        Answer Key:
+        1. b) fastest
+        2. d) went
+        3. a) is
+        (etc.)
+        The answer key should match the correct letter and answer for each question.`;
       } else if (type === 'fill') {
         promptText = 'Make the questions fill in the blanks. ' + promptText;
       }
