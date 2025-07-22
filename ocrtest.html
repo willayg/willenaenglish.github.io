@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OCR Text Extractor</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea, button { width: 100%; margin-top: 15px; }
+    textarea { height: 200px; font-size: 16px; }
+    #status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>📷 Photo to Text (OCR)</h2>
+
+  <input type="file" accept="image/*" capture="environment" id="imageInput" />
+  <div id="status">📁 Waiting for image...</div>
+  
+  <textarea id="ocrOutput" placeholder="Extracted text will appear here..."></textarea>
+  <button onclick="copyText()">📋 Copy to Clipboard</button>
+
+  <script>
+    const status = document.getElementById("status");
+    const output = document.getElementById("ocrOutput");
+
+    document.getElementById("imageInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      status.textContent = "⏳ Running OCR...";
+
+      const result = await Tesseract.recognize(file, 'eng', {
+        logger: m => status.textContent = `${m.status} (${Math.floor(m.progress * 100)}%)`
+      });
+
+      output.value = result.data.text;
+      status.textContent = "✅ OCR complete!";
+    });
+
+    function copyText() {
+      navigator.clipboard.writeText(output.value).then(() => {
+        alert("Text copied!");
+      });
+    }
+  </script>
+</body>
+</html>
