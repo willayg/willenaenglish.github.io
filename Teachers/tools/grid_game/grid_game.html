@@ -147,8 +147,8 @@
         /* Sticky grid container */
         .sticky-grid {
             position: fixed;
-            top: 230px;
-            left: 550px;
+            top: 280px;
+            left: 620px;
             z-index: 1000;
             box-shadow: 0 4px 24px rgba(46,43,63,0.10);
             background: white;
@@ -162,7 +162,6 @@
         /* For very wide screens, move sticky grid further right */
         @media (min-width: 1800px) {
           .sticky-grid {
-            top: 300px;
             left: 650px;
           }
         }
@@ -405,7 +404,7 @@
           .sticky-grid {
             position: static !important;
             top: auto !important;
-            right: 500px;
+            right: 580px;
             margin: 0 auto 24px auto;
             width: 100%;
             max-width: 100%;
@@ -443,7 +442,7 @@
     const stickyGrid = document.querySelector('.sticky-grid');
     if (!stickyGrid) return;
     const minTop = 20; // px
-    const maxTop = 230; // px
+    const maxTop = 280; // px
     const scrollStart = 0; // px
     const scrollEnd = 300; // px (after this, top stays at minTop)
     function updateStickyGridPosition() {
