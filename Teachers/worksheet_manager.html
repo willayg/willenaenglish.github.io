@@ -14,7 +14,13 @@
   </style>
 </head>
 <body class="bg-gray-50 p-6">
-  <h2 class="text-xl font-bold mb-4">Worksheet Manager</h2>
+  <h2 id="managerTitle" class="text-xl font-bold mb-4">Worksheet Manager</h2>
+  <div id="loadingSpinner" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="border:4px solid #eee; border-top:4px solid #3498db; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
+  </div>
+  <style>
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
   <div id="managerContent">
     <!-- Dynamically show save/search/load UI here -->
     <div id="saveUI" style="display:none;">
@@ -28,7 +34,39 @@
       </form>
     </div>
     <div id="loadUI" style="display:none;">
-      <div class="flex flex-wrap gap-2 mb-2">
+      <div class="flex flex-wrap gap-2 mb-2 items-center">
+        <label class="flex items-center select-none mr-3" for="showAllVocabToggle">
+          <span class="font-medium text-sm mr-2">Show All Vocabulary Files</span>
+          <input type="checkbox" id="showAllVocabToggle" class="hidden">
+          <span id="toggleSwitch" class="relative w-7 h-4 flex items-center rounded-full border border-blue-900 transition-colors duration-200" style="background:#fff;">
+            <span class="absolute left-0 top-0 w-7 h-4 rounded-full border border-blue-900 transition-colors duration-200" id="toggleBg"></span>
+            <span id="toggleKnob" class="absolute" style="top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #25324b; border-radius: 9999px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: all 0.2s;"></span>
+          </span>
+        </label>
+        <div class="relative flex-1 min-w-[180px]">
+          <input type="text" id="masterSearch" placeholder="Search worksheets..." class="border p-1 w-full pr-8" autocomplete="off">
+          <span class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+              <circle cx="9" cy="9" r="7"/>
+              <line x1="15" y1="15" x2="19" y2="19"/>
+            </svg>
+          </span>
+        </div>
+        <input type="text" id="unitQuickSearch" placeholder="Unit..." class="border p-1 flex-1 min-w-[100px]" autocomplete="off">
+        <select id="layoutQuickSearch" class="border p-1 flex-1 min-w-[120px]" style="max-width:180px;">
+          <option value="" selected>All Layouts</option>
+          <option value="wordlist">Word List</option>
+          <option value="6col-images">Picture Cards</option>
+          <option value="5col-images">Picture Cards (5 per row)</option>
+          <option value="picturelist">Picture List</option>
+          <option value="picture-quiz">Picture Quiz</option>
+          <option value="picture-quiz-5col">Picture Quiz (5 per row)</option>
+          <option value="picture-matching">Picture Matching</option>
+          <option value="eng-kor-matching">English-Korean Matching</option>
+        </select>
+        <button id="toggleAdvancedSearch" type="button" class="px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">Advanced Search</button>
+      </div>
+      <div id="advancedSearch" style="display:none;" class="flex flex-wrap gap-2 mb-2 border p-2 rounded bg-gray-50">
         <input type="text" id="searchQuery" placeholder="Title..." class="border p-1 flex-1 min-w-[120px]">
         <input type="text" id="searchBook" placeholder="Book..." class="border p-1 flex-1 min-w-[100px]">
         <input type="text" id="searchUnit" placeholder="Unit..." class="border p-1 flex-1 min-w-[80px]">
@@ -48,115 +86,136 @@
         <input type="text" id="searchLanguagePoint" placeholder="Language Point..." class="border p-1 flex-1 min-w-[100px]">
         <input type="text" id="searchCreatedBy" placeholder="Created By..." class="border p-1 flex-1 min-w-[120px]" style="flex-basis: 120px; min-width: 120px;">
         <input type="text" id="searchTags" placeholder="Tags..." class="border p-1 flex-1 min-w-[100px]">
+        <!-- Layout dropdown removed from advanced search -->
       </div>
-      <div id="worksheetList" style="max-height:300px;overflow-y:auto;"></div>
+      <div id="worksheetList" style="max-height:400px;overflow-y:auto;border: 2px solid #b2ebf2; border-radius: 0.5rem; padding: 0.5rem;"></div>
     </div>
   </div>
-  <!-- Add Save and Load buttons -->
-  <button id="saveBtn">Save Worksheet</button>
-  <button id="loadBtn">Load Worksheet</button>
+  <!-- Save and Load buttons removed -->
   <script>
+    function showSpinner() {
+      document.getElementById('loadingSpinner').style.display = 'flex';
+    }
+    function hideSpinner() {
+      document.getElementById('loadingSpinner').style.display = 'none';
+    }
     const params = new URLSearchParams(window.location.search);
 const mode = params.get('mode'); // 'save' or 'load'
 
-if (mode === 'save') {
-  document.getElementById('saveBtn').style.display = '';
-  document.getElementById('loadBtn').style.display = 'none';
-} else if (mode === 'load') {
-  document.getElementById('saveBtn').style.display = 'none';
-  document.getElementById('loadBtn').style.display = '';
-}
+
 
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
 
     document.getElementById('saveWorksheetForm').onsubmit = async function(e) {
   e.preventDefault();
-  const worksheet = window.opener.getCurrentWorksheetData();
-  worksheet.title = document.getElementById('worksheetTitle').value;
-  worksheet.notes = document.getElementById('worksheetNotes').value;
-  worksheet.book = document.getElementById('worksheetBook').value;
-  worksheet.unit = document.getElementById('worksheetUnit').value;
-  worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
+  showSpinner();
+  try {
+    const worksheet = window.opener.getCurrentWorksheetData();
+    worksheet.title = document.getElementById('worksheetTitle').value;
+    worksheet.notes = document.getElementById('worksheetNotes').value;
+    worksheet.book = document.getElementById('worksheetBook').value;
+    worksheet.unit = document.getElementById('worksheetUnit').value;
+    worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
 
-  // Set username from localStorage (match dashboard logic)
-  let username = localStorage.getItem('username') || '';
-  if (!username) {
-    const email = localStorage.getItem('userEmail');
-    if (email) {
-      username = email.split('@')[0];
+    // Set username from localStorage (match dashboard logic)
+    let username = localStorage.getItem('username') || '';
+    if (!username) {
+      const email = localStorage.getItem('userEmail');
+      if (email) {
+        username = email.split('@')[0];
+      }
     }
-  }
-  if (username) {
-    worksheet.username = username;
-  }
+    if (username) {
+      worksheet.username = username;
+    }
 
-  // --- PATCH: For grammar worksheets, always save latest grammarSections as JSON if present ---
-  if (worksheet.worksheet_type === 'grammar' && window.opener) {
-    try {
-      const openerSections = window.opener.grammarSections;
-      if (Array.isArray(openerSections) && openerSections.length > 0) {
-        worksheet.questions = JSON.stringify(openerSections);
-      } else {
+    // --- PATCH: For grammar worksheets, always save latest grammarSections as JSON if present ---
+    if (worksheet.worksheet_type === 'grammar' && window.opener) {
+      try {
+        const openerSections = window.opener.grammarSections;
+        if (Array.isArray(openerSections) && openerSections.length > 0) {
+          worksheet.questions = JSON.stringify(openerSections);
+        } else {
+          // fallback to textarea
+          const qEl = window.opener.document.getElementById('grammarQuestions');
+          worksheet.questions = qEl ? qEl.value || '' : '';
+        }
+      } catch (e) {
         // fallback to textarea
         const qEl = window.opener.document.getElementById('grammarQuestions');
         worksheet.questions = qEl ? qEl.value || '' : '';
       }
-    } catch (e) {
-      // fallback to textarea
-      const qEl = window.opener.document.getElementById('grammarQuestions');
-      worksheet.questions = qEl ? qEl.value || '' : '';
     }
-  }
 
-  // Defensive: convert to array if it's a string
-  if (typeof worksheet.words === "string") {
-    worksheet.words = worksheet.words.split('\n').filter(w => w.trim() !== "");
-  }
-  worksheet.words = Array.isArray(worksheet.words)
-    ? worksheet.words.map(w => w.trim()).filter(w => w !== "")
-    : (typeof worksheet.words === "string"
-        ? worksheet.words.split('\n').map(w => w.trim()).filter(w => w !== "")
-        : []);
+    // Defensive: convert to array if it's a string
+    if (typeof worksheet.words === "string") {
+      worksheet.words = worksheet.words.split('\n').filter(w => w.trim() !== "");
+    }
+    worksheet.words = Array.isArray(worksheet.words)
+      ? worksheet.words.map(w => w.trim()).filter(w => w !== "")
+      : (typeof worksheet.words === "string"
+          ? worksheet.words.split('\n').map(w => w.trim()).filter(w => w !== "")
+          : []);
 
-  // Uniqueness: check for existing worksheet with same title and type
-  let existingId = null;
-  let duplicateFound = false;
-  try {
-    const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets');
-    const checkData = await checkRes.json();
-    if (checkData.success && Array.isArray(checkData.data)) {
-      const found = checkData.data.find(ws => ws.title === worksheet.title && ws.worksheet_type === worksheet.worksheet_type);
-      if (found) {
-        existingId = found.id;
-        duplicateFound = true;
+    // Uniqueness: check for existing worksheet with same title and type
+    let existingId = null;
+    let duplicateFound = false;
+    try {
+      const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets');
+      const checkData = await checkRes.json();
+      if (checkData.success && Array.isArray(checkData.data)) {
+        const found = checkData.data.find(ws => ws.title === worksheet.title && ws.worksheet_type === worksheet.worksheet_type);
+        if (found) {
+          existingId = found.id;
+          duplicateFound = true;
+        }
       }
+    } catch (e) { /* ignore */ }
+
+    // Warn if duplicate found
+    if (duplicateFound) {
+      hideSpinner();
+      const proceed = confirm('A worksheet with this title and type already exists. Do you want to overwrite it?');
+      if (!proceed) return;
+      showSpinner();
     }
-  } catch (e) { /* ignore */ }
 
-  // Warn if duplicate found
-  if (duplicateFound) {
-    const proceed = confirm('A worksheet with this title and type already exists. Do you want to overwrite it?');
-    if (!proceed) return;
-  }
+    // If found, set id for update
+    if (existingId) worksheet.id = existingId;
 
-  // If found, set id for update
-  if (existingId) worksheet.id = existingId;
-
-  // Save (will update if id is present)
-  const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(worksheet)
-  });
-  const result = await res.json();
-  if (result.success) {
-    alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
-    window.close();
-  } else {
-    alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
+    // Save (will update if id is present)
+    const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(worksheet)
+    });
+    const result = await res.json();
+    if (result.success) {
+      alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
+      window.close();
+    } else {
+      alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
+    }
+  } finally {
+    hideSpinner();
   }
 };
+
+    // Helper to map type to display name
+    function getTypeDisplay(type) {
+      const typeDisplayNames = {
+        'wordtest': 'Word Builder',
+        'wordsearch': 'Wordsearch',
+        'grammar': 'Grammar',
+        'survey': 'Survey',
+        'reading': 'Reading',
+        'grid_game': 'Grid Game',
+        'flashcard': 'Flashcard'
+      };
+      if (type && /pic|picture/i.test(type)) return 'Picture Quiz';
+      return typeDisplayNames[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : '');
+    }
 
     if (mode === 'load') {
   const searchBox = document.getElementById('searchQuery');
@@ -270,7 +329,7 @@ if (mode === 'save') {
     deduped.forEach(ws => {
       // Map worksheet_type to descriptive names
       const typeDisplayNames = {
-        'wordtest': 'Word Sheet',
+        'wordtest': 'Word Builder',
         'wordsearch': 'Wordsearch',
         'grammar': 'Grammar',
         'survey': 'Survey',
@@ -286,10 +345,8 @@ if (mode === 'save') {
       // Map layout display to user-friendly names
       let layoutDisplay = ws.layout || '';
       const layoutKey = layoutDisplay.toLowerCase().replace(/\s+/g, '');
-      if (layoutKey === 'default' || layoutKey === '' || !layoutKey) {
-        layoutDisplay = 'Single List';
-      } else if (layoutKey === '4col') {
-        layoutDisplay = 'Double List';
+      if (layoutKey === 'default' || layoutKey === '' || !layoutKey || layoutKey === '4col') {
+        layoutDisplay = 'Word List';
       } else if (layoutKey === '6col-images' || layoutKey === '6colimages') {
         layoutDisplay = 'Picture Cards';
       } else if (layoutKey === '5col-images' || layoutKey === '5colimages') {
@@ -316,7 +373,57 @@ if (mode === 'save') {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-blue-50 cursor-pointer';
       tr.onclick = () => {
-        window.opener.loadWorksheet(ws);
+        // If worksheet type matches, load full worksheet
+        if (filterType && ws.worksheet_type === filterType) {
+          window.opener.loadWorksheet(ws);
+        } else if (filterType && ['wordtest','grid_game','flashcard','wordsearch'].includes(ws.worksheet_type) && ['wordtest','grid_game','flashcard','wordsearch'].includes(filterType)) {
+          // If both are vocabulary types but not the same, import only word data
+          // Custom logic: load words into AI passage textarea, set difficulty to topic input, and load default list if available
+          const mainWin = window.opener;
+          if (mainWin) {
+            // Prepare words for wordsearch: always use line breaks
+            let wordsText = '';
+            if (ws.words && Array.isArray(ws.words)) {
+              wordsText = ws.words.join('\n');
+            } else if (typeof ws.words === 'string') {
+              // If comma separated, convert to line breaks
+              if (filterType === 'wordsearch') {
+                wordsText = ws.words.replace(/,\s*/g, '\n');
+              } else {
+                wordsText = ws.words;
+              }
+            }
+            // Load words into AI passage textarea
+            const aiPassage = mainWin.document.getElementById('aiPassage');
+            if (aiPassage) {
+              aiPassage.value = wordsText;
+            }
+            // Set difficulty to topic input
+            const topicInput = mainWin.document.getElementById('topic');
+            if (topicInput) {
+              topicInput.value = ws.difficulty || '';
+            }
+            // Load default list 'Basic word list' if available
+            if (ws.defaultlist && ws.defaultlist === 'Basic word list') {
+              // If there's a special handling for Basic word list, set it
+              const defaultListInput = mainWin.document.getElementById('defaultList');
+              if (defaultListInput) {
+                defaultListInput.value = 'Basic word list';
+              }
+            }
+            // Also call loadWorksheet with minimal data for compatibility
+            const minimal = {
+              words: (wordsText ? wordsText.split('\n').map(w => w.trim()).filter(w => w) : []),
+              worksheet_type: filterType,
+              difficulty: ws.difficulty || '',
+              defaultlist: ws.defaultlist || ''
+            };
+            mainWin.loadWorksheet(minimal);
+          }
+        } else {
+          // Otherwise, load full worksheet (default)
+          window.opener.loadWorksheet(ws);
+        }
         window.close();
       };
 
@@ -421,63 +528,166 @@ if (mode === 'save') {
       filterType = 'flashcard';
     }
   }
+
+  // Update the title for load mode
+  if (mode === 'load') {
+    const titleEl = document.getElementById('managerTitle');
+    if (filterType) {
+      titleEl.textContent = `Worksheet Manager: ${getTypeDisplay(filterType)}`;
+    } else {
+      titleEl.textContent = 'Worksheet Manager: All Types';
+    }
+  }
   
   fetch('/.netlify/functions/supabase_proxy/list_worksheets')
-    .then(res => res.json())
-    .then(result => {
-      console.log('Loaded worksheets:', result);
-      if (result.success) {
-        // Filter worksheets by type if we detected one
-        if (filterType) {
-          allWorksheets = result.data.filter(ws => ws.worksheet_type === filterType);
-        } else {
-          // Default to all worksheets if we can't determine the type
-          allWorksheets = result.data;
+    showSpinner();
+    fetch('/.netlify/functions/supabase_proxy/list_worksheets')
+      .then(res => res.json())
+      .then(result => {
+        console.log('Loaded worksheets:', result);
+        if (result.success) {
+          window.allRawWorksheets = result.data;
+          updateWorksheetList();
         }
-        renderList(allWorksheets);
+      })
+      .finally(() => { hideSpinner(); });
+
+  function updateWorksheetList() {
+    // Toggle switch logic
+    const showAllVocab = document.getElementById('showAllVocabToggle')?.checked;
+    let filtered;
+    if (showAllVocab) {
+      // Show all vocabulary worksheet types
+      const allowedTypes = ['wordtest','grid_game','flashcard','wordsearch'];
+      filtered = window.allRawWorksheets.filter(ws => allowedTypes.includes(ws.worksheet_type));
+    } else if (filterType) {
+      filtered = window.allRawWorksheets.filter(ws => ws.worksheet_type === filterType);
+    } else {
+      filtered = window.allRawWorksheets;
+    }
+    allWorksheets = filtered;
+    renderList(allWorksheets);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Toggle switch setup
+    const toggle = document.getElementById('showAllVocabToggle');
+    const toggleSwitch = document.getElementById('toggleSwitch');
+    const toggleKnob = document.getElementById('toggleKnob');
+    const toggleBg = document.getElementById('toggleBg');
+    function updateToggleVisuals() {
+      const darkGrayBlue = '#25324b'; // darker, grayer blue
+      if (toggle.checked) {
+        toggleSwitch.style.background = darkGrayBlue;
+        toggleBg.style.background = darkGrayBlue;
+        toggleKnob.style.left = '11px'; // for w-7 (28px) and knob 12px
+        toggleKnob.style.background = '#fff';
+        toggleKnob.style.border = `1px solid ${darkGrayBlue}`;
+      } else {
+        toggleSwitch.style.background = '#fff';
+        toggleBg.style.background = '#fff';
+        toggleKnob.style.left = '1px';
+        toggleKnob.style.background = darkGrayBlue;
+        toggleKnob.style.border = `1px solid ${darkGrayBlue}`;
       }
-    });
-
-  // Search function
-  function doSearch() {
-  const q = document.getElementById('searchQuery').value.trim().toLowerCase();
-  const book = document.getElementById('searchBook').value.trim().toLowerCase();
-  const unit = document.getElementById('searchUnit').value.trim().toLowerCase();
-  const type = document.getElementById('searchType').value;
-  const dateFrom = document.getElementById('searchDateFrom').value;
-  const dateTo = document.getElementById('searchDateTo').value;
-  const languagePoint = document.getElementById('searchLanguagePoint').value.trim().toLowerCase();
-  const createdBy = document.getElementById('searchCreatedBy').value.trim().toLowerCase();
-  const tags = document.getElementById('searchTags').value.trim().toLowerCase();
-
-  let filtered = allWorksheets.filter(ws => {
-    let match = true;
-    if (q && !(ws.title || '').toLowerCase().includes(q)) match = false;
-    if (book && !(ws.book || '').toLowerCase().includes(book)) match = false;
-    if (unit && !(ws.unit || '').toLowerCase().includes(unit)) match = false;
-    if (type && ws.worksheet_type !== type) match = false;
-    if (dateFrom && (!ws.created_at || ws.created_at < dateFrom)) match = false;
-    if (dateTo && (!ws.created_at || ws.created_at > dateTo)) match = false;
-    if (languagePoint && !(ws.language_point || '').toLowerCase().includes(languagePoint)) match = false;
-    if (createdBy && !(ws.created_by || '').toLowerCase().includes(createdBy)) match = false;
-    if (tags && !(ws.tags || '').toLowerCase().includes(tags)) match = false;
-    return match;
-  });
-  renderList(filtered);
-}
-
-  // Trigger search on input or Enter
-  searchBox.addEventListener('input', doSearch);
-  searchBox.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      doSearch();
+    }
+    if (toggle) {
+      updateToggleVisuals();
+      toggle.addEventListener('change', function() {
+        updateToggleVisuals();
+        updateWorksheetList();
+      });
     }
   });
 
+  // Master search + unit quick search function
+  function masterSearchFunc() {
+    const q = document.getElementById('masterSearch').value.trim().toLowerCase();
+    const unit = document.getElementById('unitQuickSearch').value.trim().toLowerCase();
+    const layout = document.getElementById('layoutQuickSearch').value;
+    let filtered = allWorksheets.filter(ws => {
+      let match = true;
+      if (q && ![ws.title, ws.book, ws.unit, ws.worksheet_type, ws.layout, ws.language_point, ws.username, ws.created_by, ws.tags]
+        .map(v => (v || '').toString().toLowerCase()).some(val => val.includes(q))) match = false;
+      if (unit && !(ws.unit || '').toLowerCase().includes(unit)) match = false;
+      if (layout) {
+        const wsLayout = (ws.layout || '').toLowerCase();
+        // Only one option for Word List: treat 'wordlist' as 'default' or '4col' or blank
+        if (layout === 'wordlist') {
+          if (!(wsLayout === 'default' || wsLayout === '4col' || wsLayout === '' || wsLayout === null)) match = false;
+        }
+        // Only one option for Picture List: treat 'picturelist' as 'picture-list' or 'picture-list-2col'
+        else if (layout === 'picturelist') {
+          if (!(wsLayout === 'picture-list' || wsLayout === 'picture-list-2col')) match = false;
+        } else {
+          if (wsLayout !== layout.toLowerCase()) match = false;
+        }
+      }
+      return match;
+    });
+    renderList(filtered);
+  }
+
+  // Advanced search function
+  function advancedSearchFunc() {
+    const q = document.getElementById('searchQuery').value.trim().toLowerCase();
+    const book = document.getElementById('searchBook').value.trim().toLowerCase();
+    const unit = document.getElementById('searchUnit').value.trim().toLowerCase();
+    const type = document.getElementById('searchType').value;
+    const dateFrom = document.getElementById('searchDateFrom').value;
+    const dateTo = document.getElementById('searchDateTo').value;
+    const languagePoint = document.getElementById('searchLanguagePoint').value.trim().toLowerCase();
+    const createdBy = document.getElementById('searchCreatedBy').value.trim().toLowerCase();
+    const tags = document.getElementById('searchTags').value.trim().toLowerCase();
+
+    let filtered = allWorksheets.filter(ws => {
+      let match = true;
+      if (q && !(ws.title || '').toLowerCase().includes(q)) match = false;
+      if (book && !(ws.book || '').toLowerCase().includes(book)) match = false;
+      if (unit && !(ws.unit || '').toLowerCase().includes(unit)) match = false;
+      if (type && ws.worksheet_type !== type) match = false;
+      if (dateFrom && (!ws.created_at || ws.created_at < dateFrom)) match = false;
+      if (dateTo && (!ws.created_at || ws.created_at > dateTo)) match = false;
+      if (languagePoint && !(ws.language_point || '').toLowerCase().includes(languagePoint)) match = false;
+      if (createdBy && !(ws.created_by || '').toLowerCase().includes(createdBy)) match = false;
+      if (tags && !(ws.tags || '').toLowerCase().includes(tags)) match = false;
+      return match;
+    });
+    renderList(filtered);
+  }
+
+  // Master search and unit quick search triggers
+  const masterSearch = document.getElementById('masterSearch');
+  const unitQuickSearch = document.getElementById('unitQuickSearch');
+  const layoutQuickSearch = document.getElementById('layoutQuickSearch');
+  masterSearch.addEventListener('input', masterSearchFunc);
+  masterSearch.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      masterSearchFunc();
+    }
+  });
+  unitQuickSearch.addEventListener('input', masterSearchFunc);
+  unitQuickSearch.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      masterSearchFunc();
+    }
+  });
+  layoutQuickSearch.addEventListener('input', masterSearchFunc);
+  layoutQuickSearch.addEventListener('change', masterSearchFunc);
+
+  // Advanced search triggers
   ['searchQuery','searchBook','searchUnit','searchType','searchDateFrom','searchDateTo','searchLanguagePoint','searchCreatedBy','searchTags'].forEach(id => {
-  document.getElementById(id).addEventListener('input', doSearch);
-});
+    document.getElementById(id).addEventListener('input', advancedSearchFunc);
+    document.getElementById(id).addEventListener('change', advancedSearchFunc);
+  });
+
+  // Toggle advanced search
+  document.getElementById('toggleAdvancedSearch').onclick = function() {
+    const adv = document.getElementById('advancedSearch');
+    adv.style.display = adv.style.display === 'none' ? 'flex' : 'none';
+  };
 
 }
 
@@ -545,10 +755,9 @@ async function loadWorksheet() {
   }
 }
 
-// Call saveWorksheet() when the manager loads, or attach to a Save button
-
 document.getElementById('saveBtn').onclick = saveWorksheet;
 document.getElementById('loadBtn').onclick = loadWorksheet;
+
   </script>
 </body>
 </html>

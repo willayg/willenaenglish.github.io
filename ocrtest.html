@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OCR.space Text Extractor</title>
+  <title>Google Vision OCR Preview</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     input, textarea, button { width: 100%; margin-top: 15px; }
@@ -12,7 +12,7 @@
   </style>
 </head>
 <body>
-  <h2>📸 OCR.space Text Extractor</h2>
+  <h2>📸 Google Vision OCR</h2>
 
   <input type="file" id="imageInput" accept="image/*" capture="environment" />
   <div id="status">📁 Waiting for image...</div>
@@ -28,32 +28,37 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      status.textContent = "⏳ Uploading to OCR.space...";
+      status.textContent = "⏳ Converting image to base64...";
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("language", "eng");
-      formData.append("isOverlayRequired", "false");
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const base64Image = reader.result.split(',')[1];
 
-      try {
-        const response = await fetch("https://api.ocr.space/parse/image", {
+        status.textContent = "⏳ Sending to Google Vision API...";
+        const response = await fetch("/.netlify/functions/google_vision_proxy", {
           method: "POST",
-          body: formData
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requests: [
+              {
+                image: { content: base64Image },
+                features: [ { type: "DOCUMENT_TEXT_DETECTION" } ]
+              }
+            ]
+          })
         });
 
-        const result = await response.json();
-
-        if (result.IsErroredOnProcessing) {
-          status.textContent = "❌ Error: " + result.ErrorMessage[0];
-        } else {
-          const parsedText = result.ParsedResults[0].ParsedText;
-          output.value = parsedText;
+        const data = await response.json();
+        try {
+          const text = data.responses[0].fullTextAnnotation.text;
+          output.value = text;
           status.textContent = "✅ OCR complete!";
+        } catch (err) {
+          console.error(data);
+          status.textContent = "❌ OCR failed: " + (data.error?.message || "Unknown error");
         }
-      } catch (err) {
-        console.error(err);
-        status.textContent = "❌ Failed to connect to OCR.space";
-      }
+      };
+      reader.readAsDataURL(file);
     });
 
     function copyText() {
