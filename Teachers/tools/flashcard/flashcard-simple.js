@@ -93,6 +93,10 @@ window.showFeedbackModal = function() {
 };
 // Simple flashcard app without ES6 modules (like wordtest2.js)
 let flashcards = [];
+// Make flashcards available globally for saving
+window.flashcards = flashcards;
+// Flag to prevent auto-fetching images when loading
+let isLoadingWorksheet = false;
 let currentSettings = {
     font: 'Poppins',
     fontSize: 18,
@@ -147,16 +151,21 @@ function generateCards() {
     flashcards = words.map(word => ({
         english: word,
         korean: '',
-        imageUrl: null
+        image: null
     }));
+    
+    // Update global reference
+    window.flashcards = flashcards;
     
     updateCardList();
     updatePreview();
     
-    // Fetch images for each card as soon as generated
-    flashcards.forEach((card, idx) => {
-        fetchImageForCard(idx);
-    });
+    // Fetch images for each card as soon as generated (unless loading a worksheet)
+    if (!isLoadingWorksheet) {
+        flashcards.forEach((card, idx) => {
+            fetchImageForCard(idx);
+        });
+    }
 }
 
 async function fetchImageForCard(index) {
@@ -167,12 +176,12 @@ async function fetchImageForCard(index) {
         const res = await fetch('/.netlify/functions/pixabay?q=' + encodeURIComponent(query));
         const data = await res.json();
         if (data.images && data.images.length > 0) {
-            card.imageUrl = data.images[0];
+            card.image = data.images[0];
         } else {
-            card.imageUrl = null;
+            card.image = null;
         }
     } catch (e) {
-        card.imageUrl = null;
+        card.image = null;
     }
     updateCardList();
     updatePreview();
@@ -180,6 +189,8 @@ async function fetchImageForCard(index) {
 
 function clearCards() {
     flashcards = [];
+    // Update global reference
+    window.flashcards = flashcards;
     updateCardList();
     updatePreview();
 }
@@ -205,6 +216,8 @@ function updateCardList() {
 
 function deleteCard(index) {
     flashcards.splice(index, 1);
+    // Update global reference
+    window.flashcards = flashcards;
     updateCardList();
     updatePreview();
 }
@@ -315,7 +328,7 @@ function updatePreview() {
             if (imageFile) {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
-                    card.imageUrl = ev.target.result;
+                    card.image = ev.target.result;
                     updateCardList();
                     updatePreview();
                 };
@@ -332,26 +345,26 @@ function generateCardHTML(card, idx) {
         const zoom = currentSettings.imageZoom || 1;
         imageHTML = `
             <div class="flashcard-imagebox" style="width: 60vw; max-width: 600px; aspect-ratio: 6/8; background: #f8f8f8; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-bottom: 24px; overflow: hidden; min-height: 300px;">
-                ${card.imageUrl ? `<img src="${card.imageUrl}" alt="${card.english}" style="width:${zoom*100}%; height:${zoom*100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:18px;">No image</div>'}
+                ${card.image ? `<img src="${card.image}" alt="${card.english}" style="width:${zoom*100}%; height:${zoom*100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:18px;">No image</div>'}
             </div>
         `;
     } else if (currentSettings.layout === '1x2-portrait') {
         const zoom = currentSettings.imageZoom || 1;
         imageHTML = `
             <div class="flashcard-imagebox" style="width: 40vw; max-width: 500px; aspect-ratio: 3/1.9; background: #f8f8f8; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-bottom: 20px; overflow: hidden; min-height: 280px;">
-                ${card.imageUrl ? `<img src="${card.imageUrl}" alt="${card.english}" style="width:${zoom*100}%; height:${zoom*100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:16px;">No image</div>'}
+                ${card.image ? `<img src="${card.image}" alt="${card.english}" style="width:${zoom*100}%; height:${zoom*100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:16px;">No image</div>'}
             </div>
         `;
     } else if (currentSettings.layout === '2-card') {
         const zoom = currentSettings.imageZoom || 1;
         imageHTML = `
             <div class="flashcard-imagebox" style="width: 80%; aspect-ratio: 6/8; background: #f8f8f8; display: flex; align-items: center; justify-content: center; border-radius: 6px; margin-bottom: 12px; overflow: hidden;">
-                ${card.imageUrl ? `<img src="${card.imageUrl}" alt="${card.english}" style="width:${zoom*100}%; height:${zoom*100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:14px;">No image</div>'}
+                ${card.image ? `<img src="${card.image}" alt="${card.english}" style="width:${zoom*100}%; height:${zoom*100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:14px;">No image</div>'}
             </div>
         `;
     } else {
-        imageHTML = card.imageUrl ? 
-            `<img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image">` : 
+        imageHTML = card.image ? 
+            `<img src="${card.image}" alt="${card.english}" class="flashcard-image">` : 
             '<div class="flashcard-placeholder">No image</div>';
     }
 
@@ -760,22 +773,22 @@ function generatePrintCardHTML(card, layout, printImageZoom) {
     if (layout && layout.type === '2-card') {
         imageHTML = `
             <div class="flashcard-imagebox">
-                ${card.imageUrl ? `<img src="${card.imageUrl}" alt="${card.english}" style="width:${printImageZoom * 100}%; height:${printImageZoom * 100}%; object-fit:contain;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:14px;">No image</div>'}
+                ${card.image ? `<img src="${card.image}" alt="${card.english}" style="width:${printImageZoom * 100}%; height:${printImageZoom * 100}%; object-fit:contain;" />` : '<div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:14px;">No image</div>'}
             </div>
         `;
     } else if (layout && layout.type === '1-card') {
-        imageHTML = card.imageUrl ? 
-            `<img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image" style="max-width:80vw; max-height:60vh; object-fit:contain; margin-bottom:20px;">` : 
+        imageHTML = card.image ? 
+            `<img src="${card.image}" alt="${card.english}" class="flashcard-image" style="max-width:80vw; max-height:60vh; object-fit:contain; margin-bottom:20px;">` : 
             '<div class="flashcard-placeholder" style="min-height:200px;">No image</div>';
     } else if (layout && layout.type === '1x2-portrait') {
-        imageHTML = card.imageUrl ? 
+        imageHTML = card.image ? 
             `<div class="flashcard-imagebox" style="width:80%; aspect-ratio:1.414/1; background:#f8f8f8; display:flex; align-items:center; justify-content:center; border-radius:12px; margin-bottom:20px; overflow:hidden; min-height:280px;">
-                <img src="${card.imageUrl}" alt="${card.english}" style="width:${printImageZoom * 100}%; height:${printImageZoom * 100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />
+                <img src="${card.image}" alt="${card.english}" style="width:${printImageZoom * 100}%; height:${printImageZoom * 100}%; object-fit:contain; transition:width 0.2s,height 0.2s;" />
             </div>` : 
             '<div class="flashcard-imagebox" style="width:80%; aspect-ratio:1.414/1; background:#f8f8f8; display:flex; align-items:center; justify-content:center; border-radius:12px; margin-bottom:20px; overflow:hidden; min-height:280px;"><div class="flashcard-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:16px;">No image</div></div>';
     } else {
-        imageHTML = card.imageUrl ? 
-            `<img src="${card.imageUrl}" alt="${card.english}" class="flashcard-image">` : 
+        imageHTML = card.image ? 
+            `<img src="${card.image}" alt="${card.english}" class="flashcard-image">` : 
             '<div class="flashcard-placeholder">No image</div>';
     }
 
@@ -814,3 +827,36 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Function specifically for loading flashcards with images
+function loadFlashcardsWithImages(words, imageData) {
+    isLoadingWorksheet = true;
+    
+    // Create flashcard objects
+    flashcards = words.map(word => ({
+        english: word,
+        korean: '',
+        image: null
+    }));
+    
+    // Update global reference
+    window.flashcards = flashcards;
+    
+    // Restore images from saved data
+    if (imageData) {
+        flashcards.forEach(card => {
+            if (card.english && imageData[card.english]) {
+                card.image = imageData[card.english];
+            }
+        });
+    }
+    
+    updateCardList();
+    updatePreview();
+    
+    // Reset the loading flag
+    isLoadingWorksheet = false;
+}
+
+// Make this function available globally for the load function
+window.loadFlashcardsWithImages = loadFlashcardsWithImages;

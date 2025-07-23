@@ -754,11 +754,20 @@ document.addEventListener('DOMContentLoaded', function() {
             imageZoom: parseFloat(imageZoomSlider.value)
         };
 
+        // Collect image data from flashcards (english word -> image src)
+        const imageData = {};
+        if (window.flashcards && Array.isArray(window.flashcards)) {
+            window.flashcards.forEach(card => {
+                if (card.image && card.english) imageData[card.english] = card.image;
+            });
+        }
+
         return {
             title: titleInput.value.trim() || 'Untitled Flashcard Set',
             worksheet_type: 'flashcard',
             words: words,
             settings: JSON.stringify(settings),
+            images: JSON.stringify(imageData),
             created_at: new Date().toISOString()
         };
     }
@@ -841,14 +850,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Trigger regeneration of cards with loaded data
-            if (typeof window.generateCards === 'function') {
-                window.generateCards();
+            // Restore images and generate cards with a special function
+            const words = wordListInput.value.split('\n')
+                .map(word => word.trim())
+                .filter(word => word.length > 0);
+            
+            let imageData = {};
+            if (worksheet.images) {
+                try {
+                    if (typeof worksheet.images === 'string') {
+                        imageData = JSON.parse(worksheet.images);
+                    } else {
+                        imageData = worksheet.images;
+                    }
+                } catch (e) {
+                    console.warn('Could not parse images:', e);
+                }
+            }
+            
+            // Use special loading function that prevents auto-fetching and restores images
+            if (typeof window.loadFlashcardsWithImages === 'function') {
+                window.loadFlashcardsWithImages(words, imageData);
             } else {
-                // Fallback: trigger click on generate button
-                const generateBtn = document.getElementById('generateCardsBtn');
-                if (generateBtn) {
-                    generateBtn.click();
+                // Fallback to regular generation if function not available
+                if (typeof window.generateCards === 'function') {
+                    window.generateCards();
+                } else {
+                    const generateBtn = document.getElementById('generateCardsBtn');
+                    if (generateBtn) {
+                        generateBtn.click();
+                    }
                 }
             }
 
