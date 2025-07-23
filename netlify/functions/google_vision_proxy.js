@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function(event) {
+  console.log('RAW EVENT BODY:', event.body);
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -19,6 +20,7 @@ exports.handler = async function(event) {
   let body;
   try {
     body = JSON.parse(event.body);
+    console.log('PARSED BODY:', body);
   } catch (err) {
     return {
       statusCode: 400,
@@ -34,6 +36,7 @@ exports.handler = async function(event) {
       body: JSON.stringify(body)
     });
     const data = await response.json();
+    console.log('GOOGLE VISION RESPONSE:', data);
     return {
       statusCode: response.status,
       body: JSON.stringify(data)
