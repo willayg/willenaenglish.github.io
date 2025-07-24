@@ -797,11 +797,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function ensureGridHeader() {
   const stickyGrid = document.getElementById('gamePreviewArea');
   if (!stickyGrid) return;
-  // Remove any existing drag handle and title display
-  const oldDrag = document.getElementById('dragHandle');
-  if (oldDrag) oldDrag.remove();
-  const oldTitle = document.getElementById('gridGameTitleDisplay');
-  if (oldTitle) oldTitle.remove();
+  // Remove any existing drag handle and title display ONLY if they are direct children
+  Array.from(stickyGrid.children).forEach(child => {
+    if (child.id === 'dragHandle' || child.id === 'gridGameTitleDisplay') stickyGrid.removeChild(child);
+  });
   // Create title display
   const titleDisplay = document.createElement('div');
   titleDisplay.id = 'gridGameTitleDisplay';
@@ -822,39 +821,14 @@ function ensureGridHeader() {
     '<polygon points="2,16 7,19 7,17 15,17 15,15 7,15 7,13" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
     '<circle cx="16" cy="16" r="3" fill="#2e2b3f"/>' +
     '</g></svg></span>';
-  stickyGrid.insertBefore(dragHandle, stickyGrid.firstChild.nextSibling);
+  stickyGrid.insertBefore(dragHandle, stickyGrid.children[1] || stickyGrid.firstChild.nextSibling);
 }
 function attachDragLogic() {
   const stickyGrid = document.getElementById('gamePreviewArea');
   if (!stickyGrid) return;
-  // Ensure drag handle and title display are present
-  let dragHandle = document.getElementById('dragHandle');
-  if (!dragHandle) {
-    // Recreate drag handle if missing
-    dragHandle = document.createElement('div');
-    dragHandle.id = 'dragHandle';
-    dragHandle.style.cssText = 'padding:6px 12px;border-radius:8px 8px 0 0;font-weight:600;color:#222;user-select:none;position:absolute;top:-38px;left:0;width:48px;height:48px;z-index:1001;display:flex;align-items:center;justify-content:center;';
-    dragHandle.innerHTML = '<span id="dragIcon" style="font-size:2em;display:inline-block;width:32px;height:32px;">' +
-      '<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-      '<g>' +
-      '<polygon points="16,2 19,7 17,7 17,15 15,15 15,7 13,7" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
-      '<polygon points="30,16 25,13 25,15 17,15 17,17 25,17 25,19" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
-      '<polygon points="16,30 13,25 15,25 15,17 17,17 17,25 19,25" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
-      '<polygon points="2,16 7,19 7,17 15,17 15,15 7,15 7,13" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
-      '<circle cx="16" cy="16" r="3" fill="#2e2b3f"/>' +
-      '</g></svg></span>';
-    stickyGrid.insertBefore(dragHandle, stickyGrid.firstChild.nextSibling);
-  }
-  let titleDisplay = document.getElementById('gridGameTitleDisplay');
-  if (!titleDisplay) {
-    titleDisplay = document.createElement('div');
-    titleDisplay.id = 'gridGameTitleDisplay';
-    titleDisplay.style.cssText = 'font-size:1.5em;font-weight:700;text-align:center;margin-bottom:12px;color:#2e2b3f;';
-    stickyGrid.insertBefore(titleDisplay, stickyGrid.firstChild);
-    // Optionally update title from input
-    var titleInput = document.getElementById('titleInput');
-    if (titleInput) titleDisplay.textContent = titleInput.value.trim();
-  }
+  // Only attach drag logic if drag handle exists and is a direct child
+  const dragHandle = stickyGrid.querySelector('#dragHandle');
+  if (!dragHandle) return;
   let isDragging = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
   function isSticky() {
     return window.getComputedStyle(stickyGrid).position === 'fixed';
@@ -862,10 +836,10 @@ function attachDragLogic() {
   // Remove previous listeners
   dragHandle.onmousedown = null;
   dragHandle.ontouchstart = null;
-  document.onmousemove = null;
-  document.onmouseup = null;
-  document.ontouchmove = null;
-  document.ontouchend = null;
+  window._dragMove && document.removeEventListener('mousemove', window._dragMove);
+  window._dragUp && document.removeEventListener('mouseup', window._dragUp);
+  window._dragTouchMove && document.removeEventListener('touchmove', window._dragTouchMove);
+  window._dragTouchEnd && document.removeEventListener('touchend', window._dragTouchEnd);
   dragHandle.addEventListener('mousedown', function(e) {
     if (!isSticky()) return;
     isDragging = true;
@@ -875,19 +849,21 @@ function attachDragLogic() {
     origTop = parseInt(stickyGrid.style.top || 280);
     document.body.style.userSelect = 'none';
   });
-  document.addEventListener('mousemove', function(e) {
+  window._dragMove = function(e) {
     if (!isDragging) return;
     let dx = e.clientX - startX;
     let dy = e.clientY - startY;
     stickyGrid.style.left = (origLeft + dx) + 'px';
     stickyGrid.style.top = (origTop + dy) + 'px';
-  });
-  document.addEventListener('mouseup', function() {
+  };
+  window._dragUp = function() {
     if (isDragging) {
       isDragging = false;
       document.body.style.userSelect = '';
     }
-  });
+  };
+  document.addEventListener('mousemove', window._dragMove);
+  document.addEventListener('mouseup', window._dragUp);
   // Touch support
   dragHandle.addEventListener('touchstart', function(e) {
     if (!isSticky()) return;
@@ -899,20 +875,22 @@ function attachDragLogic() {
     origTop = parseInt(stickyGrid.style.top || 280);
     document.body.style.userSelect = 'none';
   });
-  document.addEventListener('touchmove', function(e) {
+  window._dragTouchMove = function(e) {
     if (!isDragging) return;
     const touch = e.touches[0];
     let dx = touch.clientX - startX;
     let dy = touch.clientY - startY;
     stickyGrid.style.left = (origLeft + dx) + 'px';
     stickyGrid.style.top = (origTop + dy) + 'px';
-  }, {passive:false});
-  document.addEventListener('touchend', function() {
+  };
+  window._dragTouchEnd = function() {
     if (isDragging) {
       isDragging = false;
       document.body.style.userSelect = '';
     }
-  });
+  };
+  document.addEventListener('touchmove', window._dragTouchMove, {passive:false});
+  document.addEventListener('touchend', window._dragTouchEnd);
   // Reset grid position if window resized below 1400px (static mode)
   window.addEventListener('resize', function() {
     if (!isSticky()) {
@@ -922,15 +900,7 @@ function attachDragLogic() {
   });
 }
 document.addEventListener('DOMContentLoaded', attachDragLogic);
-// Re-attach grid header and drag logic after grid is generated
-document.addEventListener('click', function(e) {
-  if (e.target && e.target.id === 'generateGameBtn') {
-    setTimeout(function() {
-      ensureGridHeader();
-      attachDragLogic();
-    }, 120);
-  }
-});
+// Title and drag handle are now preserved during grid generation
     // Font and font size controls for grid game preview
     function updateGridPreviewFont() {
       const font = document.getElementById('fontSelect')?.value || 'Poppins';

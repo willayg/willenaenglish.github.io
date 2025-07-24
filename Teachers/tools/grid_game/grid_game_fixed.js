@@ -238,6 +238,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function generateGrid() {
+        // Preserve existing title and drag handle
+        const existingTitle = document.getElementById('gridGameTitleDisplay');
+        const existingDragHandle = document.getElementById('dragHandle');
+        
         const gridContainer = document.createElement('div');
         gridContainer.innerHTML = `
             <div style="display: flex; gap: 20px; align-items: flex-start;">
@@ -260,8 +264,23 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        gamePreviewArea.innerHTML = '';
+        // Clear only content that is not title or drag handle
+        Array.from(gamePreviewArea.children).forEach(child => {
+            if (child.id !== 'gridGameTitleDisplay' && child.id !== 'dragHandle') {
+                gamePreviewArea.removeChild(child);
+            }
+        });
+        
+        // Append new grid content
         gamePreviewArea.appendChild(gridContainer);
+        
+        // Ensure title and drag handle stay at top
+        if (existingTitle && gamePreviewArea.firstChild !== existingTitle) {
+            gamePreviewArea.insertBefore(existingTitle, gamePreviewArea.firstChild);
+        }
+        if (existingDragHandle && gamePreviewArea.children[1] !== existingDragHandle) {
+            gamePreviewArea.insertBefore(existingDragHandle, gamePreviewArea.children[1] || gamePreviewArea.firstChild.nextSibling);
+        }
 
         const gameGrid = document.getElementById('gameGrid');
         
