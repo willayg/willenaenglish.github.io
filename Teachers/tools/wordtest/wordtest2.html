@@ -392,6 +392,7 @@
                     <div class="input-group">
                         <label>Passage Text</label>
                         <textarea class="textarea-field" id="passageInput" placeholder="Insert passage here..."></textarea>
+                        <button id="importTextBtn" class="extract-btn" style="margin-top:8px;width:100%;">Import Text</button>
                     </div>
 
                     <div class="input-group">
@@ -427,6 +428,26 @@
     </div>
 
     <script>
+    // Import Text button logic
+    document.addEventListener('DOMContentLoaded', function() {
+      const importBtn = document.getElementById('importTextBtn');
+      if (importBtn) {
+        importBtn.addEventListener('click', function() {
+          // Open worksheet manager filtered for Text files
+          const managerUrl = '/Teachers/worksheet_manager.html?mode=load&type=text';
+          const win = window.open(managerUrl, 'WorksheetManager', 'width=900,height=700');
+          // Listen for message from worksheet manager
+          window.addEventListener('message', function handler(e) {
+            if (e.data && e.data.action === 'import_text_passage' && typeof e.data.passage_text === 'string') {
+              document.getElementById('passageInput').value = e.data.passage_text;
+              if (window.updatePreview) window.updatePreview();
+              window.removeEventListener('message', handler);
+              win.close();
+            }
+          });
+        });
+      }
+    });
     // Feedback modal loader for Word Worksheet Generator (matching flashcard pattern)
     window.showFeedbackModal = function() {
       // Prevent multiple modals
