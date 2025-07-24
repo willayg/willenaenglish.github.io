@@ -122,6 +122,12 @@
       <button id="saveBtn">Save</button>
       <button id="clearBtn">Clear</button>
     </div>
+    <div id="titlePrompt" style="display:none;flex-direction:column;align-items:center;margin-top:18px;">
+      <label for="worksheetTitleInput" style="margin-bottom:6px;">Worksheet Title</label>
+      <input type="text" id="worksheetTitleInput" placeholder="Enter worksheet title..." style="width:90%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:1em;" />
+      <button id="titleSubmitBtn" style="margin-top:10px;background:#0077cc;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:1em;font-family:inherit;cursor:pointer;">Save Worksheet</button>
+    </div>
+    </div>
   </div>
   <script>
     const status = document.getElementById("status");
@@ -135,19 +141,38 @@
     const copyBtn = document.getElementById("copyBtn");
     const clearBtn = document.getElementById("clearBtn");
     const saveBtn = document.getElementById("saveBtn");
-    // Save to Supabase worksheet table
-    saveBtn.addEventListener("click", async () => {
+    // Save to Supabase worksheet table with title prompt
+    const titlePrompt = document.getElementById("titlePrompt");
+    const worksheetTitleInput = document.getElementById("worksheetTitleInput");
+    const titleSubmitBtn = document.getElementById("titleSubmitBtn");
+
+    saveBtn.addEventListener("click", () => {
       const passageText = output.value.trim();
       if (!passageText) {
         status.textContent = "❌ No text to save.";
         return;
       }
+      titlePrompt.style.display = "flex";
+      worksheetTitleInput.value = "";
+      worksheetTitleInput.focus();
+    });
+
+    titleSubmitBtn.addEventListener("click", async () => {
+      const passageText = output.value.trim();
+      const worksheetTitle = worksheetTitleInput.value.trim();
+      if (!worksheetTitle) {
+        status.textContent = "❌ Please enter a worksheet title.";
+        worksheetTitleInput.focus();
+        return;
+      }
       status.textContent = "⏳ Saving...";
+      titlePrompt.style.display = "none";
       try {
         const response = await fetch("/.netlify/functions/supabase_proxy_fixed/save_worksheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            title: worksheetTitle,
             passage_text: passageText,
             worksheet_type: "Text"
           })
