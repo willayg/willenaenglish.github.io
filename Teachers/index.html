@@ -227,6 +227,22 @@
         .tool-card {
             position: relative;
         }
+        /* Mobile-only tool card visibility */
+        .tool-card.mobile-only {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .tool-card.mobile-only {
+                display: flex !important;
+                width: 96vw;
+                margin: 0 auto;
+            }
+        }
+        @media (min-width: 601px) {
+            .tool-card.mobile-only {
+                display: none !important;
+            }
+        }
         
         @media (max-width: 900px) {
             .content-area {
