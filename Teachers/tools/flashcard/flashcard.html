@@ -442,19 +442,123 @@ document.addEventListener('DOMContentLoaded', function() {
             return card.english;
         }).join('\n');
     }
-    // Patch generateCards to call makePreviewEditable after rendering
-    if (window.generateCards) {
-        const origGenerateCards = window.generateCards;
-        window.generateCards = function() {
-            origGenerateCards.apply(this, arguments);
-            setTimeout(makePreviewEditable, 0);
-        };
-    } else {
-        // fallback: try after DOMContentLoaded
-        setTimeout(makePreviewEditable, 1000);
+    // Make functions globally accessible for consolidated patching
+    window.makePreviewEditable = makePreviewEditable;
+    
+    // Initialize image search window variable
+    window.imageSearchWindow = window.imageSearchWindow || null;
+    
+    // Comprehensive patch for generateCards to include all functionality
+    function applyComprehensiveGenerateCardsPatch() {
+        if (window.generateCards && !window._comprehensiveGenerateCardsPatch) {
+            const origGenerateCards = window.generateCards;
+            window.generateCards = function() {
+                // Call original function
+                origGenerateCards.apply(this, arguments);
+                
+                // Apply all patches with minimal delay
+                setTimeout(function() {
+                    // Image search double-click handler
+                    attachImageSearchDblClick();
+                    
+                    // Font updates
+                    if (typeof window.updateFlashcardFont === 'function') {
+                        window.updateFlashcardFont();
+                    }
+                    
+                    // Korean visibility
+                    if (typeof window.updateKoreanVisibility === 'function') {
+                        window.updateKoreanVisibility();
+                    }
+                    
+                    // Editable functionality
+                    makePreviewEditable();
+                }, 0);
+            };
+            window._comprehensiveGenerateCardsPatch = true;
+            console.log('Comprehensive patch applied to generateCards');
+        }
     }
-    // Also run after initial load in case cards are already present
-    setTimeout(makePreviewEditable, 500);
+    
+    // Image search double-click handler
+    function attachImageSearchDblClick() {
+        const grid = document.getElementById('flashcardGrid');
+        if (!grid) {
+            console.log('Grid not found for double-click attachment');
+            return;
+        }
+        
+        // Remove previous listener if any
+        if (window._imageSearchDblClickHandler) {
+            grid.removeEventListener('dblclick', window._imageSearchDblClickHandler);
+        }
+        
+        // Define handler
+        window._imageSearchDblClickHandler = function(e) {
+            console.log('Double-click detected');
+            let card = e.target;
+            while (card && !card.classList.contains('flashcard')) {
+                card = card.parentElement;
+            }
+            if (card && card.classList.contains('flashcard')) {
+                console.log('Double-click on flashcard:', card.id);
+                // Get the card index from the ID
+                const cardId = card.id; // should be like "flashcard-0"
+                const index = cardId ? cardId.split('-')[1] : null;
+                let word = '';
+                if (index !== null && window.flashcards && window.flashcards[index]) {
+                    // Always use the English word from the flashcards array
+                    word = window.flashcards[index].english;
+                }
+                // Fallback: try to extract word from card content, but skip placeholders
+                if (!word) {
+                    const textContent = card.textContent.trim();
+                    const lines = textContent.split('\n').map(line => line.trim()).filter(line => line && !/drag image here|no image/i.test(line));
+                    if (lines.length > 0) {
+                        word = lines[0];
+                    }
+                }
+                if (word) {
+                    console.log('Opening image search for:', word);
+                    const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
+                    // Use a global window reference to ensure reuse
+                    try {
+                        if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
+                            console.log('Reusing existing window');
+                            window.imageSearchWindow.location.href = url;
+                            window.imageSearchWindow.focus();
+                        } else {
+                            console.log('Opening new window');
+                            window.imageSearchWindow = window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
+                        }
+                    } catch (err) {
+                        console.log('Error with window handling, opening new:', err);
+                        window.imageSearchWindow = window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
+                    }
+                } else {
+                    console.log('No word found for image search');
+                }
+            }
+        };
+        
+        grid.addEventListener('dblclick', window._imageSearchDblClickHandler);
+        console.log('Double-click handler attached to grid');
+    }
+    
+    // Apply the comprehensive patch
+    setTimeout(function() {
+        console.log('Applying comprehensive patch and attaching handlers');
+        applyComprehensiveGenerateCardsPatch();
+        makePreviewEditable();
+        attachImageSearchDblClick();
+    }, 1000); // Increased delay to ensure everything is loaded
+    
+    // Also try again after a longer delay to catch late-loading scripts
+    setTimeout(function() {
+        console.log('Second attempt at applying patch');
+        applyComprehensiveGenerateCardsPatch();
+        attachImageSearchDblClick();
+    }, 2000);
 });
 </script>
 <script>
@@ -663,6 +767,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('No flashcards to export.');
                     return;
                 }
+                // Wait for all images to load before printing
+                const images = grid.querySelectorAll('img');
+                if (images.length > 0) {
+                    await Promise.all(Array.from(images).map(img => {
+                        return new Promise(resolve => {
+                            if (img.complete && img.naturalWidth !== 0) resolve();
+                            else {
+                                img.onload = () => resolve();
+                                img.onerror = () => resolve();
+                            }
+                        });
+                    }));
+                }
                 // Clone the grid for PDF export to avoid UI issues
                 const clone = grid.cloneNode(true);
                 clone.style.display = 'block';
@@ -684,38 +801,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Add double-click event to flashcards for Google Image search
-        const grid = document.getElementById('flashcardGrid');
-        if (grid) {
-            grid.addEventListener('dblclick', function(e) {
-                let card = e.target;
-                while (card && !card.classList.contains('flashcard')) {
-                    card = card.parentElement;
-                }
-                if (card && card.classList.contains('flashcard')) {
-                    // Get the card index from the ID
-                    const cardId = card.id; // should be like "flashcard-0"
-                    const index = cardId ? cardId.split('-')[1] : null;
-                    let word = '';
-                    if (index !== null && window.flashcards && window.flashcards[index]) {
-                        // Always use the English word from the flashcards array
-                        word = window.flashcards[index].english;
-                    }
-                    // Fallback: try to extract word from card content, but skip placeholders
-                    if (!word) {
-                        const textContent = card.textContent.trim();
-                        const lines = textContent.split('\n').map(line => line.trim()).filter(line => line && !/drag image here|no image/i.test(line));
-                        if (lines.length > 0) {
-                            word = lines[0];
-                        }
-                    }
-                    if (word) {
-                        const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
-                        window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
-                    }
-                }
-            });
-        }
+        // ...existing code...
 
     });
     
@@ -939,15 +1025,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         showKoreanToggle.addEventListener('change', updateKoreanVisibility);
 
-        // Update font and Korean visibility on card generation
-        if (window.generateCards) {
-            const origGenerateCards = window.generateCards;
-            window.generateCards = function() {
-                origGenerateCards.apply(this, arguments);
-                updateFlashcardFont();
-                updateKoreanVisibility();
-            };
-        }
+        // Make functions globally accessible for consolidated patching
+        window.updateFlashcardFont = updateFlashcardFont;
+        window.updateKoreanVisibility = updateKoreanVisibility;
+
+        // Comprehensive patch is now handled in the editable script section above
 
         // Feedback modal functionality (copied from grammar module for consistency)
         window.showFeedbackModal = async function() {

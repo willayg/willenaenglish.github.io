@@ -1,3 +1,41 @@
+// Simple image search window management - just the global variable
+window.imageSearchWindow = window.imageSearchWindow || null;
+
+// Image search double-click handler
+function attachImageSearchHandler() {
+    const grid = document.getElementById('flashcardGrid');
+    if (!grid) return;
+    
+    // Remove existing handler to prevent duplicates
+    grid.removeEventListener('dblclick', handleImageSearch);
+    // Add new handler
+    grid.addEventListener('dblclick', handleImageSearch);
+}
+
+function handleImageSearch(e) {
+    const card = e.target.closest('.flashcard');
+    if (!card || !card.classList.contains('flashcard')) return;
+    
+    const cardId = card.id;
+    const index = cardId ? cardId.split('-')[1] : null;
+    let word = '';
+    
+    if (index !== null && window.flashcards && window.flashcards[index]) {
+        word = window.flashcards[index].english;
+    }
+    
+    if (word) {
+        const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
+        
+        // Reuse the same window if open and not closed
+        if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
+            window.imageSearchWindow.location.href = url;
+            window.imageSearchWindow.focus();
+        } else {
+            window.imageSearchWindow = window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes');
+        }
+    }
+}
 // Feedback modal loader for burger menu integration
 window.showFeedbackModal = function() {
   // Prevent multiple modals
@@ -126,7 +164,19 @@ function setupEventListeners() {
     
     // Settings changes
     document.getElementById('fontSelect').addEventListener('change', updatePreview);
-    document.getElementById('fontSizeInput').addEventListener('input', updatePreview);
+    // Make font size update live
+    document.getElementById('fontSizeInput').addEventListener('input', function() {
+        // Update settings
+        currentSettings.fontSize = parseInt(this.value) || 18;
+        
+        // Live update existing flashcard text elements
+        document.querySelectorAll('.flashcard-english').forEach(el => {
+            el.style.fontSize = currentSettings.fontSize + 'px';
+        });
+        
+        // Also update preview settings for next full render
+        updatePreview();
+    });
     document.getElementById('layoutSelect').addEventListener('change', updatePreview);
     document.getElementById('showKoreanToggle').addEventListener('change', updatePreview);
     document.getElementById('imageOnlyToggle').addEventListener('change', updatePreview);
@@ -226,7 +276,7 @@ function updatePreview() {
     // Get current settings
     currentSettings = {
         font: document.getElementById('fontSelect').value,
-        fontSize: parseInt(document.getElementById('fontSizeInput').value),
+        fontSize: parseInt(document.getElementById('fontSizeInput').value) || 18,
         layout: document.getElementById('layoutSelect').value,
         imageZoom: parseFloat(document.getElementById('imageZoomSlider') ? document.getElementById('imageZoomSlider').value : 1),
         showKorean: document.getElementById('showKoreanToggle').checked,
@@ -336,6 +386,9 @@ function updatePreview() {
             }
         });
     });
+    
+    // Attach image search handler after updating preview
+    setTimeout(attachImageSearchHandler, 100);
 }
 
 function generateCardHTML(card, idx) {

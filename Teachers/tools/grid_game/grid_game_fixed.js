@@ -280,6 +280,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (existingDragHandle && gamePreviewArea.children[1] !== existingDragHandle) {
             gamePreviewArea.insertBefore(existingDragHandle, gamePreviewArea.children[1] || gamePreviewArea.firstChild.nextSibling);
+            // Make drag handle smaller
+            existingDragHandle.style.padding = '2px 4px';
+            existingDragHandle.style.borderRadius = '6px 6px 0 0';
+            existingDragHandle.style.position = 'absolute';
+            existingDragHandle.style.top = '-20px';
+            existingDragHandle.style.left = '8px';
+            existingDragHandle.style.width = '24px';
+            existingDragHandle.style.height = '24px';
+            var dragIcon = existingDragHandle.querySelector('#dragIcon');
+            if (dragIcon) {
+                dragIcon.style.fontSize = '1em';
+                dragIcon.style.width = '16px';
+                dragIcon.style.height = '16px';
+                // Keep the same SVG icon
+            }
         }
 
         const gameGrid = document.getElementById('gameGrid');
