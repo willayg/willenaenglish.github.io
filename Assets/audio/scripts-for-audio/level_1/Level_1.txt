@@ -1,0 +1,138 @@
+What’s your name?
+My name is David.
+Hello. How are you?
+I’m fine, thank you.
+What’s your first name?
+What’s your last name?
+My name is Sophie.
+This is my friend, John.
+Hello, Steve.
+It’s nice to meet you.
+Nice to meet you, too.
+This is my friend, Ted.
+Nice to meet you, Ted.
+Hello.
+What is it?
+It’s a pen.
+It’s an eraser.
+It’s a crayon.
+It isn’t a marker.
+It’s a book.
+Is it a pen?
+Yes, it is.
+No, it isn’t.
+Is it an eraser?
+It’s a poster.
+Is it a map?
+What color is it?
+It’s green.
+It’s orange.
+What shape is it?
+It’s a circle.
+It’s an oval.
+It’s a star.
+Is this a star?
+It’s a blue star.
+Is it an old bag?
+Is it a new camera?
+It’s a cell phone.
+What’s this?
+What’s that?
+What are these?
+These are CDs.
+What are those?
+Who is he?
+Who is she?
+He’s my brother.
+She’s my sister.
+She’s my mother.
+She’s my grandmother.
+He’s my grandfather.
+He’s my friend.
+She’s pretty.
+Is he short?
+Is she tall?
+He is tall.
+She is tall.
+He isn’t tall.
+She isn’t tall.
+He has a small head.
+She has a small head.
+He has big eyes.
+She has big eyes.
+I like cats.
+I like turtles.
+I like rabbits.
+I don’t like lions.
+I don’t want fish.
+I don’t know.
+I want a banana.
+I want an orange.
+I want chicken.
+I want a sandwich.
+What do you want?
+What do you like?
+I can swim.
+I can’t swim.
+He can swim.
+She can’t drive.
+I can walk.
+I can run.
+I can jump.
+I can dance.
+Can he swim?
+Can you ride a bike?
+Yes, I can.
+No, I can’t.
+Where’s the bat?
+It’s on the table.
+Where are the balls?
+They’re under the table.
+Where is the cookie?
+It’s in the box.
+Where are the cookies?
+They’re in the box.
+How many crayons?
+One crayon.
+Three crayons.
+How many birds are there?
+There are eight birds.
+There is one flower.
+There are four trees.
+There is an egg.
+There are six eggs.
+Ouch!
+Are you okay?
+I think so.
+How’s the weather?
+It’s sunny.
+What’s wrong?
+I feel sick.
+That’s too bad.
+Are you happy?
+Yes, I am.
+No, I’m not.
+I’m sad.
+I’m going now.
+Bye-bye!
+See you tomorrow.
+Open your book.
+Close your book.
+Put away your pencil.
+Raise your hand.
+Pay attention.
+Stop talking.
+Clean up.
+Go back to your seat.
+Make a circle.
+Make a line.
+Excuse me.
+Here you are.
+Thanks.
+You’re welcome.
+May I borrow a pen?
+Sure.
+Thank you.
+Pardon me?
+What’s your telephone number?
+It’s 765-1234.
