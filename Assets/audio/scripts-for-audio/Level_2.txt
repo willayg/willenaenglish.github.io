@@ -448,16 +448,6 @@ I live with my grandparents.
 
 I live in a tall building.
 
-📫 It’s 6 North Street.
-It’s 123 Park Avenue.
-
-It’s 9 Maple Road.
-
-It’s 22 Apple Street.
-
-It’s 75 Hill Drive.
-
-It’s 18 River Lane.
 
 🍳 I eat breakfast.
 I brush my teeth.
@@ -536,16 +526,22 @@ He’s my teacher.
 
 He’s my coach.
 
-👩 Yes, she is. / No, she isn’t.
-Yes, he is. / No, he isn’t.
+👩 Yes, she is. /
+No, she isn’t.
+Yes, he is. /
+No, he isn’t.
 
-Yes, they are. / No, they aren’t.
+Yes, they are. / 
+No, they aren’t.
 
-Yes, it is. / No, it isn’t.
+Yes, it is. /
+No, it isn’t.
 
-Yes, I do. / No, I don’t.
+Yes, I do. /
+No, I don’t.
 
-Yes, we can. / No, we can’t.
+Yes, we can. / 
+No, we can’t.
 
 (These are answer forms, but still great for drills.)
 
@@ -582,16 +578,22 @@ She wants to go to the park.
 
 She wants a cookie.
 
-🛏️ Yes, there are. / No, there aren’t.
-Yes, there is. / No, there isn’t.
+🛏️ Yes, there are. 
+No, there aren’t.
+Yes, there is. 
+No, there isn’t.
 
-Yes, we do. / No, we don’t.
+Yes, we do. 
+No, we don’t.
 
-Yes, he can. / No, he can’t.
+Yes, he can. 
+No, he can’t.
 
-Yes, I have. / No, I haven’t.
+Yes, I have. 
+No, I haven’t.
 
-Yes, it is. / No, it isn’t.
+Yes, it is. 
+No, it isn’t.
 
 
 
