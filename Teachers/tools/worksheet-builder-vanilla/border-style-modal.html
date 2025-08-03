@@ -1,6 +1,6 @@
 <!-- Border Style Modal Component -->
 <div id="border-style-modal" style="display:none;position:fixed;z-index:5000;left:0;top:0;width:100vw;height:100vh;background:rgba(60,60,80,0.18);align-items:center;justify-content:center;">
-  <div style="background:linear-gradient(135deg, rgba(165, 180, 179, 0.18) 0%, rgba(134, 201, 206, 0.18) 100%);padding:2px 18px 24px 18px;border-radius:16px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);min-width:288px;max-width:80vw;position:relative;backdrop-filter: blur(16px) saturate(180%);-webkit-backdrop-filter: blur(16px) saturate(180%);">
+  <div style="background:linear-gradient(135deg, rgba(165, 180, 179, 0.18) 0%, rgba(134, 201, 206, 0.18) 100%);padding:2px 10px 18px 10px;border-radius:16px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);min-width:245px;max-width:68vw;position:relative;backdrop-filter: blur(16px) saturate(180%);-webkit-backdrop-filter: blur(16px) saturate(180%);">
     <!-- Close button -->
     <button id="close-border-modal" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:20px;color:#666;cursor:pointer;padding:4px;line-height:1;" title="Close">&times;</button>
     <!-- Close button -->
@@ -53,21 +53,20 @@
           <div style="position:relative;">
             <div id="modal-fill-color-preview" style="width:28px;height:28px;border:1px solid #cbd5e0;border-radius:7px;background:#ffffff;cursor:pointer;" title="Fill Color"></div>
           </div>
-</div>
-<!-- Move color pickers outside modal inner container for floating behavior -->
-<div id="modal-border-color-picker" style="display:none;position:absolute;z-index:10001;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;">
-  <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;" id="modal-border-color-swatches">
-    <!-- Tailwind color swatches will be added here -->
-  </div>
-  <div id="modal-border-color-iro" style="margin-top:8px;"></div>
-</div>
-<div id="modal-fill-color-picker" style="display:none;position:absolute;z-index:10001;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;">
-  <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;" id="modal-fill-color-swatches">
-    <!-- Tailwind color swatches will be added here -->
-  </div>
-  <div id="modal-fill-color-iro" style="margin-top:8px;"></div>
-</div>
         </label>
+        <!-- Move color pickers outside modal inner container for floating behavior -->
+        <div id="modal-border-color-picker" style="display:none;position:absolute;z-index:10001;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;">
+          <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;" id="modal-border-color-swatches">
+            <!-- Tailwind color swatches will be added here -->
+          </div>
+          <div id="modal-border-color-iro" style="margin-top:8px;"></div>
+        </div>
+        <div id="modal-fill-color-picker" style="display:none;position:absolute;z-index:10001;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;">
+          <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;" id="modal-fill-color-swatches">
+            <!-- Tailwind color swatches will be added here -->
+          </div>
+          <div id="modal-fill-color-iro" style="margin-top:8px;"></div>
+        </div>
         <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
           <span>Opacity:</span>
           <input id="modal-fill-opacity" type="range" min="0" max="1" step="0.01" value="1" style="width:80px;" aria-label="Fill Opacity" />
