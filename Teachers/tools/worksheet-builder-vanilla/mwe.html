@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimum Working Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f4f4f9;
+    }
+
+    #toolbar {
+      margin: 20px 0;
+    }
+
+    #page-preview-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 794px;
+      margin: 0 auto;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .page-preview-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 794px;
+      height: 1123px;
+      margin: 12px 0 20px 0; /* Adjusted top and bottom margins */
+      padding: 0;
+      background: white;
+      position: relative;
+    }
+
+    .textbox {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+      min-width: 120px;
+      min-height: 40px;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid #ccc;
+      resize: both;
+      overflow: auto;
+      cursor: move;
+    }
+
+    .add-page-btn, .add-textbox-btn, .print-btn {
+      padding: 10px 20px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .add-page-btn {
+      background-color: #007bff;
+    }
+
+    .add-page-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .add-textbox-btn {
+      background-color: #28a745;
+    }
+
+    .add-textbox-btn:hover {
+      background-color: #1e7e34;
+    }
+
+    .print-btn {
+      background-color: #6c757d;
+    }
+
+    .print-btn:hover {
+      background-color: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button class="add-page-btn" onclick="addPage()">Add New Page</button>
+    <button class="add-textbox-btn" onclick="addTextbox()">Add Text Box</button>
+    <button class="print-btn" onclick="printPages()">Print</button>
+  </div>
+  <div id="page-preview-area"></div>
+
+  <script>
+    function addPage() {
+      const pageWrapper = document.createElement('div');
+      pageWrapper.className = 'page-preview-wrapper';
+      document.getElementById('page-preview-area').appendChild(pageWrapper);
+    }
+
+    function addTextbox() {
+      const textbox = document.createElement('div');
+      textbox.className = 'textbox';
+      textbox.contentEditable = true;
+      textbox.draggable = true;
+
+      // Add drag functionality
+      textbox.addEventListener('mousedown', function (e) {
+        const offsetX = e.clientX - textbox.offsetLeft;
+        const offsetY = e.clientY - textbox.offsetTop;
+
+        function onMouseMove(event) {
+          textbox.style.left = `${event.clientX - offsetX}px`;
+          textbox.style.top = `${event.clientY - offsetY}px`;
+        }
+
+        function onMouseUp() {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      document.querySelector('.page-preview-wrapper:last-child').appendChild(textbox);
+    }
+
+    function printPages() {
+      const originalContent = document.body.innerHTML;
+      const printContent = document.getElementById('page-preview-area').outerHTML;
+      document.body.innerHTML = printContent;
+      window.print();
+      document.body.innerHTML = originalContent;
+    }
+
+    // Initialize with one page
+    addPage();
+  </script>
+</body>
+</html>

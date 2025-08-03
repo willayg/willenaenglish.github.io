@@ -1,0 +1,1392 @@
+// main.js - Vanilla Worksheet Builder
+
+// Import state management
+// Note: Using script tag import for now to maintain compatibility
+
+// History system for undo/redo
+let history = [];
+let historyIndex = -1;
+const MAX_HISTORY = 50;
+
+// Save current state to history
+function saveToHistory(action = 'unknown') {
+  // CRITICAL: Sync DOM to data model before saving
+  syncAllTextboxesToDataModel();
+  
+  // Deep clone the current pages state
+  const currentState = {
+    pages: JSON.parse(JSON.stringify(window.worksheetState.getPages())),
+    action: action,
+    timestamp: Date.now()
+  };
+  
+  // Remove any future history if we're not at the end
+  if (historyIndex < history.length - 1) {
+    history = history.slice(0, historyIndex + 1);
+    console.log(`Truncated future history. New length: ${history.length}`);
+  }
+  
+  // Add new state
+  history.push(currentState);
+  historyIndex++;
+  
+  // Limit history size
+  if (history.length > MAX_HISTORY) {
+    history = history.slice(-MAX_HISTORY);
+    historyIndex = history.length - 1;
+  }
+  
+  console.log(`Saved to history: ${action} (${historyIndex + 1}/${history.length})`);
+  console.log(`History debug - Index: ${historyIndex}, Length: ${history.length}, Can undo: ${historyIndex > 0}, Can redo: ${historyIndex < history.length - 1}`);
+  console.log('Current state snapshot:', {
+    totalPages: window.worksheetState.getPages().length,
+    totalBoxes: window.worksheetState.getPages().reduce((sum, page) => sum + (page.boxes ? page.boxes.length : 0), 0),
+    firstPageBoxes: window.worksheetState.getPages()[0]?.boxes?.length || 0
+  });
+}
+
+// Undo last action
+function undo() {
+  if (historyIndex <= 0) {
+    console.log('Nothing to undo');
+    return;
+  }
+  
+  historyIndex--;
+  const state = history[historyIndex];
+  
+  // Store current selection info before restoring
+  const currentSelection = window.worksheetState.getLastTextbox() ? {
+    pageIdx: Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(window.worksheetState.getLastTextbox())),
+    boxIdx: Array.from(document.querySelectorAll('.worksheet-textbox')).indexOf(window.worksheetState.getLastTextbox())
+  } : null;
+  
+  // Restore the state
+  window.worksheetState.setPages(JSON.parse(JSON.stringify(state.pages)));
+  renderPages();
+  
+  // Try to restore selection if possible
+  if (currentSelection && currentSelection.pageIdx >= 0 && currentSelection.boxIdx >= 0) {
+    setTimeout(() => {
+      const pageEls = document.querySelectorAll('.page-preview-a4');
+      if (pageEls[currentSelection.pageIdx]) {
+        const boxEls = pageEls[currentSelection.pageIdx].querySelectorAll('.worksheet-textbox');
+        if (boxEls[currentSelection.boxIdx]) {
+          window.worksheetState.setLastTextbox(boxEls[currentSelection.boxIdx]);
+          window.worksheetState.getLastTextbox().classList.add('selected');
+          updateToolbarFromBox(window.worksheetState.getLastTextbox());
+        }
+      }
+    }, 10);
+  }
+  
+  console.log(`Undid: ${state.action} (${historyIndex + 1}/${history.length})`);
+  console.log(`History debug - Index: ${historyIndex}, Length: ${history.length}, Can redo: ${historyIndex < history.length - 1}`);
+}
+
+// Redo last undone action
+function redo() {
+  if (historyIndex >= history.length - 1) {
+    console.log('Nothing to redo');
+    return;
+  }
+  
+  historyIndex++;
+  const state = history[historyIndex];
+  
+  console.log(`Attempting redo: ${state.action} (index ${historyIndex}/${history.length})`);
+  
+  // Store current selection info before restoring
+  const currentSelection = window.worksheetState.getLastTextbox() ? {
+    pageIdx: Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(window.worksheetState.getLastTextbox())),
+    boxIdx: Array.from(document.querySelectorAll('.worksheet-textbox')).indexOf(window.worksheetState.getLastTextbox())
+  } : null;
+  
+  // Restore the state
+  window.worksheetState.setPages(JSON.parse(JSON.stringify(state.pages)));
+  renderPages();
+  
+  // Try to restore selection if possible
+  if (currentSelection && currentSelection.pageIdx >= 0 && currentSelection.boxIdx >= 0) {
+    setTimeout(() => {
+      const pageEls = document.querySelectorAll('.page-preview-a4');
+      if (pageEls[currentSelection.pageIdx]) {
+        const boxEls = pageEls[currentSelection.pageIdx].querySelectorAll('.worksheet-textbox');
+        if (boxEls[currentSelection.boxIdx]) {
+          window.worksheetState.setLastTextbox(boxEls[currentSelection.boxIdx]);
+          window.worksheetState.getLastTextbox().classList.add('selected');
+          updateToolbarFromBox(window.worksheetState.getLastTextbox());
+        }
+      }
+    }, 10);
+  }
+  
+  console.log(`Redid: ${state.action} (${historyIndex + 1}/${history.length})`);
+  console.log(`History debug - Index: ${historyIndex}, Length: ${history.length}, Can undo: ${historyIndex > 0}`);
+}
+
+// Make functions globally available
+window.undo = undo;
+window.redo = redo;
+window.saveToHistory = saveToHistory;
+
+// Text box operations
+function copyTextbox(box) {
+  if (!box) return;
+  
+  // Find the box data in the data model
+  const pageEls = document.querySelectorAll('.page-preview-a4');
+  for (let pageIdx = 0; pageIdx < pageEls.length; pageIdx++) {
+    const boxes = pageEls[pageIdx].querySelectorAll('.worksheet-textbox');
+    for (let boxIdx = 0; boxIdx < boxes.length; boxIdx++) {
+      if (boxes[boxIdx] === box && window.worksheetState.getPages()[pageIdx] && window.worksheetState.getPages()[pageIdx].boxes[boxIdx]) {
+        // Deep copy the box data
+        window.worksheetState.setClipboardData(JSON.parse(JSON.stringify(window.worksheetState.getPages()[pageIdx].boxes[boxIdx])));
+        console.log('Text box copied to clipboard');
+        return;
+      }
+    }
+  }
+}
+
+function cutTextbox(box) {
+  if (!box) return;
+  copyTextbox(box);
+  deleteTextbox(box);
+}
+
+function deleteTextbox(box) {
+  if (!box) return;
+  
+  // Save current state before deletion
+  saveToHistory('delete textbox');
+  
+  // Find and remove the box from the data model
+  const pageEls = document.querySelectorAll('.page-preview-a4');
+  for (let pageIdx = 0; pageIdx < pageEls.length; pageIdx++) {
+    const boxes = pageEls[pageIdx].querySelectorAll('.worksheet-textbox');
+    for (let boxIdx = 0; boxIdx < boxes.length; boxIdx++) {
+      if (boxes[boxIdx] === box && window.worksheetState.getPages()[pageIdx] && window.worksheetState.getPages()[pageIdx].boxes[boxIdx]) {
+        window.worksheetState.getPages()[pageIdx].boxes.splice(boxIdx, 1);
+        if (window.worksheetState.getLastTextbox() === box) window.worksheetState.setLastTextbox(null);
+        renderPages();
+        console.log('Text box deleted');
+        return;
+      }
+    }
+  }
+}
+
+function pasteTextbox() {
+  if (!window.worksheetState.getClipboardData()) {
+    console.log('No text box in clipboard');
+    return;
+  }
+  
+  // Save current state before pasting
+  saveToHistory('paste textbox');
+  
+  // Find the selected page or use the last page
+  const selected = document.querySelector('.page-preview-a4.selected');
+  const pagesEls = document.querySelectorAll('.page-preview-a4');
+  if (!pagesEls.length) return;
+  
+  const pageEl = selected || pagesEls[pagesEls.length - 1];
+  const pageIdx = Array.from(pagesEls).indexOf(pageEl);
+  if (pageIdx === -1) return;
+  
+  // Create a copy of the clipboard data with offset position
+  const newBoxData = JSON.parse(JSON.stringify(window.worksheetState.getClipboardData()));
+  newBoxData.left = (parseInt(newBoxData.left) + 20) + 'px';
+  newBoxData.top = (parseInt(newBoxData.top) + 20) + 'px';
+  
+  // Add to the page
+  if (!window.worksheetState.getPages()[pageIdx]) window.worksheetState.getPages()[pageIdx] = { boxes: [] };
+  window.worksheetState.getPages()[pageIdx].boxes.push(newBoxData);
+  
+  // Re-render to show the new box
+  renderPages();
+  console.log('Text box pasted');
+}
+
+// Make functions globally available
+window.copyTextbox = copyTextbox;
+window.cutTextbox = cutTextbox;
+window.deleteTextbox = deleteTextbox;
+window.pasteTextbox = pasteTextbox;
+
+// Context menu functionality
+function createContextMenu() {
+  let contextMenu = document.getElementById('textbox-context-menu');
+  if (contextMenu) return contextMenu;
+  
+  contextMenu = document.createElement('div');
+  contextMenu.id = 'textbox-context-menu';
+  contextMenu.style.position = 'fixed';
+  contextMenu.style.background = 'white';
+  contextMenu.style.border = '1px solid #e1e8ed';
+  contextMenu.style.borderRadius = '8px';
+  contextMenu.style.boxShadow = '0 4px 16px 0 rgba(60,60,80,0.15)';
+  contextMenu.style.padding = '8px 0';
+  contextMenu.style.zIndex = '10001';
+  contextMenu.style.display = 'none';
+  contextMenu.style.minWidth = '120px';
+  contextMenu.style.fontFamily = 'Poppins, Arial, sans-serif';
+  contextMenu.style.fontSize = '14px';
+  
+  contextMenu.innerHTML = `
+    <div class="context-item" data-action="undo">Undo (Ctrl+Z)</div>
+    <div class="context-item" data-action="redo">Redo (Ctrl+Y)</div>
+    <div class="context-separator"></div>
+    <div class="context-item" data-action="copy">Copy</div>
+    <div class="context-item" data-action="cut">Cut</div>
+    <div class="context-item" data-action="paste">Paste</div>
+    <div class="context-separator"></div>
+    <div class="context-item" data-action="delete">Delete</div>
+  `;
+  
+  // Add styles for context menu items
+  const style = document.createElement('style');
+  style.textContent = `
+    .context-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .context-item:hover {
+      background: #f7fafc;
+    }
+    .context-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .context-separator {
+      height: 1px;
+      background: #e1e8ed;
+      margin: 4px 0;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  document.body.appendChild(contextMenu);
+  
+  // Close context menu when clicking outside
+  document.addEventListener('click', function() {
+    contextMenu.style.display = 'none';
+  });
+  
+  return contextMenu;
+}
+
+function showContextMenu(e, contextMenu, box) {
+  const pasteItem = contextMenu.querySelector('[data-action="paste"]');
+  const undoItem = contextMenu.querySelector('[data-action="undo"]');
+  const redoItem = contextMenu.querySelector('[data-action="redo"]');
+  
+  pasteItem.classList.toggle('disabled', !getClipboardData());
+  undoItem.classList.toggle('disabled', historyIndex <= 0);
+  redoItem.classList.toggle('disabled', historyIndex >= history.length - 1);
+  
+  contextMenu.style.left = e.clientX + 'px';
+  contextMenu.style.top = e.clientY + 'px';
+  contextMenu.style.display = 'block';
+  
+  // Position adjustment if menu goes off screen
+  setTimeout(() => {
+    const rect = contextMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      contextMenu.style.left = (e.clientX - rect.width) + 'px';
+    }
+    if (rect.bottom > window.innerHeight) {
+      contextMenu.style.top = (e.clientY - rect.height) + 'px';
+    }
+  }, 0);
+  
+  // Handle context menu clicks
+  contextMenu.onclick = function(event) {
+    const action = event.target.dataset.action;
+    if (!action || event.target.classList.contains('disabled')) return;
+    
+    switch(action) {
+      case 'undo':
+        undo();
+        break;
+      case 'redo':
+        redo();
+        break;
+      case 'copy':
+        copyTextbox(box);
+        break;
+      case 'cut':
+        cutTextbox(box);
+        break;
+      case 'paste':
+        pasteTextbox();
+        break;
+      case 'delete':
+        deleteTextbox(box);
+        break;
+    }
+    
+    contextMenu.style.display = 'none';
+  };
+}
+
+// Move updateToolbarFromBox outside DOMContentLoaded so it's globally accessible
+function updateToolbarFromBox(box) {
+  if (!box) return;
+  
+  // Get references to toolbar elements
+  const fontSelect = document.getElementById('pt-font');
+  const fontSizeInput = document.getElementById('pt-fontsize');
+  const boldBtn = document.getElementById('pt-bold');
+  const italicBtn = document.getElementById('pt-italic');
+  const underlineBtn = document.getElementById('pt-underline');
+  const strikeBtn = document.getElementById('pt-strike');
+  const fontColorInput = document.getElementById('pt-fontcolor');
+  const lineSpacingInput = document.getElementById('pt-linespacing');
+  const borderInput = document.getElementById('pt-border');
+  
+  // Only update if elements exist
+  if (fontSelect) fontSelect.value = box.style.fontFamily.replace(/['\"]/g, '').split(',')[0] || 'Poppins';
+  if (fontSizeInput) fontSizeInput.value = parseInt(box.style.fontSize) || 16;
+  
+  // Text formatting
+  if (boldBtn) {
+    boldBtn.classList.toggle('active', box.style.fontWeight === 'bold' || box.style.fontWeight >= 700);
+    boldBtn.style.fontWeight = '700';
+    boldBtn.style.fontStyle = 'normal';
+    boldBtn.style.textDecoration = 'none';
+  }
+  if (italicBtn) {
+    italicBtn.classList.toggle('active', box.style.fontStyle === 'italic');
+    italicBtn.style.fontWeight = '500';
+    italicBtn.style.fontStyle = 'italic';
+    italicBtn.style.textDecoration = 'none';
+  }
+  if (underlineBtn) {
+    underlineBtn.classList.toggle('active', box.style.textDecoration && box.style.textDecoration.includes('underline'));
+    underlineBtn.style.fontWeight = '500';
+    underlineBtn.style.fontStyle = 'normal';
+    underlineBtn.style.textDecoration = 'underline';
+  }
+  if (strikeBtn) {
+    strikeBtn.classList.toggle('active', box.style.textDecoration && box.style.textDecoration.includes('line-through'));
+    strikeBtn.style.fontWeight = '500';
+    strikeBtn.style.fontStyle = 'normal';
+    strikeBtn.style.textDecoration = 'line-through';
+  }
+  
+  // Font color
+  if (fontColorInput) fontColorInput.value = box.style.color || '#000000';
+  
+  // Line spacing
+  if (lineSpacingInput) lineSpacingInput.value = box.style.lineHeight ? parseFloat(box.style.lineHeight) : 1.2;
+  
+  // Border color
+  if (borderInput) {
+    let borderColor = '#e1e8ed';
+    if (box.style.border) {
+      const match = box.style.border.match(/(#[0-9a-fA-F]{3,6}|rgb\([^)]+\))/);
+      if (match) borderColor = match[1];
+    }
+    borderInput.value = borderColor;
+  }
+}
+
+function renderPages() {
+  // Don't sync here - only sync when explicitly saving to history
+  // syncAllTextboxesToDataModel();
+  
+  const area = document.getElementById('page-preview-area');
+  area.innerHTML = '';
+  getPages().forEach((pageData, idx) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'page-preview-wrapper';
+    if (idx === pages.length - 1) wrapper.style.marginBottom = '16px';
+    else wrapper.style.marginBottom = '8px';
+    const a4 = document.createElement('div');
+    a4.className = 'page-preview-a4' + (getOrientation() === 'landscape' ? ' landscape' : '');
+    a4.style.position = 'relative';
+    // Allow page selection
+    a4.addEventListener('click', function(e) {
+      if (e.target.closest('.page-controls')) return;
+      document.querySelectorAll('.page-preview-a4.selected').forEach(p => p.classList.remove('selected'));
+      a4.classList.add('selected');
+    });
+
+    // Add + and - icons at the top, shown on hover
+    const controls = document.createElement('div');
+    controls.className = 'page-controls';
+    controls.style.position = 'absolute';
+    controls.style.top = '8px';
+    controls.style.right = '16px';
+    controls.style.display = 'flex';
+    controls.style.gap = '8px';
+    controls.style.opacity = '0';
+    controls.style.transition = 'opacity 0.2s';
+
+    // + icon (SVG)
+    const plus = document.createElement('button');
+    plus.title = 'Add page after';
+    plus.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8" fill="#fff" stroke="#e1e8ed" stroke-width="1.5"/><path d="M9 5.5V12.5" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 9H12.5" stroke="#4a5568" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    plus.style.background = 'none';
+    plus.style.border = 'none';
+    plus.style.padding = '0';
+    plus.style.cursor = 'pointer';
+    plus.style.transition = 'transform 0.15s, box-shadow 0.15s';
+    plus.onmouseenter = () => { plus.style.transform = 'scale(1.12)'; plus.style.boxShadow = '0 4px 16px 0 rgba(60,60,80,0.18)'; };
+    plus.onmouseleave = () => { plus.style.transform = 'scale(1)'; plus.style.boxShadow = 'none'; };
+    plus.onclick = (e) => {
+      e.stopPropagation();
+      saveToHistory('add page');
+      getPages().splice(idx + 1, 0, { boxes: [] });
+      renderPages();
+    };
+
+    // - icon (SVG)
+    const minus = document.createElement('button');
+    minus.title = 'Delete this page';
+    minus.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8" fill="#fff" stroke="#e1e8ed" stroke-width="1.5"/><path d="M5.5 9H12.5" stroke="#c53030" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    minus.style.background = 'none';
+    minus.style.border = 'none';
+    minus.style.padding = '0';
+    minus.style.cursor = 'pointer';
+    minus.style.transition = 'transform 0.15s, box-shadow 0.15s';
+    minus.onmouseenter = () => { minus.style.transform = 'scale(1.12)'; minus.style.boxShadow = '0 4px 16px 0 rgba(197,48,48,0.18)'; };
+    minus.onmouseleave = () => { minus.style.transform = 'scale(1)'; minus.style.boxShadow = 'none'; };
+    minus.onclick = (e) => {
+      e.stopPropagation();
+      if (getPages().length > 1) {
+        saveToHistory('delete page');
+        getPages().splice(idx, 1);
+        renderPages();
+      }
+    };
+
+    controls.appendChild(plus);
+    controls.appendChild(minus);
+    a4.appendChild(controls);
+
+    // Show controls on hover/scroll near top
+    a4.addEventListener('mouseenter', () => {
+      controls.style.opacity = '1';
+    });
+    a4.addEventListener('mouseleave', () => {
+      controls.style.opacity = '0';
+    });
+
+    // Render all text boxes for this page
+    if (Array.isArray(pageData.boxes)) {
+      pageData.boxes.forEach((boxData, boxIdx) => {
+        const box = document.createElement('div');
+        box.className = 'worksheet-textbox' + (boxData.text.trim() === '' ? ' empty' : '');
+        box.contentEditable = true;
+        
+        // Use innerHTML to preserve inline formatting, fallback to innerText
+        if (boxData.html) {
+          box.innerHTML = boxData.html;
+        } else {
+          box.innerText = boxData.text;
+        }
+        
+        box.setAttribute('data-placeholder', 'Type here...');
+        box.style.position = 'absolute';
+        box.style.left = boxData.left;
+        box.style.top = boxData.top;
+        box.style.minWidth = boxData.width;
+        box.style.minHeight = boxData.height;
+        box.style.padding = '8px 12px';
+        box.style.background = '#fff';
+        
+        // Set data attributes for border controls
+        box.setAttribute('data-border-on', (boxData.borderOn !== undefined ? boxData.borderOn : true).toString());
+        box.setAttribute('data-border-color', boxData.borderColor || '#e1e8ed');
+        box.setAttribute('data-border-width', (boxData.borderWeight !== undefined ? boxData.borderWeight : 1.5).toString());
+        box.setAttribute('data-border-radius', (boxData.borderRadius !== undefined ? boxData.borderRadius : 4).toString());
+        
+        // Set data attributes for fill controls
+        box.setAttribute('data-fill-on', (boxData.fillOn !== undefined ? boxData.fillOn : false).toString());
+        box.setAttribute('data-fill-color', boxData.fillColor || '#ffffff');
+        box.setAttribute('data-fill-opacity', (boxData.fillOpacity !== undefined ? boxData.fillOpacity : 1).toString());
+        
+        // Apply fill if enabled
+        if (boxData.fillOn) {
+          const fillColor = boxData.fillColor || '#ffffff';
+          const fillOpacity = boxData.fillOpacity !== undefined ? boxData.fillOpacity : 1;
+          // Convert hex to rgba
+          let c = fillColor.replace('#', '');
+          if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+          const num = parseInt(c, 16);
+          box.style.backgroundColor = `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${fillOpacity})`;
+        }
+        
+        // Always apply border thickness, color, and radius, even for empty boxes
+        if (boxData.borderOn || box.classList.contains('empty')) {
+          box.style.borderStyle = 'solid';
+          box.style.borderWidth = (boxData.borderWeight !== undefined ? boxData.borderWeight : 1.5) + 'px';
+          box.style.borderColor = boxData.borderColor || '#e1e8ed';
+        } else {
+          box.style.border = 'none';
+        }
+        box.style.borderRadius = (typeof boxData.borderRadius !== 'undefined' ? boxData.borderRadius : 4) + 'px';
+        box.style.fontFamily = (boxData.fontFamily || 'Poppins');
+        box.style.fontSize = (boxData.fontSize || '16px');
+        box.style.color = (boxData.color || '#3d3752');
+        box.style.fontWeight = (boxData.fontWeight || 'normal');
+        box.style.fontStyle = (boxData.fontStyle || 'normal');
+        box.style.textDecoration = (boxData.textDecoration || 'none');
+        box.style.textAlign = (boxData.textAlign || 'left');
+        box.style.lineHeight = (boxData.lineHeight || '1.2');
+        box.style.cursor = 'move';
+        box.style.boxShadow = 'none';
+        box.style.zIndex = 20;
+        box.style.resize = 'none';
+        box.style.overflow = 'auto';
+        // Vertical alignment
+        if (boxData.valign === 'top' || !boxData.valign) {
+          box.style.display = '';
+          box.style.alignItems = '';
+          box.style.justifyContent = '';
+        } else {
+          box.style.display = 'flex';
+          box.style.flexDirection = 'column';
+          box.style.justifyContent = boxData.valign === 'middle' ? 'center' : 'flex-end';
+          box.style.alignItems = 'stretch';
+        }
+        // Remove transient hover/focus/blur border logic; border is now persistent
+        // Drag logic (only drag if not resizing or editing)
+        let offsetX, offsetY, dragging = false;
+        let prevWidth = null, prevHeight = null;
+        box.addEventListener('mousedown', function(e) {
+          prevWidth = box.offsetWidth;
+          prevHeight = box.offsetHeight;
+          const style = window.getComputedStyle(box);
+          const right = box.offsetWidth - (e.offsetX || 0);
+          const bottom = box.offsetHeight - (e.offsetY || 0);
+          if (right < 18 && bottom < 18) return;
+          if (e.target !== box) return;
+          dragging = true;
+          offsetX = e.clientX - box.offsetLeft;
+          offsetY = e.clientY - box.offsetTop;
+          box.style.userSelect = 'none';
+          document.body.style.userSelect = 'none';
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!dragging) return;
+          let x = e.clientX - offsetX;
+          let y = e.clientY - offsetY;
+          const rect = a4.getBoundingClientRect();
+          const boxRect = box.getBoundingClientRect();
+          x = Math.max(0, Math.min(x, rect.width - boxRect.width));
+          y = Math.max(0, Math.min(y, rect.height - boxRect.height));
+          box.style.left = x + 'px';
+          box.style.top = y + 'px';
+          // Update data
+          boxData.left = box.style.left;
+          boxData.top = box.style.top;
+        });
+        document.addEventListener('mouseup', function() {
+          if (dragging) {
+            // Save to history after dragging (moving textbox)
+            saveToHistory('move textbox');
+          }
+          dragging = false;
+          box.style.userSelect = '';
+          document.body.style.userSelect = '';
+        });
+        // Only update size if the box was actually resized
+        box.addEventListener('mouseup', function() {
+          if (box.offsetWidth !== prevWidth || box.offsetHeight !== prevHeight) {
+            boxData.width = box.style.minWidth = box.offsetWidth + 'px';
+            boxData.height = box.style.minHeight = box.offsetHeight + 'px';
+            // Save to history after resizing
+            saveToHistory('resize textbox');
+          }
+        });
+        // Show placeholder if empty
+        function updatePlaceholder() {
+          if (box.innerText.trim() === '') {
+            box.classList.add('empty');
+          } else {
+            box.classList.remove('empty');
+          }
+        }
+        box.addEventListener('input', function() {
+          boxData.text = box.innerText;
+          boxData.html = box.innerHTML; // Preserve HTML formatting
+          updatePlaceholder();
+          // Debounced history save for text changes
+          getDebouncedSaveTextHistory()();
+        });
+        // Save font family and other style changes to data model
+        box.addEventListener('DOMSubtreeModified', function() {
+          if (box.style.fontFamily) {
+            boxData.fontFamily = box.style.fontFamily;
+          }
+          if (box.style.fontSize) {
+            boxData.fontSize = box.style.fontSize;
+          }
+        });
+      // Inline toolbar integration
+      box.addEventListener('focus', function() {
+        setLastTextbox(box);
+        box.style.cursor = 'text';
+        // Add selected class and remove from others
+        document.querySelectorAll('.worksheet-textbox.selected').forEach(b => b.classList.remove('selected'));
+        box.classList.add('selected');
+        updatePlaceholder();
+        updateToolbarFromBox(box);
+        if (window.showTextToolbar) window.showTextToolbar(box);
+      });
+      // Also show toolbar on click (for mouse users who don't focus)
+      box.addEventListener('click', function() {
+        setLastTextbox(box);
+        // Add selected class and remove from others
+        document.querySelectorAll('.worksheet-textbox.selected').forEach(b => b.classList.remove('selected'));
+        box.classList.add('selected');
+        updateToolbarFromBox(box);
+        if (window.showTextToolbar) window.showTextToolbar(box);
+      });
+      
+      // Context menu for text box operations
+      box.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        const contextMenu = createContextMenu();
+        showContextMenu(e, contextMenu, box);
+      });
+        box.addEventListener('blur', function() {
+          box.style.cursor = 'move';
+          // Remove selected class on blur, but only if not clicking on another textbox
+          setTimeout(() => {
+            if (!document.activeElement.classList.contains('worksheet-textbox')) {
+              box.classList.remove('selected');
+            }
+          }, 10);
+          updatePlaceholder();
+          // Don't hide toolbar on blur - let click outside handle it
+        });
+        updatePlaceholder();
+        a4.appendChild(box);
+      });
+    }
+
+    // (Removed page number at the bottom)
+    wrapper.appendChild(a4);
+    area.appendChild(wrapper);
+    setTimeout(() => {
+      if (!document.querySelector('.page-preview-a4.selected')) {
+        const first = document.querySelector('.page-preview-a4');
+        if (first) first.classList.add('selected');
+      }
+    }, 0);
+  });
+}
+
+
+function syncAllTextboxesToDataModel() {
+  // For each page
+  const pageEls = document.querySelectorAll('.page-preview-a4');
+  pageEls.forEach((pageEl, pageIdx) => {
+    const boxEls = pageEl.querySelectorAll('.worksheet-textbox');
+    
+    // Ensure the page exists in data model
+    if (!getPages()[pageIdx]) getPages()[pageIdx] = { boxes: [] };
+    
+    // Update existing boxes and remove any extras from data model
+    getPages()[pageIdx].boxes = [];
+    
+    boxEls.forEach((boxEl, boxIdx) => {
+      // Create or update box data from current DOM state
+      const boxData = {
+        text: boxEl.innerText || '',
+        html: boxEl.innerHTML || '',
+        left: boxEl.style.left || '0px',
+        top: boxEl.style.top || '0px',
+        width: boxEl.style.minWidth || boxEl.offsetWidth + 'px',
+        height: boxEl.style.minHeight || boxEl.offsetHeight + 'px',
+        borderOn: boxEl.getAttribute('data-border-on') === 'true' || true,
+        borderColor: boxEl.getAttribute('data-border-color') || '#e1e8ed',
+        borderWeight: parseFloat(boxEl.getAttribute('data-border-width')) || 1.5,
+        borderRadius: parseInt(boxEl.getAttribute('data-border-radius')) || 4,
+        fillOn: boxEl.getAttribute('data-fill-on') === 'true' || false,
+        fillColor: boxEl.getAttribute('data-fill-color') || '#ffffff',
+        fillOpacity: parseFloat(boxEl.getAttribute('data-fill-opacity')) || 1,
+        fontFamily: boxEl.style.fontFamily || 'Poppins',
+        fontSize: boxEl.style.fontSize || '16px',
+        color: boxEl.style.color || '#3d3752',
+        fontWeight: boxEl.style.fontWeight || 'normal',
+        fontStyle: boxEl.style.fontStyle || 'normal',
+        textDecoration: boxEl.style.textDecoration || 'none',
+        textAlign: boxEl.style.textAlign || 'left',
+        lineHeight: boxEl.style.lineHeight || '1.2',
+        valign: boxEl.style.justifyContent === 'center' ? 'middle' : 
+                boxEl.style.justifyContent === 'flex-end' ? 'bottom' : 'top'
+      };
+      
+      getPages()[pageIdx].boxes.push(boxData);
+    });
+  });
+}
+
+function addPage() {
+  saveToHistory('add page');
+  getPages().push({ boxes: [] });
+  renderPages();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Show context menu with paste when right-clicking the preview area (not on a textbox)
+  const previewArea = document.getElementById('page-preview-area');
+  if (previewArea) {
+    previewArea.addEventListener('contextmenu', function(e) {
+      // Only trigger if not right-clicking a textbox or page controls
+      if (e.target.closest('.worksheet-textbox') || e.target.closest('.page-controls')) return;
+      e.preventDefault();
+      const contextMenu = createContextMenu();
+      // Only enable paste, disable all other actions
+      contextMenu.querySelectorAll('.context-item').forEach(item => {
+        if (item.dataset.action === 'paste') {
+          item.classList.toggle('disabled', !getClipboardData());
+        } else {
+          item.classList.add('disabled');
+        }
+      });
+      contextMenu.style.left = e.clientX + 'px';
+      contextMenu.style.top = e.clientY + 'px';
+      contextMenu.style.display = 'block';
+      setTimeout(() => {
+        const rect = contextMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+          contextMenu.style.left = (e.clientX - rect.width) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+          contextMenu.style.top = (e.clientY - rect.height) + 'px';
+        }
+      }, 0);
+      // Only allow paste action
+      contextMenu.onclick = function(event) {
+        const action = event.target.dataset.action;
+        if (action === 'paste' && !event.target.classList.contains('disabled')) {
+          pasteTextbox();
+        }
+        contextMenu.style.display = 'none';
+      };
+    });
+  }
+  // Border thickness (weight) control: update inline style and data model
+  const borderWeightInput = document.getElementById('dropdown-borderweight');
+  if (borderWeightInput) {
+    borderWeightInput.addEventListener('input', function() {
+      if (getLastTextbox()) {
+        // Update inline style immediately
+        getLastTextbox().style.borderWidth = borderWeightInput.value + 'px';
+        // Also update data model for persistence
+        const pageIdx = Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(getLastTextbox()));
+        if (pageIdx >= 0) {
+          const boxIdx = Array.from(document.querySelectorAll('.worksheet-textbox')).indexOf(getLastTextbox());
+          if (boxIdx >= 0 && getPages()[pageIdx] && getPages()[pageIdx].boxes[boxIdx]) {
+            getPages()[pageIdx].boxes[boxIdx].borderWeight = borderWeightInput.value;
+          }
+        }
+        // Save to history for border weight changes
+        saveToHistory('change border thickness');
+      }
+    });
+  }
+  
+  // Keyboard shortcuts for textbox operations
+  document.addEventListener('keydown', function(e) {
+    // Handle undo/redo shortcuts globally
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+      if (e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if (e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+        return;
+      }
+    }
+    
+    // Only handle textbox shortcuts when a textbox is selected and not editing text
+    if (!getLastTextbox()) return;
+    
+    // Check if we're actually editing text content (cursor is inside the textbox)
+    const isEditing = document.activeElement === getLastTextbox() || getLastTextbox().contains(document.activeElement);
+    
+    // Don't intercept shortcuts when actively editing text content
+    if (isEditing && !e.ctrlKey && !e.metaKey) return;
+    
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+      switch(e.key.toLowerCase()) {
+        case 'c':
+          e.preventDefault();
+          copyTextbox(getLastTextbox());
+          break;
+        case 'x':
+          e.preventDefault();
+          cutTextbox(getLastTextbox());
+          break;
+        case 'v':
+          e.preventDefault();
+          pasteTextbox();
+          break;
+      }
+    }
+    
+    // Delete key (when textbox is selected but not editing)
+    if (e.key === 'Delete' && !isEditing) {
+      e.preventDefault();
+      deleteTextbox(getLastTextbox());
+    }
+  });
+  
+  // Auto-select page on scroll
+  function autoSelectVisiblePage() {
+    const pages = Array.from(document.querySelectorAll('.page-preview-a4'));
+    if (!pages.length) return;
+    let closest = null;
+    let minDist = Infinity;
+    const viewportCenter = window.scrollY + window.innerHeight / 2;
+    pages.forEach(page => {
+      const rect = page.getBoundingClientRect();
+      const pageCenter = rect.top + window.scrollY + rect.height / 2;
+      const dist = Math.abs(pageCenter - viewportCenter);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = page;
+      }
+    });
+    if (closest && !closest.classList.contains('selected')) {
+      document.querySelectorAll('.page-preview-a4.selected').forEach(p => p.classList.remove('selected'));
+      closest.classList.add('selected');
+    }
+  }
+  window.addEventListener('scroll', autoSelectVisiblePage, { passive: true });
+  // Also run on resize and after rendering pages
+  window.addEventListener('resize', autoSelectVisiblePage);
+  setTimeout(autoSelectVisiblePage, 200);
+  // Simple burger toggle logic
+  const burgerToggle = document.getElementById('burger-toggle');
+  const burgerMenu = document.getElementById('burger-menu');
+  if (burgerToggle && burgerMenu) {
+    burgerToggle.onclick = () => {
+      burgerMenu.style.display = burgerMenu.style.display === 'block' ? 'none' : 'block';
+    };
+    document.addEventListener('click', (e) => {
+      if (e.target !== burgerToggle && !burgerMenu.contains(e.target)) {
+        burgerMenu.style.display = 'none';
+      }
+    });
+  }
+  
+  // Save initial state to history
+  saveToHistory('initial state');
+  renderPages();
+
+  // --- Pastel Toolbar Logic ---
+  const pastelToolbar = document.getElementById('pastel-toolbar');
+  const fontSelect = document.getElementById('pt-font');
+  const fontSizeInput = document.getElementById('pt-fontsize');
+  const fontSizeInc = document.getElementById('pt-fontsize-inc');
+  const fontSizeDec = document.getElementById('pt-fontsize-dec');
+  // Alignment controls are now dropdowns, not selects
+  const halignBtn = document.getElementById('pt-halign-btn');
+  const valignBtn = document.getElementById('pt-valign-btn');
+  const boldBtn = document.getElementById('pt-bold');
+  const italicBtn = document.getElementById('pt-italic');
+  const underlineBtn = document.getElementById('pt-underline');
+  const strikeBtn = document.getElementById('pt-strike');
+  const fontColorInput = document.getElementById('pt-fontcolor');
+  const lineSpacingInput = document.getElementById('pt-linespacing');
+  const borderInput = document.getElementById('pt-border');
+
+  function updateBoxData(box, property, value) {
+    // Find the box in the data model and update it
+    const pageEls = document.querySelectorAll('.page-preview-a4');
+    for (let pageIdx = 0; pageIdx < pageEls.length; pageIdx++) {
+      const boxes = pageEls[pageIdx].querySelectorAll('.worksheet-textbox');
+      for (let boxIdx = 0; boxIdx < boxes.length; boxIdx++) {
+        if (boxes[boxIdx] === box && pages[pageIdx] && pages[pageIdx].boxes[boxIdx]) {
+          pages[pageIdx].boxes[boxIdx][property] = value;
+          return;
+        }
+      }
+    }
+  }
+
+  function setVAlign(valign) {
+    if (lastTextbox) {
+      lastTextbox.style.verticalAlign = valign;
+      if (valign === 'top') {
+        lastTextbox.style.display = '';
+        lastTextbox.style.alignItems = '';
+        lastTextbox.style.justifyContent = '';
+      } else {
+        lastTextbox.style.display = 'flex';
+        lastTextbox.style.flexDirection = 'column';
+        lastTextbox.style.justifyContent = valign === 'middle' ? 'center' : 'flex-end';
+        lastTextbox.style.alignItems = 'stretch';
+      }
+      updateBoxData(lastTextbox, 'valign', valign);
+      updateToolbarFromBox(lastTextbox);
+      // Save to history for alignment changes
+      saveToHistory('change vertical alignment');
+    }
+  }
+
+  function setAlign(align) {
+    if (lastTextbox) {
+      lastTextbox.style.textAlign = align;
+      updateBoxData(lastTextbox, 'textAlign', align);
+      updateToolbarFromBox(lastTextbox);
+      // Save to history for alignment changes
+      saveToHistory('change text alignment');
+    }
+  }
+
+  function toggleBold() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('bold', false, null);
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+        // Update button state based on current selection
+        setTimeout(() => {
+          const isActive = document.queryCommandState('bold');
+          boldBtn.classList.toggle('active', isActive);
+        }, 10);
+      } else {
+        // Apply to entire textbox
+        const isBold = lastTextbox.style.fontWeight === 'bold' || lastTextbox.style.fontWeight >= 700;
+        lastTextbox.style.fontWeight = isBold ? 'normal' : 'bold';
+        boldBtn.classList.toggle('active', !isBold);
+        updateBoxData(lastTextbox, 'fontWeight', lastTextbox.style.fontWeight);
+        updateToolbarFromBox(lastTextbox);
+      }
+      // Save to history for formatting changes
+      saveToHistory('format text (bold)');
+    }
+  }
+
+  function toggleItalic() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('italic', false, null);
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+        // Update button state based on current selection
+        setTimeout(() => {
+          const isActive = document.queryCommandState('italic');
+          italicBtn.classList.toggle('active', isActive);
+        }, 10);
+      } else {
+        // Apply to entire textbox
+        const isItalic = lastTextbox.style.fontStyle === 'italic';
+        lastTextbox.style.fontStyle = isItalic ? 'normal' : 'italic';
+        italicBtn.classList.toggle('active', !isItalic);
+        updateBoxData(lastTextbox, 'fontStyle', lastTextbox.style.fontStyle);
+        updateToolbarFromBox(lastTextbox);
+      }
+      // Save to history for formatting changes
+      saveToHistory('format text (italic)');
+    }
+  }
+
+  function toggleUnderline() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('underline', false, null);
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+        // Update button state based on current selection
+        setTimeout(() => {
+          const isActive = document.queryCommandState('underline');
+          underlineBtn.classList.toggle('active', isActive);
+        }, 10);
+      } else {
+        // Apply to entire textbox
+        let dec = lastTextbox.style.textDecoration || '';
+        const hasUnderline = dec.includes('underline');
+        if (hasUnderline) {
+          dec = dec.replace('underline', '').replace(/\s+/g, ' ').trim();
+        } else {
+          dec = (dec + ' underline').replace(/\s+/g, ' ').trim();
+        }
+        lastTextbox.style.textDecoration = dec || 'none';
+        underlineBtn.classList.toggle('active', !hasUnderline);
+        updateBoxData(lastTextbox, 'textDecoration', lastTextbox.style.textDecoration);
+        updateToolbarFromBox(lastTextbox);
+      }
+      // Save to history for formatting changes
+      saveToHistory('format text (underline)');
+    }
+  }
+
+  function toggleStrike() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('strikeThrough', false, null);
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+        // Update button state based on current selection
+        setTimeout(() => {
+          const isActive = document.queryCommandState('strikeThrough');
+          strikeBtn.classList.toggle('active', isActive);
+        }, 10);
+      } else {
+        // Apply to entire textbox
+        let dec = lastTextbox.style.textDecoration || '';
+        const hasStrike = dec.includes('line-through');
+        if (hasStrike) {
+          dec = dec.replace('line-through', '').replace(/\s+/g, ' ').trim();
+        } else {
+          dec = (dec + ' line-through').replace(/\s+/g, ' ').trim();
+        }
+        lastTextbox.style.textDecoration = dec || 'none';
+        strikeBtn.classList.toggle('active', !hasStrike);
+        updateBoxData(lastTextbox, 'textDecoration', lastTextbox.style.textDecoration);
+        updateToolbarFromBox(lastTextbox);
+      }
+      // Save to history for formatting changes
+      saveToHistory('format text (strikethrough)');
+    }
+  }
+
+  function updateBoxFromToolbar(box) {
+    if (!box) return;
+    // Font family
+    box.style.fontFamily = fontSelect.value;
+    updateBoxData(box, 'fontFamily', fontSelect.value);
+    // Font size
+    box.style.fontSize = fontSizeInput.value + 'px';
+    updateBoxData(box, 'fontSize', fontSizeInput.value + 'px');
+    // Font color
+    box.style.color = fontColorInput.value;
+    updateBoxData(box, 'color', fontColorInput.value);
+    // Line spacing
+    box.style.lineHeight = lineSpacingInput.value;
+    updateBoxData(box, 'lineHeight', lineSpacingInput.value);
+    // Border color
+    if (borderInput) {
+      box.style.border = '1.5px solid ' + borderInput.value;
+      updateBoxData(box, 'borderColor', borderInput.value);
+    }
+  }
+
+  // Make setAlign function available globally for the dropdown system
+  window.setAlign = function(type, value) {
+    if (lastTextbox) {
+      if (type === 'h') {
+        lastTextbox.style.textAlign = value;
+        updateBoxData(lastTextbox, 'textAlign', value);
+        // Save to history for alignment changes
+        saveToHistory('change text alignment');
+      } else if (type === 'v') {
+        setVAlign(value);
+      }
+    }
+  };
+
+  // Event listeners for new controls
+  // Note: alignment is now handled by the dropdown system in index.html
+
+  boldBtn.addEventListener('click', toggleBold);
+  italicBtn.addEventListener('click', toggleItalic);
+  underlineBtn.addEventListener('click', toggleUnderline);
+  strikeBtn.addEventListener('click', toggleStrike);
+
+  fontColorInput.addEventListener('input', function() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('foreColor', false, fontColorInput.value);
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+      } else {
+        // Apply to entire textbox
+        lastTextbox.style.color = fontColorInput.value;
+        updateBoxData(lastTextbox, 'color', fontColorInput.value);
+      }
+      // Save to history for color changes
+      saveToHistory('change font color');
+    }
+  });
+
+  fontSelect.addEventListener('change', function() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('fontName', false, fontSelect.value);
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+      } else {
+        // Apply to entire textbox
+        lastTextbox.style.fontFamily = fontSelect.value;
+        updateBoxData(lastTextbox, 'fontFamily', fontSelect.value);
+        // Also save to data model
+        const pageIdx = Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(lastTextbox));
+        if (pageIdx >= 0) {
+          const boxIdx = Array.from(document.querySelectorAll('.worksheet-textbox')).indexOf(lastTextbox);
+          if (boxIdx >= 0 && pages[pageIdx] && pages[pageIdx].boxes[boxIdx]) {
+            pages[pageIdx].boxes[boxIdx].fontFamily = fontSelect.value;
+          }
+        }
+      }
+      // Save to history for font changes
+      saveToHistory('change font family');
+    }
+  });
+  fontSizeInput.addEventListener('input', function() {
+    if (lastTextbox) {
+      const selection = window.getSelection();
+      const hasSelection = selection && !selection.isCollapsed && lastTextbox.contains(selection.anchorNode);
+      
+      if (hasSelection) {
+        // Apply to selected text using execCommand
+        document.execCommand('fontSize', false, '7'); // HTML font size (1-7 scale)
+        // Then override with exact pixel size using CSS
+        const selectedElements = lastTextbox.querySelectorAll('font[size="7"]');
+        selectedElements.forEach(el => {
+          el.style.fontSize = fontSizeInput.value + 'px';
+          el.removeAttribute('size'); // Remove the HTML size attribute
+        });
+        // Save HTML content to preserve inline formatting
+        updateBoxData(lastTextbox, 'html', lastTextbox.innerHTML);
+      } else {
+        // Apply to entire textbox
+        lastTextbox.style.fontSize = fontSizeInput.value + 'px';
+        updateBoxData(lastTextbox, 'fontSize', fontSizeInput.value + 'px');
+        // Also save to data model
+        const pageIdx = Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(lastTextbox));
+        if (pageIdx >= 0) {
+          const boxIdx = Array.from(document.querySelectorAll('.worksheet-textbox')).indexOf(lastTextbox);
+          if (boxIdx >= 0 && pages[pageIdx] && pages[pageIdx].boxes[boxIdx]) {
+            pages[pageIdx].boxes[boxIdx].fontSize = fontSizeInput.value + 'px';
+          }
+        }
+      }
+      // Save to history for font size changes
+      saveToHistory('change font size');
+    }
+  });
+  fontSizeInc.addEventListener('click', function() {
+    fontSizeInput.value = Math.min(72, parseInt(fontSizeInput.value) + 1);
+    fontSizeInput.dispatchEvent(new Event('input'));
+  });
+  fontSizeDec.addEventListener('click', function() {
+    fontSizeInput.value = Math.max(8, parseInt(fontSizeInput.value) - 1);
+    fontSizeInput.dispatchEvent(new Event('input'));
+  });
+  lineSpacingInput.addEventListener('input', function() {
+    if (lastTextbox) {
+      updateBoxFromToolbar(lastTextbox);
+      // Save to history for line spacing changes
+      saveToHistory('change line spacing');
+    }
+  });
+  if (borderInput) {
+    borderInput.addEventListener('input', function() {
+      if (lastTextbox) {
+        updateBoxFromToolbar(lastTextbox);
+        // Save to history for border changes
+        saveToHistory('change border color');
+      }
+    });
+  }
+
+  // Listen for focus/click on any text box to update toolbar
+  document.addEventListener('click', function(e) {
+    const box = e.target.closest && e.target.closest('.worksheet-textbox');
+    const toolbar = document.getElementById('pastel-toolbar');
+    // If clicking a text box, select it
+    if (box) {
+      setLastTextbox(box);
+      // Remove selected class from all other textboxes
+      document.querySelectorAll('.worksheet-textbox.selected').forEach(b => b.classList.remove('selected'));
+      box.classList.add('selected');
+      updateToolbarFromBox(box);
+      return;
+    }
+    // If clicking the pastel toolbar or its children, do NOT deselect
+    if (toolbar && (toolbar === e.target || toolbar.contains(e.target))) {
+      return;
+    }
+    // Otherwise, deselect all textboxes
+    document.querySelectorAll('.worksheet-textbox.selected').forEach(b => b.classList.remove('selected'));
+    setLastTextbox(null);
+  });
+  // Also update on focus
+  document.addEventListener('focusin', function(e) {
+    const box = e.target.closest && e.target.closest('.worksheet-textbox');
+    if (box) {
+      setLastTextbox(box);
+      updateToolbarFromBox(box);
+    }
+  });
+  // Only add event listener if add-page-text exists (avoid duplicate listeners)
+  const addPageBtn = document.getElementById('add-page-text');
+  if (addPageBtn) {
+    addPageBtn.addEventListener('click', addPage);
+  }
+
+  // --- Toolbar: Burger menu and File menu logic ---
+  // Inject burger menu template into DOM, then hook up
+  fetch('/Teachers/components/burger-menu.html')
+    .then(r => r.text())
+    .then(burgerHtml => {
+      // Insert the template into the DOM if not already present
+      if (!document.getElementById('burger-menu-template')) {
+        const div = document.createElement('div');
+        div.innerHTML = burgerHtml;
+        document.body.appendChild(div.firstElementChild);
+      }
+      if (window.insertBurgerMenu) window.insertBurgerMenu('#toolbar-mount');
+
+      // Load File menu
+          fetch('/Teachers/components/file_menu.html')
+            .then(r => r.text())
+            .then(html => {
+              const fileMenuMount = document.getElementById('file-menu-mount');
+              // Insert the file menu component at the beginning
+              fileMenuMount.insertAdjacentHTML('afterbegin', html);
+
+              // Add More button next to File button
+              const fileMenuWrapper = fileMenuMount.querySelector('.file-menu-wrapper');
+              if (fileMenuWrapper) {
+                const moreMenuHtml = `
+                  <div class="action-link more-menu dropdown" tabindex="0" style="position:relative;display:inline-block;margin-left:16px;">
+                    <span class="file-menu-btn" style="font-weight:bold;color:#fff;cursor:pointer;font-family:'Poppins',sans-serif;">More</span>
+                    <div class="dropdown-content file-menu-dropdown" style="display:none;position:absolute;left:0;top:100%;background:#fff;min-width:160px;border-radius:0 0 8px 8px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);border:1px solid #e1e8ed;z-index:100;font-family:'Poppins',sans-serif;">
+                      <a class="file-menu-item" href="#" id="help-link">Help</a>
+                      <a class="file-menu-item" href="#" id="about-link">About</a>
+                    </div>
+                  </div>
+                `;
+                fileMenuWrapper.insertAdjacentHTML('afterend', moreMenuHtml);
+              }
+
+              // Setup File menu dropdown
+              const fileBtn = fileMenuMount.querySelector('.file-menu-btn');
+              const fileDropdown = fileMenuMount.querySelector('.file-menu-dropdown');
+              if (fileBtn && fileDropdown) {
+                fileBtn.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  // Close all dropdowns first
+                  document.querySelectorAll('.dropdown-content').forEach(function(d) { d.style.display = 'none'; });
+                  fileDropdown.style.display = fileDropdown.style.display === 'block' ? 'none' : 'block';
+                });
+                // Hide dropdown on click outside
+                document.addEventListener('mousedown', function hideFileDropdown(e) {
+                  if (fileDropdown.style.display === 'block' && !fileDropdown.contains(e.target) && e.target !== fileBtn) {
+                    fileDropdown.style.display = 'none';
+                  }
+                });
+              }
+
+              // Setup More menu dropdown
+              function setupDropdown(menuSelector) {
+                var menu = document.querySelector(menuSelector);
+                if (!menu) return;
+                var btn = menu.querySelector('.file-menu-btn');
+                var dropdown = menu.querySelector('.dropdown-content');
+                if (btn && dropdown) {
+                  btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var isOpen = dropdown.style.display === 'block';
+                    // Close all dropdowns first
+                    document.querySelectorAll('.dropdown-content').forEach(function(d) { d.style.display = 'none'; });
+                    dropdown.style.display = isOpen ? 'none' : 'block';
+                  });
+                }
+              }
+              setupDropdown('.more-menu');
+
+              // Close dropdowns on outside click
+              document.addEventListener('mousedown', function(e) {
+                if (!e.target.closest('.file-menu-wrapper') && !e.target.closest('.more-menu')) {
+                  document.querySelectorAll('.dropdown-content').forEach(function(d) { d.style.display = 'none'; });
+                }
+              });
+
+              // Load the modal HTML
+              fetch('/Teachers/components/page_settings_modal.html')
+                .then(r => r.text())
+                .then(modalHtml => {
+                  document.getElementById('page-settings-modal-mount').innerHTML = modalHtml;
+                  // Wire up Page Settings menu item
+                  var pageSettingsBtn = document.getElementById('file-menu-page-settings');
+                  var modal = document.getElementById('page-settings-modal');
+                  if (pageSettingsBtn && modal) {
+                    pageSettingsBtn.onclick = function(e) {
+                      e.preventDefault();
+                      modal.style.display = 'flex';
+                      fileDropdown.style.display = 'none';
+                      // Sync modal radio to current orientation
+                      var portraitRadio = modal.querySelector('input[name="page-orientation"][value="portrait"]');
+                      var landscapeRadio = modal.querySelector('input[name="page-orientation"][value="landscape"]');
+                      if (portraitRadio && landscapeRadio) {
+                        if (getOrientation() === 'landscape') {
+                          landscapeRadio.checked = true;
+                          portraitRadio.checked = false;
+                        } else {
+                          portraitRadio.checked = true;
+                          landscapeRadio.checked = false;
+                        }
+                      }
+                    };
+                  }
+                  // Modal close logic
+                  var closeBtn = document.getElementById('close-page-settings');
+                  if (closeBtn) {
+                    closeBtn.onclick = function() {
+                      modal.style.display = 'none';
+                    };
+                  }
+                  // Save button: set orientation and close modal
+                  var saveBtn = document.getElementById('save-page-settings');
+                  if (saveBtn) {
+                    saveBtn.onclick = function() {
+                      const newOrientation = modal.querySelector('input[name="page-orientation"]:checked').value;
+                      if (newOrientation !== getOrientation()) {
+                        // Save to history for orientation changes
+                        saveToHistory('change page orientation');
+                        setOrientation(newOrientation);
+                        renderPages();
+                      }
+                      modal.style.display = 'none';
+                    };
+                  }
+                  // Click outside modal closes it
+                  modal.addEventListener('click', function(e) {
+                    if (e.target === modal) modal.style.display = 'none';
+                  });
+                });
+          });
+    });
+});
