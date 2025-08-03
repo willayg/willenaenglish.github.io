@@ -36,10 +36,20 @@
 - Prefer moving inline scripts into external JS files for maintainability.
 - Ensure all interactive elements are keyboard accessible and have proper ARIA labeling.
 - Regularly review and test print styles for worksheet outputs.
+- **Break up large JavaScript files**: Organize code into modules by functionality (UI, data, handlers, etc.) to improve maintainability, clarity, and reusability.
 
-## 5. References
+## 5. Canva-Style Text Box Movement
+- For draggable/resizable text boxes like Canva:
+  - Use established libraries (e.g., interact.js, plain-draggable) for robust drag/drop and resize handling.
+  - Keep position, rotation, and scale in your application's state for undo/redo, persistence, and smooth editing.
+  - Ensure accessibility for keyboard and screen reader users.
+  - Test for usability on touch as well as desktop devices.
+
+## 6. References
 - DOMPurify: https://github.com/cure53/DOMPurify
 - SRI Hash Generator: https://www.srihash.org/
+- interact.js: https://interactjs.io/
+- plain-draggable: https://anseki.github.io/plain-draggable/
 
 ---
 _Last updated: 2025-08-03_
