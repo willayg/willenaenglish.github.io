@@ -63,6 +63,540 @@ Do you want yogurt?
 Yes, I do.
 No, I don’t.
 What do you want?
+What’s this?
+What’s that?
+
+What’s this in your hand?
+
+What’s this animal?
+
+What’s this sound?
+
+What’s this toy?
+
+❓ Is this a calendar?
+Is this a pencil?
+
+Is this your book?
+
+Is this an apple?
+
+Is this your phone?
+
+Is this a map?
+
+🤔 Do you have a tissue?
+Do you have a pencil?
+
+Do you have a sticker?
+
+Do you have a backpack?
+
+Do you have any snacks?
+
+Do you have a coin?
+
+🎒 What do you have?
+What do you have in your bag?
+
+What do you have in your pocket?
+
+What do you have for lunch?
+
+What do you have at home?
+
+What do you have on your desk?
+
+🧍‍♀️ What does she have?
+What does she have in her bag?
+
+What does she have in her hand?
+
+What does she have for lunch?
+
+What does she have at school?
+
+What does she have in her room?
+
+👦 Does he have a wallet?
+Does he have a pencil case?
+
+Does he have a toy car?
+
+Does he have any candy?
+
+Does he have your book?
+
+Does he have a hat?
+
+🏃 Can they skip?
+Can they jump?
+
+Can they swim?
+
+Can they run fast?
+
+Can they dance?
+
+Can they ride bikes?
+
+🤕 What’s wrong?
+What’s wrong with him?
+
+What’s wrong with the TV?
+
+What’s wrong with your face?
+
+What’s wrong with your leg?
+
+What’s wrong with the dog?
+
+😷 What’s the matter?
+What’s the matter with your eye?
+
+What’s the matter, Tim?
+
+What’s the matter with your stomach?
+
+What’s the matter with your phone?
+
+What’s the matter today?
+
+🍽️ What does she like?
+What does she like to eat?
+
+What does she like to do?
+
+What does she like for lunch?
+
+What does she like at school?
+
+What does she like on her pizza?
+
+🥩 Does he like steak?
+Does he like bananas?
+
+Does he like hamburgers?
+
+Does he like broccoli?
+
+Does he like swimming?
+
+Does he like dogs?
+
+🏠 Where do you live?
+Where do you live now?
+
+Where do you live in winter?
+
+Where do you live on weekends?
+
+Where do you live with your family?
+
+Where do you live in the game?
+
+📍 What’s your address?
+What’s your phone number?
+
+What’s your street name?
+
+What’s your house number?
+
+What’s your zip code?
+
+What’s your apartment number?
+
+📘 Where’s the workbook?
+Where’s the eraser?
+
+Where’s your pencil case?
+
+Where’s my bag?
+
+Where’s the cat?
+
+Where’s the TV remote?
+
+☀️ What do you do in the morning?
+What do you do at night?
+
+What do you do after school?
+
+What do you do on Sunday?
+
+What do you do before bed?
+
+What do you do when it rains?
+
+🧼 Do you wash your face in the afternoon?
+Do you brush your teeth in the morning?
+
+Do you take a shower at night?
+
+Do you eat lunch at school?
+
+Do you play games in the evening?
+
+Do you sleep late on Sundays?
+
+⏰ What time is it?
+What time is lunch?
+
+What time is your class?
+
+What time is bedtime?
+
+What time is dinner?
+
+What time is your show?
+
+🚴 What are you doing?
+What are you doing now?
+
+What are you doing after school?
+
+What are you doing this weekend?
+
+What are you doing in class?
+
+What are you doing on your phone?
+
+🎨 What’s he doing?
+What’s she doing?
+
+What’s the dog doing?
+
+What’s your brother doing?
+
+What’s the baby doing?
+
+What’s he doing on the chair?
+
+🦓 Where is she?
+Where is he?
+
+Where is your mom?
+
+Where is the cat?
+
+Where is the bus?
+
+Where is your classroom?
+
+👩‍🏫 Who’s she?
+Who’s he?
+
+Who’s that boy?
+
+Who’s your friend?
+
+Who’s in the photo?
+
+Who’s that woman?
+
+👩‍⚕️ Is she a nurse?
+Is he a doctor?
+
+Is she a singer?
+
+Is your dad a cook?
+
+Is your teacher a man?
+
+Is the woman a pilot?
+
+👨‍🔧 Are they dentists?
+Are they teachers?
+
+Are they students?
+
+Are they your cousins?
+
+Are they from Korea?
+
+Are they in your class?
+
+🎨 What color is it?
+What color is the car?
+
+What color is her dress?
+
+What color is your pencil?
+
+What color is the bird?
+
+What color is your house?
+
+📖 Where’s the book?
+Where’s the bag?
+
+Where’s the dog?
+
+Where’s the phone?
+
+Where’s the bus stop?
+
+Where’s your water bottle?
+
+🍦 Do you want yogurt?
+Do you want pizza?
+
+Do you want some juice?
+
+Do you want a cookie?
+
+Do you want a toy?
+
+Do you want to play?
+
+🍝 What do you want?
+What do you want to eat?
+
+What do you want for lunch?
+
+What do you want to do now?
+
+What do you want for your birthday?
+
+What do you want to watch?
+
+🍑 What does she want?
+What does he want?
+
+What does the baby want?
+
+What does your sister want?
+
+What does she want to do?
+
+What does she want for dinner?
+
+🛏️ Are there any beds in the attic?
+Are there any toys in the box?
+
+Are there any apples on the table?
+
+Are there any books in your bag?
+
+Are there any students in the classroom?
+
+Are there any chairs in the kitchen?
+
+🗝️ I have a key.
+I have a pencil.
+
+I have a new backpack.
+
+I have a cold.
+
+I have three dogs.
+
+I have a question.
+
+☂️ She has an umbrella.
+She has a big smile.
+
+She has a red dress.
+
+She has two brothers.
+
+She has a math test today.
+
+She has a beautiful voice.
+
+🎩 He can do a magic trick.
+He can ride a bike.
+
+He can speak English.
+
+He can play the piano.
+
+He can run very fast.
+
+He can cook spaghetti.
+
+📕 I can’t find my book.
+I can’t find my pencil case.
+
+I can’t find my homework.
+
+I can’t find my shoes.
+
+I can’t find my phone.
+
+I can’t find my toy.
+
+🤒 I’m sick.
+I’m tired.
+
+I’m hungry.
+
+I’m happy today.
+
+I’m ready.
+
+I’m cold.
+
+🏘️ I live in Hillsdale.
+I live in Seoul.
+
+I live near the park.
+
+I live on Main Street.
+
+I live with my grandparents.
+
+I live in a tall building.
+
+
+🍳 I eat breakfast.
+I brush my teeth.
+
+I go to school.
+
+I read a book.
+
+I clean my room.
+
+I water the plants.
+
+🕖 It’s seven o’clock.
+It’s three o’clock.
+
+It’s half past six.
+
+It’s ten to nine.
+
+It’s noon.
+
+It’s midnight.
+
+🚴 I’m riding a bicycle.
+I’m watching TV.
+
+I’m doing my homework.
+
+I’m eating lunch.
+
+I’m talking to my friend.
+
+I’m drawing a picture.
+
+🎨 He’s drawing.
+He’s sleeping.
+
+He’s playing a game.
+
+He’s brushing his teeth.
+
+He’s reading a comic book.
+
+He’s building a tower.
+
+🦒 She’s at the zoo.
+She’s in the kitchen.
+
+She’s at school.
+
+She’s in the living room.
+
+She’s at the supermarket.
+
+She’s at the swimming pool.
+
+👩‍🏫 She’s my teacher.
+She’s my mom.
+
+She’s my sister.
+
+She’s my neighbor.
+
+She’s my cousin.
+
+She’s my doctor.
+
+👴 He’s my grandfather.
+He’s my uncle.
+
+He’s my dad.
+
+He’s my friend.
+
+He’s my teacher.
+
+He’s my coach.
+
+👩 Yes, she is. /
+No, she isn’t.
+Yes, he is. /
+No, he isn’t.
+
+Yes, they are. / 
+No, they aren’t.
+
+Yes, it is. /
+No, it isn’t.
+
+Yes, I do. /
+No, I don’t.
+
+Yes, we can. / 
+No, we can’t.
+
+(These are answer forms, but still great for drills.)
+
+🔵 It’s blue.
+It’s green.
+
+It’s yellow and black.
+
+It’s red.
+
+It’s orange with white spots.
+
+It’s pink and purple.
+
+🍝 I want spaghetti.
+I want ice cream.
+
+I want a sandwich.
+
+I want to go outside.
+
+I want a new toy.
+
+I want to play a game.
+
+🍑 She wants a peach.
+She wants a banana.
+
+She wants a new dress.
+
+She wants to read.
+
+She wants to go to the park.
+
+She wants a cookie.
+
+🛏️ Yes, there are. 
+No, there aren’t.
+Yes, there is. 
+No, there isn’t.
+
+Yes, we do. 
+No, we don’t.
+
+Yes, he can. 
+No, he can’t.
+
+Yes, I have. 
+No, I haven’t.
+
+Yes, it is. 
+No, it isn’t.
+
+
+
 I want spaghetti.
 What does she want?
 She wants a peach.
