@@ -1,0 +1,426 @@
+/* Worksheet text box styling */
+/* Worksheet text box styling */
+.worksheet-textbox {
+  position: absolute;
+  min-width: 120px;
+  min-height: 40px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1.5px solid transparent;
+  border-radius: 0;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 1.1em;
+  color: #3d3752;
+  cursor: move;
+  box-shadow: none;
+  z-index: 20;
+  outline: none;
+  transition: box-shadow 0.2s, border 0.2s;
+  resize: both;
+  overflow: auto; /* Allow cursor, only show scrollbars if truly needed */
+}
+/* Only style MC options as inline if needed (e.g. .mc-option) */
+.worksheet-textbox .mc-option {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.worksheet-textbox:focus, .worksheet-textbox:hover {
+  border: 1.5px solid #a0aec0;
+  box-shadow: 0 4px 16px 0 rgba(60,60,80,0.12);
+}
+
+/* Custom resize handles */
+.resize-handle {
+  position: absolute;
+  background: #4A90E2;
+  border: 1px solid #2E6BD0;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.15s ease;
+  z-index: 1000;
+  pointer-events: auto;
+  border-radius: 2px;
+}
+
+.resize-handle:hover {
+  background: #357ABD;
+  border-color: #1F5F8B;
+  opacity: 1 !important;
+}
+
+/* Corner resize handles */
+.resize-handle.nw-resize,
+.resize-handle.ne-resize,
+.resize-handle.sw-resize,
+.resize-handle.se-resize {
+  width: 8px;
+  height: 8px;
+}
+
+.resize-handle.nw-resize { top: -4px; left: -4px; cursor: nw-resize; }
+.resize-handle.ne-resize { top: -4px; right: -4px; cursor: ne-resize; }
+.resize-handle.sw-resize { bottom: -4px; left: -4px; cursor: sw-resize; }
+.resize-handle.se-resize { bottom: -4px; right: -4px; cursor: se-resize; }
+
+/* Edge resize handles */
+.resize-handle.n-resize,
+.resize-handle.s-resize {
+  width: 40px;
+  height: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.resize-handle.w-resize,
+.resize-handle.e-resize {
+  width: 8px;
+  height: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.resize-handle.n-resize { top: -4px; cursor: n-resize; }
+.resize-handle.s-resize { bottom: -4px; cursor: s-resize; }
+.resize-handle.w-resize { left: -4px; cursor: w-resize; }
+.resize-handle.e-resize { right: -4px; cursor: e-resize; }
+
+@media print {
+  .worksheet-textbox {
+    /* Preserve all alignment styles for print */
+    display: inherit !important;
+    align-items: inherit !important;
+    justify-content: inherit !important;
+    flex-direction: inherit !important;
+    text-align: inherit !important;
+    vertical-align: inherit !important;
+  }
+  
+  /* Specifically preserve flex layout for vertical alignment */
+  .worksheet-textbox[style*="display: flex"] {
+    display: flex !important;
+  }
+  
+  .worksheet-textbox[style*="justify-content: center"] {
+    justify-content: center !important;
+  }
+  
+  .worksheet-textbox[style*="justify-content: flex-end"] {
+    justify-content: flex-end !important;
+  }
+  
+  .worksheet-textbox[style*="flex-direction: column"] {
+    flex-direction: column !important;
+  }
+  
+  .worksheet-textbox[style*="align-items: stretch"] {
+    align-items: stretch !important;
+  }
+  
+  /* Preserve horizontal text alignment */
+  .worksheet-textbox[style*="text-align: left"] {
+    text-align: left !important;
+  }
+  
+  .worksheet-textbox[style*="text-align: center"] {
+    text-align: center !important;
+  }
+  
+  .worksheet-textbox[style*="text-align: right"] {
+    text-align: right !important;
+  }
+  
+  .worksheet-textbox[style*="text-align: justify"] {
+    text-align: justify !important;
+  }
+}
+
+/* Placeholder styling for empty text boxes */
+.worksheet-textbox.empty {
+  position: relative;
+}
+
+.worksheet-textbox.empty::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  color: #a0aec0;
+  font-style: italic;
+  pointer-events: none;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 1.1em;
+}
+
+.worksheet-textbox.empty:focus::before {
+  display: none;
+}
+/* Independently scrollable left toolbar (not sticky) */
+.left-toolbar {
+  position: relative;
+  z-index: 10;
+  height: calc(100vh - 96px); /* 96px = file + pastel toolbars */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* Worksheet Builder Vanilla - style.css */
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #646568 0%, #3e3a42 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 98vw;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  /* overflow: visible; removed to allow sticky to work */
+}
+
+.app-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* overflow: hidden; */
+  /* overflow: visible; removed to allow sticky to work */
+  border: 1px solid #e1e8ed;
+  width: 98vw;
+}
+
+.header {
+  background: linear-gradient(135deg, rgb(10, 105, 99), #c5ebec);
+  color: white;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 60px;
+  width: auto;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+#burger-menu-mount {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.top-actions {
+  background: #c7ece9;
+  padding: 5px 32px;
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.action-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-link:hover {
+  opacity: 0.8;
+}
+
+.floating-toolbar {
+  background: #ffd1e6;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e1e8ed;
+  position: relative;
+  cursor: default;
+}
+
+.pastel-toolbar {
+  background: #e8f4f8;
+  padding: 16px 32px;
+  border-bottom: 1px solid #e1e8ed;
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* Classy toolbar button styles for formatting controls */
+/* Main toolbar button base style */
+.toolbar-btn {
+  background: white !important;
+  border: 1.5px solid #cbd5e0 !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  font-size: 15px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  color: #4a5568 !important;
+  cursor: pointer !important;
+  margin-right: 4px !important;
+  margin-left: 0 !important;
+  transition: background 0.18s, border 0.18s, color 0.18s, box-shadow 0.18s !important;
+  box-shadow: 0 1.5px 6px 0 rgba(60,60,80,0.06) !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: 'Poppins', Verdana, sans-serif !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+}
+.toolbar-btn:last-child {
+  margin-right: 0;
+}
+.toolbar-btn-bold {
+  font-weight: 700 !important;
+  font-style: normal !important;
+  text-decoration: none !important;
+  font-family: 'Poppins', Verdana, sans-serif !important;
+  font-size: 15px !important;
+}
+.toolbar-btn-italic {
+  font-style: italic !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  font-family: 'Poppins', Verdana, sans-serif !important;
+  font-size: 15px !important;
+}
+.toolbar-btn-underline {
+  text-decoration: underline !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  font-family: 'Poppins', Verdana, sans-serif !important;
+  font-size: 15px !important;
+}
+.toolbar-btn-strike {
+  text-decoration: line-through !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  font-family: 'Poppins', Verdana, sans-serif !important;
+  font-size: 15px !important;
+}
+.toolbar-btn.active, .toolbar-btn:active, .toolbar-btn.selected {
+  background: #e3eaf6 !important; /* bluish grey */
+  border-color: #90a4c2 !important; /* muted blue-grey border */
+  color: #2d3a4a !important; /* deep blue-grey text */
+  font-size: 15px !important;
+  font-family: 'Poppins', Verdana, sans-serif !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+.toolbar-btn:hover {
+  background: #e0f7ff;
+  border-color: #22d3ee;
+  color: #0891b2;
+}
+.toolbar-btn svg {
+  display: block;
+  margin: 0;
+  pointer-events: none;
+}
+
+/* Page preview wrapper - centers A4 pages on screen */
+.page-preview-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 16px;
+  background: transparent;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* A4 Page Preview - Exact A4 dimensions for high-fidelity printing */
+.page-preview-a4 {
+  background: white;
+  border: 1.5px solid #e1e8ed;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px 0 rgba(60,60,80,0.18), 0 1.5px 6px 0 rgba(60,60,80,0.10);
+  /* Exact A4 dimensions: 210mm x 297mm at 96dpi */
+  width: 794px; /* 210mm * 96dpi / 25.4mm = 794.646px ≈ 794px */
+  height: 1123px; /* 297mm * 96dpi / 25.4mm = 1122.519px ≈ 1123px */
+  min-width: 794px;
+  min-height: 1123px;
+  max-width: 794px;
+  max-height: 1123px;
+  aspect-ratio: 210/297; /* Exact A4 ratio */
+  display: block;
+  overflow: visible; /* Allow content to flow naturally */
+  position: relative;
+  margin: 0 auto 20px auto; /* Center the page */
+  transition: width 0.3s, height 0.3s, aspect-ratio 0.3s;
+  box-sizing: border-box;
+  page-break-after: always; /* Ensure page breaks for printing */
+  page-break-inside: avoid; /* Prevent breaking inside page */
+}
+
+/* Landscape variant with swapped dimensions */
+.page-preview-a4.landscape {
+  /* Exact A4 landscape dimensions: 297mm x 210mm at 96dpi */
+  width: 1123px; /* 297mm * 96dpi / 25.4mm = 1122.519px ≈ 1123px */
+  height: 794px; /* 210mm * 96dpi / 25.4mm = 794.646px ≈ 794px */
+  min-width: 1123px;
+  min-height: 794px;
+  max-width: 1123px;
+  max-height: 794px;
+  aspect-ratio: 297/210; /* Exact A4 landscape ratio */
+}
+
+
+.page-preview-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-style: italic;
+  font-size: 1.2em;
+  letter-spacing: 0.2px;
+  background: none;
+}
+
+.add-page-text {
+  text-align: center;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 1.1em;
+  cursor: pointer;
+  margin: 0 0 8px 0;
+  user-select: none;
+  transition: color 0.2s;
+}
+.add-page-text:hover {
+  color: #2d3748;
+}

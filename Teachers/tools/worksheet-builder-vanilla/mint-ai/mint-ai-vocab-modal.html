@@ -1,0 +1,103 @@
+<!-- Mint AI-style Vocab Box Modal: AI inputs left, preview right -->
+<div id="vocab-box-modal" class="mint-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:30000;display:flex;align-items:center;justify-content:center;font-family:'Poppins',Arial,sans-serif;">
+  <div class="modal-panel" style="background:linear-gradient(135deg,#f0f9ff 0%,#e0f7fa 100%);border-radius:28px;border:2.5px solid #93cbcf;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);width:min(1400px,98vw);max-width:99vw;min-height:792px;min-width:min(900px,90vw);display:flex;flex-direction:row;overflow:hidden;position:relative;">
+    <!-- Left: AI Inputs -->
+    <div style="flex:0.88;padding:48px 24px 48px 36px;display:flex;flex-direction:column;background:white;border-right:2.5px solid #93cbcf;">
+      <h2 style="font-family:'Poppins',Arial,sans-serif;font-size:2.1em;font-weight:800;letter-spacing:-1.5px;color:#045c63;margin:0 0 18px 0;">MINT AI - Vocab</h2>
+      <!-- Removed vocab-list-format select from left column -->
+      <input id="vocab-title" type="text" placeholder="Vocab Box Title (optional)" style="font-size:1em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;">
+      <textarea id="vocab-passage" placeholder="Paste a passage here to extract vocab (optional)" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      <button id="vocab-more-options-btn" style="margin-bottom:22px;padding:7px 0;border-radius:7px;background:#00897b;color:#fff;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:700;letter-spacing:0.5px;cursor:pointer;">MORE OPTIONS</button>
+    <!-- More Options Modal (hidden by default) -->
+    <div id="vocab-more-options-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:40000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:18px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);padding:46px 56px 34px 56px;min-width:408px;min-height:420px;max-width:96vw;display:flex;flex-direction:column;align-items:flex-end;position:relative;border:2px solid #19777e;">
+        <!-- Modal is now 10% wider -->
+        <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:1.3em;font-weight:700;margin-bottom:8px;color:#2296a3;text-align:left;width:100%;">More Options</h3>
+        <div style="width:100%;height:2px;background:#19777e;margin-bottom:18px;"></div>
+        <div style="width:100%;margin-bottom:10px;">
+          <div style="font-weight:700;font-size:1.08em;color:#2296a3;margin-bottom:8px;text-align:left;">Choose Languages</div>
+          <div style="display:flex;flex-direction:row;gap:18px;">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:left;">
+              <span style="font-weight:600;font-size:0.9em;color:#2296a3;margin-bottom:4px;">Target Language</span>
+              <div id="vocab-target-lang-display" style="width:70%;margin-top:6px;padding:7px 10px;border-radius:8px;border:2px solid #19777e;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f8fafd;">
+                <img src="mint-ai/flags/en.svg" alt="English" style="width:22px;height:16px;vertical-align:middle;"> <span>English</span>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:left;">
+              <span style="font-weight:600;font-size:0.9em;color:#2296a3;margin-bottom:4px;">Students' Language</span>
+              <div id="vocab-student-lang-display" style="width:70%;margin-top:6px;padding:7px 10px;border-radius:8px;border:2px solid #19777e;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f8fafd;">
+                <img src="mint-ai/flags/en.svg" alt="English" style="width:22px;height:16px;vertical-align:middle;"> <span>English</span>
+              </div>
+            </div>
+            <!-- Language Picker Modal -->
+            <div id="vocab-lang-picker-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:50000;align-items:center;justify-content:center;">
+              <div style="background:#fff;border-radius:18px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);padding:32px 36px 28px 36px;min-width:320px;max-width:96vw;display:flex;flex-direction:column;align-items:center;position:relative;border:2px solid #19777e;">
+                <div style="font-size:1.15em;font-weight:700;margin-bottom:18px;color:#2296a3;text-align:center;width:100%;">Select Language</div>
+                <div style="display:flex;flex-direction:row;gap:18px;flex-wrap:wrap;justify-content:center;">
+                  <div class="lang-picker-option" data-value="en" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
+                    <img src="mint-ai/flags/en.svg" alt="English" style="width:20px;height:15px;"> <span style="font-size:0.95em;">English</span>
+                  </div>
+                  <div class="lang-picker-option" data-value="ko" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
+                    <img src="mint-ai/flags/kr.svg" alt="Korean" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Korean</span>
+                  </div>
+                  <div class="lang-picker-option" data-value="ja" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
+                    <img src="mint-ai/flags/jp.svg" alt="Japanese" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Japanese</span>
+                  </div>
+                  <div class="lang-picker-option" data-value="zh" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
+                    <img src="mint-ai/flags/cn.svg" alt="Chinese" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Chinese</span>
+                  </div>
+                  <div class="lang-picker-option" data-value="es" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
+                    <img src="mint-ai/flags/es.svg" alt="Spanish" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Spanish</span>
+                  </div>
+                </div>
+                <button id="vocab-lang-picker-cancel" style="margin-top:24px;padding:7px 0;border-radius:7px;background:#e1e8ed;color:#00897b;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="width:100%;height:2px;background:#2296a3;margin:10px 0 18px 0;"></div>
+        <div style="width:100%;font-weight:700;font-size:0.918em;color:#2296a3;margin-bottom:8px;text-align:left;">Other Options</div>
+        <button id="vocab-import-btn" style="margin-bottom:14px;padding:7px 0;border-radius:7px;background:#3d3752;color:#fff;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;">Import Text</button>
+        <div style="width:100%;height:2px;background:#2296a3;margin:10px 0 18px 0;"></div>
+        <button id="vocab-more-options-close" style="padding:7px 0;border-radius:7px;background:#e1e8ed;color:#00897b;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;">Close</button>
+      </div>
+    </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
+        <input id="vocab-numwords" type="number" min="1" max="30" value="10" style="width:44px;font-size:0.97em;padding:4px 7px;border-radius:7px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;">
+        <select id="vocab-difficulty" style="font-size:0.97em;padding:4px 7px;border-radius:7px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button id="vocab-extract-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#00bfae;color:#fff;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Extract</button>
+        <button id="vocab-clear-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#e1e8ed;color:#00897b;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Clear</button>
+      </div>
+      <textarea id="vocab-wordlist" placeholder="Enter words here, one per line: English, Korean" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:8px auto 16px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      <!-- Removed vocab-list-format select from its old position -->
+      <div style="display:flex;gap:18px;margin-top:28px;">
+        <button id="vocab-insert-btn" style="flex:1;font-size:0.95em;padding:7px 0;border-radius:8px;background:#00bfae;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Insert</button>
+        <button id="vocab-cancel-btn" style="flex:1;font-size:0.95em;padding:7px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Cancel</button>
+      </div>
+    </div>
+    <!-- Right: Live Preview -->
+    <div style="flex:1.7;padding:48px 48px 48px 36px;display:flex;flex-direction:column;background:linear-gradient(135deg,#e0f7fa 0%,#f0f9ff 100%);border-left:2.5px solid #93cbcf;">
+      <!-- Moved vocab-list-format select to top of right column -->
+      <select id="vocab-list-format" style="width:100%;font-size:1.1em;padding:7px 12px;border-radius:8px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;margin-bottom:10px;">
+        <option value="basic">Basic Word List</option>
+        <option value="sidebyside">2 Lists (Side by Side)</option>
+        <option value="picturecards">Picture Cards (5 per row)</option>
+        <option value="picturelist">Picture List</option>
+        <option value="picturelist2">Picture List (2 Columns)</option>
+        <option value="picturequiz">Picture Quiz</option>
+        <option value="picturequiz5">Picture Quiz (5 per row)</option>
+        <option value="picturematching">Picture Matching</option>
+        <option value="engkormatch">English-Korean Matching</option>
+      </select>
+      <div style="width:100%;height:1px;background:#b2d8dd;margin-bottom:18px;"></div>
+      <div style="font-size:1.25em;font-weight:700;color:#00897b;margin-bottom:18px;font-family:'Poppins',Arial,sans-serif;">Preview</div>
+      <div id="vocab-preview-area" style="flex:1;background:#fff;border-radius:12px;min-height:312px;max-height:624px;padding:18px 20px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;"></div>
+    </div>
+    <button id="close-vocab-modal" style="position:absolute;top:12px;right:18px;background:none;border:none;font-size:2em;color:#666;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
+  </div>
+</div>
+
