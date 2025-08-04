@@ -312,85 +312,153 @@
     let startX, startY, startWidth, startHeight, startLeft, startTop;
     let prevWidth = null, prevHeight = null;
 
+    // Helper: set user-select CSS
+    function setUserSelect(editing) {
+      if (editing) {
+        box.style.userSelect = '';
+      } else {
+        box.style.userSelect = 'none';
+      }
+    }
+
+    // Canva-style: first click selects/drags, second click enables editing
+    let isSelected = false;
+    let lastClickTime = 0;
+
+    // Helper to enter drag/select mode
+    function enterDragSelectMode() {
+      box.contentEditable = false;
+      setUserSelect(false);
+      box.classList.add('selected');
+    }
+    // Helper to enter edit mode
+    function enterEditMode() {
+      box.contentEditable = true;
+      setUserSelect(true);
+      box.classList.remove('selected');
+      setTimeout(() => {
+        box.focus();
+      }, 0);
+    }
+
     box.addEventListener('mousedown', function(e) {
       prevWidth = box.offsetWidth;
       prevHeight = box.offsetHeight;
-      const right = box.offsetWidth - (e.offsetX || 0);
-      const bottom = box.offsetHeight - (e.offsetY || 0);
-      // Diagonal (bottom-right corner)
-      if (right < 18 && bottom < 18) {
-        resizingDiagonal = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = box.offsetWidth;
-        startHeight = box.offsetHeight;
-        box.style.userSelect = 'none';
+      
+      // Only allow drag/resize if not editing
+      if (box.contentEditable === 'false') {
+        // Prevent text selection and default behavior immediately
+        e.preventDefault();
+        setUserSelect(false);
         document.body.style.userSelect = 'none';
-        return;
+        
+        // Edge/corner detection for resize
+        const right = box.offsetWidth - (e.offsetX || 0);
+        const bottom = box.offsetHeight - (e.offsetY || 0);
+        
+        // Diagonal (bottom-right corner)
+        if (right < 18 && bottom < 18) {
+          resizingDiagonal = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startWidth = box.offsetWidth;
+          startHeight = box.offsetHeight;
+          return;
+        }
+        // Right edge
+        if (right < 18 && bottom >= 18 && e.offsetY > 0 && e.offsetY < box.offsetHeight - 18) {
+          resizingRight = true;
+          startX = e.clientX;
+          startWidth = box.offsetWidth;
+          return;
+        }
+        // Bottom edge
+        if (bottom < 18 && right >= 18 && e.offsetX > 0 && e.offsetX < box.offsetWidth - 18) {
+          resizingBottom = true;
+          startY = e.clientY;
+          startHeight = box.offsetHeight;
+          return;
+        }
+        // Left edge
+        if (e.offsetX < 18 && bottom >= 18 && e.offsetY > 0 && e.offsetY < box.offsetHeight - 18) {
+          resizingLeft = true;
+          startX = e.clientX;
+          startWidth = box.offsetWidth;
+          startLeft = box.offsetLeft;
+          return;
+        }
+        // Top edge
+        if (e.offsetY < 18 && right >= 18 && e.offsetX > 0 && e.offsetX < box.offsetWidth - 18) {
+          resizingTop = true;
+          startY = e.clientY;
+          startHeight = box.offsetHeight;
+          startTop = box.offsetTop;
+          return;
+        }
+        // Otherwise, drag
+        dragging = true;
+        offsetX = e.clientX - box.offsetLeft;
+        offsetY = e.clientY - box.offsetTop;
       }
-      // Right edge
-      if (right < 18 && bottom >= 18 && e.offsetY > 0 && e.offsetY < box.offsetHeight - 18) {
-        resizingRight = true;
-        startX = e.clientX;
-        startWidth = box.offsetWidth;
-        box.style.userSelect = 'none';
-        document.body.style.userSelect = 'none';
-        return;
+    });
+
+    // Toggle between select/drag and edit mode on click
+    box.addEventListener('click', function(e) {
+      if (box.contentEditable === 'true') return; // Already editing
+      enterEditMode();
+    });
+
+    // On first render, set to select/drag mode
+    enterDragSelectMode();
+    isSelected = true;
+
+    // Deselect on click outside
+    document.addEventListener('mousedown', function(e) {
+      if (e.target !== box && box.contentEditable === 'true') {
+        // Reset to drag/select mode when clicking off
+        enterDragSelectMode();
+        box.blur();
       }
-      // Bottom edge
-      if (bottom < 18 && right >= 18 && e.offsetX > 0 && e.offsetX < box.offsetWidth - 18) {
-        resizingBottom = true;
-        startY = e.clientY;
-        startHeight = box.offsetHeight;
-        box.style.userSelect = 'none';
-        document.body.style.userSelect = 'none';
-        return;
+    });
+
+    // Also restore drag/select mode on blur (if not already in drag/select mode)
+    box.addEventListener('blur', function() {
+      if (box.contentEditable === 'true') {
+        // If blur happens while editing, restore drag/select mode
+        enterDragSelectMode();
       }
-      // Left edge
-      if (e.offsetX < 18 && bottom >= 18 && e.offsetY > 0 && e.offsetY < box.offsetHeight - 18) {
-        resizingLeft = true;
-        startX = e.clientX;
-        startWidth = box.offsetWidth;
-        startLeft = box.offsetLeft;
-        box.style.userSelect = 'none';
-        document.body.style.userSelect = 'none';
-        return;
-      }
-      // Top edge
-      if (e.offsetY < 18 && right >= 18 && e.offsetX > 0 && e.offsetX < box.offsetWidth - 18) {
-        resizingTop = true;
-        startY = e.clientY;
-        startHeight = box.offsetHeight;
-        startTop = box.offsetTop;
-        box.style.userSelect = 'none';
-        document.body.style.userSelect = 'none';
-        return;
-      }
-      // Otherwise, drag
-      if (e.target !== box) return;
-      dragging = true;
-      offsetX = e.clientX - box.offsetLeft;
-      offsetY = e.clientY - box.offsetTop;
-      box.style.userSelect = 'none';
-      document.body.style.userSelect = 'none';
+      box.style.cursor = 'move';
+      updatePlaceholder();
+      // Don't remove selected class on blur - let the toolbar click handler manage selection
     });
 
     // Change cursor on mousemove for resize zones
     box.addEventListener('mousemove', function(e) {
+      if (box.contentEditable === 'true') {
+        box.style.cursor = 'text';
+        return;
+      }
+      
+      // In drag/select mode, only show resize cursors at the very edges
       const right = box.offsetWidth - (e.offsetX || 0);
       const bottom = box.offsetHeight - (e.offsetY || 0);
+      const left = e.offsetX || 0;
+      const top = e.offsetY || 0;
+      
+      // Check for resize zones (18px from edges)
       if (right < 18 && bottom < 18) {
         box.style.cursor = 'se-resize';
-      } else if (right < 18 && bottom >= 18 && e.offsetY > 0 && e.offsetY < box.offsetHeight - 18) {
+      } else if (right < 18 && bottom >= 18 && top > 18) {
         box.style.cursor = 'e-resize';
-      } else if (bottom < 18 && right >= 18 && e.offsetX > 0 && e.offsetX < box.offsetWidth - 18) {
+      } else if (bottom < 18 && right >= 18 && left > 18) {
         box.style.cursor = 's-resize';
-      } else if (e.offsetX < 18 && bottom >= 18 && e.offsetY > 0 && e.offsetY < box.offsetHeight - 18) {
+      } else if (left < 18 && bottom >= 18 && top > 18) {
         box.style.cursor = 'w-resize';
-      } else if (e.offsetY < 18 && right >= 18 && e.offsetX > 0 && e.offsetX < box.offsetWidth - 18) {
+      } else if (top < 18 && right >= 18 && left > 18) {
         box.style.cursor = 'n-resize';
       } else {
-        box.style.cursor = dragging ? 'move' : (document.activeElement === box ? 'text' : 'move');
+        // Always use move cursor in the center area, regardless of text content
+        box.style.cursor = 'move';
       }
     });
     // Restore cursor on mouseleave
