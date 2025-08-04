@@ -1,3 +1,19 @@
+/* Modal panel styles moved from inline HTML */
+.modal-panel {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f7fa 100%);
+  border-radius: 28px;
+  border: 2.5px solid #93cbcf;
+  box-shadow: 0 12px 48px 0 rgba(60,60,80,0.22);
+  width: min(1400px, 98vw);
+  max-width: 99vw;
+  min-height: 95vh;
+  max-height: 99vh;
+  min-width: min(900px, 90vw);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  position: relative;
+}
 /* mint-ai-modal.css - Styles for the MINT AI modal */
 
 #ai-modal-overlay {
@@ -20,7 +36,7 @@
   box-shadow: 0 12px 48px 0 rgba(60,60,80,0.22);
   width: min(1400px, 98vw);
   max-width: 99vw;
-  min-height: 660px;
+  min-height: 500px;
   min-width: min(900px, 90vw);
   display: flex;
   flex-direction: row;
@@ -102,18 +118,6 @@
   margin-left: 28px;
   font-size: 1.12em;
   color: #0891b2;
-}
-
-#ai-modal-game {
-  margin: 18px 0 0 0;
-  padding: 18px 18px 18px 18px;
-  border-top: 1px solid #93cbcf;
-  min-height: 60px;
-  font-size: 1.08em;
-  color: #045c63;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .mint-ai-modal-right {
