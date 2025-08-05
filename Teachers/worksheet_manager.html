@@ -163,12 +163,12 @@ const mode = params.get('mode'); // 'save' or 'load'
     let existingId = null;
     let duplicateFound = false;
     try {
-      const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets');
+      const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,worksheet_type');
       const checkData = await checkRes.json();
       if (checkData.success && Array.isArray(checkData.data)) {
         const found = checkData.data.find(ws => ws.title === worksheet.title && ws.worksheet_type === worksheet.worksheet_type);
         if (found) {
-          existingId = found.id;
+          existingId = found.user_id;
           duplicateFound = true;
         }
       }
@@ -373,59 +373,76 @@ const mode = params.get('mode'); // 'save' or 'load'
 
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-blue-50 cursor-pointer';
-      tr.onclick = () => {
-        // If worksheet type matches, load full worksheet
-        if (filterType && ws.worksheet_type === filterType) {
-          window.opener.loadWorksheet(ws);
-        } else if (filterType && ['wordtest','grid_game','flashcard','wordsearch'].includes(ws.worksheet_type) && ['wordtest','grid_game','flashcard','wordsearch'].includes(filterType)) {
-          // If both are vocabulary types but not the same, import only word data
-          // Custom logic: load words into AI passage textarea, set difficulty to topic input, and load default list if available
-          const mainWin = window.opener;
-          if (mainWin) {
-            // Prepare words for wordsearch: always use line breaks
-            let wordsText = '';
-            if (ws.words && Array.isArray(ws.words)) {
-              wordsText = ws.words.join('\n');
-            } else if (typeof ws.words === 'string') {
-              // If comma separated, convert to line breaks
-              if (filterType === 'wordsearch') {
-                wordsText = ws.words.replace(/,\s*/g, '\n');
-              } else {
-                wordsText = ws.words;
+      tr.onclick = async () => {
+        // Show loading while fetching full worksheet data
+        showSpinner();
+        try {
+          // Fetch the complete worksheet data
+          const fullRes = await fetch(`/.netlify/functions/supabase_proxy/get_worksheet?id=${ws.user_id}`);
+          const fullResult = await fullRes.json();
+          
+          if (fullResult.success && fullResult.data) {
+            const fullWorksheet = fullResult.data;
+            
+            // If worksheet type matches, load full worksheet
+            if (filterType && fullWorksheet.worksheet_type === filterType) {
+              window.opener.loadWorksheet(fullWorksheet);
+            } else if (filterType && ['wordtest','grid_game','flashcard','wordsearch'].includes(fullWorksheet.worksheet_type) && ['wordtest','grid_game','flashcard','wordsearch'].includes(filterType)) {
+              // If both are vocabulary types but not the same, import only word data
+              const mainWin = window.opener;
+              if (mainWin) {
+                // Prepare words for wordsearch: always use line breaks
+                let wordsText = '';
+                if (fullWorksheet.words && Array.isArray(fullWorksheet.words)) {
+                  wordsText = fullWorksheet.words.join('\n');
+                } else if (typeof fullWorksheet.words === 'string') {
+                  // If comma separated, convert to line breaks
+                  if (filterType === 'wordsearch') {
+                    wordsText = fullWorksheet.words.replace(/,\s*/g, '\n');
+                  } else {
+                    wordsText = fullWorksheet.words;
+                  }
+                }
+                // Load words into AI passage textarea
+                const aiPassage = mainWin.document.getElementById('aiPassage');
+                if (aiPassage) {
+                  aiPassage.value = wordsText;
+                }
+                // Set difficulty to topic input
+                const topicInput = mainWin.document.getElementById('topic');
+                if (topicInput) {
+                  topicInput.value = fullWorksheet.difficulty || '';
+                }
+                // Load default list 'Basic word list' if available
+                if (fullWorksheet.defaultlist && fullWorksheet.defaultlist === 'Basic word list') {
+                  // If there's a special handling for Basic word list, set it
+                  const defaultListInput = mainWin.document.getElementById('defaultList');
+                  if (defaultListInput) {
+                    defaultListInput.value = 'Basic word list';
+                  }
+                }
+                // Also call loadWorksheet with minimal data for compatibility
+                const minimal = {
+                  words: (wordsText ? wordsText.split('\n').map(w => w.trim()).filter(w => w) : []),
+                  worksheet_type: filterType,
+                  difficulty: fullWorksheet.difficulty || '',
+                  defaultlist: fullWorksheet.defaultlist || ''
+                };
+                mainWin.loadWorksheet(minimal);
               }
+            } else {
+              // Otherwise, load full worksheet (default)
+              window.opener.loadWorksheet(fullWorksheet);
             }
-            // Load words into AI passage textarea
-            const aiPassage = mainWin.document.getElementById('aiPassage');
-            if (aiPassage) {
-              aiPassage.value = wordsText;
-            }
-            // Set difficulty to topic input
-            const topicInput = mainWin.document.getElementById('topic');
-            if (topicInput) {
-              topicInput.value = ws.difficulty || '';
-            }
-            // Load default list 'Basic word list' if available
-            if (ws.defaultlist && ws.defaultlist === 'Basic word list') {
-              // If there's a special handling for Basic word list, set it
-              const defaultListInput = mainWin.document.getElementById('defaultList');
-              if (defaultListInput) {
-                defaultListInput.value = 'Basic word list';
-              }
-            }
-            // Also call loadWorksheet with minimal data for compatibility
-            const minimal = {
-              words: (wordsText ? wordsText.split('\n').map(w => w.trim()).filter(w => w) : []),
-              worksheet_type: filterType,
-              difficulty: ws.difficulty || '',
-              defaultlist: ws.defaultlist || ''
-            };
-            mainWin.loadWorksheet(minimal);
+            window.close();
+          } else {
+            alert('Error loading worksheet: ' + (fullResult.error || 'Unknown error'));
           }
-        } else {
-          // Otherwise, load full worksheet (default)
-          window.opener.loadWorksheet(ws);
+        } catch (error) {
+          alert('Error loading worksheet: ' + error.message);
+        } finally {
+          hideSpinner();
         }
-        window.close();
       };
 
       tr.innerHTML = `
@@ -547,7 +564,8 @@ const mode = params.get('mode'); // 'save' or 'load'
   
   fetch('/.netlify/functions/supabase_proxy/list_worksheets')
     showSpinner();
-    fetch('/.netlify/functions/supabase_proxy/list_worksheets')
+    // Request only essential fields to avoid payload size limit
+    fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point,created_by,tags,difficulty,defaultlist')
       .then(res => res.json())
       .then(result => {
         console.log('Loaded worksheets:', result);
