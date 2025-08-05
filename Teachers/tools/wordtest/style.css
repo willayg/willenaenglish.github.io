@@ -499,7 +499,7 @@ body {
 }
 
 .image-drop-zone::before {
-  content: '📁 Drop image here';
+  content: '📁 Click, drag and drop image here';
   position: absolute;
   top: 50%;
   left: 50%;
