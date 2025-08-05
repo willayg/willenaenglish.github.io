@@ -377,12 +377,12 @@ const mode = params.get('mode'); // 'save' or 'load'
         // Show loading while fetching full worksheet data
         showSpinner();
         try {
-          // Fetch the complete worksheet data
-          const fullRes = await fetch(`/.netlify/functions/supabase_proxy/get_worksheet?id=${ws.user_id}`);
+          // Fetch the complete worksheet data using list_worksheets with ID filter
+          const fullRes = await fetch(`/.netlify/functions/supabase_proxy/list_worksheets?id=${ws.user_id}`);
           const fullResult = await fullRes.json();
           
-          if (fullResult.success && fullResult.data) {
-            const fullWorksheet = fullResult.data;
+          if (fullResult.success && fullResult.data && fullResult.data.length > 0) {
+            const fullWorksheet = fullResult.data[0];
             
             // If worksheet type matches, load full worksheet
             if (filterType && fullWorksheet.worksheet_type === filterType) {
@@ -436,7 +436,7 @@ const mode = params.get('mode'); // 'save' or 'load'
             }
             window.close();
           } else {
-            alert('Error loading worksheet: ' + (fullResult.error || 'Unknown error'));
+            alert('Error loading worksheet: Worksheet not found');
           }
         } catch (error) {
           alert('Error loading worksheet: ' + error.message);

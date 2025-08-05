@@ -327,28 +327,58 @@ exports.handler = async (event) => {
         // Worksheets fetch with profiles JOIN
         try {
           console.log('Attempting to fetch worksheets with profiles JOIN...');
-          const { data, error } = await supabase
-            .from('worksheets')
-            .select(`
+          
+          // Check for ID filter parameter
+          const idFilter = event.queryStringParameters?.id;
+          const fieldsParam = event.queryStringParameters?.fields;
+          
+          // Build the select clause based on fields parameter
+          let selectClause = '*';
+          if (fieldsParam) {
+            // Only select specified fields, don't include profiles join for limited fields
+            selectClause = fieldsParam;
+          } else {
+            // Full query with profiles join
+            selectClause = `
               *,
               profiles!worksheets_user_id_fkey (
                 username,
                 name
               )
-            `)
-            .order('created_at', { ascending: false });
+            `;
+          }
           
-          console.log('JOIN query result:', { data: data?.slice(0, 2), error });
+          let query = supabase
+            .from('worksheets')
+            .select(selectClause);
+          
+          // Add ID filter if specified
+          if (idFilter) {
+            query = query.eq('user_id', idFilter);
+          } else {
+            query = query.order('created_at', { ascending: false });
+          }
+          
+          const { data, error } = await query;
+          
+          console.log('Query result:', { data: data?.slice(0, 2), error });
           
           if (error) {
             // If JOIN fails, try alternative approach
-            console.warn('JOIN query failed, trying alternative approach:', error);
+            console.warn('Query failed, trying alternative approach:', error);
             
             // Get worksheets first
-            const { data: worksheets, error: worksheetsError } = await supabase
+            let worksheetsQuery = supabase
               .from('worksheets')
-              .select('*')
-              .order('created_at', { ascending: false });
+              .select(fieldsParam || '*');
+            
+            if (idFilter) {
+              worksheetsQuery = worksheetsQuery.eq('user_id', idFilter);
+            } else {
+              worksheetsQuery = worksheetsQuery.order('created_at', { ascending: false });
+            }
+            
+            const { data: worksheets, error: worksheetsError } = await worksheetsQuery;
             
             if (worksheetsError) {
               return {
@@ -357,7 +387,15 @@ exports.handler = async (event) => {
               };
             }
             
-            // Get all profiles
+            // If fields parameter is used (limited query), skip profiles lookup
+            if (fieldsParam) {
+              return {
+                statusCode: 200,
+                body: JSON.stringify({ success: true, data: worksheets })
+              };
+            }
+            
+            // Get all profiles for full query
             const { data: profiles, error: profilesError } = await supabase
               .from('profiles')
               .select('id, username, name');
@@ -396,7 +434,15 @@ exports.handler = async (event) => {
             };
           }
           
-          // Transform data to include created_by field
+          // If fields parameter is used (limited query), return data without transformation
+          if (fieldsParam) {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ success: true, data })
+            };
+          }
+          
+          // Transform data to include created_by field for full queries
           const transformedData = data.map(worksheet => ({
             ...worksheet,
             created_by: worksheet.profiles?.username || worksheet.profiles?.name || 'Unknown'
