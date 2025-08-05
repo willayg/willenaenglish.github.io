@@ -321,6 +321,13 @@
                     <input type="range" class="slider" id="imageSizeSlider" min="30" max="150" value="50">
                 </div>
 
+                <select class="picture-mode-select" id="pictureModeSelect" style="margin-left:8px;">
+                    <option value="photos">Photos</option>
+                    <option value="illustrations">Illustrations</option>
+                    <option value="ai">AI Gallery</option>
+                    <option value="clipart">Clipart</option>
+                </select>
+
                 <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
                 <select class="test-mode-select" id="testModeSelect" style="margin-left:8px;">
                     <option value="none">Test Mode Off</option>
@@ -333,7 +340,7 @@
 
                 <style>
                 /* Match toolbar select style */
-                .test-mode-select, #numLettersToHide {
+                .test-mode-select, .picture-mode-select, #numLettersToHide {
                     padding: 3px 8px;
                     border: 1px solid #d1d5db;
                     border-radius: 8px;
@@ -345,7 +352,7 @@
                     margin-left: 8px;
                     transition: border 0.2s, box-shadow 0.2s;
                 }
-                .test-mode-select:focus, #numLettersToHide:focus {
+                .test-mode-select:focus, .picture-mode-select:focus, #numLettersToHide:focus {
                     border-color: #4299e1;
                     box-shadow: 0 0 0 2px #bee3f8;
                 }
@@ -361,7 +368,7 @@
 
                 <style>
                 /* Match toolbar select style */
-                .test-mode-select {
+                .test-mode-select, .picture-mode-select {
                     padding: 6px 12px;
                     border: 1px solid #d1d5db;
                     border-radius: 8px;
@@ -373,7 +380,7 @@
                     margin-left: 8px;
                     transition: border 0.2s, box-shadow 0.2s;
                 }
-                .test-mode-select:focus {
+                .test-mode-select:focus, .picture-mode-select:focus {
                     border-color: #4299e1;
                     box-shadow: 0 0 0 2px #bee3f8;
                 }
@@ -555,17 +562,37 @@
     </script>
     <script type="module" src="wordtest.js"></script>
     <script>
-    // Improved double-click event for Google Image search in preview area
+    // Improved double-click event for image search based on selected mode
     document.addEventListener('DOMContentLoaded', function() {
       const previewArea = document.getElementById('previewArea');
       if (previewArea) {
-        previewArea.addEventListener('dblclick', function(e) {
+        previewArea.addEventListener('click', function(e) {
+          // Skip if clicking on input fields (for editing)
+          if (e.target.tagName === 'INPUT') return;
+          
+          // Skip if this is a word-cell with editing functionality (to avoid conflicts)
+          const isWordCell = e.target.closest('.word-cell');
+          if (isWordCell) return;
+          
+          // Skip if clicking on header elements, titles, or structural elements
+          const isHeader = e.target.closest('.worksheet-header, h1, h2, h3, h4, h5, h6, .title');
+          if (isHeader) return;
+          
+          // Skip if clicking on elements that are clearly not word content
+          if (e.target.tagName === 'TH') return; // Table headers should not trigger image search
+          
           let card = e.target;
-          // Traverse up to find a likely word cell (td, th, span, div, or any element with text)
-          while (card && card !== previewArea && !(card.tagName === 'TD' || card.tagName === 'TH' || card.tagName === 'SPAN' || card.tagName === 'DIV' || card.classList?.contains('word-card') || card.classList?.contains('card-item'))) {
+          // Traverse up to find a likely word cell (td, span, div with word content, or card items)
+          // But exclude header elements and structural containers
+          while (card && card !== previewArea && 
+                 !(card.tagName === 'TD' || 
+                   (card.tagName === 'SPAN' && !card.closest('.worksheet-header')) || 
+                   (card.tagName === 'DIV' && !card.closest('.worksheet-header') && !card.classList.contains('worksheet-header')) || 
+                   card.classList?.contains('word-card') || 
+                   card.classList?.contains('card-item'))) {
             card = card.parentElement;
           }
-          if (card && card !== previewArea) {
+          if (card && card !== previewArea && !card.closest('.worksheet-header')) {
             // Try to get the word from the card
             let word = '';
             // If card has a data-word attribute, use it
@@ -577,8 +604,38 @@
               word = card.textContent.trim().split(/\s|,/)[0];
             }
             if (word) {
-              const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
-              window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
+              // Get selected picture mode
+              const pictureModeSelect = document.getElementById('pictureModeSelect');
+              const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
+              
+              let url = '';
+              switch (mode) {
+                case 'photos':
+                  url = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+                  break;
+                case 'illustrations':
+                  url = `https://pixabay.com/illustrations/search/${encodeURIComponent(word)}/`;
+                  break;
+                case 'ai':
+                  url = `https://lexica.art/?q=${encodeURIComponent(word)}`;
+                  break;
+                case 'clipart':
+                  url = `https://openclipart.org/search/?query=${encodeURIComponent(word)}`;
+                  break;
+                default:
+                  url = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+              }
+              
+              // Calculate left-side position and size (80vh x 25vw)
+              const screenW = window.screen.availWidth || window.innerWidth;
+              const screenH = window.screen.availHeight || window.innerHeight;
+              const width = Math.round(screenW * 0.25);
+              const height = Math.round(screenH * 0.8);
+              const left = 10;
+              const top = Math.round((screenH - height) / 2);
+              const windowFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`;
+              
+              window.open(url, 'ImageSearchWindow', windowFeatures);
             }
           }
         });
