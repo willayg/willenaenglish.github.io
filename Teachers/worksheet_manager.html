@@ -563,7 +563,7 @@
   // Fetch and load worksheets
   showSpinner();
   // Request only essential fields to avoid payload size limit
-  fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point,created_by,tags,difficulty,defaultlist')
+  fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point')
     .then(res => res.json())
     .then(result => {
       console.log('Loaded worksheets:', result);
@@ -638,7 +638,7 @@
     const layout = document.getElementById('layoutQuickSearch').value;
     let filtered = allWorksheets.filter(ws => {
       let match = true;
-      if (q && ![ws.title, ws.book, ws.unit, ws.worksheet_type, ws.layout, ws.language_point, ws.username, ws.created_by, ws.tags]
+      if (q && ![ws.title, ws.book, ws.unit, ws.worksheet_type, ws.layout, ws.language_point, ws.username]
         .map(v => (v || '').toString().toLowerCase()).some(val => val.includes(q))) match = false;
       if (unit && !(ws.unit || '').toLowerCase().includes(unit)) match = false;
       if (layout) {
@@ -680,8 +680,8 @@
       if (dateFrom && (!ws.created_at || ws.created_at < dateFrom)) match = false;
       if (dateTo && (!ws.created_at || ws.created_at > dateTo)) match = false;
       if (languagePoint && !(ws.language_point || '').toLowerCase().includes(languagePoint)) match = false;
-      if (createdBy && !(ws.created_by || '').toLowerCase().includes(createdBy)) match = false;
-      if (tags && !(ws.tags || '').toLowerCase().includes(tags)) match = false;
+      if (createdBy && !(ws.username || '').toLowerCase().includes(createdBy)) match = false;
+      // tags field removed
       return match;
     });
     renderList(filtered);
