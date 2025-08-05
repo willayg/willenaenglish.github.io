@@ -101,9 +101,7 @@
       document.getElementById('loadingSpinner').style.display = 'none';
     }
     const params = new URLSearchParams(window.location.search);
-const mode = params.get('mode'); // 'save' or 'load'
-
-
+    const mode = params.get('mode'); // 'save' or 'load'
 
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
@@ -562,19 +560,26 @@ const mode = params.get('mode'); // 'save' or 'load'
     }
   }
   
-  fetch('/.netlify/functions/supabase_proxy/list_worksheets')
-    showSpinner();
-    // Request only essential fields to avoid payload size limit
-    fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point,created_by,tags,difficulty,defaultlist')
-      .then(res => res.json())
-      .then(result => {
-        console.log('Loaded worksheets:', result);
-        if (result.success) {
-          window.allRawWorksheets = result.data;
-          updateWorksheetList();
-        }
-      })
-      .finally(() => { hideSpinner(); });
+  // Fetch and load worksheets
+  showSpinner();
+  // Request only essential fields to avoid payload size limit
+  fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point,created_by,tags,difficulty,defaultlist')
+    .then(res => res.json())
+    .then(result => {
+      console.log('Loaded worksheets:', result);
+      if (result.success) {
+        window.allRawWorksheets = result.data;
+        updateWorksheetList();
+      } else {
+        console.error('Failed to load worksheets:', result.error);
+        alert('Failed to load worksheets: ' + (result.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching worksheets:', error);
+      alert('Error loading worksheets: ' + error.message);
+    })
+    .finally(() => { hideSpinner(); });
 
   function updateWorksheetList() {
     // Toggle switch logic
@@ -779,10 +784,7 @@ async function loadWorksheet() {
   } catch (error) {
     alert('Error loading worksheets: ' + error.message);
   }
-}
-
-document.getElementById('saveBtn').onclick = saveWorksheet;
-document.getElementById('loadBtn').onclick = loadWorksheet;
+    }
 
   </script>
 </body>
