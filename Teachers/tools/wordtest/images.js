@@ -50,61 +50,27 @@ async function getImageUrl(word, index, refresh = false, currentSettings = { ima
 // Load multiple image alternatives for a word (emoji first, 6 English, blank last)
 async function loadImageAlternatives(word, wordKey, kor = null, currentSettings = { imageSize: 50 }) {
     const alternatives = [];
-    
-    // Check if we already have an emoji preserved (from right-click refresh)
-    const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
-                          imageAlternatives[wordKey][0].includes('<div') && 
-                          imageAlternatives[wordKey][0].includes('font-size') ? 
-                          imageAlternatives[wordKey][0] : null;
-    
-    if (existingEmoji) {
-        // Use the existing emoji
-        alternatives.push(existingEmoji);
-    } else {
-        // First, try emoji map
-        const emoji = emojiMap[word.toLowerCase()];
-        if (emoji) {
-            alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
-        }
+    // Only add emoji if available
+    const emoji = emojiMap[word.toLowerCase()];
+    if (emoji) {
+        alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
     }
-    
-    // Get 6 English images
+    // Only get the FIRST Pixabay image for the word
     if (getPixabayImage) {
         try {
-            const englishVariations = [
-                word, 
-                `${word} illustration`, 
-                `${word} icon`,
-                `${word} cartoon`,
-                `${word} symbol`,
-                `${word} drawing`
-            ];
-            for (let i = 0; i < englishVariations.length; i++) {
-                try {
-                    const imageUrl = await getPixabayImage(englishVariations[i], true);
-                    if (imageUrl && imageUrl.startsWith('http')) {
-                        alternatives.push(imageUrl);
-                    } else if (imageUrl && imageUrl.length === 1) {
-                        alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
-                    }
-                } catch (error) {
-                    console.warn('Error getting English image for:', englishVariations[i], error);
-                }
+            const imageUrl = await getPixabayImage(word, true);
+            if (imageUrl && imageUrl.startsWith('http')) {
+                alternatives.push(imageUrl);
+            } else if (imageUrl && imageUrl.length === 1) {
+                alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
             }
         } catch (error) {
-            console.warn('Error getting English images for:', word, error);
+            console.warn('Error getting image for:', word, error);
         }
     }
-    
     // Add blank option last - just a white empty box
     alternatives.push('<div style="width:' + currentSettings.imageSize + 'px;height:' + currentSettings.imageSize + 'px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>');
-    
-    // Add placeholder as last option if needed
-    const index = parseInt(wordKey.split('_').pop()) || 0;
-    while (alternatives.length < 8) {
-        alternatives.push(getPlaceholderImage(index, `Option ${alternatives.length}`));
-    }
-    imageAlternatives[wordKey] = alternatives.slice(0, 8); // Keep only first 8 (emoji + 6 English + blank)
+    imageAlternatives[wordKey] = alternatives.slice(0, 2); // Only emoji (if any) and first image
 }
 
 // Cycle to next image for a specific word
@@ -144,36 +110,50 @@ function cycleImage(word, index, updatePreviewCallback) {
 
 // Helper function to render an image
 function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
-    const clickHandler = word ? `onclick="cycleImage('${word}', ${index})"` : '';
-    const clickStyle = word ? 'cursor: pointer; transition: transform 0.2s;' : '';
-    const hoverStyle = word ? 'onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'"' : '';
-    const dblClickHandler = word ? `ondblclick=\"window.open('https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}','googleimg','width=700,height=600,scrollbars=yes,resizable=yes')\"` : '';
-
-    // Add drag and drop instruction (hidden when printing)
-    const dragInstruction = word ? '<div class="drag-instructions print-hide">Drag & drop image here or click to cycle</div>' : '';
-
+    // Add double-click to open image search based on selected mode
+    let dblClickHandler = '';
+    if (word) {
+        dblClickHandler = `ondblclick="
+            const pictureModeSelect = document.getElementById('pictureModeSelect');
+            const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
+            const encodedWord = encodeURIComponent('${word}');
+            let url = '';
+            switch (mode) {
+                case 'photos':
+                    url = 'https://pixabay.com/images/search/' + encodedWord + '/';
+                    break;
+                case 'illustrations':
+                    url = 'https://pixabay.com/illustrations/search/' + encodedWord + '/';
+                    break;
+                case 'ai':
+                    url = 'https://lexica.art/?q=' + encodedWord;
+                    break;
+                default:
+                    url = 'https://pixabay.com/images/search/' + encodedWord + '/';
+            }
+            // Calculate left-side position and size (80vh x 25vw)
+            const screenW = window.screen.availWidth || window.innerWidth;
+            const screenH = window.screen.availHeight || window.innerHeight;
+            const width = Math.round(screenW * 0.25);
+            const height = Math.round(screenH * 0.8);
+            const left = 10;
+            const top = Math.round((screenH - height) / 2);
+            const windowFeatures = 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes';
+            window.open(url, 'ImageSearchWindow', windowFeatures);
+        "`;
+    }
+    
     if (imageUrl.startsWith('<div')) {
-        // It's an emoji or placeholder div - update font size and add click handler
+        // It's an emoji or placeholder div - update font size
         if (imageUrl.includes('font-size:')) {
             const updatedImageUrl = imageUrl.replace(/font-size:\s*\d+px/, `font-size: ${currentSettings.imageSize * 0.8}px`);
-            if (word) {
-                return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${updatedImageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle} ${dblClickHandler}>`)}</div>`;
-            }
-            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${updatedImageUrl}</div>`;
+            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${dblClickHandler}>${updatedImageUrl}</div>`;
         }
-        // If this is the blank option (white box), add double-click handler
-        if (imageUrl.includes('background:#fff') && word) {
-            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${imageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${dblClickHandler}>`)}</div>`;
-        }
-        if (word) {
-            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${dragInstruction}${imageUrl.replace('<div style="', `<div style="cursor: pointer; transition: transform 0.2s; `).replace('>', ` ${clickHandler} ${hoverStyle}>`)}</div>`;
-        }
-        return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">${imageUrl}</div>`;
+        return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${dblClickHandler}>${imageUrl}</div>`;
     }
     // It's a real image URL
     return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">
-        ${dragInstruction}
-        <img src="${imageUrl}" style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;${clickStyle}" alt="Image ${index + 1}" ${clickHandler} ${hoverStyle} title="${word ? `Click to cycle through ${word} images or drag & drop to replace` : ''}">
+        <img src="${imageUrl}" style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;cursor:pointer;" alt="Image ${index + 1}" ${dblClickHandler}>
     </div>`;
 }
 
@@ -444,8 +424,29 @@ function enableImageDragAndDrop(updatePreviewCallback) {
                     imageAlternatives[wordKey].unshift(imageDataUrl);
                     currentImageIndex[wordKey] = 0;
                     
-                    // Update preview
-                    await updatePreviewCallback();
+                    // Update only this specific image instead of full preview refresh
+                    const currentImg = zone.querySelector('img');
+                    if (currentImg) {
+                        // Store current size before updating
+                        const currentWidth = currentImg.style.width;
+                        const currentHeight = currentImg.style.height;
+                        
+                        // Update the image source
+                        currentImg.src = imageDataUrl;
+                        
+                        // Preserve the current size
+                        if (currentWidth && currentHeight) {
+                            currentImg.style.width = currentWidth;
+                            currentImg.style.height = currentHeight;
+                        }
+                        
+                        console.log(`Updated image for ${word}_${index} without full refresh`);
+                    } else {
+                        // If no img element found, update the zone's innerHTML
+                        const sizeStyle = `width:${window.currentSettings?.imageSize || 50}px;height:${window.currentSettings?.imageSize || 50}px;`;
+                        zone.innerHTML = `<img src="${imageDataUrl}" style="${sizeStyle}object-fit:cover;border-radius:8px;border:2px solid #ddd;cursor:pointer;" alt="Image ${index + 1}" data-word="${word}" data-index="${index}">`;
+                        console.log(`Created new image element for ${word}_${index}`);
+                    }
                     
                     // Show success feedback with animation
                     zone.classList.add('drag-success');

@@ -288,7 +288,7 @@ exports.handler = async (event) => {
 
         const { data, error } = await supabase
           .from('worksheets')
-          .insert([worksheet]);
+          .upsert([worksheet], { onConflict: 'user_id' });
         if (error) {
           return {
             statusCode: 400,
@@ -332,6 +332,27 @@ exports.handler = async (event) => {
           const idFilter = event.queryStringParameters?.id;
           const fieldsParam = event.queryStringParameters?.fields;
           
+          // Pagination parameters
+          const limit = parseInt(event.queryStringParameters?.limit) || 50;
+          const offset = parseInt(event.queryStringParameters?.offset) || 0;
+          
+          // Search and filter parameters
+          const typeFilter = event.queryStringParameters?.type;
+          const vocabTypes = event.queryStringParameters?.vocab_types;
+          const searchQuery = event.queryStringParameters?.search;
+          const unitFilter = event.queryStringParameters?.unit;
+          const layoutFilter = event.queryStringParameters?.layout;
+          
+          // Advanced search parameters
+          const titleFilter = event.queryStringParameters?.title;
+          const bookFilter = event.queryStringParameters?.book;
+          const unitAdvFilter = event.queryStringParameters?.unit_adv;
+          const typeAdvFilter = event.queryStringParameters?.type_adv;
+          const dateFrom = event.queryStringParameters?.date_from;
+          const dateTo = event.queryStringParameters?.date_to;
+          const languagePointFilter = event.queryStringParameters?.language_point;
+          const createdByFilter = event.queryStringParameters?.created_by;
+          
           // Build the select clause based on fields parameter
           let selectClause = '*';
           if (fieldsParam) {
@@ -350,18 +371,81 @@ exports.handler = async (event) => {
           
           let query = supabase
             .from('worksheets')
-            .select(selectClause);
+            .select(selectClause, { count: 'exact' });
           
           // Add ID filter if specified
           if (idFilter) {
             query = query.eq('user_id', idFilter);
           } else {
-            query = query.order('created_at', { ascending: false });
+            // Apply filters
+            if (typeFilter) {
+              query = query.eq('worksheet_type', typeFilter);
+            } else if (vocabTypes) {
+              const types = vocabTypes.split(',');
+              query = query.in('worksheet_type', types);
+            }
+            
+            if (searchQuery) {
+              // Search across multiple fields
+              query = query.or(`title.ilike.%${searchQuery}%,book.ilike.%${searchQuery}%,unit.ilike.%${searchQuery}%,worksheet_type.ilike.%${searchQuery}%,layout.ilike.%${searchQuery}%,language_point.ilike.%${searchQuery}%`);
+            }
+            
+            if (unitFilter) {
+              query = query.ilike('unit', `%${unitFilter}%`);
+            }
+            
+            if (layoutFilter) {
+              if (layoutFilter === 'wordlist') {
+                query = query.or('layout.eq.default,layout.eq.4col,layout.is.null,layout.eq.');
+              } else if (layoutFilter === 'picturelist') {
+                query = query.or('layout.eq.picture-list,layout.eq.picture-list-2col');
+              } else {
+                query = query.eq('layout', layoutFilter);
+              }
+            }
+            
+            // Advanced search filters
+            if (titleFilter) {
+              query = query.ilike('title', `%${titleFilter}%`);
+            }
+            
+            if (bookFilter) {
+              query = query.ilike('book', `%${bookFilter}%`);
+            }
+            
+            if (unitAdvFilter) {
+              query = query.ilike('unit', `%${unitAdvFilter}%`);
+            }
+            
+            if (typeAdvFilter) {
+              query = query.eq('worksheet_type', typeAdvFilter);
+            }
+            
+            if (dateFrom) {
+              query = query.gte('created_at', dateFrom);
+            }
+            
+            if (dateTo) {
+              query = query.lte('created_at', dateTo + 'T23:59:59');
+            }
+            
+            if (languagePointFilter) {
+              query = query.ilike('language_point', `%${languagePointFilter}%`);
+            }
+            
+            if (createdByFilter) {
+              // This would require a join with profiles table, we'll handle it after the query
+            }
+            
+            // Apply pagination and ordering
+            query = query
+              .order('created_at', { ascending: false })
+              .range(offset, offset + limit - 1);
           }
           
-          const { data, error } = await query;
+          const { data, error, count } = await query;
           
-          console.log('Query result:', { data: data?.slice(0, 2), error });
+          console.log('Query result:', { dataCount: data?.length, totalCount: count, error });
           
           if (error) {
             // If JOIN fails, try alternative approach
@@ -370,15 +454,71 @@ exports.handler = async (event) => {
             // Get worksheets first
             let worksheetsQuery = supabase
               .from('worksheets')
-              .select(fieldsParam || '*');
+              .select(fieldsParam || '*', { count: 'exact' });
             
             if (idFilter) {
               worksheetsQuery = worksheetsQuery.eq('user_id', idFilter);
             } else {
-              worksheetsQuery = worksheetsQuery.order('created_at', { ascending: false });
+              // Apply the same filters as above
+              if (typeFilter) {
+                worksheetsQuery = worksheetsQuery.eq('worksheet_type', typeFilter);
+              } else if (vocabTypes) {
+                const types = vocabTypes.split(',');
+                worksheetsQuery = worksheetsQuery.in('worksheet_type', types);
+              }
+              
+              if (searchQuery) {
+                worksheetsQuery = worksheetsQuery.or(`title.ilike.%${searchQuery}%,book.ilike.%${searchQuery}%,unit.ilike.%${searchQuery}%,worksheet_type.ilike.%${searchQuery}%,layout.ilike.%${searchQuery}%,language_point.ilike.%${searchQuery}%`);
+              }
+              
+              if (unitFilter) {
+                worksheetsQuery = worksheetsQuery.ilike('unit', `%${unitFilter}%`);
+              }
+              
+              if (layoutFilter) {
+                if (layoutFilter === 'wordlist') {
+                  worksheetsQuery = worksheetsQuery.or('layout.eq.default,layout.eq.4col,layout.is.null,layout.eq.');
+                } else if (layoutFilter === 'picturelist') {
+                  worksheetsQuery = worksheetsQuery.or('layout.eq.picture-list,layout.eq.picture-list-2col');
+                } else {
+                  worksheetsQuery = worksheetsQuery.eq('layout', layoutFilter);
+                }
+              }
+              
+              if (titleFilter) {
+                worksheetsQuery = worksheetsQuery.ilike('title', `%${titleFilter}%`);
+              }
+              
+              if (bookFilter) {
+                worksheetsQuery = worksheetsQuery.ilike('book', `%${bookFilter}%`);
+              }
+              
+              if (unitAdvFilter) {
+                worksheetsQuery = worksheetsQuery.ilike('unit', `%${unitAdvFilter}%`);
+              }
+              
+              if (typeAdvFilter) {
+                worksheetsQuery = worksheetsQuery.eq('worksheet_type', typeAdvFilter);
+              }
+              
+              if (dateFrom) {
+                worksheetsQuery = worksheetsQuery.gte('created_at', dateFrom);
+              }
+              
+              if (dateTo) {
+                worksheetsQuery = worksheetsQuery.lte('created_at', dateTo + 'T23:59:59');
+              }
+              
+              if (languagePointFilter) {
+                worksheetsQuery = worksheetsQuery.ilike('language_point', `%${languagePointFilter}%`);
+              }
+              
+              worksheetsQuery = worksheetsQuery
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1);
             }
             
-            const { data: worksheets, error: worksheetsError } = await worksheetsQuery;
+            const { data: worksheets, error: worksheetsError, count: worksheetsCount } = await worksheetsQuery;
             
             if (worksheetsError) {
               return {
@@ -391,37 +531,40 @@ exports.handler = async (event) => {
             if (fieldsParam) {
               return {
                 statusCode: 200,
-                body: JSON.stringify({ success: true, data: worksheets })
+                body: JSON.stringify({ success: true, data: worksheets, total: worksheetsCount })
               };
             }
             
-            // Get all profiles for full query
-            const { data: profiles, error: profilesError } = await supabase
-              .from('profiles')
-              .select('id, username, name');
+            // Get profiles for username lookup (only for the users in the current page)
+            const userIds = [...new Set(worksheets.map(w => w.user_id).filter(id => id))];
+            let profileMap = {};
             
-            if (profilesError) {
-              console.warn('Could not fetch profiles:', profilesError);
-              // Just return worksheets with 'Unknown'
-              const transformedData = worksheets.map(worksheet => ({
-                ...worksheet,
-                created_by: 'Unknown'
-              }));
-              return {
-                statusCode: 200,
-                body: JSON.stringify({ success: true, data: transformedData })
-              };
+            if (userIds.length > 0) {
+              const { data: profiles, error: profilesError } = await supabase
+                .from('profiles')
+                .select('id, username, name')
+                .in('id', userIds);
+              
+              if (!profilesError && profiles) {
+                profiles.forEach(profile => {
+                  profileMap[profile.id] = profile;
+                });
+              }
             }
             
-            // Manually join the data
-            const profileMap = {};
-            profiles.forEach(profile => {
-              profileMap[profile.id] = profile;
-            });
+            // Filter by created_by if specified
+            let filteredWorksheets = worksheets;
+            if (createdByFilter) {
+              filteredWorksheets = worksheets.filter(worksheet => {
+                const profile = profileMap[worksheet.user_id];
+                const username = profile?.username || profile?.name || '';
+                return username.toLowerCase().includes(createdByFilter.toLowerCase());
+              });
+            }
             
-            const transformedData = worksheets.map(worksheet => ({
+            const transformedData = filteredWorksheets.map(worksheet => ({
               ...worksheet,
-              created_by: worksheet.user_id && profileMap[worksheet.user_id] 
+              username: worksheet.user_id && profileMap[worksheet.user_id] 
                 ? (profileMap[worksheet.user_id].username || profileMap[worksheet.user_id].name)
                 : 'Unknown'
             }));
@@ -430,7 +573,7 @@ exports.handler = async (event) => {
             
             return {
               statusCode: 200,
-              body: JSON.stringify({ success: true, data: transformedData })
+              body: JSON.stringify({ success: true, data: transformedData, total: worksheetsCount })
             };
           }
           
@@ -438,21 +581,30 @@ exports.handler = async (event) => {
           if (fieldsParam) {
             return {
               statusCode: 200,
-              body: JSON.stringify({ success: true, data })
+              body: JSON.stringify({ success: true, data, total: count })
             };
           }
           
-          // Transform data to include created_by field for full queries
-          const transformedData = data.map(worksheet => ({
+          // Filter by created_by if specified (for successful JOIN)
+          let filteredData = data;
+          if (createdByFilter) {
+            filteredData = data.filter(worksheet => {
+              const username = worksheet.profiles?.username || worksheet.profiles?.name || '';
+              return username.toLowerCase().includes(createdByFilter.toLowerCase());
+            });
+          }
+          
+          // Transform data to include username field for full queries
+          const transformedData = filteredData.map(worksheet => ({
             ...worksheet,
-            created_by: worksheet.profiles?.username || worksheet.profiles?.name || 'Unknown'
+            username: worksheet.profiles?.username || worksheet.profiles?.name || 'Unknown'
           }));
           
           console.log('JOIN success, transformed sample:', transformedData.slice(0, 2));
           
           return {
             statusCode: 200,
-            body: JSON.stringify({ success: true, data: transformedData })
+            body: JSON.stringify({ success: true, data: transformedData, total: count })
           };
         } catch (err) {
           console.error('Worksheets fetch error:', err);
