@@ -6,8 +6,17 @@
       <h2 style="font-family:'Poppins',Arial,sans-serif;font-size:2.1em;font-weight:800;letter-spacing:-1.5px;color:#045c63;margin:0 0 18px 0;">MINT AI - Vocab</h2>
       <!-- Removed vocab-list-format select from left column -->
       <input id="vocab-title" type="text" placeholder="Vocab Box Title (optional)" style="font-size:1em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;">
-      <textarea id="vocab-passage" placeholder="Paste a passage here to extract vocab (optional)" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
-      <button id="vocab-more-options-btn" style="margin-bottom:22px;padding:7px 0;border-radius:7px;background:#00897b;color:#fff;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:700;letter-spacing:0.5px;cursor:pointer;">MORE OPTIONS</button>
+      
+      <!-- Mode Selection Buttons -->
+      <div style="display:flex;gap:10px;width:92%;margin:0 auto 10px auto;">
+        <button id="topic-input-btn" style="flex:1;padding:8px 0;border-radius:8px;background:#00897b;color:#fff;border:none;font-size:0.9em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 8px rgba(0,191,174,0.12);">Topic Input</button>
+        <button id="text-input-btn" style="flex:1;padding:8px 0;border-radius:8px;background:#e1e8ed;color:#666;border:none;font-size:0.9em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;opacity:0.85;">Text Input</button>
+      </div>
+      
+      <textarea id="vocab-passage" placeholder="Paste a passage here to extract vocab" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:0 auto 10px auto;outline:none;display:none;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      
+      <textarea id="vocab-topic-input" placeholder="Enter a topic (e.g., 'animals', 'food', 'school subjects')" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:80px;resize:none;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      <!-- ...existing code... -->
     <!-- More Options Modal (hidden by default) -->
     <div id="vocab-more-options-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:40000;align-items:center;justify-content:center;">
       <div style="background:#fff;border-radius:18px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);padding:46px 56px 34px 56px;min-width:408px;min-height:420px;max-width:96vw;display:flex;flex-direction:column;align-items:flex-end;position:relative;border:2px solid #19777e;">
@@ -69,30 +78,42 @@
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <button id="vocab-extract-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#00bfae;color:#fff;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Extract</button>
+        <button id="vocab-generate-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#00bfae;color:#fff;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Generate</button>
         <button id="vocab-clear-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#e1e8ed;color:#00897b;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Clear</button>
       </div>
       <textarea id="vocab-wordlist" placeholder="Enter words here, one per line: English, Korean" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:8px auto 16px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
       <!-- Removed vocab-list-format select from its old position -->
-      <div style="display:flex;gap:18px;margin-top:28px;">
+      <button id="vocab-more-options-btn" style="margin-bottom:18px;padding:7px 0;border-radius:7px;background:#00897b;color:#fff;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:700;letter-spacing:0.5px;cursor:pointer;">MORE OPTIONS</button>
+      <div style="display:flex;gap:18px;margin-top:10px;">
         <button id="vocab-insert-btn" style="flex:1;font-size:0.95em;padding:7px 0;border-radius:8px;background:#00bfae;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Insert</button>
         <button id="vocab-cancel-btn" style="flex:1;font-size:0.95em;padding:7px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Cancel</button>
       </div>
     </div>
     <!-- Right: Live Preview -->
     <div style="flex:1.7;padding:48px 48px 48px 36px;display:flex;flex-direction:column;background:linear-gradient(135deg,#e0f7fa 0%,#f0f9ff 100%);border-left:2.5px solid #93cbcf;">
-      <!-- Moved vocab-list-format select to top of right column -->
-      <select id="vocab-list-format" style="width:100%;font-size:1.1em;padding:7px 12px;border-radius:8px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;margin-bottom:10px;">
-        <option value="basic">Basic Word List</option>
-        <option value="sidebyside">2 Lists (Side by Side)</option>
-        <option value="picturecards">Picture Cards (5 per row)</option>
-        <option value="picturelist">Picture List</option>
-        <option value="picturelist2">Picture List (2 Columns)</option>
-        <option value="picturequiz">Picture Quiz</option>
-        <option value="picturequiz5">Picture Quiz (5 per row)</option>
-        <option value="picturematching">Picture Matching</option>
-        <option value="engkormatch">English-Korean Matching</option>
+      <!-- Layout Button -->
+      <button id="vocab-layouts-btn" style="width:100%;font-size:1.1em;padding:7px 12px;border-radius:8px;background:#00897b;color:#fff;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;margin-bottom:10px;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Choose Layout</button>
+      
+      <!-- Simple Layout Modal -->
+      <div id="vocab-layouts-modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(30,40,60,0.22);z-index:99999;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:18px;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);padding:32px 40px 28px 40px;min-width:320px;max-width:96vw;display:flex;flex-direction:column;align-items:center;position:relative;border:2px solid #19777e;">
+          <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:1.4em;font-weight:700;margin-bottom:18px;color:#2296a3;text-align:center;width:100%;">Choose Layout</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;width:100%;margin-bottom:18px;">
+            <button class="vocab-layout-option" data-value="sidebyside" style="padding:12px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;">📋 Side-by-Side Table</button>
+            <button class="vocab-layout-option" data-value="basic" style="padding:12px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;">📝 Simple List</button>
+            <button class="vocab-layout-option" data-value="cards" style="padding:12px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;">🎴 Cards Grid</button>
+          </div>
+          <button id="vocab-layouts-close" style="margin-top:8px;padding:8px 0;border-radius:8px;background:#e1e8ed;color:#00897b;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;font-weight:600;">Close</button>
+        </div>
+      </div>
+      
+      <!-- Hidden select for compatibility -->
+      <select id="vocab-list-format" style="display:none;">
+        <option value="sidebyside" selected>Side by Side</option>
+        <option value="basic">Simple List</option>
+        <option value="cards">Cards Grid</option>
       </select>
+      
       <div style="width:100%;height:1px;background:#b2d8dd;margin-bottom:18px;"></div>
       <div style="font-size:1.25em;font-weight:700;color:#00897b;margin-bottom:18px;font-family:'Poppins',Arial,sans-serif;">Preview</div>
       <div id="vocab-preview-area" style="flex:1;background:#fff;border-radius:12px;min-height:312px;max-height:624px;padding:18px 20px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;"></div>

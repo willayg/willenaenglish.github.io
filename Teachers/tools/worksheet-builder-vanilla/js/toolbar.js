@@ -314,6 +314,11 @@
     const lineSpacingInput = document.getElementById('pt-linespacing');
     const borderInput = document.getElementById('pt-border');
 
+    // Update orientation icon after toolbar is initialized
+    setTimeout(() => {
+      updateOrientationIcon();
+    }, 50);
+
     // Format button event listeners
     if (boldBtn) boldBtn.addEventListener('click', toggleBold);
     if (italicBtn) italicBtn.addEventListener('click', toggleItalic);
@@ -686,6 +691,8 @@
               if (window.saveToHistory) window.saveToHistory('change page orientation');
               window.worksheetState.setOrientation(newOrientation);
               if (window.renderPages) window.renderPages();
+              // Update orientation icon in toolbar
+              updateOrientationIcon();
             }
             // Save snap-to-center-guides toggle
             var snapToggle = modal.querySelector('#snap-center-guides-toggle');
@@ -718,6 +725,35 @@
     }
   }
 
+  // Update orientation icon when orientation changes
+  function updateOrientationIcon() {
+    const orientationIcon = document.getElementById('pt-orientation-icon');
+    const orientationBtn = document.getElementById('pt-orientation-btn');
+    
+    if (!orientationIcon || !orientationBtn) return;
+    
+    // Define icons for portrait and landscape
+    const portraitIcon = `
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="2" width="10" height="16" rx="1.5" stroke="#4a5568" stroke-width="2" fill="none"/>
+        <circle cx="10" cy="15" r="1" fill="#4a5568"/>
+      </svg>
+    `;
+    
+    const landscapeIcon = `
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="16" height="10" rx="1.5" stroke="#4a5568" stroke-width="2" fill="none"/>
+        <circle cx="15" cy="10" r="1" fill="#4a5568"/>
+      </svg>
+    `;
+    
+    if (window.worksheetState && window.worksheetState.getOrientation) {
+      const currentOrientation = window.worksheetState.getOrientation();
+      orientationIcon.innerHTML = currentOrientation === 'landscape' ? landscapeIcon : portraitIcon;
+      orientationBtn.title = `Switch to ${currentOrientation === 'landscape' ? 'Portrait' : 'Landscape'}`;
+    }
+  }
+
   // Create the global toolbar object
   window.worksheetToolbar = {
     updateToolbarFromBox,
@@ -730,13 +766,15 @@
     toggleStrike,
     initializeToolbar,
     initializeMenus,
-    setAlignmentGlobal
+    setAlignmentGlobal,
+    updateOrientationIcon
   };
 
   // Make functions globally available for backward compatibility
   window.updateToolbarFromBox = updateToolbarFromBox;
   window.setAlign = setAlignmentGlobal;
   window.setVAlign = setVAlign;
+  window.updateOrientationIcon = updateOrientationIcon;
 
   // ===========================================
   // NEW LINE SPACING SYSTEM - REBUILT FROM SCRATCH

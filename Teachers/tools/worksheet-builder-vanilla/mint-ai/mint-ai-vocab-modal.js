@@ -9,39 +9,56 @@
     }).filter(Boolean);
   }
 
-  // Helper: Render preview based on format
+  // Helper: Render preview - 3 simple layout options
   function renderPreview(words, format) {
     if (!words.length) return '<div style="color:#aaa;font-size:1.1em;">No words to preview.</div>';
+    
+    // Debug: log the format being used
+    console.log('renderPreview called with format:', format);
+    
     switch(format) {
-      case 'basic':
-        return `<ul style="list-style:disc inside;line-height:2;">` +
-          words.map(w => `<li><b>${w.eng}</b>${w.kor ? ' — ' + w.kor : ''}</li>`).join('') + '</ul>';
       case 'sidebyside':
-        return `<table style="width:100%;border-collapse:collapse;">` +
-          words.map(w => `<tr><td style='padding:4px 12px;border-bottom:1px solid #e1e8ed;'>${w.eng}</td><td style='padding:4px 12px;border-bottom:1px solid #e1e8ed;'>${w.kor}</td></tr>`).join('') + '</table>';
-      case 'picturecards':
-        return `<div style='display:grid;grid-template-columns:repeat(5,1fr);gap:12px;'>` +
-          words.map(w => `<div style='border:1.5px solid #e1e8ed;border-radius:8px;padding:12px;text-align:center;min-height:60px;'><div style='font-size:1.2em;font-weight:600;'>${w.eng}</div><div style='color:#888;font-size:0.98em;'>${w.kor}</div></div>`).join('') + '</div>';
-      case 'picturelist':
-        return `<ul style='list-style:none;padding:0;'>` +
-          words.map(w => `<li style='margin-bottom:10px;'><span style='font-weight:600;'>${w.eng}</span> <span style='color:#888;'>${w.kor}</span></li>`).join('') + '</ul>';
-      case 'picturelist2':
-        return `<table style='width:100%;'><tbody>` +
-          words.map((w,i) => i%2===0?`<tr><td style='padding:6px 12px;'>${w.eng}</td><td style='padding:6px 12px;'>${words[i+1]?words[i+1].eng:''}</td></tr>`:'').join('') + '</tbody></table>';
-      case 'picturequiz':
-        return `<ol style='line-height:2;'>` +
-          words.map(w => `<li><span style='font-weight:600;'>${w.eng}</span> ________</li>`).join('') + '</ol>';
-      case 'picturequiz5':
-        return `<div style='display:grid;grid-template-columns:repeat(5,1fr);gap:12px;'>` +
-          words.map(w => `<div style='border:1.5px solid #e1e8ed;border-radius:8px;padding:12px;text-align:center;min-height:60px;'><div style='font-size:1.2em;font-weight:600;'>${w.eng}</div><div style='margin-top:8px;'>________</div></div>`).join('') + '</div>';
-      case 'picturematching':
-        return `<table style='width:100%;border-collapse:collapse;'><tbody>` +
-          words.map(w => `<tr><td style='padding:6px 12px;border-bottom:1px solid #e1e8ed;'>${w.eng}</td><td style='padding:6px 12px;border-bottom:1px solid #e1e8ed;'>________</td></tr>`).join('') + '</tbody></table>';
-      case 'engkormatch':
-        return `<table style='width:100%;border-collapse:collapse;'><tbody>` +
-          words.map(w => `<tr><td style='padding:6px 12px;border-bottom:1px solid #e1e8ed;'>${w.eng}</td><td style='padding:6px 12px;border-bottom:1px solid #e1e8ed;'>${w.kor}</td></tr>`).join('') + '</tbody></table>';
+        // Side-by-side table layout with editable cells
+        const tableRows = words.map(w => 
+          `<tr>` +
+          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;font-weight:600;" contenteditable="true">${w.eng}</td>` +
+          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;color:#666;" contenteditable="true">${w.kor || ''}</td>` +
+          `</tr>`
+        ).join('');
+        // Add 3 empty rows for additional entries
+        const emptyRows = Array(3).fill().map(() => 
+          `<tr>` +
+          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;font-weight:600;" contenteditable="true"></td>` +
+          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;color:#666;" contenteditable="true"></td>` +
+          `</tr>`
+        ).join('');
+        
+        return `<table style="width:100%;border-collapse:collapse;font-family:'Poppins',Arial,sans-serif;">` +
+          `<thead><tr>` +
+          `<th style="padding:12px 16px;background:#f8fafd;border:2px solid #93cbcf;font-weight:700;color:#00897b;text-align:left;" contenteditable="true">English</th>` +
+          `<th style="padding:12px 16px;background:#f8fafd;border:2px solid #93cbcf;font-weight:700;color:#00897b;text-align:left;" contenteditable="true">L2</th>` +
+          `</tr></thead><tbody>` +
+          tableRows + emptyRows +
+          '</tbody></table>';
+      
+      case 'basic':
+        // Simple list layout
+        return `<ul style="list-style:disc inside;line-height:2.2;font-family:'Poppins',Arial,sans-serif;">` +
+          words.map(w => `<li style="margin-bottom:8px;"><b>${w.eng}</b>${w.kor ? ' — ' + w.kor : ''}</li>`).join('') + '</ul>';
+      
+      case 'cards':
+        // Cards grid layout
+        return `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;font-family:"Poppins",Arial,sans-serif;'>` +
+          words.map(w => 
+            `<div style='border:2px solid #e1e8ed;border-radius:12px;padding:16px;text-align:center;background:#fafbfc;'>` +
+            `<div style='font-size:1.1em;font-weight:700;color:#00897b;margin-bottom:8px;'>${w.eng}</div>` +
+            `<div style='color:#666;font-size:0.95em;'>${w.kor || ''}</div>` +
+            `</div>`
+          ).join('') + '</div>';
+      
       default:
-        return '<div style="color:#aaa;">Unknown format.</div>';
+        console.log('Unknown format encountered:', format);
+        return '<div style="color:#aaa;">Unknown format: ' + format + '</div>';
     }
   }
 
@@ -57,6 +74,27 @@
           messages: [
             { role: 'system', content: 'You are a helpful teaching assistant.' },
             { role: 'user', content: `Extract exactly ${numWords} ${difficulty} English words or phrases from the passage below. For each, provide the English, then a comma, then the Korean translation. Return each pair on a new line in the format: english, korean.\n\nPassage:\n${passage}` }
+          ],
+          max_tokens: 1200
+        }
+      })
+    });
+    const data = await resp.json();
+    return data.data.choices?.[0]?.message?.content || '';
+  }
+
+  // AI topic generation
+  async function generateWordsFromTopic(topic, numWords, difficulty) {
+    const resp = await fetch('/.netlify/functions/openai_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: 'chat/completions',
+        payload: {
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful teaching assistant creating vocabulary lists for English language learners.' },
+            { role: 'user', content: `Generate exactly ${numWords} ${difficulty} English words related to the topic "${topic}". For each word, provide the English, then a comma, then the Korean translation. Return each pair on a new line in the format: english, korean. Make the words appropriate for English language learners.` }
           ],
           max_tokens: 1200
         }
@@ -128,10 +166,83 @@
       // Elements
       const titleInput = modal.querySelector('#vocab-title');
       const passageInput = modal.querySelector('#vocab-passage');
+      const topicInput = modal.querySelector('#vocab-topic-input');
+      const textInputBtn = modal.querySelector('#text-input-btn');
+      const topicInputBtn = modal.querySelector('#topic-input-btn');
       const importBtn = modal.querySelector('#vocab-import-btn');
       const moreOptionsBtn = modal.querySelector('#vocab-more-options-btn');
       const moreOptionsModal = modal.querySelector('#vocab-more-options-modal');
       const moreOptionsClose = modal.querySelector('#vocab-more-options-close');
+
+      // Layout modal elements
+      const layoutsBtn = modal.querySelector('#vocab-layouts-btn');
+      const layoutsModal = modal.querySelector('#vocab-layouts-modal');
+      const layoutsClose = modal.querySelector('#vocab-layouts-close');
+      const layoutOptions = modal.querySelectorAll('.vocab-layout-option');
+      
+      // Layout modal functionality
+      if (layoutsBtn && layoutsModal && layoutsClose) {
+        layoutsBtn.onclick = function() {
+          layoutsModal.style.display = 'flex';
+        };
+        layoutsClose.onclick = function() {
+          layoutsModal.style.display = 'none';
+        };
+        // Layout option clicks
+        layoutOptions.forEach(option => {
+          option.onclick = function() {
+            const format = this.getAttribute('data-value');
+            // Update hidden select
+            const formatSelect = modal.querySelector('#vocab-list-format');
+            if (formatSelect) {
+              formatSelect.value = format;
+              // Trigger change event for preview update
+              formatSelect.dispatchEvent(new Event('change'));
+            }
+            // Close modal
+            layoutsModal.style.display = 'none';
+          };
+        });
+      }
+
+      // Get all required elements first
+      const diffInput = modal.querySelector('#vocab-difficulty');
+      const numInput = modal.querySelector('#vocab-numwords');
+      const generateBtn = modal.querySelector('#vocab-generate-btn');
+      const clearBtn = modal.querySelector('#vocab-clear-btn');
+      const wordlistInput = modal.querySelector('#vocab-wordlist');
+      const formatInput = modal.querySelector('#vocab-list-format');
+      const previewArea = modal.querySelector('#vocab-preview-area');
+      const insertBtn = modal.querySelector('#vocab-insert-btn');
+      const cancelBtn = modal.querySelector('#vocab-cancel-btn');
+      const closeBtn = modal.querySelector('#close-vocab-modal');
+
+      // Mode switching functionality (moved from HTML inline script)
+      let currentMode = 'topic'; // 'topic' is default
+      function switchToTextMode() {
+        currentMode = 'text';
+        textInputBtn.style.background = '#00897b';
+        textInputBtn.style.color = '#fff';
+        topicInputBtn.style.background = '#e1e8ed';
+        topicInputBtn.style.color = '#666';
+        passageInput.style.display = 'block';
+        topicInput.style.display = 'none';
+        generateBtn.textContent = 'Extract';
+      }
+      function switchToTopicMode() {
+        currentMode = 'topic';
+        topicInputBtn.style.background = '#00897b';
+        topicInputBtn.style.color = '#fff';
+        textInputBtn.style.background = '#e1e8ed';
+        textInputBtn.style.color = '#666';
+        passageInput.style.display = 'none';
+        topicInput.style.display = 'block';
+        generateBtn.textContent = 'Generate';
+      }
+      textInputBtn.onclick = switchToTextMode;
+      topicInputBtn.onclick = switchToTopicMode;
+      // Initialize in topic mode
+      switchToTopicMode();
 
       // Show More Options modal
       if (moreOptionsBtn && moreOptionsModal) {
@@ -145,42 +256,56 @@
           moreOptionsModal.style.display = 'none';
         };
       }
-      const diffInput = modal.querySelector('#vocab-difficulty');
-      const numInput = modal.querySelector('#vocab-numwords');
-      const extractBtn = modal.querySelector('#vocab-extract-btn');
-      const clearBtn = modal.querySelector('#vocab-clear-btn');
-      const wordlistInput = modal.querySelector('#vocab-wordlist');
-      const formatInput = modal.querySelector('#vocab-list-format');
-      const previewArea = modal.querySelector('#vocab-preview-area');
-      const insertBtn = modal.querySelector('#vocab-insert-btn');
-      const cancelBtn = modal.querySelector('#vocab-cancel-btn');
-      const closeBtn = modal.querySelector('#close-vocab-modal');
 
       // Live preview update
       function updatePreview() {
         const words = parseWordList(wordlistInput.value);
         const format = formatInput.value;
+        console.log('updatePreview: formatInput.value =', format);
+        console.log('updatePreview: formatInput element =', formatInput);
         previewArea.innerHTML = renderPreview(words, format);
       }
       wordlistInput.addEventListener('input', updatePreview);
       formatInput.addEventListener('change', updatePreview);
       updatePreview();
 
-      // Extract words with AI
-      extractBtn.onclick = async function() {
-        extractBtn.disabled = true;
-        extractBtn.textContent = 'Extracting...';
+      // Generate/Extract words with AI based on current mode
+      generateBtn.onclick = async function() {
+        generateBtn.disabled = true;
+        const originalText = generateBtn.textContent;
+        generateBtn.textContent = currentMode === 'text' ? 'Extracting...' : 'Generating...';
+        
         try {
-          const passage = passageInput.value.trim();
           const num = parseInt(numInput.value) || 10;
           const diff = diffInput.value;
-          if (!passage) { alert('Please enter a passage.'); return; }
-          const aiResult = await extractWordsWithAI(passage, num, diff);
+          let aiResult = '';
+          
+          if (currentMode === 'text') {
+            // Extract from passage
+            const passage = passageInput.value.trim();
+            if (!passage) { 
+              alert('Please enter a passage to extract words from.'); 
+              return; 
+            }
+            aiResult = await extractWordsWithAI(passage, num, diff);
+          } else {
+            // Generate from topic
+            const topic = topicInput.value.trim();
+            if (!topic) { 
+              alert('Please enter a topic to generate words for.'); 
+              return; 
+            }
+            aiResult = await generateWordsFromTopic(topic, num, diff);
+          }
+          
           wordlistInput.value = aiResult.trim();
           updatePreview();
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error generating words. Please try again.');
         } finally {
-          extractBtn.disabled = false;
-          extractBtn.textContent = 'Extract Words';
+          generateBtn.disabled = false;
+          generateBtn.textContent = originalText;
         }
       };
       // Clear all
