@@ -168,6 +168,13 @@
         }
       }, 0);
     });
+    
+    // Update orientation icon after pages are rendered
+    setTimeout(() => {
+      if (window.updateOrientationIcon) {
+        window.updateOrientationIcon();
+      }
+    }, 10);
   }
 
   // Render individual textbox
@@ -845,6 +852,12 @@
     if (window.saveToHistory) window.saveToHistory('add page');
     window.worksheetState.getPages().push({ boxes: [] });
     renderPages();
+    // Ensure orientation icon is updated after adding page
+    setTimeout(() => {
+      if (window.updateOrientationIcon) {
+        window.updateOrientationIcon();
+      }
+    }, 50);
   }
 
   // Create the global rendering object

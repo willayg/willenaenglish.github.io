@@ -74,8 +74,21 @@ function createTextToolbar() {
   textToolbar.querySelector('#tt-ai').addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (window.showAIModal && currentTextbox) {
-      window.showAIModal(currentTextbox);
+    if (currentTextbox) {
+      // Load and open the Mint AI vocab modal instead of the regular AI modal
+      if (!window.openVocabBoxModal) {
+        // Dynamically load the vocab modal script if not already loaded
+        const script = document.createElement('script');
+        script.src = 'mint-ai/mint-ai-vocab-modal.js';
+        script.onload = function() {
+          if (window.openVocabBoxModal) {
+            window.openVocabBoxModal();
+          }
+        };
+        document.head.appendChild(script);
+      } else {
+        window.openVocabBoxModal();
+      }
     }
   });
   

@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worksheet Builder (Vanilla)</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="resize-handles.css">
+  <link rel="stylesheet" href="left-toolbar.css">
+  <link rel="stylesheet" href="print.css" media="print">
+  <link rel="icon" href="../../../../Assets/Images/Logo.png">
+  <!-- Google Fonts: Poppins, Nanum Pen Script, Caveat, Roboto, Lato, Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nanum+Pen+Script&family=Caveat:wght@400;700&family=Roboto:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <!-- iro.js color picker library -->
+  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="app-card">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo">
+          <img src="../../../../Assets/Images/Logo.png" alt="Willena" class="logo-img" />
+        </div>
+        <h1>MINT Sheet</h1>
+        <!-- Simple Burger Menu -->
+        <button id="burger-toggle" style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:24px; cursor:pointer;">☰</button>
+        <ul id="burger-menu" style="display:none; position:absolute; top:48px; right:20px; background:#eaebf0; list-style:none; padding:8px 0; margin:0; box-shadow:0 2px 8px rgba(241, 237, 237, 0.15); border-radius:4px; z-index:10000;">
+          <li><a href="/index.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Home</a></li>
+          <li><a href="/Teachers/index.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Dashboard</a></li>
+          <li><a href="/Teachers/profile.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Profile</a></li>
+          <li><a href="#" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Feedback</a></li>
+          <li><a href="/Teachers/components/feedback-admin.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Admin</a></li>
+          <li><a href="/Teachers/login.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Logout</a></li>
+        </ul>
+      </div>
+      <!-- File Menu Dropdown (loaded via JS) -->
+      <div class="top-actions" id="file-menu-mount" style="position:sticky;top:0;z-index:100;opacity:0.9;">
+        <!-- File menu will be loaded here by main.js -->
+      </div>
+      <!-- Pastel Toolbar with font controls -->
+      <div class="pastel-toolbar" id="pastel-toolbar" style="position:sticky;top:38px;z-index:99;opacity:0.98;display:flex;align-items:center;gap:16px;padding:12px 24px;background:#e8f4f8;border-bottom:1px solid #5f8f9b;min-height:48px;">
+        <label style="font-size:0.98em;font-family:Poppins,sans-serif;color:#3d3752;display:flex;align-items:center;gap:6px;">
+          <span title="Font" style="display:inline-flex;align-items:center;">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 22L14 6L22 22" stroke="#4a5568" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M9.5 16H18.5" stroke="#4a5568" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <select id="pt-font" style="margin-left:6px;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e0;font-size:14px;color:#4a5568;min-width:100px;background:white;" aria-label="Font">
+            <option value="Poppins">Poppins</option>
+            <option value="Roboto">Roboto</option>
+            <option value="Lato">Lato</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Arial">Arial</option>
+            <option value="Helvetica Neue">Helvetica Neue</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Garamond">Garamond</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Comic Sans MS">Comic Sans</option>
+            <option value="Nanum Pen Script">Nanum Pen</option>
+            <option value="Caveat">Caveat</option>
+          </select>
+        </label>
+        <div style="display:flex;align-items:center;gap:0;background:white;border:1px solid #cbd5e0;border-radius:8px;overflow:hidden;">
+          <button id="pt-fontsize-dec" style="background:white;border:none;font-size:16px;font-weight:600;color:#4a5568;padding:8px 12px;cursor:pointer;transition:background 0.2s;">-</button>
+          <input id="pt-fontsize" type="number" min="8" max="72" value="16" style="border:none;padding:8px 12px;width:50px;text-align:center;font-size:14px;color:#4a5568;border-left:1px solid #cbd5e0;border-right:1px solid #cbd5e0;" />
+          <button id="pt-fontsize-inc" style="background:white;border:none;font-size:16px;font-weight:600;color:#4a5568;padding:8px 12px;cursor:pointer;transition:background 0.2s;">+</button>
+        </div>
+
+        <style>
+        /* Hide number input spinners for font size input */
+        #pt-fontsize::-webkit-outer-spin-button,
+        #pt-fontsize::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        #pt-fontsize[type=number] {
+          -moz-appearance: textfield;
+        }
+        </style>
+        <label style="font-size:0.98em;font-family:Poppins,sans-serif;color:#3d3752;display:flex;align-items:center;margin-left:8px;">
+          <div id="pt-fontcolor-container" style="position:relative;">
+            <div id="pt-fontcolor-preview" style="width:32px;height:32px;border:1px solid #cbd5e0;border-radius:8px;background:#000000;cursor:pointer;" title="Font Color"></div>
+            <div id="pt-fontcolor-picker" style="display:none;position:absolute;top:40px;left:0;z-index:15000;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;min-width:200px;">
+              <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;">
+                <!-- Tailwind color swatches will be added here -->
+              </div>
+              <div id="pt-fontcolor-iro" style="margin-top:8px;"></div>
+            </div>
+          </div>
+        </label>
+        <!-- Text Formatting Controls -->
+        <div style="display:flex;align-items:center;gap:6px;background:transparent;">
+          <button id="pt-bold" class="toolbar-btn toolbar-btn-bold" title="Bold" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;font-weight:700;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">B</button>
+          <button id="pt-italic" class="toolbar-btn toolbar-btn-italic" title="Italic" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;font-style:italic;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">I</button>
+          <button id="pt-underline" class="toolbar-btn toolbar-btn-underline" title="Underline" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;text-decoration:underline;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">U</button>
+          <button id="pt-strike" class="toolbar-btn toolbar-btn-strike" title="Strikethrough" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;text-decoration:line-through;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">S</button>
+        </div>
+        <!-- Alignment Icon Dropdowns -->
+        <div style="position:relative;display:inline-block;margin-left:8px;">
+          <button id="pt-halign-btn" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;">
+            <span id="pt-halign-icon"> <!-- default left align -->
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </span>
+          </button>
+          <div id="pt-halign-menu" style="display:none;position:absolute;top:110%;left:0;background:white;border:1.5px solid #cbd5e0;border-radius:8px;box-shadow:0 4px 16px 0 rgba(60,60,80,0.10);padding:4px 0;z-index:2000;min-width:38px;">
+            <button class="halign-option" data-value="left" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+            <button class="halign-option" data-value="center" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="6" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="5" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+            <button class="halign-option" data-value="right" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="9" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="6" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+            <button class="halign-option" data-value="justify" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="16" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="position:relative;display:inline-block;margin-left:2px;">
+          <button id="pt-valign-btn" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;">
+            <span id="pt-valign-icon"> <!-- default top align: top line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+              </svg>
+            </span>
+          </button>
+          <div id="pt-valign-menu" style="display:none;position:absolute;top:110%;left:0;background:white;border:1.5px solid #cbd5e0;border-radius:8px;box-shadow:0 4px 16px 0 rgba(60,60,80,0.10);padding:4px 0;z-index:2000;min-width:38px;">
+            <button class="valign-option" data-value="top" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <!-- Top align: top line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+              </svg>
+            </button>
+            <button class="valign-option" data-value="middle" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <!-- Middle align: middle line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+              </svg>
+            </button>
+            <button class="valign-option" data-value="bottom" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <!-- Bottom align: bottom line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+  <script>
+    // Alignment icon dropdown logic
+    function setupIconDropdown(btnId, menuId, iconId, optionClass, icons) {
+      const btn = document.getElementById(btnId);
+      const menu = document.getElementById(menuId);
+      const icon = document.getElementById(iconId);
+      const options = document.querySelectorAll('.' + optionClass);
+      
+      if (!btn || !menu || !icon || !options.length) return;
+      
+      // Toggle dropdown
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+      });
+      
+      // Handle option selection
+      options.forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const value = this.getAttribute('data-value');
+          
+          // Update icon
+          if (icons[value]) {
+            icon.innerHTML = icons[value];
+          }
+          
+          // Call alignment function
+          if (btnId.includes('halign')) {
+            if (window.setAlign) window.setAlign('h', value);
+          } else if (btnId.includes('valign')) {
+            if (window.setAlign) window.setAlign('v', value);
+          }
+          
+          // Close dropdown
+          menu.style.display = 'none';
+        });
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!btn.contains(e.target) && !menu.contains(e.target)) {
+          menu.style.display = 'none';
+        }
+      });
+    }
+    
+    // Define icons for alignment options
+    const halignIcons = {
+      left: '<svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>',
+      center: '<svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="6" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="5" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>',
+      right: '<svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="9" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="6" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>',
+      justify: '<svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="16" height="2.5" rx="1.2" fill="#4a5568"/></svg>'
+    };
+    
+    const valignIcons = {
+      top: '<svg width="22" height="22" viewBox="0 0 22 22">'+
+        '<rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>'+
+        '<rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>'+
+        '<rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>'+
+      '</svg>',
+      middle: '<svg width="22" height="22" viewBox="0 0 22 22">'+
+        '<rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#bbb"/>'+
+        '<rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>'+
+        '<rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>'+
+      '</svg>',
+      bottom: '<svg width="22" height="22" viewBox="0 0 22 22">'+
+        '<rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#bbb"/>'+
+        '<rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>'+
+        '<rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#4a5568"/>'+
+      '</svg>'
+    };
+    setupIconDropdown('pt-halign-btn', 'pt-halign-menu', 'pt-halign-icon', 'halign-option', halignIcons);
+    setupIconDropdown('pt-valign-btn', 'pt-valign-menu', 'pt-valign-icon', 'valign-option', valignIcons);
+    
+    // Page Orientation Toggle - moved to end of script loading for proper initialization
+    
+    // Also ensure orientation icon is updated after a delay when everything is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        if (window.updateOrientationIcon) {
+          window.updateOrientationIcon();
+        }
+      }, 200);
+    });
+  </script>
+        <!-- Page Orientation Toggle -->
+        <div style="margin-left:8px;">
+          <button id="pt-orientation-btn" title="Toggle Page Orientation" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;transition:background 0.15s,box-shadow 0.15s;">
+            <span id="pt-orientation-icon">
+              <!-- Portrait icon by default -->
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="2" width="10" height="16" rx="1.5" stroke="#4a5568" stroke-width="2" fill="none"/>
+                <circle cx="10" cy="15" r="1" fill="#4a5568"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+        <label style="font-size:0.98em;font-family:Poppins,sans-serif;color:#3d3752;display:flex;align-items:center;gap:6px;">
+          <span title="Line Spacing" style="display:inline-flex;align-items:center;">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="6" y1="5" x2="6" y2="23" stroke="#222" stroke-width="2.2"/>
+              <polygon points="6,3 2,7 10,7" fill="#222"/>
+              <polygon points="6,25 2,21 10,21" fill="#222"/>
+              <rect x="12" y="7" width="10" height="2.5" rx="1.2" fill="#222"/>
+              <rect x="12" y="12.5" width="10" height="2.5" rx="1.2" fill="#222"/>
+              <rect x="12" y="18" width="10" height="2.5" rx="1.2" fill="#222"/>
+            </svg>
+          </span>
+          <input id="pt-linespacing" type="number" min="1" max="3" step="0.1" value="1.8" style="width:80px;text-align:center;font-size:14px;border:1px solid #cbd5e0;border-radius:8px;padding:8px 12px;background:white;color:#4a5568;" aria-label="Line Spacing" />
+          <!-- Border Style Dropdown Button removed; modal will open on textbox click -->
+        </label>
+        <!-- Border weight slider removed -->
+      </div>
+      <!-- Main workspace row: left toolbar + main content -->
+      <!-- Workspace row: left toolbar + main content, under pastel toolbar -->
+      <div style="display:flex;flex-direction:row;align-items:stretch;min-height:0;width:100%;">
+        <!-- Left Toolbar (sticky in workspace) -->
+        <div class="left-toolbar" style="width:100px;min-width:100px;max-width:100px;background:#f7f7fa;border-right:1px solid #e1e8ed;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 0 0;z-index:10;height:calc(100vh - 96px);overflow-y:hidden;position:sticky;top:96px;">
+  <style>
+    .left-toolbar {
+      transition: box-shadow 0.2s;
+    }
+    .left-toolbar:hover {
+      overflow-y: auto !important;
+      box-shadow: 2px 0 12px 0 rgba(60,60,80,0.07);
+    }
+  </style>
+          <!-- Toolbar buttons will be injected by left-toolbar.js -->
+        </div>
+        <!-- Main Content -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+          <!-- Page Preview Area (A4 aspect ratio) -->
+          <div id="page-preview-area"></div>
+          <div class="add-page-text" id="add-page-text">+ Add New Page</div>
+          <!-- Page Settings Modal (loaded via JS) -->
+          <div id="page-settings-modal-mount"></div>
+        </div>
+        <style>
+          .worksheet-textbox {
+            resize: both !important;
+            overflow: auto !important;
+            min-width: 60px;
+            min-height: 32px;
+            max-width: 100%;
+            max-height: 100%;
+            box-sizing: border-box;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            line-height: 1.8 !important;
+          }
+          
+          /* Hover state - subtle glow */
+          .worksheet-textbox:hover {
+            box-shadow: 0 0 8px rgba(66, 153, 225, 0.3) !important;
+          }
+          
+          /* Selected/focused state - stronger glow and border */
+          .worksheet-textbox:focus,
+          .worksheet-textbox.selected {
+            box-shadow: 0 0 12px rgba(66, 153, 225, 0.5) !important;
+            border-color: #4299e1 !important;
+            outline: none;
+          }
+          
+          /* Hide resize handle by default, show only on focus/selected */
+          .worksheet-textbox::-webkit-resizer {
+            display: none;
+          }
+          .worksheet-textbox:focus::-webkit-resizer,
+          .worksheet-textbox.selected::-webkit-resizer {
+            display: block;
+          }
+          /* For Firefox, hide the resize handle by default using pointer-events */
+          .worksheet-textbox {
+            pointer-events: auto;
+          }
+          .worksheet-textbox:not(:focus):not(.selected) {
+            resize: none !important;
+          }
+          /* Ensure fill color persists on focus and hover */
+          .worksheet-textbox:focus,
+          .worksheet-textbox:hover {
+            background-color: inherit !important;
+          }
+          
+          /* Header selection styles */
+          .worksheet-header.selected {
+            box-shadow: 0 0 12px rgba(66, 153, 225, 0.5) !important;
+            outline: 2px solid #4299e1 !important;
+            outline-offset: 2px;
+          }
+          
+          .worksheet-header:hover {
+            box-shadow: 0 0 8px rgba(66, 153, 225, 0.3) !important;
+          }
+        </style>
+      </div>
+      <!-- ...existing code... -->
+    </div>
+  </div>
+  <script src="../components/burger-menu.js"></script>
+  <script src="left-toolbar.js"></script>
+  <script>
+    // Border Style Modal logic: open modal on textbox click
+    function initializeTextboxBorderAttributes(textbox) {
+      if (!textbox.hasAttribute('data-border-on')) textbox.setAttribute('data-border-on', 'true');
+      if (!textbox.hasAttribute('data-border-color')) textbox.setAttribute('data-border-color', '#b9f5d0');
+      if (!textbox.hasAttribute('data-border-width')) textbox.setAttribute('data-border-width', '1.5');
+      if (!textbox.hasAttribute('data-border-radius')) textbox.setAttribute('data-border-radius', '4');
+    }
+
+    // Listen for textbox creation (assumes textboxes are added with class 'worksheet-textbox')
+    const previewArea = document.getElementById('page-preview-area');
+    if (previewArea) {
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && node.classList.contains('worksheet-textbox')) {
+              initializeTextboxBorderAttributes(node);
+              // Apply styles from data attributes
+              const borderOn = node.getAttribute('data-border-on') === 'true';
+              const borderColorVal = node.getAttribute('data-border-color') || '#e1e8ed';
+              const borderWidthVal = node.getAttribute('data-border-width') || '1.5';
+              const borderRadiusVal = node.getAttribute('data-border-radius') || '4';
+              if (borderOn) {
+                node.style.borderStyle = 'solid';
+                node.style.borderWidth = borderWidthVal + 'px';
+                node.style.borderColor = borderColorVal || '#b9f5d0';
+              } else {
+                node.style.borderStyle = 'none';
+                node.style.borderWidth = '0px';
+              }
+              node.style.borderRadius = borderRadiusVal + 'px';
+            }
+          });
+        });
+      });
+      observer.observe(previewArea, { childList: true, subtree: true });
+    }
+
+    // Open border-style modal when a worksheet-textbox is clicked
+    document.addEventListener('click', function(e) {
+      // Check if the clicked element is inside a textbox (including text content)
+      const textbox = e.target.closest('.worksheet-textbox');
+      if (textbox) {
+        // Remove any existing modal
+        const oldModal = document.getElementById('border-style-modal');
+        if (oldModal && oldModal.parentElement) oldModal.parentElement.remove();
+        fetch('border-style-modal.html')
+          .then(resp => resp.text())
+          .then(html => {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            // Style the modal as a floating panel to the left of the workspace
+            const modal = wrapper.querySelector('#border-style-modal');
+            if (modal) {
+              modal.style.display = 'flex';
+              modal.style.position = 'fixed';
+              // Restore modal position from localStorage if available
+              let savedLeft = localStorage.getItem('borderStyleModalLeft');
+              let savedTop = localStorage.getItem('borderStyleModalTop');
+              if (savedLeft && savedTop) {
+                modal.style.left = savedLeft;
+                modal.style.top = savedTop;
+              } else {
+                modal.style.left = '120px'; // right of left toolbar (90px) + 10px gap
+                modal.style.top = '250px'; // below header+toolbar (96px) + 12px gap
+              }
+              modal.style.width = '320px';
+              modal.style.height = 'auto';
+              modal.style.background = 'none';
+              modal.style.boxShadow = 'none';
+              modal.style.zIndex = '2000';
+              modal.style.alignItems = 'flex-start';
+              modal.style.justifyContent = 'flex-start';
+              // Remove full-screen overlay effect
+              // Make modal 50% transparent and add dark cyan border to the panel
+              const panel = modal.querySelector('div');
+                  if (panel) {
+                    panel.style.background = 'rgba(255,255,255,0.5)';
+                    panel.style.border = '2.5px solid #045c63';
+                    panel.style.boxShadow = '0 8px 32px 0 rgba(60,60,80,0.18)';
+                    // Make modal draggable from anywhere inside the panel
+                    let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+                    panel.style.cursor = 'move';
+                    panel.addEventListener('mousedown', function(ev) {
+                      // Only left mouse button
+                      if (ev.button !== 0) return;
+                      // Prevent drag if clicking on input, range, or color controls
+                      const tag = ev.target.tagName.toLowerCase();
+                      if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button' || tag === 'label') return;
+                      isDragging = true;
+                      const rect = modal.getBoundingClientRect();
+                      dragOffsetX = ev.clientX - rect.left;
+                      dragOffsetY = ev.clientY - rect.top;
+                      document.body.style.userSelect = 'none';
+                    });
+                    function onMouseMove(ev) {
+                      if (isDragging) {
+                        modal.style.left = (ev.clientX - dragOffsetX) + 'px';
+                        modal.style.top = (ev.clientY - dragOffsetY) + 'px';
+                      }
+                    }
+                    function onMouseUp() {
+                      isDragging = false;
+                      document.body.style.userSelect = '';
+                      // Save modal position to localStorage
+                      localStorage.setItem('borderStyleModalLeft', modal.style.left);
+                      localStorage.setItem('borderStyleModalTop', modal.style.top);
+                      window.removeEventListener('mousemove', onMouseMove);
+                      window.removeEventListener('mouseup', onMouseUp);
+                    }
+                    panel.addEventListener('mousedown', function(ev) {
+                      // Only left mouse button
+                      if (ev.button !== 0) return;
+                      window.addEventListener('mousemove', onMouseMove);
+                      window.addEventListener('mouseup', onMouseUp);
+                    });
+                  }
+            }
+            document.body.appendChild(wrapper);
+            // Get the current selected textbox dynamically 
+            function getCurrentSelectedTextbox() {
+              return document.querySelector('.worksheet-textbox.selected') || 
+                     textbox || 
+                     (window.worksheetState && window.worksheetState.getLastTextbox());
+            }
+            
+            // Sync modal controls to textbox
+            function syncModalToTextbox() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!modal || !selectedTextbox) return;
+              const borderOn = selectedTextbox.getAttribute('data-border-on') === 'true';
+              const borderColorVal = selectedTextbox.getAttribute('data-border-color') || '#e1e8ed';
+              const borderWidthVal = selectedTextbox.getAttribute('data-border-width') || '1.5';
+              const borderRadiusVal = selectedTextbox.getAttribute('data-border-radius') || '4';
+              modal.querySelector('#modal-border-toggle').checked = borderOn;
+              modal.querySelector('#modal-border-switch').style.left = borderOn ? '22px' : '2px';
+              modal.querySelector('#modal-border-status').textContent = borderOn ? 'On' : 'Off';
+              // Update border color picker preview
+              const borderPreview = document.getElementById('modal-border-color-preview');
+              if (borderPreview) borderPreview.style.backgroundColor = borderColorVal;
+              modal.querySelector('#modal-borderweight').value = parseFloat(borderWidthVal);
+              modal.querySelector('#modal-borderweight-value').textContent = borderWidthVal + 'px';
+              modal.querySelector('#modal-border-radius').value = parseInt(borderRadiusVal);
+              modal.querySelector('#modal-border-radius-value').textContent = borderRadiusVal + 'px';
+
+              // Fill controls sync
+              const fillOn = selectedTextbox.getAttribute('data-fill-on') === 'true';
+              const fillColorVal = selectedTextbox.getAttribute('data-fill-color') || '#ffffff';
+              const fillOpacityVal = selectedTextbox.getAttribute('data-fill-opacity') || '1';
+              modal.querySelector('#modal-fill-toggle').checked = fillOn;
+              modal.querySelector('#modal-fill-switch').style.left = fillOn ? '22px' : '2px';
+              modal.querySelector('#modal-fill-status').textContent = fillOn ? 'On' : 'Off';
+              // Update fill color picker preview
+              const fillPreview = document.getElementById('modal-fill-color-preview');
+              if (fillPreview) fillPreview.style.backgroundColor = fillColorVal;
+              modal.querySelector('#modal-fill-opacity').value = fillOpacityVal;
+              modal.querySelector('#modal-fill-opacity').disabled = !fillOn;
+              modal.querySelector('#modal-fill-opacity').style.opacity = fillOn ? '1' : '0.5';
+              modal.querySelector('#modal-fill-opacity-value').textContent = Math.round(fillOpacityVal * 100) + '%';
+            }
+            syncModalToTextbox();
+            
+            // Initialize color pickers for the modal
+            if (window.worksheetColorPicker && window.worksheetColorPicker.initializeModalPickers) {
+              window.worksheetColorPicker.initializeModalPickers();
+            }
+
+            // Modal controls update textbox in real time
+            modal.querySelector('#modal-border-toggle').addEventListener('change', function() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!selectedTextbox) return;
+              
+              if (this.checked) {
+                selectedTextbox.setAttribute('data-border-on', 'true');
+                selectedTextbox.style.borderStyle = 'solid';
+                selectedTextbox.style.borderWidth = modal.querySelector('#modal-borderweight').value + 'px';
+                const borderColor = selectedTextbox.getAttribute('data-border-color') || '#e1e8ed';
+                selectedTextbox.style.borderColor = borderColor || '#b9f5d0';
+              } else {
+                selectedTextbox.setAttribute('data-border-on', 'false');
+                selectedTextbox.style.borderStyle = 'none';
+                selectedTextbox.style.borderWidth = '0px';
+              }
+              syncModalToTextbox();
+            });
+
+            modal.querySelector('#modal-borderweight').addEventListener('input', function() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!selectedTextbox) return;
+              
+              modal.querySelector('#modal-borderweight-value').textContent = this.value + 'px';
+              selectedTextbox.setAttribute('data-border-width', this.value);
+              if (modal.querySelector('#modal-border-toggle').checked) {
+                selectedTextbox.style.borderWidth = this.value + 'px';
+                selectedTextbox.style.borderStyle = 'solid';
+              }
+            });
+
+            modal.querySelector('#modal-border-radius').addEventListener('input', function() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!selectedTextbox) return;
+              
+              modal.querySelector('#modal-border-radius-value').textContent = this.value + 'px';
+              selectedTextbox.setAttribute('data-border-radius', this.value);
+              selectedTextbox.style.borderRadius = this.value + 'px';
+            });
+
+            // Utility to convert hex to rgba
+            function hexToRgba(hex, opacity) {
+              let c = hex.replace('#', '');
+              if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+              const num = parseInt(c, 16);
+              return `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${opacity})`;
+            }
+
+            function applyFillToTextbox(textbox) {
+              const fillOn = textbox.getAttribute('data-fill-on') === 'true';
+              const fillColor = textbox.getAttribute('data-fill-color') || '#ffffff';
+              const fillOpacity = textbox.getAttribute('data-fill-opacity') || '1';
+              if (fillOn) {
+                textbox.style.backgroundColor = hexToRgba(fillColor, fillOpacity);
+              } else {
+                textbox.style.backgroundColor = '';
+              }
+            }
+
+            // Fill controls event listeners
+            modal.querySelector('#modal-fill-toggle').addEventListener('change', function() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!selectedTextbox) return;
+              
+              if (this.checked) {
+                selectedTextbox.setAttribute('data-fill-on', 'true');
+              } else {
+                selectedTextbox.setAttribute('data-fill-on', 'false');
+              }
+              applyFillToTextbox(selectedTextbox);
+              syncModalToTextbox();
+            });
+
+            modal.querySelector('#modal-fill-opacity').addEventListener('input', function() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!selectedTextbox) return;
+              
+              const val = this.value;
+              modal.querySelector('#modal-fill-opacity-value').textContent = Math.round(val * 100) + '%';
+              selectedTextbox.setAttribute('data-fill-opacity', val);
+              if (modal.querySelector('#modal-fill-toggle').checked) {
+                applyFillToTextbox(selectedTextbox);
+              }
+            });
+
+            // Ensure fill persists on focus/hover/blur for the current selected textbox
+            function setupFillPersistence() {
+              const selectedTextbox = getCurrentSelectedTextbox();
+              if (!selectedTextbox) return;
+              
+              ['focus', 'blur', 'mouseenter', 'mouseleave'].forEach(evt => {
+                selectedTextbox.addEventListener(evt, function() {
+                  applyFillToTextbox(this);
+                });
+              });
+            }
+            setupFillPersistence();
+
+            // Hide modal on outside click
+            function handleOutsideClick(ev) {
+              // Allow clicks on the modal itself
+              if (modal.contains(ev.target)) return;
+              
+              // Allow clicks on textboxes or any content inside textboxes
+              const clickedTextbox = ev.target.closest('.worksheet-textbox');
+              if (clickedTextbox) return;
+              
+              // Allow clicks on the main content area where textboxes live
+              const contentArea = ev.target.closest('#page-preview-area');
+              if (contentArea) return;
+              
+              // Allow clicks on the pastel toolbar (formatting controls)
+              const toolbar = ev.target.closest('#pastel-toolbar');
+              if (toolbar) return;
+              
+              // Allow clicks on any toolbar elements
+              const anyToolbar = ev.target.closest('.pastel-toolbar, .left-toolbar, .top-actions');
+              if (anyToolbar) return;
+              
+              // Only close modal for clicks truly outside the workspace and toolbars
+              if (wrapper.parentElement) wrapper.parentElement.removeChild(wrapper);
+              document.removeEventListener('mousedown', handleOutsideClick);
+            }
+
+            setTimeout(() => {
+              document.addEventListener('mousedown', handleOutsideClick);
+            }, 0);
+
+            // Hide modal on close button
+            const closeBtn = modal.querySelector('#close-border-modal');
+            if (closeBtn) {
+              closeBtn.addEventListener('click', function() {
+                if (wrapper.parentElement) wrapper.parentElement.removeChild(wrapper);
+                document.removeEventListener('mousedown', handleOutsideClick);
+              });
+            }
+          });
+      }
+    });
+  </script>
+  <script src="js/state.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/textbox.js"></script>
+  <script src="header-templates.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/toolbar.js"></script>
+  <script src="js/contextmenu.js"></script>
+  <script src="js/events.js"></script>
+  <script src="main.js"></script>
+  <script src="insert-text-tool.js"></script>
+  <script src="insert-header-tool.js"></script>
+  <link rel="stylesheet" href="mint-ai/mint-ai-modal.css">
+  <script>
+    // MINT AI OpenAI proxy integration
+    window.generateQuestionsWithAI = async function(prompt) {
+      const resp = await fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await resp.json();
+      return data.result || '';
+    };
+  </script>
+  <script src="mint-ai/ai-modal.js"></script>
+  <script src="inline_toolbar.js"></script>
+  <script src="print-worksheet.js"></script>
+  <script src="mint-ai/mint-ai-vocab-modal.js"></script>
+  <script src="vocab-box-tool.js"></script>
+  <script>
+    // Border modal dynamic loader
+    document.addEventListener('DOMContentLoaded', function() {
+      var borderBtn = document.getElementById('open-border-modal');
+      if (borderBtn) {
+        borderBtn.addEventListener('click', async function() {
+          // Prevent multiple modals
+          if (document.getElementById('border-style-modal')) return;
+          const resp = await fetch('border-style-modal.html');
+          const html = await resp.text();
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = html;
+          document.body.appendChild(wrapper);
+          // Close logic
+          const closeBtn = wrapper.querySelector('#close-border-modal');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+              wrapper.remove();
+            });
+          }
+          // Also close on overlay click
+          const modal = wrapper.querySelector('#border-style-modal');
+          if (modal) {
+            modal.addEventListener('click', function(e) {
+              if (e.target === modal) wrapper.remove();
+            });
+          }
+        });
+      }
+    });
+  </script>
+  <script>
+    // Dropdown open/close logic for File/More menus - simplified since file_menu.html has its own script
+    document.addEventListener('DOMContentLoaded', function() {
+      // More menu dropdown will be set up by main.js after loading file_menu.html
+    });
+  </script>
+  <script>
+    // Remove the import() approach as it's causing issues
+    // The functions will be exposed directly by inline_toolbar.js
+  </script>
+  <script>
+    function printPages() {
+      const previewArea = document.getElementById('page-preview-area');
+      const pages = previewArea.querySelectorAll('.page-preview-a4');
+      const textboxes = previewArea.querySelectorAll('.worksheet-textbox');
+      
+      // Debug logging
+      console.log('Print debug:', {
+        pages: pages.length,
+        textboxes: textboxes.length,
+        previewAreaHTML: previewArea.innerHTML.substring(0, 200) + '...'
+      });
+      
+      // Check if there are any pages at all
+      if (pages.length === 0) {
+        alert('No pages found. Please create a page first.');
+        return;
+      }
+      
+      // Check if there's any content (text boxes or has-content class)
+      let hasContent = false;
+      
+      // Check for text boxes
+      if (textboxes.length > 0) {
+        hasContent = true;
+        console.log('Found text boxes:', textboxes.length);
+      } else {
+        // Fallback: check for has-content class
+        pages.forEach(page => {
+          if (page.classList.contains('has-content')) {
+            hasContent = true;
+            console.log('Found has-content class on page');
+          }
+        });
+      }
+
+      if (hasContent) {
+        console.log('Proceeding to print...');
+        // Add a small delay to ensure all styles are applied
+        setTimeout(() => {
+          window.print();
+        }, 100);
+      } else {
+        alert('The print area is empty. Please add content before printing.');
+      }
+    }
+
+    // Debug function to test print styles
+    function debugPrintStyles() {
+      const textboxes = document.querySelectorAll('.worksheet-textbox');
+      console.log('Current textboxes:', textboxes.length);
+      textboxes.forEach((box, i) => {
+        console.log(`Textbox ${i}:`, {
+          text: box.innerText,
+          visible: window.getComputedStyle(box).visibility,
+          display: window.getComputedStyle(box).display,
+          position: window.getComputedStyle(box).position,
+          classes: box.className
+        });
+      });
+    }
+
+    // Add debug function to window for console testing
+    window.debugPrintStyles = debugPrintStyles;
+  </script>
+  <style>
+    /* Additional inline print styles for consistency */
+    @media print {
+      .inline-toolbar, #inline-toolbar, #text-toolbar,
+      #border-style-modal, .border-style-modal {
+        display: none !important;
+      }
+      /* Hide specific elements but keep the structure */
+      .header,
+      .top-actions,
+      .pastel-toolbar,
+      #pastel-toolbar,
+      .left-toolbar,
+      .add-page-text,
+      #page-settings-modal-mount,
+      #burger-menu {
+        display: none !important;
+      }
+
+      /* Ensure the container structure remains visible */
+      .container,
+      .app-card,
+      #page-preview-area {
+        display: block !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      /* Make sure the main content area takes full width */
+      .app-card > div[style*="display:flex"] {
+        display: block !important;
+      }
+      
+      /* Remove any screen-only styling */
+      .page-preview-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+    #burger-menu-mount {
+      z-index: 100;
+    }
+    .header {
+      position: relative;
+    }
+    .file-menu-item {
+      display: block;
+      padding: 12px 18px;
+      color: #3d3752;
+      text-decoration: none;
+      font-size: 1em;
+      font-family: 'Poppins', sans-serif;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .file-menu-item:hover {
+      background: #f0f0f0;
+    }
+    .file-menu-btn {
+      font-family: 'Poppins', sans-serif;
+    }
+    .top-actions .file-menu-btn {
+      font-family: 'Poppins', sans-serif;
+    }
+    .file-menu-dropdown {
+      font-family: 'Poppins', sans-serif;
+      box-shadow: 0 8px 32px 0 rgba(60,60,80,0.18);
+      border: 1px solid #e1e8ed;
+      margin-top: 8px;
+    }
+  </style>
+  <script>
+    // On DOMContentLoaded, apply border styles from data attributes to all existing textboxes
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.worksheet-textbox').forEach(function(node) {
+        // Ensure data attributes are initialized
+        if (!node.hasAttribute('data-border-on')) node.setAttribute('data-border-on', 'true');
+        if (!node.hasAttribute('data-border-color')) node.setAttribute('data-border-color', '#b9f5d0');
+        if (!node.hasAttribute('data-border-width')) node.setAttribute('data-border-width', '1.5');
+        if (!node.hasAttribute('data-border-radius')) node.setAttribute('data-border-radius', '4');
+        // Apply styles from data attributes
+        const borderOn = node.getAttribute('data-border-on') === 'true';
+        const borderColorVal = node.getAttribute('data-border-color') || '#b9f5d0';
+        const borderWidthVal = node.getAttribute('data-border-width') || '1.5';
+        const borderRadiusVal = node.getAttribute('data-border-radius') || '4';
+        if (borderOn) {
+          node.style.borderStyle = 'solid';
+          node.style.borderWidth = borderWidthVal + 'px';
+          node.style.borderColor = borderColorVal;
+        } else {
+          node.style.borderStyle = 'none';
+          node.style.borderWidth = '0px';
+        }
+        node.style.borderRadius = borderRadiusVal + 'px';
+      });
+    });
+  </script>
+  <!-- Menus are loaded and hooked up by main.js -->
+  
+  <!-- Color picker integration -->
+  <script src="js/colorpicker.js"></script>
+  
+  <script>
+    // Page Orientation Toggle Setup - Run after all scripts are loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit more to ensure all modules are loaded
+      setTimeout(() => {
+        console.log('Setting up orientation toggle after all scripts loaded...');
+        const orientationBtn = document.getElementById('pt-orientation-btn');
+        const orientationIcon = document.getElementById('pt-orientation-icon');
+        
+        console.log('Found elements:', {
+          orientationBtn: !!orientationBtn,
+          orientationIcon: !!orientationIcon,
+          worksheetState: !!window.worksheetState
+        });
+        
+        if (!orientationBtn || !orientationIcon) {
+          console.log('Orientation elements not found, exiting setup');
+          return;
+        }
+        
+        // Define icons for portrait and landscape
+        const portraitIcon = `
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="2" width="10" height="16" rx="1.5" stroke="#4a5568" stroke-width="2" fill="none"/>
+            <circle cx="10" cy="15" r="1" fill="#4a5568"/>
+          </svg>
+        `;
+        
+        const landscapeIcon = `
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="5" width="16" height="10" rx="1.5" stroke="#4a5568" stroke-width="2" fill="none"/>
+            <circle cx="15" cy="10" r="1" fill="#4a5568"/>
+          </svg>
+        `;
+        
+        // Function to update icon based on current orientation
+        function updateOrientationIcon() {
+          if (window.worksheetState && window.worksheetState.getOrientation) {
+            const currentOrientation = window.worksheetState.getOrientation();
+            orientationIcon.innerHTML = currentOrientation === 'landscape' ? landscapeIcon : portraitIcon;
+            orientationBtn.title = `Switch to ${currentOrientation === 'landscape' ? 'Portrait' : 'Landscape'}`;
+            console.log('Updated orientation icon for:', currentOrientation);
+          } else {
+            console.log('worksheetState not available yet');
+          }
+        }
+        
+        // Initialize icon
+        updateOrientationIcon();
+        
+        // Handle orientation toggle click
+        orientationBtn.addEventListener('click', function(e) {
+          console.log('Orientation button clicked!');
+          e.stopPropagation();
+          
+          if (window.worksheetState && window.worksheetState.getOrientation && window.worksheetState.setOrientation) {
+            const currentOrientation = window.worksheetState.getOrientation();
+            console.log('Current orientation:', currentOrientation);
+            const newOrientation = currentOrientation === 'landscape' ? 'portrait' : 'landscape';
+            console.log('Setting new orientation:', newOrientation);
+            
+            // Save to history for orientation changes
+            if (window.saveToHistory) window.saveToHistory('toggle page orientation');
+            
+            // Set new orientation
+            window.worksheetState.setOrientation(newOrientation);
+            
+            // Update icon
+            updateOrientationIcon();
+            
+            // Re-render pages to reflect orientation change
+            if (window.renderPages) window.renderPages();
+          } else {
+            console.log('worksheetState not available:', {
+              worksheetState: !!window.worksheetState,
+              getOrientation: !!(window.worksheetState && window.worksheetState.getOrientation),
+              setOrientation: !!(window.worksheetState && window.worksheetState.setOrientation)
+            });
+          }
+        });
+        
+        // Make updateOrientationIcon globally available
+        window.updateOrientationIcon = updateOrientationIcon;
+        
+        console.log('Orientation toggle setup complete!');
+      }, 500); // Wait 500ms for all scripts to load
+    });
+  </script>
+</body>
+</html>
