@@ -21,7 +21,7 @@
       const scrollY = window.scrollY || document.documentElement.scrollTop;
       const scrollX = window.scrollX || document.documentElement.scrollLeft;
       let left = 80, top = 80;
-      const boxWidth = 750, boxHeight = 400;
+      const boxWidth = 780, boxHeight = 400;
       if (previewRect) {
         // Horizontal: center in preview area
         left = Math.max(0, Math.round((previewRect.width - boxWidth) / 2));
@@ -41,7 +41,7 @@
         width: boxWidth + 'px',
         height: boxHeight + 'px', // Default height is 400px, but will auto-grow
         text: '',
-        borderOn: true,
+        borderOn: false,
         borderColor: '#e1e8ed',
         borderWeight: 1.5,
         borderRadius: 4,

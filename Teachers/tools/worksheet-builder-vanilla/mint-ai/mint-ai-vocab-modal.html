@@ -1,124 +1,330 @@
 <!-- Mint AI-style Vocab Box Modal: AI inputs left, preview right -->
 <div id="vocab-box-modal" class="mint-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:30000;display:flex;align-items:center;justify-content:center;font-family:'Poppins',Arial,sans-serif;">
-  <div class="modal-panel" style="background:linear-gradient(135deg,#f0f9ff 0%,#e0f7fa 100%);border-radius:28px;border:2.5px solid #93cbcf;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);width:min(1400px,98vw);max-width:99vw;min-height:90vh;max-height:95vh;min-width:min(900px,90vw);display:flex;flex-direction:row;overflow:hidden;position:relative;">
+  <div class="modal-panel" style="background:linear-gradient(135deg,#f0f9ff 0%,#e0f7fa 100%);border-radius:24px;border:2px solid #93cbcf;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);width:min(1190px,98vw);max-width:99vw;min-height:76vh;max-height:85vh;min-width:min(765px,90vw);display:flex;flex-direction:row;overflow:hidden;position:relative;">
     <!-- Left: AI Inputs -->
-    <div style="flex:0.88;padding:48px 24px 48px 36px;display:flex;flex-direction:column;background:white;border-right:2.5px solid #93cbcf;">
-      <h2 style="font-family:'Poppins',Arial,sans-serif;font-size:2.1em;font-weight:800;letter-spacing:-1.5px;color:#045c63;margin:0 0 18px 0;">MINT AI - Vocab</h2>
+    <div style="flex:0.88;padding:40px 18px 40px 28px;display:flex;flex-direction:column;background:white;border-right:2px solid #93cbcf;">
+      <h2 style="font-family:'Poppins',Arial,sans-serif;font-size:1.78em;font-weight:800;letter-spacing:-1.2px;color:#045c63;margin:0 0 12px 0;">MINT AI - Vocab</h2>
       <!-- Removed vocab-list-format select from left column -->
-      <input id="vocab-title" type="text" placeholder="Vocab Box Title (optional)" style="font-size:1em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;">
+      <input id="vocab-title" type="text" placeholder="Vocab Box Title (optional)" style="font-size:0.85em;padding:5px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;margin:0 auto 8px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;">
       
       <!-- Mode Selection Buttons -->
-      <div style="display:flex;gap:10px;width:92%;margin:0 auto 10px auto;">
-        <button id="topic-input-btn" style="flex:1;padding:8px 0;border-radius:8px;background:#00897b;color:#fff;border:none;font-size:0.9em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 8px rgba(0,191,174,0.12);">Topic Input</button>
-        <button id="text-input-btn" style="flex:1;padding:8px 0;border-radius:8px;background:#e1e8ed;color:#666;border:none;font-size:0.9em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;opacity:0.85;">Text Input</button>
+      <div style="display:flex;gap:8px;width:92%;margin:0 auto 8px auto;">
+        <button id="topic-input-btn" style="flex:1;padding:6.5px 0;border-radius:7px;background:#00897b;color:#fff;border:none;font-size:0.77em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 8px rgba(0,191,174,0.12);">Topic Input</button>
+        <button id="text-input-btn" style="flex:1;padding:6.5px 0;border-radius:7px;background:#e1e8ed;color:#666;border:none;font-size:0.77em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;opacity:0.85;">Text Input</button>
       </div>
       
-      <textarea id="vocab-passage" placeholder="Paste a passage here to extract vocab" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:0 auto 10px auto;outline:none;display:none;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      <textarea id="vocab-passage" placeholder="Paste a passage here to extract vocab" style="font-size:0.68em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:153px;max-height:170px;resize:none;margin:0 auto 8px auto;outline:none;display:none;font-family:'Poppins',Arial,sans-serif;"></textarea>
       
-      <textarea id="vocab-topic-input" placeholder="Enter a topic (e.g., 'animals', 'food', 'school subjects')" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:80px;resize:none;margin:0 auto 10px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      <textarea id="vocab-topic-input" placeholder="Enter a topic (e.g., 'animals', 'food', 'school subjects')" style="font-size:0.68em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:68px;resize:none;margin:0 auto 8px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
       <!-- ...existing code... -->
     <!-- More Options Modal (hidden by default) -->
     <div id="vocab-more-options-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:40000;align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:18px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);padding:46px 56px 34px 56px;min-width:408px;min-height:420px;max-width:96vw;display:flex;flex-direction:column;align-items:flex-end;position:relative;border:2px solid #19777e;">
+      <div style="background:#fff;border-radius:15px;box-shadow:0 6px 24px 0 rgba(60,60,80,0.14);padding:39px 48px 29px 48px;min-width:347px;min-height:357px;max-width:96vw;display:flex;flex-direction:column;align-items:flex-end;position:relative;border:2px solid #19777e;">
         <!-- Modal is now 10% wider -->
-        <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:1.3em;font-weight:700;margin-bottom:8px;color:#2296a3;text-align:left;width:100%;">More Options</h3>
-        <div style="width:100%;height:2px;background:#19777e;margin-bottom:18px;"></div>
-        <div style="width:100%;margin-bottom:10px;">
-          <div style="font-weight:700;font-size:1.08em;color:#2296a3;margin-bottom:8px;text-align:left;">Choose Languages</div>
-          <div style="display:flex;flex-direction:row;gap:18px;">
+        <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:1.1em;font-weight:700;margin-bottom:7px;color:#2296a3;text-align:left;width:100%;">More Options</h3>
+        <div style="width:100%;height:2px;background:#19777e;margin-bottom:15px;"></div>
+        <div style="width:100%;margin-bottom:8px;">
+          <div style="font-weight:700;font-size:0.92em;color:#2296a3;margin-bottom:7px;text-align:left;">Choose Languages</div>
+          <div style="display:flex;flex-direction:row;gap:15px;">
             <div style="flex:1;display:flex;flex-direction:column;align-items:left;">
-              <span style="font-weight:600;font-size:0.9em;color:#2296a3;margin-bottom:4px;">Target Language</span>
-              <div id="vocab-target-lang-display" style="width:70%;margin-top:6px;padding:7px 10px;border-radius:8px;border:2px solid #19777e;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f8fafd;">
-                <img src="mint-ai/flags/en.svg" alt="English" style="width:22px;height:16px;vertical-align:middle;"> <span>English</span>
+              <span style="font-weight:600;font-size:0.77em;color:#2296a3;margin-bottom:3px;">Target Language</span>
+              <div id="vocab-target-lang-display" style="width:70%;margin-top:5px;padding:6px 8px;border-radius:7px;border:2px solid #19777e;display:flex;align-items:center;gap:7px;cursor:pointer;background:#f8fafd;">
+                <img src="mint-ai/flags/en.svg" alt="English" style="width:18px;height:13px;vertical-align:middle;"> <span>English</span>
               </div>
             </div>
             <div style="flex:1;display:flex;flex-direction:column;align-items:left;">
-              <span style="font-weight:600;font-size:0.9em;color:#2296a3;margin-bottom:4px;">Students' Language</span>
-              <div id="vocab-student-lang-display" style="width:70%;margin-top:6px;padding:7px 10px;border-radius:8px;border:2px solid #19777e;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f8fafd;">
-                <img src="mint-ai/flags/en.svg" alt="English" style="width:22px;height:16px;vertical-align:middle;"> <span>English</span>
+              <span style="font-weight:600;font-size:0.77em;color:#2296a3;margin-bottom:3px;">Students' Language</span>
+              <div id="vocab-student-lang-display" style="width:70%;margin-top:5px;padding:6px 8px;border-radius:7px;border:2px solid #19777e;display:flex;align-items:center;gap:7px;cursor:pointer;background:#f8fafd;">
+                <img src="mint-ai/flags/en.svg" alt="English" style="width:18px;height:13px;vertical-align:middle;"> <span>English</span>
               </div>
             </div>
             <!-- Language Picker Modal -->
             <div id="vocab-lang-picker-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:50000;align-items:center;justify-content:center;">
-              <div style="background:#fff;border-radius:18px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);padding:32px 36px 28px 36px;min-width:320px;max-width:96vw;display:flex;flex-direction:column;align-items:center;position:relative;border:2px solid #19777e;">
-                <div style="font-size:1.15em;font-weight:700;margin-bottom:18px;color:#2296a3;text-align:center;width:100%;">Select Language</div>
-                <div style="display:flex;flex-direction:row;gap:18px;flex-wrap:wrap;justify-content:center;">
-                  <div class="lang-picker-option" data-value="en" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
-                    <img src="mint-ai/flags/en.svg" alt="English" style="width:20px;height:15px;"> <span style="font-size:0.95em;">English</span>
+              <div style="background:#fff;border-radius:15px;box-shadow:0 6px 24px 0 rgba(60,60,80,0.14);padding:27px 30px 23px 30px;min-width:272px;max-width:96vw;display:flex;flex-direction:column;align-items:center;position:relative;border:2px solid #19777e;">
+                <div style="font-size:0.98em;font-weight:700;margin-bottom:15px;color:#2296a3;text-align:center;width:100%;">Select Language</div>
+                <div style="display:flex;flex-direction:row;gap:15px;flex-wrap:wrap;justify-content:center;">
+                  <div class="lang-picker-option" data-value="en" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px 10px;border:2px solid #19777e;border-radius:7px;background:#f8fafd;min-width:68px;">
+                    <img src="mint-ai/flags/en.svg" alt="English" style="width:17px;height:12px;"> <span style="font-size:0.81em;">English</span>
                   </div>
-                  <div class="lang-picker-option" data-value="ko" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
-                    <img src="mint-ai/flags/kr.svg" alt="Korean" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Korean</span>
+                  <div class="lang-picker-option" data-value="ko" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px 10px;border:2px solid #19777e;border-radius:7px;background:#f8fafd;min-width:68px;">
+                    <img src="mint-ai/flags/kr.svg" alt="Korean" style="width:17px;height:12px;"> <span style="font-size:0.81em;">Korean</span>
                   </div>
-                  <div class="lang-picker-option" data-value="ja" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
-                    <img src="mint-ai/flags/jp.svg" alt="Japanese" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Japanese</span>
+                  <div class="lang-picker-option" data-value="ja" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px 10px;border:2px solid #19777e;border-radius:7px;background:#f8fafd;min-width:68px;">
+                    <img src="mint-ai/flags/jp.svg" alt="Japanese" style="width:17px;height:12px;"> <span style="font-size:0.81em;">Japanese</span>
                   </div>
-                  <div class="lang-picker-option" data-value="zh" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
-                    <img src="mint-ai/flags/cn.svg" alt="Chinese" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Chinese</span>
+                  <div class="lang-picker-option" data-value="zh" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px 10px;border:2px solid #19777e;border-radius:7px;background:#f8fafd;min-width:68px;">
+                    <img src="mint-ai/flags/cn.svg" alt="Chinese" style="width:17px;height:12px;"> <span style="font-size:0.81em;">Chinese</span>
                   </div>
-                  <div class="lang-picker-option" data-value="es" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:2px solid #19777e;border-radius:8px;background:#f8fafd;min-width:80px;">
-                    <img src="mint-ai/flags/es.svg" alt="Spanish" style="width:20px;height:15px;"> <span style="font-size:0.95em;">Spanish</span>
+                  <div class="lang-picker-option" data-value="es" style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px 10px;border:2px solid #19777e;border-radius:7px;background:#f8fafd;min-width:68px;">
+                    <img src="mint-ai/flags/es.svg" alt="Spanish" style="width:17px;height:12px;"> <span style="font-size:0.81em;">Spanish</span>
                   </div>
                 </div>
-                <button id="vocab-lang-picker-cancel" style="margin-top:24px;padding:7px 0;border-radius:7px;background:#e1e8ed;color:#00897b;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;">Cancel</button>
+                <button id="vocab-lang-picker-cancel" style="margin-top:20px;padding:6px 0;border-radius:6px;background:#e1e8ed;color:#00897b;border:none;font-size:0.85em;font-family:'Poppins',Arial,sans-serif;width:100%;">Cancel</button>
               </div>
             </div>
           </div>
         </div>
-        <div style="width:100%;height:2px;background:#2296a3;margin:10px 0 18px 0;"></div>
-        <div style="width:100%;font-weight:700;font-size:0.918em;color:#2296a3;margin-bottom:8px;text-align:left;">Other Options</div>
-        <button id="vocab-import-btn" style="margin-bottom:14px;padding:7px 0;border-radius:7px;background:#3d3752;color:#fff;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;">Import Text</button>
-        <div style="width:100%;height:2px;background:#2296a3;margin:10px 0 18px 0;"></div>
-        <button id="vocab-more-options-close" style="padding:7px 0;border-radius:7px;background:#e1e8ed;color:#00897b;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;">Close</button>
+        <div style="width:100%;height:2px;background:#2296a3;margin:8px 0 15px 0;"></div>
+        <div style="width:100%;font-weight:700;font-size:0.78em;color:#2296a3;margin-bottom:7px;text-align:left;">Other Options</div>
+        <button id="vocab-import-btn" style="margin-bottom:12px;padding:6px 0;border-radius:6px;background:#3d3752;color:#fff;border:none;font-size:0.85em;font-family:'Poppins',Arial,sans-serif;width:100%;">Import Text</button>
+        <div style="width:100%;height:2px;background:#2296a3;margin:8px 0 15px 0;"></div>
+        <button id="vocab-more-options-close" style="padding:6px 0;border-radius:6px;background:#e1e8ed;color:#00897b;border:none;font-size:0.85em;font-family:'Poppins',Arial,sans-serif;width:100%;">Close</button>
       </div>
     </div>
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
-        <input id="vocab-numwords" type="number" min="1" max="30" value="10" style="width:44px;font-size:0.97em;padding:4px 7px;border-radius:7px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;">
-        <select id="vocab-difficulty" style="font-size:0.97em;padding:4px 7px;border-radius:7px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <input id="vocab-numwords" type="number" min="1" max="30" value="10" style="width:37px;font-size:0.82em;padding:3px 6px;border-radius:6px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;">
+        <select id="vocab-difficulty" style="font-size:0.82em;padding:3px 6px;border-radius:6px;border:2px solid #93cbcf;background:#fff;outline:none;font-family:'Poppins',Arial,sans-serif;">
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <button id="vocab-generate-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#00bfae;color:#fff;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Generate</button>
-        <button id="vocab-clear-btn" style="font-size:0.97em;padding:5px 10px;border-radius:7px;background:#e1e8ed;color:#00897b;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Clear</button>
+        <button id="vocab-generate-btn" style="font-size:0.82em;padding:4px 8px;border-radius:6px;background:#00bfae;color:#fff;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Generate</button>
+        <button id="vocab-clear-btn" style="font-size:0.82em;padding:4px 8px;border-radius:6px;background:#e1e8ed;color:#00897b;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Clear</button>
       </div>
-      <textarea id="vocab-wordlist" placeholder="Enter words here, one per line: English, Korean" style="font-size:0.8em;padding:7px 10px;border-radius:8px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:180px;max-height:200px;resize:none;margin:8px auto 16px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
+      <textarea id="vocab-wordlist" placeholder="Enter words here, one per line: English, Korean" style="font-size:0.68em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:153px;max-height:170px;resize:none;margin:7px auto 13px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
       <!-- Removed vocab-list-format select from its old position -->
-      <button id="vocab-more-options-btn" style="margin-bottom:18px;padding:7px 0;border-radius:7px;background:#00897b;color:#fff;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:700;letter-spacing:0.5px;cursor:pointer;">MORE OPTIONS</button>
-      <div style="display:flex;gap:18px;margin-top:10px;">
-        <button id="vocab-insert-btn" style="flex:1;font-size:0.95em;padding:7px 0;border-radius:8px;background:#00bfae;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Insert</button>
-        <button id="vocab-cancel-btn" style="flex:1;font-size:0.95em;padding:7px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Cancel</button>
+      <button id="vocab-more-options-btn" style="margin-bottom:15px;padding:6px 0;border-radius:6px;background:#00897b;color:#fff;border:none;font-size:0.85em;font-family:'Poppins',Arial,sans-serif;font-weight:700;letter-spacing:0.5px;cursor:pointer;">MORE OPTIONS</button>
+      <div style="display:flex;gap:15px;margin-top:8px;">
+        <button id="vocab-insert-btn" style="flex:1;font-size:0.81em;padding:6px 0;border-radius:7px;background:#00bfae;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Insert</button>
+        <button id="vocab-cancel-btn" style="flex:1;font-size:0.81em;padding:6px 0;border-radius:7px;background:#e1e8ed;color:#00897b;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Cancel</button>
       </div>
     </div>
     <!-- Right: Live Preview -->
-    <div style="flex:1.7;padding:48px 48px 48px 36px;display:flex;flex-direction:column;background:linear-gradient(135deg,#e0f7fa 0%,#f0f9ff 100%);border-left:2.5px solid #93cbcf;">
+    <div style="flex:1.7;padding:40px 40px 40px 28px;display:flex;flex-direction:column;background:linear-gradient(135deg,#e0f7fa 0%,#f0f9ff 100%);border-left:2px solid #93cbcf;">
       <!-- Layout Button -->
-      <button id="vocab-layouts-btn" style="width:100%;font-size:1.1em;padding:7px 12px;border-radius:8px;background:#00897b;color:#fff;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;margin-bottom:10px;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Choose Layout</button>
+      <div style="display:flex;gap:10px;margin-bottom:8px;width:100%;">
+        <button id="vocab-layouts-btn" style="flex:1;font-size:0.94em;padding:6px 10px;border-radius:7px;background:#00897b;color:#fff;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Layout</button>
+        <button id="vocab-table-style-btn" style="flex:1;font-size:0.94em;padding:6px 10px;border-radius:7px;background:#ffe0b2;color:#b26a00;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Style</button>
+      </div>
       
       <!-- Simple Layout Modal -->
       <div id="vocab-layouts-modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(30,40,60,0.22);z-index:99999;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:18px;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);padding:32px 40px 28px 40px;min-width:320px;max-width:96vw;display:flex;flex-direction:column;align-items:center;position:relative;border:2px solid #19777e;">
-          <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:1.4em;font-weight:700;margin-bottom:18px;color:#2296a3;text-align:center;width:100%;">Choose Layout</h3>
-          <div style="display:flex;flex-direction:column;gap:12px;width:100%;margin-bottom:18px;">
-            <button class="vocab-layout-option" data-value="sidebyside" style="padding:12px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;">📋 Side-by-Side Table</button>
-            <button class="vocab-layout-option" data-value="basic" style="padding:12px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;">📝 Simple List</button>
-            <button class="vocab-layout-option" data-value="cards" style="padding:12px 0;border-radius:8px;background:#e1e8ed;color:#00897b;font-size:1em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;">🎴 Cards Grid</button>
+        <div style="background:#fff;border-radius:22px;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);padding:38px 48px 32px 48px;min-width:900px;min-height:540px;max-width:98vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;position:relative;border:2.5px solid #19777e;overflow:hidden;">
+          <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:2em;font-weight:700;margin-bottom:24px;color:#2296a3;text-align:center;width:100%;letter-spacing:-1px;">Layout</h3>
+          <div style="width:100%;height:2px;background:#2296a3;margin-bottom:24px;"></div>
+          <div style="width:100%;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding-bottom:10px;margin-bottom:18px;">
+            <div style="display:inline-flex;gap:32px;align-items:flex-start;min-width:800px;">
+              <!-- Example layout thumbnails, replace src with real images or SVGs as needed -->
+              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-layout-option" data-value="sidebyside" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#222;font-size:0.55em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:95%;height:90%;background:#fff;border-radius:10px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 4px rgba(60,60,80,0.06);border:1.5px solid #e0e0e0;overflow:hidden;">
+                    <div style="display:grid;grid-template-columns:32px 1fr 1fr;border-bottom:2px solid #222;font-size:0.93em;font-weight:700;padding:2px 0 2px 0;background:#fff;">
+                      <span></span>
+                      <span style="text-align:left;padding-left:2px;">English</span>
+                      <span style="text-align:left;padding-left:2px;">Korean</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:32px 1fr 1fr;align-items:center;font-size:0.88em;border-bottom:1.5px solid #e0e0e0;padding:1.5px 0 1.5px 0;">
+                      <span style="font-weight:700;">1</span><span style="font-weight:500;">dog</span><span style="font-weight:400;">개</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:32px 1fr 1fr;align-items:center;font-size:0.88em;border-bottom:1.5px solid #e0e0e0;padding:1.5px 0 1.5px 0;">
+                      <span style="font-weight:700;">2</span><span style="font-weight:500;">cat</span><span style="font-weight:400;">고양이</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:32px 1fr 1fr;align-items:center;font-size:0.88em;border-bottom:1.5px solid #e0e0e0;padding:1.5px 0 1.5px 0;">
+                      <span style="font-weight:700;">3</span><span style="font-weight:500;">bird</span><span style="font-weight:400;">새</span>
+                    </div>
+                  </div>
+                </button>
+                <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Side-by-Side</span>
+              </div>
+              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-layout-option" data-value="doublelist" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#222;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:95%;height:90%;background:#fff;border-radius:10px;display:flex;flex-direction:row;justify-content:space-between;box-shadow:0 1px 4px rgba(60,60,80,0.06);border:1.5px solid #e0e0e0;overflow:hidden;padding:1px;gap:1px;">
+                    <div style="flex:1;display:flex;flex-direction:column;border-right:1.5px solid #222;">
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;border-bottom:1.5px solid #222;font-size:0.45em;font-weight:700;padding:0.5px 0;background:#f5f5f5;text-align:center;">
+                        <span></span>
+                        <span>Eng</span>
+                        <span>Kor</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">1</span><span style="font-weight:500;">cat</span><span style="font-weight:400;">고양이</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">2</span><span style="font-weight:500;">dog</span><span style="font-weight:400;">개</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">3</span><span style="font-weight:500;">bed</span><span style="font-weight:400;">침대</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">4</span><span style="font-weight:500;">boy</span><span style="font-weight:400;">소년</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">5</span><span style="font-weight:500;">sun</span><span style="font-weight:400;">태양</span>
+                      </div>
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;border-bottom:1.5px solid #222;font-size:0.45em;font-weight:700;padding:0.5px 0;background:#f5f5f5;text-align:center;">
+                        <span></span>
+                        <span>Eng</span>
+                        <span>Kor</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">6</span><span style="font-weight:500;">cup</span><span style="font-weight:400;">컵</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">7</span><span style="font-weight:500;">pen</span><span style="font-weight:400;">펜</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">8</span><span style="font-weight:500;">bag</span><span style="font-weight:400;">가방</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">9</span><span style="font-weight:500;">egg</span><span style="font-weight:400;">달걀</span>
+                      </div>
+                      <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                        <span style="font-weight:700;">10</span><span style="font-weight:500;">hat</span><span style="font-weight:400;">모자</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+                <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Double List</span>
+              </div>
+              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-layout-option" data-value="basic" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#00897b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:90%;margin:0 auto;padding:0.5em 0 0.5em 0;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5em 0.7em;align-items:center;font-size:0.7em;">
+                      <div style="text-align:right;font-weight:600;">cat</div><div style="text-align:left;color:#666;">고양이</div>
+                      <div style="text-align:right;font-weight:600;">dog</div><div style="text-align:left;color:#666;">개</div>
+                      <div style="text-align:right;font-weight:600;">bed</div><div style="text-align:left;color:#666;">침대</div>
+                      <div style="text-align:right;font-weight:600;">boy</div><div style="text-align:left;color:#666;">소년</div>
+                      <div style="text-align:right;font-weight:600;">sun</div><div style="text-align:left;color:#666;">태양</div>
+                    </div>
+                  </div>
+                </button>
+                <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Simple List</span>
+              </div>
+              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-layout-option" data-value="cards" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#00897b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:92%;height:92%;">
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                      <div style="font-weight:700;color:#00897b;">cat</div>
+                      <div style="color:#666;">고양이</div>
+                    </div>
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                      <div style="font-weight:700;color:#00897b;">dog</div>
+                      <div style="color:#666;">개</div>
+                    </div>
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                      <div style="font-weight:700;color:#00897b;">bed</div>
+                      <div style="color:#666;">침대</div>
+                    </div>
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                      <div style="font-weight:700;color:#00897b;">boy</div>
+                      <div style="color:#666;">소년</div>
+                    </div>
+                  </div>
+                </button>
+                <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Cards Grid</span>
+              </div>
+              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-layout-option" data-value="picturecards" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#00897b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:92%;height:92%;">
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                      <div style="flex:1;background:#4299e1;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🐱</div>
+                      <div style="font-weight:700;color:#00897b;font-size:0.7em;">cat</div>
+                      <div style="color:#666;font-size:0.6em;">고양이</div>
+                    </div>
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                      <div style="flex:1;background:#48bb78;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🐶</div>
+                      <div style="font-weight:700;color:#00897b;font-size:0.7em;">dog</div>
+                      <div style="color:#666;font-size:0.6em;">개</div>
+                    </div>
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                      <div style="flex:1;background:#ed8936;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🛏️</div>
+                      <div style="font-weight:700;color:#00897b;font-size:0.7em;">bed</div>
+                      <div style="color:#666;font-size:0.6em;">침대</div>
+                    </div>
+                    <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                      <div style="flex:1;background:#9f7aea;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">👦</div>
+                      <div style="font-weight:700;color:#00897b;font-size:0.7em;">boy</div>
+                      <div style="color:#666;font-size:0.6em;">소년</div>
+                    </div>
+                  </div>
+                </button>
+                <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Picture Cards</span>
+              </div>
+              <!-- Add more layout thumbnails here as needed -->
+            </div>
           </div>
-          <button id="vocab-layouts-close" style="margin-top:8px;padding:8px 0;border-radius:8px;background:#e1e8ed;color:#00897b;border:none;font-size:1em;font-family:'Poppins',Arial,sans-serif;width:100%;font-weight:600;">Close</button>
+          <button id="vocab-layouts-close" style="margin-top:12px;padding:12px 0;border-radius:10px;background:#e1e8ed;color:#00897b;border:none;font-size:1.2em;font-family:'Poppins',Arial,sans-serif;width:100%;font-weight:600;">Close</button>
+        </div>
+      </div>
+      
+      <!-- Table Style Modal -->
+      <div id="vocab-table-style-modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(30,40,60,0.22);z-index:99999;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:22px;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);padding:38px 48px 32px 48px;min-width:700px;min-height:440px;max-width:98vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;position:relative;border:2.5px solid #1976d2;overflow:hidden;">
+          <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:2em;font-weight:700;margin-bottom:24px;color:#1976d2;text-align:center;width:100%;letter-spacing:-1px;">Table Style</h3>
+          <div style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow-y:auto;">
+            <div style="display:flex;gap:30px;align-items:center;justify-content:center;flex-wrap:wrap;">
+              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-style-option" data-value="numbered" style="width:180px;height:140px;padding:8px;border-radius:14px;background:white;color:#333;font-size:0.9em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #dee2e6;box-shadow:0 2px 8px rgba(73,80,87,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:100%;height:100%;font-size:0.75em;display:flex;flex-direction:column;gap:1px;">
+                    <div style="background:white;border-bottom:2px solid #333;padding:4px 2px;font-weight:700;color:#333;text-align:center;display:grid;grid-template-columns:20px 1fr 1fr;gap:4px;">
+                      <span></span><span>English</span><span>Korean</span>
+                    </div>
+                    <div style="padding:2px;background:white;display:grid;grid-template-columns:20px 1fr 1fr;gap:4px;color:#333;text-align:center;">
+                      <span style="font-weight:700;">1</span><span>word</span><span>단어</span>
+                    </div>
+                    <div style="padding:2px;background:white;display:grid;grid-template-columns:20px 1fr 1fr;gap:4px;color:#333;text-align:center;">
+                      <span style="font-weight:700;">2</span><span>word</span><span>단어</span>
+                    </div>
+                    <div style="padding:2px;background:white;display:grid;grid-template-columns:20px 1fr 1fr;gap:4px;color:#333;text-align:center;">
+                      <span style="font-weight:700;">3</span><span>word</span><span>단어</span>
+                    </div>
+                  </div>
+                </button>
+                <!-- No label for Numbered -->
+              </div>
+              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-style-option" data-value="classic" style="width:180px;height:140px;padding:8px;border-radius:14px;background:#f8fafd;color:#00897b;font-size:0.9em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #93cbcf;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:100%;height:100%;font-size:0.7em;display:flex;flex-direction:column;">
+                    <div style="background:#f8fafd;border:1px solid #93cbcf;padding:4px;font-weight:700;color:#00897b;text-align:center;">English | L2</div>
+                    <div style="border:1px solid #e1e8ed;padding:3px;background:white;">Word 1 | 단어 1</div>
+                    <div style="border:1px solid #e1e8ed;padding:3px;background:white;">Word 2 | 단어 2</div>
+                  </div>
+                </button>
+                <!-- No label for Classic -->
+              </div>
+              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-style-option" data-value="modern" style="width:180px;height:140px;padding:8px;border-radius:14px;background:#f5faff;color:#1976d2;font-size:0.9em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #1976d2;box-shadow:0 2px 8px rgba(25,118,210,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:100%;height:100%;font-size:0.7em;display:flex;flex-direction:column;gap:2px;">
+                    <div style="background:#e3f2fd;border:1px solid #1976d2;padding:4px;font-weight:700;color:#1976d2;text-align:center;">English | L2</div>
+                    <div style="border:1px solid #bbdefb;padding:3px;background:#f5faff;">Word 1 | 단어 1</div>
+                    <div style="border:1px solid #bbdefb;padding:3px;background:#f5faff;">Word 2 | 단어 2</div>
+                  </div>
+                </button>
+                <!-- No label for Modern -->
+              </div>
+              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+                <button class="vocab-style-option" data-value="bold" style="width:180px;height:140px;padding:8px;border-radius:14px;background:#fffde7;color:#ffb300;font-size:0.9em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #ffb300;box-shadow:0 2px 8px rgba(255,179,0,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:100%;height:100%;font-size:0.7em;display:flex;flex-direction:column;">
+                    <div style="background:#222;border:1px solid #ffb300;padding:4px;font-weight:700;color:#ffb300;text-align:center;">English | L2</div>
+                    <div style="border:2px solid #222;padding:3px;background:#fffde7;font-weight:700;">Word 1 | 단어 1</div>
+                    <div style="border:2px solid #222;padding:3px;background:#fffde7;font-weight:700;">Word 2 | 단어 2</div>
+                  </div>
+                </button>
+                <!-- No label for Bold -->
+              </div>
+            </div>
+          </div>
+          <button id="vocab-table-style-close" style="margin-top:12px;padding:12px 0;border-radius:10px;background:#e1e8ed;color:#1976d2;border:none;font-size:1.2em;font-family:'Poppins',Arial,sans-serif;width:100%;font-weight:600;">Close</button>
         </div>
       </div>
       
       <!-- Hidden select for compatibility -->
       <select id="vocab-list-format" style="display:none;">
         <option value="sidebyside" selected>Side by Side</option>
+        <option value="doublelist">Double List</option>
         <option value="basic">Simple List</option>
         <option value="cards">Cards Grid</option>
+        <option value="picturecards">Picture Cards</option>
       </select>
       
-      <div style="width:100%;height:1px;background:#b2d8dd;margin-bottom:18px;"></div>
-      <div style="font-size:1.25em;font-weight:700;color:#00897b;margin-bottom:18px;font-family:'Poppins',Arial,sans-serif;">Preview</div>
-      <div id="vocab-preview-area" style="flex:1;background:#fff;border-radius:12px;min-height:312px;max-height:624px;padding:18px 20px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;"></div>
+      <div style="width:100%;height:1px;background:#b2d8dd;margin-bottom:15px;"></div>
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:10px;">
+        <div style="font-size:1.06em;font-weight:700;color:#00897b;font-family:'Poppins',Arial,sans-serif;">Preview</div>
+      </div>
+      <div id="vocab-preview-area" style="flex:1;background:#fff;border-radius:10px;min-height:265px;max-height:530px;padding:15px 17px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;"></div>
     </div>
-    <button id="close-vocab-modal" style="position:absolute;top:12px;right:18px;background:none;border:none;font-size:2em;color:#666;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
+    <button id="close-vocab-modal" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:1.7em;color:#666;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
   </div>
 </div>
 

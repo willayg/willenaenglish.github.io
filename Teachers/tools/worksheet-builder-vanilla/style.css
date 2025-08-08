@@ -26,8 +26,8 @@
 }
 
 .worksheet-textbox:focus, .worksheet-textbox:hover {
-  border: 1.5px solid #a0aec0;
-  box-shadow: 0 4px 16px 0 rgba(60,60,80,0.12);
+  /* Removed border override - let the textbox keep its original border color */
+  box-shadow: none; /* Removed shadow since we use external selection frame */
 }
 
 /* Custom resize handles */
