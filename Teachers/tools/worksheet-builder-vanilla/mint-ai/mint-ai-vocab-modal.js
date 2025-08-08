@@ -9,61 +9,12 @@
     }).filter(Boolean);
   }
 
-  // Helper: Render preview - 3 simple layout options
-  function renderPreview(words, format) {
-    if (!words.length) return '<div style="color:#aaa;font-size:1.1em;">No words to preview.</div>';
-    
-    // Debug: log the format being used
-    console.log('renderPreview called with format:', format);
-    
-    switch(format) {
-      case 'sidebyside':
-        // Side-by-side table layout with editable cells
-        const tableRows = words.map(w => 
-          `<tr>` +
-          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;font-weight:600;" contenteditable="true">${w.eng}</td>` +
-          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;color:#666;" contenteditable="true">${w.kor || ''}</td>` +
-          `</tr>`
-        ).join('');
-        // Add 3 empty rows for additional entries
-        const emptyRows = Array(3).fill().map(() => 
-          `<tr>` +
-          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;font-weight:600;" contenteditable="true"></td>` +
-          `<td style="padding:10px 16px;border:1px solid #e1e8ed;border-bottom:1px solid #d1d8dd;color:#666;" contenteditable="true"></td>` +
-          `</tr>`
-        ).join('');
-        
-        return `<table style="width:100%;border-collapse:collapse;font-family:'Poppins',Arial,sans-serif;">` +
-          `<thead><tr>` +
-          `<th style="padding:12px 16px;background:#f8fafd;border:2px solid #93cbcf;font-weight:700;color:#00897b;text-align:left;" contenteditable="true">English</th>` +
-          `<th style="padding:12px 16px;background:#f8fafd;border:2px solid #93cbcf;font-weight:700;color:#00897b;text-align:left;" contenteditable="true">L2</th>` +
-          `</tr></thead><tbody>` +
-          tableRows + emptyRows +
-          '</tbody></table>';
-      
-      case 'basic':
-        // Simple list layout
-        return `<ul style="list-style:disc inside;line-height:2.2;font-family:'Poppins',Arial,sans-serif;">` +
-          words.map(w => `<li style="margin-bottom:8px;"><b>${w.eng}</b>${w.kor ? ' — ' + w.kor : ''}</li>`).join('') + '</ul>';
-      
-      case 'cards':
-        // Cards grid layout
-        return `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;font-family:"Poppins",Arial,sans-serif;'>` +
-          words.map(w => 
-            `<div style='border:2px solid #e1e8ed;border-radius:12px;padding:16px;text-align:center;background:#fafbfc;'>` +
-            `<div style='font-size:1.1em;font-weight:700;color:#00897b;margin-bottom:8px;'>${w.eng}</div>` +
-            `<div style='color:#666;font-size:0.95em;'>${w.kor || ''}</div>` +
-            `</div>`
-          ).join('') + '</div>';
-      
-      default:
-        console.log('Unknown format encountered:', format);
-        return '<div style="color:#aaa;">Unknown format: ' + format + '</div>';
-    }
-  }
+  // Layout rendering is now handled by MintAIVocabLayouts.js
 
   // AI extraction (uses same endpoint as wordtest)
   async function extractWordsWithAI(passage, numWords, difficulty) {
+    // Use selectedStudentLang to get the language label
+    const lang = langOptions.find(l => l.value === selectedStudentLang)?.label || 'Korean';
     const resp = await fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,7 +24,7 @@
           model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: 'You are a helpful teaching assistant.' },
-            { role: 'user', content: `Extract exactly ${numWords} ${difficulty} English words or phrases from the passage below. For each, provide the English, then a comma, then the Korean translation. Return each pair on a new line in the format: english, korean.\n\nPassage:\n${passage}` }
+            { role: 'user', content: `Extract exactly ${numWords} ${difficulty} English words or phrases from the passage below. For each, provide the English, then a comma, then the ${lang} translation. Return each pair on a new line in the format: english, ${lang.toLowerCase()}.\n\nPassage:\n${passage}` }
           ],
           max_tokens: 1200
         }
@@ -85,6 +36,8 @@
 
   // AI topic generation
   async function generateWordsFromTopic(topic, numWords, difficulty) {
+    // Use selectedStudentLang to get the language label
+    const lang = langOptions.find(l => l.value === selectedStudentLang)?.label || 'Korean';
     const resp = await fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,7 +47,7 @@
           model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: 'You are a helpful teaching assistant creating vocabulary lists for English language learners.' },
-            { role: 'user', content: `Generate exactly ${numWords} ${difficulty} English words related to the topic "${topic}". For each word, provide the English, then a comma, then the Korean translation. Return each pair on a new line in the format: english, korean. Make the words appropriate for English language learners.` }
+            { role: 'user', content: `Generate exactly ${numWords} ${difficulty} English words related to the topic "${topic}". For each word, provide the English, then a comma, then the ${lang} translation. Return each pair on a new line in the format: english, ${lang.toLowerCase()}. Make the words appropriate for English language learners.` }
           ],
           max_tokens: 1200
         }
@@ -105,6 +58,17 @@
   }
 
   // Modal logic
+  // Make language options and selections globally accessible in this module
+  const langOptions = [
+    { value: 'en', label: 'English', flag: 'mint-ai/flags/en.svg' },
+    { value: 'ko', label: 'Korean', flag: 'mint-ai/flags/kr.svg' },
+    { value: 'ja', label: 'Japanese', flag: 'mint-ai/flags/jp.svg' },
+    { value: 'zh', label: 'Chinese', flag: 'mint-ai/flags/cn.svg' },
+    { value: 'es', label: 'Spanish', flag: 'mint-ai/flags/es.svg' }
+  ];
+  let selectedTargetLang = 'en';
+  let selectedStudentLang = 'ko';
+
   window.openVocabBoxModal = function() {
     if (document.getElementById('vocab-box-modal')) return;
     fetch('mint-ai/mint-ai-vocab-modal.html').then(r => r.text()).then(html => {
@@ -118,15 +82,6 @@
       const langDisplayTarget = modal.querySelector('#vocab-target-lang-display');
       const langDisplayStudent = modal.querySelector('#vocab-student-lang-display');
       const langPickerCancel = modal.querySelector('#vocab-lang-picker-cancel');
-      const langOptions = [
-        { value: 'en', label: 'English', flag: 'mint-ai/flags/en.svg' },
-        { value: 'ko', label: 'Korean', flag: 'mint-ai/flags/kr.svg' },
-        { value: 'ja', label: 'Japanese', flag: 'mint-ai/flags/jp.svg' },
-        { value: 'zh', label: 'Chinese', flag: 'mint-ai/flags/cn.svg' },
-        { value: 'es', label: 'Spanish', flag: 'mint-ai/flags/es.svg' }
-      ];
-      let selectedTargetLang = 'en';
-      let selectedStudentLang = 'ko';
       function updateLangDisplays() {
         const t = langOptions.find(l => l.value === selectedTargetLang);
         const s = langOptions.find(l => l.value === selectedStudentLang);
@@ -205,6 +160,36 @@
         });
       }
 
+      // Table style modal elements
+      const tableStyleBtn = modal.querySelector('#vocab-table-style-btn');
+      const tableStyleModal = modal.querySelector('#vocab-table-style-modal');
+      const tableStyleClose = modal.querySelector('#vocab-table-style-close');
+      const styleOptions = modal.querySelectorAll('.vocab-style-option');
+      let currentTableStyle = 'numbered'; // Default style
+      
+      // Table style modal functionality
+      if (tableStyleBtn && tableStyleModal && tableStyleClose) {
+        tableStyleBtn.onclick = function() {
+          tableStyleModal.style.display = 'flex';
+        };
+        tableStyleClose.onclick = function() {
+          tableStyleModal.style.display = 'none';
+        };
+        // Style option clicks
+        styleOptions.forEach(option => {
+          option.onclick = function() {
+            currentTableStyle = this.getAttribute('data-value');
+            // Update preview if current format is side-by-side
+            const formatSelect = modal.querySelector('#vocab-list-format');
+            if (formatSelect && formatSelect.value === 'sidebyside') {
+              updatePreview();
+            }
+            // Close modal
+            tableStyleModal.style.display = 'none';
+          };
+        });
+      }
+
       // Get all required elements first
       const diffInput = modal.querySelector('#vocab-difficulty');
       const numInput = modal.querySelector('#vocab-numwords');
@@ -216,6 +201,42 @@
       const insertBtn = modal.querySelector('#vocab-insert-btn');
       const cancelBtn = modal.querySelector('#vocab-cancel-btn');
       const closeBtn = modal.querySelector('#close-vocab-modal');
+      // Font controls
+      const fontSelect = modal.querySelector('#vocab-preview-font');
+      const fontSizeSelect = modal.querySelector('#vocab-preview-fontsize');
+      const fontColorSelect = modal.querySelector('#vocab-preview-fontcolor');
+      // Apply font and size to preview area
+      function applyPreviewFontSettings() {
+        if (fontSelect && fontSizeSelect && fontColorSelect && previewArea) {
+          previewArea.style.setProperty('font-family', fontSelect.value, 'important');
+          previewArea.style.setProperty('font-size', fontSizeSelect.value, 'important');
+          previewArea.style.setProperty('color', fontColorSelect.value, 'important');
+          
+          // Also apply to all elements inside preview area with !important
+          const allElements = previewArea.querySelectorAll('*');
+          allElements.forEach(el => {
+            el.style.setProperty('font-family', fontSelect.value, 'important');
+            el.style.setProperty('font-size', fontSizeSelect.value, 'important');
+            el.style.setProperty('color', fontColorSelect.value, 'important');
+          });
+        }
+      }
+      if (fontSelect) fontSelect.addEventListener('change', applyPreviewFontSettings);
+      if (fontSizeSelect) fontSizeSelect.addEventListener('change', applyPreviewFontSettings);
+      if (fontColorSelect) fontColorSelect.addEventListener('change', applyPreviewFontSettings);
+      
+      // Watch for changes in the preview area and apply font settings to new content
+      if (previewArea) {
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+              // Apply font settings to any newly added elements
+              setTimeout(applyPreviewFontSettings, 10);
+            }
+          });
+        });
+        observer.observe(previewArea, { childList: true, subtree: true });
+      }
 
       // Mode switching functionality (moved from HTML inline script)
       let currentMode = 'topic'; // 'topic' is default
@@ -261,10 +282,22 @@
       function updatePreview() {
         const words = parseWordList(wordlistInput.value);
         const format = formatInput.value;
-        console.log('updatePreview: formatInput.value =', format);
-        console.log('updatePreview: formatInput element =', formatInput);
-        previewArea.innerHTML = renderPreview(words, format);
+        if (window.MintAIVocabLayouts && typeof window.MintAIVocabLayouts.renderPreview === 'function') {
+          // Use styled version for side-by-side and double list tables
+          if (format === 'sidebyside' && window.MintAIVocabLayouts.renderSideBySideWithStyle) {
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderSideBySideWithStyle(words, currentTableStyle);
+          } else if (format === 'doublelist' && window.MintAIVocabLayouts.renderDoubleListWithStyle) {
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderDoubleListWithStyle(words, currentTableStyle);
+          } else {
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderPreview(words, format);
+          }
+        } else {
+          previewArea.innerHTML = '<div style="color:#aaa;">Layout module not loaded.</div>';
+        }
+        applyPreviewFontSettings();
       }
+      // Set initial font settings
+      applyPreviewFontSettings();
       wordlistInput.addEventListener('input', updatePreview);
       formatInput.addEventListener('change', updatePreview);
       updatePreview();
@@ -345,7 +378,20 @@
           const words = parseWordList(wordlistInput.value);
           const format = formatInput.value;
           if (!words.length) { alert('No words to insert.'); return; }
-          const vocabBoxHTML = `<div style='padding:12px 18px 8px 18px;'><div style='font-size:1.1em;font-weight:700;margin-bottom:8px;'>${titleInput.value||''}</div>${renderPreview(words, format)}</div>`;
+          
+          let renderedContent = '';
+          if (window.MintAIVocabLayouts) {
+            // Use styled version for side-by-side and double list tables
+            if (format === 'sidebyside' && window.MintAIVocabLayouts.renderSideBySideWithStyle) {
+              renderedContent = window.MintAIVocabLayouts.renderSideBySideWithStyle(words, currentTableStyle);
+            } else if (format === 'doublelist' && window.MintAIVocabLayouts.renderDoubleListWithStyle) {
+              renderedContent = window.MintAIVocabLayouts.renderDoubleListWithStyle(words, currentTableStyle);
+            } else {
+              renderedContent = window.MintAIVocabLayouts.renderPreview(words, format);
+            }
+          }
+          
+          const vocabBoxHTML = `<div style='padding:12px 18px 8px 18px;'><div style='font-size:1.1em;font-weight:700;margin-bottom:8px;'>${titleInput.value||''}</div>${renderedContent}</div>`;
           // Add a new box to the data model
           const boxData = {
             left: left + 'px',

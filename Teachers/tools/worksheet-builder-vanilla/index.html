@@ -228,17 +228,13 @@
             line-height: 1.8 !important;
           }
           
-          /* Hover state - subtle glow */
-          .worksheet-textbox:hover {
-            box-shadow: 0 0 8px rgba(66, 153, 225, 0.3) !important;
-          }
-          
-          /* Selected/focused state - stronger glow and border */
+          /* Clean textbox styling - no blue highlighting on hover/focus/selected since we use external selection frame */
+          .worksheet-textbox:hover,
           .worksheet-textbox:focus,
           .worksheet-textbox.selected {
-            box-shadow: 0 0 12px rgba(66, 153, 225, 0.5) !important;
-            border-color: #4299e1 !important;
-            outline: none;
+            box-shadow: none !important;
+            /* Allow border colors to work normally - just no blue override */
+            outline: none !important;
           }
           
           /* Hide resize handle by default, show only on focus/selected */
@@ -298,6 +294,7 @@
   <script src="mint-ai/ai-modal.js"></script>
   <script src="inline_toolbar.js"></script>
   <script src="print-worksheet.js"></script>
+  <script src="mint-ai/mint-ai-vocab-layouts.js"></script>
   <script src="mint-ai/mint-ai-vocab-modal.js"></script>
   <script src="vocab-box-tool.js"></script>
   <!-- Utility functions -->
@@ -388,5 +385,16 @@
   
   <!-- Orientation toggle logic -->
   <script src="js/orientation-toggle.js"></script>
+  <style>
+    @media print {
+      .worksheet-textbox:focus,
+      .worksheet-textbox.selected,
+      .worksheet-header.selected {
+        border-color: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
 </body>
 </html>

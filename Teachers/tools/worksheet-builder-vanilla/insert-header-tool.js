@@ -305,6 +305,9 @@
           
           const headerDiv = document.createElement('div');
           headerDiv.className = 'worksheet-header';
+          // Set fixed width and center
+          headerDiv.style.width = '780px';
+          headerDiv.style.margin = '5px auto 0 auto'; // 5px margin from top
           headerDiv.setAttribute('contenteditable', 'true');
           headerDiv.setAttribute('spellcheck', 'false');
           
