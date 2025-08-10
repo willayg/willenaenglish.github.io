@@ -1,3 +1,33 @@
+  // Matching the Meaning layout: two columns, English and L1, for matching
+  function renderMatching(words, l1Label = 'Korean') {
+    // Shuffle the L1 column for matching activity
+    const l1Words = words.map(w => w.kor || '').filter(Boolean);
+    const shuffledL1 = l1Words.slice().sort(() => Math.random() - 0.5);
+    const minRows = Math.max(5, words.length);
+    // Dot style (neutral)
+    const dot = '<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid #444;margin:0 7px;vertical-align:middle;"></span>';
+    // Card style
+    const cardStyle = 'background:#fff;border:1.5px solid #d1d5db;border-radius:9px;box-shadow:0 1px 4px rgba(60,60,80,0.04);padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;min-height:38px;';
+    const wordStyle = 'color:#222;font-weight:600;font-size:1.08em;letter-spacing:0.01em;';
+    // Left: word + dot (dot on right), align left
+    const engCol = words.map(w => `<div style="${cardStyle}justify-content:flex-start;text-align:left;">`+
+      `<span style="${wordStyle}flex:1;text-align:left;">${w.eng}</span>${dot}`+
+      `</div>`).concat(Array(Math.max(0, minRows - words.length)).fill(`<div style="${cardStyle}justify-content:flex-start;text-align:left;">&nbsp;</div>`)).join('');
+    // Right: dot + word (dot on left), align right
+    const l1Col = shuffledL1.map(kor => `<div style="${cardStyle}justify-content:flex-end;text-align:right;">`+
+      `${dot}<span style="${wordStyle}flex:1;text-align:right;">${kor}</span>`+
+      `</div>`).concat(Array(Math.max(0, minRows - shuffledL1.length)).fill(`<div style="${cardStyle}justify-content:flex-end;text-align:right;">&nbsp;</div>`)).join('');
+    return `<div style="display:flex;gap:72px;align-items:flex-start;">
+      <div style="flex:1;min-width:120px;">
+        <div style="font-weight:700;margin-bottom:6px;text-align:left;color:#222;">English</div>
+        <div>${engCol}</div>
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <div style="font-weight:700;margin-bottom:6px;text-align:right;color:#222;">${l1Label}</div>
+        <div>${l1Col}</div>
+      </div>
+    </div>`;
+  }
 // mint-ai-vocab-layouts.js: Handles rendering of vocab box layouts for Mint AI Vocab Modal
 // Exported as window.MintAIVocabLayouts for global access
 (function() {
@@ -65,7 +95,7 @@
     return tableStylePresets.map(({id, name}) => ({id, name}));
   }
 
-  function renderSideBySideWithStyle(words, styleId) {
+  function renderSideBySideWithStyle(words, styleId, l1Label = 'Korean') {
     const preset = tableStylePresets.find(p => p.id === styleId) || tableStylePresets[0];
     const minRows = 5;
     const numEmpty = Math.max(0, minRows - words.length);
@@ -90,7 +120,7 @@
         `<thead><tr>` +
         `<th style="${preset.tdNumber}" contenteditable="false"></th>` +
         `<th style="${preset.th}" contenteditable="true">English</th>` +
-        `<th style="${preset.th}" contenteditable="true">Korean</th>` +
+        `<th style="${preset.th}" contenteditable="true">${l1Label}</th>` +
         `</tr></thead><tbody>` +
         tableRows + emptyRows +
         '</tbody></table>';
@@ -111,25 +141,25 @@
       return `<table style="${preset.table}">` +
         `<thead><tr>` +
         `<th style="${preset.th}" contenteditable="true">English</th>` +
-        `<th style="${preset.th}" contenteditable="true">L2</th>` +
+        `<th style="${preset.th}" contenteditable="true">${l1Label}</th>` +
         `</tr></thead><tbody>` +
         tableRows + emptyRows +
         '</tbody></table>';
     }
   }
 
-  function renderSideBySide(words) {
+  function renderSideBySide(words, l1Label = 'Korean') {
     // Default to numbered preset
-    return renderSideBySideWithStyle(words, 'numbered');
+    return renderSideBySideWithStyle(words, 'numbered', l1Label);
   }
 
-  function renderBasic(words) {
-    return `<ul style="list-style:disc inside;line-height:2.2;font-family:'Poppins',Arial,sans-serif;">` +
+  function renderBasic(words, l1Label = 'Korean') {
+    return `<ul style="list-style:disc inside;line-height:2.2;">` +
       words.map(w => `<li style="margin-bottom:8px;"><b>${w.eng}</b>${w.kor ? ' — ' + w.kor : ''}</li>`).join('') + '</ul>';
   }
 
-  function renderCards(words) {
-    return `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;font-family:"Poppins",Arial,sans-serif;'>` +
+  function renderCards(words, l1Label = 'Korean') {
+    return `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;'>` +
       words.map(w => 
         `<div style='border:2px solid #e1e8ed;border-radius:12px;padding:16px;text-align:center;background:#fafbfc;'>` +
         `<div style='font-size:1.1em;font-weight:700;color:#00897b;margin-bottom:8px;'>${w.eng}</div>` +
@@ -297,65 +327,66 @@
   // Make the search function globally available
   window.searchImageForWord = searchImageForWord;
 
-  function renderDoubleList(words) {
-    // Use default numbered style for double list
-    return renderDoubleListWithStyle(words, 'numbered');
-  }
+function renderDoubleList(words, l1Label = 'Korean') {
+  // Use default numbered style for double list
+  return renderDoubleListWithStyle(words, 'numbered', l1Label);
+}
 
-  function renderDoubleListWithStyle(words, styleId) {
-    // Get the style preset
-    const preset = tableStylePresets.find(p => p.id === styleId) || tableStylePresets[0];
-    
-    // Split words into two columns (left: first half, right: second half)
-    const half = Math.ceil(words.length / 2);
-    const left = words.slice(0, half);
-    const right = words.slice(half);
-    // Pad columns to equal length with minimum 6 rows
-    const maxRows = Math.max(left.length, right.length, 6);
-    while (left.length < maxRows) left.push({eng: '', kor: ''});
-    while (right.length < maxRows) right.push({eng: '', kor: ''});
-    
-    // Use preset styles but force center alignment for double list
-    const tdNum = (preset.tdNumber || 'padding:8px 8px;border:none;font-weight:700;color:#333;text-align:center;box-sizing:border-box;background:white;width:38px;min-width:38px;').replace(/text-align:[^;]+;?/, 'text-align:center;');
-    // Add right border to the last cell of the left section and left border to the first cell of the right section
-    const borderBetween = 'border-left:2.5px solid #333;';
-    const tdLeft = (preset.tdLeft || 'padding:8px 12px;border:none;font-weight:600;box-sizing:border-box;background:white;color:#333;').replace(/text-align:[^;]+;?/, '') + 'text-align:center;border-bottom:1px solid #e8e8e8;';
-    const tdRight = (preset.tdRight || 'padding:8px 12px;border:none;color:#333;box-sizing:border-box;background:white;').replace(/text-align:[^;]+;?/, '') + 'text-align:center;border-bottom:1px solid #e8e8e8;';
-    // Make header underline a single continuous line across all columns with light grey background
-    const th = (preset.th || 'padding:8px 12px;background:white;border:none;font-weight:700;color:#333;text-align:left;box-sizing:border-box;').replace(/text-align:[^;]+;?/, 'text-align:center;').replace(/border-bottom:[^;]+;?/, '').replace(/background:[^;]+;?/, 'background:#f5f5f5;');
-    
-    let rows = '';
-    for (let i = 0; i < maxRows; i++) {
-      const leftHasContent = left[i].eng || left[i].kor;
-      const rightHasContent = right[i].eng || right[i].kor;
-      rows += `<tr>` +
-        `<td style="${tdNum}" contenteditable="false">${leftHasContent ? (i+1) : ''}</td>` +
-        `<td style="${tdLeft}" contenteditable="true">${left[i].eng||''}</td>` +
-        `<td style="${tdRight};border-right:2.5px solid #333;" contenteditable="true">${left[i].kor||''}</td>` +
-        `<td style="${tdNum};${borderBetween}" contenteditable="false">${rightHasContent ? (i+1+half) : ''}</td>` +
-        `<td style="${tdLeft}" contenteditable="true">${right[i].eng||''}</td>` +
-        `<td style="${tdRight}" contenteditable="true">${right[i].kor||''}</td>` +
-        `</tr>`;
-    }
-    return `<table style="${preset.table}">` +
-      `<thead><tr>` +
-        `<th style="${tdNum};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false"></th>` +
-        `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="true">English</th>` +
-        `<th style="${th};border-right:2.5px solid #333;border-bottom:2.5px solid #333;" contenteditable="true">Korean</th>` +
-        `<th style="${tdNum};${borderBetween};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false"></th>` +
-        `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="true">English</th>` +
-        `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="true">Korean</th>` +
-      `</tr></thead><tbody>` + rows + `</tbody></table>`;
+function renderDoubleListWithStyle(words, styleId, l1Label = 'Korean') {
+  // Get the style preset
+  const preset = tableStylePresets.find(p => p.id === styleId) || tableStylePresets[0];
+  
+  // Split words into two columns (left: first half, right: second half)
+  const half = Math.ceil(words.length / 2);
+  const left = words.slice(0, half);
+  const right = words.slice(half);
+  // Pad columns to equal length with minimum 6 rows
+  const maxRows = Math.max(left.length, right.length, 6);
+  while (left.length < maxRows) left.push({eng: '', kor: ''});
+  while (right.length < maxRows) right.push({eng: '', kor: ''});
+  
+  // Use preset styles but force center alignment for double list
+  const tdNum = (preset.tdNumber || 'padding:8px 8px;border:none;font-weight:700;color:#333;text-align:center;box-sizing:border-box;background:white;width:38px;min-width:38px;').replace(/text-align:[^;]+;?/, 'text-align:center;');
+  // Add right border to the last cell of the left section and left border to the first cell of the right section
+  const borderBetween = 'border-left:2.5px solid #333;';
+  const tdLeft = (preset.tdLeft || 'padding:8px 12px;border:none;font-weight:600;box-sizing:border-box;background:white;color:#333;').replace(/text-align:[^;]+;?/, '') + 'text-align:center;border-bottom:1px solid #e8e8e8;';
+  const tdRight = (preset.tdRight || 'padding:8px 12px;border:none;color:#333;box-sizing:border-box;background:white;').replace(/text-align:[^;]+;?/, '') + 'text-align:center;border-bottom:1px solid #e8e8e8;';
+  // Make header underline a single continuous line across all columns with light grey background
+  const th = (preset.th || 'padding:8px 12px;background:white;border:none;font-weight:700;color:#333;text-align:left;box-sizing:border-box;').replace(/text-align:[^;]+;?/, 'text-align:center;').replace(/border-bottom:[^;]+;?/, '').replace(/background:[^;]+;?/, 'background:#f5f5f5;');
+  
+  let rows = '';
+  for (let i = 0; i < maxRows; i++) {
+    const leftHasContent = left[i].eng || left[i].kor;
+    const rightHasContent = right[i].eng || right[i].kor;
+    rows += `<tr>` +
+      `<td style="${tdNum}" contenteditable="false">${leftHasContent ? (i+1) : ''}</td>` +
+      `<td style="${tdLeft}" contenteditable="true">${left[i].eng||''}</td>` +
+      `<td style="${tdRight};border-right:2.5px solid #333;" contenteditable="true">${left[i].kor||''}</td>` +
+      `<td style="${tdNum};${borderBetween}" contenteditable="false">${rightHasContent ? (i+1+half) : ''}</td>` +
+      `<td style="${tdLeft}" contenteditable="true">${right[i].eng||''}</td>` +
+      `<td style="${tdRight}" contenteditable="true">${right[i].kor||''}</td>` +
+      `</tr>`;
   }
+  return `<table style="${preset.table}">` +
+    `<thead><tr>` +
+      `<th style="${tdNum};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false"></th>` +
+      `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="true">English</th>` +
+      `<th style="${th};border-right:2.5px solid #333;border-bottom:2.5px solid #333;" contenteditable="true">${l1Label}</th>` +
+      `<th style="${tdNum};${borderBetween};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false"></th>` +
+      `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="true">English</th>` +
+      `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="true">${l1Label}</th>` +
+    `</tr></thead><tbody>` + rows + `</tbody></table>`;
+}
 
-  function renderPreview(words, format) {
+  function renderPreview(words, format, l1Label) {
     if (!words.length) return '<div style="color:#aaa;font-size:1.1em;">No words to preview.</div>';
     switch(format) {
-      case 'sidebyside': return renderSideBySide(words);
-      case 'basic': return renderBasic(words);
-      case 'cards': return renderCards(words);
-      case 'doublelist': return renderDoubleList(words);
-      case 'picturecards': return renderPictureCards(words);
+      case 'sidebyside': return renderSideBySide(words, l1Label);
+      case 'basic': return renderBasic(words, l1Label);
+      case 'cards': return renderCards(words, l1Label);
+      case 'doublelist': return renderDoubleList(words, l1Label);
+      case 'picturecards': return renderPictureCards(words, l1Label);
+      case 'matching': return renderMatching(words, l1Label);
       default:
         return '<div style="color:#aaa;">Unknown format: ' + format + '</div>';
     }
@@ -370,7 +401,8 @@
     renderCards,
     renderPictureCards,
     renderDoubleList,
-    renderDoubleListWithStyle
+    renderDoubleListWithStyle,
+    renderMatching
   };
   
   console.log('MintAIVocabLayouts loaded successfully:', window.MintAIVocabLayouts);

@@ -189,6 +189,11 @@
           <input id="pt-linespacing" type="number" min="1" max="3" step="0.1" value="1.8" style="width:80px;text-align:center;font-size:14px;border:1px solid #cbd5e0;border-radius:8px;padding:8px 12px;background:white;color:#4a5568;" aria-label="Line Spacing" />
           <!-- Border Style Dropdown Button removed; modal will open on textbox click -->
         </label>
+        <!-- Page Zoom Controls -->
+        <div style="display:flex;align-items:center;gap:6px;margin-left:16px;">
+          <button id="pt-zoom-fit" title="Fit to Page" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;font-family:Poppins,sans-serif;color:#4a5568;transition:background 0.15s,box-shadow 0.15s;">Full Page View</button>
+          <button id="pt-zoom-actual" title="Actual Size" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;font-family:Poppins,sans-serif;color:#4a5568;transition:background 0.15s,box-shadow 0.15s;">Actual Size</button>
+        </div>
         <!-- Border weight slider removed -->
       </div>
       <!-- Main workspace row: left toolbar + main content -->
@@ -281,7 +286,15 @@
   <script src="js/history.js"></script>
   <script src="js/textbox.js"></script>
   <script src="header-templates.js"></script>
-  <script src="js/render.js"></script>
+  <script src="js/modules/header/header-render.js"></script>
+  <!-- Load textbox modules in dependency order -->
+  <script src="js/modules/textbox/textbox-core.js"></script>
+  <script src="js/modules/textbox/textbox-drag.js"></script>
+  <script src="js/modules/textbox/textbox-resize.js"></script>
+  <script src="js/modules/textbox/textbox-events.js"></script>
+  <script src="js/modules/textbox/textbox-main.js"></script>
+  <!-- Main orchestrator -->
+  <script src="js/modules/render/render-main.js"></script>
   <script src="js/toolbar.js"></script>
   <script src="js/contextmenu.js"></script>
   <script src="js/events.js"></script>

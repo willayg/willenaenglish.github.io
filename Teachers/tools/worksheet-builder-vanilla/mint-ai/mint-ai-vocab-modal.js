@@ -3,13 +3,269 @@
   // Helper: Parse word list textarea into array of {eng, kor}
   function parseWordList(text) {
     return text.split('\n').map(line => {
-      const [eng, kor] = line.split(',').map(s => (s||'').trim());
+      // Remove leading numbers and dots, e.g. '1. bird' -> 'bird'
+      let cleaned = line.replace(/^\s*\d+\.?\s*/, '');
+      const [eng, kor] = cleaned.split(',').map(s => (s||'').trim());
       if (!eng) return null;
       return { eng, kor: kor||'' };
     }).filter(Boolean);
   }
 
   // Layout rendering is now handled by MintAIVocabLayouts.js
+
+  // Function to populate the layouts modal based on mode
+  function populateLayoutsModal(modal, isPictureMode) {
+    const container = modal.querySelector('#vocab-layouts-container');
+    const modalTitle = modal.querySelector('#vocab-layouts-modal-title');
+    
+    if (!container) return;
+    
+    // Clear existing content
+    container.innerHTML = '';
+    
+    if (isPictureMode) {
+      // Update modal title for picture mode
+      if (modalTitle) {
+        modalTitle.textContent = 'Picture Layouts';
+        modalTitle.style.color = '#f59e0b';
+      }
+      
+      // Picture Cards layout
+      container.innerHTML += `
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="grid" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#f59e0b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:92%;height:92%;">
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#f59e0b;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🏠</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#10b981;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🚗</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#8b5cf6;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🌳</div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#f59e0b;font-weight:600;">Picture Grid</span>
+        </div>
+      `;
+      
+      // Picture Matching layout
+      container.innerHTML += `
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="matching" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff3cd;color:#856404;font-size:0.55em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #ffc107;box-shadow:0 2px 8px rgba(255,193,7,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="width:95%;height:90%;background:#fff3cd;border-radius:10px;display:flex;flex-direction:row;justify-content:space-between;box-shadow:0 1px 4px rgba(255,193,7,0.06);border:1.5px solid #ffeaa7;overflow:hidden;align-items:center;">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;">
+                <div style="width:30px;height:20px;background:#f59e0b;border-radius:3px;margin-bottom:3px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.7em;">🏠</div>
+                <div style="width:30px;height:20px;background:#10b981;border-radius:3px;margin-bottom:3px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.7em;">🚗</div>
+                <div style="width:30px;height:20px;background:#8b5cf6;border-radius:3px;margin-bottom:3px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.7em;">🌳</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;">
+                <div style="background:#fff;border-radius:4px;padding:2px 8px;margin-bottom:3px;font-weight:600;font-size:0.8em;">house</div>
+                <div style="background:#fff;border-radius:4px;padding:2px 8px;margin-bottom:3px;font-weight:600;font-size:0.8em;">car</div>
+                <div style="background:#fff;border-radius:4px;padding:2px 8px;margin-bottom:3px;font-weight:600;font-size:0.8em;">tree</div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#856404;font-weight:600;">Picture Matching</span>
+        </div>
+      `;
+      
+      // Picture Labeling layout
+      container.innerHTML += `
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="labeling" style="width:160px;height:120px;padding:0;border-radius:14px;background:#e7f3ff;color:#0066cc;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #0066cc;box-shadow:0 2px 8px rgba(0,102,204,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:92%;height:92%;">
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#0066cc;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🏠</div>
+                <div style="width:90%;height:8px;background:#f0f0f0;border:1px solid #ccc;border-radius:2px;margin:0 auto;"></div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#10b981;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🚗</div>
+                <div style="width:90%;height:8px;background:#f0f0f0;border:1px solid #ccc;border-radius:2px;margin:0 auto;"></div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#0066cc;font-weight:600;">Picture Labeling</span>
+        </div>
+      `;
+      
+      // Picture Cards layout (similar to vocab cards but with images)
+      container.innerHTML += `
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="picturecards" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#8b5cf6;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #8b5cf6;box-shadow:0 2px 8px rgba(139,92,246,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:92%;height:92%;">
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#8b5cf6;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🐱</div>
+                <div style="font-weight:700;color:#8b5cf6;font-size:0.7em;">cat</div>
+                <div style="color:#666;font-size:0.6em;">고양이</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#10b981;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🐶</div>
+                <div style="font-weight:700;color:#8b5cf6;font-size:0.7em;">dog</div>
+                <div style="color:#666;font-size:0.6em;">개</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#f59e0b;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">🛏️</div>
+                <div style="font-weight:700;color:#8b5cf6;font-size:0.7em;">bed</div>
+                <div style="color:#666;font-size:0.6em;">침대</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:2px;text-align:center;background:#fafbfc;font-size:0.6em;display:flex;flex-direction:column;">
+                <div style="flex:1;background:#ef4444;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:0.8em;">👦</div>
+                <div style="font-weight:700;color:#8b5cf6;font-size:0.7em;">boy</div>
+                <div style="color:#666;font-size:0.6em;">소년</div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#8b5cf6;font-weight:600;">Picture Cards</span>
+        </div>
+      `;
+    } else {
+      // Vocab mode - restore original vocab layouts
+      if (modalTitle) {
+        modalTitle.textContent = 'Layout';
+        modalTitle.style.color = '#2296a3';
+      }
+      
+      // Add all the original vocab layout thumbnails
+      container.innerHTML = `
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="sidebyside" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#222;font-size:0.55em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="width:95%;height:90%;background:#fff;border-radius:10px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 4px rgba(60,60,80,0.06);border:1.5px solid #e0e0e0;overflow:hidden;">
+              <div style="display:grid;grid-template-columns:32px 1fr 1fr;border-bottom:2px solid #222;font-size:0.93em;font-weight:700;padding:2px 0 2px 0;background:#fff;">
+                <span></span>
+                <span style="text-align:left;padding-left:2px;">English</span>
+                <span style="text-align:left;padding-left:2px;">Korean</span>
+              </div>
+              <div style="display:grid;grid-template-columns:32px 1fr 1fr;align-items:center;font-size:0.88em;border-bottom:1.5px solid #e0e0e0;padding:1.5px 0 1.5px 0;">
+                <span style="font-weight:700;">1</span><span style="font-weight:500;">dog</span><span style="font-weight:400;">개</span>
+              </div>
+              <div style="display:grid;grid-template-columns:32px 1fr 1fr;align-items:center;font-size:0.88em;border-bottom:1.5px solid #e0e0e0;padding:1.5px 0 1.5px 0;">
+                <span style="font-weight:700;">2</span><span style="font-weight:500;">cat</span><span style="font-weight:400;">고양이</span>
+              </div>
+              <div style="display:grid;grid-template-columns:32px 1fr 1fr;align-items:center;font-size:0.88em;border-bottom:1.5px solid #e0e0e0;padding:1.5px 0 1.5px 0;">
+                <span style="font-weight:700;">3</span><span style="font-weight:500;">bird</span><span style="font-weight:400;">새</span>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Side-by-Side</span>
+        </div>
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="doublelist" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#222;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="width:95%;height:90%;background:#fff;border-radius:10px;display:flex;flex-direction:row;justify-content:space-between;box-shadow:0 1px 4px rgba(60,60,80,0.06);border:1.5px solid #e0e0e0;overflow:hidden;padding:1px;gap:1px;">
+              <div style="flex:1;display:flex;flex-direction:column;border-right:1.5px solid #222;">
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;border-bottom:1.5px solid #222;font-size:0.45em;font-weight:700;padding:0.5px 0;background:#f5f5f5;text-align:center;">
+                  <span></span>
+                  <span>Eng</span>
+                  <span>Kor</span>
+                </div>
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                  <span style="font-weight:700;">1</span><span style="font-weight:500;">cat</span><span style="font-weight:400;">고양이</span>
+                </div>
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                  <span style="font-weight:700;">2</span><span style="font-weight:500;">dog</span><span style="font-weight:400;">개</span>
+                </div>
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                  <span style="font-weight:700;">3</span><span style="font-weight:500;">bed</span><span style="font-weight:400;">침대</span>
+                </div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;">
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;border-bottom:1.5px solid #222;font-size:0.45em;font-weight:700;padding:0.5px 0;background:#f5f5f5;text-align:center;">
+                  <span></span>
+                  <span>Eng</span>
+                  <span>Kor</span>
+                </div>
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                  <span style="font-weight:700;">4</span><span style="font-weight:500;">cup</span><span style="font-weight:400;">컵</span>
+                </div>
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                  <span style="font-weight:700;">5</span><span style="font-weight:500;">pen</span><span style="font-weight:400;">펜</span>
+                </div>
+                <div style="display:grid;grid-template-columns:14px 1fr 1fr;align-items:center;font-size:0.36em;border-bottom:0.7px solid #e8e8e8;padding:0.5px 0;text-align:center;">
+                  <span style="font-weight:700;">6</span><span style="font-weight:500;">bag</span><span style="font-weight:400;">가방</span>
+                </div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Double List</span>
+        </div>
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="basic" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#00897b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="width:90%;margin:0 auto;padding:0.5em 0 0.5em 0;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5em 0.7em;align-items:center;font-size:0.7em;">
+                <div style="text-align:right;font-weight:600;">cat</div><div style="text-align:left;color:#666;">고양이</div>
+                <div style="text-align:right;font-weight:600;">dog</div><div style="text-align:left;color:#666;">개</div>
+                <div style="text-align:right;font-weight:600;">bed</div><div style="text-align:left;color:#666;">침대</div>
+                <div style="text-align:right;font-weight:600;">boy</div><div style="text-align:left;color:#666;">소년</div>
+                <div style="text-align:right;font-weight:600;">sun</div><div style="text-align:left;color:#666;">태양</div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Simple List</span>
+        </div>
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="cards" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#00897b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #2296a3;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:92%;height:92%;">
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                <div style="font-weight:700;color:#00897b;">cat</div>
+                <div style="color:#666;">고양이</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                <div style="font-weight:700;color:#00897b;">dog</div>
+                <div style="color:#666;">개</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                <div style="font-weight:700;color:#00897b;">bed</div>
+                <div style="color:#666;">침대</div>
+              </div>
+              <div style="border:1.2px solid #e1e8ed;border-radius:6px;padding:4px 2px;text-align:center;background:#fafbfc;font-size:0.7em;">
+                <div style="font-weight:700;color:#00897b;">boy</div>
+                <div style="color:#666;">소년</div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#2296a3;font-weight:600;">Cards Grid</span>
+        </div>
+        <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
+          <button class="vocab-layout-option" data-value="matching" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fffbe7;color:#b26a00;font-size:0.55em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #fbc02d;box-shadow:0 2px 8px rgba(251,191,36,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">
+            <div style="width:95%;height:90%;background:#fffbe7;border-radius:10px;display:flex;flex-direction:row;justify-content:space-between;box-shadow:0 1px 4px rgba(251,191,36,0.06);border:1.5px solid #ffe082;overflow:hidden;align-items:center;">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;">
+                <div style="font-weight:700;color:#b26a00;font-size:1em;margin-bottom:4px;">English</div>
+                <div style="background:#fff;border-radius:6px;padding:4px 12px 4px 12px;margin-bottom:3px;font-weight:600;">cat</div>
+                <div style="background:#fff;border-radius:6px;padding:4px 12px 4px 12px;margin-bottom:3px;font-weight:600;">dog</div>
+                <div style="background:#fff;border-radius:6px;padding:4px 12px 4px 12px;margin-bottom:3px;font-weight:600;">bed</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;">
+                <div style="font-weight:700;color:#b26a00;font-size:1em;margin-bottom:4px;">Korean</div>
+                <div style="background:#fff;border-radius:6px;padding:4px 12px 4px 12px;margin-bottom:3px;">고양이</div>
+                <div style="background:#fff;border-radius:6px;padding:4px 12px 4px 12px;margin-bottom:3px;">개</div>
+                <div style="background:#fff;border-radius:6px;padding:4px 12px 4px 12px;margin-bottom:3px;">침대</div>
+              </div>
+            </div>
+          </button>
+          <span style="margin-top:8px;font-size:1em;color:#b26a00;font-weight:600;">Word Matching</span>
+        </div>
+      `;
+    }
+    
+    // Re-attach click events to new layout options
+    const layoutOptions = modal.querySelectorAll('.vocab-layout-option');
+    layoutOptions.forEach(option => {
+      option.onclick = function() {
+        const format = this.getAttribute('data-value');
+        // Update hidden select
+        const formatSelect = modal.querySelector('#vocab-list-format');
+        if (formatSelect) {
+          formatSelect.value = format;
+          // Trigger change event for preview update
+          formatSelect.dispatchEvent(new Event('change'));
+        }
+        // Close modal
+        const layoutsModal = modal.querySelector('#vocab-layouts-modal');
+        if (layoutsModal) layoutsModal.style.display = 'none';
+      };
+    });
+  }
 
   // AI extraction (uses same endpoint as wordtest)
   async function extractWordsWithAI(passage, numWords, difficulty) {
@@ -69,13 +325,50 @@
   let selectedTargetLang = 'en';
   let selectedStudentLang = 'ko';
 
-  window.openVocabBoxModal = function() {
+  window.openVocabBoxModal = function(pictureMode = false) {
     if (document.getElementById('vocab-box-modal')) return;
     fetch('mint-ai/mint-ai-vocab-modal.html').then(r => r.text()).then(html => {
       const wrapper = document.createElement('div');
       wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
       const modal = document.getElementById('vocab-box-modal');
+      
+      // Store picture mode for later reference
+      modal.dataset.pictureMode = pictureMode;
+      
+      // If pictureMode, change the title and accent color, and load picture layouts
+      if (pictureMode) {
+        const title = modal.querySelector('h2');
+        if (title) {
+          title.textContent = 'MINT AI - Pictures';
+          title.style.color = '#f59e0b';
+        }
+        // Dynamically load the picture layouts module and override window.MintAIVocabLayouts
+        const script = document.createElement('script');
+        script.src = 'mint-ai/mint-ai-pictures-layouts.js';
+        script.onload = function() {
+          if (window.MintAIPicturesLayouts) {
+            window.MintAIVocabLayouts = window.MintAIPicturesLayouts;
+          }
+          // Populate layouts after loading picture layouts
+          populateLayoutsModal(modal, true);
+        };
+        document.body.appendChild(script);
+      } else {
+        // Load vocab layouts if not already loaded
+        if (!window.MintAIVocabLayouts) {
+          const script = document.createElement('script');
+          script.src = 'mint-ai/mint-ai-vocab-layouts.js';
+          script.onload = function() {
+            // Populate layouts after loading vocab layouts
+            populateLayoutsModal(modal, false);
+          };
+          document.body.appendChild(script);
+        } else {
+          // Populate layouts immediately if already loaded
+          populateLayoutsModal(modal, false);
+        }
+      }
       // Language picker modal logic
       const langPickerModal = modal.querySelector('#vocab-lang-picker-modal');
       let langPickerTarget = null; // 'target' or 'student'
@@ -94,6 +387,47 @@
           langDisplayStudent.querySelector('img').src = s.flag;
           langDisplayStudent.querySelector('img').alt = s.label;
           langDisplayStudent.querySelector('span').textContent = s.label;
+        }
+        // Update layout thumbnails with new language label
+        updateLayoutThumbnails();
+      }
+
+      function updateLayoutThumbnails() {
+        const l1Label = langOptions.find(l => l.value === selectedStudentLang)?.label || 'Korean';
+        
+        // Update Side-by-Side thumbnail - find the Korean text and replace it
+        const sideBySideThumbnail = modal.querySelector('[data-value="sidebyside"]');
+        if (sideBySideThumbnail) {
+          const spans = sideBySideThumbnail.querySelectorAll('span');
+          spans.forEach(span => {
+            if (span.textContent.trim() === 'Korean') {
+              span.textContent = l1Label;
+            }
+          });
+        }
+
+        // Update Double List thumbnail - find "Kor" text and replace with abbreviated L1 label
+        const doubleListThumbnail = modal.querySelector('[data-value="doublelist"]');
+        if (doubleListThumbnail) {
+          const spans = doubleListThumbnail.querySelectorAll('span');
+          spans.forEach(span => {
+            if (span.textContent.trim() === 'Kor') {
+              // Use first 3 characters for space constraints, but ensure it's not empty
+              const abbrev = l1Label.length >= 3 ? l1Label.substring(0, 3) : l1Label;
+              span.textContent = abbrev;
+            }
+          });
+        }
+
+        // Update Matching thumbnail - find the Korean header and replace it
+        const matchingThumbnail = modal.querySelector('[data-value="matching"]');
+        if (matchingThumbnail) {
+          const divs = matchingThumbnail.querySelectorAll('div');
+          divs.forEach(div => {
+            if (div.textContent.trim() === 'Korean') {
+              div.textContent = l1Label;
+            }
+          });
         }
       }
       langDisplayTarget.onclick = function() {
@@ -114,10 +448,15 @@
           if (langPickerTarget === 'target') selectedTargetLang = val;
           if (langPickerTarget === 'student') selectedStudentLang = val;
           updateLangDisplays();
+          updatePreview(); // Update preview with new language
           langPickerModal.style.display = 'none';
         };
       });
       updateLangDisplays();
+
+      // Forward declaration for updatePreview
+      let updatePreview;
+
       // Elements
       const titleInput = modal.querySelector('#vocab-title');
       const passageInput = modal.querySelector('#vocab-passage');
@@ -138,26 +477,14 @@
       // Layout modal functionality
       if (layoutsBtn && layoutsModal && layoutsClose) {
         layoutsBtn.onclick = function() {
+          // Repopulate layouts based on current mode
+          const isPictureMode = modal.dataset.pictureMode === 'true';
+          populateLayoutsModal(modal, isPictureMode);
           layoutsModal.style.display = 'flex';
         };
         layoutsClose.onclick = function() {
           layoutsModal.style.display = 'none';
         };
-        // Layout option clicks
-        layoutOptions.forEach(option => {
-          option.onclick = function() {
-            const format = this.getAttribute('data-value');
-            // Update hidden select
-            const formatSelect = modal.querySelector('#vocab-list-format');
-            if (formatSelect) {
-              formatSelect.value = format;
-              // Trigger change event for preview update
-              formatSelect.dispatchEvent(new Event('change'));
-            }
-            // Close modal
-            layoutsModal.style.display = 'none';
-          };
-        });
       }
 
       // Table style modal elements
@@ -279,17 +606,21 @@
       }
 
       // Live preview update
-      function updatePreview() {
+      updatePreview = function() {
         const words = parseWordList(wordlistInput.value);
         const format = formatInput.value;
+        // Get the label for the student's L1 language
+        const l1Label = langOptions.find(l => l.value === selectedStudentLang)?.label || 'Korean';
         if (window.MintAIVocabLayouts && typeof window.MintAIVocabLayouts.renderPreview === 'function') {
           // Use styled version for side-by-side and double list tables
           if (format === 'sidebyside' && window.MintAIVocabLayouts.renderSideBySideWithStyle) {
-            previewArea.innerHTML = window.MintAIVocabLayouts.renderSideBySideWithStyle(words, currentTableStyle);
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderSideBySideWithStyle(words, currentTableStyle, l1Label);
           } else if (format === 'doublelist' && window.MintAIVocabLayouts.renderDoubleListWithStyle) {
-            previewArea.innerHTML = window.MintAIVocabLayouts.renderDoubleListWithStyle(words, currentTableStyle);
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderDoubleListWithStyle(words, currentTableStyle, l1Label);
+          } else if (format === 'matching' && window.MintAIVocabLayouts.renderMatching) {
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderMatching(words, l1Label);
           } else {
-            previewArea.innerHTML = window.MintAIVocabLayouts.renderPreview(words, format);
+            previewArea.innerHTML = window.MintAIVocabLayouts.renderPreview(words, format, l1Label);
           }
         } else {
           previewArea.innerHTML = '<div style="color:#aaa;">Layout module not loaded.</div>';
@@ -381,13 +712,18 @@
           
           let renderedContent = '';
           if (window.MintAIVocabLayouts) {
+            // Get the correct L1 label for all layouts
+            const l1Label = langOptions.find(l => l.value === selectedStudentLang)?.label || 'Korean';
             // Use styled version for side-by-side and double list tables
             if (format === 'sidebyside' && window.MintAIVocabLayouts.renderSideBySideWithStyle) {
-              renderedContent = window.MintAIVocabLayouts.renderSideBySideWithStyle(words, currentTableStyle);
+              renderedContent = window.MintAIVocabLayouts.renderSideBySideWithStyle(words, currentTableStyle, l1Label);
             } else if (format === 'doublelist' && window.MintAIVocabLayouts.renderDoubleListWithStyle) {
-              renderedContent = window.MintAIVocabLayouts.renderDoubleListWithStyle(words, currentTableStyle);
+              renderedContent = window.MintAIVocabLayouts.renderDoubleListWithStyle(words, currentTableStyle, l1Label);
+            } else if (format === 'matching' && window.MintAIVocabLayouts.renderMatching) {
+              renderedContent = window.MintAIVocabLayouts.renderMatching(words, l1Label);
             } else {
-              renderedContent = window.MintAIVocabLayouts.renderPreview(words, format);
+              // Pass l1Label for any other layouts that might use it
+              renderedContent = window.MintAIVocabLayouts.renderPreview(words, format, l1Label);
             }
           }
           
