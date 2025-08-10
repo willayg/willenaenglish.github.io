@@ -25,7 +25,7 @@ function createTextToolbar() {
   const iconBg = '#a7f3d0';
   textToolbar.innerHTML = `
     <button id="tt-ai" class="toolbar-btn" title="AI" style="font-family:'Poppins',Verdana,sans-serif;font-weight:600;">AI</button>
-    <button id="tt-copy" class="toolbar-btn" title="Copy">⧉</button>
+    <button id="tt-copy" class="toolbar-btn" title="Copy (Ctrl+C)">⧉</button>
     <button id="tt-delete" class="toolbar-btn" title="Delete">✕</button>
     <button id="tt-more" class="toolbar-btn" title="More">⋯</button>
   `;
@@ -50,8 +50,15 @@ function createTextToolbar() {
   textToolbar.querySelector('#tt-copy').addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (currentTextbox && window.copyTextbox) {
-      window.copyTextbox(currentTextbox);
+    if (currentTextbox && window.worksheetTextbox && window.worksheetTextbox.duplicateTextbox) {
+      window.worksheetTextbox.duplicateTextbox(currentTextbox);
+      // Wait for DOM update and selection frame, then show toolbar on new box
+      setTimeout(() => {
+        const newBox = window.lastCreatedTextbox;
+        if (newBox && window.showTextToolbar) {
+          window.showTextToolbar(newBox);
+        }
+      }, 0);
       // Visual feedback
       this.style.background = '#10b981';
       this.style.color = 'white';
@@ -59,15 +66,23 @@ function createTextToolbar() {
         this.style.background = '';
         this.style.color = '';
       }, 200);
+      console.log('Textbox duplicated');
     }
   });
   
   textToolbar.querySelector('#tt-delete').addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (currentTextbox && window.deleteTextbox) {
-      window.deleteTextbox(currentTextbox);
-      hideTextToolbar();
+    if (currentTextbox) {
+      // Try both global and namespaced functions
+      const deleteFunc = window.deleteTextbox || window.worksheetTextbox?.deleteTextbox;
+      if (deleteFunc) {
+        deleteFunc(currentTextbox);
+        hideTextToolbar();
+        console.log('Textbox deleted');
+      } else {
+        console.error('Delete function not found');
+      }
     }
   });
   

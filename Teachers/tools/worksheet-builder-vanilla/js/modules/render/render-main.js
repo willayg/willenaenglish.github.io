@@ -116,6 +116,10 @@
       if (window.updateOrientationIcon) {
         window.updateOrientationIcon();
       }
+      // Restore zoom state after pages are rendered
+      if (window.restoreZoomState) {
+        window.restoreZoomState();
+      }
     }, 10);
   }
 
@@ -191,6 +195,10 @@
     setTimeout(() => {
       if (window.updateOrientationIcon) {
         window.updateOrientationIcon();
+      }
+      // Restore zoom state after adding page
+      if (window.restoreZoomState) {
+        window.restoreZoomState();
       }
     }, 50);
   }

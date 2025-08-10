@@ -71,6 +71,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Re-render pages to reflect orientation change
         if (window.renderPages) window.renderPages();
+        
+        // Trigger zoom recalculation if in fit mode
+        setTimeout(() => {
+          console.log('Checking zoom state after orientation change...');
+          if (window.recalculatePageZoom) {
+            const pages = document.querySelectorAll('.page-preview-a4');
+            if (pages.length && pages[0].getAttribute('data-zoom-scale') !== '1') {
+              console.log('Fit mode active, recalculating zoom...');
+              window.recalculatePageZoom();
+            }
+          }
+        }, 300); // Wait for pages to fully render
       } else {
         console.log('worksheetState not available:', {
           worksheetState: !!window.worksheetState,

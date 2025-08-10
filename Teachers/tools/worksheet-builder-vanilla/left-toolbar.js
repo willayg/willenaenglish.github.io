@@ -20,7 +20,7 @@ document.head.appendChild(styleSheet);
       headerBtn.className = 'left-toolbar-btn';
       headerBtn.innerHTML = `
         <img src="./icons/header-icon.svg" alt="Header Icon" style="width: 60px; height: 60px; display: block; margin: 0 auto 4px auto; filter: drop-shadow(0 0 2px #a3d8b0);" />
-        <span style="font-size:1em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Header</span>
+        <span style="font-size:0.8em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Header</span>
       `;
       leftToolbar.insertBefore(headerBtn, leftToolbar.firstChild);
       
@@ -40,7 +40,7 @@ document.head.appendChild(styleSheet);
       textBtn.className = 'left-toolbar-btn';
       textBtn.innerHTML = `
         <img src="./icons/text-box-icon.svg" alt="Text Box Icon" style="width: 60px; height: 60px; display: block; margin: 0 auto 4px auto; filter: drop-shadow(0 0 2px #a8d8f0);" />
-        <span style="font-size:1em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Text Box</span>
+        <span style="font-size:0.8em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Text Box</span>
       `;
       leftToolbar.appendChild(textBtn);
     }
@@ -53,7 +53,7 @@ document.head.appendChild(styleSheet);
       vocabBtn.className = 'left-toolbar-btn';
       vocabBtn.innerHTML = `
         <img src="./icons/vocab-box-icon.svg" alt="Vocab Box Icon" style="width: 60px; height: 60px; display: block; margin: 0 auto 4px auto; filter: drop-shadow(0 0 2px #f8c6d8);" />
-        <span style="font-size:1em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Vocab Box</span>
+        <span style="font-size:0.8em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Vocab Box</span>
       `;
       leftToolbar.appendChild(vocabBtn);
 
@@ -67,6 +67,34 @@ document.head.appendChild(styleSheet);
           script.src = 'mint-ai/mint-ai-vocab-modal.js';
           script.onload = function() {
             if (window.openVocabBoxModal) window.openVocabBoxModal();
+          };
+          document.body.appendChild(script);
+        }
+      });
+    }
+
+    // Insert Picture Activities button
+    if (!document.getElementById('insert-picture-activities-tool')) {
+      const pictureBtn = document.createElement('button');
+      pictureBtn.id = 'insert-picture-activities-tool';
+      pictureBtn.title = 'Picture Activities';
+      pictureBtn.className = 'left-toolbar-btn';
+      pictureBtn.innerHTML = `
+        <img src="./icons/picture-activities-icon.svg" alt="Picture Activities Icon" style="width: 60px; height: 60px; display: block; margin: 0 auto 4px auto; filter: drop-shadow(0 0 2px #c084fc);" />
+        <span style="font-size:0.8em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Picture Activities</span>
+      `;
+      leftToolbar.appendChild(pictureBtn);
+
+      // Wire up click event for picture activities functionality
+      pictureBtn.addEventListener('click', function() {
+        // Open the vocab modal in picture mode
+        if (window.openVocabBoxModal) {
+          window.openVocabBoxModal(true);
+        } else {
+          const script = document.createElement('script');
+          script.src = 'mint-ai/mint-ai-vocab-modal.js';
+          script.onload = function() {
+            if (window.openVocabBoxModal) window.openVocabBoxModal(true);
           };
           document.body.appendChild(script);
         }

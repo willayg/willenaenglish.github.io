@@ -15,6 +15,9 @@
           window.worksheetState.setClipboardData(JSON.parse(JSON.stringify(window.worksheetState.getPages()[pageIdx].boxes[boxIdx])));
           console.log('Text box copied to clipboard');
           
+          // Reset paste counter for new copy operation
+          window.pasteCounter = 0;
+          
           // Visual feedback
           box.style.outline = '2px solid #4CAF50';
           setTimeout(() => {
@@ -84,7 +87,11 @@
     // Create a copy of the clipboard data
     const newBoxData = JSON.parse(JSON.stringify(window.worksheetState.getClipboardData()));
     
-    // Try to use cursor position if available, otherwise use default offset
+    // Initialize or increment paste counter for smart positioning
+    if (!window.pasteCounter) window.pasteCounter = 0;
+    window.pasteCounter++;
+    
+    // Try to use cursor position if available, otherwise use smart offset
     if (window.lastContextMenuPosition) {
       // Convert screen coordinates to page-relative coordinates
       const pageRect = pageEl.getBoundingClientRect();
@@ -102,12 +109,44 @@
       
       // Clear the stored position
       window.lastContextMenuPosition = null;
+      // Reset paste counter since we're using explicit positioning
+      window.pasteCounter = 0;
     } else {
-      // Fall back to default offset behavior
-      newBoxData.left = (parseInt(newBoxData.left) + 20) + 'px';
-      newBoxData.top = (parseInt(newBoxData.top) + 20) + 'px';
+      // Smart offset behavior - create a staggered pattern
+      const baseOffsetX = 25;
+      const baseOffsetY = 25;
+      const maxStagger = 5; // Reset pattern after 5 pastes
       
-      console.log('Pasting textbox with default offset');
+      const staggerIndex = (window.pasteCounter - 1) % maxStagger;
+      const offsetX = baseOffsetX * (staggerIndex + 1);
+      const offsetY = baseOffsetY * (staggerIndex + 1);
+      
+      const originalLeft = parseInt(newBoxData.left) || 0;
+      const originalTop = parseInt(newBoxData.top) || 0;
+      
+      // Apply smart offset
+      let newLeft = originalLeft + offsetX;
+      let newTop = originalTop + offsetY;
+      
+      // Ensure the textbox stays within page bounds (rough estimate)
+      const pageRect = pageEl.getBoundingClientRect();
+      const maxX = pageRect.width - 120; // Leave margin for textbox width
+      const maxY = pageRect.height - 80; // Leave margin for textbox height
+      
+      // If we'd go off the right or bottom, wrap to a new row/column
+      if (newLeft > maxX) {
+        newLeft = originalLeft + baseOffsetX;
+        newTop = originalTop + offsetY + baseOffsetY;
+      }
+      if (newTop > maxY) {
+        newLeft = originalLeft + offsetX;
+        newTop = originalTop + baseOffsetY;
+      }
+      
+      newBoxData.left = newLeft + 'px';
+      newBoxData.top = newTop + 'px';
+      
+      console.log(`Pasting textbox with smart offset (${staggerIndex + 1}/${maxStagger}):`, newLeft, newTop);
     }
     
     // Add to the page
@@ -373,12 +412,63 @@
     }
   }
 
+
+  // Duplicate textbox: add a new box to the data model, re-render, and select
+  function duplicateTextbox(box) {
+    if (!box) return;
+    const pageEls = document.querySelectorAll('.page-preview-a4');
+    for (let pageIdx = 0; pageIdx < pageEls.length; pageIdx++) {
+      const boxes = pageEls[pageIdx].querySelectorAll('.worksheet-textbox');
+      for (let boxIdx = 0; boxIdx < boxes.length; boxIdx++) {
+        if (boxes[boxIdx] === box && window.worksheetState.getPages()[pageIdx] && window.worksheetState.getPages()[pageIdx].boxes[boxIdx]) {
+          const origData = window.worksheetState.getPages()[pageIdx].boxes[boxIdx];
+          const newBoxData = JSON.parse(JSON.stringify(origData));
+          const origLeft = parseInt(newBoxData.left) || 0;
+          const origTop = parseInt(newBoxData.top) || 0;
+          newBoxData.left = (origLeft + 32) + 'px';
+          newBoxData.top = (origTop + 32) + 'px';
+          if (window.saveToHistory) window.saveToHistory('duplicate textbox');
+          window.worksheetState.getPages()[pageIdx].boxes.push(newBoxData);
+          if (window.renderPages) {
+            window.renderPages();
+            requestAnimationFrame(() => {
+              const pageEl = document.querySelectorAll('.page-preview-a4')[pageIdx];
+              if (!pageEl) return;
+              const textboxes = pageEl.querySelectorAll('.worksheet-textbox');
+              if (!textboxes.length) return;
+              const newTextbox = textboxes[textboxes.length - 1];
+              window.lastCreatedTextbox = newTextbox;
+              document.querySelectorAll('.worksheet-textbox.selected').forEach(tb => tb.classList.remove('selected'));
+              newTextbox.classList.add('selected');
+              if (typeof newTextbox.focus === 'function') newTextbox.focus();
+              if (window.worksheetState && window.worksheetState.setLastTextbox) {
+                window.worksheetState.setLastTextbox(newTextbox);
+              }
+              if (window.selectTextbox) {
+                window.selectTextbox(newTextbox);
+              }
+              if (window.updateSelectionFrame) {
+                window.updateSelectionFrame(newTextbox);
+              }
+              if (window.updateHandlePosition) {
+                window.updateHandlePosition(newTextbox);
+              }
+              // Do not show toolbar here; let caller decide
+            });
+          }
+          return;
+        }
+      }
+    }
+  }
+
   // Create the global textbox operations object
   window.worksheetTextbox = {
     copyTextbox,
     cutTextbox,
     deleteTextbox,
     pasteTextbox,
+    duplicateTextbox,
     createContextMenu,
     showTextboxContextMenu,
     updateBoxData
@@ -389,6 +479,7 @@
   window.cutTextbox = cutTextbox;
   window.deleteTextbox = deleteTextbox;
   window.pasteTextbox = pasteTextbox;
+  window.duplicateTextbox = duplicateTextbox;
   window.createContextMenu = createContextMenu;
   window.showTextboxContextMenu = showTextboxContextMenu;
   window.updateBoxData = updateBoxData;
