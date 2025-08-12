@@ -75,7 +75,7 @@
     
     box.style.borderRadius = (typeof boxData.borderRadius !== 'undefined' ? boxData.borderRadius : 4) + 'px';
     box.style.fontFamily = (boxData.fontFamily || 'Poppins');
-    box.style.fontSize = (boxData.fontSize || '16px');
+    box.style.fontSize = (boxData.fontSize || '13px');
     box.style.color = (boxData.color || '#3d3752');
     box.style.fontWeight = (boxData.fontWeight || 'normal');
     box.style.fontStyle = (boxData.fontStyle || 'normal');

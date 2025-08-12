@@ -31,6 +31,9 @@
 // mint-ai-vocab-layouts.js: Handles rendering of vocab box layouts for Mint AI Vocab Modal
 // Exported as window.MintAIVocabLayouts for global access
 (function() {
+  // Store the chosen images for Picture List layout
+  let pictureListImages = {};
+
   // Add CSS for loading spinner animation
   if (!document.getElementById('vocab-layouts-css')) {
     const style = document.createElement('style');
@@ -40,12 +43,26 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        20% { opacity: 1; transform: translateX(-50%) translateY(0px); }
+        80% { opacity: 1; transform: translateX(-50%) translateY(0px); }
+        100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      }
       .image-container:hover .click-instructions {
         opacity: 1;
       }
       .image-container:hover {
         background-color: #f0f8ff;
         border-radius: 4px;
+      }
+      .drag-success {
+        animation: pulse 0.5s ease-in-out;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
       }
     `;
     document.head.appendChild(style);
@@ -193,6 +210,410 @@
     }, 100);
     
     return cardsHtml;
+  }
+
+  // Picture List layout: identical to side-by-side but with image column between number and English
+  function renderPictureList(words, l1Label = 'Korean') {
+    const preset = tableStylePresets.find(p => p.id === 'numbered');
+    if (!preset) {
+      console.error('Numbered preset not found');
+      return '<div style="color:#ff0000;">Error: Numbered style preset not found</div>';
+    }
+    
+    // Expand words array to minimum 10 items with empty placeholders
+    const minRows = Math.max(10, words.length);
+    const expandedWords = [...words];
+    while (expandedWords.length < minRows) {
+      expandedWords.push({ eng: '', kor: '' });
+    }
+    
+    // Table and cell styles from preset
+    const tdNum = (preset.tdNumber || 'width:40px;padding:8px;text-align:center;border:none;font-weight:600;background:white;color:#333;box-sizing:border-box;').replace(/text-align:[^;]+;?/, 'text-align:center;') + 'border-bottom:1px solid #e8e8e8;';
+    const tdImage = 'width:50px;padding:4px;text-align:center;border:none;background:white;box-sizing:border-box;border-bottom:1px solid #e8e8e8;';
+  const tdEng = (preset.tdLeft || 'padding:8px 12px;border:none;font-weight:600;box-sizing:border-box;background:white;color:#333;').replace(/text-align:[^;]+;?/, '') + 'text-align:left !important;border-bottom:1px solid #e8e8e8;';
+  const tdKor = (preset.tdRight || 'padding:8px 12px;border:none;color:#333;box-sizing:border-box;background:white;').replace(/text-align:[^;]+;?/, '') + 'text-align:left !important;border-bottom:1px solid #e8e8e8;';
+    const th = (preset.th || 'padding:8px 12px;background:white;border:none;font-weight:700;color:#333;text-align:left;box-sizing:border-box;').replace(/text-align:[^;]+;?/, 'text-align:center;').replace(/border-bottom:[^;]+;?/, '').replace(/background:[^;]+;?/, 'background:#f5f5f5;');
+    
+    let rows = '';
+    for (let i = 0; i < expandedWords.length; i++) {
+      const word = expandedWords[i];
+      const hasContent = word.eng || word.kor;
+      rows += `<tr>` +
+        `<td style="${tdNum}" contenteditable="false">${hasContent ? (i+1) : ''}</td>` +
+        `<td style="${tdImage}" contenteditable="false">` +
+          (word.eng ? `<div class="image-drop-zone" data-word="${word.eng}" data-index="${i}" style="margin:0 auto;cursor:pointer;border:1.5px solid #bbb;border-radius:15%;display:flex;align-items:center;justify-content:center;background:#f9f9f9;position:relative;box-shadow:0 2px 8px rgba(60,60,80,0.06);transition:all 0.2s;overflow:hidden;">` +
+            `<img src="https://via.placeholder.com/40x40/f5f5f5/999999?text=Loading..." alt="${word.eng}" style="object-fit:cover;border-radius:12%;box-shadow:0 1px 4px rgba(60,60,80,0.08);transition:all 0.2s;" draggable="false">` +
+            `</div>` : '') +
+        `</td>` +
+        `<td style="${tdEng}" contenteditable="true">${word.eng||''}</td>` +
+        `<td style="${tdKor}" contenteditable="true">${word.kor||''}</td>` +
+        `</tr>`;
+    }
+    
+  const tableHtml = `<style>
+      .picture-list-table {
+        height: 100%;
+        table-layout: fixed;
+      }
+      .picture-list-table tbody {
+        height: 100%;
+      }
+      .picture-list-table tr {
+        height: calc(100% / ${expandedWords.length});
+        transition: all 0.2s ease;
+      }
+      .picture-list-table td {
+        vertical-align: middle;
+        padding: 4px;
+      }
+      .picture-list-table .image-drop-zone {
+        height: 40px;
+        min-height: 25px;
+        max-height: 80px;
+        width: 40px;
+        min-width: 25px;
+        max-width: 80px;
+        margin: 0 auto;
+        transition: all 0.2s ease;
+      }
+      .picture-list-table .image-drop-zone img {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <table class="picture-list-table" style="${preset.table}">` +
+      `<thead><tr>` +
+        `<th style="${tdNum};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false">#</th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="false"></th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;text-align:left !important;" contenteditable="true">English</th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;text-align:left !important;" contenteditable="true">${l1Label}</th>` +
+      `</tr></thead><tbody>` + rows + `</tbody></table>`;
+    
+    // Load images after rendering (only one per word)
+    setTimeout(() => {
+      expandedWords.forEach((word, index) => {
+        if (word.eng) {
+          // Find the image element
+          const zone = document.querySelector(`.image-drop-zone[data-word="${word.eng}"][data-index="${index}"]`);
+          if (zone) {
+            const img = zone.querySelector('img');
+            if (img) {
+              const wordKey = `${word.eng.toLowerCase()}_${index}`;
+              
+              // Check if we already have a chosen image for this word
+              if (pictureListImages[wordKey]) {
+                console.log('Using saved image for:', word.eng);
+                img.src = pictureListImages[wordKey];
+              } else {
+                console.log('Loading new image for:', word.eng);
+                // Load image from Pixabay
+                fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word.eng)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`)
+                  .then(res => res.json())
+                  .then(data => {
+                    console.log('Pixabay response for', word.eng, ':', data);
+                    if (data.images && data.images.length > 0) {
+                      img.src = data.images[0];
+                      // Save this as the default image
+                      pictureListImages[wordKey] = data.images[0];
+                      console.log('Set and saved image src to:', data.images[0]);
+                    } else {
+                      const placeholder = 'https://via.placeholder.com/40x40/f5f5f5/999999?text=No+Image';
+                      img.src = placeholder;
+                      pictureListImages[wordKey] = placeholder;
+                      console.log('No images found, using placeholder');
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error loading image for', word.eng, ':', error);
+                    const errorPlaceholder = 'https://via.placeholder.com/40x40/f5f5f5/999999?text=Error';
+                    img.src = errorPlaceholder;
+                    pictureListImages[wordKey] = errorPlaceholder;
+                  });
+              }
+            }
+          }
+        }
+      });
+      // Enable drag-and-drop functionality AFTER images are loaded
+      setTimeout(() => {
+        enablePictureListDragAndDrop();
+        setupPictureListResizeObserver();
+      }, 500);
+    }, 100);
+    
+    return tableHtml;
+  }
+
+  // Enhanced drag and drop functionality for Picture List images (from wordtest/images.js)
+  function enablePictureListDragAndDrop() {
+    console.log('Setting up drag and drop for Picture List');
+    
+    // Add enhanced drag and drop listeners WITHOUT cloning/replacing elements
+    document.querySelectorAll('.image-drop-zone').forEach(zone => {
+      // Make the zone more visually obvious as a drop target
+      zone.style.transition = 'all 0.3s ease';
+      zone.title = 'Click to open Pixabay gallery or drag and drop an image here to replace';
+      
+      // Prevent default drag behaviors on the zone
+      zone.addEventListener('dragenter', e => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.add('dragover');
+        zone.style.border = '2px dashed #4299e1';
+        zone.style.backgroundColor = '#e6f0fa';
+        zone.style.borderRadius = '8px';
+      });
+      
+      zone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only remove styles if we're actually leaving the zone (not entering child elements)
+        if (!zone.contains(e.relatedTarget)) {
+          zone.classList.remove('dragover');
+          zone.style.border = '1px solid #ddd';
+          zone.style.backgroundColor = '#f9f9f9';
+          zone.style.borderRadius = '4px';
+        }
+      });
+      
+      // Prevent default drag behaviors on the zone
+      zone.addEventListener('dragenter', e => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.add('dragover');
+        zone.style.border = '2px dashed #4299e1';
+        zone.style.backgroundColor = '#e6f0fa';
+        zone.style.borderRadius = '8px';
+      });
+      
+      zone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only remove styles if we're actually leaving the zone (not entering child elements)
+        if (!zone.contains(e.relatedTarget)) {
+          zone.classList.remove('dragover');
+          zone.style.border = '2px dashed transparent';
+          zone.style.backgroundColor = '';
+          zone.style.borderRadius = '';
+        }
+      });
+      zone.addEventListener('drop', async e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.remove('dragover');
+        zone.style.border = '1px solid #ddd';
+        zone.style.backgroundColor = '#f9f9f9';
+        zone.style.borderRadius = '4px';
+        
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 0) return;
+        
+        const file = files[0];
+        if (!file.type.startsWith('image/')) {
+          alert('Please drop an image file (JPG, PNG, GIF, etc.)');
+          return;
+        }
+        
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Image file is too large. Please use an image smaller than 5MB.');
+          return;
+        }
+        
+        const word = zone.getAttribute('data-word');
+        const index = zone.getAttribute('data-index');
+        
+        if (!word || !index) {
+          console.error('Invalid word or index for image drop');
+          return;
+        }
+        
+        // Show loading indicator
+        const img = zone.querySelector('img');
+        if (img) {
+          img.style.opacity = '0.5';
+        }
+        
+        const reader = new FileReader();
+        reader.onload = async function(ev) {
+          try {
+            const imageDataUrl = ev.target.result;
+            
+            // Validate the image data
+            if (!imageDataUrl || !imageDataUrl.startsWith('data:image/')) {
+              throw new Error('Invalid image data');
+            }
+            
+            // Update the image directly
+            if (img) {
+              img.src = imageDataUrl;
+              img.style.opacity = '1';
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.borderRadius = '12%';
+              // Save the new image so it persists when inserted
+              const wordKey = `${word.toLowerCase()}_${index}`;
+              pictureListImages[wordKey] = imageDataUrl;
+              console.log(`Updated and saved image for ${word}_${index} via drag and drop`);
+            }
+            
+            // Show success feedback with animation
+            zone.classList.add('drag-success');
+            zone.style.border = '2px solid #48bb78';
+            zone.style.backgroundColor = '#e6fffa';
+            
+            // Show success message temporarily
+            const successMsg = document.createElement('div');
+            successMsg.innerHTML = '✅ Image replaced!';
+            successMsg.style.cssText = `
+              position: absolute;
+              top: -25px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: #48bb78;
+              color: white;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-size: 10px;
+              white-space: nowrap;
+              z-index: 20;
+              pointer-events: none;
+            `;
+            zone.style.position = 'relative';
+            zone.appendChild(successMsg);
+            
+            setTimeout(() => {
+              zone.classList.remove('drag-success');
+              zone.style.border = '1px solid #ddd';
+              zone.style.backgroundColor = '#f9f9f9';
+              if (successMsg.parentNode) {
+                successMsg.parentNode.removeChild(successMsg);
+              }
+            }, 2000);
+            
+          } catch (error) {
+            console.error('Error processing dropped image:', error);
+            alert('Error processing the dropped image. Please try again.');
+            if (img) {
+              img.style.opacity = '1';
+            }
+          }
+        };
+        
+        reader.onerror = function() {
+          console.error('Error reading dropped file');
+          alert('Error reading the dropped file. Please try again.');
+          if (img) {
+            img.style.opacity = '1';
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      });
+      
+      // Add hover effects for better UX
+      zone.addEventListener('mouseenter', e => {
+        if (!zone.classList.contains('dragover')) {
+          zone.style.border = '2px solid #cbd5e0';
+          zone.style.backgroundColor = '#f7fafc';
+        }
+      });
+      
+      zone.addEventListener('mouseleave', e => {
+        if (!zone.classList.contains('dragover')) {
+          zone.style.border = '1px solid #ddd';
+          zone.style.backgroundColor = '#f9f9f9';
+        }
+      });
+      
+      // Add click handler for opening Pixabay gallery
+      zone.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const word = this.getAttribute('data-word');
+        if (word) {
+          console.log('Opening Pixabay gallery for:', word);
+          const screenW = window.screen.availWidth || window.innerWidth;
+          const screenH = window.screen.availHeight || window.innerHeight;
+          const width = Math.round(screenW * 0.25);
+          const height = Math.round(screenH * 0.8);
+          const left = 10;
+          const top = Math.round((screenH - height) / 2);
+          const url = 'https://pixabay.com/images/search/' + encodeURIComponent(word) + '/';
+          window.open(url, 'ImageSearchWindow', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes');
+        }
+      });
+    });
+  }
+
+  // Function to clear stored Picture List images (useful when starting fresh)
+  function clearPictureListImages() {
+    pictureListImages = {};
+    console.log('Cleared all stored Picture List images');
+  }
+
+  // Function to get current stored images (for debugging)
+  function getPictureListImages() {
+    return pictureListImages;
+  }
+
+  // Helper function to load images specifically for table cells
+  async function loadImageForWordInTable(word, index) {
+    if (!word) return;
+    
+    try {
+      console.log('Loading table image for:', word, 'at index:', index);
+      
+      // Find the image container by word
+      const imageContainer = document.querySelector(`[data-word="${word}"]`);
+      if (!imageContainer) {
+        console.log('Image container not found for word:', word);
+        return;
+      }
+      
+      // Use Netlify function exactly like wordtest.js files
+      const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=5&page=${Math.floor(Math.random()*5)+1}`;
+      console.log('Fetching URL:', url);
+      
+      const res = await fetch(url);
+      console.log('Response status:', res.status);
+      
+      if (!res.ok) {
+        console.error('Fetch failed:', res.status, res.statusText);
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      console.log('Response data:', data);
+      
+      if (data.images && data.images.length > 0) {
+        // Use the first image from the images array
+        const imageUrl = data.images[0];
+        console.log('Using image URL:', imageUrl);
+        imageContainer.innerHTML = `<img src="${imageUrl}" alt="${word}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" crossorigin="anonymous" onerror="this.src='${getPlaceholderImage(index, word)}'">`;
+      } else {
+        console.log('No images found in response');
+        // No images found, use placeholder
+        const placeholderUrl = getPlaceholderImage(index, word);
+        imageContainer.innerHTML = `<img src="${placeholderUrl}" alt="${word}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" crossorigin="anonymous">`;
+      }
+    } catch (error) {
+      console.error('Error fetching image for word:', word, error);
+      // Fall back to placeholder
+      const placeholderUrl = getPlaceholderImage(index, word);
+      if (imageContainer) {
+        imageContainer.innerHTML = `<img src="${placeholderUrl}" alt="${word}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" crossorigin="anonymous">`;
+      }
+    }
   }
 
   // Helper function to get placeholder image (similar to wordtest.js)
@@ -378,6 +799,108 @@ function renderDoubleListWithStyle(words, styleId, l1Label = 'Korean') {
     `</tr></thead><tbody>` + rows + `</tbody></table>`;
 }
 
+  // Double Picture List layout: like double list, but with image columns after each number
+  function renderDoublePictureList(words, l1Label = 'Korean') {
+    const preset = tableStylePresets.find(p => p.id === 'numbered') || tableStylePresets[0];
+    
+    // Split words into two columns (left: first half, right: second half)
+    const half = Math.ceil(words.length / 2);
+    const left = words.slice(0, half);
+    const right = words.slice(half);
+    const maxRows = Math.max(left.length, right.length, 6);
+    while (left.length < maxRows) left.push({eng: '', kor: ''});
+    while (right.length < maxRows) right.push({eng: '', kor: ''});
+    
+    const tdNum = (preset.tdNumber || 'padding:8px 8px;border:none;font-weight:700;color:#333;text-align:center;box-sizing:border-box;background:white;width:38px;min-width:38px;').replace(/text-align:[^;]+;?/, 'text-align:center;');
+    const borderBetween = 'border-left:2.5px solid #333;';
+    const tdImage = 'width:50px;padding:4px;text-align:center;border:none;background:white;box-sizing:border-box;border-bottom:1px solid #e8e8e8;';
+    const tdEng = (preset.tdLeft || 'padding:8px 12px;border:none;font-weight:600;box-sizing:border-box;background:white;color:#333;').replace(/text-align:[^;]+;?/, '') + 'text-align:left !important;border-bottom:1px solid #e8e8e8;';
+    const tdKor = (preset.tdRight || 'padding:8px 12px;border:none;color:#333;box-sizing:border-box;background:white;').replace(/text-align:[^;]+;?/, '') + 'text-align:left !important;border-bottom:1px solid #e8e8e8;';
+    const th = (preset.th || 'padding:8px 12px;background:white;border:none;font-weight:700;color:#333;text-align:left;box-sizing:border-box;').replace(/text-align:[^;]+;?/, 'text-align:center;').replace(/border-bottom:[^;]+;?/, '').replace(/background:[^;]+;?/, 'background:#f5f5f5;');
+    
+    let rows = '';
+    for (let i = 0; i < maxRows; i++) {
+      const leftHasContent = left[i].eng || left[i].kor;
+      const rightHasContent = right[i].eng || right[i].kor;
+      rows += `<tr>` +
+        `<td style="${tdNum}" contenteditable="false">${leftHasContent ? (i+1) : ''}</td>` +
+        `<td style="${tdImage}" contenteditable="false">` +
+          (left[i].eng ? `<div class="image-drop-zone" data-word="${left[i].eng}" data-index="left${i}" style="margin:0 auto;cursor:pointer;border:1.5px solid #bbb;border-radius:15%;display:flex;align-items:center;justify-content:center;background:#f9f9f9;position:relative;box-shadow:0 2px 8px rgba(60,60,80,0.06);transition:all 0.2s;overflow:hidden;">` +
+            `<img src="https://via.placeholder.com/40x40/f5f5f5/999999?text=Loading..." alt="${left[i].eng}" style="object-fit:cover;border-radius:12%;box-shadow:0 1px 4px rgba(60,60,80,0.08);transition:all 0.2s;" draggable="false">` +
+            `</div>` : '') +
+        `</td>` +
+        `<td style="${tdEng}" contenteditable="true">${left[i].eng||''}</td>` +
+        `<td style="${tdKor};border-right:2.5px solid #333;" contenteditable="true">${left[i].kor||''}</td>` +
+        `<td style="${tdNum};${borderBetween}" contenteditable="false">${rightHasContent ? (i+1+half) : ''}</td>` +
+        `<td style="${tdImage}" contenteditable="false">` +
+          (right[i].eng ? `<div class="image-drop-zone" data-word="${right[i].eng}" data-index="right${i}" style="margin:0 auto;cursor:pointer;border:1.5px solid #bbb;border-radius:15%;display:flex;align-items:center;justify-content:center;background:#f9f9f9;position:relative;box-shadow:0 2px 8px rgba(60,60,80,0.06);transition:all 0.2s;overflow:hidden;">` +
+            `<img src="https://via.placeholder.com/40x40/f5f5f5/999999?text=Loading..." alt="${right[i].eng}" style="object-fit:cover;border-radius:12%;box-shadow:0 1px 4px rgba(60,60,80,0.08);transition:all 0.2s;" draggable="false">` +
+            `</div>` : '') +
+        `</td>` +
+        `<td style="${tdEng}" contenteditable="true">${right[i].eng||''}</td>` +
+        `<td style="${tdKor}" contenteditable="true">${right[i].kor||''}</td>` +
+        `</tr>`;
+    }
+    
+    const tableHtml = `<style>
+      .double-picture-list-table .image-drop-zone { height: 40px; min-height: 25px; max-height: 80px; width: 40px; min-width: 25px; max-width: 80px; margin: 0 auto; transition: all 0.2s ease; }
+      .double-picture-list-table .image-drop-zone img { width: 100%; height: 100%; }
+    </style>` +
+      `<table class="double-picture-list-table" style="${preset.table}">` +
+      `<thead><tr>` +
+        `<th style="${tdNum};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false"></th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="false"></th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;text-align:left !important;" contenteditable="true">English</th>` +
+        `<th style="${th};border-right:2.5px solid #333;border-bottom:2.5px solid #333;text-align:left !important;" contenteditable="true">${l1Label}</th>` +
+        `<th style="${tdNum};${borderBetween};border-bottom:2.5px solid #333;background:#f5f5f5;" contenteditable="false"></th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;" contenteditable="false"></th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;text-align:left !important;" contenteditable="true">English</th>` +
+        `<th style="${th};border-bottom:2.5px solid #333;text-align:left !important;" contenteditable="true">${l1Label}</th>` +
+      `</tr></thead><tbody>` + rows + `</tbody></table>`;
+    
+    // After rendering, load images for each word (left and right)
+    setTimeout(() => {
+      [...left, ...right].forEach((word, idx) => {
+        if (word.eng) {
+          const zone = document.querySelector(`.image-drop-zone[data-word="${word.eng}"][data-index="${idx < left.length ? 'left'+idx : 'right'+(idx-left.length)}"]`);
+          if (zone) {
+            const img = zone.querySelector('img');
+            if (img) {
+              const wordKey = `${word.eng.toLowerCase()}_${idx < left.length ? 'left'+idx : 'right'+(idx-left.length)}`;
+              if (pictureListImages[wordKey]) {
+                img.src = pictureListImages[wordKey];
+              } else {
+                fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word.eng)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`)
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.images && data.images.length > 0) {
+                      img.src = data.images[0];
+                      pictureListImages[wordKey] = data.images[0];
+                    } else {
+                      const placeholder = 'https://via.placeholder.com/40x40/f5f5f5/999999?text=No+Image';
+                      img.src = placeholder;
+                      pictureListImages[wordKey] = placeholder;
+                    }
+                  })
+                  .catch(() => {
+                    const errorPlaceholder = 'https://via.placeholder.com/40x40/f5f5f5/999999?text=Error';
+                    img.src = errorPlaceholder;
+                    pictureListImages[wordKey] = errorPlaceholder;
+                  });
+              }
+            }
+          }
+        }
+      });
+      setTimeout(() => { 
+        enablePictureListDragAndDrop(); 
+        setupPictureListResizeObserver();
+      }, 500);
+    }, 100);
+    
+    return tableHtml;
+  }
+
   function renderPreview(words, format, l1Label) {
     if (!words.length) return '<div style="color:#aaa;font-size:1.1em;">No words to preview.</div>';
     switch(format) {
@@ -386,10 +909,52 @@ function renderDoubleListWithStyle(words, styleId, l1Label = 'Korean') {
       case 'cards': return renderCards(words, l1Label);
       case 'doublelist': return renderDoubleList(words, l1Label);
       case 'picturecards': return renderPictureCards(words, l1Label);
+      case 'picturelist': return renderPictureList(words, l1Label);
+      case 'doublepicturelist': return renderDoublePictureList(words, l1Label);
       case 'matching': return renderMatching(words, l1Label);
       default:
         return '<div style="color:#aaa;">Unknown format: ' + format + '</div>';
     }
+  }
+
+  // Set up ResizeObserver to make images responsive to textbox height changes
+  function setupPictureListResizeObserver() {
+    const table = document.querySelector('.picture-list-table, .double-picture-list-table');
+    if (!table) return;
+    
+    // Find the parent textbox container
+    let textboxContainer = table.closest('.worksheet-textbox');
+    if (!textboxContainer) {
+      textboxContainer = table.closest('[contenteditable]');
+    }
+    if (!textboxContainer) return;
+    
+    console.log('Setting up ResizeObserver for Picture List images');
+    
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const containerHeight = entry.contentRect.height;
+        const rowCount = table.querySelectorAll('tbody tr').length;
+        
+        // Calculate image size based on container height
+        const availableHeightPerRow = (containerHeight - 60) / Math.max(rowCount, 1); // 60px for header + padding
+        const imageSize = Math.max(25, Math.min(80, availableHeightPerRow - 16)); // clamp between 25-80px
+        
+        // Update all image drop zones
+        const dropZones = table.querySelectorAll('.image-drop-zone');
+        dropZones.forEach(zone => {
+          zone.style.width = `${imageSize}px`;
+          zone.style.height = `${imageSize}px`;
+        });
+        
+        console.log(`Container height: ${containerHeight}px, Image size: ${imageSize}px`);
+      }
+    });
+    
+    resizeObserver.observe(textboxContainer);
+    
+    // Store the observer so it can be cleaned up later
+    table.dataset.resizeObserver = 'active';
   }
 
   window.MintAIVocabLayouts = {
@@ -400,9 +965,13 @@ function renderDoubleListWithStyle(words, styleId, l1Label = 'Korean') {
     renderBasic,
     renderCards,
     renderPictureCards,
+    renderPictureList,
     renderDoubleList,
     renderDoubleListWithStyle,
-    renderMatching
+    renderDoublePictureList,
+    renderMatching,
+    clearPictureListImages,
+    getPictureListImages
   };
   
   console.log('MintAIVocabLayouts loaded successfully:', window.MintAIVocabLayouts);

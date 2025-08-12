@@ -19,7 +19,7 @@
     
     // Only update if elements exist
     if (fontSelect) fontSelect.value = box.style.fontFamily.replace(/['\"]/g, '').split(',')[0] || 'Poppins';
-    if (fontSizeInput) fontSizeInput.value = parseInt(box.style.fontSize) || 16;
+    if (fontSizeInput) fontSizeInput.value = parseInt(box.style.fontSize) || 13;
     
     // Text formatting
     if (boldBtn) {

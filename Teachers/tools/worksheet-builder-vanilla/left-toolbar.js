@@ -100,5 +100,30 @@ document.head.appendChild(styleSheet);
         }
       });
     }
+
+    // Insert Template button
+    if (!document.getElementById('template-tool')) {
+      const templateBtn = document.createElement('button');
+      templateBtn.id = 'template-tool';
+      templateBtn.title = 'Templates (Coming soon)';
+      templateBtn.className = 'left-toolbar-btn';
+      templateBtn.innerHTML = `
+        <img src="./icons/template-icon.svg" alt="Template Icon" style="width: 60px; height: 60px; display: block; margin: 0 auto 4px auto;" />
+        <span style="font-size:0.8em;color:#6b7b6e;font-family:Poppins, sans-serif;font-weight:600;display:block;margin:0;vertical-align:top;">Templates</span>
+      `;
+      leftToolbar.insertBefore(templateBtn, leftToolbar.firstChild);
+      templateBtn.addEventListener('click', function() {
+        if (window.openTemplateModal) {
+          window.openTemplateModal();
+        } else {
+          const script = document.createElement('script');
+          script.src = 'template-modal.js';
+          script.onload = function() {
+            if (window.openTemplateModal) window.openTemplateModal();
+          };
+          document.head.appendChild(script);
+        }
+      });
+    }
   });
 })();

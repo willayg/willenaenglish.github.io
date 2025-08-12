@@ -10,7 +10,7 @@
       <!-- Mode Selection Buttons -->
       <div style="display:flex;gap:8px;width:92%;margin:0 auto 8px auto;">
         <button id="topic-input-btn" style="flex:1;padding:6.5px 0;border-radius:7px;background:#00897b;color:#fff;border:none;font-size:0.77em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 8px rgba(0,191,174,0.12);">Topic Input</button>
-        <button id="text-input-btn" style="flex:1;padding:6.5px 0;border-radius:7px;background:#e1e8ed;color:#666;border:none;font-size:0.77em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;opacity:0.85;">Text Input</button>
+  <button id="text-input-btn" style="flex:1;padding:6.5px 0;border-radius:7px;background:#e1e8ed;color:#666;border:none;font-size:0.77em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;opacity:0.85;">Paste Text</button>
       </div>
       
       <textarea id="vocab-passage" placeholder="Paste a passage here to extract vocab" style="font-size:0.68em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:153px;max-height:170px;resize:none;margin:0 auto 8px auto;outline:none;display:none;font-family:'Poppins',Arial,sans-serif;"></textarea>
@@ -78,7 +78,7 @@
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <button id="vocab-generate-btn" style="font-size:0.82em;padding:4px 8px;border-radius:6px;background:#00bfae;color:#fff;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Generate</button>
+  <button id="vocab-generate-btn" style="font-size:0.82em;padding:4px 8px;border-radius:6px;background:#0c5b69;color:#e3eceb;font-weight:700;border:none;box-shadow:0 2px 8px rgba(6, 42, 77, 0.1);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Generate</button>
         <button id="vocab-clear-btn" style="font-size:0.82em;padding:4px 8px;border-radius:6px;background:#e1e8ed;color:#00897b;font-weight:600;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Clear</button>
         <button id="vocab-more-options-btn" title="Settings" style="padding:4px 8px;border-radius:6px;background:#e1e8ed;color:#19777e;border:none;display:flex;align-items:center;justify-content:center;font-size:1.25em;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;margin-left:2px;">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -102,17 +102,36 @@
       <textarea id="vocab-wordlist" placeholder="Enter words here, one per line: English, Korean" style="font-size:0.68em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:153px;max-height:170px;resize:none;margin:7px auto 13px auto;outline:none;display:block;font-family:'Poppins',Arial,sans-serif;"></textarea>
       <!-- Removed vocab-list-format select from its old position -->
 
-      <div style="display:flex;gap:15px;margin-top:8px;">
-        <button id="vocab-insert-btn" style="flex:1;font-size:0.81em;padding:6px 0;border-radius:7px;background:#00bfae;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Insert</button>
-        <button id="vocab-cancel-btn" style="flex:1;font-size:0.81em;padding:6px 0;border-radius:7px;background:#e1e8ed;color:#00897b;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.08);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Cancel</button>
-      </div>
+  <!-- Insert/Cancel buttons moved below preview area -->
     </div>
     <!-- Right: Live Preview -->
     <div style="flex:1.7;padding:40px 40px 40px 28px;display:flex;flex-direction:column;background:linear-gradient(135deg,#e0f7fa 0%,#f0f9ff 100%);border-left:2px solid #93cbcf;">
       <!-- Layout Button -->
-      <div style="display:flex;gap:10px;margin-bottom:8px;width:100%;">
-        <button id="vocab-layouts-btn" style="flex:1;font-size:0.94em;padding:6px 10px;border-radius:7px;background:#00897b;color:#fff;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Layout</button>
-        <button id="vocab-table-style-btn" style="flex:1;font-size:0.94em;padding:6px 10px;border-radius:7px;background:#ffe0b2;color:#b26a00;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Style</button>
+      <div style="display:flex;gap:10px;margin-bottom:8px;width:100%;align-items:center;">
+        <button class="vocab-layout-icon-btn" data-layout="doublelist" title="Double List" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-doublelist.svg" alt="Double List" width="28" height="28">
+        </button>
+        <button class="vocab-layout-icon-btn" data-layout="sidebyside" title="Side by Side" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-sidebyside.svg" alt="Side by Side" width="28" height="28">
+        </button>
+        <button class="vocab-layout-icon-btn" data-layout="basic" title="Simple List" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-basic.svg" alt="Simple List" width="28" height="28">
+        </button>
+        <button class="vocab-layout-icon-btn" data-layout="cards" title="Cards Grid" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-cards.svg" alt="Cards Grid" width="28" height="28">
+        </button>
+        <button class="vocab-layout-icon-btn" data-layout="matching" title="Picture Matching" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-picturematching.svg" alt="Picture Matching" width="28" height="28">
+        </button>
+        <button class="vocab-layout-icon-btn" data-layout="picturelist" title="Picture List" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-picturelist.svg" alt="Picture List" width="28" height="28">
+        </button>
+        <button class="vocab-layout-icon-btn" data-layout="doublepicturelist" title="Double Picture List" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-doublepicturelist.svg" alt="Double Picture List" width="28" height="28">
+        </button>
+        <button id="vocab-layouts-more-btn" title="More Layouts" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <img src="icons/layout-more.svg" alt="More Layouts" width="28" height="28">
+        </button>
       </div>
       
       <!-- Simple Layout Modal -->
@@ -193,12 +212,14 @@
       
       <!-- Hidden select for compatibility -->
       <select id="vocab-list-format" style="display:none;">
-        <option value="sidebyside" selected>Side by Side</option>
-        <option value="doublelist">Double List</option>
+        <option value="sidebyside">Side by Side</option>
+        <option value="doublelist" selected>Double List</option>
         <option value="basic">Simple List</option>
         <option value="cards">Cards Grid</option>
         <option value="picturecards">Picture Cards</option>
         <option value="matching">Matching the Meaning</option>
+        <option value="picturelist">Picture List</option>
+        <option value="doublepicturelist">Double Picture List</option>
         <option value="grid">Picture Grid</option>
         <option value="labeling">Picture Labeling</option>
       </select>
@@ -207,7 +228,14 @@
       <div style="display:flex;align-items:center;gap:18px;margin-bottom:10px;">
         <div style="font-size:1.06em;font-weight:700;color:#00897b;font-family:'Poppins',Arial,sans-serif;">Preview</div>
       </div>
+
       <div id="vocab-preview-area" style="flex:1;background:#fff;border-radius:10px;min-height:265px;max-height:530px;padding:15px 17px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;"></div>
+
+      <!-- Insert/Cancel buttons below preview area -->
+      <div style="display:flex;gap:18px;justify-content:flex-end;margin-top:10px;">
+  <button id="vocab-insert-btn" style="padding:5px 28px;border-radius:9px;background:#0c5b69;color:#e3eceb;font-size:1em;font-weight:700;border:none;box-shadow:0 2px 8px rgba(6, 42, 77, 0.1);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Insert</button>
+        <button id="vocab-cancel-btn" style="padding:5px 28px;border-radius:9px;background:#e1e8ed;color:#105c74;font-size:1em;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,191,174,0.10);cursor:pointer;transition:background 0.2s;font-family:'Poppins',Arial,sans-serif;">Cancel</button>
+      </div>
     </div>
     <button id="close-vocab-modal" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:1.7em;color:#666;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
   </div>
