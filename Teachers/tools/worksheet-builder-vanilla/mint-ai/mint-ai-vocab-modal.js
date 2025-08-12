@@ -469,14 +469,27 @@
       const moreOptionsClose = modal.querySelector('#vocab-more-options-close');
 
       // Layout modal elements
-      const layoutsBtn = modal.querySelector('#vocab-layouts-btn');
       const layoutsModal = modal.querySelector('#vocab-layouts-modal');
       const layoutsClose = modal.querySelector('#vocab-layouts-close');
-      const layoutOptions = modal.querySelectorAll('.vocab-layout-option');
-      
-      // Layout modal functionality
-      if (layoutsBtn && layoutsModal && layoutsClose) {
-        layoutsBtn.onclick = function() {
+
+      // Wire up new layout icon buttons
+      const layoutIconBtns = modal.querySelectorAll('.vocab-layout-icon-btn');
+      layoutIconBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const layout = btn.getAttribute('data-layout');
+          if (!layout) return;
+          // Set the hidden select and trigger change
+          const formatSelect = modal.querySelector('#vocab-list-format');
+          if (formatSelect) {
+            formatSelect.value = layout;
+            formatSelect.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+      // Wire up 'more layouts' icon to open the modal
+      const moreLayoutsBtn = modal.querySelector('#vocab-layouts-more-btn');
+      if (moreLayoutsBtn && layoutsModal && layoutsClose) {
+        moreLayoutsBtn.onclick = function() {
           // Repopulate layouts based on current mode
           const isPictureMode = modal.dataset.pictureMode === 'true';
           populateLayoutsModal(modal, isPictureMode);
