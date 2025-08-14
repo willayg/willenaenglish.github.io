@@ -2,24 +2,34 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Play Zone | Willena English Academy</title>
+  <title>Challenge Zone | Willena English Academy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts for Cyberpunk/Sleek Look -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #f8f6f2;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #181c29 0%, #232946 100%);
+      font-family: 'Share Tech Mono', 'Segoe UI', Arial, sans-serif;
       margin: 0;
       padding: 0;
-      color: #2e2b3f;
+      color: #e0e6ff;
+      min-height: 100vh;
     }
-    header {
-      background: #2e2b3f;
-      color: #fff;
-      padding: 24px 0 16px 0;
-      text-align: center;
-      font-size: 2.2rem;
+    .header-cyber {
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-size: 3.2rem;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.15em;
+      color: #00ffe7;
+      text-shadow:
+        0 0 8px #00ffe7,
+        0 0 24px #0ff,
+        0 2px 12px #232946;
+      text-align: center;
+      padding: 48px 0 24px 0;
+      background: transparent;
+      margin-bottom: 0;
+      user-select: none;
     }
     .games-container {
       display: flex;
@@ -33,9 +43,9 @@
     .game-card {
       position: relative;
       overflow: hidden;
-      background: #fff;
+      background: rgba(30, 34, 56, 0.98);
       border-radius: 18px;
-      box-shadow: 0 2px 16px rgba(46,43,63,0.08);
+      box-shadow: 0 4px 32px #00ffe733, 0 2px 16px #181c29;
       width: 340px;
       min-height: 400px;
       display: flex;
@@ -46,11 +56,14 @@
       text-align: center;
       cursor: pointer;
       text-decoration: none;
-      color: #2e2b3f;
+      color: #e0e6ff;
+      border: 1.5px solid #00ffe7;
+      backdrop-filter: blur(2px);
     }
     .game-card:hover {
       transform: translateY(-6px) scale(1.03);
-      box-shadow: 0 8px 32px rgba(46,43,63,0.13);
+      box-shadow: 0 8px 48px #00ffe799, 0 8px 32px #181c29;
+      border-color: #ff00c8;
     }
     .game-card img {
       width: 320px;
@@ -59,16 +72,20 @@
       object-fit: cover;
       margin-bottom: 18px;
       border-radius: 16px;
-      background: #f6f6f6;
+      background: #232946;
       display: block;
+      border: 2px solid #ff00c8;
+      box-shadow: 0 0 24px #ff00c855;
     }
     .game-title {
-      font-size: 1.35rem;
-      font-weight: 600;
+      font-size: 1.5rem;
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-weight: 700;
+      color: #ff00c8;
+      letter-spacing: 0.08em;
       margin-bottom: 0;
-    }
-    .game-desc {
-      display: none;
+      text-shadow: 0 0 8px #ff00c8;
+      line-height: 1.3;
     }
     .game-overlay {
       position: absolute;
@@ -82,13 +99,17 @@
       font-weight: 500;
       color: #fff;
       text-shadow:
-        0 4px 16px rgba(16, 20, 42, 0.65),
-        0 2px 8px rgba(16, 20, 42, 0.45); /* Darker drop shadow */
+        0 0 16px #00ffe7,
+        0 2px 8px #181c29;
       padding: 24px;
       text-align: center;
       pointer-events: none;
       z-index: 2;
-      font-family: 'Baloo 2', 'Quicksand', 'Segoe UI', Arial, sans-serif; /* Classy but playful */
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      background: rgba(0, 0, 32, 0.92);
+      border-radius: 18px;
+      border: 2px solid #00ffe7;
+      box-shadow: 0 0 32px #00ffe7cc;
     }
     .game-card:hover .game-overlay,
     .game-card:focus .game-overlay,
@@ -96,14 +117,14 @@
       opacity: 1;
       pointer-events: auto;
     }
-    .overlay-pink    { background: rgba(220, 120, 180, 0.85); }
-    .overlay-yellow  { background: rgba(197, 164, 66, 0.85); }
-    .overlay-blue    { background: rgba(70, 120, 200, 0.85); }
-    .overlay-green   { background: rgba(100, 200, 140, 0.85); }
-    .overlay-orange  { background: rgba(255, 160, 80, 0.85); }
-    /* Add more as needed */
+    .overlay-blue  { background: rgba(70, 120, 200, 0.85); border-color: #00ffe7; }
+    .overlay-pink  { background: rgba(220, 120, 180, 0.85); border-color: #ff00c8; }
 
     @media (max-width: 700px) {
+      .header-cyber {
+        font-size: 2.1rem;
+        padding: 32px 0 16px 0;
+      }
       .games-container {
         gap: 18px;
         padding: 24px 2vw 40px 2vw;
@@ -121,66 +142,99 @@
         aspect-ratio: 1 / 1;
       }
       .game-overlay {
-        display: none !important;
+        font-size: 2.4rem !important;
+        padding: 10vw 4vw;
       }
+    }
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      background-color: #181c29;
+      font-size: 0.9rem;
+      color: #00ffe7;
+      border-top: 1.5px solid #232946;
+      margin-top: 60px;
+      letter-spacing: 0.04em;
     }
   </style>
 </head>
 <body>
-  <div style="width:100%;text-align:center;margin:0 0 18px 0; background:#fff; padding:12px 0 9px 0; border-radius:18px; box-shadow:0 2px 16px rgba(46,43,63,0.08);">
-    <img src="Assets/Images/backgrounds/play-zone-title.jpg" alt="Play Zone Title" style="max-width:300px;width:45vw;height:auto;display:block;margin:0 auto;">
-    <a href="index.html">
-      <img src="Assets/Images/color-logo.png" alt="Willena Color Logo" style="max-width:90px;width:20vw;height:auto;display:block;margin:9px auto 0 auto;">
-    </a>
+  <a href="index.html" style="display:block;width:100%;text-align:center;margin:32px 0 0 0;">
+    <img src="Assets/Images/Logo.png" alt="Willena English Logo" style="height:90px;max-width:320px;width:auto;display:inline-block;filter:drop-shadow(0 0 16px #00ffe7);border-radius:18px;">
+  </a>
+  <div style="width:100%;height:20vh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#181c29;">
+    <img src="Assets/Images/challenge-zone-wide.jpg" alt="Challenge Zone"
+      style="height:100%;width:auto;display:block;object-fit:contain;">
   </div>
+  <div style="width:100vw;max-width:100%;height:0;border-bottom:2px solid #00ffe7;margin:0 0 24px 0;"></div>
+
   <div class="games-container">
     <a class="game-card" href="Games/PastTenseGame/PastTenseGame.html">
-      <img src="Games/PastTenseGame/pasttensegame.jpg" alt="Past Tense Game">
+      <img src="Games/PastTenseGame/pasttensegame.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Past Tense Game">
       <div class="game-title">Past Tense Game</div>
-      <div class="game-overlay overlay-yellow">Past Tense Quiz!</div>
+      <div class="game-overlay overlay-blue">Past Tense Quiz!</div>
     </a>
     <a class="game-card" href="Games/cutie_past_tense/cutie_past_tense.html">
-      <img src="Games/cutie_past_tense/cutie_past_tense.jpg" alt="Cutie Past Tense">
+      <img src="Games/cutie_past_tense/cutie_past_tense.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Cutie Past Tense">
       <div class="game-title">Cutie Past Tense</div>
-      <div class="game-overlay overlay-blue">Eat or ate?</div>
+      <div class="game-overlay overlay-pink">Eat or ate?</div>
     </a>
     <a class="game-card" href="Games/Fruti/Fruti.html">
-      <img src="Games/Fruti/fruti.jpg" alt="Fruti Game">
+      <img src="Games/Fruti/fruti.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Fruti Game">
       <div class="game-title">Fruti</div>
-      <div class="game-overlay overlay-green">Fruit & Veg Quiz!</div>
+      <div class="game-overlay overlay-blue">Fruit & Veg Quiz!</div>
     </a>
     <a class="game-card" href="Games/game_templates/4_b_game.html">
-      <img src="Games/Easy_word_game/Easy_word_game.jpg" alt="Easy Word Game">
+      <img src="Games/Easy_word_game/Easy_word_game.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Easy Word Game">
       <div class="game-title">Easy Word Game</div>
-      <div class="game-overlay overlay-orange">Random Words</div>
+      <div class="game-overlay overlay-pink">Random Words</div>
     </a>
     <a class="game-card" href="Games/JungleAnimalGame/JungleAnimalGame.html">
-      <img src="Games/JungleAnimalGame/JungleAnimalGame.jpg" alt="Jungle Animal Game">
+      <img src="Games/JungleAnimalGame/JungleAnimalGame.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Jungle Animal Game">
       <div class="game-title">Jungle Animal Game</div>
-      <div class="game-overlay overlay-green">Guess The Animals!</div>
+      <div class="game-overlay overlay-blue">Guess The Animals!</div>
     </a>
     <a class="game-card" href="Games/PresentGame1/presentgame1.html">
-      <img src="Games/PresentGame1/presentgame1.jpg" alt="Go Goes">
+      <img src="Games/PresentGame1/presentgame1.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Go Goes">
       <div class="game-title">Go Goes</div>
-      <div class="game-overlay overlay-blue">Is it "Go or Goes?"</div>
+      <div class="game-overlay overlay-pink">Is it "Go or Goes?"</div>
     </a>
     <a class="game-card" href="Games/SchoolStuffGame/SchoolStuffGame.html">
-      <img src="Games/SchoolStuffGame/SchoolStuffGame.jpg" alt="School Stuff Game">
+      <img src="Games/SchoolStuffGame/SchoolStuffGame.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="School Stuff Game">
       <div class="game-title">School Stuff Game</div>
-      <div class="game-overlay overlay-orange">Guess School Stuff</div>
+      <div class="game-overlay overlay-blue">Guess School Stuff</div>
+    </a>
+
+    <!-- Added games -->
+    <a class="game-card" href="Games/EB4/EB4.html">
+      <img src="Games/EB4/eb4.svg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="EB4 Unscramble">
+      <div class="game-title">EB4 Unscramble</div>
+      <div class="game-overlay overlay-pink">Unscramble Sentences!</div>
+    </a>
+
+    <a class="game-card" href="Games/ES6/ES6.html">
+      <img src="Games/ES6/es6.svg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="ES6 Unscramble">
+      <div class="game-title">ES6 Unscramble</div>
+      <div class="game-overlay overlay-blue">Dramady Music</div>
+    </a>
+
+    <a class="game-card" href="Games/Participles1/participles.html">
+      <img src="Games/Participles1/participles.svg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Past Participle Basher">
+      <div class="game-title">Past Participle Basher</div>
+      <div class="game-overlay overlay-pink">Past Participles!</div>
     </a>
   </div>
-  <!-- Add footer for scroll space and info -->
-  <div class="footer" style="text-align: center; padding: 30px 20px; background-color: #f0f0f0; font-size: 0.9rem; color: #777;">
+
+  <div class="footer">
     Phone: 031-8041-2203<br>
     © 2025 Willena 원어민 영어학원. All rights reserved.
   </div>
-  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:100;display:none;align-items:center;gap:10px;background:rgba(255,255,255,0.95);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #0002;">
-    <a href="profile-s.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
-      <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
-      <span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;"></span>
-    </a>
+
+  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:100;display:none;align-items:center;gap:10px;background:rgba(24,28,41,0.97);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #00ffe733;">
+    <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
+    <span id="userName" style="font-weight:600;color:#00ffe7;font-size:1.1em;"></span>
   </div>
+
   <script>
   // Enable overlays on tap/click for mobile
   document.addEventListener('DOMContentLoaded', function() {
@@ -203,32 +257,31 @@
     });
   });
   </script>
+
   <script>
-  // Only run on mobile    Overlay removed, uncomment to put back in
-  /*if (window.innerWidth <= 700) {
+  // Only run on mobile
+  if (window.innerWidth <= 700) {
     document.addEventListener('DOMContentLoaded', function() {
       const cards = document.querySelectorAll('.game-card');
-      // The rootMargin will create a "center band" where the overlay is active
-      // For example, if the viewport is 1000px tall, rootMargin: "-35% 0px -35% 0px"
-      // means only the middle 30% (100% - 35% - 35%) will trigger intersection
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             entry.target.classList.add('show-overlay');
           } else {
             entry.target.classList.remove('show-overlay');
-          }*/
+          }
         });
       }, {
         root: null,
-        rootMargin: "-35% 0px -35% 0px", // Only center 30% of viewport
-        threshold: 0.5 // At least 50% of card must be in the center band
+        rootMargin: "-35% 0px -35% 0px",
+        threshold: 0.5
       });
 
       cards.forEach(card => observer.observe(card));
     });
   }
   </script>
+
   <script>
 document.addEventListener('DOMContentLoaded', async function() {
   const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
@@ -248,7 +301,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (result && result.data && result.data.length > 0) {
       const user = result.data[0];
       document.getElementById('userName').textContent = user.name;
-      document.getElementById('userAvatar').textContent = user.avatar; // Use .avatar for emoji
+      const avatarEl = document.getElementById('userAvatar');
+      const avatar = user.avatar;
+      if (avatar && (avatar.startsWith('http') || avatar.startsWith('data:'))) {
+        avatarEl.innerHTML = `<img src="${avatar}" alt="avatar" style="width:2.2em;height:2.2em;border-radius:50%;vertical-align:middle;">`;
+      } else {
+        avatarEl.textContent = avatar || '🙂';
+      }
       document.getElementById('userProfile').style.display = 'flex';
     }
   } catch (e) {
@@ -256,14 +315,64 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 });
 </script>
+
   <script>
-// This replaces the previous userBox logic
-const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
-const avatar = localStorage.getItem('user_avatar') || '🙂';
-const userAvatarSpan = document.getElementById('userAvatar');
-const userNameSpan = document.getElementById('userName');
-if (userAvatarSpan) userAvatarSpan.textContent = avatar;
-if (userNameSpan) userNameSpan.textContent = name || '';
+  // Load top scorers for each game and display them on the buttons
+  document.addEventListener('DOMContentLoaded', async function() {
+    // Map game cards to their game identifiers
+    const gameMapping = {
+      'Games/PastTenseGame/PastTenseGame.html': 'PastTenseGame',
+      'Games/cutie_past_tense/cutie_past_tense.html': 'cutie_past_tense',
+      'Games/Fruti/Fruti.html': 'Fruti',
+      'Games/game_templates/4_b_game.html': 'EmojiGame',
+      'Games/JungleAnimalGame/JungleAnimalGame.html': 'JungleAnimalGame',
+      'Games/PresentGame1/presentgame1.html': 'PresentGame1',
+      'Games/SchoolStuffGame/SchoolStuffGame.html': 'SchoolStuffGame',
+      'Games/EB4/EB4.html': 'EB4',
+      'Games/ES6/ES6.html': 'ES6',
+      'Games/Participles1/participles.html': 'ParticiplesGame'
+    };
+
+    // Get all game cards
+    const gameCards = document.querySelectorAll('.game-card');
+    
+    // Load top scorer for each game
+    for (const card of gameCards) {
+      const href = card.getAttribute('href');
+      const gameId = gameMapping[href];
+      
+      if (gameId) {
+        try {
+          const response = await fetch(`/.netlify/functions/submit_score?game=${encodeURIComponent(gameId)}`);
+          if (response.ok) {
+            const scores = await response.json();
+            if (scores && scores.length > 0) {
+              const topScorer = scores.reduce((prev, current) => 
+                (prev.score > current.score) ? prev : current
+              );
+              
+              // Find the game title element and add top scorer info
+              const gameTitle = card.querySelector('.game-title');
+              if (gameTitle && topScorer.name) {
+                const topScorerDiv = document.createElement('div');
+                topScorerDiv.style.cssText = `
+                  font-size: 0.8em;
+                  color: #e0e6ff;
+                  margin-top: 6px;
+                  font-weight: 600;
+                  opacity: 0.95;
+                `;
+                topScorerDiv.textContent = `🏆 ${topScorer.name}: ${topScorer.score}`;
+                gameTitle.appendChild(topScorerDiv);
+              }
+            }
+          }
+        } catch (error) {
+          console.log(`Could not load top scorer for ${gameId}:`, error);
+        }
+      }
+    }
+  });
   </script>
 </body>
 </html>

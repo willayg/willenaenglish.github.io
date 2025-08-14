@@ -1,10 +1,8 @@
 <!-- Border Style Modal Component -->
 <div id="border-style-modal" style="display:none;position:fixed;z-index:5000;left:0;top:0;width:100vw;height:100vh;background:rgba(60,60,80,0.18);align-items:center;justify-content:center;">
   <div style="background:linear-gradient(135deg, rgba(165, 180, 179, 0.18) 0%, rgba(134, 201, 206, 0.18) 100%);padding:2px 10px 18px 10px;border-radius:16px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);min-width:245px;max-width:68vw;position:relative;backdrop-filter: blur(16px) saturate(180%);-webkit-backdrop-filter: blur(16px) saturate(180%);">
-    <!-- Close button -->
-    <button id="close-border-modal" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:20px;color:#666;cursor:pointer;padding:4px;line-height:1;" title="Close">&times;</button>
-    <!-- Close button -->
-    <button id="close-border-modal" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:20px;color:#666;cursor:pointer;padding:4px;line-height:1;" title="Close">&times;</button>
+  <!-- Close button -->
+  <button id="close-border-modal" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:20px;color:#666;cursor:pointer;padding:4px;line-height:1;" title="Close">&times;</button>
     <h3 style="font-family:Poppins,sans-serif;font-size:1.08em;color:#3d3752;margin-bottom:14px;">Border Style</h3>
     <div style="display:flex;flex-direction:column;gap:14px;background:#ffffff;border:2px solid #b9f1f5;border-radius:12px;padding:12px 10px;box-sizing:border-box;max-height:56vh;overflow-y:auto;">
       <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
@@ -80,19 +78,46 @@
 // Border Style Modal logic
 const borderModal = document.getElementById('border-style-modal');
 const openBorderModalBtn = document.getElementById('open-border-modal');
+
+// Function to check selection and close modal if nothing selected
+function checkSelectionAndCloseModal() {
+  const selectedElement = getSelectedElement();
+  if (!selectedElement && borderModal.style.display === 'flex') {
+    borderModal.style.display = 'none';
+  }
+}
+
 if (openBorderModalBtn && borderModal) {
-  openBorderModalBtn.onclick = () => { borderModal.style.display = 'flex'; };
+  openBorderModalBtn.onclick = () => {
+    borderModal.style.display = 'flex';
+    // Check selection after a brief delay to allow for UI updates
+    setTimeout(checkSelectionAndCloseModal, 10);
+  };
 }
 if (borderModal) {
   borderModal.addEventListener('click', (e) => {
     if (e.target === borderModal) borderModal.style.display = 'none';
   });
+  
+  // Monitor when modal becomes visible and check if anything is selected
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        if (borderModal.style.display === 'flex') {
+          checkSelectionAndCloseModal();
+        }
+      }
+    });
+  });
+  observer.observe(borderModal, { attributes: true, attributeFilter: ['style'] });
 }
 
 // Close button handler
 const closeBorderModalBtn = document.getElementById('close-border-modal');
 if (closeBorderModalBtn && borderModal) {
-  closeBorderModalBtn.onclick = () => { borderModal.style.display = 'none'; };
+  closeBorderModalBtn.addEventListener('click', function() {
+    borderModal.style.display = 'none';
+  });
 }
 
 // Get current selected element (textbox or header)
