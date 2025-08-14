@@ -22,6 +22,20 @@
   })();
 
   function addDragHandle(box, boxData, a4, updateSelectionFrame) {
+    // Fade logic for second handle
+    let fadeTimeoutTR = null;
+    const showHandleTR = () => {
+      if (fadeTimeoutTR) { clearTimeout(fadeTimeoutTR); fadeTimeoutTR = null; }
+      dragHandleTR.classList.add('visible');
+    };
+    const hideHandleTR = () => {
+      if (fadeTimeoutTR) clearTimeout(fadeTimeoutTR);
+      fadeTimeoutTR = setTimeout(() => {
+        dragHandleTR.classList.remove('visible');
+        fadeTimeoutTR = null;
+      }, 800);
+    };
+
     // handle element
     const dragHandle = document.createElement('div');
     dragHandle.className = 'canva-move-handle';
@@ -56,6 +70,44 @@
       <path d="M18 10L15.8 12.2" stroke="${borderColor}" stroke-width="1.2" stroke-linecap="round"/>
     </svg>`;
 
+      // Second drag handle: top right inside textbox
+      const dragHandleTR = document.createElement('div');
+      dragHandleTR.className = 'canva-move-handle tr-corner';
+      dragHandleTR.setAttribute('tabindex', '0');
+      dragHandleTR.setAttribute('role', 'button');
+      dragHandleTR.setAttribute('aria-label', 'Drag to move textbox');
+      dragHandleTR.style.position = 'absolute';
+      dragHandleTR.style.width = '32px';
+      dragHandleTR.style.height = '32px';
+      dragHandleTR.style.background = 'transparent';
+      dragHandleTR.style.border = 'none';
+      dragHandleTR.style.cursor = 'grab';
+      dragHandleTR.style.zIndex = 31;
+      dragHandleTR.style.transition = 'background 0.15s, box-shadow 0.15s, border 0.15s';
+      dragHandleTR.style.outline = 'none';
+      dragHandleTR.style.userSelect = 'none';
+      dragHandleTR.style.touchAction = 'none';
+      dragHandleTR.innerHTML = dragHandle.innerHTML;
+
+      // Show/hide logic for second handle
+      dragHandleTR.classList.add('visible');
+
+      // Position update for second handle
+      function updateHandleTRPosition() {
+        if (!box.offsetParent) return;
+        dragHandleTR.style.left = (box.offsetLeft + box.offsetWidth - 36) + 'px';
+        dragHandleTR.style.top  = (box.offsetTop + 4) + 'px';
+      }
+
+      // Drag logic for second handle (reuse main logic)
+      dragHandleTR.addEventListener('pointerdown', function(e) {
+        e.stopPropagation();
+        startDrag(e);
+      });
+
+      // Add to DOM
+      a4.appendChild(dragHandleTR);
+
     // fade logic
     let fadeTimeout = null;
     const showHandle = () => {
@@ -82,8 +134,9 @@
 
     function updateHandlePosition() {
       if (!box.offsetParent) return;
-      dragHandle.style.left = (box.offsetLeft + box.offsetWidth / 2 - 32) + 'px';
-      dragHandle.style.top  = (box.offsetTop + box.offsetHeight + 12) + 'px';
+  dragHandle.style.left = (box.offsetLeft + box.offsetWidth / 2 - 32) + 'px';
+  dragHandle.style.top  = (box.offsetTop + box.offsetHeight + 12) + 'px';
+  updateHandleTRPosition();
     }
 
     // hover/focus show-hide
@@ -94,6 +147,13 @@
     box.addEventListener('pointerup', () => { if (box.classList.contains('selected')) showHandle(); });
     dragHandle.addEventListener('pointerenter', showHandle);
 
+    box.addEventListener('pointerenter', showHandleTR);
+    box.addEventListener('focus', showHandleTR);
+    box.addEventListener('click', showHandleTR);
+    box.addEventListener('pointerdown', showHandleTR);
+    box.addEventListener('pointerup', () => { if (box.classList.contains('selected')) showHandleTR(); });
+    dragHandleTR.addEventListener('pointerenter', showHandleTR);
+
     const maybeHide = () => {
       if (!box.classList.contains('selected') && !box.matches(':hover') && !dragHandle.matches(':hover')) hideHandle();
     };
@@ -101,7 +161,15 @@
     box.addEventListener('blur', maybeHide);
     dragHandle.addEventListener('pointerleave', maybeHide);
 
-    hideHandle();
+      const maybeHideTR = () => {
+        if (!box.classList.contains('selected') && !box.matches(':hover') && !dragHandleTR.matches(':hover')) hideHandleTR();
+      };
+      box.addEventListener('pointerleave', maybeHideTR);
+      box.addEventListener('blur', maybeHideTR);
+      dragHandleTR.addEventListener('pointerleave', maybeHideTR);
+
+  hideHandle();
+  hideHandleTR();
 
     // drag state
     let snapToCenter = null;

@@ -171,12 +171,17 @@
     const justResized = { flag:false };
 
     function autoHeight(){
-      // Use initialHeight for consistent auto-resize minimum, not current height
-      const min = parseInt(boxData.initialHeight || boxData.height || 400, 10);
-      box.style.height = 'auto';
-      let h = box.scrollHeight + 4;
-      box.style.height = px(h < min ? min : h);
-      boxData.height = box.style.height;
+      // Smart auto-resize: only expand when text reaches bottom, never shrink
+      const currentHeight = box.offsetHeight;
+      const scrollHeight = box.scrollHeight;
+      
+      // Only expand if content is taller than current height
+      if (scrollHeight > currentHeight) {
+        const newHeight = scrollHeight + 4; // Add small padding
+        box.style.height = newHeight + 'px';
+        boxData.height = box.style.height;
+      }
+      // Never shrink automatically - only manual resize can make it smaller
     }
 
     // keys: arrows move in select mode; undo/redo delegated
@@ -272,16 +277,16 @@
       toggleEmpty(box);
     });
 
-    // input -> sync, placeholder, autoheight, debounced history
+    // input -> sync, placeholder, smart auto-resize, debounced history
     box.addEventListener('input', ()=>{
       boxData.text = box.innerText;
       boxData.html = box.innerHTML;
       toggleEmpty(box);
-      autoHeight();
+      autoHeight(); // Smart resize: only expand when text reaches bottom
       window.worksheetState?.getDebouncedSaveTextHistory?.()();
     });
 
-    setTimeout(autoHeight,0);
+    setTimeout(autoHeight,0); // Initial smart resize check
 
     // persist font changes
     const styleObserver = new MutationObserver(m=>{
