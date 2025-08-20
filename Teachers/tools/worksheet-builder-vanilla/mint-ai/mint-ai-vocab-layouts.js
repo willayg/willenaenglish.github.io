@@ -196,7 +196,7 @@
         `<div style="font-size:0.9em;font-weight:600;color:#333;margin-bottom:4px;">${w.eng}</div>` +
         `<div style="font-size:0.8em;color:#666;">${w.kor || ''}</div>` +
         `</div>` +
-        `<div class="click-instructions" style="position:absolute;top:-25px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:4px 8px;border-radius:4px;font-size:11px;white-space:nowrap;opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:15;">Click to search Pixabay</div>` +
+        `<div class="click-instructions" style="position:absolute;top:-25px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:4px 8px;border-radius:4px;font-size:11px;white-space:nowrap;opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:15;">Click to search for images</div>` +
         `</div>`
       ).join('') + '</div>';
     
@@ -352,7 +352,7 @@
     document.querySelectorAll('.image-drop-zone').forEach(zone => {
       // Make the zone more visually obvious as a drop target
       zone.style.transition = 'all 0.3s ease';
-      zone.title = 'Click to open Pixabay gallery or drag and drop an image here to replace';
+      zone.title = 'Click to open image search or drag and drop an image here to replace';
       
       // Prevent default drag behaviors on the zone
       zone.addEventListener('dragenter', e => {
@@ -541,15 +541,9 @@
         e.stopPropagation();
         const word = this.getAttribute('data-word');
         if (word) {
-          console.log('Opening Pixabay gallery for:', word);
-          const screenW = window.screen.availWidth || window.innerWidth;
-          const screenH = window.screen.availHeight || window.innerHeight;
-          const width = Math.round(screenW * 0.25);
-          const height = Math.round(screenH * 0.8);
-          const left = 10;
-          const top = Math.round((screenH - height) / 2);
-          const url = 'https://pixabay.com/images/search/' + encodeURIComponent(word) + '/';
-          window.open(url, 'ImageSearchWindow', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes');
+          console.log('Opening image search for:', word);
+          // Use the updated openPixabaySearch function which handles different sources
+          openPixabaySearch(word);
         }
       });
     });
@@ -625,15 +619,42 @@
     return `https://via.placeholder.com/150x100/${color}/ffffff?text=${text}`;
   }
 
-  // Function to open Pixabay search in a new window
+  // Function to open image search in a new window based on selected source
   function openPixabaySearch(word) {
     if (!word) return;
     
-    // Open Pixabay search in a new window on the left side
-    const pixabayUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
-    const windowFeatures = 'width=800,height=600,left=0,top=100,scrollbars=yes,resizable=yes';
+    // Get the current picture source setting (default to illustrations if not set)
+    const pictureSource = window.currentPictureSource || 'illustrations';
     
-    window.open(pixabayUrl, '_blank', windowFeatures);
+    let searchUrl = '';
+    let windowTitle = 'ImageSearchWindow';
+    switch (pictureSource) {
+      case 'any':
+        searchUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+        windowTitle = 'AnyImageSearchWindow';
+        break;
+      case 'illustrations':
+        searchUrl = `https://pixabay.com/illustrations/search/${encodeURIComponent(word)}/`;
+        windowTitle = 'IllustrationSearchWindow';
+        break;
+      case 'photos':
+        searchUrl = `https://pixabay.com/photos/search/${encodeURIComponent(word)}/`;
+        windowTitle = 'PhotoSearchWindow';
+        break;
+      case 'ai':
+        searchUrl = `https://lexica.art/?q=${encodeURIComponent(word)}`;
+        windowTitle = 'LexicaAISearchWindow';
+        break;
+      default:
+        searchUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+        windowTitle = 'AnyImageSearchWindow';
+    }
+    console.log(`Opening ${pictureSource} search for: ${word}`);
+  // Open search in a new window - 25vw wide, tall, positioned far left
+  const width = Math.round(window.innerWidth * 0.25);
+  const height = Math.round(window.innerHeight * 0.99);
+  const windowFeatures = 'width=' + width + ',height=' + height + ',left=0,top=0,scrollbars=yes,resizable=yes';
+  window.open(searchUrl, windowTitle, windowFeatures);
   }
 
   // Make the function globally available
@@ -761,8 +782,8 @@ function renderDoubleListWithStyle(words, styleId, l1Label = 'Korean') {
   const half = Math.ceil(words.length / 2);
   const left = words.slice(0, half);
   const right = words.slice(half);
-  // Pad columns to equal length with minimum 6 rows
-  const maxRows = Math.max(left.length, right.length, 6);
+  // Pad columns to equal length (only as many rows as needed)
+  const maxRows = Math.max(left.length, right.length);
   while (left.length < maxRows) left.push({eng: '', kor: ''});
   while (right.length < maxRows) right.push({eng: '', kor: ''});
   

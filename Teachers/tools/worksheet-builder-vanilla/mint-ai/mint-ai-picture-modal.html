@@ -2,6 +2,8 @@
 <!-- Modal for Picture Activities (image worksheet formats) -->
 <div id="picture-activities-modal" class="mint-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:30000;display:flex;align-items:center;justify-content:center;font-family:'Poppins',Arial,sans-serif;">
   <div class="modal-panel" style="background:linear-gradient(135deg,#f0f9ff 0%,#e0f7fa 100%);border-radius:24px;border:2px solid #93cbcf;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);width:min(1190px,98vw);max-width:99vw;min-height:76vh;max-height:85vh;min-width:min(765px,90vw);display:flex;flex-direction:row;overflow:hidden;position:relative;">
+  <!-- Close Button (keep only one) -->
+  <!-- ...existing code... -->
     <!-- Left: AI Inputs -->
     <div style="flex:0.88;padding:40px 18px 40px 28px;display:flex;flex-direction:column;background:white;border-right:2px solid #93cbcf;">
       <h2 style="font-family:'Poppins',Arial,sans-serif;font-size:1.78em;font-weight:800;letter-spacing:-1.2px;color:#f59e0b;margin:0 0 12px 0;">MINT AI - Pictures</h2>
@@ -14,15 +16,7 @@
         <button id="picture-upload-btn" style="flex:1;padding:6.5px 0;border-radius:7px;background:#e1e8ed;color:#666;border:none;font-size:0.77em;font-weight:600;font-family:'Poppins',Arial,sans-serif;cursor:pointer;transition:background 0.2s;opacity:0.85;">Upload Images</button>
       </div>
       
-      <div style="margin-bottom:8px;">
-        <select id="picture-activity-type" style="font-size:0.82em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;margin:0 auto;outline:none;font-family:'Poppins',Arial,sans-serif;">
-          <option value="labeling">Picture Labeling</option>
-          <option value="matching">Picture Matching</option>
-          <option value="story">Picture Story</option>
-          <option value="describe">Describe the Picture</option>
-          <option value="custom">Custom Format</option>
-        </select>
-      </div>
+  <!-- ...existing code... -->
       
       <textarea id="picture-upload-area" placeholder="Drag and drop images here or click to upload" style="font-size:0.68em;padding:6px 8px;border-radius:7px;border:2px solid #93cbcf;background:#fff;width:92%;min-height:153px;max-height:170px;resize:none;margin:0 auto 8px auto;outline:none;display:none;font-family:'Poppins',Arial,sans-serif;"></textarea>
       
@@ -92,84 +86,17 @@
     
     <!-- Right: Live Preview -->
     <div style="flex:1.7;padding:40px 40px 40px 28px;display:flex;flex-direction:column;background:linear-gradient(135deg,#fef9e7 0%,#fffbeb 100%);border-left:2px solid #93cbcf;">
-      <!-- Layout Button -->
-      <div style="display:flex;gap:10px;margin-bottom:8px;width:100%;">
-        <button id="picture-layouts-btn" style="flex:1;font-size:0.94em;padding:6px 10px;border-radius:7px;background:#f59e0b;color:#fff;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Layout</button>
-        <button id="picture-style-btn" style="flex:1;font-size:0.94em;padding:6px 10px;border-radius:7px;background:#ffe0b2;color:#b26a00;font-family:'Poppins',Arial,sans-serif;box-sizing:border-box;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Style</button>
-      </div>
-      
-      <!-- Layout Modal -->
-      <div id="picture-layouts-modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(30,40,60,0.22);z-index:99999;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:22px;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);padding:38px 48px 32px 48px;min-width:900px;min-height:540px;max-width:98vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;position:relative;border:2.5px solid #f59e0b;overflow:hidden;">
-          <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:2em;font-weight:700;margin-bottom:24px;color:#f59e0b;text-align:center;width:100%;letter-spacing:-1px;">Picture Layout</h3>
-          <div style="width:100%;height:2px;background:#f59e0b;margin-bottom:24px;"></div>
-          <div style="width:100%;padding-bottom:10px;margin-bottom:18px;">
-            <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;justify-content:flex-start;">
-              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-layout-option" data-value="grid" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#222;font-size:0.55em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">Grid Layout</button>
-                <span style="margin-top:8px;font-size:1em;color:#f59e0b;font-weight:600;">Grid Layout</span>
-              </div>
-              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-layout-option" data-value="sequence" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#222;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">Sequence</button>
-                <span style="margin-top:8px;font-size:1em;color:#f59e0b;font-weight:600;">Sequence</span>
-              </div>
-              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-layout-option" data-value="matching" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#f59e0b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">Match & Label</button>
-                <span style="margin-top:8px;font-size:1em;color:#f59e0b;font-weight:600;">Match & Label</span>
-              </div>
-              <div class="layout-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-layout-option" data-value="cards" style="width:160px;height:120px;padding:0;border-radius:14px;background:#fff;color:#f59e0b;font-size:0.45em;font-family:'Poppins',Arial,sans-serif;font-weight:600;border:3px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,0.08);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">Picture Cards</button>
-                <span style="margin-top:8px;font-size:1em;color:#f59e0b;font-weight:600;">Picture Cards</span>
-              </div>
-            </div>
-          </div>
-          <button id="picture-layouts-close" style="margin-top:12px;padding:12px 0;border-radius:10px;background:#e1e8ed;color:#f59e0b;border:none;font-size:1.2em;font-family:'Poppins',Arial,sans-serif;width:100%;font-weight:600;">Close</button>
-        </div>
-      </div>
-      
-      <!-- Style Modal -->
-      <div id="picture-style-modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(30,40,60,0.22);z-index:99999;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:22px;box-shadow:0 12px 48px 0 rgba(60,60,80,0.22);padding:38px 48px 32px 48px;min-width:700px;min-height:440px;max-width:98vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;position:relative;border:2.5px solid #1976d2;overflow:hidden;">
-          <h3 style="font-family:'Poppins',Arial,sans-serif;font-size:2em;font-weight:700;margin-bottom:24px;color:#1976d2;text-align:center;width:100%;letter-spacing:-1px;">Picture Style</h3>
-          <div style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow-y:auto;">
-            <div style="display:flex;gap:30px;align-items:center;justify-content:center;flex-wrap:wrap;">
-              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-style-option" data-value="realistic" style="width:120px;height:80px;border:2px solid #1976d2;border-radius:8px;background:#fff;cursor:pointer;">Realistic</button>
-                <span style="margin-top:8px;font-size:0.9em;color:#1976d2;">Realistic</span>
-              </div>
-              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-style-option" data-value="cartoon" style="width:120px;height:80px;border:2px solid #1976d2;border-radius:8px;background:#fff;cursor:pointer;">Cartoon</button>
-                <span style="margin-top:8px;font-size:0.9em;color:#1976d2;">Cartoon</span>
-              </div>
-              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-style-option" data-value="simple" style="width:120px;height:80px;border:2px solid #1976d2;border-radius:8px;background:#fff;cursor:pointer;">Simple</button>
-                <span style="margin-top:8px;font-size:0.9em;color:#1976d2;">Simple</span>
-              </div>
-              <div class="style-thumb-container" style="display:flex;flex-direction:column;align-items:center;">
-                <button class="picture-style-option" data-value="clipart" style="width:120px;height:80px;border:2px solid #1976d2;border-radius:8px;background:#fff;cursor:pointer;">Clip Art</button>
-                <span style="margin-top:8px;font-size:0.9em;color:#1976d2;">Clip Art</span>
-              </div>
-            </div>
-          </div>
-          <button id="picture-style-close" style="margin-top:12px;padding:12px 0;border-radius:10px;background:#e1e8ed;color:#1976d2;border:none;font-size:1.2em;font-family:'Poppins',Arial,sans-serif;width:100%;font-weight:600;">Close</button>
-        </div>
-      </div>
-      
-      <!-- Hidden select for compatibility -->
-      <select id="picture-layout-format" style="display:none;">
-        <option value="grid" selected>Grid Layout</option>
-        <option value="sequence">Sequence</option>
-        <option value="matching">Match & Label</option>
-        <option value="cards">Picture Cards</option>
-      </select>
+  <!-- ...existing code... -->
       
       <div style="width:100%;height:1px;background:#f59e0b;margin-bottom:15px;"></div>
       <div style="display:flex;align-items:center;gap:18px;margin-bottom:10px;">
         <div style="font-size:1.06em;font-weight:700;color:#f59e0b;font-family:'Poppins',Arial,sans-serif;">Preview</div>
       </div>
-      <div id="picture-preview-area" style="flex:1;background:#fff;border-radius:10px;min-height:265px;max-height:530px;padding:15px 17px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;"></div>
+      <div id="picture-preview-area" style="flex:1;background:#fff;border-radius:10px;min-height:265px;max-height:530px;padding:15px 17px;box-shadow:0 2px 12px rgba(60,60,80,0.07);border:2px solid #93cbcf;font-family:'Poppins',Arial,sans-serif;overflow-y:auto;">
+        <!-- Preview content will appear here -->
+      </div>
     </div>
     
-    <button id="close-picture-modal" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:1.7em;color:#666;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
+  <button id="close-picture-modal" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:1.7em;color:#666;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
   </div>
 </div>

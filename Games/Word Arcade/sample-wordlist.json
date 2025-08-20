@@ -1,0 +1,12 @@
+[
+  { "eng": "apple", "kor": "사과" },
+  { "eng": "banana", "kor": "바나나" },
+  { "eng": "cat", "kor": "고양이" },
+  { "eng": "dog", "kor": "개" },
+  { "eng": "school", "kor": "학교" },
+  { "eng": "teacher", "kor": "선생님" },
+  { "eng": "book", "kor": "책" },
+  { "eng": "computer", "kor": "컴퓨터" },
+  { "eng": "car", "kor": "자동차" },
+  { "eng": "music", "kor": "음악" }
+]

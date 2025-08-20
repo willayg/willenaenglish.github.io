@@ -161,7 +161,11 @@
           textAlign: boxEl.style.textAlign || 'left',
           lineHeight: boxEl.style.lineHeight || '1.8', // Restored with new system
           valign: boxEl.style.justifyContent === 'center' ? 'middle' : 
-                  boxEl.style.justifyContent === 'flex-end' ? 'bottom' : 'top'
+                  boxEl.style.justifyContent === 'flex-end' ? 'bottom' : 'top',
+          // Preserve type attribute for vocab boxes
+          type: boxEl.getAttribute('data-type') || undefined,
+          // Preserve vocab state for vocab boxes
+          vocabState: boxEl.getAttribute('data-vocab-state') ? JSON.parse(boxEl.getAttribute('data-vocab-state')) : undefined
         };
         
         window.worksheetState.getPages()[pageIdx].boxes.push(boxData);
