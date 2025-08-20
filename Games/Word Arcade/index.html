@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Arcade | 단어 오락실</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Word Arcade <span style="font-size:0.7em;color:#93cbcf;">단어 오락실</span></h1>
+    <button id="loadWordsBtn">Load Word List</button>
+    <input type="file" id="wordFileInput" accept=".json" style="display:none;">
+    <div id="qrCodeContainer"></div>
+  </header>
+  <main>
+    <section id="modeSelect">
+      <button class="mode-btn" data-mode="meaning">Meaning Match</button>
+      <button class="mode-btn" data-mode="spelling">Spelling</button>
+      <button class="mode-btn" data-mode="listening">Listening Mode</button>
+      <!-- Add more modes here -->
+    </section>
+    <section id="gameArea"></section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

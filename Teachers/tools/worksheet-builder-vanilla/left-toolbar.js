@@ -59,14 +59,28 @@ document.head.appendChild(styleSheet);
 
       // Wire up click event for vocab box functionality (Mint AI modal)
       vocabBtn.addEventListener('click', function() {
+        console.log('🖱️ Vocab Box button clicked!');
+        console.log('🔍 Checking for openVocabBoxModal function:', typeof window.openVocabBoxModal);
+        
         // Dynamically load the modal script if not present
         if (window.openVocabBoxModal) {
+          console.log('✅ Function exists, calling openVocabBoxModal()');
           window.openVocabBoxModal();
         } else {
+          console.log('❌ Function not found, loading script...');
           const script = document.createElement('script');
-          script.src = 'mint-ai/mint-ai-vocab-modal.js';
+          script.src = 'mint-ai/mint-ai-vocab-modal-fixed.js';
           script.onload = function() {
-            if (window.openVocabBoxModal) window.openVocabBoxModal();
+            console.log('📜 Script loaded, checking function again:', typeof window.openVocabBoxModal);
+            if (window.openVocabBoxModal) {
+              console.log('✅ Now calling openVocabBoxModal()');
+              window.openVocabBoxModal();
+            } else {
+              console.error('❌ Function still not available after script load');
+            }
+          };
+          script.onerror = function(error) {
+            console.error('❌ Script failed to load:', error);
           };
           document.body.appendChild(script);
         }
@@ -87,14 +101,14 @@ document.head.appendChild(styleSheet);
 
       // Wire up click event for picture activities functionality
       pictureBtn.addEventListener('click', function() {
-        // Open the vocab modal in picture mode
-        if (window.openVocabBoxModal) {
-          window.openVocabBoxModal(true);
+        // Open the new picture activity modal
+        if (window.openPictureActivityModal) {
+          window.openPictureActivityModal();
         } else {
           const script = document.createElement('script');
-          script.src = 'mint-ai/mint-ai-vocab-modal.js';
+          script.src = 'mint-ai/mint-ai-picture-modal.js';
           script.onload = function() {
-            if (window.openVocabBoxModal) window.openVocabBoxModal(true);
+            if (window.openPictureActivityModal) window.openPictureActivityModal();
           };
           document.body.appendChild(script);
         }

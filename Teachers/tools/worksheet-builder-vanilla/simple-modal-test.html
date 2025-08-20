@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Modal Test</title>
+    <style>body { font-family: Arial, sans-serif; padding: 20px; }</style>
+</head>
+<body>
+    <h1>Simple Modal Test</h1>
+    <button onclick="testModal()">Test Modal</button>
+    <div id="status"></div>
+    
+    <script>
+        function testModal() {
+            console.log('Testing modal...');
+            const status = document.getElementById('status');
+            
+            fetch('mint-ai/mint-ai-vocab-modal.html')
+                .then(r => {
+                    console.log('Fetch response:', r.status, r.ok);
+                    status.innerHTML = `<p>Fetch status: ${r.status} (${r.ok ? 'OK' : 'Failed'})</p>`;
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.text();
+                })
+                .then(html => {
+                    console.log('HTML loaded, length:', html.length);
+                    status.innerHTML += `<p>HTML loaded successfully: ${html.length} characters</p>`;
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = html;
+                    document.body.appendChild(wrapper);
+                    
+                    const modal = document.getElementById('vocab-box-modal');
+                    if (modal) {
+                        status.innerHTML += `<p>✅ Modal element found and added to DOM!</p>`;
+                    } else {
+                        status.innerHTML += `<p>❌ Modal element not found in HTML</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    status.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html>

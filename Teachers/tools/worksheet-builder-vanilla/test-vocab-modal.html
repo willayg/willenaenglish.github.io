@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Vocab Modal</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Test Vocab Modal</h1>
+    <button id="test-btn">Test Function Availability</button>
+    <button id="try-open-btn">Try to Open Modal</button>
+    <div id="status"></div>
+    
+    <script src="mint-ai/mint-ai-vocab-modal.js"></script>
+    <script>
+        const statusDiv = document.getElementById('status');
+        
+        function updateStatus(message, isError = false) {
+            statusDiv.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+            console.log(message);
+        }
+        
+        document.getElementById('test-btn').addEventListener('click', function() {
+            if (typeof window.openVocabBoxModal === 'function') {
+                updateStatus('✅ openVocabBoxModal function is available!');
+            } else {
+                updateStatus('❌ openVocabBoxModal function not found', true);
+            }
+        });
+        
+        document.getElementById('try-open-btn').addEventListener('click', function() {
+            try {
+                if (typeof window.openVocabBoxModal === 'function') {
+                    updateStatus('Attempting to open modal...');
+                    window.openVocabBoxModal();
+                    setTimeout(() => {
+                        const modal = document.getElementById('vocab-box-modal');
+                        if (modal) {
+                            updateStatus('✅ Modal opened successfully!');
+                        } else {
+                            updateStatus('❌ Modal function ran but modal element not found', true);
+                        }
+                    }, 500);
+                } else {
+                    updateStatus('❌ Function not available', true);
+                }
+            } catch (error) {
+                updateStatus(`❌ Error opening modal: ${error.message}`, true);
+            }
+        });
+        
+        // Check immediately on load
+        setTimeout(function() {
+            updateStatus(`Initial check: window.openVocabBoxModal type = ${typeof window.openVocabBoxModal}`);
+        }, 100);
+    </script>
+</body>
+</html>

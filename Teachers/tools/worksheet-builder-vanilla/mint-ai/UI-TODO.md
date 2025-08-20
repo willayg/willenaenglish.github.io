@@ -1,8 +1,6 @@
-
 # MINT AI Modal & Worksheet Builder — UI/UX TODOs (Picture Activities & Word List)
 
 ## New UI/UX Requests (August 2025)
-
 
 1. **Save Content Modal & Shared Data Model for Word Lists**
    - Tall, always-visible modal on the right side of the screen.
@@ -22,23 +20,34 @@
 4. **Picture List Layout**
    - Add a new layout: "Picture List" (similar to double/side by side, but with images).
 
+5. **Text box resizing is still broken at zoom/scaling. Needs zoom-aware resize fix.**
+
+6. **STUBBORN VOCAB MODAL ISSUES:**
+   1. Edits made directly in the canvas vocab box do not load or appear in the modal when reopened. The modal ignores unsaved canvas changes.
+   2. Only the most recently inserted vocab box can be reopened in the modal using the inline toolbar AI button. Previously inserted vocab boxes show a blank modal, as if their state is lost or not tracked.
+
 ## UI/UX Improvements
 
-1. ~~**Add a separate "Picture Activities" icon to the sidebar**~~ ✅
+1. ~~Add a separate "Picture Activities" icon to the sidebar~~ ✅
    - ~~Place directly under "Vocab Box"~~
    - ~~Use a clear photo/mountain icon~~
    - ~~Keep both visible for maximum discoverability~~
 
-3. **Add a "Recents" panel to the word list generation screen**
+2. Add a "Recents" panel to the word list generation screen
    - Show the last 5–10 lists
    - Provide quick load and preview functionality
 
-4. **Add an "Also Make" button strip after generating a list**
+3. Add an "Also Make" button strip after generating a list
    - Quick-convert options: Test Sheet, Picture Cards, Matching Game, Slides, etc.
    - Instantly open the chosen layout using the same list
 
-5. **Enable "Change Layout" in the right-click menu for any word list object in the canvas**
+4. **Enable "Change Layout" in the right-click menu for any word list object in the canvas**
    - Allow instant switching between layouts without re-entering the list
 
 ---
 Add new UI/UX issues above as needed. Check off completed items below.
+10. **Instant Tooltip for Layout Icons**
+   - The browser's native tooltip (using the `title` attribute) has a delay and cannot be made to appear instantly. To achieve an immediate popup for layout icon tooltips in the Mint AI vocab modal, a custom tooltip implementation using JavaScript and CSS is needed.
+   - Replace the native tooltip for layout icon buttons with a custom tooltip that appears instantly on hover/focus and disappears on mouseleave/blur.
+   - Style the tooltip to match the modal's design.
+   - Requested during UI/UX improvements for the Mint AI vocab modal. Will revisit when building help tools.

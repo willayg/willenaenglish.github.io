@@ -12,6 +12,17 @@
   function createTextboxElement(boxData) {
     const box = document.createElement('div');
     box.className = 'worksheet-textbox' + (boxData.text && boxData.text.trim() === '' ? ' empty' : '');
+    
+    // Add vocab-specific classes and attributes if this is a vocab box
+    if (boxData.type === 'vocab') {
+      box.classList.add('vocab-box');
+      box.setAttribute('data-type', 'vocab');
+      // Store vocab state for editing if available
+      if (boxData.vocabState) {
+        box.setAttribute('data-vocab-state', JSON.stringify(boxData.vocabState));
+      }
+    }
+    
     box.contentEditable = true;
     box.setAttribute('data-placeholder', 'Type here...');
     box.style.position = 'absolute';

@@ -1,6 +1,3 @@
-// BACKUP of wordtest.js on 2025-08-05
-
-// ...existing code...
 // Word Worksheet Generator JavaScript - Main Controller
 // Import modules
 import { extractWordsWithAI } from './ai.js';
@@ -359,12 +356,12 @@ function initializeEventListeners() {
         wordListTextarea.addEventListener('input', function() {
             updateCurrentWordsFromTextarea();
             highlightDuplicates();
-            updatePreview();
+            updatePreviewPreservingImages(); // Preserve images when word list changes
         });
         wordListTextarea.addEventListener('change', function() {
             updateCurrentWordsFromTextarea();
             highlightDuplicates();
-            updatePreview();
+            updatePreviewPreservingImages(); // Preserve images when word list changes
         });
     }
 }
@@ -448,7 +445,7 @@ function getCurrentWorksheetData() {
         numLettersToHide: currentSettings.numLettersToHide
     };
     
-    return {
+    const worksheetData = {
         worksheet_type: 'wordtest',
         title,
         passage_text: passage,
@@ -457,12 +454,23 @@ function getCurrentWorksheetData() {
         settings: JSON.stringify(settings),
         images: JSON.stringify(imageData)
     };
+    
+    // Include user_id if this worksheet was loaded from database (for updates)
+    if (window._currentWorksheetId) {
+        worksheetData.user_id = window._currentWorksheetId;
+    }
+    
+    return worksheetData;
 }
 window.getCurrentWorksheetData = getCurrentWorksheetData;
 
 // Loads a worksheet object into the UI (called by worksheet_manager.html)
 function loadWorksheet(worksheet) {
     if (!worksheet) return;
+    
+    // Store worksheet user_id for updates
+    window._currentWorksheetId = worksheet.user_id || null;
+    
     // Defensive: support both array and string for words
     let wordsArr = [];
     if (Array.isArray(worksheet.words)) {
@@ -1113,6 +1121,19 @@ async function updatePreviewPreservingImages() {
 function addWordCellInteractivity(previewArea) {
     if (!previewArea) return;
 
+    // Helper functions for duplicate detection
+    function isDuplicateEng(eng) {
+        if (!eng) return false;
+        const engLower = eng.trim().toLowerCase();
+        return currentWords.filter(word => word.eng && word.eng.trim().toLowerCase() === engLower).length > 1;
+    }
+    
+    function isDuplicateKor(kor) {
+        if (!kor) return false;
+        const korLower = kor.trim().toLowerCase();
+        return currentWords.filter(word => word.kor && word.kor.trim().toLowerCase() === korLower).length > 1;
+    }
+
     // Remove any previous event listeners
     previewArea.oncontextmenu = null;
     previewArea.onclick = null;
@@ -1163,14 +1184,29 @@ function addWordCellInteractivity(previewArea) {
                 currentWords[idx][lang] = input.value.trim();
                 // Update textarea
                 document.getElementById('wordListTextarea').value = currentWords.map(word => `${word.eng}, ${word.kor}`).join('\n');
-                updatePreviewPreservingImages();
+                
+                // Instead of rebuilding the entire preview, just update this specific cell
+                const isDup = lang === 'eng' ? isDuplicateEng(input.value.trim()) : isDuplicateKor(input.value.trim());
+                const content = input.value.trim() || '______';
+                const overlay = isDup ? '<span class="dup-overlay-screen" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,140,0,0.25);pointer-events:none;z-index:1;"></span>' : '';
+                const highlightedContent = `<span style="position:relative;display:inline-block;width:100%;">${overlay}<span style="position:relative;z-index:2;">${content}</span></span>`;
+                cell.innerHTML = highlightedContent;
+            };
+            
+            const cancelEdit = () => {
+                // Just restore the original cell content without rebuilding
+                const originalValue = currentWords[idx][lang] || '______';
+                const isDup = lang === 'eng' ? isDuplicateEng(originalValue) : isDuplicateKor(originalValue);
+                const overlay = isDup ? '<span class="dup-overlay-screen" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,140,0,0.25);pointer-events:none;z-index:1;"></span>' : '';
+                const highlightedContent = `<span style="position:relative;display:inline-block;width:100%;">${overlay}<span style="position:relative;z-index:2;">${originalValue}</span></span>`;
+                cell.innerHTML = highlightedContent;
             };
             input.addEventListener('blur', saveEdit);
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     saveEdit();
                 } else if (e.key === 'Escape') {
-                    updatePreviewPreservingImages(); // Cancel edit
+                    cancelEdit();
                 }
             });
         }
