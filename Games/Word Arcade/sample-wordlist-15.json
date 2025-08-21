@@ -1,0 +1,17 @@
+[
+  {"eng": "apple", "kor": "사과"},
+  {"eng": "banana", "kor": "바나나"},
+  {"eng": "cat", "kor": "고양이"},
+  {"eng": "dog", "kor": "개"},
+  {"eng": "water", "kor": "물"},
+  {"eng": "school", "kor": "학교"},
+  {"eng": "book", "kor": "책"},
+  {"eng": "car", "kor": "자동차"},
+  {"eng": "tree", "kor": "나무"},
+  {"eng": "sun", "kor": "태양"},
+  {"eng": "moon", "kor": "달"},
+  {"eng": "star", "kor": "별"},
+  {"eng": "milk", "kor": "우유"},
+  {"eng": "bread", "kor": "빵"},
+  {"eng": "house", "kor": "집"}
+]
