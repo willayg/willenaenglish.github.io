@@ -70,17 +70,34 @@ h1 {
   border-radius: 12px;
   padding: 16px;
   text-align: center;
-  font-size: 1.1em;
+  font-size: 1.25em;
   font-weight: 600;
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
+  height: 80px;
+  min-height: 80px;
+  max-height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(60,60,80,0.08);
-  transition: all 0.3s ease;
+  transition: transform 0.25s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease;
   box-sizing: border-box;
+}
+
+/* Strong visual feedback when selected/matching */
+.eng-card.selected {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+  transform: scale(1.08) translateY(-4px);
+  box-shadow: 0 10px 24px rgba(245,158,11,0.25);
+}
+
+.kor-target.pending-match {
+  background: #93cbcf;
+  color: #fff;
+  border-color: #19777e;
+  transform: scale(1.08) translateY(-4px);
+  box-shadow: 0 10px 24px rgba(25,119,126,0.22);
 }
 
 .kor-target {
@@ -93,9 +110,9 @@ h1 {
   background: #fff3cd;
   border-color: #f59e0b;
   color: #f59e0b;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
-  touch-action: none;
+  touch-action: manipulation;
 }
 
 .eng-card:active {
@@ -122,6 +139,13 @@ h1 {
   background: #c8e6c9;
   border-color: #4caf50;
   opacity: 0.7;
+}
+
+/* Wrong feedback */
+.eng-card.wrong, .kor-target.wrong {
+  background: #fde8e8;
+  border-color: #e53e3e;
+  color: #e53e3e;
 }
 
 /* Particle explosion animation */
@@ -151,10 +175,10 @@ h1 {
   
   .kor-target, .eng-card {
     padding: 14px;
-    font-size: 1em;
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
+  font-size: 1.15em;
+    height: 70px;
+    min-height: 70px;
+    max-height: 70px;
   }
 }
 
@@ -165,9 +189,9 @@ h1 {
   
   .kor-target, .eng-card {
     padding: 12px;
-    font-size: 0.9em;
-    height: 45px;
-    min-height: 45px;
-    max-height: 45px;
+  font-size: 1em;
+    height: 56px;
+    min-height: 56px;
+    max-height: 56px;
   }
 }
