@@ -1,3 +1,65 @@
+    // --- AUDIO UPLOAD (for TTS mp3 files) ---
+    if (event.queryStringParameters && event.queryStringParameters.upload_audio !== undefined) {
+      // CORS preflight
+      if (event.httpMethod === 'OPTIONS') {
+        return {
+          statusCode: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+          },
+          body: ''
+        };
+      }
+      if (event.httpMethod === 'POST') {
+        try {
+          const parsed = JSON.parse(event.body || '{}');
+          const { word, fileDataBase64 } = parsed;
+          console.log('[upload_audio] Incoming payload keys:', Object.keys(parsed));
+          console.log('[upload_audio] Word:', word);
+          if (!word || !fileDataBase64) {
+            return {
+              statusCode: 400,
+              headers: { 'Access-Control-Allow-Origin': '*' },
+              body: JSON.stringify({ error: 'Missing word or file data' })
+            };
+          }
+          const safeWord = String(word).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '');
+          const buffer = Buffer.from(fileDataBase64, 'base64');
+          console.log('[upload_audio] Buffer length:', buffer.length, 'bytes');
+          const filePath = `${safeWord}.mp3`;
+          console.log('[upload_audio] Uploading to bucket "audio" as:', filePath);
+          const { data, error } = await supabase.storage
+            .from('audio')
+            .upload(filePath, buffer, {
+              contentType: 'audio/mpeg',
+              upsert: true,
+            });
+          if (error) {
+            console.error('[upload_audio] Supabase upload error:', error);
+            return {
+              statusCode: 500,
+              headers: { 'Access-Control-Allow-Origin': '*' },
+              body: JSON.stringify({ error: error.message || 'Upload failed', details: error })
+            };
+          }
+          console.log('[upload_audio] Upload success:', data);
+          return {
+            statusCode: 200,
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({ success: true, path: data.path })
+          };
+        } catch (err) {
+          console.error('[upload_audio] Handler error:', err);
+          return {
+            statusCode: 400,
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({ error: err.message })
+          };
+        }
+      }
+    }
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {

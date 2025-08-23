@@ -13,7 +13,13 @@ exports.handler = async (event, context) => {
   const elevenLabsApiKey = process.env.ELEVEN_LABS_API_KEY;
 
   let text = "";
-  let voiceId = process.env.ELEVEN_LABS_DEFAULT_VOICE_ID || "t48pCvC0g1kiVGYyVUCT"; // Use uppercase to match .env
+  let voiceId = process.env.ELEVEN_LABS_DEFAULT_VOICE_ID;
+  if (!voiceId) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "ELEVEN_LABS_DEFAULT_VOICE_ID env var not set" })
+    };
+  }
   try {
     const body = JSON.parse(event.body);
     text = body.text;
