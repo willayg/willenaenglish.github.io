@@ -1,0 +1,22 @@
+[
+  { "eng": "run", "kor": "달리다" },
+  { "eng": "eat", "kor": "먹다" },
+  { "eng": "drink", "kor": "마시다" },
+  { "eng": "sleep", "kor": "자다" },
+  { "eng": "read", "kor": "읽다" },
+  { "eng": "write", "kor": "쓰다" },
+  { "eng": "sing", "kor": "노래하다" },
+  { "eng": "dance", "kor": "춤추다" },
+  { "eng": "swim", "kor": "수영하다" },
+  { "eng": "jump", "kor": "뛰다" },
+  { "eng": "walk", "kor": "걷다" },
+  { "eng": "talk", "kor": "말하다" },
+  { "eng": "listen", "kor": "듣다" },
+  { "eng": "see", "kor": "보다" },
+  { "eng": "buy", "kor": "사다" },
+  { "eng": "sell", "kor": "팔다" },
+  { "eng": "make", "kor": "만들다" },
+  { "eng": "give", "kor": "주다" },
+  { "eng": "take", "kor": "받다" },
+  { "eng": "open", "kor": "열다" }
+]

@@ -7,6 +7,18 @@ export function runSpellingMode({ wordList, gameArea }) {
   let round = 0;
   let completedIndices = [];
 
+  // Show intro phrase large, then fade out to reveal the game
+  gameArea.innerHTML = `
+    <div id="spellingIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Spell the English words!</div>
+    </div>
+  `;
+  setTimeout(() => {
+    const intro = document.getElementById('spellingIntro');
+    if (intro) intro.style.opacity = '0';
+    setTimeout(() => { renderRound(); }, 650);
+  }, 1000);
+
   function renderRound() {
     const remainingIndices = wordList.map((_, i) => i).filter(i => !completedIndices.includes(i));
     const roundIndices = remainingIndices.slice(0, ROUND_SIZE);
@@ -90,5 +102,5 @@ export function runSpellingMode({ wordList, gameArea }) {
     });
   }
 
-  renderRound();
+  // First round is triggered after the intro fades out
 }

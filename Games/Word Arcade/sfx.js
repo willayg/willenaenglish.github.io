@@ -6,6 +6,7 @@ export function playSFX(name) {
     wrong2: 'assets/audio/wrong-answer2.mp3',
     kindaRight: 'assets/audio/kinda-right-answer.mp3',
     end: 'assets/audio/game-end.mp3',
+    'begin-the-game': 'assets/audio/begin-the-game.mp3',
   };
   const src = audioMap[name];
   if (src) {

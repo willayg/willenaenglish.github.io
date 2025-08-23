@@ -1,0 +1,22 @@
+[
+  {"eng": "reading", "kor": "독서"},
+  {"eng": "painting", "kor": "그림 그리기"},
+  {"eng": "cooking", "kor": "요리"},
+  {"eng": "gardening", "kor": "정원 가꾸기"},
+  {"eng": "photography", "kor": "사진 찍기"},
+  {"eng": "dancing", "kor": "춤추기"},
+  {"eng": "singing", "kor": "노래 부르기"},
+  {"eng": "playing guitar", "kor": "기타 치기"},
+  {"eng": "playing piano", "kor": "피아노 치기"},
+  {"eng": "swimming", "kor": "수영"},
+  {"eng": "cycling", "kor": "자전거 타기"},
+  {"eng": "hiking", "kor": "등산"},
+  {"eng": "fishing", "kor": "낚시"},
+  {"eng": "traveling", "kor": "여행"},
+  {"eng": "writing", "kor": "글쓰기"},
+  {"eng": "drawing", "kor": "그리기"},
+  {"eng": "playing chess", "kor": "체스 두기"},
+  {"eng": "playing video games", "kor": "비디오 게임하기"},
+  {"eng": "knitting", "kor": "뜨개질"},
+  {"eng": "baking", "kor": "베이킹"}
+]

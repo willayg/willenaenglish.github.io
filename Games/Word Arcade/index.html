@@ -9,20 +9,47 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Word Arcade <span style="font-size:0.7em;color:#93cbcf;">단어 오락실</span></h1>
-    <button id="loadWordsBtn">Load Word List</button>
-    <input type="file" id="wordFileInput" accept=".json" style="display:none;">
-    <div id="qrCodeContainer"></div>
+  <header style="display: flex; flex-direction: column; align-items: center; padding: 16px 20px;">
+    <div style="display: flex; align-items: center; width: 100%; justify-content: space-between;">
+      <div style="width: 32px;"></div>
+      <h1 style="margin: 0; text-align: center;">Word Arcade <span style="font-size:0.7em;color:#93cbcf;">단어 오락실</span></h1>
+      <button id="burgerMenuBtn" style="display: none; background: none; border: none; color: #19777e; font-size: 20px; cursor: pointer;">☰</button>
+    </div>
+    
+    <div id="menuBar" style="display: none; margin-top: 12px;">
+      <button id="wordsBtn" style="
+        background: none;
+        border: none;
+        color: #19777e;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 16px;
+        margin: 0 8px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      " onmouseover="this.style.background='rgba(25,119,126,0.1)'" onmouseout="this.style.background='none'">Words</button>
+      
+      <span style="color: #ccc;">|</span>
+      
+      <button id="modeBtn" style="
+        background: none;
+        border: none;
+        color: #19777e;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 16px;
+        margin: 0 8px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      " onmouseover="this.style.background='rgba(25,119,126,0.1)'" onmouseout="this.style.background='none'">Mode</button>
+    </div>
   </header>
   <main>
-    <section id="modeSelect">
-      <button class="mode-btn" data-mode="meaning">Meaning Match</button>
-      <button class="mode-btn" data-mode="spelling">Spelling</button>
-      <button class="mode-btn" data-mode="listening">Listening Mode</button>
-      <!-- Add more modes here -->
-    </section>
     <section id="gameArea"></section>
+    <!-- Modal overlay for mode selection -->
+    <div id="modalOverlay" style="display: none;"></div>
   </main>
   <script type="module" src="main.js"></script>
 </body>
