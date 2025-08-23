@@ -11,6 +11,18 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
   // Track which pairs have been completed
   let completedPairs = [];
 
+  // Show intro phrase large, then fade out to reveal the game
+  gameArea.innerHTML = `
+    <div id="meaningIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Match English with Korean!</div>
+    </div>
+  `;
+  setTimeout(() => {
+    const intro = document.getElementById('meaningIntro');
+    if (intro) intro.style.opacity = '0';
+    setTimeout(() => { renderRound(); }, 650);
+  }, 1000);
+
   function renderRound() {
     // Get next batch of pairs
     const remainingPairs = wordList.filter(w => !completedPairs.includes(w.eng + '|' + w.kor));
@@ -170,5 +182,5 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
     }
   }
 
-  renderRound();
+  // First round is triggered after the intro fades out
 }

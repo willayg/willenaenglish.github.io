@@ -1,0 +1,22 @@
+[
+  { "eng": "dog", "kor": "개" },
+  { "eng": "cat", "kor": "고양이" },
+  { "eng": "rabbit", "kor": "토끼" },
+  { "eng": "horse", "kor": "말" },
+  { "eng": "cow", "kor": "소" },
+  { "eng": "pig", "kor": "돼지" },
+  { "eng": "sheep", "kor": "양" },
+  { "eng": "goat", "kor": "염소" },
+  { "eng": "chicken", "kor": "닭" },
+  { "eng": "duck", "kor": "오리" },
+  { "eng": "mouse", "kor": "쥐" },
+  { "eng": "bear", "kor": "곰" },
+  { "eng": "tiger", "kor": "호랑이" },
+  { "eng": "lion", "kor": "사자" },
+  { "eng": "elephant", "kor": "코끼리" },
+  { "eng": "monkey", "kor": "원숭이" },
+  { "eng": "fox", "kor": "여우" },
+  { "eng": "wolf", "kor": "늑대" },
+  { "eng": "deer", "kor": "사슴" },
+  { "eng": "squirrel", "kor": "다람쥐" }
+]
