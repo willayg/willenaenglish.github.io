@@ -23,16 +23,20 @@ async function callTTSFunction(payload) {
 }
 
 async function checkSupabaseAudio(word) {
-  try {
-    // Try to get the Supabase URL from your environment or use a fallback
-  const supabaseUrl = 'https://fiieuiktlsivwfgyivai.supabase.co'; // User's actual Supabase project URL
-    const audioUrl = `${supabaseUrl}/storage/v1/object/public/audio/${word}.mp3`;
-    const response = await fetch(audioUrl, { method: 'HEAD' });
-    if (response.ok) {
-      return audioUrl;
+  const endpoints = [
+    `/.netlify/functions/get_audio_url?word=${encodeURIComponent(word)}`,
+    `http://localhost:8888/.netlify/functions/get_audio_url?word=${encodeURIComponent(word)}`
+  ];
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.exists && data.url) return data.url;
+      }
+    } catch (e) {
+      console.warn('get_audio_url failed:', url, e);
     }
-  } catch (e) {
-    console.warn('Supabase audio check failed:', e);
   }
   return null;
 }
