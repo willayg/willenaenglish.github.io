@@ -1,0 +1,22 @@
+[
+  {"eng": "doctor", "kor": "의사"},
+  {"eng": "nurse", "kor": "간호사"},
+  {"eng": "teacher", "kor": "선생님"},
+  {"eng": "student", "kor": "학생"},
+  {"eng": "police", "kor": "경찰"},
+  {"eng": "firefighter", "kor": "소방관"},
+  {"eng": "chef", "kor": "요리사"},
+  {"eng": "farmer", "kor": "농부"},
+  {"eng": "artist", "kor": "예술가"},
+  {"eng": "musician", "kor": "음악가"},
+  {"eng": "pilot", "kor": "조종사"},
+  {"eng": "engineer", "kor": "엔지니어"},
+  {"eng": "mechanic", "kor": "정비공"},
+  {"eng": "scientist", "kor": "과학자"},
+  {"eng": "programmer", "kor": "프로그래머"},
+  {"eng": "writer", "kor": "작가"},
+  {"eng": "actor", "kor": "배우"},
+  {"eng": "dancer", "kor": "무용수"},
+  {"eng": "waiter", "kor": "웨이터"},
+  {"eng": "driver", "kor": "운전사"}
+]

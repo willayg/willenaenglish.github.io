@@ -1,10 +1,13 @@
 import { playSFX } from '../sfx.js';
+import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
+import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Listening mode: English audio, choose correct Korean translation
 export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame }) {
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
+  const sessionId = startSession({ mode: 'listening', wordList });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
@@ -21,6 +24,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   function renderQuestion() {
     if (idx >= shuffled.length) {
       playSFX('end');
+      endSession(sessionId, { mode: 'listening', summary: { score, total: shuffled.length } });
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#41b6beff;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
         <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div>
@@ -39,12 +43,12 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
     }
     choices.sort(() => Math.random() - 0.5);
 
-    gameArea.innerHTML = `<div class="listening-game" style="max-width:420px;margin:0 auto;">
+    gameArea.innerHTML = `<div class="listening-game" style="max-width:640px;margin:0 auto;">
       <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the correct Korean translation:</div>
       <button id="playAudioBtn" style="font-size:1em;padding:8px 18px;border-radius:8px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-bottom:18px;">🔊 Play Again</button>
-      <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:400px;margin:0 auto 18px auto;">
+      <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
         ${choices.map(kor => `
-            <button class="listening-choice" data-kor="${kor}" style="height:15vh;border-radius:8px;background:#f7f7f7;color:#19777e;font-weight:700;border:2px solid #41b6beff;box-shadow:0 2px 8px rgba(60,60,80,0.10);cursor:pointer;font-size:clamp(1.2em,4vw,3em);display:flex;align-items:center;justify-content:center;transition:transform .08s ease;">
+            <button class="listening-choice choice-btn" data-kor="${kor}" style="height:18vh;">
             ${kor}
           </button>
         `).join('')}
@@ -60,27 +64,33 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
     playCurrentWord();
     document.getElementById('playAudioBtn').onclick = playCurrentWord;
 
-    // Button logic
+    // Button logic using shared helpers and splash feedback
+    setupChoiceButtons(gameArea);
     document.querySelectorAll('.listening-choice').forEach(btn => {
-      btn.onmousedown = () => { btn.style.transform = 'scale(0.97)'; };
-      btn.onmouseup = () => { btn.style.transform = 'scale(1)'; };
-      btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
       btn.onclick = () => {
+        const isCorrect = btn.dataset.kor === current.kor;
+        splashResult(btn, isCorrect);
         const feedback = document.getElementById('listening-feedback');
-        if (btn.dataset.kor === current.kor) {
+        if (isCorrect) {
           score++;
-          feedback.textContent = 'Correct!';
-          feedback.style.color = '#19777e';
+          if (feedback) { feedback.textContent = 'Correct!'; feedback.style.color = '#19777e'; }
           playSFX('correct');
         } else {
-          feedback.textContent = 'Incorrect!';
-          feedback.style.color = '#e53e3e';
+          if (feedback) { feedback.textContent = 'Incorrect!'; feedback.style.color = '#e53e3e'; }
           playSFX('wrong');
         }
-        setTimeout(() => {
-          idx++;
-          renderQuestion();
-        }, 900);
+        // Log attempt
+        logAttempt({
+          session_id: sessionId,
+          mode: 'listening',
+          word: current.eng,
+          is_correct: isCorrect,
+          answer: btn.dataset.kor,
+          correct_answer: current.kor,
+          points: isCorrect ? 1 : 0,
+          attempt_index: idx + 1
+        });
+        setTimeout(() => { idx++; renderQuestion(); }, 900);
       };
     });
   }

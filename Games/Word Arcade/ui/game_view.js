@@ -1,4 +1,7 @@
 // Game View UI
+import { showSampleWordlistModal } from './sample_wordlist_modal.js';
+import { showModeModal } from './mode_modal.js';
+
 export function renderGameView({ modeName, onShowModeModal, onWordsClick, onModeClick }) {
   const container = document.getElementById('gameArea');
   // The actual game will be rendered by the mode function, but we add the mode modal button here
@@ -17,20 +20,43 @@ export function renderGameView({ modeName, onShowModeModal, onWordsClick, onMode
     const modeBtn = document.getElementById('modeBtn');
     
     if (wordsBtn) {
-      wordsBtn.onclick = onWordsClick;
+      wordsBtn.onclick = () => {
+        // Open sample wordlist modal instead of navigating
+        showSampleWordlistModal({
+          onChoose: async (filename) => {
+            // Delegate to existing onWordsClick to restart flow after selection
+            if (onWordsClick) onWordsClick(filename);
+          }
+        });
+      };
       wordsBtn.style.opacity = '0.6'; // Not current section
     }
     if (modeBtn) {
-      modeBtn.onclick = onModeClick;
+      modeBtn.onclick = () => {
+        showModeModal({
+          onModeChosen: (newMode) => {
+            if (onModeClick) onModeClick(newMode);
+          }
+        });
+      };
       modeBtn.style.opacity = '1'; // Current section
       modeBtn.style.fontWeight = 'bold';
     }
   }
 
-  // Hide the back button and burger menu in favor of menu bar
+  // Always show Back button in menu bar
   const backBtn = document.getElementById('backBtn');
-  if (backBtn) backBtn.style.display = 'none';
-  
-  const burgerMenu = document.getElementById('burgerMenu');
-  if (burgerMenu) burgerMenu.style.display = 'none';
+  if (backBtn) {
+    backBtn.style.display = '';
+    backBtn.onclick = () => {
+      if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
+        window.WordArcade.startModeSelector();
+      } else {
+        // Fallback to re-rendering mode selector if global not available
+        import('./mode_selector.js').then(mod => {
+          if (mod.renderModeSelector) mod.renderModeSelector({});
+        });
+      }
+    };
+  }
 }

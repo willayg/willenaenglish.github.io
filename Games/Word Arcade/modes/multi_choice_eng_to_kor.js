@@ -1,10 +1,13 @@
 import { playSFX } from '../sfx.js';
+import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
+import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Multi-choice: English prompt, Korean choices
 export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
+  const sessionId = startSession({ mode: 'multi_choice_eng_to_kor', wordList });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
@@ -21,6 +24,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
   function renderQuestion() {
     if (idx >= shuffled.length) {
       playSFX('end');
+      endSession(sessionId, { mode: 'multi_choice_eng_to_kor', summary: { score, total: shuffled.length } });
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;"><h2 style="color:#41b6beff;">Game Complete!</h2><div style="font-size:1.3em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div><button id="playAgainMultiEngKor" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button></div>`;
       document.getElementById('playAgainMultiEngKor').onclick = () => startGame('multi_choice_eng_to_kor');
       return;
@@ -38,7 +42,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${current.eng}</div>
       <div id="multiChoicesEngKor" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:400px;margin:0 auto 18px auto;">
         ${choices.map(kor => `
-          <button class="multi-choice-btn" data-kor="${kor}" style="height:15vh;border-radius:8px;background:#f7f7f7;color:#19777e;font-weight:700;border:2px solid #41b6beff;box-shadow:0 2px 8px rgba(60,60,80,0.10);cursor:pointer;font-size:clamp(1.2em,4vw,3em);display:flex;align-items:center;justify-content:center;transition:transform .08s ease;">
+          <button class="multi-choice-btn choice-btn" data-kor="${kor}" style="height:15vh;">
             ${kor}
           </button>
         `).join('')}
@@ -46,13 +50,13 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
       <div id="multiFeedbackEngKor" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
       <div id="multiScoreEngKor" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">Score: ${score}</div>
     </div>`;
+    setupChoiceButtons(gameArea);
     document.querySelectorAll('.multi-choice-btn').forEach(btn => {
-      btn.onmousedown = () => { btn.style.transform = 'scale(0.97)'; };
-      btn.onmouseup = () => { btn.style.transform = 'scale(1)'; };
-      btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
       btn.onclick = () => {
         const feedback = document.getElementById('multiFeedbackEngKor');
-        if (btn.dataset.kor === current.kor) {
+        const correct = btn.dataset.kor === current.kor;
+        splashResult(btn, correct);
+        if (correct) {
           score++;
           feedback.textContent = 'Correct!';
           feedback.style.color = '#19777e';
@@ -62,6 +66,18 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
           feedback.style.color = '#e53e3e';
           playSFX('wrong');
         }
+        // Log attempt
+        logAttempt({
+          session_id: sessionId,
+          mode: 'multi_choice_eng_to_kor',
+          word: current.eng,
+          is_correct: correct,
+          answer: btn.dataset.kor,
+          correct_answer: current.kor,
+          points: correct ? 1 : 0,
+          attempt_index: idx + 1,
+          extra: { direction: 'eng_to_kor' }
+        });
         setTimeout(() => {
           idx++;
           renderQuestion();
