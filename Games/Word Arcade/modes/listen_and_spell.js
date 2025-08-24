@@ -1,10 +1,12 @@
 import { playSFX } from '../sfx.js';
+import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Listen and Spell mode
 export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame }) {
   let listeningScore = 0;
   let listeningIdx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
+  const sessionId = startSession({ mode: 'listen_and_spell', wordList });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
@@ -58,6 +60,17 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
           feedback.style.color = '#e53e3e';
           playSFX('wrong');
         }
+        // Log attempt
+        logAttempt({
+          session_id: sessionId,
+          mode: 'listen_and_spell',
+          word: shuffled[listeningIdx].eng,
+          is_correct: points > 0,
+          answer,
+          correct_answer: correct,
+          points,
+          attempt_index: listeningIdx + 1
+        });
         input.disabled = true;
         listeningScore += points;
         document.getElementById('listening-score').textContent = `Score: ${listeningScore}`;
@@ -71,6 +84,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
             input.focus();
           } else {
             playSFX('end');
+            endSession(sessionId, { mode: 'listen_and_spell', summary: { score: listeningScore, max: shuffled.length * 2 } });
             gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
                 <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
                 <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${listeningScore} / ${shuffled.length*2}</span></div>

@@ -1,4 +1,6 @@
 // File Picker UI
+import { showSampleWordlistModal } from './sample_wordlist_modal.js';
+
 export function renderFilePicker({ onFileChosen }) {
   const container = document.getElementById('gameArea');
   container.innerHTML = `<div style="text-align:center;padding:40px;">
@@ -24,14 +26,43 @@ export function renderFilePicker({ onFileChosen }) {
     <p style="margin-top: 16px; color: #666; font-size: 14px;">Select a JSON file containing your word list</p>
   </div>`;
   
-  const button = document.getElementById('loadWordsBtn');
-  const input = document.getElementById('wordFileInput');
-  
-  button.onclick = () => input.click();
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) onFileChosen(file);
-  };
+    const button = document.getElementById('loadWordsBtn');
+    button.onclick = () => {
+      showSampleWordlistModal({
+        onChoose: async (filename) => {
+          try {
+            // Build absolute URL from current page to handle spaces/paths reliably
+            const url = new URL(`./sample-wordlists/${filename}`, window.location.href);
+            const response = await fetch(url.href, { cache: 'no-store' });
+            if (!response.ok) {
+              const preview = await response.text().catch(() => '');
+              throw new Error(`Failed to fetch sample wordlist (${response.status}). URL: ${url.pathname}\n${preview.slice(0,120)}`);
+            }
+            const ct = (response.headers.get('content-type') || '').toLowerCase();
+            let wordList;
+            if (ct.includes('application/json')) {
+              wordList = await response.json();
+            } else {
+              // Fallback: parse text, but surface better error if it looks like HTML
+              const text = await response.text();
+              if (/^\s*</.test(text)) {
+                throw new Error('Received HTML instead of JSON (likely a 404). Please check the file name and path.');
+              }
+              wordList = JSON.parse(text);
+            }
+            if (typeof onFileChosen === 'function') {
+              onFileChosen({ name: filename, content: wordList });
+            } else {
+              console.error('onFileChosen is not a function. Ensure startFilePicker() is used to open the file picker.');
+              alert('Internal navigation issue. Please go Back using the header Back button or refresh the page.');
+            }
+          } catch (err) {
+            console.error('Error loading sample wordlist:', err);
+            alert('Error loading sample wordlist: ' + err.message);
+          }
+        }
+      });
+    };
 
   // Hide menu bar and back button on file picker screen
   const menuBar = document.getElementById('menuBar');

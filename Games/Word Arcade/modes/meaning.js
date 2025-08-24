@@ -1,4 +1,5 @@
 import { playSFX } from '../sfx.js';
+import { startSession, logAttempt, endSession } from '../../../students/records.js';
 // Meaning (drag-and-drop) mode
 export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, score: initialScore = 0, round: initialRound = 0 }) {
   const ROUND_SIZE = 5;
@@ -7,9 +8,13 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
   const total = wordList.length;
   const correctValue = 100 / total;
   const wrongValue = 50 / total;
+  const sessionId = startSession({ mode: 'meaning', wordList });
 
   // Track which pairs have been completed
   let completedPairs = [];
+
+  // Shuffle overall order once per game so rounds follow a random sequence
+  const shuffledOrder = [...wordList].sort(() => Math.random() - 0.5);
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
@@ -25,11 +30,12 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
 
   function renderRound() {
     // Get next batch of pairs
-    const remainingPairs = wordList.filter(w => !completedPairs.includes(w.eng + '|' + w.kor));
+  const remainingPairs = shuffledOrder.filter(w => !completedPairs.includes(w.eng + '|' + w.kor));
     const roundPairs = remainingPairs.slice(0, ROUND_SIZE);
     if (roundPairs.length === 0) {
-      // Game over
+  // Game over
       playSFX('end');
+  endSession(sessionId, { mode: 'meaning', summary: { score: Number(score.toFixed(1)), total: 100 } });
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
             <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
             <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score.toFixed(1)}%</span></div>
@@ -167,6 +173,16 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
           feedback.textContent = `Incorrect! -${wrongValue.toFixed(1)}%`;
           playSFX('wrong');
       }
+      // Log attempt for this pair selection
+      logAttempt({
+        session_id: sessionId,
+        mode: 'meaning',
+        word: eng,
+        is_correct: !!match,
+        answer: kor,
+        correct_answer: (roundPairs.find(w => w.eng === eng) || {}).kor || null,
+        points: match ? Number(correctValue.toFixed(2)) : -Number(wrongValue.toFixed(2))
+      });
   scoreCounter.innerHTML = `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;
       if (selectedEngCard) {
         selectedEngCard.classList.remove('selected');

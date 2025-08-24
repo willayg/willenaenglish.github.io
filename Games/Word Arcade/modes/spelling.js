@@ -1,4 +1,5 @@
 import { playSFX } from '../sfx.js';
+import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Spelling mode
 export function runSpellingMode({ wordList, gameArea }) {
@@ -6,6 +7,9 @@ export function runSpellingMode({ wordList, gameArea }) {
   let spellingScore = 0;
   let round = 0;
   let completedIndices = [];
+  // Create a shuffled order of indices so rounds follow a random sequence
+  const order = wordList.map((_, i) => i).sort(() => Math.random() - 0.5);
+  const sessionId = startSession({ mode: 'spelling', wordList });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
@@ -20,10 +24,11 @@ export function runSpellingMode({ wordList, gameArea }) {
   }, 1000);
 
   function renderRound() {
-    const remainingIndices = wordList.map((_, i) => i).filter(i => !completedIndices.includes(i));
+  const remainingIndices = order.filter(i => !completedIndices.includes(i));
     const roundIndices = remainingIndices.slice(0, ROUND_SIZE);
     if (roundIndices.length === 0) {
       playSFX('end');
+      endSession(sessionId, { mode: 'spelling', summary: { score: spellingScore, rounds: round } });
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
         <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${spellingScore}</span></div>
@@ -85,6 +90,18 @@ export function runSpellingMode({ wordList, gameArea }) {
             feedback.style.color = '#e53e3e';
             playSFX('wrong');
           }
+          // Log attempt
+          logAttempt({
+            session_id: sessionId,
+            mode: 'spelling',
+            word: wordList[idx].eng,
+            is_correct: points > 0,
+            answer,
+            correct_answer: correct,
+            points,
+            attempt_index: completedIndices.length + 1,
+            round: round + 1
+          });
           input.disabled = true;
           spellingScore += points;
           completedIndices.push(idx);

@@ -1,3 +1,21 @@
+const { createClient } = require('@supabase/supabase-js');
+
+exports.handler = async (event) => {
+  console.log('=== FUNCTION START ===');
+  console.log('Received event:', event.httpMethod, event.path);
+  console.log('Event body:', event.body);
+  console.log('Environment check:', {
+    SUPABASE_URL: process.env.SUPABASE_URL ? 'PRESENT' : 'MISSING',
+    SUPABASE_KEY: process.env.SUPABASE_KEY ? 'PRESENT' : 'MISSING', 
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'PRESENT' : 'MISSING',
+    NODE_ENV: process.env.NODE_ENV
+  });
+  
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
     // --- AUDIO UPLOAD (for TTS mp3 files) ---
     if (event.queryStringParameters && event.queryStringParameters.upload_audio !== undefined) {
       // CORS preflight
@@ -60,23 +78,6 @@
         }
       }
     }
-const { createClient } = require('@supabase/supabase-js');
-
-exports.handler = async (event) => {
-  console.log('=== FUNCTION START ===');
-  console.log('Received event:', event.httpMethod, event.path);
-  console.log('Event body:', event.body);
-  console.log('Environment check:', {
-    SUPABASE_URL: process.env.SUPABASE_URL ? 'PRESENT' : 'MISSING',
-    SUPABASE_KEY: process.env.SUPABASE_KEY ? 'PRESENT' : 'MISSING', 
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'PRESENT' : 'MISSING',
-    NODE_ENV: process.env.NODE_ENV
-  });
-  
-  try {
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --- FEEDBACK STATUS UPDATE ---
     if (event.queryStringParameters && event.queryStringParameters.feedback_update !== undefined && event.httpMethod === 'POST') {
@@ -325,6 +326,27 @@ exports.handler = async (event) => {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
         }
         return { statusCode: 200, body: JSON.stringify({ success: true, role: data.role }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // --- GET PROFILE ID BY AUTH USER ID ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'get_profile_id' && event.httpMethod === 'GET') {
+      try {
+        const authUserId = event.queryStringParameters.auth_user_id;
+        if (!authUserId) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing auth_user_id' }) };
+        }
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', authUserId) // Assuming profiles.id matches auth.users.id
+          .single();
+        if (error) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true, profile_id: data.id }) };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
       }
