@@ -40,7 +40,7 @@ async function loadEmojiMappings() {
   }
 }
 
-export async function runEasyPictureMode({ wordList, gameArea, playTTS, preprocessTTS, startGame }) {
+export async function runEasyPictureMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
   await loadEmojiMappings();
 
   // Only use entries with image or supported emoji available
@@ -60,7 +60,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
   const ordered = [...available].sort(() => Math.random() - 0.5);
   let score = 0;
   let idx = 0;
-  const sessionId = startSession({ mode: 'easy_picture', wordList: available });
+  const sessionId = startSession({ mode: 'easy_picture', wordList: available, listName });
 
   // Intro splash
   gameArea.innerHTML = `

@@ -3,11 +3,11 @@ import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Listening mode: English audio, choose correct Korean translation
-export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame }) {
+export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
-  const sessionId = startSession({ mode: 'listening', wordList });
+  const sessionId = startSession({ mode: 'listening', wordList, listName });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `

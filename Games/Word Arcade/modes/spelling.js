@@ -2,14 +2,14 @@ import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Spelling mode
-export function runSpellingMode({ wordList, gameArea }) {
+export function runSpellingMode({ wordList, gameArea, listName = null }) {
   const ROUND_SIZE = 5;
   let spellingScore = 0;
   let round = 0;
   let completedIndices = [];
   // Create a shuffled order of indices so rounds follow a random sequence
   const order = wordList.map((_, i) => i).sort(() => Math.random() - 0.5);
-  const sessionId = startSession({ mode: 'spelling', wordList });
+  const sessionId = startSession({ mode: 'spelling', wordList, listName });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `

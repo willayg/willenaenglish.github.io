@@ -16,6 +16,7 @@ import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 
 let wordList = [];
 let currentMode = null;
+let currentListName = null; // track the currently loaded word list filename/label
 
 const gameArea = document.getElementById('gameArea');
 
@@ -70,6 +71,7 @@ function startFilePicker() {
         // Handle either a File object (from original file picker) or {name, content} object from sample wordlist modal
         if (fileData instanceof File) {
           // Original File object handling
+          currentListName = fileData.name || 'Custom List';
           const reader = new FileReader();
           reader.onload = async function(evt) {
             try {
@@ -81,6 +83,7 @@ function startFilePicker() {
           reader.readAsText(fileData);
         } else {
           // Sample wordlist {name, content} object
+          currentListName = fileData && fileData.name ? fileData.name : 'Sample List';
           processWordlist(fileData.content);
         }
       } catch (err) {
@@ -118,6 +121,7 @@ async function processWordlist(data) {
 // Load a sample wordlist JSON by filename and process it
 async function loadSampleWordlistByFilename(filename) {
   try {
+  currentListName = filename || 'Sample List';
     const url = new URL(`./sample-wordlists/${filename}`, window.location.href);
     const res = await fetch(url.href, { cache: 'no-store' });
     if (!res.ok) {
@@ -181,7 +185,7 @@ export function startGame(mode = 'meaning') {
   });
   
   const run = modes[mode] || modes.meaning;
-  const ctx = { wordList, gameArea, playTTS, preprocessTTS, startGame };
+  const ctx = { wordList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
   run(ctx);
 }
 
@@ -194,4 +198,5 @@ window.WordArcade = {
   startFilePicker, 
   startModeSelector,
   getWordList: () => wordList,
+  getListName: () => currentListName,
 };

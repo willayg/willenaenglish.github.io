@@ -1,14 +1,14 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 // Meaning (drag-and-drop) mode
-export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, score: initialScore = 0, round: initialRound = 0 }) {
+export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null, score: initialScore = 0, round: initialRound = 0 }) {
   const ROUND_SIZE = 5;
   let score = initialScore;
   let round = initialRound;
   const total = wordList.length;
   const correctValue = 100 / total;
   const wrongValue = 50 / total;
-  const sessionId = startSession({ mode: 'meaning', wordList });
+  const sessionId = startSession({ mode: 'meaning', wordList, listName });
 
   // Track which pairs have been completed
   let completedPairs = [];
@@ -173,7 +173,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
           feedback.textContent = `Incorrect! -${wrongValue.toFixed(1)}%`;
           playSFX('wrong');
       }
-      // Log attempt for this pair selection
+      // Log attempt for this pair selection (points as integers to satisfy DB integer type)
       logAttempt({
         session_id: sessionId,
         mode: 'meaning',
@@ -181,7 +181,8 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
         is_correct: !!match,
         answer: kor,
         correct_answer: (roundPairs.find(w => w.eng === eng) || {}).kor || null,
-        points: match ? Number(correctValue.toFixed(2)) : -Number(wrongValue.toFixed(2))
+        points: match ? 1 : 0,
+        extra: { eng, kor }
       });
   scoreCounter.innerHTML = `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;
       if (selectedEngCard) {

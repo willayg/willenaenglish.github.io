@@ -3,11 +3,11 @@ import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Multi-choice: English prompt, Korean choices
-export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
+export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName = null }) {
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
-  const sessionId = startSession({ mode: 'multi_choice_eng_to_kor', wordList });
+  const sessionId = startSession({ mode: 'multi_choice_eng_to_kor', wordList, listName });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
@@ -66,7 +66,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
           feedback.style.color = '#e53e3e';
           playSFX('wrong');
         }
-        // Log attempt
+        // Log attempt: `word` is the prompt (English), `answer` is chosen Korean
         logAttempt({
           session_id: sessionId,
           mode: 'multi_choice_eng_to_kor',
@@ -76,7 +76,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame }) {
           correct_answer: current.kor,
           points: correct ? 1 : 0,
           attempt_index: idx + 1,
-          extra: { direction: 'eng_to_kor' }
+          extra: { direction: 'eng_to_kor', eng: current.eng, kor: current.kor }
         });
         setTimeout(() => {
           idx++;
