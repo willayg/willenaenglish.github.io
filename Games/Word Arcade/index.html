@@ -63,10 +63,16 @@
     <div id="modalOverlay" style="display: none;"></div>
   </main>
   <script type="module" src="main.js"></script>
-</body>
   <!-- Floating settings button in lower right -->
   <button id="settingsBtn" title="Settings" style="position:fixed;bottom:18px;right:18px;z-index:1200;width:auto;height:auto;padding:0;background:none;border:none;box-shadow:none;display:flex;align-items:center;justify-content:center;cursor:pointer;">
     <span style="font-size:1.3em;color:#19777e;">&#9881;</span>
   </button>
+  <script>
+    // Navigate to the student profile hub
+    (function(){
+      const btn = document.getElementById('settingsBtn');
+      if (btn) btn.addEventListener('click', () => { window.location.href = '/students/profile.html'; });
+    })();
+  </script>
 </body>
 </html>

@@ -3,11 +3,11 @@ import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Multiple Choice (Mixed): randomly alternates between Kor→Eng and Eng→Kor each round
-export function runMultiChoiceMode({ wordList, gameArea, startGame }) {
+export function runMultiChoiceMode({ wordList, gameArea, startGame, listName = null }) {
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
-  const sessionId = startSession({ mode: 'multi_choice', wordList });
+  const sessionId = startSession({ mode: 'multi_choice', wordList, listName });
 
   // Intro splash
   gameArea.innerHTML = `
@@ -100,17 +100,19 @@ export function runMultiChoiceMode({ wordList, gameArea, startGame }) {
           feedback.style.color = '#e53e3e';
           playSFX('wrong');
         }
-        // Log attempt
+        // Log attempt (record the prompt side in `word`, and the chosen opposite in `answer`)
+        const wordLogged = korToEng ? current.kor : current.eng;
+        const correctAns = korToEng ? current.eng : current.kor;
         logAttempt({
           session_id: sessionId,
           mode: 'multi_choice',
-          word: korToEng ? current.eng : current.kor,
+          word: wordLogged,
           is_correct: correct,
           answer: selected,
-          correct_answer: correctText,
+          correct_answer: correctAns,
           points: correct ? 1 : 0,
           attempt_index: idx + 1,
-          extra: { direction: korToEng ? 'kor_to_eng' : 'eng_to_kor' }
+          extra: { direction: korToEng ? 'kor_to_eng' : 'eng_to_kor', eng: current.eng, kor: current.kor }
         });
         setTimeout(() => {
           idx++;

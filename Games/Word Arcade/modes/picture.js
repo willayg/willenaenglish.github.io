@@ -41,7 +41,7 @@ async function loadEmojiMappings() {
   }
 }
 
-export async function runPictureMode({ wordList, gameArea, startGame }) {
+export async function runPictureMode({ wordList, gameArea, startGame, listName = null }) {
   // Load emoji mappings first
   await loadEmojiMappings();
 
@@ -62,7 +62,7 @@ export async function runPictureMode({ wordList, gameArea, startGame }) {
   const ordered = [...available].sort(() => Math.random() - 0.5);
   let score = 0;
   let idx = 0;
-  const sessionId = startSession({ mode: 'picture', wordList });
+  const sessionId = startSession({ mode: 'picture', wordList, listName });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Profile | Willena</title>
+  <style>
+    :root { --pri:#19777e; --acc:#93cbcf; --ink:#222; --mut:#666; }
+    * { box-sizing: border-box; }
+    body { margin:0; font: 14px/1.5 system-ui, Segoe UI, Arial, sans-serif; background:#f5f7fa; color:var(--ink); }
+    header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:10; }
+    header .title { font-weight:800; color:var(--pri); }
+    header .spacer { flex:1; }
+    header .btn { border:1px solid var(--acc); background:var(--acc); color:#fff; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700; min-height:44px; }
+    main { max-width: 980px; margin: 12px auto; padding: 0 12px 28px; }
+    .card { background:#fff; border:1px solid #e6eaef; border-radius:14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding:14px; }
+    .grid { display:grid; gap:14px; }
+    @media(min-width:800px){ .grid.cols-3 { grid-template-columns: 2fr 1fr 1fr; } }
+    /* Responsive spans: default stack on mobile; span on larger screens */
+    .span-2, .span-3 { grid-column: auto; }
+    @media(min-width:800px){
+      .span-2 { grid-column: 1 / span 2; }
+      .span-3 { grid-column: 1 / span 3; }
+    }
+    h2 { margin:0 0 8px 0; font-size:1.1rem; color:var(--pri); }
+    .row { display:flex; align-items:center; gap:10px; }
+  .kpis { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
+  @media(min-width:900px){ .kpis { grid-template-columns: repeat(5, minmax(0,1fr)); } }
+    .kpi { background:#f3fafb; border:1px solid #e6eaef; border-radius:12px; padding:10px; text-align:center; }
+  .kpi .v { font-size:1.3rem; font-weight:800; color:#0f5e64; }
+  .mut { color: var(--mut); font-size:13px; }
+  /* Text-heavy KPI values should be smaller and ellipsized */
+  #ovFavoriteList, #ovHardestWord { font-size:0.8rem; font-weight:700; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .badge { display:inline-flex; align-items:center; justify-content:center; padding:6px 10px; border-radius:999px; background:#f6f0ff; color:#6b46c1; border:1px solid #e8dfff; font-weight:700; margin:4px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding:8px 6px; border-bottom:1px solid #edf1f4; text-align:left; }
+    th { color:#356; font-weight:800; }
+    .pill { font-weight:700; color:#fff; background:var(--pri); padding:4px 10px; border-radius:999px; font-size:12px; }
+    .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid var(--pri); font-size:22px; }
+    .row.gap { gap:14px; }
+    .hint { font-size:12px; color:#888; }
+    .mode-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .mode-chip { border:1px solid #e6eaef; padding:8px 10px; border-radius:10px; background:#fff; }
+    .error { color:#b00020; font-weight:700; }
+
+  /* Challenging Words styles */
+  .cw-container { max-height: 300px; overflow: hidden; border: 2px solid #2a8a90; border-radius: 14px; padding: 8px; background: #fff; }
+  .cw-list { max-height: 270px; overflow-y: auto; padding-right: 4px; }
+  /* hide scrollbar visuals */
+  .cw-list { scrollbar-width: none; }
+  .cw-list::-webkit-scrollbar { width: 0; height: 0; }
+  .cw-card { display:flex; align-items:center; justify-content:space-between; gap:12px; border:2px solid #2a8a90; border-radius:16px; padding:10px 12px; margin:8px 6px; background:#fff; }
+  .cw-word { font-weight:800; font-size:1.1rem; color:#111; }
+  .cw-sub { font-size:0.7rem; color:#777; font-weight:600; margin-top:2px; }
+  .cw-right { text-align:right; min-width: 88px; }
+  .cw-acc { font-weight:800; font-size:1.3rem; }
+  .cw-skill { font-size:0.8rem; font-weight:700; }
+  .cw-acc.ok { color:#c27c00; } /* 65% orange */
+  .cw-acc.bad { color:#e74a54; } /* 10% red */
+  .cw-acc.warn { color:#c27c00; } /* 75% orange */
+  .cw-acc.zero { color:#e74a54; }
+  .cw-skill { color:#e47a84; }
+  .cw-muted { color:#888; font-size:0.85rem; }
+
+    /* Mobile-first table -> card transform */
+    @media (max-width: 720px) {
+      table { border: 0; }
+      thead { display: none; }
+      tbody { display: block; }
+      tbody tr { display: block; background:#fff; border:1px solid #e6eaef; border-radius:12px; margin:8px 0; padding:8px; }
+      tbody td { display: flex; justify-content: space-between; align-items: center; gap:10px; border-bottom: none; padding:6px 0; }
+      tbody td::before { content: attr(data-label); flex: 0 0 auto; color:#888; font-size:12px; margin-right:10px; }
+    }
+
+  /* Avatar modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background:#fff; width:min(540px, 92vw); border-radius:16px; border:1px solid #e6eaef; box-shadow: 0 8px 40px rgba(0,0,0,0.2); overflow:hidden; }
+  .modal header { padding:12px 16px; border-bottom:1px solid #edf1f4; display:flex; align-items:center; gap:10px; }
+  .modal header h3 { margin:0; font-size:1rem; color:#19777e; }
+  .modal .content { padding:12px; }
+  .emoji-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; }
+  .emoji-btn { font-size:24px; padding:10px; border-radius:12px; border:1px solid #e6eaef; background:#fff; cursor:pointer; }
+  .emoji-btn.selected { border-color:#19777e; box-shadow: 0 0 0 2px rgba(25,119,126,0.15); }
+  .modal .actions { display:flex; justify-content:flex-end; gap:8px; padding:12px; border-top:1px solid #edf1f4; }
+  .btn-ghost { background:#fff; border:1px solid #e6eaef; border-radius:12px; padding:10px 14px; cursor:pointer; }
+  .btn-primary { background:#19777e; color:#fff; border:1px solid #19777e; border-radius:12px; padding:10px 14px; cursor:pointer; }
+
+  /* Toolbar under header (link style with separators) */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 0;
+    border-bottom: 1px solid #e6eaef;
+    background: #fff;
+    position: sticky;
+    top: 52px;
+    z-index: 9;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+  @media (min-width: 760px) { .toolbar { top: 60px; } }
+  .tb-link { appearance:none; background:none; border:0; margin:0; padding:0 12px; font: inherit; color: var(--pri); cursor:pointer; font-weight:700; white-space: nowrap; display:inline-flex; align-items:center; line-height:1.2; vertical-align:middle; }
+  .tb-link.primary { color: var(--pri); }
+  .tb-link:disabled { cursor: default; color: #a9cbd0; }
+  .tb-link:not(:first-child) { border-left: 1px solid #cfe3e5; padding-left: 12px; margin-left: 12px; }
+  </style>
+  <script>
+    // Lightweight helpers for identity
+    function getUserId() {
+      return localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+    }
+    function getAvatar() {
+      return localStorage.getItem('selectedEmojiAvatar') || '🙂';
+    }
+  </script>
+  <script defer src="./student_profile.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; } </style>
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Student profile: progress, badges, and recent activity across games." />
+  <link rel="icon" href="/Logo.png" />
+  <base href="/students/">
+  </head>
+<body>
+  <header>
+  <div class="avatar" id="pfAvatar" title="Change avatar" style="cursor:pointer;">🙂</div>
+    <div>
+  <div class="title" id="pfName">Student Profile</div>
+    </div>
+    <div class="spacer"></div>
+  </header>
+  <nav class="toolbar" aria-label="Quick actions">
+    <button class="tb-link primary" id="btnHome">Home</button>
+    <button class="tb-link" id="btnGames">Games</button>
+    <button class="tb-link" id="btnWordArcade">Word Arcade</button>
+    <button class="tb-link" id="btnGrammarArcade" title="Coming soon" disabled>Grammar Arcade</button>
+  </nav>
+  <main class="grid cols-3">
+  <section class="card span-2">
+      <h2>Overview</h2>
+      <div class="kpis" id="kpiGrid">
+  <div class="kpi"><div class="v" id="ovPoints">–</div><div class="mut">Points</div></div>
+  <div class="kpi"><div class="v" id="ovStars">–</div><div class="mut">Stars</div></div>
+  <div class="kpi"><div class="v" id="ovListsExplored">–</div><div class="mut">Lists Explored</div></div>
+  <div class="kpi"><div class="v" id="ovPerfectRuns">–</div><div class="mut">Perfect Runs</div></div>
+  <div class="kpi"><div class="v" id="ovMasteredLists">–</div><div class="mut">Mastered</div></div>
+        <div class="kpi"><div class="v" id="ovHotStreak">–</div><div class="mut">Hot Streak</div></div>
+        <div class="kpi"><div class="v" id="ovWordsDiscovered">–</div><div class="mut">Words Discovered</div></div>
+        <div class="kpi"><div class="v" id="ovWordsMastered">–</div><div class="mut">Words Mastered</div></div>
+        <div class="kpi"><div class="v" id="ovSessionsPlayed">–</div><div class="mut">Sessions Played</div></div>
+        <div class="kpi"><div class="v" id="ovBadgesCount">–</div><div class="mut">Badges Earned</div></div>
+        <div class="kpi"><div class="v" id="ovFavoriteList">–</div><div class="mut">Favorite List</div></div>
+        <div class="kpi"><div class="v" id="ovHardestWord">–</div><div class="mut">Hardest Word</div></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="mut hint">Overview focuses on exploration and mastery, not accuracy.</div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Badges</h2>
+      <div id="badgesWrap" class="mut">No badges yet.</div>
+    </section>
+
+    <section class="card span-2" id="challengingSection">
+      <h2>Challenging Words</h2>
+      <div id="challengingContainer" class="cw-container">
+        <div id="challengingList" class="cw-list">
+          <div class="mut" id="challengingEmpty">Loading…</div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:6px;">Shows words with low accuracy by skill; scroll inside the box to browse.</div>
+    </section>
+
+  <section class="card span-2">
+      <h2>By Mode</h2>
+      <div id="modes" class="mode-list mut">–</div>
+    </section>
+    <section class="card">
+      <h2>Recent Sessions</h2>
+      <table>
+        <thead>
+          <tr><th>When</th><th>Mode</th><th>Summary</th></tr>
+        </thead>
+        <tbody id="sessionsBody"><tr><td colspan="3" class="mut">Loading…</td></tr></tbody>
+      </table>
+    </section>
+  <section class="card span-3">
+      <h2>Recent Attempts</h2>
+      <table>
+        <thead><tr><th>When</th><th>Mode</th><th>Word</th><th>Result</th><th>+Pts</th></tr></thead>
+        <tbody id="attemptsBody"><tr><td colspan="5" class="mut">Loading…</td></tr></tbody>
+      </table>
+    </section>
+  </main>
+  <!-- Avatar Picker Modal -->
+  <div id="avatarModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
+      <header>
+        <h3 id="avatarModalTitle">Choose your avatar</h3>
+        <div class="spacer"></div>
+        <button id="avatarClose" class="btn-ghost" aria-label="Close">✕</button>
+      </header>
+      <div class="content">
+        <div id="emojiGrid" class="emoji-grid"></div>
+      </div>
+      <div class="actions">
+        <button id="avatarCancel" class="btn-ghost">Cancel</button>
+        <button id="avatarSave" class="btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Lightweight page wiring; data loads in student_profile.js
+    window.addEventListener('DOMContentLoaded', () => {
+      const uid = getUserId();
+      const avatar = getAvatar();
+      const avatarEl = document.getElementById('pfAvatar');
+      if (avatarEl && avatar) avatarEl.textContent = avatar;
+  const homeBtn = document.getElementById('btnHome');
+  if (homeBtn) homeBtn.onclick = () => { window.location.href = '/index.html'; };
+  const gamesBtn = document.getElementById('btnGames');
+  if (gamesBtn) gamesBtn.onclick = () => { window.location.href = '/playzone.html'; };
+  const wordArcadeBtn = document.getElementById('btnWordArcade');
+  if (wordArcadeBtn) wordArcadeBtn.onclick = () => { window.location.href = '/Games/Word%20Arcade/index.html'; };
+  const grammarBtn = document.getElementById('btnGrammarArcade');
+  if (grammarBtn) grammarBtn.onclick = () => { /* coming soon */ };
+      if (!uid) {
+        const grid = document.getElementById('kpiGrid');
+        if (grid) grid.insertAdjacentHTML('afterend', '<div class="error" style="margin-top:8px;">Sign in to see your progress.</div>');
+      }
+    });
+  </script>
+</body>
+</html>

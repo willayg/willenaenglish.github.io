@@ -2,11 +2,11 @@ import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
 // Listen and Spell mode
-export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame }) {
+export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
   let listeningScore = 0;
   let listeningIdx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
-  const sessionId = startSession({ mode: 'listen_and_spell', wordList });
+  const sessionId = startSession({ mode: 'listen_and_spell', wordList, listName });
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
