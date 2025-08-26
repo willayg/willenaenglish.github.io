@@ -15,7 +15,19 @@
   };
 
   function getUserId(){
-    return localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+    return (
+      localStorage.getItem('user_id') ||
+      sessionStorage.getItem('user_id') ||
+      localStorage.getItem('userId') ||
+      sessionStorage.getItem('userId') ||
+      localStorage.getItem('student_id') ||
+      sessionStorage.getItem('student_id') ||
+      localStorage.getItem('profile_id') ||
+      sessionStorage.getItem('profile_id') ||
+      localStorage.getItem('id') ||
+      sessionStorage.getItem('id') ||
+      null
+    );
   }
 
   async function fetchJSON(url){
