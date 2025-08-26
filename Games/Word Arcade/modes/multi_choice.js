@@ -1,6 +1,7 @@
 import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // Multiple Choice (Mixed): randomly alternates between Kor→Eng and Eng→Kor each round
 export function runMultiChoiceMode({ wordList, gameArea, startGame, listName = null }) {
@@ -23,19 +24,31 @@ export function runMultiChoiceMode({ wordList, gameArea, startGame, listName = n
   setTimeout(() => {
     const intro = document.getElementById('multiMixedIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => { renderQuestion(); }, 650);
+    setTimeout(() => {
+      showGameProgress(shuffled.length, 0);
+      renderQuestion();
+    }, 650);
   }, 1000);
 
   function renderQuestion() {
     if (idx >= shuffled.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'multi_choice', summary: { score, total: shuffled.length } });
+      hideGameProgress();
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Game Complete!</h2>
         <div style="font-size:1.3em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div>
         <button id="playAgainMultiMixed" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        <button id="tryMoreMultiMixed" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
       </div>`;
       document.getElementById('playAgainMultiMixed').onclick = () => startGame('multi_choice');
+      document.getElementById('tryMoreMultiMixed').onclick = () => {
+        if (window.WordArcade?.startModeSelector) {
+          window.WordArcade.startModeSelector();
+        } else {
+          startGame('multi_choice', { shuffle: true });
+        }
+      };
       return;
     }
 
@@ -114,10 +127,7 @@ export function runMultiChoiceMode({ wordList, gameArea, startGame, listName = n
           attempt_index: idx + 1,
           extra: { direction: korToEng ? 'kor_to_eng' : 'eng_to_kor', eng: current.eng, kor: current.kor }
         });
-        setTimeout(() => {
-          idx++;
-          renderQuestion();
-        }, 900);
+  setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); renderQuestion(); }, 900);
       };
     });
   }

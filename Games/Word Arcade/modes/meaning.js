@@ -1,5 +1,6 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 // Meaning (drag-and-drop) mode
 export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null, score: initialScore = 0, round: initialRound = 0 }) {
   const ROUND_SIZE = 5;
@@ -25,7 +26,10 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
   setTimeout(() => {
     const intro = document.getElementById('meaningIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => { renderRound(); }, 650);
+    setTimeout(() => {
+      showGameProgress(total, 0);
+      renderRound();
+    }, 650);
   }, 1000);
 
   function renderRound() {
@@ -33,15 +37,25 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
   const remainingPairs = shuffledOrder.filter(w => !completedPairs.includes(w.eng + '|' + w.kor));
     const roundPairs = remainingPairs.slice(0, ROUND_SIZE);
     if (roundPairs.length === 0) {
-  // Game over
-      playSFX('end');
-  endSession(sessionId, { mode: 'meaning', summary: { score: Number(score.toFixed(1)), total: 100 } });
+      // Game over
+  playSFX('end');
+      endSession(sessionId, { mode: 'meaning', summary: { score: Number(score.toFixed(1)), total: 100 } });
+  hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
-            <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
-            <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score.toFixed(1)}%</span></div>
-            <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-          </div>`;
+        <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
+        <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score.toFixed(1)}%</span></div>
+        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        <button id="tryMoreMeaning" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+      </div>`;
       document.getElementById('playAgainBtn').onclick = () => startGame('meaning');
+      document.getElementById('tryMoreMeaning').onclick = () => {
+        if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
+          window.WordArcade.startModeSelector();
+        } else {
+          // Fallback
+          startGame('meaning');
+        }
+      };
       return;
     }
     // Shuffle for each round
@@ -71,8 +85,8 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
       if (activeTTSCard === card) return;
       activeTTSCard = card;
       const rawText = card.textContent.trim();
-      const text = preprocessTTS(rawText);
-      playTTS(text);
+      // Use the raw target word for playback so it maps directly to cached audio
+      playTTS(rawText);
       setTimeout(() => { if (activeTTSCard === card) activeTTSCard = null; }, 300);
     }
 
@@ -160,6 +174,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
           explodeAndRemove(engCard);
           score += correctValue;
           completedPairs.push(eng + '|' + kor);
+          updateGameProgress(completedPairs.length, total);
           feedback.textContent = `Correct! +${correctValue.toFixed(1)}%`;
           playSFX('correct');
         } else {

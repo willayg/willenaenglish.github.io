@@ -24,13 +24,21 @@ export function showSampleWordlistModal({ onChoose }) {
 
   // List sample wordlist files (label -> filename)
   const files = [
-  { label: 'Easy Animals', file: 'EasyAnimals.json' },
-  { label: 'Easy Hobbies', file: 'EasyHobbies.json' },
-  { label: 'Long U', file: 'LongU.json' },
-  { label: 'Easy Verbs', file: 'EasyVerbs.json' },
-  { label: 'Easy Jobs', file: 'EasyJobs.json' },
-  { label: 'Mixed 15', file: 'sample-wordlist-15.json' },
-  { label: 'Sample (All)', file: 'sample-wordlist.json' }
+    { label: 'Easy Animals', file: 'EasyAnimals.json' },
+    { label: 'Easy Hobbies', file: 'EasyHobbies.json' },
+    { label: 'Long U', file: 'LongU.json' },
+    { label: 'Easy Verbs', file: 'EasyVerbs.json' },
+    { label: 'Easy Jobs', file: 'EasyJobs.json' },
+    { label: 'Mixed 15', file: 'sample-wordlist-15.json' },
+    { label: 'Sample (All)', file: 'sample-wordlist.json' },
+    { label: 'Animals 2', file: 'Animals2.json' },
+    { label: 'Feelings', file: 'Feelings.json' },
+    { label: 'Food 1', file: 'Food1.json' },
+    { label: 'Food 2', file: 'Food2.json' },
+    { label: 'Food 3', file: 'Food3.json' },
+    { label: 'School Supplies', file: 'SchoolSupplies.json' },
+    { label: 'Sports', file: 'Sports.json' },
+    { label: 'Transportation', file: 'Transportation.json' }
   ];
   const list = document.getElementById('sampleWordlistList');
   ensureModeButtonStyles();

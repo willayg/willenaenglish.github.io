@@ -114,7 +114,22 @@ async function processWordlist(data) {
     showGameStart(() => startModeSelector());
     
   } catch (err) {
-    alert('Error processing word list: ' + err.message);
+    console.error('Error processing word list:', err);
+    const missing = err && err.details && Array.isArray(err.details.missingAfter) ? err.details.missingAfter : [];
+    const friendly = missing.length
+      ? `Some audio files could not be prepared (${missing.length}). Please try again or pick another lesson.`
+      : `Error processing word list: ${err.message}`;
+    // Render a retry UI instead of a plain alert
+    gameArea.innerHTML = `<div style="text-align:center; padding: 40px; font-family: Arial, sans-serif;">
+      <h3 style="margin-bottom: 14px; color: #e53e3e;">We couldn't prepare all audio</h3>
+      <div style="color:#555; margin-bottom:16px;">${friendly}</div>
+      <button id="retryPreload" style="font-size:1em;padding:10px 22px;border-radius:10px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Retry</button>
+      <button id="pickDifferent" style="font-size:1em;padding:10px 22px;border-radius:10px;background:#19777e;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:10px;">Choose Lesson</button>
+    </div>`;
+    const again = document.getElementById('retryPreload');
+    if (again) again.onclick = () => processWordlist(data);
+    const pick = document.getElementById('pickDifferent');
+    if (pick) pick.onclick = () => startFilePicker();
   }
 }
 
@@ -200,3 +215,31 @@ window.WordArcade = {
   getWordList: () => wordList,
   getListName: () => currentListName,
 };
+
+// Lightweight UI helpers for in-game progress bar
+export function showGameProgress(total, current = 0) {
+  const wrap = document.getElementById('gameProgressBar');
+  const fill = document.getElementById('gameProgressFill');
+  const txt = document.getElementById('gameProgressText');
+  if (!wrap || !fill || !txt) return;
+  wrap.style.display = '';
+  const pct = total > 0 ? Math.max(0, Math.min(100, Math.round((current / total) * 100))) : 0;
+  fill.style.width = pct + '%';
+  txt.textContent = `${current}/${total}`;
+}
+
+export function updateGameProgress(current, total) {
+  const fill = document.getElementById('gameProgressFill');
+  const txt = document.getElementById('gameProgressText');
+  const wrap = document.getElementById('gameProgressBar');
+  if (!fill || !txt || !wrap) return;
+  const pct = total > 0 ? Math.max(0, Math.min(100, Math.round((current / total) * 100))) : 0;
+  fill.style.width = pct + '%';
+  txt.textContent = `${current}/${total}`;
+  if (current >= total) hideGameProgress();
+}
+
+export function hideGameProgress() {
+  const wrap = document.getElementById('gameProgressBar');
+  if (wrap) wrap.style.display = 'none';
+}

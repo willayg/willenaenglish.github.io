@@ -1,0 +1,14 @@
+[
+  {"eng": "car", "kor": "자동차"},
+  {"eng": "bus", "kor": "버스"},
+  {"eng": "train", "kor": "기차"},
+  {"eng": "subway", "kor": "지하철"},
+  {"eng": "bicycle", "kor": "자전거"},
+  {"eng": "motorcycle", "kor": "오토바이"},
+  {"eng": "airplane", "kor": "비행기"},
+  {"eng": "ship", "kor": "배"},
+  {"eng": "taxi", "kor": "택시"},
+  {"eng": "truck", "kor": "트럭"},
+  {"eng": "scooter", "kor": "스쿠터"},
+  {"eng": "helicopter", "kor": "헬리콥터"}
+]

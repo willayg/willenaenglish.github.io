@@ -49,12 +49,16 @@ exports.handler = async (event) => {
     }
 
   if (section === 'sessions') {
-      const { data } = await supabase
-    .from('progress_sessions')
-    .select('session_id, mode, list_name, started_at, ended_at, summary')
-        .eq('user_id', user_id)
+      const list_name = url.searchParams.get('list_name');
+      let query = supabase
+        .from('progress_sessions')
+        .select('session_id, mode, list_name, started_at, ended_at, summary')
+        .eq('user_id', user_id);
+      if (list_name) query = query.eq('list_name', list_name);
+      const { data, error } = await query
         .order('ended_at', { ascending: false })
-        .limit(20);
+        .limit(500);
+      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message }) };
       return { statusCode: 200, body: JSON.stringify(data || []) };
     }
 
@@ -227,64 +231,73 @@ exports.handler = async (event) => {
     }
 
     if (section === 'challenging') {
-      // Return words where the student is wrong > 60% for a given skill
+      // Return words where the student is wrong > 60% for a given skill.
+      // Normalize ENG/KOR and exclude meaning-mode noise.
       const { data: attempts } = await supabase
         .from('progress_attempts')
         .select('mode, word, is_correct, points, correct_answer, extra')
         .eq('user_id', user_id);
 
-      const LISTENING = new Set(['listening']);
-      const READING = new Set(['meaning','multi_choice','multi_choice_kor_to_eng','multi_choice_eng_to_kor','picture']);
-      const SPELLING = new Set(['spelling','listen_and_spell']);
-
-      function skillOf(mode){
-        if (LISTENING.has(mode)) return 'listening';
-        if (SPELLING.has(mode)) return 'spelling';
-        if (READING.has(mode)) return 'reading';
+      const normalize = (s) => (s && typeof s === 'string') ? s.trim().toLowerCase() : null;
+      const hasHangul = (s) => typeof s === 'string' && /[\u3131-\uD79D\uAC00-\uD7AF]/.test(s);
+      const hasLatin = (s) => typeof s === 'string' && /[A-Za-z]/.test(s);
+      const toObj = (x) => { try { return typeof x === 'string' ? JSON.parse(x) : (x||null); } catch { return null; } };
+      const normMode = (m) => (m||'').toString().toLowerCase().replace(/[^a-z0-9]+/g,'_');
+      const skillOf = (mode) => {
+        const m = normMode(mode);
+        if (m.includes('spell')) return 'spelling';
+        if (m.includes('listen')) return 'listening';
+        if (m.includes('meaning')) return 'meaning';
+        if (m.includes('multi') || m.includes('choice') || m.includes('picture') || m.includes('read')) return 'reading';
         return null;
-      }
+      };
+      const EXCLUDE_MEANING = true; // reduce noise
 
-      // Aggregate per normalized english word + skill
-      const agg = new Map(); // key: `${word}||${skill}` -> { total, correctWeighted }
+      // Aggregate per normalized ENGLISH word + skill
+      // value: { total, correct, word_en, word_kr }
+      const agg = new Map();
+
       (attempts||[]).forEach(a => {
         const skill = skillOf(a.mode);
-        // Normalize word to English target where possible (handles legacy kor_to_eng logs)
-        let displayWord = a.word || null;
-        try {
-          const ex = (typeof a.extra === 'string') ? JSON.parse(a.extra) : a.extra;
-          if (skill === 'reading' && ex && ex.direction === 'kor_to_eng' && a.correct_answer) {
-            displayWord = a.correct_answer;
-          }
-        } catch {
-          // If parsing extra fails, leave displayWord as-is
-        }
-        const word = displayWord;
-        if (!skill || !word) return;
-        const key = word + '||' + skill;
-        let w = 0;
-        if (skill === 'spelling') {
-          const p = Number.isFinite(a.points) ? a.points : parseFloat(a.points);
-          if (p >= 2) w = 1; else if (p >= 1) w = 0.5; else w = 0;
-        } else {
-          w = a.is_correct ? 1 : 0;
-        }
-        const cur = agg.get(key) || { total:0, correctWeighted:0 };
-        cur.total += 1; cur.correctWeighted += w; agg.set(key, cur);
+        if (!skill) return;
+        if (EXCLUDE_MEANING && skill === 'meaning') return;
+        const ex = toObj(a.extra) || {};
+        // Determine english and korean representations from various fields
+        let eng = null, kor = null;
+        const dir = (ex.direction || ex.dir || '').toString().toLowerCase();
+        // Priority by direction hints
+        if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
+        if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
+        // Fallback scan of candidates
+        const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
+        for (const c of engCands) { if (!eng && hasLatin(c)) { eng = c; break; } }
+        const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
+        for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
+        if (!eng) return; // skip if we cannot resolve an English key
+        const key = normalize(eng) + '||' + skill;
+        if (!key || key.startsWith('||')) return;
+
+        // Weight: use simple correctness for all to avoid points variance
+        const w = a.is_correct ? 1 : 0;
+        const cur = agg.get(key) || { total:0, correct:0, word_en: eng, word_kr: kor || null };
+        cur.total += 1;
+        cur.correct += w;
+        // Keep the latest seen pretty display forms (not normalized)
+        if (!cur.word_en && eng) cur.word_en = eng;
+        if (!cur.word_kr && kor) cur.word_kr = kor;
+        agg.set(key, cur);
       });
 
       const out = [];
       agg.forEach((v, key) => {
-        const [word, skill] = key.split('||');
-        const acc = v.total ? (v.correctWeighted / v.total) : 0;
+        const [, skill] = key.split('||');
+        const acc = v.total ? (v.correct / v.total) : 0;
         if (acc < 0.4) { // wrong > 60%
-          out.push({ word, skill, accuracy: acc, attempts: v.total });
+          out.push({ word: v.word_en, word_en: v.word_en, word_kr: v.word_kr || null, skill, accuracy: acc, attempts: v.total });
         }
       });
-      // Sort by lowest accuracy then by most attempts
       out.sort((a,b) => (a.accuracy - b.accuracy) || (b.attempts - a.attempts));
-      // Optionally limit to top N to keep UI compact
-      const limited = out.slice(0, 20);
-      return { statusCode: 200, body: JSON.stringify(limited) };
+      return { statusCode: 200, body: JSON.stringify(out.slice(0, 20)) };
     }
 
     return { statusCode: 400, body: JSON.stringify({ error: 'Unknown section' }) };
