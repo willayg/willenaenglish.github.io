@@ -210,20 +210,125 @@
       return;
     }
     // Fetch username and avatar from Supabase profiles table
-    const info = await getProfileInfo(uid);
-    nameEl.textContent = info.username || 'Student Profile';
-    avatarEl.textContent = info.avatar || '🙂';
-
-    // Avatar modal behavior
-  const overlay = document.getElementById('avatarModal');
-  const grid = document.getElementById('emojiGrid');
-  const btnClose = document.getElementById('avatarClose');
-  const btnCancel = document.getElementById('avatarCancel');
-  const btnSave = document.getElementById('avatarSave');
+    const infoPromise = getProfileInfo(uid);
+    // Start all main data loads in parallel
+    const [info, kpi, ov, badges, challenging, modes, sessions, attempts] = await Promise.all([
+      infoPromise,
+      fetchJSON(API.kpi(uid)).catch(() => null),
+      fetchJSON(API.overview(uid)).catch(() => null),
+      fetchJSON(API.badges(uid)).catch(() => null),
+      fetchJSON(API.challenging(uid)).catch(() => null),
+      fetchJSON(API.modes(uid)).catch(() => null),
+      fetchJSON(API.sessions(uid)).catch(() => null),
+      fetchJSON(API.attempts(uid)).catch(() => null)
+    ]);
+    // Batch DOM updates
+    nameEl.textContent = (info && info.username) || 'Student Profile';
+    avatarEl.textContent = (info && info.avatar) || '🙂';
+    // KPIs
+    setText('ovPoints', (ov && ov.points != null) ? ov.points : '0');
+    setText('ovStars', (ov && ov.stars != null) ? ov.stars : '0');
+    setText('ovListsExplored', (ov && ov.lists_explored != null) ? ov.lists_explored : '0');
+    setText('ovPerfectRuns', (ov && ov.perfect_runs != null) ? ov.perfect_runs : '0');
+    setText('ovMasteredLists', (ov && (ov.mastered ?? ov.mastered_lists) != null) ? (ov.mastered ?? ov.mastered_lists) : '0');
+    setText('ovHotStreak', (ov && ov.best_streak != null) ? ov.best_streak : '0');
+    setText('ovWordsDiscovered', (ov && ov.words_discovered != null) ? ov.words_discovered : '0');
+    setText('ovWordsMastered', (ov && ov.words_mastered != null) ? ov.words_mastered : '0');
+    setText('ovSessionsPlayed', (ov && ov.sessions_played != null) ? ov.sessions_played : '0');
+    setText('ovBadgesCount', (ov && ov.badges_count != null) ? ov.badges_count : '0');
+    setText('ovFavoriteList', (ov && ov.favorite_list && ov.favorite_list.name) ? ov.favorite_list.name : '—');
+    setText('ovHardestWord', (ov && ov.hardest_word && ov.hardest_word.word) ? ov.hardest_word.word : '—');
+    // Badges
+    const wrap = document.getElementById('badgesWrap');
+    if (wrap) {
+      if (!badges || !Array.isArray(badges) || !badges.length) {
+        wrap.textContent = 'No badges yet.';
+      } else {
+        wrap.innerHTML = badges.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
+      }
+    }
+    // Challenging words
+    const listEl = document.getElementById('challengingList');
+    const emptyEl = document.getElementById('challengingEmpty');
+    if (listEl) {
+      if (!challenging || !Array.isArray(challenging) || !challenging.length) {
+        if (emptyEl) emptyEl.textContent = 'No challenging words yet.';
+      } else {
+        if (emptyEl) emptyEl.remove();
+        listEl.innerHTML = challenging.map(item => {
+          const accPct = Math.round((item.accuracy || 0) * 100);
+          const cls = accPct <= 0 ? 'zero' : (accPct < 40 ? 'bad' : 'ok');
+          const skillLower = (item.skill || '').toLowerCase();
+          const mainWord = item.word_en || item.word || '';
+          const subKor = item.word_kr ? `<div class="cw-sub">${item.word_kr}</div>` : '';
+          return `
+            <div class="cw-card">
+              <div>
+                <div class="cw-word">${mainWord}</div>
+                ${subKor}
+              </div>
+              <div class="cw-right">
+                <div class="cw-acc ${cls}">${accPct}%</div>
+                <div class="cw-skill">${skillLower}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+    // Modes
+    const modesEl = document.getElementById('modes');
+    if (modesEl) {
+      if (!modes || !Array.isArray(modes) || !modes.length) {
+        modesEl.textContent = 'No data yet.';
+      } else {
+        modesEl.innerHTML = modes.map(m => `<span class="mode-chip"><strong>${m.mode}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
+      }
+    }
+    // Sessions
+    const sessionsTb = document.getElementById('sessionsBody');
+    if (sessionsTb) {
+      if (!sessions || !Array.isArray(sessions) || !sessions.length) {
+        sessionsTb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>';
+      } else {
+        sessionsTb.innerHTML = sessions.map(s => {
+          const when = fmtDate(s.ended_at || s.started_at);
+          let listName = '';
+          try { let sum = s.summary; if (typeof sum === 'string') sum = JSON.parse(sum); listName = sum?.list_name || sum?.listName || ''; } catch {}
+          const sumStr = renderSummary(s.summary);
+          const meta = [sumStr, listName].filter(Boolean).join(' • ');
+          return `<tr>
+            <td data-label="When">${when}</td>
+            <td data-label="Mode"><span class="pill">${s.mode||'?'}<\/span></td>
+            <td data-label="Summary">${meta}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+    // Attempts
+    const attemptsTb = document.getElementById('attemptsBody');
+    if (attemptsTb) {
+      if (!attempts || !Array.isArray(attempts) || !attempts.length) {
+        attemptsTb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>';
+      } else {
+        attemptsTb.innerHTML = attempts.map(a => `<tr>
+          <td data-label="When">${fmtDate(a.created_at)}</td>
+          <td data-label="Mode">${a.mode||''}</td>
+          <td data-label="Word">${a.word||''}</td>
+          <td data-label="Result">${a.is_correct? '✅':'❌'}</td>
+          <td data-label="+Pts">${a.points??''}</td>
+        </tr>`).join('');
+      }
+    }
+    // Avatar modal behavior (deferred until after main data loads)
+    const overlay = document.getElementById('avatarModal');
+    const grid = document.getElementById('emojiGrid');
+    const btnClose = document.getElementById('avatarClose');
+    const btnCancel = document.getElementById('avatarCancel');
+    const btnSave = document.getElementById('avatarSave');
     const choices = ['🙂','😃','😎','🦄','🐱','🐶','👽','🤖','🌟','🎓','🧑‍🎓','🧑‍🚀','🧑‍💻','🦊','🐼','🐵','🐸','🐯','🐨','🐷'];
     let current = avatarEl.textContent;
     let selected = current;
-
     function openModal() {
       if (!overlay) return;
       if (grid && !grid.dataset.ready) {
@@ -254,15 +359,5 @@
       closeModal();
       await updateProfileAvatar(uid, current);
     });
-
-    await Promise.allSettled([
-  loadKpi(uid), // keep for future/internal metrics
-  loadOverview(uid),
-      loadBadges(uid),
-  loadChallenging(uid),
-      loadModes(uid),
-      loadSessions(uid),
-      loadAttempts(uid)
-    ]);
   });
 })();
