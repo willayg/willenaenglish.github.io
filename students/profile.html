@@ -108,6 +108,11 @@
   .tb-link.primary { color: var(--pri); }
   .tb-link:disabled { cursor: default; color: #a9cbd0; }
   .tb-link:not(:first-child) { border-left: 1px solid #cfe3e5; padding-left: 12px; margin-left: 12px; }
+  /* Loading overlay */
+  .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 10000; }
+  .spinner { width: 44px; height: 44px; border: 4px solid #cfe3e5; border-top-color: var(--pri); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { margin-top: 8px; color: var(--pri); font-weight: 700; }
   </style>
   <script>
     // Lightweight helpers for identity
@@ -141,6 +146,11 @@
   <base href="/students/">
   </head>
 <body>
+  <!-- Loading overlay spinner -->
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading…</div>
+  </div>
   <header>
   <div class="avatar" id="pfAvatar" title="Change avatar" style="cursor:pointer;">🙂</div>
     <div>
