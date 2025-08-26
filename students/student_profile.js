@@ -204,15 +204,20 @@
     const uid = getUserId();
     const nameEl = document.getElementById('pfName');
     const avatarEl = document.getElementById('pfAvatar');
+    const overlayEl = document.getElementById('loadingOverlay');
+    const showOverlay = () => { if (overlayEl) { overlayEl.style.display = 'flex'; overlayEl.setAttribute('aria-hidden', 'false'); } };
+    const hideOverlay = () => { if (overlayEl) { overlayEl.style.display = 'none'; overlayEl.setAttribute('aria-hidden', 'true'); } };
+    showOverlay();
     if (!uid) {
       nameEl.textContent = 'Student Profile';
       avatarEl.textContent = '🙂';
+      hideOverlay();
       return;
     }
     // Fetch username and avatar from Supabase profiles table
     const infoPromise = getProfileInfo(uid);
     // Start all main data loads in parallel
-    const [info, kpi, ov, badges, challenging, modes, sessions, attempts] = await Promise.all([
+  const [info, kpi, ov, badges, challenging, modes, sessions, attempts] = await Promise.all([
       infoPromise,
       fetchJSON(API.kpi(uid)).catch(() => null),
       fetchJSON(API.overview(uid)).catch(() => null),
@@ -359,5 +364,6 @@
       closeModal();
       await updateProfileAvatar(uid, current);
     });
+  hideOverlay();
   });
 })();
