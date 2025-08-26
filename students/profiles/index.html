@@ -35,9 +35,21 @@
     .error { color:#b00020; font-weight:700; }
   </style>
   <script>
-    // Lightweight helpers for identity
+    // Lightweight helpers for identity (robust fallback keys)
     function getUserId() {
-      return localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+      return (
+        localStorage.getItem('user_id') ||
+        sessionStorage.getItem('user_id') ||
+        localStorage.getItem('userId') ||
+        sessionStorage.getItem('userId') ||
+        localStorage.getItem('student_id') ||
+        sessionStorage.getItem('student_id') ||
+        localStorage.getItem('profile_id') ||
+        sessionStorage.getItem('profile_id') ||
+        localStorage.getItem('id') ||
+        sessionStorage.getItem('id') ||
+        null
+      );
     }
     function getUserName() {
       return localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || 'Guest';
@@ -46,7 +58,8 @@
       return localStorage.getItem('selectedEmojiAvatar') || '🙂';
     }
   </script>
-  <script defer src="./profile.js"></script>
+  <!-- Use absolute path so <base> never interferes -->
+  <script defer src="/students/profiles/profile.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -54,7 +67,8 @@
   <meta name="robots" content="noindex" />
   <meta name="description" content="Student profile: progress, badges, and recent activity across games." />
   <link rel="icon" href="/Logo.png" />
-  <base href="/profiles/">
+  <!-- Correct base for this folder to avoid breaking relative assets; optional since we use absolute script path -->
+  <base href="/students/profiles/">
   </head>
 <body>
   <header>
