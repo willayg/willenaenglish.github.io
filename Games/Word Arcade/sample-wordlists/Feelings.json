@@ -1,0 +1,14 @@
+[
+  {"eng": "happy", "kor": "행복한"},
+  {"eng": "sad", "kor": "슬픈"},
+  {"eng": "angry", "kor": "화난"},
+  {"eng": "excited", "kor": "신난"},
+  {"eng": "scared", "kor": "무서운"},
+  {"eng": "bored", "kor": "지루한"},
+  {"eng": "tired", "kor": "피곤한"},
+  {"eng": "surprised", "kor": "놀란"},
+  {"eng": "nervous", "kor": "긴장한"},
+  {"eng": "proud", "kor": "자랑스러운"},
+  {"eng": "shy", "kor": "수줍은"},
+  {"eng": "confused", "kor": "혼란스러운"}
+]

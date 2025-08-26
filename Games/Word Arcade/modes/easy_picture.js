@@ -16,6 +16,7 @@ function isEmojiSupported(emoji) {
 import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // Local emoji mapping cache
 let emojiMap = {};
@@ -71,7 +72,10 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
   setTimeout(() => {
     const intro = document.getElementById('easyPicIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => { renderQuestion(); }, 650);
+    setTimeout(() => {
+      showGameProgress(ordered.length, 0);
+      renderQuestion();
+    }, 650);
   }, 1000);
 
   function getTileHtml(wordEntry) {
@@ -87,9 +91,23 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
     if (idx >= ordered.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'easy_picture', summary: { score, total: ordered.length } });
-      gameArea.innerHTML = `<div style="padding:40px;text-align:center;"><h2 style="color:#41b6beff;">Easy Picture Complete!</h2><div style="font-size:1.2em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${ordered.length}</span></div><button id="playAgainEasyPic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button></div>`;
+      hideGameProgress();
+      gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
+        <h2 style="color:#41b6beff;">Easy Picture Complete!</h2>
+        <div style="font-size:1.2em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${ordered.length}</span></div>
+        <button id="playAgainEasyPic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        <button id="tryMoreEasyPic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+      </div>`;
       const again = document.getElementById('playAgainEasyPic');
       if (again) again.onclick = () => startGame('easy_picture');
+      const tryMore = document.getElementById('tryMoreEasyPic');
+      if (tryMore) tryMore.onclick = () => {
+        if (window.WordArcade?.startModeSelector) {
+          window.WordArcade.startModeSelector();
+        } else {
+          startGame('easy_picture', { shuffle: true });
+        }
+      };
       return;
     }
 
@@ -112,10 +130,6 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
     // Render tiles grid and controls
     gameArea.innerHTML = `
       <div style="padding:16px 16px 6px;text-align:center;">
-        <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:10px;">
-          <button id="replayWord" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:42px;height:42px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;">▶</button>
-          <div id="promptText" style="color:#555;font-size:0.95em;">Listen and tap the picture</div>
-        </div>
         <div id="easyPicGrid" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto;">
           ${shuffledChoices.map(ch => `
             <button class="choice-btn easy-pic-choice" data-eng="${ch.eng}" style="height:26vh;display:flex;align-items:center;justify-content:center;">
@@ -123,17 +137,19 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
             </button>
           `).join('')}
         </div>
+        <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
+          <button id="replayWord" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
+        </div>
         <div id="picFeedback" style="margin-top:10px;font-size:1.05em;height:24px;color:#555;"></div>
       </div>`;
 
     // Wire buttons + styles
     setupChoiceButtons(gameArea);
 
-    // Play the target word (with friendly short-word phrasing)
-    const phrase = preprocessTTS(current.eng);
-    playTTS(phrase);
-    const replayBtn = document.getElementById('replayWord');
-    if (replayBtn) replayBtn.onclick = () => playTTS(phrase);
+  // Play the target word using the raw keyword to match cached filenames
+  playTTS(current.eng);
+  const replayBtn = document.getElementById('replayWord');
+  if (replayBtn) replayBtn.onclick = () => playTTS(current.eng);
 
     document.querySelectorAll('.easy-pic-choice').forEach(btn => {
       btn.onclick = () => {
@@ -160,7 +176,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
           points: correct ? 1 : 0,
           attempt_index: idx + 1
         });
-        setTimeout(() => { idx++; renderQuestion(); }, 900);
+  setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);
       };
     });
   }

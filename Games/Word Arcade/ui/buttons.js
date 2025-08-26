@@ -55,14 +55,16 @@ function ensureChoiceButtonStyles() {
       max-width: 800px;
       margin: 24px auto;
       padding: 0 20px;
+      justify-content: center;
+      align-items: center;
     }
     .mode-btn {
       width: calc(100% + 10px);
       height: var(--mode-btn-height, 120px);
       border: 2px solid #19777e;
       border-radius: 12px;
-      background: #93cbcf;
-      color: #fff;
+      background: #ffffff;
+      color: #19777e;
       font-weight: 600;
       font-size: 16px;
       cursor: pointer;
@@ -77,12 +79,66 @@ function ensureChoiceButtonStyles() {
       user-select: none;
     }
     .mode-btn:hover {
-      background: #19777e;
+      background: #f8f9fa;
       transform: translateY(-2px);
       box-shadow: 0 4px 16px rgba(60,60,80,0.15);
       border-color: #93cbcf;
     }
     .mode-btn:active { transform: translateY(0); }
+
+    /* Golden back glow for perfect score */
+    .mode-btn.mode-perfect {
+      background: #fff;
+      border-color: #f5c518;
+      color: #19777e;
+      box-shadow: 0 0 16px 5px rgba(245,197,24,0.50), 0 2px 8px rgba(60,60,80,0.10);
+      transform: translateY(-1px);
+    }
+    .mode-btn.mode-perfect:hover {
+      background: #fff;
+      border-color: #f5c518;
+      box-shadow: 0 0 22px 7px rgba(245,197,24,0.58), 0 4px 12px rgba(60,60,80,0.12);
+      transform: translateY(-3px) scale(1.01);
+    }
+
+    /* Blue back glow for excellent score (95% and above) */
+    .mode-btn.mode-excellent {
+      background: #fff;
+      border-color: #3bb6ff;
+      color: #19777e;
+      box-shadow: 0 0 16px 5px rgba(59,182,255,0.38), 0 2px 8px rgba(60,60,80,0.10);
+      transform: translateY(-1px);
+    }
+    .mode-btn.mode-excellent:hover {
+      background: #fff;
+      border-color: #3bb6ff;
+      box-shadow: 0 0 22px 7px rgba(59,182,255,0.48), 0 4px 12px rgba(60,60,80,0.12);
+      transform: translateY(-3px) scale(1.01);
+    }
+
+    /* Pink back glow for great score (90% and above but less than 95%) */
+    .mode-btn.mode-great {
+      background: #fff;
+      border-color: #ff69b4;
+      color: #19777e;
+      box-shadow: 0 0 16px 5px rgba(255,105,180,0.32), 0 2px 8px rgba(60,60,80,0.10);
+      transform: translateY(-1px);
+    }
+    .mode-btn.mode-great:hover {
+      background: #fff;
+      border-color: #ff69b4;
+      box-shadow: 0 0 22px 7px rgba(255,105,180,0.42), 0 4px 12px rgba(60,60,80,0.12);
+      transform: translateY(-3px) scale(1.01);
+    }
+
+    /* Small meta line for progress (e.g., Best score) */
+    .mode-meta {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #666666;
+      margin-top: 6px;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -131,6 +187,7 @@ export function renderModeButtons(container, items, options = {}) {
   items.forEach(item => {
     const btn = document.createElement('button');
     btn.className = 'mode-btn';
+    if (item.className) btn.classList.add(item.className);
     btn.style.setProperty('--mode-btn-height', buttonHeight);
     // Allow simple HTML like <br> in labels
     btn.innerHTML = item.label;

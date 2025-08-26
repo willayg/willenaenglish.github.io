@@ -1,0 +1,12 @@
+[
+  {"eng": "rice", "kor": "밥"},
+  {"eng": "bread", "kor": "빵"},
+  {"eng": "noodles", "kor": "국수"},
+  {"eng": "egg", "kor": "계란"},
+  {"eng": "meat", "kor": "고기"},
+  {"eng": "fish", "kor": "생선"},
+  {"eng": "chicken", "kor": "치킨"},
+  {"eng": "soup", "kor": "수프"},
+  {"eng": "cheese", "kor": "치즈"},
+  {"eng": "tofu", "kor": "두부"}
+]

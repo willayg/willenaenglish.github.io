@@ -1,0 +1,12 @@
+[
+  {"eng": "pizza", "kor": "피자"},
+  {"eng": "hamburger", "kor": "햄버거"},
+  {"eng": "sandwich", "kor": "샌드위치"},
+  {"eng": "spaghetti", "kor": "스파게티"},
+  {"eng": "salad", "kor": "샐러드"},
+  {"eng": "hotdog", "kor": "핫도그"},
+  {"eng": "fries", "kor": "감자튀김"},
+  {"eng": "ice cream", "kor": "아이스크림"},
+  {"eng": "cake", "kor": "케이크"},
+  {"eng": "cookie", "kor": "쿠키"}
+]

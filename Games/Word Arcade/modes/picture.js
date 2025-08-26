@@ -2,6 +2,7 @@
 import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // Global emoji mapping - loaded from external file
 let emojiMap = {};
@@ -73,16 +74,33 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
   setTimeout(() => {
     const intro = document.getElementById('picIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => { renderQuestion(); }, 650);
+    setTimeout(() => {
+      showGameProgress(ordered.length, 0);
+      renderQuestion();
+    }, 650);
   }, 1000);
 
   function renderQuestion() {
     if (idx >= ordered.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'picture', summary: { score, total: ordered.length } });
-      gameArea.innerHTML = `<div style="padding:40px;text-align:center;"><h2 style="color:#41b6beff;">Picture Mode Complete!</h2><div style="font-size:1.3em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${ordered.length}</span></div><button id="playAgainPic" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button></div>`;
+      hideGameProgress();
+      gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
+        <h2 style="color:#41b6beff;">Picture Mode Complete!</h2>
+        <div style="font-size:1.3em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${ordered.length}</span></div>
+        <button id="playAgainPic" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        <button id="tryMorePic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+      </div>`;
       const again = document.getElementById('playAgainPic');
       if (again) again.onclick = () => startGame('picture');
+      const tryMore = document.getElementById('tryMorePic');
+      if (tryMore) tryMore.onclick = () => {
+        if (window.WordArcade?.startModeSelector) {
+          window.WordArcade.startModeSelector();
+        } else {
+          startGame('picture', { shuffle: true });
+        }
+      };
       return;
     }
 
@@ -142,7 +160,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
           points: correct ? 1 : 0,
           attempt_index: idx + 1
         });
-        setTimeout(() => { idx++; renderQuestion(); }, 900);
+  setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);
       };
     });
 

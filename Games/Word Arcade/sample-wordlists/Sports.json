@@ -1,0 +1,14 @@
+[
+  {"eng": "soccer", "kor": "축구"},
+  {"eng": "basketball", "kor": "농구"},
+  {"eng": "baseball", "kor": "야구"},
+  {"eng": "tennis", "kor": "테니스"},
+  {"eng": "volleyball", "kor": "배구"},
+  {"eng": "swimming", "kor": "수영"},
+  {"eng": "running", "kor": "달리기"},
+  {"eng": "cycling", "kor": "자전거 타기"},
+  {"eng": "skiing", "kor": "스키"},
+  {"eng": "skating", "kor": "스케이트"},
+  {"eng": "golf", "kor": "골프"},
+  {"eng": "badminton", "kor": "배드민턴"}
+]

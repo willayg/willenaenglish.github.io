@@ -1,5 +1,6 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // Spelling mode
 export function runSpellingMode({ wordList, gameArea, listName = null }) {
@@ -20,21 +21,33 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
   setTimeout(() => {
     const intro = document.getElementById('spellingIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => { renderRound(); }, 650);
+    setTimeout(() => {
+      showGameProgress(wordList.length, 0);
+      renderRound();
+    }, 650);
   }, 1000);
 
   function renderRound() {
   const remainingIndices = order.filter(i => !completedIndices.includes(i));
     const roundIndices = remainingIndices.slice(0, ROUND_SIZE);
     if (roundIndices.length === 0) {
-      playSFX('end');
+  playSFX('end');
       endSession(sessionId, { mode: 'spelling', summary: { score: spellingScore, rounds: round } });
+  hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
         <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${spellingScore}</span></div>
         <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        <button id="tryMoreSpelling" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => runSpellingMode({ wordList, gameArea });
+      document.getElementById('tryMoreSpelling').onclick = () => {
+        if (window.WordArcade?.startModeSelector) {
+          window.WordArcade.startModeSelector();
+        } else {
+          runSpellingMode({ wordList: wordList.sort(() => Math.random() - 0.5), gameArea });
+        }
+      };
       return;
     }
     gameArea.innerHTML = `
@@ -105,6 +118,7 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
           input.disabled = true;
           spellingScore += points;
           completedIndices.push(idx);
+          updateGameProgress(completedIndices.length, wordList.length);
           document.getElementById('spelling-score').innerHTML = `Score: ${spellingScore}<br>Round ${round + 1} / ${Math.ceil(wordList.length / ROUND_SIZE)}`;
           // Focus next input in this round
           const next = document.querySelector(`.spelling-card[data-idx="${roundIndices[i+1]}"] .spelling-input`);

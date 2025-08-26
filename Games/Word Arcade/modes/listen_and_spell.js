@@ -1,5 +1,6 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // Listen and Spell mode
 export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
@@ -17,21 +18,24 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
   setTimeout(() => {
     const intro = document.getElementById('listenSpellIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => { startGame(); }, 650);
+  setTimeout(() => { showGameProgress(shuffled.length, 0); startGame(); }, 650);
   }, 1000);
 
   function startGame() {
     gameArea.innerHTML = `<div class="listening-game" style="max-width:340px;margin:0 auto;">
       <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and type the English word you hear:</div>
-      <button id="playAudioBtn" style="font-size:1em;padding:8px 18px;border-radius:8px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-bottom:12px;">🔊 Play Again</button>
       <input type="text" id="listeningInput" placeholder="Type English" style="font-size:1.1em;padding:8px 12px;border-radius:8px;border:1.5px solid #f59e0b;outline:none;width:120px;">
       <span id="listening-feedback" style="margin-left:12px;font-size:1em;"></span>
+      <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
+        <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
+      </div>
       <div id="listening-score" style="margin-top:18px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">Score: 0</div>
     </div>`;
 
     function playCurrentWord() {
       const word = shuffled[listeningIdx].eng;
-      playTTS(preprocessTTS(word));
+      // Use the raw target word for playback so it maps directly to cached audio
+      playTTS(word);
     }
     playCurrentWord();
 
@@ -76,6 +80,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
         document.getElementById('listening-score').textContent = `Score: ${listeningScore}`;
         setTimeout(() => {
           listeningIdx++;
+          updateGameProgress(listeningIdx, shuffled.length);
           if (listeningIdx < shuffled.length) {
             feedback.textContent = '';
             input.value = '';
@@ -85,12 +90,21 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
           } else {
             playSFX('end');
             endSession(sessionId, { mode: 'listen_and_spell', summary: { score: listeningScore, max: shuffled.length * 2 } });
+            hideGameProgress();
             gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
                 <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
                 <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${listeningScore} / ${shuffled.length*2}</span></div>
                 <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+                <button id="tryMoreListenSpell" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
               </div>`;
             document.getElementById('playAgainBtn').onclick = () => startGame('listen_and_spell');
+            document.getElementById('tryMoreListenSpell').onclick = () => {
+              if (window.WordArcade?.startModeSelector) {
+                window.WordArcade.startModeSelector();
+              } else {
+                startGame('listen_and_spell', { shuffle: true });
+              }
+            };
           }
         }, 900);
       }

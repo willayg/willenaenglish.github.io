@@ -1,5 +1,6 @@
 // Mode Modal UI
 import { renderModeButtons, ensureModeButtonStyles } from './buttons.js';
+import { getUserId } from '../../../students/records.js';
 
 export async function showModeModal({ onModeChosen, onClose }) {
   let modal = document.getElementById('modeModal');
@@ -19,19 +20,19 @@ export async function showModeModal({ onModeChosen, onClose }) {
       <div style="margin-bottom:8px;margin-top:2px;">
         <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
           <div style="flex:1;height:1px;background:#b2d6d9;margin-right:8px;"></div>
-          <div style="font-size:1.08em;color:#19777e;font-weight:600;letter-spacing:0.5px;">Listen</div>
+          <div style="font-size:1.08em;color:#19777e;font-weight:600;letter-spacing:0.5px;">Listening</div>
           <div style="flex:1;height:1px;background:#b2d6d9;margin-left:8px;"></div>
         </div>
         <div id="modeModalListenGroup" style="margin-bottom:18px;"></div>
         <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
           <div style="flex:1;height:1px;background:#b2d6d9;margin-right:8px;"></div>
-          <div style="font-size:1.08em;color:#19777e;font-weight:600;letter-spacing:0.5px;">Read</div>
+          <div style="font-size:1.08em;color:#19777e;font-weight:600;letter-spacing:0.5px;">Reading</div>
           <div style="flex:1;height:1px;background:#b2d6d9;margin-left:8px;"></div>
         </div>
         <div id="modeModalReadGroup" style="margin-bottom:18px;"></div>
         <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
           <div style="flex:1;height:1px;background:#b2d6d9;margin-right:8px;"></div>
-          <div style="font-size:1.08em;color:#19777e;font-weight:600;letter-spacing:0.5px;">Spell</div>
+          <div style="font-size:1.08em;color:#19777e;font-weight:600;letter-spacing:0.5px;">Spelling</div>
           <div style="flex:1;height:1px;background:#b2d6d9;margin-left:8px;"></div>
         </div>
         <div id="modeModalSpellGroup" style="margin-bottom:0px;"></div>
@@ -42,6 +43,42 @@ export async function showModeModal({ onModeChosen, onClose }) {
     </div>`;
 
   ensureModeButtonStyles();
+
+  // Pre-fetch per-mode best score for this list (if logged in)
+  const userId = getUserId && getUserId();
+  const listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : null;
+  // bestByMode: mode -> { pct?: number, pts?: number }
+  let bestByMode = {};
+  if (userId && listName) {
+    try {
+      const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
+      url.searchParams.set('user_id', userId);
+      url.searchParams.set('section', 'sessions');
+  if (listName) url.searchParams.set('list_name', listName);
+  const res = await fetch(url.toString(), { cache: 'no-store' });
+      if (res.ok) {
+        const sessions = await res.json();
+        (Array.isArray(sessions) ? sessions : []).forEach(s => {
+          if (!s || s.list_name !== listName) return;
+          let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
+          const key = (s.mode || 'unknown').toString().toLowerCase();
+          if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
+            const pct = Math.round((sum.score / sum.total) * 100);
+            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
+          } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
+            const pct = Math.round((sum.score / sum.max) * 100);
+            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
+          } else if (sum && typeof sum.accuracy === 'number') {
+            const pct = Math.round((sum.accuracy || 0) * 100);
+            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
+          } else if (sum && typeof sum.score === 'number') {
+            const pts = Math.round(sum.score);
+            if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
+          }
+        });
+      }
+    } catch {}
+  }
   // Decide availability for picture modes: require at least 4 picturable items (img or emoji)
   const wl = (window.WordArcade && typeof window.WordArcade.getWordList === 'function') ? window.WordArcade.getWordList() : [];
   let picturableKeys = new Set();
@@ -70,19 +107,67 @@ export async function showModeModal({ onModeChosen, onClose }) {
   }
   const hasPicturable = picturableKeys.size >= 4;
 
-  // Group modes
+  // Helper for SVG icon paths
+  const modeIcons = {
+    easy_picture: './assets/Images/icons/picture-listen.svg',
+    listening: './assets/Images/icons/listening-mode.svg',
+    picture: './assets/Images/icons/picture-mode.svg',
+    meaning: './assets/Images/icons/matching.svg',
+    multi_choice: './assets/Images/icons/multiple-choice.svg',
+    spelling: './assets/Images/icons/translate-and-spell.svg',
+    listen_and_spell: './assets/Images/icons/listen-and-spell.svg',
+  };
+
+  // Map best pct to a CSS class for glow styling
+  const getModeClass = (modeId) => {
+    const key = String(modeId || '').toLowerCase();
+    const best = bestByMode[key];
+    const pct = best && typeof best.pct === 'number' ? best.pct : null;
+    if (pct == null) return '';
+    if (pct >= 100) return 'mode-perfect';
+    if (pct >= 95) return 'mode-excellent';
+    if (pct >= 90) return 'mode-great';
+    return '';
+  };
+
+  // Improved label with SVG icon and percent/stars
+  const labelWithBest = (id, label) => {
+    const key = id.toLowerCase();
+    const best = bestByMode[key];
+    let meta = '—';
+    let stars = '';
+    let pct = null;
+    if (best && best.pct != null) {
+      pct = best.pct;
+      meta = `<span style='font-size:1.2em;font-weight:bold;'>${pct}%</span>`;
+      if (pct >= 100) stars = '<img src="./assets/Images/icons/star.svg" alt="star" style="width:22px;height:22px;" />'.repeat(3);
+      else if (pct >= 95) stars = '<img src="./assets/Images/icons/star.svg" alt="star" style="width:22px;height:22px;" />'.repeat(2);
+      else if (pct >= 90) stars = '<img src="./assets/Images/icons/star.svg" alt="star" style="width:22px;height:22px;" />';
+    } else if (best && best.pts != null) {
+      meta = `<span style='font-size:1.2em;font-weight:bold;'>${best.pts} pts</span>`;
+    }
+    const bar = pct != null ? `<div style='width:80%;height:6px;border-radius:6px;background:#eceff1;margin-top:6px;overflow:hidden;'>
+      <div style='height:100%;width:${pct}%;background:linear-gradient(90deg,#93cbcf,#19777e);'></div>
+    </div>` : '';
+    return `<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;'>
+      <div><img src='${modeIcons[id] || ''}' alt='${label}' style='width:60px;height:60px;'/></div>
+      <div style='display:flex;align-items:center;gap:8px;'>${meta}${stars}</div>
+      ${bar}
+    </div>`;
+  };
+
   const listenModes = [
-    ...(hasPicturable ? [{ id: 'easy_picture', label: 'Picture Listen' }] : []),
-    { id: 'listening', label: 'Listening Mode' },
+    ...(hasPicturable ? [{ id: 'easy_picture', label: labelWithBest('easy_picture','Picture Listen'), className: getModeClass('easy_picture') }] : []),
+    { id: 'listening', label: labelWithBest('listening','Listening Mode'), className: getModeClass('listening') },
   ];
   const readModes = [
-    ...(hasPicturable ? [{ id: 'picture', label: 'Picture Mode' }] : []),
-    { id: 'meaning', label: 'Matching Mode' },
-    { id: 'multi_choice', label: 'Multiple Choice' },
+    ...(hasPicturable ? [{ id: 'picture', label: labelWithBest('picture','Picture Mode'), className: getModeClass('picture') }] : []),
+    { id: 'meaning', label: labelWithBest('meaning','Matching Mode'), className: getModeClass('meaning') },
+    { id: 'multi_choice', label: labelWithBest('multi_choice','Multiple Choice'), className: getModeClass('multi_choice') },
   ];
   const spellModes = [
-    { id: 'spelling', label: 'Translate and Spell' },
-    { id: 'listen_and_spell', label: 'Listen and Spell' },
+    { id: 'spelling', label: labelWithBest('spelling','Translate and Spell'), className: getModeClass('spelling') },
+    { id: 'listen_and_spell', label: labelWithBest('listen_and_spell','Listen and Spell'), className: getModeClass('listen_and_spell') },
   ];
 
   // Render each group with improved spacing
@@ -127,7 +212,11 @@ export async function showModeModal({ onModeChosen, onClose }) {
   modal.style.display = 'flex';
   document.getElementById('closeModeModal').onclick = () => {
     modal.style.display = 'none';
-    if (onClose) onClose();
+    if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
+      window.WordArcade.startModeSelector();
+    } else if (onClose) {
+      onClose();
+    }
   };
   document.getElementById('closeModeModalX').onclick = () => {
     modal.style.display = 'none';
