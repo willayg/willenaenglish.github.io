@@ -21,7 +21,7 @@ const eb4Sentences = [
   { original: "What’s wrong?", chunks: ["What’s", "wrong?"] },
   { original: "I have a headache.", chunks: ["I", "have", "a headache."] },
   { original: "You should go to the doctor.", chunks: ["You should", "go to", "the doctor."] },
-  { original: "The fire station is across from the bank.", chunks: ["(from the bank.,", "is across from", "The fire,", "station is.)"] },
+  { original: "The fire station is across from the bank.", chunks: ["from the bank.,", "is across from", "The fire station,"] },
   { original: "Where’s the restaurant?", chunks: ["Where’s", "the restaurant?"] },
   { original: "It’s next to the supermarket.", chunks: ["It’s", "next to", "the supermarket."] },
   { original: "How do I get there?", chunks: ["How do", "I get", "there?"] },
