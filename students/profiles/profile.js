@@ -1,30 +1,16 @@
 // profiles/profile.js - client script to load and render user progress
 (function(){
-  // Build origin-absolute URLs so <base> doesn't affect fetch()
-  const api = (path) => new URL(path, window.location.origin).toString();
   const API = {
     // endpoints powered by Netlify functions
-    attempts: (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=attempts`),
-    sessions: (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=sessions`),
-    kpi:      (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=kpi`),
-    modes:    (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=modes`),
-    badges:   (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=badges`)
+    attempts: (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=attempts`,
+    sessions: (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=sessions`,
+    kpi:      (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=kpi`,
+    modes:    (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=modes`,
+    badges:   (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=badges`
   };
 
   function getUserId(){
-    return (
-      localStorage.getItem('user_id') ||
-      sessionStorage.getItem('user_id') ||
-      localStorage.getItem('userId') ||
-      sessionStorage.getItem('userId') ||
-      localStorage.getItem('student_id') ||
-      sessionStorage.getItem('student_id') ||
-      localStorage.getItem('profile_id') ||
-      sessionStorage.getItem('profile_id') ||
-      localStorage.getItem('id') ||
-      sessionStorage.getItem('id') ||
-      null
-    );
+    return localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
   }
 
   async function fetchJSON(url){

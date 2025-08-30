@@ -1,9 +1,131 @@
 body {
   font-family: 'Poppins', Arial, sans-serif;
   margin: 0;
-  background: #f0f4f8;
+  background: #ffffff;
   color: #222;
   touch-action: manipulation;
+}
+/* === Header + menu === */
+.wa-header {
+  padding: 12px 14px 8px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wa-top {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+.wa-profile { display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:#19777e; }
+.wa-avatar { width:36px;height:36px;border-radius:50%;border:2px solid #93cbcf;background:hsl(0, 0%, 100%);display:grid;place-items:center;font-size:18px; }
+.wa-username { font-weight:600; color:#19777e; font-size:14px; }
+.wa-title {
+  position: static;
+  margin: 0;
+  font-size: 1.7em;
+  color: #fff;
+  text-shadow:
+    0 0 8px #39cfe0,
+    0 0 16px #39cfe0,
+    0 0 24px #39cfe0,
+    0 0 32px #39cfe0;
+  font-family: 'Poppins', Arial, sans-serif;
+  text-align: right;
+  width: 100%;
+  justify-content: flex-end;
+  display: flex;
+  align-items: flex-end;
+}
+.wa-spacer { width:44px; height:1px; }
+.wa-menu {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 8px;
+  padding: 4px 4px;
+  border-top: 1px solid #e6eaef;
+  background: #fff;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  position: relative;
+}
+.wa-menu::-webkit-scrollbar { display: none; }
+.wa-menu-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0 7px;
+  font-size: 13px;
+  color: #19777e;
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  vertical-align: middle;
+  min-width: 44px;
+  box-sizing: border-box;
+}
+.wa-menu-btn:not(:first-child) {
+  border-left: 1px solid #cfe3e5;
+  padding-left: 7px;
+  margin-left: 7px;
+}
+.wa-menu-btn:hover { color: #0f5e64; }
+/* Home button always visible: sticky left, background, z-index */
+#navHome.wa-menu-btn {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
+  min-width: 70px;
+  font-size: 13px;
+  font-weight: 700;
+  border-right: 1px solid #cfe3e5;
+  box-shadow: 2px 0 6px -2px #e6eaef;
+}
+
+/* === Opening options card === */
+main { width:95vw; max-width:1000px; margin:0 auto; background:#fff; border-radius:24px; box-shadow:0 4px 24px rgba(62,159,167,0.08); padding-top:12px; padding-bottom:24px; }
+.wa-card { background:#ffffff; border:3px solid #67e2e6; border-radius:20px; width:min(92%, 420px); margin:12px auto 20px; padding:12px 12px; box-shadow:0 3px 14px rgba(62,159,167,0.1); max-width:920px; }
+.wa-option { display:flex; align-items:flex-end; justify-content:center; gap:25px; width:100%; background:none; border:none; text-align:center; font-size:2rem; font-weight:600; padding:24px 8px; cursor:pointer; }
+.wa-option span { line-height:1; display:inline-block; vertical-align:bottom; font-family:'Poppins', Arial, sans-serif; }
+.wa-option.icon-right { flex-direction: row-reverse; }
+.wa-icon { width:153.6px; height:153.6px; flex-shrink:0; max-width:48%; }
+.wa-rule { border:0; border-top:2px solid #a9d6e9; margin:6px auto; width:70%; }
+.wa-for-you { color:#21b3be; }
+.wa-review { color:#5b7fe5; }
+.wa-basic { color:#ff6fb0; }
+.wa-browse { color:#d9923b; }
+
+@media (max-width: 450px) {
+  .wa-title { font-size: 1.35em; }
+  .wa-option { font-size: 1.2rem; }
+  .wa-option { gap:32px; }
+  .wa-icon { width: 124.8px; height: 124.8px; }
+}
+
+/* Tablet and desktop: allow the opening menu card and icons to grow */
+@media (min-width: 700px) {
+  .wa-card { width: min(85%, 820px); }
+  .wa-option { font-size: 2.2rem; gap:32px; padding:28px 12px; }
+  .wa-icon { width: 190px; height: 190px; }
+}
+
+@media (min-width: 1100px) {
+  .wa-card { width: min(70%, 1000px); }
+  .wa-option { font-size: 2.6rem; gap:40px; padding:32px 16px; }
+  .wa-icon { width: 240px; height: 240px; }
 }
 header {
   padding: 18px 12px;
@@ -42,6 +164,10 @@ h1 {
 #gameArea {
   padding: 18px;
   min-height: 300px;
+}
+#gameArea:empty {
+  min-height: 0 !important;
+  padding: 0 !important;
 }
 
 /* Drag and Drop Game Styles */

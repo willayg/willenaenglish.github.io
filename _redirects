@@ -1,3 +1,1 @@
 /*    /index.html   200
-# Canonicalize host to avoid split localStorage between www and apex
-https://www.willenaenglish.com/*  https://willenaenglish.com/:splat  301!

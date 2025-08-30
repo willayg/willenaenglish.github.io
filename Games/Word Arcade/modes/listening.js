@@ -5,21 +5,98 @@ import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.
 
 // Listening mode: English audio, choose correct Korean translation
 export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
+  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
   const sessionId = startSession({ mode: 'listening', wordList, listName });
 
+  // Detect sample list for emoji-first behavior
+  const isSampleList = !!(listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U')));
+
+  // Emoji mapping cache (loaded on demand)
+  let emojiMap = {};
+  function isEmojiSupported(emoji) {
+    if (!emoji) return false;
+    const span = document.createElement('span');
+    span.textContent = emoji;
+    span.style.visibility = 'hidden';
+    span.style.fontSize = '32px';
+    document.body.appendChild(span);
+    const width = span.offsetWidth;
+    document.body.removeChild(span);
+    return width > 10;
+  }
+  async function ensureEmojiMappings() {
+    if (Object.keys(emojiMap).length > 0) return emojiMap;
+    try {
+      const res = await fetch('./emoji-list/emoji-mappings.json');
+      const mappings = await res.json();
+      for (const category of Object.values(mappings)) Object.assign(emojiMap, category);
+    } catch (e) {
+      console.warn('Could not load emoji mappings for listening mix, using fallback', e);
+      emojiMap = {
+        dog: '🐶', cat: '🐱', rabbit: '🐰', horse: '🐴', cow: '🐮', pig: '🐷',
+        car: '🚗', bus: '🚌', train: '🚆', plane: '✈️', house: '🏠', school: '🏫',
+        apple: '🍎', banana: '🍌', orange: '🍊', sun: '☀️', moon: '🌙', star: '⭐'
+      };
+    }
+    return emojiMap;
+  }
+  function hasValidImg(w) {
+    const raw = (w && (w.image_url || w.image || w.img)) || '';
+    if (typeof raw !== 'string') return false;
+    const s = raw.trim();
+    if (!s) return false; const low = s.toLowerCase();
+    return low !== 'null' && low !== 'undefined';
+  }
+  function getEmojiFor(word) {
+    const key = String(word || '').toLowerCase();
+    return emojiMap[key] || '';
+  }
+  function getPicturable(list) {
+    return list.filter(w => {
+      if (!w || !w.eng) return false;
+      if (isSampleList) {
+        const em = getEmojiFor(w.eng);
+        return em && isEmojiSupported(em);
+      } else {
+        if (hasValidImg(w)) return true;
+        const em = getEmojiFor(w.eng);
+        return em && isEmojiSupported(em);
+      }
+    });
+  }
+  function tileHtml(w) {
+    if (isSampleList) {
+      const em = getEmojiFor(w.eng) || '❓';
+      return `<div style="font-size:3.2rem;line-height:1;">${em}</div>`;
+    } else {
+      if (hasValidImg(w)) {
+        const src = (w.image_url || w.image || w.img).trim();
+        return `<img src="${src}" alt="${w.eng}" style="max-width:38vw;max-height:22vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:3.2rem;line-height:1;display:none;">❓</div>`;
+      }
+      const em = getEmojiFor(w.eng) || '❓';
+      return `<div style="font-size:3.2rem;line-height:1;">${em}</div>`;
+    }
+  }
+  let picturable = [];
+  let canDoPictures = false;
+  let usePictureNext = true; // alternate where possible
+
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
     <div id="listeningIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Listen and choose Korean!</div>
+      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Listen and choose!</div>
     </div>
   `;
   setTimeout(() => {
     const intro = document.getElementById('listeningIntro');
     if (intro) intro.style.opacity = '0';
-    setTimeout(() => {
+    setTimeout(async () => {
+      await ensureEmojiMappings();
+      picturable = getPicturable(shuffled);
+      canDoPictures = picturable.length >= 4;
       // Initialize in-game progress: 0 of N
       showGameProgress(shuffled.length, 0);
       renderQuestion();
@@ -33,7 +110,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
       hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#41b6beff;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
-        <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div>
+        ${isReview ? '' : `<div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div>`}
         <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
         <button id="tryMoreBtn" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
       </div>`;
@@ -48,19 +125,78 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
       return;
     }
     const current = shuffled[idx];
-    // Pick 3 distractors
+
+    // Decide question type: alternate text vs picture when possible
+    const currentCanBePicture = canDoPictures && picturable.some(w => w.eng === current.eng);
+    const askPicture = currentCanBePicture && usePictureNext;
+
+    if (askPicture) {
+      // Build 4 picture choices (1 correct + 3 distractors)
+      const pool = picturable.filter(w => w.eng !== current.eng);
+      const choices = [current];
+      while (choices.length < 4 && pool.length) {
+        const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        if (pick) choices.push(pick);
+      }
+      // Fallback to text if insufficient distractors
+      if (choices.length < 4) {
+        renderAsTextQuestion(current);
+      } else {
+        const shuffledChoices = choices.sort(() => Math.random() - 0.5);
+        gameArea.innerHTML = `
+          <div class="listening-game" style="max-width:640px;margin:0 auto;">
+            <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the picture:</div>
+            <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
+              ${shuffledChoices.map(ch => `
+                <button class="choice-btn pic-choice" data-eng="${ch.eng}" style="height:18vh;display:flex;align-items:center;justify-content:center;">
+                  ${tileHtml(ch)}
+                </button>
+              `).join('')}
+            </div>
+            <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
+              <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
+            </div>
+            <div id="listening-feedback" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
+            <div id="listening-score" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
+          </div>`;
+
+        // Play audio
+        const playCurrentWord = () => playTTS(current.eng);
+        playCurrentWord();
+        document.getElementById('playAudioBtn').onclick = playCurrentWord;
+        setupChoiceButtons(gameArea);
+        gameArea.querySelectorAll('.pic-choice').forEach(btn => {
+          btn.onclick = () => {
+            const picked = btn.getAttribute('data-eng');
+            const isCorrect = picked === current.eng;
+            splashResult(btn, isCorrect);
+            const feedback = document.getElementById('listening-feedback');
+            if (isCorrect) { score++; if (feedback) { feedback.textContent = 'Correct!'; feedback.style.color = '#19777e'; } playSFX('correct'); }
+            else { if (feedback) { feedback.textContent = `It was: ${current.eng}`; feedback.style.color = '#e53e3e'; } playSFX('wrong'); }
+            logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: picked, correct_answer: current.eng, points: isCorrect ? (isReview ? 2 : 1) : 0, attempt_index: idx + 1 });
+            setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); if (canDoPictures) usePictureNext = !usePictureNext; renderQuestion(); }, 900);
+          };
+        });
+      }
+    } else {
+      renderAsTextQuestion(current);
+    }
+  }
+
+  function renderAsTextQuestion(current) {
+    // Build 4 Korean choices (1 correct + 3 distractors)
     const choices = [current.kor];
     const pool = shuffled.filter(w => w.kor !== current.kor);
     while (choices.length < 4 && pool.length) {
       const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      choices.push(pick.kor);
+      if (pick && pick.kor) choices.push(pick.kor);
     }
-    choices.sort(() => Math.random() - 0.5);
+    const shuffledKor = choices.sort(() => Math.random() - 0.5);
 
     gameArea.innerHTML = `<div class="listening-game" style="max-width:640px;margin:0 auto;">
       <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the correct Korean translation:</div>
       <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
-        ${choices.map(kor => `
+        ${shuffledKor.map(kor => `
             <button class="listening-choice choice-btn" data-kor="${kor}" style="height:18vh;">
             ${kor}
           </button>
@@ -70,20 +206,15 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
         <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
       </div>
       <div id="listening-feedback" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
-      <div id="listening-score" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">Score: ${score}</div>
+      <div id="listening-score" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
     </div>`;
 
-    // Play audio
-    function playCurrentWord() {
-      // Use the raw target word for playback to match preloaded files
-      playTTS(current.eng);
-    }
+    const playCurrentWord = () => playTTS(current.eng);
     playCurrentWord();
     document.getElementById('playAudioBtn').onclick = playCurrentWord;
 
-    // Button logic using shared helpers and splash feedback
     setupChoiceButtons(gameArea);
-    document.querySelectorAll('.listening-choice').forEach(btn => {
+    gameArea.querySelectorAll('.listening-choice').forEach(btn => {
       btn.onclick = () => {
         const isCorrect = btn.dataset.kor === current.kor;
         splashResult(btn, isCorrect);
@@ -96,18 +227,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
           if (feedback) { feedback.textContent = 'Incorrect!'; feedback.style.color = '#e53e3e'; }
           playSFX('wrong');
         }
-        // Log attempt
-        logAttempt({
-          session_id: sessionId,
-          mode: 'listening',
-          word: current.eng,
-          is_correct: isCorrect,
-          answer: btn.dataset.kor,
-          correct_answer: current.kor,
-          points: isCorrect ? 1 : 0,
-          attempt_index: idx + 1
-        });
-  setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); renderQuestion(); }, 900);
+        logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: btn.dataset.kor, correct_answer: current.kor, points: isCorrect ? (isReview ? 2 : 1) : 0, attempt_index: idx + 1 });
+        setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); if (canDoPictures) usePictureNext = !usePictureNext; renderQuestion(); }, 900);
       };
     });
   }

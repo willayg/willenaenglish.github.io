@@ -567,7 +567,7 @@ exports.handler = async (event) => {
           supabaseUrlPrefix: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 20) + '...' : 'MISSING'
         })
       };
-    } else if (event.path.endsWith('/delete_worksheet') && event.httpMethod === 'POST') {
+  } else if (event.path.endsWith('/delete_worksheet') && event.httpMethod === 'POST') {
       // Minimal delete worksheet endpoint
       try {
         const { id } = JSON.parse(event.body);
@@ -584,6 +584,111 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: JSON.stringify({ success: true }) };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    } else if (event.queryStringParameters && event.queryStringParameters.list === 'game_data' && event.httpMethod === 'GET') {
+      // List saved game_data rows (with computed thumbnail from first word image)
+      // Also fetch creator usernames from profiles without relying on a FK join.
+      try {
+        const qs = event.queryStringParameters || {};
+        const limit = Number(qs.limit) > 0 ? Number(qs.limit) : 10; // default to latest 10
+        const offset = Number(qs.offset) >= 0 ? Number(qs.offset) : 0;
+
+        const { data, error } = await supabase
+          .from('game_data')
+          .select('id, title, created_at, class, book, unit, created_by, words')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (error) throw error;
+
+        const rows = Array.isArray(data) ? data : [];
+        // Collect unique creator IDs
+        const creatorIds = Array.from(new Set(rows.map(r => r.created_by).filter(Boolean)));
+        let idToName = {};
+        if (creatorIds.length) {
+          const { data: profilesData, error: profilesErr } = await supabase
+            .from('profiles')
+            .select('id, username, name')
+            .in('id', creatorIds);
+          if (!profilesErr && Array.isArray(profilesData)) {
+            idToName = profilesData.reduce((acc, p) => {
+              acc[p.id] = p.name || p.username || p.id; // prefer name, then username, fallback to id
+              return acc;
+            }, {});
+          }
+        }
+
+        const slim = rows.map(row => {
+          let thumb = null;
+          if (Array.isArray(row.words)) {
+            thumb = row.words.map(w => (w && (w.image_url || w.image || w.img)) || null).find(Boolean) || null;
+          }
+          const { words, ...rest } = row;
+          const creator_name = rest.created_by ? (idToName[rest.created_by] || 'Unknown') : 'Unknown';
+          return { ...rest, game_image: thumb, creator_name };
+        });
+        return { statusCode: 200, body: JSON.stringify({ data: slim }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+      }
+    } else if (event.queryStringParameters && event.queryStringParameters.get === 'game_data' && event.httpMethod === 'GET') {
+      // Get one game_data row
+      try {
+        const id = event.queryStringParameters.id;
+        if (!id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing id' }) };
+        const { data, error } = await supabase
+          .from('game_data')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (error) throw error;
+        return { statusCode: 200, body: JSON.stringify({ data }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+      }
+    } else if (event.httpMethod === 'POST') {
+      // Generic POST with action routing
+      try {
+        const body = JSON.parse(event.body || '{}');
+        if (body.action === 'insert_game_data' && body.data) {
+          const gd = body.data;
+          // Normalize words shape
+          if (!Array.isArray(gd.words)) gd.words = [];
+          // Map incoming fields to schema columns
+          const row = {
+            title: gd.title || 'Untitled',
+            words: gd.words,
+            created_at: new Date().toISOString(),
+            // schema-aligned fields
+            class: gd.class || gd.gameClass || null,
+            book: gd.book || gd.gameBook || null,
+            unit: gd.unit || gd.gameUnit || null,
+            created_by: gd.created_by || gd.created_by_id || gd.user_id || gd.profile_id || null,
+            tags: Array.isArray(gd.tags) ? gd.tags : null,
+            visibility: gd.visibility || undefined,
+          };
+          const { data, error } = await supabase.from('game_data').insert([row]);
+          if (error) {
+            return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+          }
+          return { statusCode: 200, body: JSON.stringify({ success: true, data }) };
+        } else if (body.action === 'rename_game_data' && body.id && body.title) {
+          const { error } = await supabase
+            .from('game_data')
+            .update({ title: body.title })
+            .eq('id', body.id);
+          if (error) return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+          return { statusCode: 200, body: JSON.stringify({ success: true }) };
+        } else if (body.action === 'delete_game_data' && body.id) {
+          const { error } = await supabase
+            .from('game_data')
+            .delete()
+            .eq('id', body.id);
+          if (error) return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+          return { statusCode: 200, body: JSON.stringify({ success: true }) };
+        }
+        return { statusCode: 404, body: JSON.stringify({ error: 'Unknown action' }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
       }
     } else {
       return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };

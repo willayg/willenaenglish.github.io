@@ -61,28 +61,31 @@ function ensureChoiceButtonStyles() {
     .mode-btn {
       width: calc(100% + 10px);
       height: var(--mode-btn-height, 120px);
-      border: 2px solid #19777e;
-      border-radius: 12px;
-      background: #ffffff;
+      border: none;
+      border-radius: 0;
+      background: transparent;
       color: #19777e;
-      font-weight: 600;
+      font-weight: 700; /* slightly bolder */
       font-size: 16px;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.18s ease;
       display: flex;
       align-items: center;
-      justify-content: center;
-      text-align: center;
+      justify-content: space-between;
+      text-align: left;
       line-height: 1.2;
-      box-shadow: 0 2px 8px rgba(60,60,80,0.08);
+      box-shadow: none;
+      padding: 12px 18px 32px 18px; /* add extra space below content */
       touch-action: manipulation;
       user-select: none;
+      margin-bottom: 32px; /* increase vertical space between buttons */
+    }
+    .mode-btn:last-child {
+      margin-bottom: 0;
     }
     .mode-btn:hover {
-      background: #f8f9fa;
+      background: rgba(147,203,207,0.06);
       transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(60,60,80,0.15);
-      border-color: #93cbcf;
     }
     .mode-btn:active { transform: translateY(0); }
 
@@ -136,9 +139,54 @@ function ensureChoiceButtonStyles() {
       display: block;
       font-size: 12px;
       font-weight: 500;
-      color: #666666;
+      color: #5c98b4ff;
       margin-top: 6px;
     }
+  /* Star row for mode ratings */
+  .star-row { display:flex;gap:4px;align-items:center;justify-content:flex-start;margin-top:6px; } /* closer stars */
+  .star-row svg { width:16px;height:16px;display:block; }
+  .star-filled { fill: #f5c518; stroke: #d7b210; }
+  .star-empty { fill: none; stroke: #e8d8a8; stroke-width:1.5; }
+
+  /* Mode list styling: stacked rows, divider lines, alternating icon sides */
+  .mode-grid { display:block; gap:0; max-width:360px; margin:0 auto; padding-top:32px; }
+  .mode-grid .mode-btn { display:block; width:100%; padding:0px 30px 30px; background:transparent; position:relative; } /* larger vertical spacing */
+  /* Subtle metallic sheen overlay */
+  .mode-grid .mode-btn::before { content:''; position:absolute; left:50%; transform:translateX(-50%); top:2px; width:76%; height:58%; pointer-events:none; opacity:0.7; border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.20) 40%, rgba(255,255,255,0.05) 70%, rgba(255,255,255,0) 100%);
+    mix-blend-mode: screen;
+  }
+  .mode-grid .mode-btn:hover::before { opacity:0.9; }
+  .mode-grid .mode-btn::after { content:''; position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:76%; height:2px; background:rgba(0,0,0,0.12); border-radius:1px; }
+  .mode-grid .mode-btn:last-child::after { display:none; }
+  .mode-grid .mode-btn .mode-content { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  /* Reverse content order on even rows for staggered icons */
+  .mode-grid .mode-btn:nth-child(even) .mode-content { flex-direction: row-reverse; }
+  .mode-grid .mode-btn .mode-left { display:flex; flex-direction:column; align-items:flex-start; }
+  .mode-grid .mode-btn:nth-child(even) .mode-left { align-items:flex-end; text-align:right; }
+  .mode-grid .mode-btn .mode-icon img { width:92px; height:92px; }
+
+  /* Title color classes using main menu palette */
+  .mode-title { font-family: 'Poppins', Arial, sans-serif; font-weight:800; margin-bottom:6px; } /* slightly bolder */
+  .mode-title.for-you { color: #21b3be; }
+  .mode-title.review { color: #5b7fe5; }
+  .mode-title.basic { color: #ff6fb0; }
+  .mode-title.browse { color: #d9923b; }
+
+  /* Percentage/meta style inside mode rows; color matches title via same colorClass */
+  .mode-grid .mode-btn .mode-meta {
+    margin-top:1.2em; /* more vertical space above percent */
+    font-weight:800;
+    font-size:1em; /* larger, em units */
+    line-height:1.1;
+    letter-spacing:0.01em;
+    transition: color 0.2s;
+  }
+  .mode-grid .mode-btn .mode-meta.zero { color: #d4e3e9ff; }
+  .mode-grid .mode-btn .mode-meta.for-you { color: #21b3be; }
+  .mode-grid .mode-btn .mode-meta.review { color: #5b7fe5; }
+  .mode-grid .mode-btn .mode-meta.basic { color: #ff6fb0; }
+  .mode-grid .mode-btn .mode-meta.browse { color: #d9923b; }
   `;
   document.head.appendChild(style);
 }

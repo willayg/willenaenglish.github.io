@@ -4,6 +4,7 @@ import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.
 // Meaning (drag-and-drop) mode
 export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null, score: initialScore = 0, round: initialRound = 0 }) {
   const ROUND_SIZE = 5;
+  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   let score = initialScore;
   let round = initialRound;
   const total = wordList.length;
@@ -43,7 +44,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
   hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
-        <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score.toFixed(1)}%</span></div>
+        ${isReview ? '' : `<div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score.toFixed(1)}%</span></div>`}
         <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
         <button id="tryMoreMeaning" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
       </div>`;
@@ -68,7 +69,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
       ${korShuffled.map((w, i) => `<div class="kor-target" data-idx="${i}" data-kor="${w.kor}">${w.kor}</div>`).join('')}
     </div>`;
     gameArea.innerHTML = `
-      <div id="score-counter" style="margin-bottom:18px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}</div>
+      <div id="score-counter" style="margin-bottom:18px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? `Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}` : `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`}</div>
       <div class="dragdrop-game">
         <div class="dragdrop-container">
           ${engCol}
@@ -175,7 +176,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
           score += correctValue;
           completedPairs.push(eng + '|' + kor);
           updateGameProgress(completedPairs.length, total);
-          feedback.textContent = `Correct! +${correctValue.toFixed(1)}%`;
+          feedback.textContent = isReview ? 'Correct!' : `Correct! +${correctValue.toFixed(1)}%`;
           playSFX('correct');
         } else {
           korCard.classList.add('wrong');
@@ -185,7 +186,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
             engCard.classList.remove('wrong');
           }, 700);
           score -= wrongValue;
-          feedback.textContent = `Incorrect! -${wrongValue.toFixed(1)}%`;
+          feedback.textContent = isReview ? 'Incorrect!' : `Incorrect! -${wrongValue.toFixed(1)}%`;
           playSFX('wrong');
       }
       // Log attempt for this pair selection (points as integers to satisfy DB integer type)
@@ -196,10 +197,10 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
         is_correct: !!match,
         answer: kor,
         correct_answer: (roundPairs.find(w => w.eng === eng) || {}).kor || null,
-        points: match ? 1 : 0,
+        points: match ? (isReview ? 2 : 1) : 0,
         extra: { eng, kor }
       });
-  scoreCounter.innerHTML = `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;
+  scoreCounter.innerHTML = isReview ? `Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}` : `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;
       if (selectedEngCard) {
         selectedEngCard.classList.remove('selected');
         selectedEngCard = null;

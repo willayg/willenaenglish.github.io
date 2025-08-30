@@ -26,4 +26,14 @@ async function getUserRole(userId) {
   return result.role;
 }
 
-export { loginTeacher, getUserRole };
+async function getProfileId(authUserId) {
+  // Get profile ID from auth user ID
+  const res = await fetch(SUPABASE_PROXY_URL + '?action=get_profile_id&auth_user_id=' + encodeURIComponent(authUserId));
+  const result = await res.json();
+  if (!res.ok || !result.success) {
+    throw new Error(result.error || 'Could not fetch profile ID');
+  }
+  return result.profile_id;
+}
+
+export { loginTeacher, getUserRole, getProfileId };
