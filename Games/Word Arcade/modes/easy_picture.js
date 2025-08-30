@@ -42,15 +42,25 @@ async function loadEmojiMappings() {
 }
 
 export async function runEasyPictureMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
+  // Check if this is a sample list (basic wordlists use emoji, user content uses Pixabay)
+  const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
   await loadEmojiMappings();
 
   // Only use entries with image or supported emoji available
   const available = wordList.filter(w => {
     if (!w || !w.eng) return false;
-    if (w.img) return true;
-    const key = String(w.eng).toLowerCase();
-    const emoji = emojiMap[key];
-    return emoji && isEmojiSupported(emoji);
+    if (isSampleList) {
+      // For sample lists, prefer emoji over images
+      const key = String(w.eng).toLowerCase();
+      const emoji = emojiMap[key];
+      return emoji && isEmojiSupported(emoji);
+    } else {
+      // For user content, require actual images
+      if (w.img) return true;
+      const key = String(w.eng).toLowerCase();
+      const emoji = emojiMap[key];
+      return emoji && isEmojiSupported(emoji);
+    }
   });
   if (available.length < 4) {
     gameArea.innerHTML = '<div style="padding:40px;text-align:center;color:#888;font-size:1.1em;">Need at least 4 items with pictures or emojis for Easy Picture mode.</div>';
@@ -79,12 +89,22 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
   }, 1000);
 
   function getTileHtml(wordEntry) {
-    if (wordEntry.img) {
-      return `<img src="${wordEntry.img}" alt="${wordEntry.eng}" style="max-width:38vw;max-height:22vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;">`;
+    if (isSampleList) {
+      // For sample lists, always use emoji
+      const key = String(wordEntry.eng).toLowerCase();
+      const emoji = emojiMap[key] || '❓';
+      return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
+    } else {
+      // For user content, prefer Pixabay images with emoji fallback
+      const hasImg = typeof wordEntry.img === 'string' && wordEntry.img.trim() && wordEntry.img.toLowerCase() !== 'null' && wordEntry.img.toLowerCase() !== 'undefined';
+      if (hasImg) {
+        const safeSrc = wordEntry.img.trim();
+        return `<img src="${safeSrc}" alt="${wordEntry.eng}" style="max-width:38vw;max-height:22vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:3.2rem;line-height:1;display:none;">❓</div>`;
+      }
+      const key = String(wordEntry.eng).toLowerCase();
+      const emoji = emojiMap[key] || '❓';
+      return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
     }
-    const key = String(wordEntry.eng).toLowerCase();
-    const emoji = emojiMap[key] || '❓';
-    return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
   }
 
   function renderQuestion() {

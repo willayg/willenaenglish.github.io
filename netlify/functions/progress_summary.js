@@ -232,10 +232,11 @@ exports.handler = async (event) => {
 
     if (section === 'challenging') {
       // Return words where the student is wrong > 60% for a given skill.
-      // Normalize ENG/KOR and exclude meaning-mode noise.
+      // Normalize ENG/KOR and exclude meaning-mode noise for accuracy,
+      // but still mine Korean text from ALL attempts to fill missing translations.
       const { data: attempts } = await supabase
         .from('progress_attempts')
-        .select('mode, word, is_correct, points, correct_answer, extra')
+        .select('mode, word, is_correct, points, correct_answer, extra, created_at')
         .eq('user_id', user_id);
 
       const normalize = (s) => (s && typeof s === 'string') ? s.trim().toLowerCase() : null;
@@ -251,50 +252,84 @@ exports.handler = async (event) => {
         if (m.includes('multi') || m.includes('choice') || m.includes('picture') || m.includes('read')) return 'reading';
         return null;
       };
-      const EXCLUDE_MEANING = true; // reduce noise
+  const EXCLUDE_MEANING = false; // include meaning so getting it right anywhere helps
 
-      // Aggregate per normalized ENGLISH word + skill
-      // value: { total, correct, word_en, word_kr }
-      const agg = new Map();
-
+      // 0) Build a best-effort English->Korean lookup from ALL attempts (including meaning)
+      const korLookup = new Map(); // key: normalized eng, value: last seen kor with Hangul
       (attempts||[]).forEach(a => {
-        const skill = skillOf(a.mode);
-        if (!skill) return;
-        if (EXCLUDE_MEANING && skill === 'meaning') return;
         const ex = toObj(a.extra) || {};
-        // Determine english and korean representations from various fields
         let eng = null, kor = null;
         const dir = (ex.direction || ex.dir || '').toString().toLowerCase();
-        // Priority by direction hints
         if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
         if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
-        // Fallback scan of candidates
         const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
         for (const c of engCands) { if (!eng && hasLatin(c)) { eng = c; break; } }
         const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
         for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
-        if (!eng) return; // skip if we cannot resolve an English key
-        const key = normalize(eng) + '||' + skill;
-        if (!key || key.startsWith('||')) return;
-
-        // Weight: use simple correctness for all to avoid points variance
-        const w = a.is_correct ? 1 : 0;
-        const cur = agg.get(key) || { total:0, correct:0, word_en: eng, word_kr: kor || null };
-        cur.total += 1;
-        cur.correct += w;
-        // Keep the latest seen pretty display forms (not normalized)
-        if (!cur.word_en && eng) cur.word_en = eng;
-        if (!cur.word_kr && kor) cur.word_kr = kor;
-        agg.set(key, cur);
+        if (eng && kor) {
+          const key = normalize(eng);
+          if (key) korLookup.set(key, kor);
+        }
       });
 
+      // 1) Group attempts by normalized English word, then keep only the last 5 per word
+      const byWord = new Map(); // engKey -> array of { created_at, is_correct, skill, word_en, word_kr }
+      (attempts||[]).forEach(a => {
+        const skill = skillOf(a.mode);
+        const ex = toObj(a.extra) || {};
+        let eng = null, kor = null;
+        const dir = (ex.direction || ex.dir || '').toString().toLowerCase();
+        if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
+        if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
+        const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
+        for (const c of engCands) { if (!eng && hasLatin(c)) { eng = c; break; } }
+        const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
+        for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
+        if (!eng) return;
+        const engKey = normalize(eng);
+        if (!engKey) return;
+        const arr = byWord.get(engKey) || [];
+        arr.push({ created_at: a.created_at, is_correct: !!a.is_correct, skill, word_en: eng, word_kr: kor || null });
+        byWord.set(engKey, arr);
+      });
+
+      // 2) For each word, take last 5 attempts, compute overall accuracy and worst-skill within those
       const out = [];
-      agg.forEach((v, key) => {
-        const [, skill] = key.split('||');
-        const acc = v.total ? (v.correct / v.total) : 0;
-        if (acc < 0.4) { // wrong > 60%
-          out.push({ word: v.word_en, word_en: v.word_en, word_kr: v.word_kr || null, skill, accuracy: acc, attempts: v.total });
+      byWord.forEach((arr, engKey) => {
+        // sort by created_at ascending and take last 5
+        arr.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+        const recent = arr.slice(-5);
+        const total = recent.length;
+        const correct = recent.reduce((n, r) => n + (r.is_correct ? 1 : 0), 0);
+        const overallAcc = total ? (correct / total) : 0;
+        if (overallAcc >= 0.7) return;
+        // worst skill within recent
+        const perSkill = new Map(); // skill -> { total, correct, word_en, word_kr }
+        recent.forEach(r => {
+          const s = r.skill || 'any';
+          const cur = perSkill.get(s) || { total:0, correct:0, word_en: r.word_en, word_kr: r.word_kr };
+          cur.total += 1;
+          cur.correct += (r.is_correct ? 1 : 0);
+          if (!cur.word_en && r.word_en) cur.word_en = r.word_en;
+          if (!cur.word_kr && r.word_kr) cur.word_kr = r.word_kr;
+          perSkill.set(s, cur);
+        });
+        let worst = null;
+        perSkill.forEach((v, s) => {
+          const acc = v.total ? (v.correct / v.total) : 0;
+          if (!worst || acc < worst.acc || (acc === worst.acc && v.total > worst.attempts)) {
+            worst = { acc, attempts: v.total, skill: s, word_en: v.word_en, word_kr: v.word_kr };
+          }
+        });
+        const skill = worst?.skill || 'any';
+        let word_en = (recent[recent.length - 1] && recent[recent.length - 1].word_en) || (worst && worst.word_en) || null;
+        let word_kr = (worst && worst.word_kr) || null;
+        if (!word_kr) {
+          const backfill = korLookup.get(engKey);
+          if (backfill) word_kr = backfill;
         }
+        if (!word_en) word_en = engKey; // fallback to key
+        out.push({ word: word_en, word_en, word_kr, skill, accuracy: overallAcc, attempts: total });
       });
       out.sort((a,b) => (a.accuracy - b.accuracy) || (b.attempts - a.attempts));
       return { statusCode: 200, body: JSON.stringify(out.slice(0, 20)) };

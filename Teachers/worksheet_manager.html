@@ -106,8 +106,11 @@
     function hideSpinner() {
       document.getElementById('loadingSpinner').style.display = 'none';
     }
-    const params = new URLSearchParams(window.location.search);
-    const mode = params.get('mode'); // 'save' or 'load'
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode'); // 'save' or 'load'
+  const urlType = params.get('type'); // e.g., 'text', 'wordtest'
+  const vocabOnlyParam = params.get('vocab_only');
+  const requireWordsParam = params.get('require_words');
 
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
@@ -555,11 +558,13 @@
     }
   };
   
-  // For import text, always filter to worksheet_type === 'text' by default
+  // For import, use URL param 'type' when provided (text or vocab types)
   let filterType = null;
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('type') === 'text') {
     filterType = 'text';
+  } else if (urlParams.get('type') && ['wordtest','grid_game','flashcard','wordsearch'].includes(urlParams.get('type'))) {
+    filterType = urlParams.get('type');
   } else if (window.opener) {
     // Check the opener window for specific elements to determine worksheet type
     const openerDoc = window.opener.document;
@@ -588,7 +593,12 @@
     } else if (filterType) {
       titleEl.textContent = `Worksheet Manager: ${getTypeDisplay(filterType)}`;
     } else {
-      titleEl.textContent = 'Worksheet Manager: All Types';
+      // If vocab_only, hint vocabulary scope
+      if (vocabOnlyParam === '1' || vocabOnlyParam === 'true') {
+        titleEl.textContent = 'Worksheet Manager: Vocabulary Files';
+      } else {
+        titleEl.textContent = 'Worksheet Manager: All Types';
+      }
     }
   }
   
@@ -596,15 +606,20 @@
     showSpinner();
     // Build query string for pagination
     const offset = (currentPage - 1) * pageSize;
-    let fields = 'user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point';
-    let queryParams = `fields=${fields}&limit=${pageSize}&offset=${offset}`;
-    
-    // Add filter for type if specified
+    // Always fetch words when require_words flag present for client-side filtering
+    let fields = 'user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point' + (requireWordsParam ? ',words,images' : '');
+    let queryParams = `fields=${fields}&limit=${pageSize}&offset=${offset}`;    // Add filter for type if specified
     if (filterType) {
       queryParams += `&type=${filterType}`;
     }
     
     // Add search parameters
+    // If vocab_only=1 in URL, force showing vocab types; also reflect toggle UI
+    const vocabOnly = vocabOnlyParam === '1' || vocabOnlyParam === 'true';
+    const toggleEl = document.getElementById('showAllVocabToggle');
+    if (toggleEl && vocabOnly) {
+      toggleEl.checked = true;
+    }
     const showAllVocab = document.getElementById('showAllVocabToggle')?.checked;
     if (showAllVocab) {
       queryParams += `&vocab_types=wordtest,grid_game,flashcard,wordsearch`;
@@ -652,8 +667,36 @@
       .then(result => {
         console.log('Loaded worksheets:', result);
         if (result.success) {
-          window.allRawWorksheets = result.data;
-          totalWorksheets = result.total || result.data.length;
+          // Optionally filter client-side to only rows with words when requested
+          let data = result.data || [];
+          if (requireWordsParam) {
+            const hasWordsColumn = data.some(ws => 'words' in ws);
+            if (hasWordsColumn) {
+              data = data.filter(ws => {
+                if (Array.isArray(ws.words)) return ws.words.length > 0;
+                if (typeof ws.words === 'string') {
+                  const str = ws.words.trim();
+                  if (!str) return false;
+                  // Try JSON parse first
+                  try {
+                    const parsed = JSON.parse(str);
+                    if (Array.isArray(parsed)) return parsed.length > 0;
+                  } catch (_) { /* not JSON */ }
+                  // Fallback: contains at least one non-empty token
+                  const tokens = str.includes('\n') ? str.split('\n') : str.split(',');
+                  return tokens.some(t => (t || '').trim().length > 0);
+                }
+                return false;
+              });
+            }
+            // If no words column present, skip filtering to avoid empty results; backend likely ignored fields
+          }
+          window.allRawWorksheets = data;
+          if (requireWordsParam) {
+            totalWorksheets = data.length;
+          } else {
+            totalWorksheets = result.total || result.data.length;
+          }
           totalPages = Math.max(1, Math.ceil(totalWorksheets / pageSize));
           updatePaginationControls();
           updateWorksheetList();

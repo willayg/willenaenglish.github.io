@@ -4,6 +4,7 @@ import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.
 
 // Listen and Spell mode
 export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
+  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   let listeningScore = 0;
   let listeningIdx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
@@ -29,7 +30,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
       <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
         <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
       </div>
-      <div id="listening-score" style="margin-top:18px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">Score: 0</div>
+      <div id="listening-score" style="margin-top:18px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : 'Score: 0'}</div>
     </div>`;
 
     function playCurrentWord() {
@@ -72,12 +73,13 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
           is_correct: points > 0,
           answer,
           correct_answer: correct,
-          points,
+          points: isReview ? points * 2 : points,
           attempt_index: listeningIdx + 1
         });
         input.disabled = true;
         listeningScore += points;
-        document.getElementById('listening-score').textContent = `Score: ${listeningScore}`;
+        const scoreEl = document.getElementById('listening-score');
+        if (scoreEl && !isReview) scoreEl.textContent = `Score: ${listeningScore}`;
         setTimeout(() => {
           listeningIdx++;
           updateGameProgress(listeningIdx, shuffled.length);
@@ -89,11 +91,11 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
             input.focus();
           } else {
             playSFX('end');
-            endSession(sessionId, { mode: 'listen_and_spell', summary: { score: listeningScore, max: shuffled.length * 2 } });
+      endSession(sessionId, { mode: 'listen_and_spell', summary: { score: listeningScore, max: shuffled.length * 2 } });
             hideGameProgress();
-            gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
+      gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
                 <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
-                <div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${listeningScore} / ${shuffled.length*2}</span></div>
+        ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Your Score: <span style=\"color:#19777e;font-weight:700;\">${listeningScore} / ${shuffled.length*2}</span></div>`}
                 <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
                 <button id="tryMoreListenSpell" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
               </div>`;

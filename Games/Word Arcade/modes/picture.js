@@ -43,16 +43,27 @@ async function loadEmojiMappings() {
 }
 
 export async function runPictureMode({ wordList, gameArea, startGame, listName = null }) {
+  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
+  // Check if this is a sample list (basic wordlists use emoji, user content uses Pixabay)
+  const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
   // Load emoji mappings first
   await loadEmojiMappings();
 
   // Only use words with an image or supported emoji; require at least 4 to support 4-choice gameplay
   const available = wordList.filter(w => {
     if (!w) return false;
-    if (w.img) return true;
-    const key = String(w.eng).toLowerCase();
-    const emoji = emojiMap[key];
-    return emoji && isEmojiSupported(emoji);
+    if (isSampleList) {
+      // For sample lists, prefer emoji over images
+      const key = String(w.eng).toLowerCase();
+      const emoji = emojiMap[key];
+      return emoji && isEmojiSupported(emoji);
+    } else {
+      // For user content, require actual images
+      if (w.img) return true;
+      const key = String(w.eng).toLowerCase();
+      const emoji = emojiMap[key];
+      return emoji && isEmojiSupported(emoji);
+    }
   });
   if (available.length < 4) {
     gameArea.innerHTML = '<div style="padding:40px;text-align:center;color:#888;font-size:1.1em;">Need at least 4 items with pictures or emojis for Picture Mode.</div>';
@@ -87,7 +98,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
       hideGameProgress();
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Picture Mode Complete!</h2>
-        <div style="font-size:1.3em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${ordered.length}</span></div>
+        ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length}</span></div>`}
         <button id="playAgainPic" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
         <button id="tryMorePic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
       </div>`;
@@ -114,14 +125,24 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
     }
     choices.sort(() => Math.random() - 0.5);
 
-    // Render image or emoji
+    // Render image or emoji with different logic for sample vs user content
     let imgHtml = '';
-    if (current.img) {
-      imgHtml = `<img src="${current.img}" alt="${current.eng}" style="max-width:180px;max-height:180px;border-radius:16px;box-shadow:0 2px 8px #ccc;margin-bottom:18px;">`;
-    } else {
+    if (isSampleList) {
+      // For sample lists, always use emoji
       const key = String(current.eng).toLowerCase();
-      const emoji = emojiMap[key] || '';
+      const emoji = emojiMap[key] || '❓';
       imgHtml = `<div style="font-size:5em;margin-bottom:18px;">${emoji}</div>`;
+    } else {
+      // For user content, prefer Pixabay images with emoji fallback
+      const hasImg = typeof current.img === 'string' && current.img.trim() && current.img.toLowerCase() !== 'null' && current.img.toLowerCase() !== 'undefined';
+      if (hasImg) {
+        const safeSrc = current.img.trim();
+        imgHtml = `<img src="${safeSrc}" alt="${current.eng}" style="max-width:180px;max-height:180px;border-radius:16px;box-shadow:0 2px 8px #ccc;margin-bottom:18px;object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:5em;margin-bottom:18px;display:none;">❓</div>`;
+      } else {
+        const key = String(current.eng).toLowerCase();
+        const emoji = emojiMap[key] || '❓';
+        imgHtml = `<div style="font-size:5em;margin-bottom:18px;">${emoji}</div>`;
+      }
     }
 
     gameArea.innerHTML = `<div style="padding:24px;text-align:center;">
@@ -157,7 +178,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
           is_correct: correct,
           answer: btn.getAttribute('data-eng'),
           correct_answer: current.eng,
-          points: correct ? 1 : 0,
+          points: correct ? (isReview ? 2 : 1) : 0,
           attempt_index: idx + 1
         });
   setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);

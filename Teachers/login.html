@@ -47,7 +47,7 @@
   </div>
     <script type="module" src="./login.js"></script>
     <script type="module">
-      import { loginTeacher, getUserRole } from './login.js';
+      import { loginTeacher, getUserRole, getProfileId } from './login.js';
       const loginForm = document.getElementById('loginForm');
       const loginError = document.getElementById('loginError');
       const roleInfo = document.getElementById('roleInfo');
@@ -73,10 +73,18 @@
         }
         try {
           const loginRes = await loginTeacher(email, password);
-          const userId = loginRes.user.id;
-          const role = await getUserRole(userId);
-          localStorage.setItem('userId', userId);
+          const authUserId = loginRes.user.id;
+          const role = await getUserRole(authUserId);
+          
+          // Get the profile ID from the profiles table
+          const profileId = await getProfileId(authUserId);
+          
+          // Store both IDs for different purposes
+          localStorage.setItem('user_id', profileId);        // For progress tracking
+          localStorage.setItem('profile_id', profileId);     // Alternative key
+          localStorage.setItem('userId', authUserId);        // Auth ID for compatibility
           localStorage.setItem('userRole', role);
+          
           roleInfo.textContent = `Logged in as: ${role}`;
           if (role === 'admin') {
             window.location.href = '/Teachers/components/feedback-admin.html';

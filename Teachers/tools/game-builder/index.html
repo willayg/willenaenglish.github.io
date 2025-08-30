@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Builder</title>
+  <link rel="icon" href="../../../Assets/Images/Logo.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script type="module" src="main.js"></script>
+  <script type="module" src="create-game-modal.js"></script>
+  <style>
+    /* Small inline fixes for drop-zone visuals */
+    .drop-zone.dragover { border-color: #48bb78 !important; background: #e6fffb !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="app-card">
+      <!-- Header with burger -->
+      <div class="header">
+        <div class="logo"><img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img" /></div>
+        <h1>Game Builder</h1>
+        <button id="burger-toggle" class="burger">☰</button>
+        <ul id="burger-menu" class="burger-menu" style="display:none;">
+          <li><a href="/index.html">Home</a></li>
+          <li><a href="/Teachers/index.html">Dashboard</a></li>
+          <li><a href="/Teachers/profile.html">Profile</a></li>
+          <li><a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Mint Sheet</a></li>
+          <li><a href="/Teachers/login.html">Logout</a></li>
+        </ul>
+      </div>
+
+      <!-- Top menubar: Load | Load from Worksheet | Create Game | Save -->
+      <div class="pastel-toolbar top-menu">
+        <div class="toolbar-left">
+          <a id="openLink" class="link">Load</a>
+          <span class="dot">•</span>
+          <a id="loadWorksheetsLink" class="link">Load from Worksheet</a>
+        </div>
+        <div class="toolbar-right">
+          <a id="createGameLink" class="link">Create Game</a>
+          <span class="dot">•</span>
+          <a id="saveLink" class="link primary">Save</a>
+        </div>
+      </div>
+
+      <!-- Second menubar aligned to columns: Add/AI/Translate | Images toggle | Definitions toggle -->
+      <div class="pastel-toolbar edit-menu">
+        <div class="left-actions" style="grid-column: 1 / span 3; display:flex; align-items:center; gap:10px;">
+          <a id="addWordLink" class="link">Add Word +</a>
+          <span class="dot">•</span>
+          <a id="editListLink" class="link">Edit List</a>
+  <!-- Edit List Modal -->
+  <div id="editListModal" class="modal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Edit Word List</h3>
+        <button id="editListModalClose" class="close">×</button>
+      </div>
+      <div class="modal-body">
+    <textarea id="editListRaw" style="width:100%;min-height:220px;font-size:1em;" placeholder="Type each word pair on a new line and a comma between the English and the Korean. Example: cat, 고양이 / dog, 개"></textarea>
+      </div>
+      <div class="modal-foot" style="padding:12px 14px;text-align:right;">
+        <button id="editListSave" class="btn primary">Save</button>
+        <button id="editListCancel" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+          <span class="dot">•</span>
+          <a id="aiListBuilderLink" class="link">AI List Builder</a>
+          <span class="dot">•</span>
+          <a id="getTranslationsLink" class="link">Get translations</a>
+        </div>
+        <div class="toggle-images" style="grid-column: 4; display:flex; justify-content:center;">
+          <label class="toggle-label">
+            <span class="toggle-text">Images</span>
+            <input type="checkbox" id="enablePictures" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="toggle-defs" style="grid-column: 5; display:flex; justify-content:center;">
+          <label class="toggle-label">
+            <span class="toggle-text">Definitions</span>
+            <input type="checkbox" id="enableDefinitions" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Title input row (below menus) -->
+      <div class="title-row">
+        <input id="titleInput" class="input title-input" placeholder="Title Here" />
+      </div>
+
+      <!-- List without column headers -->
+      <div class="table-wrap">
+        <table class="grid word-table">
+          <!-- Column headers removed on purpose to match design -->
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <!-- Footer actions -->
+      <div class="footer-actions">
+        <button id="previewBtn" class="btn">Preview JSON</button>
+        <span id="status" class="status"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Manager Modal -->
+  <div id="fileModal" class="modal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Saved Games</h3>
+        <button id="fileModalClose" class="close">×</button>
+      </div>
+      <div id="fileList" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Create Game Modal -->
+  <div id="createGameModal" class="modal" style="display:none;">
+  <div class="modal-card" style="width:80vw;max-width:1100px;height:80vh;max-height:800px;">
+      <div class="modal-head">
+        <h3>Create Game</h3>
+        <button id="createGameModalClose" class="close">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 200px;gap:20px;align-items:start;">
+          <div>
+            <label style="display:block;margin-bottom:8px;font-weight:600;">Game Title</label>
+            <input id="gameTitle" class="input" style="width:100%;margin-bottom:15px;" placeholder="Enter game title" />
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
+              <div>
+                <label style="display:block;margin-bottom:8px;font-weight:600;">Class</label>
+                <input id="gameClass" class="input" style="width:100%;" placeholder="e.g., Grade 3A" />
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:8px;font-weight:600;">Date Due</label>
+                <input id="gameDateDue" type="date" class="input" style="width:100%;" />
+              </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
+              <div>
+                <label style="display:block;margin-bottom:8px;font-weight:600;">Book</label>
+                <input id="gameBook" class="input" style="width:100%;" placeholder="e.g., English Book 1" />
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:8px;font-weight:600;">Unit</label>
+                <input id="gameUnit" class="input" style="width:100%;" placeholder="e.g., Unit 3" />
+              </div>
+            </div>
+            
+            <label style="display:block;margin-bottom:8px;font-weight:600;">Description (Optional)</label>
+            <textarea id="gameDescription" class="input" style="width:100%;height:60px;resize:vertical;" placeholder="Brief description of the game"></textarea>
+          </div>
+          
+          <div>
+            <label style="display:block;margin-bottom:8px;font-weight:600;">Game Image</label>
+            <div id="gameImageZone" class="drop-zone" style="width:180px;height:120px;border:2px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9;">
+              <span class="hint">Click to search • Drag image here</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot" style="padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+        <span id="createGameStatus" style="margin-right:auto;color:#666;font-size:0.95em;"></span>
+        <button id="createGameSave" class="btn primary">Create Game</button>
+        <button id="createGameCancel" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simplified Mint AI-style modal -->
+  <div id="mintAiSimpleModal" class="modal" style="display:none;">
+    <div class="mint-ai-card">
+      <button id="mintAiSimpleClose" class="mint-ai-close">×</button>
+      <div class="mint-ai-left">
+        <h2 class="mint-ai-title">MINT AI - Vocab</h2>
+        <input id="mintAiSimpleBoxTitle" class="mint-ai-input" placeholder="Vocab Box Title (optional)" />
+        <div class="mint-ai-segmented">
+          <button id="mintAiModeTopic" class="seg active">Topic Input</button>
+          <button id="mintAiModeText" class="seg">Paste Text</button>
+        </div>
+        <textarea id="mintAiTopic" class="mint-ai-textarea" placeholder="Enter a topic (e.g., 'animals', 'food', 'school subjects')"></textarea>
+        <textarea id="mintAiPassage" class="mint-ai-textarea" placeholder="Paste a passage here to extract vocab" style="display:none;"></textarea>
+        <div class="mint-ai-controls">
+          <select id="mintAiNum" class="mint-ai-select">
+            <option>5</option><option selected>10</option><option>15</option><option>20</option>
+          </select>
+          <select id="mintAiDifficulty" class="mint-ai-select">
+            <option value="easy" selected>Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button id="mintAiGenerate" class="mint-ai-btn primary">Generate</button>
+          <button id="mintAiClear" class="mint-ai-btn">Clear</button>
+          <button class="mint-ai-btn" title="Settings" disabled>⚙</button>
+        </div>
+        <textarea id="mintAiWordlist" class="mint-ai-textarea" placeholder="Enter words here, one per line: English, Korean"></textarea>
+      </div>
+      <div class="mint-ai-right">
+  <div class="mint-ai-preview-head">Preview</div>
+  <div id="mintAiPreview" class="mint-ai-preview" contenteditable="true" spellcheck="false">Paste or edit here, one pair per line: English, Korean</div>
+        <div class="mint-ai-actions">
+          <button id="mintAiInsert" class="mint-ai-btn primary">Insert</button>
+          <button id="mintAiCancel" class="mint-ai-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
