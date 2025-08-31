@@ -16,6 +16,8 @@ let imageCache = {};
 // Image cycling state
 let imageAlternatives = {}; // Store multiple image options for each word
 let currentImageIndex = {}; // Track current image index for each word
+// Retry counts to avoid infinite loops on broken images
+const imageRetryCount = {};
 
 // Helper function to get placeholder image
 function getPlaceholderImage(index, label = null, currentSettings = { imageSize: 50 }) {
@@ -55,18 +57,34 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
     if (emoji) {
         alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
     }
-    // Only get the FIRST Pixabay image for the word
-    if (getPixabayImage) {
-        try {
-            const imageUrl = await getPixabayImage(word, true);
-            if (imageUrl && imageUrl.startsWith('http')) {
-                alternatives.push(imageUrl);
-            } else if (imageUrl && imageUrl.length === 1) {
-                alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
+    // Try to get ONE image from provider or Netlify fallback
+    try {
+        let imageUrl = null;
+        if (typeof getPixabayImage === 'function') {
+            imageUrl = await getPixabayImage(word, true);
+        } else {
+            // Choose image_type from UI if available
+            const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
+            const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
+            const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
+            try {
+                const res = await fetch(url, { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const images = Array.isArray(data?.images) ? data.images : [];
+                    imageUrl = data?.image || images[0] || null;
+                }
+            } catch (err) {
+                console.warn('Pixabay function fetch failed:', err);
             }
-        } catch (error) {
-            console.warn('Error getting image for:', word, error);
         }
+        if (imageUrl && imageUrl.startsWith('http')) {
+            alternatives.push(imageUrl);
+        } else if (imageUrl && imageUrl.length === 1) {
+            alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
+        }
+    } catch (error) {
+        console.warn('Error getting image for:', word, error);
     }
     // Add blank option last - just a white empty box
     alternatives.push('<div style="width:' + currentSettings.imageSize + 'px;height:' + currentSettings.imageSize + 'px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>');
@@ -152,8 +170,10 @@ function renderImage(imageUrl, index, word = null, kor = null, currentSettings =
         return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${dblClickHandler}>${imageUrl}</div>`;
     }
     // It's a real image URL
-    return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative;">
-        <img src="${imageUrl}" style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;cursor:pointer;" alt="Image ${index + 1}" ${dblClickHandler}>
+    const safeWord = word || '';
+    const onErr = `onerror="this.setAttribute('data-error','1'); if(window._wordtestImageError){ window._wordtestImageError(${JSON.stringify(safeWord)}, ${index}, this); }"`;
+    return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative;">
+        <img src="${imageUrl}" ${onErr} style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;cursor:pointer;" alt="Image ${index + 1}" ${dblClickHandler}>
     </div>`;
 }
 
@@ -198,55 +218,60 @@ async function refreshImages(updatePreviewCallback) {
 
 // Helper function to add more image alternatives without clearing existing ones
 async function addMoreImageAlternatives(word, wordKey, kor = null, currentSettings = { imageSize: 50 }) {
-    // Get 6 more English images with different search terms
-    if (getPixabayImage) {
-        try {
-            const newSearchTerms = [
-                `${word} photo`, 
-                `${word} image`, 
-                `${word} vector`,
-                `${word} art`,
-                `${word} picture`,
-                `${word} graphic`
-            ];
-            
-            const newAlternatives = [];
-            for (let i = 0; i < newSearchTerms.length; i++) {
-                try {
-                    const imageUrl = await getPixabayImage(newSearchTerms[i], true);
-                    if (imageUrl && imageUrl.startsWith('http')) {
-                        newAlternatives.push(imageUrl);
-                    } else if (imageUrl && imageUrl.length === 1) {
-                        newAlternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
+    // Get up to 6 more images using provider or Netlify fallback
+    try {
+        const newSearchTerms = [
+            `${word} photo`,
+            `${word} image`,
+            `${word} vector`,
+            `${word} art`,
+            `${word} picture`,
+            `${word} graphic`
+        ];
+
+        const newAlternatives = [];
+        for (let i = 0; i < newSearchTerms.length; i++) {
+            try {
+                let imageUrl = null;
+                if (typeof getPixabayImage === 'function') {
+                    imageUrl = await getPixabayImage(newSearchTerms[i], true);
+                } else {
+                    const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
+                    const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
+                    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(newSearchTerms[i])}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const images = Array.isArray(data?.images) ? data.images : [];
+                        imageUrl = data?.image || images[0] || null;
                     }
-                } catch (error) {
-                    console.warn('Error getting new image for:', newSearchTerms[i], error);
                 }
-            }
-            
-            // Add the new alternatives to the existing ones (but avoid duplicates)
-            const existingAlternatives = imageAlternatives[wordKey] || [];
-            const uniqueNewAlternatives = newAlternatives.filter(alt => 
-                !existingAlternatives.includes(alt)
-            );
-            
-            // Insert new alternatives after the first few existing ones
-            if (uniqueNewAlternatives.length > 0) {
-                const insertIndex = Math.min(3, existingAlternatives.length);
-                imageAlternatives[wordKey] = [
-                    ...existingAlternatives.slice(0, insertIndex),
-                    ...uniqueNewAlternatives,
-                    ...existingAlternatives.slice(insertIndex)
-                ];
-                
-                // Limit total alternatives to prevent memory issues
-                if (imageAlternatives[wordKey].length > 15) {
-                    imageAlternatives[wordKey] = imageAlternatives[wordKey].slice(0, 15);
+                if (imageUrl && imageUrl.startsWith('http')) {
+                    newAlternatives.push(imageUrl);
+                } else if (imageUrl && imageUrl.length === 1) {
+                    newAlternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
                 }
+            } catch (error) {
+                console.warn('Error getting new image for:', newSearchTerms[i], error);
             }
-        } catch (error) {
-            console.warn('Error adding more alternatives for:', word, error);
         }
+
+        // Add the new alternatives to the existing ones (but avoid duplicates)
+        const existingAlternatives = imageAlternatives[wordKey] || [];
+        const uniqueNewAlternatives = newAlternatives.filter(alt => !existingAlternatives.includes(alt));
+
+        if (uniqueNewAlternatives.length > 0) {
+            const insertIndex = Math.min(3, existingAlternatives.length);
+            imageAlternatives[wordKey] = [
+                ...existingAlternatives.slice(0, insertIndex),
+                ...uniqueNewAlternatives,
+                ...existingAlternatives.slice(insertIndex)
+            ];
+            if (imageAlternatives[wordKey].length > 15) {
+                imageAlternatives[wordKey] = imageAlternatives[wordKey].slice(0, 15);
+            }
+        }
+    } catch (error) {
+        console.warn('Error adding more alternatives for:', word, error);
     }
 }
 
@@ -522,6 +547,63 @@ function initializeImageModule(pixabayFn, cache) {
     imageCache = cache;
 }
 
+// Reset all in-memory image state without touching the DOM
+function resetImageState() {
+    try {
+        imageCache = {};
+        imageAlternatives = {};
+        currentImageIndex = {};
+    } catch (_) {}
+}
+
+// Handle a single image error by fetching a new alternative only for that slot
+async function handleImageError(word, index, imgEl, updatePreviewCallback) {
+    const key = `${(word || '').toLowerCase()}_${index}`;
+    imageRetryCount[key] = (imageRetryCount[key] || 0) + 1;
+    // Stop after 2 retries; replace with a blank box
+    const maxRetries = 2;
+    if (imageRetryCount[key] > maxRetries) {
+        if (imgEl) {
+            imgEl.outerHTML = `<div style="width:${window.currentSettings?.imageSize || 50}px;height:${window.currentSettings?.imageSize || 50}px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>`;
+        }
+        return;
+    }
+    try {
+        const updater = updatePreviewCallback || window.updatePreview || (()=>{});
+        await refreshImageForWord(word, index, true, null, window.currentSettings || { imageSize: 50 }, updater);
+    } catch (e) {
+        // As a last resort, swap to a blank placeholder
+        if (imgEl) {
+            imgEl.outerHTML = `<div style="width:${window.currentSettings?.imageSize || 50}px;height:${window.currentSettings?.imageSize || 50}px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>`;
+        }
+    }
+}
+
+// Scan current preview and refresh only images that failed to load
+async function refreshFailedImages(updatePreviewCallback) {
+    const preview = document.getElementById('previewArea');
+    if (!preview) return;
+    const imgs = Array.from(preview.querySelectorAll('.image-drop-zone img'));
+    const failed = imgs.filter(img => img.getAttribute('data-error') === '1' || (img.complete && img.naturalWidth === 0));
+    let count = 0;
+    for (const img of failed) {
+        const word = img.getAttribute('data-word') || img.closest('.image-drop-zone')?.getAttribute('data-word') || '';
+        const idx = parseInt(img.getAttribute('data-index') || img.closest('.image-drop-zone')?.getAttribute('data-index') || '-1');
+        if (!isNaN(idx) && idx >= 0) {
+        count++;
+        await handleImageError(word, idx, img, updatePreviewCallback);
+        }
+    }
+    return count;
+}
+
+// Expose a global handler for inline <img onerror>
+if (!window._wordtestImageError) {
+    window._wordtestImageError = (word, index, imgEl) => {
+        handleImageError(word, index, imgEl, window.updatePreview || (()=>{}));
+    };
+}
+
 // Function to completely clear all images (for when users want to start fresh)
 async function clearAllImages(updatePreviewCallback) {
     console.log('Clearing all images...');
@@ -563,5 +645,8 @@ export {
     hideImageLoadingSpinner,
     enableImageDragAndDrop,
     initializeImageModule,
-    clearAllImages
+    clearAllImages,
+    resetImageState,
+    refreshFailedImages,
+    handleImageError
 };
