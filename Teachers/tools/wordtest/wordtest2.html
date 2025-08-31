@@ -396,21 +396,23 @@
                         <input type="text" class="input-field" id="titleInput" placeholder="Enter title">
                     </div>
 
-                    <div class="input-group">
-                        <label>Passage Text</label>
-                        <textarea class="textarea-field" id="passageInput" placeholder="Insert passage here..."></textarea>
-                        <button id="importTextBtn" class="extract-btn" style="margin-top:8px;width:100%;">Import Text</button>
-                    </div>
+          <div class="input-group">
+            <label>Passage Text</label>
+            <textarea class="textarea-field" id="passageInput" placeholder="Insert passage here..."></textarea>
+          </div>
 
-                    <div class="input-group">
-                        <label>Difficulty and Number of Words</label>
-                        <select class="select-field" id="difficultySelect">
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                        </select>
-                        <input type="number" class="number-input" id="wordCountInput" value="10">
-                    </div>
+          <div class="input-group">
+            <label>Difficulty and Number of Words</label>
+            <select class="select-field" id="difficultySelect">
+              <option value="Topic Input">Topic Input</option>
+              <option value="related">Related Words</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+              <option value="phrases">Phrases &amp; Idioms</option>
+            </select>
+            <input type="number" class="number-input" id="wordCountInput" value="10">
+          </div>
 
                     <div class="button-group">
                         <button class="extract-btn" id="extractBtn">Extract Words</button>
@@ -434,28 +436,8 @@
         </div>
     </div>
 
-    <script>
-    // Import Text button logic
-    document.addEventListener('DOMContentLoaded', function() {
-      const importBtn = document.getElementById('importTextBtn');
-      if (importBtn) {
-        importBtn.addEventListener('click', function() {
-          // Open worksheet manager filtered for Text files
-          const managerUrl = '/Teachers/worksheet_manager.html?mode=load&type=text';
-          const win = window.open(managerUrl, 'WorksheetManager', 'width=900,height=700');
-          // Listen for message from worksheet manager
-          window.addEventListener('message', function handler(e) {
-            if (e.data && e.data.action === 'import_text_passage' && typeof e.data.passage_text === 'string') {
-              document.getElementById('passageInput').value = e.data.passage_text;
-              if (window.updatePreview) window.updatePreview();
-              window.removeEventListener('message', handler);
-              win.close();
-            }
-          });
-        });
-      }
-    });
-    // Feedback modal loader for Word Worksheet Generator (matching flashcard pattern)
+  <script>
+  // Feedback modal loader for Word Worksheet Generator (matching flashcard pattern)
     window.showFeedbackModal = function() {
       // Prevent multiple modals
       if (document.getElementById('feedbackModalBg')) return;
@@ -523,7 +505,7 @@
               testMode: document.getElementById('testModeSelect')?.value || ''
             };
           } catch (e) { toolState = {}; }
-          
+
           const payload = {
             feedback: feedbackText,
             module: 'wordtest',

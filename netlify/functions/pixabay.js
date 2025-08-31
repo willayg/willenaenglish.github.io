@@ -30,11 +30,16 @@ exports.handler = async function(event, context) {
   
   try {
     const res = await fetch(url);
+    if (!res.ok) {
+      console.log('ERROR: Pixabay HTTP', res.status);
+      return { statusCode: res.status, body: JSON.stringify({ error: 'Pixabay HTTP ' + res.status }) };
+    }
     const data = await res.json();
-    console.log('Pixabay response:', data.total || 0, 'total results');
+    const images = Array.isArray(data?.hits) ? data.hits.map(hit => hit.webformatURL).filter(Boolean) : [];
+    console.log('Pixabay response:', data.total || 0, 'total results; returning', images.length, 'urls');
     return {
       statusCode: 200,
-      body: JSON.stringify({ images: data.hits.map(hit => hit.webformatURL) })
+      body: JSON.stringify({ image: images[0] || null, images })
     };
   } catch (e) {
     console.log('ERROR: Pixabay fetch failed:', e.message);
