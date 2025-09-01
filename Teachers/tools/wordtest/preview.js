@@ -284,6 +284,14 @@ export async function generateWorksheetHTML(title, wordPairs) {
                     <img src="${logoSrc}" alt="Willena" style="height:36px;width:auto;display:block;" class="worksheet-logo" />
                     <h2 class="title" style="margin:0;font-family:${currentSettings.font};font-size:${Math.max(18, currentSettings.fontSize + 6)}px;">${safeTitle}</h2>
                 </div>
+                <div class="worksheet-header-fields" style="display:flex;gap:32px;margin-top:8px;align-items:center;">
+                    <div style="font-size:15px;font-family:${currentSettings.font};color:#444;">
+                        Name: <span style="display:inline-block;min-width:120px;border-bottom:1px solid #bbb;">&nbsp;</span>
+                    </div>
+                    <div style="font-size:15px;font-family:${currentSettings.font};color:#444;">
+                        Date: <span style="display:inline-block;min-width:100px;border-bottom:1px solid #bbb;">&nbsp;</span>
+                    </div>
+                </div>
             </div>
         `;
     };
