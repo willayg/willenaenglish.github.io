@@ -7,6 +7,8 @@ const currentWords = state.currentWords;
 const currentSettings = state.currentSettings;
 
 export async function updatePreview() {
+    // Keep a lightweight global mirror for UI-driven inline updates
+    window.currentSettings = state.currentSettings;
     const previewArea = document.getElementById('previewArea');
     const title = document.getElementById('titleInput').value || 'Worksheet Title';
     if (!previewArea) return;
@@ -16,7 +18,7 @@ export async function updatePreview() {
         return;
     }
 
-    const imageBasedLayouts = ['picture-list','picture-list-2col','picture-quiz','picture-quiz-5col','picture-matching','6col-images','5col-images'];
+    const imageBasedLayouts = ['picture-list','picture-list-2col','picture-quiz','picture-quiz-5col','picture-matching','6col-images','5col-images','eng-kor-matching'];
     if (imageBasedLayouts.includes(currentSettings.layout)) {
         previewArea.innerHTML = '<div class="preview-placeholder"><p>Loading images...</p></div>';
         await new Promise(r => setTimeout(r, 100));
@@ -60,6 +62,7 @@ export async function updatePreviewPreservingImages() {
 
 // Efficient preview update that preserves images or updates styles in place
 export async function updatePreviewStyles() {
+    window.currentSettings = state.currentSettings;
     const previewArea = document.getElementById('previewArea');
     if (!previewArea) return;
 
@@ -75,7 +78,7 @@ export async function updatePreviewStyles() {
     }
 
     // Certain layouts depend on gap/size for structure; rebuild to reflect changes
-    const imageBasedLayouts = ['picture-list','picture-list-2col','picture-quiz','picture-quiz-5col','picture-matching','6col-images','5col-images'];
+    const imageBasedLayouts = ['picture-list','picture-list-2col','picture-quiz','picture-quiz-5col','picture-matching','6col-images','5col-images','eng-kor-matching'];
     if (imageBasedLayouts.includes(currentSettings.layout)) {
         return updatePreviewPreservingImages();
     }
@@ -268,9 +271,17 @@ export async function generateWorksheetHTML(title, wordPairs) {
     // Minimal header generator to keep renderer decoupled
     const generateWorksheetHeader = async (hdrTitle) => {
         const safeTitle = (hdrTitle || '').toString();
+        // Resolve logo to an absolute URL for reliability in preview/print
+        let logoSrc = '';
+        try {
+            logoSrc = new URL('../../../Assets/Images/color-logo.png', window.location.href).href;
+        } catch (_) {
+            logoSrc = '../../../Assets/Images/color-logo.png';
+        }
         return `
             <div class="worksheet-header" style="margin-bottom: 12px;">
-                <div style="display:flex;align-items:baseline;gap:12px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <img src="${logoSrc}" alt="Willena" style="height:36px;width:auto;display:block;" class="worksheet-logo" />
                     <h2 class="title" style="margin:0;font-family:${currentSettings.font};font-size:${Math.max(18, currentSettings.fontSize + 6)}px;">${safeTitle}</h2>
                 </div>
             </div>

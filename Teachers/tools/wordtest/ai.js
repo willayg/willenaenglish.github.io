@@ -5,22 +5,26 @@ async function extractWordsWithAI(passage, numWords = 10, difficulty = 'medium')
   let promptContent = '';
   switch((difficulty || '').toLowerCase()) {
     case 'related':
-      promptContent = `
-You are an ESL teacher. Given the passage below, generate a list of exactly ${numWords} English words or short phrases that are conceptually or thematically related to the passage, but do NOT appear in the passage itself. Focus on words that are more advanced or challenging than the vocabulary found in the passage.
+  promptContent = `
+You are an ESL teacher. Given the passage below, generate exactly ${numWords} English items that are RELATED to the passage but DO NOT appear in it. Include a mix of:
+
+- Synonyms and near-synonyms of key words or ideas
+- Antonyms that help contrast key ideas
+- Collocations and common word partners (e.g., make a decision, heavy traffic)
+- Thematic associates (words strongly connected to the topic or context)
 
 Guidelines:
-- The words/phrases should be relevant to the topic, ideas, or context of the passage, but must not be present in the passage.
-- Prefer academic, literary, or less common vocabulary that would help advanced students expand their knowledge.
-- Avoid basic or overly simple words.
-- Do NOT include duplicate or very similar words/phrases.
-- Ensure you provide exactly ${numWords} distinct items.
+- Items must be relevant to the topic, ideas, or context of the passage, but must NOT be present verbatim in the passage
+- Prefer useful, teachable vocabulary (avoid very obscure terms)
+- Avoid duplicates or near-duplicates
+- Provide EXACTLY ${numWords} distinct items
 
-For each word or phrase, provide the English, then a comma, then the Korean translation.
-Return each pair on a new line in the format: english, korean
+Format:
+- One item per line: english, korean
 
 Passage:
 ${passage}
-      `;
+  `;
       break;
     case 'easy':
       promptContent = `
