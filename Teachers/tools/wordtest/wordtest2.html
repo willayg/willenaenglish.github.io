@@ -84,72 +84,36 @@
     <div class="container">
         <div class="app-card">
             <!-- Header -->
-            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+            <div class="header">
                 <div class="logo">
                     <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
                 </div>
-                <h1 style="flex:1; text-align:center; margin:0;">Word Builder</h1>
+                <h1>Word Builder</h1>
                 <!-- Burger Menu Component (vertically centered in header, inside container) -->
-                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+                <div id="burger-menu-mount"></div>
             </div>
 
             <!-- Top Action Bar -->
             <div class="top-actions">
                 <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
-    <script>
-    // New button logic
-    document.addEventListener('DOMContentLoaded', function() {
-      const newBtn = document.getElementById('newBtn');
-      if (newBtn) {
-        newBtn.addEventListener('click', function() {
-          if (confirm('Are you sure you want to start a new worksheet?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
-            // Clear all main fields
-            const idsToClear = [
-              'titleInput',
-              'passageInput',
-              'wordListTextarea',
-              'wordCountInput',
-              'fontSizeInput'
-            ];
-            idsToClear.forEach(id => {
-              const el = document.getElementById(id);
-              if (el) {
-                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
-              }
-            });
-            // Reset selects
-            const selectsToReset = [
-              'difficultySelect',
-              'fontSelect',
-              'designSelect',
-              'layoutSelect'
-            ];
-            selectsToReset.forEach(id => {
-              const sel = document.getElementById(id);
-              if (sel) sel.selectedIndex = 0;
-            });
-            // Reset sliders
-            if (document.getElementById('imageGapSlider')) document.getElementById('imageGapSlider').value = '25';
-            if (document.getElementById('imageSizeSlider')) document.getElementById('imageSizeSlider').value = '50';
-            // Reset test mode
-            if (document.getElementById('testModeSelect')) document.getElementById('testModeSelect').selectedIndex = 0;
-            // Hide duplicate warning
-            const dupWarn = document.getElementById('duplicateWarning');
-            if (dupWarn) dupWarn.style.display = 'none';
-            // Optionally clear preview area
-            const preview = document.getElementById('previewArea');
-            if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
-            if (window.updateWordtestPreview) window.updateWordtestPreview();
-          }
-        });
-      }
-    });
-    </script>
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
-                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
+                <span class="action-link" id="moreBtn">More</span>
+                <script>
+                // New button logic: reload page to fully reset worksheet
+                document.addEventListener('DOMContentLoaded', function() {
+                  const newBtn = document.getElementById('newBtn');
+                  if (newBtn) {
+                    newBtn.addEventListener('click', function() {
+                      if (confirm('Are you sure you want to start a new worksheet?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+                        window.location.reload();
+                      }
+                    });
+                  }
+                });
+                </script>
                 <script>
                 // Attach More button to show the More Tools modal overlay
                 document.addEventListener('DOMContentLoaded', function() {
@@ -208,69 +172,69 @@
                   });
                 });
                 </script>
-    <script>
-    // Simple PDF export using print dialog - works exactly like Print button
-    document.addEventListener('DOMContentLoaded', function() {
-      const pdfBtn = document.getElementById('pdfBtn');
-      if (pdfBtn) {
-        pdfBtn.addEventListener('click', function() {
-          // Create a new window with just the preview content
-          const previewArea = document.getElementById('previewArea');
-          if (!previewArea) {
-            alert('Nothing to export.');
-            return;
-          }
+                <script>
+                // Simple PDF export using print dialog - works exactly like Print button
+                document.addEventListener('DOMContentLoaded', function() {
+                  const pdfBtn = document.getElementById('pdfBtn');
+                  if (pdfBtn) {
+                    pdfBtn.addEventListener('click', function() {
+                      // Create a new window with just the preview content
+                      const previewArea = document.getElementById('previewArea');
+                      if (!previewArea) {
+                        alert('Nothing to export.');
+                        return;
+                      }
 
-          // Create print window with just the preview content
-          const printWindow = window.open('', '_blank');
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>Worksheet</title>
-              <!-- Include Google Fonts for title styles -->
-              <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-              <!-- Include all worksheet and title styles -->
-              <link rel="stylesheet" href="style.css">
-              <style>
-                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                @media print {
-                  body { margin: 0; padding: 0.5in; }
-                  .preview-area { 
-                    box-shadow: none !important; 
-                    border: none !important;
-                    background: white !important;
-                    width: 100% !important;
-                    max-width: none !important;
+                      // Create print window with just the preview content
+                      const printWindow = window.open('', '_blank');
+                      printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <title>Worksheet</title>
+                          <!-- Include Google Fonts for title styles -->
+                          <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                          <!-- Include all worksheet and title styles -->
+                          <link rel="stylesheet" href="style.css">
+                          <style>
+                            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                            @media print {
+                              body { margin: 0; padding: 0.5in; }
+                              .preview-area { 
+                                box-shadow: none !important; 
+                                border: none !important;
+                                background: white !important;
+                                width: 100% !important;
+                                max-width: none !important;
+                              }
+                              /* Remove any font-family override on worksheet-preview */
+                              .worksheet-preview {
+                                font-family: inherit !important;
+                              }
+                              /* DON'T override grid gaps - preserve JavaScript inline styles */
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          ${previewArea.outerHTML}
+                        </body>
+                        </html>
+                      `);
+
+                      printWindow.document.close();
+
+                      // Wait for content to load, then trigger print dialog
+                      printWindow.onload = function() {
+                        printWindow.print();
+                        // Close window after print dialog closes
+                        printWindow.onafterprint = function() {
+                          printWindow.close();
+                        };
+                      };
+                    });
                   }
-                  /* Remove any font-family override on worksheet-preview */
-                  .worksheet-preview {
-                    font-family: inherit !important;
-                  }
-                  /* DON'T override grid gaps - preserve JavaScript inline styles */
-                }
-              </style>
-            </head>
-            <body>
-              ${previewArea.outerHTML}
-            </body>
-            </html>
-          `);
-
-          printWindow.document.close();
-
-          // Wait for content to load, then trigger print dialog
-          printWindow.onload = function() {
-            printWindow.print();
-            // Close window after print dialog closes
-            printWindow.onafterprint = function() {
-              printWindow.close();
-            };
-          };
-        });
-      }
-    });
-    </script>
+                });
+                </script>
             </div>
 
             <!-- Floating Toolbar -->
@@ -397,25 +361,80 @@
                     </div>
 
           <div class="input-group">
-            <label>Passage Text</label>
+            <!-- Extraction mode segmented control -->
+            <div class="vocab-mode-group" style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #93cbcf;background:#f8fafd;box-shadow:0 2px 8px rgba(0,191,174,0.07);margin:6px 0 8px 0;width:100%;max-width:520px;">
+              <button id="wt-topic-input-btn" class="vocab-mode-btn" aria-pressed="false" style="flex:1;border:none;background:#f8fafd;color:#19777e;font-weight:600;font-size:0.85em;padding:6px 0;cursor:pointer;">
+                Topic Input
+              </button>
+              <button id="wt-text-input-btn" class="vocab-mode-btn" aria-pressed="true" style="flex:1;border:none;border-left:1.5px solid #93cbcf;background:#e0f7fa;color:#045c63;font-weight:700;font-size:0.85em;padding:6px 0;cursor:pointer;">
+                Paste Text
+              </button>
+            </div>
+            <input type="hidden" id="extractionMode" value="passage">
             <textarea class="textarea-field" id="passageInput" placeholder="Insert passage here..."></textarea>
+            <textarea class="textarea-field" id="topicInput" placeholder="Enter a topic (e.g., 'animals', 'food', 'school subjects')" style="display:none;min-height:68px;max-height:90px;resize:vertical;font-size:0.9em;"></textarea>
+            <script>
+            // Toggle between passage and topic inputs like Mint AI modal
+            document.addEventListener('DOMContentLoaded', function(){
+              const topicBtn = document.getElementById('wt-topic-input-btn');
+              const textBtn = document.getElementById('wt-text-input-btn');
+              const modeInput = document.getElementById('extractionMode');
+              const passageTA = document.getElementById('passageInput');
+              const topicTA = document.getElementById('topicInput');
+              function setMode(mode){
+                if(!modeInput || !passageTA || !topicTA) return;
+                modeInput.value = mode;
+                const isTopic = mode === 'topic';
+                passageTA.style.display = isTopic ? 'none' : '';
+                topicTA.style.display = isTopic ? '' : 'none';
+                if(topicBtn && textBtn){
+                  topicBtn.setAttribute('aria-pressed', isTopic ? 'true' : 'false');
+                  textBtn.setAttribute('aria-pressed', isTopic ? 'false' : 'true');
+                  topicBtn.style.background = isTopic ? '#e0f7fa' : '#f8fafd';
+                  topicBtn.style.color = isTopic ? '#045c63' : '#19777e';
+                  textBtn.style.background = isTopic ? '#f8fafd' : '#e0f7fa';
+                  textBtn.style.color = isTopic ? '#19777e' : '#045c63';
+                  textBtn.style.fontWeight = isTopic ? '600' : '700';
+                }
+                // Show/hide Related Words option depending on mode
+                const diffSelect = document.getElementById('difficultySelect');
+                if (diffSelect) {
+                  const relatedOpt = Array.from(diffSelect.options).find(o => (o.value || '').toLowerCase() === 'related');
+                  if (relatedOpt) {
+                    if (isTopic) {
+                      // Hide in topic mode; if selected, switch to Medium as default
+                      relatedOpt.disabled = true;
+                      relatedOpt.hidden = true;
+                      if ((diffSelect.value || '').toLowerCase() === 'related') {
+                        diffSelect.value = 'Medium';
+                      }
+                    } else {
+                      relatedOpt.disabled = false;
+                      relatedOpt.hidden = false;
+                    }
+                  }
+                }
+              }
+              topicBtn?.addEventListener('click', function(){ setMode('topic'); });
+              textBtn?.addEventListener('click', function(){ setMode('passage'); });
+            });
+            </script>
           </div>
 
           <div class="input-group">
             <label>Difficulty and Number of Words</label>
             <select class="select-field" id="difficultySelect">
-              <option value="Topic Input">Topic Input</option>
-              <option value="related">Related Words</option>
               <option value="Easy">Easy</option>
               <option value="Medium">Medium</option>
               <option value="Hard">Hard</option>
+              <option value="related">Related Words</option>
               <option value="phrases">Phrases &amp; Idioms</option>
             </select>
             <input type="number" class="number-input" id="wordCountInput" value="10">
           </div>
 
-                    <div class="button-group">
-                        <button class="extract-btn" id="extractBtn">Extract Words</button>
+          <div class="button-group">
+            <button class="extract-btn" id="extractBtn">Generate List</button>
                         <button class="clear-btn" id="clearBtn">Clear All</button>
                     </div>
 
@@ -599,7 +618,7 @@
                   url = `https://pixabay.com/illustrations/search/${encodeURIComponent(word)}/`;
                   break;
                 case 'ai':
-                  url = `https://lexica.art/?q=${encodeURIComponent(word)}`;
+                  url = `https://pixabay.com/ai-images/search/${encodeURIComponent(word)}/`;
                   break;
                 case 'clipart':
                   url = `https://openclipart.org/search/?query=${encodeURIComponent(word)}`;

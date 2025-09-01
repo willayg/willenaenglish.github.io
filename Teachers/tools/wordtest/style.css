@@ -11,10 +11,17 @@
 /* Worksheet Title Styles (0-10) */
 body {
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #7a7c85 0%, #54535c 100%);
+  background: linear-gradient(135deg, #274449 0%, #012024 100%);
   min-height: 100vh;
   margin: 0;
   padding: 0;
+}
+
+/* Layout variables for sticky bars */
+:root {
+  --header-height: 45px;
+  --actions-height: 30px;
+  --menubar-height: 40px;
 }
 
 .container {
@@ -38,14 +45,18 @@ body {
   border: 1px solid #e1e8ed;
 }
 
+/* Vanilla builder-style header: teal gradient, white title, sticky */
 .header {
-  background: linear-gradient(135deg, #4a5568, #2d3748);
-  color: white;
-  padding: 24px 32px;
+  background: linear-gradient(135deg, #0ea5a3 0%, #9adbe2 100%);
+  color: #ffffff;
+  padding: 5px 5px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
+  top: 0;
+  z-index: 1000;
+  min-height: var(--header-height);
+  border-bottom: 1px solid rgba(95, 143, 155, 0.35);
 }
 
 .logo {
@@ -53,18 +64,18 @@ body {
   align-items: center;
 }
 
-.logo-img {
-  height: 40px;
-  width: auto;
-}
+.logo-img { height: 50px; width: auto; display: block; }
 
 .header h1 {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   margin: 0;
-  flex-grow: 1;
+  flex: 1;
   text-align: center;
 }
+
+/* Position burger mount like vanilla */
+#burger-menu-mount { position: absolute; top: 50%; right: 16px; transform: translateY(-50%); z-index: 9999; }
 
 .menu-icon {
   display: flex;
@@ -74,41 +85,53 @@ body {
 }
 
 .menu-icon span {
-  width: 24px;
+  width: 20px;
   height: 3px;
   background: white;
   border-radius: 2px;
 }
 
+/* Top actions: pastel strip under header, sticky */
 .top-actions {
-  background: #4a5568;
-  padding: 12px 32px;
+  background: #d2f3f1;
+  padding: 3px 16px;
   display: flex;
-  gap: 24px;
+  gap: 12px;
+  align-items: center;
   border-bottom: 1px solid #e1e8ed;
+  position: sticky;
+  top: var(--header-height);
+  z-index: 999;
+  min-height: var(--actions-height);
 }
 
 .action-link {
-  color: white;
+  color: #3d3752;
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: background 0.2s;
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 
-.action-link:hover {
-  opacity: 0.8;
-}
+.action-link:hover { background: #f3fdff; }
 
+/* Push More to the right */
+#moreBtn { margin-left: auto; }
+
+/* Floating toolbar: mint pastel and sticky below actions */
 .floating-toolbar {
   background: #e8f4f8;
-  padding: 12px 24px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  border-bottom: 1px solid #e1e8ed;
-  position: relative;
+  border-bottom: 1px solid #5f8f9b;
+  position: sticky;
+  top: calc(var(--header-height) + var(--actions-height));
+  z-index: 998;
   cursor: default;
 }
 
@@ -193,9 +216,11 @@ body {
   border-radius: 2px;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
 }
 
 .slider::-webkit-slider-thumb {
+  appearance: none;
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
@@ -296,29 +321,30 @@ body {
 }
 
 .extract-btn {
-  background: #4a5568;
-  color: white;
-  border: none;
+  background: #b3eaee;
+  color: rgb(27, 70, 71);
+  border: 1px solid rgb(100, 175, 175);
   border-radius: 8px;
   padding: 10px 16px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .extract-btn:hover {
-  background: #2d3748;
+  background: #8fd3d3;
 }
 
 .clear-btn {
-  background: #e53e3e;
-  color: white;
+  background: #e1edee;
+  color: rgb(27, 70, 71);
   border: none;
   border-radius: 8px;
+  border: 1px solid rgb(100, 175, 175);
   padding: 10px 16px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }

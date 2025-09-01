@@ -183,6 +183,14 @@ export function loadWorksheet(worksheet, currentWords, currentSettings) {
     
     // Store worksheet user_id for updates
     window._currentWorksheetId = worksheet.user_id || null;
+    // Store lightweight metadata for auto-fill in save dialog
+    window._loadedWorksheetMeta = {
+        title: worksheet.title || '',
+        book: worksheet.book || '',
+        unit: worksheet.unit || '',
+        language_point: worksheet.language_point || '',
+        notes: worksheet.notes || ''
+    };
     
     // Defensive: support both array and string for words
     let wordsArr = [];

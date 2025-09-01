@@ -223,8 +223,7 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
     // --- PICTURE CARDS LAYOUT (5col-images) ---
     if (layout === "5col-images") {
         const pictureCard5Settings = {
-            ...currentSettings,
-            imageSize: 110
+            ...currentSettings
         };
         
         const imagePromises = maskedPairs.map(async (pair, i) => {
@@ -233,15 +232,15 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
         });
         const pairsWithImages = await Promise.all(imagePromises);
         
-        const cardWidth = 160;
-        const cardHeight = 200;
-        const baseGap = Math.max(currentSettings.imageGap, 10);
-        const dynamicPadding = Math.max(15, baseGap / 2);
+    const cardWidth = 160;
+    const cardHeight = 200;
+    const baseGap = Math.max(currentSettings.imageGap, 10);
+    const dynamicPadding = Math.max(15, baseGap / 2);
         
         const gridHtml = `
-            <div class="picture-cards-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${baseGap}px; column-gap: 10px; padding: ${dynamicPadding}px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
+            <div class="picture-cards-grid-5col" style="display: grid; grid-template-columns: repeat(5, 1fr); row-gap: ${baseGap}px; column-gap: ${Math.max(Math.round(baseGap / 2), 8)}px; padding: ${dynamicPadding}px; width: 100%; max-width: 900px; margin: 0 auto; place-items: center;">
                 ${pairsWithImages.map((pair, i) => {
-                    const showEng = currentSettings.testMode === 'hide-eng' ? '' : (pair.eng || pair._originalEng || '______');
+                    const showEng = testMode === 'hide-eng' ? '______' : (pair.eng || pair._originalEng || '______');
                     return `
                     <div class="picture-card-5col" style="
                         padding: 10px;
@@ -291,8 +290,7 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
     // --- PICTURE LIST (2 COLUMN) LAYOUT ---
     if (layout === "picture-list-2col") {
         const pictureList2ColSettings = {
-            ...currentSettings,
-            imageSize: 100
+            ...currentSettings
         };
         const imagePromises = maskedPairs.map(async (pair, i) => {
             const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureList2ColSettings);
@@ -334,14 +332,14 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
                             <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">
                                 ${L ? `<div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">${renderImage(L.imageUrl, L.index, L._originalEng || L.eng, L.kor, pictureList2ColSettings)}</div>` : ''}
                             </td>
-                            <td class="word-cell" data-index="${lIdx}" data-lang="eng" style="position:relative;padding:8px 10px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${L ? (L.eng || L._originalEng || '______') : ''}</td>
+                            <td class="word-cell" data-index="${lIdx}" data-lang="eng" style="position:relative;padding:8px 10px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${L ? (L.eng || '______') : ''}</td>
                             <td class="word-cell" data-index="${lIdx}" data-lang="kor" style="position:relative;padding:8px 10px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${L ? (L.kor || '______') : ''}</td>
                             <td style="border-left:2px solid #e0e0e0;border-bottom:none;"></td>
                             <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${R ? (rIdx + 1) : ''}</td>
                             <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">
                                 ${R ? `<div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">${renderImage(R.imageUrl, R.index, R._originalEng || R.eng, R.kor, pictureList2ColSettings)}</div>` : ''}
                             </td>
-                            <td class="word-cell" data-index="${rIdx}" data-lang="eng" style="position:relative;padding:8px 10px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${R ? (R.eng || R._originalEng || '______') : ''}</td>
+                            <td class="word-cell" data-index="${rIdx}" data-lang="eng" style="position:relative;padding:8px 10px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${R ? (R.eng || '______') : ''}</td>
                             <td class="word-cell" data-index="${rIdx}" data-lang="kor" style="position:relative;padding:8px 10px;border-bottom:1px solid #ddd;text-align:center;cursor:pointer;">${R ? (R.kor || '______') : ''}</td>
                         </tr>`;
                     }).join('')}
@@ -360,8 +358,7 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
     // --- PICTURE QUIZ LAYOUT ---
     if (layout === "picture-quiz") {
         const pictureQuizSettings = {
-            ...currentSettings,
-            imageSize: 120
+            ...currentSettings
         };
         const imagePromises = maskedPairs.map(async (pair, i) => {
             const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureQuizSettings);
@@ -369,27 +366,29 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
         });
         const pairsWithImages = await Promise.all(imagePromises);
         // Word choices row
-        const wordChoices = pairsWithImages.map(pair => pair.eng || pair._originalEng || '______').join(' ');
+        const wordChoices = pairsWithImages.map(pair => testMode === 'hide-eng' ? '______' : (pair.eng || pair._originalEng || '______')).join(' ');
         // Grid: 3 per row
         const perRow = 3;
         const rows = [];
         for (let i = 0; i < pairsWithImages.length; i += perRow) {
             rows.push(pairsWithImages.slice(i, i + perRow));
         }
-        const chip = (text) => `<span style="display:inline-block;margin:4px 6px 4px 0;padding:4px 10px;border-radius:6px;background:#f7fafc;border:1px solid #d7dbe3;color:#2e2b3f;font-weight:600;font-size:0.95em;">${text}</span>`;
+    const chip = (text) => `<span style="display:inline-block;margin:4px 6px 4px 0;padding:4px 10px;border-radius:6px;background:#f7fafc;border:1px solid #d7dbe3;color:#2e2b3f;font-weight:600;font-size:0.95em;text-align:center;white-space:normal;word-break:break-word;overflow-wrap:anywhere;max-width:140px;line-height:1.2;">${text}</span>`;
         const underlineCss = `
             <style>
             .quiz-underline { border-bottom: 2px solid #222; height: 22px; width: 140px; }
             @media print { .quiz-underline { border-bottom-color: #000; } }
             </style>
         `;
-        const quizHtml = `
+    const rowGap = Math.max(currentSettings.imageGap, 16);
+    const colGap = Math.max(Math.round(currentSettings.imageGap * 0.75), 20);
+    const quizHtml = `
             <div class="picture-quiz" style="max-width: 1000px; margin: 0 auto; padding: 20px 24px 28px;">
                 ${underlineCss}
                 <div style="display:flex;justify-content:center;margin:6px 0 22px;">
-                    <div style="min-height:36px;max-width:720px;width:100%;border:1.5px solid #d7dbe3;border-radius:6px;background:#fff;padding:6px 8px;">${pairsWithImages.map(p => chip(p.eng || p._originalEng || '______')).join('')}</div>
+                    <div style="min-height:36px;max-width:720px;width:100%;border:1.5px solid #d7dbe3;border-radius:6px;background:#fff;padding:6px 8px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;align-content:flex-start;">${pairsWithImages.map(p => chip(testMode === 'hide-eng' ? '______' : (p.eng || p._originalEng || '______'))).join('')}</div>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);column-gap:36px;row-gap:48px;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);column-gap:${colGap}px;row-gap:${rowGap}px;">
                     ${pairsWithImages.map(pair => `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;">
                             <div style="margin-bottom:12px;">${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureQuizSettings)}</div>
@@ -411,8 +410,7 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
     // --- PICTURE QUIZ (5 COLUMN) LAYOUT ---
     if (layout === "picture-quiz-5col") {
         const pictureQuiz5ColSettings = {
-            ...currentSettings,
-            imageSize: 100
+            ...currentSettings
         };
         const imagePromises = maskedPairs.map(async (pair, i) => {
             const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureQuiz5ColSettings);
@@ -420,27 +418,29 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
         });
         const pairsWithImages = await Promise.all(imagePromises);
         // Word choices row
-        const wordChoices = pairsWithImages.map(pair => pair.eng || pair._originalEng || '______').join(' ');
+        const wordChoices = pairsWithImages.map(pair => testMode === 'hide-eng' ? '______' : (pair.eng || pair._originalEng || '______')).join(' ');
         // Grid: 5 per row
         const perRow = 5;
         const rows = [];
         for (let i = 0; i < pairsWithImages.length; i += perRow) {
             rows.push(pairsWithImages.slice(i, i + perRow));
         }
-        const chip5 = (text) => `<span style="display:inline-block;margin:4px 6px 4px 0;padding:4px 10px;border-radius:6px;background:#f7fafc;border:1px solid #d7dbe3;color:#2e2b3f;font-weight:600;font-size:0.95em;">${text}</span>`;
+    const chip5 = (text) => `<span style="display:inline-block;margin:4px 6px 4px 0;padding:4px 10px;border-radius:6px;background:#f7fafc;border:1px solid #d7dbe3;color:#2e2b3f;font-weight:600;font-size:0.95em;text-align:center;white-space:normal;word-break:break-word;overflow-wrap:anywhere;max-width:120px;line-height:1.2;">${text}</span>`;
         const underlineCss5 = `
             <style>
             .quiz-underline-5col { border-bottom: 2px solid #222; height: 20px; width: 110px; }
             @media print { .quiz-underline-5col { border-bottom-color: #000; } }
             </style>
         `;
-        const quiz5ColHtml = `
+    const rowGap5 = Math.max(currentSettings.imageGap, 16);
+    const colGap5 = Math.max(Math.round(currentSettings.imageGap * 0.6), 16);
+    const quiz5ColHtml = `
             <div class="picture-quiz-5col" style="max-width: 1100px; margin: 0 auto; padding: 20px 24px 24px;">
                 ${underlineCss5}
                 <div style="display:flex;justify-content:center;margin:6px 0 22px;">
-                    <div style="min-height:36px;max-width:900px;width:100%;border:1.5px solid #d7dbe3;border-radius:6px;background:#fff;padding:6px 8px;">${pairsWithImages.map(p => chip5(p.eng || p._originalEng || '______')).join('')}</div>
+                    <div style="min-height:36px;max-width:900px;width:100%;border:1.5px solid #d7dbe3;border-radius:6px;background:#fff;padding:6px 8px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;align-content:flex-start;">${pairsWithImages.map(p => chip5(testMode === 'hide-eng' ? '______' : (p.eng || p._originalEng || '______'))).join('')}</div>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(5,1fr);column-gap:22px;row-gap:36px;">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);column-gap:${colGap5}px;row-gap:${rowGap5}px;">
                     ${pairsWithImages.map(pair => `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;">
                             <div style="margin-bottom:10px;">${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureQuiz5ColSettings)}</div>
@@ -461,36 +461,42 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
     
     // --- PICTURE MATCHING LAYOUT ---
     if (layout === "picture-matching") {
+        // Match the classic (old) layout closely: images on the left, English on the right, circles for drawing lines
         const pictureMatchingSettings = {
-            ...currentSettings,
-            imageSize: 110
+            ...currentSettings
         };
-        const imagePromises = maskedPairs.map(async (pair, i) => {
+        const limitedWordPairs = maskedPairs.slice(0, 8);
+        const imagePromises = limitedWordPairs.map(async (pair, i) => {
             const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureMatchingSettings);
             return { ...pair, imageUrl, index: i };
         });
         const pairsWithImages = await Promise.all(imagePromises);
-        const shuffledEng = [...pairsWithImages].sort(() => Math.random() - 0.5);
-        const shuffledKor = [...pairsWithImages].sort(() => Math.random() - 0.5);
-        const cardStyle = `background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(46,43,63,0.08); border: 1.5px solid #e2e8f0; padding: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 18px;`;
-        const matchingHtml = `
-            <div class="picture-matching" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 900px; margin: 0 auto; padding: 24px;">
-                <div>
-                    <h3 style="text-align:center;margin-bottom:18px;color:#2e2b3f;font-weight:700;">Pictures & English</h3>
-                    ${shuffledEng.map((pair, i) => `
-                        <div class="matching-card" style="${cardStyle}">
-                            <div style="width:32px;height:32px;border:2px solid #6b5b95;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#6b5b95;flex-shrink:0;">${String.fromCharCode(65 + i)}</div>
-                            <div style="flex-shrink:0;">${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureMatchingSettings)}</div>
-                            <div style="flex:1;font-weight:700;font-size:1.1em;color:#2e2b3f;">${pair.eng || pair._originalEng || '______'}</div>
+        const shuffledWords = [...limitedWordPairs].sort(() => Math.random() - 0.5);
+        const itemHeight = Math.max(currentSettings.imageSize + 20, 60);
+        const actualGap = currentSettings.imageGap;
+        const totalHeight = pairsWithImages.length * itemHeight + (pairsWithImages.length - 1) * actualGap;
+        const tableHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 800px; margin: 0 auto; padding: 20px; min-width: 700px;">
+                <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${actualGap}px;">
+                    ${pairsWithImages.map((pair, i) => `
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px;">
+                            <div class="image-container" style="display: flex; align-items: center; position: relative;">
+                                ${renderImage(pair.imageUrl, i, pair._originalEng || pair.eng, pair.kor, pictureMatchingSettings)}
+                            </div>
+                            <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
                         </div>
                     `).join('')}
                 </div>
-                <div>
-                    <h3 style="text-align:center;margin-bottom:18px;color:#2e2b3f;font-weight:700;">Korean</h3>
-                    ${shuffledKor.map((pair, i) => `
-                        <div class="matching-card" style="${cardStyle}">
-                            <div style="width:32px;height:32px;border:2px solid #6b5b95;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#6b5b95;flex-shrink:0;">${i + 1}</div>
-                            <div style="flex:1;font-weight:700;font-size:1.1em;color:#6b5b95;">${pair.kor || '______'}</div>
+                <div style="width: 30%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
+                    <div style="color: #ccc; font-size: 14px; text-align: center; font-style: italic;">Draw lines<br>to connect</div>
+                </div>
+                <div style="width: 35%; display: flex; flex-direction: column; justify-content: space-between; min-height: ${totalHeight}px; row-gap: ${actualGap}px;">
+                    ${shuffledWords.map((pair, i) => `
+                        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px;">
+                            <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
+                            <div style="padding: 12px 16px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
+                                ${pair.eng || '______'}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -499,136 +505,107 @@ export async function generateWorksheetHTML(title, wordPairs, currentSettings, h
         return `
             <div class="worksheet-preview" style="${style}">
                 ${await generateWorksheetHeader(title)}
-                ${printStyle}
-                ${matchingHtml}
+                ${tableHtml}
             </div>
         `;
     }
     
     // --- ENGLISH-KOREAN MATCHING LAYOUT ---
     if (layout === "eng-kor-matching") {
-        // No images needed for this layout
-        const shuffledEng = [...maskedPairs].sort(() => Math.random() - 0.5);
-        const shuffledKor = [...maskedPairs].sort(() => Math.random() - 0.5);
-        
-        const engKorMatchingHtml = `
-            <div class="eng-kor-matching" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 800px; margin: 0 auto; padding: 20px;">
-                <div class="matching-column-left">
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #333;">English</h3>
-                    ${shuffledEng.map((pair, i) => {
-                        const showEng = currentSettings.testMode === 'hide-eng' ? '______' : (pair.eng || pair._originalEng || '______');
-                        return `
-                        <div class="matching-item" style="
-                            display: flex;
-                            align-items: center;
-                            margin-bottom: 12px;
-                            padding: 12px;
-                            border: 2px solid #e2e8f0;
-                            border-radius: 8px;
-                            background: white;
-                            gap: 15px;
-                        ">
-                            <div style="
-                                width: 30px;
-                                height: 30px;
-                                border: 2px solid #333;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: bold;
-                                flex-shrink: 0;
-                            ">${String.fromCharCode(65 + i)}</div>
-                            <div style="flex: 1; font-weight: bold; font-size: 1.1em;">${showEng}</div>
+        // Match the classic (old) layout closely: English left, Korean right, with a center column for instructions and circles for drawing lines
+        const limitedWordPairs = maskedPairs.slice(0, 10);
+        const shuffledKorean = [...limitedWordPairs].sort(() => Math.random() - 0.5);
+        const itemHeight = Math.max(50, currentSettings.imageGap + 30);
+        const actualGap = currentSettings.imageGap;
+        const totalHeight = limitedWordPairs.length * itemHeight + (limitedWordPairs.length - 1) * actualGap;
+        const tableHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: 800px; margin: 0 auto; padding: 20px; min-width: 700px;">
+                <div style="width: 40%; display: flex; flex-direction: column; min-height: ${totalHeight}px; row-gap: ${actualGap}px;">
+                    ${limitedWordPairs.map((pair, i) => `
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; height: ${itemHeight}px;${i > 0 ? ` margin-top: ${actualGap}px;` : ''}">
+                            <div style="padding: ${Math.max(10, actualGap/2)}px 15px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
+                                ${pair.eng || pair._originalEng || 'word'}
+                            </div>
+                            <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
                         </div>
-                        `;
-                    }).join('')}
+                    `).join('')}
                 </div>
-                <div class="matching-column-right">
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Korean</h3>
-                    ${shuffledKor.map((pair, i) => `
-                        <div class="matching-item" style="
-                            display: flex;
-                            align-items: center;
-                            margin-bottom: 12px;
-                            padding: 12px;
-                            border: 2px solid #e2e8f0;
-                            border-radius: 8px;
-                            background: white;
-                            gap: 15px;
-                        ">
-                            <div style="
-                                width: 30px;
-                                height: 30px;
-                                border: 2px solid #333;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: bold;
-                            ">${i + 1}</div>
-                            <div style="flex: 1; font-weight: bold; font-size: 1.1em;">${pair.kor || '______'}</div>
+                <div style="width: 20%; min-height: ${totalHeight}px; position: relative; display: flex; align-items: center; justify-content: center;">
+                    <div style="color: #ccc; font-size: 14px; text-align: center; font-style: italic;">Draw lines<br>to connect</div>
+                </div>
+                <div style="width: 40%; display: flex; flex-direction: column; min-height: ${totalHeight}px; row-gap: ${actualGap}px;">
+                    ${shuffledKorean.map((pair, i) => `
+                        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; height: ${itemHeight}px;${i > 0 ? ` margin-top: ${actualGap}px;` : ''}">
+                            <div style="width: 16px; height: 16px; border: 3px solid #333; border-radius: 50%; background: white; flex-shrink: 0;"></div>
+                            <div style="padding: ${Math.max(10, actualGap/2)}px 15px; background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; font-weight: 600; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1;">
+                                ${pair.kor || 'word'}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
-        
         return `
             <div class="worksheet-preview" style="${style}">
                 ${await generateWorksheetHeader(title)}
-                ${engKorMatchingHtml}
+                ${tableHtml}
             </div>
         `;
     }
     
     // --- PICTURE CARDS LAYOUT (6col-images) ---
     if (layout === "6col-images") {
-        const pictureCardSettings = {
-            ...currentSettings,
-            imageSize: 100
+        const pictureCard6Settings = {
+            ...currentSettings
         };
         const imagePromises = maskedPairs.map(async (pair, i) => {
-            const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureCardSettings);
+            const imageUrl = await getImageUrl(pair._originalEng || pair.eng, i, false, pictureCard6Settings);
             return { ...pair, imageUrl, index: i };
         });
         const pairsWithImages = await Promise.all(imagePromises);
-        // Split into two columns of 8 rows each
-        const rowsPerCol = 8;
-        const leftCol = pairsWithImages.slice(0, rowsPerCol);
-        const rightCol = pairsWithImages.slice(rowsPerCol, rowsPerCol * 2);
-        function renderTable(colPairs, colOffset) {
-            return `
-                <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:350px;">
-                    <thead>
-                        <tr>
-                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;width:40px;">#</th>
-                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;width:90px;">Picture</th>
-                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">English</th>
-                            <th style="padding:12px 8px;border-bottom:2px solid #333;font-size:1.1em;text-align:center;font-weight:bold;">Korean</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${colPairs.map((pair, i) => `
-                            <tr>
-                                <td style="padding:8px;text-align:center;font-weight:500;">${colOffset + i + 1}</td>
-                                <td style="padding:8px;text-align:center;">
-                                    <div class="image-container" style="display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
-                                        ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCardSettings)}
-                                    </div>
-                                </td>
-                                <td class="word-cell" data-index="${colOffset + i}" data-lang="eng" style="position:relative;padding:8px 12px;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${pair.eng || pair._originalEng || '______'}</td>
-                                <td class="word-cell" data-index="${colOffset + i}" data-lang="kor" style="position:relative;padding:8px 12px;font-size:1.1em;text-align:center;font-weight:500;cursor:pointer;">${pair.kor || '______'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
+        const cardWidth = 140;
+        const cardHeight = 180;
+        const baseGap = Math.max(currentSettings.imageGap, 12);
+        const dynamicPadding = Math.max(12, baseGap / 2);
         const gridHtml = `
-            <div class="picture-list-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1100px; margin: 0 auto; padding: 24px;">
-                <div>${renderTable(leftCol, 0)}</div>
-                <div>${renderTable(rightCol, rowsPerCol)}</div>
+            <div class="picture-cards-grid-6col" style="display: grid; grid-template-columns: repeat(6, 1fr); row-gap: ${baseGap}px; column-gap: ${Math.max(Math.round(baseGap / 2), 8)}px; padding: ${dynamicPadding}px; width: 100%; max-width: 1200px; margin: 0 auto; place-items: center;">
+                ${pairsWithImages.map((pair, i) => {
+                    const showEng = testMode === 'hide-eng' ? '______' : (pair.eng || pair._originalEng || '______');
+                    return `
+                    <div class="picture-card-6col" style="
+                        padding: 8px;
+                        border: 2px solid #e2e8f0;
+                        border-radius: 8px;
+                        background: white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                        width: ${cardWidth}px;
+                        height: ${cardHeight}px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0;
+                    ">
+                        <div class="image-container" style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 100%;
+                            height: 90px;
+                            min-height: 60px;
+                            max-height: 100px;
+                            margin-bottom: 6px;
+                            flex-shrink: 0;
+                        ">
+                            ${renderImage(pair.imageUrl, pair.index, pair._originalEng || pair.eng, pair.kor, pictureCard6Settings)}
+                        </div>
+                        <div style="width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                            <div style="font-weight: bold; font-size: 0.92em; margin-bottom: 2px; word-wrap: break-word;">${showEng}</div>
+                            <div style="color: #555; font-size: 0.82em; word-wrap: break-word;">${pair.kor || '______'}</div>
+                        </div>
+                    </div>
+                    `;
+                }).join('')}
             </div>
         `;
         return `

@@ -804,15 +804,23 @@
 
 }
 
-    // Auto-complete the title field with the worksheet title from the main window
+    // Auto-fill save form fields (title/book/unit/language_point/notes) from opener
     if (mode === 'save' && window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
       try {
+        // Prefer last loaded worksheet metadata if present
+        const meta = window.opener._loadedWorksheetMeta || {};
         const worksheet = window.opener.getCurrentWorksheetData();
         if (worksheet && worksheet.title) {
           document.getElementById('worksheetTitle').value = worksheet.title;
+        } else if (meta.title) {
+          document.getElementById('worksheetTitle').value = meta.title;
         }
+        if (meta.book) document.getElementById('worksheetBook').value = meta.book;
+        if (meta.unit) document.getElementById('worksheetUnit').value = meta.unit;
+        if (meta.language_point) document.getElementById('worksheetLanguagePoint').value = meta.language_point;
+        if (meta.notes) document.getElementById('worksheetNotes').value = meta.notes;
       } catch (e) {
-        console.warn('Failed to get worksheet data for title auto-completion:', e);
+        console.warn('Failed to get worksheet data for auto-fill:', e);
       }
     }
 

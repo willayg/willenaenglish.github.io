@@ -129,9 +129,9 @@ function cycleImage(word, index, updatePreviewCallback) {
 // Helper function to render an image
 function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
     // Add double-click to open image search based on selected mode
-    let dblClickHandler = '';
+    let clickHandler = '';
     if (word) {
-        dblClickHandler = `ondblclick="
+        clickHandler = `onclick="
             const pictureModeSelect = document.getElementById('pictureModeSelect');
             const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
             const encodedWord = encodeURIComponent('${word}');
@@ -144,7 +144,7 @@ function renderImage(imageUrl, index, word = null, kor = null, currentSettings =
                     url = 'https://pixabay.com/illustrations/search/' + encodedWord + '/';
                     break;
                 case 'ai':
-                    url = 'https://lexica.art/?q=' + encodedWord;
+                    url = 'https://pixabay.com/ai-images/search/' + encodedWord + '/';
                     break;
                 default:
                     url = 'https://pixabay.com/images/search/' + encodedWord + '/';
@@ -162,18 +162,26 @@ function renderImage(imageUrl, index, word = null, kor = null, currentSettings =
     }
     
     if (imageUrl.startsWith('<div')) {
-        // It's an emoji or placeholder div - update font size
-        if (imageUrl.includes('font-size:')) {
+        // Emoji or placeholder divs need consistent box sizing with <img>
+        const isEmoji = imageUrl.includes('font-size:') && !/width:\s*\d+px/.test(imageUrl);
+        if (isEmoji) {
             const updatedImageUrl = imageUrl.replace(/font-size:\s*\d+px/, `font-size: ${currentSettings.imageSize * 0.8}px`);
-            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${dblClickHandler}>${updatedImageUrl}</div>`;
+            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${clickHandler}>
+                <div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;overflow:hidden;background:#fff;">
+                    ${updatedImageUrl}
+                </div>
+            </div>`;
         }
-        return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${dblClickHandler}>${imageUrl}</div>`;
+        // Already a sized placeholder box; just wrap normally
+        return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${clickHandler}>${imageUrl}</div>`;
     }
     // It's a real image URL
     const safeWord = word || '';
     const onErr = `onerror="this.setAttribute('data-error','1'); if(window._wordtestImageError){ window._wordtestImageError(${JSON.stringify(safeWord)}, ${index}, this); }"`;
-    return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative;">
-        <img src="${imageUrl}" ${onErr} style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;object-fit:cover;border-radius:8px;border:2px solid #ddd;cursor:pointer;" alt="Image ${index + 1}" ${dblClickHandler}>
+    return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative;" ${clickHandler}>
+        <div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;display:block;border-radius:8px;border:2px solid #ddd;overflow:hidden;background:#fff;">
+            <img src="${imageUrl}" ${onErr} style="display:block;width:100%;height:100%;object-fit:cover;" alt="Image ${index + 1}">
+        </div>
     </div>`;
 }
 
