@@ -79,7 +79,8 @@ IMPORTANT:
 - Ensure you provide exactly ${numWords} distinct items
 
 For each word or phrase, provide the English word/phrase, then a comma, then the Korean translation.
-Return each pair on a new line in the format: english, korean
+  Return each pair on a new line in the format: english, korean
+  Translation policy: If the item is idiomatic or figurative, translate into a natural Korean equivalent that conveys the same meaning (use a common Korean idiom or a clear paraphrase), not a literal word-for-word translation. For ordinary single words, use the most common Korean translation.
 
 Passage:
 ${passage}
@@ -123,7 +124,7 @@ ${passage}
       `;
       break;
     case 'phrases':
-      promptContent = `
+  promptContent = `
 You are an ESL teacher. From the passage below, extract all the phrases and idioms (not single words) that appear in the text. Focus on:
 
 - Multi-word expressions, collocations, and set phrases
@@ -138,11 +139,20 @@ IMPORTANT:
 - Provide as many unique phrases/idioms as you can find in the passage (up to ${numWords})
 
 For each phrase or idiom, provide the English phrase, then a comma, then the Korean translation.
+  IMPORTANT: The Korean translation should be a culturally appropriate, natural equivalent that conveys the same meaning or feeling as the English idiom, not a literal word-for-word translation. If there is a common Korean idiom or phrase that matches the meaning, use that. If not, paraphrase so that a Korean speaker would understand the intended meaning in context.
+
+  Examples (format: english, korean):
+- let the cat out of the bag, 비밀을 털어놓다
+- the elephant in the room, 모두가 알지만 말하지 않는 문제
+- hold your horses, 진정해
+- bite off more than you can chew, 욕심을 과하게 부리다
+- once in a blue moon, 거의 드물게
+
 Return each pair on a new line in the format: english, korean
 
 Passage:
 ${passage}
-      `;
+  `;
       break;
     default:
       // Default to medium difficulty
@@ -157,7 +167,8 @@ You are an ESL teacher working with intermediate English learners. From the pass
 - Connecting words (however, therefore, although)
 
 For each word or phrase, provide the English word/phrase, then a comma, then the Korean translation.
-Return each pair on a new line in the format: english, korean
+  Return each pair on a new line in the format: english, korean
+  Translation policy: If any item is idiomatic or figurative, translate to a natural Korean equivalent or paraphrase; avoid literal renderings.
 
 Passage:
 ${passage}
@@ -171,12 +182,13 @@ ${passage}
       body: JSON.stringify({
         endpoint: 'chat/completions',
         payload: {
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: 'You are a helpful teaching assistant.' },
             { role: 'user', content: promptContent }
           ],
-          max_tokens: 1500
+          max_tokens: 1500,
+          temperature: 0.4
         }
       })
     });
