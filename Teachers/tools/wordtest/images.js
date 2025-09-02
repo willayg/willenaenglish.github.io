@@ -1,4 +1,8 @@
 import { emojiMap, getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js';
+// Preserve global used by inline handlers (no behavior change)
+if (!window.getPixabaySearchUrl) {
+    window.getPixabaySearchUrl = getPixabaySearchUrl;
+}
 
 // Image handling functions for word worksheet generator
 
@@ -111,50 +115,7 @@ function cycleImage(word, index, updatePreviewCallback) {
     }
 }
 
-// Helper function to render an image
-function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
-    // Add double-click to open image search based on selected mode
-    let clickHandler = '';
-    if (word) {
-        clickHandler = `onclick="
-            const pictureModeSelect = document.getElementById('pictureModeSelect');
-            const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-            const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : '${getPixabaySearchUrl('${word}', '${mode}')}' ;
-            // Calculate left-side position and size (80vh x 25vw)
-            const screenW = window.screen.availWidth || window.innerWidth;
-            const screenH = window.screen.availHeight || window.innerHeight;
-            const width = Math.round(screenW * 0.25);
-            const height = Math.round(screenH * 0.8);
-            const left = 10;
-            const top = Math.round((screenH - height) / 2);
-            const windowFeatures = 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes';
-            window.open(url, 'ImageSearchWindow', windowFeatures);
-        "`;
-    }
-    
-    if (imageUrl.startsWith('<div')) {
-        // Emoji or placeholder divs need consistent box sizing with <img>
-        const isEmoji = imageUrl.includes('font-size:') && !/width:\s*\d+px/.test(imageUrl);
-        if (isEmoji) {
-            const updatedImageUrl = imageUrl.replace(/font-size:\s*\d+px/, `font-size: ${currentSettings.imageSize * 0.8}px`);
-            return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${clickHandler}>
-                <div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;overflow:hidden;background:#fff;">
-                    ${updatedImageUrl}
-                </div>
-            </div>`;
-        }
-        // Already a sized placeholder box; just wrap normally
-        return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${clickHandler}>${imageUrl}</div>`;
-    }
-    // It's a real image URL
-    const safeWord = word || '';
-    const onErr = `onerror="this.setAttribute('data-error','1'); if(window._wordtestImageError){ window._wordtestImageError(${JSON.stringify(safeWord)}, ${index}, this); }"`;
-    return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative;" ${clickHandler}>
-        <div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;display:block;border-radius:8px;border:2px solid #ddd;overflow:hidden;background:#fff;">
-            <img src="${imageUrl}" ${onErr} style="display:block;width:100%;height:100%;object-fit:cover;" alt="Image ${index + 1}">
-        </div>
-    </div>`;
-}
+// renderImage is imported from images-utils.js to avoid duplicate declarations
 
 // Function to refresh only currently visible images (not all alternatives)
 async function refreshImages(updatePreviewCallback) {
