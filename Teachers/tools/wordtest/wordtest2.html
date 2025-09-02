@@ -321,10 +321,10 @@
                 </div>
 
                 <select class="picture-mode-select" id="pictureModeSelect" style="margin-left:8px;">
-                    <option value="photos">Photos</option>
-                    <option value="illustrations">Illustrations</option>
-                    <option value="ai">AI Gallery</option>
-                    <option value="clipart">Clipart</option>
+                  <option value="photos">Photos</option>
+                  <option value="illustrations">Illustrations</option>
+                  <option value="ai">AI Gallery</option>
+                  <option value="vectors">Clipart</option>
                 </select>
 
                 <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
@@ -644,23 +644,8 @@
               const pictureModeSelect = document.getElementById('pictureModeSelect');
               const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
               
-              let url = '';
-              switch (mode) {
-                case 'photos':
-                  url = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
-                  break;
-                case 'illustrations':
-                  url = `https://pixabay.com/illustrations/search/${encodeURIComponent(word)}/`;
-                  break;
-                case 'ai':
-                  url = `https://pixabay.com/ai-images/search/${encodeURIComponent(word)}/`;
-                  break;
-                case 'clipart':
-                  url = `https://openclipart.org/search/?query=${encodeURIComponent(word)}`;
-                  break;
-                default:
-                  url = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
-              }
+              // Use centralized helper for all modes
+              let url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl(word, mode) : `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
               
               // Calculate left-side position and size (80vh x 25vw)
               const screenW = window.screen.availWidth || window.innerWidth;
