@@ -182,13 +182,13 @@ ${passage}
       body: JSON.stringify({
         endpoint: 'chat/completions',
         payload: {
-          model: 'gpt-4o-mini',
+          model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: 'You are a helpful teaching assistant.' },
             { role: 'user', content: promptContent }
           ],
           max_tokens: 1500,
-          temperature: 0.4
+          temperature: 0.3
         }
       })
     });
