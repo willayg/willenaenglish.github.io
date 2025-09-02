@@ -580,6 +580,34 @@ body {
   padding: 3px 6px;
 }
 
+/* Optional: make icon inherit color from parent */
+.burger-menu-dark .burger-btn { color: #374151 !important; } /* tweak shade as needed */
+
+/* Force burger icon bars (SVG) to dark gray, overriding inline fill="#fff" */
+.burger-menu-dark .burger-btn svg path,
+.burger-menu-dark .burger-btn svg line,
+.burger-menu-dark .burger-btn svg rect {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* If the burger uses span bars instead of SVG */
+.burger-menu-dark .burger-btn .bar {
+  background-color: currentColor !important;
+}
+
+/* When burger is placed in the top action bar, don't absolutely position it */
+.top-actions {
+  display: flex;
+  align-items: center;
+}
+.top-actions #burger-menu-mount {
+  position: static;
+  top: auto;
+  right: auto;
+  transform: none;
+}
+
 /* Print-specific styles */
 @media print {
   .worksheet-preview {

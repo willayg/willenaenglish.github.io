@@ -85,12 +85,10 @@
         <div class="app-card">
             <!-- Header -->
             <div class="header">
-                <div class="logo">
-                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
-                </div>
-                <h1>Word Builder</h1>
-                <!-- Burger Menu Component (vertically centered in header, inside container) -->
-                <div id="burger-menu-mount"></div>
+        <div class="logo">
+          <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+        </div>
+        <h1>Word Builder</h1>
             </div>
 
             <!-- Top Action Bar -->
@@ -100,7 +98,44 @@
                 <span class="action-link" id="saveBtn">Save</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
-                <span class="action-link" id="moreBtn">More</span>
+                <span class="action-link" id="moreBtn" style="position:relative;left:-10px;">More</span>
+                  <span class="action-link" id="buildGameBtn">Build a Game</span>
+                <script>
+                // Build a Game button logic: open game builder with current word list
+                document.addEventListener('DOMContentLoaded', function() {
+                  const buildGameBtn = document.getElementById('buildGameBtn');
+                  if (!buildGameBtn) return;
+                  buildGameBtn.addEventListener('click', function() {
+                    const ta = document.getElementById('wordListTextarea');
+                    const wordList = ta?.value.trim();
+                    const title = document.getElementById('titleInput')?.value.trim();
+                    // Prefer worksheet metadata if available (loaded from DB)
+                    let meta = (window._loadedWorksheetMeta || {});
+                    let book = meta.book || document.getElementById('bookInput')?.value?.trim() || '';
+                    let unit = meta.unit || document.getElementById('unitInput')?.value?.trim() || '';
+                    // Capture full worksheet data to preserve images
+                    let ws = null;
+                    try { ws = (typeof window.getCurrentWorksheetData === 'function') ? window.getCurrentWorksheetData() : null; } catch(_){}
+                    if (!wordList && !(ws && ws.words && ((Array.isArray(ws.words) && ws.words.length) || (typeof ws.words === 'string' && ws.words.trim())))) {
+                      alert('No words to send to the game builder.');
+                      return;
+                    }
+                    const payload = {
+                      title: title || (ws?.title || ''),
+                      // Keep backward compatibility: include wordList string
+                      wordList: wordList || (Array.isArray(ws?.words) ? ws.words.join('\n') : (typeof ws?.words === 'string' ? ws.words : '')),
+                      // Also include structured fields for richer import
+                      words: ws?.words || null,
+                      images: ws?.images || null,
+                      book,
+                      unit
+                    };
+                    try { localStorage.setItem('gameBuilderWordList', JSON.stringify(payload)); } catch (e) {}
+                    window.open('/Teachers/tools/game-builder/index.html', '_blank');
+                  });
+                });
+                </script>
+                <div id="burger-menu-mount" class="burger-menu-dark" style="display:inline-block;vertical-align:middle;margin-right:12px;"></div>
                 <script>
                 // New button logic: reload page to fully reset worksheet
                 document.addEventListener('DOMContentLoaded', function() {
