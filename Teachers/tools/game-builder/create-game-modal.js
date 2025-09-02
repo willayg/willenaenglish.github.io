@@ -27,10 +27,11 @@ export function openCreateGameModal() {
   if (el.title) el.title.value = el.titleInput?.value || '';
   if (el.cls) el.cls.value = '';
   if (el.dateDue) el.dateDue.value = '';
-  if (el.book) el.book.value = '';
-  if (el.unit) el.unit.value = '';
+  // Don't clear book/unit; keep values set on the main page (e.g., imported from Word Builder)
   if (el.desc) el.desc.value = '';
-  gameImageUrl = '';
+  // Preserve any image already injected into gameImageZone by main import
+  const imgInZone = el.imageZone?.querySelector('img');
+  gameImageUrl = imgInZone?.getAttribute('src') || '';
   setStatus('');
   updateGameImageDisplay();
   el.modal.style.display = 'flex';

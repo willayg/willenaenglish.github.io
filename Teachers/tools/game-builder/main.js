@@ -171,6 +171,120 @@ function render() {
   bindRowEvents();
 }
 
+// Import list from Word Builder (wordtest) via localStorage if present
+(function importFromWordTestIfPresent() {
+  try {
+    const raw = localStorage.getItem('gameBuilderWordList');
+    if (!raw) return;
+    localStorage.removeItem('gameBuilderWordList');
+
+    let title = '';
+    let book = '';
+    let unit = '';
+    let image = '';
+    let rows = [];
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch (_) {}
+
+    if (parsed && typeof parsed === 'object' && (parsed.wordList || parsed.words)) {
+      title = parsed.title || '';
+      book = parsed.book || '';
+      unit = parsed.unit || '';
+      image = parsed.image || '';
+      // Prefer structured words if present
+      if (Array.isArray(parsed.words)) {
+        rows = parsed.words.map((w) => newRow({
+          eng: (w && (w.eng || w.en)) || (typeof w === 'string' ? String(w).split(/[,|]/)[0]?.trim() : ''),
+          kor: (w && (w.kor || w.kr || w.translation)) || (typeof w === 'string' ? String(w).split(/[,|]/)[1]?.trim() : ''),
+          image_url: (w && (w.image_url || w.image)) || '',
+          definition: (w && w.definition) || ''
+        })).filter(r => r.eng);
+      }
+      // If not, try to parse wordList
+      if (!rows.length && typeof parsed.wordList === 'string') {
+        // Try JSON array first
+        try {
+          const arr = JSON.parse(parsed.wordList);
+          if (Array.isArray(arr)) {
+            rows = arr.map((w) => {
+              if (typeof w === 'string') {
+                const [eng, kor] = w.split(/[,|]/).map(s => (s || '').trim());
+                return newRow({ eng, kor });
+              }
+              return newRow({
+                eng: w.eng || w.en || '',
+                kor: w.kor || w.kr || w.translation || '',
+                image_url: w.image_url || w.image || '',
+                definition: w.definition || ''
+              });
+            }).filter(r => r.eng);
+          }
+        } catch (_) {}
+        if (!rows.length) {
+          // Support raw text: one pair per line: "english, korean"
+          const lines = parsed.wordList.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          rows = lines.map(line => {
+            const [eng, kor] = line.split(/[,|]/).map(s => (s || '').trim());
+            return newRow({ eng, kor });
+          }).filter(r => r.eng);
+        }
+      }
+      // Apply worksheet-level images when provided (parsed.images may be JSON string)
+      let imagesField = parsed.images;
+      if (typeof imagesField === 'string') {
+        try { imagesField = JSON.parse(imagesField); } catch (_) {}
+      }
+      if (imagesField && rows.length) {
+        applyWorksheetImages(rows, imagesField, parsed.words || parsed.wordList);
+      }
+    } else if (parsed && Array.isArray(parsed)) {
+      rows = parsed.map((w) => {
+        if (typeof w === 'string') {
+          const [eng, kor] = w.split(/[,|]/).map(s => (s || '').trim());
+          return newRow({ eng, kor });
+        }
+        return newRow({
+          eng: w.eng || w.en || '',
+          kor: w.kor || w.kr || w.translation || '',
+          image_url: w.image_url || w.image || '',
+          definition: w.definition || ''
+        });
+      }).filter(r => r.eng);
+    } else if (typeof raw === 'string') {
+      // Support raw text: one pair per line: "english, korean"
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      rows = lines.map(line => {
+        const [eng, kor] = line.split(/[,|]/).map(s => (s || '').trim());
+        return newRow({ eng, kor });
+      }).filter(r => r.eng);
+    }
+
+    if (title && titleEl) titleEl.value = title;
+    if (book) {
+      const bookEl = document.getElementById('gameBook');
+      if (bookEl) bookEl.value = book;
+    }
+    if (unit) {
+      const unitEl = document.getElementById('gameUnit');
+      if (unitEl) unitEl.value = unit;
+    }
+    if (image) {
+      const imgZone = document.getElementById('gameImageZone');
+      if (imgZone) {
+        imgZone.innerHTML = `<img src="${image}" alt="Game Image" style="max-width:100%;max-height:100px;border-radius:8px;">`;
+      }
+    }
+    if (rows.length) {
+      saveState();
+      list = rows;
+      render();
+      toast('Imported list from Word Builder');
+    }
+  } catch (e) {
+    console.warn('Import from Word Builder failed:', e);
+  }
+})();
+
 function bindRowEvents() {
   // Inputs - save state on blur (when user finishes editing)
   rowsEl.querySelectorAll('input.row-input, textarea.row-input').forEach((el) => {
