@@ -1,4 +1,5 @@
 // Image handling functions for word worksheet generator
+import { getPixabaySearchUrl, getPixabayFunctionUrl } from './pixabay-utils.js';
 
 // Simple emoji map for fallback
 const emojiMap = {
@@ -63,10 +64,9 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
         if (typeof getPixabayImage === 'function') {
             imageUrl = await getPixabayImage(word, true);
         } else {
-            // Choose image_type from UI if available
+            // Choose mode from UI if available and use centralized helper
             const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
-            const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
-            const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
+            const url = getPixabayFunctionUrl(word, mode, 5);
             try {
                 const res = await fetch(url, { cache: 'no-store' });
                 if (res.ok) {
@@ -126,32 +126,18 @@ function cycleImage(word, index, updatePreviewCallback) {
     }
 }
 
-// Centralized helper for Pixabay search URLs
-function getPixabaySearchUrl(word, mode) {
-    const encodedWord = encodeURIComponent(word);
-    switch (mode) {
-        case 'photos':
-            return `https://pixabay.com/images/search/${encodedWord}/`;
-        case 'illustrations':
-            return `https://pixabay.com/illustrations/search/${encodedWord}/`;
-        case 'ai':
-            return `https://pixabay.com/images/search/${encodedWord}/?content_type=ai`;
-        case 'vectors':
-            return `https://pixabay.com/vectors/search/${encodedWord}/`;
-        default:
-            return `https://pixabay.com/images/search/${encodedWord}/`;
-    }
-}
+// Pixabay search URL now centralized in pixabay-utils.js
 
 // Helper function to render an image
 function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
     // Add double-click to open image search based on selected mode
     let clickHandler = '';
     if (word) {
+        const encodedWord = encodeURIComponent(word);
         clickHandler = `onclick="
             const pictureModeSelect = document.getElementById('pictureModeSelect');
             const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-            const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : '${getPixabaySearchUrl('${word}', '${mode}')}' ;
+            const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : 'https://pixabay.com/images/search/${encodedWord}/';
             // Calculate left-side position and size (80vh x 25vw)
             const screenW = window.screen.availWidth || window.innerWidth;
             const screenH = window.screen.availHeight || window.innerHeight;
@@ -248,8 +234,8 @@ async function addMoreImageAlternatives(word, wordKey, kor = null, currentSettin
                     imageUrl = await getPixabayImage(newSearchTerms[i], true);
                 } else {
                     const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
-                    const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
-                    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(newSearchTerms[i])}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`);
+                    const url = getPixabayFunctionUrl(newSearchTerms[i], mode, 5);
+                    const res = await fetch(url);
                     if (res.ok) {
                         const data = await res.json();
                         const images = Array.isArray(data?.images) ? data.images : [];
@@ -640,8 +626,6 @@ async function clearAllImages(updatePreviewCallback) {
 }
 
 // Export all functions
-// Expose helper globally for use in other scripts
-window.getPixabaySearchUrl = getPixabaySearchUrl;
 
 export {
     emojiMap,
@@ -663,5 +647,4 @@ export {
     resetImageState,
     refreshFailedImages,
     handleImageError
-    ,getPixabaySearchUrl
 };
