@@ -1,7 +1,40 @@
 // Sample Wordlist Modal
-import { ensureModeButtonStyles } from './buttons.js';
+
+// Scoped styles for this modal to avoid interference from global .mode-btn rules
+let __wlModalStylesInjected = false;
+function ensureWordlistModalStyles() {
+  if (__wlModalStylesInjected) return;
+  __wlModalStylesInjected = true;
+  const style = document.createElement('style');
+  style.id = 'wl-modal-scoped-styles';
+  style.textContent = `
+    #sampleWordlistModal .wl-btn,
+    #sampleWordlistModal .mode-btn {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 12px !important;
+      width: 100% !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 12px 18px !important;
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      text-align: left !important;
+    }
+    /* Hide any decorative pseudo elements from global styles */
+    #sampleWordlistModal .wl-btn::before,
+    #sampleWordlistModal .wl-btn::after,
+    #sampleWordlistModal .mode-btn::before,
+    #sampleWordlistModal .mode-btn::after { display: none !important; content: none !important; }
+  `;
+  document.head.appendChild(style);
+}
 
 export function showSampleWordlistModal({ onChoose }) {
+  ensureWordlistModalStyles();
   // Modal overlay
   let modal = document.getElementById('sampleWordlistModal');
   if (!modal) {
@@ -70,9 +103,11 @@ export function showSampleWordlistModal({ onChoose }) {
     modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
     document.getElementById('closeSampleWordlistModal').onclick = () => { modal.style.display = 'none'; };
     document.getElementById('closeSampleWordlistModalX').onclick = () => { modal.style.display = 'none'; };
-    const list = document.getElementById('sampleCategoryList');
+  const list = document.getElementById('sampleCategoryList');
+    list.className = '';
+    list.style.gridTemplateColumns = '';
     list.innerHTML = categories.map((cat, i) => `
-      <button class="mode-btn" data-idx="${i}" style="display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;">
+      <button class="wl-btn" data-idx="${i}" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;">
         <span style="font-size:2em;">${categoryEmojis[cat.label] || '📚'}</span>
         <span style="font-weight:600;">${cat.label}</span>
       </button>
@@ -106,9 +141,8 @@ export function showSampleWordlistModal({ onChoose }) {
     document.getElementById('closeSampleWordlistModalX').onclick = () => { modal.style.display = 'none'; };
     document.getElementById('backToCategories').onclick = () => renderCategoryMenu();
     const list = document.getElementById('sampleWordlistList');
-    ensureModeButtonStyles();
-    list.className = 'mode-grid';
-    list.style.gridTemplateColumns = 'repeat(1, 1fr)';
+  list.className = '';
+  list.style.gridTemplateColumns = '';
     // Emoji per sub-list
     const listEmojis = {
       'EasyAnimals.json': '🐯',
@@ -129,7 +163,7 @@ export function showSampleWordlistModal({ onChoose }) {
     };
     list.innerHTML = category.lists.map((it, i) => {
       const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
-      return `<button class="mode-btn" data-idx="${i}" style="display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;">
+  return `<button class="wl-btn" data-idx="${i}" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;">
         <span style="font-size:2em;">${emoji}</span>
         <span style="font-weight:600;">${it.label}</span>
       </button>`;

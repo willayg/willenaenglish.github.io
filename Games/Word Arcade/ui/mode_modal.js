@@ -32,11 +32,11 @@ export async function showModeModal({ onModeChosen, onClose }) {
   let bestByMode = {};
   if (userId && listName) {
     try {
+      const token = await window.WordArcade?.getAccessToken?.();
       const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
-      url.searchParams.set('user_id', userId);
       url.searchParams.set('section', 'sessions');
-  if (listName) url.searchParams.set('list_name', listName);
-  const res = await fetch(url.toString(), { cache: 'no-store' });
+      if (listName) url.searchParams.set('list_name', listName);
+      const res = await fetch(url.toString(), { cache: 'no-store', headers: token ? { Authorization: `Bearer ${token}` } : undefined });
       if (res.ok) {
         const sessions = await res.json();
         (Array.isArray(sessions) ? sessions : []).forEach(s => {

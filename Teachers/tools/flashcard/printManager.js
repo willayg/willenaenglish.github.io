@@ -15,23 +15,25 @@ export class PrintManager {
             return;
         }
 
-        // Inject a script to auto-close after printing
-        const printContent = this.generatePrintHTML(cards, settings).replace(
-            /<\/body>/i,
-            `<script>
-                window.addEventListener('afterprint', function() { setTimeout(() => window.close(), 200); });
-                // Fallback for browsers that don't fire afterprint
-                window.onload = function() {
-                  setTimeout(function() {
-                    window.print();
-                    setTimeout(function() { window.close(); }, 500);
-                  }, 200);
-                };
-            <\/script></body>`
-        );
-
+        // Write content without auto-print; we'll wait for images and trigger once
+        const printContent = this.generatePrintHTML(cards, settings);
         printWindow.document.write(printContent);
         printWindow.document.close();
+
+        const trigger = async () => {
+            await this.waitForImages(printWindow);
+            try { printWindow.focus(); } catch (_) {}
+            printWindow.addEventListener('afterprint', () => {
+                setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 200);
+            }, { once: true });
+            try {
+                printWindow.print();
+            } catch (e) {
+                setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 800);
+            }
+        };
+        if (printWindow.document.readyState === 'complete') trigger();
+        else printWindow.addEventListener('load', trigger, { once: true });
     }
 
     exportToPDF(cards, settings) {

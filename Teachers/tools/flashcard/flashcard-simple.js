@@ -474,16 +474,54 @@ function printFlashcards() {
     
     const printContent = generatePrintHTML();
     
+    // Write content and wait for images to load before printing
     printWindow.document.write(printContent);
     printWindow.document.close();
+
+    const waitForImages = (win, timeout = 5000) => {
+        return new Promise(resolve => {
+            try {
+                const imgs = Array.from(win.document.images || []);
+                if (imgs.length === 0) return resolve();
+                let remaining = imgs.length;
+                let resolved = false;
+                const done = () => { if (!resolved) { resolved = true; resolve(); } };
+                const onOne = () => { remaining--; if (remaining <= 0) done(); };
+                imgs.forEach(img => {
+                    if (img.complete && img.naturalWidth !== 0) onOne();
+                    else {
+                        img.addEventListener('load', onOne, { once: true });
+                        img.addEventListener('error', onOne, { once: true });
+                    }
+                });
+                setTimeout(done, timeout);
+            } catch (_) { resolve(); }
+        });
+    };
+
+    const triggerPrint = async () => {
+        await waitForImages(printWindow);
+        try { printWindow.focus(); } catch (_) {}
+        // Close after printing (single trigger)
+        printWindow.addEventListener('afterprint', () => {
+            setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 200);
+        }, { once: true });
+        try {
+            printWindow.print();
+        } catch (_) {
+            // Fallback close in case print fails
+            setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 800);
+        }
+    };
+
+    if (printWindow.document.readyState === 'complete') {
+        // In some browsers onload may already have fired after document.write
+        setTimeout(triggerPrint, 0);
+    } else {
+        printWindow.addEventListener('load', triggerPrint, { once: true });
+    }
     
-    // Auto-print and close
-    setTimeout(() => {
-        printWindow.print();
-        setTimeout(() => printWindow.close(), 500);
-    }, 200);
-    
-    console.log('Print window created');
+    console.log('Print window created (awaiting images then printing once)');
 }
 
 function generatePrintHTML() {
@@ -788,17 +826,6 @@ function generatePrintHTML() {
         </head>
         <body>
             ${pageHTML}
-            <script>
-                window.addEventListener('afterprint', function() { 
-                    setTimeout(() => window.close(), 200); 
-                });
-                window.onload = function() {
-                    setTimeout(function() {
-                        window.print();
-                        setTimeout(function() { window.close(); }, 500);
-                    }, 200);
-                };
-            </script>
         </body>
         </html>
     `;
