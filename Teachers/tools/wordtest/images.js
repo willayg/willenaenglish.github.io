@@ -126,6 +126,23 @@ function cycleImage(word, index, updatePreviewCallback) {
     }
 }
 
+// Centralized helper for Pixabay search URLs
+function getPixabaySearchUrl(word, mode) {
+    const encodedWord = encodeURIComponent(word);
+    switch (mode) {
+        case 'photos':
+            return `https://pixabay.com/images/search/${encodedWord}/`;
+        case 'illustrations':
+            return `https://pixabay.com/illustrations/search/${encodedWord}/`;
+        case 'ai':
+            return `https://pixabay.com/images/search/${encodedWord}/?content_type=ai`;
+        case 'vectors':
+            return `https://pixabay.com/vectors/search/${encodedWord}/`;
+        default:
+            return `https://pixabay.com/images/search/${encodedWord}/`;
+    }
+}
+
 // Helper function to render an image
 function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
     // Add double-click to open image search based on selected mode
@@ -134,21 +151,7 @@ function renderImage(imageUrl, index, word = null, kor = null, currentSettings =
         clickHandler = `onclick="
             const pictureModeSelect = document.getElementById('pictureModeSelect');
             const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-            const encodedWord = encodeURIComponent('${word}');
-            let url = '';
-            switch (mode) {
-                case 'photos':
-                    url = 'https://pixabay.com/images/search/' + encodedWord + '/';
-                    break;
-                case 'illustrations':
-                    url = 'https://pixabay.com/illustrations/search/' + encodedWord + '/';
-                    break;
-                case 'ai':
-                    url = 'https://pixabay.com/ai-images/search/' + encodedWord + '/';
-                    break;
-                default:
-                    url = 'https://pixabay.com/images/search/' + encodedWord + '/';
-            }
+            const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : '${getPixabaySearchUrl('${word}', '${mode}')}' ;
             // Calculate left-side position and size (80vh x 25vw)
             const screenW = window.screen.availWidth || window.innerWidth;
             const screenH = window.screen.availHeight || window.innerHeight;
@@ -637,6 +640,9 @@ async function clearAllImages(updatePreviewCallback) {
 }
 
 // Export all functions
+// Expose helper globally for use in other scripts
+window.getPixabaySearchUrl = getPixabaySearchUrl;
+
 export {
     emojiMap,
     imageAlternatives,
@@ -657,4 +663,5 @@ export {
     resetImageState,
     refreshFailedImages,
     handleImageError
+    ,getPixabaySearchUrl
 };
