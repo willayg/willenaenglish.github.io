@@ -1,14 +1,6 @@
-// Image handling functions for word worksheet generator
-import { getPixabaySearchUrl, getPixabayFunctionUrl } from './pixabay-utils.js';
+import { emojiMap, getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js';
 
-// Simple emoji map for fallback
-const emojiMap = {
-    apple: "🍎", dog: "🐶", cat: "🐱", book: "📚", car: "🚗", 
-    house: "🏠", tree: "🌳", sun: "☀️", moon: "🌙", star: "⭐",
-    water: "💧", fire: "🔥", flower: "🌸", fish: "🐠", bird: "🐦",
-    food: "🍎", eat: "🍽️", drink: "🥤", sleep: "😴", run: "🏃",
-    walk: "🚶", happy: "😊", sad: "😢", big: "🔍", small: "🔎"
-};
+// Image handling functions for word worksheet generator
 
 // Image functions - these will be set from imported modules
 let getPixabayImage = null;
@@ -19,14 +11,6 @@ let imageAlternatives = {}; // Store multiple image options for each word
 let currentImageIndex = {}; // Track current image index for each word
 // Retry counts to avoid infinite loops on broken images
 const imageRetryCount = {};
-
-// Helper function to get placeholder image
-function getPlaceholderImage(index, label = null, currentSettings = { imageSize: 50 }) {
-    const displayLabel = label || `Image ${index + 1}`;
-    return `<div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;font-size:14px;color:#666;">
-        ${displayLabel}
-    </div>`;
-}
 
 // Helper function to get image URL with fallback
 async function getImageUrl(word, index, refresh = false, currentSettings = { imageSize: 50 }) {
@@ -64,9 +48,10 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
         if (typeof getPixabayImage === 'function') {
             imageUrl = await getPixabayImage(word, true);
         } else {
-            // Choose mode from UI if available and use centralized helper
+            // Choose image_type from UI if available
             const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
-            const url = getPixabayFunctionUrl(word, mode, 5);
+            const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
+            const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
             try {
                 const res = await fetch(url, { cache: 'no-store' });
                 if (res.ok) {
@@ -126,18 +111,15 @@ function cycleImage(word, index, updatePreviewCallback) {
     }
 }
 
-// Pixabay search URL now centralized in pixabay-utils.js
-
 // Helper function to render an image
 function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
     // Add double-click to open image search based on selected mode
     let clickHandler = '';
     if (word) {
-        const encodedWord = encodeURIComponent(word);
         clickHandler = `onclick="
             const pictureModeSelect = document.getElementById('pictureModeSelect');
             const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-            const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : 'https://pixabay.com/images/search/${encodedWord}/';
+            const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : '${getPixabaySearchUrl('${word}', '${mode}')}' ;
             // Calculate left-side position and size (80vh x 25vw)
             const screenW = window.screen.availWidth || window.innerWidth;
             const screenH = window.screen.availHeight || window.innerHeight;
@@ -234,8 +216,8 @@ async function addMoreImageAlternatives(word, wordKey, kor = null, currentSettin
                     imageUrl = await getPixabayImage(newSearchTerms[i], true);
                 } else {
                     const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
-                    const url = getPixabayFunctionUrl(newSearchTerms[i], mode, 5);
-                    const res = await fetch(url);
+                    const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
+                    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(newSearchTerms[i])}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`);
                     if (res.ok) {
                         const data = await res.json();
                         const images = Array.isArray(data?.images) ? data.images : [];
@@ -303,49 +285,6 @@ async function refreshImageForWord(word, index, forceNewKey = false, kor = null,
         // Hide loading spinner
         hideImageLoadingSpinner(word, index);
         updatePreviewCallback();
-    }
-}
-
-// Helper functions to show/hide loading spinner
-function showImageLoadingSpinner(word, index) {
-    const wordKey = `${word.toLowerCase()}_${index}`;
-    const previewArea = document.getElementById('previewArea');
-    if (!previewArea) return;
-    
-    // Find all image containers for this word index
-    const imageContainers = previewArea.querySelectorAll('.image-container');
-    if (imageContainers[index]) {
-        const imageContainer = imageContainers[index];
-        // Make sure the container has relative positioning
-        imageContainer.style.position = 'relative';
-        
-        // Remove existing spinner if any
-        const existingSpinner = imageContainer.querySelector('.image-loading-overlay');
-        if (existingSpinner) {
-            existingSpinner.remove();
-        }
-        
-        // Add spinner overlay
-        const spinnerOverlay = document.createElement('div');
-        spinnerOverlay.className = 'image-loading-overlay';
-        spinnerOverlay.innerHTML = '<div class="image-loading-spinner"></div>';
-        imageContainer.appendChild(spinnerOverlay);
-    }
-}
-
-function hideImageLoadingSpinner(word, index) {
-    const wordKey = `${word.toLowerCase()}_${index}`;
-    const previewArea = document.getElementById('previewArea');
-    if (!previewArea) return;
-    
-    // Find all image containers for this word index
-    const imageContainers = previewArea.querySelectorAll('.image-container');
-    if (imageContainers[index]) {
-        const imageContainer = imageContainers[index];
-        const existingSpinner = imageContainer.querySelector('.image-loading-overlay');
-        if (existingSpinner) {
-            existingSpinner.remove();
-        }
     }
 }
 
@@ -626,25 +565,25 @@ async function clearAllImages(updatePreviewCallback) {
 }
 
 // Export all functions
-
 export {
-    emojiMap,
-    imageAlternatives,
-    currentImageIndex,
-    getPlaceholderImage,
-    getImageUrl,
-    loadImageAlternatives,
-    addMoreImageAlternatives,
-    cycleImage,
-    renderImage,
-    refreshImages,
-    refreshImageForWord,
-    showImageLoadingSpinner,
-    hideImageLoadingSpinner,
-    enableImageDragAndDrop,
-    initializeImageModule,
-    clearAllImages,
-    resetImageState,
-    refreshFailedImages,
-    handleImageError
+  emojiMap,
+  imageAlternatives,
+  currentImageIndex,
+  getPlaceholderImage,
+  getImageUrl,
+  loadImageAlternatives,
+  addMoreImageAlternatives,
+  cycleImage,
+  renderImage,
+  refreshImages,
+  refreshImageForWord,
+  showImageLoadingSpinner,
+  hideImageLoadingSpinner,
+  enableImageDragAndDrop,
+  initializeImageModule,
+  clearAllImages,
+  resetImageState,
+  refreshFailedImages,
+  handleImageError,
+  getPixabaySearchUrl
 };
