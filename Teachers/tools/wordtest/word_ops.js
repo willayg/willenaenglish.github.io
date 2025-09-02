@@ -7,6 +7,44 @@ import { highlightDuplicates as worksheetHighlightDuplicates } from './worksheet
 
 const currentWords = state.currentWords;
 
+// Map common English idioms to preferred, natural Korean equivalents (figurative, not literal)
+function normalizeEngIdiom(str = '') {
+    return (str || '')
+        .toLowerCase()
+        .replace(/[^a-z\s']/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+const IDIOM_KO_MAP = new Map([
+    ['the early bird catches the worm', '부지런한 사람이 기회를 잡는다'],
+    ['early bird catches the worm', '부지런한 사람이 기회를 잡는다'],
+    ["a wolf in sheep's clothing", '양의 탈을 쓴 늑대'],
+    ['wolf in sheeps clothing', '양의 탈을 쓴 늑대'],
+    ['let sleeping dogs lie', '긁어 부스럼'],
+    ['kill two birds with one stone', '일석이조'],
+    ['a bird in the hand is worth two in the bush', '지금 가진 게 더 소중하다'],
+    ['when pigs fly', '절대 일어나지 않을 일'],
+    ["the lion's share", '가장 큰 몫'],
+    ['the lions share', '가장 큰 몫'],
+    ['a fish out of water', '낯선 환경에서 어색한 사람'],
+    ["the straw that broke the camel's back", '마지막 결정타'],
+    ['the straw that broke the camels back', '마지막 결정타'],
+    ['the elephant in the room', '모두가 알지만 말하지 않는 문제'],
+    ['hold your horses', '진정해'],
+    ['rat race', '치열한 경쟁 사회'],
+]);
+
+function applyFigurativeKorean(line) {
+    if (!line || !line.includes(',')) return line;
+    const [engRaw, ...rest] = line.split(',');
+    const eng = (engRaw || '').trim();
+    const engKey = normalizeEngIdiom(eng);
+    const mapped = IDIOM_KO_MAP.get(engKey);
+    if (!mapped) return line.trim();
+    return `${eng}, ${mapped}`;
+}
+
 export async function updateDesign() {
     state.currentSettings.design = document.getElementById('designSelect').value;
     await ensureFontsLoaded();
@@ -150,7 +188,7 @@ export async function extractWords() {
             const aiResponse = await runAIExtraction(promptContent);
             if (aiResponse) {
                 const lines = aiResponse.split('\n').filter(line => line.trim() && line.includes(','));
-                newWords = lines.map(line => line.trim()).filter(Boolean);
+                newWords = lines.map(line => applyFigurativeKorean(line.trim())).filter(Boolean);
             }
         } catch (e) { console.error('AI topic extraction error:', e); alert('Error generating topic list. Please try again.'); }
         const existing = (ta?.value || '').trim();
@@ -175,7 +213,7 @@ export async function extractWords() {
             const aiResponse = await extractWordsWithAI(passage, wordCount, difficulty);
             if (aiResponse) {
                 const lines = aiResponse.split('\n').filter(line => line.trim() && line.includes(','));
-                newWords = lines.map(line => line.trim()).filter(Boolean);
+                newWords = lines.map(line => applyFigurativeKorean(line.trim())).filter(Boolean);
             }
         } catch (aiError) {
             console.warn('AI extraction failed, using simple extraction:', aiError);
