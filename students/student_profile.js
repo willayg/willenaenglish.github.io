@@ -3,6 +3,42 @@
   // Helper to create origin-absolute URLs that ignore <base> tag
   const api = (path) => new URL(path, window.location.origin).toString();
 
+  // Read Supabase session access token from localStorage (supabase-js v2 default key)
+  function getAccessToken() {
+    const tryExtract = (raw) => {
+      try {
+        const obj = JSON.parse(raw);
+        const s = Array.isArray(obj) ? (obj[1] || obj[0] || obj) : obj;
+        return (
+          s?.access_token ||
+          s?.currentSession?.access_token ||
+          s?.session?.access_token ||
+          s?.user?.access_token ||
+          null
+        );
+      } catch { return null; }
+    };
+    try {
+      const stores = [localStorage, sessionStorage];
+      for (const store of stores) {
+        if (!store) continue;
+        const direct = store.getItem('sb-auth-token') || store.getItem('supabase.auth.token');
+        let tok = direct && tryExtract(direct);
+        if (tok) return tok;
+        for (let i = 0; i < store.length; i++) {
+          const k = store.key(i);
+          if (!k) continue;
+          if (/^sb-.*-auth-token$/.test(k)) {
+            const raw = store.getItem(k);
+            tok = raw && tryExtract(raw);
+            if (tok) return tok;
+          }
+        }
+      }
+      return null;
+    } catch { return null; }
+  }
+
   // Tiny cache with TTL in localStorage
   const CACHE_NS = 'profile_cache:';
   function setCache(key, value, ttlMs) {
@@ -23,14 +59,14 @@
   }
 
   const API = {
-    // endpoints powered by Netlify functions
-    attempts: (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=attempts`),
-    sessions: (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=sessions`),
-    kpi:      (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=kpi`),
-    modes:    (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=modes`),
-  badges:   (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=badges`),
-  overview: (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=overview`),
-  challenging: (user_id) => api(`/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=challenging`)
+    // endpoints powered by Netlify functions (JWT-based; server infers user from token)
+    attempts: () => api(`/.netlify/functions/progress_summary?section=attempts`),
+    sessions: () => api(`/.netlify/functions/progress_summary?section=sessions`),
+    kpi:      () => api(`/.netlify/functions/progress_summary?section=kpi`),
+    modes:    () => api(`/.netlify/functions/progress_summary?section=modes`),
+    badges:   () => api(`/.netlify/functions/progress_summary?section=badges`),
+    overview: () => api(`/.netlify/functions/progress_summary?section=overview`),
+    challenging: () => api(`/.netlify/functions/progress_summary?section=challenging`)
   };
 
   function getUserId(){
@@ -50,7 +86,9 @@
   }
 
   async function fetchJSON(url){
-    const res = await fetch(url, { cache: 'no-store' });
+    const token = getAccessToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    const res = await fetch(url, { cache: 'no-store', headers });
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }
@@ -64,12 +102,12 @@
 
   async function loadKpi(uid){
     // Deprecated in UI, but still used for best streak fallback if needed.
-    try { await fetchJSON(API.kpi(uid)); } catch {}
+    try { await fetchJSON(API.kpi()); } catch {}
   }
 
   async function loadOverview(uid){
     try {
-      const ov = await fetchJSON(API.overview(uid));
+      const ov = await fetchJSON(API.overview());
   setText('ovPoints', (ov.points ?? 0).toString());
   setText('ovStars', (ov.stars ?? 0).toString());
       setText('ovListsExplored', ov.lists_explored ?? '0');
@@ -101,7 +139,7 @@
   async function loadBadges(uid){
     const wrap = document.getElementById('badgesWrap');
     try {
-      const list = await fetchJSON(API.badges(uid));
+      const list = await fetchJSON(API.badges());
       if (!Array.isArray(list) || !list.length) { wrap.textContent = 'No badges yet.'; return; }
       wrap.innerHTML = list.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
     } catch { wrap.textContent = 'No badges yet.'; }
@@ -110,7 +148,7 @@
   async function loadModes(uid){
     const el = document.getElementById('modes');
     try {
-      const list = await fetchJSON(API.modes(uid));
+      const list = await fetchJSON(API.modes());
       if (!Array.isArray(list) || !list.length) { el.textContent = 'No data yet.'; return; }
       el.innerHTML = list.map(m => `<span class="mode-chip"><strong>${m.mode}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
     } catch { el.textContent = 'No data yet.'; }
@@ -119,7 +157,7 @@
   async function loadSessions(uid){
     const tb = document.getElementById('sessionsBody');
     try {
-      const list = await fetchJSON(API.sessions(uid));
+      const list = await fetchJSON(API.sessions());
       if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>'; return; }
       tb.innerHTML = list.map(s => {
         const when = fmtDate(s.ended_at || s.started_at);
@@ -152,7 +190,7 @@
   async function loadAttempts(uid){
     const tb = document.getElementById('attemptsBody');
     try {
-      const list = await fetchJSON(API.attempts(uid));
+      const list = await fetchJSON(API.attempts());
       if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; return; }
       tb.innerHTML = list.map(a => `<tr>
         <td data-label="When">${fmtDate(a.created_at)}</td>
@@ -166,7 +204,9 @@
 
   async function getProfileInfo(userId) {
     try {
-      const res = await fetch(api(`/.netlify/functions/get_profile_name?user_id=${encodeURIComponent(userId)}`));
+      const token = getAccessToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      const res = await fetch(api(`/.netlify/functions/get_profile_name?user_id=${encodeURIComponent(userId)}`), { headers });
       if (!res.ok) return {};
       const data = await res.json();
       return data;
@@ -175,9 +215,12 @@
 
   async function updateProfileAvatar(userId, avatar) {
     try {
+      const token = getAccessToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(api('/.netlify/functions/update_profile_avatar'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ user_id: userId, avatar })
       });
       return res.ok;
@@ -185,17 +228,34 @@
   }
 
   window.addEventListener('DOMContentLoaded', async () => {
-    const uid = getUserId();
+  const uid = getUserId();
+  const accessToken = getAccessToken();
     const nameEl = document.getElementById('pfName');
     const avatarEl = document.getElementById('pfAvatar');
     const overlayEl = document.getElementById('loadingOverlay');
     const showOverlay = () => { if (overlayEl) { overlayEl.style.display = 'flex'; overlayEl.setAttribute('aria-hidden', 'false'); } };
     const hideOverlay = () => { if (overlayEl) { overlayEl.style.display = 'none'; overlayEl.setAttribute('aria-hidden', 'true'); } };
     showOverlay();
-    if (!uid) {
+
+    // Debug logging to help diagnose login state
+    console.log('Profile debug:', { 
+      uid, 
+      accessToken: accessToken ? 'PRESENT' : 'MISSING', 
+      origin: window.location.origin,
+      localStorage_keys: Object.keys(localStorage).filter(k => k.includes('sb') || k.includes('auth')),
+      sessionStorage_keys: Object.keys(sessionStorage).filter(k => k.includes('sb') || k.includes('auth'))
+    });
+
+    // Treat missing access token as not signed in even if a stale uid remains
+  if (!uid || !accessToken) {
       nameEl.textContent = 'Student Profile';
       avatarEl.textContent = '🙂';
       hideOverlay();
+      // Notify user in KPI area if possible
+      try {
+        const grid = document.getElementById('kpiGrid');
+        if (grid) grid.insertAdjacentHTML('afterend', '<div class="error" style="margin-top:8px;">Sign in to see your progress.<br><small>Debug: uid=' + (uid || 'null') + ', token=' + (accessToken ? 'found' : 'missing') + '</small></div>');
+      } catch {}
       return;
     }
     // Fetch username and avatar from Supabase profiles table
@@ -274,12 +334,12 @@
     }
 
     // Fetch critical fresh data in parallel
-    const [info, ov, badges, challenging, modes] = await Promise.all([
+  const [info, ov, badges, challenging, modes] = await Promise.all([
       infoPromise,
-      fetchJSON(API.overview(uid)).catch(() => null),
-      fetchJSON(API.badges(uid)).catch(() => null),
-      fetchJSON(API.challenging(uid)).catch(() => null),
-      fetchJSON(API.modes(uid)).catch(() => null)
+  fetchJSON(API.overview()).catch(() => null),
+  fetchJSON(API.badges()).catch(() => null),
+  fetchJSON(API.challenging()).catch(() => null),
+  fetchJSON(API.modes()).catch(() => null)
     ]);
 
     // Apply and cache fresh
@@ -292,12 +352,12 @@
     hideOverlay();
 
     // Defer non-critical tables (sessions, attempts)
-    const schedule = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 800 }) : setTimeout(fn, 120));
-    schedule(async () => {
+  const schedule = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 800 }) : setTimeout(fn, 120));
+  schedule(async () => {
       try {
         const [sessions, attempts] = await Promise.all([
-          fetchJSON(API.sessions(uid)).catch(() => null),
-          fetchJSON(API.attempts(uid)).catch(() => null)
+          fetchJSON(API.sessions()).catch(() => null),
+          fetchJSON(API.attempts()).catch(() => null)
         ]);
         const sessionsTb = document.getElementById('sessionsBody');
         if (sessionsTb) {

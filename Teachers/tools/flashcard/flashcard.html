@@ -808,9 +808,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to open worksheet manager
     function openWorksheetManager(mode) {
         const url = `/Teachers/worksheet_manager.html?mode=${mode}`;
-        window.open(url, 'worksheetManager', 'width=1200,height=550');
-        const features = 'width=800,height=600,scrollbars=yes,resizable=yes';
-        window.open(url, 'WorksheetManager', features);
+        const features = 'width=1000,height=700,scrollbars=yes,resizable=yes';
+        // Use a single, consistently named window and reuse if open
+        try {
+            const w = window.open(url, 'WorksheetManager', features);
+            if (w) { w.focus(); }
+        } catch (_) {
+            window.open(url, 'WorksheetManager', features);
+        }
     }
 
     // Function to get current worksheet data for saving

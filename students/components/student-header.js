@@ -84,8 +84,9 @@ class StudentHeader extends HTMLElement {
         :host { display:block; }
         header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 14px 8px; z-index:10; }
   .top { display:flex; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; }
-        .title { font-weight:800; color: var(--pri, #19777e); }
-        .page-title { font-weight:800; color: var(--pri, #19777e); margin-left:8px; }
+  .title { font-weight:800; color: var(--pri, #19777e); }
+  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin-left:8px; justify-content: flex-end; }
+    .page-title ::slotted(img), .page-title ::slotted(svg), ::slotted(img[slot="actions"]), ::slotted(svg[slot="actions"]) { height: 5.3em; max-height: 5.6em; display:block; margin-left:auto; }
         .spacer { flex:1; }
         .btn { border:1px solid var(--acc, #93cbcf); background: var(--acc, #93cbcf); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
         .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid var(--pri, #19777e); font-size:22px; }
@@ -134,7 +135,10 @@ class StudentHeader extends HTMLElement {
             <div class="title" id="name" part="name">${name || "Profile"}</div>
             ${this.showId ? `<div class="mut" id="id" part="id">${uid ? `ID: ${uid}` : "Not signed in"}</div>` : ""}
           </div>
-          ${this.pageTitle ? `<div class="page-title" part="page-title">${this.pageTitle}</div>` : ""}
+          <div class="page-title" id="pageTitle" part="page-title">
+            <slot name="title"></slot>
+            <span class="page-title-text">${this.pageTitle || ""}</span>
+          </div>
           <div class="spacer"></div>
           <slot name="actions"></slot>
           ${this.showHome ? `<button class="btn" id="homeBtn" part="home-button" type="button">${this.homeLabel}</button>` : ""}
@@ -160,6 +164,31 @@ class StudentHeader extends HTMLElement {
           }
         }
       };
+    }
+
+    // Title slot vs text: if title slot has content, hide text; hide entire container if neither
+    const pageTitleEl = this.shadowRoot.getElementById('pageTitle');
+    const titleSlot = this.shadowRoot.querySelector('slot[name="title"]');
+    const titleText = this.shadowRoot.querySelector('.page-title-text');
+    const updateTitle = () => {
+      if (!pageTitleEl) return;
+      const hasSlotContent = titleSlot && titleSlot.assignedNodes({ flatten: true })
+        .some(n => n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.textContent.trim().length));
+      if (hasSlotContent) {
+        if (titleText) titleText.style.display = 'none';
+        pageTitleEl.style.display = '';
+      } else {
+        const hasText = !!(titleText && titleText.textContent && titleText.textContent.trim().length);
+        if (titleText) titleText.style.display = hasText ? '' : 'none';
+        pageTitleEl.style.display = hasText ? '' : 'none';
+      }
+    };
+    if (titleSlot) {
+      titleSlot.addEventListener('slotchange', updateTitle);
+      updateTitle();
+    } else {
+      // Fallback if no slot for some reason
+      if (pageTitleEl && titleText && !titleText.textContent.trim()) pageTitleEl.style.display = 'none';
     }
 
     // Hide menu row if no assigned nodes

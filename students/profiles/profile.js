@@ -1,12 +1,27 @@
 // profiles/profile.js - client script to load and render user progress
 (function(){
+  function getAccessToken() {
+    try {
+      let raw = localStorage.getItem('sb-auth-token');
+      if (!raw) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && /^sb-.*-auth-token$/.test(k)) { raw = localStorage.getItem(k); if (raw) break; }
+        }
+      }
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      const session = Array.isArray(obj) ? obj[1] : obj;
+      return session?.access_token || session?.currentSession?.access_token || null;
+    } catch { return null; }
+  }
   const API = {
     // endpoints powered by Netlify functions
-    attempts: (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=attempts`,
-    sessions: (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=sessions`,
-    kpi:      (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=kpi`,
-    modes:    (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=modes`,
-    badges:   (user_id) => `/.netlify/functions/progress_summary?user_id=${encodeURIComponent(user_id)}&section=badges`
+    attempts: () => `/.netlify/functions/progress_summary?section=attempts`,
+    sessions: () => `/.netlify/functions/progress_summary?section=sessions`,
+    kpi:      () => `/.netlify/functions/progress_summary?section=kpi`,
+    modes:    () => `/.netlify/functions/progress_summary?section=modes`,
+    badges:   () => `/.netlify/functions/progress_summary?section=badges`
   };
 
   function getUserId(){
@@ -14,7 +29,9 @@
   }
 
   async function fetchJSON(url){
-    const res = await fetch(url, { cache: 'no-store' });
+    const token = getAccessToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    const res = await fetch(url, { cache: 'no-store', headers });
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }
@@ -28,7 +45,7 @@
 
   async function loadKpi(uid){
     try {
-      const k = await fetchJSON(API.kpi(uid));
+      const k = await fetchJSON(API.kpi());
       setText('kpiAttempts', k.attempts ?? '0');
       setText('kpiAccuracy', k.accuracy != null ? `${Math.round(k.accuracy*100)}%` : '–');
       setText('kpiPoints', k.points ?? '0');
@@ -44,7 +61,7 @@
   async function loadBadges(uid){
     const wrap = document.getElementById('badgesWrap');
     try {
-      const list = await fetchJSON(API.badges(uid));
+      const list = await fetchJSON(API.badges());
       if (!Array.isArray(list) || !list.length) { wrap.textContent = 'No badges yet.'; return; }
       wrap.innerHTML = list.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
     } catch { wrap.textContent = 'No badges yet.'; }
@@ -53,7 +70,7 @@
   async function loadModes(uid){
     const el = document.getElementById('modes');
     try {
-      const list = await fetchJSON(API.modes(uid));
+      const list = await fetchJSON(API.modes());
       if (!Array.isArray(list) || !list.length) { el.textContent = 'No data yet.'; return; }
       el.innerHTML = list.map(m => `<span class="mode-chip"><strong>${m.mode}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
     } catch { el.textContent = 'No data yet.'; }
@@ -62,7 +79,7 @@
   async function loadSessions(uid){
     const tb = document.getElementById('sessionsBody');
     try {
-      const list = await fetchJSON(API.sessions(uid));
+      const list = await fetchJSON(API.sessions());
       if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>'; return; }
       tb.innerHTML = list.map(s => `<tr><td>${fmtDate(s.ended_at || s.started_at)}</td><td><span class="pill">${s.mode||'?'}</span></td><td>${renderSummary(s.summary)}</td></tr>`).join('');
     } catch { tb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>'; }
@@ -83,7 +100,7 @@
   async function loadAttempts(uid){
     const tb = document.getElementById('attemptsBody');
     try {
-      const list = await fetchJSON(API.attempts(uid));
+      const list = await fetchJSON(API.attempts());
       if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; return; }
       tb.innerHTML = list.map(a => `<tr><td>${fmtDate(a.created_at)}</td><td>${a.mode||''}</td><td>${a.word||''}</td><td>${a.is_correct? '✅':'❌'}</td><td>${a.points??''}</td></tr>`).join('');
     } catch { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; }
