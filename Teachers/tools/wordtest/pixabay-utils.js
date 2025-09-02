@@ -6,7 +6,7 @@
 
 /**
  * Build a Pixabay site search URL for a given word and mode.
- * Modes: 'photos' | 'illustrations' | 'ai' | 'gifs'
+ * Modes: 'photos' | 'illustrations' | 'ai' | 'vector images'
  */
 export function getPixabaySearchUrl(word, mode = 'photos') {
   const encoded = encodeURIComponent(String(word || ''));
@@ -18,9 +18,11 @@ export function getPixabaySearchUrl(word, mode = 'photos') {
     case 'ai':
       // Use content_type=ai filter on images search
       return `https://pixabay.com/images/search/${encoded}/?content_type=ai`;
-    case 'gifs':
-      // Use content_type=gif filter on images search
-      return `https://pixabay.com/images/search/${encoded}/?content_type=gif`;
+    case 'clipart':
+      // Treat clipart as vector-only search on Pixabay
+      return `https://pixabay.com/vectors/search/${encoded}/`;
+    case 'vector images':
+      return `https://pixabay.com/vectors/search/${encoded}/`;
     default:
       return `https://pixabay.com/images/search/${encoded}/`;
   }
@@ -33,7 +35,11 @@ export function getPixabaySearchUrl(word, mode = 'photos') {
  */
 export function getPixabayFunctionUrl(word, mode = 'photos', perPage = 5) {
   const q = encodeURIComponent(String(word || ''));
-  const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
+  // Map UI mode to Pixabay API image_type
+  let imageType = 'all';
+  if (mode === 'illustrations') imageType = 'illustration';
+  else if (mode === 'photos') imageType = 'photo';
+  else if (mode === 'clipart' || mode === 'vector images') imageType = 'vector';
   const params = new URLSearchParams({ q, image_type: imageType, safesearch: 'true', order: 'popular', per_page: String(perPage) });
   return `/.netlify/functions/pixabay?${params.toString()}`;
 }
