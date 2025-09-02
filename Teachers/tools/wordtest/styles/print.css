@@ -1,0 +1,53 @@
+@media print {
+  .worksheet-preview { max-width: 100% !important; margin: 0 !important; padding: 15px !important; box-shadow: none !important; border: none !important; }
+  /* Picture Cards print layout */
+  .worksheet-preview .picture-cards-grid { margin: 0 auto !important; padding: 10px !important; }
+  .worksheet-preview .picture-card { width: 200px !important; height: 220px !important; padding: 10px !important; box-shadow: none !important; border: 1px solid #333 !important; page-break-inside: avoid; }
+  /* Ensure images inside picture cards are visible and sized correctly */
+  .worksheet-preview .picture-card img,
+  .worksheet-preview .picture-card-5col img { display: block !important; max-width: 100% !important; max-height: 120px !important; margin: 0 auto !important; object-fit: contain !important; background: none !important; box-shadow: none !important; border: none !important; }
+  /* Page breaks for picture cards */
+  .worksheet-preview .picture-cards-page { page-break-before: auto; }
+  .worksheet-preview .picture-cards-page[style*="page-break-before: always"] { page-break-before: always !important; }
+  /* Page breaks for picture quiz */
+  .worksheet-preview .picture-quiz-page { page-break-before: auto; }
+  .worksheet-preview .picture-quiz-page[style*="page-break-before: always"] { page-break-before: always !important; }
+  /* Picture quiz item styling for print */
+  .worksheet-preview .quiz-item { page-break-inside: avoid; }
+  /* Page breaks for 5-column picture cards */
+  .worksheet-preview .picture-cards-page-5col { page-break-before: auto; }
+  .worksheet-preview .picture-cards-page-5col[style*="page-break-before: always"] { page-break-before: always !important; }
+  /* Picture cards 5-column styling for print */
+  .worksheet-preview .picture-card-5col { width: 140px !important; height: 180px !important; padding: 8px !important; box-shadow: none !important; border: 1px solid #333 !important; page-break-inside: avoid; }
+  /* Page breaks for 5-column picture quiz */
+  .worksheet-preview .picture-quiz-page-5col { page-break-before: auto; }
+  .worksheet-preview .picture-quiz-page-5col[style*="page-break-before: always"] { page-break-before: always !important; }
+  /* Picture quiz 5-column item styling for print */
+  .worksheet-preview .quiz-item-5col { page-break-inside: avoid; }
+  /* Note: Dynamic gaps for .picture-quiz-grid-5col are preserved via JS inline styles */
+  /* Adjust header for print */
+  .worksheet-preview .worksheet-header { margin-bottom: 20px !important; padding: 10px !important; border-bottom: 1px solid #333 !important; }
+  .worksheet-preview .worksheet-header img { height: 35px !important; }
+  .worksheet-preview .worksheet-header h2 { font-size: 1.4em !important; }
+  /* Make name/date fields smaller in print */
+  .worksheet-preview .worksheet-header div[style*="min-width: 220px"] { min-width: 180px !important; }
+  .worksheet-preview .worksheet-header span[style*="font-size: 0.9em"] { font-size: 0.8em !important; }
+  /* Table styles for print - match preview exactly */
+  .worksheet-preview table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; font-size: inherit !important; margin: 0 auto !important; }
+  .worksheet-preview table th,
+  .worksheet-preview table td { padding: 12px 8px !important; border-bottom: 1px solid #ddd !important; text-align: center !important; word-wrap: break-word !important; vertical-align: middle !important; }
+  /* Prevent number columns from wrapping */
+  .worksheet-preview table td[style*="white-space:nowrap"] { white-space: nowrap !important; word-wrap: normal !important; }
+  .worksheet-preview table th { border-bottom: 2px solid #333 !important; font-weight: bold !important; background: #f8f9fa !important; }
+  /* Hide interactive elements when printing */
+  .print-hide,
+  .drag-instructions,
+  .dup-overlay-screen,
+  .image-loading-overlay,
+  .image-loading-spinner { display: none !important; }
+  /* Remove hover effects and interactive styles for print */
+  .image-drop-zone { border: none !important; background: transparent !important; cursor: default !important; }
+  .image-drop-zone img { cursor: default !important; border: 1px solid #ddd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* Other image layouts for print */
+  .worksheet-preview .image-grid-item { width: 180px !important; height: 220px !important; padding: 10px !important; }
+}
