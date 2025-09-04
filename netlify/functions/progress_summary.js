@@ -3,8 +3,32 @@
 // Requires env: SUPABASE_URL, SUPABASE_ANON_KEY
 const { createClient } = require('@supabase/supabase-js');
 
+// Cookie helpers (same as supabase_proxy_fixed.js)
+function parseCookies(header) {
+  const out = {};
+  if (!header) return out;
+  header.split(/;\s*/).forEach(kv => {
+    const idx = kv.indexOf('=');
+    if (idx > 0) {
+      const k = kv.slice(0, idx).trim();
+      const v = kv.slice(idx + 1).trim();
+      if (k && !(k in out)) out[k] = decodeURIComponent(v);
+    }
+  });
+  return out;
+}
+
+function getAccessTokenFromCookie(event) {
+  const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+  const cookies = parseCookies(cookieHeader);
+  return cookies['sb_access'] || null;
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.supabase_url;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.supabase_anon_key;
+// In local/dev, the anon key is commonly provided as SUPABASE_KEY. Fall back to that.
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.supabase_anon_key;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key;
+const ADMIN_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 
 function json(status, body) {
   return {
@@ -20,21 +44,39 @@ exports.handler = async (event) => {
       return json(405, { error: 'Method Not Allowed' });
     }
 
-    const auth = event.headers.authorization || '';
-    if (!auth.startsWith('Bearer ')) {
-      return json(401, { error: 'Missing bearer token' });
+    if (!SUPABASE_URL || !ADMIN_KEY) {
+      console.error('[progress_summary] Missing SUPABASE_URL or admin key. URL present?', !!SUPABASE_URL, 'Admin/Anon present?', !!ADMIN_KEY);
+      return json(500, { error: 'Server is misconfigured: missing Supabase env vars' });
     }
 
-    // Initialize Supabase with the caller's token so Row Level Security applies
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: { headers: { Authorization: auth } }
-    });
+    // Try to get user from cookie
+    const accessToken = getAccessTokenFromCookie(event);
+    if (!accessToken) {
+      return json(401, { error: 'Not signed in (cookie missing or invalid)' });
+    }
 
-    const url = new URL(
-      event.rawUrl || `http://localhost${event.path}${event.rawQuery ? '?' + event.rawQuery : ''}`
-    );
-    const section = (url.searchParams.get('section') || 'kpi').toLowerCase();
+    // Resolve the user id using admin client to be resilient
+  const adminClient = createClient(SUPABASE_URL, ADMIN_KEY);
+    const { data: userData, error: userErr } = await adminClient.auth.getUser(accessToken);
+    if (userErr || !userData || !userData.user) {
+      console.error('[progress_summary] getUser failed', userErr);
+      return json(401, { error: 'Invalid or expired session' });
+    }
+    const userId = userData.user.id;
+
+    // Prefer anon+Bearer for RLS; if anon key missing, fall back to admin client and manually scope queries by user_id.
+  const useAdminFallback = !SUPABASE_ANON_KEY;
+    const supabase = useAdminFallback
+      ? adminClient
+      : createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false },
+          global: { headers: { Authorization: `Bearer ${accessToken}` } }
+        });
+
+    // Helper to conditionally apply user_id filter when using admin fallback
+    const scope = (query) => useAdminFallback ? query.eq('user_id', userId) : query;
+
+  const section = ((event.queryStringParameters && event.queryStringParameters.section) || 'kpi').toLowerCase();
 
     // Helper to parse summary blobs safely
     const parseSummary = (s) => {
@@ -44,9 +86,11 @@ exports.handler = async (event) => {
 
     // ---------- KPI ----------
     if (section === 'kpi') {
-      const { data: attempts, error: e1 } = await supabase
-        .from('progress_attempts')
-        .select('is_correct, points');
+      const { data: attempts, error: e1 } = await scope(
+        supabase
+          .from('progress_attempts')
+          .select('is_correct, points')
+      );
 
       if (e1) return json(400, { error: e1.message });
 
@@ -54,9 +98,11 @@ exports.handler = async (event) => {
       const correct = attempts?.filter(a => a.is_correct)?.length || 0;
       const points = attempts?.reduce((s, a) => s + (Number(a.points) || 0), 0) || 0;
 
-      const { data: ordered, error: e2 } = await supabase
-        .from('progress_attempts')
-        .select('is_correct, created_at')
+      const { data: ordered, error: e2 } = await scope(
+        supabase
+          .from('progress_attempts')
+          .select('is_correct, created_at')
+      )
         .order('created_at', { ascending: true });
 
       if (e2) return json(400, { error: e2.message });
@@ -74,9 +120,11 @@ exports.handler = async (event) => {
 
     // ---------- MODES ----------
     if (section === 'modes') {
-      const { data, error } = await supabase
-        .from('progress_attempts')
-        .select('mode, is_correct');
+      const { data, error } = await scope(
+        supabase
+          .from('progress_attempts')
+          .select('mode, is_correct')
+      );
 
       if (error) return json(400, { error: error.message });
 
@@ -92,10 +140,12 @@ exports.handler = async (event) => {
 
     // ---------- SESSIONS ----------
     if (section === 'sessions') {
-      const list_name = url.searchParams.get('list_name');
-      let query = supabase
-        .from('progress_sessions')
-        .select('session_id, mode, list_name, started_at, ended_at, summary');
+      const list_name = (event.queryStringParameters && event.queryStringParameters.list_name) || null;
+      let query = scope(
+        supabase
+          .from('progress_sessions')
+          .select('session_id, mode, list_name, started_at, ended_at, summary')
+      );
 
       if (list_name) query = query.eq('list_name', list_name);
 
@@ -109,9 +159,11 @@ exports.handler = async (event) => {
 
     // ---------- ATTEMPTS ----------
     if (section === 'attempts') {
-      const { data, error } = await supabase
-        .from('progress_attempts')
-        .select('created_at, mode, word, is_correct, points')
+      const { data, error } = await scope(
+        supabase
+          .from('progress_attempts')
+          .select('created_at, mode, word, is_correct, points')
+      )
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -122,8 +174,8 @@ exports.handler = async (event) => {
     // ---------- BADGES ----------
     if (section === 'badges') {
       const [{ data: attempts, error: eA }, { data: sessions, error: eS }] = await Promise.all([
-        supabase.from('progress_attempts').select('is_correct, points, created_at'),
-        supabase.from('progress_sessions').select('summary')
+        scope(supabase.from('progress_attempts').select('is_correct, points, created_at')),
+        scope(supabase.from('progress_sessions').select('summary'))
       ]);
       if (eA) return json(400, { error: eA.message });
       if (eS) return json(400, { error: eS.message });
@@ -137,14 +189,16 @@ exports.handler = async (event) => {
         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
         .forEach(a => { cur = a.is_correct ? cur + 1 : 0; best = Math.max(best, cur); });
 
-      const badges = [];
-      if (totalCorrect >= 1) badges.push({ id: 'first_correct', name: 'First Steps', emoji: '🥇' });
-      if (best >= 5) badges.push({ id: 'streak_5', name: 'Hot Streak', emoji: '🔥' });
-      if (totalCorrect >= 100) badges.push({ id: 'hundred_correct', name: 'Century', emoji: '💯' });
-      if (points >= 1000) badges.push({ id: 'thousand_points', name: 'Scorer', emoji: '🏆' });
+      const badgeMap = new Map();
+      if (totalCorrect >= 1) badgeMap.set('first_correct', { id: 'first_correct', name: 'First Steps', emoji: '🥇' });
+      if (best >= 5) badgeMap.set('streak_5', { id: 'streak_5', name: 'Hot Streak', emoji: '🔥' });
+      if (totalCorrect >= 100) badgeMap.set('hundred_correct', { id: 'hundred_correct', name: 'Century', emoji: '💯' });
+      if (points >= 1000) badgeMap.set('thousand_points', { id: 'thousand_points', name: 'Scorer', emoji: '🏆' });
 
       try {
+        let perfectionistAwarded = false;
         (sessions || []).forEach(s => {
+          if (perfectionistAwarded) return;
           const sum = parseSummary(s.summary);
           if (!sum) return;
           const acc =
@@ -153,19 +207,20 @@ exports.handler = async (event) => {
               : (typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) ? sum.score / sum.max
               : null;
           if ((acc !== null && acc >= 1) || sum.perfect === true) {
-            badges.push({ id: 'perfect_round', name: 'Perfectionist', emoji: '🌟' });
+            badgeMap.set('perfect_round', { id: 'perfect_round', name: 'Perfectionist', emoji: '🌟' });
+            perfectionistAwarded = true;
           }
         });
       } catch {}
 
-      return json(200, badges);
+      return json(200, Array.from(badgeMap.values()));
     }
 
     // ---------- OVERVIEW ----------
     if (section === 'overview') {
       const [sessRes, attRes] = await Promise.all([
-        supabase.from('progress_sessions').select('session_id, mode, list_name, summary, started_at, ended_at'),
-        supabase.from('progress_attempts').select('word, is_correct, points, created_at, mode')
+        scope(supabase.from('progress_sessions').select('session_id, mode, list_name, summary, started_at, ended_at')),
+        scope(supabase.from('progress_attempts').select('word, is_correct, points, created_at, mode'))
       ]);
       if (sessRes.error) return json(400, { error: sessRes.error.message });
       if (attRes.error) return json(400, { error: attRes.error.message });
@@ -232,8 +287,17 @@ exports.handler = async (event) => {
         if (typeof s.stars === 'number') return s.stars;
         return 0;
       }
+      // Stars: only count the highest stars per unique (list_name, mode)
+      const starsByListMode = new Map();
+      sessions.forEach(s => {
+        const key = `${s.list_name || ''}||${s.mode || ''}`;
+        const stars = deriveStars(parseSummary(s.summary));
+        if (!starsByListMode.has(key) || stars > starsByListMode.get(key)) {
+          starsByListMode.set(key, stars);
+        }
+      });
       let stars_total = 0;
-      sessions.forEach(s => { stars_total += deriveStars(parseSummary(s.summary)); });
+      starsByListMode.forEach(v => { stars_total += v; });
 
       let badges_count = 0;
       try {
@@ -303,13 +367,21 @@ exports.handler = async (event) => {
 
     // ---------- CHALLENGING ----------
     if (section === 'challenging') {
-      const { data: attempts, error } = await supabase
-        .from('progress_attempts')
-        .select('mode, word, is_correct, points, correct_answer, extra, created_at');
+      const { data: attempts, error } = await scope(
+        supabase
+          .from('progress_attempts')
+          .select('mode, word, is_correct, points, correct_answer, extra, created_at')
+      );
 
       if (error) return json(400, { error: error.message });
 
       const normalize = (s) => (s && typeof s === 'string') ? s.trim().toLowerCase() : null;
+      const isPicturePlaceholder = (s) => {
+        if (!s || typeof s !== 'string') return false;
+        const t = s.trim().toLowerCase();
+        const core = t.replace(/^[\s\[\(\{]+|[\s\]\)\}]+$/g, '');
+        return t === '[picture]' || core === 'picture';
+      };
       const hasHangul = (s) => typeof s === 'string' && /[\u3131-\uD79D\uAC00-\uD7AF]/.test(s);
       const hasLatin = (s) => typeof s === 'string' && /[A-Za-z]/.test(s);
       const toObj = (x) => { try { return typeof x === 'string' ? JSON.parse(x) : (x || null); } catch { return null; } };
@@ -331,7 +403,7 @@ exports.handler = async (event) => {
         if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
         if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
         const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
-        for (const c of engCands) { if (!eng && hasLatin(c)) { eng = c; break; } }
+  for (const c of engCands) { if (!eng && hasLatin(c) && !isPicturePlaceholder(c)) { eng = c; break; } }
         const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
         for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
         if (eng && kor) { const key = normalize(eng); if (key) korLookup.set(key, kor); }
@@ -346,12 +418,13 @@ exports.handler = async (event) => {
         if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
         if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
         const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
-        for (const c of engCands) { if (!eng && hasLatin(c)) { eng = c; break; } }
+  for (const c of engCands) { if (!eng && hasLatin(c) && !isPicturePlaceholder(c)) { eng = c; break; } }
         const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
         for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
         if (!eng) return;
-        const engKey = normalize(eng);
+  const engKey = normalize(eng);
         if (!engKey) return;
+  if (isPicturePlaceholder(eng)) return;
         const arr = byWord.get(engKey) || [];
         arr.push({ created_at: a.created_at, is_correct: !!a.is_correct, skill, word_en: eng, word_kr: kor || null });
         byWord.set(engKey, arr);
@@ -397,12 +470,14 @@ exports.handler = async (event) => {
         out.push({ word: word_en, word_en, word_kr, skill, accuracy: overallAcc, attempts: total });
       });
 
-      out.sort((a, b) => (a.accuracy - b.accuracy) || (b.attempts - a.attempts));
-      return json(200, out.slice(0, 20));
+  const cleaned = out.filter(it => !isPicturePlaceholder(it.word) && !isPicturePlaceholder(it.word_en) && !isPicturePlaceholder(it.word_kr));
+  cleaned.sort((a, b) => (a.accuracy - b.accuracy) || (b.attempts - a.attempts));
+  return json(200, cleaned.slice(0, 20));
     }
 
-    return json(400, { error: 'Unknown section' });
+  return json(400, { error: 'Unknown section', section });
   } catch (e) {
-    return json(500, { error: e.message });
+  console.error('[progress_summary] ERROR:', e && e.stack || e);
+  return json(500, { error: e.message || 'Internal error' });
   }
 };

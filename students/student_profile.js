@@ -5,37 +5,21 @@
 
   // Read Supabase session access token from localStorage (supabase-js v2 default key)
   function getAccessToken() {
-    const tryExtract = (raw) => {
-      try {
-        const obj = JSON.parse(raw);
-        const s = Array.isArray(obj) ? (obj[1] || obj[0] || obj) : obj;
-        return (
-          s?.access_token ||
-          s?.currentSession?.access_token ||
-          s?.session?.access_token ||
-          s?.user?.access_token ||
-          null
-        );
-      } catch { return null; }
-    };
     try {
-      const stores = [localStorage, sessionStorage];
-      for (const store of stores) {
-        if (!store) continue;
-        const direct = store.getItem('sb-auth-token') || store.getItem('supabase.auth.token');
-        let tok = direct && tryExtract(direct);
-        if (tok) return tok;
-        for (let i = 0; i < store.length; i++) {
-          const k = store.key(i);
-          if (!k) continue;
-          if (/^sb-.*-auth-token$/.test(k)) {
-            const raw = store.getItem(k);
-            tok = raw && tryExtract(raw);
-            if (tok) return tok;
-          }
+      // Try default key first
+      let raw = localStorage.getItem('sb-auth-token');
+      if (!raw) {
+        // Fallback: scan for sb-<project-ref>-auth-token
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && /^sb-.*-auth-token$/.test(k)) { raw = localStorage.getItem(k); if (raw) break; }
         }
       }
-      return null;
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      const session = Array.isArray(obj) ? obj[1] : obj;
+      const token = session?.access_token || session?.currentSession?.access_token || session?.user?.access_token;
+      return token || null;
     } catch { return null; }
   }
 
@@ -65,30 +49,16 @@
     kpi:      () => api(`/.netlify/functions/progress_summary?section=kpi`),
     modes:    () => api(`/.netlify/functions/progress_summary?section=modes`),
     badges:   () => api(`/.netlify/functions/progress_summary?section=badges`),
-    overview: () => api(`/.netlify/functions/progress_summary?section=overview`),
+  overview: () => api(`/.netlify/functions/progress_summary?section=overview`),
     challenging: () => api(`/.netlify/functions/progress_summary?section=challenging`)
   };
 
-  function getUserId(){
-    return (
-      localStorage.getItem('user_id') ||
-      sessionStorage.getItem('user_id') ||
-      localStorage.getItem('userId') ||
-      sessionStorage.getItem('userId') ||
-      localStorage.getItem('student_id') ||
-      sessionStorage.getItem('student_id') ||
-      localStorage.getItem('profile_id') ||
-      sessionStorage.getItem('profile_id') ||
-      localStorage.getItem('id') ||
-      sessionStorage.getItem('id') ||
-      null
-    );
-  }
+  // Removed getUserId and all local/session storage lookups for sensitive user info
 
   async function fetchJSON(url){
     const token = getAccessToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-    const res = await fetch(url, { cache: 'no-store', headers });
+    const res = await fetch(url, { cache: 'no-store', headers, credentials: 'include' });
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }
@@ -202,72 +172,57 @@
     } catch { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; }
   }
 
-  async function getProfileInfo(userId) {
+  async function getProfileInfo() {
     try {
-      const token = getAccessToken();
-      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch(api(`/.netlify/functions/get_profile_name?user_id=${encodeURIComponent(userId)}`), { headers });
+      const res = await fetch(api(`/.netlify/functions/supabase_proxy_fixed?action=get_profile`), { credentials: 'include' });
       if (!res.ok) return {};
       const data = await res.json();
+      // If korean_name or class are missing, try get_profile_name for fallback
+      if ((!data.korean_name || !data.class) && data.success !== false) {
+        const res2 = await fetch(api(`/.netlify/functions/supabase_proxy_fixed?action=get_profile_name`), { credentials: 'include' });
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (data2.korean_name) data.korean_name = data2.korean_name;
+          if (data2.class) data.class = data2.class;
+        }
+      }
       return data;
     } catch { return {}; }
   }
 
-  async function updateProfileAvatar(userId, avatar) {
+  async function updateProfileAvatar(avatar) {
     try {
-      const token = getAccessToken();
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch(api('/.netlify/functions/update_profile_avatar'), {
+      const res = await fetch(api('/.netlify/functions/supabase_proxy_fixed?action=update_profile_avatar'), {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ user_id: userId, avatar })
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ avatar })
       });
       return res.ok;
     } catch { return false; }
   }
 
   window.addEventListener('DOMContentLoaded', async () => {
-  const uid = getUserId();
-  const accessToken = getAccessToken();
-    const nameEl = document.getElementById('pfName');
-    const avatarEl = document.getElementById('pfAvatar');
-    const overlayEl = document.getElementById('loadingOverlay');
-    const showOverlay = () => { if (overlayEl) { overlayEl.style.display = 'flex'; overlayEl.setAttribute('aria-hidden', 'false'); } };
-    const hideOverlay = () => { if (overlayEl) { overlayEl.style.display = 'none'; overlayEl.setAttribute('aria-hidden', 'true'); } };
-    showOverlay();
-
-    // Debug logging to help diagnose login state
-    console.log('Profile debug:', { 
-      uid, 
-      accessToken: accessToken ? 'PRESENT' : 'MISSING', 
-      origin: window.location.origin,
-      localStorage_keys: Object.keys(localStorage).filter(k => k.includes('sb') || k.includes('auth')),
-      sessionStorage_keys: Object.keys(sessionStorage).filter(k => k.includes('sb') || k.includes('auth'))
-    });
-
-    // Treat missing access token as not signed in even if a stale uid remains
-  if (!uid || !accessToken) {
-      nameEl.textContent = 'Student Profile';
-      avatarEl.textContent = '🙂';
-      hideOverlay();
-      // Notify user in KPI area if possible
-      try {
-        const grid = document.getElementById('kpiGrid');
-        if (grid) grid.insertAdjacentHTML('afterend', '<div class="error" style="margin-top:8px;">Sign in to see your progress.<br><small>Debug: uid=' + (uid || 'null') + ', token=' + (accessToken ? 'found' : 'missing') + '</small></div>');
-      } catch {}
-      return;
-    }
-    // Fetch username and avatar from Supabase profiles table
-    const infoPromise = getProfileInfo(uid);
+  const nameEl = document.getElementById('pfName');
+  const avatarEl = document.getElementById('pfAvatar');
+  const overlayEl = document.getElementById('loadingOverlay');
+  const showOverlay = () => { if (overlayEl) { overlayEl.style.display = 'flex'; overlayEl.setAttribute('aria-hidden', 'false'); } };
+  const hideOverlay = () => { if (overlayEl) { overlayEl.style.display = 'none'; overlayEl.setAttribute('aria-hidden', 'true'); } };
+  showOverlay();
+  // Fetch username and avatar from cookie session
+  const infoPromise = getProfileInfo();
+  // Use a stable per-session cache key; we no longer rely on a client-side UID
+  const uid = 'me';
 
     // Try cached critical sections first (1 min TTL)
     const TTL = 60 * 1000;
     const cacheOv = getCache(`ov:${uid}`);
     const cacheBadges = getCache(`badges:${uid}`);
     const cacheChal = getCache(`challenging:${uid}`);
-    const cacheModes = getCache(`modes:${uid}`);
+  // Modes cache removed
 
+    // Track last badges for correct count
+    let lastBadges = [];
     const paintOverview = (ov) => {
       setText('ovPoints', (ov && ov.points != null) ? ov.points : '0');
       setText('ovStars', (ov && ov.stars != null) ? ov.stars : '0');
@@ -278,31 +233,46 @@
       setText('ovWordsDiscovered', (ov && ov.words_discovered != null) ? ov.words_discovered : '0');
       setText('ovWordsMastered', (ov && ov.words_mastered != null) ? ov.words_mastered : '0');
       setText('ovSessionsPlayed', (ov && ov.sessions_played != null) ? ov.sessions_played : '0');
-      setText('ovBadgesCount', (ov && ov.badges_count != null) ? ov.badges_count : '0');
+      // Use lastBadges for count if available, else fallback
+      setText('ovBadgesCount', Array.isArray(lastBadges) && lastBadges.length ? lastBadges.length : (ov && ov.badges_count != null ? ov.badges_count : '0'));
       setText('ovFavoriteList', (ov && ov.favorite_list && ov.favorite_list.name) ? ov.favorite_list.name : '—');
       setText('ovHardestWord', (ov && ov.hardest_word && ov.hardest_word.word) ? ov.hardest_word.word : '—');
     };
     const paintBadges = (badges) => {
+      lastBadges = Array.isArray(badges) ? badges : [];
       const wrap = document.getElementById('badgesWrap');
       if (!wrap) return;
-      if (!badges || !Array.isArray(badges) || !badges.length) wrap.textContent = 'No badges yet.';
-      else wrap.innerHTML = badges.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
+      if (!lastBadges.length) wrap.textContent = 'No badges yet.';
+      else wrap.innerHTML = lastBadges.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
     };
     const paintChallenging = (challenging) => {
       const listEl = document.getElementById('challengingList');
       const emptyEl = document.getElementById('challengingEmpty');
       if (!listEl) return;
-      if (!challenging || !Array.isArray(challenging) || !challenging.length) {
-        if (emptyEl) emptyEl.textContent = 'No challenging words yet.';
-      } else {
-        if (emptyEl) emptyEl.remove();
-        listEl.innerHTML = challenging.map(item => {
-          const accPct = Math.round((item.accuracy || 0) * 100);
-          const cls = accPct <= 0 ? 'zero' : (accPct < 70 ? 'bad' : 'ok');
-          const skillLower = (item.skill || '').toLowerCase();
-          const mainWord = item.word_en || item.word || '';
-          const subKor = item.word_kr ? `<div class="cw-sub">${item.word_kr}</div>` : '';
-          return `
+      // Filter out entries where any field is the placeholder '[picture]' (case-insensitive, with optional brackets)
+      const isPicturePlaceholder = (s) => {
+        if (!s || typeof s !== 'string') return false;
+        const t = s.trim().toLowerCase();
+        // Only treat as placeholder if brackets/parentheses/braces are present
+        const hasBrackets = /[\[\]\(\)\{\}]/.test(t);
+        if (!hasBrackets) return false;
+        const core = t.replace(/^[\s\[\(\{]+|[\s\]\)\}]+$/g, '');
+        return core === 'picture';
+      };
+      const items = Array.isArray(challenging) ? challenging : [];
+      // Build cards, skipping only when the main English word is a placeholder
+      const cards = items.map(item => {
+        const accPct = Math.round((item.accuracy || 0) * 100);
+        const cls = accPct <= 0 ? 'zero' : (accPct < 70 ? 'bad' : 'ok');
+        const skillLower = (item.skill || '').toLowerCase();
+        // Prefer word_en, then word
+        let mainWord = (item.word_en ?? item.word ?? '').toString();
+        if (isPicturePlaceholder(mainWord)) return null; // skip this entry entirely
+        // Optional sub (Korean); suppress if placeholder
+        let subKorTxt = item.word_kr;
+        if (isPicturePlaceholder(subKorTxt)) subKorTxt = '';
+        const subKor = subKorTxt ? `<div class="cw-sub">${subKorTxt}</div>` : '';
+        return `
             <div class="cw-card">
               <div>
                 <div class="cw-word">${mainWord}</div>
@@ -313,87 +283,73 @@
                 <div class="cw-skill">${skillLower}</div>
               </div>
             </div>
-          `;
-        }).join('');
+        `;
+      }).filter(Boolean);
+      if (!cards.length) {
+        if (emptyEl) emptyEl.textContent = 'No challenging words yet.';
+        listEl.innerHTML = '';
+      } else {
+        if (emptyEl) emptyEl.remove();
+        listEl.innerHTML = cards.join('');
       }
     };
-    const paintModes = (modes) => {
-      const modesEl = document.getElementById('modes');
-      if (!modesEl) return;
-      if (!modes || !Array.isArray(modes) || !modes.length) modesEl.textContent = 'No data yet.';
-      else modesEl.innerHTML = modes.map(m => `<span class="mode-chip"><strong>${m.mode}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
-    };
+  // paintModes removed
 
     // Paint cached immediately if present
-    if (cacheOv || cacheBadges || cacheChal || cacheModes) {
+  if (cacheOv || cacheBadges || cacheChal) {
       paintOverview(cacheOv);
       paintBadges(cacheBadges);
       paintChallenging(cacheChal);
-      paintModes(cacheModes);
       hideOverlay();
     }
 
     // Fetch critical fresh data in parallel
-  const [info, ov, badges, challenging, modes] = await Promise.all([
+  const [info, ov, badges, challenging] = await Promise.all([
       infoPromise,
   fetchJSON(API.overview()).catch(() => null),
   fetchJSON(API.badges()).catch(() => null),
-  fetchJSON(API.challenging()).catch(() => null),
-  fetchJSON(API.modes()).catch(() => null)
+  fetchJSON(API.challenging()).catch(() => null)
     ]);
 
     // Apply and cache fresh
-    nameEl.textContent = (info && info.username) || 'Student Profile';
-    avatarEl.textContent = (info && info.avatar) || '🙂';
-    paintOverview(ov); setCache(`ov:${uid}`, ov, TTL);
-    paintBadges(badges); setCache(`badges:${uid}`, badges, TTL);
-    paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL);
-    paintModes(modes); setCache(`modes:${uid}`, modes, TTL);
+  // Info from get_profile: { success, name, email, username, avatar }
+  const displayName = (info && (info.name || info.username)) || 'Student Profile';
+  nameEl.textContent = displayName;
+  avatarEl.textContent = (info && info.avatar) || '🙂';
+  // Fill hero card fields if present
+  const heroAvatar = document.getElementById('pfHeroAvatar');
+  if (heroAvatar) heroAvatar.textContent = (info && info.avatar) || '🐼';
+  const nameEnEl = document.getElementById('pfNameEn');
+  const nameKoEl = document.getElementById('pfNameKo');
+  const classEl = document.getElementById('pfClass');
+  const emailEl = document.getElementById('pfEmail');
+  if (nameEnEl) nameEnEl.textContent = info && (info.name || info.username) || '';
+  // Only set Korean name and class when present to avoid wiping placeholders
+  if (nameKoEl && info && typeof info.korean_name === 'string' && info.korean_name.trim()) {
+    nameKoEl.textContent = info.korean_name;
+  }
+  if (classEl && info && (typeof info.class === 'string' && info.class.trim())) {
+    classEl.textContent = info.class;
+  }
+  // Minimal debug to verify returned keys if fields are missing
+  if (!info?.korean_name || !info?.class) {
+    try { console.debug('[profile] get_profile keys:', Object.keys(info||{})); } catch {}
+  }
+  if (emailEl) emailEl.textContent = info && info.email ? info.email : '';
+  paintOverview(ov); setCache(`ov:${uid}`, ov, TTL);
+  // Awards counters
+  const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
+  setCount('awardPoints', ov && ov.points);
+  setCount('awardStars', ov && ov.stars);
+  // Derive medals from perfect_runs (or mastered_lists if preferred)
+  setCount('awardMedals', ov && (ov.perfect_runs ?? ov.mastered_lists));
+  paintBadges(badges); setCache(`badges:${uid}`, badges, TTL);
+  setCount('awardBadges', Array.isArray(badges) ? badges.length : (ov && ov.badges_count));
+  paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL);
     hideOverlay();
 
     // Defer non-critical tables (sessions, attempts)
-  const schedule = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 800 }) : setTimeout(fn, 120));
-  schedule(async () => {
-      try {
-        const [sessions, attempts] = await Promise.all([
-          fetchJSON(API.sessions()).catch(() => null),
-          fetchJSON(API.attempts()).catch(() => null)
-        ]);
-        const sessionsTb = document.getElementById('sessionsBody');
-        if (sessionsTb) {
-          if (!sessions || !Array.isArray(sessions) || !sessions.length) {
-            sessionsTb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>';
-          } else {
-            sessionsTb.innerHTML = sessions.map(s => {
-              const when = fmtDate(s.ended_at || s.started_at);
-              let listName = '';
-              try { let sum = s.summary; if (typeof sum === 'string') sum = JSON.parse(sum); listName = sum?.list_name || sum?.listName || ''; } catch {}
-              const sumStr = renderSummary(s.summary);
-              const meta = [sumStr, listName].filter(Boolean).join(' • ');
-              return `<tr>
-                <td data-label="When">${when}</td>
-                <td data-label="Mode"><span class="pill">${s.mode||'?'}<\/span></td>
-                <td data-label="Summary">${meta}</td>
-              </tr>`;
-            }).join('');
-          }
-        }
-        const attemptsTb = document.getElementById('attemptsBody');
-        if (attemptsTb) {
-          if (!attempts || !Array.isArray(attempts) || !attempts.length) {
-            attemptsTb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>';
-          } else {
-            attemptsTb.innerHTML = attempts.map(a => `<tr>
-              <td data-label="When">${fmtDate(a.created_at)}</td>
-              <td data-label="Mode">${a.mode||''}</td>
-              <td data-label="Word">${a.word||''}</td>
-              <td data-label="Result">${a.is_correct? '✅':'❌'}</td>
-              <td data-label="+Pts">${a.points??''}</td>
-            </tr>`).join('');
-          }
-        }
-      } catch {}
-    });
+  // Removed: deferred sessions/attempts fetch
 
     // Avatar modal behavior (deferred until after main data loads)
     const overlay = document.getElementById('avatarModal');
@@ -429,10 +385,16 @@
     if (btnClose) btnClose.addEventListener('click', closeModal);
     if (btnCancel) btnCancel.addEventListener('click', closeModal);
     if (btnSave) btnSave.addEventListener('click', async () => {
-      current = selected;
-      if (avatarEl) avatarEl.textContent = current;
-      closeModal();
-      await updateProfileAvatar(uid, current);
+      try {
+        current = selected;
+        if (avatarEl) avatarEl.textContent = current;
+        closeModal();
+        const ok = await updateProfileAvatar(current);
+        if (!ok) {
+          // Revert UI if save failed
+          if (avatarEl) avatarEl.textContent = '🙂';
+        }
+      } catch {}
     });
   hideOverlay();
   });

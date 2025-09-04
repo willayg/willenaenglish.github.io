@@ -86,7 +86,7 @@ class StudentHeader extends HTMLElement {
   .top { display:flex; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; }
   .title { font-weight:800; color: var(--pri, #19777e); }
   .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin-left:8px; justify-content: flex-end; }
-    .page-title ::slotted(img), .page-title ::slotted(svg), ::slotted(img[slot="actions"]), ::slotted(svg[slot="actions"]) { height: 5.3em; max-height: 5.6em; display:block; margin-left:auto; }
+  .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; }
         .spacer { flex:1; }
         .btn { border:1px solid var(--acc, #93cbcf); background: var(--acc, #93cbcf); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
         .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid var(--pri, #19777e); font-size:22px; }
@@ -98,7 +98,12 @@ class StudentHeader extends HTMLElement {
           overflow-x: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch;
           white-space: nowrap;
         }
-        .menu-track { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 0; }
+        .menu-track {
+          display: flex;
+          flex-wrap: nowrap;
+          align-items: center;
+          gap: 18px;
+        }
     /* Hide scrollbar for all browsers */
     .menu-row::-webkit-scrollbar { display: none; }
     .menu-row { scrollbar-width: none; scroll-behavior: smooth; }
@@ -141,7 +146,7 @@ class StudentHeader extends HTMLElement {
           </div>
           <div class="spacer"></div>
           <slot name="actions"></slot>
-          ${this.showHome ? `<button class="btn" id="homeBtn" part="home-button" type="button">${this.homeLabel}</button>` : ""}
+          ${this.showHome ? `<a class="menu-item" id="homeBtn" part="home-button" href="${this.homeHref}">${this.homeLabel}</a>` : ""}
         </div>
         <div class="menu-row" id="menuRow">
           <div class="menu-track">
@@ -152,19 +157,7 @@ class StudentHeader extends HTMLElement {
       </header>
     `;
 
-    const homeBtn = this.shadowRoot.getElementById("homeBtn");
-    if (homeBtn) {
-      homeBtn.onclick = () => {
-        const href = this.homeHref;
-        if (href) {
-          if (href.startsWith("http") || href.startsWith("/")) {
-            window.location.href = href;
-          } else {
-            window.location.assign(href);
-          }
-        }
-      };
-    }
+  // No JS click handler needed for <a> element; browser handles navigation
 
     // Title slot vs text: if title slot has content, hide text; hide entire container if neither
     const pageTitleEl = this.shadowRoot.getElementById('pageTitle');

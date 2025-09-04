@@ -140,10 +140,10 @@ export function showSampleWordlistModal({ onChoose }) {
     document.getElementById('closeSampleWordlistModal').onclick = () => { modal.style.display = 'none'; };
     document.getElementById('closeSampleWordlistModalX').onclick = () => { modal.style.display = 'none'; };
     document.getElementById('backToCategories').onclick = () => renderCategoryMenu();
-    const list = document.getElementById('sampleWordlistList');
+  const list = document.getElementById('sampleWordlistList');
   list.className = '';
   list.style.gridTemplateColumns = '';
-    // Emoji per sub-list
+  // Emoji per sub-list
     const listEmojis = {
       'EasyAnimals.json': '🐯',
       'Animals2.json': '🐼',
@@ -161,11 +161,20 @@ export function showSampleWordlistModal({ onChoose }) {
       'Feelings.json': '😊',
       'LongU.json': '🦄'
     };
+    // 1) Render 0% skeleton buttons immediately
     list.innerHTML = category.lists.map((it, i) => {
       const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
-  return `<button class="wl-btn" data-idx="${i}" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;">
-        <span style="font-size:2em;">${emoji}</span>
-        <span style="font-weight:600;">${it.label}</span>
+      return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;">
+        <span style="font-size:2em; margin-right:12px;">${emoji}</span>
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+            <span style="font-weight:600;min-width:0;">${it.label}</span>
+            <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;'>0%</span>
+          </div>
+          <div class="wl-bar" style="width:100%;height:7px;background:#e0e7ef;border-radius:4px;overflow:hidden;margin-top:7px;">
+            <div class="wl-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#93cbcf,#19777e);transition:width .3s ease;"></div>
+          </div>
+        </div>
       </button>`;
     }).join('');
     Array.from(list.children).forEach((btn) => {
@@ -175,6 +184,88 @@ export function showSampleWordlistModal({ onChoose }) {
       };
     });
     modal.style.display = 'flex';
+
+    // 2) Fetch sessions once and compute combined percent per list
+    (async () => {
+      // Normalizer for matching list_name to filename/label
+      const norm = (s) => String(s || '')
+        .toLowerCase()
+        .replace(/\.(json|csv|txt)$/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+      const isMatch = (a, b) => {
+        const na = norm(a), nb = norm(b);
+        if (!na || !nb) return false;
+        return na === nb || na.includes(nb) || nb.includes(na);
+      };
+
+      let sessions = [];
+      try {
+        const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
+        url.searchParams.set('section', 'sessions');
+        // Try to include Supabase access token if available
+        let headers = {};
+        try {
+          const supa = window.__supabase;
+          if (supa && supa.auth && typeof supa.auth.getSession === 'function') {
+            const { data: { session } } = await supa.auth.getSession();
+            if (session?.access_token) headers = { Authorization: `Bearer ${session.access_token}` };
+          }
+        } catch {}
+        const res = await fetch(url.toString(), { cache: 'no-store', headers });
+        if (res.ok) sessions = await res.json();
+      } catch {}
+
+      const tracked = ['meaning','listening','multi_choice','listen_and_spell','spelling','level_up'];
+
+      const percents = category.lists.map((it) => {
+        const bestByMode = {};
+        (Array.isArray(sessions) ? sessions : []).forEach(s => {
+          if (!s) return;
+          const ln = s.list_name != null ? String(s.list_name) : '';
+          if (!(isMatch(ln, it.file) || isMatch(ln, it.label))) return;
+          let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
+          let pct = 0;
+          if (sum && typeof sum.total === 'number' && typeof sum.score === 'number' && sum.total > 0) {
+            pct = Math.round((sum.score / sum.total) * 100);
+          } else if (sum && typeof sum.max === 'number' && typeof sum.score === 'number' && sum.max > 0) {
+            pct = Math.round((sum.score / sum.max) * 100);
+          } else if (sum && typeof sum.accuracy === 'number') {
+            pct = Math.round(Math.max(0, Math.min(1, sum.accuracy)) * 100);
+          }
+          const modeKey = String(s.mode || '').toLowerCase();
+          if (!bestByMode[modeKey] || bestByMode[modeKey] < pct) bestByMode[modeKey] = pct;
+        });
+        let sumPct = 0, count = 0;
+        tracked.forEach(m => { if (typeof bestByMode[m] === 'number') { sumPct += bestByMode[m]; count++; } });
+        return count ? Math.round(sumPct / count) : 0;
+      });
+
+      // 3) Re-render with actual percents
+      list.innerHTML = category.lists.map((it, i) => {
+        const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
+        const pct = Math.max(0, Math.min(100, percents[i] || 0));
+        return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;">
+          <span style="font-size:2em; margin-right:12px;">${emoji}</span>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+              <span style="font-weight:600;min-width:0;">${it.label}</span>
+              <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;'>${pct}%</span>
+            </div>
+            <div class="wl-bar" style="width:100%;height:7px;background:#e0e7ef;border-radius:4px;overflow:hidden;margin-top:7px;">
+              <div class="wl-bar-fill" style="height:100%;width:${pct}%;background:linear-gradient(90deg,#93cbcf,#19777e);transition:width .3s ease;"></div>
+            </div>
+          </div>
+        </button>`;
+      }).join('');
+
+      Array.from(list.children).forEach((btn) => {
+        btn.onclick = () => {
+          modal.style.display = 'none';
+          if (onChoose) onChoose(category.lists[Number(btn.getAttribute('data-idx'))].file);
+        };
+      });
+    })();
   }
 
   renderCategoryMenu();
