@@ -32,15 +32,6 @@ function getSupabase() {
       detectSessionInUrl: true,
     }
   });
-  // When auth state changes (login/logout), sync header profile so UI matches the active user
-  if (!window.__waAuthHooked) {
-    try {
-      window.__supabase.auth.onAuthStateChange(() => {
-        try { syncHeaderProfileFromServer(); } catch {}
-      });
-      window.__waAuthHooked = true;
-    } catch {}
-  }
   return window.__supabase;
 }
 
@@ -62,7 +53,7 @@ async function getAccessToken() {
 // -----------------------------
 async function fetchJSON(url, {
   method = 'GET', token, timeoutMs = 15000,
-  headers = {}, body, cache = 'no-store', credentials = 'same-origin'
+  headers = {}, body, cache = 'no-store', credentials = 'include'
 } = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -198,12 +189,14 @@ function showInlineError(text, onRetry) {
 // Core flow
 // -----------------------------
 async function callProgressSummary(section, params = {}) {
-  const token = await getAccessToken();
   const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
   url.searchParams.set('section', section);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
+  // Try to include a Bearer token if available, but don't fail if we can't get one.
+  let token;
+  try { token = await getAccessToken(); } catch {}
   return fetchJSON(url.toString(), { token });
 }
 
@@ -361,8 +354,10 @@ async function openSavedGamesModal() {
 
 async function openSavedGameById(id) {
   try {
-    const token = await getAccessToken();
-    const js = await fetchJSON(`/.netlify/functions/supabase_proxy_fixed?get=game_data&id=${encodeURIComponent(id)}`, { token });
+  // Prefer token when available, but allow cookie-auth fallback
+  let token;
+  try { token = await getAccessToken(); } catch {}
+  const js = await fetchJSON(`/.netlify/functions/supabase_proxy_fixed?get=game_data&id=${encodeURIComponent(id)}`, { token });
     const row = js?.data || js;
     if (!row || !Array.isArray(row.words)) {
       inlineToast('Saved game not found or invalid.');
@@ -386,7 +381,7 @@ async function openSavedGameById(id) {
     currentListName = row.title || 'Saved Game';
     await processWordlist(mapped);
   } catch (e) {
-    if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
+  if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
       inlineToast('Please sign in to open saved games.');
       return;
     }
@@ -412,6 +407,8 @@ window.WordArcade = {
   startGame,
   startFilePicker,
   startModeSelector,
+  // expose token helper for UI modules that need to call secure endpoints
+  getAccessToken: () => getAccessToken(),
   getWordList: () => wordList,
   getListName: () => currentListName,
   openSavedGames: () => openSavedGamesModal(),
@@ -436,42 +433,3 @@ async function loadChallengingAndStart() {
     inlineToast('Could not load your review list. Please try again.');
   }
 }
-
-// -----------------------------
-// Sync header profile (name/avatar) from server when signed in
-// This prevents stale localStorage values from showing the wrong user.
-// -----------------------------
-async function syncHeaderProfileFromServer() {
-  try {
-    const token = await getAccessToken();
-    const prof = await fetchJSON('/.netlify/functions/get_profile_name', { token });
-    if (!prof || typeof prof !== 'object') return;
-    let changed = false;
-    if (prof.username && localStorage.getItem('user_name') !== prof.username) {
-      localStorage.setItem('user_name', prof.username);
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(prof, 'avatar')) {
-      const newVal = prof.avatar == null ? null : String(prof.avatar);
-      const curVal = localStorage.getItem('selectedEmojiAvatar');
-      if (newVal !== curVal) {
-        if (newVal === null) localStorage.removeItem('selectedEmojiAvatar');
-        else localStorage.setItem('selectedEmojiAvatar', newVal);
-        changed = true;
-      }
-    }
-    if (changed) {
-      document.querySelectorAll('student-header').forEach(el => {
-        try { el.refresh && el.refresh(); } catch {}
-      });
-    }
-  } catch (_) {
-    // Not signed in or request failed; ignore silently.
-  }
-}
-
-// Attempt initial sync shortly after load
-window.addEventListener('DOMContentLoaded', () => {
-  // fire and forget; if not signed in, it no-ops
-  syncHeaderProfileFromServer();
-});

@@ -34,17 +34,24 @@
 </head>
 <body>
   <script>
-    // Access control: only allow users with 'admin' role (case-insensitive)
+    // Access control: prefer cookie session; fall back to localStorage only if needed (temporary)
     (async function() {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        window.location.href = '/Teachers/login.html';
-        return;
-      }
       try {
-        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+        // Try cookie-based whoami + get_profile
+        const who = await fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami', { credentials: 'include' });
+        const whoRes = await who.json();
+        let userId = whoRes && whoRes.success ? whoRes.user_id : null;
+        if (!userId) {
+          // Fallback to legacy localStorage (for partial migration)
+          userId = localStorage.getItem('userId');
+        }
+        if (!userId) {
+          window.location.href = '/Teachers/login.html';
+          return;
+        }
+        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile${userId ? `&user_id=${encodeURIComponent(userId)}` : ''}`, { credentials: 'include' });
         const result = await res.json();
-        let role = (result && result.role) ? String(result.role).toLowerCase() : '';
+        const role = (result && result.role) ? String(result.role).toLowerCase() : '';
         if (!result.success || role !== 'admin') {
           window.location.href = '/Teachers/components/access-denied.html';
           return;

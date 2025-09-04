@@ -7,7 +7,8 @@ async function loginTeacher(email, password) {
   const res = await fetch(SUPABASE_PROXY_URL + '?action=login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+  credentials: 'include',
+  body: JSON.stringify({ email, password })
   });
   const result = await res.json();
   if (!res.ok || !result.success) {

@@ -39,10 +39,10 @@
 <body>
   <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home">
     <img slot="actions" src="assets/Images/icons/word-arcade.svg" alt="Word Arcade" style="height:4em;max-height:4.5em;display:block;" />
-    <a slot="menu-item" id="navHome" class="menu-item" href="/students/dashboard.html">Home</a>
-    <button slot="menu-item" id="menuBtn" class="menu-item" type="button">Menu</button>
-    <button slot="menu-item" id="levelsBtn" class="menu-item" type="button">Levels</button>
-    <a slot="menu-item" id="navGrammar" class="menu-item" href="/Games/GrammarArcade/index.html">Grammar Arcade</a>
+  <a slot="menu-item" id="navHome" class="wa-menu-btn" href="/students/dashboard.html">Home</a>
+  <a slot="menu-item" id="menuBtn" class="wa-menu-btn" href="#">Menu</a>
+  <a slot="menu-item" id="levelsBtn" class="wa-menu-btn" href="#">Levels</a>
+  <a slot="menu-item" id="navGrammar" class="wa-menu-btn" href="/Games/GrammarArcade/index.html">Grammar Arcade</a>
   </student-header>
 
   <main>
@@ -84,33 +84,19 @@
     <div id="modalOverlay" style="display: none;"></div>
   </main>
 
-  <!-- Tiny bootstrap to wire header controls and refresh profile via token -->
+  <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-    const supabaseUrl = document.querySelector('meta[name="supabase-url"]').content;
-    const supabaseAnon = document.querySelector('meta[name="supabase-anon-key"]').content;
-    const supabase = createClient(supabaseUrl, supabaseAnon, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-
     const $ = (sel) => document.querySelector(sel);
 
     async function ensureHeaderProfile(){
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return; // not signed in
-        const res = await fetch('/.netlify/functions/get_profile_name', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: 'no-store',
-          credentials: 'same-origin'
-        });
+        // Get profile info (name + avatar) from cookie session
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile_name', { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json().catch(() => null);
-        if (!data) return;
-
-        if (data.username && typeof data.username === 'string') {
-          localStorage.setItem('user_name', data.username.slice(0,40));
+        if (!data || !data.success) return;
+        if ((data.username || data.name) && typeof (data.username || data.name) === 'string') {
+          localStorage.setItem('user_name', (data.username || data.name).slice(0,40));
         }
         if (data.avatar && typeof data.avatar === 'string' && data.avatar.length <= 16) {
           localStorage.setItem('selectedEmojiAvatar', data.avatar);

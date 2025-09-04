@@ -11,6 +11,65 @@ exports.handler = async (event) => {
     NODE_ENV: process.env.NODE_ENV
   });
   
+  // Helpers for cookie-based sessions
+  function parseCookies(header) {
+    const out = {};
+    if (!header) return out;
+    header.split(/;\s*/).forEach(kv => {
+      const idx = kv.indexOf('=');
+      if (idx > 0) {
+        const k = kv.slice(0, idx).trim();
+        const v = kv.slice(idx + 1).trim();
+        if (k && !(k in out)) out[k] = decodeURIComponent(v);
+      }
+    });
+    return out;
+  }
+
+  function makeCookie(name, value, { maxAge, expires, secure = true, httpOnly = true, sameSite = 'Lax', path = '/' } = {}) {
+    let str = `${name}=${encodeURIComponent(value || '')}`;
+    if (maxAge != null) str += `; Max-Age=${maxAge}`;
+    if (expires) str += `; Expires=${expires.toUTCString()}`;
+    if (path) str += `; Path=${path}`;
+    if (secure) str += '; Secure';
+    if (httpOnly) str += '; HttpOnly';
+    if (sameSite) str += `; SameSite=${sameSite}`;
+    return str;
+  }
+
+  async function getUserFromCookie(supabase, event) {
+    const headers = event.headers || {};
+    const authHeader = headers.authorization || headers.Authorization || '';
+    let token = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    } else {
+      const cookieHeader = (headers.Cookie || headers.cookie) || '';
+      const cookies = parseCookies(cookieHeader);
+      token = cookies['sb_access'] || null;
+    }
+    if (!token) return null;
+    try {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (error || !data || !data.user) return null;
+      return data.user;
+    } catch {
+      return null;
+    }
+  }
+  // Decode JWT locally to extract the user id (sub), avoids upstream failures
+  function getUserIdFromCookie(event) {
+    try {
+      const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+      const cookies = parseCookies(cookieHeader);
+      const access = cookies['sb_access'];
+      if (!access) return null;
+      const { decodeJwt } = require('jose');
+      const payload = decodeJwt(access);
+      return payload && payload.sub ? payload.sub : null;
+    } catch { return null; }
+  }
+  
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
@@ -145,22 +204,121 @@ exports.handler = async (event) => {
       }
     }
 
-    // --- GET PROFILE (name, email, approval, role) ---
+    // --- GET PROFILE (name, email, approval, role, plus korean_name/class if present) ---
     if (event.queryStringParameters && event.queryStringParameters.action === 'get_profile' && event.httpMethod === 'GET') {
       try {
-        const userId = event.queryStringParameters.user_id;
+        let userId = event.queryStringParameters.user_id;
         if (!userId) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
+          // Prefer validated Supabase auth first, then local decode as a last resort
+          const user = await getUserFromCookie(supabase, event);
+          userId = user && user.id;
+          if (!userId) {
+            userId = getUserIdFromCookie(event);
+          }
         }
+        if (!userId) {
+          return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Missing or unauthorized user' }) };
+        }
+        // Select entire row so we can map optional fields regardless of exact column name
         const { data, error } = await supabase
           .from('profiles')
-          .select('name, email, approved, role, username')
+          .select('*')
           .eq('id', userId)
           .single();
         if (error || !data) {
           return { statusCode: 404, body: JSON.stringify({ success: false, error: 'User not found' }) };
         }
-        return { statusCode: 200, body: JSON.stringify({ success: true, name: data.name, email: data.email, approved: data.approved, role: data.role, username: data.username }) };
+        // Map korean name and class using common aliases
+        const koreanName = data.korean_name || data.koreanname || data.kor_name || data.korean || data.name_kr || null;
+        const classVal = data.class || data.class_name || data.homeroom || data.grade || data.group || null;
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            name: data.name,
+            email: data.email,
+            approved: data.approved,
+            role: data.role,
+            username: data.username,
+            avatar: data.avatar,
+            korean_name: koreanName,
+            class: classVal
+          })
+        };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // --- WHOAMI (derive user_id from cookie; local decode first) ---
+  if (event.queryStringParameters && event.queryStringParameters.action === 'whoami' && event.httpMethod === 'GET') {
+      try {
+        // Prefer validated Supabase auth first
+        const user = await getUserFromCookie(supabase, event);
+        if (user && user.id) {
+          return { statusCode: 200, body: JSON.stringify({ success: true, user_id: user.id, email: user.email }) };
+        }
+        const localId = getUserIdFromCookie(event);
+    if (!localId) return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Not signed in' }) };
+    return { statusCode: 200, body: JSON.stringify({ success: true, user_id: localId }) };
+      } catch (err) {
+    return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Not signed in' }) };
+      }
+    }
+
+    // --- GET PROFILE NAME (name, username, avatar) + optional korean_name/class for fallback ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'get_profile_name' && event.httpMethod === 'GET') {
+      try {
+        let userId = getUserIdFromCookie(event);
+        if (!userId) {
+          const user = await getUserFromCookie(supabase, event);
+          userId = user && user.id;
+        }
+        if (!userId) {
+          return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Missing or unauthorized user' }) };
+        }
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        if (error || !data) {
+          return { statusCode: 404, body: JSON.stringify({ success: false, error: 'User not found' }) };
+        }
+        const koreanName = data.korean_name || data.koreanname || data.kor_name || data.korean || data.name_kr || null;
+        const classVal = data.class || data.class_name || data.homeroom || data.grade || data.group || null;
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ success: true, name: data.name, username: data.username, avatar: data.avatar, korean_name: koreanName, class: classVal })
+        };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // --- UPDATE PROFILE AVATAR ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'update_profile_avatar' && event.httpMethod === 'POST') {
+      try {
+        let userId = getUserIdFromCookie(event);
+        if (!userId) {
+          const user = await getUserFromCookie(supabase, event);
+          userId = user && user.id;
+        }
+        if (!userId) {
+          return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Missing or unauthorized user' }) };
+        }
+        const { avatar } = JSON.parse(event.body || '{}');
+        if (!avatar || typeof avatar !== 'string') {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing avatar' }) };
+        }
+        const { error } = await supabase
+          .from('profiles')
+          .update({ avatar })
+          .eq('id', userId);
+        if (error) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true }) };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
       }
@@ -304,10 +462,41 @@ exports.handler = async (event) => {
         if (error) {
           return { statusCode: 401, body: JSON.stringify({ success: false, error: error.message }) };
         }
-        return { statusCode: 200, body: JSON.stringify({ success: true, user: data.user }) };
+        const session = data && data.session;
+        const accessToken = session && session.access_token;
+        const refreshToken = session && session.refresh_token;
+        const cookies = [];
+        if (accessToken) cookies.push(makeCookie('sb_access', accessToken, { maxAge: 60 * 60, secure: true, httpOnly: true, sameSite: 'Lax', path: '/' }));
+        if (refreshToken) cookies.push(makeCookie('sb_refresh', refreshToken, { maxAge: 60 * 60 * 24 * 7, secure: true, httpOnly: true, sameSite: 'Lax', path: '/' }));
+        return {
+          statusCode: 200,
+          headers: {
+            'Set-Cookie': cookies,
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ success: true, user: data.user })
+        };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
       }
+    }
+
+    // --- LOGOUT (clear cookies) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'logout') {
+      const expired = new Date(0);
+      return {
+        statusCode: 200,
+        headers: {
+          'Set-Cookie': [
+            makeCookie('sb_access', '', { expires: expired, path: '/', secure: true, httpOnly: true, sameSite: 'Lax' }),
+            makeCookie('sb_refresh', '', { expires: expired, path: '/', secure: true, httpOnly: true, sameSite: 'Lax' })
+          ],
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ success: true })
+      };
     }
 
     // --- GET USER ROLE ---
