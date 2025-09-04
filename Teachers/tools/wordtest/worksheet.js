@@ -149,32 +149,32 @@ export function getCurrentWorksheetData(currentWords, currentSettings) {
     }
     
     // Only save worksheet_type, title, passage_text, words, layout, settings, and imageData
-    // settings: font, fontSize, imageSize, imageGap, testMode, numLettersToHide
+    // settings: font, fontSize, imageSize, imageGap, testMode, numLettersToHide, difficulty
     const settings = {
         font: currentSettings.font,
         fontSize: currentSettings.fontSize,
         imageSize: currentSettings.imageSize,
         imageGap: currentSettings.imageGap,
         testMode: currentSettings.testMode,
-        numLettersToHide: currentSettings.numLettersToHide
+        numLettersToHide: currentSettings.numLettersToHide,
+        difficulty: document.getElementById('difficultySelect')?.value || ''
     };
-    
+
     const worksheetData = {
         worksheet_type: 'wordtest',
         title,
         passage_text: passage,
         words,
-        difficulty: document.getElementById('difficultySelect')?.value || '',
         layout: currentSettings.layout,
         settings: JSON.stringify(settings),
-    images: JSON.stringify(imageData)
+        images: JSON.stringify(imageData)
     };
-    
+
     // Include user_id if this worksheet was loaded from database (for updates)
     if (window._currentWorksheetId) {
         worksheetData.user_id = window._currentWorksheetId;
     }
-    
+
     return worksheetData;
 }
 
