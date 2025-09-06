@@ -10,7 +10,14 @@ async function loginTeacher(email, password) {
   credentials: 'include',
   body: JSON.stringify({ email, password })
   });
-  const result = await res.json();
+  let result = null;
+  try {
+    result = await res.json();
+  } catch {
+    // Non-JSON (e.g., 502 HTML) -> make a readable error
+    const text = await res.text().catch(() => '');
+    throw new Error(res.ok ? 'Unexpected response' : `Login service error (${res.status}).`);
+  }
   if (!res.ok || !result.success) {
     throw new Error(result.error || 'Login failed');
   }
@@ -20,7 +27,8 @@ async function loginTeacher(email, password) {
 async function getUserRole(userId) {
   // Fetch user role from proxy
   const res = await fetch(SUPABASE_PROXY_URL + '?action=get_role&user_id=' + encodeURIComponent(userId));
-  const result = await res.json();
+  let result = null;
+  try { result = await res.json(); } catch { throw new Error(`Role service error (${res.status})`); }
   if (!res.ok || !result.success) {
     throw new Error(result.error || 'Could not fetch user role');
   }
@@ -30,7 +38,8 @@ async function getUserRole(userId) {
 async function getProfileId(authUserId) {
   // Get profile ID from auth user ID
   const res = await fetch(SUPABASE_PROXY_URL + '?action=get_profile_id&auth_user_id=' + encodeURIComponent(authUserId));
-  const result = await res.json();
+  let result = null;
+  try { result = await res.json(); } catch { throw new Error(`Profile service error (${res.status})`); }
   if (!res.ok || !result.success) {
     throw new Error(result.error || 'Could not fetch profile ID');
   }

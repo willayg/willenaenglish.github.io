@@ -10,8 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
-    "backblaze-b2": "^1.7.1",
-    "willenaenglish.github.io": "file:../.."
+  "backblaze-b2": "^1.7.1",
+  "jose": "^5.2.0"
   },
   "description": ""
 }
