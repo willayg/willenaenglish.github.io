@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
+// Use dynamic import to support ESM-only supabase-js in Netlify production
 
 exports.handler = async (event) => {
   console.log('=== FUNCTION START ===');
@@ -88,8 +88,16 @@ exports.handler = async (event) => {
   
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key;
+    if (!SUPABASE_URL || !SERVICE_KEY) {
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, error: 'Supabase env not configured' })
+      };
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // --- AUDIO UPLOAD (for TTS mp3 files) ---
     if (event.queryStringParameters && event.queryStringParameters.upload_audio !== undefined) {
