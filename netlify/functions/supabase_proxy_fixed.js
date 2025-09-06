@@ -118,8 +118,70 @@ exports.handler = async (event) => {
         body: JSON.stringify({ success: false, error: 'Supabase env not configured' })
       };
     }
+
+    // Fast path: login route handled without importing supabase-js to avoid ESM bundling issues
+    if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
+      try {
+        console.log('=== LOGIN START ===');
+        const { email, password } = JSON.parse(event.body || '{}');
+        if (!email || !password) {
+          return { statusCode: 400, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
+        }
+
+        // Check profile approval via Supabase REST using service role key
+        const profileResp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,approved&email=eq.${encodeURIComponent(email)}`, {
+          headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` }
+        });
+        const profileArr = await profileResp.json().catch(() => []);
+        const profile = Array.isArray(profileArr) ? profileArr[0] : null;
+        if (!profile || !profile.approved) {
+          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
+        }
+
+        // Perform password grant with anon or site key
+        const API_KEY =
+          process.env.SUPABASE_ANON_KEY ||
+          process.env.SUPABASE_KEY ||
+          process.env.supabase_anon_key ||
+          process.env.supabase_key;
+        if (!API_KEY) {
+          return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
+        }
+
+        const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const authData = await authResp.json().catch(() => ({}));
+        if (!authResp.ok || !authData || !authData.access_token) {
+          const msg = authData?.error_description || authData?.error || 'Invalid credentials';
+          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: msg }) };
+        }
+
+        // Set cookies; use SameSite=None for cross-origin
+        const secureFlag = !isLocalDev(event);
+        const sameSite = secureFlag ? 'None' : 'Lax';
+        const cookies = [
+          makeCookie('sb_access', authData.access_token, { maxAge: 3600, secure: secureFlag, httpOnly: true, sameSite, path: '/' })
+        ];
+        if (authData.refresh_token) {
+          cookies.push(makeCookie('sb_refresh', authData.refresh_token, { maxAge: 604800, secure: secureFlag, httpOnly: true, sameSite, path: '/' }));
+        }
+        return {
+          statusCode: 200,
+          headers: { 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json', ...makeCorsHeaders(event, true) },
+          body: JSON.stringify({ success: true, user: authData.user || null })
+        };
+      } catch (err) {
+        console.error('=== LOGIN ERROR ===', err.message, err.stack);
+        return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // Import supabase client only for routes that require it
     const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // --- AUDIO UPLOAD (for TTS mp3 files) ---
     if (event.queryStringParameters && event.queryStringParameters.upload_audio !== undefined) {
