@@ -37,6 +37,22 @@ exports.handler = async (event) => {
     return str;
   }
 
+  // Determine if current request is from a local dev origin (e.g., http://localhost:8888 or :9000)
+  function isLocalDev(event) {
+    try {
+      const headers = event.headers || {};
+      const host = String(headers.host || headers.Host || headers["x-forwarded-host"] || '').toLowerCase();
+      // Netlify/CLIs typically use localhost or 127.0.0.1 on various ports
+      if (host.includes('localhost') || host.includes('127.0.0.1')) return true;
+      // Fallback: parse rawUrl to detect scheme/host
+      if (event.rawUrl) {
+        const u = new URL(event.rawUrl);
+        if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return true;
+      }
+    } catch {}
+    return false;
+  }
+
   async function getUserFromCookie(supabase, event) {
     const headers = event.headers || {};
     const authHeader = headers.authorization || headers.Authorization || '';
@@ -465,9 +481,10 @@ exports.handler = async (event) => {
         const session = data && data.session;
         const accessToken = session && session.access_token;
         const refreshToken = session && session.refresh_token;
-        const cookies = [];
-        if (accessToken) cookies.push(makeCookie('sb_access', accessToken, { maxAge: 60 * 60, secure: true, httpOnly: true, sameSite: 'Lax', path: '/' }));
-        if (refreshToken) cookies.push(makeCookie('sb_refresh', refreshToken, { maxAge: 60 * 60 * 24 * 7, secure: true, httpOnly: true, sameSite: 'Lax', path: '/' }));
+  const cookies = [];
+  const secureFlag = !isLocalDev(event); // Use Secure in prod; allow non-Secure cookies in local dev (HTTP)
+  if (accessToken) cookies.push(makeCookie('sb_access', accessToken, { maxAge: 60 * 60, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
+  if (refreshToken) cookies.push(makeCookie('sb_refresh', refreshToken, { maxAge: 60 * 60 * 24 * 7, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
         return {
           statusCode: 200,
           headers: {
@@ -485,18 +502,64 @@ exports.handler = async (event) => {
     // --- LOGOUT (clear cookies) ---
     if (event.queryStringParameters && event.queryStringParameters.action === 'logout') {
       const expired = new Date(0);
+      const secureFlag = !isLocalDev(event);
       return {
         statusCode: 200,
         headers: {
           'Set-Cookie': [
-            makeCookie('sb_access', '', { expires: expired, path: '/', secure: true, httpOnly: true, sameSite: 'Lax' }),
-            makeCookie('sb_refresh', '', { expires: expired, path: '/', secure: true, httpOnly: true, sameSite: 'Lax' })
+            makeCookie('sb_access', '', { expires: expired, path: '/', secure: secureFlag, httpOnly: true, sameSite: 'Lax' }),
+            makeCookie('sb_refresh', '', { expires: expired, path: '/', secure: secureFlag, httpOnly: true, sameSite: 'Lax' })
           ],
           'Cache-Control': 'no-store',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ success: true })
       };
+    }
+
+    // --- REFRESH (rotate access token using refresh cookie) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'refresh' && event.httpMethod === 'GET') {
+      try {
+        const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+        const cookies = parseCookies(cookieHeader);
+        const refreshTok = cookies['sb_refresh'];
+        if (!refreshTok) {
+          return { statusCode: 401, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: 'No refresh token' }) };
+        }
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const API_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ refresh_token: refreshTok })
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || !js.access_token) {
+          return { statusCode: 401, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: js?.error_description || js?.error || 'Refresh failed' }) };
+        }
+        const accessToken = js.access_token;
+        // Supabase may rotate refresh_token
+        const newRefresh = js.refresh_token || refreshTok;
+        const expiresIn = Number(js.expires_in) > 0 ? Number(js.expires_in) : 3600; // seconds
+
+        const cookiesOut = [];
+        const secureFlag = !isLocalDev(event);
+        cookiesOut.push(
+          makeCookie('sb_access', accessToken, { maxAge: expiresIn, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' })
+        );
+        // Extend refresh cookie window to 6 months (about 15,552,000 seconds)
+        const SIX_MONTHS = 60 * 60 * 24 * 30 * 6; // 6 months
+        cookiesOut.push(
+          makeCookie('sb_refresh', newRefresh, { maxAge: SIX_MONTHS, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' })
+        );
+        return {
+          statusCode: 200,
+          headers: { 'Set-Cookie': cookiesOut, 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, expires_in: expiresIn })
+        };
+      } catch (err) {
+        return { statusCode: 500, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: err.message }) };
+      }
     }
 
     // --- GET USER ROLE ---
