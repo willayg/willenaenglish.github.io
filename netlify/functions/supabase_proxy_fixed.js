@@ -12,6 +12,19 @@ exports.handler = async (event) => {
   });
   
   // Helpers for cookie-based sessions
+  function makeCorsHeaders(event, withCredentials = false) {
+    const headers = event.headers || {};
+    const origin = headers.origin || headers.Origin || '';
+    const allowOrigin = origin || '*';
+    const base = {
+      'Access-Control-Allow-Origin': allowOrigin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Vary': 'Origin'
+    };
+    if (withCredentials) base['Access-Control-Allow-Credentials'] = 'true';
+    return base;
+  }
   function parseCookies(header) {
     const out = {};
     if (!header) return out;
@@ -87,6 +100,10 @@ exports.handler = async (event) => {
   }
   
   try {
+    // Handle global preflight
+    if (event.httpMethod === 'OPTIONS') {
+      return { statusCode: 200, headers: makeCorsHeaders(event, true), body: '' };
+    }
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key;
     if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -463,12 +480,12 @@ exports.handler = async (event) => {
     }
 
     // --- TEACHER LOGIN (email/password, only approved users) ---
-    if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
+  if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
       try {
         console.log('=== LOGIN START ===');
         const { email, password } = JSON.parse(event.body || '{}');
         if (!email || !password) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
         }
         console.log('Email received, checking profile...');
         
@@ -482,10 +499,10 @@ exports.handler = async (event) => {
         console.log('Profile query result:', { profile: !!profile, error: !!profileError });
         
         if (profileError || !profile) {
-          return { statusCode: 401, body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
+          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
         }
         if (!profile.approved) {
-          return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
+          return { statusCode: 403, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
 
         console.log('Profile approved, attempting auth...');
@@ -498,7 +515,7 @@ exports.handler = async (event) => {
           process.env.supabase_key;
         
         if (!API_KEY) {
-          return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
+          return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
         }
         
         const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -512,7 +529,7 @@ exports.handler = async (event) => {
         const authData = await authResp.json().catch(() => ({}));
         if (!authResp.ok || !authData || !authData.access_token) {
           const msg = authData?.error_description || authData?.error || 'Invalid credentials';
-          return { statusCode: 401, body: JSON.stringify({ success: false, error: msg }) };
+          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: msg }) };
         }
 
         console.log('Auth successful, setting cookies...');
@@ -528,12 +545,12 @@ exports.handler = async (event) => {
 
         return {
           statusCode: 200,
-          headers: { 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+          headers: { 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json', ...makeCorsHeaders(event, true) },
           body: JSON.stringify({ success: true, user: authData.user || null })
         };
       } catch (err) {
         console.error('=== LOGIN ERROR ===', err.message, err.stack);
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+        return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: err.message }) };
       }
     }
 
@@ -850,11 +867,12 @@ exports.handler = async (event) => {
           body: JSON.stringify({ success: false, error: err.message })
         };
       }
-    } else if (event.path.endsWith('/debug') && event.httpMethod === 'GET') {
+  } else if (event.path.endsWith('/debug') && event.httpMethod === 'GET') {
       // Debug endpoint to check environment variables
       return {
-        statusCode: 200,
-        body: JSON.stringify({
+    statusCode: 200,
+    headers: makeCorsHeaders(event, true),
+    body: JSON.stringify({
           hasSupabaseUrl: !!process.env.SUPABASE_URL,
           hasSupabaseKey: !!process.env.SUPABASE_KEY,
           hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
