@@ -20,10 +20,11 @@ function cors(event, extra = {}) {
   };
 }
 
-function cookie(name, value, { maxAge, secure = true, httpOnly = true, sameSite = 'None', path = '/' } = {}) {
+function cookie(name, value, { maxAge, secure = true, httpOnly = true, sameSite = 'None', path = '/', domain } = {}) {
   let s = `${name}=${encodeURIComponent(value ?? '')}`;
   if (maxAge != null) s += `; Max-Age=${maxAge}`;
   if (path) s += `; Path=${path}`;
+  if (domain) s += `; Domain=${domain}`;
   if (secure) s += '; Secure';
   if (httpOnly) s += '; HttpOnly';
   if (sameSite) s += `; SameSite=${sameSite}`;
@@ -134,9 +135,16 @@ exports.handler = async (event) => {
         return respond(event, 401, { success: false, error: (authData && authData.error_description) || 'Invalid credentials' });
       }
 
+      // If origin is a willenaenglish.com host, scope cookies to .willenaenglish.com so apex and www both work
+      let cookieDomain;
+      try {
+        const oh = (event.headers && (event.headers.origin || event.headers.Origin)) || '';
+        if (oh && /^https:\/\/(www\.)?willenaenglish\.com$/i.test(oh)) cookieDomain = '.willenaenglish.com';
+      } catch {}
+
       const cookies = [
-        cookie('sb_access', authData.access_token, { maxAge: 3600 }),
-        cookie('sb_refresh', authData.refresh_token || '', { maxAge: 60 * 60 * 24 * 30 }),
+        cookie('sb_access', authData.access_token, { maxAge: 3600, domain: cookieDomain }),
+        cookie('sb_refresh', authData.refresh_token || '', { maxAge: 60 * 60 * 24 * 30, domain: cookieDomain }),
       ];
       return respond(event, 200, { success: true, user: authData.user }, {}, cookies);
     }
