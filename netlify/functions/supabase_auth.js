@@ -325,27 +325,19 @@ exports.handler = async (event) => {
       const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
       const m = /(?:^|;\s*)sb_refresh=([^;]+)/.exec(cookieHeader);
       if (!m) return respond(event, 200, { success: false, message: 'No refresh token' });
-      
+
       const refreshToken = decodeURIComponent(m[1]);
       try {
         const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
         if (error || !data.session) return respond(event, 200, { success: false, message: 'Refresh failed' });
-        
+
         const session = data.session;
-        const host = (event.headers?.host || event.headers?.Host || '').toLowerCase();
-        const domain = host.endsWith('willenaenglish.com') ? '.willenaenglish.com' : '';
-        
-        return {
-          statusCode: 200,
-          headers: {
-            ...makeCorsHeaders(event),
-            'Set-Cookie': [
-              cookie('sb_access', session.access_token, { domain, maxAge: 3600 }),
-              cookie('sb_refresh', session.refresh_token, { domain, maxAge: 2592000 })
-            ]
-          },
-          body: JSON.stringify({ success: true })
-        };
+        // Use our cookie() helper which auto-adds Domain=.willenaenglish.com when appropriate
+        const cookies = [
+          cookie('sb_access', session.access_token, event, { maxAge: 3600, sameSite: 'None' }),
+          cookie('sb_refresh', session.refresh_token, event, { maxAge: 2592000, sameSite: 'None' })
+        ];
+        return respond(event, 200, { success: true }, {}, cookies);
       } catch {
         return respond(event, 200, { success: false, message: 'Refresh failed' });
       }
