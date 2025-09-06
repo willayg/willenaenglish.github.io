@@ -1,9 +1,20 @@
 exports.handler = async (event) => {
-  // Ultra-minimal CORS headers
+  // Get the origin for proper CORS
+  const origin = event.headers?.origin || event.headers?.Origin || '';
+  const allowedOrigins = [
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.com',
+    'https://willenaenglish.github.io',
+    'https://willenaenglish.netlify.app'
+  ];
+  
+  // Allow the origin if it's in our list, otherwise use the Netlify default
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : 'https://willenaenglish.netlify.app';
+  
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
     'Access-Control-Allow-Credentials': 'true'
   };
 
