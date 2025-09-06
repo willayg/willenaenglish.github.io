@@ -2,6 +2,7 @@
 function cors(event, extra = {}) {
   const ALLOWLIST = new Set([
     'https://www.willenaenglish.com',
+  'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
     'http://localhost:9000',
