@@ -10,6 +10,7 @@ class StudentHeader extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
   this._onStorage = this._onStorage.bind(this);
+  this._fetchingPoints = false;
   }
 
   attributeChangedCallback() {
@@ -31,7 +32,7 @@ class StudentHeader extends HTMLElement {
 
   _onStorage(e) {
     // Only re-render if relevant keys change
-    if (["user_name", "user_id", "selectedEmojiAvatar"].includes(e.key)) {
+  if (["user_name", "user_id", "selectedEmojiAvatar", "user_points"].includes(e.key)) {
       this.render();
     }
   }
@@ -78,6 +79,9 @@ class StudentHeader extends HTMLElement {
       localStorage.getItem("avatar") || sessionStorage.getItem("avatar") ||
       "🙂";
 
+  const rawPts = localStorage.getItem("user_points");
+    const points = rawPts != null && !isNaN(Number(rawPts)) ? Number(rawPts) : null;
+
     this.shadowRoot.innerHTML = `
       <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
@@ -85,6 +89,9 @@ class StudentHeader extends HTMLElement {
         header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 14px 8px; z-index:10; }
   .top { display:flex; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; }
   .title { font-weight:800; color: var(--pri, #19777e); }
+  .info { display:flex; flex-direction:column; gap:2px; }
+  .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#f7fcfd; border:1px solid #a9d6e9; color:#19777e; font-weight:700; font-size:12px; line-height:1; width:max-content; }
+  .points-pill svg { width:14px; height:14px; display:block; }
   .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin-left:8px; justify-content: flex-end; }
   .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; }
         .spacer { flex:1; }
@@ -138,6 +145,12 @@ class StudentHeader extends HTMLElement {
           <div class="avatar" part="avatar" aria-hidden="true">${avatar}</div>
           <div class="info">
             <div class="title" id="name" part="name">${name || "Profile"}</div>
+            <div class="points" id="pointsLine" part="points" ${points==null? 'style="display:none;"':''}>
+              <span class="points-pill" title="Total points">
+                <span style="display:inline-block;width:14px;height:14px; border-radius:50%;background:#ffd700;vertical-align:middle;"></span>
+                <span class="points-value">${points!=null? points.toLocaleString(): ''}</span>
+              </span>
+            </div>
             ${this.showId ? `<div class="mut" id="id" part="id">${uid ? `ID: ${uid}` : "Not signed in"}</div>` : ""}
           </div>
           <div class="page-title" id="pageTitle" part="page-title">
@@ -212,6 +225,25 @@ class StudentHeader extends HTMLElement {
       };
       menuSlots.forEach(s => s.addEventListener('slotchange', updateMenuVisibility));
       updateMenuVisibility();
+    }
+
+    // If points are missing, try to fetch from overview once
+    if (points == null && !this._fetchingPoints) {
+      this._fetchingPoints = true;
+      fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(ov => {
+          if (ov && typeof ov.points === 'number') {
+            try {
+              const cur = Number(localStorage.getItem('user_points') || '0') || 0;
+              if (ov.points >= cur) localStorage.setItem('user_points', String(ov.points));
+            } catch {}
+            // Re-render to show points pill
+            if (typeof this.refresh === 'function') this.refresh(); else this.render();
+          }
+        })
+        .catch(() => {})
+        .finally(() => { this._fetchingPoints = false; });
     }
   }
 }

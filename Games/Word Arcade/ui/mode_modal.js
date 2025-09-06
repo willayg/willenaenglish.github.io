@@ -30,13 +30,12 @@ export async function showModeModal({ onModeChosen, onClose }) {
   const listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : null;
   // bestByMode: mode -> { pct?: number, pts?: number }
   let bestByMode = {};
-  if (userId && listName) {
+  if (listName) {
     try {
-      const token = await window.WordArcade?.getAccessToken?.();
       const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
       url.searchParams.set('section', 'sessions');
       if (listName) url.searchParams.set('list_name', listName);
-      const res = await fetch(url.toString(), { cache: 'no-store', headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
       if (res.ok) {
         const sessions = await res.json();
         (Array.isArray(sessions) ? sessions : []).forEach(s => {
@@ -131,14 +130,23 @@ export async function showModeModal({ onModeChosen, onClose }) {
 
   // Build modal header with file title and medals progress
   const buildHeader = (perfectCount) => {
-    const names = ['wood', 'steel', 'bronze', 'silver', 'gold', 'platinum'];
+    // SVG filenames for medals in icons folder
+    const svgFiles = [
+      'wooden.svg',
+      'steel.svg',
+      'bronze.svg',
+      'silver.svg',
+      'gold.svg',
+      'platinum.svg'
+    ];
     const labels = ['Wooden', 'Steel', 'Bronze', 'Silver', 'Gold', 'Platinum'];
     let medals = '';
     for (let i = 0; i < 6; i++) {
       const filled = i < perfectCount;
-      const cls = names[i];
       const title = `${labels[i]} Medal` + (filled ? ' (earned)' : ' (locked)');
-      medals += `<span class="medal ${filled ? 'filled ' + cls : ''}" title="${title}" aria-label="${title}"></span>`;
+      medals += `<span class="medal" title="${title}" aria-label="${title}" style="display:inline-block;width:28px;height:28px;vertical-align:middle;">
+        <img src="./assets/Images/icons/${svgFiles[i]}" alt="${labels[i]} Medal" style="width:100%;height:100%;opacity:${filled ? 1 : 0.35};filter:${filled ? '' : 'grayscale(1)'};" />
+      </span>`;
     }
     const displayName = listName || 'Word List';
     return `<div class="mode-modal-header" role="region" aria-label="Progress for ${displayName}">

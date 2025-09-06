@@ -10,49 +10,13 @@ import { showModeModal } from './ui/mode_modal.js';
 import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
 
-// -----------------------------
-// Supabase auth (singleton)
-// -----------------------------
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-function assertMeta(name) {
-  const v = document.querySelector(`meta[name="${name}"]`)?.content?.trim();
-  if (!v) throw new Error(`Missing <meta name="${name}">`);
-  return v;
-}
-
-function getSupabase() {
-  if (window.__supabase) return window.__supabase;
-  const SUPABASE_URL = assertMeta('supabase-url');
-  const SUPABASE_ANON_KEY = assertMeta('supabase-anon-key');
-  window.__supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    }
-  });
-  return window.__supabase;
-}
-
-async function getAccessToken() {
-  const supabase = getSupabase();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.access_token) return session.access_token;
-  // Try refresh once
-  await supabase.auth.refreshSession();
-  const { data: { session: s2 } } = await supabase.auth.getSession();
-  if (s2?.access_token) return s2.access_token;
-  const e = new Error('Not signed in');
-  e.code = 'NOT_AUTH';
-  throw e;
-}
+// No direct Supabase client here. We rely on HTTP-only cookies set by Netlify functions.
 
 // -----------------------------
 // Fetch helper (timeout + JSON + JWT + nicer errors)
 // -----------------------------
 async function fetchJSON(url, {
-  method = 'GET', token, timeoutMs = 15000,
+  method = 'GET', timeoutMs = 15000,
   headers = {}, body, cache = 'no-store', credentials = 'include'
 } = {}) {
   const ctrl = new AbortController();
@@ -61,28 +25,33 @@ async function fetchJSON(url, {
     const res = await fetch(url, {
       method, cache, credentials, signal: ctrl.signal,
       headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(body ? { 'Content-Type': 'application/json' } : {}),
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-    const ct = (res.headers.get('content-type') || '').toLowerCase();
-    const isJSON = ct.includes('application/json');
+    const raw = await res.text().catch(() => '');
+    const tryParse = () => {
+      const s = (raw || '').trim();
+      if (!s) return undefined;
+      if (s.startsWith('{') || s.startsWith('[')) {
+        try { return JSON.parse(s); } catch { return undefined; }
+      }
+      return undefined;
+    };
+    const data = tryParse();
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
-      if (isJSON) {
-        const err = await res.json().catch(() => ({}));
-        if (err?.error || err?.message) msg += ` – ${err.error || err.message}`;
-      } else {
-        const text = await res.text().catch(() => '');
-        if (text) msg += ` – ${text.slice(0, 160)}`;
+      if (data && (data.error || data.message)) {
+        msg += ` – ${data.error || data.message}`;
+      } else if (raw) {
+        msg += ` – ${raw.slice(0, 160)}`;
       }
       const e = new Error(msg);
       e.status = res.status;
       throw e;
     }
-    return isJSON ? res.json() : res.text();
+    return data !== undefined ? data : raw;
   } finally {
     clearTimeout(t);
   }
@@ -194,23 +163,39 @@ async function callProgressSummary(section, params = {}) {
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
-  // Try to include a Bearer token if available, but don't fail if we can't get one.
-  let token;
-  try { token = await getAccessToken(); } catch {}
-  return fetchJSON(url.toString(), { token });
+  // Use cookie-based auth only
+  return fetchJSON(url.toString());
 }
 
 async function fetchChallengingWords() {
   const list = await callProgressSummary('challenging');
   if (!Array.isArray(list)) return [];
+  // Client-side safety: remove any bracketed [picture] tokens and surrounding dashes/punctuation
+  const sanitize = (s) => {
+    if (!s || typeof s !== 'string') return '';
+    let t = s;
+    t = t.replace(/[\[\(\{]\s*picture\s*[\]\)\}]\s*[-–—_:]*\s*/gi, '');
+    t = t.replace(/\s*[\[\(\{]\s*picture\s*[\]\)\}]\s*/gi, ' ');
+    t = t.replace(/^[\s\-–—_:,.;'"`~]+/, '').replace(/[\s\-–—_:,.;'"`~]+$/, '');
+    t = t.replace(/\s{2,}/g, ' ');
+    return t.trim();
+  };
   const out = list.map(it => {
     const eng = it.word_en || it.word || it.eng || '';
     const kor = it.word_kr || it.kor || it.translation || '';
     const def = it.def || it.definition || it.meaning || '';
-    const w = { eng: String(eng).trim(), kor: String(kor || '').trim() };
+    const w = { eng: sanitize(String(eng).trim()), kor: sanitize(String(kor || '').trim()) };
     if (def && String(def).trim()) w.def = String(def).trim();
     return w;
-  }).filter(w => w.eng && w.kor);
+  }).filter(w => w.eng && w.kor)
+    .filter(w => {
+      const isPlaceholder = (s) => {
+        if (!s) return false; const t = String(s).trim().toLowerCase();
+        const core = t.replace(/^[\s\[\(\{]+|[\s\]\)\}]+$/g, '');
+        return t === '[picture]' || core === 'picture';
+      };
+      return !isPlaceholder(w.eng) && !isPlaceholder(w.kor);
+    });
   return out;
 }
 
@@ -354,26 +339,51 @@ async function openSavedGamesModal() {
 
 async function openSavedGameById(id) {
   try {
-  // Prefer token when available, but allow cookie-auth fallback
-  let token;
-  try { token = await getAccessToken(); } catch {}
-  const js = await fetchJSON(`/.netlify/functions/supabase_proxy_fixed?get=game_data&id=${encodeURIComponent(id)}`, { token });
+  const js = await fetchJSON(`/.netlify/functions/supabase_proxy_fixed?get=game_data&id=${encodeURIComponent(id)}`);
     const row = js?.data || js;
-    if (!row || !Array.isArray(row.words)) {
+    if (!row) {
       inlineToast('Saved game not found or invalid.');
       return;
     }
-    const mapped = row.words.map(w => {
+    // Normalize words: can be array, JSON string, or nested under a subkey
+    let words = row.words;
+    if (typeof words === 'string') {
+      try { words = JSON.parse(words); } catch { /* leave as-is */ }
+    }
+    if (!Array.isArray(words) && words && typeof words === 'object') {
+      // Try common subkeys
+      if (Array.isArray(words.words)) words = words.words;
+      else if (Array.isArray(words.data)) words = words.data;
+      else if (Array.isArray(words.items)) words = words.items;
+      else {
+        // Convert dictionary with numeric keys into array
+        const vals = Object.keys(words).sort((a,b)=>Number(a)-Number(b)).map(k => words[k]);
+        if (vals.length) words = vals;
+      }
+    }
+    if (!Array.isArray(words)) {
+      try { console.warn('[WordArcade] Saved game words has unexpected shape:', row.words); } catch {}
+      inlineToast('Saved game not found or invalid.');
+      return;
+    }
+    const mapped = words.map(w => {
+      if (typeof w === 'string') {
+        // support "eng, kor" lines
+        const parts = w.split(/[,|]/);
+        const eng = (parts[0] || '').trim();
+        const kor = (parts[1] || '').trim();
+        return eng ? { eng, kor } : null;
+      }
       const eng = w.eng || w.en || w.word || '';
       const kor = w.kor || w.kr || w.translation || '';
       const def = w.def || w.definition || w.gloss || w.meaning || '';
-      const rawImg = w.image_url || w.image || w.img || '';
+      const rawImg = w.image_url || w.image || w.img || w.img_url || w.picture || '';
       const img = (typeof rawImg === 'string') ? rawImg.trim() : '';
       const out = { eng: String(eng).trim(), kor: String(kor).trim() };
       if (def && String(def).trim()) out.def = String(def).trim();
       if (img && img.toLowerCase() !== 'null' && img.toLowerCase() !== 'undefined') out.img = img;
       return out;
-    }).filter(w => w.eng);
+    }).filter(w => w && w.eng);
     if (!mapped.length) {
       inlineToast('This saved game has no words.');
       return;
@@ -407,8 +417,6 @@ window.WordArcade = {
   startGame,
   startFilePicker,
   startModeSelector,
-  // expose token helper for UI modules that need to call secure endpoints
-  getAccessToken: () => getAccessToken(),
   getWordList: () => wordList,
   getListName: () => currentListName,
   openSavedGames: () => openSavedGamesModal(),
@@ -417,13 +425,45 @@ window.WordArcade = {
 // Review flow using secure endpoint
 async function loadChallengingAndStart() {
   try {
-    const cleaned = await fetchChallengingWords();
+    let cleaned = await fetchChallengingWords();
     if (!cleaned.length) {
       inlineToast('No challenging words to review yet.');
       return;
     }
-    currentListName = 'Review List';
-    await processWordlist(cleaned);
+    // Cap to 10 hardest/due items
+    cleaned = cleaned.slice(0, 10);
+    // Preview modal
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px;';
+    const modal = document.createElement('div');
+    modal.style.cssText = 'width:min(520px,92vw);max-height:86vh;background:#fff;border-radius:16px;border:2px solid #67e2e6;box-shadow:0 8px 30px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column;';
+    modal.innerHTML = `
+      <div style="padding:12px 14px;border-bottom:1px solid #e6eaef;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-weight:800;color:#19777e;">Review Preview</div>
+        <button id="rvwClose" style="appearance:none;border:none;background:#fff;color:#19777e;font-weight:800;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      <div style="padding:10px 12px;">
+        <div style="color:#248b86ff;margin-bottom:8px;font-weight:700;">You will review these ${cleaned.length} difficult words:</div>
+        <div id="rvwList" style="max-height:48vh;overflow:auto;border:1px solid #e6eaef;border-radius:10px;padding:8px;">
+          ${cleaned.map(w => `<div style='display:flex;align-items:center;justify-content:space-between;padding:6px 4px;border-bottom:1px dashed #edf1f4;'><span style='font-weight:800;color:#19777e;'>${(w.eng||w.word||'').toString()}</span><span style='color:#6b7a8f;margin-left:8px;'>${(w.kor||w.word_kr||'').toString()}</span></div>`).join('')}
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#888;">Scoring in Review: +3 points per correct answer.</div>
+      </div>
+      <div style="padding:10px 12px;border-top:1px solid #e6eaef;display:flex;justify-content:flex-end;gap:8px;">
+        <button id="rvwCancel" class="btn-ghost" style="background:#fff;border:1px solid #e6eaef;border-radius:12px;padding:10px 14px;cursor:pointer;">Cancel</button>
+        <button id="rvwStart" class="btn-primary" style="background:#19777e;color:#fff;border:1px solid #19777e;border-radius:12px;padding:10px 14px;cursor:pointer;">Start</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    const dismiss = () => { try { overlay.remove(); } catch {} };
+    modal.querySelector('#rvwClose')?.addEventListener('click', dismiss);
+    modal.querySelector('#rvwCancel')?.addEventListener('click', dismiss);
+    modal.querySelector('#rvwStart')?.addEventListener('click', async () => {
+      dismiss();
+      currentListName = 'Review List';
+      await processWordlist(cleaned.map(w => ({ eng: w.eng || w.word, kor: w.kor || w.word_kr, def: w.def })));
+    });
   } catch (e) {
     if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
       inlineToast('Please sign in to use Review.');

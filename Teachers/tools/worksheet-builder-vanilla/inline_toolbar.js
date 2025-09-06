@@ -107,42 +107,36 @@ function createTextToolbar() {
     e.stopPropagation();
     if (currentTextbox) {
       console.log('AI button clicked for textbox:', currentTextbox);
+      
+      // --- FINAL ATTEMPT: Robustly open the correct modal ---
+      
+      // 1. Set a global, unambiguous reference to the textbox being edited.
+      window._currentlySelectedTextbox = currentTextbox;
+      console.log('Set window._currentlySelectedTextbox to:', window._currentlySelectedTextbox);
 
-      // Ensure this textbox has a complete, repairable vocab state
-      try {
-        // Ensure the handler script is loaded before repair
-        if (!window.VocabTextboxHandler) {
-          await loadScript('mint-ai/vocab-textbox-handler.js');
-        }
-        if (window.VocabTextboxHandler && typeof window.VocabTextboxHandler.detectAndRepairVocabBox === 'function') {
-          window.VocabTextboxHandler.detectAndRepairVocabBox(currentTextbox);
-        } else {
-          updateVocabStateFromTextbox(currentTextbox);
-        }
-      } catch (err) {
-        console.warn('Could not repair vocab state before opening modal:', err);
+      // 2. Force-reload the modal script to ensure no stale references.
+      const oldModalScript = document.querySelector('script[src="mint-ai/mint-ai-vocab-modal-fixed.js"]');
+      if (oldModalScript) {
+        oldModalScript.remove();
+        console.log('Removed old modal script to ensure a fresh load.');
       }
-
-      // Load modal script if needed, then open with the specific textbox
-      let modalScript = document.querySelector('script[src="mint-ai/mint-ai-vocab-modal-fixed.js"]');
-      const openModal = () => {
-        if (typeof window.openVocabBoxModal === 'function') {
-          window.openVocabBoxModal(false, currentTextbox);
+      
+      // 3. Load the script and open the modal.
+      const script = document.createElement('script');
+      script.src = 'mint-ai/mint-ai-vocab-modal-fixed.js';
+      script.onload = () => {
+        console.log('Fresh modal script loaded.');
+        if (window.openVocabBoxModal) {
+          // Pass the textbox reference directly.
+          window.openVocabBoxModal(false, window._currentlySelectedTextbox);
         } else {
           alert('Error: Could not open the AI modal.');
         }
       };
-      if (!modalScript) {
-        modalScript = document.createElement('script');
-        modalScript.src = 'mint-ai/mint-ai-vocab-modal-fixed.js';
-        modalScript.onload = openModal;
-        modalScript.onerror = () => alert('Error loading a required script.');
-        document.head.appendChild(modalScript);
-      } else {
-        openModal();
-      }
+      script.onerror = () => alert('Error loading a required script.');
+      document.head.appendChild(script);
 
-    } else {
+    } else {re
       console.error('No current textbox found');
     }
   });
@@ -333,7 +327,8 @@ function updateVocabStateFromTextbox(textbox) {
         // Look for patterns like "word - translation", "word, translation", etc.
         const patterns = [
           /^(\d+\.?\s*)?([^,-]+)[,-]\s*(.+)$/,  // "1. word, translation" or "word - translation"
-          /^(\d+\.?\s*)?([^:]+):\s*(.+)$/       // "word: translation"
+          /^(\d+\.?\s*)?([^:]+):\s*(.+)$/,      // "word: translation"
+          /^(\d+\.?\s*)?(.+?)\s+(.+)$/          // "word translation" (space separated)
         ];
         
         for (const [patternIndex, pattern] of patterns.entries()) {

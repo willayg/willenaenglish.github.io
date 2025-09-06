@@ -92,6 +92,8 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
   }, 1000);
 
   function renderQuestion() {
+  // Per-question guard to avoid rapid double clicks
+  let questionLocked = false;
     if (idx >= ordered.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'picture', summary: { score, total: ordered.length } });
@@ -160,6 +162,8 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
     setupChoiceButtons(gameArea);
     document.querySelectorAll('.pic-choice').forEach(btn => {
       btn.onclick = () => {
+        if (questionLocked) return;
+        questionLocked = true;
         const correct = btn.getAttribute('data-eng') === current.eng;
         splashResult(btn, correct);
         if (correct) {
@@ -170,6 +174,8 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
           playSFX('wrong');
           const f = document.getElementById('picFeedback'); if (f) f.textContent = 'Incorrect!';
         }
+        // Disable all buttons to avoid multiple attempts for same question
+        document.querySelectorAll('#picChoices button').forEach(b => b.disabled = true);
         // Log attempt (fire-and-forget)
         logAttempt({
           session_id: sessionId,
@@ -178,7 +184,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
           is_correct: correct,
           answer: btn.getAttribute('data-eng'),
           correct_answer: current.eng,
-          points: correct ? (isReview ? 2 : 1) : 0,
+          points: correct ? (isReview ? 3 : 1) : 0,
           attempt_index: idx + 1
         });
   setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);

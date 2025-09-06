@@ -42,6 +42,7 @@ async function loadEmojiMappings() {
 }
 
 export async function runEasyPictureMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
+  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   // Check if this is a sample list (basic wordlists use emoji, user content uses Pixabay)
   const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
   await loadEmojiMappings();
@@ -108,6 +109,8 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
   }
 
   function renderQuestion() {
+  // Guard per question to prevent spamming multiple picks
+  let questionLocked = false;
     if (idx >= ordered.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'easy_picture', summary: { score, total: ordered.length } });
@@ -173,6 +176,8 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
 
     document.querySelectorAll('.easy-pic-choice').forEach(btn => {
       btn.onclick = () => {
+        if (questionLocked) return;
+        questionLocked = true;
         const picked = btn.getAttribute('data-eng');
         const correct = picked === current.eng;
         splashResult(btn, correct);
@@ -185,6 +190,8 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
           playSFX('wrong');
           if (fb) fb.textContent = `It was: ${current.eng}`;
         }
+        // Disable all buttons until next render
+        document.querySelectorAll('#easyPicGrid button').forEach(b => b.disabled = true);
         // Log attempt
         logAttempt({
           session_id: sessionId,
@@ -193,7 +200,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
           is_correct: correct,
           answer: picked,
           correct_answer: current.eng,
-          points: correct ? 1 : 0,
+          points: correct ? (isReview ? 3 : 1) : 0,
           attempt_index: idx + 1
         });
   setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);

@@ -34,6 +34,8 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
   }, 1000);
 
   function renderRound() {
+  // Per-interaction lock to prevent rapid multiple matches
+  let interactionLocked = false;
     // Get next batch of pairs
   const remainingPairs = shuffledOrder.filter(w => !completedPairs.includes(w.eng + '|' + w.kor));
     const roundPairs = remainingPairs.slice(0, ROUND_SIZE);
@@ -162,6 +164,8 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
     });
 
     function handleTapMatch(engCard, korCard) {
+      if (interactionLocked) return;
+      interactionLocked = true;
       if (korCard.classList.contains('matched') || engCard.classList.contains('matched')) return;
       const eng = engCard.dataset.eng;
       const kor = korCard.dataset.kor;
@@ -186,7 +190,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
             engCard.classList.remove('wrong');
           }, 700);
           score -= wrongValue;
-          feedback.textContent = isReview ? 'Incorrect!' : `Incorrect! -${wrongValue.toFixed(1)}%`;
+          feedback.textContent = isReview ? 'Incorrect!' : 'Incorrect!';
           playSFX('wrong');
       }
       // Log attempt for this pair selection (points as integers to satisfy DB integer type)
@@ -197,7 +201,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
         is_correct: !!match,
         answer: kor,
         correct_answer: (roundPairs.find(w => w.eng === eng) || {}).kor || null,
-        points: match ? (isReview ? 2 : 1) : 0,
+  points: match ? (isReview ? 3 : 1) : 0,
         extra: { eng, kor }
       });
   scoreCounter.innerHTML = isReview ? `Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}` : `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;
@@ -207,6 +211,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
       }
       // If all pairs in this round are matched, go to next round
       setTimeout(() => {
+        interactionLocked = false; // unlock for next interaction or next round
         if (document.querySelectorAll('.eng-card').length === 0) {
           round++;
           renderRound();

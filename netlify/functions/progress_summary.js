@@ -365,7 +365,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // ---------- CHALLENGING ----------
+  // ---------- CHALLENGING ----------
     if (section === 'challenging') {
       const { data: attempts, error } = await scope(
         supabase
@@ -376,6 +376,20 @@ exports.handler = async (event) => {
       if (error) return json(400, { error: error.message });
 
       const normalize = (s) => (s && typeof s === 'string') ? s.trim().toLowerCase() : null;
+      // Remove any bracketed "[picture]" tokens and adjacent dashes/punctuation anywhere, collapse whitespace, and trim.
+      const sanitizeWord = (s) => {
+        if (!s || typeof s !== 'string') return '';
+        let t = s;
+        // Remove bracketed picture placeholders like [picture], (picture), {picture}, with optional spaces and trailing dashes
+        t = t.replace(/[\[\(\{]\s*picture\s*[\]\)\}]\s*[-–—_:]*\s*/gi, '');
+        // If anything like "[ picture ]---" remains mid-string, remove globally
+        t = t.replace(/\s*[\[\(\{]\s*picture\s*[\]\)\}]\s*/gi, ' ');
+        // Strip leading/trailing punctuation/dashes left over
+        t = t.replace(/^[\s\-–—_:,.;'"`~]+/, '').replace(/[\s\-–—_:,.;'"`~]+$/, '');
+        // Collapse internal whitespace
+        t = t.replace(/\s{2,}/g, ' ');
+        return t.trim();
+      };
       const isPicturePlaceholder = (s) => {
         if (!s || typeof s !== 'string') return false;
         const t = s.trim().toLowerCase();
@@ -395,7 +409,9 @@ exports.handler = async (event) => {
         return null;
       };
 
-      const korLookup = new Map();
+  const korLookup = new Map();
+  // Track most frequent Korean per English to avoid mismatches from outliers
+  const korFreq = new Map(); // engKey -> Map(kor -> count)
       (attempts || []).forEach(a => {
         const ex = toObj(a.extra) || {};
         let eng = null, kor = null;
@@ -403,10 +419,23 @@ exports.handler = async (event) => {
         if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
         if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
         const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
-  for (const c of engCands) { if (!eng && hasLatin(c) && !isPicturePlaceholder(c)) { eng = c; break; } }
+        for (const c of engCands) {
+          if (!eng) {
+            const c2 = sanitizeWord(c);
+            if (c2 && hasLatin(c2)) { eng = c2; break; }
+          }
+        }
         const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
         for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
-        if (eng && kor) { const key = normalize(eng); if (key) korLookup.set(key, kor); }
+        if (eng && kor) {
+          const key = normalize(eng);
+          if (key) {
+            korLookup.set(key, kor);
+            const inner = korFreq.get(key) || new Map();
+            inner.set(kor, (inner.get(kor) || 0) + 1);
+            korFreq.set(key, inner);
+          }
+        }
       });
 
       const byWord = new Map();
@@ -418,15 +447,25 @@ exports.handler = async (event) => {
         if (dir === 'kor_to_eng' && hasLatin(a.correct_answer)) eng = a.correct_answer;
         if (dir === 'eng_to_kor' && hasLatin(a.word)) eng = a.word;
         const engCands = [eng, a.word, a.correct_answer, ex.word_en, ex.en, ex.eng, ex.english, ex.answer, ex.target, ex.prompt, ex.answer_text].filter(Boolean);
-  for (const c of engCands) { if (!eng && hasLatin(c) && !isPicturePlaceholder(c)) { eng = c; break; } }
+        for (const c of engCands) {
+          if (!eng) {
+            const c2 = sanitizeWord(c);
+            if (c2 && hasLatin(c2)) { eng = c2; break; }
+          }
+        }
         const korCands = [ex.word_kr, ex.kr, ex.kor, ex.korean, ex.prompt, a.word, a.correct_answer, ex.question].filter(Boolean);
         for (const c of korCands) { if (!kor && hasHangul(c)) { kor = c; break; } }
         if (!eng) return;
-  const engKey = normalize(eng);
+        const engKey = normalize(eng);
         if (!engKey) return;
-  if (isPicturePlaceholder(eng)) return;
+        if (isPicturePlaceholder(eng)) return;
         const arr = byWord.get(engKey) || [];
         arr.push({ created_at: a.created_at, is_correct: !!a.is_correct, skill, word_en: eng, word_kr: kor || null });
+        if (kor) {
+          const inner = korFreq.get(engKey) || new Map();
+          inner.set(kor, (inner.get(kor) || 0) + 1);
+          korFreq.set(engKey, inner);
+        }
         byWord.set(engKey, arr);
       });
 
@@ -437,7 +476,8 @@ exports.handler = async (event) => {
         const total = recent.length;
         const correct = recent.reduce((n, r) => n + (r.is_correct ? 1 : 0), 0);
         const overallAcc = total ? (correct / total) : 0;
-        if (overallAcc >= 0.7) return;
+        // If accuracy is decent, deprioritize; still might show if due and low attempts
+        // We'll filter later using due schedule and also skip if quite good.
 
         const perSkill = new Map();
         recent.forEach(r => {
@@ -459,20 +499,66 @@ exports.handler = async (event) => {
         });
 
         const skill = worst?.skill || 'any';
-        let word_en = (recent[recent.length - 1] && recent[recent.length - 1].word_en) || (worst && worst.word_en) || null;
+  let word_en = (recent[recent.length - 1] && recent[recent.length - 1].word_en) || (worst && worst.word_en) || null;
         let word_kr = (worst && worst.word_kr) || null;
+        // Prefer consensus Korean (most frequent) to avoid mismatches
+        const freqMap = korFreq.get(engKey);
+        if (freqMap && freqMap.size) {
+          let bestKor = null, bestCnt = -1;
+          freqMap.forEach((cnt, k) => { if (cnt > bestCnt) { bestCnt = cnt; bestKor = k; } });
+          if (bestKor) word_kr = bestKor;
+        }
+        // Fallback to simple backfill if no consensus
         if (!word_kr) {
           const backfill = korLookup.get(engKey);
           if (backfill) word_kr = backfill;
         }
-        if (!word_en) word_en = engKey;
+  if (!word_en) word_en = engKey;
+  // Final sanitize for output safety
+  word_en = sanitizeWord(word_en);
+  if (word_kr && isPicturePlaceholder(word_kr)) word_kr = null;
 
-        out.push({ word: word_en, word_en, word_kr, skill, accuracy: overallAcc, attempts: total });
+        // Spaced repetition scheduling (lightweight, no schema):
+        // Compute last attempt time and trailing correct streak
+        const last = arr[arr.length - 1];
+        const lastTs = last ? new Date(last.created_at).getTime() : 0;
+        let streak = 0; for (let i = arr.length - 1; i >= 0; i--) { if (arr[i].is_correct) streak++; else break; }
+        const lastWasCorrect = !!(last && last.is_correct);
+        // Interval days by streak (if last correct); if last incorrect, show sooner
+        const mapDays = [0.5, 1, 3, 7, 14, 30];
+        const idx = Math.min(streak, mapDays.length - 1);
+        const intervalDays = lastWasCorrect ? mapDays[idx] : 0.5;
+        const dueAt = lastTs ? (lastTs + intervalDays * 24 * 60 * 60 * 1000) : 0;
+
+        out.push({ word: word_en, word_en, word_kr, skill, accuracy: overallAcc, attempts: total, last_ts: lastTs, due_at: dueAt });
       });
 
-  const cleaned = out.filter(it => !isPicturePlaceholder(it.word) && !isPicturePlaceholder(it.word_en) && !isPicturePlaceholder(it.word_kr));
-  cleaned.sort((a, b) => (a.accuracy - b.accuracy) || (b.attempts - a.attempts));
-  return json(200, cleaned.slice(0, 20));
+      // Filter and rank:
+      // - Remove picture placeholders
+      // - Remove words with good accuracy (>= 70%) unless severely under-practiced
+      // - Only include words that are due now (due_at <= now) or never seen (last_ts = 0)
+      const now = Date.now();
+      const cleaned = out.map(it => ({
+        ...it,
+        word: sanitizeWord(it.word_en || it.word || ''),
+        word_en: sanitizeWord(it.word_en || it.word || ''),
+        word_kr: it.word_kr
+      })).filter(it => {
+        // Drop empties/placeholders after sanitize
+        if (!it.word_en || isPicturePlaceholder(it.word_en) || isPicturePlaceholder(it.word_kr)) return false;
+        // Keep if never attempted; else must be due
+        const due = (it.last_ts === 0) || (it.due_at <= now);
+        // If accuracy good (>= 0.7) and not due, drop; if due, we can still show sometimes
+        if (!due) return false;
+        if (it.accuracy >= 0.7) {
+          // Keep only if attempts are low to encourage some practice
+          return (it.attempts < 3);
+        }
+        return true;
+      });
+      // Rank by lowest accuracy first, then earliest due, then most attempts (to break ties)
+      cleaned.sort((a, b) => (a.accuracy - b.accuracy) || ((a.due_at || 0) - (b.due_at || 0)) || (b.attempts - a.attempts));
+      return json(200, cleaned.slice(0, 20));
     }
 
   return json(400, { error: 'Unknown section', section });

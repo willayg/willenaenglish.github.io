@@ -1,3 +1,83 @@
+.badge-title {
+	font-size: 1.08em;
+	font-weight: 700;
+	color: #19777e;
+	text-align: center;
+	margin-bottom: 2px;
+}
+.badge-subtitle {
+	font-size: 0.92em;
+	color: #6b7a8f;
+	font-weight: 500;
+	text-align: center;
+	margin-top: 2px;
+}
+/* Badges card styles */
+.badges-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(169px, 1fr));
+	gap: 18px;
+	border: #67e2e6 2px solid;
+	border-radius: 12px;
+	margin-top: 8px;
+	margin-bottom: 8px;
+	max-height: 60vh;
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-width: none; /* Firefox */
+}
+.badges-grid::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+.badges-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(169px, 1fr));
+	gap: 18px;
+	border: #67e2e6 2px solid;
+	border-radius: 12px;
+	margin-top: 8px;
+	margin-bottom: 8px;
+	max-height: 60vh;
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-width: none;
+}
+.badges-grid::-webkit-scrollbar {
+  width: 8px;
+  background: #f7fcfd;
+}
+.badges-grid::-webkit-scrollbar-thumb {
+  background: #67e2e6;
+  border-radius: 8px;
+}
+.badge {
+	background: #f7fcfd;
+	border: 1.5px solid #e6eaef;
+	border-radius: 12px;
+	padding: 12px 8px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 1px 4px rgba(62,159,167,0.06);
+	min-height: 80px;
+}
+.badge-icon {
+	font-size: 2.2em;
+	margin-bottom: 6px;
+}
+.badge-label {
+	font-size: 1em;
+	color: #19777e;
+	font-weight: 600;
+	text-align: center;
+}
+.badges .mut {
+	color: #999;
+	text-align: center;
+	margin-top: 8px;
+}
 /* Student Profile page styles (migrated from inline <style> in profile.html) */
 
 :root { --pri:#19777e; --acc:#93cbcf; --ink:#222; --mut:#666; }
@@ -83,7 +163,22 @@ h2 { margin:0 0 8px 0; font-size:1.1rem; color:var(--pri); }
 .mut { color: var(--mut); font-size:13px; }
 /* Text-heavy KPI values should be smaller and ellipsized */
 #ovFavoriteList, #ovHardestWord { font-size:0.8rem; font-weight:700; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.badge { display:inline-flex; align-items:center; justify-content:center; padding:6px 10px; border-radius:999px; background:#f6f0ff; color:#6b46c1; border:1px solid #e8dfff; font-weight:700; margin:4px; }
+.badge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 8px;
+	border-radius: 6px;
+	border-color: #d5eff0;
+	background: #ffffff;
+	font-weight: 700;
+	margin: 4px;
+	box-shadow: 0 1px 4px rgba(62,159,167,0.06);
+	min-height: 80px;
+	max-height: 60vh;
+	overflow: hidden;
+}
 table { width:100%; border-collapse: collapse; }
 th, td { padding:8px 6px; border-bottom:1px solid #edf1f4; text-align:left; }
 th { color:#356; font-weight:800; }

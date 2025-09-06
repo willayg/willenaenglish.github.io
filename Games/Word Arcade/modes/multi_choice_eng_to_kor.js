@@ -4,6 +4,7 @@ import { startSession, logAttempt, endSession } from '../../../students/records.
 
 // Multi-choice: English prompt, Korean choices
 export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName = null }) {
+  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   let score = 0;
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
@@ -48,7 +49,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName
         `).join('')}
       </div>
       <div id="multiFeedbackEngKor" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
-      <div id="multiScoreEngKor" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">Score: ${score}</div>
+  <div id="multiScoreEngKor" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
     </div>`;
     setupChoiceButtons(gameArea);
     document.querySelectorAll('.multi-choice-btn').forEach(btn => {
@@ -74,7 +75,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName
           is_correct: correct,
           answer: btn.dataset.kor,
           correct_answer: current.kor,
-          points: correct ? 1 : 0,
+          points: correct ? (isReview ? 3 : 1) : 0,
           attempt_index: idx + 1,
           extra: { direction: 'eng_to_kor', eng: current.eng, kor: current.kor }
         });

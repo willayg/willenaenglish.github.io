@@ -203,16 +203,7 @@ export function showSampleWordlistModal({ onChoose }) {
       try {
         const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
         url.searchParams.set('section', 'sessions');
-        // Try to include Supabase access token if available
-        let headers = {};
-        try {
-          const supa = window.__supabase;
-          if (supa && supa.auth && typeof supa.auth.getSession === 'function') {
-            const { data: { session } } = await supa.auth.getSession();
-            if (session?.access_token) headers = { Authorization: `Bearer ${session.access_token}` };
-          }
-        } catch {}
-        const res = await fetch(url.toString(), { cache: 'no-store', headers });
+        const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
         if (res.ok) sessions = await res.json();
       } catch {}
 

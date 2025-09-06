@@ -179,7 +179,7 @@ export async function runLevelUpMode({ wordList, gameArea, startGame, listName =
           is_correct: correct,
           answer: picked,
           correct_answer: current.eng,
-          points: correct ? (isReview ? 2 : 1) : 0,
+          points: correct ? (isReview ? 3 : 1) : 0,
           attempt_index: idx + 1,
           extra: { eng: current.eng, kor: current.kor }
         });
