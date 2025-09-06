@@ -457,7 +457,7 @@ exports.handler = async (event) => {
     // --- TEACHER LOGIN (email/password, only approved users) ---
     if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
       try {
-        const { email, password } = JSON.parse(event.body);
+        const { email, password } = JSON.parse(event.body || '{}');
         if (!email || !password) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
         }
@@ -473,26 +473,36 @@ exports.handler = async (event) => {
         if (!profile.approved) {
           return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
-        // Use Supabase Auth API
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          return { statusCode: 401, body: JSON.stringify({ success: false, error: error.message }) };
+        // Use Supabase Auth REST directly with ANON key to avoid client-specific issues
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const API_KEY =
+          process.env.SUPABASE_ANON_KEY ||
+          process.env.SUPABASE_KEY ||
+          process.env.supabase_anon_key ||
+          process.env.supabase_key;
+        if (!SUPABASE_URL || !API_KEY) {
+          return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Server misconfigured (auth keys missing)' }) };
         }
-        const session = data && data.session;
-        const accessToken = session && session.access_token;
-        const refreshToken = session && session.refresh_token;
-  const cookies = [];
-  const secureFlag = !isLocalDev(event); // Use Secure in prod; allow non-Secure cookies in local dev (HTTP)
-  if (accessToken) cookies.push(makeCookie('sb_access', accessToken, { maxAge: 60 * 60, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
-  if (refreshToken) cookies.push(makeCookie('sb_refresh', refreshToken, { maxAge: 60 * 60 * 24 * 7, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
+        const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || !js.access_token) {
+          const msg = js?.error_description || js?.error || 'Invalid credentials';
+          return { statusCode: 401, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: msg }) };
+        }
+        const accessToken = js.access_token;
+        const refreshToken = js.refresh_token || null;
+        const cookies = [];
+        const secureFlag = !isLocalDev(event); // Use Secure in prod; allow non-Secure cookies in local dev (HTTP)
+        cookies.push(makeCookie('sb_access', accessToken, { maxAge: 60 * 60, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
+        if (refreshToken) cookies.push(makeCookie('sb_refresh', refreshToken, { maxAge: 60 * 60 * 24 * 7, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
         return {
           statusCode: 200,
-          headers: {
-            'Set-Cookie': cookies,
-            'Cache-Control': 'no-store',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ success: true, user: data.user })
+          headers: { 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, user: js.user || null })
         };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
