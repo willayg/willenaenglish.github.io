@@ -1,4 +1,5 @@
-// Use dynamic import to support ESM-only supabase-js in Netlify production
+// @supabase/supabase-js v2 is ESM-only; using require() can crash in Netlify (ERR_REQUIRE_ESM).
+// We'll import it dynamically inside the handler to stay compatible with Netlify's CJS runtime.
 
 exports.handler = async (event) => {
   console.log('=== FUNCTION START ===');
@@ -12,19 +13,6 @@ exports.handler = async (event) => {
   });
   
   // Helpers for cookie-based sessions
-  function makeCorsHeaders(event, withCredentials = false) {
-    const headers = event.headers || {};
-    const origin = headers.origin || headers.Origin || '';
-    const allowOrigin = origin || '*';
-    const base = {
-      'Access-Control-Allow-Origin': allowOrigin,
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Vary': 'Origin'
-    };
-    if (withCredentials) base['Access-Control-Allow-Credentials'] = 'true';
-    return base;
-  }
   function parseCookies(header) {
     const out = {};
     if (!header) return out;
@@ -48,6 +36,32 @@ exports.handler = async (event) => {
     if (httpOnly) str += '; HttpOnly';
     if (sameSite) str += `; SameSite=${sameSite}`;
     return str;
+  }
+
+  // Minimal CORS helpers
+  function getRequestOrigin(event) {
+    const h = (event && event.headers) || {};
+    return h.origin || h.Origin || '';
+  }
+  function makeCorsHeaders(event, extra = {}) {
+    const origin = getRequestOrigin(event);
+    const headers = {
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      ...extra,
+    };
+    if (origin) {
+      headers['Access-Control-Allow-Origin'] = origin;
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    } else {
+      headers['Access-Control-Allow-Origin'] = '*';
+    }
+    return headers;
+  }
+
+  // Generic preflight support
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: makeCorsHeaders(event), body: '' };
   }
 
   // Determine if current request is from a local dev origin (e.g., http://localhost:8888 or :9000)
@@ -86,116 +100,36 @@ exports.handler = async (event) => {
       return null;
     }
   }
-  // Decode JWT locally to extract the user id (sub) without external deps
+  // Decode JWT locally to extract the user id (sub), avoids upstream failures
   function getUserIdFromCookie(event) {
     try {
       const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
       const cookies = parseCookies(cookieHeader);
       const access = cookies['sb_access'];
       if (!access) return null;
+      // Manual base64url decode to avoid ESM issues with jose
       const parts = access.split('.');
       if (parts.length < 2) return null;
-      const base64url = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-      const pad = base64url.length % 4;
-      const b64 = base64url + (pad ? '='.repeat(4 - pad) : '');
-      const json = Buffer.from(b64, 'base64').toString('utf8');
+      const base64url = parts[1];
+      const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+      const json = Buffer.from(base64, 'base64').toString('utf8');
       const payload = JSON.parse(json);
       return payload && payload.sub ? payload.sub : null;
     } catch { return null; }
   }
   
   try {
-    // Handle global preflight
-    if (event.httpMethod === 'OPTIONS') {
-      return { statusCode: 200, headers: makeCorsHeaders(event, true), body: '' };
-    }
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key;
-    if (!SUPABASE_URL || !SERVICE_KEY) {
-      return {
-        statusCode: 500,
-        headers: { ...makeCorsHeaders(event, true), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, error: 'Supabase env not configured' })
-      };
-    }
-
-    // Fast path: login route handled without importing supabase-js to avoid ESM bundling issues
-    if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
-      try {
-        console.log('=== LOGIN START ===');
-        const { email, password } = JSON.parse(event.body || '{}');
-        if (!email || !password) {
-          return { statusCode: 400, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
-        }
-
-        // Check profile approval via Supabase REST using service role key
-        const profileResp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,approved&email=eq.${encodeURIComponent(email)}`, {
-          headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` }
-        });
-        const profileArr = await profileResp.json().catch(() => []);
-        const profile = Array.isArray(profileArr) ? profileArr[0] : null;
-        if (!profile || !profile.approved) {
-          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
-        }
-
-        // Perform password grant with anon or site key
-        const API_KEY =
-          process.env.SUPABASE_ANON_KEY ||
-          process.env.SUPABASE_KEY ||
-          process.env.supabase_anon_key ||
-          process.env.supabase_key;
-        if (!API_KEY) {
-          return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
-        }
-
-        const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-          body: JSON.stringify({ email, password })
-        });
-        const authData = await authResp.json().catch(() => ({}));
-        if (!authResp.ok || !authData || !authData.access_token) {
-          const msg = authData?.error_description || authData?.error || 'Invalid credentials';
-          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: msg }) };
-        }
-
-        // Set cookies; use SameSite=None for cross-origin
-        const secureFlag = !isLocalDev(event);
-        const sameSite = secureFlag ? 'None' : 'Lax';
-        const cookies = [
-          makeCookie('sb_access', authData.access_token, { maxAge: 3600, secure: secureFlag, httpOnly: true, sameSite, path: '/' })
-        ];
-        if (authData.refresh_token) {
-          cookies.push(makeCookie('sb_refresh', authData.refresh_token, { maxAge: 604800, secure: secureFlag, httpOnly: true, sameSite, path: '/' }));
-        }
-        return {
-          statusCode: 200,
-          headers: { 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json', ...makeCorsHeaders(event, true) },
-          body: JSON.stringify({ success: true, user: authData.user || null })
-        };
-      } catch (err) {
-        console.error('=== LOGIN ERROR ===', err.message, err.stack);
-        return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: err.message }) };
-      }
-    }
-
-    // Import supabase client only for routes that require it
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for uploads
+    // Dynamic ESM import to avoid ERR_REQUIRE_ESM
     const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --- AUDIO UPLOAD (for TTS mp3 files) ---
     if (event.queryStringParameters && event.queryStringParameters.upload_audio !== undefined) {
       // CORS preflight
       if (event.httpMethod === 'OPTIONS') {
-        return {
-          statusCode: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-          },
-          body: ''
-        };
+        return { statusCode: 200, headers: makeCorsHeaders(event), body: '' };
       }
       if (event.httpMethod === 'POST') {
         try {
@@ -204,11 +138,7 @@ exports.handler = async (event) => {
           console.log('[upload_audio] Incoming payload keys:', Object.keys(parsed));
           console.log('[upload_audio] Word:', word);
           if (!word || !fileDataBase64) {
-            return {
-              statusCode: 400,
-              headers: { 'Access-Control-Allow-Origin': '*' },
-              body: JSON.stringify({ error: 'Missing word or file data' })
-            };
+            return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ error: 'Missing word or file data' }) };
           }
           const safeWord = String(word).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '');
           const buffer = Buffer.from(fileDataBase64, 'base64');
@@ -223,25 +153,13 @@ exports.handler = async (event) => {
             });
           if (error) {
             console.error('[upload_audio] Supabase upload error:', error);
-            return {
-              statusCode: 500,
-              headers: { 'Access-Control-Allow-Origin': '*' },
-              body: JSON.stringify({ error: error.message || 'Upload failed', details: error })
-            };
+            return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ error: error.message || 'Upload failed', details: error }) };
           }
           console.log('[upload_audio] Upload success:', data);
-          return {
-            statusCode: 200,
-            headers: { 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify({ success: true, path: data.path })
-          };
+          return { statusCode: 200, headers: makeCorsHeaders(event), body: JSON.stringify({ success: true, path: data.path }) };
         } catch (err) {
           console.error('[upload_audio] Handler error:', err);
-          return {
-            statusCode: 400,
-            headers: { 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify({ error: err.message })
-          };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ error: err.message }) };
         }
       }
     }
@@ -483,7 +401,7 @@ exports.handler = async (event) => {
       try {
         const username = event.queryStringParameters.username;
         if (!username) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing username' }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Missing username' }) };
         }
         // Look up email by username in 'profiles' table
         const { data, error } = await supabase
@@ -492,14 +410,14 @@ exports.handler = async (event) => {
           .eq('username', username)
           .single();
         if (error || !data) {
-          return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Username not found' }) };
+          return { statusCode: 404, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Username not found' }) };
         }
         if (!data.approved) {
-          return { statusCode: 403, body: JSON.stringify({ success: false, error: 'User not approved' }) };
+          return { statusCode: 403, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
-        return { statusCode: 200, body: JSON.stringify({ success: true, email: data.email }) };
+        return { statusCode: 200, headers: makeCorsHeaders(event), body: JSON.stringify({ success: true, email: data.email }) };
       } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+        return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: err.message }) };
       }
     }
 
@@ -547,12 +465,12 @@ exports.handler = async (event) => {
     }
 
     // --- TEACHER LOGIN (email/password, only approved users) ---
-  if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
+    if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
       try {
         console.log('=== LOGIN START ===');
         const { email, password } = JSON.parse(event.body || '{}');
         if (!email || !password) {
-          return { statusCode: 400, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
         }
         console.log('Email received, checking profile...');
         
@@ -566,10 +484,10 @@ exports.handler = async (event) => {
         console.log('Profile query result:', { profile: !!profile, error: !!profileError });
         
         if (profileError || !profile) {
-          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
+          return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
         }
         if (!profile.approved) {
-          return { statusCode: 403, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'User not approved' }) };
+          return { statusCode: 403, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
 
         console.log('Profile approved, attempting auth...');
@@ -579,10 +497,11 @@ exports.handler = async (event) => {
           process.env.SUPABASE_ANON_KEY || 
           process.env.SUPABASE_KEY || 
           process.env.supabase_anon_key ||
-          process.env.supabase_key;
+          process.env.supabase_key ||
+          process.env.SUPABASE_SERVICE_ROLE_KEY; // last resort
         
         if (!API_KEY) {
-          return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
+          return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
         }
         
         const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -596,28 +515,40 @@ exports.handler = async (event) => {
         const authData = await authResp.json().catch(() => ({}));
         if (!authResp.ok || !authData || !authData.access_token) {
           const msg = authData?.error_description || authData?.error || 'Invalid credentials';
-          return { statusCode: 401, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: msg }) };
+          return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: msg }) };
         }
 
         console.log('Auth successful, setting cookies...');
         
         const secureFlag = !isLocalDev(event);
+        const origin = getRequestOrigin(event) || '';
+        let sameSite = 'Lax';
+        try {
+          if (origin) {
+            const originHost = new URL(origin).hostname;
+            const hostHeader = (event.headers.host || event.headers.Host || '');
+            const hostHost = hostHeader.split(':')[0];
+            const isLocalPair = (/^(localhost|127\.0\.0\.1)$/i.test(originHost)) && (/^(localhost|127\.0\.0\.1)$/i.test(hostHost));
+            const crossSite = originHost && hostHost && originHost.toLowerCase() !== hostHost.toLowerCase() && !isLocalPair;
+            if (crossSite) sameSite = 'None';
+          }
+        } catch {}
         const cookies = [
-          makeCookie('sb_access', authData.access_token, { maxAge: 3600, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' })
+          makeCookie('sb_access', authData.access_token, { maxAge: 3600, secure: secureFlag, httpOnly: true, sameSite, path: '/' })
         ];
         
         if (authData.refresh_token) {
-          cookies.push(makeCookie('sb_refresh', authData.refresh_token, { maxAge: 604800, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' }));
+          cookies.push(makeCookie('sb_refresh', authData.refresh_token, { maxAge: 604800, secure: secureFlag, httpOnly: true, sameSite, path: '/' }));
         }
 
         return {
           statusCode: 200,
-          headers: { 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json', ...makeCorsHeaders(event, true) },
+          headers: { ...makeCorsHeaders(event), 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
           body: JSON.stringify({ success: true, user: authData.user || null })
         };
       } catch (err) {
         console.error('=== LOGIN ERROR ===', err.message, err.stack);
-        return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ success: false, error: err.message }) };
+        return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: err.message }) };
       }
     }
 
@@ -695,7 +626,7 @@ exports.handler = async (event) => {
       try {
         const userId = event.queryStringParameters.user_id;
         if (!userId) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
         }
         const { data, error } = await supabase
           .from('profiles')
@@ -703,11 +634,11 @@ exports.handler = async (event) => {
           .eq('id', userId)
           .single();
         if (error) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: error.message }) };
         }
-        return { statusCode: 200, body: JSON.stringify({ success: true, role: data.role }) };
+        return { statusCode: 200, headers: makeCorsHeaders(event), body: JSON.stringify({ success: true, role: data.role }) };
       } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+        return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: err.message }) };
       }
     }
 
@@ -716,7 +647,7 @@ exports.handler = async (event) => {
       try {
         const authUserId = event.queryStringParameters.auth_user_id;
         if (!authUserId) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing auth_user_id' }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Missing auth_user_id' }) };
         }
         const { data, error } = await supabase
           .from('profiles')
@@ -724,11 +655,11 @@ exports.handler = async (event) => {
           .eq('id', authUserId) // Assuming profiles.id matches auth.users.id
           .single();
         if (error) {
-          return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: error.message }) };
         }
-        return { statusCode: 200, body: JSON.stringify({ success: true, profile_id: data.id }) };
+        return { statusCode: 200, headers: makeCorsHeaders(event), body: JSON.stringify({ success: true, profile_id: data.id }) };
       } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+        return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: err.message }) };
       }
     }
 
@@ -934,12 +865,11 @@ exports.handler = async (event) => {
           body: JSON.stringify({ success: false, error: err.message })
         };
       }
-  } else if (event.path.endsWith('/debug') && event.httpMethod === 'GET') {
+    } else if (event.path.endsWith('/debug') && event.httpMethod === 'GET') {
       // Debug endpoint to check environment variables
       return {
-    statusCode: 200,
-    headers: makeCorsHeaders(event, true),
-    body: JSON.stringify({
+        statusCode: 200,
+        body: JSON.stringify({
           hasSupabaseUrl: !!process.env.SUPABASE_URL,
           hasSupabaseKey: !!process.env.SUPABASE_KEY,
           hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -1072,13 +1002,13 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
       }
     } else {
-      return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
+      return { statusCode: 404, headers: makeCorsHeaders(event), body: JSON.stringify({ error: 'Not found' }) };
     }
   } catch (err) {
     console.log('=== FUNCTION ERROR ===');
     console.log('Error message:', err.message);
     console.log('Error stack:', err.stack);
     console.log('=== END ERROR ===');
-    return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
+    return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
   }
 };
