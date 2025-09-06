@@ -114,7 +114,7 @@ exports.handler = async (event) => {
     if (!SUPABASE_URL || !SERVICE_KEY) {
       return {
         statusCode: 500,
-        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        headers: { ...makeCorsHeaders(event, true), 'Content-Type': 'application/json' },
         body: JSON.stringify({ success: false, error: 'Supabase env not configured' })
       };
     }
@@ -1017,6 +1017,6 @@ exports.handler = async (event) => {
     console.log('Error message:', err.message);
     console.log('Error stack:', err.stack);
     console.log('=== END ERROR ===');
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
+    return { statusCode: 500, headers: makeCorsHeaders(event, true), body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
   }
 };
