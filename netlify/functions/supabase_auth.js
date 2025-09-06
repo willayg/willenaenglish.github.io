@@ -25,6 +25,7 @@ exports.handler = async (event) => {
 
   const ALLOWLIST = new Set([
     'https://www.willenaenglish.com',
+  'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
     'http://localhost:9000',
@@ -127,7 +128,7 @@ exports.handler = async (event) => {
           return { statusCode: 403, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not approved' }) };
         }
 
-        const API_KEY = process.env.SUPABASE_ANON_KEY;
+  const API_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
         if (!API_KEY) {
           return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
         }
