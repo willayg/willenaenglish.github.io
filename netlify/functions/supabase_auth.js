@@ -1,207 +1,285 @@
-// netlify/functions/supabase_auth.js
-// Minimal auth proxy for Netlify + Supabase (v2).
-// Actions: debug, login, get_email_by_username, get_role, get_profile_id, logout, refresh.
-
-const ALLOWLIST = new Set([
-  'https://www.willenaenglish.com',
-  'https://willenaenglish.github.io',
-  'https://willenaenglish.netlify.app',
-  'http://localhost:9000',
-  'http://localhost:8888',
-]);
-
-function getOrigin(event) {
-  return (event.headers?.origin || event.headers?.Origin || '').trim();
-}
-
-function isLocalHost(event) {
-  const h = (event.headers?.host || '').toLowerCase();
-  return h.includes('localhost') || h.includes('127.0.0.1');
-}
-
-function cors(event, extra = {}) {
-  const origin = getOrigin(event);
-  const allowed = ALLOWLIST.has(origin) ? origin : 'https://willenaenglish.netlify.app';
-  return {
-    'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Cache-Control': 'no-store',
-    ...extra,
-  };
-}
-
-function cookie(name, value, { maxAge, secure = true, httpOnly = true, sameSite = 'None', path = '/' } = {}) {
-  let s = `${name}=${encodeURIComponent(value ?? '')}`;
-  if (maxAge != null) s += `; Max-Age=${maxAge}`;
-  if (path) s += `; Path=${path}`;
-  if (secure) s += '; Secure';
-  if (httpOnly) s += '; HttpOnly';
-  if (sameSite) s += `; SameSite=${sameSite}`;
-  return s;
-}
-
-function json(event, statusCode, obj, extraHeaders = {}) {
-  return {
-    statusCode,
-    headers: { ...cors(event), 'Content-Type': 'application/json', ...extraHeaders },
-    body: JSON.stringify(obj),
-  };
-}
-
 exports.handler = async (event) => {
-  // Preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: cors(event), body: '' };
-  }
-
-  // Dynamic import to avoid ERR_REQUIRE_ESM on Netlify
-  const { createClient } = await import('@supabase/supabase-js');
-
-  const SUPABASE_URL   = process.env.SUPABASE_URL;
-  const SERVICE_KEY    = process.env.SUPABASE_SERVICE_ROLE_KEY; // admin ops
-  const ANON_KEY       = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY; // auth REST apikey
-
-  if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
-    return json(event, 500, { success: false, error: 'Missing Supabase env vars' });
-  }
-
-  const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-  const qs = event.queryStringParameters || {};
-  const action = qs.action;
-
   try {
-    // --- debug ---
-    if (action === 'debug' && event.httpMethod === 'GET') {
-      return json(event, 200, {
-        ok: true,
-        hasUrl: !!SUPABASE_URL,
-        hasAnon: !!ANON_KEY,
-        hasService: !!SERVICE_KEY,
-        node: process.version,
-      });
+    // Dynamic ESM import for Netlify runtime
+    const { createClient } = await import('@supabase/supabase-js');
+
+    // CORS allowlist
+    const ALLOWLIST = new Set([
+      'https://www.willenaenglish.com',
+      'https://willenaenglish.com',
+      'https://willenaenglish.github.io',
+      'https://willenaenglish.netlify.app',
+      'http://localhost:9000',
+      'http://localhost:8888'
+    ]);
+
+    function getRequestOrigin(event) {
+      const h = (event && event.headers) || {};
+      return h.origin || h.Origin || '';
     }
 
-    // --- get_email_by_username (approved only) ---
+    function makeCorsHeaders(event) {
+      const reqOrigin = getRequestOrigin(event);
+      const allowOrigin = (reqOrigin && ALLOWLIST.has(reqOrigin)) ? reqOrigin : 'https://willenaenglish.netlify.app';
+      return {
+        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Cache-Control': 'no-store'
+      };
+    }
+
+    function isLocalDev(event) {
+      try {
+        const headers = event.headers || {};
+        const host = String(headers.host || headers.Host || '').toLowerCase();
+        return host.includes('localhost') || host.includes('127.0.0.1');
+      } catch {
+        return false;
+      }
+    }
+
+    // Handle preflight
+    if (event.httpMethod === 'OPTIONS') {
+      return { statusCode: 200, headers: makeCorsHeaders(event), body: '' };
+    }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+
+    if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
+      return {
+        statusCode: 500,
+        headers: makeCorsHeaders(event),
+        body: JSON.stringify({ success: false, error: 'Missing Supabase environment variables' })
+      };
+    }
+
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const qs = event.queryStringParameters || {};
+    const action = qs.action;
+
+    // Debug endpoint
+    if (action === 'debug' && event.httpMethod === 'GET') {
+      return {
+        statusCode: 200,
+        headers: { ...makeCorsHeaders(event), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasSupabaseUrl: !!SUPABASE_URL,
+          hasAnonKey: !!ANON_KEY,
+          hasServiceRole: !!SERVICE_KEY,
+          node: process.version
+        })
+      };
+    }
+
+    // Get email by username
     if (action === 'get_email_by_username' && event.httpMethod === 'GET') {
       const username = qs.username;
-      if (!username) return json(event, 400, { success: false, error: 'Missing username' });
-      const { data, error } = await admin
+      if (!username) {
+        return {
+          statusCode: 400,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'Missing username' })
+        };
+      }
+
+      const { data, error } = await supabase
         .from('profiles')
         .select('email, approved')
         .eq('username', username)
         .single();
-      if (error || !data) return json(event, 404, { success: false, error: 'Username not found' });
-      if (!data.approved) return json(event, 403, { success: false, error: 'User not approved' });
-      return json(event, 200, { success: true, email: data.email });
+
+      if (error || !data) {
+        return {
+          statusCode: 404,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'Username not found' })
+        };
+      }
+
+      if (!data.approved) {
+        return {
+          statusCode: 403,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'User not approved' })
+        };
+      }
+
+      return {
+        statusCode: 200,
+        headers: makeCorsHeaders(event),
+        body: JSON.stringify({ success: true, email: data.email })
+      };
     }
 
-    // --- login (email/password) ---
+    // Login
     if (action === 'login' && event.httpMethod === 'POST') {
-      const { email, password } = JSON.parse(event.body || '{}');
-      if (!email || !password) return json(event, 400, { success: false, error: 'Missing email or password' });
+      const body = JSON.parse(event.body || '{}');
+      const { email, password } = body;
 
-      // gate on approval
-      const { data: profile, error: pErr } = await admin
+      if (!email || !password) {
+        return {
+          statusCode: 400,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'Missing email or password' })
+        };
+      }
+
+      // Check if user is approved
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id, approved')
         .eq('email', email)
         .single();
-      if (pErr || !profile) return json(event, 401, { success: false, error: 'User not found' });
-      if (!profile.approved) return json(event, 403, { success: false, error: 'User not approved' });
 
-      // password grant via REST
-      const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      if (profileError || !profile) {
+        return {
+          statusCode: 401,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'User not found' })
+        };
+      }
+
+      if (!profile.approved) {
+        return {
+          statusCode: 403,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'User not approved' })
+        };
+      }
+
+      // Authenticate with Supabase
+      const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY },
+        body: JSON.stringify({ email, password })
       });
-      const js = await resp.json().catch(() => ({}));
-      if (!resp.ok || !js?.access_token) {
-        const msg = js?.error_description || js?.error || 'Invalid credentials';
-        return json(event, 401, { success: false, error: msg });
+
+      const authData = await authResp.json().catch(() => ({}));
+
+      if (!authResp.ok || !authData.access_token) {
+        const msg = authData?.error_description || authData?.error || 'Invalid credentials';
+        return {
+          statusCode: 401,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: msg })
+        };
       }
 
-      // cookies
-      const secure = !isLocalHost(event);
-      const setCookies = [
-        cookie('sb_access', js.access_token, { maxAge: js.expires_in || 3600, secure }),
+      // Set cookies
+      const secureFlag = !isLocalDev(event);
+      const origin = getRequestOrigin(event) || '';
+      let sameSite = 'Lax';
+
+      // Determine if cross-site (use SameSite=None)
+      try {
+        if (origin) {
+          const originHost = new URL(origin).hostname;
+          const hostHeader = (event.headers.host || event.headers.Host || '');
+          const hostHost = hostHeader.split(':')[0];
+          const isLocalPair = (/^(localhost|127\.0\.0\.1)$/i.test(originHost)) && (/^(localhost|127\.0\.0\.1)$/i.test(hostHost));
+          const crossSite = originHost && hostHost && originHost.toLowerCase() !== hostHost.toLowerCase() && !isLocalPair;
+          if (crossSite) sameSite = 'None';
+        }
+      } catch {}
+
+      const accessMaxAge = Number(authData.expires_in) > 0 ? Number(authData.expires_in) : 3600;
+      const SIX_MONTHS = 60 * 60 * 24 * 30 * 6;
+
+      const cookies = [
+        `sb_access=${encodeURIComponent(authData.access_token)}; Max-Age=${accessMaxAge}; Path=/; ${secureFlag ? 'Secure; ' : ''}HttpOnly; SameSite=${sameSite}`
       ];
-      if (js.refresh_token) {
-        setCookies.push(cookie('sb_refresh', js.refresh_token, { maxAge: 60 * 60 * 24 * 30 * 6, secure }));
+
+      if (authData.refresh_token) {
+        cookies.push(`sb_refresh=${encodeURIComponent(authData.refresh_token)}; Max-Age=${SIX_MONTHS}; Path=/; ${secureFlag ? 'Secure; ' : ''}HttpOnly; SameSite=${sameSite}`);
       }
 
-      return json(
-        event,
-        200,
-        { success: true, user: js.user || null },
-        { 'Set-Cookie': setCookies }
-      );
+      return {
+        statusCode: 200,
+        headers: { ...makeCorsHeaders(event), 'Set-Cookie': cookies, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, user: authData.user || null })
+      };
     }
 
-    // --- get_role (profiles.role by user_id) ---
+    // Get role
     if (action === 'get_role' && event.httpMethod === 'GET') {
-      const user_id = qs.user_id;
-      if (!user_id) return json(event, 400, { success: false, error: 'Missing user_id' });
-      const { data, error } = await admin.from('profiles').select('role').eq('id', user_id).single();
-      if (error) return json(event, 400, { success: false, error: error.message });
-      return json(event, 200, { success: true, role: data.role });
-    }
-
-    // --- get_profile_id (by auth user id) ---
-    if (action === 'get_profile_id' && event.httpMethod === 'GET') {
-      const auth_user_id = qs.auth_user_id;
-      if (!auth_user_id) return json(event, 400, { success: false, error: 'Missing auth_user_id' });
-      const { data, error } = await admin.from('profiles').select('id').eq('id', auth_user_id).single();
-      if (error || !data) return json(event, 404, { success: false, error: 'Not found' });
-      return json(event, 200, { success: true, profile_id: data.id });
-    }
-
-    // --- logout (clear cookies) ---
-    if (action === 'logout') {
-      const expired = new Date(0);
-      const secure = !isLocalHost(event);
-      const setCookies = [
-        cookie('sb_access', '', { secure, httpOnly: true, path: '/', sameSite: 'None' }) + `; Expires=${expired.toUTCString()}`,
-        cookie('sb_refresh', '', { secure, httpOnly: true, path: '/', sameSite: 'None' }) + `; Expires=${expired.toUTCString()}`,
-      ];
-      return json(event, 200, { success: true }, { 'Set-Cookie': setCookies });
-    }
-
-    // --- refresh (rotate using refresh cookie) ---
-    if (action === 'refresh' && event.httpMethod === 'GET') {
-      const cookieHeader = event.headers?.cookie || event.headers?.Cookie || '';
-      const refresh = (cookieHeader.split(/;\s*/).map(s => s.split('='))).reduce((acc, [k, v]) => {
-        acc[k] = decodeURIComponent(v || '');
-        return acc;
-      }, {}).sb_refresh;
-
-      if (!refresh) return json(event, 401, { success: false, error: 'No refresh token' });
-
-      const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
-        body: JSON.stringify({ refresh_token: refresh }),
-      });
-      const js = await resp.json().catch(() => ({}));
-      if (!resp.ok || !js?.access_token) {
-        const msg = js?.error_description || js?.error || 'Refresh failed';
-        return json(event, 401, { success: false, error: msg });
+      const userId = qs.user_id;
+      if (!userId) {
+        return {
+          statusCode: 400,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'Missing user_id' })
+        };
       }
 
-      const secure = !isLocalHost(event);
-      const setCookies = [
-        cookie('sb_access', js.access_token, { maxAge: js.expires_in || 3600, secure }),
-        cookie('sb_refresh', js.refresh_token || refresh, { maxAge: 60 * 60 * 24 * 30 * 6, secure }),
-      ];
-      return json(event, 200, { success: true, expires_in: js.expires_in || 3600 }, { 'Set-Cookie': setCookies });
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        return {
+          statusCode: 400,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: error.message })
+        };
+      }
+
+      return {
+        statusCode: 200,
+        headers: makeCorsHeaders(event),
+        body: JSON.stringify({ success: true, role: data.role })
+      };
     }
 
-    // not found
-    return json(event, 404, { success: false, error: 'Not found' });
-  } catch (e) {
-    // unified error
-    return json(event, 500, { success: false, error: e.message || 'Internal server error' });
+    // Get profile ID
+    if (action === 'get_profile_id' && event.httpMethod === 'GET') {
+      const authUserId = qs.auth_user_id;
+      if (!authUserId) {
+        return {
+          statusCode: 400,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: 'Missing auth_user_id' })
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authUserId)
+        .single();
+
+      if (error) {
+        return {
+          statusCode: 400,
+          headers: makeCorsHeaders(event),
+          body: JSON.stringify({ success: false, error: error.message })
+        };
+      }
+
+      return {
+        statusCode: 200,
+        headers: makeCorsHeaders(event),
+        body: JSON.stringify({ success: true, profile_id: data.id })
+      };
+    }
+
+    // Unknown action
+    return {
+      statusCode: 404,
+      headers: makeCorsHeaders(event),
+      body: JSON.stringify({ success: false, error: 'Action not found' })
+    };
+
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, error: error.message || 'Internal server error' })
+    };
   }
 };
