@@ -29,6 +29,32 @@ const { createClient } = require('@supabase/supabase-js');
 //   summary JSONB
 // )
 
+// Cookie helpers (align with supabase_proxy_fixed)
+function parseCookies(header) {
+  const out = {};
+  if (!header) return out;
+  header.split(/;\s*/).forEach(kv => {
+    const idx = kv.indexOf('=');
+    if (idx > 0) {
+      const k = kv.slice(0, idx).trim();
+      const v = kv.slice(idx + 1).trim();
+      if (k && !(k in out)) out[k] = decodeURIComponent(v);
+    }
+  });
+  return out;
+}
+
+async function getUserFromAccessToken(supabase, accessToken) {
+  if (!accessToken) return null;
+  try {
+    const { data, error } = await supabase.auth.getUser(accessToken);
+    if (error || !data || !data.user) return null;
+    return data.user;
+  } catch {
+    return null;
+  }
+}
+
 exports.handler = async (event) => {
   // Simple health check and debug helpers
   if (event.httpMethod === 'GET') {
@@ -83,6 +109,13 @@ exports.handler = async (event) => {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_key;
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // Best-effort resolve user from cookie access token
+  const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+  const cookies = parseCookies(cookieHeader);
+  const accessToken = cookies['sb_access'] || null;
+  const user = await getUserFromAccessToken(supabase, accessToken);
+  const userIdFromCookie = user && user.id ? user.id : null;
+
   try {
     const body = JSON.parse(event.body || '{}');
     const { event_type } = body;
@@ -92,32 +125,44 @@ exports.handler = async (event) => {
     }
 
     if (event_type === 'session_start') {
+      // Do not create sessions for unauthenticated users
+      if (!userIdFromCookie) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in to start a session.' }) };
+      }
       const { session_id, user_id, mode, list_name, list_size, extra } = body;
       if (!session_id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing session_id' }) };
-  const { error } = await supabase.from('progress_sessions').upsert({
+      const { error } = await supabase.from('progress_sessions').upsert({
         session_id,
-        user_id: user_id || null,
+        user_id: userIdFromCookie,
         mode: mode || null,
         list_name: list_name || null,
         list_size: list_size ?? null,
         summary: extra || null
       }, { onConflict: 'session_id' });
-  if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
+      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 
     if (event_type === 'session_end') {
+      // Require authentication
+      if (!userIdFromCookie) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in to end a session.' }) };
+      }
       const { session_id, user_id, mode, extra } = body;
       if (!session_id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing session_id' }) };
-  const { error } = await supabase
+      const { error } = await supabase
         .from('progress_sessions')
-        .update({ ended_at: new Date().toISOString(), summary: extra || null, mode: mode || null, user_id: user_id || null })
+        .update({ ended_at: new Date().toISOString(), summary: extra || null, mode: mode || null, user_id: userIdFromCookie })
         .eq('session_id', session_id);
-  if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
+      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 
     if (event_type === 'attempt') {
+      // Require authentication: attempts must be attributed to a user
+      if (!userIdFromCookie) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in to earn points.' }) };
+      }
       const {
         user_id, session_id, mode, word,
         is_correct, answer, correct_answer,
@@ -129,11 +174,7 @@ exports.handler = async (event) => {
 
       // Ensure a session row exists to satisfy FK (if you created the FK)
       if (session_id) {
-        const stub = {
-          session_id,
-          user_id: user_id || null,
-          mode: mode || null
-        };
+  const stub = { session_id, user_id: userIdFromCookie, mode: mode || null };
         const { error: sessErr } = await supabase
           .from('progress_sessions')
           .upsert(stub, { onConflict: 'session_id' });
@@ -143,7 +184,7 @@ exports.handler = async (event) => {
       }
 
       const row = {
-        user_id: user_id || null,
+  user_id: userIdFromCookie,
         session_id: session_id || null,
         mode: mode || null,
         word,
@@ -156,8 +197,8 @@ exports.handler = async (event) => {
         round: round ?? null,
         extra: extra || null
       };
-  const { error } = await supabase.from('progress_attempts').insert(row);
-  if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
+      const { error } = await supabase.from('progress_attempts').insert(row);
+      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 

@@ -64,7 +64,7 @@
 
 31. 🚧 Add an automated image insertion tool that uses pixabay and lexica with api or backend.  CGDream.ai and https://www.lummi.ai/ with some others for image search
 
-36. 🚧 Rescale the main UI (toolbars, buttons, menubars, etc.) for better usability and visual balance across devices.
+
 32. ✅ Print needs to ignore all modals. (FIXED)
 33. ✅ Inserting a text box removes the header (FIXED)
 34. ✅ Fix border modal event handler conflicts (FIXED):
@@ -77,3 +77,4 @@
     - Drag handle should be visible and usable on all platforms/browsers.
     - Refactor and modularize drag logic if needed for maintainability.
     - Test with long text, resizing, and all box types.
+    36. 🚧 Rescale the main UI (toolbars, buttons, menubars, etc.) for better usability and visual balance across devices.

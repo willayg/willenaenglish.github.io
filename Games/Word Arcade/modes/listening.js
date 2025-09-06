@@ -10,6 +10,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   let idx = 0;
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
   const sessionId = startSession({ mode: 'listening', wordList, listName });
+  // One-answer-per-question lockout shared across renderers
+  let questionLocked = false;
 
   // Detect sample list for emoji-first behavior
   const isSampleList = !!(listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U')));
@@ -104,6 +106,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   }, 1000);
 
   function renderQuestion() {
+  // Reset lock for this question
+  questionLocked = false;
     if (idx >= shuffled.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'listening', summary: { score, total: shuffled.length } });
@@ -167,13 +171,17 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
         setupChoiceButtons(gameArea);
         gameArea.querySelectorAll('.pic-choice').forEach(btn => {
           btn.onclick = () => {
+            if (questionLocked) return;
+            questionLocked = true;
             const picked = btn.getAttribute('data-eng');
             const isCorrect = picked === current.eng;
             splashResult(btn, isCorrect);
             const feedback = document.getElementById('listening-feedback');
             if (isCorrect) { score++; if (feedback) { feedback.textContent = 'Correct!'; feedback.style.color = '#19777e'; } playSFX('correct'); }
             else { if (feedback) { feedback.textContent = `It was: ${current.eng}`; feedback.style.color = '#e53e3e'; } playSFX('wrong'); }
-            logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: picked, correct_answer: current.eng, points: isCorrect ? (isReview ? 2 : 1) : 0, attempt_index: idx + 1 });
+            // Disable all buttons until next render
+            gameArea.querySelectorAll('button').forEach(b => b.disabled = true);
+            logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: picked, correct_answer: current.eng, points: isCorrect ? (isReview ? 3 : 1) : 0, attempt_index: idx + 1 });
             setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); if (canDoPictures) usePictureNext = !usePictureNext; renderQuestion(); }, 900);
           };
         });
@@ -184,6 +192,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   }
 
   function renderAsTextQuestion(current) {
+  // Reset lock when rendering text question
+  questionLocked = false;
     // Build 4 Korean choices (1 correct + 3 distractors)
     const choices = [current.kor];
     const pool = shuffled.filter(w => w.kor !== current.kor);
@@ -216,6 +226,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
     setupChoiceButtons(gameArea);
     gameArea.querySelectorAll('.listening-choice').forEach(btn => {
       btn.onclick = () => {
+        if (questionLocked) return;
+        questionLocked = true;
         const isCorrect = btn.dataset.kor === current.kor;
         splashResult(btn, isCorrect);
         const feedback = document.getElementById('listening-feedback');
@@ -227,7 +239,9 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
           if (feedback) { feedback.textContent = 'Incorrect!'; feedback.style.color = '#e53e3e'; }
           playSFX('wrong');
         }
-        logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: btn.dataset.kor, correct_answer: current.kor, points: isCorrect ? (isReview ? 2 : 1) : 0, attempt_index: idx + 1 });
+        // Disable all buttons until next render
+        gameArea.querySelectorAll('button').forEach(b => b.disabled = true);
+  logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: btn.dataset.kor, correct_answer: current.kor, points: isCorrect ? (isReview ? 3 : 1) : 0, attempt_index: idx + 1 });
         setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); if (canDoPictures) usePictureNext = !usePictureNext; renderQuestion(); }, 900);
       };
     });

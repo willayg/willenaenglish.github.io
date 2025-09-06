@@ -81,31 +81,15 @@
   <div class="award a-badges"><div class="award-label">Badges</div><div class="award-value" id="awardBadges">0</div></div>
       </div>
   </section>
-  <section class="card span-2 legacy">
-      <h2>Overview</h2>
-      <div class="kpis" id="kpiGrid">
-  <div class="kpi"><div class="v" id="ovPoints">–</div><div class="mut">Points</div></div>
-  <div class="kpi"><div class="v" id="ovStars">–</div><div class="mut">Stars</div></div>
-  <div class="kpi"><div class="v" id="ovListsExplored">–</div><div class="mut">Lists Explored</div></div>
-  <div class="kpi"><div class="v" id="ovPerfectRuns">–</div><div class="mut">Perfect Runs</div></div>
-  <div class="kpi"><div class="v" id="ovMasteredLists">–</div><div class="mut">Mastered</div></div>
-        <div class="kpi"><div class="v" id="ovHotStreak">–</div><div class="mut">Hot Streak</div></div>
-        <div class="kpi"><div class="v" id="ovWordsDiscovered">–</div><div class="mut">Words Discovered</div></div>
-        <div class="kpi"><div class="v" id="ovWordsMastered">–</div><div class="mut">Words Mastered</div></div>
-        <div class="kpi"><div class="v" id="ovSessionsPlayed">–</div><div class="mut">Sessions Played</div></div>
-        <div class="kpi"><div class="v" id="ovBadgesCount">–</div><div class="mut">Badges Earned</div></div>
-        <div class="kpi"><div class="v" id="ovFavoriteList">–</div><div class="mut">Favorite List</div></div>
-        <div class="kpi"><div class="v" id="ovHardestWord">–</div><div class="mut">Hardest Word</div></div>
+  <section class="card span-2 badges" id="badgesSection">
+      <h2 class="badges-title">Your Badges</h2>
+      <div class="badges-grid" id="badgesContainer">
+        <script defer src="/students/badges.js"></script>
+        <div class="mut" id="badgesEmpty">Loading…</div>
+        <div class="mut" id="badgesLoaded" style="display:none;">No badges earned yet.</div>
       </div>
-  <div class="mt-10">
-        <div class="mut hint">Overview focuses on exploration and mastery, not accuracy.</div>
-      </div>
-    </section>
-  <section class="card legacy">
-      <h2>Badges</h2>
-      <div id="badgesWrap" class="mut">No badges yet.</div>
-    </section>
-
+  </section>
+  
   <section class="card span-2" id="challengingSection">
       <h2>Challenging Words</h2>
       <div id="challengingContainer" class="cw-container">

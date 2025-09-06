@@ -131,16 +131,9 @@ export async function showBrowseModal({ onOpen, onClose } = {}) {
   async function fetchPage(newOffset = 0) {
     offset = newOffset;
     listEl.innerHTML = '<div style="text-align:center;padding:20px;"><div style="width:24px;height:24px;border:3px solid #ddd;border-top:3px solid #19777e;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div><style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></div>';
-    let token = null;
-    try {
-      if (window.WordArcade && typeof window.WordArcade.getAccessToken === 'function') {
-        token = await window.WordArcade.getAccessToken();
-      }
-    } catch {}
     const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?list=game_data&limit=10&offset=${offset}`, {
       cache: 'no-store',
-      credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+  credentials: 'include'
     });
     let js = null;
     try { js = await res.json(); } catch { js = null; }

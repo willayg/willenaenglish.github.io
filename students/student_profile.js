@@ -1,27 +1,23 @@
 // students/student_profile.js - client script to load and render student progress
+// Shared helper: set both ovPoints and awardPoints, monotonic (never decrease on screen)
+function setPointsDisplayValue(points) {
+  try {
+    const n = Math.max(0, Number(points ?? 0) || 0);
+    const upd = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const cur = Number(el.textContent || '0') || 0;
+      if (n >= cur) el.textContent = String(n);
+    };
+    upd('ovPoints');
+    upd('awardPoints');
+  } catch {}
+}
 (function(){
   // Helper to create origin-absolute URLs that ignore <base> tag
   const api = (path) => new URL(path, window.location.origin).toString();
 
-  // Read Supabase session access token from localStorage (supabase-js v2 default key)
-  function getAccessToken() {
-    try {
-      // Try default key first
-      let raw = localStorage.getItem('sb-auth-token');
-      if (!raw) {
-        // Fallback: scan for sb-<project-ref>-auth-token
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && /^sb-.*-auth-token$/.test(k)) { raw = localStorage.getItem(k); if (raw) break; }
-        }
-      }
-      if (!raw) return null;
-      const obj = JSON.parse(raw);
-      const session = Array.isArray(obj) ? obj[1] : obj;
-      const token = session?.access_token || session?.currentSession?.access_token || session?.user?.access_token;
-      return token || null;
-    } catch { return null; }
-  }
+  // No localStorage token reads. We rely on secure HTTP-only cookies managed by the server.
 
   // Tiny cache with TTL in localStorage
   const CACHE_NS = 'profile_cache:';
@@ -56,9 +52,7 @@
   // Removed getUserId and all local/session storage lookups for sensitive user info
 
   async function fetchJSON(url){
-    const token = getAccessToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-    const res = await fetch(url, { cache: 'no-store', headers, credentials: 'include' });
+    const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }
@@ -224,7 +218,7 @@
     // Track last badges for correct count
     let lastBadges = [];
     const paintOverview = (ov) => {
-      setText('ovPoints', (ov && ov.points != null) ? ov.points : '0');
+      setPointsDisplayValue((ov && ov.points != null) ? ov.points : 0);
       setText('ovStars', (ov && ov.stars != null) ? ov.stars : '0');
       setText('ovListsExplored', (ov && ov.lists_explored != null) ? ov.lists_explored : '0');
       setText('ovPerfectRuns', (ov && ov.perfect_runs != null) ? ov.perfect_runs : '0');
@@ -295,6 +289,12 @@
     };
   // paintModes removed
 
+    // Prime from localStorage immediately (monotonic)
+    try {
+      const prim = Number(localStorage.getItem('user_points') || '0') || 0;
+      setPointsDisplayValue(prim);
+    } catch {}
+
     // Paint cached immediately if present
   if (cacheOv || cacheBadges || cacheChal) {
       paintOverview(cacheOv);
@@ -337,9 +337,20 @@
   }
   if (emailEl) emailEl.textContent = info && info.email ? info.email : '';
   paintOverview(ov); setCache(`ov:${uid}`, ov, TTL);
+  // Sync header points pill to the latest overview points
+  try {
+    if (ov && typeof ov.points === 'number') {
+      const cur = Number(localStorage.getItem('user_points') || '0') || 0;
+      if (ov.points >= cur) {
+        localStorage.setItem('user_points', String(ov.points));
+        const header = document.querySelector('student-header');
+        if (header && typeof header.refresh === 'function') header.refresh();
+      }
+    }
+  } catch {}
   // Awards counters
   const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
-  setCount('awardPoints', ov && ov.points);
+  setPointsDisplayValue(ov && ov.points);
   setCount('awardStars', ov && ov.stars);
   // Derive medals from perfect_runs (or mastered_lists if preferred)
   setCount('awardMedals', ov && (ov.perfect_runs ?? ov.mastered_lists));
@@ -397,5 +408,47 @@
       } catch {}
     });
   hideOverlay();
+  });
+})();
+
+// Live updates: reflect point changes made in other tabs/pages
+(function(){
+  function updatePointsFromLS(){
+    try {
+      const raw = localStorage.getItem('user_points');
+      if (raw != null && raw !== '') {
+        const n = Number(raw);
+        if (!Number.isNaN(n)) {
+          // Monotonic update to both ovPoints and awardPoints
+          setPointsDisplayValue(n);
+        }
+      }
+    } catch {}
+  }
+  async function refreshOverviewQuick(){
+    try {
+      const res = await fetch(new URL('/.netlify/functions/progress_summary?section=overview', window.location.origin).toString(), { credentials: 'include', cache: 'no-store' });
+      if (!res.ok) return;
+      const ov = await res.json().catch(() => null);
+      if (ov) {
+        // Monotonic LS sync
+        try {
+          if (typeof ov.points === 'number') {
+            const cur = Number(localStorage.getItem('user_points') || '0') || 0;
+            if (ov.points >= cur) localStorage.setItem('user_points', String(ov.points));
+          }
+        } catch {}
+        setPointsDisplayValue(ov.points ?? 0);
+        const setTxt = (id, text)=>{ const el = document.getElementById(id); if (el) el.textContent = text; };
+        setTxt('ovStars', (ov.stars ?? 0).toString());
+        setTxt('awardStars', (ov.stars ?? 0).toString());
+      }
+    } catch {}
+  }
+  window.addEventListener('storage', (e) => {
+    if (e && e.key === 'user_points') updatePointsFromLS();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshOverviewQuick();
   });
 })();

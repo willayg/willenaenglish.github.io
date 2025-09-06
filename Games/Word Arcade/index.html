@@ -101,6 +101,17 @@
         if (data.avatar && typeof data.avatar === 'string' && data.avatar.length <= 16) {
           localStorage.setItem('selectedEmojiAvatar', data.avatar);
         }
+        // Also fetch overview to populate points for the header
+        try {
+          const ovRes = await fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' });
+          if (ovRes.ok) {
+            const ov = await ovRes.json().catch(() => null);
+            if (ov && typeof ov.points === 'number') {
+              const cur = Number(localStorage.getItem('user_points') || '0') || 0;
+              if (ov.points >= cur) localStorage.setItem('user_points', String(ov.points));
+            }
+          }
+        } catch {}
         const header = document.querySelector('student-header');
         if (header && typeof header.refresh === 'function') header.refresh();
       } catch {}
@@ -123,6 +134,24 @@
 
       ensureHeaderProfile();
     });
+  </script>
+
+  <!-- Session refresher: rotate access cookie via secure refresh endpoint -->
+  <script>
+    (function(){
+      async function refreshOnce(){
+        try {
+          await fetch('/.netlify/functions/supabase_proxy_fixed?action=refresh', {
+            method: 'GET', credentials: 'include', cache: 'no-store'
+          });
+        } catch {}
+      }
+      window.addEventListener('DOMContentLoaded', () => {
+        refreshOnce();
+        // Refresh roughly every 45 minutes
+        setInterval(refreshOnce, 2700000);
+      });
+    })();
   </script>
 </body>
 </html>

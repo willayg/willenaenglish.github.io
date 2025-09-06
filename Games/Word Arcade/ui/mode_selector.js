@@ -70,25 +70,34 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     document.head.appendChild(hs);
   }
 
-  // Pre-fetch per-mode best score for this list (if logged in)
-  const userId = getUserId && getUserId();
+  // Pre-fetch per-mode best score for this list (cookie-based like profile page)
+  const userId = getUserId && getUserId(); // may be null; don't gate on this
   const listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : null;
   // bestByMode: mode -> { pct?: number, pts?: number }
   let bestByMode = {};
-  if (userId && listName) {
+  if (listName) {
     try {
-      const token = await window.WordArcade?.getAccessToken?.();
       const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
       url.searchParams.set('section', 'sessions');
       if (listName) url.searchParams.set('list_name', listName);
-      const res = await fetch(url.toString(), { cache: 'no-store', headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
       if (res.ok) {
         const sessions = await res.json();
-        // Compute best score per mode for this list
+        // Compute best score per mode for this list (robust matching + top-level fields)
+        const norm = (v) => (v||'').toString().trim().toLowerCase();
+        const stripExt = (v) => v.replace(/\.json$/i, '');
+        const target = norm(listName);
+        const targetNoExt = stripExt(target);
         (Array.isArray(sessions) ? sessions : []).forEach(s => {
-          if (!s || s.list_name !== listName) return;
+          if (!s) return;
           let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
           const key = (s.mode || 'unknown').toString().toLowerCase();
+          const rowName = norm(s.list_name);
+          const sumName = norm(sum?.list_name || sum?.listName);
+          const rowNoExt = stripExt(rowName);
+          const sumNoExt = stripExt(sumName);
+          const matches = (name) => !!name && (name === target || name === targetNoExt);
+          if (!(matches(rowName) || matches(sumName) || matches(rowNoExt) || matches(sumNoExt))) return;
           if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
             const pct = Math.round((sum.score / sum.total) * 100);
             if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
@@ -101,8 +110,35 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
           } else if (sum && typeof sum.score === 'number') {
             const pts = Math.round(sum.score);
             if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
+          } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
+            const pct = Math.round((s.correct / s.total) * 100);
+            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
+          } else if (typeof s.accuracy === 'number') {
+            const pct = Math.round((s.accuracy || 0) * 100);
+            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
           }
         });
+        // Fallback: aggregate across all modes if no list-specific sessions
+        if (!Object.keys(bestByMode).length) {
+          try {
+            const url2 = new URL('/.netlify/functions/progress_summary', window.location.origin);
+            url2.searchParams.set('section', 'modes');
+            const res2 = await fetch(url2.toString(), { cache: 'no-store', credentials: 'include' });
+            if (res2.ok) {
+              const modesAgg = await res2.json();
+              (Array.isArray(modesAgg) ? modesAgg : []).forEach(m => {
+                const k = (m.mode || 'unknown').toString().toLowerCase();
+                if (typeof m.correct === 'number' && typeof m.total === 'number' && m.total > 0) {
+                  const pct = Math.round((m.correct / m.total) * 100);
+                  if (!(k in bestByMode) || (bestByMode[k].pct ?? -1) < pct) bestByMode[k] = { pct };
+                } else if (typeof m.accuracy === 'number') {
+                  const pct = Math.round((m.accuracy || 0) * 100);
+                  if (!(k in bestByMode) || (bestByMode[k].pct ?? -1) < pct) bestByMode[k] = { pct };
+                }
+              });
+            }
+          } catch {}
+        }
       }
     } catch {}
   }
@@ -154,14 +190,16 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   // Build header with word list title and medals row
   const buildHeader = (perfectCount) => {
-    const names = ['wood', 'steel', 'bronze', 'silver', 'gold', 'platinum'];
+    // Use SVG medal icons from icons folder, matching the modal
+    const svgFiles = ['wooden.svg','steel.svg','bronze.svg','silver.svg','gold.svg','platinum.svg'];
     const labels = ['Wooden', 'Steel', 'Bronze', 'Silver', 'Gold', 'Platinum'];
     let medals = '';
-    for (let i = 0; i < 6; i++) {
-      const filled = i < perfectCount;
-      const cls = names[i];
-      const title = `${labels[i]} Medal` + (filled ? ' (earned)' : ' (locked)');
-      medals += `<span class="medal ${filled ? 'filled ' + cls : ''}" title="${title}" aria-label="${title}"></span>`;
+      for (let i = 0; i < 6; i++) {
+        const filled = i < perfectCount;
+        const title = `${labels[i]} Medal` + (filled ? ' (earned)' : ' (locked)');
+        medals += `<span class="medal" title="${title}" aria-label="${title}" style="display:inline-block;width:28px;height:28px;vertical-align:middle;overflow:hidden;border-radius:50%;">
+          <img src="./assets/Images/icons/${svgFiles[i]}" alt="${labels[i]} Medal" style="width:100%;height:100%;object-fit:cover;display:block;${filled ? '' : 'opacity:0.35;filter:grayscale(1);'}border-radius:50%;" />
+        </span>`;
     }
     const displayName = listName || 'Word List';
     return `<div class="mode-selector-header" role="region" aria-label="Progress for ${displayName}">

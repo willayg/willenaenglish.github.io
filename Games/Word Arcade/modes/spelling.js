@@ -109,7 +109,7 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
         const answer = input.value.trim().toLowerCase();
 
         // Base scoring: exact = 2, near (edit distance 1) = 1, else 0
-        let basePoints = 0;
+  let basePoints = 0;
         if (answer === correct && correct.length > 0) {
           basePoints = 2;
           feedback.textContent = '+2';
@@ -126,8 +126,8 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
           feedback.style.color = '#e53e3e';
           playSFX('wrong');
         }
-
-        const points = isReview ? basePoints * 2 : basePoints;
+  // In review: any correct (near or exact) logs 3 points; wrong logs 0
+  const points = basePoints > 0 ? (isReview ? 3 : basePoints) : 0;
 
         // Log attempt
         logAttempt({
@@ -143,7 +143,8 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
         });
 
         input.disabled = true;
-        spellingScore += points;
+  // Keep UI score on non-review scale; review screen hides score text
+  spellingScore += basePoints;
         completedIndices.push(idx);
         updateGameProgress(completedIndices.length, wordList.length);
         if (!isReview) {

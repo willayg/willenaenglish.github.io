@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 5 – Vocab Trainer</title>
+  <style>
+    body{margin:0;background:#0b1220;color:#e9f4ff;font:16px/1.5 system-ui,Segoe UI,Roboto,Arial,sans-serif;text-align:center}
+    h1{margin:40px 0 20px;font-size:28px;color:#00d0ff}
+    .menu,.game,.review{display:none;padding:20px}
+    button{background:#0f1f3a;border:1px solid #25406c;color:#e9f4ff;padding:12px 20px;margin:10px;border-radius:12px;cursor:pointer;font-size:16px;width:80%;max-width:300px}
+    button.primary{background:linear-gradient(180deg,#0fd1ff,#11a6ff);color:#fff;border:none;font-weight:bold}
+    .qbox{margin:20px 0;font-size:22px;font-weight:bold}
+    .options{display:flex;flex-direction:column;gap:10px;margin:20px auto;max-width:320px}
+    .option{padding:12px;border-radius:10px;background:#1a2947;color:#fff}
+    .option.correct{background:#35d49a;color:#00111c}
+    .option.wrong{background:#ff5d7a;color:#00111c}
+    input[type=text]{padding:12px;border-radius:10px;border:1px solid #24365d;background:#0f1a31;color:#fff;width:80%;max-width:300px}
+    .result{margin-top:15px}
+    .good{color:#35d49a}
+    .bad{color:#ff5d7a}
+  </style>
+</head>
+<body>
+  <div class="menu" id="menu">
+    <h1>Lesson 5 Words</h1>
+    <button onclick="start('mc')" class="primary">English → Korean (Multiple Choice)</button><br>
+    <button onclick="start('spell')" class="primary">Korean → English (Spelling)</button><br>
+    <button onclick="start('blank')" class="primary">Fill in the Blank</button>
+  </div>
+
+  <div class="game" id="game">
+    <div class="qbox" id="prompt"></div>
+    <div id="options" class="options"></div>
+    <div id="spellBox">
+      <div id="kr"></div>
+      <input type="text" id="answer" placeholder="Type here">
+      <div><button onclick="submitSpell()" class="primary">Submit</button></div>
+    </div>
+    <div id="blankBox">
+      <div id="sentence"></div>
+      <input type="text" id="blankInput" placeholder="Missing word">
+      <div><button onclick="submitBlank()" class="primary">Submit</button></div>
+    </div>
+    <div class="result" id="result"></div>
+    <div><button id="nextBtn" onclick="next()" class="primary" disabled>Next</button></div>
+  </div>
+
+  <div class="review" id="review">
+    <h2>Review Wrong Answers</h2>
+    <ul id="reviewList" style="text-align:left;max-width:360px;margin:auto"></ul>
+    <button onclick="reviewWrong()" id="reviewWrongBtn" class="primary" style="display:none">Retry Mistakes</button>
+    <button onclick="backToMenu()" class="primary">Back to Menu</button>
+  </div>
+
+  <script>
+    const WORDS=[
+      {en:"register",kr:"등록하다",ex:"How many students registered for the English class?"},
+      {en:"pit",kr:"구덩이",ex:"The racing cars can be examined in the pit."},
+      {en:"paper",kr:"논문",ex:"He read a paper on climate change."},
+      {en:"on one's own",kr:"혼자서",ex:"He managed to do the problem on his own."},
+      {en:"crew",kr:"승무원, 팀",ex:"There are 10 members of the cabin crew."},
+      {en:"trophy",kr:"트로피",ex:"The winner held the trophy in the air."},
+      {en:"attention",kr:"주의",ex:"We have to pay attention to the speed."},
+      {en:"several",kr:"몇몇의",ex:"I can get several opinions."},
+      {en:"achieve",kr:"성취하다",ex:"I should try my best to achieve my goal."},
+      {en:"depending on",kr:"~에 따라서",ex:"My personality changes depending on the person."},
+      {en:"target",kr:"목표",ex:"Our target customers are teenagers."},
+      {en:"particular",kr:"특정한",ex:"I followed the map, keeping that particular landmark in mind."},
+      {en:"keep track of",kr:"기록하다, 추적하다",ex:"We use GPS to keep track of our position."},
+      {en:"therefore",kr:"그러므로",ex:"Traffic is heavy; therefore, we should take the subway."},
+      {en:"wear out",kr:"닳게 하다, 지치게 하다",ex:"My boots are beginning to wear out."},
+      {en:"breathe",kr:"숨 쉬다",ex:"I lay down and breathed deeply."},
+      {en:"hire",kr:"고용하다",ex:"Tony was hired as a pilot."},
+      {en:"support",kr:"지지하다, 지원하다",ex:"Many students support the plans to change."},
+      {en:"tribe",kr:"부족",ex:"We can learn the culture of the Masai tribe in Kenya."},
+      {en:"invisible",kr:"보이지 않는",ex:"Many stars are invisible to the eye."}
+    ];
+    let order=[],idx=0,mode='',wrong=[],reviewMode=false;
+
+    function show(el){document.querySelectorAll('.menu,.game,.review').forEach(d=>d.style.display='none');document.getElementById(el).style.display='block'}
+
+    function start(m,customWords=null){
+      mode=m;
+      const source=customWords?customWords:WORDS;
+      order=[...Array(source.length).keys()].sort(()=>Math.random()-0.5);
+      idx=0;
+      wrong=[];
+      reviewMode=!!customWords;
+      currentSet=source;
+      show('game');
+      render();
+    }
+
+    function render(){
+      const W=currentSet[order[idx]];
+      document.getElementById('result').textContent='';
+      document.getElementById('nextBtn').disabled=true;
+      document.getElementById('options').innerHTML='';
+      document.getElementById('spellBox').style.display='none';
+      document.getElementById('blankBox').style.display='none';
+
+      if(mode==='mc'){
+        document.getElementById('prompt').textContent=W.en;
+        const opts=[W.kr,...currentSet.filter(x=>x!==W).sort(()=>Math.random()-0.5).slice(0,3).map(x=>x.kr)].sort(()=>Math.random()-0.5);
+        opts.forEach(t=>{
+          let b=document.createElement('button');
+          b.textContent=t;
+          b.className='option';
+          b.style.color='#fff';
+          b.onclick=()=>gradeMC(b,t===W.kr,W);
+          document.getElementById('options').appendChild(b)
+        });
+      }
+      if(mode==='spell'){
+        document.getElementById('prompt').textContent='Spell it in English';
+        document.getElementById('kr').textContent=W.kr;
+        document.getElementById('answer').value='';
+        document.getElementById('spellBox').style.display='block';
+      }
+      if(mode==='blank'){
+        document.getElementById('prompt').textContent='Fill in the blank';
+        document.getElementById('sentence').innerHTML=W.ex.replace(new RegExp(W.en,'i'),'_____');
+        document.getElementById('blankInput').value='';
+        document.getElementById('blankBox').style.display='block';
+      }
+    }
+
+    function gradeMC(btn,ok,W){
+      if(btn.disabled)return;
+      document.querySelectorAll('.option').forEach(b=>b.disabled=true);
+      btn.classList.add(ok?'correct':'wrong');
+      document.getElementById('result').textContent=ok?`✔ ${W.en}`:`✖ ${W.en}`;
+      document.getElementById('result').className=ok?'result good':'result bad';
+      if(!ok)wrong.push(W);
+      setTimeout(()=>{next()},500);
+    }
+
+    function submitSpell(){
+      const W=currentSet[order[idx]];
+      const g=document.getElementById('answer').value.trim().toLowerCase();
+      const ok=g===W.en.toLowerCase();
+      document.getElementById('result').textContent=ok?`✔ ${W.en}`:`✖ ${W.en}`;
+      document.getElementById('result').className=ok?'result good':'result bad';
+      if(!ok)wrong.push(W);
+      document.getElementById('nextBtn').disabled=false;
+    }
+
+    function submitBlank(){
+      const W=currentSet[order[idx]];
+      const g=document.getElementById('blankInput').value.trim().toLowerCase();
+      const ok=g===W.en.toLowerCase();
+      document.getElementById('result').textContent=ok?`✔ ${W.en}`:`✖ ${W.en}`;
+      document.getElementById('result').className=ok?'result good':'result bad';
+      if(!ok)wrong.push(W);
+      document.getElementById('nextBtn').disabled=false;
+    }
+
+    function next(){
+      if(idx<order.length-1){
+        idx++;
+        render();
+      }else{
+        showReview();
+      }
+    }
+
+    function showReview(){
+      show('review');
+      const ul=document.getElementById('reviewList');
+      ul.innerHTML='';
+      if(wrong.length===0){
+        ul.innerHTML='<li>Great job! No mistakes.</li>';
+        document.getElementById('reviewWrongBtn').style.display='none';
+      }else{
+        wrong.forEach(W=>{
+          let li=document.createElement('li');
+          li.textContent=W.en+" – "+W.kr+" | "+W.ex;
+          ul.appendChild(li);
+        });
+        document.getElementById('reviewWrongBtn').style.display='block';
+      }
+    }
+
+    function reviewWrong(){
+      if(wrong.length>0){
+        const wrongSet=[...wrong];
+        wrong=[];
+        start(mode,wrongSet);
+      }
+    }
+
+    function backToMenu(){show('menu')}
+
+    let currentSet=WORDS;
+    show('menu');
+  </script>
+</body>
+</html>

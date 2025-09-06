@@ -684,11 +684,37 @@ async function openGameData(id) {
     const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?get=game_data&id=${encodeURIComponent(id)}`);
     const js = await res.json();
     const r = js?.data || js;
-    if (!r || !r.words) return;
-    
+    if (!r) return;
+    // Normalize words: can be array, JSON string, or nested/dictionary shape
+    let words = r.words;
+    if (typeof words === 'string') {
+      try { words = JSON.parse(words); } catch {}
+    }
+    if (!Array.isArray(words) && words && typeof words === 'object') {
+      if (Array.isArray(words.words)) words = words.words;
+      else if (Array.isArray(words.data)) words = words.data;
+      else if (Array.isArray(words.items)) words = words.items;
+      else {
+        const vals = Object.keys(words).sort((a,b)=>Number(a)-Number(b)).map(k => words[k]);
+        if (vals.length) words = vals;
+      }
+    }
+    if (!Array.isArray(words)) return;
+
     saveState(); // Save state before opening
     titleEl.value = r.title || '';
-    list = (r.words || []).map(w => newRow(w));
+    list = (words || []).map(w => {
+      if (typeof w === 'string') {
+        const parts = w.split(/[,|]/);
+        return newRow({ eng: (parts[0]||'').trim(), kor: (parts[1]||'').trim() });
+      }
+      return newRow({
+        eng: w.eng || w.en || w.word || '',
+        kor: w.kor || w.kr || w.translation || '',
+        image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
+        definition: w.definition || w.def || w.gloss || w.meaning || ''
+      });
+    });
     render();
     fileModal.style.display = 'none';
     // Auto-fill missing data based on toggles (preserve existing images)

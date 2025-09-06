@@ -44,19 +44,23 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
 
     const input = document.getElementById('listeningInput');
     input.focus();
+    let entryLocked = false;
     input.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !input.disabled) {
+        if (entryLocked) return;
+        entryLocked = true;
         const feedback = document.getElementById('listening-feedback');
         const answer = input.value.trim().toLowerCase();
         const correct = shuffled[listeningIdx].eng.toLowerCase();
-        let points = 0;
+        // Base points (non-review): exact = 2, near (edit distance 1) = 1, else 0
+        let basePoints = 0;
         if (answer === correct) {
-          points = 2;
+          basePoints = 2;
           feedback.textContent = 'Perfect! +2';
           feedback.style.color = '#19777e';
           playSFX('correct');
         } else if (levenshtein(answer, correct) === 1) {
-          points = 1;
+          basePoints = 1;
           feedback.textContent = 'Close! +1';
           feedback.style.color = '#f59e0b';
           playSFX('kindaRight');
@@ -65,19 +69,21 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
           feedback.style.color = '#e53e3e';
           playSFX('wrong');
         }
+        // In review: any correct attempt (near or exact) is worth 3; wrong stays 0
+        const points = basePoints > 0 ? (isReview ? 3 : basePoints) : 0;
         // Log attempt
         logAttempt({
           session_id: sessionId,
           mode: 'listen_and_spell',
           word: shuffled[listeningIdx].eng,
-          is_correct: points > 0,
+          is_correct: basePoints > 0,
           answer,
           correct_answer: correct,
-          points: isReview ? points * 2 : points,
+          points,
           attempt_index: listeningIdx + 1
         });
-        input.disabled = true;
-        listeningScore += points;
+    input.disabled = true;
+        listeningScore += basePoints; // Keep on-screen score in non-review scale; UI is hidden in review
         const scoreEl = document.getElementById('listening-score');
         if (scoreEl && !isReview) scoreEl.textContent = `Score: ${listeningScore}`;
         setTimeout(() => {
@@ -87,6 +93,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
             feedback.textContent = '';
             input.value = '';
             input.disabled = false;
+      entryLocked = false;
             playCurrentWord();
             input.focus();
           } else {

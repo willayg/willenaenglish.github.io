@@ -1,20 +1,5 @@
 // profiles/profile.js - client script to load and render user progress
 (function(){
-  function getAccessToken() {
-    try {
-      let raw = localStorage.getItem('sb-auth-token');
-      if (!raw) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && /^sb-.*-auth-token$/.test(k)) { raw = localStorage.getItem(k); if (raw) break; }
-        }
-      }
-      if (!raw) return null;
-      const obj = JSON.parse(raw);
-      const session = Array.isArray(obj) ? obj[1] : obj;
-      return session?.access_token || session?.currentSession?.access_token || null;
-    } catch { return null; }
-  }
   const API = {
     // endpoints powered by Netlify functions
     attempts: () => `/.netlify/functions/progress_summary?section=attempts`,
@@ -29,9 +14,7 @@
   }
 
   async function fetchJSON(url){
-    const token = getAccessToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-    const res = await fetch(url, { cache: 'no-store', headers });
+    const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }

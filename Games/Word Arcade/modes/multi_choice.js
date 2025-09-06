@@ -107,6 +107,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
   }, 1000);
 
   function renderQuestion() {
+  // One-answer-per-question lockout
+  let questionLocked = false;
     if (idx >= shuffled.length) {
       playSFX('end');
       endSession(sessionId, { mode: 'multi_choice', summary: { score, total: shuffled.length } });
@@ -183,12 +185,16 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
       setupChoiceButtons(gameArea);
       document.querySelectorAll('#multiChoicesMixed .multi-pic-btn').forEach(btn => {
         btn.onclick = () => {
+          if (questionLocked) return;
+          questionLocked = true;
           const selected = btn.getAttribute('data-eng');
           const correct = selected === current.eng;
           splashResult(btn, correct);
           const feedback = document.getElementById('multiFeedbackMixed');
           if (correct) { score++; playSFX('correct'); if (feedback) { feedback.textContent = 'Correct!'; feedback.style.color = '#19777e'; } }
           else { playSFX('wrong'); if (feedback) { feedback.textContent = `It was: ${current.eng}`; feedback.style.color = '#e53e3e'; } }
+          // Disable all buttons to prevent rapid multiple taps
+          document.querySelectorAll('#multiChoicesMixed button').forEach(b => b.disabled = true);
           logAttempt({
             session_id: sessionId,
             mode: 'multi_choice',
@@ -196,7 +202,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
             is_correct: correct,
             answer: selected,
             correct_answer: current.eng,
-            points: correct ? (isReview ? 2 : 1) : 0,
+            points: correct ? (isReview ? 3 : 1) : 0,
             attempt_index: idx + 1,
             extra: { direction: 'eng_to_pic', eng: current.eng, kor: current.kor }
           });
@@ -227,20 +233,24 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
       setupChoiceButtons(gameArea);
       document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
         btn.onclick = () => {
+          if (questionLocked) return;
+          questionLocked = true;
           const selected = btn.getAttribute('data-eng');
           const correct = selected === current.eng;
           splashResult(btn, correct);
           const feedback = document.getElementById('multiFeedbackMixed');
           if (correct) { score++; playSFX('correct'); if (feedback) { feedback.textContent = 'Correct!'; feedback.style.color = '#19777e'; } }
           else { playSFX('wrong'); if (feedback) { feedback.textContent = `It was: ${current.eng}`; feedback.style.color = '#e53e3e'; } }
+          // Disable all buttons to prevent rapid multiple taps
+          document.querySelectorAll('#multiChoicesMixed button').forEach(b => b.disabled = true);
           logAttempt({
             session_id: sessionId,
             mode: 'multi_choice',
-            word: '[picture] ' + current.eng,
+            word: current.eng,
             is_correct: correct,
             answer: selected,
             correct_answer: current.eng,
-            points: correct ? (isReview ? 2 : 1) : 0,
+            points: correct ? (isReview ? 3 : 1) : 0,
             attempt_index: idx + 1,
             extra: { direction: 'pic_to_eng', eng: current.eng, kor: current.kor }
           });
@@ -290,6 +300,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
     setupChoiceButtons(gameArea);
     document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
       btn.onclick = () => {
+        if (questionLocked) return;
+        questionLocked = true;
         const feedback = document.getElementById('multiFeedbackMixed');
         const selected = btn.getAttribute(`data-${dataAttr}`);
         const correct = selected === correctText;
@@ -302,6 +314,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           if (feedback) { feedback.textContent = 'Incorrect!'; feedback.style.color = '#e53e3e'; }
           playSFX('wrong');
         }
+        // Disable all buttons to prevent rapid multiple taps
+        document.querySelectorAll('#multiChoicesMixed button').forEach(b => b.disabled = true);
         const wordLogged = korToEng ? current.kor : current.eng;
         const correctAns = korToEng ? current.eng : current.kor;
         logAttempt({
@@ -311,7 +325,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           is_correct: correct,
           answer: selected,
           correct_answer: correctAns,
-          points: correct ? (isReview ? 2 : 1) : 0,
+          points: correct ? (isReview ? 3 : 1) : 0,
           attempt_index: idx + 1,
           extra: { direction: korToEng ? 'kor_to_eng' : 'eng_to_kor', eng: current.eng, kor: current.kor }
         });
