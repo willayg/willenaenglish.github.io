@@ -483,9 +483,19 @@ exports.handler = async (event) => {
         console.log('Profile approved, attempting auth...');
         
         // Use Supabase Auth REST directly
+        const API_KEY = 
+          process.env.SUPABASE_ANON_KEY || 
+          process.env.SUPABASE_KEY || 
+          process.env.supabase_anon_key ||
+          process.env.supabase_key;
+        
+        if (!API_KEY) {
+          return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
+        }
+        
         const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY || SUPABASE_KEY },
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
           body: JSON.stringify({ email, password })
         });
         
