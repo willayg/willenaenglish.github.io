@@ -1,9 +1,10 @@
 exports.handler = async (event) => {
-  // Get the origin for proper CORS
-  const origin = event.headers?.origin || event.headers?.Origin || '';
+  // Get the origin for proper CORS - use compatible syntax
+  const headers = event.headers || {};
+  const origin = headers.origin || headers.Origin || '';
   const allowedOrigins = [
     'https://www.willenaenglish.com',
-    'https://willenaenglish.com',
+    'https://willenaenglish.com', 
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app'
   ];
