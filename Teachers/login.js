@@ -1,80 +1,216 @@
-// /Teachers/login.js
-// Auth-only client helpers for Netlify Functions + Supabase
-// Exposes: loginTeacher, getUserRole, getProfileId, getEmailByUsername, checkHealth
+/**
+ * Teachers Login Module
+ * Simple, robust authentication client for Netlify Functions + Supabase
+ * 
+ * This module provides clean, promise-based functions for teacher authentication
+ * that work seamlessly with the supabase_auth Netlify function.
+ */
 
-// Decide which origin to call for functions.
-// - On Netlify or localhost -> same-origin ('')
-// - On GitHub Pages / custom domain -> point to the Netlify site
+// Determine the correct functions base URL based on the current domain
 const HOST = location.hostname;
 const IS_NETLIFY = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
-const IS_LOCAL   = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
+const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
 const FUNCTIONS_BASE = (IS_NETLIFY || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
+const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
 
-const SUPABASE_AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
-
-// Internal: parse JSON or throw a readable error
-async function parseJson(res, fallback = 'Service error') {
+/**
+ * Internal helper for making authenticated API calls
+ * @param {string} url - The API endpoint URL
+ * @param {object} options - Fetch options
+ * @returns {Promise<object>} - Parsed JSON response
+ */
+async function makeAuthRequest(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: 'include', // Always include cookies
+    ...options
+  });
+  
+  let data;
   try {
-    return await res.json();
+    data = await response.json();
   } catch {
-    const txt = await res.text().catch(() => '');
-    const msg = res.ok ? 'Unexpected response' : `${fallback} (${res.status})`;
-    throw new Error(msg);
+    // Handle non-JSON responses (like 502 HTML errors)
+    const text = await response.text().catch(() => '');
+    throw new Error(`Server error (${response.status}): ${text.slice(0, 100)}`);
   }
+  
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || `Request failed with status ${response.status}`);
+  }
+  
+  return data;
 }
 
-// Username → email (only for approved users)
+/**
+ * Convert a username to an email address
+ * Only works for approved users
+ * @param {string} username - The username to look up
+ * @returns {Promise<string>} - The associated email address
+ */
 export async function getEmailByUsername(username) {
-  const url = `${SUPABASE_AUTH_URL}?action=get_email_by_username&username=${encodeURIComponent(username)}`;
-  const res = await fetch(url, { credentials: 'include' });
-  const js = await parseJson(res, 'Lookup error');
-  if (!res.ok || !js.success) throw new Error(js.error || 'Username not found');
-  return js.email;
+  if (!username) {
+    throw new Error('Username is required');
+  }
+  
+  const url = `${AUTH_URL}?action=get_email_by_username&username=${encodeURIComponent(username)}`;
+  const result = await makeAuthRequest(url);
+  return result.email;
 }
 
-// Login with email/password via the auth function
+/**
+ * Authenticate a teacher with email and password
+ * Sets HTTP-only cookies for session management
+ * @param {string} email - Teacher's email address
+ * @param {string} password - Teacher's password
+ * @returns {Promise<object>} - User object from Supabase auth
+ */
 export async function loginTeacher(email, password) {
-  const res = await fetch(`${SUPABASE_AUTH_URL}?action=login`, {
+  if (!email || !password) {
+    throw new Error('Email and password are required');
+  }
+  
+  const url = `${AUTH_URL}?action=login`;
+  const result = await makeAuthRequest(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // carry cookies
     body: JSON.stringify({ email, password })
   });
-  const js = await parseJson(res, 'Login service error');
-  if (!res.ok || !js.success) throw new Error(js.error || 'Login failed');
-  return js; // { success:true, user }
+  
+  return result.user;
 }
 
-// Fetch role from profiles by auth user id
+/**
+ * Get the role of a user by their auth user ID
+ * @param {string} userId - The auth user ID
+ * @returns {Promise<string>} - The user's role (e.g., 'teacher', 'admin')
+ */
 export async function getUserRole(userId) {
-  const res = await fetch(`${SUPABASE_AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`, {
-    credentials: 'include'
-  });
-  const js = await parseJson(res, 'Role service error');
-  if (!res.ok || !js.success) throw new Error(js.error || 'Could not fetch user role');
-  return js.role;
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+  
+  const url = `${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`;
+  const result = await makeAuthRequest(url);
+  return result.role;
 }
 
-// Fetch profile id from profiles by auth user id
+/**
+ * Get the profile ID for a user by their auth user ID
+ * @param {string} authUserId - The auth user ID
+ * @returns {Promise<string>} - The profile ID
+ */
 export async function getProfileId(authUserId) {
-  const res = await fetch(`${SUPABASE_AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`, {
-    credentials: 'include'
-  });
-  const js = await parseJson(res, 'Profile service error');
-  if (!res.ok || !js.success) throw new Error(js.error || 'Could not fetch profile ID');
-  return js.profile_id;
+  if (!authUserId) {
+    throw new Error('Auth user ID is required');
+  }
+  
+  const url = `${AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`;
+  const result = await makeAuthRequest(url);
+  return result.profile_id;
 }
 
-// Optional: quick health probe for debugging
-export async function checkHealth() {
+/**
+ * Check the health and configuration of the auth service
+ * Useful for debugging
+ * @returns {Promise<object>} - Service status information
+ */
+export async function checkAuthService() {
   try {
-    const res = await fetch(`${SUPABASE_AUTH_URL}?action=debug`, { credentials: 'include' });
-    const js = await parseJson(res, 'Health check error');
-    return { ok: res.ok, info: js };
-  } catch (e) {
-    return { ok: false, error: e.message };
+    const url = `${AUTH_URL}?action=debug`;
+    const response = await fetch(url, { credentials: 'include' });
+    const data = await response.json();
+    
+    return {
+      healthy: response.ok,
+      status: response.status,
+      data: data
+    };
+  } catch (error) {
+    return {
+      healthy: false,
+      error: error.message
+    };
   }
 }
 
-// Useful for debugging in the console
-export const __AUTH_DEBUG__ = { HOST, FUNCTIONS_BASE, SUPABASE_AUTH_URL };
+/**
+ * Complete login flow: handle username/email + password, fetch role and profile
+ * @param {string} loginValue - Email or username
+ * @param {string} password - Password
+ * @returns {Promise<object>} - Complete user data with role and profile ID
+ */
+export async function completeLogin(loginValue, password) {
+  if (!loginValue || !password) {
+    throw new Error('Login credentials are required');
+  }
+  
+  // Convert username to email if needed
+  let email = loginValue;
+  if (!loginValue.includes('@')) {
+    email = await getEmailByUsername(loginValue);
+  }
+  
+  // Perform login
+  const user = await loginTeacher(email, password);
+  
+  if (!user || !user.id) {
+    throw new Error('Login successful but no user data received');
+  }
+  
+  // Fetch additional user data
+  const [role, profileId] = await Promise.all([
+    getUserRole(user.id),
+    getProfileId(user.id)
+  ]);
+  
+  return {
+    user,
+    role,
+    profileId,
+    authUserId: user.id
+  };
+}
+
+/**
+ * Store user session data in localStorage
+ * @param {object} userData - User data from completeLogin()
+ */
+export function storeUserSession(userData) {
+  localStorage.setItem('userId', userData.authUserId);
+  localStorage.setItem('profile_id', userData.profileId);
+  localStorage.setItem('userRole', userData.role);
+}
+
+/**
+ * Get the redirect URL based on user role
+ * @param {string} role - User role
+ * @returns {string} - Redirect URL
+ */
+export function getRedirectUrl(role) {
+  if (role === 'admin') {
+    return '/Teachers/components/feedback-admin.html';
+  }
+  return '/Teachers/index.html';
+}
+
+// Export configuration for debugging
+export const config = {
+  HOST,
+  FUNCTIONS_BASE,
+  AUTH_URL,
+  IS_NETLIFY,
+  IS_LOCAL
+};
+
+// For console debugging
+if (typeof window !== 'undefined') {
+  window.TeacherAuth = {
+    getEmailByUsername,
+    loginTeacher,
+    getUserRole,
+    getProfileId,
+    checkAuthService,
+    completeLogin,
+    config
+  };
+}

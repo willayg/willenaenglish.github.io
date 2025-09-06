@@ -1,173 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Teacher Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Login - Willena English</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#f6f7fb; --card:#fff; --ink:#111827; --mut:#6b7280; --pri:#5a4ad1; --pri-ink:#fff; --ring:#d9d6ff; --border:#e5e7eb;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Poppins,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{min-height:100vh;display:grid;place-items:center;padding:28px}
-    .card{
-      width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);
-      border-radius:14px;box-shadow:0 6px 24px rgba(17,24,39,.06);padding:28px 24px;
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    h1{margin:4px 0 18px;font-size:24px;text-align:center}
-    label{display:block;font-weight:600;margin:14px 0 6px}
-    input{
-      width:100%;padding:12px 12px;border:1px solid var(--border);border-radius:10px;font:inherit;
-      outline:none;transition:border .15s, box-shadow .15s;
+    
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      overflow: hidden;
     }
-    input:focus{border-color:var(--pri);box-shadow:0 0 0 4px var(--ring)}
-    button{
-      width:100%;margin-top:14px;padding:12px 14px;border:0;border-radius:10px;
-      background:var(--pri);color:var(--pri-ink);font-weight:700;cursor:pointer;
+    
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
     }
-    .row{display:flex;justify-content:center;margin-top:10px}
-    .link{color:var(--pri);font-weight:600;text-decoration:underline}
-    .msg{margin:10px 0 0;text-align:center;font-size:14px}
-    .msg.err{color:#d32f2f}
-    .msg.ok{color:#1b7a36}
-    .tiny{display:block;margin-top:6px;color:var(--mut);font-size:12px;text-align:center}
+    
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .logo h1 {
+      color: #1a202c;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .logo p {
+      color: #718096;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2d3748;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+      background: #f7fafc;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+    
+    .login-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+    
+    .message.error {
+      background: #fed7d7;
+      color: #c53030;
+      border: 1px solid #feb2b2;
+    }
+    
+    .message.success {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+    
+    .signup-link {
+      text-align: center;
+      color: #718096;
+      font-size: 14px;
+    }
+    
+    .signup-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .debug-info {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: monospace;
+      max-width: 300px;
+      word-break: break-all;
+    }
+    
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <form class="card" id="loginForm" autocomplete="on">
+  <div class="login-container">
+    <div class="logo">
       <h1>Teacher Login</h1>
-      <div id="message" class="msg" hidden></div>
-
-      <label for="login">Email or Username</label>
-      <input id="login" name="login" type="text" required autocomplete="username" placeholder="email@example.com or username" />
-
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" />
-
-      <button type="submit" id="submitBtn">Login</button>
-
-      <div class="row"><a class="link" href="/Teachers/signup.html">Sign up</a></div>
-      <small class="tiny" id="envNote"></small>
+      <p>Welcome back to Willena English</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email or Username</label>
+        <input 
+          type="text" 
+          id="email" 
+          name="email" 
+          required 
+          autocomplete="username"
+          placeholder="Enter your email or username"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          required 
+          autocomplete="current-password"
+          placeholder="Enter your password"
+        >
+      </div>
+      
+      <button type="submit" class="login-btn" id="loginBtn">
+        Sign In
+      </button>
     </form>
+    
+    <div class="signup-link">
+      Don't have an account? <a href="/Teachers/signup.html">Sign up here</a>
+    </div>
   </div>
+  
+  <div id="debugInfo" class="debug-info"></div>
 
-  <!-- Single module. No duplicate script tags. No external login.js to get cached and betray you. -->
   <script type="module">
-    // ---------- Config ----------
+    // Configuration
     const HOST = location.hostname;
     const IS_NETLIFY = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
-    const IS_LOCAL   = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
+    const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
     const FUNCTIONS_BASE = (IS_NETLIFY || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
-    const AUTH_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_auth'; // single source of truth
-    // cache-busting stamp so you know you’re on the new page when debugging
-    const BUILD_STAMP = 'login-v3-2025-09-06-1';
-
-    const el = (id) => document.getElementById(id);
-    const form = el('loginForm');
-    const msg  = el('message');
-    const note = el('envNote');
-    note.textContent = `Using ${AUTH_URL} • ${BUILD_STAMP}`;
-
-    function show(type, text) {
-      msg.hidden = false;
-      msg.className = 'msg ' + (type === 'error' ? 'err' : 'ok');
-      msg.textContent = text;
+    const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
+    
+    // DOM elements
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const messageDiv = document.getElementById('message');
+    const debugInfo = document.getElementById('debugInfo');
+    
+    // Debug info display
+    debugInfo.textContent = `Auth: ${AUTH_URL} | Host: ${HOST}`;
+    
+    // Utility functions
+    function showMessage(text, type = 'error') {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
     }
-    function clearMsg(){ msg.hidden = true; msg.textContent = ''; }
-
+    
+    function hideMessage() {
+      messageDiv.style.display = 'none';
+    }
+    
+    function setLoading(loading) {
+      loginBtn.disabled = loading;
+      loginBtn.textContent = loading ? 'Signing in...' : 'Sign In';
+    }
+    
+    // API functions
+    async function apiCall(url, options = {}) {
+      try {
+        const response = await fetch(url, {
+          credentials: 'include',
+          ...options
+        });
+        
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error(`Server error (${response.status})`);
+        }
+        
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || `Request failed (${response.status})`);
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('API call failed:', error);
+        throw error;
+      }
+    }
+    
     async function getEmailByUsername(username) {
       const url = `${AUTH_URL}?action=get_email_by_username&username=${encodeURIComponent(username)}`;
-      const res = await fetch(url, { credentials:'include' });
-      let data;
-      try { data = await res.json(); } catch { throw new Error(`Lookup error (${res.status})`); }
-      if (!res.ok || !data?.success) throw new Error(data?.error || 'Username not found');
-      return data.email;
+      const result = await apiCall(url);
+      return result.email;
     }
-
+    
     async function login(email, password) {
-      const res = await fetch(`${AUTH_URL}?action=login`, {
-        method:'POST',
-        headers: { 'Content-Type':'application/json' },
-        credentials:'include',
+      const url = `${AUTH_URL}?action=login`;
+      const result = await apiCall(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      let data;
-      try { data = await res.json(); } catch {
-        const t = await res.text().catch(()=>'');
-        throw new Error(`Login service error (${res.status})`);
-      }
-      if (!res.ok || !data?.success) throw new Error(data?.error || 'Login failed');
-      return data.user; // may be null; we still have cookies
+      return result.user;
     }
-
-    async function getRole(userId) {
-      const res = await fetch(`${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`, { credentials:'include' });
-      const data = await res.json().catch(()=>null);
-      if (!res.ok || !data?.success) throw new Error(data?.error || 'Could not fetch role');
-      return data.role;
+    
+    async function getUserRole(userId) {
+      const url = `${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`;
+      const result = await apiCall(url);
+      return result.role;
     }
-
+    
     async function getProfileId(authUserId) {
-      const res = await fetch(`${AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`, { credentials:'include' });
-      const data = await res.json().catch(()=>null);
-      if (!res.ok || !data?.success) throw new Error(data?.error || 'Could not fetch profile id');
-      return data.profile_id;
+      const url = `${AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`;
+      const result = await apiCall(url);
+      return result.profile_id;
     }
-
-    // Optional quick health check on load (comment out if it annoys you)
-    try {
-      const r = await fetch(`${AUTH_URL}?action=debug`, { credentials:'include' });
-      if (!r.ok) console.warn('Auth debug not OK:', r.status);
-    } catch(e) { console.warn('Auth debug failed:', e); }
-
+    
+    // Form submission handler
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearMsg();
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Logging in…';
-
+      hideMessage();
+      setLoading(true);
+      
       try {
-        let loginValue = el('login').value.trim();
-        const password = el('password').value;
-
-        // username → email
-        if (!loginValue.includes('@')) {
-          loginValue = await getEmailByUsername(loginValue);
+        let email = emailInput.value.trim();
+        const password = passwordInput.value;
+        
+        if (!email || !password) {
+          throw new Error('Please enter both email/username and password');
         }
-
-        // 1) login (sets cookies)
-        const user = await login(loginValue, password);
-        const authUserId = user?.id || null;
-
-        // 2) fetch role + profile id
-        if (!authUserId) throw new Error('No auth user id returned');
+        
+        // Convert username to email if needed
+        if (!email.includes('@')) {
+          showMessage('Looking up username...', 'success');
+          email = await getEmailByUsername(email);
+        }
+        
+        // Perform login
+        showMessage('Signing in...', 'success');
+        const user = await login(email, password);
+        
+        if (!user || !user.id) {
+          throw new Error('Login successful but no user data received');
+        }
+        
+        // Get user role and profile ID
+        showMessage('Loading profile...', 'success');
         const [role, profileId] = await Promise.all([
-          getRole(authUserId),
-          getProfileId(authUserId)
+          getUserRole(user.id),
+          getProfileId(user.id)
         ]);
-
-        // 3) stash ids for the rest of your site
-        localStorage.setItem('userId', authUserId);   // auth.users id
-        localStorage.setItem('profile_id', profileId);// profiles.id
+        
+        // Store user data
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('profile_id', profileId);
         localStorage.setItem('userRole', role);
-
-        show('ok', `Logged in as ${role}`);
-        // 4) route
-        location.href = role === 'admin'
-          ? '/Teachers/components/feedback-admin.html'
-          : '/Teachers/index.html';
-
-      } catch (err) {
-        show('error', err.message || 'Login failed');
+        
+        showMessage(`Welcome back! Redirecting...`, 'success');
+        
+        // Redirect based on role
+        setTimeout(() => {
+          if (role === 'admin') {
+            window.location.href = '/Teachers/components/feedback-admin.html';
+          } else {
+            window.location.href = '/Teachers/index.html';
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        showMessage(error.message, 'error');
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
+        setLoading(false);
       }
     });
+    
+    // Test auth function on page load
+    (async () => {
+      try {
+        const debugUrl = `${AUTH_URL}?action=debug`;
+        const debugResult = await fetch(debugUrl, { credentials: 'include' });
+        const debugData = await debugResult.json();
+        
+        if (debugData.hasSupabaseUrl && debugData.hasAnonKey && debugData.hasServiceRole) {
+          console.log('✓ Auth service healthy');
+        } else {
+          console.warn('⚠ Auth service missing environment variables');
+        }
+      } catch (error) {
+        console.error('Auth service unreachable:', error);
+      }
+    })();
   </script>
 </body>
 </html>
