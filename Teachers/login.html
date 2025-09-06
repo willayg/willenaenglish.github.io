@@ -52,10 +52,9 @@
       const loginError = document.getElementById('loginError');
       const roleInfo = document.getElementById('roleInfo');
 
-      // If hosted on GitHub Pages, the Netlify functions path is on a different origin.
-      // You can set NETLIFY_FUNCTIONS_BASE globally if needed:
-      if (location.hostname.endsWith('github.io') && !window.NETLIFY_FUNCTIONS_BASE) {
-        // Replace with your Netlify site if different
+      // If not on a Netlify domain, point functions to the Netlify site origin
+      if (!/\.netlify\.(app|live)$/.test(location.hostname) && !window.NETLIFY_FUNCTIONS_BASE) {
+        // Replace with your Netlify functions origin if different
         window.NETLIFY_FUNCTIONS_BASE = 'https://willenaenglish.netlify.app';
       }
 
