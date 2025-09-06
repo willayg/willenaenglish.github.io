@@ -8,17 +8,6 @@ exports.handler = async (event) => {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        status: "error",
-        message: "Missing Supabase environment variables. Please check your Netlify function settings.",
-      }),
-    };
-  }
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const { name } = JSON.parse(event.body);

@@ -396,18 +396,230 @@ exports.handler = async (event) => {
       }
     }
 
-    // --- GET EMAIL BY USERNAME (MOVED TO supabase_auth) ---
+    // --- GET EMAIL BY USERNAME (only approved users) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'get_email_by_username' && event.httpMethod === 'GET') {
+      try {
+        const username = event.queryStringParameters.username;
+        if (!username) {
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Missing username' }) };
+        }
+        // Look up email by username in 'profiles' table
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('email, approved')
+          .eq('username', username)
+          .single();
+        if (error || !data) {
+          return { statusCode: 404, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Username not found' }) };
+        }
+        if (!data.approved) {
+          return { statusCode: 403, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not approved' }) };
+        }
+        return { statusCode: 200, headers: makeCorsHeaders(event), body: JSON.stringify({ success: true, email: data.email }) };
+      } catch (err) {
+        return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
 
-    // --- SECURE SIGNUP (MOVED TO supabase_auth) ---
+    // --- SECURE SIGNUP (create user, send confirmation email, insert profile) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'signup' && event.httpMethod === 'POST') {
+      try {
+        const { email, password, name, username } = JSON.parse(event.body);
+        if (!email || !password || !name || !username) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing name, email, password, or username' }) };
+        }
+        // Create user in Supabase Auth (admin)
+        const { data: userData, error: signUpError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true
+        });
+        if (signUpError || !userData || !userData.user) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: signUpError ? signUpError.message : 'Sign up failed' }) };
+        }
+        // Do NOT send invite email; let Supabase send the confirmation email automatically
+        // Insert profile row with username
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ id: userData.user.id, email, name, username, approved: true, role: 'teacher' }]);
+        if (profileError) {
+          return { statusCode: 400, body: JSON.stringify({ success: false, error: profileError.message }) };
+        }
+        return { statusCode: 200, body: JSON.stringify({ success: true, user: { id: userData.user.id, email, name, username } }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
 
-    // --- GOOGLE OAUTH SIGNUP (MOVED TO supabase_auth) ---
+    // --- GOOGLE OAUTH SIGNUP ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'google_oauth_signup' && event.httpMethod === 'GET') {
+      // Redirect to Supabase Google OAuth URL
+      const redirectTo = `${process.env.SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(process.env.SUPABASE_OAUTH_REDIRECT || 'https://willenaenglish.github.io/Teachers/signup.html')}`;
+      return {
+        statusCode: 302,
+        headers: {
+          Location: redirectTo
+        },
+        body: ''
+      };
+    }
 
-    // --- TEACHER LOGIN (MOVED TO supabase_auth) ---
+    // --- TEACHER LOGIN (email/password, only approved users) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'login' && event.httpMethod === 'POST') {
+      try {
+        console.log('=== LOGIN START ===');
+        const { email, password } = JSON.parse(event.body || '{}');
+        if (!email || !password) {
+          return { statusCode: 400, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Missing email or password' }) };
+        }
+        console.log('Email received, checking profile...');
+        
+        // Check if user is approved before allowing login
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, approved')
+          .eq('email', email)
+          .single();
+        
+        console.log('Profile query result:', { profile: !!profile, error: !!profileError });
+        
+        if (profileError || !profile) {
+          return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not found or not approved' }) };
+        }
+        if (!profile.approved) {
+          return { statusCode: 403, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'User not approved' }) };
+        }
 
-    // --- LOGOUT (MOVED TO supabase_auth) ---
+        console.log('Profile approved, attempting auth...');
+        
+        // Use Supabase Auth REST directly
+        const API_KEY = 
+          process.env.SUPABASE_ANON_KEY || 
+          process.env.SUPABASE_KEY || 
+          process.env.supabase_anon_key ||
+          process.env.supabase_key ||
+          process.env.SUPABASE_SERVICE_ROLE_KEY; // last resort
+        
+        if (!API_KEY) {
+          return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Auth key not configured' }) };
+        }
+        
+        const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        
+        console.log('Auth response status:', authResp.status);
+        
+        const authData = await authResp.json().catch(() => ({}));
+        if (!authResp.ok || !authData || !authData.access_token) {
+          const msg = authData?.error_description || authData?.error || 'Invalid credentials';
+          return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: msg }) };
+        }
 
-    // --- REFRESH (MOVED TO supabase_auth) ---
+        console.log('Auth successful, setting cookies...');
+        
+        const secureFlag = !isLocalDev(event);
+        const origin = getRequestOrigin(event) || '';
+        let sameSite = 'Lax';
+        try {
+          if (origin) {
+            const originHost = new URL(origin).hostname;
+            const hostHeader = (event.headers.host || event.headers.Host || '');
+            const hostHost = hostHeader.split(':')[0];
+            const isLocalPair = (/^(localhost|127\.0\.0\.1)$/i.test(originHost)) && (/^(localhost|127\.0\.0\.1)$/i.test(hostHost));
+            const crossSite = originHost && hostHost && originHost.toLowerCase() !== hostHost.toLowerCase() && !isLocalPair;
+            if (crossSite) sameSite = 'None';
+          }
+        } catch {}
+        const cookies = [
+          makeCookie('sb_access', authData.access_token, { maxAge: 3600, secure: secureFlag, httpOnly: true, sameSite, path: '/' })
+        ];
+        
+        if (authData.refresh_token) {
+          cookies.push(makeCookie('sb_refresh', authData.refresh_token, { maxAge: 604800, secure: secureFlag, httpOnly: true, sameSite, path: '/' }));
+        }
 
+        return {
+          statusCode: 200,
+          headers: { ...makeCorsHeaders(event), 'Set-Cookie': cookies, 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, user: authData.user || null })
+        };
+      } catch (err) {
+        console.error('=== LOGIN ERROR ===', err.message, err.stack);
+        return { statusCode: 500, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
+
+    // --- LOGOUT (clear cookies) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'logout') {
+      const expired = new Date(0);
+      const secureFlag = !isLocalDev(event);
+      return {
+        statusCode: 200,
+        headers: {
+          'Set-Cookie': [
+            makeCookie('sb_access', '', { expires: expired, path: '/', secure: secureFlag, httpOnly: true, sameSite: 'Lax' }),
+            makeCookie('sb_refresh', '', { expires: expired, path: '/', secure: secureFlag, httpOnly: true, sameSite: 'Lax' })
+          ],
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ success: true })
+      };
+    }
+
+    // --- REFRESH (rotate access token using refresh cookie) ---
+    if (event.queryStringParameters && event.queryStringParameters.action === 'refresh' && event.httpMethod === 'GET') {
+      try {
+        const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+        const cookies = parseCookies(cookieHeader);
+        const refreshTok = cookies['sb_refresh'];
+        if (!refreshTok) {
+          return { statusCode: 401, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: 'No refresh token' }) };
+        }
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const API_KEY =
+          process.env.SUPABASE_ANON_KEY ||
+          process.env.SUPABASE_KEY ||
+          process.env.SUPABASE_SERVICE_ROLE_KEY ||
+          process.env.supabase_anon_key ||
+          process.env.supabase_key ||
+          process.env.supabase_service_role_key;
+        const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ refresh_token: refreshTok })
+        });
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js || !js.access_token) {
+          return { statusCode: 401, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: js?.error_description || js?.error || 'Refresh failed' }) };
+        }
+        const accessToken = js.access_token;
+        // Supabase may rotate refresh_token
+        const newRefresh = js.refresh_token || refreshTok;
+        const expiresIn = Number(js.expires_in) > 0 ? Number(js.expires_in) : 3600; // seconds
+
+        const cookiesOut = [];
+        const secureFlag = !isLocalDev(event);
+        cookiesOut.push(
+          makeCookie('sb_access', accessToken, { maxAge: expiresIn, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' })
+        );
+        // Extend refresh cookie window to 6 months (about 15,552,000 seconds)
+        const SIX_MONTHS = 60 * 60 * 24 * 30 * 6; // 6 months
+        cookiesOut.push(
+          makeCookie('sb_refresh', newRefresh, { maxAge: SIX_MONTHS, secure: secureFlag, httpOnly: true, sameSite: 'Lax', path: '/' })
+        );
+        return {
+          statusCode: 200,
+          headers: { 'Set-Cookie': cookiesOut, 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true, expires_in: expiresIn })
+        };
+      } catch (err) {
+        return { statusCode: 500, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: err.message }) };
+      }
+    }
 
     // --- GET USER ROLE ---
     if (event.queryStringParameters && event.queryStringParameters.action === 'get_role' && event.httpMethod === 'GET') {

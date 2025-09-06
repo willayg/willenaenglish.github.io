@@ -6,11 +6,12 @@ const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
 // If running on netlify dev (localhost:8888 or 9000), use same-origin ('' base) so cookies and CORS align
 // If not on Netlify and not local (e.g., GitHub Pages), call the deployed Netlify Functions origin
 const FUNCTIONS_BASE = (IS_NETLIFY_HOST || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
+const SUPABASE_AUTH_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_auth';
 const SUPABASE_PROXY_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_proxy_fixed';
 
 async function loginTeacher(email, password) {
-  // Call Supabase Auth via proxy (you may need to add a new endpoint for this)
-  const res = await fetch(SUPABASE_PROXY_URL + '?action=login', {
+  // Call Supabase Auth via proxy
+  const res = await fetch(`${SUPABASE_AUTH_URL}?action=login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -32,7 +33,7 @@ async function loginTeacher(email, password) {
 
 async function getUserRole(userId) {
   // Fetch user role from proxy
-  const res = await fetch(SUPABASE_PROXY_URL + '?action=get_role&user_id=' + encodeURIComponent(userId), { credentials: 'include' });
+  const res = await fetch(`${SUPABASE_PROXY_URL}?action=get_role&user_id=${userId}`, { credentials: 'include' });
   let result = null;
   try { result = await res.json(); } catch { throw new Error(`Role service error (${res.status})`); }
   if (!res.ok || !result.success) {
@@ -43,7 +44,7 @@ async function getUserRole(userId) {
 
 async function getProfileId(authUserId) {
   // Get profile ID from auth user ID
-  const res = await fetch(SUPABASE_PROXY_URL + '?action=get_profile_id&auth_user_id=' + encodeURIComponent(authUserId), { credentials: 'include' });
+  const res = await fetch(`${SUPABASE_PROXY_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`, { credentials: 'include' });
   let result = null;
   try { result = await res.json(); } catch { throw new Error(`Profile service error (${res.status})`); }
   if (!res.ok || !result.success) {
