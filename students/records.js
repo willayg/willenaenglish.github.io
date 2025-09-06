@@ -10,7 +10,7 @@ let __whoamiPromise = null;
 
 async function fetchWhoAmI() {
   try {
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami', {
+  const res = await fetch('/.netlify/functions/supabase_auth?action=whoami', {
       credentials: 'include',
       cache: 'no-store'
     });
@@ -111,7 +111,7 @@ export async function logAttempt({
     let user_id = getUserId();
     // If not yet signed in, try a one-time cookie refresh then re-check
     if (!user_id) {
-      try { await fetch('/.netlify/functions/supabase_proxy_fixed?action=refresh', { credentials: 'include', cache: 'no-store' }); } catch {}
+      try { await fetch('/.netlify/functions/supabase_auth?action=refresh', { credentials: 'include', cache: 'no-store' }); } catch {}
       await new Promise(r => setTimeout(r, 200));
       user_id = await ensureUserId();
     }

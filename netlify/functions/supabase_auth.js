@@ -135,11 +135,16 @@ exports.handler = async (event) => {
         return respond(event, 401, { success: false, error: (authData && authData.error_description) || 'Invalid credentials' });
       }
 
-      // If origin is a willenaenglish.com host, scope cookies to .willenaenglish.com so apex and www both work
+      // Scope cookies to .willenaenglish.com when Host ends with willenaenglish.com so apex and www both work
       let cookieDomain;
       try {
-        const oh = (event.headers && (event.headers.origin || event.headers.Origin)) || '';
-        if (oh && /^https:\/\/(www\.)?willenaenglish\.com$/i.test(oh)) cookieDomain = '.willenaenglish.com';
+        const hh = (event.headers && (event.headers.host || event.headers.Host)) || '';
+        if (typeof hh === 'string' && /(^|\.)willenaenglish\.com$/i.test(hh.trim())) cookieDomain = '.willenaenglish.com';
+        // Fallback to Origin if Host missing
+        if (!cookieDomain) {
+          const oh = (event.headers && (event.headers.origin || event.headers.Origin)) || '';
+          if (oh && /^https:\/\/(www\.)?willenaenglish\.com$/i.test(oh)) cookieDomain = '.willenaenglish.com';
+        }
       } catch {}
 
       const cookies = [
@@ -147,6 +152,27 @@ exports.handler = async (event) => {
         cookie('sb_refresh', authData.refresh_token || '', { maxAge: 60 * 60 * 24 * 30, domain: cookieDomain }),
       ];
       return respond(event, 200, { success: true, user: authData.user }, {}, cookies);
+    }
+
+    // whoami: verify cookie session and return user basics
+    if (action === 'whoami' && event.httpMethod === 'GET') {
+      // Read sb_access from Cookie header
+      try {
+        const hdrs = event.headers || {};
+        const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+        const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+        if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const token = decodeURIComponent(m[1]);
+
+        // Validate token with Supabase
+        const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+        const { data, error } = await admin.auth.getUser(token);
+        if (error || !data || !data.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const user = data.user;
+        return respond(event, 200, { success: true, user_id: user.id, email: user.email });
+      } catch {
+        return respond(event, 401, { success: false, error: 'Not signed in' });
+      }
     }
 
     // Get role
