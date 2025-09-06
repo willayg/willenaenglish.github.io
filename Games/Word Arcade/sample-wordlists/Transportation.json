@@ -9,6 +9,14 @@
   {"eng": "ship", "kor": "배"},
   {"eng": "taxi", "kor": "택시"},
   {"eng": "truck", "kor": "트럭"},
-  {"eng": "scooter", "kor": "스쿠터"},
+  {"eng": "scooter", "kor": "킥보드"},
+  {"eng": "ferry", "kor": "페리"},
+  {"eng": "tram", "kor": "트램"},
+  {"eng": "van", "kor": "밴"},
+  {"eng": "jeep", "kor": "지프"},
+  {"eng": "cruise", "kor": "크루즈"},
+  {"eng": "yacht", "kor": "요트"},
+  {"eng": "submarine", "kor": "잠수함"},
+  {"eng": "rocket", "kor": "로켓"},
   {"eng": "helicopter", "kor": "헬리콥터"}
 ]
