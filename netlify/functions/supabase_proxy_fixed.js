@@ -527,7 +527,13 @@ exports.handler = async (event) => {
           return { statusCode: 401, headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ success: false, error: 'No refresh token' }) };
         }
         const SUPABASE_URL = process.env.SUPABASE_URL;
-        const API_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const API_KEY =
+          process.env.SUPABASE_ANON_KEY ||
+          process.env.SUPABASE_KEY ||
+          process.env.SUPABASE_SERVICE_ROLE_KEY ||
+          process.env.supabase_anon_key ||
+          process.env.supabase_key ||
+          process.env.supabase_service_role_key;
         const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
