@@ -45,33 +45,17 @@
     </div>
     <div class="role-info" id="roleInfo"></div>
   </div>
-    <script>
-      // Set functions base early so the module can pick it up on import
-      if (!/\.netlify\.(app|live)$/.test(location.hostname)) {
-        window.NETLIFY_FUNCTIONS_BASE = 'https://willenaenglish.netlify.app';
-      }
-    </script>
     <script type="module" src="./login.js"></script>
     <script type="module">
-      import { loginTeacher, getUserRole, getProfileId, checkHealth } from './login.js';
+      import { loginTeacher, getUserRole, getProfileId } from './login.js';
+  const HOST = location.hostname;
+  const IS_NETLIFY_HOST = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
+  const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
+  const FUNCTIONS_BASE = (IS_NETLIFY_HOST || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
+      const SUPABASE_PROXY_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_proxy_fixed';
       const loginForm = document.getElementById('loginForm');
       const loginError = document.getElementById('loginError');
       const roleInfo = document.getElementById('roleInfo');
-
-      // If not on a Netlify domain, point functions to the Netlify site origin
-      if (!/\.netlify\.(app|live)$/.test(location.hostname) && !window.NETLIFY_FUNCTIONS_BASE) {
-        // Replace with your Netlify functions origin if different
-        window.NETLIFY_FUNCTIONS_BASE = 'https://willenaenglish.netlify.app';
-      }
-
-      // Quick health check to surface misconfiguration issues
-      (async () => {
-        const hc = await checkHealth();
-        if (!hc.ok) {
-          console.warn('Functions health check failed:', hc);
-          roleInfo.textContent = 'Service warning: login service unavailable. Please try again later.';
-        }
-      })();
 
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -83,7 +67,7 @@
         // If not an email, look up by username
         if (!loginValue.includes('@')) {
           // Call proxy to get email by username
-          const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_email_by_username&username=' + encodeURIComponent(loginValue));
+          const res = await fetch(SUPABASE_PROXY_URL + '?action=get_email_by_username&username=' + encodeURIComponent(loginValue), { credentials: 'include' });
           const result = await res.json();
           if (!res.ok || !result.success) {
             loginError.textContent = result.error || 'Username not found';
@@ -92,7 +76,7 @@
           }
           email = result.email;
         }
-  try {
+        try {
           const loginRes = await loginTeacher(email, password);
           const authUserId = loginRes.user.id;
           const role = await getUserRole(authUserId);
@@ -113,7 +97,7 @@
             window.location.href = '/Teachers/index.html';
           }
         } catch (err) {
-          loginError.textContent = err.message || 'Login failed. Please try again later.';
+          loginError.textContent = err.message;
           loginError.style.display = 'block';
         }
       });

@@ -1,38 +1,29 @@
 // login.js - Handles teacher login using Netlify Supabase proxy
 
-// Allow overriding the functions origin when the site isn't served by Netlify (e.g., GitHub Pages)
-// You can set window.NETLIFY_FUNCTIONS_BASE = 'https://<your-site>.netlify.app' at any time.
-function getFunctionsBase() {
-  if (typeof window !== 'undefined' && window.NETLIFY_FUNCTIONS_BASE) {
-    return String(window.NETLIFY_FUNCTIONS_BASE).replace(/\/$/, '');
-  }
-  return '';
-}
-
-function proxyUrl(suffix = '') {
-  const base = getFunctionsBase();
-  return `${base}/.netlify/functions/supabase_proxy_fixed${suffix}`;
-}
-
-async function parseJsonResponse(res, fallbackMsg) {
-  try {
-    return await res.json();
-  } catch {
-    const text = await res.text().catch(() => '');
-    const statusMsg = res.ok ? 'Unexpected response' : `${fallbackMsg || 'Service error'} (${res.status})`;
-    throw new Error(statusMsg);
-  }
-}
+const HOST = location.hostname;
+const IS_NETLIFY_HOST = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
+const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
+// If running on netlify dev (localhost:8888 or 9000), use same-origin ('' base) so cookies and CORS align
+// If not on Netlify and not local (e.g., GitHub Pages), call the deployed Netlify Functions origin
+const FUNCTIONS_BASE = (IS_NETLIFY_HOST || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
+const SUPABASE_PROXY_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_proxy_fixed';
 
 async function loginTeacher(email, password) {
-  // Call Supabase Auth via proxy
-  const res = await fetch(proxyUrl('?action=login'), {
+  // Call Supabase Auth via proxy (you may need to add a new endpoint for this)
+  const res = await fetch(SUPABASE_PROXY_URL + '?action=login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({ email, password })
   });
-  const result = await parseJsonResponse(res, 'Login service error');
+  let result = null;
+  try {
+    result = await res.json();
+  } catch {
+    // Non-JSON (e.g., 502 HTML) -> make a readable error
+    const text = await res.text().catch(() => '');
+    throw new Error(res.ok ? 'Unexpected response' : `Login service error (${res.status}).`);
+  }
   if (!res.ok || !result.success) {
     throw new Error(result.error || 'Login failed');
   }
@@ -41,8 +32,9 @@ async function loginTeacher(email, password) {
 
 async function getUserRole(userId) {
   // Fetch user role from proxy
-  const res = await fetch(proxyUrl('?action=get_role&user_id=' + encodeURIComponent(userId)));
-  const result = await parseJsonResponse(res, 'Role service error');
+  const res = await fetch(SUPABASE_PROXY_URL + '?action=get_role&user_id=' + encodeURIComponent(userId), { credentials: 'include' });
+  let result = null;
+  try { result = await res.json(); } catch { throw new Error(`Role service error (${res.status})`); }
   if (!res.ok || !result.success) {
     throw new Error(result.error || 'Could not fetch user role');
   }
@@ -51,23 +43,13 @@ async function getUserRole(userId) {
 
 async function getProfileId(authUserId) {
   // Get profile ID from auth user ID
-  const res = await fetch(proxyUrl('?action=get_profile_id&auth_user_id=' + encodeURIComponent(authUserId)));
-  const result = await parseJsonResponse(res, 'Profile service error');
+  const res = await fetch(SUPABASE_PROXY_URL + '?action=get_profile_id&auth_user_id=' + encodeURIComponent(authUserId), { credentials: 'include' });
+  let result = null;
+  try { result = await res.json(); } catch { throw new Error(`Profile service error (${res.status})`); }
   if (!res.ok || !result.success) {
     throw new Error(result.error || 'Could not fetch profile ID');
   }
   return result.profile_id;
 }
 
-// Optional: lightweight health check to quickly surface server misconfiguration
-async function checkHealth() {
-  try {
-  const res = await fetch(proxyUrl('/debug'), { credentials: 'include' });
-    const js = await parseJsonResponse(res, 'Health check error');
-    return { ok: res.ok, info: js };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-}
-
-export { loginTeacher, getUserRole, getProfileId, checkHealth };
+export { loginTeacher, getUserRole, getProfileId };
