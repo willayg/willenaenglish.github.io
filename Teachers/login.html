@@ -45,6 +45,12 @@
     </div>
     <div class="role-info" id="roleInfo"></div>
   </div>
+    <script>
+      // Set functions base early so the module can pick it up on import
+      if (!/\.netlify\.(app|live)$/.test(location.hostname)) {
+        window.NETLIFY_FUNCTIONS_BASE = 'https://willenaenglish.netlify.app';
+      }
+    </script>
     <script type="module" src="./login.js"></script>
     <script type="module">
       import { loginTeacher, getUserRole, getProfileId, checkHealth } from './login.js';
