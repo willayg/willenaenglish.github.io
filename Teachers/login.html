@@ -233,8 +233,8 @@
     const messageDiv = document.getElementById('message');
     const debugInfo = document.getElementById('debugInfo');
     
-    // Debug info display
-    debugInfo.textContent = `Auth: ${AUTH_URL} | Host: ${HOST}`;
+  // Debug info display
+  debugInfo.textContent = `Auth: ${AUTH_URL} | Host: ${location.host}`;
     
     // Utility functions
     function showMessage(text, type = 'error') {

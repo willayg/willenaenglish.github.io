@@ -92,6 +92,21 @@ exports.handler = async (event) => {
     });
   }
 
+  // Minimal cookie echo for diagnostics (no sensitive values returned)
+  if (action === 'cookie_echo') {
+    const hdrs = event.headers || {};
+    const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+    const hasAccess = /(?:^|;\s*)sb_access=/.test(cookieHeader);
+    const hasRefresh = /(?:^|;\s*)sb_refresh=/.test(cookieHeader);
+    return respond(event, 200, {
+      success: true,
+      origin: (hdrs.origin || hdrs.Origin || null),
+      host: (hdrs.host || hdrs.Host || null),
+      hasAccess,
+      hasRefresh
+    });
+  }
+
   try {
     // Lazy import supabase only when needed
     let createClient;
