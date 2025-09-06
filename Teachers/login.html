@@ -1,105 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Login</title>
-  <link rel="stylesheet" href="../tests/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { background: #f6f7fb; font-family: 'Poppins', sans-serif; }
-    .login-container {
-      max-width: 400px; margin: 60px auto; background: #fff; border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(60,60,90,0.08); padding: 32px 28px;
+    :root{
+      --bg:#f6f7fb; --card:#fff; --ink:#111827; --mut:#6b7280; --pri:#5a4ad1; --pri-ink:#fff; --ring:#d9d6ff; --border:#e5e7eb;
     }
-    .login-container h2 { text-align: center; margin-bottom: 24px; }
-    .login-container label { font-weight: 600; margin-top: 12px; display: block; }
-    .login-container input {
-      width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 16px;
-      border: 1px solid #ccc; border-radius: 5px; font-size: 16px;
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Poppins,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{min-height:100vh;display:grid;place-items:center;padding:28px}
+    .card{
+      width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);
+      border-radius:14px;box-shadow:0 6px 24px rgba(17,24,39,.06);padding:28px 24px;
     }
-    .login-container button {
-      width: 100%; padding: 12px; background: #5a4ad1; color: #fff;
-      border: none; border-radius: 5px; font-size: 18px; font-weight: 600;
-      cursor: pointer; margin-top: 8px;
+    h1{margin:4px 0 18px;font-size:24px;text-align:center}
+    label{display:block;font-weight:600;margin:14px 0 6px}
+    input{
+      width:100%;padding:12px 12px;border:1px solid var(--border);border-radius:10px;font:inherit;
+      outline:none;transition:border .15s, box-shadow .15s;
     }
-    .login-container .error { color: #d32f2f; margin-bottom: 10px; text-align: center; }
-    .login-container .success { color: #388e3c; margin-bottom: 10px; text-align: center; }
-    .login-container .role-info { text-align: center; margin-top: 16px; color: #666; }
+    input:focus{border-color:var(--pri);box-shadow:0 0 0 4px var(--ring)}
+    button{
+      width:100%;margin-top:14px;padding:12px 14px;border:0;border-radius:10px;
+      background:var(--pri);color:var(--pri-ink);font-weight:700;cursor:pointer;
+    }
+    .row{display:flex;justify-content:center;margin-top:10px}
+    .link{color:var(--pri);font-weight:600;text-decoration:underline}
+    .msg{margin:10px 0 0;text-align:center;font-size:14px}
+    .msg.err{color:#d32f2f}
+    .msg.ok{color:#1b7a36}
+    .tiny{display:block;margin-top:6px;color:var(--mut);font-size:12px;text-align:center}
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Teacher Login</h2>
-    <div id="loginError" class="error" style="display:none;"></div>
-    <form id="loginForm">
-      <label for="login">Email or Username</label>
-      <input type="text" id="login" required autocomplete="username">
-      <label for="password">Password</label>
-      <input type="password" id="password" required autocomplete="current-password">
-      <button type="submit">Login</button>
-    </form>
-    <div style="text-align:center; margin-top:12px;">
-      <a href="/Teachers/signup.html" style="color:#5a4ad1; text-decoration:underline; font-weight:600; cursor:pointer;">Sign up</a>
-    </div>
-    <div class="role-info" id="roleInfo"></div>
-  </div>
-    <script type="module">
-      import { loginTeacher, getUserRole, getProfileId } from './login.js?v=authrefactor1';
-  const HOST = location.hostname;
-  const IS_NETLIFY_HOST = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
-  const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
-  const FUNCTIONS_BASE = (IS_NETLIFY_HOST || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
-      const SUPABASE_AUTH_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_auth';
-      const loginForm = document.getElementById('loginForm');
-      const loginError = document.getElementById('loginError');
-      const roleInfo = document.getElementById('roleInfo');
+  <div class="wrap">
+    <form class="card" id="loginForm" autocomplete="on">
+      <h1>Teacher Login</h1>
+      <div id="message" class="msg" hidden></div>
 
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        loginError.style.display = 'none';
-        roleInfo.textContent = '';
-        const loginValue = document.getElementById('login').value.trim();
-        const password = document.getElementById('password').value;
-        let email = loginValue;
-        // If not an email, look up by username
-        if (!loginValue.includes('@')) {
-          // Call auth function to get email by username
-          const res = await fetch(SUPABASE_AUTH_URL + '?action=get_email_by_username&username=' + encodeURIComponent(loginValue), { credentials: 'include' });
-          const result = await res.json();
-          if (!res.ok || !result.success) {
-            loginError.textContent = result.error || 'Username not found';
-            loginError.style.display = 'block';
-            return;
-          }
-          email = result.email;
-        }
-        try {
-          const loginRes = await loginTeacher(email, password);
-          const authUserId = loginRes.user.id;
-          const role = await getUserRole(authUserId);
-          
-          // Get the profile ID from the profiles table
-          const profileId = await getProfileId(authUserId);
-          
-          // Store both IDs for different purposes
-          localStorage.setItem('user_id', profileId);        // For progress tracking
-          localStorage.setItem('profile_id', profileId);     // Alternative key
-          localStorage.setItem('userId', authUserId);        // Auth ID for compatibility
-          localStorage.setItem('userRole', role);
-          
-          roleInfo.textContent = `Logged in as: ${role}`;
-          if (role === 'admin') {
-            window.location.href = '/Teachers/components/feedback-admin.html';
-          } else {
-            window.location.href = '/Teachers/index.html';
-          }
-        } catch (err) {
-          loginError.textContent = err.message;
-          loginError.style.display = 'block';
-        }
+      <label for="login">Email or Username</label>
+      <input id="login" name="login" type="text" required autocomplete="username" placeholder="email@example.com or username" />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" />
+
+      <button type="submit" id="submitBtn">Login</button>
+
+      <div class="row"><a class="link" href="/Teachers/signup.html">Sign up</a></div>
+      <small class="tiny" id="envNote"></small>
+    </form>
+  </div>
+
+  <!-- Single module. No duplicate script tags. No external login.js to get cached and betray you. -->
+  <script type="module">
+    // ---------- Config ----------
+    const HOST = location.hostname;
+    const IS_NETLIFY = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
+    const IS_LOCAL   = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
+    const FUNCTIONS_BASE = (IS_NETLIFY || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
+    const AUTH_URL = FUNCTIONS_BASE + '/.netlify/functions/supabase_auth'; // single source of truth
+    // cache-busting stamp so you know you’re on the new page when debugging
+    const BUILD_STAMP = 'login-v3-2025-09-06-1';
+
+    const el = (id) => document.getElementById(id);
+    const form = el('loginForm');
+    const msg  = el('message');
+    const note = el('envNote');
+    note.textContent = `Using ${AUTH_URL} • ${BUILD_STAMP}`;
+
+    function show(type, text) {
+      msg.hidden = false;
+      msg.className = 'msg ' + (type === 'error' ? 'err' : 'ok');
+      msg.textContent = text;
+    }
+    function clearMsg(){ msg.hidden = true; msg.textContent = ''; }
+
+    async function getEmailByUsername(username) {
+      const url = `${AUTH_URL}?action=get_email_by_username&username=${encodeURIComponent(username)}`;
+      const res = await fetch(url, { credentials:'include' });
+      let data;
+      try { data = await res.json(); } catch { throw new Error(`Lookup error (${res.status})`); }
+      if (!res.ok || !data?.success) throw new Error(data?.error || 'Username not found');
+      return data.email;
+    }
+
+    async function login(email, password) {
+      const res = await fetch(`${AUTH_URL}?action=login`, {
+        method:'POST',
+        headers: { 'Content-Type':'application/json' },
+        credentials:'include',
+        body: JSON.stringify({ email, password })
       });
-    </script>
+      let data;
+      try { data = await res.json(); } catch {
+        const t = await res.text().catch(()=>'');
+        throw new Error(`Login service error (${res.status})`);
+      }
+      if (!res.ok || !data?.success) throw new Error(data?.error || 'Login failed');
+      return data.user; // may be null; we still have cookies
+    }
+
+    async function getRole(userId) {
+      const res = await fetch(`${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`, { credentials:'include' });
+      const data = await res.json().catch(()=>null);
+      if (!res.ok || !data?.success) throw new Error(data?.error || 'Could not fetch role');
+      return data.role;
+    }
+
+    async function getProfileId(authUserId) {
+      const res = await fetch(`${AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`, { credentials:'include' });
+      const data = await res.json().catch(()=>null);
+      if (!res.ok || !data?.success) throw new Error(data?.error || 'Could not fetch profile id');
+      return data.profile_id;
+    }
+
+    // Optional quick health check on load (comment out if it annoys you)
+    try {
+      const r = await fetch(`${AUTH_URL}?action=debug`, { credentials:'include' });
+      if (!r.ok) console.warn('Auth debug not OK:', r.status);
+    } catch(e) { console.warn('Auth debug failed:', e); }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMsg();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in…';
+
+      try {
+        let loginValue = el('login').value.trim();
+        const password = el('password').value;
+
+        // username → email
+        if (!loginValue.includes('@')) {
+          loginValue = await getEmailByUsername(loginValue);
+        }
+
+        // 1) login (sets cookies)
+        const user = await login(loginValue, password);
+        const authUserId = user?.id || null;
+
+        // 2) fetch role + profile id
+        if (!authUserId) throw new Error('No auth user id returned');
+        const [role, profileId] = await Promise.all([
+          getRole(authUserId),
+          getProfileId(authUserId)
+        ]);
+
+        // 3) stash ids for the rest of your site
+        localStorage.setItem('userId', authUserId);   // auth.users id
+        localStorage.setItem('profile_id', profileId);// profiles.id
+        localStorage.setItem('userRole', role);
+
+        show('ok', `Logged in as ${role}`);
+        // 4) route
+        location.href = role === 'admin'
+          ? '/Teachers/components/feedback-admin.html'
+          : '/Teachers/index.html';
+
+      } catch (err) {
+        show('error', err.message || 'Login failed');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+      }
+    });
+  </script>
 </body>
 </html>
