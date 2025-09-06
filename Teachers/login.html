@@ -47,10 +47,26 @@
   </div>
     <script type="module" src="./login.js"></script>
     <script type="module">
-      import { loginTeacher, getUserRole, getProfileId } from './login.js';
+      import { loginTeacher, getUserRole, getProfileId, checkHealth } from './login.js';
       const loginForm = document.getElementById('loginForm');
       const loginError = document.getElementById('loginError');
       const roleInfo = document.getElementById('roleInfo');
+
+      // If hosted on GitHub Pages, the Netlify functions path is on a different origin.
+      // You can set NETLIFY_FUNCTIONS_BASE globally if needed:
+      if (location.hostname.endsWith('github.io') && !window.NETLIFY_FUNCTIONS_BASE) {
+        // Replace with your Netlify site if different
+        window.NETLIFY_FUNCTIONS_BASE = 'https://willenaenglish.netlify.app';
+      }
+
+      // Quick health check to surface misconfiguration issues
+      (async () => {
+        const hc = await checkHealth();
+        if (!hc.ok) {
+          console.warn('Functions health check failed:', hc);
+          roleInfo.textContent = 'Service warning: login service unavailable. Please try again later.';
+        }
+      })();
 
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -71,7 +87,7 @@
           }
           email = result.email;
         }
-        try {
+  try {
           const loginRes = await loginTeacher(email, password);
           const authUserId = loginRes.user.id;
           const role = await getUserRole(authUserId);
@@ -92,7 +108,7 @@
             window.location.href = '/Teachers/index.html';
           }
         } catch (err) {
-          loginError.textContent = err.message;
+          loginError.textContent = err.message || 'Login failed. Please try again later.';
           loginError.style.display = 'block';
         }
       });
