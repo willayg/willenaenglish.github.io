@@ -86,15 +86,20 @@ exports.handler = async (event) => {
       return null;
     }
   }
-  // Decode JWT locally to extract the user id (sub), avoids upstream failures
+  // Decode JWT locally to extract the user id (sub) without external deps
   function getUserIdFromCookie(event) {
     try {
       const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
       const cookies = parseCookies(cookieHeader);
       const access = cookies['sb_access'];
       if (!access) return null;
-      const { decodeJwt } = require('jose');
-      const payload = decodeJwt(access);
+      const parts = access.split('.');
+      if (parts.length < 2) return null;
+      const base64url = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64url.length % 4;
+      const b64 = base64url + (pad ? '='.repeat(4 - pad) : '');
+      const json = Buffer.from(b64, 'base64').toString('utf8');
+      const payload = JSON.parse(json);
       return payload && payload.sub ? payload.sub : null;
     } catch { return null; }
   }
