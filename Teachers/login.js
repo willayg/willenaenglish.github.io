@@ -6,6 +6,16 @@
  * that work seamlessly with the supabase_auth Netlify function.
  */
 
+// Basic, safe environment hints for debugging only (avoid ReferenceError in browsers)
+const HOST = (typeof window !== 'undefined' && window.location && window.location.host) ? window.location.host : '';
+const IS_LOCAL = (typeof window !== 'undefined' && window.location)
+  ? /localhost|127\.0\.0\.1/i.test(window.location.hostname)
+  : false;
+const IS_NETLIFY = (typeof window !== 'undefined' && window.location)
+  ? /netlify\.app$/i.test(window.location.hostname)
+  : false;
+const FUNCTIONS_BASE = '';
+
 // Always use same-origin functions so auth cookies are scoped to the site domain
 const AUTH_URL = `/.netlify/functions/supabase_auth`;
 
