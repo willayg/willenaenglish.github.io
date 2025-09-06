@@ -1,12 +1,11 @@
-[headers]
-  # Set CORS headers for all Netlify functions
-  [[headers.values]]
-    for = "/.netlify/functions/*"
-    [headers.values.headers]
-      Access-Control-Allow-Origin = "https://www.willenaenglish.com"
-      Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-      Access-Control-Allow-Headers = "Content-Type, Authorization"
-      Access-Control-Allow-Credentials = "true"
+# Set CORS headers for all Netlify functions
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "https://www.willenaenglish.com"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Credentials = "true"
 # netlify.toml — production actually builds now
 
 # Install core plugin for functions (fine to keep)
