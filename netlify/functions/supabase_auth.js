@@ -21,11 +21,36 @@ function cors(event, extra = {}) {
   };
 }
 
-function cookie(name, value, { maxAge, secure = true, httpOnly = true, sameSite = 'None', path = '/', domain } = {}) {
+function makeCorsHeaders(event, extra = {}) {
+  const ALLOWLIST = new Set([
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.com',
+    'https://willenaenglish.github.io',
+    'https://willenaenglish.netlify.app',
+    'http://localhost:9000',
+    'http://localhost:8888',
+  ]);
+  const hdrs = event.headers || {};
+  const origin = (hdrs.origin || hdrs.Origin || '').trim();
+  const allow = ALLOWLIST.has(origin) ? origin : 'https://willenaenglish.netlify.app';
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Cache-Control': 'no-store',
+    ...extra,
+  };
+}
+
+function cookie(name, value, event, { maxAge, secure = true, httpOnly = true, sameSite = 'Lax', path = '/' } = {}) {
+  const hdrs = event?.headers || {};
+  const host = hdrs.host || hdrs.Host || '';
+  
   let s = `${name}=${encodeURIComponent(value ?? '')}`;
   if (maxAge != null) s += `; Max-Age=${maxAge}`;
   if (path) s += `; Path=${path}`;
-  if (domain) s += `; Domain=${domain}`;
+  if (host.endsWith('willenaenglish.com')) s += '; Domain=.willenaenglish.com';
   if (secure) s += '; Secure';
   if (httpOnly) s += '; HttpOnly';
   if (sameSite) s += `; SameSite=${sameSite}`;
@@ -35,7 +60,7 @@ function cookie(name, value, { maxAge, secure = true, httpOnly = true, sameSite 
 function respond(event, statusCode, bodyObj, extraHeaders = {}, cookies /* string[] */) {
   const resp = {
     statusCode,
-    headers: { ...cors(event), 'Content-Type': 'application/json', ...extraHeaders },
+    headers: { ...makeCorsHeaders(event), 'Content-Type': 'application/json', ...extraHeaders },
     body: JSON.stringify(bodyObj),
   };
   if (cookies && cookies.length) {
@@ -47,7 +72,7 @@ function respond(event, statusCode, bodyObj, extraHeaders = {}, cookies /* strin
 exports.handler = async (event) => {
   // Preflight
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: cors(event), body: '' };
+    return { statusCode: 200, headers: makeCorsHeaders(event), body: '' };
   }
 
   const qs = event.queryStringParameters || {};
@@ -137,11 +162,9 @@ exports.handler = async (event) => {
       }
 
       // Always set domain for willenaenglish.com sites so cookies work on both apex and www
-      let cookieDomain = '.willenaenglish.com';
-
       const cookies = [
-        cookie('sb_access', authData.access_token, { maxAge: 3600, domain: cookieDomain }),
-        cookie('sb_refresh', authData.refresh_token || '', { maxAge: 60 * 60 * 24 * 30, domain: cookieDomain }),
+        cookie('sb_access', authData.access_token, event, { maxAge: 3600, sameSite: 'None' }),
+        cookie('sb_refresh', authData.refresh_token || '', event, { maxAge: 60 * 60 * 24 * 30, sameSite: 'None' }),
       ];
       return respond(event, 200, { success: true, user: authData.user }, {}, cookies);
     }
@@ -153,17 +176,17 @@ exports.handler = async (event) => {
         const hdrs = event.headers || {};
         const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
         const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
-        if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+        if (!m) return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Not signed in' }) };
         const token = decodeURIComponent(m[1]);
 
         // Validate token with Supabase
         const admin = createClient(SUPABASE_URL, SERVICE_KEY);
         const { data, error } = await admin.auth.getUser(token);
-        if (error || !data || !data.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+        if (error || !data || !data.user) return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Not signed in' }) };
         const user = data.user;
-        return respond(event, 200, { success: true, user_id: user.id, email: user.email });
+        return { statusCode: 200, headers: makeCorsHeaders(event), body: JSON.stringify({ success: true, user_id: user.id, email: user.email }) };
       } catch {
-        return respond(event, 401, { success: false, error: 'Not signed in' });
+        return { statusCode: 401, headers: makeCorsHeaders(event), body: JSON.stringify({ success: false, error: 'Not signed in' }) };
       }
     }
 
@@ -193,6 +216,139 @@ exports.handler = async (event) => {
         .single();
       if (error) return respond(event, 400, { success: false, error: error.message });
       return respond(event, 200, { success: true, profile_id: data.id });
+    }
+
+    // Get profile name (name, username, avatar + optional korean_name/class for fallback)
+    if (action === 'get_profile_name' && event.httpMethod === 'GET') {
+      // Extract user ID from cookie like whoami does
+      const hdrs = event.headers || {};
+      const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+      const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+      if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+      const token = decodeURIComponent(m[1]);
+
+      // Validate token with Supabase
+      const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+      const { data: userData, error: userError } = await admin.auth.getUser(token);
+      if (userError || !userData || !userData.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+      const userId = userData.user.id;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error || !data) return respond(event, 404, { success: false, error: 'User not found' });
+      
+      const koreanName = data.korean_name || data.koreanname || data.kor_name || data.korean || data.name_kr || null;
+      const classVal = data.class || data.class_name || data.homeroom || data.grade || data.group || null;
+      return respond(event, 200, { 
+        success: true, 
+        name: data.name, 
+        username: data.username, 
+        avatar: data.avatar, 
+        korean_name: koreanName, 
+        class: classVal 
+      });
+    }
+
+    // Get profile (full profile data with email, role, etc.)
+    if (action === 'get_profile' && event.httpMethod === 'GET') {
+      let userId = qs.user_id;
+      if (!userId) {
+        // Extract user ID from cookie like whoami does
+        const hdrs = event.headers || {};
+        const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+        const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+        if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const token = decodeURIComponent(m[1]);
+
+        // Validate token with Supabase
+        const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+        const { data: userData, error: userError } = await admin.auth.getUser(token);
+        if (userError || !userData || !userData.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+        userId = userData.user.id;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error || !data) return respond(event, 404, { success: false, error: 'User not found' });
+      
+      const koreanName = data.korean_name || data.koreanname || data.kor_name || data.korean || data.name_kr || null;
+      const classVal = data.class || data.class_name || data.homeroom || data.grade || data.group || null;
+      return respond(event, 200, { 
+        success: true, 
+        name: data.name,
+        email: data.email,
+        approved: data.approved,
+        role: data.role,
+        username: data.username,
+        avatar: data.avatar,
+        korean_name: koreanName,
+        class: classVal
+      });
+    }
+
+    // Update profile avatar
+    if (action === 'update_profile_avatar' && event.httpMethod === 'POST') {
+      // Extract user ID from cookie like whoami does
+      const hdrs = event.headers || {};
+      const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+      const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+      if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+      const token = decodeURIComponent(m[1]);
+
+      // Validate token with Supabase
+      const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+      const { data: userData, error: userError } = await admin.auth.getUser(token);
+      if (userError || !userData || !userData.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+      const userId = userData.user.id;
+
+      const { avatar } = JSON.parse(event.body || '{}');
+      if (!avatar || typeof avatar !== 'string') return respond(event, 400, { success: false, error: 'Missing avatar' });
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar })
+        .eq('id', userId);
+      if (error) return respond(event, 400, { success: false, error: error.message });
+      return respond(event, 200, { success: true });
+    }
+
+    // Refresh session (rotate tokens)
+    if (action === 'refresh' && event.httpMethod === 'GET') {
+      // Extract refresh token from cookie
+      const hdrs = event.headers || {};
+      const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+      const m = /(?:^|;\s*)sb_refresh=([^;]+)/.exec(cookieHeader);
+      if (!m) return respond(event, 200, { success: false, message: 'No refresh token' });
+      
+      const refreshToken = decodeURIComponent(m[1]);
+      try {
+        const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+        if (error || !data.session) return respond(event, 200, { success: false, message: 'Refresh failed' });
+        
+        const session = data.session;
+        const host = (event.headers?.host || event.headers?.Host || '').toLowerCase();
+        const domain = host.endsWith('willenaenglish.com') ? '.willenaenglish.com' : '';
+        
+        return {
+          statusCode: 200,
+          headers: {
+            ...makeCorsHeaders(event),
+            'Set-Cookie': [
+              cookie('sb_access', session.access_token, { domain, maxAge: 3600 }),
+              cookie('sb_refresh', session.refresh_token, { domain, maxAge: 2592000 })
+            ]
+          },
+          body: JSON.stringify({ success: true })
+        };
+      } catch {
+        return respond(event, 200, { success: false, message: 'Refresh failed' });
+      }
     }
 
     // Not found

@@ -1,6 +1,7 @@
 import { renderModeButtons, ensureModeButtonStyles } from './buttons.js';
 import { getUserId } from '../../../students/records.js';
 import { showSampleWordlistModal } from './sample_wordlist_modal.js';
+import { FN } from '../scripts/api-base.js';
 
 // Mode Selector UI
 export async function renderModeSelector({ onModeChosen, onWordsClick }) {
@@ -77,7 +78,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   let bestByMode = {};
   if (listName) {
     try {
-      const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
+      const url = new URL(FN('progress_summary'), window.location.origin);
       url.searchParams.set('section', 'sessions');
       if (listName) url.searchParams.set('list_name', listName);
       const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
@@ -121,7 +122,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
         // Fallback: aggregate across all modes if no list-specific sessions
         if (!Object.keys(bestByMode).length) {
           try {
-            const url2 = new URL('/.netlify/functions/progress_summary', window.location.origin);
+            const url2 = new URL(FN('progress_summary'), window.location.origin);
             url2.searchParams.set('section', 'modes');
             const res2 = await fetch(url2.toString(), { cache: 'no-store', credentials: 'include' });
             if (res2.ok) {

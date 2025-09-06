@@ -1,6 +1,7 @@
 // Mode Modal UI
 import { renderModeButtons, ensureModeButtonStyles } from './buttons.js';
 import { getUserId } from '../../../students/records.js';
+import { FN } from '../scripts/api-base.js';
 
 export async function showModeModal({ onModeChosen, onClose }) {
   let modal = document.getElementById('modeModal');
@@ -32,7 +33,7 @@ export async function showModeModal({ onModeChosen, onClose }) {
   let bestByMode = {};
   if (listName) {
     try {
-      const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
+      const url = new URL(FN('progress_summary'), window.location.origin);
       url.searchParams.set('section', 'sessions');
       if (listName) url.searchParams.set('list_name', listName);
       const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });

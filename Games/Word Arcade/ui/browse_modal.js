@@ -1,6 +1,8 @@
 // Browse Saved Games modal (extracted from main)
 // Renders a list of saved game_data rows with thumbnails and emits open(id)
 
+import { FN } from '../scripts/api-base.js';
+
 let cachedGames = null;
 let cacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds
@@ -131,7 +133,7 @@ export async function showBrowseModal({ onOpen, onClose } = {}) {
   async function fetchPage(newOffset = 0) {
     offset = newOffset;
     listEl.innerHTML = '<div style="text-align:center;padding:20px;"><div style="width:24px;height:24px;border:3px solid #ddd;border-top:3px solid #19777e;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div><style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></div>';
-    const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?list=game_data&limit=10&offset=${offset}`, {
+    const res = await fetch(`${FN('supabase_proxy_fixed')}?list=game_data&limit=10&offset=${offset}`, {
       cache: 'no-store',
   credentials: 'include'
     });
