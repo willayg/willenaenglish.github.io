@@ -136,17 +136,8 @@ exports.handler = async (event) => {
         return respond(event, 401, { success: false, error: (authData && authData.error_description) || 'Invalid credentials' });
       }
 
-      // Scope cookies to .willenaenglish.com when Host ends with willenaenglish.com so apex and www both work
-      let cookieDomain;
-      try {
-        const hh = (event.headers && (event.headers.host || event.headers.Host)) || '';
-        if (typeof hh === 'string' && /(^|\.)willenaenglish\.com$/i.test(hh.trim())) cookieDomain = '.willenaenglish.com';
-        // Fallback to Origin if Host missing
-        if (!cookieDomain) {
-          const oh = (event.headers && (event.headers.origin || event.headers.Origin)) || '';
-          if (oh && /^https:\/\/(www\.)?willenaenglish\.com$/i.test(oh)) cookieDomain = '.willenaenglish.com';
-        }
-      } catch {}
+      // Always set domain for willenaenglish.com sites so cookies work on both apex and www
+      let cookieDomain = '.willenaenglish.com';
 
       const cookies = [
         cookie('sb_access', authData.access_token, { maxAge: 3600, domain: cookieDomain }),
