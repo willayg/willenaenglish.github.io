@@ -70,7 +70,8 @@
 <body>
   <div class="box">
     <h2>로그인 또는 회원가입</h2>
-    <input type="text" id="username" placeholder="이름 입력" />
+  <input type="text" id="username" placeholder="이름 입력 (Username)" />
+  <input type="password" id="password" placeholder="비밀번호 (Password)" />
     <div class="checkbox-row">
       <input type="checkbox" id="stayLoggedIn" checked />
       <label for="stayLoggedIn">로그인 상태 유지</label>
@@ -83,54 +84,62 @@
 
   <script>
     async function handleAuth() {
-      const name = document.getElementById('username').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
       const stayLoggedIn = document.getElementById('stayLoggedIn').checked;
 
-      if (!name) {
-        alert("\uc774\ub984\uc744 \uc785\ub825\ud558\uc138\uc694.");
+      if (!username) {
+        alert('이름(Username)을 입력하세요.');
+        return;
+      }
+      if (!password) {
+        alert('비밀번호를 입력하세요.');
+        document.getElementById('password').focus();
         return;
       }
 
-      const response = await fetch('/.netlify/functions/auth_user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      });
-      const result = await response.json();
+      try {
+        // 1) Resolve email from username (and ensure account is approved)
+        const emailRes = await fetch(`/.netlify/functions/supabase_auth?action=get_email_by_username&username=${encodeURIComponent(username)}`, {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        const emailData = await emailRes.json().catch(() => ({}));
+        if (!emailRes.ok || !emailData.success || !emailData.email) {
+          alert(emailData.error || '사용자를 찾을 수 없습니다.');
+          return;
+        }
 
-      if (response.ok && result.status === 'login') {
-        // Fetch profile to get avatar
-        const profileRes = await fetch('/.netlify/functions/supabase_proxy', {
+        // 2) Perform login; cookies are set via multiValueHeaders (sb_access / sb_refresh)
+        const loginRes = await fetch('/.netlify/functions/supabase_auth?action=login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            table: 'users',
-            action: 'get_avatar',
-            user_id: result.user.id
-          })
+          credentials: 'include',
+          body: JSON.stringify({ email: emailData.email, password })
         });
-        const profileData = await profileRes.json();
-        let avatar = '';
-        if (profileData && profileData.data && profileData.data.length > 0) {
-          avatar = profileData.data[0].avatar;
+        const loginData = await loginRes.json().catch(() => ({}));
+        if (!loginRes.ok || !loginData.success) {
+          alert(loginData.error || '로그인에 실패했습니다.');
+          return;
         }
-        storeUser(result.user.id, result.user.name, stayLoggedIn, avatar);
-        window.location.href = "index.html";
-      } else if (response.ok && result.status === 'name_taken') {
-        alert("이 이름은 이미 사용 중입니다. 다른 이름을 입력해 주세요.");
-      } else if (response.ok && result.status === 'created') {
-        storeUser(result.user.id, result.user.name, stayLoggedIn);
-        window.location.href = "profile-s.html"; // Redirect new users to profile setup
-      } else {
-        alert("계정을 생성할 수 없습니다.");
-      }
-    }
 
-    function storeUser(id, name, persist, avatar) {
-      const storage = persist ? localStorage : sessionStorage;
-      storage.setItem("user_id", id);
-      storage.setItem("user_name", name);
-      if (avatar) storage.setItem("user_avatar", avatar);
+        // Optional: cache display name/avatar for header UI (non-auth)
+        try {
+          const who = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include', cache: 'no-store' });
+          if (who.ok) {
+            const w = await who.json();
+            if (w && w.success) {
+              if (w.username || w.name) localStorage.setItem('user_name', (w.username || w.name).slice(0, 40));
+              if (w.avatar) localStorage.setItem('selectedEmojiAvatar', w.avatar);
+            }
+          }
+        } catch {}
+
+        // Redirect to student profile
+        window.location.href = '/students/profile.html';
+      } catch (err) {
+        alert('네트워크 오류 또는 서버 오류입니다.');
+      }
     }
   </script>
 </body>

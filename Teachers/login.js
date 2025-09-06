@@ -6,12 +6,8 @@
  * that work seamlessly with the supabase_auth Netlify function.
  */
 
-// Determine the correct functions base URL based on the current domain
-const HOST = location.hostname;
-const IS_NETLIFY = /netlify\.app$/i.test(HOST) || /netlify\.dev$/i.test(HOST);
-const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/i.test(HOST);
-const FUNCTIONS_BASE = (IS_NETLIFY || IS_LOCAL) ? '' : 'https://willenaenglish.netlify.app';
-const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
+// Always use same-origin functions so auth cookies are scoped to the site domain
+const AUTH_URL = `/.netlify/functions/supabase_auth`;
 
 /**
  * Internal helper for making authenticated API calls
