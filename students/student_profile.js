@@ -1,5 +1,7 @@
 // students/student_profile.js - client script to load and render student progress
-// Shared helper: set both ovPoints and awardPoints, monotonic (never decrease on screen)
+import { FN } from './scripts/api-base.js';
+
+// Shared helper: set both ovPoints and awardPoints, m             const      const res = await fetch(api(FN('supabase_auth') + `?action=update_profile_avatar`), {res2 = await fetch(api(FN('supabase_auth') + `?action=get_profile_name`), { credentials: 'include' });const res = await fetch(api(FN('supabase_auth') + `?action=get_profile`), { credentials: 'include' });notonic (never decrease on screen)
 function setPointsDisplayValue(points) {
   try {
     const n = Math.max(0, Number(points ?? 0) || 0);
@@ -14,20 +16,6 @@ function setPointsDisplayValue(points) {
   } catch {}
 }
 (function(){
-  // Import same-origin functions base
-  // Note: this file is bundled statically; if module import is not supported in your page,
-  // we fallback to a simple local FN impl.
-  let FN;
-  try {
-    // dynamic import may be ignored by simple static hosting; define inline fallback below
-  } catch {}
-  if (!FN) {
-    const H = location.hostname;
-    const IS_NETLIFY = /netlify\.(app|dev)$/i.test(H);
-    const IS_LOCAL   = /^(localhost|127\.0\.0\.1)$/i.test(H);
-    const FUNCTIONS_BASE = (IS_NETLIFY || IS_LOCAL) ? '' : '';
-    FN = (name) => `${FUNCTIONS_BASE}/.netlify/functions/${name}`;
-  }
   // Helper to create origin-absolute URLs that ignore <base> tag
   const api = (path) => new URL(path, window.location.origin).toString();
 
@@ -181,12 +169,12 @@ function setPointsDisplayValue(points) {
 
   async function getProfileInfo() {
     try {
-  const res = await fetch(api(FN('supabase_proxy_fixed') + `?action=get_profile`), { credentials: 'include' });
+  const res = await fetch(api(FN('supabase_auth') + `?action=get_profile`), { credentials: 'include' });
       if (!res.ok) return {};
       const data = await res.json();
       // If korean_name or class are missing, try get_profile_name for fallback
       if ((!data.korean_name || !data.class) && data.success !== false) {
-  const res2 = await fetch(api(FN('supabase_proxy_fixed') + `?action=get_profile_name`), { credentials: 'include' });
+  const res2 = await fetch(api(FN('supabase_auth') + `?action=get_profile_name`), { credentials: 'include' });
         if (res2.ok) {
           const data2 = await res2.json();
           if (data2.korean_name) data.korean_name = data2.korean_name;
@@ -199,7 +187,7 @@ function setPointsDisplayValue(points) {
 
   async function updateProfileAvatar(avatar) {
     try {
-  const res = await fetch(api(FN('supabase_proxy_fixed') + `?action=update_profile_avatar`), {
+  const res = await fetch(api(FN('supabase_auth') + `?action=update_profile_avatar`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

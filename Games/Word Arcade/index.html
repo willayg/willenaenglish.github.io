@@ -91,7 +91,7 @@
     async function ensureHeaderProfile(){
       try {
         // Get profile info (name + avatar) from cookie session
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile_name', { credentials: 'include' });
+        const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json().catch(() => null);
         if (!data || !data.success) return;
@@ -141,7 +141,7 @@
     (function(){
       async function refreshOnce(){
         try {
-          await fetch('/.netlify/functions/supabase_proxy_fixed?action=refresh', {
+          await fetch('/.netlify/functions/supabase_auth?action=refresh', {
             method: 'GET', credentials: 'include', cache: 'no-store'
           });
         } catch {}

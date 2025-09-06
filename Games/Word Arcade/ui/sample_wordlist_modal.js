@@ -1,5 +1,7 @@
 // Sample Wordlist Modal
 
+import { FN } from '../scripts/api-base.js';
+
 // Scoped styles for this modal to avoid interference from global .mode-btn rules
 let __wlModalStylesInjected = false;
 function ensureWordlistModalStyles() {
@@ -201,7 +203,7 @@ export function showSampleWordlistModal({ onChoose }) {
 
       let sessions = [];
       try {
-        const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
+        const url = new URL(FN('progress_summary'), window.location.origin);
         url.searchParams.set('section', 'sessions');
         const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
         if (res.ok) sessions = await res.json();

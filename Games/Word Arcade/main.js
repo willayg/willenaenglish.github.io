@@ -9,6 +9,7 @@ import { renderGameView } from './ui/game_view.js';
 import { showModeModal } from './ui/mode_modal.js';
 import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
+import { FN } from './scripts/api-base.js';
 
 // No direct Supabase client here. We rely on HTTP-only cookies set by Netlify functions.
 
@@ -158,7 +159,7 @@ function showInlineError(text, onRetry) {
 // Core flow
 // -----------------------------
 async function callProgressSummary(section, params = {}) {
-  const url = new URL('/.netlify/functions/progress_summary', window.location.origin);
+  const url = new URL(FN('progress_summary'), window.location.origin);
   url.searchParams.set('section', section);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -339,7 +340,7 @@ async function openSavedGamesModal() {
 
 async function openSavedGameById(id) {
   try {
-  const js = await fetchJSON(`/.netlify/functions/supabase_proxy_fixed?get=game_data&id=${encodeURIComponent(id)}`);
+  const js = await fetchJSON(`${FN('supabase_proxy_fixed')}?get=game_data&id=${encodeURIComponent(id)}`);
     const row = js?.data || js;
     if (!row) {
       inlineToast('Saved game not found or invalid.');

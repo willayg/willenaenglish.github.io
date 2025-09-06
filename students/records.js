@@ -1,7 +1,8 @@
-// Reusable client-side tracker for student activity and per-word attempts
+// Reusable c    const res = await fetch(FN('supabase_auth') + '?action=whoami', {ient-side tracker for student activity and per-word attempts
 // Works with Netlify function: /.netlify/functions/log_word_attempt
+import { FN } from './scripts/api-base.js';
 
-const ENDPOINT = '/.netlify/functions/log_word_attempt';
+const ENDPOINT = FN('log_word_attempt');
 
 // Auth: derive user id from secure HTTP-only cookies via whoami endpoint.
 // We do NOT read tokens from localStorage or sessionStorage.
@@ -111,7 +112,7 @@ export async function logAttempt({
     let user_id = getUserId();
     // If not yet signed in, try a one-time cookie refresh then re-check
     if (!user_id) {
-      try { await fetch('/.netlify/functions/supabase_auth?action=refresh', { credentials: 'include', cache: 'no-store' }); } catch {}
+      try { await fetch(FN('supabase_auth') + '?action=refresh', { credentials: 'include', cache: 'no-store' }); } catch {}
       await new Promise(r => setTimeout(r, 200));
       user_id = await ensureUserId();
     }
@@ -174,7 +175,7 @@ export function logBatch(attempts = []) {
 let __pointsRefreshTimer = null;
 async function refreshPointsFromOverview() {
   try {
-    const res = await fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' });
+    const res = await fetch(FN('progress_summary') + '?section=overview', { credentials: 'include', cache: 'no-store' });
     if (!res.ok) return;
     const ov = await res.json().catch(() => null);
     if (ov && typeof ov.points === 'number') {

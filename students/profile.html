@@ -9,13 +9,13 @@
     async function getProfileInfo() {
       try {
         // Get user id from cookie session
-        const who = await fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami', { credentials: 'include' });
+        const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials: 'include' });
         const whoRes = await who.json();
         if (!whoRes.success || !whoRes.user_id) {
           return { error: 'Sign in required. No valid session.' };
         }
         // Get profile info
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile', { credentials: 'include' });
+        const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials: 'include' });
         const profile = await res.json();
         if (!profile.success) {
           return { error: 'Could not fetch profile information.' };
@@ -26,7 +26,7 @@
       }
     }
   </script>
-  <script defer src="/students/student_profile.js"></script>
+  <script type="module" src="/students/student_profile.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
