@@ -179,11 +179,8 @@ async function refreshPointsFromOverview() {
     if (!res.ok) return;
     const ov = await res.json().catch(() => null);
     if (ov && typeof ov.points === 'number') {
-      // Monotonic write: don't overwrite with lower values
-      const current = Number(localStorage.getItem('user_points') || '0') || 0;
-      if (ov.points >= current) {
-        localStorage.setItem('user_points', String(ov.points));
-      }
+      // Overwrite with server-authoritative value
+      localStorage.setItem('user_points', String(ov.points));
       // Proactively refresh header component in this tab
       const header = document.querySelector('student-header');
       if (header && typeof header.refresh === 'function') header.refresh();

@@ -235,8 +235,8 @@ class StudentHeader extends HTMLElement {
         .then(ov => {
           if (ov && typeof ov.points === 'number') {
             try {
-              const cur = Number(localStorage.getItem('user_points') || '0') || 0;
-              if (ov.points >= cur) localStorage.setItem('user_points', String(ov.points));
+              // Overwrite local points with server-authoritative value
+              localStorage.setItem('user_points', String(ov.points));
             } catch {}
             // Re-render to show points pill
             if (typeof this.refresh === 'function') this.refresh(); else this.render();
