@@ -107,8 +107,15 @@
           if (ovRes.ok) {
             const ov = await ovRes.json().catch(() => null);
             if (ov && typeof ov.points === 'number') {
-              // Overwrite local points with server-authoritative value
-              localStorage.setItem('user_points', String(ov.points));
+              // Overwrite with server value, but avoid decreases right after optimistic bumps
+              const NO_DECREASE_MS = 20000;
+              const now = Date.now();
+              const cur = Number(localStorage.getItem('user_points') || '0') || 0;
+              const lastIncAt = Number(localStorage.getItem('user_points_last_inc_at') || '0') || 0;
+              const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
+              if (!(withinWindow && ov.points < cur)) {
+                localStorage.setItem('user_points', String(ov.points));
+              }
             }
           }
         } catch {}
