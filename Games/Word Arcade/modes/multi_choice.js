@@ -202,7 +202,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
             is_correct: correct,
             answer: selected,
             correct_answer: current.eng,
-            points: correct ? (isReview ? 3 : 1) : 0,
+            // scoreless build: no points
             attempt_index: idx + 1,
             extra: { direction: 'eng_to_pic', eng: current.eng, kor: current.kor }
           });
@@ -250,7 +250,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
             is_correct: correct,
             answer: selected,
             correct_answer: current.eng,
-            points: correct ? (isReview ? 3 : 1) : 0,
+            // scoreless build: no points
             attempt_index: idx + 1,
             extra: { direction: 'pic_to_eng', eng: current.eng, kor: current.kor }
           });
@@ -325,7 +325,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           is_correct: correct,
           answer: selected,
           correct_answer: correctAns,
-          points: correct ? (isReview ? 3 : 1) : 0,
+          // scoreless build: no points
           attempt_index: idx + 1,
           extra: { direction: korToEng ? 'kor_to_eng' : 'eng_to_kor', eng: current.eng, kor: current.kor }
         });

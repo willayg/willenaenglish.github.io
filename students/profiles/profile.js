@@ -4,14 +4,11 @@
     // endpoints powered by Netlify functions
     attempts: () => `/.netlify/functions/progress_summary?section=attempts`,
     sessions: () => `/.netlify/functions/progress_summary?section=sessions`,
-    kpi:      () => `/.netlify/functions/progress_summary?section=kpi`,
+  kpi:      () => `/.netlify/functions/progress_summary?section=kpi`,
     modes:    () => `/.netlify/functions/progress_summary?section=modes`,
-    badges:   () => `/.netlify/functions/progress_summary?section=badges`
+  badges:   () => `/.netlify/functions/progress_summary?section=badges`,
+  overview: () => `/.netlify/functions/progress_summary?section=overview`
   };
-
-  function getUserId(){
-    return localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
-  }
 
   async function fetchJSON(url){
     const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
@@ -31,12 +28,12 @@
       const k = await fetchJSON(API.kpi());
       setText('kpiAttempts', k.attempts ?? '0');
       setText('kpiAccuracy', k.accuracy != null ? `${Math.round(k.accuracy*100)}%` : '–');
-      setText('kpiPoints', k.points ?? '0');
+  // scoreless build: no points
       setText('kpiBestStreak', k.best_streak ?? '0');
     } catch (e) {
       setText('kpiAttempts', '0');
       setText('kpiAccuracy', '–');
-      setText('kpiPoints', '0');
+      
       setText('kpiBestStreak', '0');
     }
   }
@@ -90,14 +87,23 @@
   }
 
   window.addEventListener('DOMContentLoaded', async () => {
-    const uid = getUserId();
-    if (!uid) return;
-    await Promise.allSettled([
-      loadKpi(uid),
-      loadBadges(uid),
-      loadModes(uid),
-      loadSessions(uid),
-      loadAttempts(uid)
-    ]);
+    // Proceed regardless of any client-side ID; server uses cookie auth.
+    const setText = (id, text)=>{ const el = document.getElementById(id); if (el) el.textContent = String(text); };
+    const p = [
+      loadKpi('me'),
+      loadBadges('me'),
+      loadModes('me'),
+      loadSessions('me'),
+      loadAttempts('me'),
+      (async () => {
+        try {
+          const res = await fetch(API.overview(), { credentials: 'include', cache: 'no-store' });
+          if (!res.ok) return;
+          const ov = await res.json().catch(() => null);
+          // scoreless build: ignore points in overview
+        } catch {}
+      })()
+    ];
+    await Promise.allSettled(p);
   });
 })();

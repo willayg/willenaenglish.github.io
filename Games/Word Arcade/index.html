@@ -86,6 +86,7 @@
 
   <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
   <script type="module">
+  import { initPointsClient } from '/students/scripts/points-client.js';
     const $ = (sel) => document.querySelector(sel);
 
     async function ensureHeaderProfile(){
@@ -101,26 +102,7 @@
         if (data.avatar && typeof data.avatar === 'string' && data.avatar.length <= 16) {
           localStorage.setItem('selectedEmojiAvatar', data.avatar);
         }
-        // Also fetch overview to populate points for the header
-        try {
-          const ovRes = await fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' });
-          if (ovRes.ok) {
-            const ov = await ovRes.json().catch(() => null);
-            if (ov && typeof ov.points === 'number') {
-              // Overwrite with server value, but avoid decreases right after optimistic bumps
-              const NO_DECREASE_MS = 20000;
-              const now = Date.now();
-              const cur = Number(localStorage.getItem('user_points') || '0') || 0;
-              const lastIncAt = Number(localStorage.getItem('user_points_last_inc_at') || '0') || 0;
-              const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
-              if (!(withinWindow && ov.points < cur)) {
-                localStorage.setItem('user_points', String(ov.points));
-              }
-            }
-          }
-        } catch {}
-        const header = document.querySelector('student-header');
-        if (header && typeof header.refresh === 'function') header.refresh();
+  // Scoreless build: no overview refresh needed
       } catch {}
     }
 
@@ -139,7 +121,8 @@
       const forYou = $('#assignmentsBtn');
       if (forYou) forYou.addEventListener('click', () => window.WordArcade?.openSavedGames?.());
 
-      ensureHeaderProfile();
+  try { initPointsClient(); } catch {}
+  ensureHeaderProfile();
     });
   </script>
 

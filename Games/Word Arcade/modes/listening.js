@@ -181,7 +181,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
             else { if (feedback) { feedback.textContent = `It was: ${current.eng}`; feedback.style.color = '#e53e3e'; } playSFX('wrong'); }
             // Disable all buttons until next render
             gameArea.querySelectorAll('button').forEach(b => b.disabled = true);
-            logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: picked, correct_answer: current.eng, points: isCorrect ? (isReview ? 3 : 1) : 0, attempt_index: idx + 1 });
+            logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: picked, correct_answer: current.eng, attempt_index: idx + 1 });
             setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); if (canDoPictures) usePictureNext = !usePictureNext; renderQuestion(); }, 900);
           };
         });
@@ -241,7 +241,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
         }
         // Disable all buttons until next render
         gameArea.querySelectorAll('button').forEach(b => b.disabled = true);
-  logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: btn.dataset.kor, correct_answer: current.kor, points: isCorrect ? (isReview ? 3 : 1) : 0, attempt_index: idx + 1 });
+  logAttempt({ session_id: sessionId, mode: 'listening', word: current.eng, is_correct: isCorrect, answer: btn.dataset.kor, correct_answer: current.kor, attempt_index: idx + 1 });
         setTimeout(() => { idx++; updateGameProgress(idx, shuffled.length); if (canDoPictures) usePictureNext = !usePictureNext; renderQuestion(); }, 900);
       };
     });

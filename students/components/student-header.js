@@ -11,6 +11,16 @@ class StudentHeader extends HTMLElement {
     this.attachShadow({ mode: "open" });
   this._onStorage = this._onStorage.bind(this);
   this._fetchingPoints = false;
+  this._onPointsUpdate = (e) => {
+    try {
+      const total = e?.detail?.total;
+      if (typeof total === 'number') {
+        this._points = total;
+        this.refresh();
+      }
+    } catch {}
+  };
+  this._points = null;
   }
 
   attributeChangedCallback() {
@@ -22,17 +32,28 @@ class StudentHeader extends HTMLElement {
     this.render();
     // Update if user data changes in this or other tabs
     window.addEventListener("storage", this._onStorage);
+  window.addEventListener('points:update', this._onPointsUpdate);
+    // If points not yet known, fetch once to seed
+    if (this._points == null && !this._fetchingPoints) {
+      this._fetchingPoints = true;
+      fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(ov => { if (ov && typeof ov.points === 'number') { this._points = ov.points; this.refresh(); } })
+        .catch(() => {})
+        .finally(() => { this._fetchingPoints = false; });
+    }
   }
 
   disconnectedCallback() {
     window.removeEventListener("storage", this._onStorage);
+  window.removeEventListener('points:update', this._onPointsUpdate);
   }
 
   refresh() { this.render(); }
 
   _onStorage(e) {
     // Only re-render if relevant keys change
-  if (["user_name", "user_id", "selectedEmojiAvatar", "user_points"].includes(e.key)) {
+  if (["user_name", "user_id", "selectedEmojiAvatar"].includes(e.key)) {
       this.render();
     }
   }
@@ -79,8 +100,7 @@ class StudentHeader extends HTMLElement {
       localStorage.getItem("avatar") || sessionStorage.getItem("avatar") ||
       "🙂";
 
-  const rawPts = localStorage.getItem("user_points");
-    const points = rawPts != null && !isNaN(Number(rawPts)) ? Number(rawPts) : null;
+  const points = (typeof this._points === 'number') ? this._points : null;
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -145,12 +165,10 @@ class StudentHeader extends HTMLElement {
           <div class="avatar" part="avatar" aria-hidden="true">${avatar}</div>
           <div class="info">
             <div class="title" id="name" part="name">${name || "Profile"}</div>
-            <div class="points" id="pointsLine" part="points" ${points==null? 'style="display:none;"':''}>
-              <span class="points-pill" title="Total points">
-                <span style="display:inline-block;width:14px;height:14px; border-radius:50%;background:#ffd700;vertical-align:middle;"></span>
-                <span class="points-value">${points!=null? points.toLocaleString(): ''}</span>
-              </span>
-            </div>
+            ${points != null ? `<div class="points-pill" title="Total points">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 5v3h3a1 1 0 010 2h-3v3a1 1 0 01-2 0v-3H8a1 1 0 010-2h3V7a1 1 0 012 0z" fill="currentColor"/></svg>
+              <span id="pointsVal">${points}</span>
+            </div>` : ''}
             ${this.showId ? `<div class="mut" id="id" part="id">${uid ? `ID: ${uid}` : "Not signed in"}</div>` : ""}
           </div>
           <div class="page-title" id="pageTitle" part="page-title">
@@ -227,19 +245,15 @@ class StudentHeader extends HTMLElement {
       updateMenuVisibility();
     }
 
-    // If points are missing, try to fetch from overview once
-    if (points == null && !this._fetchingPoints) {
+  // If points are missing, try to fetch from overview once
+  if (points == null && !this._fetchingPoints) {
       this._fetchingPoints = true;
       fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)
         .then(ov => {
           if (ov && typeof ov.points === 'number') {
-            try {
-              // Overwrite local points with server-authoritative value
-              localStorage.setItem('user_points', String(ov.points));
-            } catch {}
-            // Re-render to show points pill
-            if (typeof this.refresh === 'function') this.refresh(); else this.render();
+      this._points = ov.points;
+      if (typeof this.refresh === 'function') this.refresh(); else this.render();
           }
         })
         .catch(() => {})

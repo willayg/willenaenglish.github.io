@@ -184,7 +184,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
           is_correct: correct,
           answer: btn.getAttribute('data-eng'),
           correct_answer: current.eng,
-          points: correct ? (isReview ? 3 : 1) : 0,
+          // scoreless build: no points
           attempt_index: idx + 1
         });
   setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);

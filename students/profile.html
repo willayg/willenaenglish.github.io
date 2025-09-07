@@ -27,6 +27,7 @@
     }
   </script>
   <script type="module" src="/students/student_profile.js"></script>
+  <script type="module" src="/students/components/student-header.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -44,12 +45,7 @@
     <div class="spinner"></div>
     <div class="loading-text">Loading…</div>
   </div>
-  <header>
-    <div class="avatar clickable" id="pfAvatar" title="Change avatar">🙂</div>
-    <div class="user-chip"><div class="title" id="pfName">Will</div></div>
-    <div class="spacer"></div>
-    <div class="page-title" aria-hidden="true">Profile</div>
-  </header>
+  <student-header title="Profile" show-id="false" home-href="/index.html" home-label="Home"></student-header>
   <nav class="toolbar" aria-label="Quick actions">
     <button class="tb-link primary" id="btnHome">Home</button>
     <button class="tb-link" id="btnGames">Games</button>

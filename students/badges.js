@@ -162,9 +162,8 @@ window.addEventListener('profile:overview', (ev) => {
 document.addEventListener('DOMContentLoaded', () => {
   renderBadges();
   // Fallback: observe counters and re-render when they change
-  const pointsEl = document.getElementById('awardPoints');
   const starsEl = document.getElementById('awardStars');
   const medalsEl = document.getElementById('awardMedals');
   const obs = new MutationObserver(() => renderBadges());
-  [pointsEl, starsEl, medalsEl].forEach(el => { if (el) obs.observe(el, { characterData: true, subtree: true, childList: true }); });
+  [starsEl, medalsEl].forEach(el => { if (el) obs.observe(el, { characterData: true, subtree: true, childList: true }); });
 });
