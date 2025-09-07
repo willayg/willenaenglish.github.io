@@ -75,7 +75,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName
           is_correct: correct,
           answer: btn.dataset.kor,
           correct_answer: current.kor,
-          points: correct ? (isReview ? 3 : 1) : 0,
+          // scoreless build: no points
           attempt_index: idx + 1,
           extra: { direction: 'eng_to_kor', eng: current.eng, kor: current.kor }
         });

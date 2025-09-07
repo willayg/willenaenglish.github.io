@@ -1,6 +1,10 @@
-// Reusable c    const res = await fetch(FN('supabase_auth') + '?action=whoami', {ient-side tracker for student activity and per-word attempts
+// Reusable client-side tracker for student activity and per-word attempts
 // Works with Netlify function: /.netlify/functions/log_word_attempt
 import { FN } from './scripts/api-base.js';
+import { scheduleRefresh } from './scripts/points-client.js';
+// Optional shared points helpers (non-breaking):
+// Shared points helpers: standardize optimistic bump and debounced server refresh
+// Scoreless build: no points helpers
 
 const ENDPOINT = FN('log_word_attempt');
 
@@ -84,8 +88,8 @@ export async function endSession(sessionId, { mode, summary = {} } = {}) {
       console.error('❌ SESSION_END LOG FAILED:', res.status, txt);
       alert(`Session end logging failed: ${res.status} - ${txt}`);
     } else {
-      // On success, refresh points in header/profile (debounced)
-      schedulePointsRefresh();
+  // On success, refresh points in header/profile (debounced)
+  scheduleRefresh();
     }
   } catch (e) {
     console.debug('session_end log skipped:', e?.message);
@@ -117,7 +121,7 @@ export async function logAttempt({
       user_id = await ensureUserId();
     }
     if (!user_id) {
-      alert('You are not signed in. Please log in to earn points.');
+  alert('You are not signed in. Please log in.');
       return;
     }
     const res = await fetch(ENDPOINT, {
@@ -144,24 +148,24 @@ export async function logAttempt({
       const txt = await res.text().catch(() => '');
       console.error('❌ ATTEMPT LOG FAILED:', res.status, txt);
       // Also alert for immediate visibility
-    if (res.status === 401) alert('Not signed in. Please log in to earn points.');
+  if (res.status === 401) alert('Not signed in. Please log in.');
     else alert(`Logging failed: ${res.status} - ${txt}`);
     } else {
-      // Optimistic: bump local points immediately for responsive UI
+      // Apply server-authoritative total if provided
       try {
-        const inc = typeof points === 'number' ? points : 0;
-        if (inc > 0) {
-      const current = Number(localStorage.getItem('user_points') || '0') || 0;
-      const next = current + inc;
-      localStorage.setItem('user_points', String(next));
-          // Mark the time of the last optimistic increment to prevent immediate decreases
-          localStorage.setItem('user_points_last_inc_at', String(Date.now()));
-          const header = document.querySelector('student-header');
-          if (header && typeof header.refresh === 'function') header.refresh();
+        const js = await res.json().catch(() => null);
+        if (js && typeof js.points_total === 'number') {
+          // Stop persisting points in localStorage; use events + server refresh only
+          try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: js.points_total } })); } catch {}
+          scheduleRefresh();
+          return;
         }
       } catch {}
-      // Attempt logged successfully; refresh points soon
-      schedulePointsRefresh();
+      // If server didn’t send total, do a tiny optimistic bump only for correct answers
+      try {
+  // Avoid unexpected large defaults; only emit an event so header can refetch
+  if (is_correct) scheduleRefresh(0);
+      } catch {}
     }
   } catch (e) {
     console.debug('attempt log skipped:', e?.message);
@@ -173,34 +177,5 @@ export function logBatch(attempts = []) {
   for (const a of attempts) logAttempt(a);
 }
 
-// ------ Lightweight points refresher ------
-let __pointsRefreshTimer = null;
-async function refreshPointsFromOverview() {
-  try {
-    const res = await fetch(FN('progress_summary') + '?section=overview', { credentials: 'include', cache: 'no-store' });
-    if (!res.ok) return;
-    const ov = await res.json().catch(() => null);
-    if (ov && typeof ov.points === 'number') {
-      // Overwrite with server value, but avoid decreases within a short window after an optimistic bump
-      const NO_DECREASE_MS = 20000; // 20s grace
-      const now = Date.now();
-      const current = Number(localStorage.getItem('user_points') || '0') || 0;
-      const lastIncAt = Number(localStorage.getItem('user_points_last_inc_at') || '0') || 0;
-      const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
-      if (!(withinWindow && ov.points < current)) {
-        localStorage.setItem('user_points', String(ov.points));
-      }
-      // Proactively refresh header component in this tab
-      const header = document.querySelector('student-header');
-      if (header && typeof header.refresh === 'function') header.refresh();
-    }
-  } catch {}
-}
+// Scoreless build: no points refresh
 
-function schedulePointsRefresh(delayMs = 800) {
-  if (__pointsRefreshTimer) return; // debounce
-  __pointsRefreshTimer = setTimeout(() => {
-    __pointsRefreshTimer = null;
-    refreshPointsFromOverview();
-  }, delayMs);
-}

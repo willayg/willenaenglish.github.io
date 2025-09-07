@@ -1,20 +1,8 @@
 
 import { FN } from './scripts/api-base.js';
+import { initPointsClient } from './scripts/points-client.js';
 
-// Shared helper: set both ovPoints and awardPoints (never decrease on screen)
-function setPointsDisplayValue(points) {
-  // Server-authoritative display: always set exactly to provided value
-  try {
-    const n = Math.max(0, Number(points ?? 0) || 0);
-    const upd = (id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = String(n);
-    };
-    upd('ovPoints');
-    upd('awardPoints');
-  } catch {}
-}
+// Scoreless build: no points display helper
 (function(){
   // Helper to create origin-absolute URLs that ignore <base> tag
   const api = (path) => new URL(path, window.location.origin).toString();
@@ -28,11 +16,7 @@ function setPointsDisplayValue(points) {
     .replace(/'/g, '&#39;')
     .replace(/`/g, '&#96;');
 
-  // Points sync: do not decrease within a short window after an optimistic increase
-  const NO_DECREASE_MS = 20000; // 20 seconds grace period
-  const getLSNumber = (k, d = 0) => {
-    try { const v = Number(localStorage.getItem(k)); return Number.isFinite(v) ? v : d; } catch { return d; }
-  };
+  const getLSNumber = (k, d = 0) => { try { const v = Number(localStorage.getItem(k)); return Number.isFinite(v) ? v : d; } catch { return d; } };
 
   // No localStorage token reads. We rely on secure HTTP-only cookies managed by the server.
 
@@ -62,20 +46,14 @@ function setPointsDisplayValue(points) {
     modes:    () => api(FN('progress_summary') + `?section=modes`),
     badges:   () => api(FN('progress_summary') + `?section=badges`),
     overview: () => api(FN('progress_summary') + `?section=overview`),
-    challenging: () => api(FN('progress_summary') + `?section=challenging`)
+  challenging: () => api(FN('progress_summary') + `?section=challenging`),
+  correctCount: () => api(FN('count_true_attempts'))
   };
 
   // Removed getUserId and all local/session storage lookups for sensitive user info
 
   async function fetchJSON(url){
-    let res = await fetch(url, { cache: 'no-store', credentials: 'include' });
-    if (res.status === 401) {
-      // Try to refresh tokens once, then retry
-      try {
-        await fetch(api(FN('supabase_auth') + `?action=refresh`), { credentials: 'include' });
-      } catch {}
-      res = await fetch(url, { cache: 'no-store', credentials: 'include' });
-    }
+    const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }
@@ -94,12 +72,14 @@ function setPointsDisplayValue(points) {
 
   async function loadOverview(uid){
     try {
-      const ov = await fetchJSON(API.overview());
-  setText('ovPoints', (ov.points ?? 0).toString());
-  setText('ovStars', (ov.stars ?? 0).toString());
+      const [ov, cc] = await Promise.all([
+        fetchJSON(API.overview()),
+        fetchJSON(API.correctCount()).catch(() => ({}))
+      ]);
+      setText('ovStars', (ov.stars ?? 0).toString());
       setText('ovListsExplored', ov.lists_explored ?? '0');
       setText('ovPerfectRuns', ov.perfect_runs ?? '0');
-  setText('ovMasteredLists', (ov.mastered ?? ov.mastered_lists) ?? '0');
+      setText('ovMasteredLists', (ov.mastered ?? ov.mastered_lists) ?? '0');
       setText('ovHotStreak', ov.best_streak ?? '0');
       setText('ovWordsDiscovered', ov.words_discovered ?? '0');
       setText('ovWordsMastered', ov.words_mastered ?? '0');
@@ -107,8 +87,12 @@ function setPointsDisplayValue(points) {
       setText('ovBadgesCount', ov.badges_count ?? '0');
       setText('ovFavoriteList', (ov.favorite_list && ov.favorite_list.name) || '—');
       setText('ovHardestWord', (ov.hardest_word && ov.hardest_word.word) || '—');
+  const pts = (typeof cc.points === 'number') ? cc.points : (typeof cc.correct === 'number' ? cc.correct : (ov.points ?? 0));
+      setText('awardPoints', String(pts));
+      try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
+      try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov })); } catch {}
     } catch (e) {
-      // Do not zero-out UI on fetch errors; keep prior or cached values visible
+      setText('ovStars', '0');
       setText('ovListsExplored', '0');
       setText('ovPerfectRuns', '0');
       setText('ovMasteredLists', '0');
@@ -119,6 +103,7 @@ function setPointsDisplayValue(points) {
       setText('ovBadgesCount', '0');
       setText('ovFavoriteList', '—');
       setText('ovHardestWord', '—');
+      setText('awardPoints', '0');
     }
   }
 
@@ -226,6 +211,8 @@ function setPointsDisplayValue(points) {
   }
 
   window.addEventListener('DOMContentLoaded', async () => {
+  // Standardize storage listeners and show GitHub Pages notice if applicable
+  try { initPointsClient(); } catch {}
   const nameEl = document.getElementById('pfName');
   const avatarEl = document.getElementById('pfAvatar');
   const overlayEl = document.getElementById('loadingOverlay');
@@ -263,15 +250,14 @@ function setPointsDisplayValue(points) {
 
     // Try cached critical sections first (1 min TTL)
     const TTL = 60 * 1000;
-    const cacheOv = getCache(`ov:${uid}`);
+  const cacheOv = getCache(`ov:${uid}`);
     const cacheBadges = getCache(`badges:${uid}`);
     const cacheChal = getCache(`challenging:${uid}`);
   // Modes cache removed
 
     // Track last badges for correct count
     let lastBadges = [];
-    const paintOverview = (ov) => {
-      setPointsDisplayValue((ov && ov.points != null) ? ov.points : 0);
+  const paintOverview = (ov) => {
       setText('ovStars', (ov && ov.stars != null) ? ov.stars : '0');
       setText('ovListsExplored', (ov && ov.lists_explored != null) ? ov.lists_explored : '0');
       setText('ovPerfectRuns', (ov && ov.perfect_runs != null) ? ov.perfect_runs : '0');
@@ -348,33 +334,38 @@ function setPointsDisplayValue(points) {
     };
   // paintModes removed
 
-    // Prime from localStorage immediately (monotonic)
-    try {
-      const prim = Number(localStorage.getItem('user_points') || '0') || 0;
-      setPointsDisplayValue(prim);
-    } catch {}
+  // Scoreless build: no local points priming
 
     // Paint cached immediately if present
   if (cacheOv || cacheBadges || cacheChal) {
       if (cacheOv) paintOverview(cacheOv);
       if (cacheBadges) paintBadges(cacheBadges);
       if (cacheChal) paintChallenging(cacheChal);
+        // Seed points from cached overview if available
+        try {
+          const cachedPts = cacheOv && typeof cacheOv.points === 'number' ? cacheOv.points : null;
+          if (cachedPts != null) {
+            setText('awardPoints', String(cachedPts));
+            try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: cachedPts } })); } catch {}
+          }
+        } catch {}
       hideOverlay();
     }
 
   // Fetch critical fresh data in parallel
-  const [info, ov, badges, challenging] = await Promise.all([
+    const [info, ov, badges, challenging, cc] = await Promise.all([
       infoPromise,
-  fetchJSON(API.overview()).catch(() => null),
-  fetchJSON(API.badges()).catch(() => null),
-  fetchJSON(API.challenging()).catch(() => null)
+        fetchJSON(API.overview()).catch(() => null),
+        fetchJSON(API.badges()).catch(() => null),
+        fetchJSON(API.challenging()).catch(() => null),
+        fetchJSON(API.correctCount()).catch(() => null)
     ]);
 
     // Apply and cache fresh
   // Info from get_profile: { success, name, email, username, avatar }
   const displayName = (info && (info.name || info.username)) || 'Student Profile';
-  nameEl.textContent = displayName;
-  avatarEl.textContent = (info && info.avatar) || '🙂';
+  if (nameEl) nameEl.textContent = displayName;
+  if (avatarEl) avatarEl.textContent = (info && info.avatar) || '🙂';
   // Fill hero card fields if present
   const heroAvatar = document.getElementById('pfHeroAvatar');
   if (heroAvatar) heroAvatar.textContent = (info && info.avatar) || '🐼';
@@ -405,49 +396,26 @@ function setPointsDisplayValue(points) {
       const ov2 = await fetchJSON(API.overview()).catch(() => null);
       if (ov2 && typeof ov2.points === 'number') {
         paintOverview(ov2); setCache(`ov:${uid}`, ov2, TTL); hideNotice();
-        // Sync LS/header
-        try {
-          const now = Date.now();
-          const cur = getLSNumber('user_points', 0);
-          const lastIncAt = getLSNumber('user_points_last_inc_at', 0);
-          const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
-          if (!(withinWindow && ov2.points < cur)) localStorage.setItem('user_points', String(ov2.points));
-          setPointsDisplayValue(Math.max(cur, ov2.points));
-          const header = document.querySelector('student-header');
-          if (header && typeof header.refresh === 'function') header.refresh();
-        } catch {}
+  // Notify header/badges via events
+  try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: ov2.points } })); } catch {}
+  try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov2 })); } catch {}
         return;
       }
       setTimeout(trySync, 3000);
     };
     trySync();
   }
-  // Sync header points pill to the latest overview points
-  try {
-    if (ov && typeof ov.points === 'number') {
-      const now = Date.now();
-      const cur = getLSNumber('user_points', 0);
-      const lastIncAt = getLSNumber('user_points_last_inc_at', 0);
-      const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
-
-      // Decide whether to write server value to LS
-      if (!(withinWindow && ov.points < cur)) {
-        // Either server >= current, or window expired => accept server as source of truth
-        try { localStorage.setItem('user_points', String(ov.points)); } catch {}
-      }
-      // Display should never dip during the window
-      setPointsDisplayValue(Math.max(cur, ov.points));
-
-      const header = document.querySelector('student-header');
-      if (header && typeof header.refresh === 'function') header.refresh();
-    }
-  } catch {}
+  // Scoreless build: no header points sync
   // Awards counters
   const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
   // Avoid dropping below a higher local value (e.g., recent optimistic increment)
-  const __curLS = getLSNumber('user_points', 0);
-  const __sv = (ov && typeof ov.points === 'number') ? ov.points : 0;
-  setPointsDisplayValue(Math.max(__curLS, __sv));
+  // Scoreless build: no award points rendering
+  // Points: prefer dedicated endpoint sum; fallback to overview.points
+  try {
+    const pts = (cc && (typeof cc.points === 'number' ? cc.points : (typeof cc.correct === 'number' ? cc.correct : null))) ?? (ov && typeof ov.points === 'number' ? ov.points : 0);
+    setCount('awardPoints', pts);
+    try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
+  } catch {}
   setCount('awardStars', ov && ov.stars);
   // Derive medals from perfect_runs (or mastered_lists if preferred)
   setCount('awardMedals', ov && (ov.perfect_runs ?? ov.mastered_lists));
@@ -465,8 +433,8 @@ function setPointsDisplayValue(points) {
     const btnClose = document.getElementById('avatarClose');
     const btnCancel = document.getElementById('avatarCancel');
     const btnSave = document.getElementById('avatarSave');
-    const choices = ['🙂','😃','😎','🦄','🐱','🐶','👽','🤖','🌟','🎓','🧑‍🎓','🧑‍🚀','🧑‍💻','🦊','🐼','🐵','🐸','🐯','🐨','🐷'];
-    let current = avatarEl.textContent;
+  const choices = ['🙂','😃','😎','🦄','🐱','🐶','👽','🤖','🌟','🎓','🧑‍🎓','🧑‍🚀','🧑‍💻','🦊','🐼','🐵','🐸','🐯','🐨','🐷'];
+  let current = (avatarEl && avatarEl.textContent) || '🙂';
     let selected = current;
     function openModal() {
       if (!overlay) return;
@@ -508,57 +476,7 @@ function setPointsDisplayValue(points) {
   });
 })();
 
-// Live updates: reflect point changes made in other tabs/pages
+// Scoreless: no live points updates
 (function(){
-  // Local, duplicated helpers for scope safety
-  const NO_DECREASE_MS = 20000;
-  const getLSNumber = (k, d = 0) => {
-    try { const v = Number(localStorage.getItem(k)); return Number.isFinite(v) ? v : d; } catch { return d; }
-  };
-  const api = (path) => new URL(path, window.location.origin).toString();
-  function updatePointsFromLS(){
-    try {
-      const raw = localStorage.getItem('user_points');
-      if (raw != null && raw !== '') {
-        const n = Number(raw);
-        if (!Number.isNaN(n)) {
-          // Display current LS value; no-decrease is enforced when server responses arrive
-          setPointsDisplayValue(n);
-        }
-      }
-    } catch {}
-  }
-  async function refreshOverviewQuick(){
-    try {
-  const res = await fetch(api(FN('progress_summary') + '?section=overview'), { credentials: 'include', cache: 'no-store' });
-      if (!res.ok) return;
-      const ov = await res.json().catch(() => null);
-      if (ov) {
-        // Server-authoritative write with no-decrease grace
-        try {
-          if (typeof ov.points === 'number') {
-            const now = Date.now();
-            const cur = getLSNumber('user_points', 0);
-            const lastIncAt = getLSNumber('user_points_last_inc_at', 0);
-            const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
-            if (!(withinWindow && ov.points < cur)) {
-              localStorage.setItem('user_points', String(ov.points));
-            }
-            setPointsDisplayValue(Math.max(cur, ov.points));
-          } else {
-            setPointsDisplayValue(ov.points ?? 0);
-          }
-        } catch {}
-        const setTxt = (id, text)=>{ const el = document.getElementById(id); if (el) el.textContent = text; };
-        setTxt('ovStars', (ov.stars ?? 0).toString());
-        setTxt('awardStars', (ov.stars ?? 0).toString());
-      }
-    } catch {}
-  }
-  window.addEventListener('storage', (e) => {
-    if (e && e.key === 'user_points') updatePointsFromLS();
-  });
-  document.addEventListener('visibilitychange', () => {   
-    if (document.visibilityState === 'visible') refreshOverviewQuick();
-  });
+  // No-op
 })();

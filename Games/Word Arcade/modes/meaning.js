@@ -201,7 +201,7 @@ export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, sta
         is_correct: !!match,
         answer: kor,
         correct_answer: (roundPairs.find(w => w.eng === eng) || {}).kor || null,
-  points: match ? (isReview ? 3 : 1) : 0,
+  // scoreless build: no points,
         extra: { eng, kor }
       });
   scoreCounter.innerHTML = isReview ? `Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}` : `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;

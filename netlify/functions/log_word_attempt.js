@@ -29,6 +29,7 @@ const { createClient } = require('@supabase/supabase-js');
 //   summary JSONB
 // )
 
+
 // Cookie helpers (align with supabase_proxy_fixed)
 function parseCookies(header) {
   const out = {};
@@ -161,7 +162,7 @@ exports.handler = async (event) => {
     if (event_type === 'attempt') {
       // Require authentication: attempts must be attributed to a user
       if (!userIdFromCookie) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in to earn points.' }) };
+  return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in.' }) };
       }
       const {
         user_id, session_id, mode, word,
@@ -183,15 +184,24 @@ exports.handler = async (event) => {
         }
       }
 
+      // Compute a safe default for points if not provided by client
+      let safePoints = 0;
+      if (points === 0 || points === null || points === undefined) {
+        safePoints = is_correct ? 1 : 0;
+      } else {
+        const n = Number(points);
+        safePoints = Number.isFinite(n) ? n : (is_correct ? 1 : 0);
+      }
+
       const row = {
-  user_id: userIdFromCookie,
+        user_id: userIdFromCookie,
         session_id: session_id || null,
         mode: mode || null,
         word,
         is_correct: !!is_correct,
         answer: answer ?? null,
         correct_answer: correct_answer ?? null,
-        points: points ?? null,
+        points: safePoints,
         attempt_index: attempt_index ?? null,
         duration_ms: duration_ms ?? null,
         round: round ?? null,
@@ -199,7 +209,34 @@ exports.handler = async (event) => {
       };
       const { error } = await supabase.from('progress_attempts').insert(row);
       if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
-      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+      
+      // Server-authoritative total: sum of points for this user
+      // Paginate to avoid row caps
+      const { count: totalRows, error: cntErr } = await supabase
+        .from('progress_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userIdFromCookie)
+        .not('points', 'is', null);
+      if (cntErr) return { statusCode: 400, body: JSON.stringify({ error: cntErr.message }) };
+      let points_total = 0;
+      const pageSize = 1000;
+      const total = totalRows || 0;
+      for (let from = 0; from < total; from += pageSize) {
+        const to = Math.min(from + pageSize - 1, total - 1);
+        const { data: rows, error: pageErr } = await supabase
+          .from('progress_attempts')
+          .select('points')
+          .eq('user_id', userIdFromCookie)
+          .not('points', 'is', null)
+          .range(from, to);
+        if (pageErr) return { statusCode: 400, body: JSON.stringify({ error: pageErr.message }) };
+        if (Array.isArray(rows)) rows.forEach(r => { points_total += (Number(r.points) || 0); });
+      }
+      return {
+        statusCode: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ ok: true, points_total: Number(points_total) })
+      };
     }
 
     return { statusCode: 400, body: JSON.stringify({ error: 'Unknown event_type' }) };

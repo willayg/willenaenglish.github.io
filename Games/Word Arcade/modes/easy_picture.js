@@ -200,7 +200,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
           is_correct: correct,
           answer: picked,
           correct_answer: current.eng,
-          points: correct ? (isReview ? 3 : 1) : 0,
+          // scoreless build: no points
           attempt_index: idx + 1
         });
   setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);

@@ -55,7 +55,7 @@ exports.handler = async (event) => {
       return json(401, { error: 'Not signed in (cookie missing or invalid)' });
     }
 
-    // Resolve the user id using admin client to be resilient
+  // Resolve the user id using admin client to be resilient
   const adminClient = createClient(SUPABASE_URL, ADMIN_KEY);
     const { data: userData, error: userErr } = await adminClient.auth.getUser(accessToken);
     if (userErr || !userData || !userData.user) {
@@ -64,17 +64,9 @@ exports.handler = async (event) => {
     }
     const userId = userData.user.id;
 
-    // Prefer anon+Bearer for RLS; if anon key missing, fall back to admin client and manually scope queries by user_id.
-  const useAdminFallback = !SUPABASE_ANON_KEY;
-    const supabase = useAdminFallback
-      ? adminClient
-      : createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: { persistSession: false, autoRefreshToken: false },
-          global: { headers: { Authorization: `Bearer ${accessToken}` } }
-        });
-
-    // Helper to conditionally apply user_id filter when using admin fallback
-    const scope = (query) => useAdminFallback ? query.eq('user_id', userId) : query;
+  // For consistency with the insert function (which uses service role), use admin client + explicit scoping.
+  const supabase = adminClient;
+  const scope = (query) => query.eq('user_id', userId);
 
   const section = ((event.queryStringParameters && event.queryStringParameters.section) || 'kpi').toLowerCase();
 
@@ -89,14 +81,13 @@ exports.handler = async (event) => {
       const { data: attempts, error: e1 } = await scope(
         supabase
           .from('progress_attempts')
-          .select('is_correct, points')
+          .select('is_correct')
       );
 
       if (e1) return json(400, { error: e1.message });
 
-      const attemptsCount = attempts?.length || 0;
-      const correct = attempts?.filter(a => a.is_correct)?.length || 0;
-      const points = attempts?.reduce((s, a) => s + (Number(a.points) || 0), 0) || 0;
+  const attemptsCount = attempts?.length || 0;
+  const correct = attempts?.filter(a => a.is_correct)?.length || 0;
 
       const { data: ordered, error: e2 } = await scope(
         supabase
@@ -113,7 +104,6 @@ exports.handler = async (event) => {
       return json(200, {
         attempts: attemptsCount,
         accuracy: attemptsCount ? correct / attemptsCount : null,
-        points,
         best_streak: best
       });
     }
@@ -174,14 +164,13 @@ exports.handler = async (event) => {
     // ---------- BADGES ----------
     if (section === 'badges') {
       const [{ data: attempts, error: eA }, { data: sessions, error: eS }] = await Promise.all([
-        scope(supabase.from('progress_attempts').select('is_correct, points, created_at')),
+        scope(supabase.from('progress_attempts').select('is_correct, created_at')),
         scope(supabase.from('progress_sessions').select('summary'))
       ]);
       if (eA) return json(400, { error: eA.message });
       if (eS) return json(400, { error: eS.message });
 
-      const totalCorrect = (attempts || []).filter(a => a.is_correct).length;
-      const points = (attempts || []).reduce((s, a) => s + (Number(a.points) || 0), 0);
+  const totalCorrect = (attempts || []).filter(a => a.is_correct).length;
 
       let best = 0, cur = 0;
       (attempts || [])
@@ -190,10 +179,9 @@ exports.handler = async (event) => {
         .forEach(a => { cur = a.is_correct ? cur + 1 : 0; best = Math.max(best, cur); });
 
       const badgeMap = new Map();
-      if (totalCorrect >= 1) badgeMap.set('first_correct', { id: 'first_correct', name: 'First Steps', emoji: '🥇' });
-      if (best >= 5) badgeMap.set('streak_5', { id: 'streak_5', name: 'Hot Streak', emoji: '🔥' });
-      if (totalCorrect >= 100) badgeMap.set('hundred_correct', { id: 'hundred_correct', name: 'Century', emoji: '💯' });
-      if (points >= 1000) badgeMap.set('thousand_points', { id: 'thousand_points', name: 'Scorer', emoji: '🏆' });
+  if (totalCorrect >= 1) badgeMap.set('first_correct', { id: 'first_correct', name: 'First Steps', emoji: '🥇' });
+  if (best >= 5) badgeMap.set('streak_5', { id: 'streak_5', name: 'Hot Streak', emoji: '🔥' });
+  if (totalCorrect >= 100) badgeMap.set('hundred_correct', { id: 'hundred_correct', name: 'Century', emoji: '💯' });
 
       try {
         let perfectionistAwarded = false;
@@ -219,14 +207,52 @@ exports.handler = async (event) => {
     // ---------- OVERVIEW ----------
     if (section === 'overview') {
       const [sessRes, attRes] = await Promise.all([
-        scope(supabase.from('progress_sessions').select('session_id, mode, list_name, summary, started_at, ended_at')),
-        scope(supabase.from('progress_attempts').select('word, is_correct, points, created_at, mode'))
+        scope(
+          supabase
+            .from('progress_sessions')
+            .select('session_id, mode, list_name, summary, started_at, ended_at')
+            .range(0, 999999)
+        ),
+        scope(
+          supabase
+            .from('progress_attempts')
+            .select('word, is_correct, created_at, mode, points')
+            .range(0, 999999)
+        )
       ]);
       if (sessRes.error) return json(400, { error: sessRes.error.message });
       if (attRes.error) return json(400, { error: attRes.error.message });
 
       const sessions = sessRes.data || [];
       const attempts = attRes.data || [];
+      // Authoritative total: sum of points across all attempts for this user (avoid row caps by paginating)
+      let total_points = 0;
+      try {
+        const { count: totalRows, error: cntErr } = await scope(
+          supabase
+            .from('progress_attempts')
+            .select('*', { count: 'exact', head: true })
+            .not('points', 'is', null)
+        );
+        if (cntErr) throw cntErr;
+        const pageSize = 1000;
+        const total = totalRows || 0;
+        for (let from = 0; from < total; from += pageSize) {
+          const to = Math.min(from + pageSize - 1, total - 1);
+          const { data: rows, error: pageErr } = await scope(
+            supabase
+              .from('progress_attempts')
+              .select('points')
+              .not('points', 'is', null)
+              .range(from, to)
+          );
+          if (pageErr) throw pageErr;
+          if (Array.isArray(rows)) rows.forEach(r => { total_points += (Number(r.points) || 0); });
+        }
+      } catch (e) {
+        // Fallback: sum from the already-fetched limited attempts
+        total_points = attempts.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
+      }
 
       const isPerfect = (sumRaw) => {
         const s = parseSummary(sumRaw) || {};
@@ -270,7 +296,7 @@ exports.handler = async (event) => {
 
       const sessions_played = sessions.length;
 
-      const total_points = attempts.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
+  // total_points computed above
 
       function deriveStars(summ) {
         const s = summ || {};
@@ -349,7 +375,6 @@ exports.handler = async (event) => {
       });
 
       return json(200, {
-        points: total_points,
         stars: stars_total,
         lists_explored,
         perfect_runs,
@@ -361,7 +386,8 @@ exports.handler = async (event) => {
         sessions_played,
         badges_count,
         favorite_list,
-        hardest_word
+        hardest_word,
+        points: total_points
       });
     }
 
@@ -370,7 +396,7 @@ exports.handler = async (event) => {
       const { data: attempts, error } = await scope(
         supabase
           .from('progress_attempts')
-          .select('mode, word, is_correct, points, correct_answer, extra, created_at')
+          .select('mode, word, is_correct, correct_answer, extra, created_at')
       );
 
       if (error) return json(400, { error: error.message });
