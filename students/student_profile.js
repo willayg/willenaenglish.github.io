@@ -19,6 +19,21 @@ function setPointsDisplayValue(points) {
   // Helper to create origin-absolute URLs that ignore <base> tag
   const api = (path) => new URL(path, window.location.origin).toString();
 
+  // Escape HTML special chars for safe innerHTML usage
+  const esc = (s) => String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/`/g, '&#96;');
+
+  // Points sync: do not decrease within a short window after an optimistic increase
+  const NO_DECREASE_MS = 20000; // 20 seconds grace period
+  const getLSNumber = (k, d = 0) => {
+    try { const v = Number(localStorage.getItem(k)); return Number.isFinite(v) ? v : d; } catch { return d; }
+  };
+
   // No localStorage token reads. We rely on secure HTTP-only cookies managed by the server.
 
   // Tiny cache with TTL in localStorage
@@ -106,7 +121,7 @@ function setPointsDisplayValue(points) {
     try {
       const list = await fetchJSON(API.badges());
       if (!Array.isArray(list) || !list.length) { wrap.textContent = 'No badges yet.'; return; }
-      wrap.innerHTML = list.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
+  wrap.innerHTML = list.map(b => `<span class="badge" title="${esc(b.desc || '')}">${esc((b.emoji || '⭐') + ' ' + (b.name || ''))}</span>`).join('');
     } catch { wrap.textContent = 'No badges yet.'; }
   }
 
@@ -115,7 +130,7 @@ function setPointsDisplayValue(points) {
     try {
       const list = await fetchJSON(API.modes());
       if (!Array.isArray(list) || !list.length) { el.textContent = 'No data yet.'; return; }
-      el.innerHTML = list.map(m => `<span class="mode-chip"><strong>${m.mode}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
+  el.innerHTML = list.map(m => `<span class="mode-chip"><strong>${esc(m.mode)}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
     } catch { el.textContent = 'No data yet.'; }
   }
 
@@ -132,9 +147,9 @@ function setPointsDisplayValue(points) {
         const sumStr = renderSummary(s.summary);
         const meta = [sumStr, listName].filter(Boolean).join(' • ');
         return `<tr>
-          <td data-label="When">${when}</td>
-          <td data-label="Mode"><span class="pill">${s.mode||'?'}<\/span></td>
-          <td data-label="Summary">${meta}</td>
+          <td data-label="When">${esc(when)}</td>
+          <td data-label="Mode"><span class="pill">${esc(s.mode||'?')}<\/span></td>
+          <td data-label="Summary">${esc(meta)}</td>
         </tr>`;
       }).join('');
     } catch { tb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>'; }
@@ -158,9 +173,9 @@ function setPointsDisplayValue(points) {
       const list = await fetchJSON(API.attempts());
       if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; return; }
       tb.innerHTML = list.map(a => `<tr>
-        <td data-label="When">${fmtDate(a.created_at)}</td>
-        <td data-label="Mode">${a.mode||''}</td>
-        <td data-label="Word">${a.word||''}</td>
+        <td data-label="When">${esc(fmtDate(a.created_at))}</td>
+        <td data-label="Mode">${esc(a.mode||'')}</td>
+        <td data-label="Word">${esc(a.word||'')}</td>
         <td data-label="Result">${a.is_correct? '✅':'❌'}</td>
         <td data-label="+Pts">${a.points??''}</td>
       </tr>`).join('');
@@ -266,16 +281,16 @@ function setPointsDisplayValue(points) {
         // Optional sub (Korean); suppress if placeholder
         let subKorTxt = item.word_kr;
         if (isPicturePlaceholder(subKorTxt)) subKorTxt = '';
-        const subKor = subKorTxt ? `<div class="cw-sub">${subKorTxt}</div>` : '';
+  const subKor = subKorTxt ? `<div class="cw-sub">${esc(subKorTxt)}</div>` : '';
         return `
             <div class="cw-card">
               <div>
-                <div class="cw-word">${mainWord}</div>
+                <div class="cw-word">${esc(mainWord)}</div>
                 ${subKor}
               </div>
               <div class="cw-right">
                 <div class="cw-acc ${cls}">${accPct}%</div>
-                <div class="cw-skill">${skillLower}</div>
+                <div class="cw-skill">${esc(skillLower)}</div>
               </div>
             </div>
         `;
@@ -341,15 +356,29 @@ function setPointsDisplayValue(points) {
   // Sync header points pill to the latest overview points
   try {
     if (ov && typeof ov.points === 'number') {
-      // Overwrite with server value for consistency across devices
-      localStorage.setItem('user_points', String(ov.points));
+      const now = Date.now();
+      const cur = getLSNumber('user_points', 0);
+      const lastIncAt = getLSNumber('user_points_last_inc_at', 0);
+      const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
+
+      // Decide whether to write server value to LS
+      if (!(withinWindow && ov.points < cur)) {
+        // Either server >= current, or window expired => accept server as source of truth
+        try { localStorage.setItem('user_points', String(ov.points)); } catch {}
+      }
+      // Display should never dip during the window
+      setPointsDisplayValue(Math.max(cur, ov.points));
+
       const header = document.querySelector('student-header');
       if (header && typeof header.refresh === 'function') header.refresh();
     }
   } catch {}
   // Awards counters
   const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
-  setPointsDisplayValue(ov && ov.points);
+  // Avoid dropping below a higher local value (e.g., recent optimistic increment)
+  const __curLS = getLSNumber('user_points', 0);
+  const __sv = (ov && typeof ov.points === 'number') ? ov.points : 0;
+  setPointsDisplayValue(Math.max(__curLS, __sv));
   setCount('awardStars', ov && ov.stars);
   // Derive medals from perfect_runs (or mastered_lists if preferred)
   setCount('awardMedals', ov && (ov.perfect_runs ?? ov.mastered_lists));
@@ -418,7 +447,7 @@ function setPointsDisplayValue(points) {
       if (raw != null && raw !== '') {
         const n = Number(raw);
         if (!Number.isNaN(n)) {
-          // Monotonic update to both ovPoints and awardPoints
+          // Display current LS value; no-decrease is enforced when server responses arrive
           setPointsDisplayValue(n);
         }
       }
@@ -430,13 +459,21 @@ function setPointsDisplayValue(points) {
       if (!res.ok) return;
       const ov = await res.json().catch(() => null);
       if (ov) {
-        // Server-authoritative write
+        // Server-authoritative write with no-decrease grace
         try {
           if (typeof ov.points === 'number') {
-            localStorage.setItem('user_points', String(ov.points));
+            const now = Date.now();
+            const cur = getLSNumber('user_points', 0);
+            const lastIncAt = getLSNumber('user_points_last_inc_at', 0);
+            const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
+            if (!(withinWindow && ov.points < cur)) {
+              localStorage.setItem('user_points', String(ov.points));
+            }
+            setPointsDisplayValue(Math.max(cur, ov.points));
+          } else {
+            setPointsDisplayValue(ov.points ?? 0);
           }
         } catch {}
-        setPointsDisplayValue(ov.points ?? 0);
         const setTxt = (id, text)=>{ const el = document.getElementById(id); if (el) el.textContent = text; };
         setTxt('ovStars', (ov.stars ?? 0).toString());
         setTxt('awardStars', (ov.stars ?? 0).toString());

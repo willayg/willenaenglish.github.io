@@ -154,6 +154,8 @@ export async function logAttempt({
       const current = Number(localStorage.getItem('user_points') || '0') || 0;
       const next = current + inc;
       localStorage.setItem('user_points', String(next));
+          // Mark the time of the last optimistic increment to prevent immediate decreases
+          localStorage.setItem('user_points_last_inc_at', String(Date.now()));
           const header = document.querySelector('student-header');
           if (header && typeof header.refresh === 'function') header.refresh();
         }
@@ -179,8 +181,15 @@ async function refreshPointsFromOverview() {
     if (!res.ok) return;
     const ov = await res.json().catch(() => null);
     if (ov && typeof ov.points === 'number') {
-      // Overwrite with server-authoritative value
-      localStorage.setItem('user_points', String(ov.points));
+      // Overwrite with server value, but avoid decreases within a short window after an optimistic bump
+      const NO_DECREASE_MS = 20000; // 20s grace
+      const now = Date.now();
+      const current = Number(localStorage.getItem('user_points') || '0') || 0;
+      const lastIncAt = Number(localStorage.getItem('user_points_last_inc_at') || '0') || 0;
+      const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
+      if (!(withinWindow && ov.points < current)) {
+        localStorage.setItem('user_points', String(ov.points));
+      }
       // Proactively refresh header component in this tab
       const header = document.querySelector('student-header');
       if (header && typeof header.refresh === 'function') header.refresh();
