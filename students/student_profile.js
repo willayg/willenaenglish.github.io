@@ -68,7 +68,14 @@ function setPointsDisplayValue(points) {
   // Removed getUserId and all local/session storage lookups for sensitive user info
 
   async function fetchJSON(url){
-    const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
+    let res = await fetch(url, { cache: 'no-store', credentials: 'include' });
+    if (res.status === 401) {
+      // Try to refresh tokens once, then retry
+      try {
+        await fetch(api(FN('supabase_auth') + `?action=refresh`), { credentials: 'include' });
+      } catch {}
+      res = await fetch(url, { cache: 'no-store', credentials: 'include' });
+    }
     if (!res.ok) throw new Error(`${res.status}`);
     return res.json();
   }
@@ -101,8 +108,7 @@ function setPointsDisplayValue(points) {
       setText('ovFavoriteList', (ov.favorite_list && ov.favorite_list.name) || '—');
       setText('ovHardestWord', (ov.hardest_word && ov.hardest_word.word) || '—');
     } catch (e) {
-  setText('ovPoints', '0');
-  setText('ovStars', '0');
+      // Do not zero-out UI on fetch errors; keep prior or cached values visible
       setText('ovListsExplored', '0');
       setText('ovPerfectRuns', '0');
       setText('ovMasteredLists', '0');
@@ -552,7 +558,7 @@ function setPointsDisplayValue(points) {
   window.addEventListener('storage', (e) => {
     if (e && e.key === 'user_points') updatePointsFromLS();
   });
-  document.addEventListener('visibilitychange', () => {
+  document.addEventListener('visibilitychange', () => {   
     if (document.visibilityState === 'visible') refreshOverviewQuick();
   });
 })();
