@@ -309,6 +309,23 @@ exports.handler = async (event) => {
 
     // Update profile avatar
     if (action === 'update_profile_avatar' && event.httpMethod === 'POST') {
+      // Minimal CSRF mitigation: require trusted Origin/Referer
+      const hdrs0 = event.headers || {};
+      const origin0 = (hdrs0.origin || hdrs0.Origin || '').trim();
+      const referer0 = (hdrs0.referer || hdrs0.Referer || '').trim();
+      const TRUSTED = [
+        'https://www.willenaenglish.com',
+        'https://willenaenglish.com',
+        'https://willenaenglish.github.io',
+        'https://willenaenglish.netlify.app',
+        'http://localhost:9000',
+        'http://localhost:8888',
+      ];
+      const okOrigin = TRUSTED.includes(origin0);
+      const okReferer = TRUSTED.some(p => referer0.startsWith(p + '/'));
+      if (!okOrigin && !okReferer) {
+        return respond(event, 403, { success: false, error: 'CSRF check failed' });
+      }
       // Extract user ID from cookie like whoami does
       const hdrs = event.headers || {};
       const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
