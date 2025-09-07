@@ -131,6 +131,13 @@ exports.handler = async (event) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
+    // Detect localhost to relax cookie flags for http dev
+    const isLocalDev = () => {
+      const hdrs = event?.headers || {};
+      const host = (hdrs.host || hdrs.Host || '').toLowerCase();
+      return host.startsWith('localhost:') || host.startsWith('127.0.0.1');
+    };
+
     // Get email by username
     if (action === 'get_email_by_username') {
       const username = qs.username;
@@ -176,10 +183,11 @@ exports.handler = async (event) => {
         return respond(event, 401, { success: false, error: (authData && authData.error_description) || 'Invalid credentials' });
       }
 
-      // Always set domain for willenaenglish.com sites so cookies work on both apex and www
+      // Cookies: in prod use SameSite=None; Secure. On localhost(http), use Lax and no Secure so browser sends them.
+      const dev = isLocalDev();
       const cookies = [
-        cookie('sb_access', authData.access_token, event, { maxAge: 3600, sameSite: 'None' }),
-        cookie('sb_refresh', authData.refresh_token || '', event, { maxAge: 60 * 60 * 24 * 30, sameSite: 'None' }),
+        cookie('sb_access', authData.access_token, event, { maxAge: 3600, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+        cookie('sb_refresh', authData.refresh_token || '', event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
       ];
       return respond(event, 200, { success: true, user: authData.user }, {}, cookies);
     }
@@ -364,10 +372,10 @@ exports.handler = async (event) => {
         if (error || !data.session) return respond(event, 200, { success: false, message: 'Refresh failed' });
 
         const session = data.session;
-        // Use our cookie() helper which auto-adds Domain=.willenaenglish.com when appropriate
+        const dev = isLocalDev();
         const cookies = [
-          cookie('sb_access', session.access_token, event, { maxAge: 3600, sameSite: 'None' }),
-          cookie('sb_refresh', session.refresh_token, event, { maxAge: 2592000, sameSite: 'None' })
+          cookie('sb_access', session.access_token, event, { maxAge: 3600, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+          cookie('sb_refresh', session.refresh_token, event, { maxAge: 2592000, sameSite: dev ? 'Lax' : 'None', secure: !dev })
         ];
         return respond(event, 200, { success: true }, {}, cookies);
       } catch {
