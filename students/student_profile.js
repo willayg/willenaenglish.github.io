@@ -231,6 +231,30 @@ function setPointsDisplayValue(points) {
   // Use a stable per-session cache key; we no longer rely on a client-side UID
   const uid = 'me';
 
+    // Small, unobtrusive notice bar for sync status
+    function showNotice(msg, tone = 'info'){
+      try {
+        let bar = document.getElementById('syncNotice');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'syncNotice';
+          bar.style.cssText = 'position:sticky;top:0;z-index:9999;font:14px system-ui, sans-serif;padding:6px 10px;border-bottom:1px solid #ddd;';
+          document.body.prepend(bar);
+        }
+        const colors = tone === 'warn' ? ['#7a5200','#fff3cd','#ffe69c'] : tone === 'err' ? ['#7a1f1f','#f8d7da','#f1aeb5'] : ['#0b4f79','#d1ecf1','#a8d8e5'];
+        bar.style.color = colors[0];
+        bar.style.background = colors[1];
+        bar.style.borderColor = colors[2];
+        bar.textContent = msg;
+      } catch {}
+    }
+    function hideNotice(){ try { const el = document.getElementById('syncNotice'); if (el) el.remove(); } catch {} }
+
+    // If running on GitHub Pages, inform that live sync needs Netlify
+    if (/github\.io$/i.test(location.hostname)) {
+      showNotice('Live score sync requires the Netlify site. Showing cached points only here.', 'warn');
+    }
+
     // Try cached critical sections first (1 min TTL)
     const TTL = 60 * 1000;
     const cacheOv = getCache(`ov:${uid}`);
@@ -332,7 +356,7 @@ function setPointsDisplayValue(points) {
       hideOverlay();
     }
 
-    // Fetch critical fresh data in parallel
+  // Fetch critical fresh data in parallel
   const [info, ov, badges, challenging] = await Promise.all([
       infoPromise,
   fetchJSON(API.overview()).catch(() => null),
@@ -365,7 +389,33 @@ function setPointsDisplayValue(points) {
     try { console.debug('[profile] get_profile keys:', Object.keys(info||{})); } catch {}
   }
   if (emailEl) emailEl.textContent = info && info.email ? info.email : '';
-  if (ov) { paintOverview(ov); setCache(`ov:${uid}`, ov, TTL); }
+  if (ov) { paintOverview(ov); setCache(`ov:${uid}`, ov, TTL); hideNotice(); }
+  else {
+    // If overview failed, start a short poll to catch up when server/cookies become available
+    showNotice('Trying to sync scores…', 'info');
+    const endAt = Date.now() + 30000; // up to 30s
+    const trySync = async () => {
+      if (Date.now() > endAt) { showNotice('Live sync unavailable. Use the Netlify site and ensure you are signed in.', 'warn'); return; }
+      const ov2 = await fetchJSON(API.overview()).catch(() => null);
+      if (ov2 && typeof ov2.points === 'number') {
+        paintOverview(ov2); setCache(`ov:${uid}`, ov2, TTL); hideNotice();
+        // Sync LS/header
+        try {
+          const now = Date.now();
+          const cur = getLSNumber('user_points', 0);
+          const lastIncAt = getLSNumber('user_points_last_inc_at', 0);
+          const withinWindow = lastIncAt && (now - lastIncAt) < NO_DECREASE_MS;
+          if (!(withinWindow && ov2.points < cur)) localStorage.setItem('user_points', String(ov2.points));
+          setPointsDisplayValue(Math.max(cur, ov2.points));
+          const header = document.querySelector('student-header');
+          if (header && typeof header.refresh === 'function') header.refresh();
+        } catch {}
+        return;
+      }
+      setTimeout(trySync, 3000);
+    };
+    trySync();
+  }
   // Sync header points pill to the latest overview points
   try {
     if (ov && typeof ov.points === 'number') {
