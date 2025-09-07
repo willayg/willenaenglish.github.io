@@ -107,8 +107,8 @@
           if (ovRes.ok) {
             const ov = await ovRes.json().catch(() => null);
             if (ov && typeof ov.points === 'number') {
-              const cur = Number(localStorage.getItem('user_points') || '0') || 0;
-              if (ov.points >= cur) localStorage.setItem('user_points', String(ov.points));
+              // Overwrite local points with server-authoritative value
+              localStorage.setItem('user_points', String(ov.points));
             }
           }
         } catch {}

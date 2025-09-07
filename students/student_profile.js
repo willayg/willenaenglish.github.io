@@ -1,15 +1,15 @@
-// students/student_profile.js - client script to load and render student progress
+
 import { FN } from './scripts/api-base.js';
 
 // Shared helper: set both ovPoints and awardPoints, m             const      const res = await fetch(api(FN('supabase_auth') + `?action=update_profile_avatar`), {res2 = await fetch(api(FN('supabase_auth') + `?action=get_profile_name`), { credentials: 'include' });const res = await fetch(api(FN('supabase_auth') + `?action=get_profile`), { credentials: 'include' });notonic (never decrease on screen)
 function setPointsDisplayValue(points) {
+  // Server-authoritative display: always set exactly to provided value
   try {
     const n = Math.max(0, Number(points ?? 0) || 0);
     const upd = (id) => {
       const el = document.getElementById(id);
       if (!el) return;
-      const cur = Number(el.textContent || '0') || 0;
-      if (n >= cur) el.textContent = String(n);
+      el.textContent = String(n);
     };
     upd('ovPoints');
     upd('awardPoints');
@@ -341,12 +341,10 @@ function setPointsDisplayValue(points) {
   // Sync header points pill to the latest overview points
   try {
     if (ov && typeof ov.points === 'number') {
-      const cur = Number(localStorage.getItem('user_points') || '0') || 0;
-      if (ov.points >= cur) {
-        localStorage.setItem('user_points', String(ov.points));
-        const header = document.querySelector('student-header');
-        if (header && typeof header.refresh === 'function') header.refresh();
-      }
+      // Overwrite with server value for consistency across devices
+      localStorage.setItem('user_points', String(ov.points));
+      const header = document.querySelector('student-header');
+      if (header && typeof header.refresh === 'function') header.refresh();
     }
   } catch {}
   // Awards counters
@@ -432,11 +430,10 @@ function setPointsDisplayValue(points) {
       if (!res.ok) return;
       const ov = await res.json().catch(() => null);
       if (ov) {
-        // Monotonic LS sync
+        // Server-authoritative write
         try {
           if (typeof ov.points === 'number') {
-            const cur = Number(localStorage.getItem('user_points') || '0') || 0;
-            if (ov.points >= cur) localStorage.setItem('user_points', String(ov.points));
+            localStorage.setItem('user_points', String(ov.points));
           }
         } catch {}
         setPointsDisplayValue(ov.points ?? 0);
