@@ -121,7 +121,8 @@ function setPointsDisplayValue(points) {
     try {
       const list = await fetchJSON(API.badges());
       if (!Array.isArray(list) || !list.length) { wrap.textContent = 'No badges yet.'; return; }
-  wrap.innerHTML = list.map(b => `<span class="badge" title="${esc(b.desc || '')}">${esc((b.emoji || '⭐') + ' ' + (b.name || ''))}</span>`).join('');
+  const safe = list.slice(0, 200);
+  wrap.innerHTML = safe.map(b => `<span class="badge" title="${esc(b.desc || '')}">${esc((b.emoji || '⭐') + ' ' + (b.name || ''))}</span>`).join('');
     } catch { wrap.textContent = 'No badges yet.'; }
   }
 
@@ -130,16 +131,18 @@ function setPointsDisplayValue(points) {
     try {
       const list = await fetchJSON(API.modes());
       if (!Array.isArray(list) || !list.length) { el.textContent = 'No data yet.'; return; }
-  el.innerHTML = list.map(m => `<span class="mode-chip"><strong>${esc(m.mode)}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
+  const safe = list.slice(0, 200);
+  el.innerHTML = safe.map(m => `<span class="mode-chip"><strong>${esc(m.mode)}</strong> · ${m.correct}/${m.total} (${Math.round((m.correct/(m.total||1))*100)}%)</span>`).join('');
     } catch { el.textContent = 'No data yet.'; }
   }
 
   async function loadSessions(uid){
     const tb = document.getElementById('sessionsBody');
     try {
-      const list = await fetchJSON(API.sessions());
-      if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>'; return; }
-      tb.innerHTML = list.map(s => {
+  const list = await fetchJSON(API.sessions());
+  if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="3" class="mut">No sessions.</td></tr>'; return; }
+  const safe = list.slice(0, 200);
+  tb.innerHTML = safe.map(s => {
         const when = fmtDate(s.ended_at || s.started_at);
         // Show list_name if present inside summary
         let listName = '';
@@ -163,16 +166,20 @@ function setPointsDisplayValue(points) {
     const parts = [];
     if (sum.score != null && sum.total != null) parts.push(`${sum.score}/${sum.total}`);
     if (sum.accuracy != null) parts.push(`${Math.round(sum.accuracy*100)}% acc`);
-    if (sum.stars != null) parts.push(`${'⭐'.repeat(sum.stars)}`);
+    if (sum.stars != null) {
+      const stars = Math.max(0, Math.min(10, Number(sum.stars)||0));
+      parts.push(`${'⭐'.repeat(stars)}`);
+    }
     return parts.join(' · ');
   }
 
   async function loadAttempts(uid){
     const tb = document.getElementById('attemptsBody');
     try {
-      const list = await fetchJSON(API.attempts());
-      if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; return; }
-      tb.innerHTML = list.map(a => `<tr>
+  const list = await fetchJSON(API.attempts());
+  if (!Array.isArray(list) || !list.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">No attempts.</td></tr>'; return; }
+  const safe = list.slice(0, 200);
+  tb.innerHTML = safe.map(a => `<tr>
         <td data-label="When">${esc(fmtDate(a.created_at))}</td>
         <td data-label="Mode">${esc(a.mode||'')}</td>
         <td data-label="Word">${esc(a.word||'')}</td>
@@ -441,6 +448,12 @@ function setPointsDisplayValue(points) {
 
 // Live updates: reflect point changes made in other tabs/pages
 (function(){
+  // Local, duplicated helpers for scope safety
+  const NO_DECREASE_MS = 20000;
+  const getLSNumber = (k, d = 0) => {
+    try { const v = Number(localStorage.getItem(k)); return Number.isFinite(v) ? v : d; } catch { return d; }
+  };
+  const api = (path) => new URL(path, window.location.origin).toString();
   function updatePointsFromLS(){
     try {
       const raw = localStorage.getItem('user_points');
@@ -455,7 +468,7 @@ function setPointsDisplayValue(points) {
   }
   async function refreshOverviewQuick(){
     try {
-      const res = await fetch(new URL('/.netlify/functions/progress_summary?section=overview', window.location.origin).toString(), { credentials: 'include', cache: 'no-store' });
+  const res = await fetch(api(FN('progress_summary') + '?section=overview'), { credentials: 'include', cache: 'no-store' });
       if (!res.ok) return;
       const ov = await res.json().catch(() => null);
       if (ov) {
