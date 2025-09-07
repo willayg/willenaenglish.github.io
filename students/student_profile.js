@@ -1,7 +1,7 @@
 
 import { FN } from './scripts/api-base.js';
 
-// Shared helper: set both ovPoints and awardPoints, m             const      const res = await fetch(api(FN('supabase_auth') + `?action=update_profile_avatar`), {res2 = await fetch(api(FN('supabase_auth') + `?action=get_profile_name`), { credentials: 'include' });const res = await fetch(api(FN('supabase_auth') + `?action=get_profile`), { credentials: 'include' });notonic (never decrease on screen)
+// Shared helper: set both ovPoints and awardPoints (never decrease on screen)
 function setPointsDisplayValue(points) {
   // Server-authoritative display: always set exactly to provided value
   try {
@@ -259,8 +259,14 @@ function setPointsDisplayValue(points) {
       lastBadges = Array.isArray(badges) ? badges : [];
       const wrap = document.getElementById('badgesWrap');
       if (!wrap) return;
-      if (!lastBadges.length) wrap.textContent = 'No badges yet.';
-      else wrap.innerHTML = lastBadges.map(b => `<span class="badge" title="${b.desc || ''}">${b.emoji || '⭐'} ${b.name}</span>`).join('');
+      if (!lastBadges.length) {
+        wrap.textContent = 'No badges yet.';
+        return;
+      }
+      const safe = lastBadges.slice(0, 200);
+      wrap.innerHTML = safe
+        .map(b => `<span class="badge" title="${esc(b?.desc || '')}">${esc((b?.emoji || '⭐') + ' ' + (b?.name || ''))}</span>`)
+        .join('');
     };
     const paintChallenging = (challenging) => {
       const listEl = document.getElementById('challengingList');
@@ -320,9 +326,9 @@ function setPointsDisplayValue(points) {
 
     // Paint cached immediately if present
   if (cacheOv || cacheBadges || cacheChal) {
-      paintOverview(cacheOv);
-      paintBadges(cacheBadges);
-      paintChallenging(cacheChal);
+      if (cacheOv) paintOverview(cacheOv);
+      if (cacheBadges) paintBadges(cacheBadges);
+      if (cacheChal) paintChallenging(cacheChal);
       hideOverlay();
     }
 
@@ -359,7 +365,7 @@ function setPointsDisplayValue(points) {
     try { console.debug('[profile] get_profile keys:', Object.keys(info||{})); } catch {}
   }
   if (emailEl) emailEl.textContent = info && info.email ? info.email : '';
-  paintOverview(ov); setCache(`ov:${uid}`, ov, TTL);
+  if (ov) { paintOverview(ov); setCache(`ov:${uid}`, ov, TTL); }
   // Sync header points pill to the latest overview points
   try {
     if (ov && typeof ov.points === 'number') {
