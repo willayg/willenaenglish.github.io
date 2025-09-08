@@ -420,7 +420,11 @@ import { initPointsClient } from './scripts/points-client.js';
   // Derive medals from perfect_runs (or mastered_lists if preferred)
   setCount('awardMedals', ov && (ov.perfect_runs ?? ov.mastered_lists));
   paintBadges(badges); setCache(`badges:${uid}`, badges, TTL);
-  setCount('awardBadges', Array.isArray(badges) ? badges.length : (ov && ov.badges_count));
+  // If the dedicated badges grid component is present, let it own the visible badge count.
+  // Otherwise, fall back to backend count.
+  if (!document.getElementById('badgesContainer')) {
+    setCount('awardBadges', Array.isArray(badges) ? badges.length : (ov && ov.badges_count));
+  }
   paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL);
     hideOverlay();
 

@@ -211,26 +211,32 @@ exports.handler = async (event) => {
       if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
       
       // Server-authoritative total: sum of points for this user
-      // Paginate to avoid row caps
-      const { count: totalRows, error: cntErr } = await supabase
-        .from('progress_attempts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userIdFromCookie)
-        .not('points', 'is', null);
-      if (cntErr) return { statusCode: 400, body: JSON.stringify({ error: cntErr.message }) };
       let points_total = 0;
-      const pageSize = 1000;
-      const total = totalRows || 0;
-      for (let from = 0; from < total; from += pageSize) {
-        const to = Math.min(from + pageSize - 1, total - 1);
-        const { data: rows, error: pageErr } = await supabase
+      try {
+        const { data: rpcVal, error: rpcErr } = await supabase.rpc('sum_points_for_user', { uid: userIdFromCookie });
+        if (rpcErr) throw rpcErr;
+        points_total = (typeof rpcVal === 'number') ? rpcVal : (rpcVal && typeof rpcVal.sum === 'number' ? rpcVal.sum : 0);
+      } catch {
+        // Fallback: paginate to avoid row caps
+        const { count: totalRows, error: cntErr } = await supabase
           .from('progress_attempts')
-          .select('points')
+          .select('*', { count: 'exact', head: true })
           .eq('user_id', userIdFromCookie)
-          .not('points', 'is', null)
-          .range(from, to);
-        if (pageErr) return { statusCode: 400, body: JSON.stringify({ error: pageErr.message }) };
-        if (Array.isArray(rows)) rows.forEach(r => { points_total += (Number(r.points) || 0); });
+          .not('points', 'is', null);
+        if (cntErr) return { statusCode: 400, body: JSON.stringify({ error: cntErr.message }) };
+        const pageSize = 1000;
+        const total = totalRows || 0;
+        for (let from = 0; from < total; from += pageSize) {
+          const to = Math.min(from + pageSize - 1, total - 1);
+          const { data: rows, error: pageErr } = await supabase
+            .from('progress_attempts')
+            .select('points')
+            .eq('user_id', userIdFromCookie)
+            .not('points', 'is', null)
+            .range(from, to);
+          if (pageErr) return { statusCode: 400, body: JSON.stringify({ error: pageErr.message }) };
+          if (Array.isArray(rows)) rows.forEach(r => { points_total += (Number(r.points) || 0); });
+        }
       }
       return {
         statusCode: 200,

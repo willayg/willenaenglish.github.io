@@ -34,6 +34,22 @@
   <!-- Material Icons for menu buttons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="profile.css">
+  <style>
+    /* Match screenshot styling: title on the right, soft shadow text */
+    student-header::part(page-title) { margin-left: auto; text-align: right; }
+    student-header::part(page-title-text) {
+      font-weight: 800;
+      font-size: 1.6rem;
+      color: #ffffff;
+      /* Cyan glow */
+      text-shadow:
+        0 0 2px rgba(0, 200, 255, 0.9),
+        0 0 6px rgba(0, 200, 255, 0.6),
+        0 0 12px rgba(0, 200, 255, 0.35);
+    }
+    /* Hide Home in the header bar */
+    student-header::part(home-button) { display: none; }
+  </style>
   <meta name="robots" content="noindex" />
   <meta name="description" content="Student profile: progress, badges, and recent activity across games." />
   <link rel="icon" href="/Logo.png" />
@@ -45,7 +61,7 @@
     <div class="spinner"></div>
     <div class="loading-text">Loading…</div>
   </div>
-  <student-header title="Profile" show-id="false" home-href="/index.html" home-label="Home"></student-header>
+  <student-header title="Profile" show-id="false" show-home="false" show-points="false"></student-header>
   <nav class="toolbar" aria-label="Quick actions">
     <button class="tb-link primary" id="btnHome">Home</button>
     <button class="tb-link" id="btnGames">Games</button>
