@@ -225,33 +225,40 @@ exports.handler = async (event) => {
 
       const sessions = sessRes.data || [];
       const attempts = attRes.data || [];
-      // Authoritative total: sum of points across all attempts for this user (avoid row caps by paginating)
+      // Authoritative total: sum of points via RPC (fast), with pagination fallback
       let total_points = 0;
       try {
-        const { count: totalRows, error: cntErr } = await scope(
-          supabase
-            .from('progress_attempts')
-            .select('*', { count: 'exact', head: true })
-            .not('points', 'is', null)
-        );
-        if (cntErr) throw cntErr;
-        const pageSize = 1000;
-        const total = totalRows || 0;
-        for (let from = 0; from < total; from += pageSize) {
-          const to = Math.min(from + pageSize - 1, total - 1);
-          const { data: rows, error: pageErr } = await scope(
+        const { data: rpcVal, error: rpcErr } = await supabase.rpc('sum_points_for_user', { uid: userId });
+        if (rpcErr) throw rpcErr;
+        total_points = (typeof rpcVal === 'number') ? rpcVal : (rpcVal && typeof rpcVal.sum === 'number' ? rpcVal.sum : 0);
+      } catch (e) {
+        // Fallback: avoid row caps by paginating
+        try {
+          const { count: totalRows, error: cntErr } = await scope(
             supabase
               .from('progress_attempts')
-              .select('points')
+              .select('*', { count: 'exact', head: true })
               .not('points', 'is', null)
-              .range(from, to)
           );
-          if (pageErr) throw pageErr;
-          if (Array.isArray(rows)) rows.forEach(r => { total_points += (Number(r.points) || 0); });
+          if (cntErr) throw cntErr;
+          const pageSize = 1000;
+          const total = totalRows || 0;
+          for (let from = 0; from < total; from += pageSize) {
+            const to = Math.min(from + pageSize - 1, total - 1);
+            const { data: rows, error: pageErr } = await scope(
+              supabase
+                .from('progress_attempts')
+                .select('points')
+                .not('points', 'is', null)
+                .range(from, to)
+            );
+            if (pageErr) throw pageErr;
+            if (Array.isArray(rows)) rows.forEach(r => { total_points += (Number(r.points) || 0); });
+          }
+        } catch {
+          // Last fallback: sum from the already-fetched limited attempts
+          total_points = attempts.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
         }
-      } catch (e) {
-        // Fallback: sum from the already-fetched limited attempts
-        total_points = attempts.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
       }
 
       const isPerfect = (sumRaw) => {

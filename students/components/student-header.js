@@ -3,7 +3,7 @@
 
 class StudentHeader extends HTMLElement {
   static get observedAttributes() {
-  return ["home-href", "home-label", "title", "show-id", "show-home"];
+    return ["home-href", "home-label", "title", "show-id", "show-home", "show-points"];
   }
 
   constructor() {
@@ -82,6 +82,12 @@ class StudentHeader extends HTMLElement {
     return v === null || v === "" || v === "true";
   }
 
+  get showPoints() {
+    // Default true unless explicitly set to false
+    const v = this.getAttribute("show-points");
+    return v === null || v === "" || v === "true";
+  }
+
   render() {
     const name =
       localStorage.getItem("user_name") || sessionStorage.getItem("user_name") ||
@@ -100,7 +106,7 @@ class StudentHeader extends HTMLElement {
       localStorage.getItem("avatar") || sessionStorage.getItem("avatar") ||
       "🙂";
 
-  const points = (typeof this._points === 'number') ? this._points : null;
+  const points = (this.showPoints && typeof this._points === 'number') ? this._points : null;
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -112,7 +118,7 @@ class StudentHeader extends HTMLElement {
   .info { display:flex; flex-direction:column; gap:2px; }
   .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#f7fcfd; border:1px solid #a9d6e9; color:#19777e; font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .points-pill svg { width:14px; height:14px; display:block; }
-  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin-left:8px; justify-content: flex-end; }
+  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin-left:8px; flex:1; justify-content: flex-end; text-align:right; }
   .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; }
         .spacer { flex:1; }
         .btn { border:1px solid var(--acc, #93cbcf); background: var(--acc, #93cbcf); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
@@ -171,11 +177,11 @@ class StudentHeader extends HTMLElement {
             </div>` : ''}
             ${this.showId ? `<div class="mut" id="id" part="id">${uid ? `ID: ${uid}` : "Not signed in"}</div>` : ""}
           </div>
+          <div class="spacer"></div>
           <div class="page-title" id="pageTitle" part="page-title">
             <slot name="title"></slot>
-            <span class="page-title-text">${this.pageTitle || ""}</span>
+            <span class="page-title-text" part="page-title-text">${this.pageTitle || ""}</span>
           </div>
-          <div class="spacer"></div>
           <slot name="actions"></slot>
           ${this.showHome ? `<a class="menu-item" id="homeBtn" part="home-button" href="${this.homeHref}">${this.homeLabel}</a>` : ""}
         </div>
@@ -245,8 +251,8 @@ class StudentHeader extends HTMLElement {
       updateMenuVisibility();
     }
 
-  // If points are missing, try to fetch from overview once
-  if (points == null && !this._fetchingPoints) {
+  // If points are enabled and missing, try to fetch from overview once
+  if (this.showPoints && points == null && !this._fetchingPoints) {
       this._fetchingPoints = true;
       fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)

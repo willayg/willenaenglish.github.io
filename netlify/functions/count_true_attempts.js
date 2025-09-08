@@ -52,28 +52,34 @@ async function handler(event) {
     .eq('is_correct', true);
   if (error) return json(400, { error: error.message });
 
-  // 2) Sum of points for this user (sum all numeric values in points), paginated to avoid server max-rows cap
-  // First, get total rows for this user so we know how many pages to fetch
-  const { count: totalRows, error: cntErr } = await admin
-    .from('progress_attempts')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .not('points', 'is', null);
-  if (cntErr) return json(400, { error: cntErr.message });
+  // 2) Sum of points for this user via RPC (fast path), with pagination fallback
   let points = 0;
-  const pageSize = 1000;
-  const total = totalRows || 0;
-  for (let from = 0; from < total; from += pageSize) {
-    const to = Math.min(from + pageSize - 1, total - 1);
-    const { data: rows, error: pageErr } = await admin
+  try {
+    const { data: rpcVal, error: rpcErr } = await admin.rpc('sum_points_for_user', { uid: userId });
+    if (rpcErr) throw rpcErr;
+    points = (typeof rpcVal === 'number') ? rpcVal : (rpcVal && typeof rpcVal.sum === 'number' ? rpcVal.sum : 0);
+  } catch {
+    // Fallback: paginate
+    const { count: totalRows, error: cntErr } = await admin
       .from('progress_attempts')
-      .select('points')
+      .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .not('points', 'is', null)
-      .range(from, to);
-    if (pageErr) return json(400, { error: pageErr.message, page: { from, to } });
-    if (Array.isArray(rows) && rows.length) {
-      for (const r of rows) points += (Number(r.points) || 0);
+      .not('points', 'is', null);
+    if (cntErr) return json(400, { error: cntErr.message });
+    const pageSize = 1000;
+    const total = totalRows || 0;
+    for (let from = 0; from < total; from += pageSize) {
+      const to = Math.min(from + pageSize - 1, total - 1);
+      const { data: rows, error: pageErr } = await admin
+        .from('progress_attempts')
+        .select('points')
+        .eq('user_id', userId)
+        .not('points', 'is', null)
+        .range(from, to);
+      if (pageErr) return json(400, { error: pageErr.message, page: { from, to } });
+      if (Array.isArray(rows) && rows.length) {
+        for (const r of rows) points += (Number(r.points) || 0);
+      }
     }
   }
 

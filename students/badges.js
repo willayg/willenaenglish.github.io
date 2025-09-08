@@ -138,6 +138,14 @@ function renderBadges(statsOverride) {
       </div>
     `).join('')
     : '<div class="mut">No badges yet.</div>';
+
+  // Keep the Awards counter in sync with what we actually render
+  try {
+    const awardEl = document.getElementById('awardBadges');
+    if (awardEl) awardEl.textContent = String(achieved.length);
+    // Also notify listeners (e.g., profile controllers) about the rendered count
+    window.dispatchEvent(new CustomEvent('badges:rendered', { detail: { count: achieved.length } }));
+  } catch {}
 }
 
 // Re-render when overview stats are loaded by student_profile.js
