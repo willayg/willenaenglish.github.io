@@ -59,13 +59,16 @@ import { initPointsClient } from './scripts/points-client.js';
   }
 
   // Small timeout wrapper to avoid blocking UI on slow functions
-  async function fetchWithTimeout(url, { ms = 2000, cache = 'default' } = {}){
+  async function fetchWithTimeout(url, { ms = 2000, cache = 'default', label = '' } = {}){
     const ctrl = new AbortController();
     const id = setTimeout(() => ctrl.abort(), ms);
     try {
       const res = await fetch(url, { credentials: 'include', cache, signal: ctrl.signal });
       if (!res.ok) throw new Error(`${res.status}`);
       return await res.json();
+    } catch (e) {
+      if (label) console.warn('[profile] timeout/fetch fail', label, e.message||e);
+      throw e;
     } finally { clearTimeout(id); }
   }
   const tryJSON = async (fn) => { try { return await fn(); } catch { return null; } };
@@ -360,7 +363,12 @@ import { initPointsClient } from './scripts/points-client.js';
     }
   // Phase 1: fetch overview fast, then hide overlay
   if (!IS_GHPAGES) {
-    const ov = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 2000 }));
+    const OVERVIEW_TIMEOUT = 4500; // give server a little more time than before
+    let ov = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: OVERVIEW_TIMEOUT, label: 'overview:attempt1' }));
+    if (!ov) {
+      // Quick second attempt (cold start mitigation)
+      ov = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: OVERVIEW_TIMEOUT, label: 'overview:attempt2' }));
+    }
     if (ov) {
       paintOverview(ov);
       setCache(`ov:${uid}`, ov, TTL);
@@ -380,7 +388,7 @@ import { initPointsClient } from './scripts/points-client.js';
       const endAt = Date.now() + 30000;
       const poll = async () => {
         if (Date.now() > endAt) { showNotice('Live sync unavailable. Use the Netlify site and ensure you are signed in.', 'warn'); return; }
-        const ov2 = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 2000 }));
+        const ov2 = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: OVERVIEW_TIMEOUT, label: 'overview:poll' }));
         if (ov2 && typeof ov2.points === 'number') {
           paintOverview(ov2); setCache(`ov:${uid}`, ov2, TTL); hideNotice();
           try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: ov2.points } })); } catch {}
@@ -390,6 +398,14 @@ import { initPointsClient } from './scripts/points-client.js';
         setTimeout(poll, 3000);
       };
       poll();
+      // Fallback: if we had a cached overview but failed fresh fetch, ensure stars/medals counters reflect cached values
+      if (cacheOv) {
+        try {
+          const setCount = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = String(v); };
+          setCount('awardStars', cacheOv.stars);
+          setCount('awardMedals', cacheOv.perfect_runs ?? cacheOv.mastered_lists);
+        } catch {}
+      }
     }
   }
   hideOverlay();
@@ -398,10 +414,11 @@ import { initPointsClient } from './scripts/points-client.js';
   // Phase 2: background fetches (badges, challenging, points, profile)
   const doPhase2 = async () => {
     if (IS_GHPAGES) return; // keep static on GH Pages
+    const PHASE2_TIMEOUT = 4000; // slightly longer to reduce silent misses
     const [badges, challenging, cc, infoRes] = await Promise.all([
-      tryJSON(() => fetchWithTimeout(API.badges() + `&limit=50`, { ms: 2000, cache: 'default' })),
-      tryJSON(() => fetchWithTimeout(API.challenging() + `&limit=50`, { ms: 2000, cache: 'default' })),
-      tryJSON(() => fetchWithTimeout(API.correctCount(), { ms: 2000 })),
+      tryJSON(() => fetchWithTimeout(API.badges() + `&limit=50`, { ms: PHASE2_TIMEOUT, cache: 'default', label: 'badges' })),
+      tryJSON(() => fetchWithTimeout(API.challenging() + `&limit=50`, { ms: PHASE2_TIMEOUT, cache: 'default', label: 'challenging' })),
+      tryJSON(() => fetchWithTimeout(API.correctCount(), { ms: PHASE2_TIMEOUT, label: 'correctCount' })),
       tryJSON(() => getProfileInfo())
     ]);
 
@@ -416,7 +433,27 @@ import { initPointsClient } from './scripts/points-client.js';
     } catch {}
 
     if (Array.isArray(badges)) { paintBadges(badges); setCache(`badges:${uid}`, badges, TTL); }
+    else if (!badges) console.warn('[profile] badges fetch failed or timed out');
     if (Array.isArray(challenging)) { paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL); }
+    else if (!challenging) console.warn('[profile] challenging fetch failed or timed out');
+
+    // If stars/medals still zero after Phase 2 but we have badges (indicator of activity), schedule a lazy recheck of overview
+    try {
+      const starsEl = document.getElementById('awardStars');
+      const medalsEl = document.getElementById('awardMedals');
+      if (starsEl && medalsEl && starsEl.textContent === '0' && medalsEl.textContent === '0') {
+        setTimeout(async () => {
+          const lateOv = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 3000, label: 'overview:late' }));
+          if (lateOv) {
+            const setCount = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = String(v); };
+            setCount('awardStars', lateOv.stars);
+            setCount('awardMedals', lateOv.perfect_runs ?? lateOv.mastered_lists);
+            // Fire overview event if initial one never fired
+            try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: lateOv })); } catch {}
+          }
+        }, 1500);
+      }
+    } catch {}
 
     // Info from get_profile: { success, name, email, username, avatar }
     info = infoRes || null;
