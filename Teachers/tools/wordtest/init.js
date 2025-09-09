@@ -32,6 +32,7 @@ function initTestModeUI() {
 }
 
 export function initWordtest() {
+
     const start = async () => {
         await loadModules();
         // Setup UI and events
@@ -49,8 +50,8 @@ export function initWordtest() {
             () => {/* refreshImages handled by images.js */}
         );
         setupAIEventListeners((...args) => extractWords(...args), updatePreview);
-    // Expose updater globally for image error fallback
-    window.updatePreview = updatePreview;
+        // Expose updater globally for image error fallback
+        window.updatePreview = updatePreview;
         makeDraggable();
         initTestModeUI();
 
@@ -115,15 +116,25 @@ export function initWordtest() {
             });
         }
 
-    // Top action buttons (use absolute paths for reliability)
+        // Listen for wordlist:update to live update words and preview
+        document.addEventListener('wordlist:update', () => {
+            // Update words from textarea and re-render preview
+            import('./worksheet_integration.js').then(mod => {
+                mod.updateCurrentWordsFromTextarea();
+                import('./worksheet.js').then(ws => ws.highlightDuplicates());
+                import('./preview.js').then(pv => pv.updatePreview());
+            });
+        });
+
+        // Top action buttons (use absolute paths for reliability)
         document.getElementById('saveBtn')?.addEventListener('click', () => {
             window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
         document.getElementById('loadBtn')?.addEventListener('click', () => {
             window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
-    document.getElementById('printBtn')?.addEventListener('click', () => printFile());
-    document.getElementById('pdfBtn')?.addEventListener('click', () => generatePDF());
+        document.getElementById('printBtn')?.addEventListener('click', () => printFile());
+        document.getElementById('pdfBtn')?.addEventListener('click', () => generatePDF());
         // Optional dedicated retry-failed button if present
         const retryFailedBtn = document.getElementById('retryFailedBtn');
         if (retryFailedBtn) {

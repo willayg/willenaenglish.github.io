@@ -1,78 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // PDF button functionality (simple print-to-PDF)
-  const pdfBtn = document.getElementById('pdfBtn');
-  if (pdfBtn) {
-    pdfBtn.addEventListener('click', () => {
-      const preview = document.getElementById('worksheetPreviewArea-wordsearch');
-      if (!preview || !preview.innerHTML.trim()) {
-        alert('Please generate a wordsearch first.');
-        return;
-      }
-      // Open print dialog for PDF export
-      const printWindow = window.open('', '_blank');
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Wordsearch Worksheet PDF</title>
-          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
-          <style>
-            body {
-              font-family: 'Poppins', Arial, sans-serif;
-              margin: 20px;
-              background: white;
-            }
-            .wordsearch-font-sans { font-family: 'Poppins', Arial, sans-serif !important; }
-            .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace !important; }
-            .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif !important; }
-            .wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive !important; }
-            .wordsearch-table { margin: 20px auto; border-collapse: collapse; }
-            .wordsearch-table td {
-              aspect-ratio: 1 / 1;
-              width: calc(100% / 12);
-              height: auto;
-              text-align: center;
-              vertical-align: middle;
-              border: 1px solid #333;
-              font-size: 1.1em;
-              font-weight: bold;
-              padding: 0;
-              box-sizing: border-box;
-              line-height: 1;
-            }
-            .wordsearch-container {
-              background: white;
-              padding: 20px;
-              border: 1px solid #ccc;
-              border-radius: 8px;
-              margin: 20px auto;
-              max-width: max-content;
-            }
-            @media print {
-              body { margin: 0; }
-              .wordsearch-container { 
-                border: none; 
-                box-shadow: none; 
-                margin: 0;
-                padding: 10px;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          ${preview.innerHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          <\/script>
-        </body>
-        </html>
-      `;
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-    });
-  }
+  // (Legacy inline PDF/Print handlers removed in favor of centralized logic in HTML wrapper / dedicated print module.)
   // Save worksheet to Supabase via worksheet manager
   const saveBtn = document.getElementById('saveBtn');
   if (saveBtn) {
@@ -140,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ignore JSON parse errors
       }
     }
-    document.getElementById('wordsearchAllowDiagonals').checked = allowDiagonals !== false;
-    document.getElementById('wordsearchAllowBackwards').checked = allowBackwards !== false;
+    document.getElementById('wordsearchAllowDiagonals').checked = allowDiagonals === true;
+    document.getElementById('wordsearchAllowBackwards').checked = allowBackwards === true;
     document.getElementById('wordsearchSizeSlider').value = data.sizeScale || '1';
     document.getElementById('wordsearchPositionSlider').value = data.position || '0';
     document.getElementById('wordsearchSizeValue').textContent = `${parseFloat(data.sizeScale || '1').toFixed(1)}x`;
@@ -154,80 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, 100);
   };
-  // Print button functionality
-  const printBtn = document.getElementById('printBtn');
-  if (printBtn) {
-    printBtn.addEventListener('click', () => {
-      const preview = document.getElementById('worksheetPreviewArea-wordsearch');
-      if (!preview || !preview.innerHTML.trim()) {
-        alert('Please generate a wordsearch first.');
-        return;
-      }
-      // Create print window
-      const printWindow = window.open('', '_blank');
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Wordsearch Worksheet</title>
-          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
-          <style>
-            body {
-              font-family: 'Poppins', Arial, sans-serif;
-              margin: 20px;
-              background: white;
-            }
-            .wordsearch-font-sans { font-family: 'Poppins', Arial, sans-serif !important; }
-            .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace !important; }
-            .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif !important; }
-            .wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive !important; }
-            .wordsearch-table { margin: 20px auto; border-collapse: collapse; }
-            .wordsearch-table td {
-              aspect-ratio: 1 / 1;
-              width: calc(100% / 12);
-              height: auto;
-              text-align: center;
-              vertical-align: middle;
-              border: 1px solid #333;
-              font-size: 1.1em;
-              font-weight: bold;
-              padding: 0;
-              box-sizing: border-box;
-              line-height: 1;
-            }
-            .wordsearch-container {
-              background: white;
-              padding: 20px;
-              border: 1px solid #ccc;
-              border-radius: 8px;
-              margin: 20px auto;
-              max-width: max-content;
-            }
-            @media print {
-              body { margin: 0; }
-              .wordsearch-container { 
-                border: none; 
-                box-shadow: none; 
-                margin: 0;
-                padding: 10px;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          ${preview.innerHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          <\/script>
-        </body>
-        </html>
-      `;
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-    });
-  }
+  // (Legacy print button handler removed.)
   console.log('Standalone Wordsearch Generator loaded!');
 
   // Add Google Fonts for handwriting
@@ -239,21 +93,30 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(link);
   }
 
-  // Store word placements for highlighting and track highlight state
+  // Store word placements for answer marking
   let wordPlacements = [];
-  let isHighlighted = false;
 
   // Helper function to get font-specific CSS styles
   function getFontStyle(fontOpt) {
     switch(fontOpt) {
       case 'sans':
+        return 'font-family: Arial, Helvetica, sans-serif !important;';
+      case 'poppins':
         return 'font-family: "Poppins", Arial, sans-serif !important;';
+      case 'verdana':
+        return 'font-family: Verdana, Geneva, sans-serif !important;';
       case 'mono':
         return 'font-family: "Courier New", Courier, monospace !important;';
       case 'comic':
         return 'font-family: "Comic Sans MS", Comic Sans, cursive, sans-serif !important;';
       case 'nanum':
         return 'font-family: "Nanum Pen Script", cursive !important; line-height: 28px !important; padding-top: 2px !important;';
+      case 'caveat':
+        return 'font-family: "Caveat", cursive !important;';
+      case 'dancing':
+        return 'font-family: "Dancing Script", cursive !important;';
+      case 'pacifico':
+        return 'font-family: "Pacifico", cursive !important;';
       default:
         return 'font-family: "Poppins", Arial, sans-serif !important;';
     }
@@ -352,18 +215,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate the wordsearch grid
     const allowDiagonals = document.getElementById('wordsearchAllowDiagonals')?.checked;
     const allowBackwards = document.getElementById('wordsearchAllowBackwards')?.checked;
-    const grid = generateWordsearchGrid(words, size, caseOpt, allowDiagonals, allowBackwards);
+  const { grid, placedWords, unplacedWords } = generateWordsearchGrid(words, size, caseOpt, allowDiagonals, allowBackwards);
 
     // Font CSS class
-    let fontClass = 'wordsearch-font-sans';
-    if (fontOpt === 'mono') fontClass = 'wordsearch-font-mono';
-    if (fontOpt === 'comic') fontClass = 'wordsearch-font-comic';
-    if (fontOpt === 'nanum') fontClass = 'wordsearch-font-nanum';
+    let fontClassMap = {
+      'sans': 'wordsearch-font-sans',
+      'poppins': 'wordsearch-font-poppins',
+      'verdana': 'wordsearch-font-verdana',
+      'mono': 'wordsearch-font-mono',
+      'comic': 'wordsearch-font-comic',
+      'nanum': 'wordsearch-font-nanum',
+      'caveat': 'wordsearch-font-caveat',
+      'dancing': 'wordsearch-font-dancing',
+      'pacifico': 'wordsearch-font-pacifico'
+    };
+    let fontClass = fontClassMap[fontOpt] || 'wordsearch-font-poppins';
 
     // Build the HTML for the hints/words list
-    let html = `<div class="words-list" style="text-align: center; font-family: ${getFontStyle(fontOpt)}; font-size: 1em; margin-bottom: 20px; width: 100%;">
-      <strong>Words to find:</strong> ${words.join(', ')}
+    let html = `<div class=\"words-list\" style=\"text-align: center; font-family: ${getFontStyle(fontOpt)}; font-size: 1em; margin-bottom: 8px; width: 100%;\">
+      <strong>Words to find (${placedWords.length}):</strong> ${placedWords.join(', ')}
     </div>`;
+    if (unplacedWords.length) {
+      html += `<div class=\"unplaced-words\" style=\"text-align:center; color:#b30000; font-size:0.8em; margin-bottom:14px;\"><strong>Not included (no space):</strong> ${unplacedWords.join(', ')}${unplacedWords.some(w=>w.length>size)?'<br><em style=\"color:#d44;\">(Some words are longer than the grid size)</em>':''}</div>`;
+    }
 
     // Add the wordsearch grid
     html += `
@@ -436,140 +310,84 @@ document.addEventListener('DOMContentLoaded', () => {
       preview.classList.add('worksheet-preview');
     }
     
-    // Reset highlight state when new wordsearch is generated
-    isHighlighted = false;
-    const highlightBtn = document.getElementById('highlightAnswers');
-    if (highlightBtn) {
-      highlightBtn.textContent = 'Show Answers';
+    // Mark answer cells (data-answer="true") so external toggle logic / CSS can style them
+    try {
+      const previewArea = document.getElementById('worksheetPreviewArea-wordsearch');
+      if (previewArea) {
+        console.log('Marking', wordPlacements.length, 'word placements as answers'); // Debug log
+        wordPlacements.forEach(placement => {
+          console.log('Marking word:', placement.word, 'positions:', placement.positions.length); // Debug log
+          placement.positions.forEach(pos => {
+            const cell = previewArea.querySelector(`td[data-row="${pos.row}"][data-col="${pos.col}"]`);
+            if (cell) {
+              cell.setAttribute('data-answer','true');
+              console.log('Marked cell at', pos.row, pos.col, 'with letter:', cell.textContent); // Debug log
+            } else {
+              console.warn('Could not find cell at', pos.row, pos.col); // Debug log
+            }
+          });
+        });
+      }
+    } catch(e) {
+      console.error('Mark answer cells failed:', e.message);
     }
+    // Reset external toggle button text if present
+    const highlightBtn = document.getElementById('highlightAnswers');
+    if (highlightBtn) highlightBtn.textContent = 'Show Answers';
     
-    console.log(`Generated wordsearch with ${wordPlacements.length} word placements`);
+    console.log(`Generated wordsearch with ${wordPlacements.length} word placements; unplaced: ${unplacedWords.length}`);
   };
 
-  // Improved wordsearch grid generator
+  // Improved wordsearch grid generator with placed/unplaced reporting
   function generateWordsearchGrid(words, size = 12, caseOpt = 'upper', allowDiagonals = false, allowBackwards = false) {
-    // Reset word placements
     wordPlacements = [];
-    
-    // Initialize empty grid
     const grid = Array.from({ length: size }, () => Array(size).fill(''));
-    
-    // Directions: right, down, (optionally diagonals)
-    let directions = [
-      { dr: 0, dc: 1 },   // right
-      { dr: 1, dc: 0 },   // down
-    ];
-    
-    if (allowDiagonals) {
-      directions.push(
-        { dr: 1, dc: 1 },   // down-right
-        { dr: 1, dc: -1 }   // down-left
-      );
-    }
-    
-    // If backwards allowed, add left and up (and diagonals if enabled)
+    let directions = [ { dr: 0, dc: 1 }, { dr: 1, dc: 0 } ];
+    if (allowDiagonals) directions.push({ dr: 1, dc: 1 }, { dr: 1, dc: -1 });
     if (allowBackwards) {
-      directions.push(
-        { dr: 0, dc: -1 },  // left
-        { dr: -1, dc: 0 }   // up
-      );
-      if (allowDiagonals) {
-        directions.push(
-          { dr: -1, dc: 1 },  // up-right
-          { dr: -1, dc: -1 }  // up-left
-        );
-      }
+      directions.push({ dr: 0, dc: -1 }, { dr: -1, dc: 0 });
+      if (allowDiagonals) directions.push({ dr: -1, dc: 1 }, { dr: -1, dc: -1 });
     }
-
     function canPlace(word, row, col, dr, dc) {
       for (let i = 0; i < word.length; i++) {
-        const r = row + dr * i;
-        const c = col + dc * i;
+        const r = row + dr * i, c = col + dc * i;
         if (r < 0 || r >= size || c < 0 || c >= size) return false;
         if (grid[r][c] && grid[r][c] !== word[i]) return false;
       }
       return true;
     }
-
     function placeWord(word) {
-      // Try up to 100 times to place the word
-      for (let attempt = 0; attempt < 100; attempt++) {
+      for (let attempt = 0; attempt < 120; attempt++) {
         const dir = directions[Math.floor(Math.random() * directions.length)];
         const maxRow = size - Math.abs(dir.dr * (word.length - 1));
         const maxCol = size - Math.abs(dir.dc * (word.length - 1));
-        
         const row = Math.floor(Math.random() * maxRow);
         const col = Math.floor(Math.random() * maxCol);
-        
         if (canPlace(word, row, col, dir.dr, dir.dc)) {
-          // Store word placement for highlighting
           const placement = { word, positions: [] };
           for (let i = 0; i < word.length; i++) {
-            const r = row + dir.dr * i;
-            const c = col + dir.dc * i;
+            const r = row + dir.dr * i, c = col + dir.dc * i;
             grid[r][c] = word[i];
             placement.positions.push({ row: r, col: c });
           }
           wordPlacements.push(placement);
-          console.log(`Placed word "${word}" at positions:`, placement.positions);
           return true;
         }
       }
-      console.warn(`Could not place word: ${word}`);
       return false;
     }
-
-    // Place each word
-    words.forEach(word => {
-      if (word.length <= size) {
-        placeWord(word);
-      } else {
-        console.warn(`Word "${word}" is too long for grid size ${size}`);
-      }
+    const placedWords = [], unplacedWords = [];
+    words.forEach(w => {
+      if (w.length > size) { unplacedWords.push(w); return; }
+      placeWord(w) ? placedWords.push(w) : unplacedWords.push(w);
     });
-
-    // Fill empty cells with random letters
-    const alphabet = caseOpt === 'upper' ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : "abcdefghijklmnopqrstuvwxyz";
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        if (!grid[r][c]) {
-          grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
-        }
-      }
-    }
-    
-    console.log(`Generated grid with ${wordPlacements.length} word placements`);
-    return grid;
+    const alphabet = (caseOpt === 'upper' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : 'abcdefghijklmnopqrstuvwxyz');
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (!grid[r][c]) grid[r][c] = alphabet[Math.floor(Math.random()*alphabet.length)];
+    return { grid, placedWords, unplacedWords };
   }
 
-  // Highlight answers functionality
-  document.getElementById('highlightAnswers').onclick = () => {
-    const cells = document.querySelectorAll('.wordsearch-table td');
-    const highlightBtn = document.getElementById('highlightAnswers');
-    
-    if (!isHighlighted) {
-      // Highlight the answers
-      wordPlacements.forEach(placement => {
-        placement.positions.forEach(pos => {
-          const cell = document.querySelector(`td[data-row="${pos.row}"][data-col="${pos.col}"]`);
-          if (cell) {
-            cell.style.backgroundColor = '#ffeb3b';
-            cell.style.fontWeight = 'bold';
-          }
-        });
-      });
-      highlightBtn.textContent = 'Hide Answers';
-      isHighlighted = true;
-    } else {
-      // Remove highlighting
-      cells.forEach(cell => {
-        cell.style.backgroundColor = '#fff';
-        cell.style.fontWeight = 'normal';
-      });
-      highlightBtn.textContent = 'Show Answers';
-      isHighlighted = false;
-    }
-  };
+  // Note: Highlight button event handler is managed by the main HTML page script
+  // to ensure proper integration with setAnswersState function
 
   // AI Word Generation
   document.getElementById('generateCategoryWordsBtn').onclick = async () => {
@@ -645,40 +463,61 @@ document.addEventListener('DOMContentLoaded', () => {
   // Simple word generation from categories
   async function generateWordsFromCategory(category) {
     const wordCategories = {
-      'animals': ['CAT', 'DOG', 'BIRD', 'FISH', 'RABBIT', 'HORSE', 'ELEPHANT', 'LION', 'TIGER', 'BEAR', 'WOLF', 'FOX'],
-      'colors': ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE', 'BLACK', 'WHITE', 'PINK', 'BROWN', 'GRAY'],
-      'food': ['APPLE', 'BANANA', 'ORANGE', 'BREAD', 'CHEESE', 'PIZZA', 'BURGER', 'CAKE', 'COOKIE', 'MILK', 'WATER'],
-      'sports': ['FOOTBALL', 'BASKETBALL', 'BASEBALL', 'SOCCER', 'TENNIS', 'GOLF', 'SWIMMING', 'RUNNING', 'CYCLING'],
-      'school': ['TEACHER', 'STUDENT', 'BOOK', 'PENCIL', 'PAPER', 'DESK', 'CHAIR', 'BOARD', 'LESSON', 'HOMEWORK'],
-      'family': ['MOTHER', 'FATHER', 'SISTER', 'BROTHER', 'GRANDMOTHER', 'GRANDFATHER', 'UNCLE', 'AUNT', 'COUSIN'],
-      'weather': ['SUNNY', 'RAINY', 'CLOUDY', 'WINDY', 'SNOWY', 'STORMY', 'HOT', 'COLD', 'WARM', 'COOL'],
-      'body': ['HEAD', 'EYES', 'NOSE', 'MOUTH', 'EARS', 'HANDS', 'ARMS', 'LEGS', 'FEET', 'FINGERS'],
-      'house': ['KITCHEN', 'BEDROOM', 'BATHROOM', 'LIVING', 'DOOR', 'WINDOW', 'ROOF', 'FLOOR', 'WALL', 'STAIRS'],
-      'transport': ['CAR', 'BUS', 'TRAIN', 'PLANE', 'BIKE', 'BOAT', 'SHIP', 'TRUCK', 'TAXI', 'SUBWAY']
+      'animals': ['CAT','DOG','BIRD','FISH','RABBIT','HORSE','ELEPHANT','LION','TIGER','BEAR','WOLF','FOX'],
+      'colors': ['RED','BLUE','GREEN','YELLOW','PURPLE','ORANGE','BLACK','WHITE','PINK','BROWN','GRAY'],
+      'food': ['APPLE','BANANA','ORANGE','BREAD','CHEESE','PIZZA','BURGER','CAKE','COOKIE','MILK','WATER','RICE'],
+      'sports': ['FOOTBALL','BASKETBALL','BASEBALL','SOCCER','TENNIS','GOLF','SWIMMING','RUNNING','CYCLING'],
+      'school': ['TEACHER','STUDENT','BOOK','PENCIL','PAPER','DESK','CHAIR','BOARD','LESSON','HOMEWORK'],
+      'family': ['MOTHER','FATHER','SISTER','BROTHER','GRANDMA','GRANDPA','UNCLE','AUNT','COUSIN'],
+      'weather': ['SUNNY','RAINY','CLOUDY','WINDY','SNOWY','STORMY','HOT','COLD','WARM','COOL'],
+      'body': ['HEAD','EYES','NOSE','MOUTH','EARS','HANDS','ARMS','LEGS','FEET','FINGERS'],
+      'house': ['KITCHEN','BEDROOM','BATHROOM','LIVING','DOOR','WINDOW','ROOF','FLOOR','WALL','STAIRS'],
+      'transport': ['CAR','BUS','TRAIN','PLANE','BIKE','BOAT','SHIP','TRUCK','TAXI','SUBWAY'],
+      'toys': ['BALL','DOLL','ROBOT','PUZZLE','BLOCKS','CAR','TRAIN','KITE','YOYO','DRUM','TEDDY','TOP']
     };
-
-    const normalizedCategory = category.toLowerCase().trim();
-    
-    // Find matching category
-    for (const [key, words] of Object.entries(wordCategories)) {
-      if (key.includes(normalizedCategory) || normalizedCategory.includes(key)) {
-        return words.slice(0, 10); // Return up to 10 words
+    const synonyms = {
+      'toy': 'toys', 'toys': 'toys', 'favorite toys': 'toys', 'games': 'toys'
+    };
+    const normalized = category.toLowerCase().trim();
+    const mapped = synonyms[normalized];
+    if (mapped && wordCategories[mapped]) return wordCategories[mapped].slice(0,12);
+    for (const [key, list] of Object.entries(wordCategories)) {
+      if (key.includes(normalized) || normalized.includes(key)) return list.slice(0,12);
+    }
+    // Try OpenAI (proxy) as a fallback for uncategorized prompts
+    try {
+      const resp = await fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: 'chat/completions',
+          payload: {
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { role: 'system', content: 'You produce ONLY a clean newline separated list of simple uppercase single English words (no numbering, no punctuation).' },
+              { role: 'user', content: `List 12 simple classroom-appropriate English words about: ${category}` }
+            ],
+            max_tokens: 120, temperature: 0.4
+          }
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const raw = data.data?.choices?.[0]?.message?.content || '';
+        const cleaned = raw.split(/\n+/)
+          .map(l => l.replace(/^[0-9]+[).\-\s]*/,'').replace(/[^A-Z]/gi,'').toUpperCase().trim())
+          .filter(w => w.length >= 3 && w.length <= 14)
+          .filter((w,i,a) => w && a.indexOf(w)===i)
+          .slice(0,12);
+        if (cleaned.length) return cleaned;
       }
+    } catch(e) {
+      console.warn('AI fallback failed:', e.message);
     }
-
-    // If no exact match, try to find partial matches
-    const allWords = Object.values(wordCategories).flat();
-    const matchingWords = allWords.filter(word => 
-      word.toLowerCase().includes(normalizedCategory) || 
-      normalizedCategory.includes(word.toLowerCase())
-    );
-
-    if (matchingWords.length > 0) {
-      return matchingWords.slice(0, 10);
-    }
-
-    // Default fallback
-    return wordCategories.animals.slice(0, 8);
+    // Final fallback: return category letters forming one word split (ensures not always animals)
+    const letters = category.toUpperCase().replace(/[^A-Z]/g,'');
+    if (letters.length >= 3) return [letters];
+    return ['WORD','LIST'];
   }
 
   // Extract words from text

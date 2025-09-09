@@ -12,6 +12,9 @@
         const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials: 'include' });
         const whoRes = await who.json();
         if (!whoRes.success || !whoRes.user_id) {
+          // Redirect to login with return URL
+          const next = encodeURIComponent(location.pathname + location.search + location.hash);
+          location.replace('/students/login.html?next=' + next);
           return { error: 'Sign in required. No valid session.' };
         }
         // Get profile info
@@ -27,6 +30,7 @@
     }
   </script>
   <script type="module" src="/students/student_profile.js"></script>
+  <script type="module" src="/students/avatar.js"></script>
   <script type="module" src="/students/components/student-header.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -114,15 +118,15 @@
   <!-- Removed: By Mode, Recent Sessions, Recent Attempts for faster initial load -->
   </main>
   </div>
-  <!-- Avatar Picker Modal -->
+  <!-- Avatar Picker Modal: scrollable, styled like profile cards -->
   <div id="avatarModal" class="modal-overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
+    <div class="modal card avatar-modal" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
       <header>
         <h3 id="avatarModalTitle">Choose your avatar</h3>
         <div class="spacer"></div>
         <button id="avatarClose" class="btn-ghost" aria-label="Close">✕</button>
       </header>
-      <div class="content">
+      <div class="content" style="max-height:340px;overflow-y:auto;">
         <div id="emojiGrid" class="emoji-grid"></div>
       </div>
       <div class="actions">

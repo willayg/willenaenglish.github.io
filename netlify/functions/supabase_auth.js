@@ -358,6 +358,16 @@ exports.handler = async (event) => {
       return respond(event, 200, { success: true });
     }
 
+    // Logout: clear cookies
+    if (action === 'logout' && (event.httpMethod === 'POST' || event.httpMethod === 'GET')) {
+      const dev = isLocalDev();
+      const cookies = [
+        cookie('sb_access', '', event, { maxAge: 0, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+        cookie('sb_refresh', '', event, { maxAge: 0, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+      ];
+      return respond(event, 200, { success: true }, {}, cookies);
+    }
+
     // Refresh session (rotate tokens)
     if (action === 'refresh' && event.httpMethod === 'GET') {
       // Extract refresh token from cookie

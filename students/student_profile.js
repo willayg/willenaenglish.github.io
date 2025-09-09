@@ -58,6 +58,18 @@ import { initPointsClient } from './scripts/points-client.js';
     return res.json();
   }
 
+  // Small timeout wrapper to avoid blocking UI on slow functions
+  async function fetchWithTimeout(url, { ms = 2000, cache = 'default' } = {}){
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const res = await fetch(url, { credentials: 'include', cache, signal: ctrl.signal });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return await res.json();
+    } finally { clearTimeout(id); }
+  }
+  const tryJSON = async (fn) => { try { return await fn(); } catch { return null; } };
+
   function fmtDate(s){
     const d = new Date(s);
     return isNaN(d) ? '' : d.toLocaleString();
@@ -198,17 +210,7 @@ import { initPointsClient } from './scripts/points-client.js';
     } catch { return {}; }
   }
 
-  async function updateProfileAvatar(avatar) {
-    try {
-  const res = await fetch(api(FN('supabase_auth') + `?action=update_profile_avatar`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ avatar })
-      });
-      return res.ok;
-    } catch { return false; }
-  }
+  // Avatar update moved to students/avatar.js
 
   window.addEventListener('DOMContentLoaded', async () => {
   // Standardize storage listeners and show GitHub Pages notice if applicable
@@ -219,10 +221,11 @@ import { initPointsClient } from './scripts/points-client.js';
   const showOverlay = () => { if (overlayEl) { overlayEl.style.display = 'flex'; overlayEl.setAttribute('aria-hidden', 'false'); } };
   const hideOverlay = () => { if (overlayEl) { overlayEl.style.display = 'none'; overlayEl.setAttribute('aria-hidden', 'true'); } };
   showOverlay();
-  // Fetch username and avatar from cookie session
-  const infoPromise = getProfileInfo();
+  // Defer profile info; not critical to first paint
+  let info = null;
   // Use a stable per-session cache key; we no longer rely on a client-side UID
   const uid = 'me';
+  const IS_GHPAGES = /github\.io$/i.test(location.hostname);
 
     // Small, unobtrusive notice bar for sync status
     function showNotice(msg, tone = 'info'){
@@ -243,8 +246,8 @@ import { initPointsClient } from './scripts/points-client.js';
     }
     function hideNotice(){ try { const el = document.getElementById('syncNotice'); if (el) el.remove(); } catch {} }
 
-    // If running on GitHub Pages, inform that live sync needs Netlify
-    if (/github\.io$/i.test(location.hostname)) {
+  // If running on GitHub Pages, inform that live sync needs Netlify
+  if (IS_GHPAGES) {
       showNotice('Live score sync requires the Netlify site. Showing cached points only here.', 'warn');
     }
 
@@ -337,6 +340,9 @@ import { initPointsClient } from './scripts/points-client.js';
   // Scoreless build: no local points priming
 
     // Paint cached immediately if present
+  // Cap the overlay visibility to 800ms for first paint
+  const overlayCap = setTimeout(hideOverlay, 800);
+
   if (cacheOv || cacheBadges || cacheChal) {
       if (cacheOv) paintOverview(cacheOv);
       if (cacheBadges) paintBadges(cacheBadges);
@@ -350,132 +356,90 @@ import { initPointsClient } from './scripts/points-client.js';
           }
         } catch {}
       hideOverlay();
+      clearTimeout(overlayCap);
     }
+  // Phase 1: fetch overview fast, then hide overlay
+  if (!IS_GHPAGES) {
+    const ov = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 2000 }));
+    if (ov) {
+      paintOverview(ov);
+      setCache(`ov:${uid}`, ov, TTL);
+      hideNotice();
+      // Stars/medals quick counters from overview
+      const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
+      setCount('awardStars', ov.stars);
+      setCount('awardMedals', ov.perfect_runs ?? ov.mastered_lists);
+      // Seed points from overview if present
+      if (typeof ov.points === 'number') {
+        setText('awardPoints', String(ov.points));
+        try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: ov.points } })); } catch {}
+      }
+    } else {
+      // Start a short poll if cookies/session not yet ready
+      showNotice('Trying to sync scores…', 'info');
+      const endAt = Date.now() + 30000;
+      const poll = async () => {
+        if (Date.now() > endAt) { showNotice('Live sync unavailable. Use the Netlify site and ensure you are signed in.', 'warn'); return; }
+        const ov2 = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 2000 }));
+        if (ov2 && typeof ov2.points === 'number') {
+          paintOverview(ov2); setCache(`ov:${uid}`, ov2, TTL); hideNotice();
+          try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: ov2.points } })); } catch {}
+          try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov2 })); } catch {}
+          return;
+        }
+        setTimeout(poll, 3000);
+      };
+      poll();
+    }
+  }
+  hideOverlay();
+  clearTimeout(overlayCap);
 
-  // Fetch critical fresh data in parallel
-    const [info, ov, badges, challenging, cc] = await Promise.all([
-      infoPromise,
-        fetchJSON(API.overview()).catch(() => null),
-        fetchJSON(API.badges()).catch(() => null),
-        fetchJSON(API.challenging()).catch(() => null),
-        fetchJSON(API.correctCount()).catch(() => null)
+  // Phase 2: background fetches (badges, challenging, points, profile)
+  const doPhase2 = async () => {
+    if (IS_GHPAGES) return; // keep static on GH Pages
+    const [badges, challenging, cc, infoRes] = await Promise.all([
+      tryJSON(() => fetchWithTimeout(API.badges() + `&limit=50`, { ms: 2000, cache: 'default' })),
+      tryJSON(() => fetchWithTimeout(API.challenging() + `&limit=50`, { ms: 2000, cache: 'default' })),
+      tryJSON(() => fetchWithTimeout(API.correctCount(), { ms: 2000 })),
+      tryJSON(() => getProfileInfo())
     ]);
 
-    // Apply and cache fresh
-  // Info from get_profile: { success, name, email, username, avatar }
-  const displayName = (info && (info.name || info.username)) || 'Student Profile';
-  if (nameEl) nameEl.textContent = displayName;
-  if (avatarEl) avatarEl.textContent = (info && info.avatar) || '🙂';
-  // Fill hero card fields if present
-  const heroAvatar = document.getElementById('pfHeroAvatar');
-  if (heroAvatar) heroAvatar.textContent = (info && info.avatar) || '🐼';
-  const nameEnEl = document.getElementById('pfNameEn');
-  const nameKoEl = document.getElementById('pfNameKo');
-  const classEl = document.getElementById('pfClass');
-  const emailEl = document.getElementById('pfEmail');
-  if (nameEnEl) nameEnEl.textContent = info && (info.name || info.username) || '';
-  // Only set Korean name and class when present to avoid wiping placeholders
-  if (nameKoEl && info && typeof info.korean_name === 'string' && info.korean_name.trim()) {
-    nameKoEl.textContent = info.korean_name;
-  }
-  if (classEl && info && (typeof info.class === 'string' && info.class.trim())) {
-    classEl.textContent = info.class;
-  }
-  // Minimal debug to verify returned keys if fields are missing
-  if (!info?.korean_name || !info?.class) {
-    try { console.debug('[profile] get_profile keys:', Object.keys(info||{})); } catch {}
-  }
-  if (emailEl) emailEl.textContent = info && info.email ? info.email : '';
-  if (ov) { paintOverview(ov); setCache(`ov:${uid}`, ov, TTL); hideNotice(); }
-  else {
-    // If overview failed, start a short poll to catch up when server/cookies become available
-    showNotice('Trying to sync scores…', 'info');
-    const endAt = Date.now() + 30000; // up to 30s
-    const trySync = async () => {
-      if (Date.now() > endAt) { showNotice('Live sync unavailable. Use the Netlify site and ensure you are signed in.', 'warn'); return; }
-      const ov2 = await fetchJSON(API.overview()).catch(() => null);
-      if (ov2 && typeof ov2.points === 'number') {
-        paintOverview(ov2); setCache(`ov:${uid}`, ov2, TTL); hideNotice();
-  // Notify header/badges via events
-  try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: ov2.points } })); } catch {}
-  try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov2 })); } catch {}
-        return;
+    // Points prefer dedicated endpoint, fall back to cached overview value in UI
+    try {
+      const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
+      const pts = (cc && (typeof cc.points === 'number' ? cc.points : (typeof cc.correct === 'number' ? cc.correct : null)));
+      if (pts != null) {
+        setCount('awardPoints', pts);
+        try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
       }
-      setTimeout(trySync, 3000);
-    };
-    trySync();
-  }
-  // Scoreless build: no header points sync
-  // Awards counters
-  const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
-  // Avoid dropping below a higher local value (e.g., recent optimistic increment)
-  // Scoreless build: no award points rendering
-  // Points: prefer dedicated endpoint sum; fallback to overview.points
-  try {
-    const pts = (cc && (typeof cc.points === 'number' ? cc.points : (typeof cc.correct === 'number' ? cc.correct : null))) ?? (ov && typeof ov.points === 'number' ? ov.points : 0);
-    setCount('awardPoints', pts);
-    try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
-  } catch {}
-  setCount('awardStars', ov && ov.stars);
-  // Derive medals from perfect_runs (or mastered_lists if preferred)
-  setCount('awardMedals', ov && (ov.perfect_runs ?? ov.mastered_lists));
-  paintBadges(badges); setCache(`badges:${uid}`, badges, TTL);
-  // If the dedicated badges grid component is present, let it own the visible badge count.
-  // Otherwise, fall back to backend count.
-  if (!document.getElementById('badgesContainer')) {
-    setCount('awardBadges', Array.isArray(badges) ? badges.length : (ov && ov.badges_count));
-  }
-  paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL);
-    hideOverlay();
+    } catch {}
+
+    if (Array.isArray(badges)) { paintBadges(badges); setCache(`badges:${uid}`, badges, TTL); }
+    if (Array.isArray(challenging)) { paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL); }
+
+    // Info from get_profile: { success, name, email, username, avatar }
+    info = infoRes || null;
+    const displayName = (info && (info.name || info.username)) || 'Student Profile';
+    if (nameEl) nameEl.textContent = displayName;
+    if (avatarEl && info && info.avatar) avatarEl.textContent = info.avatar;
+    const heroAvatar = document.getElementById('pfHeroAvatar');
+    if (heroAvatar && info && info.avatar) heroAvatar.textContent = info.avatar;
+    const nameEnEl = document.getElementById('pfNameEn');
+    const nameKoEl = document.getElementById('pfNameKo');
+    const classEl = document.getElementById('pfClass');
+    const emailEl = document.getElementById('pfEmail');
+    if (nameEnEl && info && (info.name || info.username)) nameEnEl.textContent = info.name || info.username;
+    if (nameKoEl && info && typeof info.korean_name === 'string' && info.korean_name.trim()) nameKoEl.textContent = info.korean_name;
+    if (classEl && info && (typeof info.class === 'string' && info.class.trim())) classEl.textContent = info.class;
+    if (emailEl && info && info.email) emailEl.textContent = info.email;
+  };
+  setTimeout(doPhase2, 0);
 
     // Defer non-critical tables (sessions, attempts)
   // Removed: deferred sessions/attempts fetch
 
-    // Avatar modal behavior (deferred until after main data loads)
-    const overlay = document.getElementById('avatarModal');
-    const grid = document.getElementById('emojiGrid');
-    const btnClose = document.getElementById('avatarClose');
-    const btnCancel = document.getElementById('avatarCancel');
-    const btnSave = document.getElementById('avatarSave');
-  const choices = ['🙂','😃','😎','🦄','🐱','🐶','👽','🤖','🌟','🎓','🧑‍🎓','🧑‍🚀','🧑‍💻','🦊','🐼','🐵','🐸','🐯','🐨','🐷'];
-  let current = (avatarEl && avatarEl.textContent) || '🙂';
-    let selected = current;
-    function openModal() {
-      if (!overlay) return;
-      if (grid && !grid.dataset.ready) {
-        grid.innerHTML = choices.map(e => `<button class="emoji-btn" data-e="${e}">${e}</button>`).join('');
-        grid.dataset.ready = '1';
-        grid.addEventListener('click', (ev) => {
-          const btn = ev.target.closest('.emoji-btn');
-          if (!btn) return;
-          selected = btn.dataset.e;
-          [...grid.querySelectorAll('.emoji-btn')].forEach(b => b.classList.toggle('selected', b.dataset.e === selected));
-        });
-      }
-      if (grid) [...grid.querySelectorAll('.emoji-btn')].forEach(b => b.classList.toggle('selected', b.dataset.e === current));
-      overlay.style.display = 'flex';
-      overlay.setAttribute('aria-hidden', 'false');
-    }
-    function closeModal() {
-      if (!overlay) return;
-      overlay.style.display = 'none';
-      overlay.setAttribute('aria-hidden', 'true');
-    }
-    if (avatarEl) avatarEl.addEventListener('click', openModal);
-    if (btnClose) btnClose.addEventListener('click', closeModal);
-    if (btnCancel) btnCancel.addEventListener('click', closeModal);
-    if (btnSave) btnSave.addEventListener('click', async () => {
-      try {
-        current = selected;
-        if (avatarEl) avatarEl.textContent = current;
-        closeModal();
-        const ok = await updateProfileAvatar(current);
-        if (!ok) {
-          // Revert UI if save failed
-          if (avatarEl) avatarEl.textContent = '🙂';
-        }
-      } catch {}
-    });
+  // Avatar modal behavior moved to students/avatar.js
   hideOverlay();
   });
 })();

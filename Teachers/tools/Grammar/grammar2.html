@@ -808,6 +808,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let section = e.target.closest('.section-box, .grammar-section');
             if (section && preview.contains(section) && section.hasAttribute('data-section-idx')) {
               e.preventDefault();
+              // Confirmation before deleting entire section
+              const confirmed = confirm('Are you sure you want to delete this section?');
+              if (!confirmed) return;
               let idx = parseInt(section.getAttribute('data-section-idx'), 10);
               if (window.grammarSections && idx >= 0 && idx < window.grammarSections.length) {
                 // Save a copy of the deleted section and its index

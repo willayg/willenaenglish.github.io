@@ -177,7 +177,7 @@
                 <div class="layout-group">
                     <select class="layout-select" id="layoutSelect">
                         <option value="1-card">1 Card Per Page</option>
-                        <option value="2-card">4 Cards Per Page</option>
+                        <option value="2-card" selected>4 Cards Per Page</option>
                         <option value="1x2-portrait">2 Cards Per Page</option>
                         <option value="8-card">8 Cards Per Page</option>
                     </select>
@@ -206,8 +206,32 @@
                 </div>
 
                 <button class="secondary-btn" id="quizModeBtn" style="margin-left:12px;">Quiz Mode</button>
-                <button class="refresh-btn" id="refreshImagesBtn" title="Refresh Images">↻</button>
+                <select id="imageTypeSelect" class="toolbar-select" style="margin-left:8px;min-width:130px;">
+                    <option value="photos">Photos</option>
+                    <option value="illustrations">Illustrations</option>
+                    <option value="vectors">Clipart</option>
+                    <option value="ai">AI Images</option>
+                </select>
+                <button id="reloadImagesBtn" class="secondary-btn" style="margin-left:6px;">Reload Images</button>
             </div>
+<script>
+// Manual reload images using selected filter (no auto-refresh on dropdown change)
+document.addEventListener('DOMContentLoaded', function() {
+    const reloadBtn = document.getElementById('reloadImagesBtn');
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', function() {
+            const typeSel = document.getElementById('imageTypeSelect');
+            const selectedType = typeSel ? typeSel.value : 'photos';
+            console.log('Manual reload requested with filter:', selectedType);
+            if (window.reloadAllImages) {
+                window.reloadAllImages(selectedType, { force: true });
+            } else if (window.generateCards) {
+                window.generateCards();
+            }
+        });
+    }
+});
+</script>
     <!-- Fullscreen Quiz Overlay -->
     <div id="quizOverlay" style="display:none;position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#232526 0%,#414345 100%);align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:'Poppins',sans-serif;">
         <div id="quizImageContainer" style="max-width:98vw;height:80vh;display:flex;align-items:center;justify-content:center;position:relative;"></div>
@@ -458,8 +482,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Apply all patches with minimal delay
                 setTimeout(function() {
-                    // Image search double-click handler
-                    attachImageSearchDblClick();
+                    // Image search single-click handler
+                    attachImageSearchClick();
                     
                     // Font updates
                     if (typeof window.updateFlashcardFont === 'function') {
@@ -480,69 +504,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Image search double-click handler
-    function attachImageSearchDblClick() {
+    // Image search single-click handler (Pixabay)
+    function attachImageSearchClick() {
         const grid = document.getElementById('flashcardGrid');
-        if (!grid) {
-            console.log('Grid not found for double-click attachment');
-            return;
+        if (!grid) { console.log('Grid not found for click attachment'); return; }
+        if (window._imageSearchClickHandler) {
+            grid.removeEventListener('click', window._imageSearchClickHandler, true);
         }
-        
-        // Remove previous listener if any
-        if (window._imageSearchDblClickHandler) {
-            grid.removeEventListener('dblclick', window._imageSearchDblClickHandler);
+        // Map dropdown to correct Pixabay URL path
+        function getPixabayUrl(word, mode) {
+            const encoded = encodeURIComponent(word);
+            if (mode === 'illustrations') return `https://pixabay.com/illustrations/search/${encoded}/`;
+            if (mode === 'vectors') return `https://pixabay.com/vectors/search/${encoded}/`;
+            if (mode === 'ai') return `https://pixabay.com/images/search/${encoded}/?content_type=ai`;
+            return `https://pixabay.com/images/search/${encoded}/`;
         }
-        
-        // Define handler
-        window._imageSearchDblClickHandler = function(e) {
-            console.log('Double-click detected');
-            let card = e.target;
-            while (card && !card.classList.contains('flashcard')) {
-                card = card.parentElement;
-            }
-            if (card && card.classList.contains('flashcard')) {
-                console.log('Double-click on flashcard:', card.id);
-                // Get the card index from the ID
-                const cardId = card.id; // should be like "flashcard-0"
-                const index = cardId ? cardId.split('-')[1] : null;
+            window._imageSearchClickHandler = function(e) {
+                if (e.target.isContentEditable) return;
+                if (['INPUT','TEXTAREA','BUTTON','SELECT','LABEL'].includes(e.target.tagName)) return;
+                let card = e.target.closest('.flashcard');
+                if (!card) return;
+                if ((e.target.classList.contains('flashcard-word') || e.target.classList.contains('flashcard-korean')) && !e.ctrlKey) return; // protect editing clicks
+                const cardId = card.id;
+                const index = cardId && cardId.startsWith('flashcard-') ? parseInt(cardId.split('-')[1],10) : null;
                 let word = '';
                 if (index !== null && window.flashcards && window.flashcards[index]) {
-                    // Always use the English word from the flashcards array
-                    word = window.flashcards[index].english;
+                    word = window.flashcards[index].english || '';
                 }
-                // Fallback: try to extract word from card content, but skip placeholders
                 if (!word) {
-                    const textContent = card.textContent.trim();
-                    const lines = textContent.split('\n').map(line => line.trim()).filter(line => line && !/drag image here|no image/i.test(line));
-                    if (lines.length > 0) {
-                        word = lines[0];
-                    }
+                    const lines = card.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
+                    if (lines.length) word = lines[0];
                 }
-                if (word) {
-                    console.log('Opening image search for:', word);
-                    const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(word)}`;
-                    // Use a global window reference to ensure reuse
-                    try {
-                        if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
-                            console.log('Reusing existing window');
-                            window.imageSearchWindow.location.href = url;
-                            window.imageSearchWindow.focus();
-                        } else {
-                            console.log('Opening new window');
-                            window.imageSearchWindow = window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
-                        }
-                    } catch (err) {
-                        console.log('Error with window handling, opening new:', err);
-                        window.imageSearchWindow = window.open(url, 'ImageSearchWindow', 'width=600,height=500,scrollbars=yes,resizable=yes,top=100,left=100');
+                if (!word) return;
+            const modeSel = document.getElementById('imageTypeSelect');
+            const mode = modeSel ? modeSel.value : 'photos';
+            const url = getPixabayUrl(word, mode);
+                try {
+                    const features = 'width=400,height=720,scrollbars=yes,resizable=yes,top=20,left=0';
+                    if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
+                        window.imageSearchWindow.location.href = url;
+                        window.imageSearchWindow.focus();
+                        try { window.imageSearchWindow.resizeTo(400, 720); window.imageSearchWindow.moveTo(0, 20); } catch(_) {}
+                    } else {
+                        window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
                     }
-                } else {
-                    console.log('No word found for image search');
+                } catch(err){
+                    window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
                 }
-            }
         };
-        
-        grid.addEventListener('dblclick', window._imageSearchDblClickHandler);
-        console.log('Double-click handler attached to grid');
+        grid.addEventListener('click', window._imageSearchClickHandler, true);
+        console.log('Single-click Pixabay handler attached to grid');
     }
     
     // Apply the comprehensive patch
@@ -550,14 +561,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Applying comprehensive patch and attaching handlers');
         applyComprehensiveGenerateCardsPatch();
         makePreviewEditable();
-        attachImageSearchDblClick();
+    attachImageSearchClick();
     }, 1000); // Increased delay to ensure everything is loaded
     
     // Also try again after a longer delay to catch late-loading scripts
     setTimeout(function() {
         console.log('Second attempt at applying patch');
         applyComprehensiveGenerateCardsPatch();
-        attachImageSearchDblClick();
+    attachImageSearchClick();
     }, 2000);
 });
 </script>

@@ -6,6 +6,13 @@
     <title>Reading Worksheet Generator</title>
     <link rel="stylesheet" href="../tests/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            /* Ensure consistent base size for reading worksheet preview */
+            .worksheet-preview-wrapper { position:relative; width:100%; }
+            .worksheet-preview { width:794px; background:#fff; }
+            /* Prevent tiny appearance when little content: maintain min height of an A4 page */
+            .worksheet-preview .worksheet-page { min-height:1123px; }
+        </style>
 </head>
 <body>
   <script>
