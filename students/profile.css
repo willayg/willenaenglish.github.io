@@ -226,7 +226,14 @@ th { color:#356; font-weight:800; }
 .modal header { padding:12px 16px; border-bottom:1px solid #edf1f4; display:flex; align-items:center; gap:10px; }
 .modal header h3 { margin:0; font-size:1rem; color:#19777e; }
 .modal .content { padding:12px; }
-.emoji-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; }
+.emoji-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+	gap: 8px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	max-width: 100%;
+}
 .emoji-btn { font-size:24px; padding:10px; border-radius:12px; border:1px solid #e6eaef; background:#fff; cursor:pointer; }
 .emoji-btn.selected { border-color:#19777e; box-shadow: 0 0 0 2px rgba(25,119,126,0.15); }
 .modal .actions { display:flex; justify-content:flex-end; gap:8px; padding:12px; border-top:1px solid #edf1f4; }

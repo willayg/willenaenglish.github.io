@@ -344,25 +344,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let templateHtml = '';
       if (!passage && !questions) {
+        // Consistent sizing: wrap blank state in the same scaled wrapper so the page size
+        // doesn't appear to "grow" only after content is added.
         templateHtml = `
-          <div class="multi-page-worksheet">
-            <div class="worksheet-page">
-              <div class="page-header">
-                <h1 style="font-weight: bold; text-align: center; margin-bottom: 10px; color: #2e2b3f; letter-spacing: 1px;">${title}</h1>
-              </div>
-              <div class="page-content" style="padding: 20px;">
-                <div class="text-gray-400 p-4">
-                  Enter a reading passage and generate questions to preview the worksheet.
-                  <br><br>
-                  <strong>Sample text to test font changes:</strong>
-                  <br>This text shows how the selected font and size will appear in your worksheet.
-                  <br>Font: ${font}
-                  <br>Size: ${fontSizePx}px
+          <div id="worksheetPreviewWrapper" class="worksheet-preview-wrapper">
+            <div class="worksheet-preview" style="font-family:${font};font-size:${fontSizePx}px; width:794px;">
+              <div class="multi-page-worksheet">
+                <div class="worksheet-page" style="min-height:1123px; box-sizing:border-box; padding:24px; background:#fff;">
+                  <div class="page-header">
+                    <h1 style="font-weight: bold; text-align: center; margin:0 0 18px 0; color: #2e2b3f; letter-spacing: 1px;">${title}</h1>
+                  </div>
+                  <div class="page-content" style="padding: 4px 0;">
+                    <div class="text-gray-400 p-4" style="line-height:1.5; font-size:${fontSizePx}px;">
+                      Enter a reading passage and generate questions to preview the worksheet.<br><br>
+                      <strong>Sample text to test font changes:</strong><br>
+                      This text shows how the selected font and size will appear in your worksheet.<br>
+                      Font: ${font}<br>
+                      Size: ${fontSizePx}px
+                    </div>
+                    <div style="margin-top:32px; text-align:center; color:#999; font-size:0.9em;">
+                      (Add a passage or generate questions to populate this page)
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        `;
+          </div>`;
       } else {
         // Cloze Test Mode: blank out every 5-8th word in passage
         let passageForDisplay = passage;
@@ -465,7 +472,9 @@ document.addEventListener('DOMContentLoaded', () => {
           preview.innerHTML = templateHtml;
           applyPreviewFontStyles(preview, font, fontSizePx + 'px');
           loadGoogleFont(font);
-          setTimeout(() => scaleWorksheetPreview(), 60);
+          // Run scale twice (initial + after layout) to stabilize empty vs filled states
+          setTimeout(() => scaleWorksheetPreview(), 30);
+          setTimeout(() => scaleWorksheetPreview(), 120);
           lastPreviewHtml = templateHtml;
           lastWorksheetContent = worksheetContentKey;
           lastFont = font;

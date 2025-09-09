@@ -77,7 +77,17 @@ export class ImageManager {
             
             // Try Pixabay first if we have network access
             try {
-                const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(cleanQuery)}&image_type=photo&safesearch=true&per_page=5`;
+                // Read current filter selection and build proper Pixabay query
+                let imageType = 'photo';
+                let extraParams = '';
+                const sel = document.getElementById('imageTypeSelect');
+                if (sel) {
+                    console.log(`Current filter selection: ${sel.value}`);
+                    if (sel.value === 'illustrations') imageType = 'illustration';
+                    else if (sel.value === 'vectors') imageType = 'vector';
+                    else if (sel.value === 'ai') { imageType = 'photo'; extraParams = '&content_type=ai'; }
+                }
+                const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(cleanQuery)}&image_type=${imageType}${extraParams}&safesearch=true&per_page=5`;
                 console.log(`Fetching from: ${url}`);
                 
                 const response = await fetch(url);

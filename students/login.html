@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Login</title>
+  <link rel="stylesheet" href="/students/profile.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', 'Inter', Arial, sans-serif;
+      background: linear-gradient(135deg, #67e2e6 0%, #93cbcf 100%);
+      min-height: 100vh;
+      display: flex;
+  flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-wrap { width: 100%; display: flex; align-items: center; justify-content: center; }
+    .login-card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.10);
+      padding: 38px 32px 32px 32px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #67e2e6, #93cbcf);
+    }
+    .login-title {
+      font-weight: 800;
+      color: #1aafb9;
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .mut {
+      color: #6b7a8f;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .field {
+      margin-bottom: 22px;
+    }
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: #19777e;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .field input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 16px;
+      background: #f7fafc;
+      transition: all 0.2s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: #67e2e6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(103, 226, 230, 0.12);
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+      justify-content: center;
+    }
+    button {
+      border-radius: 10px;
+      padding: 13px 18px;
+      font-weight: 700;
+      border: none;
+      background: linear-gradient(135deg, #67e2e6 0%, #93cbcf 100%);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(103, 226, 230, 0.08);
+      transition: all 0.18s;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(103, 226, 230, 0.18);
+    }
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #guestBtn {
+      background: linear-gradient(135deg, #93cbcf 0%, #67e2e6 100%);
+      color: #19777e;
+      border: 2px solid #67e2e6;
+    }
+    .error {
+      color: #b00020;
+      font-weight: 700;
+      margin-top: 6px;
+      background: #e0f7fa;
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: center;
+      border: 1px solid #67e2e6;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 480px) {
+      .login-card { padding: 24px 10px; margin: 10px; }
+      .login-title { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div style="width:100%;display:flex;flex-direction:column;align-items:center;margin-bottom:18px;">
+    <a href="index.html">
+      <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo" style="max-width:120px;max-height:120px;">
+    </a>
+  </div>
+  <main class="login-wrap">
+    <section class="login-card">
+      <h1 class="login-title">Student Login</h1>
+      <p class="mut">Use your username and password.</p>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" />
+      </div>
+      <div class="row">
+        <button id="loginBtn">Log in</button>
+        <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef">Guest Login</button>
+      </div>
+      <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
+    </section>
+  </main>
+  <script type="module">
+    const msg = document.getElementById('msg');
+    function show(err){ msg.textContent = err; msg.style.display = err? 'block':'none'; }
+
+    async function loginWithUsernamePassword(username, password){
+      // Step 1: resolve username -> email via profiles
+      const u = new URL('/.netlify/functions/supabase_auth', location.origin);
+      u.searchParams.set('action','get_email_by_username');
+      u.searchParams.set('username', username.trim());
+      const r1 = await fetch(u, { credentials:'include' });
+      const d1 = await r1.json();
+      if (!d1.success) throw new Error(d1.error || 'Username not found');
+
+      // Step 2: call login with email/password to reuse existing flow (sets cookies)
+      const r2 = await fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', credentials:'include', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ email: d1.email, password })
+      });
+      const d2 = await r2.json();
+      if (!d2.success) throw new Error(d2.error || 'Login failed');
+      return d2;
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      show('');
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      if (!username || !password) return show('Please enter both username and password.');
+      try {
+        await loginWithUsernamePassword(username, password);
+        location.href = '/students/profile.html';
+      } catch (e) {
+        show(e.message || 'Login failed');
+      }
+    });
+
+    // Guest login button (not wired yet)
+    document.getElementById('guestBtn').addEventListener('click', () => {
+      show('Guest login coming soon!');
+    });
+  </script>
+</body>
+</html>

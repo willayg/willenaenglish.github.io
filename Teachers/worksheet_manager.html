@@ -35,6 +35,10 @@
     </div>
     <div id="loadUI" style="display:none;">
       <div class="flex flex-wrap gap-2 mb-2 items-center">
+        <!-- Teacher filter (populated dynamically) -->
+        <select id="teacherFilter" class="border p-1 flex-1 min-w-[140px]" style="max-width:180px;">
+          <option value="" selected>My Worksheets</option>
+        </select>
         <label class="flex items-center select-none mr-3" for="showAllVocabToggle">
           <span class="font-medium text-sm mr-2">Show All Vocabulary Files</span>
           <input type="checkbox" id="showAllVocabToggle" class="hidden">
@@ -63,6 +67,10 @@
           <option value="picture-quiz-5col">Picture Quiz (5 per row)</option>
           <option value="picture-matching">Picture Matching</option>
           <option value="eng-kor-matching">English-Korean Matching</option>
+        </select>
+        <!-- Book filter (populated dynamically) -->
+        <select id="bookFilter" class="border p-1 flex-1 min-w-[140px]" style="max-width:180px;">
+          <option value="" selected>All Books</option>
         </select>
         <button id="toggleAdvancedSearch" type="button" class="px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">Advanced Search</button>
       </div>
@@ -166,30 +174,28 @@
           ? worksheet.words.split('\n').map(w => w.trim()).filter(w => w !== "")
           : []);
 
-    // Uniqueness: check for existing worksheet with same title and type
+    // Uniqueness: check for existing worksheet with same title and SAME teacher (username)
     let existingId = null;
     let duplicateFound = false;
-    try {
-      const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,worksheet_type');
-      const checkData = await checkRes.json();
-      if (checkData.success && Array.isArray(checkData.data)) {
-        const found = checkData.data.find(ws => ws.title === worksheet.title && ws.worksheet_type === worksheet.worksheet_type);
-        if (found) {
-          existingId = found.user_id;
-          duplicateFound = true;
+    if (worksheet.username && worksheet.title) {
+      try {
+        const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username');
+        const checkData = await checkRes.json();
+        if (checkData.success && Array.isArray(checkData.data)) {
+          const found = checkData.data.find(ws => ws.title === worksheet.title && ws.username === worksheet.username);
+          if (found) {
+            existingId = found.user_id;
+            duplicateFound = true;
+          }
         }
-      }
-    } catch (e) { /* ignore */ }
-
-    // Warn if duplicate found
-    if (duplicateFound) {
-      hideSpinner();
-      const proceed = confirm('A worksheet with this title and type already exists. Do you want to overwrite it?');
-      if (!proceed) return;
-      showSpinner();
+      } catch (e) { /* ignore */ }
     }
 
-    // If found, set user_id for update
+    if (duplicateFound) {
+      hideSpinner();
+      const proceed = confirm('You already have a worksheet with this title. Overwrite it?');
+      if (!proceed) return; else showSpinner();
+    }
     if (existingId) worksheet.user_id = existingId;
 
     // Save (will update if id is present)
@@ -238,11 +244,11 @@
       return;
     }
 
-    // Deduplicate: only show latest worksheet per title/type
+    // Deduplicate only identical (title + worksheet_type + creator). Allow same title for different creators.
     const deduped = [];
     const seen = {};
     data.forEach(ws => {
-      const key = ws.title + '|' + ws.worksheet_type;
+      const key = `${ws.title}|${ws.worksheet_type}|${ws.username || ''}`;
       if (!seen[key] || (ws.updated_at && ws.updated_at > seen[key].updated_at)) {
         seen[key] = ws;
       }
@@ -370,7 +376,7 @@
       } else if (layoutKey === 'picture-matching') {
         layoutDisplay = 'Picture Matching';
       } else if (layoutKey === 'eng-kor-matching' || layoutKey === 'koreanenglishmatching' || layoutKey === 'engkormatching') {
-        layoutDisplay = 'English-Korean Matching';
+        layoutDisplay
       } else {
         layoutDisplay = layoutDisplay.charAt(0).toUpperCase() + layoutDisplay.slice(1);
       }
@@ -612,6 +618,28 @@
     if (filterType) {
       queryParams += `&type=${filterType}`;
     }
+
+  // Teacher filtering logic (created_by param expected by backend)
+    const teacherSelect = document.getElementById('teacherFilter');
+    let teacherValue = teacherSelect ? teacherSelect.value : '';
+    // Blank value => restrict to current user. __ALL__ => no teacher filter.
+    if (teacherValue === '') {
+      let currentUser = localStorage.getItem('username') || '';
+      if (!currentUser) {
+        const email = localStorage.getItem('userEmail');
+        if (email) currentUser = email.split('@')[0];
+      }
+      if (currentUser) queryParams += `&created_by=${encodeURIComponent(currentUser)}`;
+    } else if (teacherValue !== '__ALL__') {
+      queryParams += `&created_by=${encodeURIComponent(teacherValue)}`;
+    }
+
+    // Book filter
+    const bookFilter = document.getElementById('bookFilter');
+    const bookVal = bookFilter ? bookFilter.value : '';
+    if (bookVal) {
+      queryParams += `&book=${encodeURIComponent(bookVal)}`;
+    }
     
     // Add search parameters
     // If vocab_only=1 in URL, force showing vocab types; also reflect toggle UI
@@ -753,6 +781,53 @@
         fetchAndRenderWorksheets();
       });
     }
+
+    // Populate teacher & book dropdowns
+    (async function populateFilters() {
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=username,book&limit=10000');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          const teacherSet = new Set();
+          const bookSet = new Set();
+          data.data.forEach(ws => {
+            if (ws.username) teacherSet.add(ws.username.trim());
+            if (ws.book) bookSet.add(ws.book.trim());
+          });
+          const currentUserName = (localStorage.getItem('username') || (localStorage.getItem('userEmail') ? localStorage.getItem('userEmail').split('@')[0] : '') || '').trim();
+          const teacherArr = Array.from(teacherSet).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+          const teacherSelectEl = document.getElementById('teacherFilter');
+          if (teacherSelectEl) {
+            // Preserve first option (My Worksheets)
+            // Add All Teachers option
+            const allOpt = document.createElement('option');
+            allOpt.value='__ALL__'; allOpt.textContent='All Teachers';
+            teacherSelectEl.appendChild(allOpt);
+            teacherArr.forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t; opt.textContent = t === currentUserName ? `${t} (You)` : t;
+              teacherSelectEl.appendChild(opt);
+            });
+            // Ensure dropdown default remains My Worksheets (blank) if current user present
+          }
+          const bookArr = Array.from(bookSet).filter(Boolean).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+          const bookSelectEl = document.getElementById('bookFilter');
+            if (bookSelectEl) {
+              bookArr.forEach(bk => {
+                const opt = document.createElement('option');
+                opt.value = bk; opt.textContent = bk;
+                bookSelectEl.appendChild(opt);
+              });
+            }
+        }
+      } catch (e) {
+        console.warn('Failed to populate teacher/book filters', e);
+      }
+    })();
+
+    // Change listeners
+    document.getElementById('teacherFilter')?.addEventListener('change', () => { currentPage=1; fetchAndRenderWorksheets(); });
+    document.getElementById('bookFilter')?.addEventListener('change', () => { currentPage=1; fetchAndRenderWorksheets(); });
   });
 
   // Master search + unit quick search function

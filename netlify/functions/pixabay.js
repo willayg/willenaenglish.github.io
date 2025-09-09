@@ -19,14 +19,19 @@ exports.handler = async function(event, context) {
 
   // Allow these to be set by the frontend, or use sensible defaults
   const imageType = event.queryStringParameters.image_type || "photo"; // "all", "photo", "illustration", "vector"
+  const contentType = event.queryStringParameters.content_type; // "ai" for AI-generated content
   const order = event.queryStringParameters.order || "popular"; // "popular" or "latest"
   const safesearch = event.queryStringParameters.safesearch || "true"; // "true" or "false"
   const perPage = event.queryStringParameters.per_page || "3"; // number of results to fetch
 
-  // You can add more filters here as needed (orientation, category, colors, etc.)
-
-  const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=5&safesearch=${safesearch}&order=${order}&page=${Math.floor(Math.random()*5)+1}`;
+  // Build URL with conditional content_type parameter
+  let url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=5&safesearch=${safesearch}&order=${order}&page=${Math.floor(Math.random()*5)+1}`;
+  if (contentType) {
+    url += `&content_type=${contentType}`;
+  }
+  
   console.log('Pixabay URL (without key):', url.replace(apiKey, 'HIDDEN_KEY'));
+  console.log('Parameters:', { query, imageType, contentType, order, safesearch, perPage });
   
   try {
     const res = await fetch(url);

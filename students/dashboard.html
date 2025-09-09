@@ -1,23 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard (Coming Soon)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/students/profile.css" />
+  <base href="/students/">
+  <meta name="robots" content="noindex" />
   <style>
-    body { font-family: 'Poppins', Arial, sans-serif; margin:0; display:flex; align-items:center; justify-content:center; height:100vh; background:#f7fbfc; }
-    .card { background:#fff; border:2px solid #a9d6e9; border-radius:16px; padding:26px 28px; text-align:center; max-width:560px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
-    h1 { margin:0 0 8px; color:#19777e; font-size:26px; }
-    p { margin:6px 0 0; color:#345; }
-    a { color:#19777e; text-decoration:none; font-weight:600; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 12px; }
+    .cards { display:grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 760px){ .cards{ grid-template-columns: 1fr 1fr; } }
+    .card{ background:#fff; border:1px solid #e6eaef; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.04); padding:14px; }
+    .card h2{ margin:0 0 8px; color:#19777e; font-weight:800; font-size:1.2rem; }
+    .grid-tiles{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
+    .tile{ display:flex; align-items:center; justify-content:center; text-align:center; border:1px solid #e6eaef; border-radius:12px; padding:18px; font-weight:800; color:#19777e; background:#f7fcfd; cursor:pointer; text-decoration:none; }
+    .mut{ color:#6b7a8f; }
   </style>
+  <script>
+    // Redirect to login if not signed in
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials: 'include' });
+        const w = await who.json();
+        if (!w.success) location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
+      } catch {}
+    });
+  </script>
+  <script type="module" src="/students/components/student-header.js"></script>
 </head>
 <body>
-  <div class="card">
-    <h1>Student Dashboard</h1>
-    <p>This page is under construction.</p>
-    <p>Try the <a href="/Games/Word Arcade/index.html">Word Arcade</a> or explore <a href="/choose-levels.html">Levels</a> for now.</p>
+  <student-header title="Dashboard" show-id="false" show-home="true" show-points="true"></student-header>
+  <div class="wrap">
+    <div class="cards">
+      <section class="card">
+        <h2>Start Learning</h2>
+        <div class="grid-tiles">
+          <a class="tile" href="/playzone.html">🎮 Play Zone</a>
+          <a class="tile" href="/Games/Word%20Arcade/index.html">🧠 Word Arcade</a>
+          <a class="tile" href="/students/profile.html">👤 Profile</a>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Account</h2>
+        <p class="mut">Use the avatar in the top-right to open the menu and logout.</p>
+        <button id="logoutBig" class="btn-ghost" style="border:1px solid #e6eaef;border-radius:12px;padding:12px 14px;color:#19777e;font-weight:800">Logout</button>
+      </section>
+    </div>
   </div>
+  <script>
+    document.getElementById('logoutBig')?.addEventListener('click', async () => {
+      await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
+      location.href = '/students/login.html';
+    });
+  </script>
 </body>
 </html>

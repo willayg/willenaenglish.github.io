@@ -579,9 +579,17 @@ exports.handler = async (event) => {
           
           // If fields parameter is used (limited query), return data without transformation
           if (fieldsParam) {
+            // Apply created_by filter even when limited fields are used
+            let outData = data;
+            if (createdByFilter) {
+              outData = outData.filter(ws => {
+                const uname = (ws.username || '').toLowerCase();
+                return uname.includes(createdByFilter.toLowerCase());
+              });
+            }
             return {
               statusCode: 200,
-              body: JSON.stringify({ success: true, data, total: count })
+              body: JSON.stringify({ success: true, data: outData, total: count })
             };
           }
           
