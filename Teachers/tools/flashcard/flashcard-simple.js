@@ -222,15 +222,40 @@ async function fetchImageForCard(index) {
     const card = flashcards[index];
     if (!card) return;
     const query = card.english;
+    // Determine selected image type from dropdown (photos / illustrations / vectors / ai)
+    let imageTypeParam = 'photo';
+    let extraParams = '';
+    const sel = document.getElementById('imageTypeSelect');
+    const selected = sel ? sel.value : 'photos';
+    switch (selected) {
+        case 'illustrations':
+            imageTypeParam = 'illustration';
+            break;
+        case 'vectors':
+            imageTypeParam = 'vector';
+            break;
+        case 'ai':
+            // Pixabay docs: keep image_type=photo but add content_type=ai
+            imageTypeParam = 'photo';
+            extraParams = '&content_type=ai';
+            break;
+        default:
+            imageTypeParam = 'photo';
+    }
+    const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageTypeParam}${extraParams}`;
     try {
-        const res = await fetch('/.netlify/functions/pixabay?q=' + encodeURIComponent(query));
+        console.log('[Flashcards] Fetching image for', query, '->', url);
+        const res = await fetch(url);
         const data = await res.json();
-        if (data.images && data.images.length > 0) {
-            card.image = data.images[0];
+        if (data && Array.isArray(data.images) && data.images.length > 0) {
+            // Pick a random image among returned to add variety
+            card.image = data.images[Math.floor(Math.random() * data.images.length)];
         } else {
+            console.warn('[Flashcards] No images returned for', query, 'response snippet:', data);
             card.image = null;
         }
     } catch (e) {
+        console.error('[Flashcards] Image fetch error for', query, e);
         card.image = null;
     }
     updateCardList();
@@ -940,3 +965,24 @@ function loadFlashcardsWithImages(words, imageData) {
 
 // Make this function available globally for the load function
 window.loadFlashcardsWithImages = loadFlashcardsWithImages;
+
+// Provide a proper reloadAllImages that respects the current filter selection (instead of regenerating cards)
+window.reloadAllImages = function(selectedType, opts = {}) {
+    if (!flashcards.length) {
+        console.log('[Flashcards] No cards to reload images for.');
+        return;
+    }
+    console.log('[Flashcards] Reloading all images with filter:', selectedType || (document.getElementById('imageTypeSelect')?.value));
+    // Clear existing images only (do not lose edited words/order)
+    flashcards.forEach(c => { c.image = null; });
+    updateCardList();
+    updatePreview();
+    // Refetch sequentially to avoid hammering API (simple throttle)
+    (async () => {
+        for (let i = 0; i < flashcards.length; i++) {
+            await fetchImageForCard(i);
+            // Small delay
+            await new Promise(r => setTimeout(r, 250));
+        }
+    })();
+};
