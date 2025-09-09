@@ -22,10 +22,10 @@ exports.handler = async function(event, context) {
   const contentType = event.queryStringParameters.content_type; // "ai" for AI-generated content
   const order = event.queryStringParameters.order || "popular"; // "popular" or "latest"
   const safesearch = event.queryStringParameters.safesearch || "true"; // "true" or "false"
-  const perPage = event.queryStringParameters.per_page || "3"; // number of results to fetch
+  const perPage = event.queryStringParameters.per_page || "5"; // number of results to fetch
 
   // Build URL with conditional content_type parameter
-  let url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=5&safesearch=${safesearch}&order=${order}&page=${Math.floor(Math.random()*5)+1}`;
+  let url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=${perPage}&safesearch=${safesearch}&order=${order}&page=${Math.floor(Math.random()*5)+1}`;
   if (contentType) {
     url += `&content_type=${contentType}`;
   }
