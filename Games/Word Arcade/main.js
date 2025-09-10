@@ -111,6 +111,36 @@ let currentPreloadAbort = null; // for abortable audio preload
 const gameArea = document.getElementById('gameArea');
 
 // -----------------------------
+// Session cache (non-persistent across browser restarts)
+// -----------------------------
+function saveSessionState() {
+  try {
+    if (Array.isArray(wordList) && wordList.length) {
+      sessionStorage.setItem('WA_words', JSON.stringify(wordList));
+    }
+    if (currentListName) sessionStorage.setItem('WA_list_name', String(currentListName));
+  } catch {}
+}
+
+function restoreSessionStateIfEmpty() {
+  try {
+    if (!Array.isArray(wordList) || wordList.length === 0) {
+      const raw = sessionStorage.getItem('WA_words');
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length) {
+          wordList = arr;
+        }
+      }
+    }
+    if (!currentListName) {
+      const ln = sessionStorage.getItem('WA_list_name');
+      if (ln) currentListName = ln;
+    }
+  } catch {}
+}
+
+// -----------------------------
 // UI helpers
 // -----------------------------
 function showOpeningButtons(visible) {
@@ -204,6 +234,8 @@ async function processWordlist(data) {
   try {
     wordList = Array.isArray(data) ? data : [];
     if (!wordList.length) throw new Error('No words provided');
+  // Save early so UI can reflect title/list even if user navigates quickly
+  saveSessionState();
 
     // cancel any in-flight preload
     if (currentPreloadAbort) currentPreloadAbort.abort();
@@ -251,6 +283,8 @@ async function loadSampleWordlistByFilename(filename) {
 
 function startModeSelector() {
   showOpeningButtons(false);
+  // Ensure we have any cached state back in memory for UI headers
+  restoreSessionStateIfEmpty();
   renderModeSelector({
     onModeChosen: (mode) => { currentMode = mode; startGame(mode); },
     onWordsClick: (filename) => { if (filename) loadSampleWordlistByFilename(filename); },
@@ -403,6 +437,8 @@ async function openSavedGameById(id) {
 
 // Wire up opening page buttons after DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
+  // Try restoring session state so the mode menu or headers can show last list
+  restoreSessionStateIfEmpty();
   const basicBtn = document.getElementById('basicWordsBtn');
   const reviewBtn = document.getElementById('reviewBtn');
   const browseBtn = document.getElementById('browseBtn');

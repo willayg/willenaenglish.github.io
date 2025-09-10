@@ -49,6 +49,7 @@ export function renderGameView({ modeName, onShowModeModal, onWordsClick, onMode
   if (backBtn) {
     backBtn.style.display = '';
     backBtn.onclick = () => {
+      try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
       if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
         window.WordArcade.startModeSelector();
       } else {
@@ -59,4 +60,91 @@ export function renderGameView({ modeName, onShowModeModal, onWordsClick, onMode
       }
     };
   }
+
+  // Add bottom-centered Quit Game button (hidden until after splash)
+  try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
+  const quitBtn = document.createElement('button');
+  quitBtn.id = 'wa-quit-btn';
+  quitBtn.textContent = 'Quit Game';
+  quitBtn.setAttribute('aria-label', 'Quit current game and return to mode menu');
+  // Visuals: white pill, teal border, bluish text (match provided image)
+  quitBtn.style.cssText = [
+    'font-family:\'Poppins\', Arial, sans-serif',
+    'position:fixed',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'bottom:max(16px, env(safe-area-inset-bottom))',
+    'z-index:1000',
+    'padding:10px 22px',
+    'border-radius:9999px',
+    'background:#fff',
+    'color:#6273e4',
+    'font-weight:800',
+    'font-size:13px',
+    'border:3px solid #39d5da',
+    'box-shadow:none',
+    'cursor:pointer',
+    'outline:none',
+    '-webkit-tap-highlight-color:transparent',
+    'transition:transform .15s ease, box-shadow .15s ease, opacity .2s ease',
+    'opacity:0' // start hidden; reveal after splash
+  ].join(';');
+
+  // Hover/active micro-interactions
+  quitBtn.addEventListener('mouseenter', () => {
+    quitBtn.style.transform = 'translateX(-50%) translateY(-1px)';
+  });
+  quitBtn.addEventListener('mouseleave', () => {
+    quitBtn.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  quitBtn.addEventListener('mousedown', () => {
+    quitBtn.style.transform = 'translateX(-50%) translateY(1px)';
+  });
+  quitBtn.addEventListener('mouseup', () => {
+    quitBtn.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  quitBtn.addEventListener('click', () => {
+    // Remove the button to avoid leaving artifacts
+    try { quitBtn.remove(); } catch {}
+    // Return to mode selector - this preserves the current word list
+    if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
+      window.WordArcade.startModeSelector();
+    } else {
+      import('./mode_selector.js').then(mod => {
+        if (mod.renderModeSelector) {
+          mod.renderModeSelector({
+            onModeChosen: (mode) => {
+              if (window.WordArcade && typeof window.WordArcade.startGame === 'function') {
+                window.WordArcade.startGame(mode);
+              }
+            },
+            onWordsClick: (filename) => {
+              if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+                window.WordArcade.loadSampleWordlistByFilename(filename);
+              }
+            }
+          });
+        }
+      });
+    }
+  });
+  // Append AFTER splash: wait at least a short delay and until common splash markers are gone
+  let canceled = false;
+  const earliestMs = 1200; // ensure it doesn't appear during initial splash/transition
+  const startAt = Date.now();
+  const tryAppend = () => {
+    if (canceled) return;
+    if (Date.now() - startAt < earliestMs) { setTimeout(tryAppend, 150); return; }
+    const hasSplash = document.querySelector('.splash, #splash, #gameStartContent, .game-splash, [data-splash]');
+    if (hasSplash) { setTimeout(tryAppend, 150); return; }
+    if (!document.getElementById('wa-quit-btn')) {
+      document.body.appendChild(quitBtn);
+      // fade in
+      requestAnimationFrame(() => { quitBtn.style.opacity = '1'; });
+    }
+  };
+  // If user navigates back before we append, cancel pending insert
+  backBtn?.addEventListener('click', () => { canceled = true; });
+  setTimeout(tryAppend, 50);
 }
