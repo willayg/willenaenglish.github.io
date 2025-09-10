@@ -282,11 +282,15 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Wire up medals helper tooltip: show combined percent and which medals achieved
   if (headerEl) {
     const names = ['Wooden','Steel','Bronze','Silver','Gold','Platinum'];
-    // Compute combined percent as average of available pct across tracked modes
-    const tracked = ['meaning','listening','multi_choice','listen_and_spell','spelling','level_up'];
-    let sum = 0, count = 0;
-    tracked.forEach(id => { const b = bestByMode[id]; if (b && typeof b.pct === 'number') { sum += Math.max(0, Math.min(100, b.pct)); count++; } });
-    const combined = count ? Math.round(sum / count) : 0;
+    // Compute combined percent as average across 5 core modes (unplayed count as 0)
+    const coreModes = ['meaning','listening','multi_choice','listen_and_spell','spelling'];
+    let sum = 0;
+    coreModes.forEach(id => {
+      const b = bestByMode[id];
+      const v = (b && typeof b.pct === 'number') ? Math.max(0, Math.min(100, b.pct)) : 0;
+      sum += v;
+    });
+    const combined = Math.round(sum / coreModes.length);
     const earned = names.slice(0, Math.max(0, Math.min(6, perfectCount)));
     const tooltip = headerEl.querySelector('.medals-tooltip');
     const textEl = headerEl.querySelector('.medals-tooltip .tooltip-text');

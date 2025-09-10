@@ -7,19 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/students/profile.css" />
+  <link rel="stylesheet" href="/students/dashboard.css" />
   <base href="/students/">
   <meta name="robots" content="noindex" />
-  <style>
-    .wrap { max-width: 980px; margin: 0 auto; padding: 12px; }
-    .cards { display:grid; grid-template-columns: 1fr; gap: 14px; }
-    @media (min-width: 760px){ .cards{ grid-template-columns: 1fr 1fr; } }
-    .card{ background:#fff; border:1px solid #e6eaef; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.04); padding:14px; }
-    .card h2{ margin:0 0 8px; color:#19777e; font-weight:800; font-size:1.2rem; }
-    .grid-tiles{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
-    .tile{ display:flex; align-items:center; justify-content:center; text-align:center; border:1px solid #e6eaef; border-radius:12px; padding:18px; font-weight:800; color:#19777e; background:#f7fcfd; cursor:pointer; text-decoration:none; }
-    .mut{ color:#6b7a8f; }
-  </style>
   <script>
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
@@ -33,21 +23,126 @@
   <script type="module" src="/students/components/student-header.js"></script>
 </head>
 <body>
-  <student-header title="Dashboard" show-id="false" show-home="true" show-points="true"></student-header>
+  <student-header title="Dashboard" show-id="false" show-home="false" show-points="true"></student-header>
   <div class="wrap">
     <div class="cards">
+      <!-- Your Homework -->
       <section class="card">
-        <h2>Start Learning</h2>
-        <div class="grid-tiles">
-          <a class="tile" href="/playzone.html">🎮 Play Zone</a>
-          <a class="tile" href="/Games/Word%20Arcade/index.html">🧠 Word Arcade</a>
-          <a class="tile" href="/students/profile.html">👤 Profile</a>
+        <h2 class="card-title">Your Homework</h2>
+        <div class="card-subtitle" id="dashboardClassName">Class</div>
+        <div class="card-content homework-scroll">
+          <table class="homework-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Teacher</th>
+                <th>Due date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:#ff61ba;">Unit 3 Words About sea animals</td>
+                <td class="status-pink">William</td>
+                <td class="status-pink">2025-10-9</td>
+                <td class="status-pink">45%</td>
+              </tr>
+              <tr>
+                <td style="color:#67e2e6;">Unit 2 Phonics Long a</td>
+                <td class="status-blue">William</td>
+                <td class="status-blue">2025-10-9</td>
+                <td class="status-blue">Done</td>
+              </tr>
+              <tr>
+                <td style="color:#67e2e6;">Lalal</td>
+                <td class="status-blue">William</td>
+                <td class="status-blue">2025-10-9</td>
+                <td class="status-blue">Done</td>
+              </tr>
+              <tr>
+                <td style="color:#ff61ba;">Unit 4 Adjectives</td>
+                <td class="status-pink">William</td>
+                <td class="status-pink">2025-10-9</td>
+                <td class="status-pink">80%</td>
+              </tr>
+              <tr>
+                <td style="color:#67e2e6;">Unit 5 Verbs</td>
+                <td class="status-blue">William</td>
+                <td class="status-blue">2025-10-9</td>
+                <td class="status-blue">Done</td>
+              </tr>
+              <tr>
+                <td style="color:#ff61ba;">Unit 6 Nouns</td>
+                <td class="status-pink">William</td>
+                <td class="status-pink">2025-10-9</td>
+                <td class="status-pink">60%</td>
+              </tr>
+              <tr>
+                <td style="color:#67e2e6;">Unit 7 Review</td>
+                <td class="status-blue">William</td>
+                <td class="status-blue">2025-10-9</td>
+                <td class="status-blue">Done</td>
+              </tr>
+              <tr>
+                <td style="color:#ff61ba;">Unit 8 Challenge</td>
+                <td class="status-pink">William</td>
+                <td class="status-pink">2025-10-9</td>
+                <td class="status-pink">10%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
+
+      <!-- Start Learning -->
       <section class="card">
-        <h2>Account</h2>
-        <p class="mut">Use the avatar in the top-right to open the menu and logout.</p>
-        <button id="logoutBig" class="btn-ghost" style="border:1px solid #e6eaef;border-radius:12px;padding:12px 14px;color:#19777e;font-weight:800">Logout</button>
+        <h2 class="card-title">Start Learning</h2>
+        <div class="card-content">
+          <div class="learning-list">
+            <a href="/Games/Word%20Arcade/index.html" class="learning-item word-arcade">Word Arcade</a>
+            <a href="#" class="learning-item grammar-arcade">Grammar Arcade</a>
+            <a href="/playzone.html" class="learning-item challenge-zone">Challenge Zone</a>
+            <a href="/students/profile.html" class="learning-item my-profile">My Profile</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="card">
+        <h2 class="card-title">Settings</h2>
+        <div class="card-content">
+          <div class="settings-list">
+            <div class="settings-row">
+              <span class="settings-label">Language</span>
+              <span class="settings-muted">Korean</span>
+              <span class="settings-switch"></span>
+              <span class="settings-muted">English</span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">Dark Mode</span>
+              <span class="settings-muted">Off</span>
+              <span class="settings-switch"></span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">Music</span>
+              <span class="settings-muted">Off</span>
+              <span class="settings-switch"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Account -->
+      <section class="card">
+        <h2 class="card-title">Account</h2>
+        <div class="card-content">
+          <div class="account-list">
+            <a href="#" class="account-link">Change Password</a>
+            <a href="#" class="account-link">Change Email</a>
+            <a href="/students/profile.html" class="account-link">View Profile</a>
+            <a href="#" class="account-link">Logout</a>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -56,6 +151,33 @@
       await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
       location.href = '/students/login.html';
     });
+  </script>
+
+  <script>
+    (async () => {
+      try {
+        const el = document.getElementById('dashboardClassName');
+        if (!el) return;
+        // First try get_profile_name (returns class)
+        let cls = null;
+        try {
+          const r1 = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
+          const j1 = await r1.json().catch(() => ({}));
+          if (j1 && j1.class) cls = j1.class;
+        } catch {}
+        // Fallback to get_profile
+        if (!cls) {
+          try {
+            const r2 = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials: 'include' });
+            const j2 = await r2.json().catch(() => ({}));
+            if (j2 && j2.class) cls = j2.class;
+          } catch {}
+        }
+        if (cls && typeof cls === 'string') {
+          el.textContent = `${cls} Class`;
+        }
+      } catch {}
+    })();
   </script>
 </body>
 </html>

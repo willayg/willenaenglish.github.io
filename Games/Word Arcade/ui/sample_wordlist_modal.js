@@ -15,22 +15,59 @@ function ensureWordlistModalStyles() {
       display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      justify-content: flex-start !important;
+  justify-content: space-between !important;
       gap: 12px !important;
       width: 100% !important;
       height: auto !important;
-      margin: 0 !important;
+      /* add ~30% more vertical space between items */
+      margin: 8px 0 !important;
       padding: 12px 18px !important;
       background: none !important;
       border: none !important;
       box-shadow: none !important;
-      text-align: left !important;
+      border-radius: 0px !important;
+    }
+    /* Modal container 3px border */
+    #sampleWordlistModal > div {
+      border: 3px solid #27c5ca !important;
+    }
+    /* subtle separators between stacked buttons */
+    #sampleWordlistModal .wl-btn + .wl-btn,
+    #sampleWordlistModal .mode-btn + .mode-btn {
+      border-top: 1px solid #b0e2e4ff !important;
     }
     /* Hide any decorative pseudo elements from global styles */
     #sampleWordlistModal .wl-btn::before,
     #sampleWordlistModal .wl-btn::after,
     #sampleWordlistModal .mode-btn::before,
     #sampleWordlistModal .mode-btn::after { display: none !important; content: none !important; }
+
+    /* Segmented progress bar (blue outline + yellow blocks) */
+    #sampleWordlistModal .wl-bar {
+      width: 100%;
+      height: 16px;
+      border-radius: 9999px;
+      border: 2px solid #27c5caff; /* light blue outline */
+      background: #ffffff; /* white interior */
+      overflow: hidden;
+    }
+    #sampleWordlistModal .wl-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      /* stripes layer (12 segments with 2px gap) over warm yellow gradient base */
+      background-image:
+        linear-gradient(to right,
+          #ffc107 0,
+          #ffc107 calc(100%/12 - 2px),
+          transparent calc(100%/12 - 2px),
+          transparent calc(100%/12)
+        ),
+        linear-gradient(90deg, #ffe082, #ffb300);
+      background-size: calc(100%/12) 100%, 100% 100%;
+      background-repeat: repeat-x, no-repeat;
+      transition: width .3s ease;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -109,9 +146,9 @@ export function showSampleWordlistModal({ onChoose }) {
     list.className = '';
     list.style.gridTemplateColumns = '';
     list.innerHTML = categories.map((cat, i) => `
-      <button class="wl-btn" data-idx="${i}" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;">
-        <span style="font-size:2em;">${categoryEmojis[cat.label] || '📚'}</span>
-        <span style="font-weight:600;">${cat.label}</span>
+      <button class="wl-btn" data-idx="${i}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:2em; flex-shrink:0;">${categoryEmojis[cat.label] || '📚'}</span>
+        <span style="font-weight:600;text-align:right;">${cat.label}</span>
       </button>
     `).join('');
     Array.from(list.children).forEach((btn) => {
@@ -166,15 +203,15 @@ export function showSampleWordlistModal({ onChoose }) {
     // 1) Render 0% skeleton buttons immediately
     list.innerHTML = category.lists.map((it, i) => {
       const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
-      return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;">
-        <span style="font-size:2em; margin-right:12px;">${emoji}</span>
-        <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
-          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-            <span style="font-weight:600;min-width:0;">${it.label}</span>
-            <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;'>0%</span>
+      return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:2em; flex-shrink:0;">${emoji}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-weight:600;min-width:0;text-align:right;">${it.label}</span>
+            <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;text-align:right;'>0%</span>
           </div>
-          <div class="wl-bar" style="width:100%;height:7px;background:#e0e7ef;border-radius:4px;overflow:hidden;margin-top:7px;">
-            <div class="wl-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#93cbcf,#19777e);transition:width .3s ease;"></div>
+          <div class="wl-bar" style="margin-top:7px;">
+            <div class="wl-bar-fill" style="width:0%;"></div>
           </div>
         </div>
       </button>`;
@@ -209,7 +246,8 @@ export function showSampleWordlistModal({ onChoose }) {
         if (res.ok) sessions = await res.json();
       } catch {}
 
-      const tracked = ['meaning','listening','multi_choice','listen_and_spell','spelling','level_up'];
+  // Use 5 core modes for list completion (exclude 'level_up')
+  const coreModes = ['meaning','listening','multi_choice','listen_and_spell','spelling'];
 
       const percents = category.lists.map((it) => {
         const bestByMode = {};
@@ -229,24 +267,28 @@ export function showSampleWordlistModal({ onChoose }) {
           const modeKey = String(s.mode || '').toLowerCase();
           if (!bestByMode[modeKey] || bestByMode[modeKey] < pct) bestByMode[modeKey] = pct;
         });
-        let sumPct = 0, count = 0;
-        tracked.forEach(m => { if (typeof bestByMode[m] === 'number') { sumPct += bestByMode[m]; count++; } });
-        return count ? Math.round(sumPct / count) : 0;
+        // Average across all core modes; count unplayed as 0% to avoid inflating with only a few modes
+        let sumPct = 0;
+        coreModes.forEach(m => {
+          const v = typeof bestByMode[m] === 'number' ? Math.max(0, Math.min(100, bestByMode[m])) : 0;
+          sumPct += v;
+        });
+        return Math.round(sumPct / coreModes.length);
       });
 
       // 3) Re-render with actual percents
       list.innerHTML = category.lists.map((it, i) => {
         const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
         const pct = Math.max(0, Math.min(100, percents[i] || 0));
-        return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;">
-          <span style="font-size:2em; margin-right:12px;">${emoji}</span>
-          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
-            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-              <span style="font-weight:600;min-width:0;">${it.label}</span>
-              <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;'>${pct}%</span>
+        return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:2em; flex-shrink:0;">${emoji}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+              <span style="font-weight:600;min-width:0;text-align:right;">${it.label}</span>
+              <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;text-align:right;'>${pct}%</span>
             </div>
-            <div class="wl-bar" style="width:100%;height:7px;background:#e0e7ef;border-radius:4px;overflow:hidden;margin-top:7px;">
-              <div class="wl-bar-fill" style="height:100%;width:${pct}%;background:linear-gradient(90deg,#93cbcf,#19777e);transition:width .3s ease;"></div>
+            <div class="wl-bar" style="margin-top:7px;">
+              <div class="wl-bar-fill" style="width:${pct}%;"></div>
             </div>
           </div>
         </button>`;
