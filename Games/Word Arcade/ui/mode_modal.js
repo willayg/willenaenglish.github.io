@@ -69,14 +69,8 @@ export async function showModeModal({ onModeChosen, onClose }) {
       #modeModal .mode-modal-header { text-align:center; padding:4px 8px 10px; }
       #modeModal .mode-modal-header .file-title { font-family:'Poppins', Arial, sans-serif; font-weight:800; color:#19777e; font-size:18px; margin-top:4px; }
       #modeModal .mode-modal-header .medals-row { display:flex; align-items:center; justify-content:center; gap:10px; margin:6px 0 4px; }
-      #modeModal .medal { width:22px; height:22px; border-radius:50%; border:2px solid #d7e3e6; box-shadow:0 1px 2px rgba(0,0,0,0.06) inset; }
+      #modeModal .medal { width:22px; height:22px; border-radius:50%; border:2px solid #d7e3e6; background:transparent; box-shadow:none; }
       #modeModal .medal.filled { border-color:transparent; }
-      #modeModal .medal.wood { background:#a07855; box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); }
-      #modeModal .medal.steel { background:#9ea7b3; box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); }
-      #modeModal .medal.bronze { background:#cd7f32; box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); }
-      #modeModal .medal.silver { background:#c0c0c0; box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); }
-      #modeModal .medal.gold { background:#ffd700; box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); }
-      #modeModal .medal.platinum { background:#e5e4e2; box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); }
     `;
     document.head.appendChild(hs);
   }
@@ -91,16 +85,16 @@ export async function showModeModal({ onModeChosen, onClose }) {
   // Check if we're in Review mode - hide stats if so
   const isReview = listName === 'Review List' || (window.WordArcade?.getListName?.() === 'Review List');
 
-  // Helper for SVG icon paths
+  // Helper for PNG icon paths (lighter assets)
   const modeIcons = {
-    easy_picture: './assets/Images/icons/picture-listen.svg',
-    listening: './assets/Images/icons/listening-mode.svg',
-    picture: './assets/Images/icons/picture-mode.svg',
-    meaning: './assets/Images/icons/matching.svg',
-    multi_choice: './assets/Images/icons/multiple-choice.svg',
-    spelling: './assets/Images/icons/translate-and-spell.svg',
-  listen_and_spell: './assets/Images/icons/listen-and-spell.svg',
-  level_up: './assets/Images/icons/level-up.svg',
+  easy_picture: './assets/Images/icons/reading.png?v=20250910a',
+  listening: './assets/Images/icons/listening.png?v=20250910a',
+  picture: './assets/Images/icons/reading.png?v=20250910a',
+  meaning: './assets/Images/icons/matching.png?v=20250910a',
+  multi_choice: './assets/Images/icons/reading.png?v=20250910a',
+  spelling: './assets/Images/icons/translate-and-spell.png?v=20250910a',
+  listen_and_spell: './assets/Images/icons/listen-and-spell.png?v=20250910a',
+  level_up: './assets/Images/icons/level up.png?v=20250910a',
   };
 
   // Map best pct to a CSS class for glow styling
@@ -131,14 +125,14 @@ export async function showModeModal({ onModeChosen, onClose }) {
 
   // Build modal header with file title and medals progress
   const buildHeader = (perfectCount) => {
-    // SVG filenames for medals in icons folder
+    // PNG filenames for medals in icons folder
     const svgFiles = [
-      'wooden.svg',
-      'steel.svg',
-      'bronze.svg',
-      'silver.svg',
-      'gold.svg',
-      'platinum.svg'
+  'wooden.png?v=20250910a',
+  'steel.png?v=20250910a',
+  'bronze.png?v=20250910a',
+  'silver.png?v=20250910a',
+  'gold.png?v=20250910a',
+  'platinum.png?v=20250910a'
     ];
     const labels = ['Wooden', 'Steel', 'Bronze', 'Silver', 'Gold', 'Platinum'];
     let medals = '';
@@ -207,12 +201,12 @@ export async function showModeModal({ onModeChosen, onClose }) {
 
   // Build same stacked list as selector
   const modes = [
-    { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.svg', colorClass: 'for-you' },
-    { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening-mode.svg', colorClass: 'review' },
-    { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/multiple-choice.svg', colorClass: 'basic' },
-  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.svg', colorClass: 'browse' },
-  { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.svg', colorClass: 'browse' },
-    { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level-up.svg', colorClass: 'for-you' },
+  { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
+  { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+  { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
+  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
+  { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
+  { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
   ];
   // Compute how many modes have a perfect (100%) score for medals
   const modeIds = modes.map(m => m.id);

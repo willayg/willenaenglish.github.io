@@ -70,7 +70,7 @@ export async function showBrowseModal({ onOpen, onClose } = {}) {
       const creator = r.creator_name || r.created_by || 'Unknown';
       let img = r.game_image || r.image || r.img;
       if (!img || img === 'null' || img === 'undefined') {
-        img = './assets/Images/icons/browse.svg';
+  img = './assets/Images/icons/browse.png?v=20250910a';
       }
       const color = colors[i % colors.length];
       const rowDiv = document.createElement('div');
@@ -84,7 +84,7 @@ export async function showBrowseModal({ onOpen, onClose } = {}) {
       imgEl.style.cssText = 'width:56px;height:56px;flex-shrink:0;border-radius:12px;object-fit:cover;align-self:center;';
       imgEl.onerror = function() {
         this.onerror = null;
-        this.src = './assets/Images/icons/browse.svg';
+  this.src = './assets/Images/icons/browse.png?v=20250910a';
       };
       const textWrap = document.createElement('div');
       textWrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;min-width:0;';

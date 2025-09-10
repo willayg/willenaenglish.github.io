@@ -191,8 +191,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   // Build header with word list title and medals row
   const buildHeader = (perfectCount) => {
-    // Use SVG medal icons from icons folder, matching the modal
-    const svgFiles = ['wooden.svg','steel.svg','bronze.svg','silver.svg','gold.svg','platinum.svg'];
+    // Use PNG medal icons from icons folder (lighter)
+  const svgFiles = ['wooden.png?v=20250910a','steel.png?v=20250910a','bronze.png?v=20250910a','silver.png?v=20250910a','gold.png?v=20250910a','platinum.png?v=20250910a'];
     const labels = ['Wooden', 'Steel', 'Bronze', 'Silver', 'Gold', 'Platinum'];
     let medals = '';
       for (let i = 0; i < 6; i++) {
@@ -262,12 +262,12 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   };
   // Create a single list of modes in the order shown in the image
   const modes = [
-    { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.svg', colorClass: 'for-you' },
-    { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening-mode.svg', colorClass: 'review' },
-    { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/multiple-choice.svg', colorClass: 'basic' },
-  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.svg', colorClass: 'browse' },
-  { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.svg', colorClass: 'browse' },
-    { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level-up.svg', colorClass: 'for-you' },
+  { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
+  { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+  { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
+  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
+  { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
+  { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
   ];
 
   // Compute how many modes have a perfect (100%) score for medals
