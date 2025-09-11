@@ -177,7 +177,7 @@ class StudentHeader extends HTMLElement {
   .menu-anchor { position: relative; }
   .dropdown {
     position: absolute;
-    right: -200px;
+    right: 20px;
     top: calc(100% + 8px);
     background: #fff;
     border: 1px solid #e6eaef;
