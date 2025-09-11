@@ -447,6 +447,16 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   if (reviewBtn) reviewBtn.addEventListener('click', () => { loadChallengingAndStart(); });
   if (browseBtn) browseBtn.addEventListener('click', () => { openSavedGamesModal(); });
+
+  // Auto-open a saved game when linked with ?open=saved&id=123
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const open = (params.get('open') || '').toLowerCase();
+    const id = params.get('id');
+    if (open === 'saved' && id) {
+      openSavedGameById(id);
+    }
+  } catch {}
 });
 
 // Optional: expose for console debugging and UI querying

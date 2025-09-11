@@ -977,7 +977,12 @@ exports.handler = async (event) => {
             tags: Array.isArray(gd.tags) ? gd.tags : null,
             visibility: gd.visibility || undefined,
           };
-          const { data, error } = await supabase.from('game_data').insert([row]);
+          // Ensure we return the inserted row id for client-side linking/QR
+          const { data, error } = await supabase
+            .from('game_data')
+            .insert([row])
+            .select('id')
+            .single();
           if (error) {
             return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
           }
