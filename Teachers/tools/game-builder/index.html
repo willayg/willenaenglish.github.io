@@ -169,8 +169,28 @@
       </div>
       <div class="modal-foot" style="padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:flex-end;">
         <span id="createGameStatus" style="margin-right:auto;color:#666;font-size:0.95em;"></span>
+        <button id="createGameLive" class="btn" title="Save and play on your phone">Play Game Live</button>
         <button id="createGameSave" class="btn primary">Create Game</button>
         <button id="createGameCancel" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightweight QR popup -->
+  <div id="qrOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;padding:12px;">
+    <div style="background:#fff;border-radius:16px;border:2px solid #67e2e6;box-shadow:0 8px 30px rgba(0,0,0,0.25);padding:16px;max-width:92vw;width:420px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+        <div style="font-weight:800;color:#19777e;">Play Game Live</div>
+        <button id="qrClose" class="btn" style="background:#fff;border:1px solid #e6eaef;border-radius:10px;padding:6px 10px;cursor:pointer;">Close</button>
+      </div>
+      <div id="qrTips" style="font-size:12px;color:#666;margin-bottom:8px;">Scan this QR with your phone camera to open the game.</div>
+      <div style="display:flex;align-items:center;justify-content:center;margin:12px 0;">
+        <img id="qrImage" alt="QR code" style="width:240px;height:240px;border-radius:12px;border:1px solid #eef2f5;image-rendering:pixelated;" />
+      </div>
+      <div style="word-break:break-all;font-size:12px;color:#19777e;background:#f6feff;border:1px solid #a9d6e9;border-radius:8px;padding:8px;" id="qrLinkBox"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button id="qrCopy" class="btn" style="background:#93cbcf;color:#fff;border:1px solid #93cbcf;border-radius:10px;padding:8px 12px;cursor:pointer;">Copy Link</button>
+        <a id="qrOpen" class="btn" target="_blank" rel="noopener" style="text-decoration:none;background:#19777e;color:#fff;border:1px solid #19777e;border-radius:10px;padding:8px 12px;cursor:pointer;">Open</a>
       </div>
     </div>
   </div>

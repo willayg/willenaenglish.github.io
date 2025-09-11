@@ -8,6 +8,7 @@ const el = {
   modal: document.getElementById('createGameModal'),
   close: document.getElementById('createGameModalClose'),
   save: document.getElementById('createGameSave'),
+  live: document.getElementById('createGameLive'),
   cancel: document.getElementById('createGameCancel'),
   title: document.getElementById('gameTitle'),
   cls: document.getElementById('gameClass'),
@@ -185,6 +186,100 @@ export function initCreateGameModal(buildPayload) {
       console.error('Save error', e); setStatus('Save error'); alert('Save error');
     } finally {
       el.save.disabled = false; setStatus('');
+    }
+  };
+
+  // Play Game Live flow: save like Create Game, then show QR pointing to Word Arcade to open this saved game id
+  if (el.live) el.live.onclick = async () => {
+    const data = buildPayload();
+    data.gameTitle = el.title?.value?.trim() || 'Untitled Game';
+    data.gameClass = el.cls?.value?.trim() || '';
+    data.gameDateDue = el.dateDue?.value || '';
+    data.gameBook = el.book?.value?.trim() || '';
+    data.gameUnit = el.unit?.value?.trim() || '';
+    data.gameDescription = el.desc?.value?.trim() || '';
+    data.gameImage = gameImageUrl;
+    data.class = data.gameClass;
+    data.book = data.gameBook;
+    data.unit = data.gameUnit;
+    try {
+      const uid = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('id');
+      if (uid) data.created_by = uid;
+    } catch {}
+
+    if (!data.title || !Array.isArray(data.words) || !data.words.length) {
+      alert('Please provide a title and at least one word.');
+      return;
+    }
+
+    try {
+      el.live.disabled = true;
+      const english = data.words.map(w => w.eng).filter(Boolean);
+      await ensureAudioForWords(english);
+    } catch {}
+
+    try {
+      setStatus('Saving game...');
+      const res = await fetch('/.netlify/functions/supabase_proxy_fixed', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'insert_game_data', data })
+      });
+      const js = await res.json();
+      if (!(js?.success)) {
+        setStatus('Save failed');
+        alert('Save failed: ' + (js?.error || 'Unknown error'));
+        return;
+      }
+      setStatus('Saved. Generating QR...');
+      const inserted = Array.isArray(js.data) ? js.data[0] : (js.data || {});
+      const gameId = inserted?.id || inserted?.[0]?.id;
+      if (!gameId) {
+        alert('Could not determine saved game id.');
+        return;
+      }
+      // Build link that opens Word Arcade and loads this saved game, then lands on mode selector
+      const base = `${location.origin}/Games/Word%20Arcade/index.html`;
+      const url = new URL(base);
+      url.searchParams.set('open', 'saved');
+      url.searchParams.set('id', String(gameId));
+
+      // Generate QR – try multiple providers in case one is blocked
+      const providers = [
+        // Google Charts
+        `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=M|0&chl=${encodeURIComponent(url.toString())}`,
+        // QuickChart
+        `https://quickchart.io/qr?text=${encodeURIComponent(url.toString())}&size=300&margin=0`,
+        // goQR
+        `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url.toString())}`
+      ];
+      const overlay = document.getElementById('qrOverlay');
+      const img = document.getElementById('qrImage');
+      const linkBox = document.getElementById('qrLinkBox');
+      const copyBtn = document.getElementById('qrCopy');
+      const openBtn = document.getElementById('qrOpen');
+      const closeBtn = document.getElementById('qrClose');
+      if (img) {
+        let idx = 0;
+        const tryNext = () => {
+          if (idx >= providers.length) return;
+          img.src = providers[idx++];
+        };
+        img.onerror = () => { tryNext(); };
+        tryNext();
+      }
+      if (linkBox) linkBox.textContent = url.toString();
+      if (openBtn) openBtn.href = url.toString();
+      if (overlay) overlay.style.display = 'flex';
+      if (closeBtn) closeBtn.onclick = () => { overlay.style.display = 'none'; };
+      if (copyBtn) copyBtn.onclick = async () => {
+        try { await navigator.clipboard.writeText(url.toString()); setStatus('Link copied.'); } catch {}
+      };
+    } catch (e) {
+      console.error('Play Live error', e);
+      setStatus('Error');
+      alert('Could not create or open the live game.');
+    } finally {
+      el.live.disabled = false;
     }
   };
 
