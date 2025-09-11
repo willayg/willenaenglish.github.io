@@ -119,27 +119,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
             if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
           }
         });
-        // Fallback: aggregate across all modes if no list-specific sessions
-        if (!Object.keys(bestByMode).length) {
-          try {
-            const url2 = new URL(FN('progress_summary'), window.location.origin);
-            url2.searchParams.set('section', 'modes');
-            const res2 = await fetch(url2.toString(), { cache: 'no-store', credentials: 'include' });
-            if (res2.ok) {
-              const modesAgg = await res2.json();
-              (Array.isArray(modesAgg) ? modesAgg : []).forEach(m => {
-                const k = (m.mode || 'unknown').toString().toLowerCase();
-                if (typeof m.correct === 'number' && typeof m.total === 'number' && m.total > 0) {
-                  const pct = Math.round((m.correct / m.total) * 100);
-                  if (!(k in bestByMode) || (bestByMode[k].pct ?? -1) < pct) bestByMode[k] = { pct };
-                } else if (typeof m.accuracy === 'number') {
-                  const pct = Math.round((m.accuracy || 0) * 100);
-                  if (!(k in bestByMode) || (bestByMode[k].pct ?? -1) < pct) bestByMode[k] = { pct };
-                }
-              });
-            }
-          } catch {}
-        }
+  // Do not fallback to aggregate stats: leave modes at 0% if this list has no prior sessions.
       }
     } catch {}
   }
