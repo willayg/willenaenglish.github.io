@@ -154,7 +154,7 @@ export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, 
     const term = encodeURIComponent(list[idx]?.eng || '');
     const url = `https://pixabay.com/images/search/${term}/`;
     // Reuse the same window name so it refreshes instead of opening multiple windows
-    window.open(url, 'pixabaySearch', 'width=900,height=700');
+    window.open(url, 'pixabaySearch', 'width=600,height=900,left=700');
   });
 
   // Drag and drop handling

@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
-const ELEVEN_LABS_VOICE_ID = process.env.ELEVEN_LABS_VOICE_ID;
+const ELEVEN_LABS_VOICE_ID = process.env.ELEVEN_LABS_VOICE_ID || process.env.ELEVEN_LABS_DEFAULT_VOICE_ID;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -48,6 +48,7 @@ exports.handler = async (event) => {
   }
 
   // 2. Generate audio with Eleven Labs
+  const voiceSettings = { stability: 1.0, similarity_boost: 1.0, style: 1.0, use_speaker_boost: false };
   let audioBuffer;
   try {
     const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_LABS_VOICE_ID}`, {
@@ -56,7 +57,7 @@ exports.handler = async (event) => {
         'xi-api-key': ELEVEN_LABS_API_KEY,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ text: phrase, model_id: "eleven_monolingual_v1" })
+      body: JSON.stringify({ text: phrase, model_id: "eleven_monolingual_v1", voice_settings: voiceSettings })
     });
 
     if (!ttsRes.ok) {

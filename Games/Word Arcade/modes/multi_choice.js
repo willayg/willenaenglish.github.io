@@ -182,7 +182,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div id="multiScoreMixed" style="margin-top:6px;text-align:center;font-size:1.1em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
         </div>`;
 
-      setupChoiceButtons(gameArea);
+  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
       document.querySelectorAll('#multiChoicesMixed .multi-pic-btn').forEach(btn => {
         btn.onclick = () => {
           if (questionLocked) return;
@@ -230,7 +230,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
         </div>`;
 
       document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '15vh'; });
-      setupChoiceButtons(gameArea);
+  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
       document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
         btn.onclick = () => {
           if (questionLocked) return;
@@ -297,7 +297,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
     </div>`;
 
     document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '15vh'; });
-    setupChoiceButtons(gameArea);
+  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
     document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
       btn.onclick = () => {
         if (questionLocked) return;

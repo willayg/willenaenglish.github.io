@@ -8,7 +8,12 @@ const audioCache = new Map(); // normalizedWord -> Audio object
 const DISABLE_TTS_GENERATION = false;
 
 function normalizeWord(w) {
-  return String(w || '').trim().toLowerCase();
+  // Unify cache keys so 'ice cream' and 'ice_cream' map to the same key
+  // Use lowercase and replace all whitespace with underscores
+  return String(w || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
 }
 
 // Optional: persist a preferred ElevenLabs voice ID (e.g., US/UK voice)
@@ -22,10 +27,14 @@ function getPreferredVoiceId() {
 }
 
 async function batchCheckSupabaseAudio(words) {
-  const isLocal = typeof window !== 'undefined' && /localhost|127\.0\.0\.1/i.test(window.location.hostname);
-  const endpoints = isLocal
-    ? ['http://localhost:9000/.netlify/functions/get_audio_urls', '/.netlify/functions/get_audio_urls']
-    : ['/.netlify/functions/get_audio_urls'];
+  // Try relative first (works in Netlify dev/prod), then common localhost ports
+  const endpoints = [
+    '/.netlify/functions/get_audio_urls',
+    'http://localhost:9000/.netlify/functions/get_audio_urls',
+    'http://127.0.0.1:9000/.netlify/functions/get_audio_urls',
+    'http://localhost:8888/.netlify/functions/get_audio_urls',
+    'http://127.0.0.1:8888/.netlify/functions/get_audio_urls'
+  ];
   let lastErr = null;
   for (const url of endpoints) {
     try {
@@ -34,17 +43,55 @@ async function batchCheckSupabaseAudio(words) {
         init.signal = AbortSignal.timeout(12000);
       }
       const res = await fetch(url, init);
-      if (res.ok) {
-        const data = await res.json();
-        return data && data.results ? data.results : {};
-      } else {
+      if (!res.ok) {
         lastErr = new Error(`get_audio_urls HTTP ${res.status}`);
+        continue;
       }
+      const data = await res.json();
+      if (data && data.results && typeof data.results === 'object') {
+        return data.results; // { [word]: { exists: boolean, url?: string } }
+      }
+      lastErr = new Error('Malformed response from get_audio_urls');
     } catch (e) {
       lastErr = e;
     }
   }
   throw lastErr || new Error('get_audio_urls failed');
+}
+
+// Robust loader: try to load an Audio element; if it fails, fetch as Blob and use an object URL
+async function loadAudioElement(url) {
+  // First attempt: direct Audio src
+  try {
+    const audio = new Audio(url);
+    audio.preload = 'auto';
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Load timeout')), 10000);
+      audio.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
+      audio.onerror = () => { clearTimeout(timeout); reject(new Error('Load error')); };
+      audio.load();
+    });
+    return audio;
+  } catch (e) {
+    // Fallback: fetch blob and create object URL
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const audio2 = new Audio(objectUrl);
+      audio2.preload = 'auto';
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Blob load timeout')), 10000);
+        audio2.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
+        audio2.onerror = () => { clearTimeout(timeout); reject(new Error('Blob load error')); };
+        audio2.load();
+      });
+      return audio2;
+    } catch (e2) {
+      throw e2;
+    }
+  }
 }
 
 // Preload all audio for a word list - generates missing MP3s and loads all from Supabase
@@ -84,10 +131,13 @@ export async function preloadAllAudio(wordList, onProgress = null) {
 
   console.log(`Found ${existingAudio.size} existing, missing ${missingWords.length}`);
 
-  // If none of the words exist, generate for all
-  if (!DISABLE_TTS_GENERATION && missingWords.length) {
+  // Generate when needed: if none exist, generate all; else generate missing
+  // Additionally, refresh words that contain spaces to remove any prior 'underscore' speech
+  if (!DISABLE_TTS_GENERATION && (missingWords.length > 0 || words.some(w => /[\s_]/.test(w)))) {
     completed = 0;
-    const toGenerate = existingAudio.size === 0 ? words : missingWords;
+    const toGenerate = existingAudio.size === 0
+      ? words
+  : Array.from(new Set([ ...missingWords, ...words.filter(w => /[\s_]/.test(w)) ]));
     for (const word of toGenerate) {
       try {
         const text = preprocessTTS(word);
@@ -95,8 +145,9 @@ export async function preloadAllAudio(wordList, onProgress = null) {
         if (data && data.audio) {
           const uploadedUrl = await uploadToSupabase(word, data.audio);
           if (uploadedUrl) {
-            audioCache.delete(normalizeWord(word));
-            existingAudio.set(normalizeWord(word), uploadedUrl);
+            const n = normalizeWord(word);
+            audioCache.delete(n);
+            existingAudio.set(n, uploadedUrl);
           } else {
             failedGenerations.add(word);
           }
@@ -122,13 +173,7 @@ export async function preloadAllAudio(wordList, onProgress = null) {
       const idx = audioIndex++;
       const [normWord, url] = audioEntries[idx];
       try {
-        const audio = new Audio(url);
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Load timeout')), 10000);
-          audio.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
-          audio.onerror = () => { clearTimeout(timeout); reject(new Error('Load error')); };
-          audio.load();
-        });
+        const audio = await loadAudioElement(url);
         audioCache.set(normWord, audio);
       } catch (err) {
         failedLoads.add(normWord);
@@ -187,10 +232,11 @@ async function uploadToSupabase(word, audioBase64) {
   ];
   for (const url of endpoints) {
     try {
+  const payload = { word, fileDataBase64: audioBase64 };
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word, fileDataBase64: audioBase64 })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         const result = await res.json();
@@ -206,33 +252,62 @@ async function uploadToSupabase(word, audioBase64) {
   throw new Error('Upload failed');
 }
 
+function countVowelGroups(s) {
+  if (!/^[a-zA-Z]+$/.test(s)) return Infinity; // non-simple words: skip syllable guess
+  // Split on one-or-more non-vowel characters and count non-empty vowel chunks
+  return s.split(/[^aeiouy]+/i).filter(Boolean).length;
+}
+
+function isMonosyllabic(s) {
+  const t = String(s || '').trim();
+  if (!t) return false;
+  const vg = countVowelGroups(t);
+  return vg === 1;
+}
+
+// Treat very short words similarly to monosyllabic ones for pacing/playback
+function isShortWord(s) {
+  const t = String(s || '').trim();
+  return t.length > 0 && t.length <= 4;
+}
+
+function isMonoOrShortWord(s) {
+  const t = String(s || '').trim();
+  if (!t) return false;
+  return isMonosyllabic(t) || isShortWord(t);
+}
+
 export function preprocessTTS(text) {
-  const isShort = text.length <= 4 || (/^[a-zA-Z]+$/.test(text) && text.split(/[^aeiouy]+/).length <= 2);
-  if (isShort) {
-    const formats = [
-      (word) => `The word is: "${word}!"`,
-      (word) => `Let's try: "${word}!"`,
-      (word) => `Can you do: "${word}!"?`,
-      (word) => `Try "${word}!"`,
-      (word) => `This one is: "${word}"`
-    ];
-    let idx;
-    if (window.crypto && window.crypto.getRandomValues) {
-      const arr = new Uint32Array(1);
-      window.crypto.getRandomValues(arr);
-      idx = arr[0] % formats.length;
-    } else {
-      idx = Math.floor(Math.random() * formats.length);
-    }
-    return formats[idx](text);
+  // Normalize underscores to spaces (defensive: avoid voices saying "underscore")
+  text = String(text || '').replace(/_/g, ' ').trim();
+  // Apply a prefixed natural-speech template for every word/phrase to soften delivery
+  const w = text;
+  const templates = [
+    (x) => `This one is "${x}"...`,
+    (x) => `The word is "${x}"...`,
+    (x) => `"${x}", is the word...`,
+    (x) => `Try "${x}"...`,
+    (x) => `How about "${x}"?...`,
+    (x) => `"${x}", is the one...`,
+    (x) => `Can you do the word; "${x}"?...`,
+    (x) => `Can you do; "${x}"?...`,
+    (x) => `The word you want is... "${x}"...`
+  ];
+  let idx = 0;
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const arr = new Uint32Array(1);
+    window.crypto.getRandomValues(arr);
+    idx = arr[0] % templates.length;
+  } else {
+    idx = Math.floor(Math.random() * templates.length);
   }
-  return text;
+  return templates[idx](w);
 }
 
 // Extract the canonical word from a TTS phrase, handling quotes and prefixes
 function extractWordForAudio(text) {
   if (!text) return '';
-  const raw = String(text).trim();
+  const raw = String(text).replace(/_/g, ' ').trim();
   const sanitize = (s) => s
     .trim()
     // drop any leading/trailing quotes, spaces, or punctuation
@@ -246,8 +321,8 @@ function extractWordForAudio(text) {
   }
   // Remove trailing punctuation/closing quotes
   const tailTrimmed = raw.replace(/[\"”'’!?.、，。…\s]*$/g, '').trim();
-  // Strip common prompt prefixes if present
-  const promptPrefix = /^(?:the word is|let[’']s try|can you (?:say|do)|try|this one is)\s*[:：-]?\s*/i;
+  // Strip common prompt prefixes if present (including our natural-speech helpers)
+  const promptPrefix = /^(?:the word is|the word you want is|this is a|this is an|this one is|how about|let['’]s try|can you (?:say|do)|try|say it slowly|please say|repeat slowly|repeat|slowly|let['’]s say it slowly)\s*[:：-]?\s*/i;
   const removedPrompt = tailTrimmed.replace(promptPrefix, '').trim();
   // Clean any stray leading quotes left after prompt removal
   const cleaned = sanitize(removedPrompt);
@@ -287,7 +362,7 @@ function speakWithSystemTTS(word) {
           const utt2 = new SpeechSynthesisUtterance(String(word));
           if (voice) utt2.voice = voice;
           utt2.lang = (voice && voice.lang) || 'en-US';
-          utt2.rate = 0.9; utt2.pitch = 1.0; utt2.volume = 1.0;
+            utt2.rate = 0.8; utt2.pitch = 1.0; utt2.volume = 1.0;
           utt2.onend = resolve; utt2.onerror = resolve;
           synth.speak(utt2);
         };
@@ -301,7 +376,7 @@ function speakWithSystemTTS(word) {
       const utt = new SpeechSynthesisUtterance(String(word));
       utt.voice = voice;
       utt.lang = voice.lang || 'en-US';
-      utt.rate = 0.9; utt.pitch = 1.0; utt.volume = 1.0;
+        utt.rate = 0.8; utt.pitch = 1.0; utt.volume = 1.0;
       utt.onend = resolve; utt.onerror = resolve;
       synth.speak(utt);
     } catch {
@@ -318,9 +393,8 @@ export async function playTTS(text) {
   // Play from cache when available (normalized)
   const key = normalizeWord(word);
   if (audioCache.has(key)) {
-    const audio = audioCache.get(key);
-    audio.currentTime = 0;
-    audio.playbackRate = 0.85;
+  const audio = audioCache.get(key);
+  audio.currentTime = 0;
     try {
       await audio.play();
     } catch (err) {
@@ -332,6 +406,57 @@ export async function playTTS(text) {
     }
     return;
   }
+
+  // Lazy-load from backend if not preloaded yet
+  try {
+    // Prefer get_audio_urls to get a signed/public URL when needed
+    const listEndpoints = [
+      '/.netlify/functions/get_audio_urls',
+      'http://localhost:9000/.netlify/functions/get_audio_urls'
+    ];
+    let loaded = false;
+    for (const url of listEndpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ words: [word] })
+        });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && data.results) {
+          const info = data.results[word] || data.results[normalizeWord(word)] || null;
+          if (info && info.exists && info.url) {
+            const audio = await loadAudioElement(info.url);
+            audioCache.set(key, audio);
+            try { await audio.play(); console.debug('Lazy-loaded audio from R2 (list):', word); } catch { /* ignore */ }
+            loaded = true;
+            break;
+          }
+        }
+      } catch { /* try next */ }
+    }
+    if (loaded) return;
+
+    // Fallback to single URL check (may require public base)
+    const singleEndpoints = [
+      '/.netlify/functions/get_audio_url',
+      'http://localhost:9000/.netlify/functions/get_audio_url'
+    ];
+    for (const url of singleEndpoints) {
+      try {
+        const res = await fetch(`${url}?word=${encodeURIComponent(word)}`, { method: 'GET' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && data.exists && data.url) {
+          const audio = await loadAudioElement(data.url);
+          audioCache.set(key, audio);
+          try { await audio.play(); console.debug('Lazy-loaded audio from R2 (single):', word); } catch { /* ignore */ }
+          return;
+        }
+      } catch { /* try next */ }
+    }
+  } catch { /* swallow and fall back */ }
 
   // Strict mode: do not generate; fallback to system TTS (US female preferred)
   // Keep logs quiet to avoid noise during class use

@@ -1,0 +1,133 @@
+// Mini Player Bootstrap (ID-based cross-device)
+// -------------------------------------------------------------
+// Responsibilities:
+// 1. Read id from URL (?id=...)
+// 2. Fetch JSON from server /.netlify/functions/live_game?id=...
+// 3. Normalize words -> pass to requested mode (all modes active except Level Up)
+// 4. Provide common utilities (TTS) to modes that need them.
+// 5. Render errors gracefully if anything missing.
+// -------------------------------------------------------------
+
+import { loadMode } from './core/mode-registry.js';
+import { playTTS, preprocessTTS, preloadAllAudio } from './tts.js';
+
+const root = document.getElementById('gameRoot');
+
+function showError(msg) {
+	if (root) {
+		root.innerHTML = `<div style="max-width:480px;margin:40px auto;text-align:center;font-family:system-ui,sans-serif;padding:30px 24px;background:#fff;border:2px solid #fecaca;border-radius:18px;box-shadow:0 6px 24px rgba(0,0,0,0.1);">
+			<h2 style="margin:0 0 12px;font-size:1.4rem;color:#b91c1c;">Problem Loading Game</h2>
+			<div style="color:#334155;font-size:.95rem;line-height:1.4;">${msg}</div>
+		</div>`;
+	}
+	console.error('[MiniPlayer]', msg);
+}
+
+function getId() {
+	const params = new URLSearchParams(location.search);
+	return params.get('id');
+}
+
+function getModeFromUrl() {
+  const params = new URLSearchParams(location.search);
+  return params.get('mode');
+}
+
+async function fetchGame(id) {
+	try {
+		const resp = await fetch('/.netlify/functions/live_game?id=' + encodeURIComponent(id), { cache: 'no-store' });
+		const js = await resp.json().catch(()=>null);
+		if (!resp.ok || !js || !js.success) throw new Error(js && js.error || 'Fetch failed');
+		return js;
+	} catch(e) {
+		showError('Could not load game: ' + (e.message || 'error'));
+		return null;
+	}
+}
+
+function normalizeWords(list) {
+	if (!Array.isArray(list)) return [];
+	return list.map(w => {
+		const eng = w.eng || w.en || '';
+		const kor = w.kor || w.kr || w.translation || '';
+		if (!eng || !kor) return null; // drop incomplete
+		return {
+			eng,
+			kor,
+			// Preserve multiple image field aliases so picture modes can find one
+			img: w.img || w.image || w.picture || w.image_url || null,
+			image: w.image || null,
+			image_url: w.image_url || null,
+			picture: w.picture || null,
+			// Preserve audio aliases for listening modes
+			audio: w.audio || w.audio_eng || w.tts || w.audio_url || null,
+			audio_eng: w.audio_eng || null,
+			audio_kor: w.audio_kor || null,
+			tts: w.tts || null,
+			audio_url: w.audio_url || null,
+			definition: w.definition || '',
+			// include any extra fields if needed later (shallow copy limited safe list)
+			part: w.part || w.pos || null
+		};
+	}).filter(Boolean);
+}
+
+async function start() {
+	const id = getId();
+	if (!id) { showError('Missing id in URL.'); return; }
+	const stub = await fetchGame(id);
+	if (!stub) return; // fetchGame already showed error
+	const modeKey = getModeFromUrl() || stub.mode || (Array.isArray(stub.modes) ? stub.modes[0] : null) || 'multi_choice_eng_to_kor';
+	const words = normalizeWords(stub.wordlist || stub.words || []);
+	if (!words.length) {
+		showError('No valid words found in game data.');
+		return;
+	}
+
+	// If the selected mode depends on audio, preload from Supabase so we avoid system TTS fallback.
+	const audioModes = new Set(['easy_picture', 'listening_multi_choice', 'listen_and_spell', 'spelling']);
+	if (audioModes.has(modeKey)) {
+		if (root) {
+			root.innerHTML = `<div style="max-width:520px;margin:40px auto;text-align:center;font-family:system-ui,sans-serif;padding:24px 20px;background:#fff;border:2px solid #cfe8ea;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,0.08);">
+				<h2 style="margin:0 0 10px;font-size:1.2rem;color:#19777e;">Preparing audio…</h2>
+				<div id="audioPrepMsg" style="color:#334155;font-size:.95rem;line-height:1.4;">Checking and loading sounds</div>
+				<div style="margin-top:12px;height:10px;background:#eef2f7;border-radius:999px;overflow:hidden;">
+					<div id="audioPrepBar" style="height:100%;width:0;background:#93cbcf;transition:width .15s ease;"></div>
+				</div>
+			</div>`;
+		}
+		try {
+			const engWords = words.map(w => w.eng).filter(Boolean);
+			await preloadAllAudio(engWords, (p) => {
+				const bar = document.getElementById('audioPrepBar');
+				const msg = document.getElementById('audioPrepMsg');
+				if (bar && typeof p.progress === 'number') {
+					bar.style.width = Math.max(0, Math.min(100, Math.round(p.progress))) + '%';
+				}
+				if (msg && p.phase) {
+					msg.textContent = p.phase === 'checking' ? 'Checking existing audio…' : p.phase === 'generating' ? 'Generating missing audio…' : 'Loading audio…';
+				}
+			});
+		} catch (e) {
+			console.warn('Audio preload failed; proceeding with fallback TTS if needed.', e);
+		}
+	}
+	try {
+		const mode = await loadMode(modeKey);
+		const context = {
+			wordList: words,
+			gameArea: root,
+			startGame: (k) => { if (k) { location.search = '?id=' + encodeURIComponent(getId()) + '&mode=' + encodeURIComponent(k); } },
+			listName: stub.title || 'Live List',
+			// Provide shared utilities for modes that require audio
+			playTTS,
+			preprocessTTS
+		};
+		mode.run(context);
+	} catch(e) {
+		console.error(e);
+		showError('Failed to load mode: ' + e.message);
+	}
+}
+
+start();

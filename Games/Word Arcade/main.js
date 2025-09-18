@@ -11,6 +11,21 @@ import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
 import { FN } from './scripts/api-base.js';
 
+// -----------------------------
+// Auth redirect helper
+// -----------------------------
+function redirectToStudentLogin() {
+  try {
+    const already = new URL(location.href);
+    const next = encodeURIComponent(already.pathname + already.search + already.hash);
+    // Avoid infinite loop if we're already on the student login
+    if (/\/students\/login\.html$/i.test(already.pathname)) return;
+    location.href = `/students/login.html?next=${next}`;
+  } catch {
+    location.href = '/students/login.html';
+  }
+}
+
 // No direct Supabase client here. We rely on HTTP-only cookies set by Netlify functions.
 
 // -----------------------------
@@ -43,13 +58,16 @@ async function fetchJSON(url, {
     const data = tryParse();
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
-      if (data && (data.error || data.message)) {
-        msg += ` – ${data.error || data.message}`;
-      } else if (raw) {
-        msg += ` – ${raw.slice(0, 160)}`;
-      }
+      const serverMsg = (data && (data.error || data.message)) || raw.slice(0,160);
+      if (serverMsg) msg += ` – ${serverMsg}`;
       const e = new Error(msg);
       e.status = res.status;
+      // Detect auth issues: 401/403 or recognizable error strings
+      const authLike = res.status === 401 || res.status === 403 || /not\s*signed\s*in|not\s*auth|no\s*session/i.test(serverMsg || '');
+      if (authLike) {
+        // Schedule redirect after small delay so calling code can stop UI work
+        setTimeout(() => redirectToStudentLogin(), 50);
+      }
       throw e;
     }
     return data !== undefined ? data : raw;

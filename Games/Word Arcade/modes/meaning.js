@@ -1,224 +1,92 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
-import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
-// Meaning (drag-and-drop) mode
-export function runMeaningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null, score: initialScore = 0, round: initialRound = 0 }) {
-  const ROUND_SIZE = 5;
-  const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
-  let score = initialScore;
-  let round = initialRound;
-  const total = wordList.length;
-  const correctValue = 100 / total;
-  const wrongValue = 50 / total;
-  const sessionId = startSession({ mode: 'meaning', wordList, listName });
 
-  // Track which pairs have been completed
-  let completedPairs = [];
+// Meaning mode (definition → 4 choices) — audio-free, uses definitions from game_data.words JSON
+export function runMeaningMode({ wordList, gameArea, startGame, listName = null }) {
+  const shuffle = (arr) => arr.map(v => [Math.random(), v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
 
-  // Shuffle overall order once per game so rounds follow a random sequence
-  const shuffledOrder = [...wordList].sort(() => Math.random() - 0.5);
+  // Normalize/guard input
+  const words = Array.isArray(wordList) ? wordList.filter(w => w && w.eng) : [];
+  const total = words.length;
+  const sessionId = startSession({ mode: 'meaning', wordList: words, listName });
+  let score = 0;
+  let index = 0;
+  const order = shuffle([...words]);
 
-  // Show intro phrase large, then fade out to reveal the game
-  gameArea.innerHTML = `
-    <div id="meaningIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Match English with Korean!</div>
-    </div>
-  `;
-  setTimeout(() => {
-    const intro = document.getElementById('meaningIntro');
-    if (intro) intro.style.opacity = '0';
-    setTimeout(() => {
-      showGameProgress(total, 0);
-      renderRound();
-    }, 650);
-  }, 1000);
+  const definitionOf = (w) => {
+    const raw = (w && (w.def || w.definition || w.gloss || w.meaning)) || '';
+    const t = String(raw).replace(/\s+/g, ' ').trim();
+    return t ? t.slice(0, 220) : 'Choose the word that best matches this meaning.';
+  };
+
+  const ensurePoppins = () => {
+    try {
+      if (!document.getElementById('wa_poppins_font')) {
+        const l = document.createElement('link');
+        l.id = 'wa_poppins_font';
+        l.rel = 'stylesheet';
+        l.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap';
+        document.head.appendChild(l);
+      }
+    } catch {}
+  };
 
   function renderRound() {
-  // Per-interaction lock to prevent rapid multiple matches
-  let interactionLocked = false;
-    // Get next batch of pairs
-  const remainingPairs = shuffledOrder.filter(w => !completedPairs.includes(w.eng + '|' + w.kor));
-    const roundPairs = remainingPairs.slice(0, ROUND_SIZE);
-    if (roundPairs.length === 0) {
-      // Game over
-  playSFX('end');
-      endSession(sessionId, { mode: 'meaning', summary: { score: Number(score.toFixed(1)), total: 100 } });
-  hideGameProgress();
-      gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
-        <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
-        ${isReview ? '' : `<div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score.toFixed(1)}%</span></div>`}
-        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMoreMeaning" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
-      </div>`;
-      document.getElementById('playAgainBtn').onclick = () => startGame('meaning');
-      document.getElementById('tryMoreMeaning').onclick = () => {
-        if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
-          window.WordArcade.startModeSelector();
-        } else {
-          // Fallback
-          startGame('meaning');
-        }
-      };
-      return;
-    }
-    // Shuffle for each round
-    const engShuffled = [...roundPairs].sort(() => Math.random() - 0.5);
-    const korShuffled = [...roundPairs].sort(() => Math.random() - 0.5);
-    const engCol = `<div class="eng-col">
-      ${engShuffled.map((w, i) => `<div class="eng-card" data-eng="${w.eng}" data-idx="${i}">${w.eng}</div>`).join('')}
-    </div>`;
-    const korCol = `<div class="kor-col">
-      ${korShuffled.map((w, i) => `<div class="kor-target" data-idx="${i}" data-kor="${w.kor}">${w.kor}</div>`).join('')}
-    </div>`;
+    if (index >= order.length) return end();
+    ensurePoppins();
+
+    const target = order[index];
+    const prompt = definitionOf(target);
+    const pool = words.filter(w => w.eng !== target.eng);
+    const distractors = shuffle(pool).slice(0, Math.min(3, Math.max(0, pool.length)));
+    const options = shuffle([target, ...distractors]);
+
     gameArea.innerHTML = `
-      <div id="score-counter" style="margin-bottom:18px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? `Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}` : `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`}</div>
-      <div class="dragdrop-game">
-        <div class="dragdrop-container">
-          ${engCol}
-          ${korCol}
+      <div style="max-width:720px;margin:0 auto;padding:16px;font-family:'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;">
+        <div style="text-align:center;margin-bottom:10px;color:#19777e;font-weight:700;">Meaning Mode</div>
+        <div id="defBox" style="background:#fff;border:2px solid #cfe8ea;border-radius:14px;padding:16px 18px;margin-bottom:16px;color:#0f172a;font-size:1.05rem;line-height:1.5;min-height:64px;">${prompt}</div>
+        <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          ${options.map(o => `<button class="opt" data-eng="${o.eng}" style="padding:14px 12px;border-radius:12px;border:2px solid #e2e8f0;background:#f8fafc;font-weight:700;color:#0f172a;cursor:pointer;">${o.eng}</button>`).join('')}
         </div>
-        <div id="dragdrop-feedback" style="margin-top:18px;text-align:center;font-size:1.1em;"></div>
-      </div>
-    `;
+        <div style="margin-top:14px;text-align:center;color:#334155;">${index + 1} / ${total}</div>
+      </div>`;
 
-    let activeTTSCard = null;
-    let selectedEngCard = null;
+    gameArea.querySelectorAll('button.opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const choice = btn.getAttribute('data-eng');
+        const correct = choice === target.eng;
+        btn.style.borderColor = correct ? '#22c55e' : '#ef4444';
+        btn.style.background = correct ? '#dcfce7' : '#fee2e2';
+        if (correct) playSFX('correct'); else playSFX('wrong');
 
-    function playCardTTS(card) {
-      if (activeTTSCard === card) return;
-      activeTTSCard = card;
-      const rawText = card.textContent.trim();
-      // Use the raw target word for playback so it maps directly to cached audio
-      playTTS(rawText);
-      setTimeout(() => { if (activeTTSCard === card) activeTTSCard = null; }, 300);
-    }
+        if (correct) score += 1;
 
-    function explodeAndRemove(element) {
-      const rect = element.getBoundingClientRect();
-      const parent = element.parentElement;
-      const particles = document.createElement('div');
-      particles.className = 'particle-explosion';
-      particles.style.position = 'absolute';
-      particles.style.left = element.offsetLeft + 'px';
-      particles.style.top = element.offsetTop + 'px';
-      particles.style.width = rect.width + 'px';
-      particles.style.height = rect.height + 'px';
-      parent.appendChild(particles);
-      for (let i = 0; i < 18; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.background = i % 2 ? '#f59e0b' : '#93cbcf';
-        p.style.left = (rect.width/2) + 'px';
-        p.style.top = (rect.height/2) + 'px';
-        particles.appendChild(p);
-        setTimeout(() => {
-          p.style.transform = `translate(${(Math.random()-0.5)*80}px, ${(Math.random()-0.5)*80}px) scale(0.7)`;
-          p.style.opacity = 0;
-        }, 10);
-      }
-      setTimeout(() => { particles.remove(); }, 700);
-      element.remove();
-    }
+        logAttempt({
+          session_id: sessionId,
+          mode: 'meaning',
+          word: target.eng,
+          is_correct: correct,
+          answer: choice,
+          correct_answer: target.eng
+        });
 
-    document.querySelectorAll('.eng-card').forEach(card => {
-      card.style.cursor = 'pointer';
-      card.title = 'Tap to select and hear pronunciation';
-      card.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (selectedEngCard) {
-          selectedEngCard.classList.remove('selected');
-        }
-        selectedEngCard = card;
-        card.classList.add('selected');
-        playCardTTS(card);
-        document.getElementById('dragdrop-feedback').textContent = '';
-      });
-      card.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (selectedEngCard) {
-          selectedEngCard.classList.remove('selected');
-        }
-        selectedEngCard = card;
-        card.classList.add('selected');
-        playCardTTS(card);
-        document.getElementById('dragdrop-feedback').textContent = '';
+        setTimeout(() => { index += 1; renderRound(); }, 600);
       });
     });
-
-    document.querySelectorAll('.kor-target').forEach(target => {
-      target.style.cursor = 'pointer';
-      target.title = 'Tap to match';
-      function handleKorTap(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (!selectedEngCard) return;
-        target.classList.add('pending-match');
-        setTimeout(() => {
-          handleTapMatch(selectedEngCard, target);
-          target.classList.remove('pending-match');
-        }, 120);
-      }
-      target.addEventListener('click', handleKorTap);
-      target.addEventListener('touchstart', handleKorTap);
-    });
-
-    function handleTapMatch(engCard, korCard) {
-      if (interactionLocked) return;
-      interactionLocked = true;
-      if (korCard.classList.contains('matched') || engCard.classList.contains('matched')) return;
-      const eng = engCard.dataset.eng;
-      const kor = korCard.dataset.kor;
-      const match = roundPairs.find(w => w.eng === eng && w.kor === kor);
-      const feedback = document.getElementById('dragdrop-feedback');
-      const scoreCounter = document.getElementById('score-counter');
-        if (match) {
-          korCard.classList.add('matched');
-          engCard.classList.add('matched');
-          explodeAndRemove(korCard);
-          explodeAndRemove(engCard);
-          score += correctValue;
-          completedPairs.push(eng + '|' + kor);
-          updateGameProgress(completedPairs.length, total);
-          feedback.textContent = isReview ? 'Correct!' : `Correct! +${correctValue.toFixed(1)}%`;
-          playSFX('correct');
-        } else {
-          korCard.classList.add('wrong');
-          engCard.classList.add('wrong');
-          setTimeout(() => {
-            korCard.classList.remove('wrong');
-            engCard.classList.remove('wrong');
-          }, 700);
-          score -= wrongValue;
-          feedback.textContent = isReview ? 'Incorrect!' : 'Incorrect!';
-          playSFX('wrong');
-      }
-      // Log attempt for this pair selection (points as integers to satisfy DB integer type)
-      logAttempt({
-        session_id: sessionId,
-        mode: 'meaning',
-        word: eng,
-        is_correct: !!match,
-        answer: kor,
-        correct_answer: (roundPairs.find(w => w.eng === eng) || {}).kor || null,
-  // scoreless build: no points,
-        extra: { eng, kor }
-      });
-  scoreCounter.innerHTML = isReview ? `Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}` : `Score: ${score.toFixed(1)}%<br>Round ${round + 1} / ${Math.ceil(total / ROUND_SIZE)}`;
-      if (selectedEngCard) {
-        selectedEngCard.classList.remove('selected');
-        selectedEngCard = null;
-      }
-      // If all pairs in this round are matched, go to next round
-      setTimeout(() => {
-        interactionLocked = false; // unlock for next interaction or next round
-        if (document.querySelectorAll('.eng-card').length === 0) {
-          round++;
-          renderRound();
-        }
-      }, 750);
-    }
   }
 
-  // First round is triggered after the intro fades out
+  function end() {
+    const pct = total ? Math.round((score / total) * 100) : 0;
+    endSession(sessionId, { mode: 'meaning', summary: { score: pct, total: 100 } });
+    gameArea.innerHTML = `
+      <div style="text-align:center;padding:32px 16px;font-family:'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;">
+        <h2 style="color:#f59e0b;margin:0 0 8px;">All done!</h2>
+        <div style="margin-bottom:14px;">Score: <b style="color:#19777e;">${pct}%</b></div>
+        <button id="again" style="padding:10px 18px;border-radius:12px;background:#93cbcf;color:#fff;border:none;font-weight:700;cursor:pointer;">Play again</button>
+      </div>`;
+    const again = document.getElementById('again');
+    if (again) again.onclick = () => startGame('meaning');
+  }
+
+  renderRound();
 }

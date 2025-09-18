@@ -113,7 +113,8 @@ exports.handler = async (event) => {
   // Best-effort resolve user from cookie access token
   const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
   const cookies = parseCookies(cookieHeader);
-  const accessToken = cookies['sb_access'] || null;
+  // Support a few legacy/alternate cookie names defensively
+  const accessToken = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
   const user = await getUserFromAccessToken(supabase, accessToken);
   const userIdFromCookie = user && user.id ? user.id : null;
 

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Word Arcade - Live Mode</title>
+	<link rel="stylesheet" href="mini.css" />
+	<!-- Minimal inline fallback style if mini.css missing -->
+	<style>
+		body { margin:0; font-family: system-ui, sans-serif; background:#f1f5f9; color:#1f2937; }
+		#gameRoot { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+	</style>
+</head>
+<body>
+	<!-- Word Arcade style header (reuse student-header with slots like index.html) -->
+	<student-header title="" show-home="false" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home">
+		<img slot="actions" src="assets/Images/icons/word-arcade.svg" alt="Word Arcade" style="height:4em;max-height:4.5em;display:block;" />
+	</student-header>
+	<!-- Game container used by play-main.js -->
+	<div id="gameRoot">
+		<div style="text-align:center;color:#19777e;font-weight:700;">Loading game…</div>
+	</div>
+	<script type="module" src="/students/components/student-header.js"></script>
+	<script type="module" src="/students/scripts/points-client.js"></script>
+	<script type="module" src="play-main.js"></script>
+	<script type="module">
+	import { initPointsClient } from '/students/scripts/points-client.js';
+	async function ensureHeaderProfile(){
+	  try {
+		const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
+		if (!res.ok) return;
+		const data = await res.json().catch(() => null);
+		if (!data || !data.success) return;
+		if ((data.username || data.name) && typeof (data.username || data.name) === 'string') {
+		  localStorage.setItem('user_name', (data.username || data.name).slice(0,40));
+		}
+		if (data.avatar && typeof data.avatar === 'string' && data.avatar.length <= 16) {
+		  localStorage.setItem('selectedEmojiAvatar', data.avatar);
+		}
+	  } catch {}
+	}
+	document.addEventListener('DOMContentLoaded', () => { try { initPointsClient(); } catch {}; ensureHeaderProfile(); });
+	</script>
+</body>
+</html>

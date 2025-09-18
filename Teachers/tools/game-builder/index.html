@@ -7,6 +7,25 @@
   <link rel="icon" href="../../../Assets/Images/Logo.png" />
   <link rel="stylesheet" href="styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Auth guard: redirect unauthenticated users to login with return path -->
+  <script>
+    (function(){
+      try {
+        const LS_KEYS = ['user_id','id','userId','sb_user_id','supabase_user_id','auth_user_id'];
+        let uid = '';
+        for (const k of LS_KEYS) { const v = localStorage.getItem(k) || sessionStorage.getItem(k); if (v && v.trim()) { uid = v.trim(); break; } }
+        if (!uid) {
+          // Inspect cookies for sb access token indicator
+            const hasSbCookie = /sb_access|sb-access-token/.test(document.cookie || '');
+            if (!hasSbCookie) {
+              const ret = encodeURIComponent(location.pathname + location.search + location.hash);
+              location.replace('/Teachers/login.html?redirect=' + ret);
+              return; // Stop loading the rest of the page assets
+            }
+        }
+      } catch(e){ console.warn('[game-builder] auth guard error', e); }
+    })();
+  </script>
   <script type="module" src="main.js"></script>
   <script type="module" src="create-game-modal.js"></script>
   <style>
@@ -36,12 +55,12 @@
         <div class="toolbar-left">
           <a id="openLink" class="link">Load</a>
           <span class="dot">•</span>
+          <a id="saveLink" class="link primary">Save</a>
+          <span class="dot">•</span>
           <a id="loadWorksheetsLink" class="link">Load from Worksheet</a>
         </div>
         <div class="toolbar-right">
           <a id="createGameLink" class="link">Create Game</a>
-          <span class="dot">•</span>
-          <a id="saveLink" class="link primary">Save</a>
         </div>
       </div>
 
@@ -86,6 +105,13 @@
             <span class="switch" aria-hidden="true"></span>
           </label>
         </div>
+        <div class="toggle-defs" style="grid-column: 6; display:flex; justify-content:center;">
+          <label class="toggle-label">
+            <span class="toggle-text">Examples</span>
+            <input type="checkbox" id="enableExamples" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
 
       <!-- Title input row (below menus) -->
@@ -93,17 +119,27 @@
         <input id="titleInput" class="input title-input" placeholder="Title Here" />
       </div>
 
-      <!-- List without column headers -->
+      <!-- Word list with column headers -->
       <div class="table-wrap">
         <table class="grid word-table">
-          <!-- Column headers removed on purpose to match design -->
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>English</th>
+              <th>Korean</th>
+              <th>Image</th>
+              <th>Definition</th>
+              <th>Example</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
 
       <!-- Footer actions -->
       <div class="footer-actions">
-        <button id="previewBtn" class="btn">Preview JSON</button>
+        <button id="previewBtn" class="btn">JSON</button>
         <span id="status" class="status"></span>
       </div>
     </div>
@@ -111,12 +147,31 @@
 
   <!-- File Manager Modal -->
   <div id="fileModal" class="modal" style="display:none;">
-    <div class="modal-card">
+    <div class="modal-card" style="width:90vw; height:80vh;">
       <div class="modal-head">
         <h3>Saved Games</h3>
         <button id="fileModalClose" class="close">×</button>
       </div>
-      <div id="fileList" class="modal-body"></div>
+  <div id="fileList" class="modal-body file-list-scroll"></div>
+  <div style="text-align:center;margin-top:12px;">
+    <button id="loadMoreFilesBtn" class="btn" style="min-width:140px;display:none;">Load More</button>
+  </div>
+    </div>
+  </div>
+
+  <!-- Save Game Modal -->
+  <div id="saveModal" class="modal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Save Game</h3>
+        <button id="saveModalClose" class="close">×</button>
+      </div>
+      <div class="modal-body">
+        <label style="display:block; margin-bottom:8px;">Game Title</label>
+        <input id="saveGameTitle" class="input" placeholder="Enter game title" style="width:100%;" />
+        <div id="saveModalStatus" style="margin-top:10px;color:#64748b;font-size:0.95rem;min-height:20px;"></div>
+        <button id="confirmSave" class="btn primary" style="margin-top: 16px; width:100%;">Save Game</button>
+      </div>
     </div>
   </div>
 
@@ -169,8 +224,6 @@
       </div>
       <div class="modal-foot" style="padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:flex-end;">
         <span id="createGameStatus" style="margin-right:auto;color:#666;font-size:0.95em;"></span>
-        <button id="createGameLive" class="btn" title="Save and play on your phone">Play Game Live</button>
-        <button id="createGameSave" class="btn primary">Create Game</button>
         <button id="createGameCancel" class="btn">Cancel</button>
       </div>
     </div>

@@ -897,20 +897,33 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
       }
     } else if (event.queryStringParameters && event.queryStringParameters.list === 'game_data' && event.httpMethod === 'GET') {
-      // List saved game_data rows (with computed thumbnail from first word image)
-      // Also fetch creator usernames from profiles without relying on a FK join.
+      // List saved game_data rows with optional lightweight mode (?no_words=1) and preserved/stored game_image column.
       try {
         const qs = event.queryStringParameters || {};
         const limit = Number(qs.limit) > 0 ? Number(qs.limit) : 10; // default to latest 10
         const offset = Number(qs.offset) >= 0 ? Number(qs.offset) : 0;
-
-        const { data, error } = await supabase
+        const noWords = qs.no_words === '1' || qs.no_words === 'true';
+        const baseSelect = noWords
+          ? 'id, title, created_at, created_by, game_image'
+          : 'id, title, created_at, class, book, unit, created_by, words, game_image';
+        let { data, error } = await supabase
           .from('game_data')
-          .select('id, title, created_at, class, book, unit, created_by, words')
+          .select(baseSelect)
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
+        // If error due to missing game_image column, retry without it
+        if (error && /game_image/.test(error.message || '')) {
+          const retrySelect = noWords
+            ? 'id, title, created_at, created_by'
+            : 'id, title, created_at, class, book, unit, created_by, words';
+          const retry = await supabase
+            .from('game_data')
+            .select(retrySelect)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+          data = retry.data; error = retry.error;
+        }
         if (error) throw error;
-
         const rows = Array.isArray(data) ? data : [];
         // Collect unique creator IDs
         const creatorIds = Array.from(new Set(rows.map(r => r.created_by).filter(Boolean)));
@@ -922,22 +935,63 @@ exports.handler = async (event) => {
             .in('id', creatorIds);
           if (!profilesErr && Array.isArray(profilesData)) {
             idToName = profilesData.reduce((acc, p) => {
-              acc[p.id] = p.name || p.username || p.id; // prefer name, then username, fallback to id
+              acc[p.id] = p.name || p.username || p.id;
               return acc;
             }, {});
           }
         }
-
-        const slim = rows.map(row => {
-          let thumb = null;
-          if (Array.isArray(row.words)) {
+        const result = rows.map(row => {
+          let thumb = row.game_image || null;
+          if (!thumb && !noWords && Array.isArray(row.words)) {
             thumb = row.words.map(w => (w && (w.image_url || w.image || w.img)) || null).find(Boolean) || null;
           }
-          const { words, ...rest } = row;
-          const creator_name = rest.created_by ? (idToName[rest.created_by] || 'Unknown') : 'Unknown';
-          return { ...rest, game_image: thumb, creator_name };
+          if (noWords) {
+            return {
+              id: row.id,
+              title: row.title,
+              created_at: row.created_at,
+              created_by: row.created_by,
+              creator_name: row.created_by ? (idToName[row.created_by] || 'Unknown') : 'Unknown',
+              game_image: thumb
+            };
+          }
+            const { words, ...rest } = row;
+            return {
+              ...rest,
+              creator_name: row.created_by ? (idToName[row.created_by] || 'Unknown') : 'Unknown',
+              game_image: thumb
+            };
         });
-        return { statusCode: 200, body: JSON.stringify({ data: slim }) };
+        return { statusCode: 200, body: JSON.stringify({ data: result }) };
+      } catch (err) {
+        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+      }
+    } else if (event.queryStringParameters && event.queryStringParameters.get === 'game_thumb' && event.httpMethod === 'GET') {
+      // Return single thumbnail (explicit game_image or derived from first word image)
+      try {
+        const id = event.queryStringParameters.id;
+        if (!id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing id' }) };
+        let { data, error } = await supabase
+          .from('game_data')
+          .select('game_image, words')
+          .eq('id', id)
+          .single();
+        if (error && /game_image/.test(error.message || '')) {
+          const retry = await supabase
+            .from('game_data')
+            .select('words')
+            .eq('id', id)
+            .single();
+          data = retry.data; error = retry.error;
+        }
+        if (error) throw error;
+        let thumb = data && data.game_image ? data.game_image : null;
+        if (!thumb && data && Array.isArray(data.words)) {
+          for (const w of data.words) {
+            if (w && (w.image_url || w.image || w.img)) { thumb = w.image_url || w.image || w.img; break; }
+          }
+        }
+        return { statusCode: 200, body: JSON.stringify({ id, thumb }) };
       } catch (err) {
         return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
       }
@@ -964,24 +1018,29 @@ exports.handler = async (event) => {
           const gd = body.data;
           // Normalize words shape
           if (!Array.isArray(gd.words)) gd.words = [];
-          // Map incoming fields to schema columns
+          // Derive game_image from explicit gd.gameImage or first word image
+          let derivedImage = (gd.gameImage || gd.game_image || '').trim() || null;
+          if (!derivedImage) {
+            for (const w of gd.words) {
+              if (w && (w.image_url || w.image || w.img)) { derivedImage = w.image_url || w.image || w.img; break; }
+            }
+          }
           const row = {
             title: gd.title || 'Untitled',
             words: gd.words,
             created_at: new Date().toISOString(),
-            // schema-aligned fields
             class: gd.class || gd.gameClass || null,
             book: gd.book || gd.gameBook || null,
             unit: gd.unit || gd.gameUnit || null,
             created_by: gd.created_by || gd.created_by_id || gd.user_id || gd.profile_id || null,
             tags: Array.isArray(gd.tags) ? gd.tags : null,
             visibility: gd.visibility || undefined,
+            game_image: derivedImage,
           };
-          // Ensure we return the inserted row id for client-side linking/QR
           const { data, error } = await supabase
             .from('game_data')
             .insert([row])
-            .select('id')
+            .select('id, game_image')
             .single();
           if (error) {
             return { statusCode: 400, body: JSON.stringify({ success: false, error: error.message }) };
