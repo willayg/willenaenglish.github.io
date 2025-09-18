@@ -171,6 +171,15 @@
       return d2;
     }
 
+    function getNextDest() {
+      try {
+        const params = new URLSearchParams(location.search);
+        const nxt = params.get('next');
+        if (nxt && /^\//.test(nxt)) return nxt; // only allow same-site absolute path
+      } catch {}
+      return '/students/profile.html';
+    }
+
     document.getElementById('loginBtn').addEventListener('click', async () => {
       show('');
       const username = document.getElementById('username').value;
@@ -178,7 +187,7 @@
       if (!username || !password) return show('Please enter both username and password.');
       try {
         await loginWithUsernamePassword(username, password);
-        location.href = '/students/profile.html';
+        location.href = getNextDest();
       } catch (e) {
         show(e.message || 'Login failed');
       }

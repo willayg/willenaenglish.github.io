@@ -13,7 +13,7 @@ package = "@netlify/plugin-functions-install-core"
   directory = "netlify/functions"
   # Tell Netlify how to bundle the function and which deps to keep external
   node_bundler = "esbuild"
-  external_node_modules = ["@supabase/supabase-js"]
+  external_node_modules = ["@supabase/supabase-js", "@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"]
 
 # Use Node 20 in prod and dev. Yes, 18 “works,” but 20 is safer for ESM.
 [context.production.environment]

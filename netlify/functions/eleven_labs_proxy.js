@@ -20,11 +20,24 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: "ELEVEN_LABS_DEFAULT_VOICE_ID env var not set" })
     };
   }
+  let modelId = "eleven_monolingual_v1";
+  let voiceSettings = { stability: 1.0, similarity_boost: 1.0, style: 1.0, use_speaker_boost: false };
   try {
     const body = JSON.parse(event.body);
     text = body.text;
     if (body.voice_id) voiceId = body.voice_id;
-    console.log(`TTS request: text="${text}", voiceId="${voiceId}"`);
+    if (body.model_id && typeof body.model_id === 'string') modelId = body.model_id;
+    if (body.voice_settings && typeof body.voice_settings === 'object') {
+      // Shallow merge with defaults to enforce user’s preferred baseline while allowing specific overrides
+      voiceSettings = {
+        stability: 1.0,
+        similarity_boost: 1.0,
+        style: 1.0,
+        use_speaker_boost: false,
+        ...body.voice_settings
+      };
+    }
+    console.log(`TTS request: text="${text}", voiceId="${voiceId}", model_id="${modelId}", voice_settings=${JSON.stringify(voiceSettings)}`);
   } catch (e) {
     console.error("Invalid request body:", e);
     return {
@@ -43,7 +56,8 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         text: text,
-        model_id: "eleven_monolingual_v1"
+        model_id: modelId,
+        voice_settings: voiceSettings
       })
     });
 

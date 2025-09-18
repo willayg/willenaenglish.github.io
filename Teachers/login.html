@@ -348,14 +348,15 @@
         
         showMessage(`Welcome back! Redirecting...`, 'success');
         
-        // Redirect based on role
-        setTimeout(() => {
-          if (role === 'admin') {
-            window.location.href = '/Teachers/components/feedback-admin.html';
-          } else {
-            window.location.href = '/Teachers/index.html';
-          }
-        }, 1000);
+        // Determine redirect target: honor ?redirect= param if present and same-origin
+        const params = new URLSearchParams(location.search);
+        let target = params.get('redirect');
+        if (target && !/^https?:/i.test(target) && target.startsWith('/')) {
+          // Allow only internal paths
+        } else {
+          target = (role === 'admin') ? '/Teachers/components/feedback-admin.html' : '/Teachers/index.html';
+        }
+        setTimeout(() => { window.location.href = target; }, 700);
         
       } catch (error) {
         console.error('Login error:', error);
@@ -365,7 +366,7 @@
       }
     });
     
-    // Test auth function on page load
+    // If already logged in (has session), optionally auto-redirect if redirect= present
     (async () => {
       try {
         const debugUrl = `${AUTH_URL}?action=debug`;
@@ -376,6 +377,14 @@
           console.log('✓ Auth service healthy');
         } else {
           console.warn('⚠ Auth service missing environment variables');
+        }
+        if (debugData.session && debugData.session.user && debugData.session.user.id) {
+          // Already logged in, perform quick redirect
+          const params = new URLSearchParams(location.search);
+          const redirect = params.get('redirect');
+          if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
+            window.location.replace(redirect);
+          }
         }
       } catch (error) {
         console.error('Auth service unreachable:', error);

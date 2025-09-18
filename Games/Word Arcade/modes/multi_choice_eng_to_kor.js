@@ -51,7 +51,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName
       <div id="multiFeedbackEngKor" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
   <div id="multiScoreEngKor" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
     </div>`;
-    setupChoiceButtons(gameArea);
+  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
     document.querySelectorAll('.multi-choice-btn').forEach(btn => {
       btn.onclick = () => {
         const feedback = document.getElementById('multiFeedbackEngKor');

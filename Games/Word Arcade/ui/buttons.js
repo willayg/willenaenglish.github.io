@@ -191,17 +191,46 @@ function ensureChoiceButtonStyles() {
   document.head.appendChild(style);
 }
 
-export function setupChoiceButtons(root = document) {
+export function setupChoiceButtons(root = document, options = {}) {
   ensureChoiceButtonStyles();
+  const {
+    lockOnClick = true,          // prevent multiple rapid answers
+    lockAttribute = 'data-locked',
+    disableOthers = true,        // disable sibling buttons after first selection
+    minAnswerLatencyMs = 0       // if >0, ignore clicks that occur sooner than this from render time
+  } = options;
+  const renderTime = performance.now();
   const buttons = root.querySelectorAll('.choice-btn');
+  let locked = false;
   buttons.forEach(btn => {
     // Extra JS press animation for mobile consistency
-    btn.onmousedown = () => { btn.style.transform = 'scale(0.97)'; };
+    btn.onmousedown = () => { if (!locked) btn.style.transform = 'scale(0.97)'; };
     const reset = () => { btn.style.transform = 'scale(1)'; };
     btn.onmouseup = reset;
     btn.onmouseleave = reset;
-    btn.ontouchstart = () => { btn.style.transform = 'scale(0.97)'; };
+    btn.ontouchstart = () => { if (!locked) btn.style.transform = 'scale(0.97)'; };
     btn.ontouchend = reset;
+
+    if (lockOnClick) {
+      const orig = btn.onclick;
+      // Wrap existing onclick (if assigned later, modes still call setup first so we guard by event delegation?)
+      // We prefer to intercept via addEventListener to not clobber later reassign.
+      btn.addEventListener('click', (ev) => {
+        if (locked) { ev.stopImmediatePropagation(); ev.preventDefault(); return; }
+        if (minAnswerLatencyMs > 0 && (performance.now() - renderTime) < minAnswerLatencyMs) {
+          // Too fast: optional ignore (anti-spam). Provide tiny vibration if supported.
+          if (navigator.vibrate) try { navigator.vibrate(10); } catch {}
+          ev.stopImmediatePropagation(); ev.preventDefault();
+          return;
+        }
+        locked = true;
+        btn.setAttribute(lockAttribute, 'true');
+        if (disableOthers) {
+          buttons.forEach(b => { if (b !== btn) { b.disabled = true; b.classList.add('choice-disabled'); } });
+        }
+        // Allow original handler (already attached inline or via assignment) to run after lock.
+      }, { capture: true });
+    }
   });
 }
 
