@@ -2,9 +2,34 @@ import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
+// ----- Live Play Helpers (play.html integration) -------------
+function isLivePlayContext() {
+  try {
+    const loc = window.location || {};
+    if (/play\.html$/i.test(loc.pathname)) return true;
+    if (loc.search && /[&?]mode=(spelling|listen_and_spell)/i.test(loc.search)) return true;
+  } catch { /* ignore */ }
+  return !!window.__WORD_ARCADE_LIVE;
+}
+
+function ensureLiveListenStyles() {
+  if (!isLivePlayContext()) return;
+  if (document.getElementById('wa-live-spell-styles')) return; // spelling injector already covers shared rules
+  const style = document.createElement('style');
+  style.id = 'wa-live-spell-styles';
+  style.textContent = `
+    .wa-live-wrap { width:100%; max-width:660px; margin:0 auto; padding:0 10px 10px; box-sizing:border-box; }
+    .wa-live-wrap .tap-spell { max-width:100% !important; }
+    .wa-live-wrap #letterTiles { max-width:100% !important; }
+    @media (max-width:520px){ .wa-live-wrap #tap-instructions { font-size:1em !important; } }
+  `;
+  document.head.appendChild(style);
+}
+
 // Listen and Spell (Tap-to-Spell) mode
 export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
+  ensureLiveListenStyles();
   let score = 0;
   let idx = 0;
   const ordered = [...wordList].sort(() => Math.random() - 0.5);
@@ -58,7 +83,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Your Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length*2}</span></div>`}
         <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMoreListenSpell" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreListenSpell\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName });
       document.getElementById('tryMoreListenSpell').onclick = () => {
@@ -73,26 +98,138 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
 
     const current = ordered[idx];
     const correct = String(current.eng || '').trim();
-    const tiles = makeLetterTilesFor(correct.toLowerCase());
-    const usedStack = []; // stack of tile ids used in order
+    const fromBuilder = !!window.__WA_FROM_BUILDER;
+    const live = isLivePlayContext();
+    // Multi-line slot rendering: split answer into words, skip spaces
+    let dynamicContainerWidth = null;
+    if (live) {
+      try { dynamicContainerWidth = Math.min(660, Math.max(280, gameArea.clientWidth - 24)); } catch {}
+    }
+    const maxSlotsWidth = dynamicContainerWidth || (fromBuilder ? 520 : 340);
+    const minSlotSize = fromBuilder ? 32 : 26;
+    const slotGap = fromBuilder ? 10 : (live ? 8 : 8);
+    const words = correct.split(' ');
+    function renderSlotRows() {
+      return `<div class=\"slot-rows-container\" style=\"display:flex;flex-direction:column;align-items:center;\">` +
+        words.map(word => {
+          const slotCount = word.length;
+          let slotSize = Math.floor((maxSlotsWidth - slotGap * (slotCount - 1)) / slotCount);
+          if (slotSize < minSlotSize) slotSize = minSlotSize;
+          return `<div class=\"slot-row\" style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${word.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:2px solid #93cbcf;border-radius:10px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:1.3em;font-weight:800;color:#0f172a;transition:width .2s;\"></div>`).join('')}</div>`;
+        }).join('') + '</div>';
+    }
+    // Only show tiles for non-space characters
+    const tileChars = correct.replace(/ /g, '').split('');
+    const tileObjs = tileChars.map((ch, i) => ({ id: 'b' + i, ch }));
+    // Add distractors as before
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    const inWordSet = new Set(tileChars);
+    const pool = alphabet.filter(ch => !inWordSet.has(ch));
+    const distractorCount = 2;
+    const distractors = [];
+    while (distractors.length < distractorCount && pool.length) {
+      const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      distractors.push(pick);
+    }
+    distractors.forEach((ch, i) => tileObjs.push({ id: 'd' + i, ch }));
+    // Shuffle
+    for (let i = tileObjs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tileObjs[i], tileObjs[j]] = [tileObjs[j], tileObjs[i]];
+    }
+    const usedStack = [];
     let locked = false;
-
-    gameArea.innerHTML = `
-      <div class="tap-spell" style="max-width:520px;margin:0 auto;">
+    const innerHTML = `
+      <div class="tap-spell ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (live ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
         <div id="tap-instructions" style="margin-bottom:12px;text-align:center;font-size:1.06em;color:#19777e;">Listen and tap the letters to spell the word:</div>
-        <div style="display:flex;justify-content:center;align-items:center;margin:10px 0 8px 0;gap:10px;">
-          <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
+        <div style="display:flex;justify-content:center;align-items:center;margin:10px 0 58px 0;gap:10px;">
+         <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
         </div>
-        <div id="letterSlots" style="display:flex;justify-content:center;gap:8px;margin:8px 0 12px 0;">
-          ${correct.split('').map(() => `<div class=\"slot\" style=\"width:38px;height:46px;border:2px solid #93cbcf;border-radius:10px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:1.3em;font-weight:800;color:#0f172a;\"></div>`).join('')}
+        <div id="letterSlots" style="margin:8px 0 12px 0;">
+         ${renderSlotRows()}
         </div>
         <div id="letterTiles" style="display:flex;flex-wrap:wrap;gap:10px;max-width:420px;margin:0 auto;justify-content:center;align-items:center;">
-          ${tiles.map(t => `<button class=\"choice-btn tile-btn\" data-id=\"${t.id}\" data-ch=\"${t.ch}\" style=\"width:56px;height:56px;border:2px solid #cfdbe2;border-radius:12px;background:#fff;font-size:1.2em;font-weight:800;color:#314249;display:flex;align-items:center;justify-content:center;\">${t.ch.toUpperCase()}</button>`).join('')}
+          ${tileObjs.map(t => `<button class=\"choice-btn tile-btn\" data-id=\"${t.id}\" data-ch=\"${t.ch}\" style=\"width:56px;height:56px;border:2px solid #cfdbe2;border-radius:12px;background:#fff;font-size:1.2em;font-weight:800;color:#314249;display:flex;align-items:center;justify-content:center;\">${t.ch.toUpperCase()}</button>`).join('')}
         </div>
         <div id="listening-feedback" style="min-height:26px;text-align:center;font-size:1.05em;color:#555;margin-top:10px;"></div>
         <div id="listening-score" style="margin-top:6px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
       </div>
     `;
+    if (live) {
+      gameArea.innerHTML = `<div class=\"wa-live-wrap\">${innerHTML}</div>`;
+    } else {
+      gameArea.innerHTML = innerHTML;
+    }
+    // Live resizing for listen & spell
+    if (live) {
+      const wrap = gameArea.querySelector('.wa-live-wrap');
+      if (wrap && !wrap.__slotResizeObserver) {
+        let lastWidth = wrap.clientWidth;
+        const ro = new ResizeObserver(entries => {
+          for (const entry of entries) {
+            const w = entry.contentRect.width;
+            if (Math.abs(w - lastWidth) >= 8) {
+              lastWidth = w;
+              try {
+                const slotsContainer = gameArea.querySelector('#letterSlots');
+                if (slotsContainer) {
+                  let dynamic = Math.min(660, Math.max(280, wrap.clientWidth - 24));
+                  const newWords = correct.split(' ');
+                  const newHTML = `<div class=\"slot-rows-container\" style=\"display:flex;flex-direction:column;align-items:center;\">` +
+                    newWords.map(word => {
+                      const slotCount = word.length;
+                      let slotSize = Math.floor((dynamic - slotGap * (slotCount - 1)) / slotCount);
+                      if (slotSize < minSlotSize) slotSize = minSlotSize;
+                      return `<div class=\"slot-row\" style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${word.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:2px solid #93cbcf;border-radius:10px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:1.3em;font-weight:800;color:#0f172a;transition:width .15s;\"></div>`).join('')}</div>`;
+                    }).join('') + '</div>';
+                  slotsContainer.innerHTML = newHTML;
+                  slotEls = Array.from(document.querySelectorAll('#letterSlots .slot'));
+                  const letters = usedStack.map(id => {
+                    const btn = document.querySelector(`.tile-btn[data-id="${id}"]`);
+                    return btn ? btn.getAttribute('data-ch') : '';
+                  });
+                  slotEls.forEach((el, i) => { el.textContent = letters[i] ? letters[i].toUpperCase() : ''; });
+                  bindSlotRemovalHandlers();
+                }
+              } catch { /* ignore */ }
+            }
+          }
+        });
+        ro.observe(wrap);
+        wrap.__slotResizeObserver = ro;
+      }
+    }
+    // If launched from builder, swap in square larger tiles/slots
+    if (window.__WA_FROM_BUILDER) {
+      const wrap = gameArea.querySelector('.tap-spell');
+      if (wrap) {
+        wrap.style.maxWidth = '600px';
+        const slotsRow = wrap.querySelector('#letterSlots');
+        if (slotsRow) {
+          slotsRow.style.gap = '10px';
+          slotsRow.style.flexWrap = 'wrap';
+          Array.from(slotsRow.children).forEach(ch => {
+            ch.style.width = '54px';
+            ch.style.height = '54px';
+            ch.style.border = '3px solid #93cbcf';
+            ch.style.borderRadius = '14px';
+            ch.style.fontSize = '1.2em';
+          });
+        }
+        const tilesWrap = wrap.querySelector('#letterTiles');
+        if (tilesWrap) {
+          tilesWrap.style.maxWidth = '520px';
+          tilesWrap.style.gap = '12px';
+          Array.from(tilesWrap.querySelectorAll('.tile-btn')).forEach(btn => {
+            btn.style.width = '62px';
+            btn.style.height = '62px';
+            btn.style.border = '3px solid #cfdbe2';
+            btn.style.borderRadius = '14px';
+            btn.style.fontSize = '1.38em';
+          });
+        }
+      }
+    }
 
     function playCurrent() {
       try { playTTS(current.eng); } catch {}
@@ -101,8 +238,8 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
     document.getElementById('playAudioBtn').onclick = playCurrent;
 
   const tileButtons = Array.from(document.querySelectorAll('.tile-btn'));
-  const slotEls = Array.from(document.querySelectorAll('#letterSlots .slot'));
-  const feedback = document.getElementById('listening-feedback');
+  let slotEls = Array.from(document.querySelectorAll('#letterSlots .slot'));
+    const feedback = document.getElementById('listening-feedback');
 
     function updateSlots() {
       // Fill slots based on usedStack
@@ -116,13 +253,15 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
     }
 
     function evaluateIfComplete() {
-      if (usedStack.length !== correct.length || locked) return;
+      // Only require non-space letters
+      const expectedLength = correct.replace(/ /g, '').length;
+      if (usedStack.length !== expectedLength || locked) return;
       locked = true;
       const answer = usedStack.map(id => {
         const b = document.querySelector(`.tile-btn[data-id="${id}"]`);
         return b ? b.getAttribute('data-ch') : '';
-      }).join('');
-      const correctLower = correct.toLowerCase();
+      }).join('').toLowerCase().replace(/ /g, '');
+      const correctLower = correct.toLowerCase().replace(/ /g, '');
       let basePoints = 0;
       if (answer === correctLower && correctLower.length > 0) {
         basePoints = 2; feedback.textContent = 'Perfect! +2'; feedback.style.color = '#19777e'; playSFX('correct');
@@ -158,11 +297,12 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
       if (locked) return;
       const id = btn.getAttribute('data-id');
       if (!id) return;
-      if (usedStack.length >= correct.length) return;
+      // Only allow as many tiles as non-space letters
+      const expectedLength = correct.replace(/ /g, '').length;
+      if (usedStack.length >= expectedLength) return;
       usedStack.push(id);
       btn.disabled = true;
       btn.classList.add('selected');
-      // Hide used tile to avoid confusion
       btn.style.display = 'none';
       updateSlots();
       evaluateIfComplete();
@@ -170,23 +310,25 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
 
     tileButtons.forEach(btn => btn.onclick = () => onTileClick(btn));
 
-    // Allow removing a specific letter by tapping its slot; restore the corresponding tile
-    slotEls.forEach((slotEl, slotIndex) => {
-      slotEl.style.cursor = 'pointer';
-      slotEl.title = 'Tap to remove letter';
-      slotEl.onclick = () => {
-        if (locked) return;
-        if (slotIndex >= usedStack.length) return; // empty slot
-        const removedId = usedStack.splice(slotIndex, 1)[0];
-        const btn = document.querySelector(`.tile-btn[data-id="${removedId}"]`);
-        if (btn) {
-          btn.disabled = false;
-          btn.classList.remove('selected');
-          btn.style.display = '';
-        }
-        updateSlots();
-      };
-    });
+    function bindSlotRemovalHandlers() {
+      slotEls.forEach((slotEl, slotIndex) => {
+        slotEl.style.cursor = 'pointer';
+        slotEl.title = 'Tap to remove letter';
+        slotEl.onclick = () => {
+          if (locked) return;
+          if (slotIndex >= usedStack.length) return; // empty slot
+          const removedId = usedStack.splice(slotIndex, 1)[0];
+          const btn = document.querySelector(`.tile-btn[data-id="${removedId}"]`);
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('selected');
+            btn.style.display = '';
+          }
+          updateSlots();
+        };
+      });
+    }
+    bindSlotRemovalHandlers();
   }
 
   function levenshtein(a, b) {

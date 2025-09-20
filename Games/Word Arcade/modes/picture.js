@@ -3,6 +3,7 @@ import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
+import { ensureImageStyles } from '../ui/image_styles.js';
 
 // Global emoji mapping - loaded from external file
 let emojiMap = {};
@@ -102,7 +103,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
         <h2 style="color:#41b6beff;">Picture Mode Complete!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length}</span></div>`}
         <button id="playAgainPic" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMorePic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMorePic\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
       </div>`;
       const again = document.getElementById('playAgainPic');
       if (again) again.onclick = () => startGame('picture');
@@ -139,7 +140,8 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
       const hasImg = typeof current.img === 'string' && current.img.trim() && current.img.toLowerCase() !== 'null' && current.img.toLowerCase() !== 'undefined';
       if (hasImg) {
         const safeSrc = current.img.trim();
-        imgHtml = `<img src="${safeSrc}" alt="${current.eng}" style="max-width:180px;max-height:180px;border-radius:16px;box-shadow:0 2px 8px #ccc;margin-bottom:18px;object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:5em;margin-bottom:18px;display:none;">❓</div>`;
+        ensureImageStyles();
+        imgHtml = `<div class=\"wa-img-box wa-square rounded shadow\" style=\"max-width:40vw;\"><img src='${safeSrc}' alt='${current.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:5em;margin-bottom:18px;display:none;\">❓</div>`;
       } else {
         const key = String(current.eng).toLowerCase();
         const emoji = emojiMap[key] || '❓';

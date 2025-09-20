@@ -41,7 +41,7 @@ export function runListeningMultiChoice({ wordList, gameArea, startGame, listNam
         <button id="listenPlayBtn" style="background:#19777e;color:#fff;font-weight:700;padding:14px 30px;font-size:1.1em;border:none;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:pointer;">▶ Listen</button>
       </div>
       <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:16px;max-width:480px;margin:0 auto 12px auto;">
-        ${answers.map(a => `<button class=\"choice-btn listening-choice\" data-answer=\"${a}\" style=\"height:15vh;\">${a}</button>`).join('')}
+        ${answers.map(a => `<button class=\"choice-btn listening-choice\" data-answer=\"${a}\">${a}</button>`).join('')}
       </div>
       <div id="listeningFeedback" style="min-height:28px;font-size:1.05em;color:#555;margin-top:6px;"></div>
       <div style="margin-top:4px;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>

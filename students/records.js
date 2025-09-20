@@ -16,6 +16,12 @@ let __authResolved = false; // becomes true after first successful authenticated
 const __pendingAttempts = [];
 let __flushScheduled = false;
 const __pendingSessionEnd = new Map(); // sessionId -> payload for retry
+// Throttle: avoid hammering the auth refresh endpoint if user id not yet resolved.
+// Previously, flushPendingAttempts() retried every ~250ms, causing a rapid
+// stream of GET /.netlify/functions/supabase_auth?action=refresh requests.
+// We cap refresh attempts to at most once every THROTTLE_MS while unauthenticated.
+const __AUTH_REFRESH_THROTTLE_MS = 5000; // adjust (e.g. 3000) if you want faster retries
+let __lastAuthRefresh = 0;
 
 async function fetchWhoAmI() {
   try {
@@ -139,7 +145,14 @@ function scheduleAuthFlush() {
 async function flushPendingAttempts() {
   // Try to resolve auth again (refresh + whoami) with light backoff chain
   if (!getUserId()) {
-    try { await fetch(FN('supabase_auth') + '?action=refresh', { credentials: 'include', cache: 'no-store' }); } catch {}
+    const now = Date.now();
+    // Only call the refresh endpoint if enough time has passed since last attempt.
+    if (now - __lastAuthRefresh >= __AUTH_REFRESH_THROTTLE_MS) {
+      __lastAuthRefresh = now;
+      try {
+        await fetch(FN('supabase_auth') + '?action=refresh', { credentials: 'include', cache: 'no-store' });
+      } catch {}
+    }
     await ensureUserId();
   }
   const uid = getUserId();

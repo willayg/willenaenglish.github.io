@@ -51,6 +51,28 @@ const el = {
 let gameImageUrl = '';
 
 // -------------------------------------------------------------
+// Loading Overlay (spinner + message for live game creation & QR gen)
+// -------------------------------------------------------------
+let loadingEl = null;
+function showLoading(msg = 'Loading...') {
+  if (!el.modal) return;
+  if (!loadingEl) {
+    loadingEl = document.createElement('div');
+    loadingEl.className = 'cgm-loading-overlay';
+    loadingEl.innerHTML = `
+      <div class="cgm-loading-box" role="status" aria-live="polite">
+        <div class="cgm-spinner" aria-hidden="true"></div>
+        <div class="cgm-loading-msg"></div>
+      </div>`;
+    el.modal.appendChild(loadingEl);
+  }
+  const msgBox = loadingEl.querySelector('.cgm-loading-msg');
+  if (msgBox) msgBox.textContent = msg;
+  loadingEl.style.display = 'flex';
+}
+function hideLoading() { if (loadingEl) loadingEl.style.display = 'none'; }
+
+// -------------------------------------------------------------
 // Panel Construction Helpers
 // -------------------------------------------------------------
 function ensurePanels() {
@@ -178,8 +200,8 @@ function buildLiveTiles() {
     { key:'easy_picture', label:'Audio → Picture', desc:'Listen then choose', active:true },
     { key:'listen_and_spell', label:'Listen & Spell', desc:'Type what you hear', active:true },
     { key:'spelling', label:'Spelling', desc:'Basic spelling drill', active:true },
-    { key:'meaning', label:'Meaning', desc:'Word → Definition', active:true },
-    { key:'level_up', label:'Level Up', desc:'Progression mode', active:false }
+    { key:'matching', label:'Matching', desc:'Match the words.', active:true },
+    { key:'level_up', label:'Level Up', desc:'Words → Definitions', active:true }
   ];
   modes.forEach(m => {
     const div = document.createElement('div');
@@ -426,6 +448,27 @@ function showQrForUrl(urlStr) {
   if (linkBox) linkBox.textContent = urlStr;
   if (openBtn) openBtn.href = urlStr;
   if (overlay) overlay.style.display = 'flex';
+  // Prepare skeleton / spinner for QR image
+  if (img) {
+    img.classList.add('qr-loading');
+    let spin = overlay && overlay.querySelector('.qr-spinner');
+    if (!spin && overlay) {
+      spin = document.createElement('div');
+      spin.className = 'qr-spinner';
+      if (img.parentElement) {
+        img.parentElement.style.position = 'relative';
+        img.parentElement.appendChild(spin);
+      } else {
+        overlay.appendChild(spin);
+      }
+    }
+    const clearLoading = () => {
+      img.classList.remove('qr-loading');
+      if (spin) spin.remove();
+    };
+    img.onload = clearLoading;
+    img.onerror = () => { clearLoading(); img.classList.add('qr-error'); };
+  }
   const providers = [
     `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=M|0&chl=${encodeURIComponent(urlStr)}`,
     `https://quickchart.io/qr?text=${encodeURIComponent(urlStr)}&size=300&margin=0`,
@@ -448,6 +491,7 @@ async function launchLiveMode() {
   const data = buildPayloadRef();
   if (!data || !Array.isArray(data.words) || !data.words.length) { alert('No words found. Please add words first.'); return; }
   setStatus('Creating live game...');
+  showLoading('Creating live game...');
   let id = null;
   try {
     const resp = await fetch('/.netlify/functions/live_game', {
@@ -470,6 +514,7 @@ async function launchLiveMode() {
   } catch(e) {
     console.error('Failed to create live game', e);
     setStatus('Live create failed');
+    hideLoading();
     alert('Could not create live game on server. Reason: ' + (e.message || 'unknown error') + '\n\nLikely causes if first time:\n1. The database table live_games was not created yet.\n2. Missing Supabase keys in Netlify dev environment.\n3. Need pgcrypto extension (for gen_random_uuid).');
     return;
   } finally {
@@ -477,7 +522,14 @@ async function launchLiveMode() {
   }
   const url = new URL(window.location.origin + '/Games/Word Arcade/play.html');
   url.searchParams.set('id', id);
-  showQrForUrl(url.toString());
+  url.searchParams.set('src', 'builder');
+  // Pass the intended mode explicitly so play-main can force it
+  if (selectedLiveMode) url.searchParams.set('mode', selectedLiveMode);
+  showLoading('Generating QR code...');
+  setTimeout(() => {
+    showQrForUrl(url.toString());
+    hideLoading();
+  }, 30);
 }
 
 // expose launch function if needed elsewhere (optional)
