@@ -350,6 +350,20 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 
 /* End Create Game Modal rebuild styles */
 
+/* ========== Create Game Modal Loading Overlay & QR Skeleton ========== */
+.cgm-loading-overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); background:rgba(255,255,255,0.65); z-index:60; }
+.cgm-loading-box { background:#ffffff; border:2px solid #cfe4e8; padding:26px 34px 30px; border-radius:20px; box-shadow:0 6px 28px rgba(0,0,0,0.18); display:flex; flex-direction:column; align-items:center; gap:14px; min-width:220px; }
+.cgm-spinner { width:54px; height:54px; border:6px solid #dbe8ec; border-top-color:#19777e; border-radius:50%; animation:cgmSpin .9s linear infinite; }
+.cgm-loading-msg { font-size:.9rem; font-weight:600; color:#0f3f49; letter-spacing:.5px; text-align:center; }
+@keyframes cgmSpin { to { transform:rotate(360deg); } }
+
+/* QR image skeleton (assumes #qrImage element) */
+#qrImage.qr-loading { background:linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation:shimmer 1.2s infinite; opacity:.2; }
+#qrImage.qr-error { outline:3px solid #f87171; position:relative; }
+#qrImage.qr-error::after { content:'Error'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:700; color:#b91c1c; background:rgba(255,255,255,0.85); }
+.qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:44px; height:44px; border:6px solid #cbd5e1; border-top-color:#0d5c63; border-radius:50%; animation:cgmSpin .9s linear infinite; pointer-events:none; }
+
+
 /* ===== Loader Modal Performance + Card Styles ===== */
 .skeleton-bar { background: linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation: shimmer 1.2s infinite; }
 .skeleton-card { background: linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation: shimmer 1.2s infinite; }

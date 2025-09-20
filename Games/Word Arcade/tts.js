@@ -4,8 +4,8 @@
 const audioCache = new Map(); // normalizedWord -> Audio object
 
 // Strict behavior flags
-// Generation is allowed during preload to create files only for missing words; still disabled at runtime
-const DISABLE_TTS_GENERATION = false;
+// Disable generation completely (per requirement to prevent creating new audio files)
+const DISABLE_TTS_GENERATION = true;
 
 function normalizeWord(w) {
   // Unify cache keys so 'ice cream' and 'ice_cream' map to the same key
@@ -131,36 +131,9 @@ export async function preloadAllAudio(wordList, onProgress = null) {
 
   console.log(`Found ${existingAudio.size} existing, missing ${missingWords.length}`);
 
-  // Generate when needed: if none exist, generate all; else generate missing
-  // Additionally, refresh words that contain spaces to remove any prior 'underscore' speech
-  if (!DISABLE_TTS_GENERATION && (missingWords.length > 0 || words.some(w => /[\s_]/.test(w)))) {
-    completed = 0;
-    const toGenerate = existingAudio.size === 0
-      ? words
-  : Array.from(new Set([ ...missingWords, ...words.filter(w => /[\s_]/.test(w)) ]));
-    for (const word of toGenerate) {
-      try {
-        const text = preprocessTTS(word);
-        const data = await callTTSFunction({ text, voice_id: getPreferredVoiceId() });
-        if (data && data.audio) {
-          const uploadedUrl = await uploadToSupabase(word, data.audio);
-          if (uploadedUrl) {
-            const n = normalizeWord(word);
-            audioCache.delete(n);
-            existingAudio.set(n, uploadedUrl);
-          } else {
-            failedGenerations.add(word);
-          }
-        }
-      } catch (err) {
-        failedGenerations.add(word);
-      }
-      completed++;
-      if (onProgress) {
-        const progress = 33 + (completed / Math.max(1, toGenerate.length)) * 33; // Phase 2
-        onProgress({ completed, total: toGenerate.length, phase: 'generating', word, progress });
-      }
-    }
+  // Generation disabled: skip creation entirely. Report phase 2 instantly if callback expects it.
+  if (onProgress) {
+    onProgress({ phase: 'generating', word: '', progress: 66, completed, total: totalWords });
   }
 
   // Load all audio into cache (with concurrency)
@@ -189,20 +162,16 @@ export async function preloadAllAudio(wordList, onProgress = null) {
   const audioWorkers = Array.from({ length: Math.min(6, audioEntries.length) }, () => loadWorker());
   await Promise.all(audioWorkers);
 
-  // Validate that all requested words are present in the cache
+  // Do NOT throw if missing; instead return a summary so caller can skip those words in audio-dependent modes.
   const missingAfter = words.filter(w => !audioCache.has(normalizeWord(w)));
-  if (missingAfter.length > 0) {
-    const error = new Error(`Audio missing for ${missingAfter.length} word(s).`);
-    error.details = {
-      missingAfter,
-      failedGenerations: Array.from(failedGenerations),
-      failedLoads: Array.from(failedLoads)
-    };
-    throw error;
-  }
-
-  console.log(`Audio preload complete. ${audioCache.size} files ready.`);
-  return audioCache.size;
+  const summary = {
+    ready: audioCache.size,
+    missing: missingAfter,
+    failedGenerations: Array.from(failedGenerations),
+    failedLoads: Array.from(failedLoads)
+  };
+  console.log(`[AudioPreload] Complete. Ready: ${summary.ready} Missing: ${summary.missing.length}`);
+  return summary;
 }
 
 async function callTTSFunction(payload) {

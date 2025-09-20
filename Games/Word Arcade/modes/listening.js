@@ -2,6 +2,7 @@ import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
+import { ensureImageStyles } from '../ui/image_styles.js';
 
 // Listening mode: English audio, choose correct Korean translation
 export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
@@ -76,7 +77,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
     } else {
       if (hasValidImg(w)) {
         const src = (w.image_url || w.image || w.img).trim();
-        return `<img src="${src}" alt="${w.eng}" style="max-width:38vw;max-height:22vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:3.2rem;line-height:1;display:none;">❓</div>`;
+  ensureImageStyles();
+  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${src}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:3.2rem;line-height:1;display:none;\">❓</div>`;
       }
       const em = getEmojiFor(w.eng) || '❓';
       return `<div style="font-size:3.2rem;line-height:1;">${em}</div>`;
@@ -116,7 +118,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
         <h2 style="color:#41b6beff;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
         ${isReview ? '' : `<div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div>`}
         <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMoreBtn" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreBtn\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => startGame('listening');
       document.getElementById('tryMoreBtn').onclick = () => {

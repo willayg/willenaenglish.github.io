@@ -17,6 +17,7 @@ import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
+import { ensureImageStyles } from '../ui/image_styles.js';
 
 // Local emoji mapping cache
 let emojiMap = {};
@@ -100,7 +101,8 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
       const hasImg = typeof wordEntry.img === 'string' && wordEntry.img.trim() && wordEntry.img.toLowerCase() !== 'null' && wordEntry.img.toLowerCase() !== 'undefined';
       if (hasImg) {
         const safeSrc = wordEntry.img.trim();
-        return `<img src="${safeSrc}" alt="${wordEntry.eng}" style="max-width:38vw;max-height:22vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:3.2rem;line-height:1;display:none;">❓</div>`;
+  ensureImageStyles();
+  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${safeSrc}' alt='${wordEntry.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:3.2rem;line-height:1;display:none;\">❓</div>`;
       }
       const key = String(wordEntry.eng).toLowerCase();
       const emoji = emojiMap[key] || '❓';
@@ -119,7 +121,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
         <h2 style="color:#41b6beff;">Easy Picture Complete!</h2>
         <div style="font-size:1.2em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${ordered.length}</span></div>
         <button id="playAgainEasyPic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMoreEasyPic" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreEasyPic\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
       </div>`;
       const again = document.getElementById('playAgainEasyPic');
       if (again) again.onclick = () => startGame('easy_picture');

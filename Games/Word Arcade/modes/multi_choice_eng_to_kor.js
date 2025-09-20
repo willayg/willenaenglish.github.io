@@ -43,7 +43,7 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${current.eng}</div>
       <div id="multiChoicesEngKor" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:400px;margin:0 auto 18px auto;">
         ${choices.map(kor => `
-          <button class="multi-choice-btn choice-btn" data-kor="${kor}" style="height:15vh;">
+          <button class=\"multi-choice-btn choice-btn\" data-kor=\"${kor}\">
             ${kor}
           </button>
         `).join('')}

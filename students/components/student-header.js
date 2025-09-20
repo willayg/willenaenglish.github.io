@@ -159,19 +159,19 @@ class StudentHeader extends HTMLElement {
       <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
         :host { display:block; }
-        header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 14px 8px; z-index:10; }
-  .top { display:flex; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; justify-content: flex-end; }
-  .title { font-weight:800; color: var(--pri, #19777e); }
-  .info { display:flex; flex-direction:column; gap:2px; }
+        header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 8px 8px; z-index:10; min-width:0; width:100vw; box-sizing:border-box; }
+  .top { display:flex; flex-direction:row; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; justify-content: center; min-width:0; }
+  .title { font-weight:800; color: var(--pri, #19777e); text-align:center; }
+  .info { display:flex; flex-direction:column; gap:2px; align-items:center; }
   .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#f7fcfd; border:1px solid #a9d6e9; color:#19777e; font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .points-pill svg { width:14px; height:14px; display:block; }
-  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin-left:8px; flex:1; justify-content: flex-end; text-align:center; }
-  .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; }
-        .spacer { flex:1; }
+  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin:0 auto; justify-content:center; text-align:center; min-width:0; }
+  .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; margin-right:auto; }
+  .spacer { flex:1; }
   .btn { border:1px solid var(--acc, #93cbcf); background: var(--acc, #93cbcf); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
   .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid var(--pri, #19777e); font-size:22px; }
   .avatar-btn { cursor:pointer; }
-        .mut { color: var(--mut, #666); font-size:12px; }
+        .mut { color: var(--mut, #666); font-size:12px; text-align:center; }
         button.btn:focus { outline: 2px solid var(--pri, #30b5beff); outline-offset:2px; }
   /* Avatar dropdown */
   .menu-anchor { position: relative; }
@@ -203,7 +203,6 @@ class StudentHeader extends HTMLElement {
   .dropdown.open { display:block; }
   .dd-item { display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid transparent; background:#fff; border-radius:10px; padding:10px 12px; cursor:pointer; font-weight:700; color: #19777e; }
   .dd-item:hover, .dd-item:focus { background:#f7fcfd; border-color:#e6eaef; outline:none; }
-  .logout-btn { border:1px solid #e6eaef; background:#fff; color:#19777e; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
         .menu-row {
           margin-top:8px; padding-top:8px; border-top:1px solid #eef2f5;
           font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif;
@@ -261,7 +260,6 @@ class StudentHeader extends HTMLElement {
             <span class="page-title-text" part="page-title-text">${this.pageTitle || ""}</span>
           </div>
           <slot name="actions"></slot>
-          ${this.showLogout ? `<button class="logout-btn" id="logoutBtn" part="logout-button" title="Logout">Logout</button>` : ""}
           ${this.showHome ? `<a class="menu-item" id="homeBtn" part="home-button" href="${this.homeHref}">${this.homeLabel}</a>` : ""}
           <div class="menu-anchor">
             <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
@@ -282,7 +280,6 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M12 12c2.7 0 8 1.34 8 4v4H4v-4c0-2.66 5.3-4 8-4zm0-2a4 4 0 100-8 4 4 0 000 8z" fill="#19777e"/></svg>
                 Profile
               </a>
-              ${this.showLogout ? `<button class="dd-item" role="menuitem" id="logoutAction"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-10H5c-1.1 0-2 .9-2 2v6h2V5h14v14H5v-6H3v6c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" fill="#19777e"/></svg>Logout</button>` : ''}
             </div>
           </div>
         </div>

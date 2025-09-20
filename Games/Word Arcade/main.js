@@ -252,32 +252,44 @@ async function processWordlist(data) {
   try {
     wordList = Array.isArray(data) ? data : [];
     if (!wordList.length) throw new Error('No words provided');
-  // Save early so UI can reflect title/list even if user navigates quickly
-  saveSessionState();
+    // Save early so UI can reflect title/list even if user navigates quickly
+    saveSessionState();
 
     // cancel any in-flight preload
     if (currentPreloadAbort) currentPreloadAbort.abort();
     currentPreloadAbort = new AbortController();
 
     showProgress('Preparing audio files...', 0);
+    let preloadError = null;
+    let preloadSummary = null;
+    try {
+      preloadSummary = await preloadAllAudio(wordList, ({ phase, word, progress }) => {
+        const phaseText = phase === 'checking' ? 'Checking existing files' : phase === 'generating' ? 'Generating missing audio' : 'Loading audio files';
+        showProgress(`${phaseText}<br><small>Current: ${word || ''}</small>`, progress || 0);
+      }, { signal: currentPreloadAbort.signal });
+    } catch (err) {
+      if (err?.name === 'AbortError') return; // list changed mid-flight
+      preloadError = err;
+      console.warn('[WordArcade] Audio preload partial failure – continuing anyway.', err);
+    }
 
-    // NOTE: ensure your preloadAllAudio supports an options object with { signal }.
-    // If it doesn't yet, adding a third arg is safe (it will be ignored until implemented).
-    await preloadAllAudio(wordList, ({ phase, word, progress }) => {
-      const phaseText = phase === 'checking' ? 'Checking existing files' : phase === 'generating' ? 'Generating missing audio' : 'Loading audio files';
-      showProgress(`${phaseText}<br><small>Current: ${word || ''}</small>`, progress || 0);
-    }, { signal: currentPreloadAbort.signal });
-
-    showGameStart(() => startModeSelector());
+    showGameStart(() => {
+      // If generation disabled, preloadSummary may contain missing list. Filter for modes that need audio later.
+      if (preloadSummary && preloadSummary.missing && preloadSummary.missing.length) {
+        inlineToast(`Audio unavailable for ${preloadSummary.missing.length} word${preloadSummary.missing.length>1?'s':''}. These will be skipped in audio modes.`);
+        // Store skip list globally for modes that require audio (they can test before presenting a question)
+        window.__WA_MISSING_AUDIO = new Set(preloadSummary.missing.map(w => String(w).trim().toLowerCase()));
+      } else if (preloadError) {
+        inlineToast('Audio problem – starting anyway.');
+      }
+      startModeSelector();
+    });
 
   } catch (err) {
-    if (err?.name === 'AbortError') return; // user changed lists
-    console.error('Error processing word list:', err);
-    const missing = err && err.details && Array.isArray(err.details.missingAfter) ? err.details.missingAfter : [];
-    const friendly = missing.length
-      ? `Some audio files could not be prepared (${missing.length}). Please try again or pick another lesson.`
-      : `Error processing word list: ${err.message}`;
-    showInlineError(friendly, () => processWordlist(data));
+    if (err?.name === 'AbortError') return;
+    console.error('Error processing word list (fatal):', err);
+    const msg = err.message || 'Unknown error';
+    showInlineError(`Error processing word list: ${msg}`, () => processWordlist(data));
   }
 }
 
@@ -288,12 +300,32 @@ async function loadSampleWordlistByFilename(filename) {
     if (!/^[A-Za-z0-9._-]+$/.test(filename)) throw new Error('Invalid filename');
 
     currentListName = filename || 'Sample List';
-    const url = new URL(`./sample-wordlists/${filename}`, import.meta.url);
-    const res = await fetch(url.href, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Failed to fetch ${filename}: ${res.status}`);
-    const ct = (res.headers.get('content-type') || '').toLowerCase();
-    const data = ct.includes('application/json') ? await res.json() : JSON.parse(await res.text());
-    await processWordlist(data);
+    // Attempt primary fetch plus fallback variants for names with spaces vs underscores/hyphens
+    const candidates = [filename];
+    // If filename contains spaces, user likely passed a friendly name; generate slug variants
+    if (filename.includes(' ')) {
+      const base = filename.trim();
+      candidates.push(base.replace(/\s+/g, '_'));
+      candidates.push(base.replace(/\s+/g, '-'));
+      candidates.push(base.replace(/\s+/g, ''));
+    } else if (!filename.includes('_') && !filename.includes('-')) {
+      // If user passed snake or kebab originally, we already have; else also try underscore & hyphen inserts for common patterns (icecream -> ice_cream)
+      if (/icecream/i.test(filename)) candidates.push(filename.replace(/icecream/i, 'ice_cream'));
+      if (/sorethroat/i.test(filename)) candidates.push(filename.replace(/sorethroat/i, 'sore_throat'));
+    }
+    let lastErr = null; let loaded = null;
+    for (const cand of Array.from(new Set(candidates))) {
+      try {
+        const url = new URL(`./sample-wordlists/${cand}`, import.meta.url);
+        const res = await fetch(url.href, { cache: 'no-store' });
+        if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+        const ct = (res.headers.get('content-type') || '').toLowerCase();
+        const data = ct.includes('application/json') ? await res.json() : JSON.parse(await res.text());
+        loaded = data; currentListName = cand; break;
+      } catch (e) { lastErr = e; }
+    }
+    if (!loaded) throw new Error(`Failed to fetch ${filename}${lastErr ? ': ' + lastErr.message : ''}`);
+    await processWordlist(loaded);
   } catch (err) {
     inlineToast('Error loading sample word list: ' + err.message);
   }
@@ -346,7 +378,20 @@ export async function startGame(mode = 'meaning') {
 
   const pick = modeLoaders[mode] || modeLoaders.meaning;
   const run = await pick();
-  const ctx = { wordList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
+  // If this mode depends on audio and we have a global missing-audio set, filter now so gameplay never surfaces silent words.
+  const audioDependent = new Set(['easy_picture','listening','listen_and_spell','spelling','listening_multi_choice']);
+  let effectiveList = wordList;
+  if (audioDependent.has(mode) && window.__WA_MISSING_AUDIO instanceof Set) {
+    const before = effectiveList.length;
+    effectiveList = effectiveList.filter(w => !window.__WA_MISSING_AUDIO.has(String(w.eng||'').trim().toLowerCase()));
+    if (!effectiveList.length && before) {
+      // All filtered out – show a toast and fall back to mode selector instead of empty run
+      inlineToast('All words missing audio for this mode. Pick a different mode.');
+      startModeSelector();
+      return;
+    }
+  }
+  const ctx = { wordList: effectiveList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
   run(ctx);
 }
 
@@ -457,6 +502,14 @@ async function openSavedGameById(id) {
 window.addEventListener('DOMContentLoaded', () => {
   // Try restoring session state so the mode menu or headers can show last list
   restoreSessionStateIfEmpty();
+  // Detect builder source (?src=builder) so modes can tweak layout minimally
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('src') === 'builder') {
+      window.__WA_FROM_BUILDER = true;
+      document.body.classList.add('from-builder');
+    }
+  } catch {}
   const basicBtn = document.getElementById('basicWordsBtn');
   const reviewBtn = document.getElementById('reviewBtn');
   const browseBtn = document.getElementById('browseBtn');

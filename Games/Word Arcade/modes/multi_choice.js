@@ -2,6 +2,7 @@ import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
+import { ensureImageStyles } from '../ui/image_styles.js';
 
 // Local emoji mapping cache for picture-capable rounds
 let emojiMap = {};
@@ -65,7 +66,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
     const hasImg = w.img && String(w.img).trim() && String(w.img).toLowerCase() !== 'null' && String(w.img).toLowerCase() !== 'undefined';
     if (hasImg) {
       const safe = String(w.img).trim();
-      return `<img src="${safe}" alt="${w.eng}" style="max-width:38vw;max-height:22vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:3.2rem;line-height:1;display:none;">❓</div>`;
+  ensureImageStyles();
+  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:3.2rem;line-height:1;display:none;\">❓</div>`;
     }
     const emoji = emojiMap[String(w.eng).toLowerCase()] || '❓';
     return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
@@ -80,7 +82,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
     const hasImg = w.img && String(w.img).trim() && String(w.img).toLowerCase() !== 'null' && String(w.img).toLowerCase() !== 'undefined';
     if (hasImg) {
       const safe = String(w.img).trim();
-      return `<img src="${safe}" alt="${w.eng}" style="max-width:64vw;max-height:28vh;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);object-fit:contain;background:#fff;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';"><div style="font-size:4rem;line-height:1;display:none;">❓</div>`;
+  ensureImageStyles();
+  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:64vw;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:4rem;line-height:1;display:none;\">❓</div>`;
     }
     const emoji = emojiMap[String(w.eng).toLowerCase()] || '❓';
     return `<div style="font-size:4rem;line-height:1;">${emoji}</div>`;
@@ -117,7 +120,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
         <h2 style="color:#41b6beff;">Game Complete!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${shuffled.length}</span></div>`}
         <button id="playAgainMultiMixed" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMoreMultiMixed" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreMultiMixed\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
       </div>`;
       document.getElementById('playAgainMultiMixed').onclick = () => startGame('multi_choice');
       document.getElementById('tryMoreMultiMixed').onclick = () => {

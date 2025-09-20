@@ -34,10 +34,19 @@ export const modeRegistry = {
 		const mod = await import('../modes/spelling.js');
 		return { run: (ctx) => mod.runSpellingMode(ctx) };
 	},
+	'level_up': async () => {
+		const mod = await import('../modes/level_up.js');
+		return { run: (ctx) => mod.runLevelUpMode(ctx) };
+	},
 	'meaning': async () => {
+		// Legacy loader now points to legacy wrapper which delegates to matching core
 		const mod = await import('../modes/meaning.js');
 		return { run: (ctx) => mod.runMeaningMode(ctx) };
-	}
+	},
+	'matching': async () => {
+		const mod = await import('../modes/matching.js');
+		return { run: (ctx) => mod.run(ctx) };
+	},
 };
 
 export async function loadMode(key) {

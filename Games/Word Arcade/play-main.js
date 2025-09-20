@@ -11,7 +11,35 @@
 import { loadMode } from './core/mode-registry.js';
 import { playTTS, preprocessTTS, preloadAllAudio } from './tts.js';
 
-const root = document.getElementById('gameRoot');
+// Inject enhanced tap-spell styles (idempotent) for spelling / listen_and_spell when loaded live
+(function ensureTapSpellStyles(){
+	if (document.getElementById('tapSpellLiveEnhance')) return;
+	const style = document.createElement('style');
+	style.id = 'tapSpellLiveEnhance';
+	style.textContent = `
+	/* Live Tap-Spell Enhancements */
+	.tap-spell { --ts-slot-size:54px; --ts-tile-size:62px; --ts-gap:10px; }
+	.tap-spell.from-builder { --ts-slot-size:54px; --ts-tile-size:62px; }
+	@media (max-width:640px){ .tap-spell { --ts-slot-size:48px; --ts-tile-size:56px; --ts-gap:8px; } }
+	@media (max-width:480px){ .tap-spell { --ts-slot-size:44px; --ts-tile-size:52px; --ts-gap:7px; } }
+		/* Reset any generic choice button sizing that leaks onto tile-btn */
+		#letterTiles .tile-btn { min-width:var(--ts-tile-size) !important; max-width:var(--ts-tile-size) !important; min-height:var(--ts-tile-size) !important; max-height:var(--ts-tile-size) !important; }
+	.tap-spell #letterSlots { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--ts-gap); margin:8px 0 12px; }
+	.tap-spell #letterSlots .slot { width:var(--ts-slot-size); height:var(--ts-slot-size); border:3px solid #93cbcf; border-radius:14px; background:#f7fafc; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2em; color:#0f172a; box-shadow:0 2px 4px rgba(0,0,0,0.08); transition:background .2s,border-color .2s; }
+	.tap-spell #letterSlots .slot:hover { background:#fff; border-color:#41b6beff; cursor:pointer; }
+	.tap-spell #letterTiles { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--ts-gap); max-width:640px; margin:0 auto; }
+	.tap-spell #letterTiles .tile-btn { width:var(--ts-tile-size); height:var(--ts-tile-size); border:3px solid #cfdbe2; border-radius:14px; background:#fff; font-weight:800; font-size:1.25em; color:#314249; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.08); transition:transform .18s, box-shadow .18s, background .2s, border-color .2s; }
+	.tap-spell #letterTiles .tile-btn:hover:not(:disabled){ transform:translateY(-4px); box-shadow:0 6px 16px rgba(0,0,0,0.18); border-color:#41b6beff; }
+	.tap-spell #letterTiles .tile-btn:active:not(:disabled){ transform:scale(.9); }
+	.tap-spell #letterTiles .tile-btn:disabled { opacity:.15; pointer-events:none; }
+	.tap-spell #spelling-feedback, .tap-spell #listening-feedback { min-height:26px; text-align:center; font-size:1.05em; color:#555; margin-top:10px; font-weight:600; }
+	.tap-spell #spelling-score, .tap-spell #listening-score { text-align:center; font-size:1.2em; font-weight:700; color:#19777e; }
+	`;
+	document.head.appendChild(style);
+})();
+
+// Use inner stage container so layout (fixed root & header spacing) remains intact
+const root = document.getElementById('gameStage') || document.getElementById('gameRoot');
 
 function showError(msg) {
 	if (root) {
@@ -31,6 +59,11 @@ function getId() {
 function getModeFromUrl() {
   const params = new URLSearchParams(location.search);
   return params.get('mode');
+}
+
+function isFromBuilder() {
+	const params = new URLSearchParams(location.search);
+	return params.get('src') === 'builder';
 }
 
 async function fetchGame(id) {
@@ -75,6 +108,10 @@ function normalizeWords(list) {
 async function start() {
 	const id = getId();
 	if (!id) { showError('Missing id in URL.'); return; }
+	if (isFromBuilder()) {
+		try { document.body.classList.add('from-builder'); } catch {}
+		window.__WA_FROM_BUILDER = true;
+	}
 	const stub = await fetchGame(id);
 	if (!stub) return; // fetchGame already showed error
 	const modeKey = getModeFromUrl() || stub.mode || (Array.isArray(stub.modes) ? stub.modes[0] : null) || 'multi_choice_eng_to_kor';
@@ -84,7 +121,7 @@ async function start() {
 		return;
 	}
 
-	// If the selected mode depends on audio, preload from Supabase so we avoid system TTS fallback.
+	// If the selected mode depends on audio, preload existing audio (generation disabled) and skip missing ones.
 	const audioModes = new Set(['easy_picture', 'listening_multi_choice', 'listen_and_spell', 'spelling']);
 	if (audioModes.has(modeKey)) {
 		if (root) {
@@ -98,18 +135,29 @@ async function start() {
 		}
 		try {
 			const engWords = words.map(w => w.eng).filter(Boolean);
-			await preloadAllAudio(engWords, (p) => {
+			const summary = await preloadAllAudio(engWords, (p) => {
 				const bar = document.getElementById('audioPrepBar');
 				const msg = document.getElementById('audioPrepMsg');
 				if (bar && typeof p.progress === 'number') {
 					bar.style.width = Math.max(0, Math.min(100, Math.round(p.progress))) + '%';
 				}
 				if (msg && p.phase) {
-					msg.textContent = p.phase === 'checking' ? 'Checking existing audio…' : p.phase === 'generating' ? 'Generating missing audio…' : 'Loading audio…';
+					msg.textContent = p.phase === 'checking' ? 'Checking existing audio…' : p.phase === 'generating' ? 'Skipping generation…' : 'Loading audio…';
 				}
 			});
+			if (summary && summary.missing && summary.missing.length) {
+				// Remove words lacking audio so audio-dependent gameplay never shows them
+				const missingSet = new Set(summary.missing.map(w => w.toLowerCase()));
+				for (let i = words.length - 1; i >= 0; i--) {
+					if (missingSet.has(words[i].eng.toLowerCase())) words.splice(i, 1);
+				}
+				if (!words.length) {
+					showError('All words missing audio for this mode.');
+					return;
+				}
+			}
 		} catch (e) {
-			console.warn('Audio preload failed; proceeding with fallback TTS if needed.', e);
+			console.warn('Audio preload failed; proceeding with whatever audio is available.', e);
 		}
 	}
 	try {

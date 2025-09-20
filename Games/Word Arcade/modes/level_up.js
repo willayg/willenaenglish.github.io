@@ -128,11 +128,12 @@ export async function runLevelUpMode({ wordList, gameArea, startGame, listName =
       playSFX('end');
       endSession(sessionId, { mode: 'level_up', summary: { score, total: ordered.length } });
       hideGameProgress();
+      const isLivePlay = !!document.getElementById('gameStage');
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Level Up Complete!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.2em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length}</span></div>`}
         <button id="playAgainLevelUp" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        <button id="tryMoreLevelUp" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;">Try More</button>
+        ${isLivePlay ? '' : `<button id=\"tryMoreLevelUp\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
       </div>`;
       const again = document.getElementById('playAgainLevelUp');
       if (again) again.onclick = () => startGame('level_up');
