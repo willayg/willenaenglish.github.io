@@ -68,10 +68,7 @@ export async function showModeModal({ onModeChosen, onClose }) {
     hs.textContent = `
       #modeModal .mode-modal-header { text-align:center; padding:4px 8px 10px; }
       #modeModal .mode-modal-header .file-title { font-family:'Poppins', Arial, sans-serif; font-weight:800; color:#19777e; font-size:18px; margin-top:4px; }
-      #modeModal .mode-modal-header .medals-row { display:flex; align-items:center; justify-content:center; gap:10px; margin:6px 0 4px; }
-      #modeModal .medal { width:22px; height:22px; border-radius:50%; border:2px solid #d7e3e6; background:transparent; box-shadow:none; }
-      #modeModal .medal.filled { border-color:transparent; }
-    `;
+    `; // Medal styles removed
     document.head.appendChild(hs);
   }
   // Decide availability for picture modes: require at least 4 explicit images (no emoji fallback)
@@ -123,30 +120,11 @@ export async function showModeModal({ onModeChosen, onClose }) {
     return 0;
   };
 
-  // Build modal header with file title and medals progress
-  const buildHeader = (perfectCount) => {
-    // PNG filenames for medals in icons folder
-    const svgFiles = [
-  'wooden.png?v=20250910a',
-  'steel.png?v=20250910a',
-  'bronze.png?v=20250910a',
-  'silver.png?v=20250910a',
-  'gold.png?v=20250910a',
-  'platinum.png?v=20250910a'
-    ];
-    const labels = ['Wooden', 'Steel', 'Bronze', 'Silver', 'Gold', 'Platinum'];
-    let medals = '';
-    for (let i = 0; i < 6; i++) {
-      const filled = i < perfectCount;
-      const title = `${labels[i]} Medal` + (filled ? ' (earned)' : ' (locked)');
-      medals += `<span class="medal" title="${title}" aria-label="${title}" style="display:inline-block;width:28px;height:28px;vertical-align:middle;">
-        <img src="./assets/Images/icons/${svgFiles[i]}" alt="${labels[i]} Medal" style="width:100%;height:100%;opacity:${filled ? 1 : 0.35};filter:${filled ? '' : 'grayscale(1)'};" />
-      </span>`;
-    }
+  // Simplified modal header (medals removed)
+  const buildHeader = () => {
     const displayName = listName || 'Word List';
-    return `<div class="mode-modal-header" role="region" aria-label="Progress for ${displayName}">
+    return `<div class="mode-modal-header" role="region" aria-label="${displayName}">
       <div class="file-title">${displayName}</div>
-      <div class="medals-row" aria-label="${perfectCount} of 6 medals earned">${medals}</div>
     </div>`;
   };
 
@@ -208,16 +186,8 @@ export async function showModeModal({ onModeChosen, onClose }) {
   { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
   { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
   ];
-  // Compute how many modes have a perfect (100%) score for medals
-  const modeIds = modes.map(m => m.id);
-  let perfectCount = 0;
-  modeIds.forEach(id => {
-    const best = bestByMode[String(id).toLowerCase()];
-    if (best && typeof best.pct === 'number' && best.pct >= 100) perfectCount++;
-  });
-
   const headerEl = modal.querySelector('#modeModalHeader');
-  if (headerEl) headerEl.innerHTML = buildHeader(perfectCount);
+  if (headerEl) headerEl.innerHTML = buildHeader();
 
   const listContainer = modal.querySelector('.mode-grid');
   modes.forEach((m) => {
