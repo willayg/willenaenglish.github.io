@@ -305,10 +305,10 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 
 /* Start chooser buttons */
 .cgm-choice-buttons { display:flex; flex-wrap:wrap; gap:24px; justify-content:center; margin:30px auto; max-width:640px; }
-.cgm-choice-btn { flex:1 1 240px; min-width:240px; padding:34px 24px; text-align:center; font-size:1.25rem; font-weight:700; border:3px solid var(--primary); background:#fff; color:var(--primary-dark); border-radius:18px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.06); transition:background .2s,border-color .2s,transform .18s; }
+.cgm-choice-btn { flex:1 1 240px; min-width:240px; min-height:200px; padding:34px 24px; text-align:center; font-size:1.25rem; font-weight:700; border:3px solid var(--primary); background:#fff; color:var(--primary-dark); border-radius:18px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.06); transition:background .2s,border-color .2s,transform .18s; }
 .cgm-choice-btn:hover { background:#f0fafb; transform:translateY(-2px); }
-.cgm-choice-btn.play { border-color:#19777e; background:#19777e; color:#fff; }
-.cgm-choice-btn.play:hover { background:#0d5c63; }
+.cgm-choice-btn.play { border-color:#f59e0b; }
+.cgm-choice-btn.play:hover { background:#fff7ed; }
 .cgm-choice-btn.hw { border-color:#f59e0b; }
 .cgm-choice-btn.hw:hover { background:#fff7ed; }
 

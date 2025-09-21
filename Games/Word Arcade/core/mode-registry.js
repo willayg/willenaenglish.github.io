@@ -47,6 +47,10 @@ export const modeRegistry = {
 		const mod = await import('../modes/matching.js');
 		return { run: (ctx) => mod.run(ctx) };
 	},
+	'full_arcade': async () => {
+		const mod = await import('../modes/full_arcade.js');
+		return { run: (ctx) => mod.run(ctx) };
+	},
 };
 
 export async function loadMode(key) {

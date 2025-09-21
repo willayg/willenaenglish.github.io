@@ -193,6 +193,7 @@ function buildLiveTiles() {
   if (!el.liveGrid) return;
   if (el.liveGrid.childElementCount) return; // build once
   const modes = [
+    { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true },
     { key:'multi_choice_eng_to_kor', label:'Multiple Choice', desc:'English → Korean', active:true },
     { key:'picture_multi_choice', label:'Picture Match', desc:'Image → Word', active:true },
     { key:'listening_multi_choice', label:'Listening', desc:'Hear → Choose', active:true },
