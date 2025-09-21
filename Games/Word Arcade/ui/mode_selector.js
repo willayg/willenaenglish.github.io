@@ -242,6 +242,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   };
   // Create a single list of modes in the order shown in the image
   const modes = [
+  { id: 'full_arcade', title: 'Full Arcade', icon: './assets/Images/icons/arcade.png?v=20250921a', colorClass: 'for-you' },
   { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
   { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
   { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
