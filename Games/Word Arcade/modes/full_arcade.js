@@ -5,8 +5,10 @@
 //
 // Theme -> Underlying Mode Mapping:
 // 1. Matching:      'matching' (existing match English↔Korean)
-// 2. Listen:        alternates between 'easy_picture' (audio → picture) and
-//                   'listening_multi_choice' (audio → meaning) per playthrough.
+// 2. Listen:        now uses unified 'listening' hybrid mode (per-question alternates
+//                   between picture (image/emoji) and Korean meaning where enough
+//                   picturable items (>=4) exist; otherwise gracefully falls back
+//                   to meaning-only questions).
 // 3. Read:          alternates direction each run between ENG→KOR and KOR→ENG
 //                   multi-choice (vocabulary recognition in reading form).
 // 4. Spell:         'listen_and_spell' (listen then type exact word).
@@ -20,30 +22,33 @@
 
 import { loadMode } from '../core/mode-registry.js';
 
-// Persist a lightweight counter across runs so Listen/Read rounds can alternate.
-let __fa_run_counter = (window.__fa_run_counter || 0);
-window.__fa_run_counter = __fa_run_counter + 1;
+// Persist lightweight counters across runs so Listen & Read rounds rotate deterministically
+// rather than random each time (better perceived coverage & fairness).
+let __fa_listen_counter = (window.__fa_listen_counter || 0);
+let __fa_read_counter = (window.__fa_read_counter || 0);
+window.__fa_listen_counter = __fa_listen_counter + 1;
+window.__fa_read_counter = __fa_read_counter + 1;
 
 function buildRoundSequence() {
-  const runIndex = window.__fa_run_counter; // 1-based after increment
-  const listenVariant = (runIndex % 2 === 0) ? 'listening_multi_choice' : 'easy_picture';
-  const readDirection = (runIndex % 2 === 0)
-    ? ['multi_choice_kor_to_eng', 'multi_choice_eng_to_kor']
-    : ['multi_choice_eng_to_kor', 'multi_choice_kor_to_eng'];
-  // Take first of readDirection for this single Read round; the other direction
-  // will appear on the next playthrough when the order flips.
-  const readRound = readDirection[0];
+  // Listen round always uses the hybrid mode which internally alternates
+  // per question. If later you want to occasionally insert a pure variant,
+  // you can restore a rotation here.
+  const listenVariant = 'listening';
+  const readVariant = 'multi_choice';
   return [
-    'matching',              // Match
-    listenVariant,           // Listen (audio → picture/meaning)
-    readRound,               // Read (multi-choice in one direction)
-    'listen_and_spell',      // Spell (listen then spell)
-    'spelling',              // Test (prompt in Korean -> type English)
-    'level_up',              // Level Up (definition → word)
+    'matching',
+    listenVariant,
+    readVariant,
+    'listen_and_spell',
+    'spelling',
+    'level_up',
   ];
 }
 
-const THEMED_SEQUENCE = buildRoundSequence();
+function getThemedSequence() {
+  // Always randomize Listen round at the moment Full Arcade starts
+  return buildRoundSequence();
+}
 
 // Utility to create a simple container for per-round overlays
 function ensureOverlay() {
@@ -78,21 +83,70 @@ export function runFullArcadeMode(context) {
 
   let roundIndex = 0;
   let currentMode = null;
+  const THEMED_SEQUENCE = getThemedSequence();
+
+  // Provide a globally callable helper so external UI (e.g., Skip link) can advance
+  window.__fullArcadeNextRound = function() {
+    const nextIdx = roundIndex + 1;
+    if (nextIdx < THEMED_SEQUENCE.length) startRound(nextIdx); else finalSummary();
+  };
+
+  // Provide a globally callable helper to go back to the previous round
+  window.__fullArcadePrevRound = function() {
+    const prevIdx = roundIndex - 1;
+    if (prevIdx >= 0) startRound(prevIdx);
+  };
+
+  // Skip Round small text link (bottom-right) — injected once then shown/hidden
+  function ensureSkipLink() {
+    let link = document.getElementById('faSkipRoundLink');
+    if (!link) {
+      link = document.createElement('div');
+      link.id = 'faSkipRoundLink';
+      link.textContent = 'Skip round →';
+      link.style.cssText = 'position:fixed;right:16px;bottom:14px;font-size:.85rem;color:#19777e;cursor:pointer;z-index:5000;font-weight:500;text-decoration:underline;font-family:system-ui,sans-serif;';
+      link.onclick = () => window.__fullArcadeNextRound && window.__fullArcadeNextRound();
+      document.body.appendChild(link);
+    }
+    link.style.display = 'block';
+  }
+  function hideSkipLink() { const link = document.getElementById('faSkipRoundLink'); if (link) link.style.display = 'none'; }
+
+  // Bottom-left "Last round" (previous) link
+  function ensurePrevLink() {
+    let link = document.getElementById('faPrevRoundLink');
+    if (!link) {
+      link = document.createElement('div');
+      link.id = 'faPrevRoundLink';
+      link.textContent = '← Last round';
+      link.style.cssText = 'position:fixed;left:16px;bottom:14px;font-size:.85rem;color:#19777e;cursor:pointer;z-index:7000;font-weight:500;text-decoration:underline;font-family:system-ui,sans-serif;';
+      link.onclick = () => window.__fullArcadePrevRound && window.__fullArcadePrevRound();
+      document.body.appendChild(link);
+    }
+    // Show whenever not the very first index; also keep during end screen
+    link.style.display = (roundIndex > 0) ? 'block' : 'none';
+  }
+  function hidePrevLink() { const link = document.getElementById('faPrevRoundLink'); if (link) link.style.display = 'none'; }
 
   function startRound(i) {
     roundIndex = i;
-  const modeKey = THEMED_SEQUENCE[i];
+    const modeKey = THEMED_SEQUENCE[i];
     if (!modeKey) return finalSummary();
     // Clear area & show lightweight round header
     gameArea.innerHTML = `<div class="arcade-round-intro" style="text-align:center;padding:16px 8px;font-family:system-ui,sans-serif;">
-  <h2 style="margin:4px 0 10px;font-size:1.25rem;color:#19777e;font-weight:800;">Round ${i+1} / ${THEMED_SEQUENCE.length}</h2>
-  <div style="color:#334155;font-size:.9rem;margin-bottom:8px;">${prettyLabel(modeKey)}</div>
+      <h2 style="margin:4px 0 10px;font-size:1.25rem;color:#19777e;font-weight:800;">Round ${i+1} / ${THEMED_SEQUENCE.length}</h2>
+      <div style="color:#334155;font-size:.9rem;margin-bottom:8px;">${prettyLabel(modeKey)}</div>
       <div style="font-size:.8rem;color:#64748b;">Loading…</div>
     </div>`;
+    ensureSkipLink();
+  ensurePrevLink();
     loadMode(modeKey).then(mod => {
       currentMode = modeKey;
       // Run underlying mode with same context; pass through wordList (can be filtered per round later)
       mod.run({ ...context, wordList, gameArea });
+      // Reassert prev link shortly after mode renders in case mode wipes overlays
+      setTimeout(ensurePrevLink, 250);
+      setTimeout(ensurePrevLink, 750);
       hookEndScreen();
     }).catch(e => {
       console.error('[FullArcade] failed to load mode', modeKey, e);
@@ -145,6 +199,8 @@ export function runFullArcadeMode(context) {
 
     if (mutationObserver) try { mutationObserver.disconnect(); } catch {}
     injectRoundControls(correct, total);
+    // Re-evaluate prev link visibility after round ends
+    ensurePrevLink();
   }
 
   function injectRoundControls(correct, total) {
@@ -179,6 +235,8 @@ export function runFullArcadeMode(context) {
   }
 
   function finalSummary() {
+    hideSkipLink();
+    hidePrevLink();
     const pct = cumulative.totalQuestions ? Math.round((cumulative.totalCorrect / cumulative.totalQuestions) * 100) : 0;
     gameArea.innerHTML = `<div style="max-width:560px;margin:40px auto;padding:28px 24px;background:#fff;border:2px solid #cfdbe2;border-radius:20px;font-family:system-ui,sans-serif;text-align:center;">
       <h2 style="margin:0 0 14px;font-size:1.6rem;color:#0f172a;font-weight:800;">Full Arcade Complete</h2>
@@ -221,8 +279,11 @@ function prettyLabel(key) {
     case 'matching': return 'Match (Words)';
     case 'easy_picture': return 'Listen (Audio → Picture)';
     case 'listening_multi_choice': return 'Listen (Audio → Meaning)';
+  case 'listening': return 'Listen (Pictures / Korean)';
     case 'multi_choice_eng_to_kor': return 'Read (ENG → KOR)';
     case 'multi_choice_kor_to_eng': return 'Read (KOR → ENG)';
+  case 'multi_choice': return 'Read (Mixed)';
+  case 'picture_multi_choice': return 'Read (Picture → EN Word)';
     case 'listen_and_spell': return 'Spell (Listen & Type)';
     case 'spelling': return 'Test (KOR → Spell EN)';
     case 'level_up': return 'Level Up (Definition)';

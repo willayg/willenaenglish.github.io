@@ -315,7 +315,7 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 /* Live mode grid (4 x 2) */
 .cgm-live-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; max-width:1080px; margin:0 auto 10px; }
 .cgm-mode-tile { position:relative; width:100%; aspect-ratio:1/1; max-width:250px; max-height:250px; background:#f5f8fa; border:2px solid #cfdbe2; border-radius:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; font-weight:700; font-size:1rem; color:#314249; margin:0 auto; cursor:default; box-shadow:0 4px 14px rgba(0,0,0,0.05); transition:box-shadow .18s, transform .18s, background .2s; }
-.cgm-mode-tile.active { cursor:pointer; background:#19777e; color:#fff; border-color:#19777e; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
+.cgm-mode-tile.active { cursor:pointer; background:#f0fafb; color:#19777e; border-color:#f59e0b; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
 .cgm-mode-tile.active:hover { transform:translateY(-4px); }
 .cgm-mode-tile .cgm-tag { position:absolute; top:10px; right:10px; font-size:11px; background:#19777e; color:#fff; padding:4px 8px; border-radius:999px; letter-spacing:.5px; font-weight:600; }
 .cgm-mode-tile.disabled { opacity:.45; }
