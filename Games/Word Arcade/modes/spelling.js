@@ -132,22 +132,41 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     let dynamicContainerWidth = null;
     if (live) {
       try {
-        // measure the immediate gameArea (already sized by play.html scaling wrapper)
-        dynamicContainerWidth = Math.min(660, Math.max(280, gameArea.clientWidth - 24));
+        // Allow smaller minimum than before (was 280); helps very narrow devices.
+        const computed = gameArea.clientWidth - 24; // padding allowance
+        dynamicContainerWidth = Math.min(660, Math.max(200, computed));
       } catch { dynamicContainerWidth = null; }
     }
     const maxSlotsWidth = dynamicContainerWidth || (fromBuilder ? 520 : 340); // px
-    const minSlotSize = fromBuilder ? 32 : 26; // a touch smaller to fit narrow phones
+    // Allow slots to shrink further (down to 20) on narrow phones; builder keeps a bit larger.
+  // Remove enforced minimum so very long words can compress further on narrow screens.
+  const minSlotSize = fromBuilder ? 26 : 10; // kept a tiny floor just to avoid zero; effectively no visual clamp
     const slotGap = fromBuilder ? 10 : (live ? 8 : 8); // keep ability to tweak live later
     const words = correct.split(' ');
-    // For each word, calculate slot size so all fit in one line
+    // Multi-row logic: if a single word is long and viewport is narrow, wrap into 2 rows (balanced) instead of shrinking too small.
+    function maybeSplitLongWord(word, availableWidth) {
+      const MIN_WRAP_TRIGGER = 9; // letters
+      const narrow = availableWidth < 380; // arbitrary breakpoint for very small phones
+      if (!narrow || word.length < MIN_WRAP_TRIGGER) return [word];
+      // Split roughly in half, bias first row longer if odd.
+      const mid = Math.ceil(word.length / 2);
+      return [word.slice(0, mid), word.slice(mid)];
+    }
+    // For each (possibly split) word segment, calculate slot size so all segments fit their own line.
     function renderSlotRows() {
+      let segments = [];
+      words.forEach(w => {
+        const segs = maybeSplitLongWord(w, maxSlotsWidth);
+        segments.push(...segs);
+      });
       return `<div class=\"slot-rows-container\" style=\"display:flex;flex-direction:column;align-items:center;\">` +
-        words.map(word => {
-          const slotCount = word.length;
-          let slotSize = Math.floor((maxSlotsWidth - slotGap * (slotCount - 1)) / slotCount);
-          if (slotSize < minSlotSize) slotSize = minSlotSize;
-          return `<div class=\"slot-row\" style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${word.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:3px solid #93cbcf;border-radius:14px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:1.2em;font-weight:800;color:#0f172a;transition:width .2s;\"></div>`).join('')}</div>`;
+        segments.map(segment => {
+          const slotCount = segment.length;
+            let slotSize = Math.floor((maxSlotsWidth - slotGap * (slotCount - 1)) / Math.max(1, slotCount));
+            // Previously clamped to a minimum; now allow smaller sizes (down to tiny floor) for extreme cases.
+            if (slotSize < minSlotSize) slotSize = minSlotSize;
+            const fontPx = Math.min(30, Math.max(14, Math.round(slotSize * 0.75)));
+            return `<div class=\"slot-row\" data-row-len='${slotCount}' style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${segment.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:3px solid #93cbcf;border-radius:14px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:${fontPx}px;font-weight:800;color:#0f172a;transition:width .2s;\"></div>`).join('')}</div>`;
         }).join('') + '</div>';
     }
     const tileSize = fromBuilder ? 62 : 56;
@@ -207,14 +226,22 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
                 const slotsContainer = gameArea.querySelector('#letterSlots');
                 if (slotsContainer) {
                   // Recalculate dynamicContainerWidth and regenerate rows
-                  let dynamic = Math.min(660, Math.max(280, wrap.clientWidth - 24));
+                  let dynamic = Math.min(660, Math.max(200, wrap.clientWidth - 24));
+                  // Rebuild with potential wrapping identical to initial render
+                  function maybeSplitLongWord(word, availableWidth) {
+                    const MIN_WRAP_TRIGGER = 9; const narrow = availableWidth < 380; if (!narrow || word.length < MIN_WRAP_TRIGGER) return [word];
+                    const mid = Math.ceil(word.length / 2); return [word.slice(0, mid), word.slice(mid)];
+                  }
                   const newWords = correct.split(' ');
+                  let segments = [];
+                  newWords.forEach(w => { const segs = maybeSplitLongWord(w, dynamic); segments.push(...segs); });
                   const newHTML = `<div class=\"slot-rows-container\" style=\"display:flex;flex-direction:column;align-items:center;\">` +
-                    newWords.map(word => {
-                      const slotCount = word.length;
-                      let slotSize = Math.floor((dynamic - slotGap * (slotCount - 1)) / slotCount);
-                      if (slotSize < minSlotSize) slotSize = minSlotSize;
-                      return `<div class=\"slot-row\" style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${word.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:3px solid #93cbcf;border-radius:14px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:1.2em;font-weight:800;color:#0f172a;transition:width .15s;\"></div>`).join('')}</div>`;
+                    segments.map(segment => {
+                      const slotCount = segment.length;
+                      let slotSize = Math.floor((dynamic - slotGap * (slotCount - 1)) / Math.max(1, slotCount));
+                      if (slotSize < minSlotSize) slotSize = minSlotSize; // minimal floor only
+                      const fontPx = Math.min(30, Math.max(14, Math.round(slotSize * 0.75)));
+                      return `<div class=\"slot-row\" data-row-len='${slotCount}' style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${segment.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:3px solid #93cbcf;border-radius:14px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:${fontPx}px;font-weight:800;color:#0f172a;transition:width .15s;\"></div>`).join('')}</div>`;
                     }).join('') + '</div>';
                   slotsContainer.innerHTML = newHTML;
                   // Re-link slotEls reference & repaint current letters
