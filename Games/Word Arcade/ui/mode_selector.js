@@ -56,18 +56,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     hs.textContent = `
       #gameArea .mode-selector-header { text-align:center; padding:4px 8px 10px; }
       #gameArea .mode-selector-header .file-title { font-family:'Poppins', Arial, sans-serif; font-weight:800; color:#19777e; font-size:18px; margin-top:4px; }
-      #gameArea .mode-selector-header .medals-row { display:flex; align-items:center; justify-content:center; gap:10px; margin:6px 0 4px; }
-      #gameArea .medal { width:22px; height:22px; border-radius:50%; border:2px solid #d7e3e6; box-shadow:0 1px 2px rgba(0,0,0,0.10) inset, 0 2px 8px rgba(60,60,80,0.08); position:relative; overflow:hidden; }
-      #gameArea .medal.filled { border-color:transparent; }
-      #gameArea .medal.wood { background:linear-gradient(135deg,#a07855 60%,#d2b48c 100%); }
-      #gameArea .medal.steel { background:linear-gradient(135deg,#9ea7b3 60%,#e0e6ed 100%); }
-      #gameArea .medal.bronze { background:linear-gradient(135deg,#cd7f32 60%,#e8c07a 100%); }
-      #gameArea .medal.silver { background:linear-gradient(135deg,#c0c0c0 60%,#f8f8f8 100%); }
-      #gameArea .medal.gold { background:linear-gradient(135deg,#ffd700 60%,#fffbe5 100%); }
-      #gameArea .medal.platinum { background:linear-gradient(135deg,#e5e4e2 60%,#f6f6f6 100%); }
-      #gameArea .medal.filled::after { content:''; position:absolute; left:4px; top:4px; width:14px; height:7px; border-radius:7px 7px 7px 7px; background:linear-gradient(90deg,rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.15) 100%); opacity:0.7; pointer-events:none; }
-      #gameArea .medal.filled::before { content:''; position:absolute; left:2px; top:12px; width:18px; height:6px; border-radius:3px 3px 8px 8px; background:linear-gradient(90deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.01) 100%); opacity:0.5; pointer-events:none; }
-    `;
+    `; // Medal-specific CSS removed (skeleton kept minimal)
     document.head.appendChild(hs);
   }
 
@@ -169,26 +158,30 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     return `<svg class="star-empty" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.5 9.75l-5.667 5.527L19.335 24 12 19.897 4.665 24l1.502-8.723L.5 9.75l7.832-1.732z"/></svg>`;
   };
 
-  // Build header with word list title and medals row
-  const buildHeader = (perfectCount) => {
-    // Use PNG medal icons from icons folder (lighter)
-  const svgFiles = ['wooden.png?v=20250910a','steel.png?v=20250910a','bronze.png?v=20250910a','silver.png?v=20250910a','gold.png?v=20250910a','platinum.png?v=20250910a'];
-    const labels = ['Wooden', 'Steel', 'Bronze', 'Silver', 'Gold', 'Platinum'];
-    let medals = '';
-      for (let i = 0; i < 6; i++) {
-        const filled = i < perfectCount;
-        const title = `${labels[i]} Medal` + (filled ? ' (earned)' : ' (locked)');
-        medals += `<span class="medal" title="${title}" aria-label="${title}" style="display:inline-block;width:28px;height:28px;vertical-align:middle;overflow:hidden;border-radius:50%;">
-          <img src="./assets/Images/icons/${svgFiles[i]}" alt="${labels[i]} Medal" style="width:100%;height:100%;object-fit:cover;display:block;${filled ? '' : 'opacity:0.35;filter:grayscale(1);'}border-radius:50%;" />
-        </span>`;
-    }
-    const displayName = listName || 'Word List';
-    return `<div class="mode-selector-header" role="region" aria-label="Progress for ${displayName}">
+  // Simplified header (medals removed entirely)
+  const humanizeListName = (name) => {
+    if (!name) return 'Word List';
+    // Remove .json extension
+    let base = name.replace(/\.json$/i, '');
+    // Replace underscores / dashes with spaces
+    base = base.replace(/[_-]+/g, ' ');
+    // Insert spaces before CamelCase boundaries (e.g., EasyAnimals -> Easy Animals)
+    base = base.replace(/([a-z])([A-Z])/g, '$1 $2');
+    // Insert spaces between letters and numbers (Food1 -> Food 1, Level2Words -> Level 2 Words)
+    base = base.replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/(\d)([A-Za-z])/g, '$1 $2');
+    // Collapse multiple spaces
+    base = base.replace(/\s+/g, ' ').trim();
+    // Preserve special known names exactly
+    if (base.toLowerCase() === 'review list') return 'Review List';
+    // Capitalize each word (only if not already properly capitalized)
+    base = base.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : w).join(' ');
+    return base;
+  };
+
+  const buildHeader = () => {
+    const displayName = humanizeListName(listName);
+    return `<div class="mode-selector-header" role="region" aria-label="${displayName}">
       <div class="file-title">${displayName}</div>
-      <div class="medals-row" aria-label="${perfectCount} of 6 medals earned">${medals}</div>
-      <div class="medals-tooltip" style="display:none; font-size:12px; color:#19777e; margin-top:4px; background:#f6feff; border:1px solid #a9d6e9; border-radius:8px; padding:6px 8px;">
-        <span class="tooltip-text"></span>
-      </div>
     </div>`;
   };
 
@@ -242,7 +235,6 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   };
   // Create a single list of modes in the order shown in the image
   const modes = [
-  { id: 'full_arcade', title: 'Full Arcade', icon: './assets/Images/icons/arcade.png?v=20250921a', colorClass: 'for-you' },
   { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
   { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
   { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
@@ -251,44 +243,9 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
   ];
 
-  // Compute how many modes have a perfect (100%) score for medals
-  const modeIds = modes.map(m => m.id);
-  let perfectCount = 0;
-  modeIds.forEach(id => {
-    const best = bestByMode[String(id).toLowerCase()];
-    if (best && typeof best.pct === 'number' && best.pct >= 100) perfectCount++;
-  });
+  // Neutralized medals logic: always show zero earned (skeleton retained for future redesign)
   const headerEl = container.querySelector('#modeHeader');
-  if (headerEl) headerEl.innerHTML = buildHeader(perfectCount);
-  // Wire up medals helper tooltip: show combined percent and which medals achieved
-  if (headerEl) {
-    const names = ['Wooden','Steel','Bronze','Silver','Gold','Platinum'];
-    // Compute combined percent as average across 5 core modes (unplayed count as 0)
-    const coreModes = ['meaning','listening','multi_choice','listen_and_spell','spelling'];
-    let sum = 0;
-    coreModes.forEach(id => {
-      const b = bestByMode[id];
-      const v = (b && typeof b.pct === 'number') ? Math.max(0, Math.min(100, b.pct)) : 0;
-      sum += v;
-    });
-    const combined = Math.round(sum / coreModes.length);
-    const earned = names.slice(0, Math.max(0, Math.min(6, perfectCount)));
-    const tooltip = headerEl.querySelector('.medals-tooltip');
-    const textEl = headerEl.querySelector('.medals-tooltip .tooltip-text');
-    const medalsRow = headerEl.querySelector('.medals-row');
-    const showTip = () => {
-      if (tooltip && textEl) {
-        textEl.textContent = `${combined}% complete • Medals: ${earned.length ? earned.join(', ') : 'None yet'}`;
-        tooltip.style.display = 'block';
-      }
-    };
-    const hideTip = () => { if (tooltip) tooltip.style.display = 'none'; };
-    if (medalsRow) {
-      medalsRow.onclick = (e) => { e.stopPropagation(); if (tooltip.style.display === 'block') { hideTip(); } else { showTip(); } };
-      medalsRow.onmouseleave = hideTip;
-    }
-    document.addEventListener('click', (e) => { if (!headerEl.contains(e.target)) hideTip(); }, { once: true });
-  }
+  if (headerEl) headerEl.innerHTML = buildHeader();
 
   const listContainer = container.querySelector('.mode-grid');
   modes.forEach((m) => {
