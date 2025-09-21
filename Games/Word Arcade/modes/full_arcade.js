@@ -1,25 +1,49 @@
-// Full Arcade Mode: orchestrates all six standard Word Arcade rounds in sequence.
-// Rounds list order (adjust if your project uses different canonical order):
-// 1. multi_choice_eng_to_kor
-// 2. multi_choice_kor_to_eng
-// 3. picture_multi_choice
-// 4. easy_picture (or listening_multi_choice if you prefer)
-// 5. spelling (or listen_and_spell)
-// 6. matching (definitions / meaning)
+// Full Arcade Mode: orchestrates six themed rounds in the pedagogical order
+// you described (Match, Listen, Read, Spell, Test, Level Up). We map those
+// themes onto existing underlying mode implementations while introducing a
+// little variation so repeated playthroughs feel fresh.
+//
+// Theme -> Underlying Mode Mapping:
+// 1. Matching:      'matching' (existing match English↔Korean)
+// 2. Listen:        alternates between 'easy_picture' (audio → picture) and
+//                   'listening_multi_choice' (audio → meaning) per playthrough.
+// 3. Read:          alternates direction each run between ENG→KOR and KOR→ENG
+//                   multi-choice (vocabulary recognition in reading form).
+// 4. Spell:         'listen_and_spell' (listen then type exact word).
+// 5. Test:          'spelling' (show Korean, type English) – existing spelling drill.
+// 6. Level Up:      'level_up' (definition → word selection).
+//
+// We compute a dynamic ROUND_SEQUENCE at runtime instead of a static constant.
 
 // The orchestrator wraps each underlying mode, listens for its normal end screen,
 // injects Next / Replay buttons, and maintains cumulative stats.
 
 import { loadMode } from '../core/mode-registry.js';
 
-const ROUND_SEQUENCE = [
-  'multi_choice_eng_to_kor',
-  'multi_choice_kor_to_eng',
-  'picture_multi_choice',
-  'easy_picture',
-  'spelling',
-  'matching'
-];
+// Persist a lightweight counter across runs so Listen/Read rounds can alternate.
+let __fa_run_counter = (window.__fa_run_counter || 0);
+window.__fa_run_counter = __fa_run_counter + 1;
+
+function buildRoundSequence() {
+  const runIndex = window.__fa_run_counter; // 1-based after increment
+  const listenVariant = (runIndex % 2 === 0) ? 'listening_multi_choice' : 'easy_picture';
+  const readDirection = (runIndex % 2 === 0)
+    ? ['multi_choice_kor_to_eng', 'multi_choice_eng_to_kor']
+    : ['multi_choice_eng_to_kor', 'multi_choice_kor_to_eng'];
+  // Take first of readDirection for this single Read round; the other direction
+  // will appear on the next playthrough when the order flips.
+  const readRound = readDirection[0];
+  return [
+    'matching',              // Match
+    listenVariant,           // Listen (audio → picture/meaning)
+    readRound,               // Read (multi-choice in one direction)
+    'listen_and_spell',      // Spell (listen then spell)
+    'spelling',              // Test (prompt in Korean -> type English)
+    'level_up',              // Level Up (definition → word)
+  ];
+}
+
+const THEMED_SEQUENCE = buildRoundSequence();
 
 // Utility to create a simple container for per-round overlays
 function ensureOverlay() {
@@ -57,12 +81,12 @@ export function runFullArcadeMode(context) {
 
   function startRound(i) {
     roundIndex = i;
-    const modeKey = ROUND_SEQUENCE[i];
+  const modeKey = THEMED_SEQUENCE[i];
     if (!modeKey) return finalSummary();
     // Clear area & show lightweight round header
     gameArea.innerHTML = `<div class="arcade-round-intro" style="text-align:center;padding:16px 8px;font-family:system-ui,sans-serif;">
-      <h2 style="margin:4px 0 10px;font-size:1.25rem;color:#19777e;font-weight:800;">Round ${i+1} / ${ROUND_SEQUENCE.length}</h2>
-      <div style="color:#334155;font-size:.9rem;margin-bottom:8px;">${modeKey.replace(/_/g,' ')}</div>
+  <h2 style="margin:4px 0 10px;font-size:1.25rem;color:#19777e;font-weight:800;">Round ${i+1} / ${THEMED_SEQUENCE.length}</h2>
+  <div style="color:#334155;font-size:.9rem;margin-bottom:8px;">${prettyLabel(modeKey)}</div>
       <div style="font-size:.8rem;color:#64748b;">Loading…</div>
     </div>`;
     loadMode(modeKey).then(mod => {
@@ -144,10 +168,10 @@ export function runFullArcadeMode(context) {
 
     const nextIdx = roundIndex + 1;
     const nextBtn = document.createElement('button');
-    nextBtn.textContent = nextIdx < ROUND_SEQUENCE.length ? 'Next Round ➜' : 'Final Summary';
+    nextBtn.textContent = nextIdx < THEMED_SEQUENCE.length ? 'Next Round ➜' : 'Final Summary';
     nextBtn.style.cssText = commonBtnStyle('#0d9488');
     nextBtn.onclick = () => {
-      if (nextIdx < ROUND_SEQUENCE.length) startRound(nextIdx); else finalSummary();
+      if (nextIdx < THEMED_SEQUENCE.length) startRound(nextIdx); else finalSummary();
     };
     bar.appendChild(nextBtn);
 
@@ -176,7 +200,7 @@ export function runFullArcadeMode(context) {
     };
     const exitBtn = document.getElementById('fa-exit');
     if (exitBtn) exitBtn.onclick = () => {
-      if (context.startGame) context.startGame('multi_choice_eng_to_kor');
+      if (context.startGame) context.startGame('matching');
     };
   }
 
@@ -191,3 +215,17 @@ export function runFullArcadeMode(context) {
 }
 
 export const run = runFullArcadeMode;
+
+function prettyLabel(key) {
+  switch (key) {
+    case 'matching': return 'Match (Words)';
+    case 'easy_picture': return 'Listen (Audio → Picture)';
+    case 'listening_multi_choice': return 'Listen (Audio → Meaning)';
+    case 'multi_choice_eng_to_kor': return 'Read (ENG → KOR)';
+    case 'multi_choice_kor_to_eng': return 'Read (KOR → ENG)';
+    case 'listen_and_spell': return 'Spell (Listen & Type)';
+    case 'spelling': return 'Test (KOR → Spell EN)';
+    case 'level_up': return 'Level Up (Definition)';
+    default: return key.replace(/_/g,' ');
+  }
+}
