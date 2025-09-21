@@ -204,12 +204,42 @@ export function runFullArcadeMode(context) {
   }
 
   function injectRoundControls(correct, total) {
-    const perfect = total && correct === total;
-  const endPanel = gameArea.querySelector('[id*="end" i], .game-end-screen, .end-screen, .ending-screen') || gameArea;
-  // Hide underlying Play Again to avoid duplicate UX (if present)
-  const underlyingReplay = endPanel.querySelector('#playAgainBtn, button');
-  if (underlyingReplay && /play again/i.test(underlyingReplay.textContent || '')) underlyingReplay.style.display = 'none';
+    // Locate end panel first
+    const endPanel = gameArea.querySelector('[id*="end" i], .game-end-screen, .end-screen, .ending-screen') || gameArea;
     if (!endPanel) return;
+
+    // Fallback: some modes only show a percentage (e.g., "Your Score: 100.0%") without x/y numbers.
+    if ((!total || total === 0) && (correct === 0)) {
+      try {
+        const txt = endPanel.textContent || '';
+        const pm = /(\d+(?:\.\d+)?)\s*%/.exec(txt);
+        if (pm) {
+          const perc = parseFloat(pm[1]);
+          if (!isNaN(perc)) {
+            total = 100; // treat percent as out of 100
+            correct = Math.round(perc); // preserve integer percent
+            if (window.__FA_DEBUG) console.debug('[FullArcade] Percent fallback applied', { perc, correct, total });
+          }
+        }
+      } catch {}
+    }
+
+    // Hide underlying Play Again to avoid duplicate UX (if present)
+    const underlyingReplay = endPanel.querySelector('#playAgainBtn, button');
+    if (underlyingReplay && /play again/i.test(underlyingReplay.textContent || '')) underlyingReplay.style.display = 'none';
+
+    const perfect = total && correct === total;
+    // Trigger star overlay (defer slightly to allow DOM of end panel to settle)
+    try {
+      if (typeof window.showRoundStars === 'function') {
+        setTimeout(() => { window.showRoundStars({ correct, total }); }, 60);
+      } else {
+        // Lazy load if not yet present
+        import('../ui/star_overlay.js').then(() => {
+          if (typeof window.showRoundStars === 'function') window.showRoundStars({ correct, total });
+        }).catch(()=>{});
+      }
+    } catch {}
     // Container bar
     const bar = document.createElement('div');
     bar.style.cssText = 'margin-top:18px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;';
