@@ -17,6 +17,15 @@ export const modeRegistry = {
 		const mod = await import('../modes/listening_multi_choice.js');
 		return { run: (ctx) => mod.runListeningMultiChoice(ctx) };
 	},
+	'listening': async () => {
+		// Hybrid listening mode that alternates picture vs Korean meaning questions per word
+		const mod = await import('../modes/listening.js');
+		return { run: (ctx) => mod.runListeningMode(ctx) };
+	},
+	'multi_choice': async () => {
+		const mod = await import('../modes/multi_choice.js');
+		return { run: (ctx) => mod.runMultiChoiceMode(ctx) };
+	},
 	// Newly enabled modes
 	'multi_choice_kor_to_eng': async () => {
 		const mod = await import('../modes/multi_choice_kor_to_eng.js');
