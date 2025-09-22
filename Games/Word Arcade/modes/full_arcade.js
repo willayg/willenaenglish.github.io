@@ -149,6 +149,8 @@ function summaryBlock(html) {
 
 export function runFullArcadeMode(context) {
   const { wordList, gameArea } = context;
+  // Signal to nested modes that we are in the live play environment even if URL lacks direct mode key.
+  window.__WORD_ARCADE_LIVE = true;
   if (!Array.isArray(wordList) || !wordList.length) {
     gameArea.innerHTML = '<div style="padding:30px;text-align:center;">No words available.</div>';
     return;
