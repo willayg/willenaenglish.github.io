@@ -2,7 +2,7 @@
 import { playSFX } from '../sfx.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
-import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
+import { showGameProgressSync as showGameProgress, updateGameProgressSync as updateGameProgress, hideGameProgressSync as hideGameProgress } from '../utils/progress.js';
 import { ensureImageStyles } from '../ui/image_styles.js';
 
 // Global emoji mapping - loaded from external file

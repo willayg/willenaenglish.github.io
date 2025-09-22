@@ -1,6 +1,6 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
-import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
+import { showGameProgressSync as showGameProgress, updateGameProgressSync as updateGameProgress, hideGameProgressSync as hideGameProgress } from '../utils/progress.js';
 
 // ----- Live Play Helpers (play.html integration) ---------------------------------
 function isLivePlayContext() {
@@ -37,24 +37,29 @@ function ensureLiveSpellStyles() {
 
 // Spelling mode (Tap-to-Spell with Korean prompt)
 export function runSpellingMode({ wordList, gameArea, listName = null }) {
-  // Defensive logging to help diagnose why the spelling UI might be blank
-  console.log('runSpellingMode called', { wordCount: Array.isArray(wordList) ? wordList.length : 0, listName });
+  // Enhanced logging to help diagnose why the spelling UI might be blank
+  console.log('[Spelling] runSpellingMode called', { 
+    wordCount: Array.isArray(wordList) ? wordList.length : 0, 
+    listName,
+    gameAreaId: gameArea?.id,
+    isLivePlay: isLivePlayContext()
+  });
+  
   // Ensure we have a valid gameArea element
   gameArea = gameArea || document.getElementById('gameArea');
   if (!gameArea) {
-    console.error('runSpellingMode: no gameArea available');
+    console.error('[Spelling] runSpellingMode: no gameArea available');
     return;
   }
+  
   // Validate list
   if (!Array.isArray(wordList) || wordList.length === 0) {
+    console.error('[Spelling] Invalid or empty wordList:', wordList);
     gameArea.innerHTML = `<div style="padding:28px;text-align:center;color:#666;font-weight:600;">No words available for Spelling mode.<br>Please choose a lesson or load a word list first.</div>`;
     return;
   }
 
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
-  const urlParams = new URLSearchParams(location.search);
-  const adaptiveTiles = urlParams.has('adaptiveTiles');
-  const debugSpell = urlParams.has('debugSpell');
   ensureLiveSpellStyles();
   let score = 0;
   let idx = 0;
@@ -172,25 +177,9 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
             return `<div class=\"slot-row\" data-row-len='${slotCount}' style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${segment.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:3px solid #93cbcf;border-radius:14px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:${fontPx}px;font-weight:800;color:#0f172a;transition:width .2s;\"></div>`).join('')}</div>`;
         }).join('') + '</div>';
     }
-    // Base tile sizing (can be overridden by adaptiveTiles flag)
-    let tileSize = fromBuilder ? 62 : 56;
+    const tileSize = fromBuilder ? 62 : 56;
     const tileRadius = fromBuilder ? 14 : 12;
     const fontScale = fromBuilder ? 1.15 : 1.0;
-    if (adaptiveTiles) {
-      try {
-        const totalTiles = correct.replace(/ /g,'').length + 2; // + distractors
-        // Attempt to keep all tiles on one (or two) rows without overflow
-        const containerTarget = (gameArea.clientWidth || 520) - 32; // padding allowance
-        // Decide rows: if more than 10 tiles, allow two rows for comfort
-        const rows = totalTiles > 10 ? 2 : 1;
-        const tilesPerRow = Math.ceil(totalTiles / rows);
-        const gap = fromBuilder ? 12 : 10;
-        let candidate = Math.floor((containerTarget - gap * (tilesPerRow - 1)) / tilesPerRow);
-        // Clamp sensibly
-        candidate = Math.max(38, Math.min(candidate, fromBuilder ? 70 : 64));
-        tileSize = candidate;
-      } catch { /* ignore and fall back */ }
-    }
     // Only show tiles for non-space characters
     const tileChars = correct.replace(/ /g, '').split('');
     const tileObjs = tileChars.map((ch, i) => ({ id: 'b' + i, ch }));
@@ -284,29 +273,6 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
   const tileButtons = Array.from(document.querySelectorAll('.tile-btn'));
   let slotEls = Array.from(document.querySelectorAll('#letterSlots .slot'));
     const feedback = document.getElementById('spelling-feedback');
-
-    // Debug instrumentation (optional via ?debugSpell=1)
-    if (debugSpell) {
-      try {
-        window.__SpellArcadeReport = function() {
-          const tiles = Array.from(document.querySelectorAll('#letterTiles .tile-btn')).map(b => b.getBoundingClientRect().width);
-          const slots = Array.from(document.querySelectorAll('#letterSlots .slot')).map(s => s.getBoundingClientRect().width);
-          return {
-            mode: 'spelling',
-            word: correct,
-            tileCount: tiles.length,
-            slotCount: slots.length,
-            tileSizes: tiles,
-            slotSizes: slots,
-            container: gameArea.clientWidth,
-            adaptiveTilesEnabled: adaptiveTiles,
-            userAgent: navigator.userAgent,
-            timestamp: Date.now()
-          };
-        };
-        console.info('[SpellDebug] Call window.__SpellArcadeReport() to inspect sizing.');
-      } catch {}
-    }
 
     function updateSlots() {
       const letters = usedStack.map(id => {
@@ -413,3 +379,6 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     return dp[a.length][b.length];
   }
 }
+
+// Export for mode registry
+export const run = runSpellingMode;
