@@ -13,29 +13,30 @@ import { playTTS, preprocessTTS, preloadAllAudio } from './tts.js';
 
 // Inject enhanced tap-spell styles (idempotent) for spelling / listen_and_spell when loaded live
 (function ensureTapSpellStyles(){
-	if (document.getElementById('tapSpellLiveEnhance')) return;
-	const style = document.createElement('style');
-	style.id = 'tapSpellLiveEnhance';
-	style.textContent = `
-	/* Live Tap-Spell Enhancements */
-	.tap-spell { --ts-slot-size:54px; --ts-tile-size:62px; --ts-gap:10px; }
-	.tap-spell.from-builder { --ts-slot-size:54px; --ts-tile-size:62px; }
-	@media (max-width:640px){ .tap-spell { --ts-slot-size:48px; --ts-tile-size:56px; --ts-gap:8px; } }
-	@media (max-width:480px){ .tap-spell { --ts-slot-size:44px; --ts-tile-size:52px; --ts-gap:7px; } }
-		/* Reset any generic choice button sizing that leaks onto tile-btn */
-		#letterTiles .tile-btn { min-width:var(--ts-tile-size) !important; max-width:var(--ts-tile-size) !important; min-height:var(--ts-tile-size) !important; max-height:var(--ts-tile-size) !important; }
-	.tap-spell #letterSlots { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--ts-gap); margin:8px 0 12px; }
-	.tap-spell #letterSlots .slot { width:var(--ts-slot-size); height:var(--ts-slot-size); border:3px solid #93cbcf; border-radius:14px; background:#f7fafc; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2em; color:#0f172a; box-shadow:0 2px 4px rgba(0,0,0,0.08); transition:background .2s,border-color .2s; }
-	.tap-spell #letterSlots .slot:hover { background:#fff; border-color:#41b6beff; cursor:pointer; }
-	.tap-spell #letterTiles { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--ts-gap); max-width:640px; margin:0 auto; }
-	.tap-spell #letterTiles .tile-btn { width:var(--ts-tile-size); height:var(--ts-tile-size); border:3px solid #cfdbe2; border-radius:14px; background:#fff; font-weight:800; font-size:1.25em; color:#314249; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.08); transition:transform .18s, box-shadow .18s, background .2s, border-color .2s; }
-	.tap-spell #letterTiles .tile-btn:hover:not(:disabled){ transform:translateY(-4px); box-shadow:0 6px 16px rgba(0,0,0,0.18); border-color:#41b6beff; }
-	.tap-spell #letterTiles .tile-btn:active:not(:disabled){ transform:scale(.9); }
-	.tap-spell #letterTiles .tile-btn:disabled { opacity:.15; pointer-events:none; }
-	.tap-spell #spelling-feedback, .tap-spell #listening-feedback { min-height:26px; text-align:center; font-size:1.05em; color:#555; margin-top:10px; font-weight:600; }
-	.tap-spell #spelling-score, .tap-spell #listening-score { text-align:center; font-size:1.2em; font-weight:700; color:#19777e; }
+    if (document.getElementById('tapSpellLiveEnhance')) return;
+    const style = document.createElement('style');
+    style.id = 'tapSpellLiveEnhance';
+    style.textContent = `
+	/* Live Tap-Spell Enhancements (scoped to .fixed-layout to avoid overriding dynamic sizing) */
+	.tap-spell.fixed-layout { --ts-slot-size:54px; --ts-tile-size:62px; --ts-gap:10px; }
+	.tap-spell.fixed-layout.from-builder { --ts-slot-size:54px; --ts-tile-size:62px; }
+	@media (max-width:640px){ .tap-spell.fixed-layout { --ts-slot-size:48px; --ts-tile-size:56px; --ts-gap:8px; } }
+	@media (max-width:480px){ .tap-spell.fixed-layout { --ts-slot-size:44px; --ts-tile-size:52px; --ts-gap:7px; } }
+	/* Reset any generic choice button sizing that leaks onto tile-btn only in fixed layout */
+	.tap-spell.fixed-layout #letterTiles .tile-btn { min-width:var(--ts-tile-size) !important; max-width:var(--ts-tile-size) !important; min-height:var(--ts-tile-size) !important; max-height:var(--ts-tile-size) !important; }
+	.tap-spell.fixed-layout #letterSlots { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--ts-gap); margin:8px 0 12px; }
+	.tap-spell.fixed-layout #letterSlots .slot { width:var(--ts-slot-size); height:var(--ts-slot-size); border:3px solid #93cbcf; border-radius:14px; background:#f7fafc; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2em; color:#0f172a; box-shadow:0 2px 4px rgba(0,0,0,0.08); transition:background .2s,border-color .2s; }
+	.tap-spell.fixed-layout #letterSlots .slot:hover { background:#fff; border-color:#41b6beff; cursor:pointer; }
+	.tap-spell.fixed-layout #letterTiles { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--ts-gap); max-width:640px; margin:0 auto; }
+	.tap-spell.fixed-layout #letterTiles .tile-btn { width:var(--ts-tile-size); height:var(--ts-tile-size); border:3px solid #cfdbe2; border-radius:14px; background:#fff; font-weight:800; font-size:1.25em; color:#314249; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.08); transition:transform .18s, box-shadow .18s, background .2s, border-color .2s; }
+	.tap-spell.fixed-layout #letterTiles .tile-btn:hover:not(:disabled){ transform:translateY(-4px); box-shadow:0 6px 16px rgba(0,0,0,0.18); border-color:#41b6beff; }
+	.tap-spell.fixed-layout #letterTiles .tile-btn:active:not(:disabled){ transform:scale(.9); }
+	.tap-spell.fixed-layout #letterTiles .tile-btn:disabled { opacity:.15; pointer-events:none; }
+	.tap-spell.fixed-layout #spelling-feedback, .tap-spell.fixed-layout #listening-feedback { min-height:26px; text-align:center; font-size:1.05em; color:#555; margin-top:10px; font-weight:600; }
+	.tap-spell.fixed-layout #spelling-score, .tap-spell.fixed-layout #listening-score { text-align:center; font-size:1.2em; font-weight:700; color:#19777e; }
 	`;
-	document.head.appendChild(style);
+    document.head.appendChild(style);
+    console.debug('[play-main] tap-spell enhancement CSS injected (scoped .fixed-layout).');
 })();
 
 // Use inner stage container so layout (fixed root & header spacing) remains intact
