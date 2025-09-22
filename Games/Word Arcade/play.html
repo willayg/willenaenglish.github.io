@@ -96,8 +96,7 @@
 	</div>
 	<script type="module" src="/students/components/student-header.js"></script>
 	<script type="module" src="/students/scripts/points-client.js"></script>
-	<!-- Added version query for cache busting -->
-	<script type="module" src="play-main.js?v=20250922a"></script>
+	<script type="module" src="play-main.js"></script>
 	<script type="module">
 	import { initPointsClient } from '/students/scripts/points-client.js';
 	async function ensureHeaderProfile(){
@@ -153,28 +152,30 @@
 	})();
 	</script>
 	<script>
-	// Auto-fit scaling (disabled for tap-spell / dynamic-slots to avoid width math conflicts)
+	// Auto-fit scaling to eliminate residual scroll by shrinking oversize mode content
 	(function(){
 		function fitStage(){
 			const stage = document.getElementById('gameStage');
 			if(!stage) return;
-			// If a tap-spell root is present, skip scaling entirely (those modes size themselves responsively)
-			if (stage.querySelector('.tap-spell')) return;
-			const child = stage.querySelector('.meaning-mode-root')
+			// Find the largest child block (game root for current mode)
+			const child = Array.from(stage.children).find(el => el.classList && el.classList.contains('tap-spell'))
+				|| stage.querySelector('.meaning-mode-root')
 				|| Array.from(stage.children).find(el => el.tagName !== 'SCRIPT' && el.id !== 'audioPrepMsg');
 			if(!child) return;
 			child.classList.add('scalable-root');
 			child.style.removeProperty('transform');
 			const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--headerH')) || 0;
-			const availH = window.innerHeight - headerH - 6;
+			const availH = window.innerHeight - headerH - 6; // a little buffer
 			const rect = child.getBoundingClientRect();
 			if(rect.height > availH){
 				const scale = Math.max(0.55, availH / rect.height);
 				child.style.transform = 'scale(' + scale.toFixed(3) + ')';
+				// Center horizontally after scale
 				child.style.marginLeft = 'auto';
 				child.style.marginRight = 'auto';
 			}
 		}
+		// Observe mutations to re-fit when mode changes
 		const stage = document.getElementById('gameStage');
 		if(stage){
 			new MutationObserver(() => { requestAnimationFrame(fitStage); }).observe(stage, { childList:true, subtree:true });
@@ -185,9 +186,5 @@
 		}
 	})();
 	</script>
-	<!-- Override live tap-spell fixed slot-sizing when dynamic rows are used -->
-	<style>
-	.tap-spell.dynamic-slots #letterSlots .slot { width:auto !important; height:auto !important; }
-	</style>
 </body>
 </html>
