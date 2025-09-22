@@ -97,6 +97,18 @@
 	<script type="module" src="/students/components/student-header.js"></script>
 	<script type="module" src="/students/scripts/points-client.js"></script>
 	<script type="module" src="play-main.js"></script>
+	<script>
+	// Set a global guard early so scaling script can skip tap-spell / listen_and_spell modes
+	(function(){
+		try{
+			const params = new URLSearchParams(location.search||'');
+			const mode = params.get('mode');
+			if(mode && /^(spelling|listen_and_spell)$/i.test(mode)){
+				window.__NO_TAP_SPELL_SCALE = true;
+			}
+		}catch{/* ignore */}
+	})();
+	</script>
 	<script type="module">
 	import { initPointsClient } from '/students/scripts/points-client.js';
 	async function ensureHeaderProfile(){
@@ -152,39 +164,48 @@
 	})();
 	</script>
 	<script>
-	// Auto-fit scaling to eliminate residual scroll by shrinking oversize mode content
+	// Auto-fit scaling (skips for tap-spell / listen_and_spell when guard flag present)
 	(function(){
+		function isNoScaleMode(){
+			if(window.__NO_TAP_SPELL_SCALE) return true;
+			const stage = document.getElementById('gameStage');
+			if(stage && stage.querySelector('.tap-spell')) return true; // runtime detection
+			return false;
+		}
 		function fitStage(){
+			if(isNoScaleMode()) return; // skip entirely for dynamic spelling layouts
 			const stage = document.getElementById('gameStage');
 			if(!stage) return;
-			// Find the largest child block (game root for current mode)
-			const child = Array.from(stage.children).find(el => el.classList && el.classList.contains('tap-spell'))
-				|| stage.querySelector('.meaning-mode-root')
-				|| Array.from(stage.children).find(el => el.tagName !== 'SCRIPT' && el.id !== 'audioPrepMsg');
+			const child = stage.querySelector('.meaning-mode-root') || Array.from(stage.children).find(el => el.tagName !== 'SCRIPT' && el.id !== 'audioPrepMsg');
 			if(!child) return;
 			child.classList.add('scalable-root');
 			child.style.removeProperty('transform');
 			const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--headerH')) || 0;
-			const availH = window.innerHeight - headerH - 6; // a little buffer
+			const availH = window.innerHeight - headerH - 6;
 			const rect = child.getBoundingClientRect();
 			if(rect.height > availH){
 				const scale = Math.max(0.55, availH / rect.height);
 				child.style.transform = 'scale(' + scale.toFixed(3) + ')';
-				// Center horizontally after scale
 				child.style.marginLeft = 'auto';
 				child.style.marginRight = 'auto';
 			}
 		}
-		// Observe mutations to re-fit when mode changes
 		const stage = document.getElementById('gameStage');
 		if(stage){
-			new MutationObserver(() => { requestAnimationFrame(fitStage); }).observe(stage, { childList:true, subtree:true });
+			const mo = new MutationObserver(() => { requestAnimationFrame(fitStage); });
+			mo.observe(stage, { childList:true, subtree:true });
 			window.addEventListener('resize', () => { requestAnimationFrame(fitStage); });
 			window.addEventListener('orientationchange', () => setTimeout(fitStage, 150));
 			window.addEventListener('load', fitStage);
 			setTimeout(fitStage, 500);
 		}
+		// Debug trace to confirm guard status
+		console.debug('[play.html] scaling script loaded. noScaleFlag=', !!window.__NO_TAP_SPELL_SCALE);
 	})();
 	</script>
+	<style>
+	/* Force dynamic sizing for spelling modes when used */
+	.tap-spell.dynamic-slots #letterSlots .slot { width:auto !important; height:auto !important; }
+	</style>
 </body>
 </html>

@@ -153,7 +153,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
     const usedStack = [];
     let locked = false;
     const innerHTML = `
-      <div class="tap-spell ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (live ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
+      <div class="tap-spell dynamic-slots ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (live ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
         <div id="tap-instructions" style="margin-bottom:12px;text-align:center;font-size:1.06em;color:#19777e;">Listen and tap the letters to spell the word:</div>
         <div style="display:flex;justify-content:center;align-items:center;margin:10px 0 58px 0;gap:10px;">
          <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
