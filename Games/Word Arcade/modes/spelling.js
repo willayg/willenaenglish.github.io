@@ -193,7 +193,7 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     }
 
     const innerHTML = `
-      <div class="tap-spell dynamic-slots ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (isLivePlayContext() ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
+      <div class="tap-spell ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (isLivePlayContext() ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
         <div id="korPrompt" style="margin-bottom:62px;text-align:center;font-size:${fromBuilder ? '1.35em' : '1.25em'};color:#19777e;font-weight:800;">${current.kor || ''}</div>
         <div id="letterSlots" style="margin:8px 0 12px 0;">
           ${renderSlotRows()}
