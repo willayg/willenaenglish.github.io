@@ -22,6 +22,85 @@
 
 import { loadMode } from '../core/mode-registry.js';
 
+// --- Custom lightweight preloader & loader override for two special modes ---
+// Rationale: user requested a rewrite of how Full Arcade imports `listen_and_spell` and `spelling`
+// without touching the mode source files themselves. We special‑case these here so the rest of the
+// ecosystem (mini player, direct launches) still uses the central registry untouched.
+// Strategy:
+// 1. Kick off early dynamic imports (preload) when Full Arcade starts to hide latency.
+// 2. Provide a local loadArcadeMode(key) that bypasses registry for those two keys with retry + fallback.
+// 3. If a special mode fails twice, we gracefully skip to next round (recording a skipped marker) so the
+//    arcade flow never hard-crashes in production.
+
+const SPECIAL_MODE_KEYS = new Set(['listen_and_spell','spelling']);
+const __fa_preloaded = {};
+
+function preloadSpecialModes() {
+  SPECIAL_MODE_KEYS.forEach(k => {
+    // Only preload once
+    if (__fa_preloaded[k]) return;
+    __fa_preloaded[k] = import(`../modes/${k}.js`).catch(err => {
+      console.warn('[FullArcade] Preload failed for', k, err);
+      return null; // store null so later we attempt real load again
+    });
+  });
+}
+
+async function loadArcadeMode(key) {
+  if (!SPECIAL_MODE_KEYS.has(key)) {
+    // Delegate to standard registry for all other modes
+    return loadMode(key);
+  }
+  // Attempt: prefer preloaded promise if exists
+  let attempt = 0;
+  while (attempt < 2) {
+    try {
+      attempt++;
+      let modPromise = __fa_preloaded[key];
+      if (!modPromise) {
+        modPromise = import(`../modes/${key}.js`);
+        __fa_preloaded[key] = modPromise; // cache for any future use
+      }
+      const raw = await modPromise;
+      if (!raw) throw new Error('Module object null');
+      // Expect the canonical run export names used historically
+      let runner = raw.run || raw[`run${camelCase(key)}Mode`] || raw[`run${camelCase(key)}`];
+      if (!runner) {
+        // Historical specific exports
+        if (key === 'listen_and_spell' && raw.runListenAndSpellMode) runner = raw.runListenAndSpellMode;
+        else if (key === 'spelling' && raw.runSpellingMode) runner = raw.runSpellingMode;
+      }
+      if (typeof runner !== 'function') throw new Error('No runnable export found');
+      return { run: (ctx) => {
+        if (window.__FA_DEBUG) console.debug(`[FullArcade] Running special mode ${key} (attempt ${attempt})`);
+        return runner(ctx);
+      }};
+    } catch (err) {
+      console.error(`[FullArcade] Load attempt ${attempt} failed for ${key}`, err);
+      // Invalidate cached failed preloaded promise so next loop can re-import fresh
+      __fa_preloaded[key] = null;
+      if (attempt >= 2) break; // stop retrying
+    }
+  }
+  // Fallback shim: returns an immediate end screen with skip messaging.
+  return { run: (ctx) => {
+    const { gameArea } = ctx;
+    gameArea.innerHTML = `<div style="padding:32px;text-align:center;font-family:system-ui;">
+      <h2 style="margin:0 0 12px;font-size:1.3rem;color:#b91c1c;">${prettyLabel(key)} Unavailable</h2>
+      <p style="margin:0 0 16px;font-size:.95rem;color:#475569;">We couldn't load this round right now. Skipping it so you can keep playing.</p>
+      <button id="fa-skip-broken" style="${commonBtnStyle('#0d9488')}">Continue</button>
+    </div>`;
+    const btn = document.getElementById('fa-skip-broken');
+    if (btn) btn.onclick = () => {
+      if (window.__fullArcadeNextRound) window.__fullArcadeNextRound();
+    };
+  }};
+}
+
+function camelCase(key) {
+  return key.split(/[_-]/).map((p,i) => i===0 ? p.charAt(0).toUpperCase()+p.slice(1) : p.charAt(0).toUpperCase()+p.slice(1)).join('');
+}
+
 // Persist lightweight counters across runs so Listen & Read rounds rotate deterministically
 // rather than random each time (better perceived coverage & fairness).
 let __fa_listen_counter = (window.__fa_listen_counter || 0);
@@ -74,6 +153,9 @@ export function runFullArcadeMode(context) {
     gameArea.innerHTML = '<div style="padding:30px;text-align:center;">No words available.</div>';
     return;
   }
+
+  // Begin preloading special modes immediately (non-blocking)
+  try { preloadSpecialModes(); } catch(e) { console.debug('[FullArcade] Preload init skipped', e); }
 
   const cumulative = {
     rounds: [], // { key, correct, total }
@@ -133,6 +215,7 @@ export function runFullArcadeMode(context) {
     const modeKey = THEMED_SEQUENCE[i];
     if (!modeKey) return finalSummary();
     // Clear area & show lightweight round header
+    if (window.__FA_DEBUG) console.debug('[FullArcade] Starting round', i, modeKey, 'special?', SPECIAL_MODE_KEYS.has(modeKey));
     gameArea.innerHTML = `<div class="arcade-round-intro" style="text-align:center;padding:16px 8px;font-family:system-ui,sans-serif;">
       <h2 style="margin:4px 0 10px;font-size:1.25rem;color:#19777e;font-weight:800;">Round ${i+1} / ${THEMED_SEQUENCE.length}</h2>
       <div style="color:#334155;font-size:.9rem;margin-bottom:8px;">${prettyLabel(modeKey)}</div>
@@ -140,7 +223,7 @@ export function runFullArcadeMode(context) {
     </div>`;
     ensureSkipLink();
   ensurePrevLink();
-    loadMode(modeKey).then(mod => {
+    loadArcadeMode(modeKey).then(mod => {
       currentMode = modeKey;
       // Run underlying mode with same context; pass through wordList (can be filtered per round later)
       mod.run({ ...context, wordList, gameArea });

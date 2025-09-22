@@ -1,6 +1,6 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
-import { showGameProgressSync as showGameProgress, updateGameProgressSync as updateGameProgress, hideGameProgressSync as hideGameProgress } from '../utils/progress.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // ----- Live Play Helpers (play.html integration) -------------
 function isLivePlayContext() {
@@ -28,27 +28,6 @@ function ensureLiveListenStyles() {
 
 // Listen and Spell (Tap-to-Spell) mode
 export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
-  console.log('[ListenAndSpell] runListenAndSpellMode called', { 
-    wordCount: Array.isArray(wordList) ? wordList.length : 0, 
-    listName,
-    gameAreaId: gameArea?.id,
-    isLivePlay: isLivePlayContext(),
-    hasPlayTTS: typeof playTTS === 'function'
-  });
-
-  // Ensure we have a valid gameArea element
-  gameArea = gameArea || document.getElementById('gameArea');
-  if (!gameArea) {
-    console.error('[ListenAndSpell] no gameArea available');
-    return;
-  }
-  
-  // Validate list
-  if (!Array.isArray(wordList) || wordList.length === 0) {
-    console.error('[ListenAndSpell] Invalid or empty wordList:', wordList);
-    gameArea.innerHTML = `<div style="padding:28px;text-align:center;color:#666;font-weight:600;">No words available for Listen and Spell mode.<br>Please choose a lesson or load a word list first.</div>`;
-    return;
-  }
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   ensureLiveListenStyles();
   let score = 0;
@@ -273,15 +252,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
     }
 
     function playCurrent() {
-      try { 
-        if (typeof playTTS === 'function') {
-          playTTS(current.eng);
-        } else {
-          console.warn('[ListenAndSpell] playTTS function not available');
-        }
-      } catch (e) {
-        console.error('[ListenAndSpell] Error playing TTS:', e);
-      }
+      try { playTTS(current.eng); } catch {}
     }
     playCurrent();
     document.getElementById('playAudioBtn').onclick = playCurrent;
@@ -393,6 +364,3 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
     return dp[a.length][b.length];
   }
 }
-
-// Export for mode registry
-export const run = runListenAndSpellMode;

@@ -5,7 +5,7 @@
 
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
-import { showGameProgressSync as showGameProgress, updateGameProgressSync as updateGameProgress, hideGameProgressSync as hideGameProgress } from '../utils/progress.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 import { ensureMatchingStyles } from '../ui/matching_styles.js';
 
 export function runMatchingCore({ wordList, gameArea, startGame, listName = null, score: initialScore = 0, round: initialRound = 0 }, { sessionModeKey = 'matching', introTitle = 'Match English with Korean!', roundSize = 5 } = {}) {
