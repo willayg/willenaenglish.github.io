@@ -176,7 +176,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:12px;">${current.eng}</div>
           <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto 10px auto;">
             ${choices.map(ch => `
-              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" style="height:26vh;display:flex;align-items:center;justify-content:center;">
+              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:26vh;display:flex;align-items:center;justify-content:center;">
                 ${getTileHtml(ch)}
               </button>
             `).join('')}
@@ -225,7 +225,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div style="margin:8px 0 14px 0;display:flex;justify-content:center;">${getPromptTileHtml(current)}</div>
           <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:520px;margin:0 auto 12px auto;">
             ${choices.map(txt => `
-              <button class="multi-choice-btn choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}">${txt}</button>
+              <button class="multi-choice-btn choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}" ${txt === current.eng ? 'data-correct="1"' : ''}>${txt}</button>
             `).join('')}
           </div>
           <div id="multiFeedbackMixed" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
@@ -290,7 +290,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${prompt}</div>
       <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:480px;margin:0 auto 18px auto;">
         ${choices.map(txt => `
-          <button class="multi-choice-btn choice-btn" data-${dataAttr}="${txt.replaceAll('"','&quot;')}">
+          <button class="multi-choice-btn choice-btn" data-${dataAttr}="${txt.replaceAll('"','&quot;')}" ${txt === correctText ? 'data-correct="1"' : ''}>
             ${txt}
           </button>
         `).join('')}

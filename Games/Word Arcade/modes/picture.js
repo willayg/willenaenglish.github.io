@@ -153,7 +153,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
       <div style="margin-bottom:18px;">${imgHtml}</div>
       <div id="picChoices" style="display:grid;grid-template-columns:repeat(2, minmax(40vw, 1fr));gap:16px;max-width:92vw;margin:0 auto;">
         ${choices.map(w => `
-          <button class="pic-choice choice-btn" data-eng="${w}" style="height:20vh;">
+          <button class="pic-choice choice-btn" data-eng="${w}" ${w === current.eng ? 'data-correct="1"' : ''} style="height:20vh;">
             ${w}
           </button>
         `).join('')}

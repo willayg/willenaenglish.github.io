@@ -48,7 +48,7 @@ export function runPictureMultiChoice({ wordList, gameArea, startGame, listName 
           <div class=\"wa-img-box wa-4x3 rounded-14 shadow-lg\" style=\"width:100%;max-width:420px;margin:0 auto;\">\n            <img src='${imgUrl}' alt='word image' onerror=\"this.onerror=null;this.parentElement.style.display='none';\" />\n          </div>` : `<div style=\"height:160px;display:flex;align-items:center;justify-content:center;font-size:clamp(1.4rem,3.5vw,2.6rem);font-weight:700;color:#19777e;border:3px dashed #93cbcf;border-radius:14px;\">${current.eng}</div>`}
       </div>
   <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:16px;max-width:480px;margin:0 auto 12px auto;justify-content:center;">
-        ${answers.map(a => `<button class=\"choice-btn picture-choice\" data-answer=\"${a}\">${a}</button>`).join('')}
+    ${answers.map(a => `<button class=\"choice-btn picture-choice\" data-answer=\"${a}\" ${a === correctAnswer ? 'data-correct="1"' : ''}>${a}</button>`).join('')}
       </div>
       <div id="pictureFeedback" style="min-height:28px;font-size:1.05em;color:#555;margin-top:6px;"></div>
       <div style="margin-top:4px;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>

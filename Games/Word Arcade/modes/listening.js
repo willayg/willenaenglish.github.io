@@ -154,7 +154,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
             <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the picture:</div>
             <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
               ${shuffledChoices.map(ch => `
-                <button class="choice-btn pic-choice" data-eng="${ch.eng}" style="height:18vh;display:flex;align-items:center;justify-content:center;">
+                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:18vh;display:flex;align-items:center;justify-content:center;">
                   ${tileHtml(ch)}
                 </button>
               `).join('')}
@@ -209,7 +209,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
       <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the correct Korean translation:</div>
       <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
         ${shuffledKor.map(kor => `
-            <button class="listening-choice choice-btn" data-kor="${kor}" style="height:18vh;">
+            <button class="listening-choice choice-btn" data-kor="${kor}" ${kor === current.kor ? 'data-correct="1"' : ''} style="height:18vh;">
             ${kor}
           </button>
         `).join('')}

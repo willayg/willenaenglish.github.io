@@ -42,11 +42,11 @@ export function runMultiChoiceEngToKor({ wordList, gameArea, startGame, listName
     gameArea.innerHTML = `<div style="padding:24px;text-align:center;max-width:420px;margin:0 auto;">
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${current.eng}</div>
       <div id="multiChoicesEngKor" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:400px;margin:0 auto 18px auto;">
-        ${choices.map(kor => `
-          <button class=\"multi-choice-btn choice-btn\" data-kor=\"${kor}\">
-            ${kor}
-          </button>
-        `).join('')}
+          ${choices.map(kor => `
+            <button class=\"multi-choice-btn choice-btn\" data-kor=\"${kor}\" ${kor === current.kor ? 'data-correct="1"' : ''}>
+              ${kor}
+            </button>
+          `).join('')}
       </div>
       <div id="multiFeedbackEngKor" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
   <div id="multiScoreEngKor" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>

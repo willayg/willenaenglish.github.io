@@ -156,7 +156,7 @@ export async function runLevelUpMode({ wordList, gameArea, startGame, listName =
         <div style="font-size:clamp(1.1em,2.8vw,1.5em);color:#19777e;margin:0 auto 16px auto;max-width:680px;line-height:1.5;background:#f0fbfc;border-radius:12px;padding:12px 16px;">${current._def}</div>
         <div id="lvlUpChoices" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:520px;margin:0 auto 12px auto;">
           ${options.map(txt => `
-            <button class="lvlup-choice choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}">${txt}</button>
+            <button class="lvlup-choice choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}" ${txt === current.eng ? 'data-correct="1"' : ''}>${txt}</button>
           `).join('')}
         </div>
         <div id="lvlUpFeedback" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
