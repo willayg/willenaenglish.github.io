@@ -10,7 +10,6 @@
 
 import { loadMode } from './core/mode-registry.js';
 import { playTTS, preprocessTTS, preloadAllAudio } from './tts.js';
-// (Removed tap-spell fixed sizing injection – Option A – to allow dynamic slot sizing logic inside modes to fully control layout.)
 
 // Use inner stage container so layout (fixed root & header spacing) remains intact
 const root = document.getElementById('gameStage') || document.getElementById('gameRoot');

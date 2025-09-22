@@ -38,11 +38,8 @@
 				font-size: clamp(0.6em, 2vw, 1.5em);
 				margin-bottom: 48px;
 			}
-			/* Remove last margin for last button in grid */
 			[id*="Choices"] .choice-btn:last-child { margin-bottom: 0; }
-			/* Tap-spell tiles: keep perfect squares independent of generic choice sizing */
-			#letterTiles .tile-btn { width:62px !important; height:62px !important; padding:0; box-sizing:border-box; }
-			@media (max-width:520px){ #letterTiles .tile-btn{ width:52px !important; height:52px !important; } }
+			/* Removed hard-coded tap-spell tile sizing to allow dynamic mode logic to control */
 		}
 		/* Adaptive square buttons on wider screens */
 		@media (min-width: 680px) {
@@ -72,7 +69,7 @@
 		#letterTiles { max-width:100% !important; }
 		#letterTiles .tile-btn { flex:0 0 auto; }
 		/* Allow tile rows to wrap and shrink on small screens */
-		@media (max-width:520px){ #letterTiles { gap:6px !important; } #letterTiles .tile-btn{ width:48px !important; height:48px !important; font-size:1.05em !important; } }
+		@media (max-width:520px){ #letterTiles { gap:6px !important; } /* Removed forced small tile dimensions so dynamic sizing can shrink naturally */ }
 		/* Clamp definition box to avoid pushing layout */
 		#defBox { max-height:28vh; overflow:auto; }
 		/* Auto scale container wrapper (applied dynamically) */
@@ -96,7 +93,7 @@
 	</div>
 	<script type="module" src="/students/components/student-header.js"></script>
 	<script type="module" src="/students/scripts/points-client.js"></script>
-	<script type="module" src="play-main.js"></script>
+	<script type="module" src="play-main.js?v=dynamic1"></script>
 	<script type="module">
 	import { initPointsClient } from '/students/scripts/points-client.js';
 	async function ensureHeaderProfile(){
@@ -163,6 +160,8 @@
 				|| Array.from(stage.children).find(el => el.tagName !== 'SCRIPT' && el.id !== 'audioPrepMsg');
 			if(!child) return;
 			child.classList.add('scalable-root');
+			// Skip scaling transform entirely for tap-spell so letter math remains pixel-true
+			if (child.classList.contains('tap-spell')) return;
 			child.style.removeProperty('transform');
 			const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--headerH')) || 0;
 			const availH = window.innerHeight - headerH - 6; // a little buffer
