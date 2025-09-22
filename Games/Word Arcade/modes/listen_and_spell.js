@@ -6,10 +6,12 @@ import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.
 function isLivePlayContext() {
   try {
     const loc = window.location || {};
-    if (/play\.html$/i.test(loc.pathname)) return true;
-    if (loc.search && /[&?]mode=(spelling|listen_and_spell)/i.test(loc.search)) return true;
+    // Accept /play or /play.html (pretty URL support)
+    if (/\/play(\.html)?$/i.test(loc.pathname)) return true;
+    // Accept nested full_arcade plus direct modes
+    if (loc.search && /[&?]mode=(spelling|listen_and_spell|full_arcade)/i.test(loc.search)) return true;
   } catch { /* ignore */ }
-  return !!window.__WORD_ARCADE_LIVE;
+    return !!window.__WORD_ARCADE_LIVE;
 }
 
 function ensureLiveListenStyles() {
@@ -169,7 +171,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
       </div>
     `;
     if (live) {
-      gameArea.innerHTML = `<div class=\"wa-live-wrap\">${innerHTML}</div>`;
+      gameArea.innerHTML = `<div class=\"wa-live-wrap scalable-root\">${innerHTML}</div>`;
     } else {
       gameArea.innerHTML = innerHTML;
     }

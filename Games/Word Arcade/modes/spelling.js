@@ -4,13 +4,15 @@ import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.
 
 // ----- Live Play Helpers (play.html integration) ---------------------------------
 function isLivePlayContext() {
-  // Detect if loaded inside the standalone live play host (play.html) by path or query param
+  // Broaden detection for production where pretty URLs (/play) or full_arcade query are used.
   try {
     const loc = window.location || {};
-    if (/play\.html$/i.test(loc.pathname)) return true;
-    if (loc.search && /[?&]mode=(spelling|listen_and_spell)/i.test(loc.search)) return true;
-  } catch { /* noop */ }
-  return !!window.__WORD_ARCADE_LIVE; // manual escape hatch
+    // Accept /play or /play.html at end of path
+    if (/\/play(\.html)?$/i.test(loc.pathname)) return true;
+    // Treat any of these mode params as live context (full_arcade launches nested rounds without updating URL)
+    if (loc.search && /[?&]mode=(spelling|listen_and_spell|full_arcade)/i.test(loc.search)) return true;
+  } catch { /* ignore */ }
+  return !!window.__WORD_ARCADE_LIVE; // global escape hatch set by full_arcade orchestrator
 }
 
 function ensureLiveSpellStyles() {
@@ -206,7 +208,7 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
       </div>
     `;
     if (live) {
-      gameArea.innerHTML = `<div class="wa-live-wrap">${innerHTML}</div>`;
+      gameArea.innerHTML = `<div class="wa-live-wrap scalable-root">${innerHTML}</div>`;
     } else {
       gameArea.innerHTML = innerHTML;
     }
