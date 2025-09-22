@@ -157,7 +157,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
       <div style="padding:16px 16px 6px;text-align:center;">
         <div id="easyPicGrid" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto;">
           ${shuffledChoices.map(ch => `
-            <button class="choice-btn easy-pic-choice" data-eng="${ch.eng}" style="height:26vh;display:flex;align-items:center;justify-content:center;">
+            <button class="choice-btn easy-pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:26vh;display:flex;align-items:center;justify-content:center;">
               ${getTileHtml(ch)}
             </button>
           `).join('')}

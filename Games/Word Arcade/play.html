@@ -81,6 +81,58 @@
 		#gameStage { -webkit-overflow-scrolling:auto; }
 		#gameStage img, #gameStage canvas { max-width:100%; height:auto; }
 		@media (orientation:landscape) and (max-height:480px) { #gameStage { justify-content:flex-start; } }
+
+		/* --- Multi-choice live layout overrides to prevent overlap on wide screens --- */
+		/* The generic large-screen rule sets .choice-btn min-width:320px which causes
+		   two columns (2 * 320px + gap/padding) to overflow their grid container and visually overlap.
+		   Constrain buttons inside explicit multi-choice grids and allow them to size via grid. */
+		#multiChoicesEngKor .choice-btn,
+		#multiChoicesKorEng .choice-btn,
+		#multiChoicesMixed .choice-btn,
+		#listeningChoices .choice-btn,
+		#pictureChoices .choice-btn,
+		#lvlUpChoices .choice-btn {
+			min-width: unset !important; /* allow grid to dictate width */
+			width: 100%;
+			margin-bottom: 0; /* grid gap handles spacing */
+		}
+		/* Reduce internal grid gap slightly for better fit on mid widths */
+		#multiChoicesEngKor, #multiChoicesKorEng, #multiChoicesMixed { gap: 18px !important; }
+		/* Ensure grid columns share width evenly without overflow */
+		#multiChoicesEngKor, #multiChoicesKorEng, #multiChoicesMixed { grid-auto-rows: 1fr; }
+		@media (min-width:701px){
+			#multiChoicesEngKor .choice-btn,
+			#multiChoicesKorEng .choice-btn,
+			#multiChoicesMixed .choice-btn { font-size: clamp(.75em, 1.6vw, 1.35em) !important; }
+		}
+
+		/* --- Picture & listening choice layout refinement --- */
+		/* Center picture grids with a max width matching two nicely spaced squares */
+		#pictureChoices, #picChoices, #listeningChoices, #easyPicGrid { 
+			max-width: 860px; /* allows four squares in 2x2 with gaps */
+			margin-left:auto; margin-right:auto; width:100%;
+		}
+		/* Make image-based choice buttons square and consistent */
+		#pictureChoices .choice-btn.picture-choice,
+		#picChoices .choice-btn.picture-choice,
+		#easyPicGrid .choice-btn.picture-choice,
+		#listeningChoices .choice-btn.listening-choice {
+			aspect-ratio: 1 / 1 !important;
+			width: 100%;
+			max-width: 360px; /* prevent overly wide rectangles on huge screens */
+			height: auto !important;
+			display: flex; align-items:center; justify-content:center;
+		}
+		/* On very wide screens shrink gap slightly so layout remains visually tight */
+		@media (min-width:1000px){
+			#pictureChoices, #picChoices, #easyPicGrid, #listeningChoices { gap: 26px !important; }
+		}
+		/* On narrow phones allow slight rectangle but keep min visual balance */
+		@media (max-width:520px){
+			#pictureChoices .choice-btn.picture-choice,
+			#picChoices .choice-btn.picture-choice,
+			#easyPicGrid .choice-btn.picture-choice { max-width: 46vw; }
+		}
 	</style>
 </head>
 <body>

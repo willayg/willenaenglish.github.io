@@ -48,6 +48,20 @@ function ensureChoiceButtonStyles() {
     .splash-correct { animation: btnSplashCorrect 450ms ease; }
     .splash-wrong { animation: btnSplashWrong 450ms ease; }
 
+    /* Correct reveal highlight (applied to the actual correct button when user selects wrong) */
+    .choice-correct-reveal {
+      background: #e8ffeec9 !important;
+      box-shadow: 0 0 0 3px #16a34a, 0 2px 10px rgba(22,163,74,0.35) !important;
+      border-color: #16a34a !important;
+      position: relative;
+    }
+    .choice-correct-reveal::after {
+      content: '✓';
+      position: absolute; top:6px; right:8px; font-size:1.1em; font-weight:800; color:#15803d;
+      text-shadow:0 1px 2px rgba(0,0,0,0.18);
+      pointer-events:none;
+    }
+
     /* Mode selector grid and buttons */
     .mode-grid {
       display: grid;
@@ -242,6 +256,16 @@ export function splashResult(el, isCorrect) {
   void el.offsetWidth;
   el.classList.add(cls);
   setTimeout(() => { el.classList.remove('splash-correct', 'splash-wrong'); }, 500);
+  // If answer wrong, reveal correct option (requires data-correct="1" set on the correct button)
+  if (!isCorrect) {
+    try {
+      const root = el.closest('#gameStage') || document;
+      const correctBtn = root.querySelector('.choice-btn[data-correct="1"]');
+      if (correctBtn && !correctBtn.classList.contains('choice-correct-reveal')) {
+        correctBtn.classList.add('choice-correct-reveal');
+      }
+    } catch {}
+  }
 }
 
 // Ensure mode button styles are present (alias to shared injector)

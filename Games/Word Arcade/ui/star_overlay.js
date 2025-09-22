@@ -33,8 +33,12 @@
     const css = `
       .star-round-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:8000;font-family:'Poppins',system-ui,sans-serif;animation:starFadeIn .25s ease forwards;}
       .star-round-panel{background:#ffffff; padding:28px 32px 30px; border-radius:28px; text-align:center; position:relative; box-shadow:0 6px 30px -4px rgba(0,0,0,.25); border:2px solid #67e2e6;}
-      .star-row{display:flex;gap:10px;justify-content:center;margin:6px 0 14px;}
-      .star-slot{width:54px;height:54px;position:relative;}
+      .star-row{--fa-star-size:2.6em; --fa-star-gap:0.55em; display:flex;gap:var(--fa-star-gap);justify-content:center;margin:6px 0 14px;}
+      /* Each star slot scales from the configurable CSS var rather than inheriting button font sizes elsewhere */
+      .star-row.size-lg{--fa-star-size:3em;}
+      .star-row.size-md{--fa-star-size:2.6em;}
+      .star-row.size-sm{--fa-star-size:2.2em;}
+      .star-slot{width:var(--fa-star-size);height:var(--fa-star-size);position:relative;flex:0 0 var(--fa-star-size);} 
       .star-slot svg{width:100%;height:100%;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));}
       .star-empty path{fill:#e2e8f0;stroke:#cbd5e1;stroke-width:1;}
       .star-filled path{fill:url(#goldGradient);stroke:#f8d24b;stroke-width:1.5;}
@@ -74,8 +78,8 @@
   }
 
   function buildStarSVG(id){
-    // Explicit width/height for consistent sizing
-    return `<svg width="54" height="54" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goldGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#ffeaa7"/><stop offset="55%" stop-color="#f8d24b"/><stop offset="100%" stop-color="#f6b93b"/></linearGradient></defs><path d="M12 .587l3.668 7.431L23.5 9.75l-5.667 5.527L19.335 24 12 19.897 4.665 24l1.502-8.723L.5 9.75l7.832-1.732z"/></svg>`;
+    // No fixed pixel sizing; parent slot governs final size via CSS vars.
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goldGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#ffeaa7"/><stop offset="55%" stop-color="#f8d24b"/><stop offset="100%" stop-color="#f6b93b"/></linearGradient></defs><path d="M12 .587l3.668 7.431L23.5 9.75l-5.667 5.527L19.335 24 12 19.897 4.665 24l1.502-8.723L.5 9.75l7.832-1.732z"/></svg>`;
   }
 
   function removeOverlay(overlay){
@@ -109,8 +113,8 @@
     sub.className='star-sub';
     sub.textContent = `${correct} / ${total}  (${pct}%)`;
 
-    const row = document.createElement('div');
-    row.className='star-row';
+  const row = document.createElement('div');
+  row.className='star-row size-lg'; // default large size; adjust classes if needed
 
     for (let i=0;i<5;i++){
       const slot = document.createElement('div');
