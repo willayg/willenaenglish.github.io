@@ -1,6 +1,6 @@
 import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
-import { showGameProgressSync as showGameProgress, updateGameProgressSync as updateGameProgress, hideGameProgressSync as hideGameProgress } from '../utils/progress.js';
+import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
 // ----- Live Play Helpers (play.html integration) ---------------------------------
 function isLivePlayContext() {
@@ -37,24 +37,16 @@ function ensureLiveSpellStyles() {
 
 // Spelling mode (Tap-to-Spell with Korean prompt)
 export function runSpellingMode({ wordList, gameArea, listName = null }) {
-  // Enhanced logging to help diagnose why the spelling UI might be blank
-  console.log('[Spelling] runSpellingMode called', { 
-    wordCount: Array.isArray(wordList) ? wordList.length : 0, 
-    listName,
-    gameAreaId: gameArea?.id,
-    isLivePlay: isLivePlayContext()
-  });
-  
+  // Defensive logging to help diagnose why the spelling UI might be blank
+  console.log('runSpellingMode called', { wordCount: Array.isArray(wordList) ? wordList.length : 0, listName });
   // Ensure we have a valid gameArea element
   gameArea = gameArea || document.getElementById('gameArea');
   if (!gameArea) {
-    console.error('[Spelling] runSpellingMode: no gameArea available');
+    console.error('runSpellingMode: no gameArea available');
     return;
   }
-  
   // Validate list
   if (!Array.isArray(wordList) || wordList.length === 0) {
-    console.error('[Spelling] Invalid or empty wordList:', wordList);
     gameArea.innerHTML = `<div style="padding:28px;text-align:center;color:#666;font-weight:600;">No words available for Spelling mode.<br>Please choose a lesson or load a word list first.</div>`;
     return;
   }
@@ -379,6 +371,3 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     return dp[a.length][b.length];
   }
 }
-
-// Export for mode registry
-export const run = runSpellingMode;

@@ -37,11 +37,11 @@ export const modeRegistry = {
 	},
 	'listen_and_spell': async () => {
 		const mod = await import('../modes/listen_and_spell.js');
-		return { run: (ctx) => mod.run(ctx) };
+		return { run: (ctx) => mod.runListenAndSpellMode(ctx) };
 	},
 	'spelling': async () => {
 		const mod = await import('../modes/spelling.js');
-		return { run: (ctx) => mod.run(ctx) };
+		return { run: (ctx) => mod.runSpellingMode(ctx) };
 	},
 	'level_up': async () => {
 		const mod = await import('../modes/level_up.js');
