@@ -188,40 +188,76 @@ function showPanel(name) {
   if (name === 'homework' && el.panelHomework) el.panelHomework.classList.add('active');
 }
 
-// Build live mode tiles (all active except Level Up)
+// Build live mode tiles (grouped horizontally: Full Games vs Mini Games)
 function buildLiveTiles() {
   if (!el.liveGrid) return;
   if (el.liveGrid.childElementCount) return; // build once
-  const modes = [
-    { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true },
-    { key:'multi_choice_eng_to_kor', label:'Multiple Choice', desc:'English → Korean', active:true },
-    { key:'picture_multi_choice', label:'Picture Match', desc:'Image → Word', active:true },
-    { key:'listening_multi_choice', label:'Listening', desc:'Hear → Choose', active:true },
-    { key:'multi_choice_kor_to_eng', label:'Multi Choice', desc:'Korean → English', active:true },
-    { key:'easy_picture', label:'Audio → Picture', desc:'Listen then choose', active:true },
-    { key:'listen_and_spell', label:'Listen & Spell', desc:'Type what you hear', active:true },
-    { key:'spelling', label:'Spelling', desc:'Basic spelling drill', active:true },
-    { key:'matching', label:'Matching', desc:'Match the words.', active:true },
-    { key:'level_up', label:'Level Up', desc:'Words → Definitions', active:true }
-  ];
-  modes.forEach(m => {
-    const div = document.createElement('div');
-    div.className = 'cgm-mode-tile ' + (m.active ? 'active' : 'disabled');
-    div.dataset.mode = m.key;
-    div.innerHTML = `
-      <div class="cgm-mode-name">${m.label}</div>
-      <div class="cgm-mode-desc">${m.desc}</div>
-      <div class="cgm-tag">${m.active ? 'PLAY' : 'SOON'}</div>
-    `;
-    if (m.active) {
-      div.addEventListener('click', () => {
-        selectedLiveMode = m.key;
-        launchLiveMode();
-      });
+
+  // Define groups
+  const groups = [
+    {
+      title: 'Full Games',
+      modes: [
+        { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true }
+      ]
+    },
+    {
+      title: 'Mini Games',
+      modes: [
+        { key:'multi_choice_eng_to_kor', label:'Multiple Choice', desc:'English → Korean', active:true },
+        { key:'picture_multi_choice', label:'Picture Match', desc:'Image → Word', active:true },
+        { key:'listening_multi_choice', label:'Listening', desc:'Hear → Choose', active:true },
+        { key:'multi_choice_kor_to_eng', label:'Multi Choice', desc:'Korean → English', active:true },
+        { key:'easy_picture', label:'Audio → Picture', desc:'Listen then choose', active:true },
+        { key:'listen_and_spell', label:'Listen & Spell', desc:'Type what you hear', active:true },
+        { key:'spelling', label:'Spelling', desc:'Basic spelling drill', active:true },
+        { key:'matching', label:'Matching', desc:'Match the words', active:true },
+        { key:'level_up', label:'Level Up', desc:'Words → Definitions', active:false } // placeholder
+      ]
     }
-    el.liveGrid.appendChild(div);
+  ];
+
+  // Horizontal container for both groups
+  const container = document.createElement('div');
+  container.className = 'cgm-group-container';
+  el.liveGrid.appendChild(container);
+
+  groups.forEach(group => {
+    // Group box
+    const box = document.createElement('div');
+    box.className = 'cgm-group-box';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'cgm-group-header';
+    header.textContent = group.title;
+    box.appendChild(header);
+
+    // Mode tiles
+    const grid = document.createElement('div');
+    grid.className = 'cgm-mode-group';
+    group.modes.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'cgm-mode-tile ' + (m.active ? 'active' : 'disabled');
+      div.dataset.mode = m.key;
+      div.innerHTML = `
+        <div class="cgm-mode-name">${m.label}</div>
+        <div class="cgm-mode-desc">${m.desc}</div>
+        <div class="cgm-tag">${m.active ? 'PLAY' : 'SOON'}</div>
+      `;
+      if (m.active) {
+        div.addEventListener('click', () => {
+          selectedLiveMode = m.key;
+          launchLiveMode();
+        });
+      }
+      grid.appendChild(div);
+    });
+    box.appendChild(grid);
+    container.appendChild(box);
   });
 }
+
 
 export function openCreateGameModal() {
   if (!el.modal) return;
@@ -446,43 +482,67 @@ function showQrForUrl(urlStr) {
   const copyBtn = document.getElementById('qrCopy');
   const openBtn = document.getElementById('qrOpen');
   const closeBtn = document.getElementById('qrClose');
+  if (!overlay || !img) return;
+
+  overlay.style.display = 'flex';
   if (linkBox) linkBox.textContent = urlStr;
   if (openBtn) openBtn.href = urlStr;
-  if (overlay) overlay.style.display = 'flex';
-  // Prepare skeleton / spinner for QR image
-  if (img) {
-    img.classList.add('qr-loading');
-    let spin = overlay && overlay.querySelector('.qr-spinner');
-    if (!spin && overlay) {
-      spin = document.createElement('div');
-      spin.className = 'qr-spinner';
-      if (img.parentElement) {
-        img.parentElement.style.position = 'relative';
-        img.parentElement.appendChild(spin);
-      } else {
-        overlay.appendChild(spin);
-      }
+
+  // Ensure dedicated stable container
+  let container = img.closest('.qr-image-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'qr-image-container';
+    if (img.parentElement) {
+      img.parentElement.insertBefore(container, img);
+      container.appendChild(img);
+    } else {
+      overlay.appendChild(container);
+      container.appendChild(img);
     }
-    const clearLoading = () => {
-      img.classList.remove('qr-loading');
-      if (spin) spin.remove();
-    };
-    img.onload = clearLoading;
-    img.onerror = () => { clearLoading(); img.classList.add('qr-error'); };
   }
+
+  // Remove any previous spinners
+  container.querySelectorAll('.qr-spinner').forEach(s => s.remove());
+
+  // Fresh spinner
+  const spinner = document.createElement('div');
+  spinner.className = 'qr-spinner';
+  container.appendChild(spinner);
+
+  img.classList.add('qr-loading');
+  img.classList.remove('qr-error');
+
+  const clear = (isError) => {
+    img.classList.remove('qr-loading');
+    if (spinner.parentNode) spinner.remove();
+    if (isError) img.classList.add('qr-error');
+  };
+
+  img.onload = () => clear(false);
+  // we will override onerror later for retry logic
+
   const providers = [
     `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=M|0&chl=${encodeURIComponent(urlStr)}`,
     `https://quickchart.io/qr?text=${encodeURIComponent(urlStr)}&size=300&margin=0`,
     `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(urlStr)}`
   ];
-  if (img) {
-    let idx = 0; const tryNext = () => { if (idx>=providers.length) return; img.src = providers[idx++]; };
-    img.onerror = () => tryNext();
-    tryNext();
+  let idx = 0;
+  const tryNext = () => {
+    if (idx >= providers.length) { clear(true); return; }
+    img.src = providers[idx++];
+  };
+  img.onerror = () => { tryNext(); };
+  tryNext();
+
+  if (copyBtn) {
+    copyBtn.onclick = async () => {
+      try { await navigator.clipboard.writeText(urlStr); setStatus('Link copied'); } catch {}
+    };
   }
-  if (copyBtn) copyBtn.onclick = async () => { try { await navigator.clipboard.writeText(urlStr); setStatus('Link copied'); } catch {} };
-  if (closeBtn) closeBtn.onclick = () => { if (overlay) overlay.style.display='none'; };
-  // Do NOT close the Create Game modal here; keep it open beneath the QR overlay
+  if (closeBtn) {
+    closeBtn.onclick = () => { overlay.style.display = 'none'; };
+  }
 }
 
 // Launch selected live mode (generic; all supported except Level Up)
