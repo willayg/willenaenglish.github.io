@@ -303,6 +303,42 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 .cgm-panel.active { display:block; }
 @keyframes cgmFade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
+/* Group container now stacks sections vertically (Full Games above Mini Games) */
+.cgm-group-container {
+  display: flex;
+  flex-direction: column; /* vertical stacking */
+  gap: 28px;
+  margin-top: 10px;
+}
+
+/* Ensure the grouping wrapper inside the outer grid spans the full available width.
+   Without this, the single .cgm-group-container sat inside only the first 1fr column
+   of .cgm-live-grid (repeat(4,1fr)), making everything appear as a narrow left column. */
+.cgm-live-grid > .cgm-group-container { grid-column: 1 / -1; width:100%; }
+
+.cgm-group-box {
+  flex: 1 1 0;
+  min-width: 240px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.cgm-group-header {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #334155;
+}
+
+.cgm-mode-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+
 /* Start chooser buttons */
 .cgm-choice-buttons { display:flex; flex-wrap:wrap; gap:24px; justify-content:center; margin:30px auto; max-width:640px; }
 .cgm-choice-btn { flex:1 1 240px; min-width:240px; min-height:200px; padding:34px 24px; text-align:center; font-size:1.25rem; font-weight:700; border:3px solid var(--primary); background:#fff; color:var(--primary-dark); border-radius:18px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.06); transition:background .2s,border-color .2s,transform .18s; }
@@ -314,7 +350,43 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 
 /* Live mode grid (4 x 2) */
 .cgm-live-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; max-width:1080px; margin:0 auto 10px; }
-.cgm-mode-tile { position:relative; width:100%; aspect-ratio:1/1; max-width:250px; max-height:250px; background:#f5f8fa; border:2px solid #cfdbe2; border-radius:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; font-weight:700; font-size:1rem; color:#314249; margin:0 auto; cursor:default; box-shadow:0 4px 14px rgba(0,0,0,0.05); transition:box-shadow .18s, transform .18s, background .2s; }
+.cgm-mode-tile { position:relative; width:100%; aspect-ratio:1/1;   min-width: 180px;   min-height: 180px; max-width:375px; max-height:375px; background:#f5f8fa; border:2px solid #cfdbe2; border-radius:33px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; font-weight:700; font-size:1.5rem; color:#314249; margin:0 auto; cursor:default; box-shadow:0 4px 14px rgba(0,0,0,0.05); transition:box-shadow .18s, transform .18s, background .2s; }
+/* Live mode grid overall container */
+.cgm-live-grid { display:grid; grid-template-columns:1fr; gap:32px; max-width:1400px; margin:0 auto 10px; }
+
+/* Each mode group now a 4-column grid that wraps; never shows more than 4 per row */
+.cgm-mode-group { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:32px; justify-items:center; }
+
+/* Responsive collapse of columns */
+@media (max-width: 1300px) { .cgm-mode-group { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+@media (max-width: 950px) { .cgm-mode-group { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+@media (max-width: 560px) { .cgm-mode-group { grid-template-columns:1fr; } }
+
+/* Mode tile (50% larger baseline) */
+.cgm-mode-tile {
+  position:relative;
+  width:100%;
+  aspect-ratio:1/1;
+  max-width:375px;
+  max-height:375px;
+  min-width:240px; /* ensures they grow bigger, not shrink too small */
+  min-height:240px;
+  background:#f5f8fa;
+  border:2px solid #cfdbe2;
+  border-radius:28px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  font-weight:700;
+  font-size:1.25rem; /* moderate increase over original (1rem) */
+  color:#314249;
+  margin:0 auto;
+  cursor:default;
+  box-shadow:0 4px 14px rgba(0,0,0,0.05);
+  transition:box-shadow .18s, transform .18s, background .2s;
+}
 .cgm-mode-tile.active { cursor:pointer; background:#ffffff; color:#19777e; border-color:#f59e0b; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
 .cgm-mode-tile.active:hover { transform:translateY(-4px); }
 .cgm-mode-tile .cgm-tag { position:absolute; top:10px; right:10px; font-size:11px; background:#19777e; color:#fff; padding:4px 8px; border-radius:999px; letter-spacing:.5px; font-weight:600; }
@@ -340,12 +412,11 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
   .cgm-live-grid { grid-template-columns:repeat(2, 1fr); }
 }
 @media (max-width: 560px) {
-  .cgm-live-grid { grid-template-columns:1fr 1fr; gap:14px; }
-  .cgm-mode-tile { max-width:200px; max-height:200px; }
   .cgm-choice-buttons { gap:16px; }
   .cgm-choice-btn { padding:26px 18px; font-size:1.05rem; }
   .cgm-home-form { grid-template-columns:1fr; }
   .cgm-home-form .wide { grid-column:1; }
+  .cgm-mode-tile { max-width:300px; max-height:300px; min-width:200px; min-height:200px; font-size:1.1rem; }
 }
 
 /* End Create Game Modal rebuild styles */
@@ -357,11 +428,34 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 .cgm-loading-msg { font-size:.9rem; font-weight:600; color:#0f3f49; letter-spacing:.5px; text-align:center; }
 @keyframes cgmSpin { to { transform:rotate(360deg); } }
 
+/* QR Overlay layout (stable sizing to prevent lateral jitter) */
+#qrOverlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.55); z-index:2000; padding:20px; }
+#qrOverlay .qr-box { background:#fff; border:2px solid #cfe4e8; border-radius:22px; padding:26px 30px 32px; box-shadow:0 10px 40px -6px rgba(0,0,0,0.35); position:relative; width:min(480px,92vw); display:flex; flex-direction:column; align-items:center; gap:18px; }
+#qrOverlay .qr-close-btn { position:absolute; top:10px; right:12px; background:rgba(0,0,0,0.05); border:none; font-size:22px; line-height:1; cursor:pointer; padding:4px 10px; border-radius:12px; color:#475569; }
+#qrOverlay .qr-close-btn:hover { background:rgba(0,0,0,0.12); }
+
+/* Stable wrapper fixes spinner wobble by reserving space */
+.qr-image-wrapper { position:relative; width:300px; height:300px; max-width:300px; max-height:300px; display:flex; align-items:center; justify-content:center; }
+.qr-image-wrapper img { width:100%; height:100%; object-fit:contain; display:block; }
+
+/* Spinner absolutely centered over reserved area */
+.qr-image-wrapper .qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:62px; height:62px; border:7px solid #d9e3e8; border-top-color:#0d5c63; border-radius:50%; animation:cgmSpin .85s linear infinite; box-shadow:0 0 0 3px rgba(255,255,255,0.6); }
+
+/* Skeleton shimmer states remain but without affecting layout width */
+#qrImage.qr-loading { background:linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation:shimmer 1.2s infinite; opacity:.25; }
+
+
 /* QR image skeleton (assumes #qrImage element) */
 #qrImage.qr-loading { background:linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation:shimmer 1.2s infinite; opacity:.2; }
 #qrImage.qr-error { outline:3px solid #f87171; position:relative; }
 #qrImage.qr-error::after { content:'Error'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:700; color:#b91c1c; background:rgba(255,255,255,0.85); }
 .qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:44px; height:44px; border:6px solid #cbd5e1; border-top-color:#0d5c63; border-radius:50%; animation:cgmSpin .9s linear infinite; pointer-events:none; }
+
+/* Stable QR container & spinner (new unified version) */
+.qr-image-container { position:relative; width:300px; height:300px; max-width:300px; max-height:300px; display:flex; align-items:center; justify-content:center; }
+.qr-image-container img { width:100%; height:100%; object-fit:contain; display:block; }
+.qr-image-container .qr-spinner { position:absolute; top:50%; left:50%; width:64px; height:64px; transform:translate(-50%, -50%); border:7px solid #d9e3e8; border-top-color:#0d5c63; border-radius:50%; animation:spin .85s linear infinite; box-shadow:0 0 0 3px rgba(255,255,255,.55); }
+@keyframes spin { to { transform:translate(-50%, -50%) rotate(360deg); } }
 
 
 /* ===== Loader Modal Performance + Card Styles ===== */

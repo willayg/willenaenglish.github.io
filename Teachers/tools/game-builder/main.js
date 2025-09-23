@@ -800,21 +800,42 @@ async function uploadAudioFile(key, audioBase64) {
 async function ensureAudioForWordsAndSentences(wordsList, examplesMap, opts = { maxWorkers: 3 }) {
   // wordsList: array of plain target words (strings)
   // examplesMap: { normalizedWord: exampleSentence }
-  const normalizeForKey = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-  const words = (wordsList || []).map(w => normalizeForKey(w)).filter(Boolean);
-  if (!words.length && (!examplesMap || Object.keys(examplesMap).length === 0)) return { ensuredWords: [], ensuredSentences: [] };
+  // New naming: prefer space-preserving keys ("ice cream") while still supporting legacy underscore ("ice_cream").
+  const normalizeSpace = (s) => String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  const toLegacy = (spaceKey) => spaceKey.replace(/\s+/g, '_');
+
+  const rawWords = (wordsList || []).map(w => normalizeSpace(w)).filter(Boolean);
+  if (!rawWords.length && (!examplesMap || Object.keys(examplesMap).length === 0)) return { ensuredWords: [], ensuredSentences: [] };
 
   // 1) Check existing word audio
-  const wordKeys = words.slice();
-  // Normalize example keys the same way so sentence files are like "egg_sentence"
-  const sentenceKeys = Object.keys(examplesMap || {}).map(k => `${normalizeForKey(k)}_sentence`);
+  // Word keys (preferred space form); legacy forms used underscores. We'll check both.
+  const wordKeys = rawWords.slice();
+  const legacyWordKeys = rawWords.map(toLegacy);
+  // Sentence keys follow same pattern with suffix
+  const sentenceKeys = Object.keys(examplesMap || {}).map(k => `${normalizeSpace(k)} sentence`); // space form with space + ' sentence'
+  const legacySentenceKeys = sentenceKeys.map(k => k.replace(/\s+/g, '_')); // legacy underscore sentence naming
 
-  const combinedKeys = Array.from(new Set([].concat(wordKeys, sentenceKeys)));
+  // When querying existing audio, include both naming variants
+  const combinedKeys = Array.from(new Set([].concat(wordKeys, legacyWordKeys, sentenceKeys, legacySentenceKeys)));
   let existing = {};
   try { existing = await checkExistingAudioKeys(combinedKeys); } catch (e) { console.warn('checkExistingAudioKeys failed', e); existing = {}; }
 
-  const missingWordKeys = wordKeys.filter(w => { const info = existing[w]; return !(info && info.exists && info.url); });
-  const missingSentenceKeys = sentenceKeys.filter(k => { const info = existing[k]; return !(info && info.exists && info.url); });
+  // Determine presence considering either variant; if either exists we skip generation.
+  const wordHasAny = (k) => {
+    const legacy = toLegacy(k);
+    return !!((existing[k] && existing[k].exists) || (existing[legacy] && existing[legacy].exists));
+  };
+  const sentenceHasAny = (k) => {
+    const legacy = k.replace(/\s+/g, '_');
+    return !!((existing[k] && existing[k].exists) || (existing[legacy] && existing[legacy].exists));
+  };
+  const missingWordKeys = wordKeys.filter(k => !wordHasAny(k));
+  const missingSentenceKeys = sentenceKeys.filter(k => !sentenceHasAny(k));
 
   // Helper to generate-and-upload for a set of tasks
   async function runGeneration(tasks, generatorFn) {
@@ -850,9 +871,8 @@ async function ensureAudioForWordsAndSentences(wordsList, examplesMap, opts = { 
 
   // Prepare sentence generation tasks: use examplesMap value as text, key is `${word}_sentence`
   const sentenceTasks = missingSentenceKeys.map(k => {
-    const base = String(k).replace(/_sentence$/i, '');
-    // examplesMap keys may be raw words; normalize lookup
-    const lookup = Object.keys(examplesMap || {}).find(orig => normalizeForKey(orig) === base);
+    const base = k.replace(/ sentence$/i, '');
+    const lookup = Object.keys(examplesMap || {}).find(orig => normalizeSpace(orig) === base);
     return { key: k, text: lookup ? examplesMap[lookup] : '' };
   }).filter(t => t.text && t.text.trim());
 
