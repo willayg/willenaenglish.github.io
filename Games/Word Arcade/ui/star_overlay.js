@@ -21,10 +21,10 @@
   function pctToStars(pct){
     if (pct == null) return 0;
     if (pct >= 100) return 5;
-    if (pct >= 95) return 4;
-    if (pct >= 90) return 3;
-    if (pct >= 85) return 2;
-    if (pct >= 80) return 1;
+    if (pct > 90) return 4;
+    if (pct > 80) return 3;
+    if (pct > 70) return 2;
+    if (pct >= 60) return 1;
     return 0;
   }
 

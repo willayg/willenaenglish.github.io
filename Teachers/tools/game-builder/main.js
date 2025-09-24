@@ -20,7 +20,8 @@ const titleEl = document.getElementById('titleInput');
 const addWordLink = document.getElementById('addWordLink');
 const loadWorksheetsLink = document.getElementById('loadWorksheetsLink');
 const openLink = document.getElementById('openLink');
-const saveLink = document.getElementById('saveLink');
+const saveLink = document.getElementById('saveLink'); // new quick Save (silent overwrite)
+const saveAsLink = document.getElementById('saveAsLink');
 const previewBtn = document.getElementById('previewBtn');
 const createGameLink = document.getElementById('createGameLink');
 const editListLink = document.getElementById('editListLink');
@@ -71,6 +72,7 @@ const fileModalClose = document.getElementById('fileModalClose');
 
 // State
 let list = [];
+let currentGameId = null; // tracks last opened/saved game id for quick Save
 let loadingImages; // from image system
 
 // Undo/Redo functionality
@@ -379,6 +381,76 @@ function toast(msg) {
   setTimeout(() => { if (statusEl.textContent === msg) statusEl.textContent = ''; }, 2000);
 }
 
+// Tiny top-right toast for brief status (e.g., 500ms "Saved"), or longer error
+function showTinyToast(msg, { variant = 'success', ms = 500 } = {}) {
+  let el = document.getElementById('tinyToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'tinyToast';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.style.cssText = [
+      'position:fixed',
+      'top:12px',
+      'right:12px',
+      'background:#10b981',
+      'color:#fff',
+      'padding:8px 12px',
+      'border-radius:9999px',
+      'font:600 13px system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
+      'box-shadow:0 6px 20px rgba(0,0,0,.18)',
+      'z-index:100000',
+      'opacity:0',
+      'transform:translateY(-6px)',
+      'transition:opacity .12s ease, transform .12s ease',
+      'display:none'
+    ].join(';');
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  if (variant === 'error') el.style.background = '#ef4444';
+  else if (variant === 'warn') el.style.background = '#f59e0b';
+  else el.style.background = '#10b981';
+  // show
+  el.style.display = 'block';
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+  });
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-6px)';
+    setTimeout(() => { if (el.style.opacity === '0') el.style.display = 'none'; }, 160);
+  }, Math.max(200, ms | 0));
+}
+
+// Network helpers: resilient JSON fetch with retry for transient dev resets
+async function fetchJSONSafe(url, init, opts = {}) {
+  const { retryOnNetwork = true, retryDelayMs = 700 } = opts;
+  try {
+    const res = await fetch(url, init);
+    // Read text first so we can report useful errors on non-JSON responses
+    let text = '';
+    try { text = await res.text(); } catch {}
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch {}
+    if (!res.ok) {
+      const msg = (data && (data.error || data.message)) || text || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return data ?? {};
+  } catch (err) {
+    const msg = String(err && err.message || err || '');
+    // Retry once on network-style errors seen in Netlify dev (connection reset / failed to fetch)
+    if (retryOnNetwork && /Failed to fetch|NetworkError|ERR_CONNECTION_RESET|load failed|TypeError: NetworkError/i.test(msg)) {
+      await new Promise(r => setTimeout(r, retryDelayMs));
+      return fetchJSONSafe(url, init, { retryOnNetwork: false, retryDelayMs });
+    }
+    throw err;
+  }
+}
+
 
 function buildPayload() {
   return {
@@ -557,24 +629,39 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
   applyWorksheetImagesFromModule(rows, imagesField, originalWords);
 }
 
+// Quick Save (silent): overwrite if currentGameId, else open Save As modal to name the file
 saveLink.onclick = async () => {
   const payload = buildPayload();
   if (!payload.title || payload.words.length === 0) {
     toast('Need title and at least 1 word');
     return;
   }
+  // First-time save in this session/file -> open Save As modal to set the title and create the record
+  if (!currentGameId) {
+    // Pre-fill modal title from current input
+    const titleField = document.getElementById('saveGameTitle');
+    if (titleField) titleField.value = titleEl.value || '';
+    const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = '';
+    const modal = document.getElementById('saveModal');
+    ensureRegenerateAudioCheckbox();
+    if (modal) modal.style.display = 'flex';
+    return;
+  }
+  // Otherwise, overwrite silently
   saveLink.classList.add('disabled');
   try {
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'insert_game_data', data: payload })
+    const body = { action: 'update_game_data', id: currentGameId, data: payload };
+    const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     });
-    const js = await res.json();
-    if (js?.success) toast('Saved'); else toast(js?.error || 'Save failed');
+    if (js?.success) {
+      showTinyToast('Saved', { ms: 500 });
+    } else {
+      showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+    }
   } catch (e) {
     console.error(e);
-    toast('Save error');
+    showTinyToast('Save error', { variant: 'error', ms: 3000 });
   } finally {
     saveLink.classList.remove('disabled');
   }
@@ -738,9 +825,11 @@ const saveModalClose = document.getElementById('saveModalClose');
 saveModalClose.onclick = () => { saveModal.style.display = 'none'; };
 window.addEventListener('click', (e) => { if (e.target === saveModal) saveModal.style.display = 'none'; });
 
-saveLink.onclick = () => {
+// Save As (open modal flow)
+saveAsLink.onclick = () => {
   document.getElementById('saveGameTitle').value = titleEl.value || '';
   const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = '';
+  ensureRegenerateAudioCheckbox();
   saveModal.style.display = 'flex';
 };
 
@@ -749,10 +838,44 @@ const confirmSave = document.getElementById('confirmSave');
 function isLocalHost() { return typeof window !== 'undefined' && /localhost|127\.0\.0\.1/i.test(window.location.hostname); }
 function preferredVoice() { try { const id = localStorage.getItem('ttsVoiceId'); return id && id.trim() ? id.trim() : null; } catch { return null; } }
 
+// Ensure a 'Regenerate audio' checkbox exists in Save modal and reflect saved preference
+function ensureRegenerateAudioCheckbox(){
+  try {
+    const boxId = 'regenerateAudioCheckbox';
+    const statusBox = document.getElementById('saveModalStatus');
+    const container = statusBox && statusBox.parentElement ? statusBox.parentElement : document.getElementById('saveModal');
+    if (!container) return;
+    let row = document.getElementById('regenerateAudioRow');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'regenerateAudioRow';
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:8px 0 2px 0;';
+      row.innerHTML = `
+        <input type="checkbox" id="${boxId}" style="transform:translateY(1px);" />
+        <label for="${boxId}" style="font-size:13px;color:#334155;cursor:pointer;">Regenerate audio for all words (overwrite)</label>
+      `;
+      // Insert above the status box if available, else append to modal
+      if (statusBox && statusBox.parentElement) {
+        statusBox.parentElement.insertBefore(row, statusBox);
+      } else {
+        container.appendChild(row);
+      }
+    }
+    const cb = document.getElementById(boxId);
+    const saved = localStorage.getItem('gb_regenerate_audio') === '1';
+    if (cb) {
+      cb.checked = saved;
+      cb.onchange = () => {
+        try { localStorage.setItem('gb_regenerate_audio', cb.checked ? '1' : '0'); } catch {}
+      };
+    }
+  } catch {}
+}
+
 async function checkExistingAudioKeys(keys) {
   if (!Array.isArray(keys) || !keys.length) return {};
   const endpoints = isLocalHost()
-    ? ['http://localhost:9000/.netlify/functions/get_audio_urls', '/.netlify/functions/get_audio_urls']
+    ? ['/.netlify/functions/get_audio_urls', 'http://localhost:9000/.netlify/functions/get_audio_urls']
     : ['/.netlify/functions/get_audio_urls'];
   let lastErr = null;
   for (const url of endpoints) {
@@ -773,7 +896,7 @@ async function checkExistingAudioKeys(keys) {
 
 async function callTTSProxy(payload) {
   const endpoints = isLocalHost()
-    ? ['http://localhost:9000/.netlify/functions/eleven_labs_proxy', '/.netlify/functions/eleven_labs_proxy']
+    ? ['/.netlify/functions/eleven_labs_proxy', 'http://localhost:9000/.netlify/functions/eleven_labs_proxy']
     : ['/.netlify/functions/eleven_labs_proxy'];
   for (const url of endpoints) {
     try {
@@ -786,7 +909,7 @@ async function callTTSProxy(payload) {
 
 async function uploadAudioFile(key, audioBase64) {
   const endpoints = isLocalHost()
-    ? ['http://localhost:9000/.netlify/functions/upload_audio', '/.netlify/functions/upload_audio']
+    ? ['/.netlify/functions/upload_audio', 'http://localhost:9000/.netlify/functions/upload_audio']
     : ['/.netlify/functions/upload_audio'];
   for (const url of endpoints) {
     try {
@@ -797,98 +920,156 @@ async function uploadAudioFile(key, audioBase64) {
   throw new Error('Upload failed');
 }
 
-async function ensureAudioForWordsAndSentences(wordsList, examplesMap, opts = { maxWorkers: 3 }) {
+async function ensureAudioForWordsAndSentences(wordsList, examplesMap, opts = {}) {
   // wordsList: array of plain target words (strings)
   // examplesMap: { normalizedWord: exampleSentence }
-  // New naming: prefer space-preserving keys ("ice cream") while still supporting legacy underscore ("ice_cream").
-  const normalizeSpace = (s) => String(s || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-  const toLegacy = (spaceKey) => spaceKey.replace(/\s+/g, '_');
-
-  const rawWords = (wordsList || []).map(w => normalizeSpace(w)).filter(Boolean);
-  if (!rawWords.length && (!examplesMap || Object.keys(examplesMap).length === 0)) return { ensuredWords: [], ensuredSentences: [] };
+  const normalizeForKey = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  const words = (wordsList || []).map(w => normalizeForKey(w)).filter(Boolean);
+  // Map back from normalized key to the original display word to avoid TTS saying "underscore"
+  const originalByKey = {};
+  (wordsList || []).forEach(orig => {
+    const k = normalizeForKey(orig);
+    if (k) originalByKey[k] = String(orig);
+  });
+  // Deterministic variety: pick a template based on a stable hash of the word
+  function hash32(str){
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+  function generatePrefixedSentence(original){
+    const w = String(original || '').replace(/\s+/g, ' ').trim();
+    // Templates inspired by your previous set; {w} will be replaced with the word
+    const templates = [
+      'This one is {w}.',
+      'The word is {w}.',
+      '{w} is the word.',
+      'The word you want is {w}.',
+      "Now, let's do {w}.",
+      'How about {w}?',
+      'Do you know {w}?',
+      'This word is {w}.',
+      "The word I'm looking for is {w}.",
+      '{w} is the one that I want.'
+    ];
+    const idx = templates.length ? (hash32(w) % templates.length) : 0;
+    return templates[idx].replace('{w}', w);
+  }
+  const { maxWorkers = 3, onInit, onProgress, onDone, force = false } = opts || {};
+  if (!words.length && (!examplesMap || Object.keys(examplesMap).length === 0)) {
+    if (typeof onInit === 'function') onInit(0);
+    if (typeof onDone === 'function') onDone();
+    return { ensuredWords: [], ensuredSentences: [] };
+  }
 
   // 1) Check existing word audio
-  // Word keys (preferred space form); legacy forms used underscores. We'll check both.
-  const wordKeys = rawWords.slice();
-  const legacyWordKeys = rawWords.map(toLegacy);
-  // Sentence keys follow same pattern with suffix
-  const sentenceKeys = Object.keys(examplesMap || {}).map(k => `${normalizeSpace(k)} sentence`); // space form with space + ' sentence'
-  const legacySentenceKeys = sentenceKeys.map(k => k.replace(/\s+/g, '_')); // legacy underscore sentence naming
+  const wordKeys = words.slice();
+  // Ensure a sentence clip for EVERY word: use provided example sentence when available, otherwise a prefixed sentence
+  const sentenceKeys = words.map(w => `${w}_sentence`);
 
-  // When querying existing audio, include both naming variants
-  const combinedKeys = Array.from(new Set([].concat(wordKeys, legacyWordKeys, sentenceKeys, legacySentenceKeys)));
-  let existing = {};
-  try { existing = await checkExistingAudioKeys(combinedKeys); } catch (e) { console.warn('checkExistingAudioKeys failed', e); existing = {}; }
+  let missingWordKeys = wordKeys.slice();
+  let missingSentenceKeys = sentenceKeys.slice();
+  if (!force) {
+    const combinedKeys = Array.from(new Set([].concat(wordKeys, sentenceKeys)));
+    let existing = {};
+    try { existing = await checkExistingAudioKeys(combinedKeys); } catch (e) { console.warn('checkExistingAudioKeys failed', e); existing = {}; }
+    missingWordKeys = wordKeys.filter(w => { const info = existing[w]; return !(info && info.exists && info.url); });
+    missingSentenceKeys = sentenceKeys.filter(k => { const info = existing[k]; return !(info && info.exists && info.url); });
+  }
 
-  // Determine presence considering either variant; if either exists we skip generation.
-  const wordHasAny = (k) => {
-    const legacy = toLegacy(k);
-    return !!((existing[k] && existing[k].exists) || (existing[legacy] && existing[legacy].exists));
-  };
-  const sentenceHasAny = (k) => {
-    const legacy = k.replace(/\s+/g, '_');
-    return !!((existing[k] && existing[k].exists) || (existing[legacy] && existing[legacy].exists));
-  };
-  const missingWordKeys = wordKeys.filter(k => !wordHasAny(k));
-  const missingSentenceKeys = sentenceKeys.filter(k => !sentenceHasAny(k));
+  // Progress accounting
+  let totalTasksForProgress = 0;
+  let completedTasksForProgress = 0;
 
   // Helper to generate-and-upload for a set of tasks
   async function runGeneration(tasks, generatorFn) {
     const failures = [];
-    const buckets = Array.from({ length: Math.min(opts.maxWorkers || 3, tasks.length) }, () => []);
+    const buckets = Array.from({ length: Math.min(maxWorkers || 3, tasks.length) }, () => []);
     tasks.forEach((t, i) => buckets[i % buckets.length].push(t));
     await Promise.all(buckets.map(async (bucket) => {
       for (const task of bucket) {
         try {
-          const payload = await generatorFn(task);
-          if (payload && payload.audio) {
-            await uploadAudioFile(task.key, payload.audio);
-          } else {
+          // Skip tasks that have no usable text
+          if (!task || !task.text || !String(task.text).trim()) {
             failures.push(task);
+          } else {
+            const payload = await generatorFn(task);
+            // Only upload when we actually received non-empty audio
+            if (payload && typeof payload.audio === 'string' && payload.audio.trim()) {
+              await uploadAudioFile(task.key, payload.audio);
+            } else {
+              failures.push(task);
+            }
           }
         } catch (e) {
           console.warn('Generation/upload failed for', task, e);
           failures.push(task);
         }
+        // Update progress after each task completes (success or failure)
+        completedTasksForProgress++;
+        if (typeof onProgress === 'function') onProgress(completedTasksForProgress, totalTasksForProgress);
       }
     }));
     return failures;
   }
 
-  // Prepare word generation tasks (use preprocessTTS-like behavior for short words)
-  const wordTasks = missingWordKeys.map(w => ({ key: w, text: (() => {
-    // Reuse simple short-word prompt formatting from preprocessTTS
-    const raw = String(w || '');
-    const isShort = raw.length <= 4 || (/^[a-zA-Z]+$/.test(raw) && raw.split(/[^aeiouy]+/).length <= 2);
-    if (isShort) return `The word is: "${raw}!"`;
-    return raw;
-  })() }));
+  // Prepare word generation tasks: always use the standard prefixed sentence logic for variety
+  const wordTasks = missingWordKeys.map(k => {
+    // Use the original word text for speech, not the normalized key
+    const orig = (originalByKey[k] || k || '').toString().replace(/_/g, ' ').trim();
+    return { key: k, text: generatePrefixedSentence(orig) };
+  });
+
+  // Filter out any blank word tasks (safety)
+  const filteredWordTasks = wordTasks.filter(t => t && t.text && String(t.text).trim());
 
   // Prepare sentence generation tasks: use examplesMap value as text, key is `${word}_sentence`
   const sentenceTasks = missingSentenceKeys.map(k => {
-    const base = k.replace(/ sentence$/i, '');
-    const lookup = Object.keys(examplesMap || {}).find(orig => normalizeSpace(orig) === base);
-    return { key: k, text: lookup ? examplesMap[lookup] : '' };
-  }).filter(t => t.text && t.text.trim());
+    const base = String(k).replace(/_sentence$/i, '');
+    // examplesMap keys may be raw words; normalize lookup
+    const lookup = Object.keys(examplesMap || {}).find(orig => normalizeForKey(orig) === base);
+    let text = '';
+    if (lookup) {
+      text = String(examplesMap[lookup] || '').trim();
+    }
+    // If no example sentence is provided, synthesize a clear prefixed sentence for the word
+    if (!text) {
+      // Find the original (un-normalized) word for nicer output
+      const original = (wordsList || []).find(w => normalizeForKey(w) === base) || base.replace(/_/g, ' ');
+      text = generatePrefixedSentence(original);
+    }
+    return { key: k, text };
+  });
+
+  // Filter out any blank sentence tasks (safety)
+  const filteredSentenceTasks = sentenceTasks.filter(t => t && t.text && String(t.text).trim());
+
+  // Initialize progress totals and notify
+  const totalForWords = filteredWordTasks.length;
+  const totalForSentences = filteredSentenceTasks.length;
+  totalTasksForProgress = totalForWords + totalForSentences;
+  if (typeof onInit === 'function') onInit(totalTasksForProgress);
 
   // Run generation for words then sentences
-  if (wordTasks.length) {
-    await runGeneration(wordTasks, async (task) => {
+  if (filteredWordTasks.length) {
+    await runGeneration(filteredWordTasks, async (task) => {
       const voice = preferredVoice();
-      return await callTTSProxy({ text: task.text, voice_id: voice });
+      // Use Eleven v3 (alpha) for word clarity and expressiveness
+      return await callTTSProxy({ text: task.text, voice_id: voice, model_id: 'eleven_v3' });
     });
   }
-  if (sentenceTasks.length) {
-    await runGeneration(sentenceTasks, async (task) => {
+  if (filteredSentenceTasks.length) {
+    await runGeneration(filteredSentenceTasks, async (task) => {
       const voice = preferredVoice();
-      return await callTTSProxy({ text: task.text, voice_id: voice });
+      // Use Eleven Turbo v2.5 for fast sentence generation
+      return await callTTSProxy({ text: task.text, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
     });
   }
+
+  if (typeof onDone === 'function') onDone();
 
   return { ensuredWords: wordKeys, ensuredSentences: sentenceKeys };
 }
@@ -981,9 +1162,34 @@ confirmSave.onclick = async () => {
         }
       }
       if (words.length || Object.keys(examplesMap).length) {
-        if (statusBox) statusBox.textContent = 'Ensuring audio files...';
-        await ensureAudioForWordsAndSentences(words, examplesMap, { maxWorkers: 3 });
-        if (statusBox) statusBox.textContent = 'Audio ready';
+        // Build a tiny progress bar inside the status box
+        let barWrap = statusBox && statusBox.querySelector('.gb-save-bar');
+        if (!barWrap && statusBox) {
+          statusBox.innerHTML = '<div class="gb-save-bar" style="position:relative;height:10px;background:#e6eaef;border-radius:6px;overflow:hidden;margin:6px 0 2px 0;"><div class="gb-save-bar-fill" style="height:100%;width:0;background:#67e2e6;transition:width .2s ease;"></div></div><div class="gb-save-bar-txt" style="font-size:12px;color:#64748b;margin-top:2px;">Preparing audio…</div>';
+          barWrap = statusBox.querySelector('.gb-save-bar');
+        }
+        const barFill = statusBox ? statusBox.querySelector('.gb-save-bar-fill') : null;
+        const barTxt = statusBox ? statusBox.querySelector('.gb-save-bar-txt') : null;
+
+        const maxWorkers = isLocalHost() ? 1 : 3;
+        const force = (localStorage.getItem('gb_regenerate_audio') === '1');
+        await ensureAudioForWordsAndSentences(words, examplesMap, {
+          maxWorkers,
+          force,
+          onInit: (total) => {
+            if (barTxt) barTxt.textContent = total ? `Ensuring audio files… (0/${total})` : 'Ensuring audio files…';
+            if (barFill) barFill.style.width = '0%';
+          },
+          onProgress: (done, total) => {
+            const pct = total ? Math.round((done / total) * 100) : 0;
+            if (barFill) barFill.style.width = pct + '%';
+            if (barTxt) barTxt.textContent = total ? `Ensuring audio files… (${done}/${total})` : `Ensuring audio files…`;
+          },
+          onDone: () => {
+            if (barTxt) barTxt.textContent = 'Audio ready';
+            if (barFill) barFill.style.width = '100%';
+          }
+        });
       }
     } catch (e) {
       console.warn('Audio ensure failed, continuing to save game', e);
@@ -995,10 +1201,25 @@ confirmSave.onclick = async () => {
       saveAction = 'update_game_data';
       postBody = { action: saveAction, id: existingRow.id, data: payload };
     }
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(postBody) });
-    const js = await res.json();
+    const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(postBody)
+    });
     if (js?.success) {
       const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = existingRow ? 'Overwritten' : 'Saved';
+      // After a successful Save As (insert or overwrite), try to set currentGameId for future quick saves
+      try {
+        if (existingRow && existingRow.id) {
+          currentGameId = existingRow.id;
+        } else {
+          const who = getCurrentUserId();
+          const r = await fetch('/.netlify/functions/list_game_data_unique?limit=1&offset=0&created_by=' + encodeURIComponent(who));
+          const j = await r.json();
+          const row = Array.isArray(j.data) && j.data[0] ? j.data[0] : null;
+          if (row && row.title && row.title.trim().toLowerCase() === (title || '').toLowerCase()) currentGameId = row.id;
+        }
+      } catch {}
       toast(existingRow ? 'Game overwritten' : 'Game saved');
       saveModal.style.display = 'none';
     } else {
@@ -1367,6 +1588,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
       if (js?.data) {
         // Load into builder
         const gd = js.data;
+        currentGameId = gd.id || id || null;
         if (Array.isArray(gd.words)) {
           saveState();
           list = gd.words.map(w => newRow({ eng: w.eng || w.en || '', kor: w.kor || w.translation || w.kr || '', image_url: (w.image_url || w.image || w.img || ''), definition: w.definition, example: w.example || w.example_sentence }));

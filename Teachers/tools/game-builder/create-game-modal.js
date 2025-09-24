@@ -198,7 +198,10 @@ function buildLiveTiles() {
     {
       title: 'Full Games',
       modes: [
-        { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true }
+        { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true },
+        { key:'full_sentence_mode', label:'Sentence Mode', desc:'Practice sentences', active:false },
+        { key:'full_learn_mode', label:'Learn Mode', desc:'Study and review', active:false },
+        { key:'full_time_battle', label:'Time Battle', desc:'Compete in real-time', active:false }
       ]
     },
     {
@@ -240,21 +243,72 @@ function buildLiveTiles() {
       const div = document.createElement('div');
       div.className = 'cgm-mode-tile ' + (m.active ? 'active' : 'disabled');
       div.dataset.mode = m.key;
+      // Remember baseline active so dynamic checks (like images available) can toggle without enabling truly inactive modes
+      div.dataset.baselineActive = m.active ? '1' : '0';
       div.innerHTML = `
         <div class="cgm-mode-name">${m.label}</div>
         <div class="cgm-mode-desc">${m.desc}</div>
         <div class="cgm-tag">${m.active ? 'PLAY' : 'SOON'}</div>
       `;
-      if (m.active) {
-        div.addEventListener('click', () => {
-          selectedLiveMode = m.key;
-          launchLiveMode();
-        });
-      }
+      // Always bind click; guard at runtime based on disabled class so dynamic state works
+      div.addEventListener('click', () => {
+        if (div.classList.contains('disabled')) {
+          // Provide a gentle hint when disabled due to missing requirements
+          try {
+            const tag = div.querySelector('.cgm-tag');
+            if (tag) {
+              tag.textContent = tag.textContent || 'UNAVAILABLE';
+            }
+          } catch {}
+          setStatus('This mode is unavailable for the current list.');
+          return;
+        }
+        selectedLiveMode = m.key;
+        launchLiveMode();
+      });
       grid.appendChild(div);
     });
     box.appendChild(grid);
     container.appendChild(box);
+  });
+}
+
+// Determine if picture-based modes should be disabled based on the current word list images
+function updateLiveTilesAvailability() {
+  if (!el.liveGrid) return;
+  // Identify modes that require word images
+  const pictureModes = new Set(['picture_multi_choice', 'easy_picture']);
+  let words = [];
+  try {
+    if (typeof buildPayloadRef === 'function') {
+      const payload = buildPayloadRef();
+      if (payload && Array.isArray(payload.words)) words = payload.words;
+    }
+  } catch {}
+  const hasMissingImages = words.some(w => !w || !String(w.image_url || '').trim());
+  // Toggle tiles
+  el.liveGrid.querySelectorAll('.cgm-mode-tile').forEach(tile => {
+    const mode = tile.getAttribute('data-mode');
+    const baselineActive = tile.getAttribute('data-baseline-active') === '1' || tile.dataset.baselineActive === '1';
+    const tag = tile.querySelector('.cgm-tag');
+    // Never enable modes that are baseline disabled (e.g., level_up placeholder)
+    if (!baselineActive) {
+      tile.classList.remove('active');
+      tile.classList.add('disabled');
+      if (tag) tag.textContent = 'SOON';
+      return;
+    }
+    if (pictureModes.has(mode) && hasMissingImages) {
+      tile.classList.remove('active');
+      tile.classList.add('disabled');
+      tile.title = 'Some words are missing pictures. Add images to use this mode.';
+      if (tag) tag.textContent = 'NEEDS IMAGES';
+    } else {
+      tile.classList.remove('disabled');
+      tile.classList.add('active');
+      tile.removeAttribute('title');
+      if (tag) tag.textContent = 'PLAY';
+    }
   });
 }
 
@@ -272,6 +326,8 @@ export function openCreateGameModal() {
   gameImageUrl = imgInZone?.getAttribute('src') || '';
   setStatus('');
   updateGameImageDisplay();
+  // Update live modes availability based on current word list (e.g., require pictures for picture modes)
+  try { updateLiveTilesAvailability(); } catch {}
   el.modal.style.display = 'flex';
 }
 
