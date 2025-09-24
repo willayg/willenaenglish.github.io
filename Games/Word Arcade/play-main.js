@@ -11,6 +11,12 @@
 import { loadMode } from './core/mode-registry.js';
 import { playTTS, preprocessTTS, preloadAllAudio } from './tts.js';
 
+// Abort early if auth gate has not set window.__AUTH_OK (play.html injects it after whoami)
+if (!window.__AUTH_OK) {
+	// Provide minimal placeholder; the redirect should already be in progress if unauth.
+	console.warn('[MiniPlayer] Auth flag missing at module start; likely redirecting.');
+}
+
 // Inject enhanced tap-spell styles (idempotent) for spelling / listen_and_spell when loaded live
 (function ensureTapSpellStyles(){
 	if (document.getElementById('tapSpellLiveEnhance')) return;

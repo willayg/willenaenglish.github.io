@@ -6,6 +6,28 @@
 	<title>Word Arcade - Live Mode</title>
 	<link rel="stylesheet" href="mini.css" />
 	<script>
+	// Hard auth gate v1: hide body until auth verified; redirect if not.
+	(function(){
+	  const doc = document; doc.documentElement.style.visibility='hidden';
+	  function show(){ doc.documentElement.style.visibility=''; }
+	  async function check(){
+	    const c = document.cookie||'';
+	    const hasA = /(?:^|;\s*)sb_access=/.test(c);
+	    const hasR = /(?:^|;\s*)sb_refresh=/.test(c);
+	    if(!hasA && hasR){
+	      try { await fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});}catch{}
+	    }
+	    try {
+	      const r = await fetch('/.netlify/functions/supabase_auth?action=whoami',{credentials:'include',cache:'no-store'});
+	      if(r.ok){ const d=await r.json().catch(()=>null); if(d&&d.success){ window.__AUTH_OK=true; show(); return; } }
+	    } catch {}
+	    const next = encodeURIComponent(location.pathname + location.search);
+	    location.replace('/students/login.html?next='+next);
+	  }
+	  check();
+	})();
+	</script>
+	<script>
 	// Early scroll lock before content loads
 	(function(){
 		const html = document.documentElement; const body = document.body;

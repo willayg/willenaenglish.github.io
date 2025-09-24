@@ -384,7 +384,60 @@ export function runFullArcadeMode(context) {
     ].join(';');
   }
 
-  startRound(0);
+  // Show a pre-game word list modal once before the first round
+  function showWordListModal(onStart, onCancel){
+    // Build lightweight overlay
+    let overlay = document.getElementById('faWordListOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'faWordListOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9000;';
+      document.body.appendChild(overlay);
+    }
+    const listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : 'Word List';
+    const itemsHtml = (wordList || []).map(w => {
+      const eng = (w && (w.eng || w.en || w.word)) || '';
+      const kor = (w && (w.kor || w.kr || w.word_kr || w.translation)) || '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px dashed #edf1f4;">
+        <span style="font-weight:800;color:#19777e;">${String(eng)}</span>
+        <span style="color:#6b7a8f;margin-left:8px;">${String(kor)}</span>
+      </div>`;
+    }).join('');
+
+    overlay.innerHTML = `
+      <div role="dialog" aria-label="Word list preview" aria-modal="true" style="background:#fff;border-radius:18px;border:2px solid #67e2e6;box-shadow:0 10px 30px rgba(0,0,0,.25);width:min(720px,92vw);max-height:min(82vh,880px);display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #e6eaef;">
+          <div style="font-weight:900;font-size:1.1rem;color:#19777e;">${String(listName)}</div>
+          <button id="faWlCloseX" title="Close" style="background:none;border:none;font-size:1.3rem;color:#334155;cursor:pointer;">×</button>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="font-size:.95rem;color:#334155;margin-bottom:8px;">Review the words before you start:</div>
+          <div style="border:1px solid #e6eaef;border-radius:12px;max-height:56vh;overflow:auto;padding:6px 8px;">${itemsHtml}</div>
+          <div style="display:flex;justify-content:center;gap:12px;margin-top:12px;">
+            <button id="faWlCancel" style="${commonBtnStyle('#64748b')}">Cancel</button>
+            <button id="faWlStart" style="${commonBtnStyle('#0d9488')}">Start</button>
+          </div>
+        </div>
+      </div>`;
+
+    function cleanup(){ try { overlay.remove(); } catch{} }
+    const startBtn = overlay.querySelector('#faWlStart');
+    const cancelBtn = overlay.querySelector('#faWlCancel');
+    const closeX = overlay.querySelector('#faWlCloseX');
+    if (startBtn) startBtn.onclick = () => { cleanup(); if (onStart) onStart(); };
+    if (cancelBtn) cancelBtn.onclick = () => { cleanup(); if (onCancel) onCancel(); };
+    if (closeX) closeX.onclick = () => { cleanup(); if (onCancel) onCancel(); };
+    overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); if (onCancel) onCancel(); } };
+  }
+
+  showWordListModal(() => startRound(0), () => {
+    // Exit back to mode selector if Cancel
+    if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
+      window.WordArcade.startModeSelector();
+    } else if (context.startGame) {
+      context.startGame('matching');
+    }
+  });
 }
 
 export const run = runFullArcadeMode;

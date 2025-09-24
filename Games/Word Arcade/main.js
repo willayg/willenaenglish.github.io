@@ -378,20 +378,7 @@ export async function startGame(mode = 'meaning') {
 
   const pick = modeLoaders[mode] || modeLoaders.meaning;
   const run = await pick();
-  // If this mode depends on audio and we have a global missing-audio set, filter now so gameplay never surfaces silent words.
-  const audioDependent = new Set(['easy_picture','listening','listen_and_spell','spelling','listening_multi_choice']);
-  let effectiveList = wordList;
-  if (audioDependent.has(mode) && window.__WA_MISSING_AUDIO instanceof Set) {
-    const before = effectiveList.length;
-    effectiveList = effectiveList.filter(w => !window.__WA_MISSING_AUDIO.has(String(w.eng||'').trim().toLowerCase()));
-    if (!effectiveList.length && before) {
-      // All filtered out – show a toast and fall back to mode selector instead of empty run
-      inlineToast('All words missing audio for this mode. Pick a different mode.');
-      startModeSelector();
-      return;
-    }
-  }
-  const ctx = { wordList: effectiveList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
+  const ctx = { wordList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
   run(ctx);
 }
 
@@ -502,14 +489,6 @@ async function openSavedGameById(id) {
 window.addEventListener('DOMContentLoaded', () => {
   // Try restoring session state so the mode menu or headers can show last list
   restoreSessionStateIfEmpty();
-  // Detect builder source (?src=builder) so modes can tweak layout minimally
-  try {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('src') === 'builder') {
-      window.__WA_FROM_BUILDER = true;
-      document.body.classList.add('from-builder');
-    }
-  } catch {}
   const basicBtn = document.getElementById('basicWordsBtn');
   const reviewBtn = document.getElementById('reviewBtn');
   const browseBtn = document.getElementById('browseBtn');
