@@ -414,20 +414,17 @@ export function runFullArcadeMode(context) {
           <div style="font-size:.95rem;color:#334155;margin-bottom:8px;">Review the words before you start:</div>
           <div style="border:1px solid #e6eaef;border-radius:12px;max-height:56vh;overflow:auto;padding:6px 8px;">${itemsHtml}</div>
           <div style="display:flex;justify-content:center;gap:12px;margin-top:12px;">
-            <button id="faWlCancel" style="${commonBtnStyle('#64748b')}">Cancel</button>
             <button id="faWlStart" style="${commonBtnStyle('#0d9488')}">Start</button>
           </div>
         </div>
       </div>`;
 
     function cleanup(){ try { overlay.remove(); } catch{} }
-    const startBtn = overlay.querySelector('#faWlStart');
-    const cancelBtn = overlay.querySelector('#faWlCancel');
-    const closeX = overlay.querySelector('#faWlCloseX');
-    if (startBtn) startBtn.onclick = () => { cleanup(); if (onStart) onStart(); };
-    if (cancelBtn) cancelBtn.onclick = () => { cleanup(); if (onCancel) onCancel(); };
-    if (closeX) closeX.onclick = () => { cleanup(); if (onCancel) onCancel(); };
-    overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); if (onCancel) onCancel(); } };
+  const startBtn = overlay.querySelector('#faWlStart');
+  const closeX = overlay.querySelector('#faWlCloseX');
+  if (startBtn) startBtn.onclick = () => { cleanup(); if (onStart) onStart(); };
+  if (closeX) closeX.onclick = () => { cleanup(); if (onStart) onStart(); };
+  overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); if (onStart) onStart(); } };
   }
 
   showWordListModal(() => startRound(0), () => {

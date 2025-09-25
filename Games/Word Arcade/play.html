@@ -6,17 +6,19 @@
 	<title>Word Arcade - Live Mode</title>
 	<link rel="stylesheet" href="mini.css" />
 	<script>
-	// Hard auth gate v1: hide body until auth verified; redirect if not.
+	// Auth gate: allow Supabase auth OR guest cookie; else redirect to students login with next param
 	(function(){
 	  const doc = document; doc.documentElement.style.visibility='hidden';
 	  function show(){ doc.documentElement.style.visibility=''; }
 	  async function check(){
 	    const c = document.cookie||'';
+	    const hasGuest = /(?:^|;\s*)wa_guest_id=/.test(c);
 	    const hasA = /(?:^|;\s*)sb_access=/.test(c);
 	    const hasR = /(?:^|;\s*)sb_refresh=/.test(c);
 	    if(!hasA && hasR){
 	      try { await fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});}catch{}
 	    }
+	    if (hasGuest) { window.__AUTH_OK = true; show(); return; }
 	    try {
 	      const r = await fetch('/.netlify/functions/supabase_auth?action=whoami',{credentials:'include',cache:'no-store'});
 	      if(r.ok){ const d=await r.json().catch(()=>null); if(d&&d.success){ window.__AUTH_OK=true; show(); return; } }

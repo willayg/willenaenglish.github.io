@@ -201,7 +201,7 @@ function buildLiveTiles() {
         { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true },
         { key:'full_sentence_mode', label:'Sentence Mode', desc:'Practice sentences', active:false },
         { key:'full_learn_mode', label:'Learn Mode', desc:'Study and review', active:false },
-        { key:'full_time_battle', label:'Time Battle', desc:'Compete in real-time', active:false }
+        { key:'time_battle', label:'Time Battle', desc:'Compete in real-time', active:true }
       ]
     },
     {

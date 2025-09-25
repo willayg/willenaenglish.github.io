@@ -60,6 +60,10 @@ export const modeRegistry = {
 		const mod = await import('../modes/full_arcade.js');
 		return { run: (ctx) => mod.run(ctx) };
 	},
+	'time_battle': async () => {
+		const mod = await import('../modes/time_battle.js');
+		return { run: (ctx) => mod.run(ctx) };
+	},
 };
 
 export async function loadMode(key) {
