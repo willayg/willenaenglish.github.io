@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Live Leaderboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root { --accent:#67e2e6; --bg:#0f172a; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Poppins,system-ui,sans-serif; background:var(--bg); color:#fff; overflow:hidden; }
+header { padding:18px 28px 6px; display:flex; align-items:center; justify-content:space-between; }
+header h1 { margin:0; font-size:clamp(1.8rem,4vw,3.4rem); color:var(--accent); font-weight:800; letter-spacing:.5px; }
+#updatedAt { font-size:.75rem; letter-spacing:.5px; color:#94a3b8; margin-left:14px; }
+#controls { display:flex; gap:10px; }
+button { font-family:inherit; font-weight:700; cursor:pointer; }
+#listWrap { position:absolute; inset:90px 0 0 0; padding:0 24px 40px; display:flex; flex-direction:column; gap:10px; overflow:auto; scrollbar-width:thin; }
+#listWrap::-webkit-scrollbar { width:10px; }
+#listWrap::-webkit-scrollbar-track { background:#142132; }
+#listWrap::-webkit-scrollbar-thumb { background:#23425a; border-radius:20px; }
+.tlb-row { display:flex; align-items:center; gap:14px; padding:10px 18px; border-radius:18px; background:linear-gradient(90deg,#132033,#0f172a); position:relative; will-change:transform; }
+.tlb-row:nth-child(odd){ background:linear-gradient(90deg,#182a42,#0f172a); }
+.tlb-rank { font-size:clamp(1.05rem,1.5vw,2rem); font-weight:800; color:var(--accent); width:3.2ch; text-align:right; }
+.tlb-medal { font-size:clamp(1.35rem,2vw,2.3rem); width:2.6ch; text-align:center; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+.tlb-name { flex:1; font-size:clamp(1.05rem,2vw,2.35rem); font-weight:700; color:#fff; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tlb-score { font-size:clamp(1.3rem,2.3vw,2.8rem); font-weight:900; color:#ffe082; display:flex; align-items:center; gap:10px; }
+.tlb-up,.tlb-down { font-size:clamp(.68rem,.9vw,1.05rem); font-weight:700; padding:3px 9px; border-radius:22px; line-height:1; letter-spacing:.5px; }
+.tlb-up { background:#065f46; color:#fff; }
+.tlb-down { background:#7f1d1d; color:#fff; }
+@keyframes tlbPulse { 0%,100% { box-shadow:0 0 0 0 rgba(103,226,230,0.55);} 50% { box-shadow:0 0 0 14px rgba(103,226,230,0);} }
+@keyframes tlbBump { 0% { transform:scale(1);} 40% { transform:scale(1.07);} 100% { transform:scale(1);} }
+.tlb-score.bump { animation:tlbBump .5s ease; }
+.tlb-row.promoted { outline:2px solid var(--accent); animation:tlbPulse 2.4s ease 0.3s; }
+.tlb-row.demoted { opacity:.9; }
+.tlb-empty { color:#fff; font-size:1.5rem; font-weight:600; opacity:.75; padding:30px 10px; }
+#status { position:fixed; bottom:6px; right:10px; font-size:.65rem; letter-spacing:.8px; color:#64748b; font-weight:600; }
+#calmToggle { background:#142c3d; color:#cbd5e1; border:2px solid #23425a; padding:8px 14px; border-radius:14px; font-size:.8rem; }
+#calmToggle.active { background:#23425a; color:#fff; }
+#closeWin { background:#fff; color:#0f172a; border:2px solid var(--accent); padding:8px 14px; border-radius:14px; font-size:.8rem; }
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:flex-end;gap:12px;">
+    <h1>Live Leaderboard</h1>
+    <span id="updatedAt"></span>
+  </div>
+  <div id="controls">
+    <button id="calmToggle" title="Toggle calm mode (less animation)">Calm Mode</button>
+    <button id="closeWin" onclick="window.close()">Close</button>
+  </div>
+</header>
+<div id="listWrap"></div>
+<div id="status"></div>
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const sessionId = qs.get('id');
+  const listWrap = document.getElementById('listWrap');
+  const updatedAt = document.getElementById('updatedAt');
+  const status = document.getElementById('status');
+  const calmToggle = document.getElementById('calmToggle');
+  let calm = false;
+  let prev = []; // { name, score, index }
+  let prevKey = '';
+  let active = true;
+
+  calmToggle.addEventListener('click', ()=>{ calm = !calm; calmToggle.classList.toggle('active', calm); });
+
+  function snapshotKey(list){ return list.map(e=>e.name+':'+e.score).join('|'); }
+  function medal(i){ return i===0?'\uD83E\uDD47': i===1?'\uD83E\uDD48': i===2?'\uD83E\uDD49':''; }
+
+  function buildRow(entry, i, prevIndex, scoreChanged){
+    const up = prevIndex > i && prevIndex !== -1;
+    const down = prevIndex < i && prevIndex !== -1;
+    const delta = up? `<span class="tlb-up">▲ ${prevIndex - i}</span>` : down? `<span class="tlb-down">▼ ${i - prevIndex}</span>` : '';
+    return `<div class="tlb-rank">${i+1}</div><div class="tlb-medal">${medal(i)}</div><div class="tlb-name">${(entry.name||'Player').replace(/</g,'&lt;')}</div><div class="tlb-score${scoreChanged?' bump':''}">${entry.score}${delta}</div>`;
+  }
+
+  async function poll(){
+    if (!active || !sessionId) return;
+    try {
+      const url = new URL('/.netlify/functions/timer_score', location.origin);
+      url.searchParams.set('session_id', sessionId);
+      url.searchParams.set('best','1');
+      url.searchParams.set('limit','50');
+      const res = await fetch(url.toString(), { cache:'no-store' });
+      const js = await res.json().catch(()=>null);
+      if (js && js.success && Array.isArray(js.leaderboard)) update(js.leaderboard);
+      status.textContent = '';
+    } catch(e){ status.textContent = 'Network issue...'; }
+    finally { setTimeout(poll, 3000); }
+  }
+
+  function update(entries){
+    const top = entries.slice(0,50);
+    const key = snapshotKey(top);
+    if (key === prevKey) { updatedAt.textContent = new Date().toLocaleTimeString(); return; }
+
+    // FIRST rects
+    const first = new Map();
+    listWrap.querySelectorAll('.tlb-row').forEach(r=> first.set(r.dataset.name, r.getBoundingClientRect()));
+
+    const existing = new Map();
+    listWrap.querySelectorAll('.tlb-row').forEach(r=> existing.set(r.dataset.name, r));
+    const used = new Set();
+
+    top.forEach((entry,i)=>{
+      const name = entry.name || 'Player';
+      let row = existing.get(name);
+      const prevEntry = prev.find(p=>p.name===name);
+      const prevIndex = prevEntry ? prevEntry.index : -1;
+      const scoreChanged = !!(prevEntry && prevEntry.score !== entry.score);
+      if (!row){
+        row = document.createElement('div');
+        row.className = 'tlb-row';
+        row.dataset.name = name;
+        row.innerHTML = buildRow(entry,i,prevIndex,scoreChanged);
+        const ref = listWrap.children[i];
+        if (ref) listWrap.insertBefore(row, ref); else listWrap.appendChild(row);
+        row.style.opacity='0'; row.style.transform='translateY(12px)';
+        requestAnimationFrame(()=>{ row.style.transition='opacity .4s ease, transform .45s ease'; row.style.opacity='1'; row.style.transform='translateY(0)'; });
+      } else {
+        if (prevIndex !== i){
+          row.classList.remove('promoted','demoted');
+          if (!calm){
+            if (prevIndex > i && prevIndex !== -1) row.classList.add('promoted');
+            else if (prevIndex < i && prevIndex !== -1) row.classList.add('demoted');
+          }
+        }
+        row.innerHTML = buildRow(entry,i,prevIndex,scoreChanged);
+        const ref = listWrap.children[i];
+        if (ref !== row) listWrap.insertBefore(row, ref);
+      }
+      used.add(name);
+    });
+
+    // OUT: fade removed
+    listWrap.querySelectorAll('.tlb-row').forEach(r=>{
+      if (!used.has(r.dataset.name)){
+        r.style.transition='opacity .35s ease, transform .35s ease';
+        r.style.opacity='0'; r.style.transform='translateY(14px)';
+        setTimeout(()=>r.remove(), 380);
+      }
+    });
+
+    // LAST rects for FLIP
+    const last = new Map();
+    listWrap.querySelectorAll('.tlb-row').forEach(r=> last.set(r.dataset.name, r.getBoundingClientRect()));
+    listWrap.querySelectorAll('.tlb-row').forEach(r=>{
+      const f = first.get(r.dataset.name); const l = last.get(r.dataset.name); if(!f||!l) return;
+      const dx = f.left - l.left; const dy = f.top - l.top; if (!dx && !dy) return;
+      r.style.transition='none'; r.style.transform=`translate(${dx}px,${dy}px)`;
+      requestAnimationFrame(()=>{ r.style.transition='transform .55s cubic-bezier(.22,.8,.26,.99)'; r.style.transform='translate(0,0)'; });
+    });
+
+    prev = top.map((e,i)=>({ name:e.name, score:e.score, index:i }));
+    prevKey = key;
+    updatedAt.textContent = new Date().toLocaleTimeString();
+  }
+
+  if (!sessionId){ listWrap.innerHTML = '<div class="tlb-empty">No session id provided (?id=)</div>'; active=false; }
+  else poll();
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,10 @@
 // Time Battle v2: 35s timed round with mixed question types, responsive UI,
 // per-letter scoring for spelling, correct/wrong SFX and highlights, replay, and live leaderboard.
+//
+// Enhancement: duration is now configurable when a teacher launches a live Time Battle.
+// live_game.config example:
+//   { "time_battle": { "duration": 60 } }
+// This value (15–300 seconds) is passed through play-main.js via context.config.
 
 import { showLeaderboardModal } from '../ui/leaderboard_modal.js';
 import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
@@ -114,8 +119,12 @@ export async function runTimeBattleMode(context) {
     return;
   }
 
-  // Game settings
-  const durationSec = 35;
+  // Game settings: allow configurable duration via live game config
+  let durationSec = 35;
+  try {
+    const cfgDur = context && context.config && context.config.time_battle && Number(context.config.time_battle.duration);
+    if (Number.isFinite(cfgDur)) durationSec = Math.min(300, Math.max(15, Math.round(cfgDur)));
+  } catch {}
   const sessionId = makeSessionId();
   const STORAGE_KEY = `tbv2:${sessionId}:time_battle`;
   // Always start each round at score 0 (no accumulation across rounds)

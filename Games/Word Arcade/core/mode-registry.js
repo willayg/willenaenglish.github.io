@@ -64,6 +64,10 @@ export const modeRegistry = {
 		const mod = await import('../modes/time_battle.js');
 		return { run: (ctx) => mod.run(ctx) };
 	},
+	'full_sentence_mode': async () => {
+		const mod = await import('../modes/sentence_mode.js');
+		return { run: (ctx) => mod.run(ctx) };
+	},
 };
 
 export async function loadMode(key) {

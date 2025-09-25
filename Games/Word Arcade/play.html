@@ -210,10 +210,11 @@
 		// Hard scroll prevention (iOS Safari edge cases)
 		['touchmove','wheel'].forEach(ev => {
 			document.addEventListener(ev, (e) => {
+				// Allow scrollable modals / elements explicitly marked
+				if (e.target && e.target.closest && e.target.closest('.fa-scroll-allow')) return;
 				const stage = document.getElementById('gameStage');
 				if (!stage) return;
 				if (!stage.contains(e.target)) { e.preventDefault(); return; }
-				// Inside stage: still cancel if would scroll (no internal scroll currently allowed)
 				if (stage && stage.scrollHeight <= stage.clientHeight) { e.preventDefault(); }
 			}, { passive:false });
 		});
