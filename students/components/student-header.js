@@ -136,10 +136,17 @@ class StudentHeader extends HTMLElement {
   }
 
   render() {
+    // Try established identity sources; if none, fall back to guest cookie
+    let cookieGuestName = null;
+    try {
+      const m = (document.cookie || '').match(/(?:^|;\s*)wa_guest_name=([^;]+)/);
+      cookieGuestName = m ? decodeURIComponent(m[1]) : null;
+    } catch {}
     const name = this._name ||
       localStorage.getItem("user_name") || sessionStorage.getItem("user_name") ||
       localStorage.getItem("username") || sessionStorage.getItem("username") ||
       localStorage.getItem("name") || sessionStorage.getItem("name") ||
+      cookieGuestName ||
       "Guest";
     const uid = this._uid ||
       localStorage.getItem("user_id") || sessionStorage.getItem("user_id") ||
@@ -397,6 +404,19 @@ class StudentHeader extends HTMLElement {
       try {
         const keys = ['user_name','username','name','user_id','userId','student_id','profile_id','id','selectedEmojiAvatar','avatar'];
         keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+      } catch {}
+      // Clear guest cookies if present so routes don't consider guest authenticated
+      try {
+        const opts = 'Path=/; Max-Age=0';
+        // Clear for current domain
+        document.cookie = 'wa_guest_id=; ' + opts;
+        document.cookie = 'wa_guest_name=; ' + opts;
+        // Also attempt clearing on top-level domain used in production
+        const host = location.hostname;
+        if (/willenaenglish\.com$/i.test(host)) {
+          document.cookie = 'wa_guest_id=; Domain=.willenaenglish.com; ' + opts;
+          document.cookie = 'wa_guest_name=; Domain=.willenaenglish.com; ' + opts;
+        }
       } catch {}
       try { await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' }); } catch {}
       const next = encodeURIComponent(location.pathname);

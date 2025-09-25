@@ -193,9 +193,31 @@
       }
     });
 
-    // Guest login button (not wired yet)
-    document.getElementById('guestBtn').addEventListener('click', () => {
-      show('Guest login coming soon!');
+    // Guest login flow
+    async function startGuestSession(name){
+      const r = await fetch('/.netlify/functions/guest_session', {
+        method:'POST', credentials:'include', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ name })
+      });
+      const d = await r.json().catch(()=>null);
+      if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Guest login failed');
+      return d.guest;
+    }
+
+    document.getElementById('guestBtn').addEventListener('click', async () => {
+      show('');
+      try {
+        const prev = localStorage.getItem('guest_name') || '';
+        const name = prompt('Enter your name to play as a guest:', prev);
+        if (!name) return; // cancelled
+        const guest = await startGuestSession(name);
+        localStorage.setItem('guest_name', guest.name);
+        // Also set the generic user_name used by the student header UI
+        try { localStorage.setItem('user_name', guest.name); } catch {}
+        location.href = getNextDest();
+      } catch(e){
+        show(e.message || 'Guest login failed');
+      }
     });
   </script>
 </body>

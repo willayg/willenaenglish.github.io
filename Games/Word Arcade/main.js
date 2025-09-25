@@ -358,6 +358,7 @@ const modeLoaders = {
   listen_and_spell: () => import('./modes/listen_and_spell.js').then(m => m.runListenAndSpellMode),
   multi_choice:   () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
   level_up:       () => import('./modes/level_up.js').then(m => m.runLevelUpMode),
+  time_battle:    () => import('./modes/time_battle.js').then(m => m.run),
 };
 
 export async function startGame(mode = 'meaning') {
