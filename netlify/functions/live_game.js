@@ -52,6 +52,7 @@ exports.handler = async (event) => {
 	if (event.httpMethod === 'POST') {
 	let body; try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { success:false, error:'Invalid JSON' }); }
 	const { mode, title, words, config, ttlMinutes } = body || {};
+	// config: arbitrary JSON; for Time Battle we expect optional { time_battle: { duration: <seconds> } }
 	if (!mode) return json(400, { success:false, error:'Missing mode' });
 	if (!Array.isArray(words) || !words.length) return json(400, { success:false, error:'Missing words array' });
 	const ttl = Number(ttlMinutes); const safeTtl = Number.isFinite(ttl) ? Math.min(Math.max(ttl,1), 24*6*10) : 120; // default 120

@@ -405,19 +405,32 @@ export function runFullArcadeMode(context) {
     }).join('');
 
     overlay.innerHTML = `
-      <div role="dialog" aria-label="Word list preview" aria-modal="true" style="background:#fff;border-radius:18px;border:2px solid #67e2e6;box-shadow:0 10px 30px rgba(0,0,0,.25);width:min(720px,92vw);max-height:min(82vh,880px);display:flex;flex-direction:column;">
+      <div role="dialog" aria-label="Word list preview" aria-modal="true" class="fa-scroll-allow" style="background:#fff;border-radius:18px;border:2px solid #67e2e6;box-shadow:0 10px 30px rgba(0,0,0,.25);width:min(720px,92vw);max-height:min(82vh,880px);display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #e6eaef;">
           <div style="font-weight:900;font-size:1.1rem;color:#19777e;">${String(listName)}</div>
           <button id="faWlCloseX" title="Close" style="background:none;border:none;font-size:1.3rem;color:#334155;cursor:pointer;">×</button>
         </div>
         <div style="padding:12px 14px;">
           <div style="font-size:.95rem;color:#334155;margin-bottom:8px;">Review the words before you start:</div>
-          <div style="border:1px solid #e6eaef;border-radius:12px;max-height:56vh;overflow:auto;padding:6px 8px;">${itemsHtml}</div>
+          <div class="fa-wordlist-list fa-scroll-allow" style="border:1px solid #e6eaef;border-radius:12px;max-height:56vh;overflow:auto;padding:6px 8px;">${itemsHtml}</div>
           <div style="display:flex;justify-content:center;gap:12px;margin-top:12px;">
             <button id="faWlStart" style="${commonBtnStyle('#0d9488')}">Start</button>
           </div>
         </div>
       </div>`;
+
+    // Inject scrollbar styling once
+    if (!document.getElementById('faWordListScrollStyles')) {
+      const st = document.createElement('style');
+      st.id = 'faWordListScrollStyles';
+      st.textContent = `
+        .fa-wordlist-list { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #74d2dc #e0f7f9; }
+        .fa-wordlist-list::-webkit-scrollbar { width: 10px; }
+        .fa-wordlist-list::-webkit-scrollbar-track { background:#e0f7f9; border-radius:10px; }
+        .fa-wordlist-list::-webkit-scrollbar-thumb { background:#74d2dc; border-radius:10px; border:2px solid #e0f7f9; }
+      `;
+      document.head.appendChild(st);
+    }
 
     function cleanup(){ try { overlay.remove(); } catch{} }
   const startBtn = overlay.querySelector('#faWlStart');

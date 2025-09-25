@@ -93,6 +93,8 @@ function normalizeWords(list) {
 		return {
 			eng,
 			kor,
+			// Preserve sentence example if provided
+			sentence: w.sentence || w.example_sentence || w.example || null,
 			// Preserve multiple image field aliases so picture modes can find one
 			img: w.img || w.image || w.picture || w.image_url || null,
 			image: w.image || null,
@@ -173,6 +175,7 @@ async function start() {
 			gameArea: root,
 			startGame: (k) => { if (k) { location.search = '?id=' + encodeURIComponent(getId()) + '&mode=' + encodeURIComponent(k); } },
 			listName: stub.title || 'Live List',
+			config: stub.config || {},
 			// Provide shared utilities for modes that require audio
 			playTTS,
 			preprocessTTS

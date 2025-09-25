@@ -51,6 +51,60 @@ const el = {
 let gameImageUrl = '';
 
 // -------------------------------------------------------------
+// Time Battle Settings (duration configuration before launch)
+// -------------------------------------------------------------
+let tbSettings = { duration: 35 };
+function showTimeBattleSettings() {
+  // Reuse/create a lightweight overlay inside the modal to keep context
+  if (!el.modal) return launchLiveMode();
+  let wrap = document.getElementById('tbSettingsOverlay');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'tbSettingsOverlay';
+    wrap.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:9999;';
+    wrap.innerHTML = `
+      <div class="tb-settings" style="width:min(420px,92vw);background:#fff;border-radius:20px;border:2px solid #67e2e6;box-shadow:0 12px 40px -4px rgba(0,0,0,.25);font-family:Poppins,system-ui,sans-serif;display:flex;flex-direction:column;max-height:90vh;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e6eaef;">
+          <h3 style="margin:0;font-size:1.15rem;font-weight:800;color:#19777e;">Time Battle Settings</h3>
+          <button id="tbSetClose" style="background:none;border:none;font-size:1.4rem;line-height:1;color:#334155;cursor:pointer;">×</button>
+        </div>
+        <div style="padding:18px 20px 10px;overflow:auto;">
+          <label for="tbDurationInput" style="display:block;font-size:.75rem;font-weight:600;letter-spacing:.5px;color:#19777e;margin-bottom:6px;">DURATION (SECONDS)</label>
+          <input id="tbDurationInput" type="number" min="15" max="300" step="5" value="35" style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:1rem;background:#f7fafc;font-family:inherit;font-weight:600;color:#0f172a;" />
+          <div style="margin-top:8px;font-size:.7rem;color:#475569;line-height:1.4;">Choose how long each Time Battle round lasts. Typical: 35s. You can set between 15 and 300 seconds.</div>
+          <div id="tbDurationError" style="display:none;margin-top:8px;font-size:.75rem;font-weight:600;color:#b91c1c;">Enter a value between 15 and 300.</div>
+        </div>
+        <div style="padding:14px 18px 18px;display:flex;justify-content:flex-end;gap:10px;">
+          <button id="tbSetCancel" class="btn" style="background:#fff;border:2px solid #93cbcf;color:#19777e;font-weight:700;padding:10px 18px;border-radius:14px;cursor:pointer;">Cancel</button>
+          <button id="tbSetLaunch" class="btn" style="background:#0d9488;border:2px solid #0d9488;color:#fff;font-weight:800;padding:10px 20px;border-radius:14px;cursor:pointer;">Launch ▶</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+  } else {
+    wrap.style.display = 'flex';
+  }
+  const input = wrap.querySelector('#tbDurationInput');
+  if (input) input.value = String(tbSettings.duration || 35);
+  const errEl = wrap.querySelector('#tbDurationError');
+  const close = () => { wrap.style.display = 'none'; };
+  wrap.querySelector('#tbSetClose').onclick = close;
+  wrap.querySelector('#tbSetCancel').onclick = close;
+  wrap.onclick = (e) => { if (e.target === wrap) close(); };
+  wrap.querySelector('#tbSetLaunch').onclick = () => {
+    const raw = Number(input.value);
+    if (!Number.isFinite(raw) || raw < 15 || raw > 300) {
+      if (errEl) errEl.style.display = 'block';
+      input.focus();
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    tbSettings.duration = Math.round(raw);
+    close();
+    launchLiveMode();
+  };
+}
+
+// -------------------------------------------------------------
 // Loading Overlay (spinner + message for live game creation & QR gen)
 // -------------------------------------------------------------
 let loadingEl = null;
@@ -199,7 +253,7 @@ function buildLiveTiles() {
       title: 'Full Games',
       modes: [
         { key:'full_arcade', label:'Full Arcade', desc:'6 Rounds', active:true },
-        { key:'full_sentence_mode', label:'Sentence Mode', desc:'Practice sentences', active:false },
+  { key:'full_sentence_mode', label:'Sentence Mode', desc:'Practice sentences', active:true },
         { key:'full_learn_mode', label:'Learn Mode', desc:'Study and review', active:false },
         { key:'time_battle', label:'Time Battle', desc:'Compete in real-time', active:true }
       ]
@@ -264,6 +318,11 @@ function buildLiveTiles() {
           return;
         }
         selectedLiveMode = m.key;
+        // Intercept Time Battle to show a settings modal first
+        if (m.key === 'time_battle') {
+          showTimeBattleSettings();
+          return;
+        }
         launchLiveMode();
       });
       grid.appendChild(div);
@@ -599,8 +658,249 @@ function showQrForUrl(urlStr) {
   if (closeBtn) {
     closeBtn.onclick = () => { overlay.style.display = 'none'; };
   }
+
+  // Inject single Leaderboard button (opens in new tab). We insert only once.
+  const footer = copyBtn && copyBtn.parentElement; // container with Copy Link & Open
+  if (footer && !footer.querySelector('#qrLeaderboardBtn')) {
+    const lbBtn = document.createElement('button');
+    lbBtn.id = 'qrLeaderboardBtn';
+    lbBtn.textContent = 'Leaderboard';
+    lbBtn.style.cssText = 'background:#19777e;color:#fff;border:1px solid #19777e;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer;font-family:Poppins,system-ui,sans-serif;';
+    footer.insertBefore(lbBtn, copyBtn); // place directly before Copy Link for prominence
+    lbBtn.addEventListener('click', () => {
+      const id = (typeof window !== 'undefined' && window.__lastLiveGameId) ? window.__lastLiveGameId : null;
+      if (!id) { alert('Session id not ready yet. Launch the game first.'); return; }
+      const url = new URL(window.location.origin + '/Games/Word Arcade/leaderboard.html');
+      url.searchParams.set('id', id);
+      window.open(url.toString(), 'waLeaderboard'+id, 'noopener');
+    });
+  }
 }
 
+// -------------------------------------------------------------
+// Leaderboard / Teacher Projector View
+// -------------------------------------------------------------
+// Flow:
+// 1. launchLiveMode -> create game -> store id globally -> showQrForUrl
+// 2. Teacher clicks 'Leaderboard' in QR footer -> openTeacherLeaderboard()
+// 3. Fullscreen modal with podium (top 5) + link to Teacher View (stats)
+// 4. Poll every 3s for best scores via timer_score function
+// Extend easily by adding round or live (non-best) modes.
+
+function openTeacherLeaderboard(){
+  let modal = document.getElementById('teacherLeaderboardModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'teacherLeaderboardModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:#0f172a;display:flex;flex-direction:column;z-index:10000;padding:24px;';
+    modal.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h1 style="margin:0;font-size:clamp(1.8rem,4vw,3.6rem);color:#67e2e6;font-family:Poppins,system-ui,sans-serif;font-weight:800;letter-spacing:1px;">Live Leaderboard</h1>
+        <button id="tlbClose" style="background:#fff;border:2px solid #67e2e6;color:#0f172a;font-weight:700;padding:10px 18px;border-radius:14px;cursor:pointer;font-family:Poppins,system-ui;">Close</button>
+      </div>
+      <div id="tlbPodium" style="flex:1;display:flex;flex-direction:column;gap:10px;padding:6px 4px 30px;overflow:hidden;position:relative;">
+        <!-- Dynamic ranking rows -->
+      </div>
+      <div style="position:absolute;left:14px;bottom:10px;font-size:.85rem;color:#93cbcf;font-family:Poppins,system-ui;cursor:pointer;" id="tlbTeacherViewLink">Teacher view</div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#tlbClose').onclick = () => { if (modal._lbStop) modal._lbStop(); modal.remove(); };
+    modal.querySelector('#tlbTeacherViewLink').onclick = () => showTeacherStatsPanel(modal);
+
+    // Inject CSS (once) for FLIP animated list (stable rows, transform transitions only on movement)
+    if (!document.getElementById('tlbListStyles')) {
+      const style = document.createElement('style');
+      style.id = 'tlbListStyles';
+      style.textContent = `
+        @keyframes tlbPulse { 0%,100% { box-shadow:0 0 0 0 rgba(103,226,230,0.55);} 50% { box-shadow:0 0 0 14px rgba(103,226,230,0);} }
+        @keyframes tlbBump { 0% { transform:scale(1);} 40% { transform:scale(1.07);} 100% { transform:scale(1);} }
+        .tlb-row { display:flex;align-items:center;gap:14px;padding:10px 18px;border-radius:18px;background:linear-gradient(90deg,#132033,#0f172a);position:relative;will-change:transform; }
+        .tlb-row:nth-child(odd){ background:linear-gradient(90deg,#182a42,#0f172a); }
+        .tlb-rank { font-size:clamp(1.05rem,1.5vw,2rem);font-weight:800;color:#67e2e6;width:3.2ch;text-align:right;font-family:Poppins,system-ui; }
+        .tlb-medal { font-size:clamp(1.35rem,2vw,2.3rem);width:2.6ch;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+        .tlb-name { flex:1;font-size:clamp(1.05rem,2vw,2.35rem);font-weight:700;color:#fff;font-family:Poppins,system-ui;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .tlb-score { font-size:clamp(1.3rem,2.3vw,2.8rem);font-weight:900;color:#ffe082;font-family:Poppins,system-ui;display:flex;align-items:center;gap:10px; }
+        .tlb-score.bump { animation:tlbBump .5s ease; }
+        .tlb-up, .tlb-down { font-size:clamp(.68rem,0.9vw,1.05rem);font-weight:700;padding:3px 9px;border-radius:22px;line-height:1;letter-spacing:.5px; }
+        .tlb-up { background:#065f46;color:#fff; }
+        .tlb-down { background:#7f1d1d;color:#fff; }
+        .tlb-row.promoted { outline:2px solid #67e2e6; animation:tlbPulse 2.4s ease 0.3s; }
+        .tlb-row.demoted { opacity:.9; }
+        .tlb-empty { color:#fff;font-size:1.5rem;font-weight:600;font-family:Poppins,system-ui;opacity:.75;padding:30px 10px; }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+  renderLeaderboardPodium(modal); // initial placeholder
+  requestFullscreenSafe(modal);
+  beginLeaderboardPolling(modal);
+}
+
+// Previous state snapshot for FLIP + change detection
+let __prevLeaderboardState = []; // [{ name, score, index }]
+let __prevSnapshotKey = '';
+
+function buildRowInner(rankIndex, entry, prevIndex, scoreChanged){
+  let medal = '';
+  if (rankIndex === 0) medal = '🥇'; else if (rankIndex === 1) medal = '🥈'; else if (rankIndex === 2) medal = '🥉';
+  const movedUp = prevIndex !== -1 && prevIndex > rankIndex;
+  const movedDown = prevIndex !== -1 && prevIndex < rankIndex;
+  const delta = movedUp ? `<span class="tlb-up">▲ ${prevIndex - rankIndex}</span>` : movedDown ? `<span class="tlb-down">▼ ${rankIndex - prevIndex}</span>` : '';
+  return `
+    <div class="tlb-rank">${rankIndex+1}</div>
+    <div class="tlb-medal">${medal}</div>
+    <div class="tlb-name">${(entry.name||'Player').replace(/</g,'&lt;')}</div>
+    <div class="tlb-score${scoreChanged ? ' bump':''}">${entry.score}${delta}</div>`;
+}
+
+function snapshotKey(list){
+  return list.map(e=>`${e.name}:${e.score}`).join('|');
+}
+
+function renderLeaderboardPodium(modal, entries=[]) {
+  const box = modal.querySelector('#tlbPodium');
+  if (!box) return;
+  if (!entries.length) { box.innerHTML = '<div class="tlb-empty">Waiting for scores…</div>'; __prevLeaderboardState=[]; __prevSnapshotKey=''; return; }
+  const top = entries.slice(0,15);
+  const key = snapshotKey(top);
+  if (key === __prevSnapshotKey) return; // nothing changed; skip all work
+
+  // 1. Capture FIRST positions (FLIP)
+  const firstRects = new Map();
+  box.querySelectorAll('.tlb-row').forEach(r=>{ firstRects.set(r.dataset.name, r.getBoundingClientRect()); });
+
+  // 2. Build/update rows in-place
+  const existing = new Map();
+  box.querySelectorAll('.tlb-row').forEach(r=> existing.set(r.dataset.name, r));
+
+  // Track which names used this frame
+  const used = new Set();
+  top.forEach((entry, newIndex) => {
+    const name = entry.name || 'Player';
+    let row = existing.get(name);
+    const prev = __prevLeaderboardState.find(p => p.name === name);
+    const prevIndex = prev ? prev.index : -1;
+    const scoreChanged = !!(prev && prev.score !== entry.score);
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'tlb-row';
+      row.dataset.name = name;
+      row.innerHTML = buildRowInner(newIndex, entry, prevIndex, scoreChanged);
+      // Insert at correct position
+      const ref = box.children[newIndex];
+      if (ref) box.insertBefore(row, ref); else box.appendChild(row);
+      // New rows fade in naturally via transform (start slightly translated)
+      row.style.opacity = '0';
+      row.style.transform = 'translateY(10px)';
+      requestAnimationFrame(()=>{ row.style.transition='opacity .4s ease, transform .45s ease'; row.style.opacity='1'; row.style.transform='translateY(0)'; });
+    } else {
+      // Update inner HTML (keeps bump class if needed)
+      row.innerHTML = buildRowInner(newIndex, entry, prevIndex, scoreChanged);
+      // Move to new spot if order changed
+      const ref = box.children[newIndex];
+      if (ref !== row) {
+        box.insertBefore(row, ref);
+      }
+      // Mark promotions/demotions (visual emphasis only)
+      row.classList.remove('promoted','demoted');
+      if (prevIndex > newIndex && prevIndex !== -1) row.classList.add('promoted');
+      else if (prevIndex < newIndex && prevIndex !== -1) row.classList.add('demoted');
+    }
+    used.add(name);
+  });
+
+  // Remove rows not present now (fade out)
+  box.querySelectorAll('.tlb-row').forEach(r=>{
+    if (!used.has(r.dataset.name)) {
+      r.style.transition='opacity .35s ease, transform .35s ease';
+      r.style.opacity='0';
+      r.style.transform='translateY(12px)';
+      setTimeout(()=>r.remove(), 380);
+    }
+  });
+
+  // 3. Capture LAST positions & apply FLIP transform
+  const lastRects = new Map();
+  box.querySelectorAll('.tlb-row').forEach(r=> lastRects.set(r.dataset.name, r.getBoundingClientRect()));
+  box.querySelectorAll('.tlb-row').forEach(r=> {
+    const name = r.dataset.name;
+    const first = firstRects.get(name);
+    const last = lastRects.get(name);
+    if (!first || !last) return; // new row or removed
+    const dx = first.left - last.left;
+    const dy = first.top - last.top;
+    if (dx || dy) {
+      r.style.transition='none';
+      r.style.transform=`translate(${dx}px,${dy}px)`;
+      requestAnimationFrame(()=> {
+        r.style.transition='transform .55s cubic-bezier(.22,.8,.26,.99)';
+        r.style.transform='translate(0,0)';
+      });
+    }
+  });
+
+  // 4. Update snapshot
+  __prevLeaderboardState = top.map((e,i)=>({ name:e.name, score:e.score, index:i }));
+  __prevSnapshotKey = key;
+}
+
+function requestFullscreenSafe(el){ try { if (el.requestFullscreen) el.requestFullscreen(); } catch {} }
+
+function beginLeaderboardPolling(modal){
+  const sessionId = extractSessionIdFromQr();
+  if (!sessionId) return;
+  let active = true;
+  modal._lbStop = () => { active = false; };
+  async function tick(){
+    if (!active) return;
+    try {
+      const url = new URL('/.netlify/functions/timer_score', window.location.origin);
+      url.searchParams.set('session_id', sessionId);
+      url.searchParams.set('best', '1');
+      url.searchParams.set('limit', '20');
+      const res = await fetch(url.toString(), { cache:'no-store' });
+      const js = await res.json().catch(()=>null);
+      if (js && js.success && Array.isArray(js.leaderboard)) renderLeaderboardPodium(modal, js.leaderboard);
+    } catch {}
+    finally { setTimeout(tick, 3000); }
+  }
+  tick();
+}
+
+function extractSessionIdFromQr(){
+  try { return window.__lastLiveGameId || null; } catch { return null; }
+}
+
+function showTeacherStatsPanel(modal){
+  if (modal.querySelector('#tlbStats')) return; // already open
+  const panel = document.createElement('div');
+  panel.id = 'tlbStats';
+  panel.style.cssText = 'position:absolute;inset:0;background:rgba(15,23,42,0.96);display:flex;flex-direction:column;padding:20px 28px;';
+  panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">\n      <h2 style=\"margin:0;font-size:clamp(1.4rem,3vw,2.6rem);color:#67e2e6;font-weight:800;font-family:Poppins,system-ui;\">Teacher View</h2>\n      <button id=\"tlbStatsClose\" style=\"background:#fff;border:2px solid #67e2e6;color:#0f172a;font-weight:700;padding:8px 16px;border-radius:12px;cursor:pointer;font-family:Poppins,system-ui;\">Close</button>\n    </div>\n    <div id=\"tlbStatsBody\" style=\"flex:1;overflow:auto;font-family:Poppins,system-ui;color:#e2e8f0;font-size:.95rem;\">Loading…</div>`;
+  modal.appendChild(panel);
+  panel.querySelector('#tlbStatsClose').onclick = () => panel.remove();
+  loadTeacherStats(panel.querySelector('#tlbStatsBody'));
+}
+
+async function loadTeacherStats(bodyEl){
+  const sessionId = extractSessionIdFromQr();
+  if (!sessionId) { bodyEl.textContent = 'No session id.'; return; }
+  try {
+    const url = new URL('/.netlify/functions/timer_score', window.location.origin);
+    url.searchParams.set('session_id', sessionId);
+    url.searchParams.set('best', '1');
+    url.searchParams.set('limit', '200');
+    const res = await fetch(url.toString(), { cache:'no-store' });
+    const js = await res.json().catch(()=>null);
+    if (!js || !js.success) { bodyEl.textContent = 'Failed to load scores.'; return; }
+    const rows = js.leaderboard || [];
+    if (!rows.length) { bodyEl.textContent = 'No scores yet.'; return; }
+    const avg = (rows.reduce((a,r)=>a+Number(r.score||0),0)/rows.length).toFixed(1);
+    const max = rows[0].score;
+    bodyEl.innerHTML = `<div style=\"margin-bottom:16px;display:flex;flex-wrap:wrap;gap:18px;\">\n      <div style=\"background:#1e293b;padding:12px 16px;border-radius:12px;min-width:140px;\">\n        <div style=\"font-size:.65rem;font-weight:600;letter-spacing:1px;color:#93cbcf;margin-bottom:4px;\">PLAYERS</div>\n        <div style=\"font-size:1.6rem;font-weight:800;color:#fff;\">${rows.length}</div>\n      </div>\n      <div style=\"background:#1e293b;padding:12px 16px;border-radius:12px;min-width:140px;\">\n        <div style=\"font-size:.65rem;font-weight:600;letter-spacing:1px;color:#93cbcf;margin-bottom:4px;\">TOP SCORE</div>\n        <div style=\"font-size:1.6rem;font-weight:800;color:#fff;\">${max}</div>\n      </div>\n      <div style=\"background:#1e293b;padding:12px 16px;border-radius:12px;min-width:140px;\">\n        <div style=\"font-size:.65rem;font-weight:600;letter-spacing:1px;color:#93cbcf;margin-bottom:4px;\">AVG SCORE</div>\n        <div style=\"font-size:1.6rem;font-weight:800;color:#fff;\">${avg}</div>\n      </div>\n    </div>\n    <table style=\"width:100%;border-collapse:collapse;\">\n      <thead><tr style=\"text-align:left;background:#334155;color:#fff;\">\n        <th style=\"padding:8px 10px;font-weight:600;font-size:.7rem;letter-spacing:.5px;\">#</th>\n        <th style=\"padding:8px 10px;font-weight:600;font-size:.7rem;letter-spacing:.5px;\">Name</th>\n        <th style=\"padding:8px 10px;font-weight:600;font-size:.7rem;letter-spacing:.5px;\">Score</th>\n      </tr></thead>\n      <tbody>\n        ${rows.map((r,i)=>`<tr style=\\"background:${i%2?'#1e293b':'#0f172a'};\\"><td style=\\"padding:6px 10px;color:#93cbcf;font-weight:600;\\">${i+1}</td><td style=\\"padding:6px 10px;\\">${(r.name||'Player').replace(/</g,'&lt;')}</td><td style=\\"padding:6px 10px;font-weight:700;\\">${r.score}</td></tr>`).join('')}\n      </tbody>\n    </table>`;
+  } catch {
+    bodyEl.textContent = 'Error loading stats.';
+  }
+}
 // Launch selected live mode (generic; all supported except Level Up)
 async function launchLiveMode() {
   if (!selectedLiveMode) return;
@@ -618,7 +918,7 @@ async function launchLiveMode() {
         mode: selectedLiveMode,
         title: data.title || data.gameTitle || data.name || 'Live Game',
         words: data.words,
-        config: {},
+        config: selectedLiveMode === 'time_battle' ? { time_battle: { duration: tbSettings.duration || 35 } } : {},
         ttlMinutes: 180
       })
     });
@@ -628,6 +928,7 @@ async function launchLiveMode() {
       throw new Error(detail);
     }
     id = js.id;
+    try { window.__lastLiveGameId = id; } catch {}
   } catch(e) {
     console.error('Failed to create live game', e);
     setStatus('Live create failed');
