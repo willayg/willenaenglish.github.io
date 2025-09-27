@@ -41,12 +41,10 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   }
 
   // Clear and render a single stacked rounded panel matching main menu style
-  container.innerHTML = `<div style="display:flex;justify-content:center;padding:18px 12px;">
-    <div style="width:100%;max-width:360px;border-radius:18px;border:2px solid #67e2e6;padding:6px 6px;background:#fff;">
-      <div id="modeHeader"></div>
-      <div class="mode-grid"></div>
-    </div>
-  </div>`;
+  container.innerHTML = `
+    <div id="modeHeader" style="text-align:center;margin-top:4px;"></div>
+    <div id="modeSelect" aria-label="Select a mode"></div>
+  `;
 
   ensureModeButtonStyles();
   // Inject header styles (scoped) if not present
@@ -67,50 +65,71 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   let bestByMode = {};
   if (listName) {
     try {
-      const url = new URL(FN('progress_summary'), window.location.origin);
-      url.searchParams.set('section', 'sessions');
-      if (listName) url.searchParams.set('list_name', listName);
-      const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
-      if (res.ok) {
-        const sessions = await res.json();
-        // Compute best score per mode for this list (robust matching + top-level fields)
-        const norm = (v) => (v||'').toString().trim().toLowerCase();
-        const stripExt = (v) => v.replace(/\.json$/i, '');
-        const target = norm(listName);
-        const targetNoExt = stripExt(target);
-        (Array.isArray(sessions) ? sessions : []).forEach(s => {
-          if (!s) return;
-          let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-          const key = (s.mode || 'unknown').toString().toLowerCase();
-          const rowName = norm(s.list_name);
-          const sumName = norm(sum?.list_name || sum?.listName);
-          const rowNoExt = stripExt(rowName);
-          const sumNoExt = stripExt(sumName);
-          const matches = (name) => !!name && (name === target || name === targetNoExt);
-          if (!(matches(rowName) || matches(sumName) || matches(rowNoExt) || matches(sumNoExt))) return;
-          if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
-            const pct = Math.round((sum.score / sum.total) * 100);
-            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-          } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
-            const pct = Math.round((sum.score / sum.max) * 100);
-            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-          } else if (sum && typeof sum.accuracy === 'number') {
-            const pct = Math.round((sum.accuracy || 0) * 100);
-            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-          } else if (sum && typeof sum.score === 'number') {
-            const pts = Math.round(sum.score);
-            if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
-          } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
-            const pct = Math.round((s.correct / s.total) * 100);
-            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-          } else if (typeof s.accuracy === 'number') {
-            const pct = Math.round((s.accuracy || 0) * 100);
-            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-          }
-        });
-  // Do not fallback to aggregate stats: leave modes at 0% if this list has no prior sessions.
+      const norm = (v) => (v||'').toString().trim().toLowerCase();
+      const stripExt = (v) => v.replace(/\.json$/i, '');
+      const target = norm(listName);
+      const targetNoExt = stripExt(target);
+      const matchesTarget = (rowName) => {
+        const n = norm(rowName);
+        const noExt = stripExt(n);
+        return !!n && (n === target || n === targetNoExt || noExt === targetNoExt);
+      };
+      // Helper: canonicalize raw mode values to the 6 displayed keys
+      const canonicalMode = (raw) => {
+        const m = (raw || 'unknown').toString().toLowerCase();
+        if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
+        if (m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
+        if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
+        if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
+        if (m === 'spelling' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
+        if (m.includes('level_up')) return 'level_up';
+        return m;
+      };
+
+      async function fetchSessions(scoped) {
+        const url = new URL(FN('progress_summary'), window.location.origin);
+        url.searchParams.set('section', 'sessions');
+        if (scoped) url.searchParams.set('list_name', listName);
+        const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
+        if (!res.ok) return [];
+        return await res.json();
       }
-    } catch {}
+
+      // First try list-scoped fetch (fast)
+      let sessions = await fetchSessions(true);
+      // If none returned (maybe list_name mismatch), fallback to all sessions then filter manually
+      if (!sessions || !sessions.length) {
+        sessions = await fetchSessions(false);
+      }
+
+      (Array.isArray(sessions) ? sessions : []).forEach(s => {
+        if (!s) return;
+        if (!matchesTarget(s.list_name) && !matchesTarget((s.summary && (s.summary.list_name || s.summary.listName)))) return;
+        let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
+        const key = canonicalMode(s.mode);
+        let pct = null; let pts = null;
+        if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
+          pct = Math.round((sum.score / sum.total) * 100);
+        } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
+          pct = Math.round((sum.score / sum.max) * 100);
+        } else if (sum && typeof sum.accuracy === 'number') {
+          pct = Math.round((sum.accuracy || 0) * 100);
+        } else if (sum && typeof sum.score === 'number') {
+          pts = Math.round(sum.score);
+        } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
+          pct = Math.round((s.correct / s.total) * 100);
+        } else if (typeof s.accuracy === 'number') {
+          pct = Math.round((s.accuracy || 0) * 100);
+        }
+        if (pct != null) {
+          if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
+        } else if (pts != null) {
+          if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
+        }
+      });
+    } catch (e) {
+      try { console.warn('[mode_selector] progress fetch error', e); } catch {}
+    }
   }
   // Determine if picture modes are available
   const wl = (window.WordArcade && typeof window.WordArcade.getWordList === 'function') ? window.WordArcade.getWordList() : [];
@@ -247,11 +266,12 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const headerEl = container.querySelector('#modeHeader');
   if (headerEl) headerEl.innerHTML = buildHeader();
 
-  const listContainer = container.querySelector('.mode-grid');
+  const listContainer = container.querySelector('#modeSelect');
   modes.forEach((m) => {
-    const btn = document.createElement('button');
-    btn.className = 'mode-btn';
-    btn.dataset.modeId = m.id;
+  const btn = document.createElement('button');
+  btn.className = 'mode-btn mode-card';
+  btn.setAttribute('data-mode', m.id);
+  btn.dataset.modeId = m.id; // keep legacy data-modeId for any existing code
     btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass);
     btn.onclick = () => onModeChosen && onModeChosen(m.id);
     listContainer.appendChild(btn);

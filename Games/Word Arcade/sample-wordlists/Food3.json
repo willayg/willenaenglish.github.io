@@ -1,12 +1,12 @@
 [
-  {"eng": "pizza", "kor": "피자"},
-  {"eng": "hamburger", "kor": "햄버거"},
-  {"eng": "sandwich", "kor": "샌드위치"},
-  {"eng": "spaghetti", "kor": "스파게티"},
-  {"eng": "salad", "kor": "샐러드"},
-  {"eng": "hotdog", "kor": "핫도그"},
-  {"eng": "fries", "kor": "감자튀김"},
-  {"eng": "ice cream", "kor": "아이스크림"},
-  {"eng": "cake", "kor": "케이크"},
-  {"eng": "cookie", "kor": "쿠키"}
+  {"eng": "pizza", "kor": "피자", "def": "flat bread with cheese and toppings", "ex": "We eat pizza."},
+  {"eng": "hamburger", "kor": "햄버거", "def": "a meat patty in a bun", "ex": "He eats a hamburger."},
+  {"eng": "sandwich", "kor": "샌드위치", "def": "food between two bread slices", "ex": "I make a sandwich."},
+  {"eng": "spaghetti", "kor": "스파게티", "def": "long pasta with sauce", "ex": "We eat spaghetti."},
+  {"eng": "salad", "kor": "샐러드", "def": "mixed raw vegetables", "ex": "She eats salad."},
+  {"eng": "hotdog", "kor": "핫도그", "def": "a sausage in a bun", "ex": "I eat a hotdog."},
+  {"eng": "fries", "kor": "감자튀김", "def": "fried potato sticks", "ex": "We share fries."},
+  {"eng": "ice cream", "kor": "아이스크림", "def": "sweet frozen dessert", "ex": "I like ice cream."},
+  {"eng": "cake", "kor": "케이크", "def": "sweet baked dessert", "ex": "She cuts a cake."},
+  {"eng": "cookie", "kor": "쿠키", "def": "small sweet baked treat", "ex": "I eat a cookie."}
 ]

@@ -16,6 +16,8 @@ let __authResolved = false; // becomes true after first successful authenticated
 const __pendingAttempts = [];
 let __flushScheduled = false;
 const __pendingSessionEnd = new Map(); // sessionId -> payload for retry
+// New: store session_start payloads that failed (likely 401) so we can retry once auth resolves
+const __pendingSessionStarts = new Map(); // sessionId -> { payload, tries }
 // Throttle: avoid hammering the auth refresh endpoint if user id not yet resolved.
 // Previously, flushPendingAttempts() retried every ~250ms, causing a rapid
 // stream of GET /.netlify/functions/supabase_auth?action=refresh requests.
@@ -74,7 +76,22 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(payload)
-  }).catch((e) => console.debug('session_start log skipped:', e?.message));
+  }).then(async res => {
+    if (res.status === 401 || res.status === 403) {
+      // queue for retry after auth; keep original payload (with list_name)
+      __pendingSessionStarts.set(sessionId, { payload, tries: 0 });
+      scheduleAuthFlush();
+      return;
+    }
+    if (!res.ok) {
+      console.warn('[records] session_start failed', res.status);
+    }
+  }).catch((e) => {
+    console.debug('session_start log skipped:', e?.message);
+    // On network error retain payload for later attempt
+    __pendingSessionStarts.set(sessionId, { payload, tries: 0 });
+    scheduleAuthFlush();
+  });
   return sessionId;
 }
 
@@ -170,6 +187,33 @@ async function flushPendingAttempts() {
   if (__pendingSessionEnd.size) {
     for (const [sid, payload] of Array.from(__pendingSessionEnd.entries())) {
       await sendSessionEnd({ ...payload, user_id: uid });
+    }
+  }
+  // Retry pending session_start events (upsert semantics) now that we (likely) have auth
+  if (__pendingSessionStarts.size) {
+    for (const [sid, entry] of Array.from(__pendingSessionStarts.entries())) {
+      const { payload } = entry || {}; if (!payload) { __pendingSessionStarts.delete(sid); continue; }
+      try {
+        const res = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ ...payload, user_id: uid })
+        });
+        if (res.ok) {
+          __pendingSessionStarts.delete(sid);
+        } else if (res.status === 401) {
+          // still unauthorized; will retry on next flush
+          const cur = __pendingSessionStarts.get(sid); if (cur) cur.tries = (cur.tries || 0) + 1;
+        } else {
+          console.warn('[records] retry session_start failed', res.status);
+          __pendingSessionStarts.delete(sid);
+        }
+      } catch (e) {
+        const cur = __pendingSessionStarts.get(sid); if (cur) cur.tries = (cur.tries || 0) + 1;
+        // Give up after several attempts
+        if (cur && cur.tries > 6) __pendingSessionStarts.delete(sid);
+      }
     }
   }
 }

@@ -74,6 +74,7 @@ function ensureWordlistModalStyles() {
 
 export function showSampleWordlistModal({ onChoose }) {
   ensureWordlistModalStyles();
+  try { console.info('[WA sample lists] showSampleWordlistModal start'); } catch {}
   // Modal overlay
   let modal = document.getElementById('sampleWordlistModal');
   if (!modal) {
@@ -224,57 +225,87 @@ export function showSampleWordlistModal({ onChoose }) {
     });
     modal.style.display = 'flex';
 
-    // 2) Fetch sessions once and compute combined percent per list
+    // 2) Compute progress per list using the EXACT same fetching logic as mode_selector (scoped fetch, then fallback)
     (async () => {
-      // Normalizer for matching list_name to filename/label
-      const norm = (s) => String(s || '')
-        .toLowerCase()
-        .replace(/\.(json|csv|txt)$/g, '')
-        .replace(/[^a-z0-9]+/g, ' ')
-        .trim();
-      const isMatch = (a, b) => {
-        const na = norm(a), nb = norm(b);
-        if (!na || !nb) return false;
-        return na === nb || na.includes(nb) || nb.includes(na);
+      const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'spelling', 'level_up'];
+
+      // Canonicalize modes (copied from mode_selector)
+      const canonicalMode = (raw) => {
+        const m = (raw || 'unknown').toString().toLowerCase();
+        if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
+        if (m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
+        if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
+        if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
+        if (m === 'spelling' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
+        if (m.includes('level_up')) return 'level_up';
+        return m;
       };
 
-      let sessions = [];
-      try {
-        const url = new URL(FN('progress_summary'), window.location.origin);
-        url.searchParams.set('section', 'sessions');
-        const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) sessions = await res.json();
-      } catch {}
+      const norm = (v) => (v||'').toString().trim().toLowerCase();
+      const stripExt = (v) => v.replace(/\.json$/i, '');
 
-  // Use 5 core modes for list completion (exclude 'level_up')
-  const coreModes = ['meaning','listening','multi_choice','listen_and_spell','spelling'];
+      async function fetchSessionsFor(listFile) {
+        const urlBase = new URL(FN('progress_summary'), window.location.origin);
+        urlBase.searchParams.set('section', 'sessions');
+        // First attempt: scoped
+        const scoped = new URL(urlBase.toString());
+        scoped.searchParams.set('list_name', listFile);
+        let res = await fetch(scoped.toString(), { cache: 'no-store', credentials: 'include' });
+        let data = [];
+        if (res.ok) data = await res.json();
+        // Fallback: all sessions if none returned
+        if (!data || !data.length) {
+          res = await fetch(urlBase.toString(), { cache: 'no-store', credentials: 'include' });
+          if (res.ok) data = await res.json(); else data = [];
+        }
+        return Array.isArray(data) ? data : [];
+      }
 
-      const percents = category.lists.map((it) => {
-        const bestByMode = {};
-        (Array.isArray(sessions) ? sessions : []).forEach(s => {
+      async function computePercent(listFile) {
+        const sessions = await fetchSessionsFor(listFile);
+        if (!sessions.length) return 0; // treat as 0% if no data
+        const target = norm(listFile);
+        const targetNoExt = stripExt(target);
+        const matchesTarget = (rowName) => {
+          const n = norm(rowName);
+            if (!n) return false;
+            const nNoExt = stripExt(n);
+            return n === target || n === targetNoExt || nNoExt === targetNoExt;
+        };
+        const bestByMode = {}; // mode -> { pct }
+        sessions.forEach(s => {
           if (!s) return;
-          const ln = s.list_name != null ? String(s.list_name) : '';
-          if (!(isMatch(ln, it.file) || isMatch(ln, it.label))) return;
+          if (!matchesTarget(s.list_name) && !matchesTarget(s.summary && (s.summary.list_name || s.summary.listName))) return;
           let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-          let pct = 0;
-          if (sum && typeof sum.total === 'number' && typeof sum.score === 'number' && sum.total > 0) {
+          const key = canonicalMode(s.mode);
+          let pct = null; let pts = null;
+          if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
             pct = Math.round((sum.score / sum.total) * 100);
-          } else if (sum && typeof sum.max === 'number' && typeof sum.score === 'number' && sum.max > 0) {
+          } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
             pct = Math.round((sum.score / sum.max) * 100);
           } else if (sum && typeof sum.accuracy === 'number') {
-            pct = Math.round(Math.max(0, Math.min(1, sum.accuracy)) * 100);
+            pct = Math.round((sum.accuracy || 0) * 100);
+          } else if (sum && typeof sum.score === 'number') {
+            pts = Math.round(sum.score);
+          } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
+            pct = Math.round((s.correct / s.total) * 100);
+          } else if (typeof s.accuracy === 'number') {
+            pct = Math.round((s.accuracy || 0) * 100);
           }
-          const modeKey = String(s.mode || '').toLowerCase();
-          if (!bestByMode[modeKey] || bestByMode[modeKey] < pct) bestByMode[modeKey] = pct;
+          if (pct != null) {
+            if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
+          } else if (pts != null) {
+            if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
+          }
         });
-        // Average across all core modes; count unplayed as 0% to avoid inflating with only a few modes
-        let sumPct = 0;
-        coreModes.forEach(m => {
-          const v = typeof bestByMode[m] === 'number' ? Math.max(0, Math.min(100, bestByMode[m])) : 0;
-          sumPct += v;
-        });
-        return Math.round(sumPct / coreModes.length);
-      });
+        // Strict average across 6 canonical modes; missing modes contribute 0
+        let total = 0;
+        modeIds.forEach(m => { const v = bestByMode[m]; if (v && typeof v.pct === 'number') total += v.pct; });
+        return Math.round(total / 6);
+      }
+
+      // Kick off all list computations in parallel
+      const percents = await Promise.all(category.lists.map(l => computePercent(l.file).catch(() => 0)));
 
       // 3) Re-render with actual percents
       list.innerHTML = category.lists.map((it, i) => {

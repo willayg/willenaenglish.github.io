@@ -51,6 +51,70 @@ const el = {
 let gameImageUrl = '';
 
 // -------------------------------------------------------------
+// Sentence ID Upgrader (Additive, Safe Fallback)
+// -------------------------------------------------------------
+// For each word object produced by buildPayload():
+//   { eng, kor, example, legacy_sentence?, sentences?, primary_sentence_id? }
+// This helper:
+//  1. Finds words with legacy_sentence (or example) but no sentences[] / primary_sentence_id.
+//  2. Batches unique sentence texts to backend (Netlify supabase proxy) with action 'upsert_sentences_batch'.
+//  3. Expects response: { success:true, sentences:[ { text, id } ] }
+//  4. Mutates word objects in-place adding: sentences:[{id}], primary_sentence_id: id.
+// Fallback: if backend or network fails, silently keep legacy_sentence only (runtime still works via fallback).
+// NOTE: Removal of legacy_sentence keys will happen in a later cleanup phase when metrics show near-zero fallback usage.
+async function ensureSentenceIds(wordObjs){
+  try {
+    if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0, reused:0 };
+    const targets = wordObjs.filter(w=> !w.primary_sentence_id && !Array.isArray(w.sentences) && (w.legacy_sentence || w.example));
+    if(!targets.length) return { inserted:0, reused:0 };
+    // Build unique normalized sentence list
+    const norm = s=> (s||'').trim().replace(/\s+/g,' ');
+    const map = new Map();
+    targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const n = norm(raw); if(n && !map.has(n)) map.set(n,{ text:n, words:[w.eng].filter(Boolean) }); }});
+    if(!map.size) return { inserted:0, reused:0 };
+    // Call dedicated Netlify function (bypasses generic proxy which doesn't route this action)
+    const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
+    let endpoint = '/.netlify/functions/upsert_sentences_batch';
+    try {
+      if (window && window.location && window.location.hostname === 'localhost') {
+        // Support both netlify dev (8888) and functions:serve (netlify dev rewrites) without change
+        endpoint = '/.netlify/functions/upsert_sentences_batch';
+      }
+    } catch {}
+    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const js = await res.json().catch(()=>null);
+    if(js && js.audio){
+      console.debug('[SentenceUpgrade][modal][audio] summary', js.audio);
+    }
+    if(js && js.audio_status){
+      console.debug('[SentenceUpgrade][modal][audio_status sample]', js.audio_status.slice(0,5));
+    }
+    if(js && js.env){
+      console.debug('[SentenceUpgrade][modal][env]', js.env);
+    }
+    if(!js || !js.success || !Array.isArray(js.sentences)){
+      console.debug('[SentenceUpgrade] Sentence batch failed or empty', { status: res.status, ok: res.ok, body: js });
+      return { inserted:0, reused:0, backend:false };
+    }
+  const byText = new Map(js.sentences.map(r=>[norm(r.text), r])); // r may include audio_key later
+    let applied=0; let missed=0;
+    targets.forEach(w=>{
+      const raw = w.legacy_sentence || w.example || '';
+      const rec = byText.get(norm(raw));
+      if(rec && rec.id){
+        // Preserve text + audio_key (if backend populated it)
+        const sentObj = { id: rec.id, text: rec.text };
+        if (rec.audio_key) sentObj.audio_key = rec.audio_key;
+        w.sentences = [sentObj];
+        w.primary_sentence_id = rec.id;
+        applied++;
+      } else missed++;
+    });
+    return { inserted:applied, missed };
+  } catch(e){ console.debug('[SentenceUpgrade] ensureSentenceIds failed', e?.message); return { inserted:0, error:true }; }
+}
+
+// -------------------------------------------------------------
 // Time Battle Settings (duration configuration before launch)
 // -------------------------------------------------------------
 let tbSettings = { duration: 35 };
@@ -538,7 +602,14 @@ export function initCreateGameModal(buildPayload) {
       data.class = data.gameClass; data.book = data.gameBook; data.unit = data.gameUnit;
       try { const uid = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('id'); if (uid) data.created_by = uid; } catch {}
       if (!data.title || !Array.isArray(data.words) || !data.words.length) { alert('Need title and at least one word.'); return; }
-      try { el.save.disabled = true; const english = data.words.map(w => w.eng).filter(Boolean); await ensureAudioForWords(english); } catch {}
+      try {
+        el.save.disabled = true;
+        setStatus('Linking sentences...');
+        await ensureSentenceIds(data.words); // safe upgrade (silent fallback)
+        const english = data.words.map(w => w.eng).filter(Boolean);
+        setStatus('Ensuring audio...');
+        await ensureAudioForWords(english);
+      } catch {}
       try {
         setStatus('Saving assignment...');
         const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_game_data', data }) });
@@ -907,6 +978,8 @@ async function launchLiveMode() {
   if (!buildPayloadRef) { alert('Live launch not ready: missing payload builder.'); return; }
   const data = buildPayloadRef();
   if (!data || !Array.isArray(data.words) || !data.words.length) { alert('No words found. Please add words first.'); return; }
+  setStatus('Preparing sentences...');
+  try { await ensureSentenceIds(data.words); } catch {}
   setStatus('Creating live game...');
   showLoading('Creating live game...');
   let id = null;

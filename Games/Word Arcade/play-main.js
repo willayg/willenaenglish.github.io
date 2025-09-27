@@ -90,11 +90,12 @@ function normalizeWords(list) {
 		const eng = w.eng || w.en || '';
 		const kor = w.kor || w.kr || w.translation || '';
 		if (!eng || !kor) return null; // drop incomplete
-		return {
+		const obj = {
 			eng,
 			kor,
-			// Preserve sentence example if provided
-			sentence: w.sentence || w.example_sentence || w.example || null,
+			// Preserve sentence example if provided (legacy display)
+			sentence: w.sentence || w.example_sentence || w.example || w.legacy_sentence || null,
+			legacy_sentence: w.legacy_sentence || null,
 			// Preserve multiple image field aliases so picture modes can find one
 			img: w.img || w.image || w.picture || w.image_url || null,
 			image: w.image || null,
@@ -107,9 +108,19 @@ function normalizeWords(list) {
 			tts: w.tts || null,
 			audio_url: w.audio_url || null,
 			definition: w.definition || '',
-			// include any extra fields if needed later (shallow copy limited safe list)
 			part: w.part || w.pos || null
 		};
+		// --- Sentence ID Upgrade passthrough ---
+		// Preserve normalized sentence metadata so sentence_mode can resolve R2 audio.
+		if (Array.isArray(w.sentences)) obj.sentences = w.sentences.map(s => ({
+			id: s.id,
+			text: s.text,
+			audio_key: s.audio_key || s.audioKey || null,
+			weight: s.weight || null
+		})).filter(s => s.id);
+		if (w.primary_sentence_id) obj.primary_sentence_id = w.primary_sentence_id;
+		if (w.audio_key) obj.audio_key = w.audio_key; // direct audio key if already set
+		return obj;
 	}).filter(Boolean);
 }
 

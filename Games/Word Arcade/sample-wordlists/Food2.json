@@ -1,12 +1,12 @@
 [
-  {"eng": "rice", "kor": "밥"},
-  {"eng": "bread", "kor": "빵"},
-  {"eng": "noodles", "kor": "국수"},
-  {"eng": "egg", "kor": "계란"},
-  {"eng": "meat", "kor": "고기"},
-  {"eng": "fish", "kor": "생선"},
-  {"eng": "chicken", "kor": "치킨"},
-  {"eng": "soup", "kor": "수프"},
-  {"eng": "cheese", "kor": "치즈"},
-  {"eng": "tofu", "kor": "두부"}
+  {"eng": "rice", "kor": "밥", "def": "small white cooked grains", "ex": "I eat rice."},
+  {"eng": "bread", "kor": "빵", "def": "baked food made from flour", "ex": "I slice bread."},
+  {"eng": "noodles", "kor": "국수", "def": "long thin strips of dough", "ex": "We cook noodles."},
+  {"eng": "egg", "kor": "계란", "def": "food with a shell from a hen", "ex": "I fry an egg."},
+  {"eng": "meat", "kor": "고기", "def": "animal flesh used as food", "ex": "He cooks meat."},
+  {"eng": "fish", "kor": "생선", "def": "meat from a fish", "ex": "She grills fish."},
+  {"eng": "chicken", "kor": "치킨", "def": "meat from a chicken", "ex": "We roast chicken."},
+  {"eng": "soup", "kor": "수프", "def": "hot liquid food", "ex": "I sip soup."},
+  {"eng": "cheese", "kor": "치즈", "def": "food made from milk", "ex": "I eat cheese."},
+  {"eng": "tofu", "kor": "두부", "def": "soft white food from soy", "ex": "I cook tofu."}
 ]

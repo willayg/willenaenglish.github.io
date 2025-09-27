@@ -453,6 +453,36 @@ async function fetchJSONSafe(url, init, opts = {}) {
 
 
 function buildPayload() {
+  // Ensure each word carries a legacy_sentence for Sentence Mode.
+  const vowels = /^[aeiou]/i;
+  function fallbackSentence(w){
+    const eng = (w.eng||'').trim();
+    if(!eng) return '';
+    // If multi-word phrase, simple pattern:
+    if(eng.includes(' ')) return `I can ${eng}.`;
+    const art = vowels.test(eng) ? 'an' : 'a';
+    // Choose between two simple templates for a little variation
+    if(/ing$/i.test(eng)) return `They are ${eng}.`;
+    return `This is ${art} ${eng}.`;
+  }
+  function chooseLegacySentence(w){
+    // 1. Pre-existing legacy_sentence (if user loaded an older game)
+    if(w.legacy_sentence && /\w+\s+\w+\s+\w+/.test(w.legacy_sentence)) return w.legacy_sentence.trim();
+    // 2. Example with >=3 tokens
+    if(w.example && /\w+\s+\w+\s+\w+/.test(w.example)) return w.example.trim();
+    // 3. Definition (take first clause up to 14 words)
+    if(w.definition){
+      const words = w.definition.trim().split(/\s+/).slice(0,14);
+      if(words.length >=3){
+        let def = words.join(' ');
+        def = def.replace(/\s+$/,'');
+        if(!/[.!?]$/.test(def)) def += '.';
+        return def;
+      }
+    }
+    // 4. Generated fallback
+    return fallbackSentence(w);
+  }
   return {
     title: titleEl.value || 'Untitled Game',
     gameImage: document.getElementById('gameImageZone').querySelector('img')?.src || '',
@@ -461,7 +491,9 @@ function buildPayload() {
       kor: w.kor || '',
       image_url: w.image_url || '',
       definition: w.definition || '',
-      example: w.example || ''
+      example: w.example || '',
+      // Always provide a legacy_sentence so Sentence Mode never empties out.
+      legacy_sentence: chooseLegacySentence(w)
     }))
   };
 }
@@ -1076,6 +1108,58 @@ async function ensureAudioForWordsAndSentences(wordsList, examplesMap, opts = {}
 
 // --- End audio helpers ---
 
+// --- Sentence ID upgrade (builder-local) ------------------------------------
+// NOTE: create-game-modal has its own ensureSentenceIds, but when saving directly
+// from this builder (main.js) we never invoked the batch sentence function, so
+// nothing was inserted in the sentences table. This local helper fixes that gap.
+async function ensureSentenceIdsBuilder(wordObjs){
+  try {
+    if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0 };
+    // Select targets that have legacy_sentence/example AND lack primary_sentence_id & sentences[]
+    const norm = s => (s||'').trim().replace(/\s+/g,' ');
+    const targets = wordObjs.filter(w=> !w.primary_sentence_id && !Array.isArray(w.sentences) && (w.legacy_sentence || w.example));
+    if(!targets.length) return { inserted:0 };
+    const map = new Map();
+    for (const w of targets){
+      const raw = w.legacy_sentence || w.example || '';
+      if(raw && raw.split(/\s+/).length >= 3){
+        const n = norm(raw);
+        if(n && !map.has(n)) map.set(n, { text:n, words:[w.eng].filter(Boolean) });
+      }
+    }
+    if(!map.size) return { inserted:0 };
+    const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
+    const res = await fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const js = await res.json().catch(()=>null);
+    if(js && js.audio){
+      console.debug('[SentenceUpgrade][builder][audio] summary', js.audio);
+    }
+    if(js && js.audio_status){
+      console.debug('[SentenceUpgrade][builder][audio_status sample]', js.audio_status.slice(0,5));
+    }
+    if(js && js.env){
+      console.debug('[SentenceUpgrade][builder][env]', js.env);
+    }
+    if(!js || !js.success || !Array.isArray(js.sentences)){
+      console.debug('[SentenceUpgrade][builder] batch failed', { status: res.status, ok: res.ok, body: js });
+      return { inserted:0, backend:false };
+    }
+  const byText = new Map(js.sentences.map(r=> [norm(r.text), r]));
+    let applied=0;
+    for (const w of targets){
+      const raw = w.legacy_sentence || w.example || '';
+      const rec = byText.get(norm(raw));
+      if(rec && rec.id){
+        const sentObj = { id: rec.id, text: rec.text };
+        if (rec.audio_key) sentObj.audio_key = rec.audio_key;
+        w.sentences = [sentObj];
+        w.primary_sentence_id = rec.id; applied++; }
+    }
+    console.debug('[SentenceUpgrade][builder] applied', { applied, totalTargets: targets.length, unique: map.size, meta: js.meta });
+    return { inserted: applied };
+  } catch(e){ console.debug('[SentenceUpgrade][builder] error', e?.message); return { inserted:0, error:true }; }
+}
+
 confirmSave.onclick = async () => {
   let title = document.getElementById('saveGameTitle').value.trim();
   if (!title) { toast('Need title'); return; }
@@ -1148,7 +1232,13 @@ confirmSave.onclick = async () => {
       if (uid) payload.created_by = uid;
     } catch {}
 
-    // Prepare and ensure audio files for words and example sentences
+    // NEW: Ensure sentence IDs (batch insert) before audio so future modes can resolve sentence_id.
+    try {
+      const statusBox = document.getElementById('saveModalStatus'); if(statusBox) statusBox.textContent = 'Linking sentences…';
+      await ensureSentenceIdsBuilder(payload.words);
+    } catch(e){ console.debug('[SentenceUpgrade][builder] sentence id ensure failed', e?.message); }
+
+    // Prepare and ensure audio files for words and example sentences (legacy word + word_sentence clips)
     try {
       const statusBox = document.getElementById('saveModalStatus');
       const words = payload.words.map(w => w.eng).filter(Boolean);
@@ -1195,6 +1285,7 @@ confirmSave.onclick = async () => {
       console.warn('Audio ensure failed, continuing to save game', e);
       const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = 'Audio step failed (continuing)';
     }
+    console.debug('[BuilderSave] sentence linking + audio ensure complete; proceeding to persist game_data');
     let saveAction = 'insert_game_data';
     let postBody = { action: saveAction, data: payload };
     if (existingRow) {
