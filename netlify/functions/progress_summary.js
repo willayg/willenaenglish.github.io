@@ -26,7 +26,7 @@ function getAccessTokenFromCookie(event) {
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.supabase_url;
 // In local/dev, the anon key is commonly provided as SUPABASE_KEY. Fall back to that.
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.supabase_anon_key;
+const ASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.supabase_anon_key;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key;
 const ADMIN_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 
@@ -144,7 +144,79 @@ exports.handler = async (event) => {
         .limit(500);
 
       if (error) return json(400, { error: error.message });
-      return json(200, data || []);
+      const sessions = data || [];
+      // Identify sessions missing usable summary (null, empty object, or stringified empty {})
+      const needs = sessions.filter(s => {
+        const raw = s.summary;
+        if (!raw) return true;
+        try {
+          const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (!obj) return true;
+          const keys = Object.keys(obj);
+          if (!keys.length) return true;
+          // If we already have score+total/accuracy keep it
+          if (typeof obj.accuracy === 'number') return false;
+          if (typeof obj.score === 'number' && typeof obj.total === 'number' && obj.total > 0) return false;
+          if (typeof obj.score === 'number' && typeof obj.max === 'number' && obj.max > 0) return false;
+          return true;
+        } catch { return true; }
+      }).map(s => s.session_id).filter(Boolean);
+
+      if (needs.length) {
+        // Fetch attempts for only these sessions to synthesize summaries.
+        // Use larger chunks and add retry logic for reliability
+        const CHUNK = 100; 
+        const attemptMap = new Map(); // session_id -> { total, correct }
+        console.log('[progress_summary] Synthesizing summaries for', needs.length, 'sessions');
+        
+        for (let i = 0; i < needs.length; i += CHUNK) {
+          const slice = needs.slice(i, i + CHUNK);
+          console.log('[progress_summary] Processing chunk', i/CHUNK + 1, 'of', Math.ceil(needs.length/CHUNK), '- session IDs:', slice.slice(0, 3));
+          
+          const { data: attempts, error: attErr } = await scope(
+            supabase
+              .from('progress_attempts')
+              .select('session_id, is_correct')
+              .in('session_id', slice)
+          );
+          
+          if (attErr) {
+            console.error('[progress_summary] Attempt fetch error for chunk:', attErr);
+            continue;
+          }
+          
+          console.log('[progress_summary] Found', (attempts || []).length, 'attempts for chunk');
+          (attempts || []).forEach(a => {
+            if (!a.session_id) return;
+            const cur = attemptMap.get(a.session_id) || { total: 0, correct: 0 };
+            cur.total += 1; 
+            if (a.is_correct) cur.correct += 1; 
+            attemptMap.set(a.session_id, cur);
+          });
+        }
+        
+        console.log('[progress_summary] Attempt map has', attemptMap.size, 'sessions with attempts');
+        let synthesized = 0;
+        sessions.forEach(s => {
+          if (!needs.includes(s.session_id)) return;
+          const agg = attemptMap.get(s.session_id);
+          if (!agg || !agg.total) {
+            console.log('[progress_summary] No attempts found for session:', s.session_id);
+            return;
+          }
+          const accuracy = agg.total ? (agg.correct / agg.total) : null;
+          s.summary = {
+            score: agg.correct,
+            total: agg.total,
+            accuracy,
+            derived: true
+          };
+          synthesized++;
+          console.log('[progress_summary] Synthesized summary for', s.session_id, ':', s.summary);
+        });
+        console.log('[progress_summary] Successfully synthesized', synthesized, 'summaries');
+      }
+      return json(200, sessions);
     }
 
     // ---------- ATTEMPTS ----------

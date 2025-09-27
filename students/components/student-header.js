@@ -190,25 +190,37 @@ class StudentHeader extends HTMLElement {
     border: 1px solid #e6eaef;
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0,0,0,.12);
-    min-width: 180px;
-    max-width: 90vw;
+    min-width: 230px; /* widened to avoid cramped text */
+    max-width: 320px; /* cap width for readability */
     padding: 8px;
-    display: none;
+    display: block; /* allow animation control via visibility/opacity */
     z-index: 1000;
-    overflow-x: auto;
+    overflow-x: hidden; /* prevent horizontal scrollbar */
+    overflow-y: auto; /* allow vertical scroll if many items */
+    /* Animation base state */
+    opacity: 0;
+    transform: translateX(16px) scale(.98);
+    pointer-events: none;
+    transition: opacity .28s ease, transform .32s cubic-bezier(.34,.9,.42,1.0);
+  }
+  .dropdown.opening, .dropdown.open { opacity:1; transform: translateX(0) scale(1); pointer-events:auto; }
+  .dropdown.closing { opacity:0; transform: translateX(12px) scale(.97); pointer-events:none; }
+  @media (prefers-reduced-motion: reduce) {
+    .dropdown { transition:none; transform:none !important; }
   }
   @media (max-width: 520px) {
     .dropdown {
       left: auto;
       right: 0;
-      min-width: 140px;
-      max-width: 96vw;
+      min-width: 170px; /* still a bit wider on mobile */
+      max-width: 96vw; /* allow near full width on very small screens */
       top: calc(100% + 4px);
-      font-size: 1.08em;
+      font-size: clamp(.85rem, 3.4vw, 1rem); /* responsive text */
     }
   }
-  .dropdown.open { display:block; }
-  .dd-item { display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid transparent; background:#fff; border-radius:10px; padding:10px 12px; cursor:pointer; font-weight:700; color: #19777e; }
+  .dropdown.open { /* keep class for legacy logic; now handled with states */ }
+  .dd-item { display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left; border:1px solid transparent; background:#fff; border-radius:10px; padding:9px 12px; cursor:pointer; font-weight:600; color: #19777e; font-size: clamp(.8rem, 2.6vw, .95rem); line-height:1.2; white-space: normal; overflow-wrap: anywhere; }
+  .dd-item svg { flex: 0 0 auto; margin-top:2px; }
   .dd-item:hover, .dd-item:focus { background:#f7fcfd; border-color:#e6eaef; outline:none; }
         .menu-row {
           margin-top:8px; padding-top:8px; border-top:1px solid #eef2f5;
@@ -287,6 +299,10 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M12 12c2.7 0 8 1.34 8 4v4H4v-4c0-2.66 5.3-4 8-4zm0-2a4 4 0 100-8 4 4 0 000 8z" fill="#19777e"/></svg>
                 Profile
               </a>
+              <button class="dd-item" id="logoutAction" role="menuitem" type="button" style="color:#c62828;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-11H9c-1.1 0-2 .9-2 2v4h2V4h10v16H9v-4H7v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#c62828"/></svg>
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -376,8 +392,27 @@ class StudentHeader extends HTMLElement {
     const avatarMenu = this.shadowRoot.getElementById('avatarMenu');
     const toggleMenu = (open) => {
       if (!avatarBtn || !avatarMenu) return;
-      const willOpen = open != null ? open : !avatarMenu.classList.contains('open');
-      avatarMenu.classList.toggle('open', willOpen);
+      const isOpen = avatarMenu.classList.contains('open') || avatarMenu.classList.contains('opening');
+      const willOpen = open != null ? open : !isOpen;
+      if (willOpen && !isOpen) {
+        avatarMenu.classList.remove('closing');
+        avatarMenu.classList.add('opening');
+        // force reflow then swap to steady open state
+        requestAnimationFrame(() => {
+          avatarMenu.classList.add('open');
+          avatarMenu.classList.remove('opening');
+        });
+      } else if (!willOpen && isOpen) {
+        avatarMenu.classList.remove('open');
+        avatarMenu.classList.add('closing');
+        const after = (e) => {
+          if (e.propertyName === 'opacity') {
+            avatarMenu.classList.remove('closing');
+            avatarMenu.removeEventListener('transitionend', after);
+          }
+        };
+        avatarMenu.addEventListener('transitionend', after);
+      }
       avatarBtn.setAttribute('aria-expanded', String(willOpen));
       if (willOpen) {
         const first = avatarMenu.querySelector('.dd-item');

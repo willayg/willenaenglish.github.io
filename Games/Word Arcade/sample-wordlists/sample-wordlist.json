@@ -1,12 +1,12 @@
 [
-  { "eng": "apple", "kor": "사과" },
-  { "eng": "banana", "kor": "바나나" },
-  { "eng": "cat", "kor": "고양이" },
-  { "eng": "dog", "kor": "개" },
-  { "eng": "school", "kor": "학교" },
-  { "eng": "teacher", "kor": "선생님" },
-  { "eng": "book", "kor": "책" },
-  { "eng": "computer", "kor": "컴퓨터" },
-  { "eng": "car", "kor": "자동차" },
-  { "eng": "music", "kor": "음악" }
+  { "eng": "apple", "kor": "사과", "def": "a round red or green fruit", "ex": "I eat an apple." },
+  { "eng": "banana", "kor": "바나나", "def": "a long yellow fruit", "ex": "I peel a banana." },
+  { "eng": "cat", "kor": "고양이", "def": "a small pet that meows", "ex": "The cat sleeps." },
+  { "eng": "dog", "kor": "개", "def": "a common pet that barks", "ex": "The dog runs." },
+  { "eng": "school", "kor": "학교", "def": "a place where students learn", "ex": "I go to school." },
+  { "eng": "teacher", "kor": "선생님", "def": "a person who teaches students", "ex": "The teacher smiles." },
+  { "eng": "book", "kor": "책", "def": "pages with words to read", "ex": "I read a book." },
+  { "eng": "computer", "kor": "컴퓨터", "def": "a machine you use to work or play", "ex": "I use a computer." },
+  { "eng": "car", "kor": "자동차", "def": "a vehicle with four wheels", "ex": "The car stops." },
+  { "eng": "music", "kor": "음악", "def": "sounds people play or sing", "ex": "I like music." }
 ]

@@ -1,14 +1,14 @@
 [
-  {"eng": "happy", "kor": "행복한"},
-  {"eng": "sad", "kor": "슬픈"},
-  {"eng": "angry", "kor": "화난"},
-  {"eng": "excited", "kor": "신난"},
-  {"eng": "scared", "kor": "무서운"},
-  {"eng": "bored", "kor": "지루한"},
-  {"eng": "tired", "kor": "피곤한"},
-  {"eng": "surprised", "kor": "놀란"},
-  {"eng": "nervous", "kor": "긴장한"},
-  {"eng": "proud", "kor": "자랑스러운"},
-  {"eng": "shy", "kor": "수줍은"},
-  {"eng": "confused", "kor": "혼란스러운"}
+  {"eng": "happy", "kor": "행복한", "def": "feeling good and glad", "ex": "I feel happy."},
+  {"eng": "sad", "kor": "슬픈", "def": "feeling unhappy", "ex": "She feels sad."},
+  {"eng": "angry", "kor": "화난", "def": "feeling mad", "ex": "He feels angry."},
+  {"eng": "excited", "kor": "신난", "def": "feeling very eager and glad", "ex": "We feel excited."},
+  {"eng": "scared", "kor": "무서운", "def": "feeling afraid", "ex": "I feel scared."},
+  {"eng": "bored", "kor": "지루한", "def": "not interested", "ex": "They feel bored."},
+  {"eng": "tired", "kor": "피곤한", "def": "needing rest", "ex": "I feel tired."},
+  {"eng": "surprised", "kor": "놀란", "def": "feeling sudden wonder", "ex": "She feels surprised."},
+  {"eng": "nervous", "kor": "긴장한", "def": "worried about something", "ex": "I feel nervous."},
+  {"eng": "proud", "kor": "자랑스러운", "def": "feeling good about something done", "ex": "He feels proud."},
+  {"eng": "shy", "kor": "수줍은", "def": "not wanting to be looked at", "ex": "The boy feels shy."},
+  {"eng": "confused", "kor": "혼란스러운", "def": "not sure what is happening", "ex": "I feel confused."}
 ]

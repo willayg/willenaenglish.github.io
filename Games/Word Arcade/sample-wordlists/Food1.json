@@ -1,12 +1,12 @@
 [
-  {"eng": "apple", "kor": "사과"},
-  {"eng": "banana", "kor": "바나나"},
-  {"eng": "orange", "kor": "오렌지"},
-  {"eng": "grape", "kor": "포도"},
-  {"eng": "watermelon", "kor": "수박"},
-  {"eng": "strawberry", "kor": "딸기"},
-  {"eng": "pear", "kor": "배"},
-  {"eng": "peach", "kor": "복숭아"},
-  {"eng": "cherry", "kor": "체리"},
-  {"eng": "lemon", "kor": "레몬"}
+  {"eng": "apple", "kor": "사과", "def": "a round red or green fruit", "ex": "I eat an apple."},
+  {"eng": "banana", "kor": "바나나", "def": "a long yellow fruit", "ex": "I peel a banana."},
+  {"eng": "orange", "kor": "오렌지", "def": "a round orange citrus fruit", "ex": "I eat an orange."},
+  {"eng": "grape", "kor": "포도", "def": "a small round sweet fruit", "ex": "She eats grapes."},
+  {"eng": "watermelon", "kor": "수박", "def": "a very large green melon", "ex": "We cut a watermelon."},
+  {"eng": "strawberry", "kor": "딸기", "def": "a small red sweet fruit", "ex": "He picks a strawberry."},
+  {"eng": "pear", "kor": "배", "def": "a sweet fruit with a wide bottom", "ex": "I slice a pear."},
+  {"eng": "peach", "kor": "복숭아", "def": "a soft fruit with fuzzy skin", "ex": "I bite a peach."},
+  {"eng": "cherry", "kor": "체리", "def": "a small round red fruit", "ex": "She eats a cherry."},
+  {"eng": "lemon", "kor": "레몬", "def": "a sour yellow citrus fruit", "ex": "I cut a lemon."}
 ]

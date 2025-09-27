@@ -1,14 +1,14 @@
 [
-  {"eng": "soccer", "kor": "축구"},
-  {"eng": "basketball", "kor": "농구"},
-  {"eng": "baseball", "kor": "야구"},
-  {"eng": "tennis", "kor": "테니스"},
-  {"eng": "volleyball", "kor": "배구"},
-  {"eng": "swimming", "kor": "수영"},
-  {"eng": "running", "kor": "달리기"},
-  {"eng": "cycling", "kor": "자전거 타기"},
-  {"eng": "skiing", "kor": "스키"},
-  {"eng": "skating", "kor": "스케이트"},
-  {"eng": "golf", "kor": "골프"},
-  {"eng": "badminton", "kor": "배드민턴"}
+  {"eng": "soccer", "kor": "축구", "def": "a game where players kick a ball into a goal", "ex": "We play soccer."},
+  {"eng": "basketball", "kor": "농구", "def": "a game where players shoot a ball into a hoop", "ex": "They play basketball."},
+  {"eng": "baseball", "kor": "야구", "def": "a game where players hit a ball and run bases", "ex": "He plays baseball."},
+  {"eng": "tennis", "kor": "테니스", "def": "a game hitting a ball over a net", "ex": "She plays tennis."},
+  {"eng": "volleyball", "kor": "배구", "def": "a game hitting a ball over a high net", "ex": "We play volleyball."},
+  {"eng": "swimming", "kor": "수영", "def": "moving through water with arms and legs", "ex": "I enjoy swimming."},
+  {"eng": "running", "kor": "달리기", "def": "moving fast on your feet", "ex": "He likes running."},
+  {"eng": "cycling", "kor": "자전거 타기", "def": "riding a bicycle for sport", "ex": "She likes cycling."},
+  {"eng": "skiing", "kor": "스키", "def": "moving on snow with skis", "ex": "We go skiing."},
+  {"eng": "skating", "kor": "스케이트", "def": "moving on wheels or blades", "ex": "She enjoys skating."},
+  {"eng": "golf", "kor": "골프", "def": "a game hitting a small ball into holes", "ex": "He plays golf."},
+  {"eng": "badminton", "kor": "배드민턴", "def": "a game hitting a shuttle over a net", "ex": "They play badminton."}
 ]
