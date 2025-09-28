@@ -63,26 +63,22 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
       if (isSampleList) {
         const em = getEmojiFor(w.eng);
         return em && isEmojiSupported(em);
-      } else {
-        if (hasValidImg(w)) return true;
-        const em = getEmojiFor(w.eng);
-        return em && isEmojiSupported(em);
       }
+      return hasValidImg(w); // user content: require real image
     });
   }
   function tileHtml(w) {
     if (isSampleList) {
       const em = getEmojiFor(w.eng) || '❓';
-      return `<div style="font-size:3.2rem;line-height:1;">${em}</div>`;
-    } else {
-      if (hasValidImg(w)) {
-        const src = (w.image_url || w.image || w.img).trim();
-  ensureImageStyles();
-  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${src}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:3.2rem;line-height:1;display:none;\">❓</div>`;
-      }
-      const em = getEmojiFor(w.eng) || '❓';
-      return `<div style="font-size:3.2rem;line-height:1;">${em}</div>`;
+      return `<div style=\"font-size:3.2rem;line-height:1;\">${em}</div>`;
     }
+    const src = (w.image_url || w.image || w.img).trim();
+    ensureImageStyles();
+    // Include an inline fallback so a failed image shows the word instead of a blank tile
+    return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;display:flex;align-items:center;justify-content:center;position:relative;\">
+      <img src='${src}' alt='${w.eng}' style=\"max-width:100%;max-height:100%;object-fit:cover;\" onerror=\"this.style.display='none';this.nextElementSibling.style.display='flex';\">
+      <div class=\"wa-img-fallback\" style=\"display:none;font-size:clamp(1rem,3.1vw,1.35rem);font-weight:600;padding:4px;text-align:center;\">${w.eng}</div>
+    </div>`;
   }
   let picturable = [];
   let canDoPictures = false;
@@ -134,7 +130,12 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
 
     // Decide question type: alternate text vs picture when possible
     const currentCanBePicture = canDoPictures && picturable.some(w => w.eng === current.eng);
-    const askPicture = currentCanBePicture && usePictureNext;
+    // Only ask for a picture round if we can assemble 4 fully visual options (current + 3 others)
+    let askPicture = false;
+    if (currentCanBePicture) {
+      const others = picturable.filter(w => w.eng !== current.eng);
+      if (others.length >= 3) askPicture = usePictureNext; // alternate only if feasible
+    }
 
     if (askPicture) {
       // Build 4 picture choices (1 correct + 3 distractors)

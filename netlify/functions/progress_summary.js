@@ -666,6 +666,42 @@ exports.handler = async (event) => {
       return json(200, cleaned.slice(0, 20));
     }
 
+    // ---------- CHALLENGING_V2 (last20 accuracy algorithm) ----------
+    if (section === 'challenging_v2') {
+      // New lightweight server-side logic delegates aggregation to SQL function challenging_words_v2
+      // Falls back gracefully if RPC missing.
+      try {
+        const { data, error: rpcErr } = await supabase.rpc('challenging_words_v2', { p_user_id: userId, p_limit: 30 });
+        if (rpcErr) {
+          console.error('[progress_summary] challenging_v2 RPC error, falling back to empty list:', rpcErr);
+          return json(200, []);
+        }
+        const sanitizeWord = (s) => {
+          if (!s || typeof s !== 'string') return '';
+          let t = s;
+          t = t.replace(/\s{2,}/g, ' ').trim();
+          return t;
+        };
+        const badSuffix = /_(sentence|broken|fillblank)\b/i;
+        const out = (data || []).map(r => ({
+          word: sanitizeWord(r.word_en || r.word || ''),
+          word_en: sanitizeWord(r.word_en || r.word || ''),
+          word_kr: sanitizeWord(r.word_kr || ''),
+          attempts: r.attempts,
+          correct: r.correct,
+          incorrect: r.incorrect,
+          accuracy: typeof r.accuracy === 'number' ? Number(r.accuracy) : (r.accuracy ? Number(r.accuracy) : null)
+        }))
+          .filter(r => r.word_en && r.word_kr)
+          // Exclude sentence or meta entries (contain underscore or known suffix patterns)
+          .filter(r => !r.word_en.includes('_') && !badSuffix.test(r.word_en));
+        return json(200, out);
+      } catch (e) {
+        console.error('[progress_summary] challenging_v2 unexpected error', e);
+        return json(200, []);
+      }
+    }
+
   return json(400, { error: 'Unknown section', section });
   } catch (e) {
   console.error('[progress_summary] ERROR:', e && e.stack || e);

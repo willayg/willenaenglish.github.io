@@ -1,0 +1,137 @@
+[
+  {
+    "file": "Animals2.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 10,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "EasyAnimals.json",
+    "total": 20,
+    "processing": 20,
+    "skippedExisting": 20,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "EasyHobbies.json",
+    "total": 20,
+    "processing": 20,
+    "skippedExisting": 20,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "EasyJobs.json",
+    "total": 20,
+    "processing": 20,
+    "skippedExisting": 20,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "EasyVerbs.json",
+    "total": 20,
+    "processing": 20,
+    "skippedExisting": 20,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "Feelings.json",
+    "total": 12,
+    "processing": 12,
+    "skippedExisting": 12,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "Food1.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 10,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "Food2.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 10,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "Food3.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 10,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "LongU.json",
+    "total": 19,
+    "processing": 19,
+    "skippedExisting": 19,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "sample-wordlist-15.json",
+    "total": 15,
+    "processing": 15,
+    "skippedExisting": 15,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "sample-wordlist.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 10,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "SchoolSupplies.json",
+    "total": 15,
+    "processing": 15,
+    "skippedExisting": 15,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "Sports.json",
+    "total": 12,
+    "processing": 12,
+    "skippedExisting": 12,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  },
+  {
+    "file": "Transportation.json",
+    "total": 20,
+    "processing": 20,
+    "skippedExisting": 20,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0
+  }
+]

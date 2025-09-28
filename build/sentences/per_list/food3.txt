@@ -1,0 +1,24 @@
+# List: Food3
+# Words
+pizza
+hamburger
+sandwich
+spaghetti
+salad
+hotdog
+fries
+ice cream
+cake
+cookie
+
+# Sentences
+We eat pizza.
+He eats a hamburger.
+I make a sandwich.
+We eat spaghetti.
+She eats salad.
+I eat a hotdog.
+We share fries.
+I like ice cream.
+She cuts a cake.
+I eat a cookie.

@@ -1,0 +1,24 @@
+# List: sample-wordlist
+# Words
+apple
+banana
+cat
+dog
+school
+teacher
+book
+computer
+car
+music
+
+# Sentences
+I eat an apple.
+I peel a banana.
+The cat sleeps.
+The dog runs.
+I go to school.
+The teacher smiles.
+I read a book.
+I use a computer.
+The car stops.
+I like music.

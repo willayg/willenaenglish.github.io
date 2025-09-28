@@ -1,0 +1,24 @@
+# List: Food1
+# Words
+apple
+banana
+orange
+grape
+watermelon
+strawberry
+pear
+peach
+cherry
+lemon
+
+# Sentences
+I eat an apple.
+I peel a banana.
+I eat an orange.
+She eats grapes.
+We cut a watermelon.
+He picks a strawberry.
+I slice a pear.
+I bite a peach.
+She eats a cherry.
+I cut a lemon.

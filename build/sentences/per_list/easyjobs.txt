@@ -1,0 +1,44 @@
+# List: EasyJobs
+# Words
+doctor
+nurse
+teacher
+student
+police
+firefighter
+chef
+farmer
+artist
+musician
+pilot
+engineer
+mechanic
+scientist
+programmer
+writer
+actor
+dancer
+waiter
+driver
+
+# Sentences
+The doctor helps patients.
+The nurse checks patients.
+The teacher explains lessons.
+The student reads books.
+The police help people.
+The firefighter sprays water.
+The chef cooks meals.
+The farmer plants seeds.
+The artist paints pictures.
+The musician plays songs.
+The pilot flies an airplane.
+The engineer builds bridges.
+The mechanic fixes cars.
+The scientist tests ideas.
+The programmer writes apps.
+The writer writes books.
+The actor learns lines.
+The dancer practices moves.
+The waiter carries plates.
+The driver drives a bus.

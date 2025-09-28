@@ -10,6 +10,10 @@ import { showModeModal } from './ui/mode_modal.js';
 import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
 import { FN } from './scripts/api-base.js';
+// Review manager (provenance + enrichment for review attempts)
+// Legacy review manager (kept for rollback) not needed for new flow.
+// import { ReviewManager } from './modes/review.js';
+import { showReviewSelectionModal, runReviewSession } from './modes/review_session.js';
 
 // -----------------------------
 // Auth redirect helper
@@ -125,6 +129,7 @@ let wordList = [];
 let currentMode = null;
 let currentListName = null;
 let currentPreloadAbort = null; // for abortable audio preload
+let activeModeCleanup = null; // optional cleanup function returned by mode runners
 
 const gameArea = document.getElementById('gameArea');
 
@@ -156,6 +161,55 @@ function restoreSessionStateIfEmpty() {
       if (ln) currentListName = ln;
     }
   } catch {}
+}
+
+// -----------------------------
+// Hard reset / quit helpers
+// -----------------------------
+function clearSessionState() {
+  try {
+    sessionStorage.removeItem('WA_words');
+    sessionStorage.removeItem('WA_list_name');
+  } catch {}
+}
+
+function resetProgressBar() {
+  const wrap = document.getElementById('gameProgressBar');
+  const fill = document.getElementById('gameProgressFill');
+  const txt = document.getElementById('gameProgressText');
+  if (fill) fill.style.width = '0%';
+  if (txt) txt.textContent = '0/0';
+  if (wrap) wrap.style.display = 'none';
+}
+
+function destroyModeIfActive() {
+  try { if (typeof activeModeCleanup === 'function') activeModeCleanup(); } catch (e) { console.warn('[WordArcade] Mode cleanup error', e); }
+  activeModeCleanup = null;
+}
+
+function clearCurrentGameState({ keepWordList = false } = {}) {
+  // Abort any pending audio work
+  if (currentPreloadAbort) { try { currentPreloadAbort.abort(); } catch {} }
+  currentPreloadAbort = null;
+  destroyModeIfActive();
+  if (!keepWordList) {
+    wordList = [];
+    currentListName = null;
+    clearSessionState();
+  }
+  currentMode = null;
+  // Clear UI surface
+  if (gameArea) gameArea.replaceChildren();
+  resetProgressBar();
+  // Remove lingering quit button
+  try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
+  // Remove missing audio set for safety
+  try { delete window.__WA_MISSING_AUDIO; } catch {}
+}
+
+function quitToOpening(fully = false) {
+  clearCurrentGameState({ keepWordList: !fully });
+  showOpeningButtons(true);
 }
 
 // -----------------------------
@@ -217,35 +271,60 @@ async function callProgressSummary(section, params = {}) {
 }
 
 async function fetchChallengingWords() {
-  const list = await callProgressSummary('challenging');
+  // Prefer new v2 algorithm; allow fallback if disabled globally
+  const section = (window.__WA_REVIEW_ALGO === 'legacy') ? 'challenging' : 'challenging_v2';
+  const list = await callProgressSummary(section);
   if (!Array.isArray(list)) return [];
-  // Client-side safety: remove any bracketed [picture] tokens and surrounding dashes/punctuation
-  const sanitize = (s) => {
+  const hasHangul = (s) => /[\u3131-\uD79D\uAC00-\uD7AF]/.test(s);
+  const hasLatin = (s) => /[A-Za-z]/.test(s);
+  const sanitizeToken = (s) => {
     if (!s || typeof s !== 'string') return '';
-    let t = s;
-    t = t.replace(/[\[\(\{]\s*picture\s*[\]\)\}]\s*[-–—_:]*\s*/gi, '');
-    t = t.replace(/\s*[\[\(\{]\s*picture\s*[\]\)\}]\s*/gi, ' ');
-    t = t.replace(/^[\s\-–—_:,.;'"`~]+/, '').replace(/[\s\-–—_:,.;'"`~]+$/, '');
-    t = t.replace(/\s{2,}/g, ' ');
-    return t.trim();
+    return s
+      .replace(/[\[\(\{]\s*picture\s*[\]\)\}]/gi,'')
+      .replace(/^[\s\-–—_:,.;'"`~]+/, '')
+      .replace(/[\s\-–—_:,.;'"`~]+$/, '')
+      .replace(/\s{2,}/g,' ')
+      .trim();
   };
-  const out = list.map(it => {
-    const eng = it.word_en || it.word || it.eng || '';
-    const kor = it.word_kr || it.kor || it.translation || '';
-    const def = it.def || it.definition || it.meaning || '';
-    const w = { eng: sanitize(String(eng).trim()), kor: sanitize(String(kor || '').trim()) };
-    if (def && String(def).trim()) w.def = String(def).trim();
-    return w;
-  }).filter(w => w.eng && w.kor)
-    .filter(w => {
-      const isPlaceholder = (s) => {
-        if (!s) return false; const t = String(s).trim().toLowerCase();
-        const core = t.replace(/^[\s\[\(\{]+|[\s\]\)\}]+$/g, '');
-        return t === '[picture]' || core === 'picture';
-      };
-      return !isPlaceholder(w.eng) && !isPlaceholder(w.kor);
-    });
-  return out;
+  const sanitizeEntry = (it) => {
+    if (!it || typeof it !== 'object') return null;
+    let eng = sanitizeToken(String(it.word_en || it.word || it.eng || ''));
+    let kor = sanitizeToken(String(it.word_kr || it.kor || it.translation || ''));
+    const defRaw = it.def || it.definition || it.meaning || '';
+    // Swap heuristic
+    if (eng && kor && hasHangul(eng) && !hasHangul(kor) && hasLatin(kor) && !hasLatin(eng)) {
+      [eng, kor] = [kor, eng];
+    } else if (eng && !hasLatin(eng) && hasLatin(kor) && hasHangul(eng)) {
+      [eng, kor] = [kor, eng];
+    }
+    if (!eng || !kor) return null;
+    // Skip obvious duplicate both-Korean same string
+    if (hasHangul(eng) && hasHangul(kor) && !hasLatin(eng)) {
+      const a = eng.replace(/\s+/g,'').toLowerCase();
+      const b = kor.replace(/\s+/g,'').toLowerCase();
+      if (a === b) return null;
+    }
+    const def = (defRaw && String(defRaw).trim()) ? String(defRaw).trim() : undefined;
+    return { eng, kor, ...(def?{def}:{} )};
+  };
+  const cleaned = list.map(sanitizeEntry).filter(Boolean);
+  // If after cleaning we have <5, relax duplicate Korean rule by reprocessing skipped ones (without the identical Hangul check)
+  if (cleaned.length < 5) {
+    const relaxed = list.map(it => {
+      if (!it || typeof it !== 'object') return null;
+      let eng = sanitizeToken(String(it.word_en || it.word || it.eng || ''));
+      let kor = sanitizeToken(String(it.word_kr || it.kor || it.translation || ''));
+      if (!eng || !kor) return null;
+      return { eng, kor };
+    }).filter(Boolean);
+    // Merge any new not-already-present
+    const existing = new Set(cleaned.map(w => w.eng + '|' + w.kor));
+    for (const r of relaxed) {
+      const key = r.eng + '|' + r.kor;
+      if (!existing.has(key)) { cleaned.push(r); existing.add(key); if (cleaned.length >= 5) break; }
+    }
+  }
+  return cleaned;
 }
 
 async function processWordlist(data) {
@@ -274,15 +353,25 @@ async function processWordlist(data) {
     }
 
     showGameStart(() => {
-      // If generation disabled, preloadSummary may contain missing list. Filter for modes that need audio later.
       if (preloadSummary && preloadSummary.missing && preloadSummary.missing.length) {
         inlineToast(`Audio unavailable for ${preloadSummary.missing.length} word${preloadSummary.missing.length>1?'s':''}. These will be skipped in audio modes.`);
-        // Store skip list globally for modes that require audio (they can test before presenting a question)
         window.__WA_MISSING_AUDIO = new Set(preloadSummary.missing.map(w => String(w).trim().toLowerCase()));
       } else if (preloadError) {
         inlineToast('Audio problem – starting anyway.');
       }
+      // Persist again in case we force-cleared earlier
+      try { saveSessionState(); } catch {}
       startModeSelector();
+      // One-time deferred re-render if header/title or stats didn't populate yet
+      setTimeout(() => {
+        try {
+          const headerTitle = document.querySelector('#modeHeader .file-title');
+          const needsRerender = !headerTitle || !headerTitle.textContent || /Word List/i.test(headerTitle.textContent);
+          if (currentListName && needsRerender) {
+            startModeSelector();
+          }
+        } catch {}
+      }, 180);
     });
 
   } catch (err) {
@@ -293,11 +382,16 @@ async function processWordlist(data) {
   }
 }
 
-async function loadSampleWordlistByFilename(filename) {
+async function loadSampleWordlistByFilename(filename, { force = false } = {}) {
   try {
     if (!filename) throw new Error('No filename');
     // optional filename safety if user-provided
     if (!/^[A-Za-z0-9._-]+$/.test(filename)) throw new Error('Invalid filename');
+
+    // If forcing a fresh start or we still have a previous list loaded, clear previous game state first
+    if (force || (Array.isArray(wordList) && wordList.length)) {
+      try { clearCurrentGameState({ keepWordList: false }); } catch {}
+    }
 
     currentListName = filename || 'Sample List';
     // Attempt primary fetch plus fallback variants for names with spaces vs underscores/hyphens
@@ -337,13 +431,13 @@ function startModeSelector() {
   restoreSessionStateIfEmpty();
   renderModeSelector({
     onModeChosen: (mode) => { currentMode = mode; startGame(mode); },
-    onWordsClick: (filename) => { if (filename) loadSampleWordlistByFilename(filename); },
+  onWordsClick: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); },
   });
 }
 
 function startFilePicker() {
   showOpeningButtons(true);
-  showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename); } });
+  showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); } });
 }
 
 // -----------------------------
@@ -364,6 +458,8 @@ const modeLoaders = {
 export async function startGame(mode = 'meaning') {
   showOpeningButtons(false);
   if (!wordList.length) { showOpeningButtons(true); gameArea.innerHTML = ''; return; }
+  // Clear any previous mode (when switching)
+  destroyModeIfActive();
 
   renderGameView({
     modeName: mode,
@@ -380,7 +476,8 @@ export async function startGame(mode = 'meaning') {
   const pick = modeLoaders[mode] || modeLoaders.meaning;
   const run = await pick();
   const ctx = { wordList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
-  run(ctx);
+  const maybeCleanup = run(ctx);
+  if (typeof maybeCleanup === 'function') activeModeCleanup = maybeCleanup;
 }
 
 // In-game progress bar helpers
@@ -494,7 +591,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const reviewBtn = document.getElementById('reviewBtn');
   const browseBtn = document.getElementById('browseBtn');
   if (basicBtn) basicBtn.addEventListener('click', () => {
-    showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename); } });
+    showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); } });
   });
   if (reviewBtn) reviewBtn.addEventListener('click', () => { loadChallengingAndStart(); });
   if (browseBtn) browseBtn.addEventListener('click', () => { openSavedGamesModal(); });
@@ -518,56 +615,55 @@ window.WordArcade = {
   getWordList: () => wordList,
   getListName: () => currentListName,
   openSavedGames: () => openSavedGamesModal(),
+  quitToOpening,
+  clearCurrentGameState,
 };
 
 // Review flow using secure endpoint
+// Rollback toggle: set window.__WA_REVIEW_V2 = false before clicking Review to fallback (not implemented old code retained separately if needed)
 async function loadChallengingAndStart() {
+  if (window.__WA_REVIEW_V2 === false) {
+    inlineToast('Legacy review mode disabled in this build.');
+    return;
+  }
   try {
-    let cleaned = await fetchChallengingWords();
-    if (!cleaned.length) {
-      inlineToast('No challenging words to review yet.');
-      return;
-    }
-    // Cap to 10 hardest/due items
-    cleaned = cleaned.slice(0, 10);
-    // Preview modal
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px;';
-    const modal = document.createElement('div');
-    modal.style.cssText = 'width:min(520px,92vw);max-height:86vh;background:#fff;border-radius:16px;border:2px solid #67e2e6;box-shadow:0 8px 30px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column;';
-    modal.innerHTML = `
-      <div style="padding:12px 14px;border-bottom:1px solid #e6eaef;display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-weight:800;color:#19777e;">Review Preview</div>
-        <button id="rvwClose" style="appearance:none;border:none;background:#fff;color:#19777e;font-weight:800;font-size:18px;cursor:pointer;">✕</button>
-      </div>
-      <div style="padding:10px 12px;">
-        <div style="color:#248b86ff;margin-bottom:8px;font-weight:700;">You will review these ${cleaned.length} difficult words:</div>
-        <div id="rvwList" style="max-height:48vh;overflow:auto;border:1px solid #e6eaef;border-radius:10px;padding:8px;">
-          ${cleaned.map(w => `<div style='display:flex;align-items:center;justify-content:space-between;padding:6px 4px;border-bottom:1px dashed #edf1f4;'><span style='font-weight:800;color:#19777e;'>${(w.eng||w.word||'').toString()}</span><span style='color:#6b7a8f;margin-left:8px;'>${(w.kor||w.word_kr||'').toString()}</span></div>`).join('')}
-        </div>
-        <div style="margin-top:10px;font-size:12px;color:#888;">Scoring in Review: +3 points per correct answer.</div>
-      </div>
-      <div style="padding:10px 12px;border-top:1px solid #e6eaef;display:flex;justify-content:flex-end;gap:8px;">
-        <button id="rvwCancel" class="btn-ghost" style="background:#fff;border:1px solid #e6eaef;border-radius:12px;padding:10px 14px;cursor:pointer;">Cancel</button>
-        <button id="rvwStart" class="btn-primary" style="background:#19777e;color:#fff;border:1px solid #19777e;border-radius:12px;padding:10px 14px;cursor:pointer;">Start</button>
-      </div>
-    `;
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    const dismiss = () => { try { overlay.remove(); } catch {} };
-    modal.querySelector('#rvwClose')?.addEventListener('click', dismiss);
-    modal.querySelector('#rvwCancel')?.addEventListener('click', dismiss);
-    modal.querySelector('#rvwStart')?.addEventListener('click', async () => {
-      dismiss();
-      currentListName = 'Review List';
-      await processWordlist(cleaned.map(w => ({ eng: w.eng || w.word, kor: w.kor || w.word_kr, def: w.def })));
+    let words = await fetchChallengingWords();
+    if (!Array.isArray(words)) words = [];
+    // Defensive sanitize: drop any non-object or missing eng/kor pairs
+    words = words.filter(w => w && typeof w === 'object' && typeof w.eng === 'string' && typeof w.kor === 'string' && w.eng.trim() && w.kor.trim());
+    if (!words.length) { inlineToast('No challenging words to review yet.'); return; }
+    // Keep full list for selection; enforce max 10 in selection modal.
+    try { if (window.__WA_DEBUG_REVIEW) console.debug('[Review] candidate words', words); } catch {}
+    showReviewSelectionModal(words, {
+      min: 5,
+      max: 10,
+      onStart: (chosen) => {
+        try { startNewReviewCombined(chosen); } catch (e) { console.error('Review start failed', e); inlineToast('Could not start review.'); }
+      },
+      onCancel: () => {}
     });
   } catch (e) {
-    if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
-      inlineToast('Please sign in to use Review.');
-      return;
-    }
+    if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) { inlineToast('Please sign in to use Review.'); return; }
     console.error('Failed to load challenging words:', e);
-    inlineToast('Could not load your review list. Please try again.');
+    inlineToast('Could not load review candidates.');
   }
+}
+
+function startNewReviewCombined(chosenWords) {
+  // Clear any active mode and render into gameArea directly (no mode selector)
+  destroyModeIfActive();
+  showOpeningButtons(false);
+  gameArea.innerHTML = '';
+  currentListName = 'Review (Custom)';
+  const mount = document.createElement('div');
+  gameArea.appendChild(mount);
+  runReviewSession({
+    words: chosenWords.map(w => ({ eng: w.eng || w.word, kor: w.kor || w.word_kr, def: w.def })),
+    mount,
+    onFinish: ({ aborted }) => {
+      if (aborted) { quitToOpening(true); return; }
+      // After finish, return to opening buttons
+      setTimeout(() => { quitToOpening(true); }, 400);
+    }
+  });
 }

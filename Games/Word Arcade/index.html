@@ -76,16 +76,16 @@
         <span>Basic</span>
       </button>
       <button id="assignmentsBtn" class="wa-option wa-option-card wa-for-you" type="button">
-        <img src="./assets/Images/icons/for you.png?v=20250910a" alt="For You" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-        <span>For You</span>
+        <img src="./assets/Images/icons/for you.png?v=20250910a" alt="Your Work" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span>Your Work</span>
       </button>
       <button id="reviewBtn" class="wa-option wa-option-card wa-review" type="button">
-        <img src="./assets/Images/icons/review.png?v=20250910a" alt="Review" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-        <span>Review</span>
+        <img src="./assets/Images/icons/review.png?v=20250910a" alt="3X Challenge" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span>3X Challenge</span>
       </button>
       <button id="browseBtn" class="wa-option wa-option-card wa-browse" type="button">
-        <img src="./assets/Images/icons/browse.png?v=20250910a" alt="Browse" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-        <span>Browse</span>
+        <img src="./assets/Images/icons/browse.png?v=20250910a" alt="Discover" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span>Discover</span>
       </button>
     </div>
 
@@ -120,10 +120,20 @@
     document.addEventListener('DOMContentLoaded', () => {
       const menuBtn = $('#menuBtn');
       if (menuBtn) menuBtn.addEventListener('click', () => {
-        const sg = document.getElementById('savedGamesModal'); if (sg) sg.style.display = 'none';
-        const overlay = document.getElementById('modalOverlay'); if (overlay) overlay.style.display = 'none';
-        const ga = document.getElementById('gameArea'); if (ga) ga.replaceChildren();
-        const open = document.getElementById('openingButtons'); if (open) open.style.display = '';
+        // Use central quit helper so all state (word list, mode cleanup, progress bar, quit button) is fully reset.
+        if (window.WordArcade?.quitToOpening) {
+          window.WordArcade.quitToOpening(true); // full reset (do not keep current list)
+        } else {
+          // Fallback: mimic minimal reset if global API not ready
+          try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
+          const sg = document.getElementById('savedGamesModal'); if (sg) sg.style.display = 'none';
+          const overlay = document.getElementById('modalOverlay'); if (overlay) overlay.style.display = 'none';
+          const ga = document.getElementById('gameArea'); if (ga) ga.replaceChildren();
+          const open = document.getElementById('openingButtons'); if (open) open.style.display = '';
+          const pb = document.getElementById('gameProgressBar'); if (pb) pb.style.display = 'none';
+          const fill = document.getElementById('gameProgressFill'); if (fill) fill.style.width = '0%';
+          const txt = document.getElementById('gameProgressText'); if (txt) txt.textContent = '0/0';
+        }
       });
 
       const levelsBtn = $('#levelsBtn');

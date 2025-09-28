@@ -44,36 +44,37 @@ async function loadEmojiMappings() {
 
 export async function runEasyPictureMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
-  // Check if this is a sample list (basic wordlists use emoji, user content uses Pixabay)
   const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
   await loadEmojiMappings();
 
-  // Only use entries with image or supported emoji available
-  const available = wordList.filter(w => {
-    if (!w || !w.eng) return false;
-    if (isSampleList) {
-      // For sample lists, prefer emoji over images
-      const key = String(w.eng).toLowerCase();
-      const emoji = emojiMap[key];
-      return emoji && isEmojiSupported(emoji);
-    } else {
-      // For user content, require actual images
-      if (w.img) return true;
-      const key = String(w.eng).toLowerCase();
-      const emoji = emojiMap[key];
-      return emoji && isEmojiSupported(emoji);
-    }
-  });
-  if (available.length < 4) {
-    gameArea.innerHTML = '<div style="padding:40px;text-align:center;color:#888;font-size:1.1em;">Need at least 4 items with pictures or emojis for Easy Picture mode.</div>';
+  // Base cleaned list (allow non-visual entries for fallback text questions)
+  const allWords = (wordList || []).filter(w => w && w.eng);
+  if (allWords.length < 4) {
+    gameArea.innerHTML = '<div style="padding:40px;text-align:center;color:#888;font-size:1.05em;">Need at least 4 words in the list for Easy Picture mode.</div>';
     return;
   }
 
-  // Shuffle question order
-  const ordered = [...available].sort(() => Math.random() - 0.5);
+  // Picturable subset (sample: emoji-supported; user: must have real image)
+  function hasValidImg(w) {
+    const src = (w.image_url || w.image || w.img || '').trim();
+    if (!src) return false;
+    const lower = src.toLowerCase();
+    if (lower === 'null' || lower === 'undefined' || lower.startsWith('data:')) return false;
+    return true;
+  }
+  const picturable = allWords.filter(w => {
+    if (isSampleList) {
+      const em = emojiMap[String(w.eng).toLowerCase()];
+      return em && isEmojiSupported(em);
+    }
+    return hasValidImg(w);
+  });
+
+  // Shuffle order of all words (not just picturable) for broader exposure
+  const ordered = [...allWords].sort(() => Math.random() - 0.5);
   let score = 0;
   let idx = 0;
-  const sessionId = startSession({ mode: 'easy_picture', wordList: available, listName });
+  const sessionId = startSession({ mode: 'easy_picture', wordList: allWords, listName });
 
   // Intro splash
   gameArea.innerHTML = `
@@ -90,24 +91,29 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
     }, 650);
   }, 1000);
 
-  function getTileHtml(wordEntry) {
+  function tileHtml(w) {
     if (isSampleList) {
-      // For sample lists, always use emoji
-      const key = String(wordEntry.eng).toLowerCase();
-      const emoji = emojiMap[key] || '❓';
-      return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
-    } else {
-      // For user content, prefer Pixabay images with emoji fallback
-      const hasImg = typeof wordEntry.img === 'string' && wordEntry.img.trim() && wordEntry.img.toLowerCase() !== 'null' && wordEntry.img.toLowerCase() !== 'undefined';
-      if (hasImg) {
-        const safeSrc = wordEntry.img.trim();
-  ensureImageStyles();
-  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${safeSrc}' alt='${wordEntry.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:3.2rem;line-height:1;display:none;\">❓</div>`;
+      const em = emojiMap[String(w.eng).toLowerCase()];
+      if (em && isEmojiSupported(em)) {
+        return `<div style=\"font-size:3.2rem;line-height:1;\">${em}</div>`;
       }
-      const key = String(wordEntry.eng).toLowerCase();
-      const emoji = emojiMap[key] || '❓';
-      return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
+      return `<div style=\"font-size:clamp(1rem,2.9vw,1.3rem);font-weight:600;line-height:1.2;padding:4px;\">${w.kor || w.eng}</div>`;
     }
+    const src = (w.image_url || w.image || w.img || '').trim();
+    ensureImageStyles();
+    return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;display:flex;align-items:center;justify-content:center;\"><img src='${src}' alt='${w.eng}' style=\"max-width:100%;max-height:100%;object-fit:cover;\" onerror=\"this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';\"><div style=\"display:none;font-size:clamp(.95rem,2.6vw,1.25rem);font-weight:600;padding:4px;text-align:center;\">${w.kor || w.eng}</div></div>`;
+  }
+
+  function canAskPicture(current, distractorPool) {
+    if (isSampleList) {
+      if (!picturable.some(w => w.eng === current.eng)) return false;
+      const others = picturable.filter(w => w.eng !== current.eng);
+      return others.length >= 3; // emoji-based
+    }
+    // user content: need image for current + 3 others
+    if (!picturable.some(w => w.eng === current.eng)) return false;
+    const others = picturable.filter(w => w.eng !== current.eng);
+    return others.length >= 3;
   }
 
   function renderQuestion() {
@@ -137,36 +143,58 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
     }
 
     const current = ordered[idx];
-    // Build 4-picture choice set (1 correct + 3 random distractors)
+
+    // Build distractor pool (other words)
+    const others = ordered.filter(w => w !== current);
+    // Decide if we can show a visual (picture/emoji) round this question
+    const askPicture = canAskPicture(current, others);
+
+    // Build choices (same approach for both; visual rendering differs)
     const choices = [current];
-    const pool = ordered.filter(w => w !== current);
+    const pool = [...others];
     while (choices.length < 4 && pool.length) {
       const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      if (pick) choices.push(pick);
+      if (!choices.includes(pick)) choices.push(pick);
     }
-    // If for some reason fewer than 4, pad from full available
-    const backupPool = available.filter(w => !choices.includes(w));
+    // If still short (should not happen often), pull from allWords again
+    const backupPool = allWords.filter(w => !choices.includes(w));
     while (choices.length < 4 && backupPool.length) {
       const pick = backupPool.splice(Math.floor(Math.random() * backupPool.length), 1)[0];
       if (pick) choices.push(pick);
     }
     const shuffledChoices = choices.sort(() => Math.random() - 0.5);
 
-    // Render tiles grid and controls
-    gameArea.innerHTML = `
-      <div style="padding:16px 16px 6px;text-align:center;">
-        <div id="easyPicGrid" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto;">
-          ${shuffledChoices.map(ch => `
-            <button class="choice-btn easy-pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:26vh;display:flex;align-items:center;justify-content:center;">
-              ${getTileHtml(ch)}
-            </button>
-          `).join('')}
-        </div>
-        <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
-          <button id="replayWord" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
-        </div>
-        <div id="picFeedback" style="margin-top:10px;font-size:1.05em;height:24px;color:#555;"></div>
-      </div>`;
+    if (askPicture) {
+      gameArea.innerHTML = `
+        <div style="padding:16px 16px 6px;text-align:center;">
+          <div id="easyPicGrid" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto;">
+            ${shuffledChoices.map(ch => `
+              <button class=\"choice-btn easy-pic-choice\" data-eng=\"${ch.eng}\" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style=\"height:26vh;display:flex;align-items:center;justify-content:center;\">
+                ${tileHtml(ch)}
+              </button>
+            `).join('')}
+          </div>
+          <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
+            <button id="replayWord" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
+          </div>
+          <div id="picFeedback" style="margin-top:10px;font-size:1.05em;height:24px;color:#555;"></div>
+        </div>`;
+    } else {
+      // Text fallback (no images / not enough visuals) – show word choices as text buttons
+      gameArea.innerHTML = `
+        <div style="padding:16px 16px 6px;text-align:center;">
+          <div style=\"font-size:1.1em;font-weight:600;margin-bottom:6px;color:#19777e;\">Listen and choose the word</div>
+          <div id="easyPicGrid" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto;">
+            ${shuffledChoices.map(ch => `
+              <button class=\"choice-btn easy-pic-choice\" data-eng=\"${ch.eng}\" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style=\"height:10.5vh;display:flex;align-items:center;justify-content:center;font-size:clamp(1rem,3.2vw,1.4rem);font-weight:600;\">${ch.eng}</button>
+            `).join('')}
+          </div>
+          <div style="display:flex;justify-content:center;align-items:center;margin:18px 0 0 0;">
+            <button id="replayWord" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
+          </div>
+          <div id="picFeedback" style="margin-top:10px;font-size:1.05em;height:24px;color:#555;"></div>
+        </div>`;
+    }
 
     // Wire buttons + styles
     setupChoiceButtons(gameArea);
@@ -202,10 +230,10 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
           is_correct: correct,
           answer: picked,
           correct_answer: current.eng,
-          // scoreless build: no points
+          question_type: askPicture ? 'visual' : 'text',
           attempt_index: idx + 1
         });
-  setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);
+        setTimeout(() => { idx++; updateGameProgress(idx, ordered.length); renderQuestion(); }, 900);
       };
     });
   }
