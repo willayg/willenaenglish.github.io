@@ -60,19 +60,27 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   // Pre-fetch per-mode best score for this list (cookie-based like profile page)
   const userId = getUserId && getUserId(); // may be null; don't gate on this
-  const listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : null;
+  let listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : null;
+  // Fallback: if force-clear removed name before splash ended, pull from sessionStorage
+  if (!listName) {
+    try { const ln = sessionStorage.getItem('WA_list_name'); if (ln) listName = ln; } catch {}
+  }
+  try { console.info('[mode_selector] Active listName =', listName); } catch {}
   // bestByMode: mode -> { pct?: number, pts?: number }
   let bestByMode = {};
   if (listName) {
     try {
-      const norm = (v) => (v||'').toString().trim().toLowerCase();
-      const stripExt = (v) => v.replace(/\.json$/i, '');
-      const target = norm(listName);
-      const targetNoExt = stripExt(target);
+      const canon = (v) => {
+        if (!v) return '';
+        return v.toString().trim().toLowerCase()
+          .replace(/\.json$/i,'')
+          .replace(/[_\-\s]+/g,'') // remove separators
+          .replace(/[^a-z0-9]+/g,''); // strip any stray punctuation
+      };
+      const targetCanon = canon(listName);
       const matchesTarget = (rowName) => {
-        const n = norm(rowName);
-        const noExt = stripExt(n);
-        return !!n && (n === target || n === targetNoExt || noExt === targetNoExt);
+        const c = canon(rowName);
+        return c && c === targetCanon;
       };
       // Helper: canonicalize raw mode values to the 6 displayed keys
       const canonicalMode = (raw) => {
@@ -102,6 +110,9 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
         sessions = await fetchSessions(false);
       }
 
+      if (!sessions || !sessions.length) {
+        try { console.info('[mode_selector] No session rows returned for list', listName); } catch {}
+      }
       (Array.isArray(sessions) ? sessions : []).forEach(s => {
         if (!s) return;
         if (!matchesTarget(s.list_name) && !matchesTarget((s.summary && (s.summary.list_name || s.summary.listName)))) return;

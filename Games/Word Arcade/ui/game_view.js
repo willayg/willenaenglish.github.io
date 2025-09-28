@@ -49,14 +49,12 @@ export function renderGameView({ modeName, onShowModeModal, onWordsClick, onMode
   if (backBtn) {
     backBtn.style.display = '';
     backBtn.onclick = () => {
-      try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
-      if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
-        window.WordArcade.startModeSelector();
+      // Full quit: remove current list so next game truly starts fresh
+      if (window.WordArcade && typeof window.WordArcade.quitToOpening === 'function') {
+        window.WordArcade.quitToOpening(true);
       } else {
-        // Fallback to re-rendering mode selector if global not available
-        import('./mode_selector.js').then(mod => {
-          if (mod.renderModeSelector) mod.renderModeSelector({});
-        });
+        try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
+        import('./mode_selector.js').then(mod => { if (mod.renderModeSelector) mod.renderModeSelector({}); });
       }
     };
   }
@@ -105,28 +103,13 @@ export function renderGameView({ modeName, onShowModeModal, onWordsClick, onMode
   });
 
   quitBtn.addEventListener('click', () => {
-    // Remove the button to avoid leaving artifacts
-    try { quitBtn.remove(); } catch {}
-    // Return to mode selector - this preserves the current word list
-    if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
-      window.WordArcade.startModeSelector();
+    // Soft quit: keep wordList so user can pick a new mode quickly
+    if (window.WordArcade && typeof window.WordArcade.clearCurrentGameState === 'function') {
+      window.WordArcade.clearCurrentGameState({ keepWordList: true });
+      if (window.WordArcade.startModeSelector) window.WordArcade.startModeSelector();
     } else {
-      import('./mode_selector.js').then(mod => {
-        if (mod.renderModeSelector) {
-          mod.renderModeSelector({
-            onModeChosen: (mode) => {
-              if (window.WordArcade && typeof window.WordArcade.startGame === 'function') {
-                window.WordArcade.startGame(mode);
-              }
-            },
-            onWordsClick: (filename) => {
-              if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
-                window.WordArcade.loadSampleWordlistByFilename(filename);
-              }
-            }
-          });
-        }
-      });
+      try { quitBtn.remove(); } catch {}
+      import('./mode_selector.js').then(mod => { if (mod.renderModeSelector) mod.renderModeSelector({}); });
     }
   });
   // Append AFTER splash: wait at least a short delay and until common splash markers are gone

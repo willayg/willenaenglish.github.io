@@ -126,6 +126,25 @@ export async function logAttempt({
   round = null,
   extra = {}
 } = {}) {
+  // REVIEW ENRICHMENT HOOK (non-breaking): if a global ReviewManager is active and mode indicates review context
+  try {
+    if (typeof window !== 'undefined' && window.__WA_REVIEW_ACTIVE && window.__WA_REVIEW_MANAGER && extra && extra.attempt_context !== 'review') {
+      // We only have 'word' string here; attempt to find matching word object from manager for enrichment
+      const mgr = window.__WA_REVIEW_MANAGER;
+      const candidate = Array.isArray(mgr.words) ? mgr.words.find(w => (w.eng || w.word) === word) : null;
+      if (candidate) {
+        // Use manager to build extra metadata; do NOT double-log (manager normally would call logAttempt directly in review modes later)
+        const built = mgr.buildExtraFor(candidate);
+        extra = { ...extra, ...built };
+        if (is_correct) {
+          // Mark first-correct if not already credited
+          const wid = built.word_id;
+            if (wid && !mgr.firstCorrect.has(wid)) { mgr.firstCorrect.add(wid); extra.first_correct_in_review = true; }
+            else if (wid) { extra.first_correct_in_review = false; }
+        }
+      }
+    }
+  } catch (e) { /* swallow enrichment errors */ }
   try {
     // Ensure cookies are sent; also kick whoami if not yet done
     kickOffWhoAmI();

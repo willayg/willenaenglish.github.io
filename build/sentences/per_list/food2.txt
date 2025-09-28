@@ -1,0 +1,24 @@
+# List: Food2
+# Words
+rice
+bread
+noodles
+egg
+meat
+fish
+chicken
+soup
+cheese
+tofu
+
+# Sentences
+I eat rice.
+I slice bread.
+We cook noodles.
+I fry an egg.
+He cooks meat.
+She grills fish.
+We roast chicken.
+I sip soup.
+I eat cheese.
+I cook tofu.

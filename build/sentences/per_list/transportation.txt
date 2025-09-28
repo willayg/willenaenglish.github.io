@@ -1,0 +1,44 @@
+# List: Transportation
+# Words
+car
+bus
+train
+subway
+bicycle
+motorcycle
+airplane
+ship
+taxi
+truck
+scooter
+ferry
+tram
+van
+jeep
+cruise
+yacht
+submarine
+rocket
+helicopter
+
+# Sentences
+The car stops.
+The bus arrives.
+The train leaves.
+The subway comes.
+I ride a bicycle.
+He rides a motorcycle.
+The airplane lands.
+The ship sails.
+I take a taxi.
+The truck delivers boxes.
+She rides a scooter.
+The ferry crosses water.
+The tram turns.
+The van carries tools.
+The jeep climbs hills.
+The cruise visits ports.
+The yacht moves slowly.
+The submarine dives.
+The rocket lifts off.
+The helicopter hovers.

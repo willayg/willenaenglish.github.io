@@ -60,33 +60,46 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
 
   const getTileHtml = (w) => {
     if (isSampleList) {
-      const emoji = emojiMap[String(w.eng).toLowerCase()] || '❓';
-      return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
+      const emoji = emojiMap[String(w.eng).toLowerCase()];
+      if (emoji && isEmojiSupported(emoji)) {
+        return `<div style=\"font-size:3.2rem;line-height:1;\">${emoji}</div>`;
+      }
+      const fallbackLabel = w.kor || w.eng || '?';
+      return `<div style=\"font-size:clamp(1rem,2.8vw,1.3rem);line-height:1.15;font-weight:600;padding:4px;\">${fallbackLabel}</div>`;
     }
     const hasImg = w.img && String(w.img).trim() && String(w.img).toLowerCase() !== 'null' && String(w.img).toLowerCase() !== 'undefined';
     if (hasImg) {
       const safe = String(w.img).trim();
   ensureImageStyles();
-  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:3.2rem;line-height:1;display:none;\">❓</div>`;
+  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';\"></div><div style=\"display:none;font-size:clamp(.9rem,2.6vw,1.2rem);line-height:1.15;font-weight:600;padding:4px;align-items:center;justify-content:center;text-align:center;\">${w.kor || w.eng || '?'}</div>`;
     }
-    const emoji = emojiMap[String(w.eng).toLowerCase()] || '❓';
-    return `<div style="font-size:3.2rem;line-height:1;">${emoji}</div>`;
+    const emoji = emojiMap[String(w.eng).toLowerCase()];
+    if (emoji && isEmojiSupported(emoji)) {
+      return `<div style=\"font-size:3.2rem;line-height:1;\">${emoji}</div>`;
+    }
+    return `<div style=\"font-size:clamp(1rem,2.8vw,1.3rem);line-height:1.15;font-weight:600;padding:4px;\">${w.kor || w.eng || '?'} </div>`;
   };
 
   const getPromptTileHtml = (w) => {
     // For a single prompt image/emoji (larger)
     if (isSampleList) {
-      const emoji = emojiMap[String(w.eng).toLowerCase()] || '❓';
-      return `<div style="font-size:4rem;line-height:1;">${emoji}</div>`;
+      const emoji = emojiMap[String(w.eng).toLowerCase()];
+      if (emoji && isEmojiSupported(emoji)) {
+        return `<div style=\"font-size:4rem;line-height:1;\">${emoji}</div>`;
+      }
+      return `<div style=\"font-size:clamp(1.1rem,3.2vw,1.5rem);line-height:1.25;font-weight:700;padding:6px;\">${w.kor || w.eng || '?'} </div>`;
     }
     const hasImg = w.img && String(w.img).trim() && String(w.img).toLowerCase() !== 'null' && String(w.img).toLowerCase() !== 'undefined';
     if (hasImg) {
       const safe = String(w.img).trim();
   ensureImageStyles();
-  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:64vw;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='block';\"></div><div style=\"font-size:4rem;line-height:1;display:none;\">❓</div>`;
+  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:64vw;display:flex;align-items:center;justify-content:center;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';\" style=\"max-width:100%;max-height:100%;object-fit:cover;\"><div style=\"display:none;font-size:clamp(1.1rem,3.2vw,1.5rem);line-height:1.25;font-weight:700;padding:6px;text-align:center;\">${w.kor || w.eng || '?'}</div></div>`;
     }
-    const emoji = emojiMap[String(w.eng).toLowerCase()] || '❓';
-    return `<div style="font-size:4rem;line-height:1;">${emoji}</div>`;
+    const emoji = emojiMap[String(w.eng).toLowerCase()];
+    if (emoji && isEmojiSupported(emoji)) {
+      return `<div style=\"font-size:4rem;line-height:1;\">${emoji}</div>`;
+    }
+    return `<div style=\"font-size:clamp(1.1rem,3.2vw,1.5rem);line-height:1.25;font-weight:700;padding:6px;\">${w.kor || w.eng || '?'} </div>`;
   };
 
   // Intro splash

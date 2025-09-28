@@ -68,6 +68,15 @@ function ensureWordlistModalStyles() {
       background-repeat: repeat-x, no-repeat;
       transition: width .3s ease;
     }
+    #sampleWordlistModal .wl-bar-fill.loading {
+      animation: wlBarShimmer 1.1s linear infinite;
+    }
+    @keyframes wlBarShimmer {
+      0% { opacity: 0.7; filter: brightness(1.1); }
+      50% { opacity: 1; filter: brightness(1.4); }
+      100% { opacity: 0.7; filter: brightness(1.1); }
+    }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -129,7 +138,7 @@ export function showSampleWordlistModal({ onChoose }) {
   };
   function renderCategoryMenu() {
     modal.innerHTML = `
-      <div style="width:80vw;max-width:420px;max-height:85vh;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;font-family:'Poppins',Arial,sans-serif;position:relative;">
+  <div style="width:95vw;max-width:420px;max-height:85vh;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;font-family:'Poppins',Arial,sans-serif;position:relative;">
         <div id="wa-browse-header" style="position:sticky;top:0;background:#f6feff;border-bottom:2px solid #a9d6e9;z-index:1;">
           <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 12px;">
             <span style="font-size:1.3em;color:#19777e;font-weight:700;">Choose a Category</span>
@@ -162,7 +171,7 @@ export function showSampleWordlistModal({ onChoose }) {
 
   function renderListMenu(category) {
     modal.innerHTML = `
-      <div style="width:80vw;max-width:420px;max-height:85vh;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;font-family:'Poppins',Arial,sans-serif;position:relative;">
+  <div style="width:95vw;max-width:420px;max-height:85vh;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;font-family:'Poppins',Arial,sans-serif;position:relative;">
         <div id="wa-browse-header" style="position:sticky;top:0;background:#f6feff;border-bottom:2px solid #a9d6e9;z-index:1;">
           <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 12px;">
             <span style="font-size:1.3em;color:#19777e;font-weight:700;">${category.label}</span>
@@ -202,7 +211,7 @@ export function showSampleWordlistModal({ onChoose }) {
       'LongU.json': '🦄'
     };
     // 1) Render 0% skeleton buttons immediately
-    list.innerHTML = category.lists.map((it, i) => {
+  list.innerHTML = category.lists.map((it, i) => {
       const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
       return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:space-between;">
         <span style="font-size:2em; flex-shrink:0;">${emoji}</span>
@@ -212,7 +221,7 @@ export function showSampleWordlistModal({ onChoose }) {
             <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;text-align:right;'>0%</span>
           </div>
           <div class="wl-bar" style="margin-top:7px;">
-            <div class="wl-bar-fill" style="width:0%;"></div>
+            <div class="wl-bar-fill loading" data-final="false"></div>
           </div>
         </div>
       </button>`;
@@ -308,7 +317,7 @@ export function showSampleWordlistModal({ onChoose }) {
       const percents = await Promise.all(category.lists.map(l => computePercent(l.file).catch(() => 0)));
 
       // 3) Re-render with actual percents
-      list.innerHTML = category.lists.map((it, i) => {
+  list.innerHTML = category.lists.map((it, i) => {
         const emoji = listEmojis[it.file] || categoryEmojis[category.label] || '📚';
         const pct = Math.max(0, Math.min(100, percents[i] || 0));
         return `<button class="wl-btn" data-idx="${i}" data-file="${it.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:space-between;">
@@ -319,7 +328,7 @@ export function showSampleWordlistModal({ onChoose }) {
               <span class="wl-percent" style='font-size:0.95em;color:#19777e;font-weight:500;text-align:right;'>${pct}%</span>
             </div>
             <div class="wl-bar" style="margin-top:7px;">
-              <div class="wl-bar-fill" style="width:${pct}%;"></div>
+              <div class="wl-bar-fill" data-final="true" style="width:${pct}%;"></div>
             </div>
           </div>
         </button>`;

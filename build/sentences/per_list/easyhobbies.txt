@@ -1,0 +1,44 @@
+# List: EasyHobbies
+# Words
+reading
+painting
+cooking
+gardening
+photography
+dancing
+singing
+playing guitar
+playing piano
+swimming
+cycling
+hiking
+fishing
+traveling
+writing
+drawing
+playing chess
+playing video games
+knitting
+baking
+
+# Sentences
+I like reading books.
+She enjoys painting pictures.
+I enjoy cooking dinner.
+My mom likes gardening flowers.
+He loves photography work.
+We enjoy dancing songs.
+She likes singing songs.
+He likes playing guitar music.
+She practices playing piano songs.
+We enjoy swimming laps.
+He enjoys cycling roads.
+We go hiking trails.
+Dad likes fishing rivers.
+Our family likes traveling places.
+I enjoy writing stories.
+The child likes drawing animals.
+We enjoy playing chess games.
+He likes playing video games.
+Grandma enjoys knitting hats.
+She enjoys baking cookies.

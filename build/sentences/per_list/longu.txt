@@ -1,0 +1,43 @@
+# List: LongU
+# Words
+cube
+June
+cute
+tube
+flute
+duty
+huge
+mute
+fume
+lute
+pure
+rule
+fuel
+blue
+glue
+true
+suit
+tune
+duke
+
+# Sentences
+I hold a cube.
+June feels warm.
+The dog looks cute.
+Water fills the tube.
+She plays a flute.
+He does his duty.
+The ship is huge.
+The TV stays mute.
+Gray fumes rise.
+He plays a lute.
+The water stays pure.
+We follow rules.
+The car uses fuel.
+The sky is blue.
+I use glue.
+The story is true.
+He wears a suit.
+The whale is huge.
+I hum a tune.
+The duke visits.

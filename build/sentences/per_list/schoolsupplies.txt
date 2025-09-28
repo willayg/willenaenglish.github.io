@@ -1,0 +1,34 @@
+# List: SchoolSupplies
+# Words
+pencil
+pen
+eraser
+notebook
+ruler
+scissors
+glue
+crayon
+marker
+backpack
+desk
+chair
+chalk
+board
+paper
+
+# Sentences
+I use a pencil.
+I hold a pen.
+I use an eraser.
+I open a notebook.
+I use a ruler.
+She uses scissors.
+I add glue.
+He grabs a crayon.
+I use a marker.
+I pack a backpack.
+I clean the desk.
+He moves the chair.
+She holds chalk.
+The teacher cleans the board.
+I fold paper.
