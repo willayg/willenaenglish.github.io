@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Profile | Willena</title>
+  <title data-i18n="Profile">Profile</title>
   <script>
     // Cookie-based identity fetch
     async function getProfileInfo() {
@@ -32,6 +32,9 @@
   <script type="module" src="/students/student_profile.js"></script>
   <script type="module" src="/students/avatar.js"></script>
   <script type="module" src="/students/components/student-header.js"></script>
+  <script src="/students/language.js"></script>
+  <link rel="stylesheet" href="/students/theme.css">
+  <script src="/students/theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -65,12 +68,12 @@
     <div class="spinner"></div>
     <div class="loading-text">Loading…</div>
   </div>
-  <student-header title="Profile" show-id="false" show-home="false" show-points="false"></student-header>
+  <student-header title="Profile" show-id="false" show-home="false" show-points="false" data-i18n="Profile"></student-header>
   <nav class="toolbar" aria-label="Quick actions">
-    <button class="tb-link primary" id="btnHome">Home</button>
-    <button class="tb-link" id="btnGames">Games</button>
-    <button class="tb-link" id="btnWordArcade">Word Arcade</button>
-    <button class="tb-link" id="btnGrammarArcade" title="Coming soon" disabled>Grammar Arcade</button>
+  <button class="tb-link primary" id="btnHome" data-i18n="Home">Home</button>
+  <button class="tb-link" id="btnGames" data-i18n="Games">Games</button>
+  <button class="tb-link" id="btnWordArcade" data-i18n="Word Arcade">Word Arcade</button>
+  <button class="tb-link" id="btnGrammarArcade" title="Coming soon" disabled data-i18n="Grammar Arcade">Grammar Arcade</button>
   </nav>
   <div class="profile-wrap">
   <main class="grid cols-3 profile-grid">
@@ -82,30 +85,31 @@
         </div>
       </div>
       <div class="info-panel">
-        <div class="info-row"><span class="label">English Name</span><span class="value" id="pfNameEn">Jim</span></div>
-        <div class="info-row"><span class="label">Korean Name</span><span class="value" id="pfNameKo">봉수</span></div>
-        <div class="info-row"><span class="label">Class</span><span class="value" id="pfClass">Sydney</span></div>
-        <div class="info-row"><span class="label">Email</span><span class="value" id="pfEmail">Jim@jim.com</span></div>
+  <div class="info-row"><span class="label" data-i18n="English Name">English Name</span><span class="value" id="pfNameEn">Jim</span></div>
+  <div class="info-row"><span class="label" data-i18n="Korean Name">Korean Name</span><span class="value" id="pfNameKo">봉수</span></div>
+  <div class="info-row"><span class="label" data-i18n="Class">Class</span><span class="value" id="pfClass">Sydney</span></div>
+  <div class="info-row"><span class="label" data-i18n="Email">Email</span><span class="value" id="pfEmail">Jim@jim.com</span></div>
       </div>
   </section>
   <section class="card span-2 awards" id="awardsSection">
-      <h2 class="awards-title">Your Awards</h2>
+  <h2 class="awards-title" data-i18n="Your Awards">Your Awards</h2>
       <div class="awards-grid">
-  <div class="award a-points"><div class="award-label">Points</div><div class="award-value" id="awardPoints">0</div></div>
-  <div class="award a-medals"><div class="award-label">Medals</div><div class="award-value" id="awardMedals">0</div></div>
-  <div class="award a-stars"><div class="award-label">Stars</div><div class="award-value" id="awardStars">0</div></div>
-  <div class="award a-badges"><div class="award-label">Badges</div><div class="award-value" id="awardBadges">0</div></div>
+  <div class="award a-points"><div class="award-label" data-i18n="Points">Points</div><div class="award-value" id="awardPoints">0</div></div>
+  <div class="award a-medals"><div class="award-label" data-i18n="Medals">Medals</div><div class="award-value" id="awardMedals">0</div></div>
+  <div class="award a-stars"><div class="award-label" data-i18n="Stars">Stars</div><div class="award-value" id="awardStars">0</div></div>
+  <div class="award a-badges"><div class="award-label" data-i18n="Badges">Badges</div><div class="award-value" id="awardBadges">0</div></div>
       </div>
   </section>
   <section class="card span-2 badges" id="badgesSection">
-      <h2 class="badges-title">Your Badges</h2>
+  <h2 class="badges-title" data-i18n="Your Badges">Your Badges</h2>
       <div class="badges-grid" id="badgesContainer">
         <script defer src="/students/badges.js"></script>
-        <div class="mut" id="badgesEmpty">Loading…</div>
-        <div class="mut" id="badgesLoaded" style="display:none;">No badges earned yet.</div>
+  <div class="mut" id="badgesEmpty" data-i18n="Loading…">Loading…</div>
+  <div class="mut" id="badgesLoaded" style="display:none;" data-i18n="No badges earned yet.">No badges earned yet.</div>
       </div>
   </section>
   
+  <!-- Challenging Words section temporarily removed
   <section class="card span-2" id="challengingSection">
       <h2>Challenging Words</h2>
       <div id="challengingContainer" class="cw-container">
@@ -114,6 +118,7 @@
         </div>
       </div>
     </section>
+  -->
 
   <!-- Removed: By Mode, Recent Sessions, Recent Attempts for faster initial load -->
   </main>
@@ -164,7 +169,7 @@
       // Optionally update name, etc. here
       const pfName = document.getElementById('pfName');
       if (pfName && profile.name) pfName.textContent = profile.name;
-      // TODO: Load KPIs, badges, etc. using profile info
+      // Medal logic fully removed.
     });
   </script>
 </body>

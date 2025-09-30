@@ -375,8 +375,9 @@ import { initPointsClient } from './scripts/points-client.js';
       hideNotice();
       // Stars/medals quick counters from overview
       const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
-      setCount('awardStars', ov.stars);
-      setCount('awardMedals', ov.perfect_runs ?? ov.mastered_lists);
+  // Stars retained; medals deprecated (removed calculation/update)
+  setCount('awardStars', ov.stars);
+  // setCount('awardMedals', ov.perfect_runs ?? ov.mastered_lists); // removed: legacy medal metric
       // Seed points from overview if present
       if (typeof ov.points === 'number') {
         setText('awardPoints', String(ov.points));
@@ -403,7 +404,7 @@ import { initPointsClient } from './scripts/points-client.js';
         try {
           const setCount = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = String(v); };
           setCount('awardStars', cacheOv.stars);
-          setCount('awardMedals', cacheOv.perfect_runs ?? cacheOv.mastered_lists);
+          // setCount('awardMedals', cacheOv.perfect_runs ?? cacheOv.mastered_lists); // removed legacy medal update
         } catch {}
       }
     }
@@ -440,14 +441,15 @@ import { initPointsClient } from './scripts/points-client.js';
     // If stars/medals still zero after Phase 2 but we have badges (indicator of activity), schedule a lazy recheck of overview
     try {
       const starsEl = document.getElementById('awardStars');
-      const medalsEl = document.getElementById('awardMedals');
-      if (starsEl && medalsEl && starsEl.textContent === '0' && medalsEl.textContent === '0') {
+      // medal element intentionally ignored (deprecated)
+      const medalsEl = null;
+      if (starsEl && starsEl.textContent === '0') {
         setTimeout(async () => {
           const lateOv = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 3000, label: 'overview:late' }));
           if (lateOv) {
             const setCount = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = String(v); };
             setCount('awardStars', lateOv.stars);
-            setCount('awardMedals', lateOv.perfect_runs ?? lateOv.mastered_lists);
+            // setCount('awardMedals', lateOv.perfect_runs ?? lateOv.mastered_lists); // medals disabled
             // Fire overview event if initial one never fired
             try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: lateOv })); } catch {}
           }
@@ -484,4 +486,29 @@ import { initPointsClient } from './scripts/points-client.js';
 // Scoreless: no live points updates
 (function(){
   // No-op
+})();
+
+// Lightweight live star refresher (no medals) so stars update after playing a game in another tab.
+(function(){
+  const REFRESH_MIN_INTERVAL = 3000; // ms debounce
+  let lastStarRefresh = 0;
+  async function refreshStars(force = false){
+    if (!force && Date.now() - lastStarRefresh < REFRESH_MIN_INTERVAL) return;
+    lastStarRefresh = Date.now();
+    try {
+      const ov = await (async () => {
+        try { return await fetch(API.overview(), { credentials:'include', cache:'no-store' }).then(r => r.ok ? r.json() : null); } catch { return null; }
+      })();
+      if (ov && typeof ov.stars === 'number') {
+        const v = String(ov.stars);
+        const awardEl = document.getElementById('awardStars');
+        if (awardEl && awardEl.textContent !== v) awardEl.textContent = v;
+        const ovEl = document.getElementById('ovStars');
+        if (ovEl && ovEl.textContent !== v) ovEl.textContent = v;
+      }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshStars(false); });
+  // Expose manual hook for debugging
+  try { window.refreshStars = refreshStars; } catch {}
 })();

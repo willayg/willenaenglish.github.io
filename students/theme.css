@@ -1,0 +1,199 @@
+/* Shared light/dark theme styles for student area & games */
+/* Baseline (light) colors are mostly already defined inline or per-page. This file focuses on dark overrides.
+   Add generic tokens and structural overrides that multiple pages can rely on. */
+
+:root {
+  color-scheme: light dark;
+}
+html.dark {
+  --bg-root: #10151a;
+  --bg-surface: #182028;
+  --bg-surface-alt: #1d2730;
+  --border-subtle: #28323c;
+  --border-strong: #2c3a44;
+  --text-high: #e3e8ed;
+  --text-mid: #b0bcc7;
+  --accent: #67e2e6;
+  --accent-strong: #3fb6c4;
+}
+
+/* Root background + default text */
+html.dark body { background: var(--bg-root) !important; color: var(--text-high); }
+
+/* Generic cards (dashboard, profile, game option cards if they reuse .card) */
+html.dark .card { background: var(--bg-surface) !important; border-color: var(--border-subtle) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.6) !important; }
+html.dark .card-content { background: var(--bg-surface) !important; border-color: var(--border-strong) !important; }
+
+/* Headings inside cards */
+html.dark .card-title, html.dark h1, html.dark h2, html.dark h3 { color: var(--accent) !important; }
+
+/* Muted text helpers */
+html.dark .settings-muted, html.dark .mut, html.dark .badge-empty, html.dark .coming-soon { color: var(--text-mid) !important; }
+
+/* Lists / dividers */
+html.dark .learning-item,
+html.dark .account-link,
+html.dark .settings-row { border-color: var(--border-strong) !important; }
+
+html.dark .account-link { color: #8ab9ff !important; }
+html.dark .settings-label { color: #9cb8ff !important; }
+html.dark .lang-label { color: var(--accent) !important; }
+
+/* Switch component */
+html.dark .settings-switch { background: #3a4651 !important; }
+html.dark [role="switch"][aria-checked="true"].settings-switch { background: var(--accent-strong) !important; }
+
+/* Profile specific text (if any status classes reused) */
+html.dark .status-pink { color: var(--text-high) !important; }
+html.dark .status-blue { color: var(--text-mid) !important; }
+
+/* Word Arcade specific containers */
+html.dark #openingButtons.wa-card,
+html.dark .wa-card { background: var(--bg-surface) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.55) !important; }
+html.dark body.word-arcade { background: var(--bg-root) !important; }
+/* Fallback: dark main container if body lacked word-arcade at load */
+html.dark body > main.notranslate { background: var(--bg-surface) !important; }
+
+/* Word Arcade option buttons (if standard class names) */
+html.dark .wa-option-card { background: var(--bg-surface-alt) !important; border-color: var(--border-strong) !important; }
+html.dark .wa-option-card:hover { background: #22303b !important; }
+
+/* Profile specific: avatar ring, info panel, awards & badges */
+html.dark .avatar-ring { background: #141b21 !important; border-color:#2c3a44 !important; }
+html.dark .info-panel { background: var(--bg-surface-alt) !important; border-color:#2c3a44 !important; }
+html.dark .info-row .value { background:#1f2830 !important; border-color:#31404a !important; color: var(--text-high) !important; }
+html.dark .awards-grid { background: var(--bg-surface-alt) !important; border-color:#2c3a44 !important; }
+html.dark .awards-grid::before, html.dark .awards-grid::after { background:#2c3a44 !important; }
+html.dark .badges-grid { background: var(--bg-surface-alt) !important; border-color:#2c3a44 !important; }
+html.dark .badge { background:#1f2830 !important; border-color:#2c3a44 !important; }
+html.dark .badge-label { color:#67e2e6 !important; }
+html.dark .badges .mut { color: var(--text-mid) !important; }
+
+/* Profile toolbar (menu bar under header) */
+html.dark .toolbar { background:#1b242c !important; border-bottom:1px solid var(--border-strong) !important; }
+html.dark .tb-link { color:#67e2e6 !important; }
+html.dark .tb-link:disabled { color:#3a4e5a !important; }
+
+/* Game play stage background */
+html.dark #gameRoot { background: var(--bg-root) !important; }
+html.dark #gameStage { background: var(--bg-surface) !important; }
+/* Word Arcade main wrapper (index.html) */
+html.dark body.word-arcade main { background: var(--bg-surface) !important; border-color: var(--border-subtle) !important; box-shadow: 0 3px 14px rgba(0,0,0,0.6) !important; }
+
+/* Word Arcade opening option cards: keep vivid colored borders in dark mode */
+html.dark .wa-option-card { background: linear-gradient(145deg,#1d2730,#141b21) !important; }
+html.dark .wa-option-card.wa-basic { border-color:#ff6fb0 !important; }
+html.dark .wa-option-card.wa-for-you { border-color:#21b3be !important; }
+html.dark .wa-option-card.wa-review { border-color:#d9923b !important; }
+html.dark .wa-option-card.wa-browse { border-color:#5b7fe5 !important; }
+html.dark .wa-option-card:hover { box-shadow:0 10px 26px -4px rgba(0,0,0,0.55) !important; }
+/* Mode select buttons (reuse same palette) */
+html.dark #modeSelect .mode-btn { background: linear-gradient(145deg,#1d2730,#141b21) !important; border-color:#a9d6e9 !important; }
+html.dark #modeSelect .mode-btn[data-mode="meaning"],
+html.dark #modeSelect .mode-btn[data-mode="level_up"] { border-color:#21b3be !important; }
+html.dark #modeSelect .mode-btn[data-mode="listening"] { border-color:#5b7fe5 !important; }
+html.dark #modeSelect .mode-btn[data-mode="multi_choice"] { border-color:#ff6fb0 !important; }
+html.dark #modeSelect .mode-btn[data-mode="listen_and_spell"],
+html.dark #modeSelect .mode-btn[data-mode="spelling"] { border-color:#d9923b !important; }
+html.dark #gameArea { background: var(--bg-surface-alt) !important; }
+
+/* Word Arcade sample wordlist modal dark treatment */
+html.dark #sampleWordlistModal { background: linear-gradient(140deg, rgba(20,30,38,0.86), rgba(20,30,38,0.6)) !important; }
+html.dark #sampleWordlistModal > div { background:#1d2730 !important; border-color:#27c5ca !important; box-shadow:0 10px 34px -4px rgba(0,0,0,0.65) !important; }
+html.dark #sampleWordlistModal #wa-browse-header { background:#23313c !important; border-bottom-color:#2c3a44 !important; }
+html.dark #sampleWordlistModal button { color:#67e2e6 !important; }
+html.dark #sampleWordlistModal .wl-bar { background:#10151a !important; border-color:#27c5ca !important; }
+html.dark #sampleWordlistModal .wl-bar-fill.loading { filter:brightness(1.2); }
+
+/* Generic in-game floating panels (sentence practice etc.) */
+html.dark .wa-floating-panel { background:#1d2730 !important; border-color:#27c5ca !important; box-shadow:0 8px 26px -4px rgba(0,0,0,0.6) !important; }
+
+/* Sentence Mode (Word Arcade live) dark styles */
+/* Sentence mode selection menu (apply even if wrapper class missing) */
+html.dark .sentence-mode .sm-mode-card,
+html.dark .sm-mode-card { background:linear-gradient(165deg,#1d2730 60%,#162027 100%) !important; border-color:#2c3a44 !important; box-shadow:0 8px 28px -4px rgba(0,0,0,0.65) !important; }
+html.dark .sentence-mode .sm-mode-title,
+html.dark .sm-mode-title { color:#67e2e6 !important; }
+html.dark .sentence-mode .sm-mode-desc,
+html.dark .sm-mode-desc { color:#b0bcc7 !important; }
+html.dark .sentence-mode .sm-mode-btn,
+html.dark .sm-mode-btn { background:#1f2a33 !important; border-color:#3a4a55 !important; color:#e3e8ed !important; box-shadow:0 4px 18px -4px rgba(0,0,0,0.55) !important; }
+html.dark .sentence-mode .sm-mode-btn:hover:not(:disabled),
+html.dark .sm-mode-btn:hover:not(:disabled){ background:#26323d !important; }
+html.dark .sentence-mode .sm-box { background:linear-gradient(165deg,#1d2730,#141b21) !important; border-color:#2c3a44 !important; box-shadow:0 8px 28px -4px rgba(0,0,0,0.6) !important; }
+html.dark .sentence-mode .sm-section-label { color:#67e2e6 !important; }
+html.dark .sentence-mode .sm-construct-line { background:#10171d !important; border-color:#374753 !important; color:#e3e8ed !important; }
+html.dark .sentence-mode .sm-word-frag.sm-word-inline { color:#e3e8ed !important; }
+html.dark .sentence-mode .sm-divider { background:linear-gradient(90deg,rgba(103,226,230,0) 0%, #67e2e6 18%, #67e2e6 82%, rgba(103,226,230,0) 100%) !important; }
+html.dark .sentence-mode .sm-chip { --sm-bg:#1f2a33; --sm-border:#3a4a55; --sm-color:#e3e8ed; box-shadow:0 3px 10px rgba(0,0,0,0.45) !important; }
+html.dark .sentence-mode .sm-chip:hover:not(:disabled){ background:#26323d !important; border-color:#4b5d6a !important; }
+html.dark .sentence-mode .sm-chip.placed { --sm-bg:#19777e; --sm-border:#19777e; --sm-color:#fff; }
+html.dark .sentence-mode .sm-btn.ghost { --btn-bg:#1f2a33; --btn-bg2:#1f2a33; --btn-color:#e3e8ed; border-color:#3a4a55 !important; background:#1f2a33 !important; }
+html.dark .sentence-mode .sm-btn.ghost:hover { background:#26323d !important; }
+html.dark .sentence-mode .sm-btn.primary { --btn-bg:#0d9488; --btn-bg2:#0f766e; }
+html.dark .sentence-mode .sm-btn.accent { --btn-bg:#19777e; --btn-bg2:#155e63; }
+html.dark .sentence-mode .sm-feedback { color:#e3e8ed !important; }
+html.dark .sentence-mode .fb-gap { background:#2a3640 !important; border-color:#3a4a55 !important; color:#b0bcc7 !important; }
+html.dark .sentence-mode .fb-gap.filled { background:#1d3b41 !important; border-color:#19777e !important; color:#e3e8ed !important; }
+html.dark .sentence-mode .fb-gap.correct { background:#123a2f !important; border-color:#16a34a !important; color:#8ef4c2 !important; }
+html.dark .sentence-mode .fb-gap.incorrect { background:#3b2020 !important; border-color:#dc2626 !important; color:#fca5a5 !important; }
+html.dark .sentence-mode .sm-counter { background:#23313c !important; color:#67e2e6 !important; }
+html.dark .sentence-mode .sm-score { background:#19777e !important; color:#fff !important; }
+html.dark .sentence-mode #smSubmit.sm-floating,
+html.dark .sentence-mode #fbSubmit.sm-floating,
+html.dark .sentence-mode #bsSubmit.sm-floating { box-shadow:0 22px 55px -12px rgba(0,0,0,0.7),0 0 0 5px rgba(25,119,126,0.25) !important; }
+/* Summary / end screens (inline-styled light backgrounds) */
+html.dark .sentence-mode [style*='background:linear-gradient(165deg,#ffffff'] { background:linear-gradient(165deg,#1d2730,#141b21) !important; border-color:#2c3a44 !important; box-shadow:0 8px 28px -4px rgba(0,0,0,0.65) !important; }
+html.dark .sentence-mode [style*='background:#fff3cd'] { background:#3a3220 !important; }
+html.dark .sentence-mode h2 { color:#67e2e6 !important; }
+html.dark .sentence-mode .sm-summary-btn { background:#1f2a33 !important; border-color:#3a4a55 !important; color:#e3e8ed !important; box-shadow:0 4px 18px -4px rgba(0,0,0,0.55) !important; }
+html.dark .sentence-mode .sm-summary-btn:hover { background:#26323d !important; }
+
+/* Preserve colored borders on profile & dashboard cards in dark mode */
+html.dark .card { border-color:#67e2e6 !important; }
+html.dark .info-panel { border-color:#67e2e6 !important; }
+html.dark .awards-grid { border-color:#67e2e6 !important; }
+html.dark .badges-grid { border-color:#67e2e6 !important; }
+html.dark .avatar-ring { border-color:#1aafb9 !important; }
+html.dark .cw-container { border-color:#67e2e6 !important; }
+html.dark .cw-card { border-color:#67e2e6 !important; }
+
+/* Generic buttons (fallback) */
+html.dark button { color: var(--text-high); }
+
+/* Header component (student-header) internal parts via ::part if defined */
+student-header::part(bar) { transition: background .25s; }
+html.dark student-header::part(bar) { background: #1b242c !important; color: var(--text-high) !important; }
+html.dark student-header::part(title) { color: var(--text-high) !important; }
+
+/* Ensure images / icons keep visibility; no filter by default */
+
+/* Scrollbars (webkit) */
+html.dark ::-webkit-scrollbar { width: 10px; }
+html.dark ::-webkit-scrollbar-track { background: #0f1419; }
+html.dark ::-webkit-scrollbar-thumb { background: #2d3943; border-radius: 6px; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #364652; }
+
+/* Links */
+html.dark a { color: #82cfff; }
+
+/* Inputs in modals (password/email) */
+html.dark input[type="text"],
+html.dark input[type="password"],
+html.dark input[type="email"] { background:#1f2830; border-color:#2f3a45; color:var(--text-high); }
+html.dark input[type="text"]:focus,
+html.dark input[type="password"]:focus,
+html.dark input[type="email"]:focus { outline:2px solid var(--accent-strong); }
+
+/* Modal containers (generic) */
+html.dark .modal, html.dark .modal.card { background: var(--bg-surface) !important; }
+html.dark .modal h2, html.dark .modal label { color: var(--accent) !important; }
+html.dark .modal button { color: var(--text-high) !important; }
+html.dark .modal .pw-toggle { color: var(--accent-strong) !important; }
+html.dark .modal .pw-eye svg { stroke: var(--accent-strong) !important; }
+
+/* Utility: hide anything explicitly marked light-only in dark mode */
+html.dark .light-only { display: none !important; }
+/* Utility: show dark-only elements only in dark */
+.dark-only { display: none !important; }
+html.dark .dark-only { display: initial !important; }

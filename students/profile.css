@@ -407,3 +407,9 @@ th { color:#356; font-weight:800; }
 
 /* Hide legacy blocks on narrow view so screenshot layout shows */
 @media (max-width: 760px) { .legacy { display:none !important; } }
+
+/* --- Dark Mode Fallback Overrides (primary definitions live in theme.css) --- */
+html.dark body { background:#10151a; color:#e3e8ed; }
+html.dark .card { background:#182028; border-color:#28323c; box-shadow:0 2px 8px rgba(0,0,0,0.6); }
+html.dark .badge { background:#1f2830; border-color:#2c3a44; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+html.dark .info-row .value { background:#1f2830; border-color:#31404a; color:#e3e8ed; }

@@ -2,35 +2,39 @@
    Base Styles & Layout
    ===================== */
 body {
-  background: #f5f7fa;
-  font-family: 'Poppins', Arial, Helvetica, sans-serif;
+   background: #f5f7fa;
+   font-family: 'Poppins', Arial, Helvetica, sans-serif;
+   margin: 0;
+   overflow-x: hidden;
 }
-.wrap { max-width: 980px; margin: 0 auto; padding: 12px; }
+html { overflow-x:hidden; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 12px; box-sizing:border-box; width:100%; overflow-x:hidden; }
 
 /* =====================
    Card Styles
    ===================== */
 .cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px 32px; /* 24px vertical, 32px horizontal gap */
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
-  padding-left: 2px;
-  padding-right: 2px;
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 24px 20px; /* reduce horizontal gap to avoid overflow */
+   max-width: 100%;
+   width: 100%;
+   margin: 0 auto;
+   box-sizing: border-box;
+   padding-left: 4px;
+   padding-right: 4px;
+   overflow:hidden;
 }
 @media (min-width: 900px) {
-  .cards {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 50px 48px; /* 32px vertical, 48px horizontal gap for large screens */
-    max-width: 900px;
-    margin: 0 auto;
-    padding-left: 0;
-    padding-right: 0;
-  }
+   .cards {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 40px 40px; /* tightened gaps */
+      max-width: 900px;
+      margin: 0 auto;
+      padding-left: 0;
+      padding-right: 0;
+   }
   .card {
     min-width: 0;
     height: 100%;
@@ -83,8 +87,13 @@ body {
 .settings-row:last-child { border-bottom:none; }
 .settings-label { font-weight:800; color:#748dd3; font-size:1.1rem; padding: 20px; }
 .settings-muted { color:#6b7a8f; font-size:1rem; margin:0 8px; }
-.settings-switch { width:38px; height:22px; background:#e6eaef; border-radius:999px; display:inline-block; position:relative; margin:0 8px; }
-.settings-switch::after { content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; box-shadow:0 1px 2px rgba(0,0,0,0.15); }
+.settings-switch { width:48px; height:24px; background:#e6eaef; border-radius:999px; display:inline-block; position:relative; margin:0 8px; transition:background .25s ease; }
+.settings-switch::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#ffffff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .28s ease; }
+/* When English active (aria-checked=true) push knob to right */
+[role="switch"][aria-checked="true"].settings-switch::after { transform: translateX(24px); }
+[role="switch"][aria-checked="true"].settings-switch { background:#67e2e6; }
+.lang-label { font-weight:600; color:#19777e; padding:2px 4px; user-select:none; }
+.lang-label.active { text-decoration:underline; }
 
 /* =====================
    Account List
@@ -98,3 +107,5 @@ body {
    ===================== */
 .status-pink { color: #333333 !important; text-align: right; font-weight: 700; }
 .status-blue { color: #9da6a7 !important; text-align: right; font-weight: 700; }
+
+/* Dark theme overrides moved to students/theme.css */

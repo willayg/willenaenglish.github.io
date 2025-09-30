@@ -358,6 +358,107 @@ exports.handler = async (event) => {
       return respond(event, 200, { success: true });
     }
 
+    // Change password (verify current password, then update)
+    if (action === 'change_password' && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body || '{}');
+        const { current_password, new_password } = body;
+        if (!current_password || !new_password) return respond(event, 400, { success: false, error: 'Missing credentials' });
+        if (String(new_password).length < 6) return respond(event, 400, { success: false, error: 'Password too short' });
+
+        // Extract user from sb_access cookie
+        const hdrs = event.headers || {};
+        const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+        const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+        if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const token = decodeURIComponent(m[1]);
+
+        const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+        const { data: userData, error: userError } = await admin.auth.getUser(token);
+        if (userError || !userData || !userData.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const userId = userData.user.id;
+        const userEmail = userData.user.email;
+
+        // Re-auth by attempting password grant with current password
+        const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+          body: JSON.stringify({ email: userEmail, password: current_password })
+        });
+        if (!authResp.ok) {
+          return respond(event, 403, { success: false, error: 'Incorrect current password', error_code: 'bad_current' });
+        }
+
+        // Update password using admin API
+        const { error: updError } = await admin.auth.admin.updateUserById(userId, { password: new_password });
+        if (updError) return respond(event, 400, { success: false, error: updError.message || 'Update failed' });
+
+        return respond(event, 200, { success: true });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: 'Internal error' });
+      }
+    }
+
+    // Change email (verify current password, then update auth + profile)
+    if (action === 'change_email' && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body || '{}');
+        const { current_password, new_email } = body;
+        if (!current_password || !new_email) return respond(event, 400, { success: false, error: 'Missing credentials' });
+        const emailNorm = String(new_email).trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!emailRegex.test(emailNorm)) return respond(event, 400, { success: false, error: 'Invalid email address', error_code: 'invalid_email' });
+
+        // Extract user from sb_access cookie
+        const hdrs = event.headers || {};
+        const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+        const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+        if (!m) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const token = decodeURIComponent(m[1]);
+
+        const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+        const { data: userData, error: userError } = await admin.auth.getUser(token);
+        if (userError || !userData || !userData.user) return respond(event, 401, { success: false, error: 'Not signed in' });
+        const userId = userData.user.id;
+        const currentEmail = userData.user.email;
+
+        // Re-auth using password grant with current email
+        const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+          body: JSON.stringify({ email: currentEmail, password: current_password })
+        });
+        if (!authResp.ok) {
+          return respond(event, 403, { success: false, error: 'Incorrect current password', error_code: 'bad_current' });
+        }
+
+        // Ensure new email not already in use (profiles table check)
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', emailNorm)
+          .single();
+        if (existingProfile) {
+          return respond(event, 400, { success: false, error: 'Email already in use', error_code: 'email_in_use' });
+        }
+
+        // Update auth user email
+        const { error: updErr } = await admin.auth.admin.updateUserById(userId, { email: emailNorm });
+        if (updErr) return respond(event, 400, { success: false, error: updErr.message || 'Update failed' });
+
+        // Update profiles table
+        const { error: profErr } = await supabase
+          .from('profiles')
+          .update({ email: emailNorm })
+          .eq('id', userId);
+        if (profErr) return respond(event, 400, { success: false, error: profErr.message || 'Profile update failed' });
+
+        return respond(event, 200, { success: true });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: 'Internal error' });
+      }
+    }
+
     // Logout: clear cookies
     if (action === 'logout' && (event.httpMethod === 'POST' || event.httpMethod === 'GET')) {
       const dev = isLocalDev();

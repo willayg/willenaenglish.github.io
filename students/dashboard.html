@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/students/dashboard.css" />
+  <link rel="stylesheet" href="/students/theme.css" />
   <base href="/students/">
   <meta name="robots" content="noindex" />
   <script>
@@ -21,127 +22,70 @@
     });
   </script>
   <script type="module" src="/students/components/student-header.js"></script>
+  <script src="/students/language.js"></script>
+  <script src="/students/theme.js"></script>
 </head>
 <body>
-  <student-header title="Dashboard" show-id="false" show-home="false" show-points="true"></student-header>
+  <student-header title="Dashboard" show-id="false" show-home="false" show-points="true" data-i18n="Dashboard"></student-header>
   <div class="wrap">
     <div class="cards">
-      <!-- Your Homework -->
+      <!-- Start Playing -->
       <section class="card">
-        <h2 class="card-title">Your Homework</h2>
-        <div class="card-subtitle" id="dashboardClassName">Class</div>
-        <div class="card-content homework-scroll">
-          <table class="homework-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Teacher</th>
-                <th>Due</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="color:#1a1a1a;">Unit 3 Words About sea animals</td>
-                <td class="status-pink">William</td>
-                <td class="status-pink">2025-10-9</td>
-                <td class="status-pink">45%</td>
-              </tr>
-              <tr>
-                <td style="color:#979b9b;">Unit 2 Phonics Long a</td>
-                <td class="status-blue">William</td>
-                <td class="status-blue">2025-10-9</td>
-                <td class="status-blue">Done</td>
-              </tr>
-              <tr>
-                <td style="color:#979b9b;">Lalal</td>
-                <td class="status-blue">William</td>
-                <td class="status-blue">2025-10-9</td>
-                <td class="status-blue">Done</td>
-              </tr>
-              <tr>
-                <td style="color:#1a1a1a;">Unit 4 Adjectives</td>
-                <td class="status-pink">William</td>
-                <td class="status-pink">2025-10-9</td>
-                <td class="status-pink">80%</td>
-              </tr>
-              <tr>
-                <td style="color:#979b9b;">Unit 5 Verbs</td>
-                <td class="status-blue">William</td>
-                <td class="status-blue">2025-10-9</td>
-                <td class="status-blue">Done</td>
-              </tr>
-              <tr>
-                <td style="color:#1a1a1a;">Unit 6 Nouns</td>
-                <td class="status-pink">William</td>
-                <td class="status-pink">2025-10-9</td>
-                <td class="status-pink">60%</td>
-              </tr>
-              <tr>
-                <td style="color:#979b9b;">Unit 7 Review</td>
-                <td class="status-blue">William</td>
-                <td class="status-blue">2025-10-9</td>
-                <td class="status-blue">Done</td>
-              </tr>
-              <tr>
-                <td style="color:#1a1a1a;">Unit 8 Challenge</td>
-                <td class="status-pink">William</td>
-                <td class="status-pink">2025-10-9</td>
-                <td class="status-pink">10%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Start Learning -->
-      <section class="card">
-        <h2 class="card-title">Start Learning</h2>
+        <h2 class="card-title" data-i18n="Start Playing">Start Playing</h2>
         <div class="card-content">
           <div class="learning-list">
-            <a href="/Games/Word%20Arcade/index.html" class="learning-item word-arcade">Word Arcade</a>
-            <a href="#" class="learning-item grammar-arcade">Grammar Arcade</a>
-            <a href="/playzone.html" class="learning-item challenge-zone">Challenge Zone</a>
-            <a href="/students/profile.html" class="learning-item my-profile">My Profile</a>
-          </div>
-        </div>
-      </section>
-
-      <!-- Settings -->
-      <section class="card">
-        <h2 class="card-title">Settings</h2>
-        <div class="card-content">
-          <div class="settings-list">
-            <div class="settings-row">
-              <span class="settings-label">Language</span>
-              <span class="settings-muted">Korean</span>
-              <span class="settings-switch"></span>
-              <span class="settings-muted">English</span>
-            </div>
-            <div class="settings-row">
-              <span class="settings-label">Dark Mode</span>
-              <span class="settings-muted">Off</span>
-              <span class="settings-switch"></span>
-            </div>
-            <div class="settings-row">
-              <span class="settings-label">Music</span>
-              <span class="settings-muted">Off</span>
-              <span class="settings-switch"></span>
-            </div>
+            <a href="/Games/Word%20Arcade/index.html" class="learning-item word-arcade" data-i18n="Word Arcade">Word Arcade</a>
+            <a href="#" class="learning-item grammar-arcade" data-i18n="Grammar Arcade">Grammar Arcade</a>
+            <a href="/playzone.html" class="learning-item challenge-zone" data-i18n="Challenge Zone">Challenge Zone</a>
+            <a href="/students/profile.html" class="learning-item my-profile" data-i18n="My Profile">My Profile</a>
           </div>
         </div>
       </section>
 
       <!-- Account -->
       <section class="card">
-        <h2 class="card-title">Account</h2>
+        <h2 class="card-title" data-i18n="Account">Account</h2>
         <div class="card-content">
           <div class="account-list">
-            <a href="#" class="account-link">Change Password</a>
-            <a href="#" class="account-link">Change Email</a>
-            <a href="/students/profile.html" class="account-link">View Profile</a>
-            <a href="#" class="account-link">Logout</a>
+            <a href="#" id="changePasswordLink" class="account-link" data-i18n="Change Password">Change Password</a>
+            <a href="#" id="changeEmailLink" class="account-link" data-i18n="Change Email">Change Email</a>
+            <a href="/students/profile.html" class="account-link" data-i18n="View Profile">View Profile</a>
+            <a href="#" class="account-link" data-i18n="Logout">Logout</a>
           </div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="card">
+        <h2 class="card-title" data-i18n="Settings">Settings</h2>
+        <div class="card-content">
+          <div class="settings-list">
+            <div class="settings-row" id="langRow">
+              <span class="settings-label" data-i18n="Language">Language</span>
+              <span id="langKoLabel" class="lang-label" data-i18n="Kor">Kor</span>
+              <span id="langToggle" class="settings-switch" role="switch" aria-checked="false" tabindex="0" title="Toggle Language"></span>
+              <span id="langEnLabel" class="lang-label" data-i18n="Eng">Eng</span>
+            </div>
+            <div class="settings-row" id="darkModeRow">
+              <span class="settings-label" data-i18n="Dark Mode">Dark Mode</span>
+              <span class="settings-muted" id="darkModeStatus" data-i18n="Off">Off</span>
+              <span id="darkModeToggle" class="settings-switch" role="switch" aria-checked="false" tabindex="0" title="Toggle Dark Mode"></span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label" data-i18n="Music">Music</span>
+              <span class="settings-muted" data-i18n="Off">Off</span>
+              <span class="settings-switch"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Your Work -->
+      <section class="card">
+        <h2 class="card-title" data-i18n="Your Work">Your Work</h2>
+        <div class="card-subtitle" id="dashboardClassName" data-i18n="Class">Class</div>
+        <div class="card-content homework-scroll" style="display:flex;align-items:center;justify-content:center;min-height:160px;">
+          <div class="coming-soon" style="font-size:1.25rem;font-weight:600;color:#666;" data-i18n="Coming soon">Coming soon</div>
         </div>
       </section>
     </div>
@@ -151,6 +95,206 @@
       await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
       location.href = '/students/login.html';
     });
+  </script>
+  <script>
+    // Unified language switch with animated knob; only switch is interactive
+    (function(){
+      function setActiveStyles(){
+        if(!window.StudentLang) return;
+        const cur = StudentLang.getLang();
+        const ko = document.getElementById('langKoLabel');
+        const en = document.getElementById('langEnLabel');
+        const sw = document.getElementById('langToggle');
+        if(ko) ko.classList.toggle('active', cur==='ko');
+        if(en) en.classList.toggle('active', cur==='en');
+        if(sw) sw.setAttribute('aria-checked', cur==='en');
+      }
+      function toggle(){ if(!window.StudentLang) return; StudentLang.setLang(StudentLang.getLang()==='en'?'ko':'en'); setActiveStyles(); }
+      document.addEventListener('DOMContentLoaded', () => {
+        const sw = document.getElementById('langToggle');
+        if(sw){
+          sw.addEventListener('click', toggle);
+          sw.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); }});
+        }
+        setActiveStyles();
+      });
+      window.addEventListener('studentlang:changed', setActiveStyles);
+    })();
+  </script>
+
+  <script>
+    // Wire dark mode toggle to shared StudentTheme
+    (function(){
+      function init(){
+        const sw = document.getElementById('darkModeToggle');
+        if(!sw) return;
+        const activate = () => { if(window.StudentTheme) StudentTheme.toggle(); };
+        sw.addEventListener('click', activate);
+        sw.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); }});
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+      window.addEventListener('studenttheme:changed', () => { if(window.StudentTheme) StudentTheme.apply(); });
+    })();
+  </script>
+
+  <!-- Change Password Modal -->
+  <div id="pwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal" style="max-width:400px;width:100%;border-radius:14px;padding:24px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.15);font-family:'Poppins',sans-serif;">
+      <button id="pwClose" aria-label="Close" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:20px;cursor:pointer;">×</button>
+      <h2 style="margin:0 0 12px;font-size:1.4rem;font-weight:800;color:#19777e;" data-i18n="Change Password">Change Password</h2>
+      <form id="pwForm">
+        <label style="display:block;font-weight:600;margin:10px 0 6px;color:#19777e;" for="pwCurrent" data-i18n="Current Password">Current Password</label>
+        <div style="position:relative;">
+          <input id="pwCurrent" type="password" style="width:100%;box-sizing:border-box;padding:6px 42px 6px 10px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;" autocomplete="current-password" />
+          <button type="button" data-target="pwCurrent" class="pw-toggle pw-eye" aria-pressed="false" aria-label="Show password" title="Show password" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#19777e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label style="display:block;font-weight:600;margin:14px 0 6px;color:#19777e;" for="pwNew" data-i18n="New Password">New Password</label>
+        <div style="position:relative;">
+          <input id="pwNew" type="password" style="width:100%;box-sizing:border-box;padding:6px 42px 6px 10px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;" autocomplete="new-password" />
+          <button type="button" data-target="pwNew" class="pw-toggle pw-eye" aria-pressed="false" aria-label="Show password" title="Show password" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#19777e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label style="display:block;font-weight:600;margin:14px 0 6px;color:#19777e;" for="pwNew2" data-i18n="Confirm Password">Confirm Password</label>
+        <div style="position:relative;">
+          <input id="pwNew2" type="password" style="width:100%;box-sizing:border-box;padding:6px 42px 6px 10px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;" autocomplete="new-password" />
+          <button type="button" data-target="pwNew2" class="pw-toggle pw-eye" aria-pressed="false" aria-label="Show password" title="Show password" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#19777e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div id="pwMsg" style="margin-top:12px;font-size:0.9rem;font-weight:600;color:#b00020;display:none;"></div>
+        <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+          <button type="button" id="pwCancel" style="background:#e6eaef;color:#19777e;font-weight:600;padding:10px 18px;border-radius:10px;border:none;cursor:pointer;" data-i18n="Cancel">Cancel</button>
+          <button type="submit" id="pwSubmit" style="background:linear-gradient(135deg,#67e2e6,#93cbcf);color:#fff;font-weight:700;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;" data-i18n="Save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Email Modal -->
+  <div id="emailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal" style="max-width:400px;width:100%;border-radius:14px;padding:24px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.15);font-family:'Poppins',sans-serif;">
+      <button id="emailClose" aria-label="Close" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:20px;cursor:pointer;">×</button>
+      <h2 style="margin:0 0 12px;font-size:1.4rem;font-weight:800;color:#19777e;" data-i18n="Change Email">Change Email</h2>
+      <form id="emailForm">
+        <label style="display:block;font-weight:600;margin:10px 0 6px;color:#19777e;" for="emailCurrentPw" data-i18n="Current Password">Current Password</label>
+        <input id="emailCurrentPw" type="password" style="width:100%;box-sizing:border-box;padding:6px 10px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;" autocomplete="current-password" />
+        <label style="display:block;font-weight:600;margin:14px 0 6px;color:#19777e;" for="newEmail" data-i18n="New Email">New Email</label>
+        <input id="newEmail" type="email" style="width:100%;box-sizing:border-box;padding:6px 10px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;" autocomplete="email" />
+        <label style="display:block;font-weight:600;margin:14px 0 6px;color:#19777e;" for="newEmail2" data-i18n="Confirm Email">Confirm Email</label>
+        <input id="newEmail2" type="email" style="width:100%;box-sizing:border-box;padding:6px 10px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;" autocomplete="email" />
+        <div id="emailMsg" style="margin-top:12px;font-size:0.9rem;font-weight:600;color:#b00020;display:none;"></div>
+        <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+          <button type="button" id="emailCancel" style="background:#e6eaef;color:#19777e;font-weight:600;padding:10px 18px;border-radius:10px;border:none;cursor:pointer;" data-i18n="Cancel">Cancel</button>
+          <button type="submit" id="emailSubmit" style="background:linear-gradient(135deg,#67e2e6,#93cbcf);color:#fff;font-weight:700;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;" data-i18n="Save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const link = document.getElementById('changePasswordLink');
+      const modal = document.getElementById('pwModal');
+      const closeBtn = document.getElementById('pwClose');
+      const cancelBtn = document.getElementById('pwCancel');
+      const form = document.getElementById('pwForm');
+      const msg = document.getElementById('pwMsg');
+      const cur = document.getElementById('pwCurrent');
+      const pw1 = document.getElementById('pwNew');
+      const pw2 = document.getElementById('pwNew2');
+      function t(k){ return (window.StudentLang && StudentLang.translate(k)) || k; }
+      function showModal(){ if(modal){ modal.style.display='flex'; msg.style.display='none'; form.reset(); cur.focus(); if(window.StudentLang) StudentLang.applyTranslations(); } }
+      function hideModal(){ if(modal){ modal.style.display='none'; } }
+      function showError(txt){ if(!msg) return; msg.style.color='#b00020'; msg.textContent=txt; msg.style.display=txt?'block':'none'; }
+      function showSuccess(txt){ if(!msg) return; msg.style.color='#19777e'; msg.textContent=txt; msg.style.display=txt?'block':'none'; }
+      if(link) link.addEventListener('click', e=>{ e.preventDefault(); showModal(); });
+      [closeBtn,cancelBtn].forEach(b=> b && b.addEventListener('click', e=>{ e.preventDefault(); hideModal(); }));
+      modal?.addEventListener('click', e=>{ if(e.target===modal) hideModal(); });
+      form?.addEventListener('submit', async e=>{
+        e.preventDefault(); showError('');
+        const c = cur.value.trim(); const n1 = pw1.value.trim(); const n2 = pw2.value.trim();
+        if(!c || !n1 || !n2) return showError(t('Please enter both username and password.')); // reuse generic msg key
+        if(n1.length < 6) return showError(t('Password must be at least 6 characters.'));
+        if(n1 !== n2) return showError(t('Passwords do not match'));
+        try {
+          const r = await fetch('/.netlify/functions/supabase_auth?action=change_password', { method:'POST', credentials:'include', headers:{'content-type':'application/json'}, body: JSON.stringify({ current_password:c, new_password:n1 }) });
+          const j = await r.json().catch(()=>({}));
+          if(!j.success){
+            if(j.error_code==='bad_current') return showError(t('Incorrect current password'));
+            return showError(t(j.error||'Login failed'));
+          }
+          showSuccess(t('Password updated'));
+          setTimeout(hideModal, 1400);
+        } catch { showError(t('Login failed')); }
+      });
+      // Password visibility toggles
+      function togglePw(btn){
+        const id = btn.getAttribute('data-target');
+        const input = document.getElementById(id);
+        if(!input) return;
+        const showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        btn.setAttribute('aria-pressed', String(!showing));
+        const stroke = window.getComputedStyle(btn.querySelector('svg')).stroke || '#19777e';
+        // Replace SVG icon
+        btn.innerHTML = showing
+          ? `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94m4.21-2.29A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-2.16 3.19M9.9 9.9a3 3 0 0 0 4.2 4.2M1 1l22 22"/></svg>`
+          : `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        btn.setAttribute('aria-label', showing ? t('Show') : t('Hide'));
+        btn.setAttribute('title', showing ? t('Show') : t('Hide'));
+      }
+      document.querySelectorAll('#pwModal .pw-toggle').forEach(btn=>{
+        btn.addEventListener('click', ()=> togglePw(btn));
+      });
+      window.addEventListener('studentlang:changed', ()=>{ if(modal?.style.display==='flex'){ if(window.StudentLang) StudentLang.applyTranslations(); } });
+    })();
+  </script>
+
+  <script>
+    // Change Email Modal logic
+    (function(){
+      const link = document.getElementById('changeEmailLink');
+      const modal = document.getElementById('emailModal');
+      const closeBtn = document.getElementById('emailClose');
+      const cancelBtn = document.getElementById('emailCancel');
+      const form = document.getElementById('emailForm');
+      const msg = document.getElementById('emailMsg');
+      const curPw = document.getElementById('emailCurrentPw');
+      const em1 = document.getElementById('newEmail');
+      const em2 = document.getElementById('newEmail2');
+      function t(k){ return (window.StudentLang && StudentLang.translate(k)) || k; }
+      function showError(txt){ if(!msg) return; msg.style.color='#b00020'; msg.textContent=txt; msg.style.display=txt?'block':'none'; }
+      function showSuccess(txt){ if(!msg) return; msg.style.color='#19777e'; msg.textContent=txt; msg.style.display=txt?'block':'none'; }
+      function showModal(){ if(!modal) return; modal.style.display='flex'; msg.style.display='none'; form.reset(); curPw.focus(); if(window.StudentLang) StudentLang.applyTranslations(); }
+      function hideModal(){ if(modal) modal.style.display='none'; }
+      if(link) link.addEventListener('click', e=>{ e.preventDefault(); showModal(); });
+      ;[closeBtn,cancelBtn].forEach(b=> b && b.addEventListener('click', e=>{ e.preventDefault(); hideModal(); }));
+      modal?.addEventListener('click', e=>{ if(e.target===modal) hideModal(); });
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+      form?.addEventListener('submit', async e=>{
+        e.preventDefault(); showError('');
+        const cp = curPw.value.trim(); const e1 = em1.value.trim(); const e2 = em2.value.trim();
+        if(!cp || !e1 || !e2) return showError(t('Please enter both username and password.'));
+        if(e1.toLowerCase() !== e2.toLowerCase()) return showError(t('Emails do not match'));
+        if(!emailRegex.test(e1)) return showError(t('Invalid email address'));
+        try {
+          const r = await fetch('/.netlify/functions/supabase_auth?action=change_email', { method:'POST', credentials:'include', headers:{'content-type':'application/json'}, body: JSON.stringify({ current_password:cp, new_email:e1 }) });
+          const j = await r.json().catch(()=>({}));
+          if(!j.success){
+            if(j.error_code==='bad_current') return showError(t('Incorrect current password'));
+            if(j.error_code==='email_in_use') return showError(t('Email already in use'));
+            if(j.error_code==='invalid_email') return showError(t('Invalid email address'));
+            return showError(t(j.error||'Login failed'));
+          }
+          showSuccess(t('Email updated'));
+          setTimeout(hideModal, 1400);
+        } catch { showError(t('Login failed')); }
+      });
+      window.addEventListener('studentlang:changed', ()=>{ if(modal?.style.display==='flex'){ if(window.StudentLang) StudentLang.applyTranslations(); } });
+    })();
   </script>
 
   <script>

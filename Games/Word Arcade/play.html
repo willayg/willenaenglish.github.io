@@ -5,6 +5,9 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>Word Arcade - Live Mode</title>
 	<link rel="stylesheet" href="mini.css" />
+	<link rel="stylesheet" href="/students/theme.css" />
+	<script src="/students/language.js"></script>
+	<script src="/students/theme.js"></script>
 	<script>
 	// Auth gate: allow Supabase auth OR guest cookie; else redirect to students login with next param
 	(function(){
@@ -159,15 +162,15 @@
 		}
 	</style>
 </head>
-<body>
+<body class="word-arcade notranslate" translate="no">
 	<!-- Word Arcade style header (reuse student-header with slots like index.html) -->
-	<student-header title="" show-home="false" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home">
+	<student-header title="" show-home="false" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
 		<img slot="actions" src="assets/Images/icons/word-arcade.svg" alt="Word Arcade" style="height:4em;max-height:4.5em;display:block;" />
 	</student-header>
 	<!-- Game container used by play-main.js -->
-	<div id="gameRoot">
-		<div id="gameStage">
-			<div style="text-align:center;color:#19777e;font-weight:700;">Loading game…</div>
+	<div id="gameRoot" class="notranslate" translate="no">
+		<div id="gameStage" class="notranslate" translate="no">
+			<div style="text-align:center;color:#19777e;font-weight:700;" data-i18n="Loading game…">Loading game…</div>
 		</div>
 	</div>
 	<script type="module" src="/students/components/student-header.js"></script>

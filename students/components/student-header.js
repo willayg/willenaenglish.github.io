@@ -166,7 +166,7 @@ class StudentHeader extends HTMLElement {
       <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
         :host { display:block; }
-        header { position:sticky; top:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 8px 8px; z-index:10; min-width:0; width:100vw; box-sizing:border-box; }
+  header { position:sticky; top:0; left:0; right:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 12px 8px; z-index:10; min-width:0; width:100%; box-sizing:border-box; margin:0; }
   .top { display:flex; flex-direction:row; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; justify-content: center; min-width:0; }
   .title { font-weight:800; color: var(--pri, #19777e); text-align:center; }
   .info { display:flex; flex-direction:column; gap:2px; align-items:center; }
@@ -262,6 +262,34 @@ class StudentHeader extends HTMLElement {
         ::slotted(button.menu-item) { -webkit-appearance:none; appearance:none; background:transparent; border:none; }
         /* Disabled look */
         ::slotted(.menu-item.disabled) { color: var(--mut, #666); opacity:.6; pointer-events:none; border-bottom-color: transparent; }
+
+      /* =====================
+        Dark Mode Overrides (shadow-aware)
+        Uses :host-context(html.dark) so global html.dark toggling applies.
+        ===================== */
+      :host-context(html.dark) header { background:#1b242c; border-color:#28323c; color:#e3e8ed; }
+      :host-context(html.dark) .title,
+      :host-context(html.dark) .page-title,
+      :host-context(html.dark) .page-title-text { color:#e3e8ed; }
+      :host-context(html.dark) .mut { color:#b0bcc7; }
+      :host-context(html.dark) .points-pill { background:#1f2a33; border-color:#2f3a45; color:#67e2e6; }
+      :host-context(html.dark) .avatar { background:#182028; border-color:#67e2e6; }
+      :host-context(html.dark) ::slotted(.menu-item) { color:#9fd8df; }
+      :host-context(html.dark) ::slotted(.menu-item:hover),
+      :host-context(html.dark) ::slotted(.menu-item:focus),
+      :host-context(html.dark) ::slotted(.menu-item:active) { background:#253039; color:#67e2e6; }
+      :host-context(html.dark) ::slotted(.menu-item.active) { background:#1f2a33; border-bottom-color:#67e2e6; }
+      /* Dropdown */
+      :host-context(html.dark) .dropdown { background:#1f2830; border-color:#2c3a44; }
+      :host-context(html.dark) .dd-item { background:#1f2830; border-color:#1f2830; color:#9fd8df; }
+      :host-context(html.dark) .dd-item:hover,
+      :host-context(html.dark) .dd-item:focus { background:#28323c; }
+      /* SVG icon recolor: rely on currentColor where possible; adjust hard-coded fills */
+      :host-context(html.dark) .dd-item svg path[fill="#19777e"] { fill:#67e2e6; }
+      :host-context(html.dark) .dd-item svg path[fill="#c62828"] { fill:#ff6b6b; }
+      /* Scroll row divider */
+      :host-context(html.dark) .menu-row { border-top-color:#28323c; }
+      
       </style>
       <header>
         <div class="top">
@@ -283,23 +311,23 @@ class StudentHeader extends HTMLElement {
           <div class="menu-anchor">
             <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
             <div class="dropdown" id="avatarMenu" role="menu" aria-label="Account menu">
-              <a class="dd-item" role="menuitem" href="/students/dashboard.html">
+              <a class="dd-item" role="menuitem" href="/students/dashboard.html" data-i18n="Dashboard">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" fill="#19777e"/></svg>
                 Dashboard
               </a>
-              <a class="dd-item" role="menuitem" href="/Games/Word%20Arcade/index.html">
+              <a class="dd-item" role="menuitem" href="/Games/Word%20Arcade/index.html" data-i18n="Word Arcade">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">W</text></svg>
                 Word Arcade
               </a>
-              <a class="dd-item" role="menuitem" href="/Games/GrammarArcade/index.html">
+              <a class="dd-item" role="menuitem" href="/Games/GrammarArcade/index.html" data-i18n="Grammar Arcade">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><rect x="4" y="4" width="16" height="16" rx="4" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">G</text></svg>
                 Grammar Arcade
               </a>
-              <a class="dd-item" role="menuitem" href="/students/profile.html">
+              <a class="dd-item" role="menuitem" href="/students/profile.html" data-i18n="Profile">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M12 12c2.7 0 8 1.34 8 4v4H4v-4c0-2.66 5.3-4 8-4zm0-2a4 4 0 100-8 4 4 0 000 8z" fill="#19777e"/></svg>
                 Profile
               </a>
-              <button class="dd-item" id="logoutAction" role="menuitem" type="button" style="color:#c62828;">
+              <button class="dd-item" id="logoutAction" role="menuitem" type="button" style="color:#c62828;" data-i18n="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-11H9c-1.1 0-2 .9-2 2v4h2V4h10v16H9v-4H7v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#c62828"/></svg>
                 Logout
               </button>
@@ -465,3 +493,22 @@ class StudentHeader extends HTMLElement {
 }
 
 customElements.define("student-header", StudentHeader);
+// Auto translation inside shadow root when language changes
+window.addEventListener('studentlang:changed', () => {
+  try {
+    document.querySelectorAll('student-header').forEach(h => {
+      const sr = h.shadowRoot; if(!sr) return;
+      const t = window.StudentLang && StudentLang.translate;
+      sr.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if(!k||!t) return;
+        // Avoid stripping icons (keep child elements, update first text node)
+        if(el.childNodes.length===1 && el.firstChild.nodeType===3) { el.firstChild.textContent = t(k); }
+        else {
+          const tn = Array.from(el.childNodes).find(n=>n.nodeType===3 && n.textContent.trim().length>0);
+          if(tn) tn.textContent = t(k);
+        }
+      });
+    });
+  } catch {}
+});

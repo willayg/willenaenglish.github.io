@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Student Login</title>
+  <title data-i18n="Student Login">Student Login</title>
   <link rel="stylesheet" href="/students/profile.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -122,6 +122,8 @@
       .login-title { font-size: 1.3rem; }
     }
   </style>
+  <script src="/students/language.js"></script>
+  <!-- System language detection now handled globally in language.js -->
 </head>
 <body>
   <div style="width:100%;display:flex;flex-direction:column;align-items:center;margin-bottom:18px;">
@@ -131,25 +133,26 @@
   </div>
   <main class="login-wrap">
     <section class="login-card">
-      <h1 class="login-title">Student Login</h1>
-      <p class="mut">Use your username and password.</p>
+  <h1 class="login-title" data-i18n="Student Login">Student Login</h1>
+  <p class="mut" data-i18n="Use your username and password.">Use your username and password.</p>
       <div class="field">
-        <label for="username">Username</label>
+  <label for="username" data-i18n="Username">Username</label>
         <input id="username" autocomplete="username" />
       </div>
       <div class="field">
-        <label for="password">Password</label>
+  <label for="password" data-i18n="Password">Password</label>
         <input id="password" type="password" autocomplete="current-password" />
       </div>
       <div class="row">
-        <button id="loginBtn">Log in</button>
-        <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef">Guest Login</button>
+  <button id="loginBtn" data-i18n="Log in">Log in</button>
+  <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button>
       </div>
       <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
     </section>
   </main>
   <script type="module">
-    const msg = document.getElementById('msg');
+  const msg = document.getElementById('msg');
+  function t(k){ return (window.StudentLang && StudentLang.translate(k)) || k; }
     function show(err){ msg.textContent = err; msg.style.display = err? 'block':'none'; }
 
     async function loginWithUsernamePassword(username, password){
@@ -184,12 +187,12 @@
       show('');
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      if (!username || !password) return show('Please enter both username and password.');
+  if (!username || !password) return show(t('Please enter both username and password.'));
       try {
         await loginWithUsernamePassword(username, password);
         location.href = getNextDest();
       } catch (e) {
-        show(e.message || 'Login failed');
+        show(t(e.message) || t('Login failed'));
       }
     });
 
@@ -208,7 +211,7 @@
       show('');
       try {
         const prev = localStorage.getItem('guest_name') || '';
-        const name = prompt('Enter your name to play as a guest:', prev);
+  const name = prompt(t('Enter your name to play as a guest:'), prev);
         if (!name) return; // cancelled
         const guest = await startGuestSession(name);
         localStorage.setItem('guest_name', guest.name);
@@ -216,9 +219,10 @@
         try { localStorage.setItem('user_name', guest.name); } catch {}
         location.href = getNextDest();
       } catch(e){
-        show(e.message || 'Guest login failed');
+        show(t(e.message) || t('Guest login failed'));
       }
     });
+    document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
   </script>
 </body>
 </html>
