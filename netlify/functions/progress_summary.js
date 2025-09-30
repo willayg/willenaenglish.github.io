@@ -384,19 +384,41 @@ exports.handler = async (event) => {
         else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
         else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
         if (acc != null) {
-          if (acc >= 1) return 3;
-          if (acc >= 0.9) return 2;
-          if (acc >= 0.8) return 1;
+          // 0–5 scale aligned with front-end overlay (>=100:5, >90:4, >80:3, >70:2, >=60:1, else 0)
+          if (acc >= 1) return 5;
+          if (acc > 0.9) return 4;
+          if (acc > 0.8) return 3;
+          if (acc > 0.7) return 2;
+          if (acc >= 0.6) return 1;
           return 0;
         }
-        if (typeof s.stars === 'number') return s.stars;
+        if (typeof s.stars === 'number') return Math.max(0, Math.min(5, s.stars));
         return 0;
       }
-      // Stars: only count the highest stars per unique (list_name, mode)
+      // Determine if a session is considered "finished" (Option B semantics)
+      function isFinished(sumObj) {
+        if (!sumObj || typeof sumObj !== 'object') return false;
+        // Perfect flag or 100% accuracy always counts
+        if (sumObj.perfect === true) return true;
+        let acc = null;
+        if (typeof sumObj.accuracy === 'number') acc = sumObj.accuracy;
+        else if (typeof sumObj.score === 'number' && typeof sumObj.total === 'number' && sumObj.total > 0) acc = sumObj.score / sumObj.total;
+        else if (typeof sumObj.score === 'number' && typeof sumObj.max === 'number' && sumObj.max > 0) acc = sumObj.score / sumObj.max;
+        if (acc != null && acc >= 0.60) return true; // >=60% threshold to "finish" a mode
+        return false;
+      }
+      // Stars: only count highest stars per unique (effective_list_name, mode) for finished sessions.
+      // Recover list name from summary if row list_name missing; skip if still unknown to avoid collisions.
       const starsByListMode = new Map();
       sessions.forEach(s => {
-        const key = `${s.list_name || ''}||${s.mode || ''}`;
-        const stars = deriveStars(parseSummary(s.summary));
+        const parsed = parseSummary(s.summary) || {};
+        // Accept derived summaries if they meet accuracy threshold
+        const effectiveListRaw = s.list_name || parsed.list_name || parsed.listName || null;
+        // If still missing, fall back to synthetic placeholder so progress is visible
+        const effectiveList = effectiveListRaw || 'unlabeled_list';
+        if (!isFinished(parsed)) return; // only finished sessions contribute
+        const key = `${effectiveList}||${s.mode || ''}`;
+        const stars = deriveStars(parsed);
         if (!starsByListMode.has(key) || stars > starsByListMode.get(key)) {
           starsByListMode.set(key, stars);
         }
