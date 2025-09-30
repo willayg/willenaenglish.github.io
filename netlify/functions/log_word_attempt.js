@@ -152,9 +152,21 @@ exports.handler = async (event) => {
       }
       const { session_id, user_id, mode, extra } = body;
       if (!session_id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing session_id' }) };
+      // Try to extract list_name & list_size from extra summary if not already present
+      let extraObj = null;
+      try { if (extra && typeof extra === 'string') extraObj = JSON.parse(extra); else if (extra && typeof extra === 'object') extraObj = extra; } catch {}
+      const listFromExtra = extraObj && (extraObj.list_name || extraObj.listName || null);
+      const sizeFromExtra = extraObj && (typeof extraObj.list_size === 'number' ? extraObj.list_size : (typeof extraObj.total_words === 'number' ? extraObj.total_words : null));
       const { error } = await supabase
         .from('progress_sessions')
-        .update({ ended_at: new Date().toISOString(), summary: extra || null, mode: mode || null, user_id: userIdFromCookie })
+        .update({
+          ended_at: new Date().toISOString(),
+          summary: extra || null,
+          mode: mode || null,
+          user_id: userIdFromCookie,
+          ...(listFromExtra ? { list_name: listFromExtra } : {}),
+          ...(sizeFromExtra ? { list_size: sizeFromExtra } : {})
+        })
         .eq('session_id', session_id);
       if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
@@ -176,7 +188,12 @@ exports.handler = async (event) => {
 
       // Ensure a session row exists to satisfy FK (if you created the FK)
       if (session_id) {
-  const stub = { session_id, user_id: userIdFromCookie, mode: mode || null };
+        // Attempt to enrich stub with list_name if present in extra
+        let extraObj = null;
+        try { if (extra && typeof extra === 'string') extraObj = JSON.parse(extra); else if (extra && typeof extra === 'object') extraObj = extra; } catch {}
+        const listFromExtra = extraObj && (extraObj.list_name || extraObj.listName || null);
+        const listSizeFromExtra = extraObj && (typeof extraObj.list_size === 'number' ? extraObj.list_size : null);
+        const stub = { session_id, user_id: userIdFromCookie, mode: mode || null, ...(listFromExtra ? { list_name: listFromExtra } : {}), ...(listSizeFromExtra ? { list_size: listSizeFromExtra } : {}) };
         const { error: sessErr } = await supabase
           .from('progress_sessions')
           .upsert(stub, { onConflict: 'session_id' });

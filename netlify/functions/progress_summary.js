@@ -278,6 +278,7 @@ exports.handler = async (event) => {
 
     // ---------- OVERVIEW ----------
     if (section === 'overview') {
+      const debugMode = !!(event.queryStringParameters && event.queryStringParameters.debug);
       const [sessRes, attRes] = await Promise.all([
         scope(
           supabase
@@ -400,6 +401,8 @@ exports.handler = async (event) => {
         if (!sumObj || typeof sumObj !== 'object') return false;
         // Perfect flag or 100% accuracy always counts
         if (sumObj.perfect === true) return true;
+        // If summary explicitly already provides stars > 0, accept as finished
+        if (typeof sumObj.stars === 'number' && sumObj.stars > 0) return true;
         let acc = null;
         if (typeof sumObj.accuracy === 'number') acc = sumObj.accuracy;
         else if (typeof sumObj.score === 'number' && typeof sumObj.total === 'number' && sumObj.total > 0) acc = sumObj.score / sumObj.total;
@@ -410,18 +413,38 @@ exports.handler = async (event) => {
       // Stars: only count highest stars per unique (effective_list_name, mode) for finished sessions.
       // Recover list name from summary if row list_name missing; skip if still unknown to avoid collisions.
       const starsByListMode = new Map();
+      const starsDebug = []; // collect breakdown for optional client debugging
+      const debugSessions = debugMode ? [] : null;
       sessions.forEach(s => {
         const parsed = parseSummary(s.summary) || {};
         // Accept derived summaries if they meet accuracy threshold
         const effectiveListRaw = s.list_name || parsed.list_name || parsed.listName || null;
-        // If still missing, fall back to synthetic placeholder so progress is visible
         const effectiveList = effectiveListRaw || 'unlabeled_list';
-        if (!isFinished(parsed)) return; // only finished sessions contribute
-        const key = `${effectiveList}||${s.mode || ''}`;
-        const stars = deriveStars(parsed);
-        if (!starsByListMode.has(key) || stars > starsByListMode.get(key)) {
-          starsByListMode.set(key, stars);
+        const finished = isFinished(parsed);
+        const derivedStars = deriveStars(parsed);
+        if (debugMode) {
+          let accVal = null;
+            if (typeof parsed.accuracy === 'number') accVal = parsed.accuracy;
+            else if (typeof parsed.score === 'number' && typeof parsed.total === 'number' && parsed.total > 0) accVal = parsed.score / parsed.total;
+            else if (typeof parsed.score === 'number' && typeof parsed.max === 'number' && parsed.max > 0) accVal = parsed.score / parsed.max;
+          debugSessions.push({
+            session_id: s.session_id,
+            raw_list_name: s.list_name,
+            list_from_summary: parsed.list_name || parsed.listName || null,
+            effective_list: effectiveList,
+            mode: s.mode || '',
+            finished,
+            accuracy: accVal,
+            stars_field: parsed.stars,
+            derivedStars
+          });
         }
+        if (!finished) return;
+        const key = `${effectiveList}||${s.mode || ''}`;
+        if (!starsByListMode.has(key) || derivedStars > starsByListMode.get(key)) {
+          starsByListMode.set(key, derivedStars);
+        }
+        starsDebug.push({ list: effectiveList, mode: s.mode || '', stars: derivedStars });
       });
       let stars_total = 0;
       starsByListMode.forEach(v => { stars_total += v; });
@@ -475,7 +498,7 @@ exports.handler = async (event) => {
         }
       });
 
-      return json(200, {
+      const basePayload = {
         stars: stars_total,
         lists_explored,
         perfect_runs,
@@ -488,8 +511,11 @@ exports.handler = async (event) => {
         badges_count,
         favorite_list,
         hardest_word,
-        points: total_points
-      });
+        points: total_points,
+        stars_breakdown: starsDebug
+      };
+      if (debugMode) basePayload.debug_sessions = debugSessions;
+      return json(200, basePayload);
     }
 
   // ---------- CHALLENGING ----------
