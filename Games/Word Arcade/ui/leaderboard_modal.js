@@ -1,7 +1,7 @@
 // UI modal for live leaderboard display after a timed round
 // Minimal, dependency-free markup; poll refresh support via callback
 
-export function showLeaderboardModal({ title = 'Leaderboard', entries = [], onClose, onRefresh, onReplay, refreshIntervalMs = 5000 }) {
+export function showLeaderboardModal({ title = 'Leaderboard', entries = [], onClose, onRefresh, onReplay, refreshIntervalMs = 5000, backdropClosable = true }) {
   let overlay = document.getElementById('leaderboardOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -50,7 +50,7 @@ export function showLeaderboardModal({ title = 'Leaderboard', entries = [], onCl
   const replayBtn = overlay.querySelector('#lbReplayBtn');
 
   // No close X; overlay click still closes if needed
-  overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); if (onClose) onClose(); } };
+  overlay.onclick = (e) => { if (!backdropClosable) return; if (e.target === overlay) { cleanup(); if (onClose) onClose(); } };
   if (replayBtn && onReplay) replayBtn.onclick = () => { cleanup(); onReplay(); };
 
   let timer = null;

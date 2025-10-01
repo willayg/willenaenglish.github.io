@@ -475,6 +475,35 @@ import { initPointsClient } from './scripts/points-client.js';
   };
   setTimeout(doPhase2, 0);
 
+  // Immediate star refresh after a session ends (emitted by records.js)
+  window.addEventListener('session:ended', async () => {
+    try {
+      const ov = await fetch(API.overview() + '&_bust=' + Date.now(), { credentials: 'include', cache: 'no-store' }).then(r => r.ok ? r.json() : null);
+      if (ov && typeof ov.stars === 'number') {
+        const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
+        setCount('awardStars', ov.stars);
+        // update overlay stat block too
+        try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov })); } catch {}
+      }
+    } catch {}
+  });
+
+  // Cross-tab star refresh via localStorage key
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'stars:refresh') {
+      (async () => {
+        try {
+          const ov = await fetch(API.overview() + '&_bust=' + Date.now(), { credentials: 'include', cache: 'no-store' }).then(r => r.ok ? r.json() : null);
+          if (ov && typeof ov.stars === 'number') {
+            const setCount = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v ?? 0); };
+            setCount('awardStars', ov.stars);
+            try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov })); } catch {}
+          }
+        } catch {}
+      })();
+    }
+  });
+
     // Defer non-critical tables (sessions, attempts)
   // Removed: deferred sessions/attempts fetch
 
@@ -486,29 +515,4 @@ import { initPointsClient } from './scripts/points-client.js';
 // Scoreless: no live points updates
 (function(){
   // No-op
-})();
-
-// Lightweight live star refresher (no medals) so stars update after playing a game in another tab.
-(function(){
-  const REFRESH_MIN_INTERVAL = 3000; // ms debounce
-  let lastStarRefresh = 0;
-  async function refreshStars(force = false){
-    if (!force && Date.now() - lastStarRefresh < REFRESH_MIN_INTERVAL) return;
-    lastStarRefresh = Date.now();
-    try {
-      const ov = await (async () => {
-        try { return await fetch(API.overview(), { credentials:'include', cache:'no-store' }).then(r => r.ok ? r.json() : null); } catch { return null; }
-      })();
-      if (ov && typeof ov.stars === 'number') {
-        const v = String(ov.stars);
-        const awardEl = document.getElementById('awardStars');
-        if (awardEl && awardEl.textContent !== v) awardEl.textContent = v;
-        const ovEl = document.getElementById('ovStars');
-        if (ovEl && ovEl.textContent !== v) ovEl.textContent = v;
-      }
-    } catch {}
-  }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshStars(false); });
-  // Expose manual hook for debugging
-  try { window.refreshStars = refreshStars; } catch {}
 })();

@@ -37,6 +37,43 @@
       }
     })();
   </script>
+  <style>
+    .admin-top-bar { position:sticky; top:0; z-index:600; display:flex; align-items:center; gap:18px; padding:10px 18px; background:#0f172a; box-shadow:0 4px 18px -4px rgba(0,0,0,.35); }
+    .admin-top-bar h2 { margin:0; font-size:1.05rem; font-weight:700; color:#67e2e6; letter-spacing:.5px; }
+    .admin-burger { position:relative; }
+    .admin-burger button { background:none; border:2px solid #67e2e6; color:#67e2e6; font-size:22px; padding:6px 14px; border-radius:12px; font-weight:700; cursor:pointer; letter-spacing:.5px; }
+    .admin-burger button:hover { background:#67e2e6; color:#0f172a; }
+    .admin-menu { position:absolute; top:100%; left:0; margin-top:10px; background:#fff; border:1px solid #e2e8f0; border-radius:16px; min-width:240px; box-shadow:0 10px 34px -8px rgba(0,0,0,.35); padding:6px 0; display:none; }
+    .admin-menu.open { display:block; animation:fadeIn .18s ease; }
+    .admin-menu a { display:flex; align-items:center; gap:10px; padding:10px 16px; font-weight:600; font-size:.85rem; color:#0f172a; text-decoration:none; letter-spacing:.3px; }
+    .admin-menu a:hover { background:#f1f7f9; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:translateY(0);} }
+  </style>
+  <div class="admin-top-bar">
+    <div class="admin-burger">
+      <button class="admin-burger-btn" aria-haspopup="true" aria-expanded="false">☰</button>
+      <div class="admin-menu" role="menu">
+        <a href="/Teachers/components/admin-dashboard.html" role="menuitem" style="font-weight:800;color:#1976d2;">📊 Admin Dashboard</a>
+        <a href="/Teachers/components/feedback-admin.html" role="menuitem">💬 Feedback Admin</a>
+        <a href="/Teachers/components/admin_teachers.html" role="menuitem">👩‍🏫 Manage Teachers</a>
+        <a href="/Teachers/tools/planner/planner.html" role="menuitem">📝 Planner</a>
+        <a href="#" data-action="bugs" role="menuitem">🐞 Bugs</a>
+        <a href="/Teachers/index.html" role="menuitem">🏠 Teacher Dashboard</a>
+        <a href="/Teachers/login.html" data-action="logout" role="menuitem">🚪 Logout</a>
+      </div>
+    </div>
+    <h2 class="admin-header-title">Admin Dashboard</h2>
+  </div>
+  <script>
+    (function(){
+      const bar = document.querySelector('.admin-top-bar');
+      const btn = bar.querySelector('.admin-burger-btn');
+      const menu = bar.querySelector('.admin-menu');
+      btn.addEventListener('click', ()=>{ const open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
+      document.addEventListener('click', (e)=>{ if(!menu.contains(e.target) && !btn.contains(e.target) && menu.classList.contains('open')){ menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } }, true);
+      menu.addEventListener('click', (e)=>{ const a = e.target.closest('a'); if(!a) return; if(a.dataset.action==='bugs'){ e.preventDefault(); if(window.showFeedbackModal) window.showFeedbackModal(); else alert('Feedback modal not available.'); menu.classList.remove('open'); } else if(a.dataset.action==='logout'){ e.preventDefault(); fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST',credentials:'include'}).finally(()=> location.href='/Teachers/login.html'); } });
+    })();
+  </script>
   <div class="admin-container">
     <h1>Admin Dashboard</h1>
     <div class="admin-links">

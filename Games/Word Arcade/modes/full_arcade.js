@@ -218,7 +218,7 @@ export function runFullArcadeMode(context) {
     if (!modeKey) return finalSummary();
     // Clear area & show lightweight round header
     if (window.__FA_DEBUG) console.debug('[FullArcade] Starting round', i, modeKey, 'special?', SPECIAL_MODE_KEYS.has(modeKey));
-    gameArea.innerHTML = `<div class="arcade-round-intro" style="text-align:center;padding:16px 8px;font-family:system-ui,sans-serif;">
+  gameArea.innerHTML = `<div class="arcade-round-intro fa-definition-box" style="text-align:center;padding:16px 8px;font-family:system-ui,sans-serif;">
       <h2 style="margin:4px 0 10px;font-size:1.25rem;color:#19777e;font-weight:800;">Round ${i+1} / ${THEMED_SEQUENCE.length}</h2>
       <div style="color:#334155;font-size:.9rem;margin-bottom:8px;">${prettyLabel(modeKey)}</div>
       <div style="font-size:.8rem;color:#64748b;">Loading…</div>
@@ -353,7 +353,7 @@ export function runFullArcadeMode(context) {
     hideSkipLink();
     hidePrevLink();
     const pct = cumulative.totalQuestions ? Math.round((cumulative.totalCorrect / cumulative.totalQuestions) * 100) : 0;
-    gameArea.innerHTML = `<div style="max-width:560px;margin:40px auto;padding:28px 24px;background:#fff;border:2px solid #cfdbe2;border-radius:20px;font-family:system-ui,sans-serif;text-align:center;">
+  gameArea.innerHTML = `<div class="fa-summary-panel" style="max-width:560px;margin:40px auto;padding:28px 24px;background:#fff;border:2px solid #cfdbe2;border-radius:20px;font-family:system-ui,sans-serif;text-align:center;">
       <h2 style="margin:0 0 14px;font-size:1.6rem;color:#0f172a;font-weight:800;">Full Arcade Complete</h2>
       <div style="font-size:1.1rem;color:#334155;margin-bottom:14px;">Overall Score: <strong>${cumulative.totalCorrect} / ${cumulative.totalQuestions}</strong> (${pct}%)</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin:12px 0 18px;">

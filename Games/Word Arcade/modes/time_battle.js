@@ -108,6 +108,9 @@ async function submitScore(sessionId, round, score) {
 
 export async function runTimeBattleMode(context) {
   const { wordList, gameArea } = context;
+  // Ensure interactive state is restored in case a previous round set pointer-events:none
+  try { gameArea.style.pointerEvents = 'auto'; } catch {}
+  try { gameArea.querySelectorAll('[disabled]')?.forEach(el => el.removeAttribute('disabled')); } catch {}
   // Force login gate
   const loggedIn = await requireLogin();
   if (!loggedIn) {
@@ -387,10 +390,11 @@ export async function runTimeBattleMode(context) {
 
   let remaining = durationSec;
   let timer = null;
+  let gameEnded = false; // lock after finish to prevent post-time interactions / cheating
 
   function addTime(seconds) {
     const inc = Number(seconds) || 0;
-    if (inc <= 0) return;
+  if (gameEnded || inc <= 0) return; // no time bonuses after game end
     remaining += inc;
     if (timerEl) {
       timerEl.textContent = remaining + 's';
@@ -437,12 +441,25 @@ export async function runTimeBattleMode(context) {
   }, 1000);
 
   async function finish() {
+    if (gameEnded) return; // guard against double calls
+    gameEnded = true;
+    // Freeze underlying game UI so user cannot keep answering after closing modal
+    try {
+      if (timer) clearInterval(timer);
+      // Disable all buttons / inputs
+      gameArea.querySelectorAll('button, input, textarea').forEach(el => { el.disabled = true; });
+      // Remove any lingering click handlers by cloning (minimal but effective)
+      // (Skip for spelling tiles where we already disabled buttons)
+      gameArea.style.pointerEvents = 'none';
+    } catch {}
     // Submit and show leaderboard
     await submitScore(sessionId, round, score);
     const initial = await fetchLeaderboard(sessionId, round);
     const modal = showLeaderboardModal({
       title: 'Live Leaderboard',
       entries: initial,
+      backdropClosable: false, // prevent dismiss + cheating
+  qrLink: (() => { try { const u = new URL(location.origin + '/Games/Word Arcade/play.html'); u.searchParams.set('id', sessionId); u.searchParams.set('mode', 'time_battle'); u.searchParams.set('round', String(round)); return u.toString(); } catch { return null; } })(),
       onReplay: () => {
         try { localStorage.removeItem(STORAGE_KEY); } catch {}
         try { modal.close(); } catch {}
@@ -451,6 +468,12 @@ export async function runTimeBattleMode(context) {
       }
     });
   }
+
+  // Wrap score updates & progression to respect gameEnded
+  const originalUpdateScore = updateScore;
+  updateScore = function(newScore) { if (gameEnded) return; originalUpdateScore(newScore); };
+  const originalNextQuestion = nextQuestion;
+  nextQuestion = function() { if (gameEnded) return; originalNextQuestion(); };
 }
 
 export const run = runTimeBattleMode;

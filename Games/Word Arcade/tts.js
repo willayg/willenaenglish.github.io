@@ -354,6 +354,12 @@ function speakWithSystemTTS(word) {
   });
 }
 
+// Track currently playing audio keys to avoid overlapping/re-entrant playback
+const _playingKeys = new Set();
+const _pendingLoads = new Map(); // key -> promise resolving to audio element
+const PLAY_COOLDOWN_MS = 700; // minimal spacing for rapid clicks
+const _lastPlayAt = new Map(); // key -> timestamp ms
+
 export async function playTTS(text) {
   console.log(`Playing TTS for: "${text}"`);
   // Extract the actual word for filename (remove prompt formatting)
@@ -361,17 +367,28 @@ export async function playTTS(text) {
 
   // Play from cache when available (normalized)
   const key = normalizeWord(word);
+  const now = Date.now();
+  const lastAt = _lastPlayAt.get(key) || 0;
+  if (now - lastAt < PLAY_COOLDOWN_MS) {
+    return; // ignore spammy clicks within cooldown
+  }
+  _lastPlayAt.set(key, now);
+
   if (audioCache.has(key)) {
-  const audio = audioCache.get(key);
-  audio.currentTime = 0;
+    const audio = audioCache.get(key);
+    if (_playingKeys.has(key)) {
+      return; // already playing; don't layer
+    }
+    _playingKeys.add(key);
+    audio.currentTime = 0;
+    const clear = () => { _playingKeys.delete(key); audio.removeEventListener('ended', clear); audio.removeEventListener('pause', clear); audio.removeEventListener('error', clear); };
+    audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
     try {
       await audio.play();
     } catch (err) {
       console.warn(`Audio play failed for ${word}, retrying once...`, err);
       await new Promise(r => setTimeout(r, 200));
-      try { await audio.play(); } catch (err2) {
-        console.warn(`Second audio play failed for ${word}.`, err2);
-      }
+      try { await audio.play(); } catch (err2) { console.warn(`Second audio play failed for ${word}.`, err2); clear(); }
     }
     return;
   }
@@ -396,9 +413,18 @@ export async function playTTS(text) {
         if (data && data.results) {
           const info = data.results[word] || data.results[normalizeWord(word)] || null;
           if (info && info.exists && info.url) {
-            const audio = await loadAudioElement(info.url);
-            audioCache.set(key, audio);
-            try { await audio.play(); console.debug('Lazy-loaded audio from R2 (list):', word); } catch { /* ignore */ }
+            // Deduplicate potential racing loads
+            let audioPromise = _pendingLoads.get(key);
+            if (!audioPromise) {
+              audioPromise = loadAudioElement(info.url).then(a => { audioCache.set(key, a); return a; }).finally(() => _pendingLoads.delete(key));
+              _pendingLoads.set(key, audioPromise);
+            }
+            const audio = await audioPromise;
+            if (_playingKeys.has(key)) return; // another play already in progress
+            _playingKeys.add(key);
+            const clear = () => { _playingKeys.delete(key); audio.removeEventListener('ended', clear); audio.removeEventListener('pause', clear); audio.removeEventListener('error', clear); };
+            audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
+            try { await audio.play(); console.debug('Lazy-loaded audio from R2 (list):', word); } catch { clear(); }
             loaded = true;
             break;
           }
@@ -418,9 +444,17 @@ export async function playTTS(text) {
         if (!res.ok) continue;
         const data = await res.json();
         if (data && data.exists && data.url) {
-          const audio = await loadAudioElement(data.url);
-          audioCache.set(key, audio);
-          try { await audio.play(); console.debug('Lazy-loaded audio from R2 (single):', word); } catch { /* ignore */ }
+          let audioPromise = _pendingLoads.get(key);
+          if (!audioPromise) {
+            audioPromise = loadAudioElement(data.url).then(a => { audioCache.set(key, a); return a; }).finally(() => _pendingLoads.delete(key));
+            _pendingLoads.set(key, audioPromise);
+          }
+          const audio = await audioPromise;
+          if (_playingKeys.has(key)) return;
+          _playingKeys.add(key);
+          const clear = () => { _playingKeys.delete(key); audio.removeEventListener('ended', clear); audio.removeEventListener('pause', clear); audio.removeEventListener('error', clear); };
+          audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
+          try { await audio.play(); console.debug('Lazy-loaded audio from R2 (single):', word); } catch { clear(); }
           return;
         }
       } catch { /* try next */ }
@@ -430,5 +464,12 @@ export async function playTTS(text) {
   // Strict mode: do not generate; fallback to system TTS (US female preferred)
   // Keep logs quiet to avoid noise during class use
   // console.debug(`Audio not preloaded for word: "${word}"; speaking via system TTS.`);
+  // System TTS: avoid overlapping by cancelling if currently speaking same word
+  try {
+    if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) {
+      // If already speaking, don't queue another for same cooldown window
+      return;
+    }
+  } catch {}
   await speakWithSystemTTS(word);
 }

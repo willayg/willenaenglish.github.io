@@ -278,26 +278,51 @@ exports.handler = async (event) => {
 
     // ---------- OVERVIEW ----------
     if (section === 'overview') {
-      const debugMode = !!(event.queryStringParameters && event.queryStringParameters.debug);
-      const [sessRes, attRes] = await Promise.all([
-        scope(
+      const debugFlag = (event.queryStringParameters && event.queryStringParameters.debug) ? true : false;
+      // First get counts to know how many pages to fetch
+      const PAGE = 1000;
+      const [{ count: sessCount, error: sessCntErr }, { count: attCount, error: attCntErr }] = await Promise.all([
+        scope(supabase.from('progress_sessions').select('*', { count: 'exact', head: true })),
+        scope(supabase.from('progress_attempts').select('*', { count: 'exact', head: true }))
+      ]);
+      if (sessCntErr) return json(400, { error: sessCntErr.message });
+      if (attCntErr) return json(400, { error: attCntErr.message });
+      const sessions = [];
+      const attempts = [];
+      // Fetch session pages newest-first for determinism
+      const sessPages = Math.ceil((sessCount || 0) / PAGE);
+      for (let p = 0; p < sessPages; p++) {
+        const from = p * PAGE;
+        const to = Math.min(from + PAGE - 1, (sessCount || 0) - 1);
+        if (to < from) break;
+        const { data, error } = await scope(
           supabase
             .from('progress_sessions')
             .select('session_id, mode, list_name, summary, started_at, ended_at')
-            .range(0, 999999)
-        ),
-        scope(
+            .order('started_at', { ascending: false })
+            .range(from, to)
+        );
+        if (error) return json(400, { error: error.message, page: p, domain: 'sessions' });
+        if (Array.isArray(data)) sessions.push(...data);
+      }
+      // Fetch attempts pages (only fields needed). We'll need sequential ordering for streak calc later.
+      const attPages = Math.ceil((attCount || 0) / PAGE);
+      for (let p = 0; p < attPages; p++) {
+        const from = p * PAGE;
+        const to = Math.min(from + PAGE - 1, (attCount || 0) - 1);
+        if (to < from) break;
+        const { data, error } = await scope(
           supabase
             .from('progress_attempts')
             .select('word, is_correct, created_at, mode, points')
-            .range(0, 999999)
-        )
-      ]);
-      if (sessRes.error) return json(400, { error: sessRes.error.message });
-      if (attRes.error) return json(400, { error: attRes.error.message });
-
-      const sessions = sessRes.data || [];
-      const attempts = attRes.data || [];
+            .order('created_at', { ascending: false })
+            .range(from, to)
+        );
+        if (error) return json(400, { error: error.message, page: p, domain: 'attempts' });
+        if (Array.isArray(data)) attempts.push(...data);
+      }
+      // For logic that expects chronological order we can sort once (cost O(n log n)).
+      attempts.sort((a,b)=> new Date(a.created_at) - new Date(b.created_at));
       // Authoritative total: sum of points via RPC (fast), with pagination fallback
       let total_points = 0;
       try {
@@ -378,6 +403,8 @@ exports.handler = async (event) => {
 
   // total_points computed above
 
+      // Updated 0–5 star scale (previously 0–3). Thresholds:
+      // 100% => 5, >=95% => 4, >=90% => 3, >=80% => 2, >=60% => 1, else 0
       function deriveStars(summ) {
         const s = summ || {};
         let acc = null;
@@ -385,66 +412,53 @@ exports.handler = async (event) => {
         else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
         else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
         if (acc != null) {
-          // 0–5 scale aligned with front-end overlay (>=100:5, >90:4, >80:3, >70:2, >=60:1, else 0)
           if (acc >= 1) return 5;
-          if (acc > 0.9) return 4;
-          if (acc > 0.8) return 3;
-          if (acc > 0.7) return 2;
-          if (acc >= 0.6) return 1;
+          if (acc >= 0.95) return 4;
+          if (acc >= 0.90) return 3;
+          if (acc >= 0.80) return 2;
+          if (acc >= 0.60) return 1;
           return 0;
         }
-        if (typeof s.stars === 'number') return Math.max(0, Math.min(5, s.stars));
+        if (typeof s.stars === 'number') return s.stars; // fallback if pre-computed
         return 0;
       }
-      // Determine if a session is considered "finished" (Option B semantics)
-      function isFinished(sumObj) {
-        if (!sumObj || typeof sumObj !== 'object') return false;
-        // Perfect flag or 100% accuracy always counts
-        if (sumObj.perfect === true) return true;
-        // If summary explicitly already provides stars > 0, accept as finished
-        if (typeof sumObj.stars === 'number' && sumObj.stars > 0) return true;
-        let acc = null;
-        if (typeof sumObj.accuracy === 'number') acc = sumObj.accuracy;
-        else if (typeof sumObj.score === 'number' && typeof sumObj.total === 'number' && sumObj.total > 0) acc = sumObj.score / sumObj.total;
-        else if (typeof sumObj.score === 'number' && typeof sumObj.max === 'number' && sumObj.max > 0) acc = sumObj.score / sumObj.max;
-        if (acc != null && acc >= 0.60) return true; // >=60% threshold to "finish" a mode
-        return false;
-      }
-      // Stars: only count highest stars per unique (effective_list_name, mode) for finished sessions.
-      // Recover list name from summary if row list_name missing; skip if still unknown to avoid collisions.
+  // debugFlag already defined above
+      // Track highest stars per (list_name, mode) plus raw breakdown for debug
       const starsByListMode = new Map();
-      const starsDebug = []; // collect breakdown for optional client debugging
-      const debugSessions = debugMode ? [] : null;
+      const stars_breakdown = [];
+      let orderIdx = 0;
       sessions.forEach(s => {
-        const parsed = parseSummary(s.summary) || {};
-        // Accept derived summaries if they meet accuracy threshold
-        const effectiveListRaw = s.list_name || parsed.list_name || parsed.listName || null;
-        const effectiveList = effectiveListRaw || 'unlabeled_list';
-        const finished = isFinished(parsed);
-        const derivedStars = deriveStars(parsed);
-        if (debugMode) {
-          let accVal = null;
-            if (typeof parsed.accuracy === 'number') accVal = parsed.accuracy;
-            else if (typeof parsed.score === 'number' && typeof parsed.total === 'number' && parsed.total > 0) accVal = parsed.score / parsed.total;
-            else if (typeof parsed.score === 'number' && typeof parsed.max === 'number' && parsed.max > 0) accVal = parsed.score / parsed.max;
-          debugSessions.push({
+        const list = s.list_name || '';
+        const mode = s.mode || '';
+        const key = `${list}||${mode}`;
+        const parsed = parseSummary(s.summary);
+        const stars = deriveStars(parsed);
+        const prev = starsByListMode.get(key) || 0;
+        const becameBest = stars > prev;
+        if (becameBest) starsByListMode.set(key, stars);
+        if (debugFlag) {
+          let acc = null;
+            if (parsed) {
+              if (typeof parsed.accuracy === 'number') acc = parsed.accuracy;
+              else if (typeof parsed.score === 'number' && typeof parsed.total === 'number' && parsed.total > 0) acc = parsed.score / parsed.total;
+              else if (typeof parsed.score === 'number' && typeof parsed.max === 'number' && parsed.max > 0) acc = parsed.score / parsed.max;
+            }
+          const reason = becameBest
+            ? (prev === 0 ? 'first_for_pair' : 'improved_best')
+            : (stars === prev ? 'tied_existing_best' : (stars < prev ? 'lower_than_best' : 'unknown'));
+          stars_breakdown.push({
+            i: orderIdx++,
             session_id: s.session_id,
-            raw_list_name: s.list_name,
-            list_from_summary: parsed.list_name || parsed.listName || null,
-            effective_list: effectiveList,
-            mode: s.mode || '',
-            finished,
-            accuracy: accVal,
-            stars_field: parsed.stars,
-            derivedStars
+            list_name: list || null,
+            mode: mode || null,
+            stars,
+            accuracy: acc,
+            existing_best_before: prev,
+            became_best: becameBest,
+            best_for_pair: (becameBest ? stars : prev),
+            reason
           });
         }
-        if (!finished) return;
-        const key = `${effectiveList}||${s.mode || ''}`;
-        if (!starsByListMode.has(key) || derivedStars > starsByListMode.get(key)) {
-          starsByListMode.set(key, derivedStars);
-        }
-        starsDebug.push({ list: effectiveList, mode: s.mode || '', stars: derivedStars });
       });
       let stars_total = 0;
       starsByListMode.forEach(v => { stars_total += v; });
@@ -498,7 +512,7 @@ exports.handler = async (event) => {
         }
       });
 
-      const basePayload = {
+      const overviewPayload = {
         stars: stars_total,
         lists_explored,
         perfect_runs,
@@ -511,11 +525,21 @@ exports.handler = async (event) => {
         badges_count,
         favorite_list,
         hardest_word,
-        points: total_points,
-        stars_breakdown: starsDebug
+        points: total_points
       };
-      if (debugMode) basePayload.debug_sessions = debugSessions;
-      return json(200, basePayload);
+      if (debugFlag) {
+        overviewPayload.stars_breakdown = stars_breakdown;
+        overviewPayload.meta = {
+          sessions_fetched: sessions.length,
+          attempts_fetched: attempts.length,
+          sessions_count: sessCount || sessions.length,
+          attempts_count: attCount || attempts.length,
+          pages_sessions: sessPages,
+          pages_attempts: attPages,
+          page_size: PAGE
+        };
+      }
+      return json(200, overviewPayload);
     }
 
   // ---------- CHALLENGING ----------

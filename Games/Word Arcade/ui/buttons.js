@@ -45,6 +45,17 @@ function ensureChoiceButtonStyles() {
       70%  { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
       100% { background: #f7f7f7; }
     }
+    /* Dark mode splash variants so buttons do not flash back to light gray */
+    html.dark @keyframes btnSplashCorrect {
+      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.55); background:#123d20; }
+      70%  { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
+      100% { background:#1f2933; }
+    }
+    html.dark @keyframes btnSplashWrong {
+      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); background:#412323; }
+      70%  { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+      100% { background:#1f2933; }
+    }
     .splash-correct { animation: btnSplashCorrect 450ms ease; }
     .splash-wrong { animation: btnSplashWrong 450ms ease; }
 
@@ -201,6 +212,38 @@ function ensureChoiceButtonStyles() {
   .mode-grid .mode-btn .mode-meta.review { color: #5b7fe5; }
   .mode-grid .mode-btn .mode-meta.basic { color: #ff6fb0; }
   .mode-grid .mode-btn .mode-meta.browse { color: #d9923b; }
+
+  /* ---------------- Dark Mode Overrides ---------------- */
+  html.dark .choice-btn {
+    background: #1f2933; /* deep slate */
+    color: #d9f1f3; /* light aqua text */
+    border-color: #2ca7b0; /* keep teal accent */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.55), 0 0 0 1px #102027 inset;
+  }
+  html.dark .choice-btn:hover { background:#24323d; }
+  html.dark .choice-btn:active { background:#1b252d; }
+  html.dark .choice-correct-reveal {
+    background: #123d20 !important;
+    box-shadow: 0 0 0 3px #16a34a, 0 2px 14px rgba(22,163,74,0.55) !important;
+    border-color: #1fb154 !important;
+  }
+  html.dark .mode-btn {
+    background: transparent;
+    color: #d9f1f3;
+  }
+  html.dark .mode-grid .mode-btn { background:transparent; }
+  html.dark .mode-grid .mode-btn::after { background:rgba(255,255,255,0.10); }
+  html.dark .mode-btn:hover { background: rgba(55,120,132,0.18); }
+  html.dark .mode-btn.mode-perfect { background:#18242b; }
+  html.dark .mode-btn.mode-excellent { background:#18242b; }
+  html.dark .mode-btn.mode-great { background:#18242b; }
+  html.dark .mode-grid .mode-btn .mode-meta.zero { color:#3a5663; }
+  html.dark .mode-grid .mode-btn .mode-meta.for-you { color:#21b3be; }
+  html.dark .mode-grid .mode-btn .mode-meta.review { color:#5b7fe5; }
+  html.dark .mode-grid .mode-btn .mode-meta.basic { color:#ff6fb0; }
+  html.dark .mode-grid .mode-btn .mode-meta.browse { color:#d9923b; }
+  html.dark .star-empty { stroke:#4a5560; }
+  html.dark .star-filled { filter: drop-shadow(0 0 4px rgba(245,197,24,0.45)); }
   `;
   document.head.appendChild(style);
 }
