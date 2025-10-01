@@ -95,7 +95,7 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
   return sessionId;
 }
 
-export async function endSession(sessionId, { mode, summary = {} } = {}) {
+export async function endSession(sessionId, { mode, summary = {}, listName = null, wordList = null } = {}) {
   if (!sessionId) return;
   try {
     kickOffWhoAmI();
@@ -106,7 +106,8 @@ export async function endSession(sessionId, { mode, summary = {} } = {}) {
       scheduleAuthFlush();
       return;
     }
-    await sendSessionEnd({ session_id: sessionId, mode: mode || 'unknown', extra: summary, user_id: uid });
+  const list_size = Array.isArray(wordList) ? wordList.length : null;
+  await sendSessionEnd({ session_id: sessionId, mode: mode || 'unknown', extra: summary, user_id: uid, list_name: listName, list_size });
   } catch (e) {
     console.debug('session_end log skipped:', e?.message);
   }
@@ -288,7 +289,7 @@ async function sendAttempt({ user_id, session_id, mode, word, is_correct, answer
   if (is_correct) scheduleRefresh(0);
 }
 
-async function sendSessionEnd({ session_id, mode, extra, user_id }) {
+async function sendSessionEnd({ session_id, mode, extra, user_id, list_name = null, list_size = null }) {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -297,8 +298,10 @@ async function sendSessionEnd({ session_id, mode, extra, user_id }) {
       event_type: 'session_end',
       session_id,
       mode,
-      user_id,
-      extra
+  user_id,
+  extra,
+  list_name,
+  list_size
     })
   });
   if (!res.ok) {
@@ -326,6 +329,10 @@ async function sendSessionEnd({ session_id, mode, extra, user_id }) {
     return;
   }
   try { __pendingSessionEnd.delete(session_id); } catch {}
+  // Emit a lightweight event to allow any listeners (e.g., profile or header) to refetch overview immediately
+  try { window.dispatchEvent(new CustomEvent('session:ended', { detail: { session_id, mode, list_name, list_size } })); } catch {}
+  // Cross-tab signal
+  try { localStorage.setItem('stars:refresh', String(Date.now())); } catch {}
   scheduleRefresh();
 }
 

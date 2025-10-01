@@ -144,10 +144,130 @@ html.dark .sentence-mode #fbSubmit.sm-floating,
 html.dark .sentence-mode #bsSubmit.sm-floating { box-shadow:0 22px 55px -12px rgba(0,0,0,0.7),0 0 0 5px rgba(25,119,126,0.25) !important; }
 /* Summary / end screens (inline-styled light backgrounds) */
 html.dark .sentence-mode [style*='background:linear-gradient(165deg,#ffffff'] { background:linear-gradient(165deg,#1d2730,#141b21) !important; border-color:#2c3a44 !important; box-shadow:0 8px 28px -4px rgba(0,0,0,0.65) !important; }
+/* Extra guard: sentence summary panels sometimes use plain white without gradient */
+html.dark .sentence-mode [style*='background:#fff'][style*='padding'][style*='border'] { background:#1d2730 !important; border-color:#2c3a44 !important; color:var(--text-high) !important; }
 html.dark .sentence-mode [style*='background:#fff3cd'] { background:#3a3220 !important; }
 html.dark .sentence-mode h2 { color:#67e2e6 !important; }
 html.dark .sentence-mode .sm-summary-btn { background:#1f2a33 !important; border-color:#3a4a55 !important; color:#e3e8ed !important; box-shadow:0 4px 18px -4px rgba(0,0,0,0.55) !important; }
 html.dark .sentence-mode .sm-summary-btn:hover { background:#26323d !important; }
+
+/* =============================
+  Word Arcade Additional Dark Overrides (2025-09-30)
+  Covers: Quit button, time battle UI, star overlay, spelling inputs, opening word list modal
+  ============================= */
+/* Quit Game floating pill */
+html.dark #wa-quit-btn { background:#1d2730 !important; color:#67e2e6 !important; border-color:#39d5da !important; box-shadow:0 0 0 1px #102027 inset,0 4px 16px -4px rgba(0,0,0,0.65) !important; }
+html.dark #wa-quit-btn:hover { background:#22303b !important; }
+html.dark #wa-quit-btn:active { background:#18242c !important; }
+
+/* Generic in-game primary word & score text that were too dark in light inline styles */
+html.dark #gameStage [style*='color:#19777e'] { color:#67e2e6 !important; }
+/* Inline dark text (#0f172a / #334155 etc.) inside game cards */
+html.dark #gameStage [style*='#0f172a'],
+html.dark #gameStage [style*='#334155'],
+html.dark #gameStage [style*='#475569'] { color:var(--text-high) !important; }
+
+/* Opening word list sample modal additional elements (fallback if new markup appears) */
+html.dark #sampleWordlistModal [style*='background:#fff'] { background:#1d2730 !important; }
+html.dark #sampleWordlistModal [style*='background:#f6feff'] { background:#23313c !important; }
+html.dark #sampleWordlistModal button { color:#67e2e6 !important; }
+html.dark #sampleWordlistModal .wl-btn { color:#67e2e6 !important; }
+
+/* Time Battle container & elements */
+html.dark .tb-wrap { background:#1d2730 !important; border-color:#2c3a44 !important; box-shadow:0 6px 26px -4px rgba(0,0,0,0.65) !important; }
+html.dark .tb-head { color:var(--text-high) !important; }
+html.dark .tb-title { color:#67e2e6 !important; }
+html.dark .tb-meta { color:var(--text-high) !important; }
+html.dark .tb-card { background:linear-gradient(165deg,#1d2730,#141b21) !important; border-color:#2c3a44 !important; box-shadow:0 8px 28px -6px rgba(0,0,0,0.6) !important; }
+html.dark .tb-prompt { color:#e3e8ed !important; }
+html.dark #tbSpellInput { background:#1f2a33 !important; border-color:#3a4a55 !important; color:#e3e8ed !important; }
+html.dark #tbSpellInput:focus { outline:2px solid #39d5da !important; }
+html.dark .tb-audio-btn { background:#155e63 !important; border-color:#0d4b50 !important; }
+html.dark .tb-countdown { background:rgba(16,21,26,0.92) !important; color:#67e2e6 !important; }
+/* Choice button feedback (white flash fix) handled in buttons.js but guard here for any inline fallbacks */
+html.dark .choice-btn.splash-correct { background:#123d20 !important; }
+html.dark .choice-btn.splash-wrong { background:#412323 !important; }
+
+/* Live leaderboard panel inside Time Battle (shares .tb-card) */
+html.dark .tb-card [style*='background:#fff3cd'] { background:#3a3220 !important; }
+
+/* Spelling mode floating tiles/input wrappers */
+html.dark .tap-spell input[type='text'],
+html.dark .tap-spell input[type='search'] { background:#1f2a33 !important; border-color:#3a4a55 !important; color:#e3e8ed !important; }
+
+/* Star overlay panel */
+html.dark .star-round-overlay { background:rgba(0,0,0,0.6) !important; }
+html.dark .star-round-panel { background:#1d2730 !important; border-color:#39d5da !important; box-shadow:0 10px 34px -6px rgba(0,0,0,0.7) !important; }
+html.dark .star-msg { color:#67e2e6 !important; }
+html.dark .star-sub { color:var(--text-mid) !important; }
+html.dark .star-skip-hint { color:#4f636f !important; }
+html.dark .star-empty path { fill:#2c3a44 !important; stroke:#3a4a55 !important; }
+
+/* Full arcade end-of-round summary panels (often inline styled white) */
+html.dark [style*='background:#ffffff'][class*='summary'],
+html.dark [style*='background:#fff'][class*='summary'] { background:#1d2730 !important; color:var(--text-high) !important; }
+
+/* Ensure high contrast for any inline teal on dark bg */
+html.dark [style*='color:#19777e'] { color:#67e2e6 !important; }
+/* Full Arcade prompt/definition light pill (background:#dffbfc or #fbfcfd) */
+html.dark #gameStage [style*='background:#dffbfc'],
+html.dark #gameStage [style*='background:#fbfcfd'],
+html.dark #gameStage [style*='background:#dffbfc'][style*='border-radius'],
+html.dark #gameStage [style*='background:#ffffff'][style*='whiskers'] { background:#1f2a33 !important; color:var(--text-high) !important; border-color:#39d5da !important; }
+/* Semantic class fallback */
+html.dark .fa-definition-box { background:#1f2a33 !important; border-color:#2c3a44 !important; }
+
+/* Sample word list modal: Cancel / Back buttons & light grey buttons */
+html.dark #sampleWordlistModal button[style*='background:#93cbcf'],
+html.dark #sampleWordlistModal button[style*='background:#eceff1'],
+html.dark #sampleWordlistModal button[style*='background:#93cbcf'][style*='color:#fff'] { background:#1f2a33 !important; color:#67e2e6 !important; border:1px solid #3a4a55 !important; box-shadow:0 2px 10px rgba(0,0,0,0.55) !important; }
+html.dark #sampleWordlistModal button[style*='background:#93cbcf']:hover,
+html.dark #sampleWordlistModal button[style*='background:#eceff1']:hover { background:#26323d !important; }
+
+/* Sentence mode summary container (buttons already handled) */
+html.dark .sentence-mode [style*='Full'][style*='Score'] { background:#1d2730 !important; border-color:#2c3a44 !important; color:var(--text-high) !important; }
+/* ==== Full Arcade Specific (modal + summary) ==== */
+/* Pre-game word list overlay & inner panel */
+html.dark #faWordListOverlay { background:rgba(0,0,0,0.65) !important; }
+html.dark #faWordListOverlay [role='dialog'] { background:#1d2730 !important; border-color:#39d5da !important; box-shadow:0 12px 40px -8px rgba(0,0,0,0.75) !important; }
+html.dark #faWordListOverlay [style*='border-bottom:1px solid #e6eaef'] { border-bottom:1px solid #2c3a44 !important; }
+html.dark #faWordListOverlay [style*='border:1px solid #e6eaef'] { border:1px solid #31404a !important; background:#18242c !important; }
+html.dark #faWordListOverlay [style*='color:#334155'] { color:var(--text-mid) !important; }
+html.dark #faWordListOverlay [style*='color:#6b7a8f'] { color:#7c8e9b !important; }
+/* Word row dashed divider replacement */
+html.dark #faWordListOverlay [style*='border-bottom:1px dashed #edf1f4'] { border-bottom:1px dashed #31404a !important; }
+/* Word text accent */
+html.dark #faWordListOverlay [style*='font-weight:800;color:#19777e'] { color:#67e2e6 !important; }
+
+/* Skip / Last round links */
+html.dark #faSkipRoundLink, html.dark #faPrevRoundLink { color:#67e2e6 !important; }
+
+/* Full arcade round intro panel */
+html.dark .arcade-round-intro { background:linear-gradient(155deg,#1d2730,#141b21) !important; border:1px solid #2c3a44 !important; box-shadow:0 6px 24px -6px rgba(0,0,0,0.6) !important; border-radius:18px !important; }
+html.dark .arcade-round-intro [style*='color:#334155'] { color:var(--text-mid) !important; }
+html.dark .arcade-round-intro [style*='color:#64748b'] { color:#4f636f !important; }
+
+/* Inline white summary box at finalSummary() */
+html.dark [style*='Full Arcade Complete'][style*='background:#fff'] { background:#1d2730 !important; border-color:#2c3a44 !important; }
+html.dark [style*='Full Arcade Complete'] [style*='color:#0f172a'] { color:#67e2e6 !important; }
+html.dark [style*='Full Arcade Complete'] [style*='color:#334155'] { color:var(--text-mid) !important; }
+html.dark [style*='Full Arcade Complete'] [style*='color:#475569'] { color:#7c8e9b !important; }
+/* Semantic summary panel class */
+html.dark .fa-summary-panel { background:#1d2730 !important; border-color:#2c3a44 !important; box-shadow:0 8px 26px -6px rgba(0,0,0,0.65) !important; }
+html.dark .fa-summary-panel h2 { color:#67e2e6 !important; }
+html.dark .fa-summary-panel strong { color:#67e2e6 !important; }
+
+/* Letter slots / tiles in live spelling that retain light backgrounds (generic white boxes) */
+html.dark #gameStage .tap-spell [style*='background:#fff'],
+html.dark #gameStage .tap-spell [style*='background: #fff'] { background:#1f2a33 !important; border-color:#3a4a55 !important; color:var(--text-high) !important; }
+html.dark #gameStage .tap-spell [style*='border:2px solid #93cbcf'] { border-color:#3a4a55 !important; }
+html.dark #gameStage .tap-spell [style*='color:#19777e'] { color:#67e2e6 !important; }
+/* Tile buttons in live spelling (play-main.js) */
+html.dark .tap-spell #letterTiles .tile-btn { background:#1f2a33 !important; border-color:#3a4a55 !important; color:#e3e8ed !important; box-shadow:0 3px 10px rgba(0,0,0,0.55) !important; }
+html.dark .tap-spell #letterTiles .tile-btn:hover:not(:disabled){ border-color:#39d5da !important; background:#26323d !important; }
+
+/* Score text inside spelling round */
+html.dark #gameStage [style*='Score:'] { color:#67e2e6 !important; }
 
 /* Preserve colored borders on profile & dashboard cards in dark mode */
 html.dark .card { border-color:#67e2e6 !important; }

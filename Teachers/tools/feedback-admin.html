@@ -1,141 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Feedback Admin - Willena Tools</title>
-  <link rel="stylesheet" href="/Teachers/components/style.css">
-  <style>
-    body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
-    .admin-container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 32px; }
-    h1 { text-align: center; color: #1976d2; margin-bottom: 24px; }
-    .feedback-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-    .feedback-table th, .feedback-table td { padding: 10px 12px; border-bottom: 1px solid #e0e0e0; text-align: left; }
-    .feedback-table th { background: #f0f6ff; color: #1976d2; font-weight: 600; }
-    .feedback-table tr:last-child td { border-bottom: none; }
-    .feedback-row { transition: background 0.2s; }
-    .feedback-row:hover { background: #f5faff; }
-    .tool-state-details { font-size: 0.95em; color: #444; background: #f8f8fa; border-radius: 6px; padding: 8px; margin-top: 6px; white-space: pre-wrap; }
-    .search-bar { margin-bottom: 18px; display: flex; gap: 10px; }
-    .search-bar input { flex: 1; padding: 8px 12px; border-radius: 5px; border: 1px solid #d0d0d0; font-size: 1em; }
-    .search-bar button { padding: 8px 18px; border-radius: 5px; border: none; background: #1976d2; color: #fff; font-size: 1em; cursor: pointer; }
-    .search-bar button:hover { background: #1256a3; }
-    .json-toggle { color: #1976d2; cursor: pointer; font-size: 0.95em; margin-left: 8px; }
-    .json-toggle:hover { text-decoration: underline; }
-    .json-collapsed { display: none; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecting...</title>
+  <meta http-equiv="refresh" content="0; url=/Teachers/components/feedback-admin.html" />
+  <link rel="canonical" href="/Teachers/components/feedback-admin.html" />
+  <style>body{font-family:Arial,system-ui,Roboto,sans-serif;display:flex;min-height:100dvh;align-items:center;justify-content:center;background:#0f172a;color:#e2e8f0;margin:0}a{color:#67e2e6}</style>
 </head>
 <body>
-  <script>
-    // Access control: only allow users with 'admin' role (case-insensitive)
-    (async function() {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        window.location.href = '/Teachers/login.html';
-        return;
-      }
-      try {
-        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-        const result = await res.json();
-        // Defensive: check role strictly and case-insensitive
-        let role = (result && result.role) ? String(result.role).toLowerCase() : '';
-        if (!result.success || role !== 'admin') {
-          window.location.href = '/Teachers/index.html';
-          return;
-        }
-      } catch (e) {
-        window.location.href = '/Teachers/login.html';
-      }
-    })();
-  </script>
-  <div class="admin-container">
-    <h1>Feedback Admin</h1>
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search feedback, module, or user...">
-      <button id="refreshBtn">Refresh</button>
-    </div>
-    <table class="feedback-table" id="feedbackTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Feedback</th>
-          <th>Module</th>
-          <th>Tool State</th>
-          <th>User</th>
-          <th>Page</th>
-        </tr>
-      </thead>
-      <tbody id="feedbackTableBody">
-        <tr><td colspan="6" style="text-align:center; color:#888;">Loading...</td></tr>
-      </tbody>
-    </table>
+  <div>
+    <h1 style="font-size:1.2rem;margin:0 0 12px">Redirecting…</h1>
+    <p>If you are not redirected automatically, <a href="/Teachers/components/feedback-admin.html">click here for Feedback Admin</a>.</p>
+    <script>location.replace('/Teachers/components/feedback-admin.html');</script>
   </div>
-  <script>
-    async function fetchFeedback() {
-      const resp = await fetch('/.netlify/functions/supabase_proxy?feedback_list', { method: 'GET' });
-      const data = await resp.json();
-      if (!Array.isArray(data)) return [];
-      return data;
-    }
-
-    function formatDate(iso) {
-      if (!iso) return '';
-      const d = new Date(iso);
-      return d.toLocaleString();
-    }
-
-    function renderToolState(toolState) {
-      if (!toolState) return '';
-      let json = '';
-      try { json = JSON.stringify(toolState, null, 2); } catch {}
-      return `<span class="json-toggle" onclick="this.nextElementSibling.classList.toggle('json-collapsed')">[show]</span><pre class="tool-state-details json-collapsed">${json}</pre>`;
-    }
-
-    function renderTable(feedbacks) {
-      const tbody = document.getElementById('feedbackTableBody');
-      if (!feedbacks.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No feedback found.</td></tr>';
-        return;
-      }
-      // Sort: urgent feedbacks ("urgent" in feedback, case-insensitive) to top
-      feedbacks = feedbacks.slice().sort((a, b) => {
-        const aUrgent = (a.feedback||'').toLowerCase().includes('urgent') ? 1 : 0;
-        const bUrgent = (b.feedback||'').toLowerCase().includes('urgent') ? 1 : 0;
-        return bUrgent - aUrgent;
-      });
-      tbody.innerHTML = feedbacks.map(f => `
-        <tr class="feedback-row">
-          <td>${formatDate(f.created_at)}</td>
-          <td>${(f.feedback||'').replace(/</g,'&lt;')}</td>
-          <td>${f.module||''}</td>
-          <td>${renderToolState(f.tool_state)}</td>
-          <td>${f.user_id||''}</td>
-          <td>${f.page_url||''}</td>
-        </tr>
-      `).join('');
-    }
-
-    async function loadAndRender() {
-      document.getElementById('feedbackTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Loading...</td></tr>';
-      let feedbacks = await fetchFeedback();
-      renderTable(feedbacks);
-    }
-
-    document.getElementById('refreshBtn').onclick = loadAndRender;
-    document.getElementById('searchInput').oninput = async function() {
-      let val = this.value.trim().toLowerCase();
-      let feedbacks = await fetchFeedback();
-      if (val) {
-        feedbacks = feedbacks.filter(f =>
-          (f.feedback||'').toLowerCase().includes(val) ||
-          (f.module||'').toLowerCase().includes(val) ||
-          (f.user_id||'').toLowerCase().includes(val) ||
-          (f.page_url||'').toLowerCase().includes(val)
-        );
-      }
-      renderTable(feedbacks);
-    };
-    loadAndRender();
-  </script>
 </body>
 </html>

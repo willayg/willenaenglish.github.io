@@ -73,6 +73,8 @@ class StudentHeader extends HTMLElement {
       const who = await whoRes.json();
       if (!who || !who.success || !who.user_id) return;
       this._uid = who.user_id;
+  // Stash simple role for later gating (teacher/admin)
+  try { if (who.role) { localStorage.setItem('user_role', who.role); } } catch {}
       const profRes = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include', cache: 'no-store' });
       const prof = await profRes.json();
       if (prof && prof.success) {
@@ -327,6 +329,10 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M12 12c2.7 0 8 1.34 8 4v4H4v-4c0-2.66 5.3-4 8-4zm0-2a4 4 0 100-8 4 4 0 000 8z" fill="#19777e"/></svg>
                 Profile
               </a>
+              <button class="dd-item" id="feedbackItem" role="menuitem" type="button" data-i18n="Bugs">
+                <svg width="20" height="20" viewBox="0 0 24 24" style="margin-right:4px" xmlns="http://www.w3.org/2000/svg" fill="none"><path fill="#19777e" d="M14 6.3V5a2 2 0 10-4 0v1.3A5 5 0 007 11v1H5a1 1 0 000 2h2v1c0 .34.03.67.1 1H5a1 1 0 000 2h2.68A5.98 5.98 0 0012 21a5.98 5.98 0 004.32-1H19a1 1 0 000-2h-2.1c.07-.33.1-.66.1-1v-1h2a1 1 0 000-2h-2v-1a5 5 0 00-3-4.7zM12 19a4 4 0 01-4-4v-4a4 4 0 118 0v4a4 4 0 01-4 4z"/></svg>
+                Bugs
+              </button>
               <button class="dd-item" id="logoutAction" role="menuitem" type="button" style="color:#c62828;" data-i18n="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-11H9c-1.1 0-2 .9-2 2v4h2V4h10v16H9v-4H7v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#c62828"/></svg>
                 Logout
@@ -489,6 +495,53 @@ class StudentHeader extends HTMLElement {
     if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
     const logoutAction = this.shadowRoot.getElementById('logoutAction');
     if (logoutAction) logoutAction.addEventListener('click', doLogout);
+
+    // Always-on Bugs (feedback) item
+    const feedbackBtn = this.shadowRoot.getElementById('feedbackItem');
+    if (feedbackBtn) {
+      feedbackBtn.addEventListener('click', () => {
+        try {
+          if (window.showFeedbackModal) { window.showFeedbackModal(); return; }
+        } catch {}
+        // Lightweight inline fallback modal
+        if (document.getElementById('inlineBugModal')) return;
+        const wrap = document.createElement('div');
+        wrap.id = 'inlineBugModal';
+        wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        wrap.innerHTML = `<div style="background:#fff;border:2px solid #19777e;border-radius:18px;max-width:480px;width:100%;padding:18px 20px;font-family:system-ui;display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <h3 style="margin:0;font-size:1.05rem;font-weight:800;color:#19777e;">Report a Bug</h3>
+            <button id="bugClose" style="background:none;border:none;font-size:1.4rem;line-height:1;cursor:pointer;color:#475569;">×</button>
+          </div>
+          <textarea id="bugText" placeholder="Describe the issue (what you expected vs what happened)" style="width:100%;min-height:140px;resize:vertical;padding:10px 12px;border:2px solid #e2e8f0;border-radius:12px;font-family:inherit;font-size:.9rem;line-height:1.4;"></textarea>
+          <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+            <button id="bugCancel" style="background:#fff;border:2px solid #93cbcf;padding:8px 14px;border-radius:10px;font-weight:600;color:#19777e;cursor:pointer;">Cancel</button>
+            <button id="bugSend" style="background:#19777e;border:2px solid #19777e;padding:8px 16px;border-radius:10px;font-weight:700;color:#fff;cursor:pointer;">Send</button>
+          </div>
+          <div id="bugStatus" style="font-size:.7rem;font-weight:600;color:#64748b;min-height:16px;"></div>
+        </div>`;
+        document.body.appendChild(wrap);
+        const close = ()=> wrap.remove();
+        wrap.querySelector('#bugClose').onclick = close;
+        wrap.querySelector('#bugCancel').onclick = close;
+        const sendBtn = wrap.querySelector('#bugSend');
+        const ta = wrap.querySelector('#bugText');
+        const statusEl = wrap.querySelector('#bugStatus');
+        sendBtn.onclick = async () => {
+          const txt = (ta.value||'').trim();
+          if (!txt) { ta.focus(); return; }
+          sendBtn.disabled = true; sendBtn.textContent='Sending...'; statusEl.textContent='';
+          const payload = { feedback: txt, module: 'general', page_url: location.pathname };
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_feedback', data: payload }) });
+            const js = await resp.json().catch(()=>({}));
+            if (resp.ok && js.success) { sendBtn.textContent='Sent!'; statusEl.textContent='Thank you.'; setTimeout(close, 900); }
+            else { sendBtn.disabled=false; sendBtn.textContent='Send'; statusEl.textContent='Error: ' + (js.error||'unknown'); }
+          } catch(e){ sendBtn.disabled=false; sendBtn.textContent='Send'; statusEl.textContent='Network error'; }
+        };
+        ta.focus();
+      });
+    }
   }
 }
 

@@ -39,6 +39,26 @@ button { font-family:inherit; font-weight:700; cursor:pointer; }
 #calmToggle { background:#142c3d; color:#cbd5e1; border:2px solid #23425a; padding:8px 14px; border-radius:14px; font-size:.8rem; }
 #calmToggle.active { background:#23425a; color:#fff; }
 #closeWin { background:#fff; color:#0f172a; border:2px solid var(--accent); padding:8px 14px; border-radius:14px; font-size:.8rem; }
+/* QR Panel */
+#qrToggle { background:#23425a; color:#fff; border:2px solid #355d78; padding:8px 14px; border-radius:14px; font-size:.8rem; }
+#qrToggle.active { background:#355d78; }
+#qrPanel { position:fixed; top:86px; right:18px; width:200px; background:#132033; border:2px solid #23425a; border-radius:18px; padding:12px 12px 14px; display:flex; flex-direction:column; gap:8px; box-shadow:0 10px 26px -4px rgba(0,0,0,.45); font-family:Poppins,system-ui,sans-serif; }
+#qrPanel h2 { margin:0; font-size:.8rem; letter-spacing:.8px; font-weight:800; color:#67e2e6; text-align:center; }
+#qrImg { width:160px; height:160px; border-radius:12px; background:#0f172a; border:2px solid #23425a; object-fit:cover; align-self:center; }
+#qrLinkBox { font-size:.55rem; line-height:1.2; word-break:break-all; background:#0f172a; padding:6px 7px; border-radius:8px; border:1px solid #23425a; color:#cbd5e1; max-height:60px; overflow:auto; }
+#qrActions { display:flex; gap:6px; }
+#qrActions button, #qrActions a { flex:1; background:#19777e; color:#fff; border:none; padding:6px 8px; border-radius:8px; font-size:.6rem; font-weight:700; text-align:center; text-decoration:none; }
+#qrActions button.secondary { background:#0d9488; }
+#qrStatus { font-size:.55rem; font-weight:600; letter-spacing:.5px; color:#94a3b8; min-height:10px; text-align:center; }
+#qrCloseSmall { position:absolute; top:4px; right:6px; background:none; border:none; color:#94a3b8; font-size:1rem; line-height:1; cursor:pointer; font-weight:700; }
+#qrProviderNote { font-size:.45rem; text-align:center; color:#64748b; }
+@media (max-width: 900px){
+  #qrPanel { position:static; width:auto; flex-direction:row; align-items:center; padding:10px; gap:12px; }
+  #qrImg { width:120px; height:120px; }
+  #qrLinkBox { flex:1; font-size:.55rem; max-height:80px; }
+  #qrActions { flex-direction:column; width:90px; }
+  body { overflow:auto; }
+}
 </style>
 </head>
 <body>
@@ -48,26 +68,51 @@ button { font-family:inherit; font-weight:700; cursor:pointer; }
     <span id="updatedAt"></span>
   </div>
   <div id="controls">
+    <button id="qrToggle" title="Show/hide join QR">Show QR</button>
     <button id="calmToggle" title="Toggle calm mode (less animation)">Calm Mode</button>
     <button id="closeWin" onclick="window.close()">Close</button>
   </div>
 </header>
 <div id="listWrap"></div>
 <div id="status"></div>
+<div id="qrPanel" style="display:none;">
+  <button id="qrCloseSmall" aria-label="Hide QR">×</button>
+  <h2>SCAN TO JOIN</h2>
+  <img id="qrImg" alt="QR code" />
+  <div id="qrLinkBox"></div>
+  <div id="qrActions">
+    <button id="qrCopy" class="secondary" title="Copy link">Copy</button>
+    <a id="qrOpen" target="_blank" rel="noopener" title="Open link">Open</a>
+  </div>
+  <div id="qrStatus"></div>
+  <div id="qrProviderNote">Auto-fallback providers</div>
+</div>
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
   const sessionId = qs.get('id');
+  const forcedMode = qs.get('mode') || 'time_battle';
   const listWrap = document.getElementById('listWrap');
   const updatedAt = document.getElementById('updatedAt');
   const status = document.getElementById('status');
   const calmToggle = document.getElementById('calmToggle');
+  const qrToggle = document.getElementById('qrToggle');
+  const qrPanel = document.getElementById('qrPanel');
+  const qrImg = document.getElementById('qrImg');
+  const qrLinkBox = document.getElementById('qrLinkBox');
+  const qrCopy = document.getElementById('qrCopy');
+  const qrOpen = document.getElementById('qrOpen');
+  const qrStatus = document.getElementById('qrStatus');
+  const qrCloseSmall = document.getElementById('qrCloseSmall');
   let calm = false;
   let prev = []; // { name, score, index }
   let prevKey = '';
   let active = true;
+  let qrProvidersTried = 0;
 
   calmToggle.addEventListener('click', ()=>{ calm = !calm; calmToggle.classList.toggle('active', calm); });
+  qrToggle.addEventListener('click', ()=>{ const show = qrPanel.style.display==='none'; qrPanel.style.display = show?'block':'none'; qrToggle.classList.toggle('active', show); if (show) ensureQr(); });
+  qrCloseSmall.addEventListener('click', ()=>{ qrPanel.style.display='none'; qrToggle.classList.remove('active'); });
 
   function snapshotKey(list){ return list.map(e=>e.name+':'+e.score).join('|'); }
   function medal(i){ return i===0?'\uD83E\uDD47': i===1?'\uD83E\uDD48': i===2?'\uD83E\uDD49':''; }
@@ -161,8 +206,40 @@ button { font-family:inherit; font-weight:700; cursor:pointer; }
     updatedAt.textContent = new Date().toLocaleTimeString();
   }
 
+  function buildJoinUrl(){
+    if (!sessionId) return '';
+    try {
+      const u = new URL(location.origin + '/Games/Word Arcade/play.html');
+      u.searchParams.set('id', sessionId);
+      u.searchParams.set('mode', forcedMode);
+      return u.toString();
+    } catch { return ''; }
+  }
+
+  function ensureQr(){
+    if (!sessionId || !qrImg) return;
+    if (!qrImg.dataset.loaded){
+      const link = buildJoinUrl();
+      qrLinkBox.textContent = link;
+      if (qrOpen) qrOpen.href = link;
+      const providers = [
+        `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=M|0&chl=${encodeURIComponent(link)}`,
+        `https://quickchart.io/qr?text=${encodeURIComponent(link)}&size=300&margin=0`,
+        `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}`
+      ];
+      let i=0; qrProvidersTried=0;
+      const tryNext = ()=>{ if(i>=providers.length){ qrStatus.textContent='All providers failed'; return; } qrImg.src = providers[i++]; qrProvidersTried++; };
+      qrImg.onload = ()=>{ qrImg.dataset.loaded='1'; qrStatus.textContent=''; };
+      qrImg.onerror = ()=>{ qrStatus.textContent='Retrying...'; setTimeout(tryNext, 250); };
+      tryNext();
+      if (qrCopy) qrCopy.onclick = async ()=>{ try{ await navigator.clipboard.writeText(link); qrCopy.textContent='Copied!'; setTimeout(()=>qrCopy.textContent='Copy',1600);}catch{} };
+    }
+  }
+
   if (!sessionId){ listWrap.innerHTML = '<div class="tlb-empty">No session id provided (?id=)</div>'; active=false; }
   else poll();
+  // Auto-show QR on initial load for convenience
+  if (sessionId) { qrPanel.style.display='block'; qrToggle.classList.add('active'); ensureQr(); }
 })();
 </script>
 </body>
