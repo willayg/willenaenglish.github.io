@@ -203,17 +203,35 @@
 
       const titleInput = modal.querySelector('#header-title');
 
-      // Load worksheet title from localStorage if available
-      const savedTitle = localStorage.getItem('worksheetTitle');
-      if (savedTitle) {
-        titleInput.value = savedTitle;
+      // Title persistence: previously used localStorage (restored automatically across hard refreshes).
+      // New behavior: use sessionStorage for automatic restore within a tab session.
+      // If a legacy localStorage value exists BUT no session value yet, ask user whether to restore.
+      const sessionTitle = (function(){ try { return sessionStorage.getItem('worksheetTitle'); } catch { return null; } })();
+      const legacyTitle = (function(){ try { return localStorage.getItem('worksheetTitle'); } catch { return null; } })();
+      if (sessionTitle) {
+        titleInput.value = sessionTitle;
         titleInput.dispatchEvent(new Event('input'));
+      } else if (!sessionTitle && legacyTitle) {
+        // Prompt user for restoration to prevent unexpected carry-over between distinct worksheets
+        try {
+          if (confirm('Restore previous worksheet title?')) {
+            titleInput.value = legacyTitle;
+            titleInput.dispatchEvent(new Event('input'));
+            try { sessionStorage.setItem('worksheetTitle', legacyTitle); } catch {}
+          } else {
+            // User opted not to restore; clear legacy to avoid future prompts.
+            try { localStorage.removeItem('worksheetTitle'); } catch {}
+          }
+        } catch {}
       }
 
       // Save worksheet title to localStorage on change and update all previews
       titleInput.addEventListener('input', function() {
         const newTitle = titleInput.value;
-        localStorage.setItem('worksheetTitle', newTitle);
+        // Persist only in sessionStorage now for non-sticky session scoped behavior
+        try { sessionStorage.setItem('worksheetTitle', newTitle); } catch {}
+        // Remove legacy key to stop auto-persistence across new sessions
+        try { localStorage.removeItem('worksheetTitle'); } catch {}
 
         // Regenerate all previews with the new title
         if (window.headerTemplates && window.headerTemplates.templates) {
@@ -272,8 +290,9 @@
       
       // Function to apply header
       function applyHeader(style) {
-        const title = modal.querySelector('#header-title').value;
-        localStorage.setItem('worksheetTitle', title);
+  const title = modal.querySelector('#header-title').value;
+  try { sessionStorage.setItem('worksheetTitle', title); } catch {}
+  try { localStorage.removeItem('worksheetTitle'); } catch {}
         let logoSrc = '../../../../Assets/Images/color-logo1.png';
         
         // Use centralized header templates

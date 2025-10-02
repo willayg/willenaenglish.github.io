@@ -193,10 +193,43 @@ export function storeUserSession(userData) {
  * @returns {string} - Redirect URL
  */
 export function getRedirectUrl(role) {
-  if (role === 'admin') {
-    return '/Teachers/components/feedback-admin.html';
+  // Determine an intended redirect (priority: explicit redirect param -> stored returnTo -> role default)
+  let target = null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const qp = params.get('redirect');
+    if (qp && isSafePath(qp)) target = qp;
+    if (!target) {
+      const stored = sessionStorage.getItem('teacher:returnTo');
+      if (stored && isSafePath(stored)) target = stored;
+    }
+  } catch {}
+  if (!target) {
+    if (role === 'admin') target = '/Teachers/components/feedback-admin.html';
+    else target = '/Teachers/index.html';
   }
-  return '/Teachers/index.html';
+  return target;
+}
+
+// Capture the page the user attempted to access (call from protected pages before redirecting to login)
+export function captureReturnTo() {
+  try {
+    const here = window.location.pathname + (window.location.search || '');
+    if (isSafePath(here)) sessionStorage.setItem('teacher:returnTo', here);
+  } catch {}
+}
+
+// Manual resolver if needed externally
+export function resolveRedirectUrl(role){
+  return getRedirectUrl(role);
+}
+
+function isSafePath(p){
+  // Only allow same-site relative paths without protocol and without // to avoid open redirects
+  if (!p) return false;
+  if (/^https?:/i.test(p)) return false;
+  if (p.includes('//')) return false;
+  return p.startsWith('/') ? true : false;
 }
 
 // Export configuration for debugging
