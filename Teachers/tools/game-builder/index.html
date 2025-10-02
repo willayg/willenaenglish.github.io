@@ -28,6 +28,11 @@
   </script>
   <script type="module" src="main.js"></script>
   <script type="module" src="create-game-modal.js"></script>
+  <script>
+    // Public base URL for R2-hosted images. IMPORTANT: For Cloudflare public buckets the domain already maps to the bucket.
+    // Do NOT append the bucket name again. (Previously we had '/images' here which caused 404s like /images/words/...)
+    window.R2_PUBLIC_BASE = 'https://pub-83853c84fe974140804e77f50de8c523.r2.dev';
+  </script>
   <style>
     /* Small inline fixes for drop-zone visuals */
     .drop-zone.dragover { border-color: #48bb78 !important; background: #e6fffb !important; }
@@ -63,6 +68,8 @@
         </div>
         <div class="toolbar-right">
           <a id="createGameLink" class="link">Create Game</a>
+          <span class="dot">•</span>
+          <a id="reuploadImagesLink" class="link">Re-upload Images</a>
         </div>
       </div>
 

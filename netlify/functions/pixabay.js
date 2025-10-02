@@ -23,9 +23,17 @@ exports.handler = async function(event, context) {
   const order = event.queryStringParameters.order || "popular"; // "popular" or "latest"
   const safesearch = event.queryStringParameters.safesearch || "true"; // "true" or "false"
   const perPage = event.queryStringParameters.per_page || "5"; // number of results to fetch
+  const pageParam = event.queryStringParameters.page; // allow explicit page for deterministic pagination
 
   // Build URL with conditional content_type parameter
-  let url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=${perPage}&safesearch=${safesearch}&order=${order}&page=${Math.floor(Math.random()*5)+1}`;
+  // Use provided page param if valid positive integer; else keep lightweight randomness (1-5)
+  let pageValue = 1;
+  if (pageParam && /^\d+$/.test(pageParam) && Number(pageParam) > 0) {
+    pageValue = Number(pageParam);
+  } else {
+    pageValue = Math.floor(Math.random()*5)+1;
+  }
+  let url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&per_page=${perPage}&safesearch=${safesearch}&order=${order}&page=${pageValue}`;
   if (contentType) {
     url += `&content_type=${contentType}`;
   }

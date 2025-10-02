@@ -24,6 +24,8 @@ const saveLink = document.getElementById('saveLink'); // new quick Save (silent 
 const saveAsLink = document.getElementById('saveAsLink');
 const previewBtn = document.getElementById('previewBtn');
 const createGameLink = document.getElementById('createGameLink');
+// Removed reuploadImagesLink (auto-handled on every save)
+const reuploadImagesLink = null;
 const editListLink = document.getElementById('editListLink');
 const editListModal = document.getElementById('editListModal');
 const editListModalClose = document.getElementById('editListModalClose');
@@ -74,6 +76,50 @@ const fileModalClose = document.getElementById('fileModalClose');
 let list = [];
 let currentGameId = null; // tracks last opened/saved game id for quick Save
 let loadingImages; // from image system
+// Bootstrap user id early (improves created_by reliability on first save). Attempts a whoami call once.
+(async function bootstrapUserId(){
+  try {
+    // Skip if already present
+    const existing = localStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('user_id');
+    if(existing && existing.trim()) return;
+    const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami', { credentials:'include' });
+    if(!res.ok) return; // silent fail
+    const js = await res.json().catch(()=>null);
+    if(js && js.success && js.user_id){
+      try { localStorage.setItem('user_id', js.user_id); } catch {}
+      console.debug('[whoami/bootstrap] stored user_id', js.user_id);
+    }
+  } catch(e){ console.debug('[whoami/bootstrap] failed', e?.message); }
+})();
+// Disabled: prior auto session restore removed intentionally (user wants clean slate on refresh)
+// (Left placeholder so future re-enable logic has an anchor.)
+try { sessionStorage.removeItem('gb_last_game_v1'); } catch {}
+// Add Clear All button (create dynamically to avoid HTML edits if not present)
+let clearAllBtn = document.getElementById('clearAllGameData');
+if(!clearAllBtn){
+  clearAllBtn = document.createElement('button');
+  clearAllBtn.id = 'clearAllGameData';
+  clearAllBtn.textContent = 'Clear All';
+  clearAllBtn.style.cssText = 'margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid #b94d4d;background:#d9534f;color:#fff;cursor:pointer;font-family:Poppins,sans-serif;font-size:0.85rem;';
+  const toolbar = document.getElementById('builderToolbar') || document.querySelector('#controls') || document.body;
+  toolbar.appendChild(clearAllBtn);
+}
+clearAllBtn.addEventListener('click', () => {
+  if(!confirm('This will erase ALL unsaved game data (words, title, session cache). Continue?')) return;
+  // Reset in-memory state
+  list = [];
+  currentGameId = null;
+  if(titleEl) titleEl.value = '';
+  // Remove session & legacy storage keys
+  try { sessionStorage.removeItem('gb_last_game_v1'); } catch {}
+  const lsKeys = [
+    'gameBuilderWordList','gb_regenerate_audio','worksheetTitle','user_id','id','userId'
+  ];
+  lsKeys.forEach(k=>{ try { localStorage.removeItem(k); } catch {} });
+  // Clear any image placeholders referencing past session (basic rerender)
+  render();
+  toast('All game builder data cleared');
+});
 
 // Undo/Redo functionality
 let undoStack = [];
@@ -96,6 +142,7 @@ if (createGameLink) {
     openCreateGameModal();
   };
 }
+// NOTE: Re-upload button removed; images now auto-processed during every Save / Save As.
 
 // Undo/Redo functions
 function saveState() {
@@ -135,6 +182,41 @@ function newRow(data = {}) {
 
 function render() {
   rowsEl.innerHTML = '';
+  // If we don't have a real public base (placeholder) rewrite any direct R2 API endpoints to proxy form for visibility
+  try {
+    const placeholder = !window.R2_PUBLIC_BASE || /your-r2-public-domain/i.test(window.R2_PUBLIC_BASE);
+    if (placeholder) {
+      for (const w of list) {
+        if (!w || !w.image_url || /\/\.netlify\/functions\/image_proxy\?/.test(w.image_url)) continue;
+        const m = w.image_url.match(/^https?:\/\/[^/]+\.r2\.cloudflarestorage\.com\/([^/]+)\/(.+)$/i);
+        if (m) {
+          const key = m[2];
+            if (/^(words|cover)\//.test(key)) {
+              w.image_url = '/.netlify/functions/image_proxy?key=' + encodeURIComponent(key);
+            } else {
+              // Legacy prefix normalization: strip leading images/ or public/
+              const cleaned = key.replace(/^(?:images\/)+/i,'').replace(/^(?:public\/)+/i,'');
+              if (/^(words|cover)\//.test(cleaned)) {
+                w.image_url = '/.netlify/functions/image_proxy?key=' + encodeURIComponent(cleaned);
+              }
+            }
+        }
+      }
+    }
+    // Normalization: If public base is set WITHOUT bucket (correct form), but URLs still contain '/images/words/...' because of earlier double bucket, strip first 'images/'
+    if (!placeholder && window.R2_PUBLIC_BASE && !/\/$/.test(window.R2_PUBLIC_BASE)) {
+      const base = window.R2_PUBLIC_BASE.replace(/\/$/, '');
+      for (const w of list) {
+        if (!w || !w.image_url) continue;
+        if (w.image_url.startsWith(base + '/images/words/')) {
+          w.image_url = base + '/' + w.image_url.substring((base + '/images/').length);
+        }
+        if (w.image_url.startsWith(base + '/images/cover/')) {
+          w.image_url = base + '/' + w.image_url.substring((base + '/images/').length);
+        }
+      }
+    }
+  } catch(e){ console.warn('Image URL rewrite check failed', e); }
   // If images, definitions, or examples are disabled, add classes to the table for CSS hiding
   const wordTable = document.querySelector('.word-table');
   if (wordTable) {
@@ -185,6 +267,40 @@ function render() {
     `;
     rowsEl.appendChild(tr);
   });
+  // DEBUG instrumentation: log each image element lifecycle (remove or comment out when stable)
+  try {
+    const imgs = rowsEl.querySelectorAll('.drop-zone img');
+    imgs.forEach(img => {
+      if (!img.__dbgHooked) {
+        const src = img.getAttribute('src') || '';
+        console.log('[img-debug] present src=', src);
+        img.addEventListener('load', () => console.log('[img-debug] load ok', img.getAttribute('src')));
+        img.addEventListener('error', () => {
+          const failing = img.getAttribute('src');
+          console.warn('[img-debug] load ERROR', failing);
+          // Auto fallback: if this looks like a public R2 base but not a proxy, convert to proxy
+          if (/^https?:\/\/pub-[^/]+\.r2\.dev\//.test(failing) && !/\.netlify\/functions\/image_proxy/.test(failing)) {
+            // Extract key after bucket name (assumes bucket name is next segment after domain)
+            try {
+              const parts = failing.split(/\/+/).slice(3); // drop protocol + domain
+              // parts[0] is bucket, rest is key
+              if (parts.length >= 2) {
+                const key = parts.slice(1).join('/');
+                if (/^(words|cover)\//.test(key)) {
+                  let normKey = key;
+                  normKey = normKey.replace(/^(?:images\/)+/i,'').replace(/^(?:public\/)+/i,'');
+                  const proxyUrl = '/.netlify/functions/image_proxy?key=' + encodeURIComponent(normKey);
+                  console.log('[img-debug] retry via proxy', proxyUrl);
+                  img.src = proxyUrl;
+                }
+              }
+            } catch(e){ console.warn('fallback proxy conversion failed', e); }
+          }
+        });
+        img.__dbgHooked = true;
+      }
+    });
+  } catch(e){ console.warn('img-debug hook failed', e); }
   bindRowEvents();
 }
 
@@ -381,6 +497,25 @@ function toast(msg) {
   setTimeout(() => { if (statusEl.textContent === msg) statusEl.textContent = ''; }, 2000);
 }
 
+// Simple full-screen loading overlay
+function ensureLoadingOverlay(){
+  let el = document.getElementById('gbLoadingOverlay');
+  if(!el){
+    el = document.createElement('div');
+    el.id='gbLoadingOverlay';
+    el.style.cssText='position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.32);z-index:100000;font:600 16px system-ui,Arial;color:#fff;backdrop-filter:blur(2px);';
+    el.innerHTML='<div style="background:#0f172a; padding:18px 26px; border-radius:14px; box-shadow:0 6px 28px -4px rgba(0,0,0,.35); display:flex; flex-direction:column; gap:10px; align-items:center;" id="gbLoadingBox"><div class="spinner" style="width:34px;height:34px;border:4px solid #334155;border-top-color:#67e2e6;border-radius:50%;animation:spin .8s linear infinite"></div><div id="gbLoadingText">Loading…</div></div>';
+    const style = document.createElement('style');
+    style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+    document.body.appendChild(el);
+  }
+  return {
+    show(msg){ try { el.style.display='flex'; const t=el.querySelector('#gbLoadingText'); if(t) t.textContent=msg||'Loading…'; } catch{} },
+    hide(){ try { el.style.display='none'; } catch{} }
+  };
+}
+
 // Tiny top-right toast for brief status (e.g., 500ms "Saved"), or longer error
 function showTinyToast(msg, { variant = 'success', ms = 500 } = {}) {
   let el = document.getElementById('tinyToast');
@@ -497,6 +632,72 @@ function buildPayload() {
     }))
   };
 }
+
+function cacheCurrentGame(){
+  try {
+    const payload = buildPayload();
+    sessionStorage.setItem('gb_last_game_v1', JSON.stringify({ id: currentGameId, title: payload.title, words: payload.words }));
+  } catch{}
+}
+
+// --- Image upload helper (R2 on-save optimization) ---------------------------------
+async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {}){
+  try {
+    const R2_PREFIX = (window.R2_PUBLIC_BASE || 'https://');
+    const toUpload = [];
+    // Track changes: if a row previously had an uploaded (R2/proxy) URL but user replaced it with a data: URL, we must upload again.
+    // We'll store an _origImageUrl on the global list rows after successful upload to detect modifications.
+    payload.words.forEach((w,i)=>{
+      if(!w || !w.image_url) return;
+      const url = w.image_url;
+      const rowRef = list && list[i];
+      const isProxy = /\/.netlify\/functions\/image_proxy\?key=/.test(url);
+      const isR2Public = !!R2_PREFIX && url.startsWith(R2_PREFIX) && /\/words\//.test(url);
+      const isData = url.startsWith('data:');
+      // Determine if changed: if we have a stored original and current differs (even if both R2) allow re-upload to create new key? Usually not needed; only data: triggers.
+      const orig = rowRef && rowRef._origImageUrl;
+      const replacedWithData = isData && orig && orig !== url; // user replaced previously uploaded image
+      const needs = isData || (!isProxy && !isR2Public && /^https?:/i.test(url)) || replacedWithData;
+      if(needs) toUpload.push({ index:i, source:url });
+    });
+    const coverNeeds = (()=>{
+      if(!payload.gameImage) return false;
+      const gi = payload.gameImage;
+      const isData = gi.startsWith('data:');
+      const isR2 = !!R2_PREFIX && gi.startsWith(R2_PREFIX) && /\/cover\//.test(gi);
+      const isProxy = /\/.netlify\/functions\/image_proxy\?key=/.test(gi);
+      // If original cover stored, detect replacement to data:
+      const coverImgEl = document.getElementById('gameImageZone')?.querySelector('img');
+      const origCover = coverImgEl && coverImgEl.dataset && coverImgEl.dataset.origUploadedUrl;
+      const replaced = isData && origCover && origCover !== gi;
+      return isData || (!isR2 && !isProxy && /^https?:/i.test(gi)) || replaced;
+    })();
+    if(!toUpload.length && !coverNeeds) return payload; // nothing to do
+  const body = { gameId: gameId || null, words: toUpload, cover: coverNeeds ? { source: payload.gameImage } : null };
+  if (opts.force) body.force = 1;
+    const statusBox = document.getElementById('saveModalStatus'); if(statusBox) statusBox.textContent = 'Optimizing images…';
+  const res = await fetch('/.netlify/functions/upload-images' + (opts.force ? '?force=1' : ''), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if(!res.ok) { console.warn('[image-upload] server responded', res.status); return payload; }
+    const js = await res.json();
+    if(Array.isArray(js.words)) js.words.forEach(r=> { if(typeof r.index==='number' && r.url){
+      payload.words[r.index].image_url = r.url;
+      // Also mutate global list so subsequent buildPayload() or saves persist R2 URL
+      if (Array.isArray(list) && list[r.index]) list[r.index].image_url = r.url;
+      if (Array.isArray(list) && list[r.index]) list[r.index]._origImageUrl = r.url;
+    }});
+    if(js.cover && js.cover.url) {
+      payload.gameImage = js.cover.url;
+      try {
+        const coverImgEl = document.getElementById('gameImageZone')?.querySelector('img');
+        if (coverImgEl) coverImgEl.dataset.origUploadedUrl = js.cover.url;
+      } catch {}
+    }
+    if(js.gameId && !gameId) { try { currentGameId = js.gameId; } catch {} }
+    if(statusBox) statusBox.textContent = 'Images ready';
+    return payload;
+  } catch(e){ console.warn('[image-upload] failed', e); return payload; }
+}
+// -------------------------------------------------------------------------------
 
 // Toolbar actions
 addWordLink.onclick = () => { 
@@ -662,7 +863,7 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
 }
 
 // Quick Save (silent): overwrite if currentGameId, else open Save As modal to name the file
-saveLink.onclick = async () => {
+saveLink.onclick = async (ev) => {
   const payload = buildPayload();
   if (!payload.title || payload.words.length === 0) {
     toast('Need title and at least 1 word');
@@ -682,9 +883,11 @@ saveLink.onclick = async () => {
   // Otherwise, overwrite silently
   saveLink.classList.add('disabled');
   try {
+    // NEW: auto optimize & upload any new/replaced images before update
+  try { await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) }); } catch(e){ console.warn('[quick-save] image prep failed (continuing)', e); }
     const body = { action: 'update_game_data', id: currentGameId, data: payload };
     const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials:'include', body: JSON.stringify(body)
     });
     if (js?.success) {
       showTinyToast('Saved', { ms: 500 });
@@ -843,9 +1046,12 @@ async function loadPicturesForMissing() {
 
 // File modal: list previously saved game_data and open
 openLink.onclick = () => {
-  // Show modal immediately for instant feedback
+  // Show modal immediately with skeleton for instant feedback
   fileModal.style.display = 'flex';
-  // Kick off (non-blocking) population
+  if (fileList) {
+    fileList.innerHTML = buildSkeletonHTML(8);
+  }
+  // Kick off (non-blocking) population (may use cache)
   populateFileList();
 };
 fileModalClose.onclick = () => { fileModal.style.display = 'none'; };
@@ -1160,7 +1366,7 @@ async function ensureSentenceIdsBuilder(wordObjs){
   } catch(e){ console.debug('[SentenceUpgrade][builder] error', e?.message); return { inserted:0, error:true }; }
 }
 
-confirmSave.onclick = async () => {
+confirmSave.onclick = async (ev) => {
   let title = document.getElementById('saveGameTitle').value.trim();
   if (!title) { toast('Need title'); return; }
   const currentUid = getCurrentUserId();
@@ -1223,6 +1429,8 @@ confirmSave.onclick = async () => {
 
   const payload = buildPayload();
   payload.title = title;
+  // Upload/resize images before continuing save
+  try { await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) }); } catch(e){ console.warn('[save] image prep failed', e); }
   confirmSave.classList.add('disabled');
   try {
     // Ensure created_by is attached (checks multiple keys, reusing getCurrentUserId logic)
@@ -1292,9 +1500,13 @@ confirmSave.onclick = async () => {
       saveAction = 'update_game_data';
       postBody = { action: saveAction, id: existingRow.id, data: payload };
     }
+    try {
+      console.log('[SAVE PAYLOAD SENT words[0..5]]', (postBody.data.words||[]).slice(0,6).map(w=> ({ eng:w.eng, img:(w.image_url||'').slice(0,80) })) );
+    } catch {}
     const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
+      credentials:'include',
       body: JSON.stringify(postBody)
     });
     if (js?.success) {
@@ -1313,6 +1525,7 @@ confirmSave.onclick = async () => {
       } catch {}
       toast(existingRow ? 'Game overwritten' : 'Game saved');
       saveModal.style.display = 'none';
+      cacheCurrentGame();
     } else {
       const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = js?.error || 'Save failed';
       toast(js?.error || 'Save failed');
@@ -1333,6 +1546,19 @@ let fileListUniqueCount = 0;
 let fileListUid = '';
 let fileListAllMode = false; // when true, show all users' games
 const LOAD_LIMIT = 10;
+// --- Saved games modal caching & skeleton ---
+let fileListCache = null; // { ts, rows, uniqueCount }
+const CACHE_MAX_AGE_MS = 20000; // 20s reuse
+function buildSkeletonHTML(n){
+  const cards = Array.from({length:n}).map(()=> '<div class="game-card skeleton"><div class="thumb-wrap sk"></div><div class="card-body"><div class="sk-line sk-title"></div><div class="sk-line sk-meta"></div></div></div>').join('');
+  if(!document.getElementById('gbSkeletonStyles')){
+    const style = document.createElement('style');
+    style.id='gbSkeletonStyles';
+    style.textContent='@keyframes skShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}} .game-card.skeleton{background:#f8fafc;padding:8px;border-radius:12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;position:relative}.game-card.skeleton .thumb-wrap{height:110px;background:#e2e8f0;border-radius:8px;position:relative;overflow:hidden}.game-card.skeleton .sk-line{height:14px;background:#e2e8f0;border-radius:6px;position:relative;overflow:hidden;margin-top:6px}.game-card.skeleton .sk-title{width:70%;height:16px}.game-card.skeleton .sk-meta{width:40%;height:12px}.game-card.skeleton .thumb-wrap:before,.game-card.skeleton .sk-line:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));animation:skShimmer 1.15s infinite}';
+    document.head.appendChild(style);
+  }
+  return `<div class="saved-games-grid">${cards}</div>`;
+}
 
 // Deletion / selection helpers
 let selectedGameIds = new Set();
@@ -1463,35 +1689,78 @@ function performPendingDelete(idSet){
   const rows = ids.map(id=> fileListRows.find(r=> r.id===id)).filter(Boolean);
   if(!rows.length) return;
   markCardsPending(idSet);
-  // Show snackbar with undo, delay actual deletion network call until expiry
+  // Single delete: show inline countdown overlay on the card instead of global snackbar
+  if(ids.length===1){
+    const id = ids[0];
+    const card = document.querySelector(`.game-card [data-open="${id}"]`)?.closest('.game-card');
+    if(card){
+      let overlay = card.querySelector('.pending-overlay');
+      if(!overlay){
+        overlay = document.createElement('div');
+        overlay.className='pending-overlay';
+        overlay.style.cssText='position:absolute;inset:0;background:rgba(15,23,42,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;backdrop-filter:blur(2px);gap:10px;';
+        card.appendChild(overlay);
+      } else {
+        overlay.innerHTML='';
+      }
+      const msg = document.createElement('div');
+      msg.style.cssText='color:#fff;font-weight:600;font-size:14px;';
+      msg.textContent='Game deleted';
+      const countdown = document.createElement('div');
+      countdown.style.cssText='color:#cbd5e1;font-size:12px;letter-spacing:.5px;';
+      let remaining = Math.ceil(DELETE_UNDO_MS/1000);
+      countdown.textContent = 'Undo in '+remaining+'s';
+      const undoBtn = document.createElement('button');
+      undoBtn.textContent='Undo';
+      undoBtn.style.cssText='background:#0ea5e9;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-weight:600;cursor:pointer;font-size:13px;';
+      overlay.innerHTML='';
+      overlay.appendChild(msg); overlay.appendChild(countdown); overlay.appendChild(undoBtn);
+      let finished=false;
+      const intId = setInterval(()=>{ remaining--; if(remaining<=0){ clearInterval(intId); } if(remaining>=0) countdown.textContent='Undo in '+remaining+'s'; },1000);
+      const finalize = async (expired)=>{
+        if(finished) return; finished=true; clearInterval(intId);
+        if(!expired){
+          // Undo: remove overlay and restore
+            card.classList.remove('pending-delete');
+            const ov=card.querySelector('.pending-overlay'); if(ov) ov.remove();
+            toast('Restore');
+            return;
+        }
+        // Expired -> commit deletion
+        const idx = fileListRows.findIndex(r=> r.id===id);
+        if(idx!==-1) fileListRows.splice(idx,1);
+        removeCardsImmediately(new Set([id]));
+        paintFileList(fileListRows, { cached:true, initial:false, uniqueCount:fileListUniqueCount });
+        try {
+          const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
+          const js = await res.json(); if(!js?.success){ console.warn('Delete failed', id, js); }
+        } catch(e){ console.warn('Delete error', id, e); }
+        toast('Deleted');
+      };
+      undoBtn.onclick=()=> finalize(false);
+      setTimeout(()=> finalize(true), DELETE_UNDO_MS);
+      return; // single delete handled
+    }
+  }
+  // Multi-delete: retain original snackbar batch behavior
   const batch = { ids: idSet, rows, finalized:false, timeoutId:null };
   pendingDeleteBatches.push(batch);
   const { timeoutId } = showUndoSnackbar(ids.length===1 ? 'Game deleted' : ids.length+' games deleted', ()=>{
-    // Undo: restore visual state
-    batch.finalized=true; // mark consumed
-    // Remove overlays
+    batch.finalized=true;
     ids.forEach(id=>{
       const card = document.querySelector(`.game-card [data-open="${id}"]`)?.closest('.game-card');
       if(card){ card.classList.remove('pending-delete'); const ov=card.querySelector('.pending-overlay'); if(ov) ov.remove(); }
     });
     toast('Restore');
   }, async ()=>{
-    if(batch.finalized) return; // already undone
-    batch.finalized=true;
-    // Remove from fileListRows
-    ids.forEach(id=> {
-      const idx = fileListRows.findIndex(r=> r.id===id);
-      if(idx!==-1) fileListRows.splice(idx,1);
-    });
+    if(batch.finalized) return; batch.finalized=true;
+    ids.forEach(id=> { const idx = fileListRows.findIndex(r=> r.id===id); if(idx!==-1) fileListRows.splice(idx,1); });
     removeCardsImmediately(idSet);
-    // Repaint meta / filters
     paintFileList(fileListRows, { cached:true, initial:false, uniqueCount:fileListUniqueCount });
-    // Now call backend deletion sequentially
     for(const id of ids){
       try {
         const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
-        const js = await res.json();
-        if(!js?.success){ console.warn('Delete failed', id, js); }
+        const js = await res.json(); if(!js?.success){ console.warn('Delete failed', id, js); }
       } catch(e){ console.warn('Delete error', id, e); }
     }
     toast(ids.length===1 ? 'Deleted' : 'Deleted '+ids.length+' games');
@@ -1505,6 +1774,20 @@ async function populateFileList() {
   fileListUniqueCount = 0;
   fileListUid = getCurrentUserId();
   fileListAllMode = false; // reset to user scope on explicit populate
+  // Attempt session cache reuse
+  try {
+    const raw = sessionStorage.getItem('gb_file_list_cache_v1');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.rows) && (Date.now()-parsed.ts) < CACHE_MAX_AGE_MS){
+        fileListRows = parsed.rows; fileListUniqueCount = parsed.uniqueCount || parsed.rows.length;
+        paintFileList(fileListRows, { cached:true, initial:true, uniqueCount:fileListUniqueCount });
+        // Background refresh (non-blocking)
+        loadFileListPage(true);
+        return;
+      }
+    }
+  } catch{}
   await loadFileListPage(true);
 }
 
@@ -1513,7 +1796,7 @@ async function loadFileListPage(isInitial) {
   fileListLoading = true;
   const uid = fileListUid;
   // When no uid, still attempt to fetch system (NULL created_by) rows
-  const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset;
+  const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset + '&page_pull=' + (LOAD_LIMIT*4) + '&names=0';
   let url;
   if (fileListAllMode) {
     url = baseUrl + '&all=1&unique=0';
@@ -1668,40 +1951,62 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
 
   // Minimal helpers for actions (open/rename/delete). These call existing API endpoints.
   async function openGameData(id){
+    const overlay = ensureLoadingOverlay();
+    overlay.show('Loading game…');
     try {
       const res = await fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(id));
       if(!res.ok){
         console.error('[game-builder] openGameData fetch failed', res.status, id);
         toast('Open failed ('+res.status+')');
+        overlay.hide();
         return;
       }
       const js = await res.json();
-      if (js?.data) {
-        // Load into builder
-        const gd = js.data;
-        currentGameId = gd.id || id || null;
-        if (Array.isArray(gd.words)) {
-          saveState();
-          list = gd.words.map(w => newRow({ eng: w.eng || w.en || '', kor: w.kor || w.translation || w.kr || '', image_url: (w.image_url || w.image || w.img || ''), definition: w.definition, example: w.example || w.example_sentence }));
-          if (titleEl) titleEl.value = gd.title || 'Untitled Game';
-          render();
-          toast('Game loaded');
-          fileModal.style.display = 'none';
-        }
-      } else {
-        toast('Load failed');
+      const row = js && js.data ? js.data : js;
+      if(!row){ toast('Load failed'); return; }
+      currentGameId = row.id || id || null;
+      let words = row.words;
+      if (typeof words === 'string') {
+        try { words = JSON.parse(words); } catch {}
       }
+      if(!Array.isArray(words) && words && typeof words === 'object') {
+        if(Array.isArray(words.words)) words = words.words;
+        else if(Array.isArray(words.data)) words = words.data;
+        else if(Array.isArray(words.items)) words = words.items;
+        else {
+          const numKeys = Object.keys(words).filter(k=>/^\d+$/.test(k)).sort((a,b)=>Number(a)-Number(b));
+          if(numKeys.length) words = numKeys.map(k=> words[k]);
+        }
+      }
+      if(!Array.isArray(words)) {
+        console.warn('[game-builder] Unexpected words shape', row.words);
+        toast('Game has no words');
+        return;
+      }
+      saveState();
+      list = words.map(w => {
+        if(!w) return null;
+        if(typeof w === 'string'){
+          const parts = w.split(/[,|]/);
+          const eng = (parts[0]||'').trim();
+          const kor = (parts[1]||'').trim();
+          return eng ? newRow({ eng, kor }) : null;
+        }
+        return newRow({
+          eng: w.eng || w.en || w.word || '',
+          kor: w.kor || w.kr || w.translation || '',
+          image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
+          definition: w.definition || w.def || w.meaning || '',
+          example: w.example || w.example_sentence || w.sentence || ''
+        });
+      }).filter(Boolean);
+      if (titleEl) titleEl.value = row.title || 'Untitled Game';
+      render();
+      toast(list.length ? 'Game loaded' : 'Loaded (empty)');
+      fileModal.style.display = 'none';
+      cacheCurrentGame();
     } catch(e){ console.error(e); toast('Load error'); }
-  }
-  async function renameGameData(id){
-    const newTitle = prompt('New title?');
-    if(!newTitle) return;
-    try {
-      const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'rename_game_data', id, title:newTitle }) });
-      const js = await res.json();
-      if(js?.success){ toast('Renamed'); refreshFileList('gb_file_list_v3'); }
-      else toast(js?.error||'Rename failed');
-    } catch(e){ console.error(e); toast('Rename error'); }
+    finally { try { overlay.hide(); } catch{} }
   }
   async function deleteGameData(id){
     if(!confirm('Delete this game?')) return;
@@ -1727,10 +2032,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
       else {
         toast(js?.error||'Delete failed');
         // Rollback if we removed it
-        if (removed) {
-          fileListRows.splice(idx,0,removed);
-          paintFileList(fileListRows, { cached: true, initial: false, uniqueCount: fileListUniqueCount });
-        }
+        if (removed) { fileListRows.splice(idx,0,removed); }
       }
     } catch(e){ console.error(e); toast('Delete error'); }
   }
@@ -1753,8 +2055,8 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
       div.className = 'game-card new-style';
       if(selectedGameIds.has(r.id)) div.classList.add('selected');
       const owned = !r.created_by || r.created_by === currentUid;
-  // Use explicit game_image, then derived first_image_url from backend, then legacy image_url
-  const imageUrl = r.game_image || r.first_image_url || r.image_url || '';
+  // Use server-normalized thumb_url if present
+  let imageUrl = r.thumb_url || r.game_image || r.first_image_url || '';
       const placeholderSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180"><rect width="300" height="180" fill="#f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="#94a3b8">Loading...</text></svg>';
       const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(placeholderSVG);
       div.innerHTML = `
@@ -1821,37 +2123,32 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
   function setupLazyImages(){
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
-        if(entry.isIntersecting){
-          const wrap = entry.target;
-          observer.unobserve(wrap);
-          const img = wrap.querySelector('img');
-            const actual = wrap.getAttribute('data-thumb');
-            if(actual){
-              const tmp = new Image();
-              tmp.onload = () => {
-                img.src = actual; wrap.classList.add('loaded');
-              };
-              tmp.onerror = () => { wrap.classList.add('error'); };
-              tmp.src = actual;
-            } else {
-              // try secondary thumb endpoint
-              const id = wrap.getAttribute('data-id');
-              fetch('/.netlify/functions/supabase_proxy_fixed?get=game_thumb&id=' + encodeURIComponent(id))
-                .then(r=>r.json())
-                .then(js=>{
-                  if(js.thumb){
-                    const t = new Image();
-                    t.onload=()=>{ img.src = js.thumb; wrap.classList.add('loaded'); };
-                    t.onerror=()=> wrap.classList.add('error');
-                    t.src = js.thumb;
-                  } else {
-                    wrap.classList.add('no-image');
-                  }
-                }).catch(()=>wrap.classList.add('error'));
-            }
-        }
+        if(!entry.isIntersecting) return;
+        const wrap = entry.target; observer.unobserve(wrap);
+        const img = wrap.querySelector('img');
+        const actual = wrap.getAttribute('data-thumb');
+        if(!actual){ wrap.classList.add('no-image'); return; }
+        img.src = actual;
+        img.onload = () => wrap.classList.add('loaded');
+        img.onerror = () => {
+          if(/^(https?:\/\/)/.test(actual) && !/\.netlify\/functions\/image_proxy/.test(actual)){
+            try {
+              const base = (window.R2_PUBLIC_BASE||'').replace(/\/$/, '');
+              if(base && actual.startsWith(base+'/')){
+                const key = actual.substring(base.length+1);
+                let normKey2 = key.replace(/^(?:images\/)+/i,'').replace(/^(?:public\/)+/i,'');
+                const prox = '/.netlify/functions/image_proxy?key=' + encodeURIComponent(normKey2);
+                img.src = prox;
+                img.onload = () => wrap.classList.add('loaded');
+                img.onerror = () => wrap.classList.add('error');
+                return;
+              }
+            } catch{}
+          }
+          wrap.classList.add('error');
+        };
       });
-    }, { rootMargin:'200px 0px', threshold:0.01 });
+    }, { rootMargin:'150px 0px', threshold:0.01 });
     document.querySelectorAll('.thumb-wrap.lazy').forEach(wrap => observer.observe(wrap));
   }
 
