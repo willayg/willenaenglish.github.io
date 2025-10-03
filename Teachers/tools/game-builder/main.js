@@ -1548,7 +1548,10 @@ let fileListAllMode = false; // when true, show all users' games
 const LOAD_LIMIT = 10;
 // --- Saved games modal caching & skeleton ---
 let fileListCache = null; // { ts, rows, uniqueCount }
-const CACHE_MAX_AGE_MS = 20000; // 20s reuse
+// Extended cache: 3 min in-session + optional 5 min persistent localStorage (stale-while-revalidate)
+const SESSION_CACHE_MAX_AGE_MS = 180000; // 3 minutes
+const PERSIST_CACHE_MAX_AGE_MS = 300000; // 5 minutes
+const PERSIST_CACHE_KEY = 'gb_file_list_cache_v2';
 
 // --- Performance instrumentation (lightweight) ----------------------------------
 // Captures timing + size for the listing fetch to help establish baseline numbers.
@@ -1826,15 +1829,35 @@ async function populateFileList() {
   fileListAllMode = false; // reset to user scope on explicit populate
   // Attempt session cache reuse
   try {
-    const raw = sessionStorage.getItem('gb_file_list_cache_v1');
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(parsed && Array.isArray(parsed.rows) && (Date.now()-parsed.ts) < CACHE_MAX_AGE_MS){
+    // Prefer fresh session cache
+    const rawSession = sessionStorage.getItem('gb_file_list_cache_v1');
+    if(rawSession){
+      const parsed = JSON.parse(rawSession);
+      if(parsed && Array.isArray(parsed.rows) && (Date.now()-parsed.ts) < SESSION_CACHE_MAX_AGE_MS){
         fileListRows = parsed.rows; fileListUniqueCount = parsed.uniqueCount || parsed.rows.length;
         paintFileList(fileListRows, { cached:true, initial:true, uniqueCount:fileListUniqueCount });
-        // Background refresh (non-blocking)
-        loadFileListPage(true);
+        loadFileListPage(true); // SWR refresh
         return;
+      }
+    }
+    // Fallback to persistent localStorage (can be stale)
+    const rawPersist = localStorage.getItem(PERSIST_CACHE_KEY);
+    if(rawPersist){
+      const parsedP = JSON.parse(rawPersist);
+      if(parsedP && Array.isArray(parsedP.rows)){
+        const age = Date.now() - parsedP.ts;
+        if(age < PERSIST_CACHE_MAX_AGE_MS){
+          fileListRows = parsedP.rows; fileListUniqueCount = parsedP.uniqueCount || parsedP.rows.length;
+          paintFileList(fileListRows, { cached:true, initial:true, uniqueCount:fileListUniqueCount });
+          loadFileListPage(true); // refresh in background
+          return;
+        } else {
+          // Show stale immediately (SWR) then refresh
+          fileListRows = parsedP.rows; fileListUniqueCount = parsedP.uniqueCount || parsedP.rows.length;
+          paintFileList(fileListRows, { cached:true, initial:true, uniqueCount:fileListUniqueCount });
+          loadFileListPage(true);
+          return;
+        }
       }
     }
   } catch{}
@@ -1853,10 +1876,22 @@ async function loadFileListPage(isInitial) {
   } else {
     url = uid ? (baseUrl + '&created_by=' + encodeURIComponent(uid) + '&include_null=1') : (baseUrl + '&include_null=1');
   }
+  // Timeout guard (8s)
+  const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  if(ac){ setTimeout(()=> { if(!ac.signal.aborted) ac.abort(); }, 8000); }
+  // Long-load UX indicator after 700ms if skeleton still present
+  const slowTimer = setTimeout(()=>{
+    try {
+      if(fileList && fileList.querySelector('.saved-games-grid') && fileList.querySelector('.game-card.skeleton')){
+        const meta = document.getElementById('fileListMeta');
+        if(meta) meta.textContent = 'Fetching games… (still working)';
+      }
+    } catch{}
+  },700);
   const t0 = performance.now();
   let ttfbMs = 0; let totalMs = 0; let sizeBytes = 0; let js=null; let status=0; let ok=false;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, ac? { signal: ac.signal } : undefined);
     status = res.status;
     ttfbMs = performance.now() - t0; // approximation
     const text = await res.text();
@@ -1868,6 +1903,7 @@ async function loadFileListPage(isInitial) {
     totalMs = performance.now() - t0;
     console.warn('[game-builder] fetch error list', e);
   }
+  clearTimeout(slowTimer);
   recordPerfSample({ label: 'list(ui)', ttfbMs, totalMs, sizeBytes, status, error: ok?undefined:'fetch-failed' });
   if(!ok || !js){
     fileList.innerHTML = '<div class="status">Error loading games (status ' + status + '). <button id="retryListBtn" class="btn">Retry</button></div>';
@@ -1896,6 +1932,14 @@ async function loadFileListPage(isInitial) {
     }
   }
   fileListLoading = false;
+  // Persist cache (SWR) only for initial full loads
+  try {
+    if(isInitial){
+      const cacheObj = { ts: Date.now(), rows: fileListRows, uniqueCount: fileListUniqueCount };
+      sessionStorage.setItem('gb_file_list_cache_v1', JSON.stringify(cacheObj));
+      localStorage.setItem(PERSIST_CACHE_KEY, JSON.stringify(cacheObj));
+    }
+  } catch{}
 }
 
 const loadMoreBtn = document.getElementById('loadMoreFilesBtn');
@@ -2269,3 +2313,21 @@ initMintAiListBuilder({
 
 // Initialize Create Game modal
 initCreateGameModal(buildPayload);
+
+// --- Prefetch & Warm-Up -------------------------------------------------------
+// After main UI is stable, warm the list endpoint so first manual open is instant.
+if(!window.__gbPrefetchScheduled){
+  window.__gbPrefetchScheduled = true;
+  window.addEventListener('load', () => {
+    // Warm-up HEAD-style (head=1) quickly
+    setTimeout(()=>{ try { fetch('/.netlify/functions/list_game_data_unique?limit=1&offset=0&head=1&unique=1&page_pull=1', { cache:'no-store' }); } catch{} }, 1200);
+    // Full prefetch if no fresh session cache exists
+    setTimeout(()=>{
+      try {
+        const raw = sessionStorage.getItem('gb_file_list_cache_v1');
+        if(!raw){ populateFileList(); }
+      } catch{}
+    }, 2500);
+  });
+}
+// -----------------------------------------------------------------------------
