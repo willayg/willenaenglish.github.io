@@ -115,8 +115,9 @@ exports.handler = async (event) => {
       }
     }
 
-    // 4. Ensure audio for each sentence (parallel with modest concurrency)
-    const WANT_AUDIO = true;
+  // 4. Ensure audio for each sentence (parallel with modest concurrency)
+  // Allow caller to skip audio generation for faster non-blocking linking (e.g., live game launch)
+  const WANT_AUDIO = !body.skip_audio; // skip when truthy
     let generated = 0, reused = 0, failed = 0;
 
     async function hasObject(key){

@@ -73,12 +73,14 @@ async function ensureSentenceIds(wordObjs){
     targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const n = norm(raw); if(n && !map.has(n)) map.set(n,{ text:n, words:[w.eng].filter(Boolean) }); }});
     if(!map.size) return { inserted:0, reused:0 };
     // Call dedicated Netlify function (bypasses generic proxy which doesn't route this action)
-    const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
+  const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) }; 
+  if(opts.skipAudio) payload.skip_audio = true;
     let endpoint = '/.netlify/functions/upsert_sentences_batch';
     try {
       if (window && window.location && window.location.hostname === 'localhost') {
         // Support both netlify dev (8888) and functions:serve (netlify dev rewrites) without change
-        endpoint = '/.netlify/functions/upsert_sentences_batch';
+        const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
+        if(opts.skipAudio) payload.skip_audio = true;
       }
     } catch {}
     const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
@@ -110,7 +112,17 @@ async function ensureSentenceIds(wordObjs){
         applied++;
       } else missed++;
     });
-    return { inserted:applied, missed };
+    // If we skipped audio, optionally schedule a background audio generation call (non-blocking)
+    if(opts.skipAudio){
+      try {
+        const needAudio = targets.filter(w=> w.primary_sentence_id && !(w.sentences && w.sentences[0] && w.sentences[0].audio_key));
+        if(needAudio.length){
+          // Background trigger (no await) to generate audio later without blocking UI
+          const triggerPayload = { action:'upsert_sentences_batch', sentences: needAudio.map(w=> ({ text: w.legacy_sentence || w.example || '' })), skip_audio:false };
+          fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(triggerPayload) }).catch(()=>{});
+        }
+      } catch{}
+    }
   } catch(e){ console.debug('[SentenceUpgrade] ensureSentenceIds failed', e?.message); return { inserted:0, error:true }; }
 }
 
@@ -978,8 +990,15 @@ async function launchLiveMode() {
   if (!buildPayloadRef) { alert('Live launch not ready: missing payload builder.'); return; }
   const data = buildPayloadRef();
   if (!data || !Array.isArray(data.words) || !data.words.length) { alert('No words found. Please add words first.'); return; }
-  setStatus('Preparing sentences...');
-  try { await ensureSentenceIds(data.words); } catch {}
+  // Fast path: background sentence linking (skip audio) so UI is not blocked
+  try {
+    const total = data.words.length;
+    const withIds = data.words.filter(w=> w && (w.primary_sentence_id || (Array.isArray(w.sentences) && w.sentences.length))).length;
+    if (withIds < total) {
+      setStatus('Linking sentences…');
+      (async ()=>{ try { await ensureSentenceIds(data.words, { skipAudio:true }); } catch(e){ console.debug('[liveLaunch] bg sentence link failed', e?.message); } })();
+    }
+  } catch {}
   setStatus('Creating live game...');
   showLoading('Creating live game...');
   let id = null;
