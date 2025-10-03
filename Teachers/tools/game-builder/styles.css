@@ -439,7 +439,7 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 .qr-image-wrapper img { width:100%; height:100%; object-fit:contain; display:block; }
 
 /* Spinner absolutely centered over reserved area */
-.qr-image-wrapper .qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:62px; height:62px; border:7px solid #d9e3e8; border-top-color:#0d5c63; border-radius:50%; animation:cgmSpin .85s linear infinite; box-shadow:0 0 0 3px rgba(255,255,255,0.6); }
+.qr-image-wrapper .qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:62px; height:62px; border:7px solid #d9e3e8; border-top-color:#0d5c63; border-radius:50%; animation:spin .85s linear infinite; box-shadow:0 0 0 3px rgba(255,255,255,0.6); transform-origin:50% 50%; will-change:transform; }
 
 /* Skeleton shimmer states remain but without affecting layout width */
 #qrImage.qr-loading { background:linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation:shimmer 1.2s infinite; opacity:.25; }
@@ -449,13 +449,13 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 #qrImage.qr-loading { background:linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%); background-size:200% 100%; animation:shimmer 1.2s infinite; opacity:.2; }
 #qrImage.qr-error { outline:3px solid #f87171; position:relative; }
 #qrImage.qr-error::after { content:'Error'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:700; color:#b91c1c; background:rgba(255,255,255,0.85); }
-.qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:44px; height:44px; border:6px solid #cbd5e1; border-top-color:#0d5c63; border-radius:50%; animation:cgmSpin .9s linear infinite; pointer-events:none; }
+.qr-spinner { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:44px; height:44px; border:6px solid #cbd5e1; border-top-color:#0d5c63; border-radius:50%; animation:spin .9s linear infinite; pointer-events:none; transform-origin:50% 50%; will-change:transform; }
 
 /* Stable QR container & spinner (new unified version) */
 .qr-image-container { position:relative; width:300px; height:300px; max-width:300px; max-height:300px; display:flex; align-items:center; justify-content:center; }
 .qr-image-container img { width:100%; height:100%; object-fit:contain; display:block; }
-.qr-image-container .qr-spinner { position:absolute; top:50%; left:50%; width:64px; height:64px; transform:translate(-50%, -50%); border:7px solid #d9e3e8; border-top-color:#0d5c63; border-radius:50%; animation:spin .85s linear infinite; box-shadow:0 0 0 3px rgba(255,255,255,.55); }
-@keyframes spin { to { transform:translate(-50%, -50%) rotate(360deg); } }
+.qr-image-container .qr-spinner { position:absolute; top:50%; left:50%; width:64px; height:64px; transform:translate(-50%, -50%); border:7px solid #d9e3e8; border-top-color:#0d5c63; border-radius:50%; animation:spin .85s linear infinite; box-shadow:0 0 0 3px rgba(255,255,255,.55); transform-origin:50% 50%; will-change:transform; }
+@keyframes spin { from { transform:translate(-50%, -50%) rotate(0deg); } to { transform:translate(-50%, -50%) rotate(360deg); } }
 
 
 /* ===== Loader Modal Performance + Card Styles ===== */
