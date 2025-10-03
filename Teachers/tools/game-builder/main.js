@@ -1549,6 +1549,56 @@ const LOAD_LIMIT = 10;
 // --- Saved games modal caching & skeleton ---
 let fileListCache = null; // { ts, rows, uniqueCount }
 const CACHE_MAX_AGE_MS = 20000; // 20s reuse
+
+// --- Performance instrumentation (lightweight) ----------------------------------
+// Captures timing + size for the listing fetch to help establish baseline numbers.
+// Stores recent samples in window.__gbPerf (max 25) and logs concise console output.
+if (!window.__gbPerf) window.__gbPerf = [];
+function recordPerfSample(sample){
+  try {
+    window.__gbPerf.push(sample);
+    if(window.__gbPerf.length > 25) window.__gbPerf.shift();
+    const { label, ttfbMs, totalMs, sizeBytes, status } = sample;
+    console.info(`[GB-PERF] ${label} status=${status} ttfb=${ttfbMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms size=${sizeBytes}B`);
+  } catch(e) { /* non-fatal */ }
+}
+async function timedJSONFetch(label, url, init){
+  const start = performance.now();
+  let ttfbMs = 0; let ok=false; let status = 0; let sizeBytes=0; let text=''; let data=null; let err=null;
+  try {
+    const res = await fetch(url, init);
+    status = res.status;
+    ttfbMs = performance.now() - start; // approximate (headers received)
+    text = await res.text();
+    sizeBytes = new Blob([text]).size;
+    try { data = text ? JSON.parse(text) : null; } catch(parseErr){ err = parseErr; }
+    ok = res.ok;
+    return { ok, status, data, raw: text, meta:{ label, ttfbMs, totalMs: performance.now() - start, sizeBytes, status }};
+  } catch(fetchErr){
+    err = fetchErr;
+    return { ok:false, status: status||0, data:null, raw:'', meta:{ label, ttfbMs, totalMs: performance.now() - start, sizeBytes, status: status||0, error: String(err&&err.message||err) }};
+  } finally {
+    recordPerfSample({ label, ...(err?{ error: String(err&&err.message||err) }:{}), ... (window.lastPerfMetaTemp||{} ) });
+  }
+}
+// Helper to run a quick head-style warm measurement (head=1 avoids image logic)
+async function measureListEndpointOnce(params = {}){
+  const qs = new URLSearchParams({ limit:'10', offset:'0', head:'1', unique:'1', names:'0', page_pull:'10', ...params });
+  const { meta } = await timedJSONFetch('list(head)', '/.netlify/functions/list_game_data_unique?' + qs.toString());
+  recordPerfSample(meta);
+  return meta;
+}
+// Optional baseline capture (3 head + 1 full) triggered once per page load.
+if (!window.__gbPerfBaselineScheduled){
+  window.__gbPerfBaselineScheduled = true;
+  setTimeout(async ()=>{
+    try {
+      for(let i=0;i<3;i++){ await measureListEndpointOnce({ run:String(i+1) }); }
+      await timedJSONFetch('list(full)', '/.netlify/functions/list_game_data_unique?limit=10&offset=0&unique=1&names=0&page_pull=40');
+    } catch(e){ console.debug('[GB-PERF] baseline capture error', e); }
+  }, 2500);
+}
+// -------------------------------------------------------------------------------
 function buildSkeletonHTML(n){
   const cards = Array.from({length:n}).map(()=> '<div class="game-card skeleton"><div class="thumb-wrap sk"></div><div class="card-body"><div class="sk-line sk-title"></div><div class="sk-line sk-meta"></div></div></div>').join('');
   if(!document.getElementById('gbSkeletonStyles')){
@@ -1803,13 +1853,28 @@ async function loadFileListPage(isInitial) {
   } else {
     url = uid ? (baseUrl + '&created_by=' + encodeURIComponent(uid) + '&include_null=1') : (baseUrl + '&include_null=1');
   }
-  const res = await fetch(url);
-  if (!res.ok) {
-    fileList.innerHTML = '<div class="status">Error loading games (status ' + res.status + '). Make sure Netlify dev server is running.</div>';
-    fileListLoading = false;
-    return;
+  const t0 = performance.now();
+  let ttfbMs = 0; let totalMs = 0; let sizeBytes = 0; let js=null; let status=0; let ok=false;
+  try {
+    const res = await fetch(url);
+    status = res.status;
+    ttfbMs = performance.now() - t0; // approximation
+    const text = await res.text();
+    sizeBytes = text.length;
+    try { js = JSON.parse(text); } catch(parseErr){ console.warn('[game-builder] parse error list response', parseErr); }
+    ok = res.ok;
+    totalMs = performance.now() - t0;
+  } catch(e){
+    totalMs = performance.now() - t0;
+    console.warn('[game-builder] fetch error list', e);
   }
-  const js = await res.json();
+  recordPerfSample({ label: 'list(ui)', ttfbMs, totalMs, sizeBytes, status, error: ok?undefined:'fetch-failed' });
+  if(!ok || !js){
+    fileList.innerHTML = '<div class="status">Error loading games (status ' + status + '). <button id="retryListBtn" class="btn">Retry</button></div>';
+    const retry = document.getElementById('retryListBtn');
+    if(retry){ retry.onclick = ()=> { fileListLoading=false; loadFileListPage(isInitial); }; }
+    fileListLoading = false; return;
+  }
   const rows = Array.isArray(js?.data) ? js.data : [];
   const countFromResp = (js.unique === 0 ? js.total_count : (js.unique_count || js.total_count)) || rows.length;
   if (isInitial) {
