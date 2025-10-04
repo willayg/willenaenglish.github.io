@@ -131,6 +131,77 @@ let currentListName = null;
 let currentPreloadAbort = null; // for abortable audio preload
 let activeModeCleanup = null; // optional cleanup function returned by mode runners
 
+// -------------------------------------------------------------
+// Image normalization (handles builder refactor differences)
+// -------------------------------------------------------------
+// Some newer builder saves may store raw keys like "words/apple.jpg" or legacy
+// variants like "images/words/apple.jpg" or even double-prefixed forms.
+// Older saved games may already contain full https URLs (Pixabay or R2 public).
+// This helper upgrades every word entry so that downstream modes can rely on
+// a consistent `.img` field when an image is available.
+// Strategy:
+// 1. Detect a public base from (priority): window.R2_PUBLIC_BASE (builder),
+//    <meta name="r2-public-base"> tag, or fallback null (means leave relative).
+// 2. If a value looks like a relative key (no http/https/data:) build absolute.
+// 3. Strip unintended leading segments: images/, public/, / before joining.
+// 4. Preserve original field if already absolute; set word.img unified alias.
+function normalizeImageUrl(raw, base) {
+  if (!raw || typeof raw !== 'string') return '';
+  let s = raw.trim();
+  if (!s) return '';
+  
+  // CRITICAL FIX: Strip legacy /images/ prefix from absolute R2 URLs
+  // Pattern: https://pub-xxx.r2.dev/images/words/... → https://pub-xxx.r2.dev/words/...
+  if (/^https?:\/\/[^/]+\.r2\.dev\/images\/words\//i.test(s)) {
+    s = s.replace(/\/images\/words\//i, '/words/');
+    console.log('[normalizeImageUrl] Stripped /images/ prefix:', s.substring(0, 80));
+  }
+  
+  // Already absolute or data URI or Netlify proxy - return as-is after legacy fix
+  if (/^(?:https?:)?\/\//i.test(s) || s.startsWith('data:') || /\.netlify\/functions\/image_proxy/.test(s)) return s;
+  
+  // For relative paths: clean up legacy prefixes
+  s = s.replace(/^\/+/, '');
+  s = s.replace(/^(?:images\/)+/i,'');
+  s = s.replace(/^(?:public\/)+/i,'');
+  
+  // Build absolute if base available
+  if (!base) return s;
+  const cleanBase = base.replace(/\/$/, '');
+  return cleanBase + '/' + s;
+}
+
+function detectR2Base() {
+  try {
+    if (window.R2_PUBLIC_BASE && /^(https?:)?\/\//i.test(window.R2_PUBLIC_BASE)) return window.R2_PUBLIC_BASE;
+    const meta = document.querySelector('meta[name="r2-public-base"], meta[name="wa-r2-base"], meta[name="r2-base"]');
+    if (meta) {
+      const v = (meta.getAttribute('content')||'').trim();
+      if (v && /^(https?:)?\/\//i.test(v) && !/your_r2_public_base/i.test(v)) return v;
+    }
+  } catch {}
+  return null;
+}
+
+function normalizeWordImages(list) {
+  const base = detectR2Base();
+  for (const w of list) {
+    if (!w || typeof w !== 'object') continue;
+    // Gather candidate from any field (mimicking mini player's multi-alias approach)
+    const candidate = w.image_url || w.image || w.img || w.picture || '';
+    const norm = normalizeImageUrl(candidate, base);
+    if (norm) {
+      // Set unified alias (modes check w.img || w.image_url)
+      w.img = norm;
+      // Ensure image_url also populated for modes that check it first
+      if (!w.image_url) w.image_url = norm;
+      // Also set image and picture for full compatibility
+      if (!w.image) w.image = norm;
+      if (!w.picture) w.picture = norm;
+    }
+  }
+}
+
 const gameArea = document.getElementById('gameArea');
 
 // -----------------------------
@@ -331,6 +402,8 @@ async function processWordlist(data) {
   try {
     wordList = Array.isArray(data) ? data : [];
     if (!wordList.length) throw new Error('No words provided');
+    // Normalize image fields early (supports builder refactor differences)
+    try { normalizeWordImages(wordList); } catch (e) { console.warn('[WordArcade] image normalization failed (non-fatal)', e); }
     // Save early so UI can reflect title/list even if user navigates quickly
     saveSessionState();
 
@@ -564,7 +637,13 @@ async function openSavedGameById(id) {
       const img = (typeof rawImg === 'string') ? rawImg.trim() : '';
       const out = { eng: String(eng).trim(), kor: String(kor).trim() };
       if (def && String(def).trim()) out.def = String(def).trim();
-      if (img && img.toLowerCase() !== 'null' && img.toLowerCase() !== 'undefined') out.img = img;
+      // Preserve image in ALL field variants so normalizeWordImages can find and process it
+      if (img && img.toLowerCase() !== 'null' && img.toLowerCase() !== 'undefined') {
+        out.image_url = img;
+        out.image = img;
+        out.img = img;
+        out.picture = img;
+      }
       return out;
     }).filter(w => w && w.eng);
     if (!mapped.length) {
@@ -572,6 +651,17 @@ async function openSavedGameById(id) {
       return;
     }
     currentListName = row.title || 'Saved Game';
+    console.log('[WordArcade] Before normalization, sample words:', mapped.slice(0,3).map(w => ({
+      eng: w.eng,
+      image_url: w.image_url?.substring(0,60),
+      img: w.img?.substring(0,60)
+    })));
+    try { normalizeWordImages(mapped); } catch (e) { console.warn('[WordArcade] saved game image normalization failed', e); }
+    console.log('[WordArcade] After normalization, sample words:', mapped.slice(0,3).map(w => ({
+      eng: w.eng,
+      image_url: w.image_url?.substring(0,60),
+      img: w.img?.substring(0,60)
+    })));
     await processWordlist(mapped);
   } catch (e) {
   if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {

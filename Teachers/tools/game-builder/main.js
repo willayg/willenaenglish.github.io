@@ -13,6 +13,94 @@ import {
 } from './images.js';
 import { initMintAiListBuilder } from './MintAi-list-builder.js';
 import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js';
+import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
+import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
+import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
+import { generateExample, generateDefinition } from './services/ai-service.js';
+import { 
+  preferredVoice, 
+  checkExistingAudioKeys, 
+  callTTSProxy, 
+  uploadAudioFile, 
+  ensureAudioForWordsAndSentences,
+  ensureRegenerateAudioCheckbox
+} from './services/audio-service.js';
+import { 
+  getCurrentUserId,
+  ensureSentenceIdsBuilder,
+  prepareAndUploadImagesIfNeeded,
+  saveGameData,
+  loadGameData,
+  deleteGameData,
+  listGameData,
+  findGameByTitle,
+  generateIncrementedTitle,
+  showTitleConflictModal
+} from './services/file-service.js';
+import {
+  getList,
+  setList,
+  getCurrentGameId,
+  setCurrentGameId,
+  newRow,
+  saveState,
+  undo as undoState,
+  redo as redoState,
+  clearAllState,
+  buildPayload,
+  cacheCurrentGame,
+  parseWords
+} from './state/game-state.js';
+// Legacy global bridge: some pre-refactor modules and inline code still expect
+// window.list / window.currentGameId to exist. Keep them synchronized with the
+// state module without changing existing references.
+if (!window.list) Object.defineProperty(window, 'list', {
+  get() { return getList(); },
+  set(v) { setList(v); }
+});
+if (!('currentGameId' in window)) Object.defineProperty(window, 'currentGameId', {
+  get() { return getCurrentGameId(); },
+  set(v) { setCurrentGameId(v); }
+});
+// Phase 3: Render & UI extraction
+import { buildRowHTML, applyTableToggles } from './render/row-html.js';
+import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js';
+import { 
+  showEditListModal as showEditListModalUI, 
+  hideEditListModal as hideEditListModalUI,
+  handleEditListSave,
+  openSaveAsModal,
+  handleSaveAsConfirm,
+  showFileModal as showFileModalUI,
+  hideFileModal as hideFileModalUI
+} from './ui/modals.js';
+import {
+  handleQuickSave,
+  handlePreview,
+  handleAddWord,
+  handleUndo,
+  handleRedo,
+  handleGetTranslations,
+  handleGenerateDefinitions,
+  handleGenerateExamples
+} from './ui/event-handlers.js';
+import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
+import { initFileListModal } from './ui/file-list.js';
+import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
+
+// Early toast shim: ensures calls before actual toast util wiring don't throw
+const toast = (function(){
+  if (typeof window !== 'undefined') {
+    if (typeof window.toast === 'function') return (...a) => window.toast(...a);
+    // Provide a minimal window.toast so later code assigning it still works
+    window.toast = function(msg){
+      try { showTinyToast(msg); } catch { console.log('[toast]', msg); }
+    };
+    return (...a) => window.toast(...a);
+  }
+  // Non-browser fallback
+  return (...a) => console.log('[toast]', ...a);
+})();
 
 // DOM refs
 const rowsEl = document.getElementById('rows');
@@ -24,43 +112,19 @@ const saveLink = document.getElementById('saveLink'); // new quick Save (silent 
 const saveAsLink = document.getElementById('saveAsLink');
 const previewBtn = document.getElementById('previewBtn');
 const createGameLink = document.getElementById('createGameLink');
-// Removed reuploadImagesLink (auto-handled on every save)
-const reuploadImagesLink = null;
+// Re-upload Images link removed (logic now auto-handled on save)
 const editListLink = document.getElementById('editListLink');
 const editListModal = document.getElementById('editListModal');
 const editListModalClose = document.getElementById('editListModalClose');
 const editListRaw = document.getElementById('editListRaw');
 const editListSave = document.getElementById('editListSave');
 const editListCancel = document.getElementById('editListCancel');
-// Edit List modal logic
-function showEditListModal() {
-  if (!editListModal) return;
-  // Populate textarea with current list
-  editListRaw.value = list.map(w => `${w.eng || ''}, ${w.kor || ''}`.trim()).join('\n');
-  editListModal.style.display = 'flex';
-}
-function hideEditListModal() {
-  if (editListModal) editListModal.style.display = 'none';
-}
-if (editListLink) editListLink.onclick = (e) => { e.preventDefault(); showEditListModal(); };
-if (editListModalClose) editListModalClose.onclick = hideEditListModal;
-if (editListCancel) editListCancel.onclick = hideEditListModal;
+// Edit List modal wiring
+if (editListLink) editListLink.onclick = (e) => { e.preventDefault(); showEditListModalUI(editListModal, editListRaw, getList()); };
+if (editListModalClose) editListModalClose.onclick = () => hideEditListModalUI(editListModal);
+if (editListCancel) editListCancel.onclick = () => hideEditListModalUI(editListModal);
 if (editListSave) editListSave.onclick = () => {
-  if (!editListRaw) return;
-  const lines = editListRaw.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const newRows = lines.map(line => {
-    const [eng, kor] = line.split(',').map(s => (s || '').trim());
-    return newRow({ eng, kor });
-  }).filter(r => r.eng);
-  if (newRows.length) {
-    saveState();
-    list = newRows;
-    render();
-    hideEditListModal();
-    toast('List updated');
-  } else {
-    toast('No valid words');
-  }
+  handleEditListSave(editListRaw, newRow, saveState, setList, render, toast, () => hideEditListModalUI(editListModal));
 };
 
 const getTranslationsLink = document.getElementById('getTranslationsLink');
@@ -72,9 +136,8 @@ const fileModal = document.getElementById('fileModal');
 const fileList = document.getElementById('fileList');
 const fileModalClose = document.getElementById('fileModalClose');
 
-// State
-let list = [];
-let currentGameId = null; // tracks last opened/saved game id for quick Save
+// State now managed by state/game-state.js module
+// Access via getList(), setList(), getCurrentGameId(), setCurrentGameId()
 let loadingImages; // from image system
 // Bootstrap user id early (improves created_by reliability on first save). Attempts a whoami call once.
 (async function bootstrapUserId(){
@@ -94,37 +157,42 @@ let loadingImages; // from image system
 // Disabled: prior auto session restore removed intentionally (user wants clean slate on refresh)
 // (Left placeholder so future re-enable logic has an anchor.)
 try { sessionStorage.removeItem('gb_last_game_v1'); } catch {}
-// Add Clear All button (create dynamically to avoid HTML edits if not present)
+// Add Clear All button (now placed in top toolbar markup, fallback create if missing)
 let clearAllBtn = document.getElementById('clearAllGameData');
 if(!clearAllBtn){
-  clearAllBtn = document.createElement('button');
+  const rightBar = document.querySelector('.top-menu .toolbar-right') || document.querySelector('.top-menu') || document.body;
+  // insert dot if existing items present
+  if(rightBar && rightBar.children.length){
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.textContent = '•';
+    rightBar.appendChild(dot);
+  }
+  clearAllBtn = document.createElement('a');
   clearAllBtn.id = 'clearAllGameData';
+  clearAllBtn.className = 'link danger';
   clearAllBtn.textContent = 'Clear All';
-  clearAllBtn.style.cssText = 'margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid #b94d4d;background:#d9534f;color:#fff;cursor:pointer;font-family:Poppins,sans-serif;font-size:0.85rem;';
-  const toolbar = document.getElementById('builderToolbar') || document.querySelector('#controls') || document.body;
-  toolbar.appendChild(clearAllBtn);
+  rightBar.appendChild(clearAllBtn);
 }
 clearAllBtn.addEventListener('click', () => {
   if(!confirm('This will erase ALL unsaved game data (words, title, session cache). Continue?')) return;
-  // Reset in-memory state
-  list = [];
-  currentGameId = null;
+  // Reset in-memory state via state module
+  setList([]);
+  setCurrentGameId(null);
   if(titleEl) titleEl.value = '';
   // Remove session & legacy storage keys
   try { sessionStorage.removeItem('gb_last_game_v1'); } catch {}
   const lsKeys = [
-    'gameBuilderWordList','gb_regenerate_audio','worksheetTitle','user_id','id','userId'
+    'gameBuilderWordList','gb_regenerate_audio','worksheetTitle','user_id','id','userId','gb_image_folder_v1'
   ];
   lsKeys.forEach(k=>{ try { localStorage.removeItem(k); } catch {} });
+  try { sessionStorage.removeItem('gb_image_folder_v1'); } catch {}
   // Clear any image placeholders referencing past session (basic rerender)
   render();
   toast('All game builder data cleared');
 });
 
-// Undo/Redo functionality
-let undoStack = [];
-let redoStack = [];
-const MAX_UNDO_STACK = 50;
+// Undo/Redo functionality now in state/game-state.js
 
 // Initialize image system
 const imageSystem = initImageSystem();
@@ -142,45 +210,55 @@ if (createGameLink) {
     openCreateGameModal();
   };
 }
-// NOTE: Re-upload button removed; images now auto-processed during every Save / Save As.
-
-// Undo/Redo functions
-function saveState() {
-  undoStack.push(JSON.parse(JSON.stringify(list)));
-  if (undoStack.length > MAX_UNDO_STACK) undoStack.shift();
-  redoStack = [];
-}
-function undo() {
-  if (!undoStack.length) return;
-  redoStack.push(JSON.parse(JSON.stringify(list)));
-  list = undoStack.pop();
-  render();
-  toast('Undone');
-}
-function redo() {
-  if (!redoStack.length) return;
-  undoStack.push(JSON.parse(JSON.stringify(list)));
-  list = redoStack.pop();
-  render();
-  toast('Redone');
-}
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-  else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
-});
-
-function newRow(data = {}) {
-  return {
-    eng: data.eng || '',
-    kor: data.kor || '',
-    image_url: data.image_url || '',
-    definition: data.definition || '',
-    example: data.example || data.example_sentence || ''
+// Add Word button wiring
+if (addWordLink) {
+  addWordLink.onclick = (e) => {
+    e.preventDefault();
+    handleAddWord(saveState, getList, setList, newRow, render);
   };
 }
+// Get Translations button wiring
+if (getTranslationsLink) {
+  getTranslationsLink.onclick = (e) => {
+    e.preventDefault();
+    handleGetTranslations(getList, setList, render, toast);
+  };
+}
+// NOTE: Re-upload button removed; images now auto-processed during every Save / Save As.
+
+// Undo/Redo keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { 
+    e.preventDefault(); 
+    if (undoState()) {
+      render();
+      toast('Undone');
+    }
+  }
+  else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { 
+    e.preventDefault(); 
+    if (redoState()) {
+      render();
+      toast('Redone');
+    }
+  }
+});
+
+// newRow function now imported from state/game-state.js
+
+// Initialize saved games modal (Load)
+initFileListModal({
+  fileModal,
+  fileListEl: fileList,
+  openLink,
+  fileModalClose,
+  titleEl,
+  toast,
+  render
+});
 
 function render() {
+  const list = getList();
   rowsEl.innerHTML = '';
   // If we don't have a real public base (placeholder) rewrite any direct R2 API endpoints to proxy form for visibility
   try {
@@ -208,100 +286,93 @@ function render() {
       const base = window.R2_PUBLIC_BASE.replace(/\/$/, '');
       for (const w of list) {
         if (!w || !w.image_url) continue;
+        // Strip /images/ from absolute R2 URLs (bucket name shouldn't be in public URL path)
         if (w.image_url.startsWith(base + '/images/words/')) {
           w.image_url = base + '/' + w.image_url.substring((base + '/images/').length);
+          console.log('[builder] Stripped /images/ from word image_url:', w.image_url.substring(0, 80));
         }
         if (w.image_url.startsWith(base + '/images/cover/')) {
           w.image_url = base + '/' + w.image_url.substring((base + '/images/').length);
+          console.log('[builder] Stripped /images/ from cover image_url:', w.image_url.substring(0, 80));
         }
+      }
+      // Also check game cover image
+      if (gameImage && typeof gameImage === 'string' && gameImage.startsWith(base + '/images/cover/')) {
+        gameImage = base + '/' + gameImage.substring((base + '/images/').length);
+        console.log('[builder] Stripped /images/ from gameImage:', gameImage.substring(0, 80));
       }
     }
   } catch(e){ console.warn('Image URL rewrite check failed', e); }
-  // If images, definitions, or examples are disabled, add classes to the table for CSS hiding
-  const wordTable = document.querySelector('.word-table');
-  if (wordTable) {
-    if (enablePicturesEl && !enablePicturesEl.checked) {
-      wordTable.classList.add('hide-images');
-    } else {
-      wordTable.classList.remove('hide-images');
-    }
-    if (enableDefinitionsEl && !enableDefinitionsEl.checked) {
-      wordTable.classList.add('hide-definitions');
-    } else {
-      wordTable.classList.remove('hide-definitions');
-    }
-    if (enableExamplesEl && !enableExamplesEl.checked) {
-      wordTable.classList.add('hide-examples');
-    } else {
-      wordTable.classList.remove('hide-examples');
-    }
-  }
+  // Apply table toggles
+  applyTableToggles(enablePicturesEl, enableDefinitionsEl, enableExamplesEl);
+  
   list.forEach((w, i) => {
     const tr = document.createElement('tr');
     const isLoading = loadingImages.has(i);
-    const dzInner = generateImageDropZoneHTML(w, i, isLoading, escapeHtml);
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td><input class="row-input" data-field="eng" data-idx="${i}" value="${escapeHtml(w.eng)}" placeholder="English" /></td>
-      <td><input class="row-input" data-field="kor" data-idx="${i}" value="${escapeHtml(w.kor)}" placeholder="Korean" /></td>
-      <td>
-        <div class="drop-zone" data-idx="${i}">
-          ${dzInner}
-        </div>
-      </td>
-      <td>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <textarea class="row-input def-textarea" data-field="definition" data-idx="${i}" rows="3" placeholder="Definition (optional)">${escapeHtml(w.definition || '')}</textarea>
-          <button class="btn small refresh-btn" data-action="refresh-def" data-idx="${i}" title="Regenerate definition">↻</button>
-        </div>
-      </td>
-      <td>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <textarea class="row-input ex-textarea" data-field="example" data-idx="${i}" rows="3" placeholder="Example sentence (auto)">${escapeHtml(w.example || '')}</textarea>
-          <button class="btn small refresh-btn" data-action="refresh-example" data-idx="${i}" title="Regenerate example">↻</button>
-        </div>
-      </td>
-      <td>
-        <button class="btn small icon" title="Remove" aria-label="Remove" data-action="delete" data-idx="${i}">×</button>
-      </td>
-    `;
+    tr.innerHTML = buildRowHTML(w, i, isLoading);
     rowsEl.appendChild(tr);
   });
-  // DEBUG instrumentation: log each image element lifecycle (remove or comment out when stable)
+  // Image error fallback to proxy (auto-retry on direct R2 failures)
   try {
-    const imgs = rowsEl.querySelectorAll('.drop-zone img');
-    imgs.forEach(img => {
-      if (!img.__dbgHooked) {
-        const src = img.getAttribute('src') || '';
-        console.log('[img-debug] present src=', src);
-        img.addEventListener('load', () => console.log('[img-debug] load ok', img.getAttribute('src')));
+    rowsEl.querySelectorAll('.drop-zone img').forEach(img => {
+      if (!img.__fallbackHooked) {
         img.addEventListener('error', () => {
           const failing = img.getAttribute('src');
-          console.warn('[img-debug] load ERROR', failing);
-          // Auto fallback: if this looks like a public R2 base but not a proxy, convert to proxy
           if (/^https?:\/\/pub-[^/]+\.r2\.dev\//.test(failing) && !/\.netlify\/functions\/image_proxy/.test(failing)) {
-            // Extract key after bucket name (assumes bucket name is next segment after domain)
             try {
-              const parts = failing.split(/\/+/).slice(3); // drop protocol + domain
-              // parts[0] is bucket, rest is key
+              const parts = failing.split(/\/+/).slice(3);
               if (parts.length >= 2) {
-                const key = parts.slice(1).join('/');
+                const key = parts.slice(1).join('/').replace(/^(?:images\/)+/i,'').replace(/^(?:public\/)+/i,'');
                 if (/^(words|cover)\//.test(key)) {
-                  let normKey = key;
-                  normKey = normKey.replace(/^(?:images\/)+/i,'').replace(/^(?:public\/)+/i,'');
-                  const proxyUrl = '/.netlify/functions/image_proxy?key=' + encodeURIComponent(normKey);
-                  console.log('[img-debug] retry via proxy', proxyUrl);
-                  img.src = proxyUrl;
+                  img.src = '/.netlify/functions/image_proxy?key=' + encodeURIComponent(key);
                 }
               }
-            } catch(e){ console.warn('fallback proxy conversion failed', e); }
+            } catch {}
           }
         });
-        img.__dbgHooked = true;
+        img.__fallbackHooked = true;
       }
     });
-  } catch(e){ console.warn('img-debug hook failed', e); }
+  } catch {}
   bindRowEvents();
+}
+
+function bindRowEvents(){
+  const list = getList();
+  // Inputs and textareas
+  rowsEl.querySelectorAll('input.row-input, textarea.row-input').forEach(el => {
+    let originalValue = el.value;
+    el.addEventListener('input', () => {
+      const idx = parseInt(el.dataset.idx,10);
+      const field = el.dataset.field;
+      if(list[idx]) list[idx][field] = el.value;
+    });
+    el.addEventListener('focus', () => { originalValue = el.value; });
+    el.addEventListener('blur', () => {
+      if(el.value !== originalValue){ saveState(); }
+    });
+  });
+  // Delete buttons
+  rowsEl.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.idx,10);
+      saveState();
+      list.splice(idx,1);
+      render();
+    };
+  });
+  // Drop zones
+  rowsEl.querySelectorAll('.drop-zone').forEach(zone => {
+    const idx = parseInt(zone.dataset.idx,10);
+    setupImageDropZone(zone, idx, list, render, escapeHtml, saveState);
+  });
+  // Refresh definition/example buttons
+  rowsEl.querySelectorAll('[data-action="refresh-def"]').forEach(btn => {
+    btn.onclick = async () => { const idx = parseInt(btn.dataset.idx,10); await generateDefinitionForRow(idx, true); };
+  });
+  rowsEl.querySelectorAll('[data-action="refresh-example"]').forEach(btn => {
+    btn.onclick = async () => { const idx = parseInt(btn.dataset.idx,10); await generateExampleForRow(idx, true); };
+  });
 }
 
 // Import list from Word Builder (wordtest) via localStorage if present
@@ -410,451 +481,29 @@ function render() {
         imgZone.innerHTML = `<img src="${image}" alt="Game Image" style="max-width:100%;max-height:100px;border-radius:8px;">`;
       }
     }
-    if (rows.length) {
-      saveState();
-      list = rows;
-      render();
-      // Auto examples after initial render
-      (async ()=>{ await generateExamplesForMissing(); })();
-      toast('Imported list from Word Builder');
-    }
   } catch (e) {
     console.warn('Import from Word Builder failed:', e);
   }
 })();
 
-function bindRowEvents() {
-  // Inputs - save state on blur (when user finishes editing)
-  rowsEl.querySelectorAll('input.row-input, textarea.row-input').forEach((el) => {
-    let originalValue = el.value;
-    
-    el.addEventListener('input', () => {
-      const idx = parseInt(el.dataset.idx, 10);
-      const field = el.dataset.field;
-      if (list[idx]) list[idx][field] = el.value;
-    });
-    
-    el.addEventListener('focus', () => {
-      originalValue = el.value;
-    });
-    
-    el.addEventListener('blur', () => {
-      if (el.value !== originalValue) {
-        saveState(); // Save state when user finishes editing and value changed
-      }
-    });
+// File list logic extracted to ui/file-list.js (initFileListModal)
+
+// Defer toast resolution until call time to avoid ReferenceError if builder invoked early
+window.loadWorksheet = (ws) => {
+  const resolvedToast = (typeof toast === 'function')
+    ? toast
+    : (window.toast || ((msg) => console.log('[toast]', msg)));
+  return loadWorksheetIntoBuilder(ws, {
+    titleEl,
+    enablePicturesEl,
+    enableDefinitionsEl,
+    enableExamplesEl,
+    generateDefinitionsForMissing,
+    generateExamplesForMissing,
+    loadingImages,
+    render,
+    toast: resolvedToast
   });
-
-  // Delete
-  rowsEl.querySelectorAll('[data-action="delete"]').forEach(btn => {
-    btn.onclick = () => {
-      const idx = parseInt(btn.dataset.idx, 10);
-      saveState(); // Save state before deletion
-      list.splice(idx, 1);
-      render();
-    };
-  });
-
-  // Refresh definition
-  rowsEl.querySelectorAll('[data-action="refresh-def"]').forEach(btn => {
-    btn.onclick = async () => {
-      const idx = parseInt(btn.dataset.idx, 10);
-      btn.disabled = true;
-      btn.textContent = '…';
-      try {
-        await generateDefinitionForRow(idx);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '↻';
-      }
-    };
-  });
-
-  // Refresh example
-  rowsEl.querySelectorAll('[data-action="refresh-example"]').forEach(btn => {
-    btn.onclick = async () => {
-      const idx = parseInt(btn.dataset.idx, 10);
-      btn.disabled = true;
-      btn.textContent = '…';
-      try {
-        await generateExampleForRow(idx, true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '↻';
-      }
-    };
-  });
-
-  // Drop zones
-  rowsEl.querySelectorAll('.drop-zone').forEach(zone => {
-    const idx = parseInt(zone.dataset.idx, 10);
-    setupImageDropZone(zone, idx, list, render, escapeHtml, saveState);
-  });
-}
-
-function toast(msg) {
-  statusEl.textContent = msg;
-  setTimeout(() => { if (statusEl.textContent === msg) statusEl.textContent = ''; }, 2000);
-}
-
-// Simple full-screen loading overlay
-function ensureLoadingOverlay(){
-  let el = document.getElementById('gbLoadingOverlay');
-  if(!el){
-    el = document.createElement('div');
-    el.id='gbLoadingOverlay';
-    el.style.cssText='position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.32);z-index:100000;font:600 16px system-ui,Arial;color:#fff;backdrop-filter:blur(2px);';
-    el.innerHTML='<div style="background:#0f172a; padding:18px 26px; border-radius:14px; box-shadow:0 6px 28px -4px rgba(0,0,0,.35); display:flex; flex-direction:column; gap:10px; align-items:center;" id="gbLoadingBox"><div class="spinner" style="width:34px;height:34px;border:4px solid #334155;border-top-color:#67e2e6;border-radius:50%;animation:spin .8s linear infinite"></div><div id="gbLoadingText">Loading…</div></div>';
-    const style = document.createElement('style');
-    style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
-    document.head.appendChild(style);
-    document.body.appendChild(el);
-  }
-  return {
-    show(msg){ try { el.style.display='flex'; const t=el.querySelector('#gbLoadingText'); if(t) t.textContent=msg||'Loading…'; } catch{} },
-    hide(){ try { el.style.display='none'; } catch{} }
-  };
-}
-
-// Tiny top-right toast for brief status (e.g., 500ms "Saved"), or longer error
-function showTinyToast(msg, { variant = 'success', ms = 500 } = {}) {
-  let el = document.getElementById('tinyToast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'tinyToast';
-    el.setAttribute('role', 'status');
-    el.setAttribute('aria-live', 'polite');
-    el.style.cssText = [
-      'position:fixed',
-      'top:12px',
-      'right:12px',
-      'background:#10b981',
-      'color:#fff',
-      'padding:8px 12px',
-      'border-radius:9999px',
-      'font:600 13px system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
-      'box-shadow:0 6px 20px rgba(0,0,0,.18)',
-      'z-index:100000',
-      'opacity:0',
-      'transform:translateY(-6px)',
-      'transition:opacity .12s ease, transform .12s ease',
-      'display:none'
-    ].join(';');
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
-  if (variant === 'error') el.style.background = '#ef4444';
-  else if (variant === 'warn') el.style.background = '#f59e0b';
-  else el.style.background = '#10b981';
-  // show
-  el.style.display = 'block';
-  requestAnimationFrame(() => {
-    el.style.opacity = '1';
-    el.style.transform = 'translateY(0)';
-  });
-  clearTimeout(el._hideTimer);
-  el._hideTimer = setTimeout(() => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(-6px)';
-    setTimeout(() => { if (el.style.opacity === '0') el.style.display = 'none'; }, 160);
-  }, Math.max(200, ms | 0));
-}
-
-// Network helpers: resilient JSON fetch with retry for transient dev resets
-async function fetchJSONSafe(url, init, opts = {}) {
-  const { retryOnNetwork = true, retryDelayMs = 700 } = opts;
-  try {
-    const res = await fetch(url, init);
-    // Read text first so we can report useful errors on non-JSON responses
-    let text = '';
-    try { text = await res.text(); } catch {}
-    let data = null;
-    try { data = text ? JSON.parse(text) : null; } catch {}
-    if (!res.ok) {
-      const msg = (data && (data.error || data.message)) || text || `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
-    return data ?? {};
-  } catch (err) {
-    const msg = String(err && err.message || err || '');
-    // Retry once on network-style errors seen in Netlify dev (connection reset / failed to fetch)
-    if (retryOnNetwork && /Failed to fetch|NetworkError|ERR_CONNECTION_RESET|load failed|TypeError: NetworkError/i.test(msg)) {
-      await new Promise(r => setTimeout(r, retryDelayMs));
-      return fetchJSONSafe(url, init, { retryOnNetwork: false, retryDelayMs });
-    }
-    throw err;
-  }
-}
-
-
-function buildPayload() {
-  // Ensure each word carries a legacy_sentence for Sentence Mode.
-  const vowels = /^[aeiou]/i;
-  function fallbackSentence(w){
-    const eng = (w.eng||'').trim();
-    if(!eng) return '';
-    // If multi-word phrase, simple pattern:
-    if(eng.includes(' ')) return `I can ${eng}.`;
-    const art = vowels.test(eng) ? 'an' : 'a';
-    // Choose between two simple templates for a little variation
-    if(/ing$/i.test(eng)) return `They are ${eng}.`;
-    return `This is ${art} ${eng}.`;
-  }
-  function chooseLegacySentence(w){
-    // 1. Pre-existing legacy_sentence (if user loaded an older game)
-    if(w.legacy_sentence && /\w+\s+\w+\s+\w+/.test(w.legacy_sentence)) return w.legacy_sentence.trim();
-    // 2. Example with >=3 tokens
-    if(w.example && /\w+\s+\w+\s+\w+/.test(w.example)) return w.example.trim();
-    // 3. Definition (take first clause up to 14 words)
-    if(w.definition){
-      const words = w.definition.trim().split(/\s+/).slice(0,14);
-      if(words.length >=3){
-        let def = words.join(' ');
-        def = def.replace(/\s+$/,'');
-        if(!/[.!?]$/.test(def)) def += '.';
-        return def;
-      }
-    }
-    // 4. Generated fallback
-    return fallbackSentence(w);
-  }
-  return {
-    title: titleEl.value || 'Untitled Game',
-    gameImage: document.getElementById('gameImageZone').querySelector('img')?.src || '',
-    words: list.map(w => ({
-      eng: w.eng || '',
-      kor: w.kor || '',
-      image_url: w.image_url || '',
-      definition: w.definition || '',
-      example: w.example || '',
-      // Always provide a legacy_sentence so Sentence Mode never empties out.
-      legacy_sentence: chooseLegacySentence(w)
-    }))
-  };
-}
-
-function cacheCurrentGame(){
-  try {
-    const payload = buildPayload();
-    sessionStorage.setItem('gb_last_game_v1', JSON.stringify({ id: currentGameId, title: payload.title, words: payload.words }));
-  } catch{}
-}
-
-// --- Image upload helper (R2 on-save optimization) ---------------------------------
-async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {}){
-  try {
-    const R2_PREFIX = (window.R2_PUBLIC_BASE || 'https://');
-    const toUpload = [];
-    // Track changes: if a row previously had an uploaded (R2/proxy) URL but user replaced it with a data: URL, we must upload again.
-    // We'll store an _origImageUrl on the global list rows after successful upload to detect modifications.
-    payload.words.forEach((w,i)=>{
-      if(!w || !w.image_url) return;
-      const url = w.image_url;
-      const rowRef = list && list[i];
-      const isProxy = /\/.netlify\/functions\/image_proxy\?key=/.test(url);
-      const isR2Public = !!R2_PREFIX && url.startsWith(R2_PREFIX) && /\/words\//.test(url);
-      const isData = url.startsWith('data:');
-      // Determine if changed: if we have a stored original and current differs (even if both R2) allow re-upload to create new key? Usually not needed; only data: triggers.
-      const orig = rowRef && rowRef._origImageUrl;
-      const replacedWithData = isData && orig && orig !== url; // user replaced previously uploaded image
-      const needs = isData || (!isProxy && !isR2Public && /^https?:/i.test(url)) || replacedWithData;
-      if(needs) toUpload.push({ index:i, source:url });
-    });
-    const coverNeeds = (()=>{
-      if(!payload.gameImage) return false;
-      const gi = payload.gameImage;
-      const isData = gi.startsWith('data:');
-      const isR2 = !!R2_PREFIX && gi.startsWith(R2_PREFIX) && /\/cover\//.test(gi);
-      const isProxy = /\/.netlify\/functions\/image_proxy\?key=/.test(gi);
-      // If original cover stored, detect replacement to data:
-      const coverImgEl = document.getElementById('gameImageZone')?.querySelector('img');
-      const origCover = coverImgEl && coverImgEl.dataset && coverImgEl.dataset.origUploadedUrl;
-      const replaced = isData && origCover && origCover !== gi;
-      return isData || (!isR2 && !isProxy && /^https?:/i.test(gi)) || replaced;
-    })();
-    if(!toUpload.length && !coverNeeds) return payload; // nothing to do
-  const body = { gameId: gameId || null, words: toUpload, cover: coverNeeds ? { source: payload.gameImage } : null };
-  if (opts.force) body.force = 1;
-    const statusBox = document.getElementById('saveModalStatus'); if(statusBox) statusBox.textContent = 'Optimizing images…';
-  const res = await fetch('/.netlify/functions/upload-images' + (opts.force ? '?force=1' : ''), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-    if(!res.ok) { console.warn('[image-upload] server responded', res.status); return payload; }
-    const js = await res.json();
-    if(Array.isArray(js.words)) js.words.forEach(r=> { if(typeof r.index==='number' && r.url){
-      payload.words[r.index].image_url = r.url;
-      // Also mutate global list so subsequent buildPayload() or saves persist R2 URL
-      if (Array.isArray(list) && list[r.index]) list[r.index].image_url = r.url;
-      if (Array.isArray(list) && list[r.index]) list[r.index]._origImageUrl = r.url;
-    }});
-    if(js.cover && js.cover.url) {
-      payload.gameImage = js.cover.url;
-      try {
-        const coverImgEl = document.getElementById('gameImageZone')?.querySelector('img');
-        if (coverImgEl) coverImgEl.dataset.origUploadedUrl = js.cover.url;
-      } catch {}
-    }
-    if(js.gameId && !gameId) { try { currentGameId = js.gameId; } catch {} }
-    if(statusBox) statusBox.textContent = 'Images ready';
-    return payload;
-  } catch(e){ console.warn('[image-upload] failed', e); return payload; }
-}
-// -------------------------------------------------------------------------------
-
-// Toolbar actions
-addWordLink.onclick = () => { 
-  saveState(); // Save state before adding
-  list.push(newRow()); 
-  render(); 
-};
-previewBtn.onclick = () => {
-  const data = buildPayload();
-  console.log('Preview JSON', data);
-  alert(JSON.stringify(data, null, 2));
-};
-
-// Get translations for rows that have English but missing Korean
-if (getTranslationsLink) {
-  getTranslationsLink.onclick = async (e) => {
-    e.preventDefault();
-    const pending = list
-      .map((row, idx) => ({ eng: (row.eng || '').trim(), idx }))
-      .filter(x => x.eng && !(list[x.idx].kor || '').trim());
-    if (!pending.length) { toast('No untranslated words'); return; }
-
-    try {
-      getTranslationsLink.classList.add('disabled');
-      const words = pending.map(p => p.eng).join('\n');
-      const prompt = `Translate the following English words into natural Korean used in everyday speech.\nReturn ONLY the Korean translations, one per line, same order, no numbering or extra text.\n\n${words}`;
-      const res = await fetch('/.netlify/functions/openai_proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const js = await res.json();
-      let text = (js?.result || '').trim();
-      if (!text) { toast('No translations returned'); return; }
-
-      // Normalize bullets/numbers if model added them
-      const lines = text
-        .split(/\r?\n/)
-        .map(l => l.replace(/^\s*[-*•]?\s*\d+[).]?\s*/, '').trim())
-        .filter(Boolean);
-      if (!lines.length) { toast('Parse error'); return; }
-
-      saveState();
-      const n = Math.min(lines.length, pending.length);
-      for (let i = 0; i < n; i++) {
-        list[pending[i].idx].kor = lines[i];
-      }
-      render();
-      toast('Translations added');
-    } catch (err) {
-      console.error(err);
-      toast('Translation error');
-    } finally {
-      getTranslationsLink.classList.remove('disabled');
-    }
-  };
-}
-
-// Load from worksheets via manager (vocab only, require words)
-loadWorksheetsLink.onclick = () => {
-  const url = '/Teachers/worksheet_manager.html?mode=load&require_words=1';
-  window.open(url, 'worksheetManager', 'width=1200px,height=800px, left=20px,');
-};
-
-// Receive worksheet from manager and import words
-window.loadWorksheet = function(worksheet) {
-  try {
-    console.log('Loading worksheet:', worksheet);
-    const wordsField = worksheet?.words;
-    let rows = [];
-    // Attempt to auto-load a title from common worksheet properties
-    try {
-      const possibleTitle = (worksheet && (worksheet.title || worksheet.name || worksheet.worksheet_title || worksheet.game_title || worksheet.sheet_title)) || '';
-      if (possibleTitle && titleEl) {
-        titleEl.value = possibleTitle;
-      }
-    } catch (e) { /* non-fatal */ }
-    if (Array.isArray(wordsField)) {
-      rows = wordsField.map(w => {
-        if (typeof w === 'string') {
-          const [eng, kor] = w.split(',').map(s => s.trim());
-          return newRow({ eng, kor });
-        }
-        return newRow({
-          eng: w.eng || w.en || '',
-          kor: w.kor || w.kr || w.translation || '',
-          image_url: w.image_url || w.image || '',
-          definition: w.definition || ''
-        });
-      });
-    } else if (typeof wordsField === 'string') {
-      // Try JSON-parsed array first (to retain images/definitions)
-      let parsed = null;
-      try { parsed = JSON.parse(wordsField); } catch (_) { /* not JSON */ }
-      if (Array.isArray(parsed)) {
-        rows = parsed.map(w => {
-          if (typeof w === 'string') {
-            const [eng, kor] = w.split(',').map(s => s.trim());
-            return newRow({ eng, kor });
-          }
-          const img = w.image_url || w.image || w.img || w.img_url || w.picture || '';
-          return newRow({
-            eng: w.eng || w.en || '',
-            kor: w.kor || w.kr || w.translation || '',
-            image_url: img,
-            definition: w.definition || ''
-          });
-        });
-      } else {
-        // Support newline or comma separated simple strings
-        const parts = wordsField.includes('\n') ? wordsField.split('\n') : wordsField.split(',');
-        rows = parts.map(s => {
-          const [eng, kor] = s.split(',').map(t => (t || '').trim());
-          return newRow({ eng, kor });
-        }).filter(r => r.eng);
-      }
-    }
-    
-    // Apply worksheet-level images from multiple possible sources
-    const imageSources = [
-      worksheet?.images,           // Direct images field
-      worksheet?.image_data,       // Alternative naming
-      worksheet?.savedImageData    // From wordtest-style saves
-    ].filter(Boolean);
-    
-    console.log('Available image sources:', imageSources);
-    
-    for (const imageSource of imageSources) {
-      if (imageSource) {
-        console.log('Applying images from source:', imageSource);
-        applyWorksheetImages(rows, imageSource, wordsField);
-      }
-    }
-    
-    if (rows.length === 0) {
-      toast('No words found in selected worksheet');
-      return;
-    }
-    
-  saveState(); // Save state before loading worksheet
-  list = rows;
-    
-    // Log final rows with image data for debugging
-    console.log('Final rows with images:', rows.map(r => ({ eng: r.eng, has_image: !!r.image_url })));
-    
-    render();
-    // Only auto-fill missing data (don't overwrite existing images)
-    (async () => {
-      if (enablePicturesEl.checked) await loadImagesForMissingOnly(list, loadingImages, render);
-      if (enableDefinitionsEl.checked) await generateDefinitionsForMissing();
-      await generateExamplesForMissing();
-    })();
-    toast('Imported from Worksheet Manager');
-  } catch (e) {
-    console.error('Import error', e);
-    toast('Import failed');
-  }
 };
 
 function applyWorksheetImages(rows, imagesField, originalWords) {
@@ -862,45 +511,8 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
   applyWorksheetImagesFromModule(rows, imagesField, originalWords);
 }
 
-// Quick Save (silent): overwrite if currentGameId, else open Save As modal to name the file
-saveLink.onclick = async (ev) => {
-  const payload = buildPayload();
-  if (!payload.title || payload.words.length === 0) {
-    toast('Need title and at least 1 word');
-    return;
-  }
-  // First-time save in this session/file -> open Save As modal to set the title and create the record
-  if (!currentGameId) {
-    // Pre-fill modal title from current input
-    const titleField = document.getElementById('saveGameTitle');
-    if (titleField) titleField.value = titleEl.value || '';
-    const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = '';
-    const modal = document.getElementById('saveModal');
-    ensureRegenerateAudioCheckbox();
-    if (modal) modal.style.display = 'flex';
-    return;
-  }
-  // Otherwise, overwrite silently
-  saveLink.classList.add('disabled');
-  try {
-    // NEW: auto optimize & upload any new/replaced images before update
-  try { await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) }); } catch(e){ console.warn('[quick-save] image prep failed (continuing)', e); }
-    const body = { action: 'update_game_data', id: currentGameId, data: payload };
-    const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials:'include', body: JSON.stringify(body)
-    });
-    if (js?.success) {
-      showTinyToast('Saved', { ms: 500 });
-    } else {
-      showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
-    }
-  } catch (e) {
-    console.error(e);
-    showTinyToast('Save error', { variant: 'error', ms: 3000 });
-  } finally {
-    saveLink.classList.remove('disabled');
-  }
-}
+// Quick Save (silent): overwrite if currentGameId, else open Save As modal
+saveLink.onclick = (ev) => handleQuickSave(ev, buildPayload, getCurrentGameId, titleEl, toast);
 
 // Basic burger menu toggle
 (function setupBurger() {
@@ -927,11 +539,13 @@ enableExamplesEl.addEventListener('change', async () => {
 enablePicturesEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show images
   if (enablePicturesEl.checked) {
+    const list = getList();
     await loadImagesForMissingOnly(list, loadingImages, render);
   }
 });
 
 async function generateDefinitionsForMissing() {
+  const list = getList();
   for (let i = 0; i < list.length; i++) {
     const w = list[i];
     if (!w) continue;
@@ -943,6 +557,7 @@ async function generateDefinitionsForMissing() {
 }
 
 async function generateExamplesForMissing() {
+  const list = getList();
   for (let i = 0; i < list.length; i++) {
     const w = list[i];
     if (!w) continue;
@@ -951,96 +566,37 @@ async function generateExamplesForMissing() {
   }
 }
 
+// AI generation wrappers using services/ai-service.js
 async function generateExampleForRow(idx, force = false) {
+  const list = getList();
   const w = list[idx];
   if (!w || !w.eng) return;
   if (!force && w.example && w.example.trim()) return;
-  const target = w.eng.trim();
-  const prompt = `Write one short simple English sentence for beginner ESL students using the word "${target}". Keep it positive, concrete, and 5-12 words. Avoid quotes, explanations, or extra text. Output only the sentence.`;
-  try {
-    const res = await fetch('/.netlify/functions/openai_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt }) });
-    const js = await res.json();
-    let sent = (js?.result || '').trim();
-    if (!sent) return;
-    sent = sent.replace(/^\s*[-*•]?\s*\d+[).]\s*/, '').replace(/^"|"$/g,'').trim();
-    // Capitalize & end punctuation
-    sent = sent.charAt(0).toUpperCase() + sent.slice(1);
-    if (!/[.!?]$/.test(sent)) sent += '.';
-    w.example = sent;
+  
+  const example = await generateExample(w.eng);
+  if (example) {
+    w.example = example;
     render();
-  } catch(e) { console.error(e); }
+  }
 }
 
 async function generateDefinitionForRow(idx) {
+  const list = getList();
   const w = list[idx];
-  if (!w || !w.eng || !w.kor) return;
-  const target = w.eng.trim();
-  const prompt = `Write a concise, kid-friendly definition that does NOT include or repeat the word "${target}". Consider the Korean meaning "${w.kor}" as context. Keep it simple for young learners, one short sentence.`;
-  try {
-    const res = await fetch('/.netlify/functions/openai_proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    const js = await res.json();
-    let def = (js?.result || '').trim();
-    if (!def) return;
-    
-    // Clean up conversational AI responses - extract just the definition
-    def = cleanDefinitionResponse(def);
-    if (!def) return;
-    // Remove any Korean (Hangul) characters and the exact Korean word if present
-    def = def.replace(/[\uAC00-\uD7AF]+/g, '');
-    if (w.kor) {
-      const esc = w.kor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      def = def.replace(new RegExp(esc, 'g'), '');
-    }
-    def = def.replace(/\s{2,}/g, ' ').trim();
-    
-    // Ensure it does not contain the target word (case-insensitive); if it does, attempt a simple fix
-    const re = new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i');
-    if (re.test(def)) {
-      // Remove the target word and trim punctuation
-      def = def.replace(re, '').replace(/\s{2,}/g, ' ').replace(/^\W+|\W+$/g, '').trim();
-    }
-    // Capitalize first letter; ensure it ends with a period
-    def = def.charAt(0).toUpperCase() + def.slice(1);
-    if (!/[.!?]$/.test(def)) def += '.';
-    w.definition = def;
+  if (!w || !w.eng) return;
+  
+  const definition = await generateDefinition(w.eng, w.kor || '');
+  if (definition) {
+    w.definition = definition;
     render();
-  } catch (e) {
-    console.error(e);
   }
 }
 
-function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-function cleanDefinitionResponse(text) {
-  // Remove conversational AI prefixes and suffixes
-  let cleaned = text
-    .replace(/^(here\s+is\s+a\s+concise\s+definition\s+for\s+["""][^"""]*["""]\s+without\s+using\s+the\s+word\s+itself:\s*["""]\s*)/i, '')
-    .replace(/^(kid-friendly\s+definition:\s*)/i, '')
-    .replace(/^(sure[,!]?\s*)?(i['']?ll\s+)?(?:give\s+you\s+)?(?:a\s+)?(?:definition\s+)?(?:for\s+)?(?:that\s+word[.!]?\s*)?/i, '')
-    .replace(/^(here['']?s\s+)?(?:a\s+)?(?:definition\s+)?(?:for\s+)?(?:that\s+word[.!]?\s*)?/i, '')
-    .replace(/^(the\s+)?(?:definition\s+)?(?:of\s+)?(?:this\s+word\s+)?(?:is[:\s]*)?/i, '')
-    .replace(/\s*(?:hope\s+)?(?:this\s+)?(?:helps[!.]?)?$/i, '')
-    .replace(/\s*(?:let\s+me\s+know\s+if\s+you\s+need\s+anything\s+else[!.]?)?$/i, '')
-    .trim();
-  
-  // If it starts with quotes, try to extract the quoted content
-  if (cleaned.startsWith('"') && cleaned.includes('"', 1)) {
-    const match = cleaned.match(/^"([^"]+)"/);
-    if (match) cleaned = match[1].trim();
-  }
-  
-  // Remove any remaining conversational fragments
-  cleaned = cleaned.replace(/^(well[,\s]*)?/i, '').trim();
-  
-  return cleaned;
-}
+// escapeRegExp and cleanDefinitionResponse now imported from utils/validation.js
 
 async function loadPicturesForMissing() {
   // Deprecated - use loadImagesForMissingOnly from images.js instead
+  const list = getList();
   await loadImagesForMissingOnly(list, loadingImages, render);
 }
 
@@ -1072,471 +628,13 @@ saveAsLink.onclick = () => {
 };
 
 const confirmSave = document.getElementById('confirmSave');
-// --- Audio helpers (minimal, adapted from create-game-modal.js / tts.js) ---
-function isLocalHost() { return typeof window !== 'undefined' && /localhost|127\.0\.0\.1/i.test(window.location.hostname); }
-function preferredVoice() { try { const id = localStorage.getItem('ttsVoiceId'); return id && id.trim() ? id.trim() : null; } catch { return null; } }
+// Audio helpers now fully imported from services/audio-service.js
+// uploadAudioFile, ensureAudioForWordsAndSentences, ensureSentenceIdsBuilder) 
+// now imported from services/audio-service.js and services/file-service.js
 
-// Ensure a 'Regenerate audio' checkbox exists in Save modal and reflect saved preference
-function ensureRegenerateAudioCheckbox(){
-  try {
-    const boxId = 'regenerateAudioCheckbox';
-    const statusBox = document.getElementById('saveModalStatus');
-    const container = statusBox && statusBox.parentElement ? statusBox.parentElement : document.getElementById('saveModal');
-    if (!container) return;
-    let row = document.getElementById('regenerateAudioRow');
-    if (!row) {
-      row = document.createElement('div');
-      row.id = 'regenerateAudioRow';
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:8px 0 2px 0;';
-      row.innerHTML = `
-        <input type="checkbox" id="${boxId}" style="transform:translateY(1px);" />
-        <label for="${boxId}" style="font-size:13px;color:#334155;cursor:pointer;">Regenerate audio for all words (overwrite)</label>
-      `;
-      // Insert above the status box if available, else append to modal
-      if (statusBox && statusBox.parentElement) {
-        statusBox.parentElement.insertBefore(row, statusBox);
-      } else {
-        container.appendChild(row);
-      }
-    }
-    const cb = document.getElementById(boxId);
-    const saved = localStorage.getItem('gb_regenerate_audio') === '1';
-    if (cb) {
-      cb.checked = saved;
-      cb.onchange = () => {
-        try { localStorage.setItem('gb_regenerate_audio', cb.checked ? '1' : '0'); } catch {}
-      };
-    }
-  } catch {}
+if (confirmSave) {
+  confirmSave.onclick = (ev) => handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameId, setCurrentGameId, toast, cacheCurrentGame, saveModal, saveModalStatus);
 }
-
-async function checkExistingAudioKeys(keys) {
-  if (!Array.isArray(keys) || !keys.length) return {};
-  const endpoints = isLocalHost()
-    ? ['/.netlify/functions/get_audio_urls', 'http://localhost:9000/.netlify/functions/get_audio_urls']
-    : ['/.netlify/functions/get_audio_urls'];
-  let lastErr = null;
-  for (const url of endpoints) {
-    try {
-      const init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ words: keys }) };
-      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) init.signal = AbortSignal.timeout(12000);
-      const res = await fetch(url, init);
-      if (res.ok) {
-        const data = await res.json();
-        return data && data.results ? data.results : {};
-      } else {
-        lastErr = new Error(`get_audio_urls ${res.status}`);
-      }
-    } catch (e) { lastErr = e; }
-  }
-  throw lastErr || new Error('get_audio_urls failed');
-}
-
-async function callTTSProxy(payload) {
-  const endpoints = isLocalHost()
-    ? ['/.netlify/functions/eleven_labs_proxy', 'http://localhost:9000/.netlify/functions/eleven_labs_proxy']
-    : ['/.netlify/functions/eleven_labs_proxy'];
-  for (const url of endpoints) {
-    try {
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (res.ok) return await res.json();
-    } catch (e) { /* try next */ }
-  }
-  throw new Error('All TTS endpoints failed');
-}
-
-async function uploadAudioFile(key, audioBase64) {
-  const endpoints = isLocalHost()
-    ? ['/.netlify/functions/upload_audio', 'http://localhost:9000/.netlify/functions/upload_audio']
-    : ['/.netlify/functions/upload_audio'];
-  for (const url of endpoints) {
-    try {
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word: key, fileDataBase64: audioBase64 }) });
-      if (res.ok) { const r = await res.json(); return r.url; }
-    } catch (e) { /* try next */ }
-  }
-  throw new Error('Upload failed');
-}
-
-async function ensureAudioForWordsAndSentences(wordsList, examplesMap, opts = {}) {
-  // wordsList: array of plain target words (strings)
-  // examplesMap: { normalizedWord: exampleSentence }
-  const normalizeForKey = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-  const words = (wordsList || []).map(w => normalizeForKey(w)).filter(Boolean);
-  // Map back from normalized key to the original display word to avoid TTS saying "underscore"
-  const originalByKey = {};
-  (wordsList || []).forEach(orig => {
-    const k = normalizeForKey(orig);
-    if (k) originalByKey[k] = String(orig);
-  });
-  // Deterministic variety: pick a template based on a stable hash of the word
-  function hash32(str){
-    let h = 2166136261 >>> 0;
-    for (let i = 0; i < str.length; i++) {
-      h ^= str.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return h >>> 0;
-  }
-  function generatePrefixedSentence(original){
-    const w = String(original || '').replace(/\s+/g, ' ').trim();
-    // Templates inspired by your previous set; {w} will be replaced with the word
-    const templates = [
-      'This one is {w}.',
-      'The word is {w}.',
-      '{w} is the word.',
-      'The word you want is {w}.',
-      "Now, let's do {w}.",
-      'How about {w}?',
-      'Do you know {w}?',
-      'This word is {w}.',
-      "The word I'm looking for is {w}.",
-      '{w} is the one that I want.'
-    ];
-    const idx = templates.length ? (hash32(w) % templates.length) : 0;
-    return templates[idx].replace('{w}', w);
-  }
-  const { maxWorkers = 3, onInit, onProgress, onDone, force = false } = opts || {};
-  if (!words.length && (!examplesMap || Object.keys(examplesMap).length === 0)) {
-    if (typeof onInit === 'function') onInit(0);
-    if (typeof onDone === 'function') onDone();
-    return { ensuredWords: [], ensuredSentences: [] };
-  }
-
-  // 1) Check existing word audio
-  const wordKeys = words.slice();
-  // Ensure a sentence clip for EVERY word: use provided example sentence when available, otherwise a prefixed sentence
-  const sentenceKeys = words.map(w => `${w}_sentence`);
-
-  let missingWordKeys = wordKeys.slice();
-  let missingSentenceKeys = sentenceKeys.slice();
-  if (!force) {
-    const combinedKeys = Array.from(new Set([].concat(wordKeys, sentenceKeys)));
-    let existing = {};
-    try { existing = await checkExistingAudioKeys(combinedKeys); } catch (e) { console.warn('checkExistingAudioKeys failed', e); existing = {}; }
-    missingWordKeys = wordKeys.filter(w => { const info = existing[w]; return !(info && info.exists && info.url); });
-    missingSentenceKeys = sentenceKeys.filter(k => { const info = existing[k]; return !(info && info.exists && info.url); });
-  }
-
-  // Progress accounting
-  let totalTasksForProgress = 0;
-  let completedTasksForProgress = 0;
-
-  // Helper to generate-and-upload for a set of tasks
-  async function runGeneration(tasks, generatorFn) {
-    const failures = [];
-    const buckets = Array.from({ length: Math.min(maxWorkers || 3, tasks.length) }, () => []);
-    tasks.forEach((t, i) => buckets[i % buckets.length].push(t));
-    await Promise.all(buckets.map(async (bucket) => {
-      for (const task of bucket) {
-        try {
-          // Skip tasks that have no usable text
-          if (!task || !task.text || !String(task.text).trim()) {
-            failures.push(task);
-          } else {
-            const payload = await generatorFn(task);
-            // Only upload when we actually received non-empty audio
-            if (payload && typeof payload.audio === 'string' && payload.audio.trim()) {
-              await uploadAudioFile(task.key, payload.audio);
-            } else {
-              failures.push(task);
-            }
-          }
-        } catch (e) {
-          console.warn('Generation/upload failed for', task, e);
-          failures.push(task);
-        }
-        // Update progress after each task completes (success or failure)
-        completedTasksForProgress++;
-        if (typeof onProgress === 'function') onProgress(completedTasksForProgress, totalTasksForProgress);
-      }
-    }));
-    return failures;
-  }
-
-  // Prepare word generation tasks: always use the standard prefixed sentence logic for variety
-  const wordTasks = missingWordKeys.map(k => {
-    // Use the original word text for speech, not the normalized key
-    const orig = (originalByKey[k] || k || '').toString().replace(/_/g, ' ').trim();
-    return { key: k, text: generatePrefixedSentence(orig) };
-  });
-
-  // Filter out any blank word tasks (safety)
-  const filteredWordTasks = wordTasks.filter(t => t && t.text && String(t.text).trim());
-
-  // Prepare sentence generation tasks: use examplesMap value as text, key is `${word}_sentence`
-  const sentenceTasks = missingSentenceKeys.map(k => {
-    const base = String(k).replace(/_sentence$/i, '');
-    // examplesMap keys may be raw words; normalize lookup
-    const lookup = Object.keys(examplesMap || {}).find(orig => normalizeForKey(orig) === base);
-    let text = '';
-    if (lookup) {
-      text = String(examplesMap[lookup] || '').trim();
-    }
-    // If no example sentence is provided, synthesize a clear prefixed sentence for the word
-    if (!text) {
-      // Find the original (un-normalized) word for nicer output
-      const original = (wordsList || []).find(w => normalizeForKey(w) === base) || base.replace(/_/g, ' ');
-      text = generatePrefixedSentence(original);
-    }
-    return { key: k, text };
-  });
-
-  // Filter out any blank sentence tasks (safety)
-  const filteredSentenceTasks = sentenceTasks.filter(t => t && t.text && String(t.text).trim());
-
-  // Initialize progress totals and notify
-  const totalForWords = filteredWordTasks.length;
-  const totalForSentences = filteredSentenceTasks.length;
-  totalTasksForProgress = totalForWords + totalForSentences;
-  if (typeof onInit === 'function') onInit(totalTasksForProgress);
-
-  // Run generation for words then sentences
-  if (filteredWordTasks.length) {
-    await runGeneration(filteredWordTasks, async (task) => {
-      const voice = preferredVoice();
-      // Use Eleven v3 (alpha) for word clarity and expressiveness
-      return await callTTSProxy({ text: task.text, voice_id: voice, model_id: 'eleven_v3' });
-    });
-  }
-  if (filteredSentenceTasks.length) {
-    await runGeneration(filteredSentenceTasks, async (task) => {
-      const voice = preferredVoice();
-      // Use Eleven Turbo v2.5 for fast sentence generation
-      return await callTTSProxy({ text: task.text, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
-    });
-  }
-
-  if (typeof onDone === 'function') onDone();
-
-  return { ensuredWords: wordKeys, ensuredSentences: sentenceKeys };
-}
-
-// --- End audio helpers ---
-
-// --- Sentence ID upgrade (builder-local) ------------------------------------
-// NOTE: create-game-modal has its own ensureSentenceIds, but when saving directly
-// from this builder (main.js) we never invoked the batch sentence function, so
-// nothing was inserted in the sentences table. This local helper fixes that gap.
-async function ensureSentenceIdsBuilder(wordObjs){
-  try {
-    if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0 };
-    // Select targets that have legacy_sentence/example AND lack primary_sentence_id & sentences[]
-    const norm = s => (s||'').trim().replace(/\s+/g,' ');
-    const targets = wordObjs.filter(w=> !w.primary_sentence_id && !Array.isArray(w.sentences) && (w.legacy_sentence || w.example));
-    if(!targets.length) return { inserted:0 };
-    const map = new Map();
-    for (const w of targets){
-      const raw = w.legacy_sentence || w.example || '';
-      if(raw && raw.split(/\s+/).length >= 3){
-        const n = norm(raw);
-        if(n && !map.has(n)) map.set(n, { text:n, words:[w.eng].filter(Boolean) });
-      }
-    }
-    if(!map.size) return { inserted:0 };
-    const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
-    const res = await fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const js = await res.json().catch(()=>null);
-    if(js && js.audio){
-      console.debug('[SentenceUpgrade][builder][audio] summary', js.audio);
-    }
-    if(js && js.audio_status){
-      console.debug('[SentenceUpgrade][builder][audio_status sample]', js.audio_status.slice(0,5));
-    }
-    if(js && js.env){
-      console.debug('[SentenceUpgrade][builder][env]', js.env);
-    }
-    if(!js || !js.success || !Array.isArray(js.sentences)){
-      console.debug('[SentenceUpgrade][builder] batch failed', { status: res.status, ok: res.ok, body: js });
-      return { inserted:0, backend:false };
-    }
-  const byText = new Map(js.sentences.map(r=> [norm(r.text), r]));
-    let applied=0;
-    for (const w of targets){
-      const raw = w.legacy_sentence || w.example || '';
-      const rec = byText.get(norm(raw));
-      if(rec && rec.id){
-        const sentObj = { id: rec.id, text: rec.text };
-        if (rec.audio_key) sentObj.audio_key = rec.audio_key;
-        w.sentences = [sentObj];
-        w.primary_sentence_id = rec.id; applied++; }
-    }
-    console.debug('[SentenceUpgrade][builder] applied', { applied, totalTargets: targets.length, unique: map.size, meta: js.meta });
-    return { inserted: applied };
-  } catch(e){ console.debug('[SentenceUpgrade][builder] error', e?.message); return { inserted:0, error:true }; }
-}
-
-confirmSave.onclick = async (ev) => {
-  let title = document.getElementById('saveGameTitle').value.trim();
-  if (!title) { toast('Need title'); return; }
-  const currentUid = getCurrentUserId();
-  let existingRow = null;
-  try {
-    // Fetch only this user's games with same title (lightweight filter client-side)
-    const listRes = await fetch('/.netlify/functions/list_game_data_unique?limit=50&offset=0&created_by=' + encodeURIComponent(currentUid));
-    if (listRes.ok) {
-      const js = await listRes.json();
-      const all = Array.isArray(js.data) ? js.data : [];
-      existingRow = all.find(r => r.title && r.title.trim().toLowerCase() === title.toLowerCase());
-    }
-  } catch (e) { console.warn('Duplicate check failed', e); }
-
-  if (existingRow) {
-    // Offer overwrite / increment / cancel
-    const choice = await new Promise(resolve => {
-      const modal = document.createElement('div');
-      modal.style.position='fixed'; modal.style.inset='0'; modal.style.background='rgba(0,0,0,0.45)'; modal.style.zIndex='99999';
-      modal.innerHTML = `<div style="background:#fff;max-width:420px;margin:10% auto;padding:20px;border-radius:12px;font-family:sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.25);">
-        <h3 style="margin-top:0;">Title Exists</h3>
-        <p style="font-size:14px;color:#334155;line-height:1.4;">You already have a game named <strong>${escapeHtml(title)}</strong>. What would you like to do?</p>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
-          <button id="dupOverwrite" class="btn primary" style="width:100%;">Overwrite Existing</button>
-          <button id="dupIncrement" class="btn" style="width:100%;background:#f1f5f9;">Save as Incremented Name</button>
-          <button id="dupCancel" class="btn" style="width:100%;background:#fee2e2;color:#b91c1c;">Cancel</button>
-        </div>
-      </div>`;
-      document.body.appendChild(modal);
-      modal.addEventListener('click', e => {
-        if (e.target.id === 'dupOverwrite') { resolve('overwrite'); modal.remove(); }
-        else if (e.target.id === 'dupIncrement') { resolve('increment'); modal.remove(); }
-        else if (e.target.id === 'dupCancel') { resolve('cancel'); modal.remove(); }
-        else if (e.target === modal) { resolve('cancel'); modal.remove(); }
-      });
-    });
-    if (choice === 'cancel') { toast('Save cancelled'); return; }
-    if (choice === 'increment') {
-      // Append (2), (3), ... style until unique for this user
-      const base = title.replace(/\s*\(\d+\)$/, '').trim();
-      let n = 2; let newTitle = `${base} (${n})`;
-      // Re-pull list to ensure up-to-date (optional but safer)
-      try {
-        const listRes2 = await fetch('/.netlify/functions/list_game_data_unique?limit=200&offset=0&created_by=' + encodeURIComponent(currentUid));
-        if (listRes2.ok) {
-          const js2 = await listRes2.json();
-          const titlesLower = new Set((js2.data||[]).map(r=> (r.title||'').toLowerCase()));
-          while (titlesLower.has(newTitle.toLowerCase()) && n < 200) { n++; newTitle = `${base} (${n})`; }
-        }
-      } catch {}
-      title = newTitle;
-      document.getElementById('saveGameTitle').value = title;
-      existingRow = null; // we will insert as new
-    }
-    // If overwrite chosen, keep existingRow for update action.
-    if (choice === 'overwrite') {
-      // proceed with update later
-    }
-  }
-
-  const payload = buildPayload();
-  payload.title = title;
-  // Upload/resize images before continuing save
-  try { await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) }); } catch(e){ console.warn('[save] image prep failed', e); }
-  confirmSave.classList.add('disabled');
-  try {
-    // Ensure created_by is attached (checks multiple keys, reusing getCurrentUserId logic)
-    try {
-      let uid = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('id') || localStorage.getItem('userId') || sessionStorage.getItem('userId');
-      if (!uid && typeof getCurrentUserId === 'function') uid = getCurrentUserId();
-      if (uid) payload.created_by = uid;
-    } catch {}
-
-    // NEW: Ensure sentence IDs (batch insert) before audio so future modes can resolve sentence_id.
-    try {
-      const statusBox = document.getElementById('saveModalStatus'); if(statusBox) statusBox.textContent = 'Linking sentences…';
-      await ensureSentenceIdsBuilder(payload.words);
-    } catch(e){ console.debug('[SentenceUpgrade][builder] sentence id ensure failed', e?.message); }
-
-    // Prepare and ensure audio files for words and example sentences (legacy word + word_sentence clips)
-    try {
-      const statusBox = document.getElementById('saveModalStatus');
-      const words = payload.words.map(w => w.eng).filter(Boolean);
-      const examplesMap = {};
-      if (enableExamplesEl && enableExamplesEl.checked) {
-        for (const w of payload.words) {
-          if (w && w.eng && w.example && String(w.example).trim()) {
-            const key = String(w.eng).trim();
-            examplesMap[key] = String(w.example).trim();
-          }
-        }
-      }
-      if (words.length || Object.keys(examplesMap).length) {
-        // Build a tiny progress bar inside the status box
-        let barWrap = statusBox && statusBox.querySelector('.gb-save-bar');
-        if (!barWrap && statusBox) {
-          statusBox.innerHTML = '<div class="gb-save-bar" style="position:relative;height:10px;background:#e6eaef;border-radius:6px;overflow:hidden;margin:6px 0 2px 0;"><div class="gb-save-bar-fill" style="height:100%;width:0;background:#67e2e6;transition:width .2s ease;"></div></div><div class="gb-save-bar-txt" style="font-size:12px;color:#64748b;margin-top:2px;">Preparing audio…</div>';
-          barWrap = statusBox.querySelector('.gb-save-bar');
-        }
-        const barFill = statusBox ? statusBox.querySelector('.gb-save-bar-fill') : null;
-        const barTxt = statusBox ? statusBox.querySelector('.gb-save-bar-txt') : null;
-
-        const maxWorkers = isLocalHost() ? 1 : 3;
-        const force = (localStorage.getItem('gb_regenerate_audio') === '1');
-        await ensureAudioForWordsAndSentences(words, examplesMap, {
-          maxWorkers,
-          force,
-          onInit: (total) => {
-            if (barTxt) barTxt.textContent = total ? `Ensuring audio files… (0/${total})` : 'Ensuring audio files…';
-            if (barFill) barFill.style.width = '0%';
-          },
-          onProgress: (done, total) => {
-            const pct = total ? Math.round((done / total) * 100) : 0;
-            if (barFill) barFill.style.width = pct + '%';
-            if (barTxt) barTxt.textContent = total ? `Ensuring audio files… (${done}/${total})` : `Ensuring audio files…`;
-          },
-          onDone: () => {
-            if (barTxt) barTxt.textContent = 'Audio ready';
-            if (barFill) barFill.style.width = '100%';
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Audio ensure failed, continuing to save game', e);
-      const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = 'Audio step failed (continuing)';
-    }
-    console.debug('[BuilderSave] sentence linking + audio ensure complete; proceeding to persist game_data');
-    let saveAction = 'insert_game_data';
-    let postBody = { action: saveAction, data: payload };
-    if (existingRow) {
-      saveAction = 'update_game_data';
-      postBody = { action: saveAction, id: existingRow.id, data: payload };
-    }
-    try {
-      console.log('[SAVE PAYLOAD SENT words[0..5]]', (postBody.data.words||[]).slice(0,6).map(w=> ({ eng:w.eng, img:(w.image_url||'').slice(0,80) })) );
-    } catch {}
-    const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      credentials:'include',
-      body: JSON.stringify(postBody)
-    });
-    if (js?.success) {
-      const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = existingRow ? 'Overwritten' : 'Saved';
-      // After a successful Save As (insert or overwrite), try to set currentGameId for future quick saves
-      try {
-        if (existingRow && existingRow.id) {
-          currentGameId = existingRow.id;
-        } else {
-          const who = getCurrentUserId();
-          const r = await fetch('/.netlify/functions/list_game_data_unique?limit=1&offset=0&created_by=' + encodeURIComponent(who));
-          const j = await r.json();
-          const row = Array.isArray(j.data) && j.data[0] ? j.data[0] : null;
-          if (row && row.title && row.title.trim().toLowerCase() === (title || '').toLowerCase()) currentGameId = row.id;
-        }
-      } catch {}
-      toast(existingRow ? 'Game overwritten' : 'Game saved');
-      saveModal.style.display = 'none';
-      cacheCurrentGame();
-    } else {
-      const statusBox = document.getElementById('saveModalStatus'); if (statusBox) statusBox.textContent = js?.error || 'Save failed';
-      toast(js?.error || 'Save failed');
-    }
-  } catch (e) {
-    console.error(e);
-    toast('Save error');
-  } finally {
-    confirmSave.classList.remove('disabled');
-  }
-};
 
 
 let fileListLoading = false;
@@ -1553,65 +651,29 @@ const SESSION_CACHE_MAX_AGE_MS = 180000; // 3 minutes
 const PERSIST_CACHE_MAX_AGE_MS = 300000; // 5 minutes
 const PERSIST_CACHE_KEY = 'gb_file_list_cache_v2';
 
-// --- Performance instrumentation (lightweight) ----------------------------------
-// Captures timing + size for the listing fetch to help establish baseline numbers.
-// Stores recent samples in window.__gbPerf (max 25) and logs concise console output.
-if (!window.__gbPerf) window.__gbPerf = [];
-function recordPerfSample(sample){
-  try {
-    window.__gbPerf.push(sample);
-    if(window.__gbPerf.length > 25) window.__gbPerf.shift();
-    const { label, ttfbMs, totalMs, sizeBytes, status } = sample;
-    console.info(`[GB-PERF] ${label} status=${status} ttfb=${ttfbMs.toFixed(1)}ms total=${totalMs.toFixed(1)}ms size=${sizeBytes}B`);
-  } catch(e) { /* non-fatal */ }
-}
-async function timedJSONFetch(label, url, init){
-  const start = performance.now();
-  let ttfbMs = 0; let ok=false; let status = 0; let sizeBytes=0; let text=''; let data=null; let err=null;
-  try {
-    const res = await fetch(url, init);
-    status = res.status;
-    ttfbMs = performance.now() - start; // approximate (headers received)
-    text = await res.text();
-    sizeBytes = new Blob([text]).size;
-    try { data = text ? JSON.parse(text) : null; } catch(parseErr){ err = parseErr; }
-    ok = res.ok;
-    return { ok, status, data, raw: text, meta:{ label, ttfbMs, totalMs: performance.now() - start, sizeBytes, status }};
-  } catch(fetchErr){
-    err = fetchErr;
-    return { ok:false, status: status||0, data:null, raw:'', meta:{ label, ttfbMs, totalMs: performance.now() - start, sizeBytes, status: status||0, error: String(err&&err.message||err) }};
-  } finally {
-    recordPerfSample({ label, ...(err?{ error: String(err&&err.message||err) }:{}), ... (window.lastPerfMetaTemp||{} ) });
-  }
-}
+// --- Performance instrumentation now imported from utils/network.js ---
 // Helper to run a quick head-style warm measurement (head=1 avoids image logic)
-async function measureListEndpointOnce(params = {}){
+async function measureListEndpointOnce(params = {}) {
   const qs = new URLSearchParams({ limit:'10', offset:'0', head:'1', unique:'1', names:'0', page_pull:'10', ...params });
   const { meta } = await timedJSONFetch('list(head)', '/.netlify/functions/list_game_data_unique?' + qs.toString());
   recordPerfSample(meta);
   return meta;
 }
 // Optional baseline capture (3 head + 1 full) triggered once per page load.
-if (!window.__gbPerfBaselineScheduled){
+if (!window.__gbPerfBaselineScheduled) {
   window.__gbPerfBaselineScheduled = true;
-  setTimeout(async ()=>{
+  setTimeout(async () => {
     try {
-      for(let i=0;i<3;i++){ await measureListEndpointOnce({ run:String(i+1) }); }
+      for (let i = 0; i < 3; i++) { 
+        await measureListEndpointOnce({ run: String(i+1) }); 
+      }
       await timedJSONFetch('list(full)', '/.netlify/functions/list_game_data_unique?limit=10&offset=0&unique=1&names=0&page_pull=40');
-    } catch(e){ console.debug('[GB-PERF] baseline capture error', e); }
+    } catch (e) { 
+      console.debug('[GB-PERF] baseline capture error', e); 
+    }
   }, 2500);
 }
-// -------------------------------------------------------------------------------
-function buildSkeletonHTML(n){
-  const cards = Array.from({length:n}).map(()=> '<div class="game-card skeleton"><div class="thumb-wrap sk"></div><div class="card-body"><div class="sk-line sk-title"></div><div class="sk-line sk-meta"></div></div></div>').join('');
-  if(!document.getElementById('gbSkeletonStyles')){
-    const style = document.createElement('style');
-    style.id='gbSkeletonStyles';
-    style.textContent='@keyframes skShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}} .game-card.skeleton{background:#f8fafc;padding:8px;border-radius:12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;position:relative}.game-card.skeleton .thumb-wrap{height:110px;background:#e2e8f0;border-radius:8px;position:relative;overflow:hidden}.game-card.skeleton .sk-line{height:14px;background:#e2e8f0;border-radius:6px;position:relative;overflow:hidden;margin-top:6px}.game-card.skeleton .sk-title{width:70%;height:16px}.game-card.skeleton .sk-meta{width:40%;height:12px}.game-card.skeleton .thumb-wrap:before,.game-card.skeleton .sk-line:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));animation:skShimmer 1.15s infinite}';
-    document.head.appendChild(style);
-  }
-  return `<div class="saved-games-grid">${cards}</div>`;
-}
+// buildSkeletonHTML now imported from utils/dom-helpers.js
 
 // Deletion / selection helpers
 let selectedGameIds = new Set();
@@ -1722,7 +784,7 @@ function markCardsPending(ids){
   if(!document.getElementById('pendingDeleteStyles')){
     const style = document.createElement('style');
     style.id='pendingDeleteStyles';
-    style.textContent='@keyframes spin{to{transform:rotate(360deg)}} .game-card.selected{outline:3px solid #0ea5e9;}';
+  style.textContent='@keyframes gbOverlaySpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} .game-card.selected{outline:3px solid #0ea5e9;}';
     document.head.appendChild(style);
   }
 }
@@ -1967,67 +1029,7 @@ function dedupeByTitle(rows) {
 
 // dedupeByTitle removed (handled server-side)
 
-function getCurrentUserId(){
-  try {
-    // Check multiple possible storage keys
-    const possibleKeys = [
-      'user_id', 'id', 'userId', 'current_user_id', 'currentUserId',
-      'sb_user_id', 'supabase_user_id', 'auth_user_id'
-    ];
-    
-    // Check localStorage first
-    for (const key of possibleKeys) {
-      const value = localStorage.getItem(key);
-      if (value && value.trim()) {
-        console.log('[getCurrentUserId] Found user ID in localStorage:', key, value.substring(0, 8) + '...');
-        return value.trim();
-      }
-    }
-    
-    // Check sessionStorage
-    for (const key of possibleKeys) {
-      const value = sessionStorage.getItem(key);
-      if (value && value.trim()) {
-        console.log('[getCurrentUserId] Found user ID in sessionStorage:', key, value.substring(0, 8) + '...');
-        return value.trim();
-      }
-    }
-    
-    // Try to extract from Supabase auth cookie
-    try {
-      const cookieHeader = document.cookie;
-      const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-        const [key, value] = cookie.trim().split('=');
-        if (key && value) acc[key] = decodeURIComponent(value);
-        return acc;
-      }, {});
-      
-      const accessToken = cookies['sb_access'] || cookies['sb-access-token'];
-      if (accessToken) {
-        // Decode JWT to get user ID
-        const parts = accessToken.split('.');
-        if (parts.length >= 2) {
-          const base64url = parts[1];
-          const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-          const json = atob(base64);
-          const payload = JSON.parse(json);
-          if (payload.sub) {
-            console.log('[getCurrentUserId] Found user ID in JWT cookie:', payload.sub.substring(0, 8) + '...');
-            return payload.sub;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('[getCurrentUserId] Error extracting from cookie:', e);
-    }
-    
-    console.warn('[getCurrentUserId] No user ID found in any storage location');
-    return '';
-  } catch (e) { 
-    console.error('[getCurrentUserId] Error:', e);
-    return ''; 
-  }
-}
+// getCurrentUserId removed (now imported from services/file-service.js)
 
 function paintFileList(initialRows, { cached, initial, uniqueCount }) {
   // Show all rows loaded so far (pagination outside). No slicing so user can see pages appended.
@@ -2073,7 +1075,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
       const js = await res.json();
       const row = js && js.data ? js.data : js;
       if(!row){ toast('Load failed'); return; }
-      currentGameId = row.id || id || null;
+  setCurrentGameId(row.id || id || null);
       let words = row.words;
       if (typeof words === 'string') {
         try { words = JSON.parse(words); } catch {}
@@ -2093,7 +1095,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
         return;
       }
       saveState();
-      list = words.map(w => {
+      const mapped = words.map(w => {
         if(!w) return null;
         if(typeof w === 'string'){
           const parts = w.split(/[,|]/);
@@ -2109,9 +1111,10 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
           example: w.example || w.example_sentence || w.sentence || ''
         });
       }).filter(Boolean);
+      setList(mapped);
       if (titleEl) titleEl.value = row.title || 'Untitled Game';
       render();
-      toast(list.length ? 'Game loaded' : 'Loaded (empty)');
+      toast(mapped.length ? 'Game loaded' : 'Loaded (empty)');
       fileModal.style.display = 'none';
       cacheCurrentGame();
     } catch(e){ console.error(e); toast('Load error'); }
@@ -2146,43 +1149,16 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
     } catch(e){ console.error(e); toast('Delete error'); }
   }
 
-  function ensureMaterialIcons(){
-    if(document.getElementById('materialIconsLink')) return;
-    const link = document.createElement('link');
-    link.id = 'materialIconsLink';
-    link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  }
-
   function renderList(list) {
     const frag = document.createDocumentFragment();
     const currentUid = getCurrentUserId();
     list.forEach(r => {
-      const when = r.created_at ? new Date(r.created_at).toLocaleDateString() : '';
       const div = document.createElement('div');
       div.className = 'game-card new-style';
       if(selectedGameIds.has(r.id)) div.classList.add('selected');
       const owned = !r.created_by || r.created_by === currentUid;
-  // Use server-normalized thumb_url if present
-  let imageUrl = r.thumb_url || r.game_image || r.first_image_url || '';
-      const placeholderSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180"><rect width="300" height="180" fill="#f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="#94a3b8">Loading...</text></svg>';
-      const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(placeholderSVG);
-      div.innerHTML = `
-        <div class="thumb-wrap tall lazy" data-id="${r.id}" data-thumb="${imageUrl}">
-          <div class="img-spinner"></div>
-          <img alt="Game Image" src="${placeholder}" loading="lazy" />
-        </div>
-        <div class="card-body" data-open="${r.id}">
-          <h4 class="g-title renameable" data-rename="${r.id}">${escapeHtml(r.title || 'Untitled')}</h4>
-          <div class="g-meta-row">
-            <div style="display:flex;flex-direction:column;align-items:flex-start;">
-              <p class="g-creator">${r.creator_name || 'Unknown'}</p>
-              <p class="g-date">${when}</p>
-            </div>
-            <button class="del-btn" title="${owned?'Delete':'Not owner'}" data-del="${r.id}" ${owned?'':'disabled style="opacity:.35;cursor:not-allowed;"'}><span class="material-icons" style="font-size:19px;">delete</span></button>
-          </div>
-        </div>`;
+      const isSelected = selectedGameIds.has(r.id);
+      div.innerHTML = buildGameCardHTML(r, owned, isSelected, currentUid);
       frag.appendChild(div);
     });
     grid.replaceChildren(frag);

@@ -69,6 +69,11 @@ export async function showBrowseModal({ onOpen, onClose } = {}) {
       const t = r.title || 'Untitled';
       const creator = r.creator_name || r.created_by || 'Unknown';
       let img = r.game_image || r.image || r.img;
+      // Strip legacy /images/ prefix from R2 URLs (same fix as main.js normalizeImageUrl)
+      if (img && typeof img === 'string' && /^https?:\/\/[^/]+\.r2\.dev\/images\/(words|cover)\//i.test(img)) {
+        img = img.replace(/\/images\/(words|cover)\//i, '/$1/');
+        console.log('[browse] Stripped /images/ from cover:', img.substring(0, 80));
+      }
       if (!img || img === 'null' || img === 'undefined') {
   img = './assets/Images/icons/browse.png?v=20250910a';
       }
