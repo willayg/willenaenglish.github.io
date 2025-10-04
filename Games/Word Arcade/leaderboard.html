@@ -42,9 +42,9 @@ button { font-family:inherit; font-weight:700; cursor:pointer; }
 /* QR Panel */
 #qrToggle { background:#23425a; color:#fff; border:2px solid #355d78; padding:8px 14px; border-radius:14px; font-size:.8rem; }
 #qrToggle.active { background:#355d78; }
-#qrPanel { position:fixed; top:86px; right:18px; width:200px; background:#132033; border:2px solid #23425a; border-radius:18px; padding:12px 12px 14px; display:flex; flex-direction:column; gap:8px; box-shadow:0 10px 26px -4px rgba(0,0,0,.45); font-family:Poppins,system-ui,sans-serif; }
+#qrPanel { position:fixed; bottom:18px; right:18px; width:360px; background:#132033; border:2px solid #23425a; border-radius:18px; padding:12px 12px 14px; display:flex; flex-direction:column; gap:8px; box-shadow:0 10px 26px -4px rgba(0,0,0,.45); font-family:Poppins,system-ui,sans-serif; }
 #qrPanel h2 { margin:0; font-size:.8rem; letter-spacing:.8px; font-weight:800; color:#67e2e6; text-align:center; }
-#qrImg { width:160px; height:160px; border-radius:12px; background:#0f172a; border:2px solid #23425a; object-fit:cover; align-self:center; }
+#qrImg { width:320px; height:320px; border-radius:12px; background:#0f172a; border:2px solid #23425a; object-fit:cover; align-self:center; }
 #qrLinkBox { font-size:.55rem; line-height:1.2; word-break:break-all; background:#0f172a; padding:6px 7px; border-radius:8px; border:1px solid #23425a; color:#cbd5e1; max-height:60px; overflow:auto; }
 #qrActions { display:flex; gap:6px; }
 #qrActions button, #qrActions a { flex:1; background:#19777e; color:#fff; border:none; padding:6px 8px; border-radius:8px; font-size:.6rem; font-weight:700; text-align:center; text-decoration:none; }
@@ -223,9 +223,9 @@ button { font-family:inherit; font-weight:700; cursor:pointer; }
       qrLinkBox.textContent = link;
       if (qrOpen) qrOpen.href = link;
       const providers = [
-        `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=M|0&chl=${encodeURIComponent(link)}`,
-        `https://quickchart.io/qr?text=${encodeURIComponent(link)}&size=300&margin=0`,
-        `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}`
+        `https://chart.googleapis.com/chart?cht=qr&chs=600x600&chld=M|0&chl=${encodeURIComponent(link)}`,
+        `https://quickchart.io/qr?text=${encodeURIComponent(link)}&size=600&margin=0`,
+        `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(link)}`
       ];
       let i=0; qrProvidersTried=0;
       const tryNext = ()=>{ if(i>=providers.length){ qrStatus.textContent='All providers failed'; return; } qrImg.src = providers[i++]; qrProvidersTried++; };
