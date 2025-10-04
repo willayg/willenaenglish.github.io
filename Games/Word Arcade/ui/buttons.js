@@ -31,33 +31,75 @@ function ensureChoiceButtonStyles() {
       transition: transform .08s ease, background-color .2s ease, box-shadow .2s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      position: relative;
+      isolation: isolate;
     }
     .choice-btn:focus { outline: none; }
     .choice-btn:active { transform: scale(0.97); }
 
     @keyframes btnSplashCorrect {
-      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.6); background: #eafff2; }
-      70%  { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
+      0%   { background: #eafff2; }
       100% { background: #f7f7f7; }
     }
     @keyframes btnSplashWrong {
-      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.6); background: #ffecec; }
-      70%  { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+      0%   { background: #ffecec; }
       100% { background: #f7f7f7; }
+    }
+    @keyframes splashRippleCorrect {
+      0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.6; }
+      70%  { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+    }
+    @keyframes splashRippleWrong {
+      0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.6; }
+      70%  { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
     }
     /* Dark mode splash variants so buttons do not flash back to light gray */
     html.dark @keyframes btnSplashCorrect {
-      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.55); background:#123d20; }
-      70%  { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
+      0%   { background:#123d20; }
       100% { background:#1f2933; }
     }
     html.dark @keyframes btnSplashWrong {
-      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); background:#412323; }
-      70%  { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+      0%   { background:#412323; }
       100% { background:#1f2933; }
     }
-    .splash-correct { animation: btnSplashCorrect 450ms ease; }
-    .splash-wrong { animation: btnSplashWrong 450ms ease; }
+    .splash-correct { 
+      animation: btnSplashCorrect 450ms ease; 
+      position: relative; 
+      z-index: 10;
+      overflow: hidden;
+    }
+    .splash-correct::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(34,197,94,0.5) 0%, rgba(34,197,94,0.3) 30%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: splashRippleCorrect 450ms ease;
+    }
+    .splash-wrong { 
+      animation: btnSplashWrong 450ms ease; 
+      position: relative; 
+      z-index: 10;
+      overflow: hidden;
+    }
+    .splash-wrong::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(239,68,68,0.5) 0%, rgba(239,68,68,0.3) 30%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: splashRippleWrong 450ms ease;
+    }
 
     /* Correct reveal highlight (applied to the actual correct button when user selects wrong) */
     .choice-correct-reveal {

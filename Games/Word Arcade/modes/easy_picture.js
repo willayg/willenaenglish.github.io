@@ -78,8 +78,8 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
 
   // Intro splash
   gameArea.innerHTML = `
-    <div id="easyPicIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.3rem,5.2vw,4rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Listen and choose the picture</div>
+    <div id="easyPicIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.3rem,5.2vw,4rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">Listen and choose the picture</div>
     </div>
   `;
   setTimeout(() => {
@@ -101,7 +101,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
     }
     const src = (w.image_url || w.image || w.img || '').trim();
     ensureImageStyles();
-    return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;display:flex;align-items:center;justify-content:center;\"><img src='${src}' alt='${w.eng}' style=\"max-width:100%;max-height:100%;object-fit:cover;\" onerror=\"this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';\"><div style=\"display:none;font-size:clamp(.95rem,2.6vw,1.25rem);font-weight:600;padding:4px;text-align:center;\">${w.kor || w.eng}</div></div>`;
+    return `<div class=\"wa-img-box wa-4x3 rounded shadow\"><img src='${src}' alt='${w.eng}' onerror=\"this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';\"><div style=\"display:none;font-size:clamp(.95rem,2.6vw,1.25rem);font-weight:600;padding:4px;text-align:center;\">${w.kor || w.eng}</div></div>`;
   }
 
   function canAskPicture(current, distractorPool) {
@@ -169,7 +169,7 @@ export async function runEasyPictureMode({ wordList, gameArea, playTTS, preproce
         <div style="padding:16px 16px 6px;text-align:center;">
           <div id="easyPicGrid" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto;">
             ${shuffledChoices.map(ch => `
-              <button class=\"choice-btn easy-pic-choice\" data-eng=\"${ch.eng}\" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style=\"height:26vh;display:flex;align-items:center;justify-content:center;\">
+              <button class=\"choice-btn easy-pic-choice\" data-eng=\"${ch.eng}\" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style=\"height:34vh;display:flex;align-items:center;justify-content:center;\">
                 ${tileHtml(ch)}
               </button>
             `).join('')}

@@ -101,8 +101,8 @@ export async function runLevelUpMode({ wordList, gameArea, startGame, listName =
 
   // Intro
   gameArea.innerHTML = `
-    <div id="lvlUpIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.2rem,5vw,3.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">
+    <div id="lvlUpIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.2rem,5vw,3.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">
         Level Up
         <div style="font-size:clamp(0.9rem,3.5vw,1.4rem);font-weight:600;color:#248b86ff;margin-top:8px;">Read the definition and pick the word</div>
       </div>
