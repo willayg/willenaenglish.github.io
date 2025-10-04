@@ -191,13 +191,12 @@ function normalizeWordImages(list) {
     const candidate = w.image_url || w.image || w.img || w.picture || '';
     const norm = normalizeImageUrl(candidate, base);
     if (norm) {
-      // Set unified alias (modes check w.img || w.image_url)
+      // ALWAYS overwrite all image field variants with normalized URL
+      // (fixes bug where existing fields had bad /images/ prefix that wasn't being replaced)
       w.img = norm;
-      // Ensure image_url also populated for modes that check it first
-      if (!w.image_url) w.image_url = norm;
-      // Also set image and picture for full compatibility
-      if (!w.image) w.image = norm;
-      if (!w.picture) w.picture = norm;
+      w.image_url = norm;
+      w.image = norm;
+      w.picture = norm;
     }
   }
 }

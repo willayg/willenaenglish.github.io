@@ -12,8 +12,8 @@ export function runPictureMultiChoice({ wordList, gameArea, startGame, listName 
   const shuffled = [...wordList].sort(() => Math.random() - 0.5);
   const sessionId = startSession({ mode: 'picture_multi_choice', wordList, listName });
 
-  gameArea.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.4rem,5vw,4rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Match the Picture!</div>
+  gameArea.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.4rem,5vw,4rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">Match the Picture!</div>
     </div>`;
   setTimeout(() => { showQuestion(); }, 900);
 

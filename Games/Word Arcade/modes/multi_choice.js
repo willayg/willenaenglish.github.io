@@ -104,8 +104,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
 
   // Intro splash
   gameArea.innerHTML = `
-    <div id="multiMixedIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.2rem,5vw,3.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">
+    <div id="multiMixedIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.2rem,5vw,3.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">
         Reading
         <div style="font-size:clamp(0.9rem,3.5vw,1.4rem);font-weight:600;color:#248b86ff;margin-top:8px;">
           Pictures and words — mixed questions
@@ -187,9 +187,9 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
         <div style="padding:16px 16px 6px;text-align:center;">
           <div style="font-size:clamp(0.95em,2.6vw,1.1em);color:#555;margin-bottom:6px;">Pick the picture</div>
           <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:12px;">${current.eng}</div>
-          <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(42vw, 1fr));gap:14px;max-width:94vw;margin:0 auto 10px auto;">
+          <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(180px, 1fr));gap:14px;max-width:min(94vw, 560px);margin:0 auto 10px auto;">
             ${choices.map(ch => `
-              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:26vh;display:flex;align-items:center;justify-content:center;">
+              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:auto;min-height:120px;padding:1px;display:flex;align-items:center;justify-content:center;">
                 ${getTileHtml(ch)}
               </button>
             `).join('')}
@@ -236,7 +236,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
         <div style="padding:24px;text-align:center;max-width:720px;margin:0 auto;">
           <div style="font-size:clamp(0.95em,2.6vw,1.1em);color:#555;margin-bottom:6px;">Pick the English</div>
           <div style="margin:8px 0 14px 0;display:flex;justify-content:center;">${getPromptTileHtml(current)}</div>
-          <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:520px;margin:0 auto 12px auto;">
+          <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:min(90vw, 520px);margin:0 auto 12px auto;justify-content:center;">
             ${choices.map(txt => `
               <button class="multi-choice-btn choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}" ${txt === current.eng ? 'data-correct="1"' : ''}>${txt}</button>
             `).join('')}
@@ -245,7 +245,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div id="multiScoreMixed" style="margin-top:6px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
         </div>`;
 
-      document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '15vh'; });
+      document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '12vh'; });
   setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
       document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
         btn.onclick = () => {
@@ -301,7 +301,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
     gameArea.innerHTML = `<div style="padding:24px;text-align:center;max-width:520px;margin:0 auto;">
       <div style="font-size:clamp(0.95em,2.6vw,1.1em);color:#555;margin-bottom:6px;">${korToEng ? 'Pick the English' : 'Pick the Korean'}</div>
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${prompt}</div>
-      <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:480px;margin:0 auto 18px auto;">
+      <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:min(90vw, 480px);margin:0 auto 18px auto;justify-content:center;">
         ${choices.map(txt => `
           <button class="multi-choice-btn choice-btn" data-${dataAttr}="${txt.replaceAll('"','&quot;')}" ${txt === correctText ? 'data-correct="1"' : ''}>
             ${txt}
@@ -312,7 +312,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
       <div id="multiScoreMixed" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
     </div>`;
 
-    document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '15vh'; });
+    document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '12vh'; });
   setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
     document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
       btn.onclick = () => {

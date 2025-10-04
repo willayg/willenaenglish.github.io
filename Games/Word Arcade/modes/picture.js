@@ -65,8 +65,8 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
-    <div id="picIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Which word matches the picture?</div>
+    <div id="picIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">Which word matches the picture?</div>
     </div>
   `;
   setTimeout(() => {
@@ -128,9 +128,9 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
         }
       } else {
         const src = current.img.trim(); ensureImageStyles();
-        promptVisual = `<div class=\"wa-img-box wa-square rounded shadow\" style=\"max-width:40vw;display:flex;align-items:center;justify-content:center;\"><img src='${src}' alt='${current.eng}' onerror=\"this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';\" style=\"max-width:100%;max-height:100%;object-fit:cover;\"><div style=\"display:none;font-size:clamp(1.05rem,3.2vw,1.6rem);font-weight:600;padding:6px;text-align:center;\">${current.kor || current.eng}</div></div>`;
+        promptVisual = `<div class=\"wa-img-box wa-square rounded shadow\"><img src='${src}' alt='${current.eng}' onerror=\"this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';\"><div style=\"display:none;font-size:clamp(1.05rem,3.2vw,1.6rem);font-weight:600;padding:6px;text-align:center;\">${current.kor || current.eng}</div></div>`;
       }
-      gameArea.innerHTML = `<div style=\"padding:24px;text-align:center;\">\n        <div style=\"margin-bottom:18px;\">${promptVisual}</div>\n        <div id=\"picChoices\" style=\"display:grid;grid-template-columns:repeat(2,minmax(40vw,1fr));gap:16px;max-width:92vw;margin:0 auto;\">\n          ${set.map(w => `<button class=\\"pic-choice choice-btn\\" data-eng=\\"${w.eng}\\" ${w.eng===current.eng?'data-correct=\\"1\\"':''} style=\\"height:20vh;\\">${w.eng}</button>`).join('')}\n        </div>\n        <div id=\"picFeedback\" style=\"margin-top:16px;font-size:1.1em;height:24px;color:#555;\"></div>\n      </div>`;
+      gameArea.innerHTML = `<div style=\"padding:24px;text-align:center;\">\n        <div style=\"margin-bottom:18px;\">${promptVisual}</div>\n        <div id=\"picChoices\" style=\"display:grid;grid-template-columns:repeat(2,minmax(40vw,1fr));gap:16px;max-width:92vw;margin:0 auto;\">\n          ${set.map(w => `<button class=\\"pic-choice choice-btn\\" data-eng=\\"${w.eng}\\" ${w.eng===current.eng?'data-correct=\\"1\\"':''} style=\\"height:28vh;\\">${w.eng}</button>`).join('')}\n        </div>\n        <div id=\"picFeedback\" style=\"margin-top:16px;font-size:1.1em;height:24px;color:#555;\"></div>\n      </div>`;
       wireAnswerHandlers(current);
     } else {
       // Fallback text question (Korean prompt -> pick English) ensures no blanks

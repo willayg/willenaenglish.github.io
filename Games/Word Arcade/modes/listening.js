@@ -86,8 +86,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
 
   // Show intro phrase large, then fade out to reveal the game
   gameArea.innerHTML = `
-    <div id="listeningIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Listen and choose!</div>
+    <div id="listeningIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">Listen and choose!</div>
     </div>
   `;
   setTimeout(() => {
@@ -155,7 +155,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
             <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the picture:</div>
             <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
               ${shuffledChoices.map(ch => `
-                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:18vh;display:flex;align-items:center;justify-content:center;">
+                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:28vh;display:flex;align-items:center;justify-content:center;">
                   ${tileHtml(ch)}
                 </button>
               `).join('')}

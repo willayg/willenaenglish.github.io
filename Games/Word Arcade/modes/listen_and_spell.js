@@ -39,8 +39,8 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
 
   // Intro splash
   gameArea.innerHTML = `
-    <div id="listenSpellIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:40vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.3rem,5.2vw,4rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Listen and tap the letters</div>
+    <div id="listenSpellIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.3rem,5.2vw,4rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">Listen and tap the letters</div>
     </div>
   `;
   setTimeout(() => {

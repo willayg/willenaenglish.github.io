@@ -62,8 +62,8 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
 
   // Intro splash
   gameArea.innerHTML = `
-  <div id="spellingIntro" style="display:flex;align-items:center;justify-content:center;width:90vw;height:30vh;opacity:1;transition:opacity .6s ease;">
-      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;width:90%;">Spell the English word</div>
+  <div id="spellingIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:30vh;opacity:1;transition:opacity .6s ease;">
+      <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">Spell the English word</div>
     </div>
   `;
   setTimeout(() => {
