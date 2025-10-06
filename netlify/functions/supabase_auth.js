@@ -81,7 +81,11 @@ exports.handler = async (event) => {
   // Debug endpoint should not require supabase-js
   if (action === 'debug') {
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY 
+      || process.env.SUPABASE_SERVICE_KEY 
+      || process.env.SUPABASE_KEY 
+      || process.env.SUPABASE_SERVICE_ROLE 
+      || process.env.SERVICE_ROLE_KEY;
     const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
     return respond(event, 200, {
       success: true,

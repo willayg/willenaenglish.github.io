@@ -459,7 +459,6 @@ export async function runTimeBattleMode(context) {
       title: 'Live Leaderboard',
       entries: initial,
       backdropClosable: false, // prevent dismiss + cheating
-  qrLink: (() => { try { const u = new URL(location.origin + '/Games/Word Arcade/play.html'); u.searchParams.set('id', sessionId); u.searchParams.set('mode', 'time_battle'); u.searchParams.set('round', String(round)); return u.toString(); } catch { return null; } })(),
       onReplay: () => {
         try { localStorage.removeItem(STORAGE_KEY); } catch {}
         try { modal.close(); } catch {}

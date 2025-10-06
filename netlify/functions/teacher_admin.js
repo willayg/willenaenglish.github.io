@@ -60,27 +60,45 @@ exports.handler = async (event) => {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const db = admin; // same client for db queries
 
+  // Role flags available to all action branches
+  let actorRole = null;
+  let isAdmin = false;
+  let isTeacher = false;
+
   // AuthZ: require teacher/admin role
   const access = cookieToken(event);
   if (!access) return respond(event, 401, { success:false, error:'Not signed in' });
   try {
-      if (action === 'rename_class' && event.httpMethod === 'POST') {
-        const body = JSON.parse(event.body || '{}');
-        const { old_class, new_class } = body;
-        if (!old_class || !new_class) return respond(event, 400, { success:false, error:'Both class names required' });
-        // Only update students
-        const { error } = await db.from('profiles').update({ class: new_class }).eq('role', 'student').eq('class', old_class);
-        if (error) return respond(event, 400, { success:false, error: error.message });
-        return respond(event, 200, { success:true });
-      }
+    const { data, error } = await admin.auth.getUser(access);
+    if (error || !data?.user) return respond(event, 401, { success:false, error:'Not signed in' });
+    const userId = data.user.id;
+  const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', userId).single();
+  if (perr || !prof) return respond(event, 403, { success:false, error:'Profile missing' });
+  actorRole = String(prof.role || '').toLowerCase();
+  isAdmin = actorRole === 'admin';
+  isTeacher = actorRole === 'teacher';
+    if (!isAdmin && !isTeacher) return respond(event, 403, { success:false, error:'Forbidden' });
+
+    // Admin-only: rename_class
+    if (action === 'rename_class' && event.httpMethod === 'POST') {
+  if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
+      const body = JSON.parse(event.body || '{}');
+      const { old_class, new_class } = body;
+      if (!old_class || !new_class) return respond(event, 400, { success:false, error:'Both class names required' });
+      const { error } = await db.from('profiles').update({ class: new_class }).eq('role', 'student').eq('class', old_class);
+      if (error) return respond(event, 400, { success:false, error: error.message });
+      return respond(event, 200, { success:true });
+    }
+
+    // Admin-only: update_student
     if (action === 'update_student' && event.httpMethod === 'POST') {
+  if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const { user_id, name, username, korean_name, class: className } = body;
       if (!user_id) return respond(event, 400, { success:false, error:'Missing user_id' });
-      // Only allow update for students
-      const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', user_id).single();
-      if (perr || !prof) return respond(event, 404, { success:false, error:'Profile not found' });
-      if (String(prof.role).toLowerCase() !== 'student') return respond(event, 403, { success:false, error:'Only students are manageable' });
+      const { data: tprof, error: perr2 } = await db.from('profiles').select('role').eq('id', user_id).single();
+      if (perr2 || !tprof) return respond(event, 404, { success:false, error:'Profile not found' });
+      if (String(tprof.role).toLowerCase() !== 'student') return respond(event, 403, { success:false, error:'Only students are manageable' });
       const updateFields = {};
       if (typeof name === 'string') updateFields.name = name;
       if (typeof username === 'string') updateFields.username = username;
@@ -91,12 +109,6 @@ exports.handler = async (event) => {
       if (error) return respond(event, 400, { success:false, error: error.message });
       return respond(event, 200, { success:true });
     }
-    const { data, error } = await admin.auth.getUser(access);
-    if (error || !data?.user) return respond(event, 401, { success:false, error:'Not signed in' });
-    const userId = data.user.id;
-    const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', userId).single();
-    if (perr || !prof) return respond(event, 403, { success:false, error:'Profile missing' });
-    if (!['teacher','admin'].includes((prof.role || '').toLowerCase())) return respond(event, 403, { success:false, error:'Forbidden' });
   } catch {
     return respond(event, 401, { success:false, error:'Not signed in' });
   }
@@ -115,12 +127,20 @@ exports.handler = async (event) => {
   try {
     if (action === 'list_students') {
       const search = (qs.search || '').trim();
+      const classFilter = (qs.class || '').trim();
       const limit = Math.min(parseInt(qs.limit || '100', 10) || 100, 500);
       const offset = parseInt(qs.offset || '0', 10) || 0;
-  let q = db.from('profiles').select('id, name, username, email, avatar, approved, role, class, korean_name').eq('role', 'student');
+      let q = db
+        .from('profiles')
+        .select('id, name, username, email, avatar, approved, role, class, korean_name, grade, school, phone')
+        .eq('role', 'student');
+      if (classFilter) q = q.eq('class', classFilter);
       if (search) {
-        // ILIKE not available in supabase-js builder; use filters
-        q = q.or(`username.ilike.%${search}%,name.ilike.%${search}%`);
+        // Prefer prefix search for index friendliness; fallback to contains if search is very short
+        const s = search.replace(/[%_]/g, '').toLowerCase();
+        const pat = s.length >= 2 ? `${s}%` : `%${s}%`;
+        // Search username, name, korean_name
+        q = q.or(`username.ilike.${pat},name.ilike.${pat},korean_name.ilike.${pat}`);
       }
       const { data, error } = await q.order('username', { ascending: true }).range(offset, offset + limit - 1);
       if (error) return respond(event, 400, { success:false, error: error.message });
@@ -134,8 +154,151 @@ exports.handler = async (event) => {
         role: d.role,
         class: d.class || null,
         korean_name: d.korean_name || '',
+        grade: d.grade || null,
+        school: d.school || null,
+        phone: d.phone || null,
       }));
       return respond(event, 200, { success:true, students, limit, offset });
+    }
+
+    // Bulk upsert students
+    if (action === 'bulk_upsert_students' && event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body || '{}');
+      const students = Array.isArray(body.students) ? body.students : [];
+      if (!students.length) return respond(event, 400, { success:false, error:'students array required' });
+
+      // Normalize and validate inputs
+      const norm = students.map(s => ({
+        class: (s.class || '').toString().trim() || null,
+        school: (s.school || '').toString().trim() || null,
+        grade: (s.grade || '').toString().trim() || null,
+        korean_name: (s.korean_name || s.koreanName || '').toString().trim(),
+        name: (s.name || s.english_name || '').toString().trim(),
+        phone: (s.phone || '').toString().trim() || null,
+        username: (s.username || '').toString().trim().toLowerCase(),
+        password: (s.password || '').toString()
+      })).filter(s => s.class && s.korean_name && s.name && s.username && s.password);
+
+      if (!norm.length) return respond(event, 400, { success:false, error:'no valid students' });
+
+      let created = 0, updated = 0, skipped = 0;
+
+      // Prefetch existing students by korean_name and class to minimize DB roundtrips
+      const korSet = new Set(norm.map(s => (s.korean_name || '').toLowerCase()));
+      const clsSet = new Set(norm.map(s => (s.class || '').toLowerCase()));
+      let existingRows = [];
+      if (korSet.size && clsSet.size) {
+        const korArr = Array.from(korSet);
+        const clsArr = Array.from(clsSet);
+        const { data: exData } = await db
+          .from('profiles')
+          .select('id, username, email, name, korean_name, class')
+          .eq('role', 'student')
+          .in('korean_name', korArr)
+          .in('class', clsArr);
+        if (Array.isArray(exData)) existingRows = exData;
+      }
+      const byKorClass = new Map(); // key: `${kor}|${cls}`
+      const byFull = new Map();     // key: `${eng}|${kor}|${cls}`
+      for (const r of existingRows) {
+        const kor = String(r.korean_name || '').toLowerCase();
+        const cls = String(r.class || '').toLowerCase();
+        const eng = String(r.name || '').toLowerCase();
+        if (kor && cls) byKorClass.set(`${kor}|${cls}`, r);
+        if (eng && kor && cls) byFull.set(`${eng}|${kor}|${cls}`, r);
+      }
+
+      for (const s of norm) {
+        try {
+          // Try lookup from maps first
+          const keyFull = `${s.name.toLowerCase()}|${s.korean_name.toLowerCase()}|${(s.class||'').toLowerCase()}`;
+          const keyKorCls = `${s.korean_name.toLowerCase()}|${(s.class||'').toLowerCase()}`;
+          let existing = byFull.get(keyFull) || byKorClass.get(keyKorCls) || null;
+          if (!existing) {
+            // Fallback single query if not in prefetch
+            const { data: maybe, error: selErr } = await db
+              .from('profiles')
+              .select('id, username, email, name, korean_name, class')
+              .eq('role', 'student')
+              .ilike('korean_name', s.korean_name)
+              .ilike('class', s.class)
+              .maybeSingle();
+            if (!selErr && maybe) existing = maybe;
+          }
+
+          // synthesize email from username
+          const email = `${s.username}@stu.willena`;
+
+          if (!existing) {
+            // Create new auth user + profile
+            const { data: createdUser, error: cErr } = await admin.auth.admin.createUser({
+              email,
+              email_confirm: true,
+              password: s.password,
+              user_metadata: { role: 'student', username: s.username }
+            });
+            if (cErr || !createdUser?.user) throw new Error(cErr?.message || 'createUser failed');
+            const uid = createdUser.user.id;
+            const prof = {
+              id: uid,
+              email,
+              username: s.username,
+              name: s.name,
+              korean_name: s.korean_name,
+              role: 'student',
+              approved: true,
+              class: s.class,
+              grade: s.grade || null,
+              school: s.school || null,
+              phone: s.phone || null
+            };
+            const { error: iErr } = await db.from('profiles').insert(prof);
+            if (iErr) {
+              // rollback auth user if profile insert fails
+              try { await admin.auth.admin.deleteUser(uid); } catch {}
+              throw iErr;
+            }
+            created++;
+          } else {
+            // Update existing profile fields; try to update username/email; reset password to new username
+            const uid = existing.id;
+            // First update profile with school/grade/phone/class/name/kor and username
+            const updateFields = {
+              username: s.username,
+              name: s.name,
+              korean_name: s.korean_name,
+              class: s.class,
+              grade: s.grade || null,
+              school: s.school || null,
+              phone: s.phone || null
+            };
+            const { error: uErr } = await db.from('profiles').update(updateFields).eq('id', uid);
+            if (uErr) throw uErr;
+            // Update auth: email + password
+            const { error: updErr } = await admin.auth.admin.updateUserById(uid, { email, password: s.password });
+            if (updErr) {
+              // If email collision, attempt without email change
+              if (String(updErr.message || '').toLowerCase().includes('unique')) {
+                const { error: pwErr } = await admin.auth.admin.updateUserById(uid, { password: s.password });
+                if (pwErr) throw pwErr;
+                // Keep profile email unchanged on collision
+              } else {
+                throw updErr;
+              }
+            } else {
+              // Auth email updated successfully -> sync profiles.email
+              const { error: peErr } = await db.from('profiles').update({ email }).eq('id', uid);
+              if (peErr) throw peErr;
+            }
+            updated++;
+          }
+        } catch (e) {
+          // Skip on error but continue others
+          skipped++;
+        }
+      }
+
+      return respond(event, 200, { success:true, created, updated, skipped, total: norm.length });
     }
 
     if (action === 'create_student' && event.httpMethod === 'POST') {
@@ -163,6 +326,7 @@ exports.handler = async (event) => {
     }
 
     if (action === 'reset_password' && event.httpMethod === 'POST') {
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const idOrUsername = (body.user_id || body.username || '').trim();
       const newPass = body.new_password;
@@ -180,6 +344,7 @@ exports.handler = async (event) => {
     }
 
     if (action === 'delete_student' && event.httpMethod === 'POST') {
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const idOrUsername = (body.user_id || body.username || '').trim();
       if (!idOrUsername) return respond(event, 400, { success:false, error:'user_id or username required' });
@@ -198,6 +363,7 @@ exports.handler = async (event) => {
     }
 
     if (action === 'set_approved' && event.httpMethod === 'POST') {
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const idOrUsername = (body.user_id || body.username || '').trim();
       const approved = !!body.approved;

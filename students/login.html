@@ -121,6 +121,103 @@
       .login-card { padding: 24px 10px; margin: 10px; }
       .login-title { font-size: 1.3rem; }
     }
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      padding: 32px;
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      animation: modalFadeIn 0.3s ease;
+      overflow: hidden; /* clip pseudo header for crisp rounded corners */
+      border: 1px solid #e6eaef; /* subtle border to avoid subpixel artifacts */
+      background-clip: padding-box; /* ensure background doesn't bleed under border */
+      will-change: transform, opacity; /* smoother animation in some browsers */
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #67e2e6, #93cbcf);
+      border-radius: 0; /* parent clips the corners */
+    }
+    .modal-title {
+      font-weight: 800;
+      color: #1aafb9;
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .modal-body {
+      margin-bottom: 20px;
+      color: #6b7a8f;
+      text-align: center;
+      font-size: 16px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .modal-btn {
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-weight: 700;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.18s;
+      min-width: 100px;
+    }
+    .modal-btn-primary {
+      background: linear-gradient(135deg, #67e2e6 0%, #93cbcf 100%);
+      color: #fff;
+    }
+    .modal-btn-secondary {
+      background: #fff;
+      color: #19777e;
+      border: 2px solid #e2e8f0;
+    }
+    .modal-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(103, 226, 230, 0.2);
+    }
+    .modal-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #6b7a8f;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: #1aafb9; }
   </style>
   <script src="/students/language.js"></script>
   <!-- System language detection now handled globally in language.js -->
@@ -147,10 +244,36 @@
   <button id="loginBtn" data-i18n="Log in">Log in</button>
   <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button>
       </div>
+      <button id="helpBtn" type="button" data-i18n="Help Please" style="display:block;width:100%;background:#fff;color:#19777e;border:2px solid #e6eaef;margin-top:8px;">
+        Help Please
+      </button>
       <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
     </section>
   </main>
+
+  <!-- Modal container -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
   <script type="module">
+  // Set Help button text based on system language
+  window.addEventListener('DOMContentLoaded', () => {
+    const helpBtn = document.getElementById('helpBtn');
+    if (helpBtn) {
+      const lang = (window.StudentLang && window.StudentLang.currentLang) || navigator.language || 'en';
+      if (lang.startsWith('ko')) {
+        helpBtn.textContent = '도와주세요ㅠㅠ';
+      } else {
+        helpBtn.textContent = 'Help Please';
+      }
+    }
+  });
   const msg = document.getElementById('msg');
   function t(k){ return (window.StudentLang && StudentLang.translate(k)) || k; }
     function show(err){ msg.textContent = err; msg.style.display = err? 'block':'none'; }
@@ -172,6 +295,17 @@
       const d2 = await r2.json();
       if (!d2.success) throw new Error(d2.error || 'Login failed');
       return d2;
+    }
+
+    // Direct email login helper (used by the Help flow after password reset)
+    async function loginWithEmailPassword(email, password){
+      const r = await fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', credentials:'include', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ email, password })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Login failed');
+      return d;
     }
 
     function getNextDest() {
@@ -223,6 +357,322 @@
       }
     });
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
+
+    // =======================
+    // Student Help Modal Flow
+    // =======================
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalActions = document.getElementById('modalActions');
+    const modalClose = document.getElementById('modalClose');
+
+    // Store student verification data
+    let studentData = {};
+
+    // Translations for modal text
+    const modalTexts = {
+      en: {
+        areYouStudent: "Are you a Willena student?",
+        yes: "Yes",
+        no: "No",
+        enterKoreanName: "What is your Korean name?",
+        koreanNamePlaceholder: "한국어 이름",
+        enterEnglishName: "What is your English name?",
+        englishNamePlaceholder: "English Name",
+        enterGrade: "What is your grade?",
+        gradePlaceholder: "e.g., 1, 2, 3, 4, 5, 6",
+        enterClass: "What is your class name?",
+        classPlaceholder: "Class Name",
+        next: "Next",
+        back: "Back",
+        verifying: "Verifying...",
+        notFound: "We couldn't find a student with that information. Please check your details and try again.",
+        createPassword: "Create a new password",
+        passwordPlaceholder: "New Password",
+        confirmPassword: "Confirm Password",
+        setPassword: "Set Password",
+        passwordMismatch: "Passwords do not match",
+        passwordTooShort: "Password must be at least 6 characters",
+        success: "Password set successfully! Redirecting...",
+        errorOccurred: "An error occurred. Please try again."
+      },
+      ko: {
+        areYouStudent: "윌레나 학생이신가요?",
+        yes: "예",
+        no: "아니오",
+        enterKoreanName: "한국어 이름을 입력하세요",
+        koreanNamePlaceholder: "한국어 이름",
+        enterEnglishName: "영어 이름을 입력하세요",
+        englishNamePlaceholder: "English Name",
+        enterGrade: "학년을 입력하세요",
+        gradePlaceholder: "예: 1, 2, 3, 4, 5, 6",
+        enterClass: "반 이름을 입력하세요",
+        classPlaceholder: "반 이름",
+        next: "다음",
+        back: "뒤로",
+        verifying: "확인 중...",
+        notFound: "해당 정보로 학생을 찾을 수 없습니다. 정보를 확인하고 다시 시도해 주세요.",
+        createPassword: "새 비밀번호를 만드세요",
+        passwordPlaceholder: "새 비밀번호",
+        confirmPassword: "비밀번호 확인",
+        setPassword: "비밀번호 설정",
+        passwordMismatch: "비밀번호가 일치하지 않습니다",
+        passwordTooShort: "비밀번호는 최소 6자 이상이어야 합니다",
+        success: "비밀번호가 설정되었습니다! 리디렉션 중...",
+        errorOccurred: "오류가 발생했습니다. 다시 시도해 주세요."
+      }
+    };
+
+    function getModalLang() {
+      // Detect language from browser or StudentLang
+      try {
+        if (window.StudentLang && window.StudentLang.currentLang) {
+          return window.StudentLang.currentLang === 'ko' ? 'ko' : 'en';
+        }
+      } catch {}
+      const lang = navigator.language || navigator.userLanguage || 'en';
+      return lang.startsWith('ko') ? 'ko' : 'en';
+    }
+
+    function mt(key) {
+      const lang = getModalLang();
+      return modalTexts[lang][key] || modalTexts.en[key] || key;
+    }
+
+    function showModal() {
+      modalOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hideModal() {
+      modalOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+      studentData = {};
+    }
+
+    modalClose.addEventListener('click', hideModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) hideModal();
+    });
+
+    // Step 1: Are you a student?
+    function showStep1() {
+      modalTitle.textContent = mt('areYouStudent');
+      modalBody.innerHTML = '';
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-primary" id="yesBtn">${mt('yes')}</button>
+        <button class="modal-btn modal-btn-secondary" id="noBtn">${mt('no')}</button>
+      `;
+      
+      document.getElementById('yesBtn').addEventListener('click', showStep2);
+      document.getElementById('noBtn').addEventListener('click', hideModal);
+      showModal();
+    }
+
+    // Step 2: Korean name
+    function showStep2() {
+      modalTitle.textContent = mt('enterKoreanName');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="koreanNameInput" class="field input" placeholder="${mt('koreanNamePlaceholder')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="nextBtn">${mt('next')}</button>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', showStep1);
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        const val = document.getElementById('koreanNameInput').value.trim();
+        if (!val) return;
+        studentData.korean_name = val;
+        showStep3();
+      });
+    }
+
+    // Step 3: English name
+    function showStep3() {
+      modalTitle.textContent = mt('enterEnglishName');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="englishNameInput" class="field input" placeholder="${mt('englishNamePlaceholder')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="nextBtn">${mt('next')}</button>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', showStep2);
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        const val = document.getElementById('englishNameInput').value.trim();
+        if (!val) return;
+        studentData.name = val;
+        showStep4();
+      });
+    }
+
+    // Step 4: Grade
+    function showStep4() {
+      modalTitle.textContent = mt('enterGrade');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="gradeInput" class="field input" placeholder="${mt('gradePlaceholder')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="nextBtn">${mt('next')}</button>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', showStep3);
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        const val = document.getElementById('gradeInput').value.trim();
+        if (!val) return;
+        studentData.grade = val;
+        showStep5();
+      });
+    }
+
+    // Step 5: Class
+    function showStep5() {
+      modalTitle.textContent = mt('enterClass');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="classInput" class="field input" placeholder="${mt('classPlaceholder')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="verifyBtn">${mt('next')}</button>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', showStep4);
+      document.getElementById('verifyBtn').addEventListener('click', async () => {
+        const val = document.getElementById('classInput').value.trim();
+        if (!val) return;
+        studentData.class = val;
+        await verifyStudent();
+      });
+    }
+
+    // Verify student with backend
+    async function verifyStudent() {
+      modalTitle.textContent = mt('verifying');
+      modalBody.innerHTML = '<p>⏳</p>';
+      modalActions.innerHTML = '';
+
+      try {
+        const res = await fetch('/.netlify/functions/verify_student', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(studentData)
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && data.student) {
+          studentData.id = data.student.id;
+          studentData.username = data.student.username;
+          studentData.email = data.student.email || null;
+          showStep6();
+        } else {
+          showError(mt('notFound'));
+        }
+      } catch (err) {
+        console.error('Verification error:', err);
+        showError(mt('errorOccurred'));
+      }
+    }
+
+    // Step 6: Create password
+    function showStep6() {
+      modalTitle.textContent = mt('createPassword');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="newPasswordInput" type="password" class="field input" placeholder="${mt('passwordPlaceholder')}" style="width:100%;margin-bottom:12px;" />
+          <input id="confirmPasswordInput" type="password" class="field input" placeholder="${mt('confirmPassword')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-primary" id="setPasswordBtn">${mt('setPassword')}</button>
+      `;
+      
+      document.getElementById('setPasswordBtn').addEventListener('click', async () => {
+        const pass1 = document.getElementById('newPasswordInput').value;
+        const pass2 = document.getElementById('confirmPasswordInput').value;
+
+        if (pass1 !== pass2) {
+          alert(mt('passwordMismatch'));
+          return;
+        }
+        if (pass1.length < 6) {
+          alert(mt('passwordTooShort'));
+          return;
+        }
+
+        await setPassword(pass1);
+      });
+    }
+
+    // Set password and log in
+    async function setPassword(password) {
+      modalTitle.textContent = mt('verifying');
+      modalBody.innerHTML = '<p>⏳</p>';
+      modalActions.innerHTML = '';
+
+      try {
+        const res = await fetch('/.netlify/functions/set_student_password', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ 
+            student_id: studentData.id,
+            password: password
+          })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          modalTitle.textContent = mt('success');
+          modalBody.innerHTML = '<p>✅</p>';
+          
+          // Now log in with the new credentials
+          setTimeout(async () => {
+            try {
+              if (studentData.email) {
+                await loginWithEmailPassword(studentData.email, password);
+              } else if (studentData.username) {
+                await loginWithUsernamePassword(studentData.username, password);
+              } else {
+                throw new Error('Missing login identifier');
+              }
+              location.href = getNextDest();
+            } catch (e) {
+              hideModal();
+              show(t('Login failed. Please try logging in manually.'));
+            }
+          }, 1500);
+        } else {
+          showError(data.error || mt('errorOccurred'));
+        }
+      } catch (err) {
+        console.error('Set password error:', err);
+        showError(mt('errorOccurred'));
+      }
+    }
+
+    function showError(message) {
+      modalTitle.textContent = '⚠️';
+      modalBody.innerHTML = `<p>${message}</p>`;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="closeBtn">${mt('back')}</button>
+      `;
+      document.getElementById('closeBtn').addEventListener('click', hideModal);
+    }
+
+    // Attach to Help button
+    document.getElementById('helpBtn').addEventListener('click', showStep1);
   </script>
 </body>
 </html>

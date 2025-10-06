@@ -10,6 +10,7 @@
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="stylesheet" href="/Teachers/tools/wordtest/style.css" />
   <style>
+    :root { --header-h: 70px; --actions-h: 44px; }
     /* Minimal pill styles for Approved column */
     .pill { padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
     .pill.yes { background:#e8fff5; color:#185281; border:1px solid #b9edef; }
@@ -17,6 +18,10 @@
     /* Override header color to blue gradient */
     .header {
       background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%) !important;
+      position: sticky !important;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     /* Make names column text darker */
     .worksheet-preview td:nth-child(2), .worksheet-preview th:nth-child(2) {
@@ -43,9 +48,14 @@
       z-index: 2;
     }
     /* Menu bar override: light sky blue */
-    .top-actions, .floating-toolbar {
-      background: #e0f2fe !important;
-    }
+    .top-actions, .floating-toolbar { background: #e0f2fe !important; }
+    .top-actions { position: sticky; top: var(--header-h); z-index: 999; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .floating-toolbar { position: sticky; top: calc(var(--header-h) + var(--actions-h)); z-index: 998; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    /* Make main content full-width (remove sidebar layout) */
+    .main-content { display:block !important; }
+    .preview-area { max-width:none !important; min-width:auto !important; width:100% !important; }
+    .word-list-container { max-width:none !important; }
+    .list { height: 72vh; }
   </style>
 </head>
 <body>
@@ -63,6 +73,8 @@
       <!-- Top Actions -->
       <div class="top-actions">
         <span id="openBulkModal" class="action-link">Add Full Class</span>
+        <span id="openAddAllModal" class="action-link">Add All</span>
+        <span id="openSingleAddModal" class="action-link">Add Student</span>
         <span id="openRenameClassModal" class="action-link">Move Class Up</span>
         <span id="langToggleBtn" class="action-link" style="margin-left:auto;">한국어 | English</span>
       </div>
@@ -80,41 +92,9 @@
 
       <!-- Main Content -->
       <div class="main-content">
-        <!-- Sidebar: Add Student -->
-        <div class="sidebar">
-          <div class="input-group">
-            <label for="newUsername">Username</label>
-            <input id="newUsername" class="input-field" placeholder="e.g. amy123" autocomplete="off" />
-          </div>
-          <div class="input-group">
-            <label for="newPassword">Password</label>
-            <input id="newPassword" class="input-field" type="password" placeholder="Set password" autocomplete="new-password" />
-          </div>
-          <div class="input-group">
-            <label for="newName">Name (optional)</label>
-            <input id="newName" class="input-field" placeholder="Amy" />
-          </div>
-          <div class="input-group">
-            <label for="newKoreanName">Korean Name</label>
-            <input id="newKoreanName" class="input-field" placeholder="에이미" />
-          </div>
-          <div class="input-group">
-            <label for="newClass">Class (optional)</label>
-            <input id="newClass" class="input-field" placeholder="Sydney" />
-          </div>
-          <div class="input-group" style="display:flex; align-items:center; gap:10px;">
-            <label for="newApproved" style="margin:0;">Approve</label>
-            <input type="checkbox" id="newApproved" checked />
-          </div>
-          <div class="button-group">
-            <button id="createBtn" class="extract-btn" style="width:100%;">Add Student</button>
-          </div>
-          <div id="createMsg" style="color:#a11; font-size:13px;"></div>
-        </div>
-
         <!-- Right: Student List -->
-        <div class="preview-area" style="display:block; max-width:1600px; min-width:900px; width:100%;height:70vh">
-          <div class="word-list-container" style="max-width:1500px; width:100%;">
+        <div class="preview-area" style="display:block; width:100%;height:78vh">
+          <div class="word-list-container" style="width:100%;">
             <div class="word-list-header">Students</div>
             <div class="word-list" style="padding:0;">
               <div class="list" style="max-height:90vh; overflow:auto;">
@@ -122,12 +102,15 @@
                   <!-- Tool button names switch between English and Korean based on language mode (handled by JS) -->
                   <table style="table-layout:fixed; width:100%;">
                       <colgroup>
-                        <col style="width:90px;">
-                        <col style="width:90px;">
-                        <col style="width:90px;">
-                        <col style="width:70px;">
-                        <col style="width:70px;">
-                        <col style="width:260px;">
+                        <col style="width:120px;"> <!-- Username -->
+                        <col style="width:120px;"> <!-- Name -->
+                        <col style="width:120px;"> <!-- Korean Name -->
+                        <col style="width:110px;"> <!-- Class -->
+                        <col style="width:80px;">  <!-- Grade -->
+                        <col style="width:140px;"> <!-- School -->
+                        <col style="width:120px;"> <!-- Phone -->
+                        <col style="width:90px;">  <!-- Approved -->
+                        <col style="width:auto;">  <!-- Tools -->
                       </colgroup>
                     <thead>
                       <tr>
@@ -135,8 +118,11 @@
                         <th>Name</th>
                         <th>Korean Name</th>
                         <th>Class</th>
+                        <th>Grade</th>
+                        <th>School</th>
+                        <th>Phone</th>
                         <th>Approved</th>
-                          <th style="min-width:220px;">Tools</th>
+                        <th style="min-width:240px;">Tools</th>
                       </tr>
                     </thead>
                     <tbody id="rows"></tbody>
@@ -148,6 +134,61 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Add Student Modal -->
+  <div id="singleAddModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="singleAddModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:480px; width:96vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:14px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Add Student</h2>
+      <div class="input-group">
+        <label for="singleUsername">Username</label>
+        <input id="singleUsername" class="input-field" placeholder="e.g. ellie2282" autocomplete="off" />
+      </div>
+      <div class="input-group">
+        <label for="singlePassword">Password</label>
+        <input id="singlePassword" class="input-field" type="password" placeholder="Set password" autocomplete="new-password" />
+      </div>
+      <div class="input-group">
+        <label for="singleName">Name (optional)</label>
+        <input id="singleName" class="input-field" placeholder="Ellie" />
+      </div>
+      <div class="input-group">
+        <label for="singleKoreanName">Korean Name</label>
+        <input id="singleKoreanName" class="input-field" placeholder="엘리" />
+      </div>
+      <div class="input-group">
+        <label for="singleClass">Class (optional)</label>
+        <input id="singleClass" class="input-field" placeholder="Brown" />
+      </div>
+      <div class="input-group" style="display:flex; align-items:center; gap:10px;">
+        <label for="singleApproved" style="margin:0;">Approve</label>
+        <input type="checkbox" id="singleApproved" checked />
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button id="singleAddCancel" class="clear-btn" type="button">Cancel</button>
+        <button id="singleAddSubmit" class="extract-btn" type="button">Add Student</button>
+      </div>
+      <div id="singleAddMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Add All Modal (paste entire multi-class roster) -->
+  <div id="addAllModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="addAllModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:720px; width:96vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:16px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Add All Students</h2>
+      <p style="margin:0; font-size:0.95em; color:#334155;">Paste the full list including class headers (e.g., "NewYork 기초2 ...") and the table rows. I'll parse School, Grade, Korean Name, English Name, and Phone, and assign the class from each header.</p>
+      <label for="addAllText">Paste roster text</label>
+      <textarea id="addAllText" rows="14" class="textarea-field" style="width:100%;" placeholder="Brown 왕기초1 (월~금) 2:00~3:10\nNo.\tSchool\tGrade\tName\t영어이름\tPhone\n1\t은계초\t1\t송서희\tLily\t010-3129-1248\n..."></textarea>
+      <div style="display:flex; gap:10px; justify-content:space-between; align-items:center;">
+        <div id="addAllStats" style="font-size:12px; color:#475569;"></div>
+        <div style="display:flex; gap:10px;">
+          <button id="addAllCancel" class="clear-btn" type="button">Cancel</button>
+          <button id="addAllParse" class="layout-btn" type="button">Preview Count</button>
+          <button id="addAllSubmit" class="extract-btn" type="button">Upload</button>
+        </div>
+      </div>
+      <div id="addAllMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
     </div>
   </div>
 
