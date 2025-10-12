@@ -129,6 +129,7 @@ function setLanguage(lang) {
   document.getElementById('openBulkModal').textContent = langMap[lang].addFullClass;
   const addAllBtn = document.getElementById('openAddAllModal'); if (addAllBtn) addAllBtn.textContent = langMap[lang].addAll;
   document.getElementById('openRenameClassModal').textContent = langMap[lang].moveClassUp;
+  const testBtn = document.getElementById('openTestInput'); if (testBtn) testBtn.textContent = (lang==='ko' ? '시험 입력' : 'Test Input');
   langToggleBtn.textContent = langMap[lang].koreanEnglish;
   // Table headers
   const ths = document.querySelectorAll('.worksheet-preview thead th, .word-list-container thead th, table thead th');
@@ -364,6 +365,13 @@ function wire() {
   el('search').addEventListener('input', () => { clearTimeout(wire._t); wire._t = setTimeout(refresh, 300); });
   const classFilter = el('classFilter');
   if (classFilter) classFilter.addEventListener('change', refresh);
+  const testBtn = document.getElementById('openTestInput');
+  if (testBtn) testBtn.addEventListener('click', ()=>{
+    const klass = el('classFilter')?.value || '';
+    const url = new URL('/Teachers/tools/test_input/index.html', location.origin);
+    if (klass) url.searchParams.set('class', klass);
+    location.href = url.toString();
+  });
   attachRowHandlers();
 }
 
