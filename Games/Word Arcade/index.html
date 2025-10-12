@@ -96,6 +96,15 @@
 
     <!-- Modal overlay for mode selection -->
     <div id="modalOverlay" style="display: none;"></div>
+    <!-- Coming Soon Modal -->
+    <div id="comingSoonModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:18px;box-shadow:0 4px 32px #19777e55;padding:38px 32px 32px 32px;max-width:340px;text-align:center;margin:auto;">
+        <img src="./assets/Images/icons/for you.png?v=20250910a" alt="Coming Soon" style="width:80px;height:80px;margin-bottom:18px;filter:drop-shadow(0 0 8px #19777e);">
+        <div style="font-size:2.1em;font-weight:700;color:#19777e;margin-bottom:12px;">Coming Soon</div>
+        <div style="font-size:1.1em;color:#444;margin-bottom:18px;">This feature is not yet available.<br>Check back soon!</div>
+        <button id="closeComingSoon" style="font-size:1em;padding:8px 22px;border-radius:8px;background:#19777e;color:#fff;border:none;box-shadow:0 2px 8px #19777e33;cursor:pointer;">OK</button>
+      </div>
+    </div>
   </main>
 
   <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
@@ -143,10 +152,19 @@
       if (levelsBtn) levelsBtn.addEventListener('click', () => window.WordArcade?.startModeSelector?.());
 
       const forYou = $('#assignmentsBtn');
-      if (forYou) forYou.addEventListener('click', () => window.WordArcade?.openSavedGames?.());
+      if (forYou) forYou.addEventListener('click', (e) => {
+        e.preventDefault();
+        const modal = document.getElementById('comingSoonModal');
+        if (modal) modal.style.display = 'flex';
+      });
+      const closeComingSoon = document.getElementById('closeComingSoon');
+      if (closeComingSoon) closeComingSoon.addEventListener('click', () => {
+        const modal = document.getElementById('comingSoonModal');
+        if (modal) modal.style.display = 'none';
+      });
 
-  try { initPointsClient(); } catch {}
-  ensureHeaderProfile();
+      try { initPointsClient(); } catch {}
+      ensureHeaderProfile();
     });
   </script>
 
