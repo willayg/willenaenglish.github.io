@@ -18,6 +18,11 @@ const DEFAULT_COLUMNS = [
   { key: 'final_est', label: 'Final Score Est', type: 'computed-percent' }
 ];
 
+// Fixed class ordering (case-insensitive); unspecified classes fall back after these in alpha order
+const CLASS_ORDER = [
+  'brown','stanford','manchester','melbourne','new york','hawaii','boston','paris','sydney','berkeley','chicago','london','cambridge','yale','trinity','washington','princeton','mit','harvard'
+];
+
 // State
 let currentTest = null; // { id, name, date, columns }
 let students = []; // [{id, username, name, korean_name, class}]
@@ -80,6 +85,9 @@ const campaignMsg = document.getElementById('campaignMsg');
 const colMenu = document.getElementById('colMenu');
 let colMenuIndex = null;
 let metaTimer = null;
+// Per-class comments (not persisted server-side yet; stored in test metadata via a special column on save)
+const classComments = new Map(); // key: class or '' -> comment text
+let commentSaveTimer = null;
 
 // ---------- Import Modal + Parser ----------
 function openImportModal() {
@@ -97,6 +105,11 @@ function closeImportModal() { importModalBg.style.display = 'none'; }
 
 // Heuristics to map header labels to keys
 const HEADER_MAP = [
+  // Library grade (text) columns first so they don't get misinterpreted as numeric maxima
+  { re: /독서|book\s*reading|reading\s*grade/i, key: 'lib_reading', label: '독서', type: 'text' },
+  { re: /raz[-\s]*kids|raz\b/i, key: 'lib_raz', label: 'Raz-kids', type: 'text' },
+  { re: /시간엄수|punctual|time\s*keeping/i, key: 'lib_punctuality', label: '시간엄수', type: 'text' },
+  // Test numeric columns
   { re: /phonics|^p\b/i, key: 'phonics', label: 'Phonics (P)', type: 'number' },
   { re: /listen|^l\b/i, key: 'listening', label: 'Listening (L)', type: 'number' },
   { re: /vocab|^v\b/i, key: 'vocab', label: 'Vocab (V)', type: 'number' },
@@ -108,6 +121,17 @@ const HEADER_MAP = [
   { re: /final|estimate|percent/i, key: 'final_est', label: 'Final Score Est', type: 'computed-percent' }
 ];
 const IGNORE_TOTAL_RE = /total|sum|final|estimate|percent/i;
+
+const ALLOWED_GRADES = new Set(['A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F']);
+function normalizeGrade(val) {
+  if (!val) return '';
+  let t = String(val).trim().toUpperCase();
+  t = t.replace(/[^A-F+\-]/g,'');
+  // Collapse multiple plus/minus
+  t = t.replace(/([+\-]){2,}/g,'$1');
+  if (!ALLOWED_GRADES.has(t)) return '';
+  return t;
+}
 
 function normalizeCell(s) {
   if (s == null) return '';
@@ -164,10 +188,10 @@ function buildColumnDefsFromHeaderCols(headerCols) {
     const m = HEADER_MAP.find(h => h.re.test(t));
     if (m) indexToDef.set(i, { ...m });
   }
-  // Preserve order based on appearance
+  // Preserve order based on appearance; include text (library) columns before numeric totals
   const cols = [];
   [...indexToDef.entries()].forEach(([i, def]) => {
-    if (def.type === 'number') cols.push({ key: def.key, label: def.label, type: def.type });
+    if (def.type === 'number' || def.type === 'text') cols.push({ key: def.key, label: def.label, type: def.type });
   });
   if (cols.some(c => c.type === 'number')) {
     if (!cols.some(c => c.type === 'computed-total')) cols.push({ key: 'total', label: 'Total', type: 'computed-total' });
@@ -199,6 +223,18 @@ function parsePastedTable(text) {
 
   const hasHangul = (s) => /[\u3131-\uD79D\uAC00-\uD7AF]/.test(String(s));
 
+  // Determine core meta column indexes dynamically
+  const nameIdx = headerCols.findIndex(h => /name/i.test(h));
+  const koreanIdx = headerCols.findIndex(h => /이름/.test(h));
+  const classIdx = headerCols.findIndex(h => /(^|\b)(class|반)(\b|$)/i.test(h) && !/다음/.test(h));
+  const nextClassIdx = headerCols.findIndex(h => /다음반|next\s*class|next\b/i.test(h));
+  // Library text column indices for normalization
+  const libColInfo = [];
+  headerCols.forEach((h, idx) => {
+    const def = indexToDef.get(idx);
+    if (def && def.type === 'text' && /^lib_/.test(def.key)) libColInfo.push({ idx, key: def.key });
+  });
+
   for (let i = headerIndex + 1; i < lines.length; i++) {
   let parts = splitter(lines[i] || '');
   if (parts.length === 1 && typeof parts[0] === 'string' && parts[0].includes('\t')) parts = parts[0].split('\t');
@@ -211,9 +247,10 @@ function parsePastedTable(text) {
   if (isBanner) { currentClass = joined; pendingClasses.clear(); continue; }
 
     // Meta columns
-  const name = normalizeCell(parts[0] || '');
-  const korean = normalizeCell(parts[1] || '');
-  const klass = normalizeCell(parts[2] || '') || currentClass || '';
+  const name = normalizeCell(parts[nameIdx >=0 ? nameIdx : 0] || '');
+  const korean = normalizeCell(parts[koreanIdx >=0 ? koreanIdx : 1] || '');
+  const klass = normalizeCell(parts[classIdx >=0 ? classIdx : 2] || '') || currentClass || '';
+  const nextClass = normalizeCell(parts[nextClassIdx >=0 ? nextClassIdx : -1] || '');
 
     // Treat empty-name numeric rows as maxima rows for the class
     if (!name) {
@@ -298,7 +335,14 @@ function parsePastedTable(text) {
     const valCount = Object.values(data).filter(v => v !== '' && v != null).length;
     if (!name && valCount === 0) continue;
 
-  outRows.push({ meta: { name: (name || '').trim(), korean_name: korean || '', class: klass }, data });
+  // Normalize any library grade text values
+  libColInfo.forEach(info => {
+    const raw = normalizeCell(parts[info.idx] || '');
+    const g = normalizeGrade(raw);
+    if (g) data[info.key] = g; else if (raw) data[info.key] = ''; // keep blanks for unrecognized
+  });
+
+  outRows.push({ meta: { name: (name || '').trim(), korean_name: korean || '', class: klass, next_class: nextClass }, data });
   if (klass) { lastClassSeen = klass; pendingClasses.add(klass); }
   }
 
@@ -333,10 +377,10 @@ function parsePastedTable(text) {
 
 function renderImportPreview(parsed) {
   const cols = parsed.columns;
-  const head = `<thead><tr>${['Name','Korean','Class', ...cols.map(c=>c.label)].map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
+  const head = `<thead><tr>${['Name','Korean','Class','Next Class', ...cols.map(c=>c.label)].map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
   const bodyRows = parsed.rows.slice(0, 100).map(r => {
     const vals = cols.map(c => r.data[c.key] ?? '');
-    return `<tr><td>${r.meta.name||''}</td><td>${r.meta.korean_name||''}</td><td>${r.meta.class||''}</td>${vals.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+    return `<tr><td>${r.meta.name||''}</td><td>${r.meta.korean_name||''}</td><td>${r.meta.class||''}</td><td>${r.meta.next_class||''}</td>${vals.map(v=>`<td>${v}</td>`).join('')}</tr>`;
   }).join('');
   const body = `<tbody>${bodyRows}</tbody>`;
   importPreview.innerHTML = head + body;
@@ -435,7 +479,8 @@ async function handleImportConfirm() {
           __snap_username: user.username || '',
           __snap_name: r.meta.name || user.name || '',
           __snap_korean: r.meta.korean_name || user.korean_name || '',
-          __snap_class: payload.class || r.meta.class || user.class || ''
+          __snap_class: payload.class || r.meta.class || user.class || '',
+          __snap_next_class: r.meta.next_class || ''
         };
         const data = { ...r.data };
         // Clamp numbers to maxima if defined
@@ -534,7 +579,7 @@ function columnsFor(test) {
 }
 
 function renderHead(cols) {
-  const fixed = ['Username','Name','Korean Name','Class'];
+  const fixed = ['Name','Korean Name','Class'];
   const thFixed = fixed.map(t=>`<th class="id-col">${t}</th>`).join('');
   const thDyn = cols.map((c, idx)=>`<th data-col="${idx}" class="col-head">${c.label}</th>`).join('');
   gridHead.innerHTML = `<tr>${thFixed}${thDyn}</tr>`;
@@ -550,7 +595,7 @@ function renderFoot(cols) {
     if (c.type === 'computed-percent') return `<td class="max-100">100.00</td>`;
     return '<td></td>';
   }).join('');
-  gridFoot.innerHTML = `<tr class="sum-row"><td class="id-col"></td><td class="id-col"></td><td class="id-col"></td><td class="id-col"></td>${maxCells}</tr>`;
+  gridFoot.innerHTML = `<tr class="sum-row"><td class="id-col"></td><td class="id-col"></td><td class="id-col"></td>${maxCells}</tr>`;
 }
 
 function ensureRow(user_id) {
@@ -591,12 +636,11 @@ function renderBody(cols) {
     .filter(s=>{
       const q = search.value.trim().toLowerCase();
       if (!q) return true;
-      return (s.username||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.korean_name||'').includes(q);
+  return (s.name||'').toLowerCase().includes(q) || (s.korean_name||'').includes(q);
     })
     .map((s, idx)=>{
       const r = ensureRow(s.id);
       const idTds = [
-        `<td class=\"id-col\">${s.username||''}</td>`,
         `<td class=\"id-col\">${s.name||''}</td>`,
         `<td class=\"id-col\">${s.korean_name||''}</td>`,
         `<td class=\"id-col\">${s.class||''}</td>`
@@ -607,6 +651,7 @@ function renderBody(cols) {
           const ce = computedLocked ? '' : ' contenteditable=\"true\"';
           return `<td data-row=\"${idx}\" data-col=\"${cIdx}\" data-uid=\"${s.id}\" data-key=\"${c.key}\"${ce}>${val!==''?val:''}</td>`;
         }
+        // Text (library grade) columns are editable like numeric
         return `<td contenteditable=\"true\" data-row=\"${idx}\" data-col=\"${cIdx}\" data-uid=\"${s.id}\" data-key=\"${c.key}\">${val!==''?val:''}</td>`;
       }).join('');
       return `<tr>${idTds}${dynTds}</tr>`;
@@ -614,7 +659,7 @@ function renderBody(cols) {
   if (!rowsHtml) {
     // Keep body empty until a test is selected
     if (!currentTest || !currentTest.id) gridBody.innerHTML = '';
-    else gridBody.innerHTML = '<tr><td class="id-col" colspan="12">No students</td></tr>';
+  else gridBody.innerHTML = '<tr><td class="id-col" colspan="6">No students</td></tr>';
   } else {
     gridBody.innerHTML = rowsHtml;
   }
@@ -1235,6 +1280,10 @@ async function loadTestById(id) {
     } catch { students = []; }
   }
   testMeta.textContent = `${currentTest.name} — ${students.length} students`;
+  // Restore class comment for the active class key
+  const activeClass = currentTest.class || '';
+  const cEl = document.getElementById('classComment');
+  if (cEl) cEl.value = classComments.get(activeClass) || '';
   refreshGrid();
 }
 
@@ -1263,10 +1312,22 @@ testPicker.addEventListener('change', async ()=>{
 });
 
 if (testClassFilter) testClassFilter.addEventListener('change', async ()=>{
+  const prevClass = (currentTest && currentTest.class) || '';
+  // Persist current comment for previous class before switching
+  const classCommentEl = document.getElementById('classComment');
+  if (classCommentEl) {
+    const val = classCommentEl.value || '';
+    if (prevClass != null) classComments.set(prevClass, val);
+  }
   const klass = testClassFilter.value; if (!activeTestGroupKey) return;
   const group = testGroups[activeTestGroupKey]; if (!group) return;
   const item = (group.items||[]).find(it=> it.class === klass);
   await loadTestById(item?.id);
+  // After load, populate textarea with stored comment for the new class (if any)
+  if (classCommentEl) {
+    const newClass = testClassFilter.value || (currentTest && currentTest.class) || '';
+    classCommentEl.value = classComments.get(newClass) || '';
+  }
 });
 
 async function saveCurrent() {
@@ -1286,7 +1347,8 @@ async function saveCurrent() {
       __snap_username: s.username||'',
       __snap_name: s.name||'',
       __snap_korean: s.korean_name||'',
-      __snap_class: s.class||''
+      __snap_class: s.class||'',
+      __snap_next_class: s.next_class||''
     };
     return { user_id: s.id, data };
   });
@@ -1336,7 +1398,8 @@ async function runAutosave() {
       __snap_username: s.username||'',
       __snap_name: s.name||'',
       __snap_korean: s.korean_name||'',
-      __snap_class: s.class||''
+      __snap_class: s.class||'',
+      __snap_next_class: s.next_class||''
     };
     return { user_id: uid, data };
   });
@@ -1370,6 +1433,17 @@ function getDesiredTestDate() {
 // Persist test metadata (columns/name/date/class) when available
 async function saveTestMeta() {
   if (!currentTest || !currentTest.id) return;
+  // Embed class comment for current class into test.columns meta (lightweight persistence)
+  const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
+  const comment = document.getElementById('classComment')?.value || '';
+  if (activeClass != null) classComments.set(activeClass, comment);
+  // Store in a synthetic metadata column object (key starting with _meta_comment_) once per class
+  const cols = activeColumns().slice();
+  const metaKey = `_meta_comment_${activeClass||'default'}`;
+  let metaCol = cols.find(c=> c.key === metaKey);
+  if (!metaCol) { cols.push({ key: metaKey, label: metaKey, type: 'text' }); }
+  // Ensure currentTest columns reference includes metaCol
+  if (currentTest.columns) currentTest.columns = cols;
   const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), date: getDesiredTestDate(), class: (testClassFilter && testClassFilter.value) || currentTest.class || null, columns: activeColumns() };
   try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; msg.style.color = '#0369a1'; msg.textContent = 'Updated test settings.'; } catch {}
 }
@@ -1440,7 +1514,18 @@ if (refreshBtn) refreshBtn.addEventListener('click', async ()=>{
 if (search) search.addEventListener('input', ()=>{ refreshGrid(); });
 
 function uniqueClassesFromStudents(all) {
-  return Array.from(new Set((all||[]).map(s=>s.class).filter(Boolean))).sort();
+  const raw = Array.from(new Set((all||[]).map(s=>s.class).filter(Boolean)));
+  raw.sort((a,b)=>{
+    const ai = CLASS_ORDER.indexOf(String(a).toLowerCase());
+    const bi = CLASS_ORDER.indexOf(String(b).toLowerCase());
+    if (ai !== -1 || bi !== -1) {
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    }
+    return String(a).localeCompare(String(b));
+  });
+  return raw;
 }
 
 // Populate test class filter using all classes from students endpoint
@@ -1539,12 +1624,12 @@ if (addColumnBtn) addColumnBtn.addEventListener('click', async ()=>{
 // Export CSV
 function exportCsv() {
   const cols = activeColumns();
-  const headers = ['Username','Name','Korean Name','Class', ...cols.map(c=>c.label||c.key)];
+  const headers = ['Name','Korean Name','Class', ...cols.map(c=>c.label||c.key)];
   const lines = [headers.join(',')];
   for (const s of students) {
     const r = ensureRow(s.id);
     const vals = cols.map(c=> r.data[c.key] ?? '');
-    const row = [s.username||'', s.name||'', s.korean_name||'', s.class||'', ...vals].map(v=>
+    const row = [s.name||'', s.korean_name||'', s.class||'', ...vals].map(v=>
       typeof v === 'string' && (v.includes(',') || v.includes('"')) ? '"'+v.replace(/"/g,'""')+'"' : v
     );
     lines.push(row.join(','));
@@ -1563,3 +1648,235 @@ if (importTableBtn) importTableBtn.addEventListener('click', openImportModal);
 if (importCancel) importCancel.addEventListener('click', closeImportModal);
 if (importParse) importParse.addEventListener('click', handleParseClick);
 if (importConfirm) importConfirm.addEventListener('click', handleImportConfirm);
+const importCloseX = document.getElementById('importCloseX');
+if (importCloseX) importCloseX.addEventListener('click', closeImportModal);
+// Class comment autosave debounce
+const classCommentEl = document.getElementById('classComment');
+if (classCommentEl) {
+  classCommentEl.addEventListener('input', () => {
+    if (commentSaveTimer) clearTimeout(commentSaveTimer);
+    commentSaveTimer = setTimeout(()=>{ saveTestMeta(); }, 1200);
+  });
+}
+
+// Report Cards Modal logic
+(function(){
+  const openBtn = document.getElementById('openReportCardsBtn');
+  const modalBg = document.getElementById('rcModalBg');
+  const closeBtn = document.getElementById('rcCloseBtn');
+  const printBtn = document.getElementById('rcPrintBtn');
+  const cardsWrap = document.getElementById('rcCardsWrap');
+  const cardsContainer = document.getElementById('rcCardsContainer');
+  const rcStatus = document.getElementById('rcStatus');
+  if (!openBtn || !modalBg) return;
+
+  function esc(s=''){ return String(s).replace(/[&<>"'`]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","`":"&#96;"}[m]||m)); }
+  function fmtDate(dateStr){ if(!dateStr) return ''; const d=new Date(dateStr); if(Number.isNaN(d)) return String(dateStr); return d.toLocaleDateString(undefined,{ year:'numeric', month:'long', day:'numeric' }); }
+  function parseNumber(v){ if(v===null||v===undefined) return null; if(typeof v==='number' && Number.isFinite(v)) return v; if(typeof v==='string'){ const m=v.trim().match(/-?[0-9]+(?:\.[0-9]+)?/); if(!m) return null; const n=Number(m[0]); return Number.isFinite(n)?n:null; } return null; }
+  function formatNumber(v,{decimals=0}={}){ if(v===null||v===undefined||Number.isNaN(v)) return '—'; const opts={minimumFractionDigits:decimals, maximumFractionDigits:decimals}; if(!Number.isFinite(v)) return '—'; if(decimals===0 && Math.abs(v-Math.round(v))>0.0001){ return v.toLocaleString(undefined,{minimumFractionDigits:1, maximumFractionDigits:1}); } return v.toLocaleString(undefined,opts); }
+  const formatPercent = (v)=> (v===null||v===undefined||Number.isNaN(v)) ? '—' : `${formatNumber(v,{decimals:1})}%`;
+
+  function barsPercent(score, max){ const s=parseNumber(score), m=parseNumber(max); if(!Number.isFinite(s) || !Number.isFinite(m) || m<=0) return 0; return Math.max(0, Math.min(100, (s/m)*100)); }
+
+  function visibleStudents() {
+    const trs = Array.from(document.getElementById('gridBody')?.querySelectorAll('tr')||[]);
+    const out = [];
+    trs.forEach(tr => {
+      const tds = tr.children; if (!tds || tds.length < 2) return;
+      const name = tds[0]?.textContent?.trim() || '';
+      const korean = tds[1]?.textContent?.trim() || '';
+      const row = { username:'', name, korean_name: korean, class:'', data: {} };
+      const cols = activeColumns();
+      for (let i = 2; i < tds.length; i++) {
+        const td = tds[i];
+        const key = td.getAttribute('data-key');
+        if (!key) continue;
+        const text = td.textContent || '';
+        const col = cols.find(c=> c.key === key) || {};
+        if (col.type === 'number') {
+          const num = parseNumber(text);
+          if (num !== null) row.data[key] = num;
+        } else if (col.type === 'text') {
+          row.data[key] = text.trim();
+        }
+      }
+      out.push(row);
+    });
+    return out;
+  }
+
+  function currentTestMeta() {
+    const name = document.getElementById('testName')?.value || '';
+    const date = document.getElementById('testDate')?.value || '';
+    const cols = activeColumns();
+    return { name, date, columns: cols };
+  }
+
+  // Korean skill labels mapping
+  const KOREAN_LABELS = {
+    'phonics': '파닉스',
+    'listening': '듣기',
+    'vocab': '어휘',
+    'grammar': '문법',
+    'gw': '문법/쓰기',
+    'write': '쓰기',
+    'reading': '읽기',
+    'speaking': '말하기'
+  };
+
+  function getKoreanLabel(col) {
+    // Try to match by key first
+    if (KOREAN_LABELS[col.key]) return KOREAN_LABELS[col.key];
+    // Try to match by label patterns
+    const label = (col.label || '').toLowerCase();
+    if (/listening|듣기/.test(label)) return '듣기';
+    if (/vocab|어휘/.test(label)) return '어휘';
+    if (/grammar(?!.*write)|문법(?!.*쓰기)/.test(label)) return '문법';
+    if (/write|쓰기/.test(label)) return '쓰기';
+    if (/reading|읽기/.test(label)) return '읽기';
+    if (/speaking|말하기/.test(label)) return '말하기';
+    if (/phonics|파닉스/.test(label)) return '파닉스';
+    // Fallback to original label
+    return col.label || col.key;
+  }
+
+  function renderCard({ student, test, notes }) {
+    const cols = Array.isArray(test.columns) ? test.columns : [];
+    const numberCols = cols.filter(c=>c.type==='number');
+
+  const scores = [];
+    let t=0, m=0;
+    for (const c of numberCols) {
+      const val = parseNumber(student.data[c.key]);
+      const max = parseNumber(c.max);
+      if (val===null) continue;
+      t += Number.isFinite(val) ? val : 0;
+      m += Number.isFinite(max) ? max : 0;
+      scores.push({ label: getKoreanLabel(c), score:val, max, pct: barsPercent(val, max) });
+    }
+  const percent = (m>0) ? Math.round((t/m)*1000)/10 : null;
+  const totalSum = `${formatNumber(t)}/${formatNumber(m)}`;
+
+    // Library grades (text) if available
+    const libReading = student.data['lib_reading'] || student.data['LIB_READING'] || '';
+    const libRaz = student.data['lib_raz'] || student.data['LIB_RAZ'] || '';
+    const libPunctuality = student.data['lib_punctuality'] || student.data['LIB_PUNCTUALITY'] || '';
+
+    const skillRows = scores.map(s=>
+      `<div class="rc-skill">
+        <div class="rc-skill-label">${esc(s.label)}</div>
+        <div class="rc-bar"><span style="width:${s.pct}%"><span class="rc-pct">${Math.round(s.pct)}</span></span></div>
+        <div class="rc-score">${formatNumber(s.score)}${Number.isFinite(s.max)?`/${formatNumber(s.max)}`:''}</div>
+      </div>`
+    ).join('');
+
+  const logo = '/Logo.png';
+    return `
+      <section class="rc-page">
+        <header class="rc-header">
+          <img class="rc-logo" src="${logo}" alt="Willena" />
+        </header>
+
+        <div class="rc-info">
+          <div class="rc-field"><span class="rc-label">Student Name:</span><div class="rc-line"><div class="rc-value">${esc(student.name||'')}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Korean Name:</span><div class="rc-line"><div class="rc-value">${esc(student.korean_name||'')}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Class:</span><div class="rc-line"><div class="rc-value">${esc(student.class||'')}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Term Period:</span><div class="rc-line"><div class="rc-value">${esc(fmtDate(test.date)||'')}</div></div></div>
+        </div>
+
+        <div class="rc-columns">
+          <div class="rc-titlebar rc-skills rc-col-title">Skills</div>
+          <div class="rc-titlebar rc-library rc-col-title">Library</div>
+
+          <div>
+            ${skillRows}
+            <div class="rc-total-wrap">
+              <div class="rc-total-label">총</div>
+              <div class="rc-total">${formatPercent(percent)}</div>
+              <div class="rc-total-sum">${totalSum}</div>
+            </div>
+          </div>
+
+          <aside class="rc-library">
+            <div class="rc-lib-item">
+              <div class="rc-grade-big">${esc(libRaz || '—')}</div>
+              <div class="rc-lib-text">
+                <div class="rc-g-label">RAZ KIDS</div>
+              </div>
+            </div>
+            <div class="rc-lib-item">
+              <div class="rc-grade-big">${esc(libReading || '—')}</div>
+              <div class="rc-lib-text">
+                <div class="rc-g-label">독서</div>
+              </div>
+            </div>
+            <div class="rc-lib-item">
+              <div class="rc-grade-big">${esc(libPunctuality || '—')}</div>
+              <div class="rc-lib-text">
+                <div class="rc-g-label">시간엄수</div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="rc-comments-head rc-span">Comments</div>
+          <div class="rc-comments rc-span">${notes ? esc(notes) : 'Use this space to add personalised feedback before printing.'}</div>
+        </div>
+      </section>`;
+  }
+
+  function openModal() {
+    const test = currentTestMeta();
+    const students = visibleStudents();
+    rcStatus.textContent = `Rendering ${students.length} report card${students.length===1?'':'s'}…`;
+  const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
+  const notes = (classComments.get(activeClass) || document.getElementById('classComment')?.value || '').trim();
+    const cards = students.map(s => renderCard({ student:s, test, notes }));
+    cardsContainer.innerHTML = cards.join('');
+    modalBg.style.display = 'flex';
+    rcStatus.textContent = `Ready. ${students.length} card${students.length===1?'':'s'}.`;
+  }
+
+  function closeModal() { modalBg.style.display = 'none'; }
+  openBtn.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  modalBg.addEventListener('click', (e)=>{ if (e.target === modalBg) closeModal(); });
+
+  function printCardsStandalone() {
+    try {
+      const w = window.open('', '_blank');
+      if (!w) { window.print(); return; }
+      const html = `<!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Report Cards</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+            <link rel="stylesheet" href="/Teachers/tools/test_input/report-card.css" />
+            <style>
+              html, body { background:#fff; margin:0; }
+              #mount { padding:0; margin:0; }
+              @page { size: A4; margin: 0; }
+            </style>
+          </head>
+          <body>
+            <div id="mount">${cardsContainer.innerHTML}</div>
+            <script>
+              (function(){
+                function go(){ try { window.focus(); window.print(); } catch(e) { setTimeout(go, 100); } }
+                if (document.readyState === 'complete') go(); else window.addEventListener('load', function(){ setTimeout(go, 150); });
+              })();
+            </script>
+          </body>
+        </html>`;
+      w.document.open(); w.document.write(html); w.document.close();
+    } catch { window.print(); }
+  }
+
+  printBtn?.addEventListener('click', ()=>{
+    // Use standalone window to avoid visibility/overlay conflicts in print
+    printCardsStandalone();
+  });
+})();

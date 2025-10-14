@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="stylesheet" href="/Teachers/tools/wordtest/style.css" />
+  <link rel="stylesheet" href="./report-card.css" />
   <style>
     :root { --header-h: 64px; }
     body { background:#f5f7fb; }
@@ -23,7 +24,18 @@
     table.grid th { position:sticky; top:0; background:#f8fafc; z-index:1; font-weight:700; }
     table.grid td[contenteditable="true"]:focus { outline:2px solid #60a5fa; }
     .id-col { position:sticky; left:0; background:#f8fafc; z-index:2; font-weight:600; }
-    .sum-row { position:sticky; bottom:0; background:#f8fafc; font-weight:700; }
+  .sum-row { position:sticky; bottom:0; background:#f8fafc; font-weight:700; }
+  /* Center align all dynamic score/grade columns (non id-col) */
+  #gridBody td:not(.id-col), #gridHead th.col-head, #gridFoot td:not(.id-col) { text-align:center; }
+  /* Keep name columns left-aligned */
+  #gridBody td.id-col, #gridHead th.id-col, #gridFoot td.id-col { text-align:left; }
+  /* Import preview alignment (first two columns = names) */
+  #importPreview th:not(:first-child):not(:nth-child(2)),
+  #importPreview td:not(:first-child):not(:nth-child(2)) { text-align:center; }
+  #importPreview th:first-child, #importPreview th:nth-child(2),
+  #importPreview td:first-child, #importPreview td:nth-child(2) { text-align:left; }
+  #classCommentBox { margin:12px 10px 4px; display:flex; flex-direction:column; gap:4px; }
+  #classComment { min-height:70px; font-size:13px; resize:vertical; }
     .pill { padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
     .pill.meta { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
     .note { color:#64748b; font-size:12px; }
@@ -46,10 +58,11 @@
   <input id="testMonthFilter" type="month" class="input-field" style="max-width:160px; display:none;" />
   <label for="testMonthFilter" style="font-size:12px; color:#4a5568; font-weight:500; display:none;">Month:</label>
         <div class="spacer" style="flex:1;"></div>
-        <button id="newTestBtn" class="layout-btn">New Test</button>
+  <button id="newTestBtn" class="layout-btn">New Test</button>
         <select id="testClassFilter" class="toolbar-select"><option value="">All Classes</option></select>
         <select id="testPicker" class="toolbar-select"><option value="">Load Test…</option></select>
         <button id="refreshBtn" class="layout-btn">Refresh</button>
+  <button id="openReportCardsBtn" class="layout-btn">Report Cards</button>
       </div>
 
       <div class="grid-wrap">
@@ -70,6 +83,10 @@
             <tbody id="gridBody"></tbody>
             <tfoot id="gridFoot"></tfoot>
           </table>
+          <div id="classCommentBox">
+            <label for="classComment" class="note" style="font-weight:600; margin-top:8px; display:block;">Class Comment (appears on each report card)</label>
+            <textarea id="classComment" class="input-field" style="margin-top:4px;" placeholder="Enter class comment..."></textarea>
+          </div>
         </div>
         <div id="msg" class="note" style="padding:8px 10px;"></div>
       </div>
@@ -142,8 +159,9 @@
 
   <!-- Import From Table Modal -->
   <div id="importModalBg" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.35); z-index:3001; align-items:center; justify-content:center;">
-    <div style="background:#fff; width:min(96vw, 980px); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px 16px 12px; display:flex; flex-direction:column; gap:10px;">
-      <h3 style="margin:4px 0 6px;">Import Scores from Pasted Table</h3>
+    <div style="background:#fff; width:min(96vw, 980px); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px 16px 12px; display:flex; flex-direction:column; gap:10px; position:relative;">
+      <button id="importCloseX" style="position:absolute; top:6px; right:8px; background:none; border:none; font-size:20px; line-height:1; cursor:pointer; color:#475569;" aria-label="Close import">&times;</button>
+      <h3 style="margin:4px 24px 6px 0;">Import Scores from Pasted Table</h3>
       <div class="note">Paste the table exactly as copied from your sheet (with headers). We'll detect classes, columns, and scores automatically. You can adjust the test name and date before import.</div>
       <div style="display:grid; grid-template-columns: 1fr 320px; gap:12px; align-items:stretch;">
         <textarea id="pasteTableInput" class="input-field" placeholder="Paste table here..." style="height:260px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"></textarea>
@@ -166,5 +184,25 @@
       <div id="importMsg" class="note"></div>
     </div>
   </div>
+
+  <!-- Report Cards Modal -->
+  <div id="rcModalBg" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.35); z-index:3002; align-items:center; justify-content:center;">
+    <div id="rcModal" style="background:#fff; width:min(96vw, 1100px); max-height:92vh; overflow:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+      <div style="position:sticky; top:0; background:#f8fafc; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; z-index:1;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <strong>Report Cards</strong>
+          <span id="rcStatus" class="note"></span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button id="rcPrintBtn" class="extract-btn">Print</button>
+          <button id="rcCloseBtn" class="clear-btn">Close</button>
+        </div>
+      </div>
+      <div id="rcCardsWrap" style="padding:14px;">
+        <div id="rcCardsContainer"></div>
+      </div>
+    </div>
+  </div>
+  
 </body>
 </html>
