@@ -1,0 +1,144 @@
+/* Report Card A4 Portrait Styles */
+@page { size: A4; margin: 0; }
+
+:root {
+  --rc-navy: #2c2f44;           /* header bg */
+  --rc-navy-2: #373b53;         /* alt navy */
+  --rc-accent: #41b7cd;         /* bars */
+  --rc-accent-2: #bfe7ee;       /* light background elements */
+  --rc-line: #cfe1ea;           /* underlines and grid */
+  --rc-muted: #6b7280;          /* muted text */
+  --rc-text: #1f2937;           /* body text */
+  --rc-title: #334155;          /* headings */
+  --rc-bg: #ffffff;             /* page */
+}
+
+/* Global typography and print color fidelity */
+html, body { font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+@media print { html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* Keep modal-only printing */
+@media print {
+  /* Only apply this hide-everything trick when explicitly enabled on the host page */
+  body.print-rc-only *:not(#rcModalBg):not(#rcModal):not(#rcModal *) { visibility: hidden !important; }
+  body.print-rc-only #rcModalBg { visibility: visible !important; position: static !important; background: transparent !important; display: block !important; }
+  body.print-rc-only #rcModal, body.print-rc-only #rcModal * { visibility: visible !important; }
+  body.print-rc-only #rcModal {
+    position: static !important;
+    width: auto !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+  body.print-rc-only #rcModal > div:first-child { display: none !important; } /* hide sticky toolbar */
+  body.print-rc-only #rcCardsWrap { padding: 0 !important; margin: 0 !important; }
+  .rc-page { margin: 0 !important; border: none !important; box-shadow: none !important; }
+}
+
+/* Page container sized to A4 */
+.rc-page {
+  width: 210mm;
+  min-height: 297mm;
+  box-sizing: border-box;
+  background: var(--rc-bg);
+  color: var(--rc-text);
+  padding: 12mm 14mm 14mm 14mm;
+  margin: 0 auto 8mm;
+  page-break-after: always;
+  border: 1px solid #e5e7eb;
+}
+
+/* Header */
+.rc-header {
+  height: 22mm;
+  background: var(--rc-navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 14mm;
+}
+.rc-header .rc-logo { height: 30mm; width: auto; }
+
+/* Info fields (two columns) */
+.rc-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5mm 16mm;
+  margin: 8mm 0 6mm;
+}
+.rc-field { display: flex; flex-direction: column; }
+.rc-field .rc-label {
+  font-size: 8.8pt;
+  font-weight: 800;
+  color: var(--rc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.6mm;
+}
+.rc-field .rc-line {
+  position: relative; height: 7mm;
+  border-bottom: 1.6px solid var(--rc-line);
+}
+.rc-field .rc-value { position: absolute; bottom: 1.4mm; left: 0; font-size: 10.5pt; color: var(--rc-text); }
+
+/* Section titles */
+.rc-titlebar {
+  background: var(--rc-navy);
+  color: #fff;
+  font-weight: 900;
+  font-size: 9pt;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  padding: 2.6mm 5mm;
+  border-radius: 0;
+  margin: 4mm 0 2.5mm;
+  display: inline-block;
+}
+.rc-titlebar.rc-skills { width: 100mm; }
+.rc-titlebar.rc-library { width: 50mm; }
+
+/* Two-column body: skills left, library right */
+.rc-columns {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  row-gap: 2.5mm; /* tighter space between titles and data */
+  column-gap: 10mm;
+  align-items: start;
+  grid-auto-rows: min-content;
+}
+.rc-col-title { grid-column: span 1; margin: 1.5mm 0 1.5mm; }
+.rc-span { grid-column: 1 / -1; }
+
+/* Skill rows */
+.rc-skill { display: grid; grid-template-columns: 18mm 1fr 18mm; gap: 4mm; align-items: center; margin: 3mm 0; }
+.rc-skill .rc-skill-label { text-align: left; font-weight: 800; color: var(--rc-text); font-size: 10pt; }
+.rc-skill .rc-bar { height: 7mm; border-radius: 0; background: #ffffff; overflow: hidden; position: relative; border-right: 1.6px solid var(--rc-line); }
+.rc-skill .rc-bar::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(to right, transparent 0, transparent calc(25% - 0.5px), var(--rc-line) calc(25% - 0.5px), var(--rc-line) calc(25% + 0.5px), transparent calc(25% + 0.5px), transparent calc(50% - 0.5px), var(--rc-line) calc(50% - 0.5px), var(--rc-line) calc(50% + 0.5px), transparent calc(50% + 0.5px), transparent calc(75% - 0.5px), var(--rc-line) calc(75% - 0.5px), var(--rc-line) calc(75% + 0.5px), transparent calc(75% + 0.5px));
+}
+.rc-skill .rc-bar > span { position: absolute; inset: 0; width: 0%; background: var(--rc-accent); display: flex; align-items: center; justify-content: center; }
+.rc-skill .rc-bar .rc-pct { position: static; display: inline-block; font-weight: 800; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.08); font-size: 10pt; pointer-events: none; line-height: 1; }
+.rc-skill .rc-score { text-align: right; font-weight: 800; color: #4b5563; font-size: 9.5pt; }
+
+.rc-total-wrap { display: grid; grid-template-columns: 18mm 1fr auto; align-items: baseline; margin-top: 4mm; }
+.rc-total-label { text-align: left; font-weight: 900; font-size: 24pt; color: #4b5563; }
+.rc-total { font-size: 32pt; font-weight: 900; color: var(--rc-text); letter-spacing: 0.2px; color: #4b5563; }
+.rc-total-sum { font-size: 16pt; font-weight: 800; color: #4b5563; }
+
+/* Library gauges */
+.rc-library { display: grid; gap: 9mm; }
+.rc-lib-item { display: grid; grid-template-columns: 28mm 1fr; align-items: center; gap: 6mm; }
+.rc-grade-big { font-weight: 900; font-size: 28pt; color: var(--rc-text); text-align: center; }
+.rc-lib-text .rc-g-label { font-weight: 900; color: var(--rc-text); font-size: 11pt; letter-spacing: 0.2px; }
+.rc-lib-text .rc-g-sub { color: var(--rc-muted); font-size: 9pt; margin-top: 1mm; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Comments */
+.rc-comments-head { background: var(--rc-navy); color: #fff; width: 170mm; font-weight: 900; font-size: 9.5pt; letter-spacing: 0.6px; text-transform: uppercase; padding: 3mm 5mm; margin-top: 6mm; border-radius: 0; }
+.rc-comments { margin-top: 3mm; line-height: 1.6; color: #4b5563; font-size: 10pt; text-align: justify; }
+
+/* Modal preview spacing */
+#rcCardsContainer { display: grid; gap: 8mm; }

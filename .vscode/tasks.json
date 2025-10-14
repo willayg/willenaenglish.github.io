@@ -9,6 +9,13 @@
 				"$gcc"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Reload browser cache-busting",
+			"type": "shell",
+			"command": "echo Cache-bust ready. Please hard refresh browser (Ctrl+F5) and re-test Library Parse.",
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
