@@ -532,6 +532,9 @@ export async function startGame(mode = 'meaning') {
   if (!wordList.length) { showOpeningButtons(true); gameArea.innerHTML = ''; return; }
   // Clear any previous mode (when switching)
   destroyModeIfActive();
+  
+  // Clear the game area before rendering new content
+  gameArea.innerHTML = '';
 
   renderGameView({
     modeName: mode,
@@ -760,7 +763,10 @@ function showLevelsMenu() {
   // Back button - goes to main menu
   const backBtn = document.getElementById('levelBackBtn');
   if (backBtn) {
-    backBtn.addEventListener('click', function(e) {
+    // Clone and replace to remove any old listeners
+    const newBackBtn = backBtn.cloneNode(true);
+    backBtn.replaceWith(newBackBtn);
+    newBackBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
       // Restore the original main menu buttons
@@ -780,7 +786,10 @@ function showLevelsMenu() {
   // Level 1 (Easy) - shows the word list modal and loads basic mode
   const level1Btn = document.getElementById('level1Btn');
   if (level1Btn) {
-    level1Btn.addEventListener('click', () => {
+    // Clone and replace to remove any old listeners
+    const newLevel1Btn = level1Btn.cloneNode(true);
+    level1Btn.replaceWith(newLevel1Btn);
+    newLevel1Btn.addEventListener('click', () => {
       showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); } });
     });
   }
@@ -789,7 +798,10 @@ function showLevelsMenu() {
   [0, 2, 3, 4, 5].forEach(level => {
     const btn = document.getElementById(`level${level}Btn`);
     if (btn) {
-      btn.addEventListener('click', () => {
+      // Clone and replace to remove any old listeners
+      const newBtn = btn.cloneNode(true);
+      btn.replaceWith(newBtn);
+      newBtn.addEventListener('click', () => {
         const modal = document.getElementById('comingSoonModal');
         if (modal) modal.style.display = 'flex';
       });
@@ -803,15 +815,36 @@ function wireUpMainMenuButtons() {
   const basicBtn = document.getElementById('basicWordsBtn');
   const reviewBtn = document.getElementById('reviewBtn');
   const browseBtn = document.getElementById('browseBtn');
-  if (assignmentsBtn) assignmentsBtn.addEventListener('click', () => {
-    const modal = document.getElementById('comingSoonModal');
-    if (modal) modal.style.display = 'flex';
-  });
-  if (basicBtn) basicBtn.addEventListener('click', () => {
-    showLevelsMenu();
-  });
-  if (reviewBtn) reviewBtn.addEventListener('click', () => { loadChallengingAndStart(); });
-  if (browseBtn) browseBtn.addEventListener('click', () => { openSavedGamesModal(); });
+  
+  // Clone and replace each button to remove old listeners
+  if (assignmentsBtn) {
+    const newAssignmentsBtn = assignmentsBtn.cloneNode(true);
+    assignmentsBtn.replaceWith(newAssignmentsBtn);
+    newAssignmentsBtn.addEventListener('click', () => {
+      const modal = document.getElementById('comingSoonModal');
+      if (modal) modal.style.display = 'flex';
+    });
+  }
+  
+  if (basicBtn) {
+    const newBasicBtn = basicBtn.cloneNode(true);
+    basicBtn.replaceWith(newBasicBtn);
+    newBasicBtn.addEventListener('click', () => {
+      showLevelsMenu();
+    });
+  }
+  
+  if (reviewBtn) {
+    const newReviewBtn = reviewBtn.cloneNode(true);
+    reviewBtn.replaceWith(newReviewBtn);
+    newReviewBtn.addEventListener('click', () => { loadChallengingAndStart(); });
+  }
+  
+  if (browseBtn) {
+    const newBrowseBtn = browseBtn.cloneNode(true);
+    browseBtn.replaceWith(newBrowseBtn);
+    newBrowseBtn.addEventListener('click', () => { openSavedGamesModal(); });
+  }
 }
 
 // Wire up opening page buttons after DOM is ready
