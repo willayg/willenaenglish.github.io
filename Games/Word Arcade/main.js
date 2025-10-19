@@ -672,18 +672,153 @@ async function openSavedGameById(id) {
   }
 }
 
+
+// Color palette for level cards (4 colors only, matching main menu)
+// Fixed rotation pattern: pink, cyan, orange, blue, repeating
+const levelColors = ['#ff6fb0', '#5b9fd3', '#d9923b', '#21b3be']; // pink, cyan, orange, teal/blue
+const abcColors = ['#21b3be', '#d9923b', '#ff6fb0']; // cyan, orange, pink for letters
+
+// Store original opening buttons HTML for back button
+const originalOpeningButtonsHTML = `
+      <button id="assignmentsBtn" class="wa-option wa-option-card wa-for-you" type="button">
+        <img src="./assets/Images/icons/for you.png?v=20250910a" alt="Your Homework" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Your Homework">Your Homework</span>
+      </button>
+      <button id="basicWordsBtn" class="wa-option wa-option-card wa-basic" type="button">
+        <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Word Games" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Word Games">Word Games</span>
+      </button>
+      <button id="reviewBtn" class="wa-option wa-option-card wa-review" type="button">
+        <img src="./assets/Images/icons/review.png?v=20250910a" alt="X3 Point Challenge" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="X3 Point Challenge">X3 Point Challenge</span>
+      </button>
+      <button id="browseBtn" class="wa-option wa-option-card wa-browse" type="button">
+        <img src="./assets/Images/icons/browse.png?v=20250910a" alt="Discover" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Discover">Discover</span>
+      </button>
+    `;
+
+// Show levels menu when Word Games button is clicked
+function showLevelsMenu() {
+  const openingButtons = document.getElementById('openingButtons');
+  if (!openingButtons) return;
+  
+  // Generate colors in strict rotation pattern
+  const backColor = levelColors[0]; // pink
+  const level0Color = levelColors[1]; // cyan
+  const level1Color = levelColors[2]; // orange
+  const level2Color = levelColors[3]; // blue
+  const level3Color = levelColors[0]; // pink
+  const level4Color = levelColors[1]; // cyan
+  const level5Color = levelColors[2]; // orange
+  
+  openingButtons.innerHTML = `
+    <button id="level0Btn" class="wa-option wa-option-card wa-level-0 wa-level-inactive" type="button" style="border-color: ${level0Color}; opacity: 0.6;">
+      <div class="abc-playful" style="--c1: ${abcColors[0]}; --c2: ${abcColors[1]}; --c3: ${abcColors[2]};">
+        <span style="color: ${abcColors[0]};">A</span><span style="color: ${abcColors[1]};">B</span><span style="color: ${abcColors[2]};">C</span>
+      </div>
+      <span style="color: ${level0Color};" data-i18n="Level 0: Phonics">Level 0: Phonics</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+    </button>
+    <button id="level1Btn" class="wa-option wa-option-card wa-level-1" type="button" style="border-color: ${level1Color};">
+      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 1" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <span style="color: ${level1Color};" data-i18n="Level 1: Easy">Level 1: Easy</span>
+    </button>
+    <button id="level2Btn" class="wa-option wa-option-card wa-level-2 wa-level-inactive" type="button" style="border-color: ${level2Color}; opacity: 0.6;">
+      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 2" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <span style="color: ${level2Color};" data-i18n="Level 2">Level 2</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+    </button>
+    <button id="level3Btn" class="wa-option wa-option-card wa-level-3 wa-level-inactive" type="button" style="border-color: ${level3Color}; opacity: 0.6;">
+      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 3" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <span style="color: ${level3Color};" data-i18n="Level 3">Level 3</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+    </button>
+    <button id="level4Btn" class="wa-option wa-option-card wa-level-4 wa-level-inactive" type="button" style="border-color: ${level4Color}; opacity: 0.6;">
+      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 4" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <span style="color: ${level4Color};" data-i18n="Level 4">Level 4</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+    </button>
+    <button id="level5Btn" class="wa-option wa-option-card wa-level-5 wa-level-inactive" type="button" style="border-color: ${level5Color}; opacity: 0.6;">
+      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 5" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <span style="color: ${level5Color};" data-i18n="Level 5">Level 5</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+    </button>
+    <button id="levelBackBtn" class="wa-option wa-option-card wa-back" type="button" style="border-color: ${backColor}; height: auto; min-height: auto; padding: 8px 8px 10px;">
+      <div class="wa-logo-crop">
+        <img src="./assets/Images/icons/word-arcade.svg?v=20250910a" alt="Back" class="wa-icon wa-icon-back" loading="lazy" decoding="async" draggable="false" />
+      </div>
+      <span style="color: ${backColor}; font-size: 0.7rem;" data-i18n="Back">← Back</span>
+    </button>
+  `;
+  
+  // Apply translations to the newly created elements (supports Korean)
+  if (window.StudentLang && typeof window.StudentLang.applyTranslations === 'function') {
+    window.StudentLang.applyTranslations();
+  }
+  
+  // Back button - goes to main menu
+  const backBtn = document.getElementById('levelBackBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Restore the original main menu buttons
+      const openingButtons = document.getElementById('openingButtons');
+      if (openingButtons) {
+        openingButtons.innerHTML = originalOpeningButtonsHTML;
+        // Re-attach event listeners to the restored buttons
+        wireUpMainMenuButtons();
+        // Re-apply translations for restored content
+        if (window.StudentLang && typeof window.StudentLang.applyTranslations === 'function') {
+          window.StudentLang.applyTranslations();
+        }
+      }
+    });
+  }
+  
+  // Level 1 (Easy) - shows the word list modal and loads basic mode
+  const level1Btn = document.getElementById('level1Btn');
+  if (level1Btn) {
+    level1Btn.addEventListener('click', () => {
+      showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); } });
+    });
+  }
+  
+  // Level 0 and Levels 2-5 - Coming Soon
+  [0, 2, 3, 4, 5].forEach(level => {
+    const btn = document.getElementById(`level${level}Btn`);
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const modal = document.getElementById('comingSoonModal');
+        if (modal) modal.style.display = 'flex';
+      });
+    }
+  });
+}
+
+// Wire up main menu button event listeners
+function wireUpMainMenuButtons() {
+  const assignmentsBtn = document.getElementById('assignmentsBtn');
+  const basicBtn = document.getElementById('basicWordsBtn');
+  const reviewBtn = document.getElementById('reviewBtn');
+  const browseBtn = document.getElementById('browseBtn');
+  if (assignmentsBtn) assignmentsBtn.addEventListener('click', () => {
+    const modal = document.getElementById('comingSoonModal');
+    if (modal) modal.style.display = 'flex';
+  });
+  if (basicBtn) basicBtn.addEventListener('click', () => {
+    showLevelsMenu();
+  });
+  if (reviewBtn) reviewBtn.addEventListener('click', () => { loadChallengingAndStart(); });
+  if (browseBtn) browseBtn.addEventListener('click', () => { openSavedGamesModal(); });
+}
+
 // Wire up opening page buttons after DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
   // Try restoring session state so the mode menu or headers can show last list
   restoreSessionStateIfEmpty();
-  const basicBtn = document.getElementById('basicWordsBtn');
-  const reviewBtn = document.getElementById('reviewBtn');
-  const browseBtn = document.getElementById('browseBtn');
-  if (basicBtn) basicBtn.addEventListener('click', () => {
-    showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); } });
-  });
-  if (reviewBtn) reviewBtn.addEventListener('click', () => { loadChallengingAndStart(); });
-  if (browseBtn) browseBtn.addEventListener('click', () => { openSavedGamesModal(); });
+  wireUpMainMenuButtons();
 
   // Auto-open a saved game when linked with ?open=saved&id=123
   try {

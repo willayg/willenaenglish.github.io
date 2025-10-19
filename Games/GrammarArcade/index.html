@@ -5,19 +5,179 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grammar Arcade (Coming Soon)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Your header web component -->
+  <script defer src="/students/components/student-header.js"></script>
   <style>
-    body { font-family: 'Poppins', Arial, sans-serif; margin:0; display:flex; align-items:center; justify-content:center; height:100vh; background:#f7fbfc; }
-    .card { background:#fff; border:2px solid #a9d6e9; border-radius:16px; padding:26px 28px; text-align:center; max-width:560px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
+    /* Force consistent header height to prevent jumpiness */
+    student-header {
+      --header-height: 180px;
+    }
+  </style>
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; margin:0; background:#f7fbfc; overflow-y: hidden; }
+    .card { background:#fff; border:2px solid #a9d6e9; border-radius:16px; padding:26px 28px; text-align:center; max-width:560px; box-shadow:0 6px 20px rgba(0,0,0,0.08); margin: 40px auto; }
     h1 { margin:0 0 8px; color:#19777e; font-size:26px; }
     p { margin:6px 0 0; color:#345; }
     a { color:#19777e; text-decoration:none; font-weight:600; }
+    
+    /* Tab styling */
+    .wa-menu-btn {
+      appearance: none;
+      background: none;
+      border: 0;
+      margin: 0;
+      padding: 10px 20px;
+      font-size: 14px;
+      color: #19777e;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      line-height: 1.4;
+      vertical-align: middle;
+      min-width: auto;
+      min-height: 44px;
+      box-sizing: border-box;
+      font-family: 'Poppins', Arial, sans-serif !important;
+      text-decoration: none !important;
+      transition: all 0.25s ease;
+      position: relative;
+      flex: 1;
+      justify-content: center;
+    }
+    .wa-menu-btn:not(:first-child) {
+      border-left: none;
+      margin-left: 0;
+      padding-left: 20px;
+    }
+    .wa-menu-btn:hover,
+    .wa-menu-btn:focus,
+    .wa-menu-btn:active {
+      color: #19777e;
+      background: none;
+      border: none;
+      box-shadow: none;
+      outline: none;
+      transform: none;
+      font-size: 14px;
+    }
+    .wa-tab {
+      position: relative;
+      transition: all 0.25s ease;
+      border-bottom: 3px solid transparent;
+      padding-bottom: 10px;
+      padding-top: 10px;
+      background: linear-gradient(135deg, rgba(147, 203, 207, 0) 0%, rgba(147, 203, 207, 0) 100%);
+    }
+    .wa-tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #19777e, #93cbcf, #19777e);
+      border-radius: 3px;
+      transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .wa-tab.active {
+      color: #19777e;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(147, 203, 207, 0.1) 0%, rgba(147, 203, 207, 0.05) 100%);
+    }
+    .wa-tab.active::after {
+      width: 80%;
+    }
+    .wa-tab:not(.active) {
+      color: #999;
+    }
+    .wa-tab:hover:not(.active) {
+      color: #19777e;
+    }
+    .wa-tab:hover:not(.active)::after {
+      width: 40%;
+      opacity: 0.5;
+    }
+    @media (max-width: 768px) {
+      .wa-menu-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      .wa-menu-btn:not(:first-child) {
+        padding-left: 14px;
+      }
+    }
+    @media (max-width: 480px) {
+      .wa-menu-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-height: 40px;
+      }
+      .wa-menu-btn:not(:first-child) {
+        padding-left: 12px;
+      }
+      .wa-tab {
+        padding-bottom: 8px;
+        padding-top: 8px;
+      }
+    }
+    /* Cropped logo wrapper (no SVG edits) */
+    .logo-crop {
+      height: 4.2em;               /* matches header visual height */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;            /* crops extra top/bottom */
+    }
+    .logo-crop .logo-img {
+      height: 280%;                /* zoom more to crop more whitespace */
+      width: auto;
+      display: block;
+      object-fit: cover;           /* safe if width gets constrained */
+      object-position: 70% 20%;    /* adjust vertical focus if needed */
+    }
   </style>
 </head>
 <body>
+  <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
+  <div slot="actions" class="logo-crop">
+    <img class="logo-img" src="assets/Images/icons/grammar-arcade.svg" alt="Grammar Arcade" />
+  </div>
+  <a slot="menu-item" id="tabWordArcade" class="wa-menu-btn wa-tab" href="#" data-i18n="Word Arcade">Word Arcade</a>
+  <a slot="menu-item" id="tabGrammarArcade" class="wa-menu-btn wa-tab active" href="#" data-i18n="Grammar Arcade">Grammar Arcade</a>
+  </student-header>
+
   <div class="card">
     <h1>Grammar Arcade</h1>
     <p>This module is under construction.</p>
     <p>Go back to the <a href="/Games/Word Arcade/index.html">Word Arcade</a>.</p>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabWordArcade = document.getElementById('tabWordArcade');
+      const tabGrammarArcade = document.getElementById('tabGrammarArcade');
+
+      if (tabWordArcade) {
+        tabWordArcade.addEventListener('click', (e) => {
+          e.preventDefault();
+          tabWordArcade.classList.add('active');
+          tabGrammarArcade.classList.remove('active');
+          window.location.href = '/Games/Word Arcade/index.html';
+        });
+      }
+
+      if (tabGrammarArcade) {
+        tabGrammarArcade.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Already on Grammar Arcade, just update UI state
+          tabGrammarArcade.classList.add('active');
+          tabWordArcade.classList.remove('active');
+        });
+      }
+    });
+  </script>
 </body>
 </html>

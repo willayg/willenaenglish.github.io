@@ -4,7 +4,14 @@ body {
   background: #ffffff;
   color: #222;
   touch-action: manipulation;
+  overflow-y: hidden;
 }
+
+/* === Force consistent header height across apps === */
+student-header {
+  --header-height: 180px;
+}
+
 /* === Header + menu === */
 .wa-header {
   padding: 12px 14px 8px;
@@ -45,17 +52,19 @@ body {
 .wa-menu {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 0;
   margin-top: 8px;
-  padding: 4px 4px;
+  padding: 0;
   border-top: 1px solid #e6eaef;
   background: #fff;
-  overflow-x: auto;
+  overflow-x: visible;
   overflow-y: hidden;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   position: relative;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 .wa-menu::-webkit-scrollbar { display: none; }
 .wa-menu-btn {
@@ -63,25 +72,30 @@ body {
   background: none;
   border: 0;
   margin: 0;
-  padding: 0 7px;
-  font-size: 13px;
+  padding: 10px 20px;
+  font-size: 14px;
   color: #19777e;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  line-height: 1.2;
+  line-height: 1.4;
   vertical-align: middle;
-  min-width: 44px;
+  min-width: auto;
+  min-height: 44px;
   box-sizing: border-box;
   font-family: 'Poppins', Arial, sans-serif !important;
   text-decoration: none !important;
+  transition: all 0.25s ease;
+  position: relative;
+  flex: 1;
+  justify-content: center;
 }
 .wa-menu-btn:not(:first-child) {
-  border-left: 1px solid #cfe3e5;
-  padding-left: 7px;
-  margin-left: 7px;
+  border-left: none;
+  margin-left: 0;
+  padding-left: 20px;
 }
 .wa-menu-btn:hover,
 .wa-menu-btn:focus,
@@ -91,9 +105,79 @@ body {
   border: none;
   box-shadow: none;
   outline: none;
-  transform: scale(1.1);
-  font-size: 1.1em;
-  transition: font-size 0.18s cubic-bezier(.4,2,.3,.7), transform 0.18s cubic-bezier(.4,2,.3,.7);
+  transform: none;
+  font-size: 14px;
+}
+
+/* === Modern Tab styling === */
+.wa-tab {
+  position: relative;
+  transition: all 0.25s ease;
+  border-bottom: 3px solid transparent;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  background: linear-gradient(135deg, rgba(147, 203, 207, 0) 0%, rgba(147, 203, 207, 0) 100%);
+}
+
+.wa-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #19777e, #93cbcf, #19777e);
+  border-radius: 3px;
+  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.wa-tab.active {
+  color: #19777e;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(147, 203, 207, 0.1) 0%, rgba(147, 203, 207, 0.05) 100%);
+}
+
+.wa-tab.active::after {
+  width: 80%;
+}
+
+.wa-tab:not(.active) {
+  color: #999;
+}
+
+.wa-tab:hover:not(.active) {
+  color: #19777e;
+}
+
+.wa-tab:hover:not(.active)::after {
+  width: 40%;
+  opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .wa-menu-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .wa-menu-btn:not(:first-child) {
+    padding-left: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wa-menu-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  .wa-menu-btn:not(:first-child) {
+    padding-left: 12px;
+  }
+  .wa-tab {
+    padding-bottom: 8px;
+    padding-top: 8px;
+  }
 }
 
 
@@ -133,6 +217,36 @@ main {
 .wa-option-card.wa-basic:hover { border-color:#e45497; }
 .wa-option-card.wa-browse { border-color:#5b7fe5; }
 .wa-option-card.wa-browse:hover { border-color:#3f5fb1; }
+.wa-option-card.wa-back { border-color:#19777e; }
+.wa-option-card.wa-back:hover { border-color:#0f5962; }
+.wa-option-card.wa-back .wa-logo-crop {
+  width: 70px;
+  height: 48px; /* crop height to remove top/bottom whitespace */
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wa-option-card.wa-back .wa-logo-crop .wa-icon-back {
+  width: 70px; /* keep full width inside the crop */
+  height: auto; /* do not stretch horizontally */
+  object-fit: contain; /* ensure no side cropping */
+  object-position: center center; /* centered vertically */
+}
+
+.wa-option-card.wa-level-inactive {
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.wa-option-card.wa-level-inactive:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.wa-option-card.wa-level-inactive .wa-icon {
+  filter: grayscale(100%);
+}
 
 /* Responsive tweaks */
 /* Mobile first: single column (already defined). */
@@ -406,4 +520,25 @@ h1 {
     min-height: 56px;
     max-height: 56px;
   }
+}
+
+/* Playful ABC letters with individual colors */
+.abc-playful {
+  font-size: clamp(5rem, 24vw, 5rem);
+  line-height: 0.9;
+  white-space: nowrap;
+  font-weight: 900;
+  letter-spacing: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+.abc-playful span {
+  display: inline-block;
+  font-size: clamp(6rem, 15vw, 10rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: inherit;
+  line-height: 0.9;
 }
