@@ -23,6 +23,25 @@ const CLASS_ORDER = [
   'brown','stanford','manchester','melbourne','new york','hawaii','boston','paris','sydney','berkeley','chicago','london','cambridge','yale','trinity','washington','princeton','mit','harvard'
 ];
 
+// Consistent class name ordering helper
+function compareClasses(a, b) {
+  const A = String(a||'').toLowerCase();
+  const B = String(b||'').toLowerCase();
+  const ai = CLASS_ORDER.indexOf(A);
+  const bi = CLASS_ORDER.indexOf(B);
+  if (ai !== -1 || bi !== -1) {
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  }
+  return String(a||'').localeCompare(String(b||''));
+}
+function sortClassesList(list) {
+  const arr = (list||[]).slice();
+  arr.sort(compareClasses);
+  return arr;
+}
+
 // State
 let currentTest = null; // { id, name, date, columns }
 let students = []; // [{id, username, name, korean_name, class}]
@@ -35,7 +54,7 @@ const search = el('search');
 const gridHead = el('gridHead');
 const gridBody = el('gridBody');
 const gridFoot = el('gridFoot');
-const testPicker = el('testPicker');
+const testPicker = el('testPicker'); // deprecated in UI; kept for compatibility if present
 const testName = el('testName');
 const testDate = el('testDate');
 const testMeta = el('testMeta');
@@ -47,6 +66,13 @@ const addColumnBtn = el('addColumnBtn');
 const exportCsvBtn = el('exportCsvBtn');
 const testClassFilter = el('testClassFilter');
 const computedIndicator = el('computedIndicator');
+// Load modal elements
+const openLoadBtn = document.getElementById('openLoadBtn');
+const loadModalBg = document.getElementById('loadModalBg');
+const loadCloseBtn = document.getElementById('loadCloseBtn');
+const loadSearch = document.getElementById('loadSearch');
+const loadList = document.getElementById('loadList');
+const loadMsg = document.getElementById('loadMsg');
 // Import modal elements
 const importModalBg = document.getElementById('importModalBg');
 const importTableBtn = document.getElementById('importTableBtn');
@@ -62,6 +88,7 @@ const importParse = document.getElementById('importParse');
 const importConfirm = document.getElementById('importConfirm');
 const importMsg = document.getElementById('importMsg');
 const strictTsvSwitch = document.getElementById('strictTsvSwitch');
+const importBusy = document.getElementById('importBusy');
 // Grouped test picker state
 let testGroups = {}; // key `${name}||${date}` -> { name, date, items: [{ id, class }] }
 let activeTestGroupKey = null;
@@ -89,6 +116,65 @@ let metaTimer = null;
 const classComments = new Map(); // key: class or '' -> comment text
 let commentSaveTimer = null;
 
+// Stable alphabetical sort for students (by name, then korean_name, then username, then id)
+function sortStudents(arr) {
+  const safe = (v) => (v==null ? '' : String(v));
+  return (arr||[]).slice().sort((a,b)=>{
+    const an = safe(a.name).toLowerCase();
+    const bn = safe(b.name).toLowerCase();
+    if (an !== bn) return an.localeCompare(bn);
+    const ak = safe(a.korean_name).toLowerCase();
+    const bk = safe(b.korean_name).toLowerCase();
+    if (ak !== bk) return ak.localeCompare(bk);
+    const au = safe(a.username).toLowerCase();
+    const bu = safe(b.username).toLowerCase();
+    if (au !== bu) return au.localeCompare(bu);
+    const ai = safe(a.id);
+    const bi = safe(b.id);
+    return String(ai).localeCompare(String(bi));
+  });
+}
+
+// --- Lightweight metadata carrier for class comments ---
+// We persist class comments inside the test.columns array on one existing column object
+// (prefer the computed-total column). We attach a plain object property `_classComments`
+// shaped as: { "<classNameOrBlank>": "comment text", ... }
+function getMetaCarrierColumn(cols) {
+  if (!Array.isArray(cols) || !cols.length) return null;
+  // Prefer computed-total, then computed-percent, else first column
+  let c = cols.find(x => x && x.type === 'computed-total')
+       || cols.find(x => x && x.type === 'computed-percent')
+       || cols[0];
+  return c || null;
+}
+function loadCommentsFromColumns(test) {
+  const cols = columnsFor(test);
+  const carrier = getMetaCarrierColumn(cols);
+  const key = (test && (test.class || '')) || '';
+  // Preferred: per-test single comment
+  if (carrier && carrier._comment !== undefined) {
+    classComments.set(key, String(carrier._comment || ''));
+  }
+  // Backward-compat: if legacy map exists, merge as fallback
+  const map = carrier && carrier._classComments;
+  if (map && typeof map === 'object') {
+    for (const [k, v] of Object.entries(map)) {
+      if (!classComments.has(k)) classComments.set(k, String(v || ''));
+    }
+  }
+}
+function persistCommentsToColumns(test) {
+  const cols = columnsFor(test);
+  const carrier = getMetaCarrierColumn(cols);
+  if (!carrier) return cols; // nothing to do
+  const key = (test && (test.class || '')) || '';
+  const val = classComments.get(key) || '';
+  carrier._comment = String(val);
+  if (carrier._classComments) delete carrier._classComments; // stop writing legacy structure
+  if (test && test.columns && test.columns !== cols) test.columns = cols;
+  return cols;
+}
+
 // ---------- Import Modal + Parser ----------
 function openImportModal() {
   importMsg.textContent = '';
@@ -97,7 +183,7 @@ function openImportModal() {
   importPreview.innerHTML = '';
   pasteTableInput.value = '';
   importTestName.value = testName.value || `Test ${new Date().toISOString().slice(0,10)}`;
-  importTestDate.value = testDate.value || new Date().toISOString().slice(0,10);
+  importTestDate.value = (testDate && testDate.value) || new Date().toISOString().slice(0,10);
   importConfirm.disabled = true;
   importModalBg.style.display = 'flex';
 }
@@ -430,6 +516,9 @@ async function handleParseClick() {
 async function handleImportConfirm() {
   if (!lastParsed) return;
   importMsg.style.color = '#334155'; importMsg.textContent = 'Importing…';
+  // Busy UI on
+  if (importBusy) { importBusy.style.display = 'flex'; }
+  importConfirm.disabled = true; importCancel.disabled = true; importParse.disabled = true;
   const name = (importTestName.value || 'Imported Test').trim();
   const date = importTestDate.value || getDesiredTestDate();
 
@@ -519,7 +608,13 @@ async function handleImportConfirm() {
     extra = ` Unmatched: ${unmatchedTotal} (${clsTxt}).`;
   }
   importMsg.textContent = `Imported ${createdCount} test(s), ${upsertedTotal} entry(ies).` + (failed ? ` Failed groups: ${failed}.` : '') + extra;
-  importConfirm.disabled = true;
+  // Busy UI off and close modal on success
+  if (importBusy) { importBusy.style.display = 'none'; }
+  importCancel.disabled = false; importParse.disabled = false; // leave confirm disabled
+  // If at least one test created or upserted, close the modal
+  if (createdCount > 0 || upsertedTotal > 0) {
+    try { closeImportModal(); } catch {}
+  }
   // Optionally load the first created group's test into the grid: if per-class off, we created 1
   try {
     await loadTests();
@@ -529,7 +624,7 @@ async function handleImportConfirm() {
       lastImported = { groupKey, tests: createdItems.slice() };
       activeTestGroupKey = groupKey;
       if (testPicker) testPicker.value = groupKey;
-      const classes = Array.from(new Set(createdItems.map(it=> it.class).filter(Boolean)));
+  const classes = sortClassesList(Array.from(new Set(createdItems.map(it=> it.class).filter(Boolean))));
       if (testClassFilter) {
         testClassFilter.disabled = false;
         testClassFilter.innerHTML = classes.length ? classes.map(c=>`<option value="${c}">${c}</option>`).join('') : '<option value="">(no class)</option>';
@@ -548,7 +643,12 @@ async function handleImportConfirm() {
         if (firstItem?.id) await loadTestById(firstItem.id);
       }
     }
-  } catch {}
+  } catch {
+    // On failure, keep the modal open and show message
+  } finally {
+    if (importBusy) { importBusy.style.display = 'none'; }
+    importCancel.disabled = false; importParse.disabled = false;
+  }
 }
 
 function sumMax(columns) {
@@ -632,11 +732,15 @@ function setCellValue(r, key, val, cols) {
 }
 
 function renderBody(cols) {
+  const filterClass = (testClassFilter && testClassFilter.value) || '';
   const rowsHtml = students
     .filter(s=>{
+      // Class filter first
+      if (filterClass && String(s.class||'').toLowerCase() !== String(filterClass).toLowerCase()) return false;
+      // Then search filter
       const q = search.value.trim().toLowerCase();
       if (!q) return true;
-  return (s.name||'').toLowerCase().includes(q) || (s.korean_name||'').includes(q);
+      return (s.name||'').toLowerCase().includes(q) || (s.korean_name||'').includes(q);
     })
     .map((s, idx)=>{
       const r = ensureRow(s.id);
@@ -912,7 +1016,7 @@ function pasteTextIntoFooter(text) {
       if (Number.isFinite(parsed) && parsed >= 0) { col.max = parsed; changed = true; }
     }
   }
-  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:testDate.value||null, columns: cols };
+  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:(testDate&&testDate.value)||null, columns: cols };
   else currentTest.columns = cols;
   if (changed) { refreshGrid(); if (metaTimer) clearTimeout(metaTimer); metaTimer = setTimeout(()=> saveTestMeta(), 400); }
 }
@@ -1112,7 +1216,7 @@ gridFoot.addEventListener('paste', (e)=>{
     const parsed = Number(String(parts[i]).replace(/[^0-9.\-]/g, ''));
     if (Number.isFinite(parsed) && parsed >= 0) { col.max = parsed; changed = true; }
   }
-  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:testDate.value||null, columns: cols };
+  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:(testDate&&testDate.value)||null, columns: cols };
   else currentTest.columns = cols;
   if (changed) { refreshGrid(); if (metaTimer) clearTimeout(metaTimer); metaTimer = setTimeout(()=> saveTestMeta(), 400); }
 });
@@ -1141,7 +1245,7 @@ function applyMaxEdit(cell) {
   else if (Number.isFinite(parsed) && parsed >= 0) col.max = parsed;
   else return;
   // Persist in current test object
-  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:testDate.value||null, columns: cols };
+  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:(testDate&&testDate.value)||null, columns: cols };
   else currentTest.columns = cols;
   // Recompute derived
   const tCols = activeColumns();
@@ -1208,7 +1312,7 @@ colMenu.addEventListener('click', (e)=>{
     cols.splice(i,1);
   }
   // persist new columns into current test (unsaved until autosave or explicit save)
-  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:testDate.value||null, columns: cols };
+  if (!currentTest) currentTest = { id:null, name:testName.value||'Untitled Test', date:(testDate&&testDate.value)||null, columns: cols };
   else currentTest.columns = cols;
   hideColMenu();
   refreshGrid();
@@ -1231,12 +1335,17 @@ async function loadTests() {
     map.get(key).items.push({ id: t.id, class: t.class||'' });
   }
   testGroups = Object.fromEntries(map.entries());
-  const opts = ['<option value="">Load Test…</option>'];
-  for (const [key, g] of map.entries()) {
-    const label = `${g.name}${g.date?` ${g.date}`:''}`;
-    opts.push(`<option value="${key}">${label}</option>`);
+  // If legacy dropdown exists, populate it (not visible in new UI)
+  if (testPicker) {
+    const opts = ['<option value="">Load Test…</option>'];
+    for (const [key, g] of map.entries()) {
+      const label = `${g.name}${g.date?` ${g.date}`:''}`;
+      opts.push(`<option value="${key}">${label}</option>`);
+    }
+    testPicker.innerHTML = opts.join('');
   }
-  testPicker.innerHTML = opts.join('');
+  // Also (re)build the modal list if it's open
+  if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList();
   if (testClassFilter) {
     testClassFilter.disabled = true;
     testClassFilter.innerHTML = '<option value="">Class…</option>';
@@ -1252,8 +1361,12 @@ async function loadTestById(id) {
   if (!data?.success) { msg.style.color='#b91c1c'; msg.textContent=data.error||'Load failed'; return; }
   currentTest = data.test;
   const entries = Array.isArray(data.entries) ? data.entries : [];
+  // Reset grid state for fresh load
+  rows = [];
+  // Restore per-class comments from test metadata (if present)
+  loadCommentsFromColumns(currentTest);
   testName.value = currentTest.name || '';
-  testDate.value = currentTest.date || '';
+  if (testDate) testDate.value = currentTest.date || '';
   if (testClassFilter) {
     // Try to reflect the loaded class in the class switcher if present
     const val = currentTest.class || '';
@@ -1264,19 +1377,19 @@ async function loadTestById(id) {
   }
   rows = entries.map(e=>({ user_id: e.user_id, data: e.data || {} }));
   if (entries.length > 0) {
-    students = entries.map(e => ({
+    students = sortStudents(entries.map(e => ({
       id: e.user_id,
       username: e.data?.__snap_username || '',
       name: e.data?.__snap_name || '',
       korean_name: e.data?.__snap_korean || '',
       class: e.data?.__snap_class || (currentTest.class || '')
-    }));
+    })));
   } else {
     try {
       const url = `${STUDENT_API}?action=list_students&class=${encodeURIComponent(currentTest.class||'')}`;
       const sRes = await fetch(url, { credentials:'include', cache:'no-store' });
       const sData = await sRes.json();
-      if (sRes.ok && sData.success) students = sData.students || []; else students = [];
+      if (sRes.ok && sData.success) students = sortStudents(sData.students || []); else students = [];
     } catch { students = []; }
   }
   testMeta.textContent = `${currentTest.name} — ${students.length} students`;
@@ -1287,7 +1400,7 @@ async function loadTestById(id) {
   refreshGrid();
 }
 
-testPicker.addEventListener('change', async ()=>{
+if (testPicker) testPicker.addEventListener('change', async ()=>{
   const key = testPicker.value; if (!key) return;
   activeTestGroupKey = key;
   const group = testGroups[key];
@@ -1301,7 +1414,7 @@ testPicker.addEventListener('change', async ()=>{
     await loadTestById(lastImported.tests[0].id);
   } else {
     // Deduplicate classes within the group (multiple imports with same name/date)
-    const classes = Array.from(new Set((group?.items||[]).map(it=> it.class).filter(Boolean)));
+  const classes = sortClassesList(Array.from(new Set((group?.items||[]).map(it=> it.class).filter(Boolean))));
     if (testClassFilter) {
       testClassFilter.disabled = false;
       testClassFilter.innerHTML = classes.length ? classes.map(c=>`<option value="${c}">${c}</option>`).join('') : '<option value="">(no class)</option>';
@@ -1318,30 +1431,55 @@ if (testClassFilter) testClassFilter.addEventListener('change', async ()=>{
   if (classCommentEl) {
     const val = classCommentEl.value || '';
     if (prevClass != null) classComments.set(prevClass, val);
+  // Fire-and-forget save to avoid blocking UI on class switch
+  try { saveTestMeta({ captureActive: false }); } catch {}
   }
-  const klass = testClassFilter.value; if (!activeTestGroupKey) return;
-  const group = testGroups[activeTestGroupKey]; if (!group) return;
-  const item = (group.items||[]).find(it=> it.class === klass);
-  await loadTestById(item?.id);
+  const klass = testClassFilter.value;
+  // Ensure we have an active group; if missing, attempt to derive from currentTest
+  if (!activeTestGroupKey && currentTest) {
+    const k = `${currentTest.name||''}||${currentTest.date||''}`;
+    if (testGroups && testGroups[k]) activeTestGroupKey = k;
+  }
+  const group = testGroups[activeTestGroupKey];
+  if (!group) return; // nothing to switch within
+  // Try strict match first, then case-insensitive
+  let item = (group.items||[]).find(it=> it.class === klass);
+  if (!item && klass) {
+    const low = String(klass).toLowerCase();
+    item = (group.items||[]).find(it=> String(it.class||'').toLowerCase() === low);
+  }
+  if (!item) {
+    // No matching class in this group; keep current test but update message
+    msg.style.color = '#64748b';
+    msg.textContent = 'Selected class not found in this test group.';
+    return;
+  }
+  await loadTestById(item.id);
   // After load, populate textarea with stored comment for the new class (if any)
   if (classCommentEl) {
     const newClass = testClassFilter.value || (currentTest && currentTest.class) || '';
-    classCommentEl.value = classComments.get(newClass) || '';
+  classCommentEl.value = classComments.get(newClass) || '';
   }
 });
 
 async function saveCurrent() {
   if (!currentTest) {
-  const payload = { name: (testName.value||'Untitled Test').trim(), date: getDesiredTestDate(), columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null };
+  // No test yet: create one. Comments (if any) will be saved on subsequent metadata save.
+  const payload = { name: (testName.value||'Untitled Test').trim(), date: (testDate && testDate.value) || null, columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null };
     const data = await api('create_test', payload);
     currentTest = data.test;
   } else if (currentTest && currentTest.id) {
     // Persist any metadata changes (name/date/class/columns)
-  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), date: getDesiredTestDate(), class: (testClassFilter && testClassFilter.value) || currentTest.class || null, columns: activeColumns() };
+  // Make sure class comments are embedded into columns before saving
+  const colsWithMeta = persistCommentsToColumns(currentTest);
+  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), columns: colsWithMeta };
     try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; } catch {}
   }
   // Build entries using snapshot identity to preserve historical class/name
-  const entries = students.map(s=>{
+  const targetClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
+  const entries = students
+    .filter(s=> !targetClass || String(s.class||'').toLowerCase() === String(targetClass).toLowerCase())
+    .map(s=>{
     const r = ensureRow(s.id);
     const data = { ...r.data,
       __snap_username: s.username||'',
@@ -1375,7 +1513,7 @@ function scheduleSave() {
 
 async function ensureTestCreated() {
   if (currentTest && currentTest.id) return;
-  const payload = { name: (testName.value||'Untitled Test').trim() || 'Untitled Test', date: getDesiredTestDate(), columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null };
+  const payload = { name: (testName.value||'Untitled Test').trim() || 'Untitled Test', date: (testDate && testDate.value) || null, columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null };
   const data = await api('create_test', payload);
   currentTest = data.test;
 }
@@ -1431,20 +1569,17 @@ function getDesiredTestDate() {
 }
 
 // Persist test metadata (columns/name/date/class) when available
-async function saveTestMeta() {
+async function saveTestMeta(opts={ captureActive: true }) {
   if (!currentTest || !currentTest.id) return;
-  // Embed class comment for current class into test.columns meta (lightweight persistence)
-  const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
-  const comment = document.getElementById('classComment')?.value || '';
-  if (activeClass != null) classComments.set(activeClass, comment);
-  // Store in a synthetic metadata column object (key starting with _meta_comment_) once per class
-  const cols = activeColumns().slice();
-  const metaKey = `_meta_comment_${activeClass||'default'}`;
-  let metaCol = cols.find(c=> c.key === metaKey);
-  if (!metaCol) { cols.push({ key: metaKey, label: metaKey, type: 'text' }); }
-  // Ensure currentTest columns reference includes metaCol
-  if (currentTest.columns) currentTest.columns = cols;
-  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), date: getDesiredTestDate(), class: (testClassFilter && testClassFilter.value) || currentTest.class || null, columns: activeColumns() };
+  // Optionally capture the current textarea into the active class slot
+  if (opts.captureActive) {
+    const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
+    const comment = document.getElementById('classComment')?.value || '';
+    if (activeClass != null) classComments.set(activeClass, comment);
+  }
+  // Persist into columns on a carrier column without adding visible columns
+  const cols = persistCommentsToColumns(currentTest);
+  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), columns: cols };
   try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; msg.style.color = '#0369a1'; msg.textContent = 'Updated test settings.'; } catch {}
 }
 
@@ -1468,6 +1603,7 @@ async function listStudents() {
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load students');
   students = data.students || [];
+  students = sortStudents(students);
 }
 
 async function populateClassFilter() { /* no-op: left class filter removed */ }
@@ -1541,10 +1677,146 @@ async function populateTestClassFilter() {
   } catch {}
 }
 
+// ---------- Load Test Modal ----------
+function buildLoadList(filter='') {
+  if (!loadList) return;
+  const q = (filter||'').trim().toLowerCase();
+  const items = [];
+  for (const [key, g] of Object.entries(testGroups||{})) {
+    const classes = Array.from(new Set((g.items||[]).map(it=> it.class).filter(Boolean)));
+    const label = `${g.name}${g.date?` ${g.date}`:''}`;
+    const matches = !q || label.toLowerCase().includes(q) || classes.some(c=> String(c).toLowerCase().includes(q));
+    if (!matches) continue;
+    items.push({ key, label, classes, firstId: (g.items&&g.items[0]&&g.items[0].id)||null, count: (g.items||[]).length });
+  }
+  if (!items.length) {
+    loadList.innerHTML = '<div class="note">No tests found.</div>';
+    return;
+  }
+  loadList.innerHTML = items.map(it => `
+    <div class="load-item" data-item-key="${it.key}" style="display:flex; align-items:center; gap:10px; border:1px solid #e5e7eb; border-radius:8px; padding:10px;">
+      <div style="flex:1 1 auto; min-width:0;">
+        <div style="font-weight:600; color:#0f172a;">${it.label}</div>
+        <div class="note">${(it.classes||[]).join(', ') || '(no class)'} • ${it.count} class test(s)</div>
+      </div>
+      <div class="actions" style="display:flex; gap:8px; align-items:center;">
+        <div class="countdown" data-countdown style="display:none; gap:8px; align-items:center;">
+          <span class="note" data-ttl>Deleting in 5…</span>
+          <button data-cancel-del class="clear-btn">Cancel</button>
+        </div>
+        <button data-del-key="${it.key}" class="clear-btn" title="Delete this test group" style="color:#b91c1c; border-color:#ef4444;">Delete</button>
+        <button data-load-key="${it.key}" class="layout-btn">Open</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openLoadModal() {
+  if (!loadModalBg) return;
+  loadMsg.textContent = '';
+  loadSearch.value = '';
+  buildLoadList('');
+  loadModalBg.style.display = 'flex';
+}
+function closeLoadModal(){ if (loadModalBg) loadModalBg.style.display = 'none'; }
+
+if (openLoadBtn) openLoadBtn.addEventListener('click', openLoadModal);
+if (loadCloseBtn) loadCloseBtn.addEventListener('click', closeLoadModal);
+if (loadModalBg) loadModalBg.addEventListener('click', (e)=>{ if (e.target === loadModalBg) closeLoadModal(); });
+if (loadSearch) loadSearch.addEventListener('input', ()=> buildLoadList(loadSearch.value||''));
+if (loadList) loadList.addEventListener('click', async (e)=>{
+  const openBtn = e.target.closest('button[data-load-key]');
+  const delBtn = e.target.closest('button[data-del-key]');
+  const cancelBtn = e.target.closest('button[data-cancel-del]');
+  // Countdown state cache on element
+  const getItemRow = (from)=> from.closest('.load-item');
+  if (openBtn) {
+    const key = openBtn.getAttribute('data-load-key'); if (!key) return;
+    activeTestGroupKey = key;
+    const group = testGroups[key];
+  const classes = sortClassesList(Array.from(new Set((group?.items||[]).map(it=> it.class).filter(Boolean))));
+    if (testClassFilter) {
+      testClassFilter.disabled = false;
+      testClassFilter.innerHTML = classes.length ? classes.map(c=>`<option value="${c}">${c}</option>`).join('') : '<option value="">(no class)</option>';
+    }
+    const first = group?.items?.[0];
+    // Reflect the chosen class in the selector
+    if (testClassFilter && first?.class) {
+      const opt = Array.from(testClassFilter.options||[]).find(o=>o.value===first.class);
+      if (opt) testClassFilter.value = first.class;
+    }
+    await loadTestById(first?.id);
+    closeLoadModal();
+    return;
+  }
+  if (delBtn) {
+    const key = delBtn.getAttribute('data-del-key'); if (!key) return;
+    const row = getItemRow(delBtn);
+    if (!row) return;
+    const cd = row.querySelector('[data-countdown]');
+    const ttlEl = row.querySelector('[data-ttl]');
+    const delButton = delBtn;
+    let ttl = 5;
+    // show countdown UI
+    if (cd) cd.style.display = 'flex';
+    if (ttlEl) ttlEl.textContent = `Deleting in ${ttl}…`;
+    delButton.style.display = 'none';
+    // store timer handle on row to allow cancel
+    const tick = async () => {
+      ttl -= 1;
+      if (ttlEl) ttlEl.textContent = `Deleting in ${ttl}…`;
+      if (ttl <= 0) {
+        // time to delete
+        clearInterval(timerId);
+        const group = testGroups[key]; if (!group) { reset(); return; }
+        const ids = (group.items||[]).map(it=> it.id).filter(Boolean);
+        if (!ids.length) { reset(); return; }
+        loadMsg.style.color = '#334155';
+        loadMsg.textContent = 'Deleting…';
+        let ok = 0, fail = 0;
+        for (const id of ids) {
+          try { await api('delete_test', { test_id: id }); ok++; }
+          catch (e) { fail++; }
+        }
+        if (currentTest && currentTest.id && ids.includes(currentTest.id)) {
+          currentTest = { id:null, name:'', date:null, columns:[...DEFAULT_COLUMNS] };
+          students = []; rows = []; refreshGrid();
+          testMeta.textContent = 'No test loaded';
+        }
+        await loadTests();
+        buildLoadList(loadSearch ? loadSearch.value||'' : '');
+        if (fail === 0) { loadMsg.style.color = '#065f46'; loadMsg.textContent = `Deleted ${ok} item(s).`; }
+        else { loadMsg.style.color = '#b91c1c'; loadMsg.textContent = `Deleted ${ok}, failed ${fail}. You may need admin permissions.`; }
+      }
+    };
+    function reset() {
+      if (cd) cd.style.display = 'none';
+      if (ttlEl) ttlEl.textContent = '';
+      delButton.style.display = '';
+    }
+    const timerId = setInterval(tick, 1000);
+    row._delTimer = timerId;
+    row._delKey = key;
+    return;
+  }
+  if (cancelBtn) {
+    const row = getItemRow(cancelBtn);
+    if (!row) return;
+    const cd = row.querySelector('[data-countdown]');
+    const delButton = row.querySelector('button[data-del-key]');
+    if (row._delTimer) { clearInterval(row._delTimer); row._delTimer = null; }
+    if (cd) cd.style.display = 'none';
+    if (delButton) delButton.style.display = '';
+    loadMsg.style.color = '#64748b';
+    loadMsg.textContent = 'Deletion cancelled.';
+    return;
+  }
+});
+
 async function openCampaignModal() {
   campaignMsg.textContent = '';
   campaignName.value = testName.value || `Test ${new Date().toISOString().slice(0,10)}`;
-  campaignDate.value = testDate.value || new Date().toISOString().slice(0,10);
+  campaignDate.value = (testDate && testDate.value) || new Date().toISOString().slice(0,10);
   // populate classes by querying all students once
   let all = [];
   try {
@@ -1762,6 +2034,31 @@ if (classCommentEl) {
     const libRaz = student.data['lib_raz'] || student.data['LIB_RAZ'] || '';
     const libPunctuality = student.data['lib_punctuality'] || student.data['LIB_PUNCTUALITY'] || '';
 
+    // Grade to radial percent mapping per spec
+    function gradeToPercent(g) {
+      if (!g) return 0;
+      const t = String(g).trim().toUpperCase();
+      const map = { 'A+':100, 'A':90, 'A-':80, 'B+':65, 'B':50, 'B-':35, 'C+':10, 'C':1 };
+      return map[t] ?? 0;
+    }
+    // Semicircle gauge SVG (pathLength=100 for easy stroke-dasharray)
+    function renderGauge(grade) {
+      const pct = Math.max(0, Math.min(100, gradeToPercent(grade)));
+      console.log('[RC] renderGauge called:', grade, '-> pct:', pct);
+      // Path is a half-circle arc from left to right using a 50x50 viewBox centered at (50,50), radius 40
+      // We draw only the top half (y from 50 to 10) and use pathLength=100 so dasharray=pct shows progress.
+      return `
+        <div class="rc-gauge" aria-label="${esc(grade||'')} gauge">
+          <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
+            <path class="arc-track" d="M10,50 A40,40 0 0 1 90,50" pathLength="100"
+              fill="none" stroke="var(--rc-accent-2)" stroke-width="6" stroke-linecap="round"></path>
+            <path class="arc-fill"  d="M10,50 A40,40 0 0 1 90,50" pathLength="100"
+              fill="none" stroke="var(--rc-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${pct} 100"></path>
+          </svg>
+          <div class="grade-text">${esc(grade||'—')}</div>
+        </div>`;
+    }
+
     const skillRows = scores.map(s=>
       `<div class="rc-skill">
         <div class="rc-skill-label">${esc(s.label)}</div>
@@ -1791,7 +2088,7 @@ if (classCommentEl) {
           <div>
             ${skillRows}
             <div class="rc-total-wrap">
-              <div class="rc-total-label">총</div>
+              <div class="rc-total-label">Total</div>
               <div class="rc-total">${formatPercent(percent)}</div>
               <div class="rc-total-sum">${totalSum}</div>
             </div>
@@ -1799,21 +2096,21 @@ if (classCommentEl) {
 
           <aside class="rc-library">
             <div class="rc-lib-item">
-              <div class="rc-grade-big">${esc(libRaz || '—')}</div>
+              ${renderGauge(libRaz)}
               <div class="rc-lib-text">
                 <div class="rc-g-label">RAZ KIDS</div>
               </div>
             </div>
             <div class="rc-lib-item">
-              <div class="rc-grade-big">${esc(libReading || '—')}</div>
+              ${renderGauge(libReading)}
               <div class="rc-lib-text">
-                <div class="rc-g-label">독서</div>
+                <div class="rc-g-label">BOOK READING</div>
               </div>
             </div>
             <div class="rc-lib-item">
-              <div class="rc-grade-big">${esc(libPunctuality || '—')}</div>
+              ${renderGauge(libPunctuality)}
               <div class="rc-lib-text">
-                <div class="rc-g-label">시간엄수</div>
+                <div class="rc-g-label">PUNCTUALITY</div>
               </div>
             </div>
           </aside>
@@ -1825,8 +2122,20 @@ if (classCommentEl) {
   }
 
   function openModal() {
+    console.log('[RC] openModal called - version rc3');
+    // Ensure inline styles for gauge layout are present (defensive against other CSS overrides)
+    (function ensureInlineGaugeStyles(){
+      if (document.getElementById('rcInlineGaugeStyles')) return;
+      const css = `#rcModal .rc-library{display:grid;gap:9mm;justify-items:center}#rcModal .rc-lib-item{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}#rcModal .rc-gauge{width:120px;height:72px;position:relative}#rcModal .rc-gauge svg{width:100%;height:100%;display:block}#rcModal .rc-gauge .grade-text{position:absolute;left:0;right:0;top:50%;transform:translateY(-35%);font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}`;
+      const tag = document.createElement('style');
+      tag.id = 'rcInlineGaugeStyles';
+      tag.textContent = css;
+      document.body.appendChild(tag);
+      console.log('[RC] Injected inline gauge styles');
+    })();
     const test = currentTestMeta();
     const students = visibleStudents();
+    console.log('[RC] Rendering cards for', students.length, 'students');
     rcStatus.textContent = `Rendering ${students.length} report card${students.length===1?'':'s'}…`;
   const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
   const notes = (classComments.get(activeClass) || document.getElementById('classComment')?.value || '').trim();
@@ -1854,11 +2163,17 @@ if (classCommentEl) {
             <link rel="preconnect" href="https://fonts.googleapis.com">
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
             <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-            <link rel="stylesheet" href="/Teachers/tools/test_input/report-card.css" />
+            <link rel="stylesheet" href="/Teachers/tools/test_input/report-card.css?v=20251015-rc3" />
             <style>
               html, body { background:#fff; margin:0; }
               #mount { padding:0; margin:0; }
               @page { size: A4; margin: 0; }
+              /* Inline gauge layout to ensure consistent print rendering */
+              .rc-library{display:grid;gap:9mm;justify-items:center}
+              .rc-lib-item{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+              .rc-gauge{width:120px;height:72px;position:relative}
+              .rc-gauge svg{width:100%;height:100%;display:block}
+              .rc-gauge .grade-text{position:absolute;left:0;right:0;top:50%;transform:translateY(-35%);font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}
             </style>
           </head>
           <body>

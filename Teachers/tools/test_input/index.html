@@ -3,20 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test Input</title>
+  <title>Tests</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="stylesheet" href="/Teachers/tools/wordtest/style.css" />
-  <link rel="stylesheet" href="./report-card.css" />
+  <link rel="stylesheet" href="/Teachers/tools/wordtest/style.css?v=20251015-rc1" />
+  <link rel="stylesheet" href="./report-card.css?v=20251015-rc4" />
   <style>
     :root { --header-h: 64px; }
-    body { background:#f5f7fb; }
+  body { background:#f5f7fb; font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+  button, input, select { font-family: inherit; }
     .header { position:sticky; top:0; z-index:1000; background:linear-gradient(135deg,#2563eb,#60a5fa); box-shadow:0 2px 6px rgba(0,0,0,0.08); }
-    .header h1 { color:#fff; }
+  .header h1 { color:#fff; font-size:18px; font-weight:700; }
     .top-actions { position:sticky; top:var(--header-h); z-index:999; background:#e0f2fe; }
     .grid-wrap { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
     .toolbar { display:flex; gap:10px; padding:10px; align-items:center; border-bottom:1px solid #e5e7eb; background:#f8fafc; }
+    /* New toolbar layout */
+    .top-actions-bar { display:grid; grid-template-columns: 1fr auto; gap:10px; padding:10px; align-items:center; border-bottom:1px solid #e5e7eb; background:linear-gradient(180deg,#e0f2fe,#eaf6ff); }
+    .ta-left { display:flex; gap:10px; align-items:center; min-width:0; }
+    .ta-right { display:flex; gap:10px; justify-content:flex-end; align-items:center; }
+    .ta-row2 { grid-column:1 / -1; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .chip { border-radius:999px; padding:4px 10px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; font-weight:600; font-size:12px; white-space:nowrap; }
+  .btn { padding:8px 12px; border-radius:12px; background:#fff; border:1px solid #e5e7eb; box-shadow:0 1px 0 rgba(0,0,0,0.03); cursor:pointer; }
+  .btn:hover { background:#f8fafc; }
+  .btn-primary { background:#a7f3d0; border-color:#34d399; color:#064e3b; font-weight:700; }
+  .btn-primary:hover { background:#86efac; }
+  /* Text-style buttons */
+  .btn-link { background:transparent; border:none; box-shadow:none; color:#0f172a; font-weight:600; padding:6px 8px; }
+  .btn-link:hover { background:#f1f5f9; }
+    .btn-ghost { background:transparent; border:1px dashed #cbd5e1; }
+    .select { appearance:none; padding:8px 12px; border-radius:12px; border:1px solid #e5e7eb; background:#fff; box-shadow:0 1px 0 rgba(0,0,0,0.03); }
+    /* Overflow menu */
+    details.more { position:relative; }
+    details.more > summary { list-style:none; }
+    details.more[open] > summary::marker { display:none; }
+    details.more .more-menu { position:absolute; right:0; top:110%; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.12); padding:8px; display:flex; flex-direction:column; gap:6px; min-width:180px; z-index:3; }
+  /* Hand cursor on clickable elements */
+  a[href], button, [role="button"], .btn, .btn-link, .layout-btn, .clear-btn, .extract-btn, details.more > summary,
+  #gridMenu div[data-act], #colMenu div[data-act], #campaignSelectAll, #campaignClear { cursor: pointer; }
+    @media (max-width: 900px) {
+      .top-actions-bar { grid-template-columns: 1fr; }
+      .ta-right { justify-content:stretch; }
+    }
     .toolbar .spacer { flex:1; }
     .sheet { width:100%; overflow:auto; height:70vh; }
     table.grid { border-collapse: separate; border-spacing:0; width:max-content; min-width:100%; font-size:14px; }
@@ -35,7 +63,7 @@
   #importPreview th:first-child, #importPreview th:nth-child(2),
   #importPreview td:first-child, #importPreview td:nth-child(2) { text-align:left; }
   #classCommentBox { margin:12px 10px 4px; display:flex; flex-direction:column; gap:4px; }
-  #classComment { min-height:70px; font-size:13px; resize:vertical; }
+  #classComment { min-height:260px; font-size:13px; resize:vertical; }
     .pill { padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
     .pill.meta { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
     .note { color:#64748b; font-size:12px; }
@@ -46,37 +74,38 @@
     <div class="app-card">
       <div class="header" style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <a href="/Teachers/tools/manage_students.html" class="layout-btn" style="background:#fff; color:#1e293b;">⟵ Back</a>
-          <h1 style="margin:0;">Test Input</h1>
+          <h1 style="margin:0;">Tests</h1>
         </div>
         <div id="burger-menu-mount"></div>
       </div>
-      <div class="top-actions" style="display:flex; gap:12px; align-items:center; padding:8px 10px;">
-        <input id="search" class="input-field" placeholder="Search students" style="max-width:300px;" />
-        <!-- Removed left class filter per feedback; class is chosen via the Load Test class switcher -->
-  <!-- Month filter hidden per feedback; date will be automatic and tests recognized by name -->
-  <input id="testMonthFilter" type="month" class="input-field" style="max-width:160px; display:none;" />
-  <label for="testMonthFilter" style="font-size:12px; color:#4a5568; font-weight:500; display:none;">Month:</label>
-        <div class="spacer" style="flex:1;"></div>
-  <button id="newTestBtn" class="layout-btn">New Test</button>
-        <select id="testClassFilter" class="toolbar-select"><option value="">All Classes</option></select>
-        <select id="testPicker" class="toolbar-select"><option value="">Load Test…</option></select>
-        <button id="refreshBtn" class="layout-btn">Refresh</button>
-  <button id="openReportCardsBtn" class="layout-btn">Report Cards</button>
+      <div class="top-actions top-actions-bar">
+        <div class="ta-left">
+          <input id="search" class="input-field" placeholder="Search students" style="max-width:320px;" />
+          <span id="testMeta" class="chip" title="Current test and student count">No test loaded</span>
+          <!-- Month filter hidden per feedback; date will be automatic -->
+          <input id="testMonthFilter" type="month" class="input-field" style="max-width:160px; display:none;" />
+        </div>
+        <div class="ta-right">
+          <button id="openReportCardsBtn" class="btn-link" title="Open report cards">Report Cards</button>
+          <button id="openLoadBtn" class="btn-link">Load Test</button>
+          <button id="saveBtn" class="btn-link" title="Save (Ctrl+S)">Save</button>
+        </div>
+        <div class="ta-row2">
+          <input id="testName" class="input-field" placeholder="Test name (e.g., Brown Midterm)" style="flex:0 0 200px; width:200px; max-width:200px;" />
+          <select id="testClassFilter" class="select"><option value="">All Classes</option></select>
+          <button id="newTestBtn" class="btn-link">New Test</button>
+          <button id="importTableBtn" class="btn-link">Import</button>
+          <details class="more">
+            <summary class="btn-link">More</summary>
+            <div class="more-menu">
+              <button id="exportCsvBtn" class="btn-link">Export CSV</button>
+              <button id="refreshBtn" class="btn-link">Refresh</button>
+            </div>
+          </details>
+        </div>
       </div>
 
-      <div class="grid-wrap">
-        <div class="toolbar">
-          <span class="pill meta" id="testMeta">No test loaded</span>
-          <input id="testName" class="input-field" placeholder="Test name (e.g., Brown Midterm)" style="max-width:280px;" />
-          <input id="testDate" class="input-field" type="date" />
-          <span id="computedIndicator" class="pill meta" title="Toggle via right-click menu on the grid header">Computed: Locked</span>
-          <div class="spacer"></div>
-          <button id="addColumnBtn" class="layout-btn">+ Column</button>
-          <button id="importTableBtn" class="layout-btn">Import from Table</button>
-          <button id="saveBtn" class="extract-btn">Save</button>
-          <button id="exportCsvBtn" class="layout-btn">Export CSV</button>
-        </div>
+  <div class="grid-wrap">
         <div class="sheet">
           <table class="grid" id="grid">
             <thead id="gridHead"></thead>
@@ -125,12 +154,13 @@
     await ensureBurgerMenuTemplate();
     insertBurgerMenu('#burger-menu-mount');
   </script>
-  <script type="module" src="./test_input.js"></script>
+  <script type="module" src="./test_input.js?v=20251015-rc3"></script>
   <style>
     /* Selection styling */
     td.cell-selected { outline:2px solid #60a5fa; background:#eff6ff; }
     #gridMenu div:hover { background:#f1f5f9; }
     #colMenu div:hover { background:#f1f5f9; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   </style>
 
   <!-- Create Campaign Modal -->
@@ -138,8 +168,8 @@
     <div style="background:#fff; width:96vw; max-width:640px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px 16px 12px;">
       <h3 style="margin:4px 0 10px;">Create Test for Classes</h3>
       <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
-        <input id="campaignName" class="input-field" placeholder="Test name (e.g., October 2025 Test)" style="flex:1;" />
-        <input id="campaignDate" type="date" class="input-field" />
+        <input id="campaignName" class="input-field" placeholder="Test name (e.g., October 2025 Test)" style="flex:1 1 auto; min-width:0;" />
+        <input id="campaignDate" type="date" class="input-field" style="flex:0 0 150px; max-width:150px;" />
       </div>
       <div class="note" style="margin-bottom:8px;">Select classes to include. You can edit maxima per class after creating.</div>
       <div id="campaignClassList" style="max-height:40vh; overflow:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; padding:6px; border:1px solid #e5e7eb; border-radius:8px;"></div>
@@ -157,9 +187,24 @@
     </div>
   </div>
 
+  <!-- Load Test Modal -->
+  <div id="loadModalBg" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.35); z-index:3002; align-items:center; justify-content:center;">
+    <div style="background:#fff; width:min(96vw, 900px); max-height:90vh; overflow:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:14px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <strong style="flex:1;">Load Test</strong>
+        <button id="loadCloseBtn" class="clear-btn">Close</button>
+      </div>
+      <input id="loadSearch" class="input-field" placeholder="Search by name, date, or class…" />
+      <div id="loadList" style="display:grid; grid-template-columns:1fr; gap:8px;">
+        <!-- populated by script -->
+      </div>
+      <div id="loadMsg" class="note"></div>
+    </div>
+  </div>
+
   <!-- Import From Table Modal -->
   <div id="importModalBg" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.35); z-index:3001; align-items:center; justify-content:center;">
-    <div style="background:#fff; width:min(96vw, 980px); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px 16px 12px; display:flex; flex-direction:column; gap:10px; position:relative;">
+  <div style="background:#fff; width:min(96vw, 980px); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px 16px 12px; display:flex; flex-direction:column; gap:10px; position:relative;">
       <button id="importCloseX" style="position:absolute; top:6px; right:8px; background:none; border:none; font-size:20px; line-height:1; cursor:pointer; color:#475569;" aria-label="Close import">&times;</button>
       <h3 style="margin:4px 24px 6px 0;">Import Scores from Pasted Table</h3>
       <div class="note">Paste the table exactly as copied from your sheet (with headers). We'll detect classes, columns, and scores automatically. You can adjust the test name and date before import.</div>
@@ -182,6 +227,12 @@
         <table id="importPreview" class="grid" style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px;"></table>
       </div>
       <div id="importMsg" class="note"></div>
+      <div id="importBusy" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.75); border-radius:16px; align-items:center; justify-content:center;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <div style="width:36px; height:36px; border-radius:50%; border:3px solid #93c5fd; border-top-color:#2563eb; animation: spin 0.8s linear infinite;"></div>
+          <div class="note">Importing…</div>
+        </div>
+      </div>
     </div>
   </div>
 

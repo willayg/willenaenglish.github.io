@@ -2,8 +2,8 @@
 @page { size: A4; margin: 0; }
 
 :root {
-  --rc-navy: #2c2f44;           /* header bg */
-  --rc-navy-2: #373b53;         /* alt navy */
+  --rc-navy: #064569;           /* header bg */
+  --rc-navy-2: #4e5472;         /* alt navy */
   --rc-accent: #41b7cd;         /* bars */
   --rc-accent-2: #bfe7ee;       /* light background elements */
   --rc-line: #cfe1ea;           /* underlines and grid */
@@ -124,21 +124,65 @@ html, body { font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system,
 .rc-skill .rc-bar .rc-pct { position: static; display: inline-block; font-weight: 800; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.08); font-size: 10pt; pointer-events: none; line-height: 1; }
 .rc-skill .rc-score { text-align: right; font-weight: 800; color: #4b5563; font-size: 9.5pt; }
 
-.rc-total-wrap { display: grid; grid-template-columns: 18mm 1fr auto; align-items: baseline; margin-top: 4mm; }
-.rc-total-label { text-align: left; font-weight: 900; font-size: 24pt; color: #4b5563; }
+.rc-total-wrap {
+  display: grid;
+  grid-template-columns: max-content 1fr auto;
+  column-gap: 4mm;
+  align-items: baseline;
+  margin-top: 4mm;
+}
+.rc-total-label {
+  text-align: left;
+  font-weight: 900;
+  font-size: 24pt;
+  color: #4b5563;
+  margin-right: 10px;
+}
 .rc-total { font-size: 32pt; font-weight: 900; color: var(--rc-text); letter-spacing: 0.2px; color: #4b5563; }
 .rc-total-sum { font-size: 16pt; font-weight: 800; color: #4b5563; }
 
 /* Library gauges */
-.rc-library { display: grid; gap: 9mm; }
-.rc-lib-item { display: grid; grid-template-columns: 28mm 1fr; align-items: center; gap: 6mm; }
-.rc-grade-big { font-weight: 900; font-size: 28pt; color: var(--rc-text); text-align: center; }
+.rc-library { display: grid; gap: 9mm; justify-items: center; }
+/* Each item stacked: gauge on top, label below; centered */
+.rc-lib-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3mm;
+  text-align: center;
+}
+
+/* Gauge container (semi-circle) */
+.rc-gauge {
+  position: relative;
+  width: 28mm;
+  height: 18mm; /* half circle height */
+}
+.rc-gauge svg { width: 100%; height: 100%; display: block; }
+.rc-gauge .arc-track { stroke: var(--rc-accent-2); stroke-width: 12; fill: none; stroke-linecap: round; opacity: 1; }
+.rc-gauge .arc-fill  { stroke: var(--rc-accent);   stroke-width: 12; fill: none; stroke-linecap: round; transform-origin: 50% 100%; }
+/* Center grade */
+.rc-gauge .grade-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 94% !important;
+  transform: translateY(-100%) !important;
+  text-align: center;
+  font-weight: 900;
+  color:#1f2937;
+  font-size: 20pt;
+  color: var(--rc-text);
+}
+
+/* Label stack to the right */
+.rc-lib-text { text-align: center; }
 .rc-lib-text .rc-g-label { font-weight: 900; color: var(--rc-text); font-size: 11pt; letter-spacing: 0.2px; }
 .rc-lib-text .rc-g-sub { color: var(--rc-muted); font-size: 9pt; margin-top: 1mm; text-transform: uppercase; letter-spacing: 0.3px; }
 
 /* Comments */
 .rc-comments-head { background: var(--rc-navy); color: #fff; width: 170mm; font-weight: 900; font-size: 9.5pt; letter-spacing: 0.6px; text-transform: uppercase; padding: 3mm 5mm; margin-top: 6mm; border-radius: 0; }
-.rc-comments { margin-top: 3mm; line-height: 1.6; color: #4b5563; font-size: 10pt; text-align: justify; }
+.rc-comments { width: 180mm; margin-top: 3mm; line-height: 1.6; color: #4b5563; font-size: 10pt; text-align: justify; }
 
 /* Modal preview spacing */
 #rcCardsContainer { display: grid; gap: 8mm; }
