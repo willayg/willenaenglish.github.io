@@ -302,6 +302,12 @@ export function setupChoiceButtons(root = document, options = {}) {
   const buttons = root.querySelectorAll('.choice-btn');
   let locked = false;
   buttons.forEach(btn => {
+    // Skip if already set up (prevents duplicate listeners when called multiple times)
+    if (btn.dataset.choiceBtnSetup === 'true') return;
+    
+    // Mark button as set up
+    btn.dataset.choiceBtnSetup = 'true';
+    
     // Extra JS press animation for mobile consistency
     btn.onmousedown = () => { if (!locked) btn.style.transform = 'scale(0.97)'; };
     const reset = () => { btn.style.transform = 'scale(1)'; };
