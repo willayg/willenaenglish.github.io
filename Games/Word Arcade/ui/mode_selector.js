@@ -264,13 +264,23 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     </div>`;
   };
   // Create a single list of modes in the order shown in the image
-  const modes = [
-  { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
-  { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
-  { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
-  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
-  { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
-  { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
+  // Check if this is a phonics list to show different modes
+  const isPhonics = (window.WordArcade && typeof window.WordArcade.getListName === 'function') 
+    ? (window.WordArcade.getListName() || '').toLowerCase().includes('sound')
+    : false;
+  
+  const modes = isPhonics ? [
+    { id: 'listen', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+    { id: 'read', title: 'Read & Find', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
+    { id: 'missing_letter', title: 'Missing Letter', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
+    { id: 'spelling', title: 'Spell It Out', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
+  ] : [
+    { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
+    { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+    { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
+    { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
+    { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
+    { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
   ];
 
   // Neutralized medals logic: always show zero earned (skeleton retained for future redesign)
