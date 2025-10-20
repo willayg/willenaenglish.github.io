@@ -9,6 +9,7 @@ import { renderGameView } from './ui/game_view.js';
 import { showModeModal } from './ui/mode_modal.js';
 import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
+import { showPhonicsModal } from './ui/phonics_modal.js';
 import { FN } from './scripts/api-base.js';
 // Review manager (provenance + enrichment for review attempts)
 // Legacy review manager (kept for rollback) not needed for new flow.
@@ -527,6 +528,26 @@ const modeLoaders = {
   time_battle:    () => import('./modes/time_battle.js').then(m => m.run),
 };
 
+// Load and start a phonics game
+async function loadPhonicsGame({ listFile, mode, listName }) {
+  try {
+    // Fetch the word list from the phonics-lists folder
+    const response = await fetch(`./phonics-lists/short-vowels/${listFile.split('/').pop()}`);
+    if (!response.ok) throw new Error(`Failed to load ${listFile}`);
+    
+    const wordData = await response.json();
+    wordList = Array.isArray(wordData) ? wordData : [];
+    currentListName = listName || 'Phonics List';
+    
+    // Start the game with the specified phonics mode
+    await startGame(mode);
+  } catch (error) {
+    console.error('Error loading phonics list:', error);
+    inlineToast(`Error loading list: ${error.message}`);
+    showOpeningButtons(true);
+  }
+}
+
 export async function startGame(mode = 'meaning') {
   showOpeningButtons(false);
   if (!wordList.length) { showOpeningButtons(true); gameArea.innerHTML = ''; return; }
@@ -794,8 +815,25 @@ function showLevelsMenu() {
     });
   }
   
-  // Level 0 and Levels 2-5 - Coming Soon
-  [0, 2, 3, 4, 5].forEach(level => {
+  // Level 0 (Phonics) - shows the phonics modal
+  const level0Btn = document.getElementById('level0Btn');
+  if (level0Btn) {
+    // Clone and replace to remove any old listeners
+    const newLevel0Btn = level0Btn.cloneNode(true);
+    level0Btn.replaceWith(newLevel0Btn);
+    newLevel0Btn.addEventListener('click', () => {
+      showPhonicsModal({
+        onChoose: (data) => {
+          // data = { listFile, mode, listName }
+          loadPhonicsGame(data);
+        },
+        onClose: () => {}
+      });
+    });
+  }
+  
+  // Levels 2-5 - Coming Soon
+  [2, 3, 4, 5].forEach(level => {
     const btn = document.getElementById(`level${level}Btn`);
     if (btn) {
       // Clone and replace to remove any old listeners
