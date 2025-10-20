@@ -526,6 +526,10 @@ const modeLoaders = {
   multi_choice:   () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
   level_up:       () => import('./modes/level_up.js').then(m => m.runLevelUpMode),
   time_battle:    () => import('./modes/time_battle.js').then(m => m.run),
+  // Phonics modes (using existing modes for now, will create specific phonics versions later)
+  listen:         () => import('./modes/listening.js').then(m => m.runListeningMode),
+  read:           () => import('./modes/picture.js').then(m => m.runPictureMode),
+  missing_letter: () => import('./modes/listen_and_spell.js').then(m => m.runListenAndSpellMode),
 };
 
 // Load and start a phonics game
@@ -538,9 +542,10 @@ async function loadPhonicsGame({ listFile, mode, listName }) {
     const wordData = await response.json();
     wordList = Array.isArray(wordData) ? wordData : [];
     currentListName = listName || 'Phonics List';
+    currentMode = mode || 'listening'; // Set the selected phonics mode
     
-    // Start the game with the specified phonics mode
-    await startGame(mode);
+    // Show the mode selector so user can see the available phonics modes
+    renderModeSelector({});
   } catch (error) {
     console.error('Error loading phonics list:', error);
     inlineToast(`Error loading list: ${error.message}`);
@@ -737,12 +742,11 @@ function showLevelsMenu() {
   const level5Color = levelColors[2]; // orange
   
   openingButtons.innerHTML = `
-    <button id="level0Btn" class="wa-option wa-option-card wa-level-0 wa-level-inactive" type="button" style="border-color: ${level0Color}; opacity: 0.6;">
+    <button id="level0Btn" class="wa-option wa-option-card wa-level-0" type="button" style="border-color: ${level0Color};">
       <div class="abc-playful" style="--c1: ${abcColors[0]}; --c2: ${abcColors[1]}; --c3: ${abcColors[2]};">
         <span style="color: ${abcColors[0]};">A</span><span style="color: ${abcColors[1]};">B</span><span style="color: ${abcColors[2]};">C</span>
       </div>
       <span style="color: ${level0Color};" data-i18n="Level 0: Phonics">Level 0: Phonics</span>
-      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
     </button>
     <button id="level1Btn" class="wa-option wa-option-card wa-level-1" type="button" style="border-color: ${level1Color};">
       <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 1" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
