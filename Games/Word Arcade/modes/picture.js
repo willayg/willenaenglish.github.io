@@ -83,7 +83,7 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
   let questionLocked = false;
     if (idx >= ordered.length) {
       playSFX('end');
-      endSession(sessionId, { mode: 'picture', summary: { score, total: ordered.length } });
+  endSession(sessionId, { mode: 'picture', summary: { score, total: ordered.length, completed: true }, listName, wordList: ordered });
       hideGameProgress();
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Picture Mode Complete!</h2>

@@ -219,7 +219,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const isReview = listName === 'Review List' || (window.WordArcade?.getListName?.() === 'Review List');
 
   // Grouped items in requested order
-  const labelWithBest = (id, svgPath, title, colorClass) => {
+  const labelWithBest = (id, svgPath, title, colorClass, textIcon, textColor) => {
     const key = id.toLowerCase();
     const best = bestByMode[key];
     // If no data, show 0% (per request)
@@ -230,7 +230,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     // In Review mode, don't show any stats - just the icon
     if (isReview) {
       return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div><img src="${svgPath}" alt="${id}" style="width:120px;height:120px;" /></div>
+        <div>${textIcon ? `<div style="font-size:64px;font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}" style="width:120px;height:120px;" />`}</div>
       </div>`;
     }
     
@@ -260,20 +260,24 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
         <div class="star-row">${starsHtml}</div>
     <div>${meta}</div>
       </div>
-      <div class="mode-icon"><img src="${svgPath}" alt="${id}"/></div>
+      <div class="mode-icon">${textIcon ? `<div style="font-size:64px;font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}"/>`}</div>
     </div>`;
   };
   // Create a single list of modes in the order shown in the image
-  // Check if this is a phonics list to show different modes
-  const isPhonics = (window.WordArcade && typeof window.WordArcade.getListName === 'function') 
-    ? (window.WordArcade.getListName() || '').toLowerCase().includes('sound')
-    : false;
+  // Check if this is a phonics list to show different modes.
+  // Prefer a global flag set by the phonics loader, fallback to name heuristic.
+  const isPhonics = (window.__WA_IS_PHONICS__ === true) || (
+    (window.WordArcade && typeof window.WordArcade.getListName === 'function')
+      ? ((window.WordArcade.getListName() || '').toLowerCase().includes('sound'))
+      : false
+  );
   
   const modes = isPhonics ? [
-    { id: 'listen', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
-    { id: 'read', title: 'Read & Find', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
-    { id: 'missing_letter', title: 'Missing Letter', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
-    { id: 'spelling', title: 'Spell It Out', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
+    // Use existing mode ids so colors and loaders work out-of-the-box
+    { id: 'missing_letter', title: 'Missing Letter', icon: null, textIcon: 'C _ _', colorClass: 'browse', textColor: '#ff1493' },
+    { id: 'listening', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+    { id: 'multi_choice',   title: 'Read & Find',   icon: './assets/Images/icons/reading.png?v=20250910a',   colorClass: 'basic' },
+    { id: 'listen_and_spell',  title: 'Spell It Out',  icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
   ] : [
     { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
     { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
@@ -293,8 +297,49 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   btn.className = 'mode-btn mode-card';
   btn.setAttribute('data-mode', m.id);
   btn.dataset.modeId = m.id; // keep legacy data-modeId for any existing code
-    btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass);
+    btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
     btn.onclick = () => onModeChosen && onModeChosen(m.id);
     listContainer.appendChild(btn);
   });
+
+  // Add "Main Menu" button at the bottom
+  const mainMenuBtn = document.createElement('button');
+  mainMenuBtn.className = 'mode-btn mode-card main-menu-btn';
+  mainMenuBtn.style.cssText = `
+    margin-top: 24px;
+    margin-bottom: 48px;
+    background: linear-gradient(135deg, #19777e 0%, #137f8c 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 18px 32px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 4px 12px rgba(25, 119, 126, 0.25);
+  `;
+  mainMenuBtn.innerHTML = `<span data-i18n="Main Menu">Main Menu</span>`;
+  mainMenuBtn.onclick = () => {
+    if (window.WordArcade && typeof window.WordArcade.quitToOpening === 'function') {
+      window.WordArcade.quitToOpening(true);
+    } else {
+      // Fallback: navigate to main opening view
+      if (typeof showOpeningButtons === 'function') {
+        showOpeningButtons(true);
+      }
+    }
+  };
+
+  // Add hover effects
+  mainMenuBtn.addEventListener('mouseenter', () => {
+    mainMenuBtn.style.transform = 'translateY(-2px)';
+    mainMenuBtn.style.boxShadow = '0 6px 16px rgba(25, 119, 126, 0.35)';
+  });
+  mainMenuBtn.addEventListener('mouseleave', () => {
+    mainMenuBtn.style.transform = 'translateY(0)';
+    mainMenuBtn.style.boxShadow = '0 4px 12px rgba(25, 119, 126, 0.25)';
+  });
+
+  listContainer.appendChild(mainMenuBtn);
 }

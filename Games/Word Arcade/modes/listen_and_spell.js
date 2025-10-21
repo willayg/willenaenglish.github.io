@@ -79,7 +79,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
   function renderQuestion() {
     if (idx >= ordered.length) {
       playSFX('end');
-      endSession(sessionId, { mode: 'listen_and_spell', summary: { score, max: ordered.length * 2 } });
+  endSession(sessionId, { mode: 'listen_and_spell', summary: { score, max: ordered.length * 2, completed: true }, listName, wordList: ordered });
       hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>

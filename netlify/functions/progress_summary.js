@@ -135,6 +135,7 @@ exports.handler = async (event) => {
         supabase
           .from('progress_sessions')
           .select('session_id, mode, list_name, started_at, ended_at, summary')
+          .not('ended_at', 'is', null) // only completed sessions
       );
 
       if (list_name) query = query.eq('list_name', list_name);
@@ -361,6 +362,7 @@ exports.handler = async (event) => {
 
       const isPerfect = (sumRaw) => {
         const s = parseSummary(sumRaw) || {};
+        if (s.completed === false) return false;
         if (s.accuracy === 1 || s.perfect === true) return true;
         if (typeof s.score === 'number' && typeof s.total === 'number') return s.score >= s.total;
         if (typeof s.score === 'number' && typeof s.max === 'number') return s.score >= s.max;
@@ -432,6 +434,8 @@ exports.handler = async (event) => {
         const mode = s.mode || '';
         const key = `${list}||${mode}`;
         const parsed = parseSummary(s.summary);
+        // Ignore incomplete sessions for stars
+        if (parsed && parsed.completed === false) return;
         const stars = deriveStars(parsed);
         const prev = starsByListMode.get(key) || 0;
         const becameBest = stars > prev;
