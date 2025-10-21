@@ -60,6 +60,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   function getPicturable(list) {
     return list.filter(w => {
       if (!w || !w.eng) return false;
+      // Check for emoji field (phonics)
+      if (w.emoji && isEmojiSupported(w.emoji)) return true;
       if (isSampleList) {
         const em = getEmojiFor(w.eng);
         return em && isEmojiSupported(em);
@@ -68,9 +70,13 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
     });
   }
   function tileHtml(w) {
+    // Check emoji field first (phonics)
+    if (w.emoji && isEmojiSupported(w.emoji)) {
+      return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(2.5rem,8vw,3.8rem);line-height:1;\">${w.emoji}</div>`;
+    }
     if (isSampleList) {
       const em = getEmojiFor(w.eng) || '❓';
-      return `<div style=\"font-size:3.2rem;line-height:1;\">${em}</div>`;
+      return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(2.5rem,8vw,3.8rem);line-height:1;\">${em}</div>`;
     }
     const src = (w.image_url || w.image || w.img).trim();
     ensureImageStyles();
@@ -108,7 +114,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   questionLocked = false;
     if (idx >= shuffled.length) {
       playSFX('end');
-      endSession(sessionId, { mode: 'listening', summary: { score, total: shuffled.length } });
+  endSession(sessionId, { mode: 'listening', summary: { score, total: shuffled.length, completed: true }, listName, wordList: shuffled });
       hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#41b6beff;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
@@ -152,10 +158,9 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
         const shuffledChoices = choices.sort(() => Math.random() - 0.5);
         gameArea.innerHTML = `
           <div class="listening-game" style="max-width:640px;margin:0 auto;">
-            <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the picture:</div>
-            <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
+            <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:16px;max-width:100%;margin:0 auto 18px auto;padding:0 12px;">
               ${shuffledChoices.map(ch => `
-                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:28vh;display:flex;align-items:center;justify-content:center;">
+                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;min-height:140px;">
                   ${tileHtml(ch)}
                 </button>
               `).join('')}
@@ -207,10 +212,9 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
     const shuffledKor = choices.sort(() => Math.random() - 0.5);
 
     gameArea.innerHTML = `<div class="listening-game" style="max-width:640px;margin:0 auto;">
-      <div id="listening-instructions" style="margin-bottom:18px;text-align:center;font-size:1.1em;color:#19777e;">Listen and choose the correct Korean translation:</div>
-      <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(2, minmax(160px, 1fr));gap:16px;max-width:540px;margin:0 auto 18px auto;">
+      <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:12px;max-width:100%;margin:0 auto 18px auto;padding:0 12px;">
         ${shuffledKor.map(kor => `
-            <button class="listening-choice choice-btn" data-kor="${kor}" ${kor === current.kor ? 'data-correct="1"' : ''} style="height:18vh;">
+            <button class="listening-choice choice-btn" data-kor="${kor}" ${kor === current.kor ? 'data-correct="1"' : ''} style="height:auto;min-height:80px;display:flex;align-items:center;justify-content:center;">
             ${kor}
           </button>
         `).join('')}

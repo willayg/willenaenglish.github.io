@@ -267,6 +267,7 @@ function clearCurrentGameState({ keepWordList = false } = {}) {
     wordList = [];
     currentListName = null;
     clearSessionState();
+    try { delete window.__WA_IS_PHONICS__; } catch {}
   }
   currentMode = null;
   // Clear UI surface
@@ -436,8 +437,14 @@ async function processWordlist(data) {
       try { saveSessionState(); } catch {}
       startModeSelector();
       // One-time deferred re-render if header/title or stats didn't populate yet
+      // (only needed for edge case where list name wasn't set before audio preload finished)
+      // Mark that we've already rendered to prevent duplicate mode cards
+      const alreadyRendered = !!currentListName;
       setTimeout(() => {
         try {
+          // Skip deferred re-render if we already had a list name at first render time
+          if (alreadyRendered) return;
+          
           const headerTitle = document.querySelector('#modeHeader .file-title');
           const needsRerender = !headerTitle || !headerTitle.textContent || /Word List/i.test(headerTitle.textContent);
           if (currentListName && needsRerender) {
@@ -465,6 +472,8 @@ async function loadSampleWordlistByFilename(filename, { force = false } = {}) {
     if (force || (Array.isArray(wordList) && wordList.length)) {
       try { clearCurrentGameState({ keepWordList: false }); } catch {}
     }
+
+    try { window.__WA_IS_PHONICS__ = false; } catch {}
 
     currentListName = filename || 'Sample List';
     // Attempt primary fetch plus fallback variants for names with spaces vs underscores/hyphens
@@ -528,24 +537,28 @@ const modeLoaders = {
   time_battle:    () => import('./modes/time_battle.js').then(m => m.run),
   // Phonics modes (using existing modes for now, will create specific phonics versions later)
   listen:         () => import('./modes/listening.js').then(m => m.runListeningMode),
-  read:           () => import('./modes/picture.js').then(m => m.runPictureMode),
-  missing_letter: () => import('./modes/listen_and_spell.js').then(m => m.runListenAndSpellMode),
+  // Read & Find should be textual read (multi_choice) for phonics; picture mode remains available separately
+  read:           () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
+  // True missing-letter mode (new)
+  missing_letter: () => import('./modes/missing_letter.js').then(m => m.runMissingLetterMode),
 };
 
 // Load and start a phonics game
 async function loadPhonicsGame({ listFile, mode, listName }) {
   try {
-    // Fetch the word list from the phonics-lists folder
-    const response = await fetch(`./phonics-lists/short-vowels/${listFile.split('/').pop()}`);
+  // Fetch the word list using the provided relative path
+  const response = await fetch(`./${listFile}`);
     if (!response.ok) throw new Error(`Failed to load ${listFile}`);
     
     const wordData = await response.json();
-    wordList = Array.isArray(wordData) ? wordData : [];
+    // Mark this as a phonics flow so the mode selector can show phonics modes/colors
+    window.__WA_IS_PHONICS__ = true;
+    // Set list name before processing so it's persisted alongside the words
     currentListName = listName || 'Phonics List';
-    currentMode = mode || 'listening'; // Set the selected phonics mode
-    
-    // Show the mode selector so user can see the available phonics modes
-    renderModeSelector({});
+    // Use the standard processing pipeline so we normalize, preload audio, and SAVE session state
+    await processWordlist(Array.isArray(wordData) ? wordData : []);
+    // If a mode was preselected, jump straight in; otherwise the processor already opened the mode selector
+    if (mode) { currentMode = mode; startGame(mode); }
   } catch (error) {
     console.error('Error loading phonics list:', error);
     inlineToast(`Error loading list: ${error.message}`);
@@ -678,6 +691,7 @@ async function openSavedGameById(id) {
       inlineToast('This saved game has no words.');
       return;
     }
+    try { window.__WA_IS_PHONICS__ = false; } catch {}
     currentListName = row.title || 'Saved Game';
     console.log('[WordArcade] Before normalization, sample words:', mapped.slice(0,3).map(w => ({
       eng: w.eng,
@@ -743,9 +757,7 @@ function showLevelsMenu() {
   
   openingButtons.innerHTML = `
     <button id="level0Btn" class="wa-option wa-option-card wa-level-0" type="button" style="border-color: ${level0Color};">
-      <div class="abc-playful" style="--c1: ${abcColors[0]}; --c2: ${abcColors[1]}; --c3: ${abcColors[2]};">
-        <span style="color: ${abcColors[0]};">A</span><span style="color: ${abcColors[1]};">B</span><span style="color: ${abcColors[2]};">C</span>
-      </div>
+      <img src="./assets/Images/icons/0abc.svg" alt="Level 0" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level0Color};" data-i18n="Level 0: Phonics">Level 0: Phonics</span>
     </button>
     <button id="level1Btn" class="wa-option wa-option-card wa-level-1" type="button" style="border-color: ${level1Color};">
@@ -753,22 +765,22 @@ function showLevelsMenu() {
       <span style="color: ${level1Color};" data-i18n="Level 1: Easy">Level 1: Easy</span>
     </button>
     <button id="level2Btn" class="wa-option wa-option-card wa-level-2 wa-level-inactive" type="button" style="border-color: ${level2Color}; opacity: 0.6;">
-      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 2" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <img src="./assets/Images/icons/2leaf.svg" alt="Level 2" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level2Color};" data-i18n="Level 2">Level 2</span>
       <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
     </button>
     <button id="level3Btn" class="wa-option wa-option-card wa-level-3 wa-level-inactive" type="button" style="border-color: ${level3Color}; opacity: 0.6;">
-      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 3" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <img src="./assets/Images/icons/3blue-flower.svg" alt="Level 3" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level3Color};" data-i18n="Level 3">Level 3</span>
       <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
     </button>
     <button id="level4Btn" class="wa-option wa-option-card wa-level-4 wa-level-inactive" type="button" style="border-color: ${level4Color}; opacity: 0.6;">
-      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 4" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <img src="./assets/Images/icons/4green-butterfly.svg" alt="Level 4" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level4Color};" data-i18n="Level 4">Level 4</span>
       <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
     </button>
     <button id="level5Btn" class="wa-option wa-option-card wa-level-5 wa-level-inactive" type="button" style="border-color: ${level5Color}; opacity: 0.6;">
-      <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 5" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <img src="./assets/Images/icons/5blue-bird.svg" alt="Level 5" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level5Color};" data-i18n="Level 5">Level 5</span>
       <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
     </button>
@@ -949,6 +961,7 @@ async function loadChallengingAndStart() {
 }
 
 function startNewReviewCombined(chosenWords) {
+  try { window.__WA_IS_PHONICS__ = false; } catch {}
   // Clear any active mode and render into gameArea directly (no mode selector)
   destroyModeIfActive();
   showOpeningButtons(false);

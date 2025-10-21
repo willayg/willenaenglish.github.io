@@ -47,6 +47,8 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
   await loadEmojiMappings();
   const isPicturable = (w) => {
     if (!w || !w.eng) return false;
+    // Check if word has emoji field (phonics)
+    if (w.emoji && isEmojiSupported(w.emoji)) return true;
     if (isSampleList) {
       const emoji = emojiMap[String(w.eng).toLowerCase()];
       return emoji && isEmojiSupported(emoji);
@@ -59,29 +61,37 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
   const hasPicturable = picturable.length >= 4;
 
   const getTileHtml = (w) => {
+    // Check word's own emoji field first (phonics lists)
+    if (w.emoji && isEmojiSupported(w.emoji)) {
+      return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(2.5rem,8vw,3.8rem);line-height:1;\">${w.emoji}</div>`;
+    }
     if (isSampleList) {
       const emoji = emojiMap[String(w.eng).toLowerCase()];
       if (emoji && isEmojiSupported(emoji)) {
-        return `<div style=\"font-size:3.2rem;line-height:1;\">${emoji}</div>`;
+        return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(2.5rem,8vw,3.8rem);line-height:1;\">${emoji}</div>`;
       }
       const fallbackLabel = w.kor || w.eng || '?';
-      return `<div style=\"font-size:clamp(1rem,2.8vw,1.3rem);line-height:1.15;font-weight:600;padding:4px;\">${fallbackLabel}</div>`;
+      return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(1rem,2.8vw,1.3rem);line-height:1.15;font-weight:600;padding:4px;\">${fallbackLabel}</div>`;
     }
     const hasImg = w.img && String(w.img).trim() && String(w.img).toLowerCase() !== 'null' && String(w.img).toLowerCase() !== 'undefined';
     if (hasImg) {
       const safe = String(w.img).trim();
   ensureImageStyles();
-  return `<div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:40vw;\"><img src='${safe}' alt='${w.eng}' onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';\"></div><div style=\"display:none;font-size:clamp(.9rem,2.6vw,1.2rem);line-height:1.15;font-weight:600;padding:4px;align-items:center;justify-content:center;text-align:center;\">${w.kor || w.eng || '?'}</div>`;
+  return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;\"><div class=\"wa-img-box wa-4x3 rounded shadow\" style=\"max-width:90%;max-height:90%;\"><img src='${safe}' alt='${w.eng}' style=\"max-width:100%;max-height:100%;object-fit:cover;\" onerror=\"this.onerror=null;this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';\"></div><div style=\"display:none;font-size:clamp(.9rem,2.6vw,1.2rem);line-height:1.15;font-weight:600;padding:4px;align-items:center;justify-content:center;text-align:center;\">${w.kor || w.eng || '?'}</div></div>`;
     }
     const emoji = emojiMap[String(w.eng).toLowerCase()];
     if (emoji && isEmojiSupported(emoji)) {
-      return `<div style=\"font-size:3.2rem;line-height:1;\">${emoji}</div>`;
+      return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(2.5rem,8vw,3.8rem);line-height:1;\">${emoji}</div>`;
     }
-    return `<div style=\"font-size:clamp(1rem,2.8vw,1.3rem);line-height:1.15;font-weight:600;padding:4px;\">${w.kor || w.eng || '?'} </div>`;
+    return `<div style=\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(1rem,2.8vw,1.3rem);line-height:1.15;font-weight:600;padding:4px;\">${w.kor || w.eng || '?'}</div>`;
   };
 
   const getPromptTileHtml = (w) => {
     // For a single prompt image/emoji (larger)
+    // Check word's own emoji field first (phonics lists)
+    if (w.emoji && isEmojiSupported(w.emoji)) {
+      return `<div style=\"font-size:4rem;line-height:1;\">${w.emoji}</div>`;
+    }
     if (isSampleList) {
       const emoji = emojiMap[String(w.eng).toLowerCase()];
       if (emoji && isEmojiSupported(emoji)) {
@@ -127,7 +137,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
   let questionLocked = false;
     if (idx >= shuffled.length) {
       playSFX('end');
-      endSession(sessionId, { mode: 'multi_choice', summary: { score, total: shuffled.length } });
+  endSession(sessionId, { mode: 'multi_choice', summary: { score, total: shuffled.length, completed: true }, listName, wordList: shuffled });
       hideGameProgress();
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Game Complete!</h2>
@@ -184,12 +194,12 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
       const distractors = pickN(picturable.filter(w => w !== current), 3);
       const choices = [current, ...distractors].sort(() => Math.random() - 0.5);
       gameArea.innerHTML = `
-        <div style="padding:16px 16px 6px;text-align:center;">
+        <div style="padding:16px 12px 6px;text-align:center;">
           <div style="font-size:clamp(0.95em,2.6vw,1.1em);color:#555;margin-bottom:6px;">Pick the picture</div>
           <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:12px;">${current.eng}</div>
-          <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(180px, 1fr));gap:14px;max-width:min(94vw, 560px);margin:0 auto 10px auto;">
+          <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:12px;max-width:100%;margin:0 auto 10px auto;padding:0 4px;">
             ${choices.map(ch => `
-              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="height:auto;min-height:120px;padding:1px;display:flex;align-items:center;justify-content:center;">
+              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="aspect-ratio:1;min-height:120px;padding:8px;display:flex;align-items:center;justify-content:center;">
                 ${getTileHtml(ch)}
               </button>
             `).join('')}

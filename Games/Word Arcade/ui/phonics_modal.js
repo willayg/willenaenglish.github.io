@@ -136,6 +136,7 @@ export function showPhonicsModal({ onChoose, onClose }) {
       label: 'Sound Starters',
       emoji: '🎵',
       sublabel: 'Short Vowel Sounds',
+      folder: 'short-vowels',
       lists: [
         { label: 'Short A Sound', file: 'short-a.json', emoji: '🐱' },
         { label: 'Short E Sound', file: 'short-e.json', emoji: '🥚' },
@@ -149,6 +150,7 @@ export function showPhonicsModal({ onChoose, onClose }) {
       label: 'Long Sound Builders',
       emoji: '📖',
       sublabel: 'Long Vowel Sounds',
+      folder: 'long-vowels',
       lists: [
         { label: 'Long A Sound', file: 'long-a.json', emoji: '🍰' },
         { label: 'Long E Sound', file: 'long-e.json', emoji: '🐝' },
@@ -162,19 +164,21 @@ export function showPhonicsModal({ onChoose, onClose }) {
       label: 'Blend Masters',
       emoji: '⚡',
       sublabel: 'Consonant Blends & Clusters',
+      folder: 'consonant-blends',
       lists: [
         { label: 'Blend: BL, BR', file: 'blend-br-bl.json', emoji: '🎈' },
         { label: 'Blend: CL, CR', file: 'blend-cr-cl.json', emoji: '☁️' },
         { label: 'Blend: DR, FL, FR', file: 'blend-dr-fl-fr.json', emoji: '🌸' },
         { label: 'Blend: GL, GR', file: 'blend-gr-gl.json', emoji: '🍇' },
-        { label: 'Blend: PL, PR, SC', file: 'blend-pl-pr-sc.json', emoji: '🌳' },
-        { label: 'Blend: SK, SL, SM, SN, SP, ST, SW', file: 'blend-sk-st-etc.json', emoji: '⭐' },
+        { label: 'Blend: PL, PR', file: 'blend-pl-pr-sc.json', emoji: '🌳' },
+        { label: 'Blend: SK, SL, SM, SN, SP, ST, SW', file: 'blend-sk-sl-sm-sn-sp-st-sw.json', emoji: '⭐' },
         { label: 'Blend: TR, TW', file: 'blend-tr-tw.json', emoji: '🎄' }
       ]
     }
   ];
 
   // Phonics Modes
+  // We will reuse the global mode selector UI; keep this for future use
   const phonic_modes = [
     { id: 'listen', label: 'Listen & Pick', emoji: '👂', desc: 'Hear the word, choose the picture' },
     { id: 'read', label: 'Read & Find', emoji: '👀', desc: 'See the word, find the picture' },
@@ -255,60 +259,27 @@ export function showPhonicsModal({ onChoose, onClose }) {
       btn.onclick = () => {
         const itemIndex = Number(btn.getAttribute('data-idx'));
         const selectedList = category.lists[itemIndex];
-        renderModeMenu(selectedList);
+        renderModeMenu(selectedList, category);
       };
     });
 
     modal.style.display = 'flex';
   }
 
-  function renderModeMenu(listItem) {
-    modal.innerHTML = `
-      <div class="phonics-modal-container">
-        <div class="phonics-modal-header">
-          <span>${listItem.label}</span>
-          <button class="phonics-modal-close" id="phonicsCloseX" title="Close">✕</button>
-        </div>
-        <div class="phonics-modal-list" id="phononicsModeList"></div>
-        <div class="phonics-modal-buttons">
-          <button class="phonics-modal-btn phonics-modal-btn-back" id="phonicsBack">← Back</button>
-          <button class="phonics-modal-btn phonics-modal-btn-cancel" id="phonicsCancel" data-i18n="Cancel">Cancel</button>
-        </div>
-      </div>
-    `;
-
-    modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-    document.getElementById('phonicsCloseX').onclick = () => { modal.style.display = 'none'; };
-    document.getElementById('phonicsBack').onclick = () => renderCategoryMenu();
-    document.getElementById('phonicsCancel').onclick = () => { modal.style.display = 'none'; onClose?.(); };
-
-    const list = document.getElementById('phononicsModeList');
-    list.innerHTML = phonic_modes.map((mode, i) => `
-      <button class="phonics-category-btn" data-idx="${i}" style="flex-direction: column; align-items: flex-start;">
-        <div style="display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 8px;">
-          <span class="phonics-category-emoji">${mode.emoji}</span>
-          <span style="font-weight: 600; font-size: 1.05em;">${mode.label}</span>
-        </div>
-        <div style="font-size: 0.85em; color: #666; font-weight: 400; margin-left: 44px;">${mode.desc}</div>
-      </button>
-    `).join('');
-
-    Array.from(list.children).forEach((btn, idx) => {
-      btn.onclick = () => {
-        const mode = phonic_modes[idx];
-        modal.style.display = 'none';
-        // Return selected list file and mode
-        if (onChoose) {
-          onChoose({
-            listFile: `phonics-lists/short-vowels/${listItem.file}`,
-            mode: mode.id,
-            listName: listItem.label
-          });
-        }
-      };
-    });
-
-    modal.style.display = 'flex';
+  // Instead of showing modes inside this modal, close it and let the global
+  // mode selector render colorful cards. This fixes the duplicate UI layer.
+  function renderModeMenu(listItem, category) {
+    // Immediately close the modal and propagate selection upward
+    modal.style.display = 'none';
+    modal.remove();
+    if (onChoose) {
+      onChoose({
+        listFile: `phonics-lists/${category.folder}/${listItem.file}`,
+        // Do not force a mode here; the mode selector will be shown next
+        mode: null,
+        listName: listItem.label
+      });
+    }
   }
 
   // Start with category menu

@@ -284,6 +284,7 @@ main {
 #modeSelect .mode-btn[data-mode="meaning"] { border-color:#21b3be; }
 #modeSelect .mode-btn[data-mode="listening"] { border-color:#5b7fe5; }
 #modeSelect .mode-btn[data-mode="multi_choice"] { border-color:#ff6fb0; }
+#modeSelect .mode-btn[data-mode="missing_letter"] { border-color:#00d9d9; }
 #modeSelect .mode-btn[data-mode="listen_and_spell"] { border-color:#d9923b; }
 #modeSelect .mode-btn[data-mode="spelling"] { border-color:#d9923b; }
 #modeSelect .mode-btn[data-mode="level_up"] { border-color:#21b3be; }
