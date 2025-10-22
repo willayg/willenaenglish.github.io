@@ -1,0 +1,17 @@
+[
+  {"eng":"borrow","kor":"빌리다","def":"to take something for a time and return it","ex":"I borrow a book."},
+  {"eng":"lend","kor":"빌려주다","def":"to give something for a time","ex":"I lend a pencil."},
+  {"eng":"build","kor":"짓다","def":"to make something by putting parts together","ex":"They build a bridge."},
+  {"eng":"break","kor":"부수다","def":"to make something into pieces","ex":"He breaks the stick."},
+  {"eng":"fix","kor":"고치다","def":"to repair something","ex":"She fixes the toy."},
+  {"eng":"carry","kor":"나르다","def":"to hold and move something","ex":"I carry the box."},
+  {"eng":"cover","kor":"덮다","def":"to put something over another thing","ex":"We cover the pot."},
+  {"eng":"discover","kor":"발견하다","def":"to find something new","ex":"They discover a cave."},
+  {"eng":"improve","kor":"향상시키다","def":"to make something better","ex":"I improve my writing."},
+  {"eng":"decide","kor":"결정하다","def":"to choose what to do","ex":"We decide to go."},
+  {"eng":"invite","kor":"초대하다","def":"to ask someone to come","ex":"I invite my friend."},
+  {"eng":"arrive","kor":"도착하다","def":"to get to a place","ex":"The bus arrives."},
+  {"eng":"prefer","kor":"선호하다","def":"to like one thing more","ex":"I prefer tea."},
+  {"eng":"compare","kor":"비교하다","def":"to look at how things are the same or different","ex":"We compare two pictures."},
+  {"eng":"explain","kor":"설명하다","def":"to make something clear with words","ex":"The teacher explains the rule."}
+]

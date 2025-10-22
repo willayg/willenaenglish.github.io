@@ -14,8 +14,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
   // One-answer-per-question lockout shared across renderers
   let questionLocked = false;
 
-  // Detect sample list for emoji-first behavior
-  const isSampleList = !!(listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U')));
+  // Detect sample list for emoji-first behavior (any .json file from sample-wordlists or sample-wordlists-level2)
+  const isSampleList = !!(listName && listName.includes('.json'));
 
   // Emoji mapping cache (loaded on demand)
   let emojiMap = {};

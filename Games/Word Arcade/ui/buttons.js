@@ -213,7 +213,7 @@ function ensureChoiceButtonStyles() {
   .star-row { display:flex;gap:4px;align-items:center;justify-content:flex-start;margin-top:6px; } /* closer stars */
   .star-row svg { width:16px;height:16px;display:block; }
   .star-filled { fill: #f5c518; stroke: #d7b210; }
-  .star-empty { fill: none; stroke: #e8d8a8; stroke-width:1.5; }
+  .star-empty { fill: #e8e8e8; stroke: #c0c0c0; stroke-width:1; }
 
   /* Mode list styling: stacked rows, divider lines, alternating icon sides */
   .mode-grid { display:block; gap:0; max-width:360px; margin:0 auto; padding-top:32px; }

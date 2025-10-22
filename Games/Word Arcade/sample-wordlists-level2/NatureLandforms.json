@@ -1,0 +1,12 @@
+[
+  {"eng":"mountain","kor":"산","def":"a very high hill","ex":"We climb a mountain."},
+  {"eng":"valley","kor":"계곡","def":"low land between hills","ex":"The river flows through the valley."},
+  {"eng":"river","kor":"강","def":"a long line of water that flows","ex":"The river moves fast."},
+  {"eng":"ocean","kor":"바다","def":"a very large area of salt water","ex":"The ocean is blue."},
+  {"eng":"desert","kor":"사막","def":"a very dry area with little rain","ex":"The desert is hot."},
+  {"eng":"forest","kor":"숲","def":"a large area with many trees","ex":"Animals live in the forest."},
+  {"eng":"island","kor":"섬","def":"land with water all around it","ex":"The island is small."},
+  {"eng":"volcano","kor":"화산","def":"a mountain that can shoot out lava","ex":"The volcano is quiet."},
+  {"eng":"waterfall","kor":"폭포","def":"water falling from a high place","ex":"We see a waterfall."},
+  {"eng":"cave","kor":"동굴","def":"a large hole in the side of a hill or under the ground","ex":"We explore a cave."}
+]

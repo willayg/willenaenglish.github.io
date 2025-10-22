@@ -84,8 +84,8 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessT
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Your Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length*2}</span></div>`}
-        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreListenSpell\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
+        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;font-family:'Poppins',Arial,sans-serif;">Play Again</button>
+  ${document.getElementById('gameStage') ? '' : `<button id="tryMoreListenSpell" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#fff;color:#27c5ca;font-weight:700;border:3px solid #27c5ca;box-shadow:0 2px 8px rgba(39,197,202,0.12);cursor:pointer;margin-left:12px;font-family:'Poppins',Arial,sans-serif;">Try More</button>`}
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => runListenAndSpellMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName });
       document.getElementById('tryMoreListenSpell').onclick = () => {

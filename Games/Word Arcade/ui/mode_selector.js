@@ -66,6 +66,19 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     try { const ln = sessionStorage.getItem('WA_list_name'); if (ln) listName = ln; } catch {}
   }
   try { console.info('[mode_selector] Active listName =', listName); } catch {}
+  
+  // Helper: canonicalize raw mode values to the 6 displayed keys (MUST be defined before async code uses it!)
+  const canonicalMode = (raw) => {
+    const m = (raw || 'unknown').toString().toLowerCase();
+    if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
+    if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
+    if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
+    if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
+    if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
+    if (m.includes('level_up')) return 'level_up';
+    return m;
+  };
+  
   // bestByMode: mode -> { pct?: number, pts?: number }
   let bestByMode = {};
   if (listName) {
@@ -78,21 +91,21 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
           .replace(/[^a-z0-9]+/g,''); // strip any stray punctuation
       };
       const targetCanon = canon(listName);
+      
+      // For phonics lists, also accept the non-prefixed version (for backward compatibility)
+      // e.g., "Phonics - Short A Sound" should also match sessions saved as "Short A Sound"
+      const isPhonicsName = listName && listName.toLowerCase().includes('sound');
+      const altCanon = isPhonicsName ? canon(listName.replace(/^Phonics\s*[-:]\s*/i, '')) : null;
+      
       const matchesTarget = (rowName) => {
         const c = canon(rowName);
-        return c && c === targetCanon;
+        if (!c) return false;
+        if (c === targetCanon) return true;
+        // Also check alternate canonicalized form for backward compatibility
+        if (altCanon && c === altCanon) return true;
+        return false;
       };
-      // Helper: canonicalize raw mode values to the 6 displayed keys
-      const canonicalMode = (raw) => {
-        const m = (raw || 'unknown').toString().toLowerCase();
-        if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-        if (m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-        if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-        if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-        if (m === 'spelling' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-        if (m.includes('level_up')) return 'level_up';
-        return m;
-      };
+      // canonicalMode is now defined above outside this scope, no need to redefine it
 
       async function fetchSessions(scoped) {
         const url = new URL(FN('progress_summary'), window.location.origin);
@@ -113,9 +126,20 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
       if (!sessions || !sessions.length) {
         try { console.info('[mode_selector] No session rows returned for list', listName); } catch {}
       }
+      
+      try {
+        console.info('[mode_selector] Sessions received:', sessions.length, 'records');
+        console.info('[mode_selector] Looking for listName:', listName, '-> canon:', canon(listName));
+        if (altCanon) console.info('[mode_selector] Also looking for alt canon:', altCanon);
+      } catch {}
+      
       (Array.isArray(sessions) ? sessions : []).forEach(s => {
         if (!s) return;
-        if (!matchesTarget(s.list_name) && !matchesTarget((s.summary && (s.summary.list_name || s.summary.listName)))) return;
+        const listMatches = matchesTarget(s.list_name) || matchesTarget((s.summary && (s.summary.list_name || s.summary.listName)));
+        try {
+          console.info('[mode_selector] Session:', s.mode, 'list_name:', s.list_name, 'matches:', listMatches);
+        } catch {}
+        if (!listMatches) return;
         let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
         const key = canonicalMode(s.mode);
         let pct = null; let pts = null;
@@ -132,12 +156,19 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
         } else if (typeof s.accuracy === 'number') {
           pct = Math.round((s.accuracy || 0) * 100);
         }
+        try {
+          console.info('[mode_selector] Mode:', s.mode, '-> canonical:', key, 'pct:', pct);
+        } catch {}
         if (pct != null) {
           if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
         } else if (pts != null) {
           if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
         }
       });
+      
+      try {
+        console.info('[mode_selector] Final bestByMode:', bestByMode);
+      } catch {}
     } catch (e) {
       try { console.warn('[mode_selector] progress fetch error', e); } catch {}
     }
@@ -146,7 +177,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const wl = (window.WordArcade && typeof window.WordArcade.getWordList === 'function') ? window.WordArcade.getWordList() : [];
   
   // Check if this is a sample list (always has emoji fallbacks)
-  const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
+  const isSampleList = listName && listName.includes('.json');
   
   let pictureCount = 0;
   if (Array.isArray(wl) && wl.length) {
@@ -191,8 +222,13 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Simplified header (medals removed entirely)
   const humanizeListName = (name) => {
     if (!name) return 'Word List';
+    // Normalize to filename only (strip any folder path like sample-wordlists-level2/Vegetables.json)
+    let base = String(name);
+    if (base.includes('/') || base.includes('\\')) {
+      base = base.split(/[/\\]/).pop();
+    }
     // Remove .json extension
-    let base = name.replace(/\.json$/i, '');
+    base = base.replace(/\.json$/i, '');
     // Replace underscores / dashes with spaces
     base = base.replace(/[_-]+/g, ' ');
     // Insert spaces before CamelCase boundaries (e.g., EasyAnimals -> Easy Animals)
@@ -218,10 +254,13 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Check if we're in Review mode - hide stats if so
   const isReview = listName === 'Review List' || (window.WordArcade?.getListName?.() === 'Review List');
 
+  // canonicalMode already defined at top of function
+
   // Grouped items in requested order
   const labelWithBest = (id, svgPath, title, colorClass, textIcon, textColor) => {
-    const key = id.toLowerCase();
-    const best = bestByMode[key];
+    // Canonicalize the mode ID to match how it's stored in bestByMode
+    const canonicalId = canonicalMode(id);
+    const best = bestByMode[canonicalId];
     // If no data, show 0% (per request)
     let meta = '0%';
     let pct = null;
@@ -238,26 +277,17 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
       pct = best.pct;
       const metaClass = pct === 0 ? 'zero' : colorClass;
       meta = `<span class="mode-meta ${metaClass}">${pct}%</span>`;
-      const filled = pctToStars(pct);
-      // Render 5 stars, filled or empty
-      for (let i = 0; i < 5; i++) {
-        starsHtml += starSvg(i < filled);
-      }
     } else if (best && best.pts != null) {
       meta = `<span class="mode-meta zero">0%</span>`;
-      // no pct -> show 0 filled stars but show empties
-      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
     } else {
-      // No data yet: show empty stars and 0% with same styling/spacing
+      // No data yet: show 0% with same styling/spacing
       meta = `<span class="mode-meta zero">0%</span>`;
-      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
     }
 
     // Return content block; actual button HTML will wrap this
   return `<div class="mode-content">
       <div class="mode-left">
         <div class="mode-title ${colorClass}">${title}</div>
-        <div class="star-row">${starsHtml}</div>
     <div>${meta}</div>
       </div>
       <div class="mode-icon">${textIcon ? `<div style="font-size:64px;font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}"/>`}</div>
@@ -274,8 +304,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   
   const modes = isPhonics ? [
     // Use existing mode ids so colors and loaders work out-of-the-box
-    { id: 'missing_letter', title: 'Missing Letter', icon: null, textIcon: 'C _ _', colorClass: 'browse', textColor: '#ff1493' },
-    { id: 'listening', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+    { id: 'listen', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
+    { id: 'missing_letter', title: 'Missing Letter', icon: null, textIcon: 'C _ _', colorClass: 'browse', textColor: '#41b6beff' },
     { id: 'multi_choice',   title: 'Read & Find',   icon: './assets/Images/icons/reading.png?v=20250910a',   colorClass: 'basic' },
     { id: 'listen_and_spell',  title: 'Spell It Out',  icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
   ] : [
@@ -302,22 +332,91 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     listContainer.appendChild(btn);
   });
 
+  // Add "Change Level" button (above Main Menu)
+  const changeLevelBtn = document.createElement('button');
+  changeLevelBtn.className = 'mode-btn mode-card change-level-btn';
+  changeLevelBtn.style.cssText = `
+    margin-top: 24px;
+    background: #fff;
+    color: #f59e0b;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 18px 32px;
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+  `;
+  changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
+  changeLevelBtn.onclick = async () => {
+    // Detect which modal to show based on current list
+    const isPhonicsMode = window.__WA_IS_PHONICS__ === true || (listName && listName.toLowerCase().includes('sound'));
+    const isLevel2Mode = listName && listName.startsWith('Level 2 -');
+    
+    if (isPhonicsMode) {
+      // Show phonics modal
+      const { showPhonicsModal } = await import('./phonics_modal.js');
+      showPhonicsModal({
+        onChoose: (data) => {
+          if (window.WordArcade && typeof window.WordArcade.loadPhonicsGame === 'function') {
+            window.WordArcade.loadPhonicsGame(data);
+          }
+        },
+        onClose: () => {}
+      });
+    } else if (isLevel2Mode) {
+      // Show Level 2 modal
+      const { showLevel2Modal } = await import('./level2_modal.js');
+      showLevel2Modal({
+        onChoose: (data) => {
+          if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+            window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+          }
+        },
+        onClose: () => {}
+      });
+    } else {
+      // Show Level 1 (sample wordlist) modal
+      showSampleWordlistModal({
+        onChoose: (filename) => {
+          if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+            window.WordArcade.loadSampleWordlistByFilename(filename, { force: true });
+          }
+        }
+      });
+    }
+  };
+
+  // Add hover effects
+  changeLevelBtn.addEventListener('mouseenter', () => {
+    changeLevelBtn.style.transform = 'translateY(-2px)';
+    changeLevelBtn.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.25)';
+  });
+  changeLevelBtn.addEventListener('mouseleave', () => {
+    changeLevelBtn.style.transform = 'translateY(0)';
+    changeLevelBtn.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.15)';
+  });
+
+  listContainer.appendChild(changeLevelBtn);
+
   // Add "Main Menu" button at the bottom
   const mainMenuBtn = document.createElement('button');
   mainMenuBtn.className = 'mode-btn mode-card main-menu-btn';
   mainMenuBtn.style.cssText = `
-    margin-top: 24px;
     margin-bottom: 48px;
-    background: linear-gradient(135deg, #19777e 0%, #137f8c 100%);
-    color: #fff;
+    background: #fff;
+    color: #21b5c0ff;
+    font-family: 'Poppins', Arial, sans-serif;
     font-weight: 700;
     font-size: 16px;
     padding: 18px 32px;
-    border: none;
+    border: 2px solid #1eb0bbff;
     border-radius: 12px;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 4px 12px rgba(25, 119, 126, 0.25);
+    box-shadow: 0 4px 12px rgba(25, 119, 126, 0.15);
   `;
   mainMenuBtn.innerHTML = `<span data-i18n="Main Menu">Main Menu</span>`;
   mainMenuBtn.onclick = () => {
@@ -334,11 +433,11 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Add hover effects
   mainMenuBtn.addEventListener('mouseenter', () => {
     mainMenuBtn.style.transform = 'translateY(-2px)';
-    mainMenuBtn.style.boxShadow = '0 6px 16px rgba(25, 119, 126, 0.35)';
+    mainMenuBtn.style.boxShadow = '0 6px 16px rgba(25, 119, 126, 0.25)';
   });
   mainMenuBtn.addEventListener('mouseleave', () => {
     mainMenuBtn.style.transform = 'translateY(0)';
-    mainMenuBtn.style.boxShadow = '0 4px 12px rgba(25, 119, 126, 0.25)';
+    mainMenuBtn.style.boxShadow = '0 4px 12px rgba(25, 119, 126, 0.15)';
   });
 
   listContainer.appendChild(mainMenuBtn);

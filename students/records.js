@@ -97,6 +97,11 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
 
 export async function endSession(sessionId, { mode, summary = {}, listName = null, wordList = null } = {}) {
   if (!sessionId) return;
+  // Fire a local in-page event immediately so game UIs can react (e.g., show stars)
+  try {
+    const list_size = Array.isArray(wordList) ? wordList.length : null;
+    try { window.dispatchEvent(new CustomEvent('wa:session-ended', { detail: { session_id: sessionId, mode: mode || 'unknown', summary, list_name: listName, list_size } })); } catch {}
+  } catch {}
   try {
     kickOffWhoAmI();
     const uid = getUserId();

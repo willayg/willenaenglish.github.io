@@ -1,0 +1,14 @@
+[
+  {"eng":"jacket","kor":"자켓","def":"a short coat you wear over clothes","ex":"I wear a jacket."},
+  {"eng":"sweater","kor":"스웨터","def":"a warm top made of yarn","ex":"She puts on a sweater."},
+  {"eng":"scarf","kor":"목도리","def":"a long cloth worn around the neck","ex":"He wears a scarf."},
+  {"eng":"gloves","kor":"장갑","def":"covers for the hands","ex":"I wear gloves in winter."},
+  {"eng":"boots","kor":"부츠","def":"shoes that cover the ankle or higher","ex":"She wears boots."},
+  {"eng":"jeans","kor":"청바지","def":"pants made of denim","ex":"He wears jeans."},
+  {"eng":"belt","kor":"벨트","def":"a strap worn around the waist","ex":"I put on a belt."},
+  {"eng":"hat","kor":"모자","def":"a thing worn on the head","ex":"She wears a hat."},
+  {"eng":"shorts","kor":"반바지","def":"short pants","ex":"He wears shorts."},
+  {"eng":"dress","kor":"드레스","def":"a one-piece clothing for women or girls","ex":"She buys a dress."},
+  {"eng":"skirt","kor":"치마","def":"a piece of clothing worn from the waist down","ex":"She wears a skirt."},
+  {"eng":"sneakers","kor":"운동화","def":"comfortable sports shoes","ex":"I wear sneakers."}
+]

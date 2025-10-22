@@ -45,8 +45,8 @@ async function loadEmojiMappings() {
 
 export async function runPictureMode({ wordList, gameArea, startGame, listName = null }) {
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
-  // Check if this is a sample list (basic wordlists use emoji, user content uses Pixabay)
-  const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
+  // Check if this is a sample list (any .json file from sample-wordlists or sample-wordlists-level2)
+  const isSampleList = listName && listName.includes('.json');
   // Load emoji mappings first
   await loadEmojiMappings();
 

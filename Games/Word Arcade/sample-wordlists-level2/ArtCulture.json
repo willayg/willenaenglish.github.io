@@ -1,0 +1,12 @@
+[
+  {"eng":"painting","kor":"그림","def":"a picture made with paint","ex":"I see a painting on the wall."},
+  {"eng":"sculpture","kor":"조각상","def":"a figure made from stone or clay","ex":"The sculpture is in the museum."},
+  {"eng":"museum","kor":"박물관","def":"a building with art and old things","ex":"We visit the art museum."},
+  {"eng":"gallery","kor":"갤러리","def":"a room or building for displaying art","ex":"The gallery shows new paintings."},
+  {"eng":"portrait","kor":"초상화","def":"a picture of a person","ex":"She paints a portrait."},
+  {"eng":"landscape","kor":"풍경화","def":"a picture of nature and land","ex":"This landscape shows mountains."},
+  {"eng":"brush","kor":"붓","def":"a tool for painting","ex":"I clean my brush."},
+  {"eng":"canvas","kor":"캔버스","def":"cloth to paint on","ex":"The artist paints on canvas."},
+  {"eng":"statue","kor":"동상","def":"a figure made of stone, metal, or clay","ex":"There is a statue in the park."},
+  {"eng":"exhibition","kor":"전시회","def":"a show of art or things","ex":"The art exhibition opens today."}
+]

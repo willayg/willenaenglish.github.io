@@ -1,0 +1,17 @@
+[
+  {"eng":"sun","kor":"해","def":"the bright star in the sky that gives us light and warmth","ex":"The sun is shining."},
+  {"eng":"rain","kor":"비","def":"water that falls from clouds in drops","ex":"It is raining today."},
+  {"eng":"snow","kor":"눈","def":"soft white pieces of frozen water that fall from the sky","ex":"Snow covers the ground."},
+  {"eng":"wind","kor":"바람","def":"moving air outside","ex":"The wind is strong."},
+  {"eng":"cloud","kor":"구름","def":"a white or gray mass in the sky made of tiny drops of water","ex":"There are many clouds today."},
+  {"eng":"autumn","kor":"가을","def":"the season after summer with falling leaves","ex":"I like autumn colors."},
+  {"eng":"spring","kor":"봄","def":"the season with blooming flowers","ex":"Spring is warm and sunny."},
+  {"eng":"frost","kor":"서리","def":"ice crystals on cold surfaces","ex":"There is frost on the grass."},
+  {"eng":"thunder","kor":"천둥","def":"a loud sound after lightning","ex":"I hear thunder during the storm."},
+  {"eng":"lightning","kor":"번개","def":"a bright flash during a storm","ex":"Lightning lights up the sky."},
+  {"eng":"rainbow","kor":"무지개","def":"colorful arc in the sky after rain","ex":"A rainbow appears after the rain."},
+  {"eng":"breeze","kor":"산들바람","def":"a soft gentle wind","ex":"A nice breeze blows today."},
+  {"eng":"typhoon","kor":"태풍","def":"a very strong wind and rain storm","ex":"The typhoon is coming."},
+  {"eng":"hail","kor":"우박","def":"small balls of ice that fall from clouds","ex":"Hail hits the roof."},
+  {"eng":"humid","kor":"습도가 많은","def":"moisture or wetness in the air","ex":"High humidity makes it feel hot."}
+]
