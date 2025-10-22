@@ -1,0 +1,10 @@
+{
+  "prompt": {
+    "rules": [
+      "Never hardcode API keys or secrets in frontend code.",
+      "Never use localStorage/sessionStorage for tokens.",
+      "Always use process.env for keys and proxy server functions for API access.",
+      "Prefer secure HTTP-only cookies for session handling."
+    ]
+  }
+}
