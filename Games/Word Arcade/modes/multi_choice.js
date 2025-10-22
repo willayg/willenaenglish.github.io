@@ -43,7 +43,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
   const sessionId = startSession({ mode: 'multi_choice', wordList, listName });
 
   // Determine if we can support picture-based questions
-  const isSampleList = listName && (listName.includes('.json') || listName.includes('Sample') || listName.includes('Mixed') || listName.includes('Easy') || listName.includes('Food') || listName.includes('Animals') || listName.includes('Transportation') || listName.includes('Jobs') || listName.includes('Sports') || listName.includes('School') || listName.includes('Hobbies') || listName.includes('Verbs') || listName.includes('Feelings') || listName.includes('Long U'));
+  const isSampleList = listName && listName.includes('.json');
   await loadEmojiMappings();
   const isPicturable = (w) => {
     if (!w || !w.eng) return false;

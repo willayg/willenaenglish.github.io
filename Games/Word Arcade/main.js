@@ -10,6 +10,9 @@ import { showModeModal } from './ui/mode_modal.js';
 import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
 import { showPhonicsModal } from './ui/phonics_modal.js';
+import { showLevel2Modal } from './ui/level2_modal.js';
+// Ensure star overlay script is loaded once; it attaches window.showRoundStars
+import './ui/star_overlay.js';
 import { FN } from './scripts/api-base.js';
 // Review manager (provenance + enrichment for review attempts)
 // Legacy review manager (kept for rollback) not needed for new flow.
@@ -462,11 +465,11 @@ async function processWordlist(data) {
   }
 }
 
-async function loadSampleWordlistByFilename(filename, { force = false } = {}) {
+async function loadSampleWordlistByFilename(filename, { force = false, listName = null } = {}) {
   try {
     if (!filename) throw new Error('No filename');
-    // optional filename safety if user-provided
-    if (!/^[A-Za-z0-9._-]+$/.test(filename)) throw new Error('Invalid filename');
+    // optional filename safety - allow slashes for subfolders
+    if (!/^[A-Za-z0-9._\/-]+$/.test(filename)) throw new Error('Invalid filename');
 
     // If forcing a fresh start or we still have a previous list loaded, clear previous game state first
     if (force || (Array.isArray(wordList) && wordList.length)) {
@@ -475,7 +478,7 @@ async function loadSampleWordlistByFilename(filename, { force = false } = {}) {
 
     try { window.__WA_IS_PHONICS__ = false; } catch {}
 
-    currentListName = filename || 'Sample List';
+    currentListName = listName || filename || 'Sample List';
     // Attempt primary fetch plus fallback variants for names with spaces vs underscores/hyphens
     const candidates = [filename];
     // If filename contains spaces, user likely passed a friendly name; generate slug variants
@@ -492,12 +495,17 @@ async function loadSampleWordlistByFilename(filename, { force = false } = {}) {
     let lastErr = null; let loaded = null;
     for (const cand of Array.from(new Set(candidates))) {
       try {
-        const url = new URL(`./sample-wordlists/${cand}`, import.meta.url);
+        // If path already contains a slash (subfolder), use as-is; otherwise prefix with sample-wordlists/
+        const path = cand.includes('/') ? `./${cand}` : `./sample-wordlists/${cand}`;
+        const url = new URL(path, import.meta.url);
         const res = await fetch(url.href, { cache: 'no-store' });
         if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
-        const ct = (res.headers.get('content-type') || '').toLowerCase();
-        const data = ct.includes('application/json') ? await res.json() : JSON.parse(await res.text());
-        loaded = data; currentListName = cand; break;
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  const data = ct.includes('application/json') ? await res.json() : JSON.parse(await res.text());
+  loaded = data;
+  // Preserve friendly listName if provided; otherwise fall back to candidate name
+  if (!listName) currentListName = cand;
+  break;
       } catch (e) { lastErr = e; }
     }
     if (!loaded) throw new Error(`Failed to fetch ${filename}${lastErr ? ': ' + lastErr.message : ''}`);
@@ -535,28 +543,33 @@ const modeLoaders = {
   multi_choice:   () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
   level_up:       () => import('./modes/level_up.js').then(m => m.runLevelUpMode),
   time_battle:    () => import('./modes/time_battle.js').then(m => m.run),
-  // Phonics modes (using existing modes for now, will create specific phonics versions later)
-  listen:         () => import('./modes/listening.js').then(m => m.runListeningMode),
+  // Phonics modes
+  listen:         () => import('./modes/phonics_listening.js').then(m => m.runPhonicsListeningMode),
   // Read & Find should be textual read (multi_choice) for phonics; picture mode remains available separately
   read:           () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
   // True missing-letter mode (new)
   missing_letter: () => import('./modes/missing_letter.js').then(m => m.runMissingLetterMode),
+  phonics_listening: () => import('./modes/phonics_listening.js').then(m => m.runPhonicsListeningMode),
 };
 
 // Load and start a phonics game
 async function loadPhonicsGame({ listFile, mode, listName }) {
   try {
+    console.log('[loadPhonicsGame] Starting load:', { listFile, mode, listName, previousListName: currentListName });
   // Fetch the word list using the provided relative path
   const response = await fetch(`./${listFile}`);
     if (!response.ok) throw new Error(`Failed to load ${listFile}`);
     
     const wordData = await response.json();
+    console.log('[loadPhonicsGame] Fetched', wordData.length, 'words');
     // Mark this as a phonics flow so the mode selector can show phonics modes/colors
     window.__WA_IS_PHONICS__ = true;
     // Set list name before processing so it's persisted alongside the words
     currentListName = listName || 'Phonics List';
+    console.log('[loadPhonicsGame] Set currentListName to:', currentListName);
     // Use the standard processing pipeline so we normalize, preload audio, and SAVE session state
     await processWordlist(Array.isArray(wordData) ? wordData : []);
+    console.log('[loadPhonicsGame] processWordlist complete, currentListName is now:', currentListName);
     // If a mode was preselected, jump straight in; otherwise the processor already opened the mode selector
     if (mode) { currentMode = mode; startGame(mode); }
   } catch (error) {
@@ -759,15 +772,17 @@ function showLevelsMenu() {
     <button id="level0Btn" class="wa-option wa-option-card wa-level-0" type="button" style="border-color: ${level0Color};">
       <img src="./assets/Images/icons/0abc.svg" alt="Level 0" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level0Color};" data-i18n="Level 0: Phonics">Level 0: Phonics</span>
+      <span class="wa-card-stars" id="wa-stars-level0" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
     <button id="level1Btn" class="wa-option wa-option-card wa-level-1" type="button" style="border-color: ${level1Color};">
       <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 1" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level1Color};" data-i18n="Level 1: Easy">Level 1: Easy</span>
+      <span class="wa-card-stars" id="wa-stars-level1" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
-    <button id="level2Btn" class="wa-option wa-option-card wa-level-2 wa-level-inactive" type="button" style="border-color: ${level2Color}; opacity: 0.6;">
+    <button id="level2Btn" class="wa-option wa-option-card wa-level-2" type="button" style="border-color: ${level2Color};">
       <img src="./assets/Images/icons/2leaf.svg" alt="Level 2" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level2Color};" data-i18n="Level 2">Level 2</span>
-      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+      <span class="wa-card-stars" id="wa-stars-level2" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
     <button id="level3Btn" class="wa-option wa-option-card wa-level-3 wa-level-inactive" type="button" style="border-color: ${level3Color}; opacity: 0.6;">
       <img src="./assets/Images/icons/3blue-flower.svg" alt="Level 3" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
@@ -848,8 +863,25 @@ function showLevelsMenu() {
     });
   }
   
-  // Levels 2-5 - Coming Soon
-  [2, 3, 4, 5].forEach(level => {
+  // Level 2 - shows the level 2 modal
+  const level2Btn = document.getElementById('level2Btn');
+  if (level2Btn) {
+    // Clone and replace to remove any old listeners
+    const newLevel2Btn = level2Btn.cloneNode(true);
+    level2Btn.replaceWith(newLevel2Btn);
+    newLevel2Btn.addEventListener('click', () => {
+      showLevel2Modal({
+        onChoose: (data) => {
+          // data = { listFile, listName }
+          loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+        },
+        onClose: () => {}
+      });
+    });
+  }
+  
+  // Levels 3-5 - Coming Soon
+  [3, 4, 5].forEach(level => {
     const btn = document.getElementById(`level${level}Btn`);
     if (btn) {
       // Clone and replace to remove any old listeners
@@ -861,6 +893,102 @@ function showLevelsMenu() {
       });
     }
   });
+
+  // After wiring buttons, compute and render per-level star counts
+  (async () => {
+    try {
+      // Fetch all sessions once
+      const sessions = await callProgressSummary('sessions');
+      if (!Array.isArray(sessions) || sessions.length === 0) return;
+
+      // Helpers
+      const canonicalMode = (raw) => {
+        const m = (raw || 'unknown').toString().toLowerCase();
+        if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
+        if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
+        if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
+        if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
+        if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
+        if (m.includes('level_up')) return 'level_up';
+        return m;
+      };
+      const pctFrom = (s) => {
+        let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
+        if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) return Math.round((sum.score / sum.total) * 100);
+        if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) return Math.round((sum.score / sum.max) * 100);
+        if (sum && typeof sum.accuracy === 'number') return Math.round((sum.accuracy || 0) * 100);
+        if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) return Math.round((s.correct / s.total) * 100);
+        if (typeof s.accuracy === 'number') return Math.round((s.accuracy || 0) * 100);
+        return null;
+      };
+      const pctToStars = (pct) => {
+        if (pct == null) return 0;
+        if (pct >= 100) return 5;
+        if (pct > 90) return 4;
+        if (pct > 80) return 3;
+        if (pct > 70) return 2;
+        if (pct >= 60) return 1;
+        return 0;
+      };
+
+      const byLevel = {
+        level0: new Map(), // list_name -> bestByMode
+        level1: new Map(),
+        level2: new Map(),
+      };
+
+      const norm = (v) => (v||'').toString().trim();
+
+      sessions.forEach((s) => {
+        if (!s) return;
+        const listName = norm(s.list_name) || norm((s.summary && (s.summary.list_name || s.summary.listName)));
+        if (!listName) return;
+        let bucket = null;
+        if (/^phonics\s*-/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
+        else if (/^level\s*2\s*-/i.test(listName)) bucket = 'level2';
+        else if (/\.json$/i.test(listName)) bucket = 'level1';
+        if (!bucket) return;
+
+        const key = listName.toLowerCase();
+        const map = byLevel[bucket];
+        if (!map.has(key)) map.set(key, {});
+        const best = map.get(key);
+        const mode = canonicalMode(s.mode);
+        const pct = pctFrom(s);
+        if (pct != null) {
+          if (!(mode in best) || best[mode] < pct) best[mode] = pct;
+        }
+      });
+
+      const sumStars = (map, modeIds) => {
+        let total = 0;
+        map.forEach((bestByMode) => {
+          modeIds.forEach((m) => {
+            const pct = bestByMode[m];
+            total += pctToStars(pct);
+          });
+        });
+        return total;
+      };
+
+      const phonicsModes = ['listening','spelling','multi_choice','listen_and_spell'];
+      const generalModes = ['meaning','listening','multi_choice','listen_and_spell','spelling','level_up'];
+
+      const stars0 = sumStars(byLevel.level0, phonicsModes);
+      const stars1 = sumStars(byLevel.level1, generalModes);
+      const stars2 = sumStars(byLevel.level2, generalModes);
+
+      const s0 = document.getElementById('wa-stars-level0');
+      const s1 = document.getElementById('wa-stars-level1');
+      const s2 = document.getElementById('wa-stars-level2');
+      if (s0) s0.textContent = `⭐ ${stars0}`;
+      if (s1) s1.textContent = `⭐ ${stars1}`;
+      if (s2) s2.textContent = `⭐ ${stars2}`;
+    } catch (e) {
+      // Silent fail; stars are optional UI sugar
+      try { console.info('[levels] stars unavailable', e?.message || e); } catch {}
+    }
+  })();
 }
 
 // Wire up main menu button event listeners
@@ -916,6 +1044,24 @@ window.addEventListener('DOMContentLoaded', () => {
       openSavedGameById(id);
     }
   } catch {}
+
+  // Global stars overlay hook: show after any Word Arcade session ends
+  try {
+    window.addEventListener('wa:session-ended', (e) => {
+      const detail = (e && e.detail) || {};
+      const summary = detail.summary || {};
+      // Normalize to correct/total
+      let correct = Number(summary.score ?? summary.correct ?? 0);
+      let total = Number((summary.total ?? summary.max ?? 0));
+      // Fallback: if total missing but percent-like summary provided
+      if (!total && typeof summary.percent === 'number') {
+        total = 100; correct = Math.round(summary.percent);
+      }
+      if (total > 0 && typeof window.showRoundStars === 'function') {
+        try { window.showRoundStars({ correct, total }); } catch {}
+      }
+    });
+  } catch {}
 });
 
 // Optional: expose for console debugging and UI querying
@@ -928,6 +1074,8 @@ window.WordArcade = {
   openSavedGames: () => openSavedGamesModal(),
   quitToOpening,
   clearCurrentGameState,
+  loadPhonicsGame,
+  loadSampleWordlistByFilename,
 };
 
 // Review flow using secure endpoint

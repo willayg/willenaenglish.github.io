@@ -1,0 +1,19 @@
+[
+  {"eng":"violin","kor":"바이올린","def":"a string instrument you play with a bow","ex":"She plays the violin."},
+  {"eng":"guitar","kor":"기타","def":"a string instrument you strum or pluck","ex":"He plays the guitar."},
+  {"eng":"piano","kor":"피아노","def":"a large instrument with black and white keys","ex":"She plays the piano."},
+  {"eng":"trumpet","kor":"트럼펫","def":"a brass instrument that is shiny","ex":"He plays the trumpet."},
+  {"eng":"drum","kor":"드럼","def":"a round instrument you hit to make sound","ex":"The drummer plays the drums."},
+  {"eng":"flute","kor":"플루트","def":"a long, thin instrument you blow into","ex":"She plays the flute."},
+  {"eng":"clarinet","kor":"클라리넷","def":"a black woodwind instrument you blow into","ex":"He plays the clarinet."},
+  {"eng":"harp","kor":"하프","def":"a large string instrument with a frame","ex":"The musician plays the harp."},
+  {"eng":"saxophone","kor":"색소폰","def":"a metal instrument you blow into","ex":"He plays the saxophone."},
+  {"eng":"tambourine","kor":"탬버린","def":"a round instrument with metal rings","ex":"I shake the tambourine."},
+  {"eng":"cymbals","kor":"심벌즈","def":"two metal discs that clash together","ex":"The cymbals make loud noise."},
+  {"eng":"accordion","kor":"아코디언","def":"an instrument that expands and squeezes","ex":"The old man plays the accordion."},
+  {"eng":"maracas","kor":"마라카스","def":"small instruments with beads inside that shake","ex":"She shakes maracas."},
+  {"eng":"xylophone","kor":"실로폰","def":"an instrument with wooden bars you hit","ex":"The child plays the xylophone."},
+  {"eng":"cello","kor":"첼로","def":"a large string instrument you play with a bow","ex":"He plays the cello."},
+  {"eng":"electric guitar","kor":"일렉트릭 기타","def":"a guitar that uses electricity to make sound","ex":"She plays the electric guitar."},
+  {"eng":"keyboard","kor":"키보드","def":"an electronic instrument with keys like a piano","ex":"He plays the keyboard."}
+]

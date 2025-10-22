@@ -63,20 +63,31 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
 
     const current = ordered[idx];
     const word = String(current.eng || '').toLowerCase().trim();
-    
-    // Detect if this is a consonant blend list (check if listName contains 'Blend')
-    const isConsonantBlend = (listName && listName.includes('Blend')) || (window.WordArcade?.getListName?.() || '').includes('Blend');
-    
+
+    // Determine list behavior
+    const activeName = (listName || (window.WordArcade?.getListName?.() || '')) + '';
+    const isConsonantBlend = /Blend/i.test(activeName);
+    const isStartDigraphList = /(CH,?\s*SH|TH,?\s*WH)/i.test(activeName);
+    const isEndingsList = /Endings/i.test(activeName);
+
     let firstPart, missing, masked;
-    
-    if (isConsonantBlend) {
-      // For consonant blends: hide the first 2 letters (the blend itself)
-      missing = word.slice(0, 2);
-      firstPart = word.slice(2);
-      masked = '__' + firstPart;
+    const startFocus = (isConsonantBlend || isStartDigraphList);
+
+    if (startFocus) {
+      // For starting blends/digraphs: hide first 2 or 3 letters
+      const hideCount = (word.startsWith('thr')) ? 3 : 2;
+      missing = word.slice(0, hideCount);
+      firstPart = word.slice(hideCount);
+      masked = '_'.repeat(hideCount) + firstPart;
+    } else if (isEndingsList) {
+      // For CK / NG / MP endings list: hide last 2 or 3 letters
+      const hideCount = word.endsWith('ing') ? 3 : 2;
+      firstPart = word.slice(0, word.length - hideCount);
+      missing = word.slice(-hideCount);
+      masked = firstPart + '_'.repeat(hideCount);
     } else {
-      // For vowels: hide the last 2-3 letters (phonics focus on endings)
-      const hideCount = Math.min(3, Math.max(2, Math.floor(word.length / 3))); // 2-3 letters depending on word length
+      // Default (other lists): hide the last 2-3 letters based on word length
+      const hideCount = Math.min(3, Math.max(2, Math.floor(word.length / 3)));
       firstPart = word.slice(0, word.length - hideCount);
       missing = word.slice(word.length - hideCount);
       masked = firstPart + '_'.repeat(hideCount);
@@ -89,17 +100,18 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
     
     let distractors = [];
     
-    if (isConsonantBlend) {
-      // For consonant blends: collect first 2 letters from other words
+    if (startFocus) {
+      // For starting blends/digraphs: collect first N letters from other words
+      const n = missing.length;
       distractors = allChoices
-        .map(w => w.slice(0, 2))
-        .filter((blend, idx, arr) => blend !== missing && blend.length === 2 && arr.indexOf(blend) === idx); // unique, correct length
+        .map(w => w.slice(0, n))
+        .filter((blend, idx, arr) => blend !== missing && blend.length === n && arr.indexOf(blend) === idx);
     } else {
-      // For vowels: collect the ending part from other words
-      const hideCount = missing.length;
+      // For endings: collect last N letters from other words
+      const n = missing.length;
       distractors = allChoices
-        .map(w => w.slice(-hideCount))
-        .filter((ending, idx, arr) => ending !== missing && ending.length === hideCount && arr.indexOf(ending) === idx); // unique, correct length
+        .map(w => w.slice(-n))
+        .filter((ending, idx, arr) => ending !== missing && ending.length === n && arr.indexOf(ending) === idx);
     }
 
     // Fisher-Yates shuffle for better randomization
@@ -115,21 +127,21 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
     distractors = shuffle(distractors);
 
     // If we don't have enough distractors, generate plausible ones
-    if (isConsonantBlend) {
-      // Common consonant blend patterns
-      const blendPatterns = ['bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'tr', 'tw', 'sc', 'sh', 'ch', 'th', 'wh'];
+    if (startFocus) {
+      // Patterns for 2-letter and 3-letter starts
+      const patterns2 = ['ch','sh','th','wh','bl','br','cl','cr','dr','fl','fr','gl','gr','pl','pr','sc','sk','sl','sm','sn','sp','st','sw','tr','tw'];
+      const patterns3 = ['thr','shr','scr','spl','spr','str'];
+      const pool = (missing.length === 3) ? patterns3 : patterns2;
       while (distractors.length < 3) {
-        const cand = blendPatterns.find(b => b !== missing && !distractors.includes(b));
-        if (cand) distractors.push(cand);
-        else break;
+        const cand = pool.find(p => p !== missing && !distractors.includes(p));
+        if (cand) distractors.push(cand); else break;
       }
     } else {
-      // Common ending patterns for vowels
-      const patterns = ['at', 'an', 'ap', 'ad', 'ag', 'am', 'as', 'ax', 'ab', 'et', 'en', 'ed', 'ig', 'it', 'in', 'og', 'ot', 'on', 'ug', 'ut', 'um'];
+      // Ending patterns – keep focused on target endings
+      const pool = (missing.length === 3) ? ['ing'] : ['ck','ng','mp'];
       while (distractors.length < 3) {
-        const cand = patterns.find(p => p !== missing && !distractors.includes(p));
-        if (cand) distractors.push(cand);
-        else break;
+        const cand = pool.find(p => p !== missing && !distractors.includes(p));
+        if (cand) distractors.push(cand); else break;
       }
     }
 
@@ -137,9 +149,9 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
     const choices = shuffle([missing, ...distractors.slice(0, 3)]);
 
     gameArea.innerHTML = `
-      <div class="missing-letter" style="padding:24px 16px;text-align:center;max-width:640px;margin:0 auto;">
-        <div style="font-size:clamp(0.95em,2.6vw,1.1em);color:#555;margin-bottom:16px;">${isConsonantBlend ? 'Find the starting blend' : 'Complete the ending'}</div>
-        <div style="font-size:clamp(2.2em,7vw,3.4em);font-weight:900;color:#19777e;margin:20px 0 28px 0;letter-spacing:.04em;">${masked}</div>
+      <div class="missing-letter" style="padding:24px 16px;text-align:center;max-width:640px;margin:0 auto;position:relative;">
+        <div id="mlScore" style="${isReview ? 'display:none;' : ''}position:absolute;top:8px;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;background:#e6f7f8;color:#0a6b70;font-weight:800;font-size:.95em;border:1px solid #bfe7ea;box-shadow:0 1px 3px rgba(0,0,0,.05);">Score: ${score}</div>
+        <div style="height:50px;display:flex;align-items:center;justify-content:center;margin:28px 0 28px 0;"><div style="font-size:clamp(2.2em,7vw,3.4em);font-weight:900;color:#19777e;letter-spacing:.04em;">${masked}</div></div>
         <div style="display:flex;justify-content:center;align-items:center;margin:20px 0 32px 0;">
           <button id="mlPlay" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:56px;height:56px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.6em;">▶</button>
         </div>
@@ -147,7 +159,6 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
           ${choices.map(choice => `<button class=\"choice-btn ml-btn\" data-choice=\"${choice}\" ${choice===missing?'data-correct=\"1\"':''} style=\"height:100px;border-radius:14px;font-size:clamp(1.25em,3vw,1.6em);font-weight:800;background:#fff;border:3px solid #cfdbe2;\">${choice}</button>`).join('')}
         </div>
         <div id="mlFeedback" style="margin-top:16px;font-size:1.05em;height:24px;color:#555;"></div>
-        <div id="mlScore" style="margin-top:16px;text-align:center;font-size:1.15em;font-weight:800;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
       </div>
     `;
 
@@ -175,7 +186,7 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
           wordDisplay.style.transition = 'all .3s ease';
           wordDisplay.textContent = word;
           wordDisplay.style.opacity = '1';
-          wordDisplay.style.color = '#0badadff';
+          wordDisplay.style.color = correct ? '#0badadff' : '#e53e3e';
           wordDisplay.style.fontSize = 'clamp(4em, 9vw, 7em)';
           wordDisplay.style.fontWeight = '900';
         }

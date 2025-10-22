@@ -1,0 +1,13 @@
+[
+  {"eng":"calculator","kor":"계산기","def":"a small machine for math","ex":"I use a calculator."},
+  {"eng":"compass","kor":"컴퍼스","def":"a tool for drawing circles","ex":"She uses a compass."},
+  {"eng":"protractor","kor":"각도기","def":"a tool for measuring angles","ex":"We use a protractor."},
+  {"eng":"highlighter","kor":"형광펜","def":"a bright pen for marking text","ex":"I use a highlighter."},
+  {"eng":"binder","kor":"바인더","def":"a hard cover that holds papers","ex":"He opens a binder."},
+  {"eng":"folder","kor":"폴더","def":"a thin cover for papers","ex":"I keep papers in a folder."},
+  {"eng":"stapler","kor":"스테이플러","def":"a tool to join papers with metal","ex":"She uses a stapler."},
+  {"eng":"paperclip","kor":"클립","def":"a small metal clip for papers","ex":"I need a paperclip."},
+  {"eng":"tape","kor":"테이프","def":"a thin sticky strip","ex":"He uses tape."},
+  {"eng":"whiteboard","kor":"화이트보드","def":"a board for writing with markers","ex":"The teacher writes on the whiteboard."},
+  {"eng":"projector","kor":"프로젝터","def":"a machine that shows pictures on a wall","ex":"The projector turns on."}
+]

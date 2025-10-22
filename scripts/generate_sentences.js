@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const ROOT = process.cwd();
+const ROOT = path.resolve(__dirname, '..');  // Go up one level from scripts/
 const WORDLIST_DIR = path.join(ROOT, 'Games', 'Word Arcade', 'sample-wordlists');
 const BUILD_DIR = path.join(ROOT, 'build', 'sentences');
 

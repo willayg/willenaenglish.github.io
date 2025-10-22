@@ -1,0 +1,12 @@
+[
+  {"eng":"library","kor":"도서관","def":"a place to read and borrow books","ex":"I go to the library."},
+  {"eng":"museum","kor":"박물관","def":"a place that shows old or special things","ex":"We visit the museum."},
+  {"eng":"bakery","kor":"빵집","def":"a shop that makes and sells bread","ex":"She works at a bakery."},
+  {"eng":"pharmacy","kor":"약국","def":"a shop that sells medicine","ex":"He goes to the pharmacy."},
+  {"eng":"hospital","kor":"병원","def":"a place where sick people get help","ex":"She goes to the hospital."},
+  {"eng":"post office","kor":"우체국","def":"a place to send letters and packages","ex":"I go to the post office."},
+  {"eng":"police station","kor":"경찰서","def":"a building for the police","ex":"We pass the police station."},
+  {"eng":"fire station","kor":"소방서","def":"a building for firefighters and fire trucks","ex":"The fire station is near."},
+  {"eng":"supermarket","kor":"슈퍼마켓","def":"a large store for food and goods","ex":"We shop at the supermarket."},
+  {"eng":"playground","kor":"놀이터","def":"an outdoor place for children to play","ex":"The kids run at the playground."}
+]
