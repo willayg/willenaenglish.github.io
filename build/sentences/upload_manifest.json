@@ -1,1122 +1,2018 @@
 [
   {
     "type": "sentence",
-    "id": "animalsadvanced__s001__f530ff",
-    "text": "The cheetah runs quickly.",
-    "list": "animalsadvanced",
-    "word": "cheetah"
+    "id": "adjectives4__s001__44841d",
+    "text": "She is busy with homework.",
+    "list": "adjectives4",
+    "word": "busy"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s002__5579ea",
-    "text": "The hippopotamus rests in water.",
-    "list": "animalsadvanced",
-    "word": "hippopotamus"
+    "id": "adjectives4__s002__134f0c",
+    "text": "I am free this weekend.",
+    "list": "adjectives4",
+    "word": "free"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s003__aad606",
-    "text": "The rhinoceros walks slowly.",
-    "list": "animalsadvanced",
-    "word": "rhinoceros"
+    "id": "adjectives4__s003__d0b4e6",
+    "text": "This meeting is important.",
+    "list": "adjectives4",
+    "word": "important"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s004__9bba4d",
-    "text": "The panda eats bamboo.",
-    "list": "animalsadvanced",
-    "word": "panda"
+    "id": "adjectives4__s004__6ab5a6",
+    "text": "That book is interesting.",
+    "list": "adjectives4",
+    "word": "interesting"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s005__adc4b1",
-    "text": "The koala sleeps in a tree.",
-    "list": "animalsadvanced",
-    "word": "koala"
+    "id": "adjectives4__s005__a7fe83",
+    "text": "The class was boring.",
+    "list": "adjectives4",
+    "word": "boring"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s006__2a338c",
-    "text": "The sloth moves slowly.",
-    "list": "animalsadvanced",
-    "word": "sloth"
+    "id": "adjectives4__s006__5497bd",
+    "text": "It’s safe to cross now.",
+    "list": "adjectives4",
+    "word": "safe"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s007__1e6ca6",
-    "text": "The otter plays in the water.",
-    "list": "animalsadvanced",
-    "word": "otter"
+    "id": "adjectives4__s007__f5ed4c",
+    "text": "That road is dangerous.",
+    "list": "adjectives4",
+    "word": "dangerous"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s008__98b1bb",
-    "text": "The beaver builds a dam.",
-    "list": "animalsadvanced",
-    "word": "beaver"
+    "id": "adjectives4__s008__6ae5c1",
+    "text": "She eats healthy food.",
+    "list": "adjectives4",
+    "word": "healthy"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s009__572617",
-    "text": "The eagle flies over the mountain.",
-    "list": "animalsadvanced",
-    "word": "eagle"
+    "id": "adjectives4__s009__e9ca2f",
+    "text": "He is sick today.",
+    "list": "adjectives4",
+    "word": "sick"
   },
   {
     "type": "sentence",
-    "id": "animalsadvanced__s010__e1d3bf",
-    "text": "The owl hoots at night.",
-    "list": "animalsadvanced",
-    "word": "owl"
+    "id": "adjectives4__s010__33bcab",
+    "text": "I’m hungry after school.",
+    "list": "adjectives4",
+    "word": "hungry"
   },
   {
     "type": "sentence",
-    "id": "artculture__s001__5c0593",
-    "text": "I see a painting on the wall.",
-    "list": "artculture",
-    "word": "painting"
+    "id": "adjectives4__s011__bf5fb2",
+    "text": "He felt thirsty after running.",
+    "list": "adjectives4",
+    "word": "thirsty"
   },
   {
     "type": "sentence",
-    "id": "artculture__s002__036561",
-    "text": "The sculpture is in the museum.",
-    "list": "artculture",
-    "word": "sculpture"
+    "id": "adjectives4__s012__e39929",
+    "text": "I can’t eat more, I’m full.",
+    "list": "adjectives4",
+    "word": "full"
   },
   {
     "type": "sentence",
-    "id": "artculture__s003__d45647",
-    "text": "We visit the art museum.",
-    "list": "artculture",
-    "word": "museum"
+    "id": "adjectives5__s001__397abb",
+    "text": "The box is empty.",
+    "list": "adjectives5",
+    "word": "empty"
   },
   {
     "type": "sentence",
-    "id": "artculture__s004__8d8c40",
-    "text": "The gallery shows new paintings.",
-    "list": "artculture",
-    "word": "gallery"
+    "id": "adjectives5__s002__ae37ff",
+    "text": "This bag is heavy.",
+    "list": "adjectives5",
+    "word": "heavy"
   },
   {
     "type": "sentence",
-    "id": "artculture__s005__65354c",
-    "text": "She paints a portrait.",
-    "list": "artculture",
-    "word": "portrait"
+    "id": "adjectives5__s003__f98093",
+    "text": "A feather is light.",
+    "list": "adjectives5",
+    "word": "light"
   },
   {
     "type": "sentence",
-    "id": "artculture__s006__5bea4d",
-    "text": "This landscape shows mountains.",
-    "list": "artculture",
-    "word": "landscape"
+    "id": "adjectives5__s004__4a0386",
+    "text": "The sun is bright today.",
+    "list": "adjectives5",
+    "word": "bright"
   },
   {
     "type": "sentence",
-    "id": "artculture__s007__a7c3e2",
-    "text": "I clean my brush.",
-    "list": "artculture",
-    "word": "brush"
+    "id": "adjectives5__s005__27529b",
+    "text": "It’s dark in the room.",
+    "list": "adjectives5",
+    "word": "dark"
   },
   {
     "type": "sentence",
-    "id": "artculture__s008__a769d2",
-    "text": "The artist paints on canvas.",
-    "list": "artculture",
-    "word": "canvas"
+    "id": "adjectives5__s006__d9660b",
+    "text": "The table is clean.",
+    "list": "adjectives5",
+    "word": "clean"
   },
   {
     "type": "sentence",
-    "id": "artculture__s009__0636ce",
-    "text": "There is a statue in the park.",
-    "list": "artculture",
-    "word": "statue"
+    "id": "adjectives5__s007__2c2599",
+    "text": "Your shoes are dirty.",
+    "list": "adjectives5",
+    "word": "dirty"
   },
   {
     "type": "sentence",
-    "id": "artculture__s010__ed553f",
-    "text": "The art exhibition opens today.",
-    "list": "artculture",
-    "word": "exhibition"
+    "id": "adjectives5__s008__90b173",
+    "text": "Be quiet in the library.",
+    "list": "adjectives5",
+    "word": "quiet"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s001__84cc9d",
-    "text": "I wear a jacket.",
-    "list": "clothingaccessories",
-    "word": "jacket"
+    "id": "adjectives5__s009__0f63a3",
+    "text": "The music is too loud.",
+    "list": "adjectives5",
+    "word": "loud"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s002__a030cf",
-    "text": "She puts on a sweater.",
-    "list": "clothingaccessories",
-    "word": "sweater"
+    "id": "adjectives5__s010__1fc6a6",
+    "text": "This pillow is soft.",
+    "list": "adjectives5",
+    "word": "soft"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s003__a9d8ce",
-    "text": "He wears a scarf.",
-    "list": "clothingaccessories",
-    "word": "scarf"
+    "id": "adjectives5__s011__3d88b9",
+    "text": "The floor is hard.",
+    "list": "adjectives5",
+    "word": "hard"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s004__48626f",
-    "text": "I wear gloves in winter.",
-    "list": "clothingaccessories",
-    "word": "gloves"
+    "id": "adjectives5__s012__8e74ad",
+    "text": "Be careful, the knife is sharp.",
+    "list": "adjectives5",
+    "word": "sharp"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s005__e19a0b",
-    "text": "She wears boots.",
-    "list": "clothingaccessories",
-    "word": "boots"
+    "id": "adjectives6__s001__03265b",
+    "text": "The earth is round.",
+    "list": "adjectives6",
+    "word": "round"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s006__0a43d3",
-    "text": "He wears jeans.",
-    "list": "clothingaccessories",
-    "word": "jeans"
+    "id": "adjectives6__s002__7ce282",
+    "text": "The table is square.",
+    "list": "adjectives6",
+    "word": "square"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s007__42cd9f",
-    "text": "I put on a belt.",
-    "list": "clothingaccessories",
-    "word": "belt"
+    "id": "adjectives6__s003__ef31d6",
+    "text": "The road is wide.",
+    "list": "adjectives6",
+    "word": "wide"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s008__213898",
-    "text": "She wears a hat.",
-    "list": "clothingaccessories",
-    "word": "hat"
+    "id": "adjectives6__s004__550f7e",
+    "text": "This street is narrow.",
+    "list": "adjectives6",
+    "word": "narrow"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s009__451613",
-    "text": "He wears shorts.",
-    "list": "clothingaccessories",
-    "word": "shorts"
+    "id": "adjectives6__s005__e13a14",
+    "text": "The water is deep.",
+    "list": "adjectives6",
+    "word": "deep"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s010__6b9f33",
-    "text": "She buys a dress.",
-    "list": "clothingaccessories",
-    "word": "dress"
+    "id": "adjectives6__s006__b42359",
+    "text": "The pool is shallow here.",
+    "list": "adjectives6",
+    "word": "shallow"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s011__c20987",
-    "text": "She wears a skirt.",
-    "list": "clothingaccessories",
-    "word": "skirt"
+    "id": "adjectives6__s007__13eeab",
+    "text": "He has strong arms.",
+    "list": "adjectives6",
+    "word": "strong"
   },
   {
     "type": "sentence",
-    "id": "clothingaccessories__s012__37a9a8",
-    "text": "I wear sneakers.",
-    "list": "clothingaccessories",
-    "word": "sneakers"
+    "id": "adjectives6__s008__8bdd73",
+    "text": "She felt weak after running.",
+    "list": "adjectives6",
+    "word": "weak"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s001__1aa628",
-    "text": "I go to the library.",
-    "list": "communityplaces2",
-    "word": "library"
+    "id": "adjectives6__s009__6678c9",
+    "text": "The book is thick.",
+    "list": "adjectives6",
+    "word": "thick"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s002__4c08e9",
-    "text": "We visit the museum.",
-    "list": "communityplaces2",
-    "word": "museum"
+    "id": "adjectives6__s010__940d3f",
+    "text": "She cut a thin slice of bread.",
+    "list": "adjectives6",
+    "word": "thin"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s003__738e58",
-    "text": "She works at a bakery.",
-    "list": "communityplaces2",
-    "word": "bakery"
+    "id": "adjectives6__s011__ec4f43",
+    "text": "He is a rich man.",
+    "list": "adjectives6",
+    "word": "rich"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s004__42a905",
-    "text": "He goes to the pharmacy.",
-    "list": "communityplaces2",
-    "word": "pharmacy"
+    "id": "adjectives6__s012__cf32c3",
+    "text": "They are poor farmers.",
+    "list": "adjectives6",
+    "word": "poor"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s005__02abd3",
-    "text": "She goes to the hospital.",
-    "list": "communityplaces2",
-    "word": "hospital"
+    "id": "animals2__s001__e7e783",
+    "text": "The lion rests.",
+    "list": "animals2",
+    "word": "lion"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s006__e94d8c",
-    "text": "I go to the post office.",
-    "list": "communityplaces2",
-    "word": "post office"
+    "id": "animals2__s002__37a729",
+    "text": "The tiger walks.",
+    "list": "animals2",
+    "word": "tiger"
   },
   {
     "type": "sentence",
-    "id": "communityplaces2__s007__e0139d",
-    "text": "We pass the police station.",
-    "list": "communityplaces2",
-    "word": "police station"
-  },
-  {
-    "type": "sentence",
-    "id": "communityplaces2__s008__cf2037",
-    "text": "The fire station is near.",
-    "list": "communityplaces2",
-    "word": "fire station"
-  },
-  {
-    "type": "sentence",
-    "id": "communityplaces2__s009__4db104",
-    "text": "We shop at the supermarket.",
-    "list": "communityplaces2",
-    "word": "supermarket"
-  },
-  {
-    "type": "sentence",
-    "id": "communityplaces2__s010__aa0456",
-    "text": "The kids run at the playground.",
-    "list": "communityplaces2",
-    "word": "playground"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s001__5aae84",
-    "text": "The child is curious.",
-    "list": "feelings2",
-    "word": "curious"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s002__50bf65",
-    "text": "She feels frustrated.",
-    "list": "feelings2",
-    "word": "frustrated"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s003__272ffa",
-    "text": "He is jealous of the prize.",
-    "list": "feelings2",
-    "word": "jealous"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s004__e31e94",
-    "text": "I feel embarrassed.",
-    "list": "feelings2",
-    "word": "embarrassed"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s005__0b0750",
-    "text": "We feel relaxed.",
-    "list": "feelings2",
-    "word": "relaxed"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s006__ded328",
-    "text": "He feels lonely.",
-    "list": "feelings2",
-    "word": "lonely"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s007__cae379",
-    "text": "I am grateful for your help.",
-    "list": "feelings2",
-    "word": "grateful"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s008__d9443e",
-    "text": "She feels anxious.",
-    "list": "feelings2",
-    "word": "anxious"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s009__315e0b",
-    "text": "He stays calm.",
-    "list": "feelings2",
-    "word": "calm"
-  },
-  {
-    "type": "sentence",
-    "id": "feelings2__s010__d8d6ab",
-    "text": "The girl is brave.",
-    "list": "feelings2",
-    "word": "brave"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s001__a8b25d",
-    "text": "I sleep in the bedroom.",
-    "list": "homerooms",
-    "word": "bedroom"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s002__6da1f9",
-    "text": "We cook in the kitchen.",
-    "list": "homerooms",
-    "word": "kitchen"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s003__528d47",
-    "text": "I wash in the bathroom.",
-    "list": "homerooms",
-    "word": "bathroom"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s004__407cb5",
-    "text": "We sit in the living room.",
-    "list": "homerooms",
-    "word": "living room"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s005__4e813c",
-    "text": "Tools are in the basement.",
-    "list": "homerooms",
-    "word": "basement"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s006__84421c",
-    "text": "Old boxes are in the attic.",
-    "list": "homerooms",
-    "word": "attic"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s007__1370eb",
-    "text": "I walk up the staircase.",
-    "list": "homerooms",
-    "word": "staircase"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s008__89bf5f",
-    "text": "We sit on the balcony.",
-    "list": "homerooms",
-    "word": "balcony"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s009__bfaded",
-    "text": "The car is in the garage.",
-    "list": "homerooms",
-    "word": "garage"
-  },
-  {
-    "type": "sentence",
-    "id": "homerooms__s010__d3bdeb",
-    "text": "Pictures hang in the hallway.",
-    "list": "homerooms",
-    "word": "hallway"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s001__06af20",
-    "text": "I put milk in the refrigerator.",
-    "list": "kitchenappliances",
-    "word": "refrigerator"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s002__542fd6",
-    "text": "She uses the microwave.",
-    "list": "kitchenappliances",
-    "word": "microwave"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s003__4176aa",
-    "text": "I use a blender for smoothies.",
-    "list": "kitchenappliances",
-    "word": "blender"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s004__e0dfcf",
-    "text": "He puts bread in the toaster.",
-    "list": "kitchenappliances",
-    "word": "toaster"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s005__7d5a76",
-    "text": "We load the dishwasher.",
-    "list": "kitchenappliances",
-    "word": "dishwasher"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s006__a4fa21",
-    "text": "She bakes cake in the oven.",
-    "list": "kitchenappliances",
-    "word": "oven"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s007__ea9670",
-    "text": "I cook on the stove.",
-    "list": "kitchenappliances",
-    "word": "stove"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s008__16cdaa",
-    "text": "I wash dishes in the sink.",
-    "list": "kitchenappliances",
-    "word": "sink"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s009__3b48e3",
-    "text": "Plates are in the cabinet.",
-    "list": "kitchenappliances",
-    "word": "cabinet"
-  },
-  {
-    "type": "sentence",
-    "id": "kitchenappliances__s010__3fd23e",
-    "text": "I cut vegetables on the counter.",
-    "list": "kitchenappliances",
-    "word": "counter"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s001__9485bf",
-    "text": "She plays the violin.",
-    "list": "musicalinstruments",
-    "word": "violin"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s002__5d0f43",
-    "text": "He plays the guitar.",
-    "list": "musicalinstruments",
-    "word": "guitar"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s003__f3d2a0",
-    "text": "She plays the piano.",
-    "list": "musicalinstruments",
-    "word": "piano"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s004__62c983",
-    "text": "He plays the trumpet.",
-    "list": "musicalinstruments",
-    "word": "trumpet"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s005__8e6b50",
-    "text": "The drummer plays the drums.",
-    "list": "musicalinstruments",
-    "word": "drum"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s006__cf5dc9",
-    "text": "She plays the flute.",
-    "list": "musicalinstruments",
-    "word": "flute"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s007__4ee238",
-    "text": "He plays the clarinet.",
-    "list": "musicalinstruments",
-    "word": "clarinet"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s008__3ede6a",
-    "text": "The musician plays the harp.",
-    "list": "musicalinstruments",
-    "word": "harp"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s009__8aa882",
-    "text": "He plays the saxophone.",
-    "list": "musicalinstruments",
-    "word": "saxophone"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s010__5c2a43",
-    "text": "I shake the tambourine.",
-    "list": "musicalinstruments",
-    "word": "tambourine"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s011__0202f7",
-    "text": "The cymbals make loud noise.",
-    "list": "musicalinstruments",
-    "word": "cymbals"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s012__77cb6e",
-    "text": "The old man plays the accordion.",
-    "list": "musicalinstruments",
-    "word": "accordion"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s013__e226f2",
-    "text": "She shakes maracas.",
-    "list": "musicalinstruments",
-    "word": "maracas"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s014__e0d7e6",
-    "text": "The child plays the xylophone.",
-    "list": "musicalinstruments",
-    "word": "xylophone"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s015__dfdf20",
-    "text": "He plays the cello.",
-    "list": "musicalinstruments",
-    "word": "cello"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s016__5f5a73",
-    "text": "She plays the electric guitar.",
-    "list": "musicalinstruments",
-    "word": "electric guitar"
-  },
-  {
-    "type": "sentence",
-    "id": "musicalinstruments__s017__7ff4c4",
-    "text": "He plays the keyboard.",
-    "list": "musicalinstruments",
-    "word": "keyboard"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s001__69f0c4",
-    "text": "We climb a mountain.",
-    "list": "naturelandforms",
-    "word": "mountain"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s002__0d1d6e",
-    "text": "The river flows through the valley.",
-    "list": "naturelandforms",
-    "word": "valley"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s003__42f8b2",
-    "text": "The river moves fast.",
-    "list": "naturelandforms",
-    "word": "river"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s004__90d59f",
-    "text": "The ocean is blue.",
-    "list": "naturelandforms",
-    "word": "ocean"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s005__2e8702",
-    "text": "The desert is hot.",
-    "list": "naturelandforms",
-    "word": "desert"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s006__91de73",
-    "text": "Animals live in the forest.",
-    "list": "naturelandforms",
-    "word": "forest"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s007__f4d652",
-    "text": "The island is small.",
-    "list": "naturelandforms",
-    "word": "island"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s008__363917",
-    "text": "The volcano is quiet.",
-    "list": "naturelandforms",
-    "word": "volcano"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s009__87fd8a",
-    "text": "We see a waterfall.",
-    "list": "naturelandforms",
-    "word": "waterfall"
-  },
-  {
-    "type": "sentence",
-    "id": "naturelandforms__s010__b121c9",
-    "text": "We explore a cave.",
-    "list": "naturelandforms",
-    "word": "cave"
-  },
-  {
-    "type": "sentence",
-    "id": "rareanimals__s001__2f74c3",
-    "text": "The elephant drinks water.",
-    "list": "rareanimals",
+    "id": "animals2__s003__52b831",
+    "text": "The elephant drinks.",
+    "list": "animals2",
     "word": "elephant"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s002__58544f",
-    "text": "Penguins live in cold places.",
-    "list": "rareanimals",
-    "word": "penguin"
+    "id": "animals2__s004__fc1931",
+    "text": "The giraffe eats leaves.",
+    "list": "animals2",
+    "word": "giraffe"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s003__1ddda7",
-    "text": "The peacock displays its tail.",
-    "list": "rareanimals",
-    "word": "peacock"
+    "id": "animals2__s005__e91f02",
+    "text": "The zebra runs.",
+    "list": "animals2",
+    "word": "zebra"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s004__824096",
-    "text": "The crocodile swims in the river.",
-    "list": "rareanimals",
-    "word": "crocodile"
+    "id": "animals2__s006__fff1fe",
+    "text": "The monkey climbs.",
+    "list": "animals2",
+    "word": "monkey"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s005__174081",
-    "text": "The tortoise walks slowly.",
-    "list": "rareanimals",
-    "word": "tortoise"
+    "id": "animals2__s007__a08a4e",
+    "text": "The bear sleeps.",
+    "list": "animals2",
+    "word": "bear"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s006__fadfbe",
-    "text": "The jellyfish floats in the ocean.",
-    "list": "rareanimals",
-    "word": "jellyfish"
+    "id": "animals2__s008__e993a9",
+    "text": "The wolf howls.",
+    "list": "animals2",
+    "word": "wolf"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s007__9eb934",
-    "text": "The butterfly lands on a flower.",
-    "list": "rareanimals",
-    "word": "butterfly"
+    "id": "animals2__s009__ecd410",
+    "text": "The fox hides.",
+    "list": "animals2",
+    "word": "fox"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s008__8796df",
-    "text": "The dragonfly flies fast.",
-    "list": "rareanimals",
-    "word": "dragonfly"
+    "id": "animals2__s010__6def1f",
+    "text": "The kangaroo jumps.",
+    "list": "animals2",
+    "word": "kangaroo"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s009__8cc894",
-    "text": "The caterpillar eats leaves.",
-    "list": "rareanimals",
-    "word": "caterpillar"
+    "id": "easyanimals__s001__05245b",
+    "text": "The dog runs.",
+    "list": "easyanimals",
+    "word": "dog"
   },
   {
     "type": "sentence",
-    "id": "rareanimals__s010__69b431",
-    "text": "The seahorse swims slowly.",
-    "list": "rareanimals",
-    "word": "seahorse"
+    "id": "easyanimals__s002__f6d023",
+    "text": "The cat sleeps.",
+    "list": "easyanimals",
+    "word": "cat"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s001__ed39dd",
-    "text": "I use a calculator.",
-    "list": "schoolsupplies2",
-    "word": "calculator"
+    "id": "easyanimals__s003__02f9ba",
+    "text": "The rabbit hops.",
+    "list": "easyanimals",
+    "word": "rabbit"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s002__65cc64",
-    "text": "She uses a compass.",
-    "list": "schoolsupplies2",
-    "word": "compass"
+    "id": "easyanimals__s004__354748",
+    "text": "The horse trots.",
+    "list": "easyanimals",
+    "word": "horse"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s003__7fad32",
-    "text": "We use a protractor.",
-    "list": "schoolsupplies2",
-    "word": "protractor"
+    "id": "easyanimals__s005__d4a4fd",
+    "text": "The cow eats grass.",
+    "list": "easyanimals",
+    "word": "cow"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s004__94fb95",
-    "text": "I use a highlighter.",
-    "list": "schoolsupplies2",
-    "word": "highlighter"
+    "id": "easyanimals__s006__16a477",
+    "text": "The pig rolls.",
+    "list": "easyanimals",
+    "word": "pig"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s005__ea5256",
-    "text": "He opens a binder.",
-    "list": "schoolsupplies2",
-    "word": "binder"
+    "id": "easyanimals__s007__3ef932",
+    "text": "The sheep grazes.",
+    "list": "easyanimals",
+    "word": "sheep"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s006__d6766a",
-    "text": "I keep papers in a folder.",
-    "list": "schoolsupplies2",
-    "word": "folder"
+    "id": "easyanimals__s008__63fd29",
+    "text": "The goat climbs.",
+    "list": "easyanimals",
+    "word": "goat"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s007__b17c21",
-    "text": "She uses a stapler.",
-    "list": "schoolsupplies2",
-    "word": "stapler"
+    "id": "easyanimals__s009__2c8151",
+    "text": "The chicken pecks.",
+    "list": "easyanimals",
+    "word": "chicken"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s008__17cc58",
-    "text": "I need a paperclip.",
-    "list": "schoolsupplies2",
-    "word": "paperclip"
+    "id": "easyanimals__s010__d86501",
+    "text": "The duck swims.",
+    "list": "easyanimals",
+    "word": "duck"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s009__59048a",
-    "text": "He uses tape.",
-    "list": "schoolsupplies2",
-    "word": "tape"
+    "id": "easyanimals__s011__ecc12f",
+    "text": "The mouse hides.",
+    "list": "easyanimals",
+    "word": "mouse"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s010__b83578",
-    "text": "The teacher writes on the whiteboard.",
-    "list": "schoolsupplies2",
-    "word": "whiteboard"
+    "id": "easyanimals__s012__a08a4e",
+    "text": "The bear sleeps.",
+    "list": "easyanimals",
+    "word": "bear"
   },
   {
     "type": "sentence",
-    "id": "schoolsupplies2__s011__85735a",
-    "text": "The projector turns on.",
-    "list": "schoolsupplies2",
-    "word": "projector"
+    "id": "easyanimals__s013__37a729",
+    "text": "The tiger walks.",
+    "list": "easyanimals",
+    "word": "tiger"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s001__f3deae",
-    "text": "I cook broccoli.",
-    "list": "vegetables",
-    "word": "broccoli"
+    "id": "easyanimals__s014__e7e783",
+    "text": "The lion rests.",
+    "list": "easyanimals",
+    "word": "lion"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s002__7baa82",
-    "text": "She cuts a cucumber.",
-    "list": "vegetables",
-    "word": "cucumber"
+    "id": "easyanimals__s015__52b831",
+    "text": "The elephant drinks.",
+    "list": "easyanimals",
+    "word": "elephant"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s003__104729",
-    "text": "We wash lettuce.",
-    "list": "vegetables",
-    "word": "lettuce"
+    "id": "easyanimals__s016__fff1fe",
+    "text": "The monkey climbs.",
+    "list": "easyanimals",
+    "word": "monkey"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s004__6af317",
-    "text": "I slice a tomato.",
-    "list": "vegetables",
-    "word": "tomato"
+    "id": "easyanimals__s017__ecd410",
+    "text": "The fox hides.",
+    "list": "easyanimals",
+    "word": "fox"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s005__74ab0f",
-    "text": "He chops cabbage.",
-    "list": "vegetables",
-    "word": "cabbage"
+    "id": "easyanimals__s018__e993a9",
+    "text": "The wolf howls.",
+    "list": "easyanimals",
+    "word": "wolf"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s006__98606e",
-    "text": "I eat spinach.",
-    "list": "vegetables",
-    "word": "spinach"
+    "id": "easyanimals__s019__522515",
+    "text": "The deer runs.",
+    "list": "easyanimals",
+    "word": "deer"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s007__8ec50b",
-    "text": "We fry eggplant.",
-    "list": "vegetables",
-    "word": "eggplant"
+    "id": "easyanimals__s020__253995",
+    "text": "The squirrel jumps.",
+    "list": "easyanimals",
+    "word": "squirrel"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s008__7ffd85",
-    "text": "She steams cauliflower.",
-    "list": "vegetables",
-    "word": "cauliflower"
+    "id": "easyhobbies__s001__d3f5dc",
+    "text": "I like reading books.",
+    "list": "easyhobbies",
+    "word": "reading"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s009__07e2ae",
-    "text": "I add mushrooms.",
-    "list": "vegetables",
-    "word": "mushroom"
+    "id": "easyhobbies__s002__f18673",
+    "text": "She enjoys painting pictures.",
+    "list": "easyhobbies",
+    "word": "painting"
   },
   {
     "type": "sentence",
-    "id": "vegetables__s010__5ef6d9",
-    "text": "He cuts a pepper.",
-    "list": "vegetables",
-    "word": "pepper"
+    "id": "easyhobbies__s003__3e228b",
+    "text": "I enjoy cooking dinner.",
+    "list": "easyhobbies",
+    "word": "cooking"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s001__438d7e",
-    "text": "I borrow a book.",
-    "list": "verbs2",
-    "word": "borrow"
+    "id": "easyhobbies__s004__17d1aa",
+    "text": "My mom likes gardening flowers.",
+    "list": "easyhobbies",
+    "word": "gardening"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s002__6282d3",
-    "text": "I lend a pencil.",
-    "list": "verbs2",
-    "word": "lend"
+    "id": "easyhobbies__s005__e41840",
+    "text": "He loves photography work.",
+    "list": "easyhobbies",
+    "word": "photography"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s003__f4c9c5",
-    "text": "They build a bridge.",
-    "list": "verbs2",
-    "word": "build"
+    "id": "easyhobbies__s006__62fc5e",
+    "text": "We enjoy dancing songs.",
+    "list": "easyhobbies",
+    "word": "dancing"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s004__11a5c7",
-    "text": "He breaks the stick.",
-    "list": "verbs2",
-    "word": "break"
+    "id": "easyhobbies__s007__9e7b32",
+    "text": "She likes singing songs.",
+    "list": "easyhobbies",
+    "word": "singing"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s005__16677d",
-    "text": "She fixes the toy.",
-    "list": "verbs2",
-    "word": "fix"
+    "id": "easyhobbies__s008__b3eb05",
+    "text": "He likes playing guitar music.",
+    "list": "easyhobbies",
+    "word": "playing guitar"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s006__0276cf",
-    "text": "I carry the box.",
-    "list": "verbs2",
-    "word": "carry"
+    "id": "easyhobbies__s009__2afa13",
+    "text": "She practices playing piano songs.",
+    "list": "easyhobbies",
+    "word": "playing piano"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s007__797164",
-    "text": "We cover the pot.",
-    "list": "verbs2",
-    "word": "cover"
+    "id": "easyhobbies__s010__b91b1d",
+    "text": "We enjoy swimming laps.",
+    "list": "easyhobbies",
+    "word": "swimming"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s008__989366",
-    "text": "They discover a cave.",
-    "list": "verbs2",
-    "word": "discover"
+    "id": "easyhobbies__s011__265d52",
+    "text": "He enjoys cycling roads.",
+    "list": "easyhobbies",
+    "word": "cycling"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s009__612dcd",
-    "text": "I improve my writing.",
-    "list": "verbs2",
-    "word": "improve"
+    "id": "easyhobbies__s012__a9af30",
+    "text": "We go hiking trails.",
+    "list": "easyhobbies",
+    "word": "hiking"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s010__5627d6",
-    "text": "We decide to go.",
-    "list": "verbs2",
-    "word": "decide"
+    "id": "easyhobbies__s013__6b318b",
+    "text": "Dad likes fishing rivers.",
+    "list": "easyhobbies",
+    "word": "fishing"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s011__f7949a",
-    "text": "I invite my friend.",
-    "list": "verbs2",
-    "word": "invite"
+    "id": "easyhobbies__s014__fca21c",
+    "text": "Our family likes traveling places.",
+    "list": "easyhobbies",
+    "word": "traveling"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s012__b13843",
-    "text": "The bus arrives.",
-    "list": "verbs2",
-    "word": "arrive"
+    "id": "easyhobbies__s015__31fee2",
+    "text": "I enjoy writing stories.",
+    "list": "easyhobbies",
+    "word": "writing"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s013__0b848d",
-    "text": "I prefer tea.",
-    "list": "verbs2",
-    "word": "prefer"
+    "id": "easyhobbies__s016__133f25",
+    "text": "The child likes drawing animals.",
+    "list": "easyhobbies",
+    "word": "drawing"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s014__c1df41",
-    "text": "We compare two pictures.",
-    "list": "verbs2",
-    "word": "compare"
+    "id": "easyhobbies__s017__0fd36e",
+    "text": "We enjoy playing chess games.",
+    "list": "easyhobbies",
+    "word": "playing chess"
   },
   {
     "type": "sentence",
-    "id": "verbs2__s015__0f767d",
-    "text": "The teacher explains the rule.",
-    "list": "verbs2",
-    "word": "explain"
+    "id": "easyhobbies__s018__6d4ad0",
+    "text": "He likes playing video games.",
+    "list": "easyhobbies",
+    "word": "playing video games"
   },
   {
     "type": "sentence",
-    "id": "weather__s001__6205bf",
-    "text": "The sun is shining.",
-    "list": "weather",
+    "id": "easyhobbies__s019__f51acb",
+    "text": "Grandma enjoys knitting hats.",
+    "list": "easyhobbies",
+    "word": "knitting"
+  },
+  {
+    "type": "sentence",
+    "id": "easyhobbies__s020__29e161",
+    "text": "She enjoys baking cookies.",
+    "list": "easyhobbies",
+    "word": "baking"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s001__06ef9d",
+    "text": "The doctor helps patients.",
+    "list": "easyjobs",
+    "word": "doctor"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s002__433ef1",
+    "text": "The nurse checks patients.",
+    "list": "easyjobs",
+    "word": "nurse"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s003__1a48ce",
+    "text": "The teacher explains lessons.",
+    "list": "easyjobs",
+    "word": "teacher"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s004__a70fe1",
+    "text": "The student reads books.",
+    "list": "easyjobs",
+    "word": "student"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s005__c2d241",
+    "text": "The police help people.",
+    "list": "easyjobs",
+    "word": "police"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s006__80a009",
+    "text": "The firefighter sprays water.",
+    "list": "easyjobs",
+    "word": "firefighter"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s007__e59f0c",
+    "text": "The chef cooks meals.",
+    "list": "easyjobs",
+    "word": "chef"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s008__7752a9",
+    "text": "The farmer plants seeds.",
+    "list": "easyjobs",
+    "word": "farmer"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s009__0d00e5",
+    "text": "The artist paints pictures.",
+    "list": "easyjobs",
+    "word": "artist"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s010__e92fa9",
+    "text": "The musician plays songs.",
+    "list": "easyjobs",
+    "word": "musician"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s011__015daa",
+    "text": "The pilot flies an airplane.",
+    "list": "easyjobs",
+    "word": "pilot"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s012__4561f7",
+    "text": "The engineer builds bridges.",
+    "list": "easyjobs",
+    "word": "engineer"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s013__0b0a8b",
+    "text": "The mechanic fixes cars.",
+    "list": "easyjobs",
+    "word": "mechanic"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s014__ee7a4c",
+    "text": "The scientist tests ideas.",
+    "list": "easyjobs",
+    "word": "scientist"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s015__b201a8",
+    "text": "The programmer writes apps.",
+    "list": "easyjobs",
+    "word": "programmer"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s016__e0bfa7",
+    "text": "The writer writes books.",
+    "list": "easyjobs",
+    "word": "writer"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s017__d66aa0",
+    "text": "The actor learns lines.",
+    "list": "easyjobs",
+    "word": "actor"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s018__a83592",
+    "text": "The dancer practices moves.",
+    "list": "easyjobs",
+    "word": "dancer"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s019__63580a",
+    "text": "The waiter carries plates.",
+    "list": "easyjobs",
+    "word": "waiter"
+  },
+  {
+    "type": "sentence",
+    "id": "easyjobs__s020__6c4e17",
+    "text": "The driver drives a bus.",
+    "list": "easyjobs",
+    "word": "driver"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s001__d49e67",
+    "text": "I run home.",
+    "list": "easyverbs",
+    "word": "run"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s002__8a26e9",
+    "text": "I eat rice.",
+    "list": "easyverbs",
+    "word": "eat"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s003__4e3c12",
+    "text": "I drink water.",
+    "list": "easyverbs",
+    "word": "drink"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s004__a733c5",
+    "text": "I sleep well.",
+    "list": "easyverbs",
+    "word": "sleep"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s005__0c597d",
+    "text": "I read a book.",
+    "list": "easyverbs",
+    "word": "read"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s006__e32eca",
+    "text": "I write a note.",
+    "list": "easyverbs",
+    "word": "write"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s007__317661",
+    "text": "I sing a song.",
+    "list": "easyverbs",
+    "word": "sing"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s008__e43ea3",
+    "text": "We dance together.",
+    "list": "easyverbs",
+    "word": "dance"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s009__b992f9",
+    "text": "I swim laps.",
+    "list": "easyverbs",
+    "word": "swim"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s010__7b78a5",
+    "text": "I jump high.",
+    "list": "easyverbs",
+    "word": "jump"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s011__dbd8a2",
+    "text": "We walk home.",
+    "list": "easyverbs",
+    "word": "walk"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s012__f19642",
+    "text": "We talk softly.",
+    "list": "easyverbs",
+    "word": "talk"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s013__7e7512",
+    "text": "I listen carefully.",
+    "list": "easyverbs",
+    "word": "listen"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s014__7f89a3",
+    "text": "I see a bird.",
+    "list": "easyverbs",
+    "word": "see"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s015__9cef24",
+    "text": "I buy bread.",
+    "list": "easyverbs",
+    "word": "buy"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s016__9f4a5d",
+    "text": "They sell fruit.",
+    "list": "easyverbs",
+    "word": "sell"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s017__4b3200",
+    "text": "I make a cake.",
+    "list": "easyverbs",
+    "word": "make"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s018__376371",
+    "text": "I give a gift.",
+    "list": "easyverbs",
+    "word": "give"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s019__a41b69",
+    "text": "I take a pen.",
+    "list": "easyverbs",
+    "word": "take"
+  },
+  {
+    "type": "sentence",
+    "id": "easyverbs__s020__b58ef4",
+    "text": "I open a box.",
+    "list": "easyverbs",
+    "word": "open"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s001__e6a0d0",
+    "text": "I feel happy.",
+    "list": "feelings",
+    "word": "happy"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s002__49e0c3",
+    "text": "She feels sad.",
+    "list": "feelings",
+    "word": "sad"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s003__4f743d",
+    "text": "He feels angry.",
+    "list": "feelings",
+    "word": "angry"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s004__44ab9f",
+    "text": "We feel excited.",
+    "list": "feelings",
+    "word": "excited"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s005__13b728",
+    "text": "I feel scared.",
+    "list": "feelings",
+    "word": "scared"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s006__96cb25",
+    "text": "They feel bored.",
+    "list": "feelings",
+    "word": "bored"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s007__dda3f3",
+    "text": "I feel tired.",
+    "list": "feelings",
+    "word": "tired"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s008__141791",
+    "text": "She feels surprised.",
+    "list": "feelings",
+    "word": "surprised"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s009__98a82c",
+    "text": "I feel nervous.",
+    "list": "feelings",
+    "word": "nervous"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s010__0c6016",
+    "text": "He feels proud.",
+    "list": "feelings",
+    "word": "proud"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s011__2345d9",
+    "text": "The boy feels shy.",
+    "list": "feelings",
+    "word": "shy"
+  },
+  {
+    "type": "sentence",
+    "id": "feelings__s012__c6274d",
+    "text": "I feel confused.",
+    "list": "feelings",
+    "word": "confused"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s001__0b5f5c",
+    "text": "I eat an apple.",
+    "list": "food1",
+    "word": "apple"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s002__e82d1e",
+    "text": "I peel a banana.",
+    "list": "food1",
+    "word": "banana"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s003__b9ca21",
+    "text": "I eat an orange.",
+    "list": "food1",
+    "word": "orange"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s004__c82006",
+    "text": "She eats grapes.",
+    "list": "food1",
+    "word": "grape"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s005__4ab193",
+    "text": "We cut a watermelon.",
+    "list": "food1",
+    "word": "watermelon"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s006__f240ca",
+    "text": "He picks a strawberry.",
+    "list": "food1",
+    "word": "strawberry"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s007__f97879",
+    "text": "I slice a pear.",
+    "list": "food1",
+    "word": "pear"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s008__116378",
+    "text": "I bite a peach.",
+    "list": "food1",
+    "word": "peach"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s009__422a22",
+    "text": "She eats a cherry.",
+    "list": "food1",
+    "word": "cherry"
+  },
+  {
+    "type": "sentence",
+    "id": "food1__s010__651c5f",
+    "text": "I cut a lemon.",
+    "list": "food1",
+    "word": "lemon"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s001__8a26e9",
+    "text": "I eat rice.",
+    "list": "food2",
+    "word": "rice"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s002__275dd9",
+    "text": "I slice bread.",
+    "list": "food2",
+    "word": "bread"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s003__7e5c0e",
+    "text": "We cook noodles.",
+    "list": "food2",
+    "word": "noodles"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s004__0c36f2",
+    "text": "I fry an egg.",
+    "list": "food2",
+    "word": "egg"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s005__3e9e51",
+    "text": "He cooks meat.",
+    "list": "food2",
+    "word": "meat"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s006__636802",
+    "text": "She grills fish.",
+    "list": "food2",
+    "word": "fish"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s007__8158c6",
+    "text": "We roast chicken.",
+    "list": "food2",
+    "word": "chicken"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s008__45cee6",
+    "text": "I sip soup.",
+    "list": "food2",
+    "word": "soup"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s009__dbb8a3",
+    "text": "I eat cheese.",
+    "list": "food2",
+    "word": "cheese"
+  },
+  {
+    "type": "sentence",
+    "id": "food2__s010__1e2b2d",
+    "text": "I cook tofu.",
+    "list": "food2",
+    "word": "tofu"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s001__87bfcd",
+    "text": "We eat pizza.",
+    "list": "food3",
+    "word": "pizza"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s002__04f8ee",
+    "text": "He eats a hamburger.",
+    "list": "food3",
+    "word": "hamburger"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s003__de969d",
+    "text": "I make a sandwich.",
+    "list": "food3",
+    "word": "sandwich"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s004__ce1e8a",
+    "text": "We eat spaghetti.",
+    "list": "food3",
+    "word": "spaghetti"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s005__095374",
+    "text": "She eats salad.",
+    "list": "food3",
+    "word": "salad"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s006__ff1eda",
+    "text": "I eat a hotdog.",
+    "list": "food3",
+    "word": "hotdog"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s007__c05b61",
+    "text": "We share fries.",
+    "list": "food3",
+    "word": "fries"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s008__dae691",
+    "text": "I like ice cream.",
+    "list": "food3",
+    "word": "ice cream"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s009__e2280a",
+    "text": "She cuts a cake.",
+    "list": "food3",
+    "word": "cake"
+  },
+  {
+    "type": "sentence",
+    "id": "food3__s010__859010",
+    "text": "I eat a cookie.",
+    "list": "food3",
+    "word": "cookie"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s001__0b5f5c",
+    "text": "I eat an apple.",
+    "list": "sample-wordlist",
+    "word": "apple"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s002__e82d1e",
+    "text": "I peel a banana.",
+    "list": "sample-wordlist",
+    "word": "banana"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s003__f6d023",
+    "text": "The cat sleeps.",
+    "list": "sample-wordlist",
+    "word": "cat"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s004__05245b",
+    "text": "The dog runs.",
+    "list": "sample-wordlist",
+    "word": "dog"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s005__400eb2",
+    "text": "I go to school.",
+    "list": "sample-wordlist",
+    "word": "school"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s006__30351f",
+    "text": "The teacher smiles.",
+    "list": "sample-wordlist",
+    "word": "teacher"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s007__0c597d",
+    "text": "I read a book.",
+    "list": "sample-wordlist",
+    "word": "book"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s008__304180",
+    "text": "I use a computer.",
+    "list": "sample-wordlist",
+    "word": "computer"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s009__332f7a",
+    "text": "The car stops.",
+    "list": "sample-wordlist",
+    "word": "car"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist__s010__22c437",
+    "text": "I like music.",
+    "list": "sample-wordlist",
+    "word": "music"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s001__0b5f5c",
+    "text": "I eat an apple.",
+    "list": "sample-wordlist-15",
+    "word": "apple"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s002__323502",
+    "text": "He eats a banana.",
+    "list": "sample-wordlist-15",
+    "word": "banana"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s003__f6d023",
+    "text": "The cat sleeps.",
+    "list": "sample-wordlist-15",
+    "word": "cat"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s004__05245b",
+    "text": "The dog runs.",
+    "list": "sample-wordlist-15",
+    "word": "dog"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s005__4e3c12",
+    "text": "I drink water.",
+    "list": "sample-wordlist-15",
+    "word": "water"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s006__400eb2",
+    "text": "I go to school.",
+    "list": "sample-wordlist-15",
+    "word": "school"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s007__0c597d",
+    "text": "I read a book.",
+    "list": "sample-wordlist-15",
+    "word": "book"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s008__332f7a",
+    "text": "The car stops.",
+    "list": "sample-wordlist-15",
+    "word": "car"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s009__ccc663",
+    "text": "The tree grows.",
+    "list": "sample-wordlist-15",
+    "word": "tree"
+  },
+  {
+    "type": "sentence",
+    "id": "sample-wordlist-15__s010__02dee0",
+    "text": "The sun shines.",
+    "list": "sample-wordlist-15",
     "word": "sun"
   },
   {
     "type": "sentence",
-    "id": "weather__s002__ee5d44",
-    "text": "It is raining today.",
-    "list": "weather",
-    "word": "rain"
+    "id": "sample-wordlist-15__s011__9b0284",
+    "text": "The moon rises.",
+    "list": "sample-wordlist-15",
+    "word": "moon"
   },
   {
     "type": "sentence",
-    "id": "weather__s003__c1e9f1",
-    "text": "Snow covers the ground.",
-    "list": "weather",
-    "word": "snow"
+    "id": "sample-wordlist-15__s012__48a0af",
+    "text": "A star sparkles.",
+    "list": "sample-wordlist-15",
+    "word": "star"
   },
   {
     "type": "sentence",
-    "id": "weather__s004__d0275f",
-    "text": "The wind is strong.",
-    "list": "weather",
-    "word": "wind"
+    "id": "sample-wordlist-15__s013__90fcd5",
+    "text": "I drink milk.",
+    "list": "sample-wordlist-15",
+    "word": "milk"
   },
   {
     "type": "sentence",
-    "id": "weather__s005__197997",
-    "text": "There are many clouds today.",
-    "list": "weather",
-    "word": "cloud"
+    "id": "sample-wordlist-15__s014__81cc81",
+    "text": "I cut bread.",
+    "list": "sample-wordlist-15",
+    "word": "bread"
   },
   {
     "type": "sentence",
-    "id": "weather__s006__28c6c2",
-    "text": "I like autumn colors.",
-    "list": "weather",
-    "word": "autumn"
+    "id": "sample-wordlist-15__s015__1f5338",
+    "text": "We clean the house.",
+    "list": "sample-wordlist-15",
+    "word": "house"
   },
   {
     "type": "sentence",
-    "id": "weather__s007__ce1ec9",
-    "text": "Spring is warm and sunny.",
-    "list": "weather",
-    "word": "spring"
+    "id": "schoolsupplies__s001__fd5d82",
+    "text": "I use a pencil.",
+    "list": "schoolsupplies",
+    "word": "pencil"
   },
   {
     "type": "sentence",
-    "id": "weather__s008__54d366",
-    "text": "There is frost on the grass.",
-    "list": "weather",
-    "word": "frost"
+    "id": "schoolsupplies__s002__d4546b",
+    "text": "I hold a pen.",
+    "list": "schoolsupplies",
+    "word": "pen"
   },
   {
     "type": "sentence",
-    "id": "weather__s009__a1071e",
-    "text": "I hear thunder during the storm.",
-    "list": "weather",
-    "word": "thunder"
+    "id": "schoolsupplies__s003__a2633b",
+    "text": "I use an eraser.",
+    "list": "schoolsupplies",
+    "word": "eraser"
   },
   {
     "type": "sentence",
-    "id": "weather__s010__9409f0",
-    "text": "Lightning lights up the sky.",
-    "list": "weather",
-    "word": "lightning"
+    "id": "schoolsupplies__s004__30c9da",
+    "text": "I open a notebook.",
+    "list": "schoolsupplies",
+    "word": "notebook"
   },
   {
     "type": "sentence",
-    "id": "weather__s011__dc9acf",
-    "text": "A rainbow appears after the rain.",
-    "list": "weather",
-    "word": "rainbow"
+    "id": "schoolsupplies__s005__c02f6a",
+    "text": "I use a ruler.",
+    "list": "schoolsupplies",
+    "word": "ruler"
   },
   {
     "type": "sentence",
-    "id": "weather__s012__67a880",
-    "text": "A nice breeze blows today.",
-    "list": "weather",
-    "word": "breeze"
+    "id": "schoolsupplies__s006__049f9f",
+    "text": "She uses scissors.",
+    "list": "schoolsupplies",
+    "word": "scissors"
   },
   {
     "type": "sentence",
-    "id": "weather__s013__fe4dd9",
-    "text": "The typhoon is coming.",
-    "list": "weather",
-    "word": "typhoon"
+    "id": "schoolsupplies__s007__c2583c",
+    "text": "I add glue.",
+    "list": "schoolsupplies",
+    "word": "glue"
   },
   {
     "type": "sentence",
-    "id": "weather__s014__63c85b",
-    "text": "Hail hits the roof.",
-    "list": "weather",
-    "word": "hail"
+    "id": "schoolsupplies__s008__4a1f4c",
+    "text": "He grabs a crayon.",
+    "list": "schoolsupplies",
+    "word": "crayon"
   },
   {
     "type": "sentence",
-    "id": "weather__s015__97feef",
-    "text": "High humidity makes it feel hot.",
-    "list": "weather",
-    "word": "humid"
+    "id": "schoolsupplies__s009__b7f7b8",
+    "text": "I use a marker.",
+    "list": "schoolsupplies",
+    "word": "marker"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolsupplies__s010__f1bcfd",
+    "text": "I pack a backpack.",
+    "list": "schoolsupplies",
+    "word": "backpack"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolsupplies__s011__27934d",
+    "text": "I clean the desk.",
+    "list": "schoolsupplies",
+    "word": "desk"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolsupplies__s012__4a4e1c",
+    "text": "He moves the chair.",
+    "list": "schoolsupplies",
+    "word": "chair"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolsupplies__s013__010fba",
+    "text": "She holds chalk.",
+    "list": "schoolsupplies",
+    "word": "chalk"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolsupplies__s014__4e2ae4",
+    "text": "The teacher cleans the board.",
+    "list": "schoolsupplies",
+    "word": "board"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolsupplies__s015__ac18ab",
+    "text": "I fold paper.",
+    "list": "schoolsupplies",
+    "word": "paper"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s001__02ee9c",
+    "text": "We play soccer.",
+    "list": "sports",
+    "word": "soccer"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s002__0d64ce",
+    "text": "They play basketball.",
+    "list": "sports",
+    "word": "basketball"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s003__47a67f",
+    "text": "He plays baseball.",
+    "list": "sports",
+    "word": "baseball"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s004__7280e4",
+    "text": "She plays tennis.",
+    "list": "sports",
+    "word": "tennis"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s005__e92723",
+    "text": "We play volleyball.",
+    "list": "sports",
+    "word": "volleyball"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s006__e6b72b",
+    "text": "I enjoy swimming.",
+    "list": "sports",
+    "word": "swimming"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s007__3a3243",
+    "text": "He likes running.",
+    "list": "sports",
+    "word": "running"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s008__228aa4",
+    "text": "She likes cycling.",
+    "list": "sports",
+    "word": "cycling"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s009__1e2a30",
+    "text": "We go skiing.",
+    "list": "sports",
+    "word": "skiing"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s010__d77c8d",
+    "text": "She enjoys skating.",
+    "list": "sports",
+    "word": "skating"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s011__f2d49b",
+    "text": "He plays golf.",
+    "list": "sports",
+    "word": "golf"
+  },
+  {
+    "type": "sentence",
+    "id": "sports__s012__a6934b",
+    "text": "They play badminton.",
+    "list": "sports",
+    "word": "badminton"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s001__332f7a",
+    "text": "The car stops.",
+    "list": "transportation",
+    "word": "car"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s002__b13843",
+    "text": "The bus arrives.",
+    "list": "transportation",
+    "word": "bus"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s003__97a960",
+    "text": "The train leaves.",
+    "list": "transportation",
+    "word": "train"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s004__1f821e",
+    "text": "The subway comes.",
+    "list": "transportation",
+    "word": "subway"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s005__327547",
+    "text": "I ride a bicycle.",
+    "list": "transportation",
+    "word": "bicycle"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s006__daffdb",
+    "text": "He rides a motorcycle.",
+    "list": "transportation",
+    "word": "motorcycle"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s007__0932b1",
+    "text": "The airplane lands.",
+    "list": "transportation",
+    "word": "airplane"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s008__8939da",
+    "text": "The ship sails.",
+    "list": "transportation",
+    "word": "ship"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s009__32778c",
+    "text": "I take a taxi.",
+    "list": "transportation",
+    "word": "taxi"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s010__9e50da",
+    "text": "The truck delivers boxes.",
+    "list": "transportation",
+    "word": "truck"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s011__cce201",
+    "text": "She rides a scooter.",
+    "list": "transportation",
+    "word": "scooter"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s012__d73fb4",
+    "text": "The ferry crosses water.",
+    "list": "transportation",
+    "word": "ferry"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s013__246d54",
+    "text": "The tram turns.",
+    "list": "transportation",
+    "word": "tram"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s014__0ee2e4",
+    "text": "The van carries tools.",
+    "list": "transportation",
+    "word": "van"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s015__aba076",
+    "text": "The jeep climbs hills.",
+    "list": "transportation",
+    "word": "jeep"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s016__83c923",
+    "text": "The cruise visits ports.",
+    "list": "transportation",
+    "word": "cruise"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s017__a7e48e",
+    "text": "The yacht moves slowly.",
+    "list": "transportation",
+    "word": "yacht"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s018__7e6a47",
+    "text": "The submarine dives.",
+    "list": "transportation",
+    "word": "submarine"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s019__73c05b",
+    "text": "The rocket lifts off.",
+    "list": "transportation",
+    "word": "rocket"
+  },
+  {
+    "type": "sentence",
+    "id": "transportation__s020__da569a",
+    "text": "The helicopter hovers.",
+    "list": "transportation",
+    "word": "helicopter"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s001__86596a",
+    "text": "I believe you.",
+    "list": "verbs5",
+    "word": "believe"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s002__342cd6",
+    "text": "I love my family.",
+    "list": "verbs5",
+    "word": "love"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s003__5f9c5f",
+    "text": "She likes pizza.",
+    "list": "verbs5",
+    "word": "like"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s004__d74389",
+    "text": "He hates homework.",
+    "list": "verbs5",
+    "word": "hate"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s005__e25584",
+    "text": "I hope it doesn’t rain.",
+    "list": "verbs5",
+    "word": "hope"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s006__2e8d97",
+    "text": "I need more time.",
+    "list": "verbs5",
+    "word": "need"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s007__02a8d7",
+    "text": "She wants a new phone.",
+    "list": "verbs5",
+    "word": "want"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s008__120399",
+    "text": "What does this word mean?",
+    "list": "verbs5",
+    "word": "mean"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s009__ce28fa",
+    "text": "Do you understand me?",
+    "list": "verbs5",
+    "word": "understand"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s010__832c75",
+    "text": "I remember your name.",
+    "list": "verbs5",
+    "word": "remember"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s011__fa9a31",
+    "text": "I forget my homework.",
+    "list": "verbs5",
+    "word": "forget"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs5__s012__a54b7a",
+    "text": "Class begins at nine.",
+    "list": "verbs5",
+    "word": "begin"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s001__09e366",
+    "text": "The movie ends.",
+    "list": "verbs6",
+    "word": "end"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s002__7639cc",
+    "text": "He changes his shirt.",
+    "list": "verbs6",
+    "word": "change"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s003__a140e5",
+    "text": "The plant grows fast.",
+    "list": "verbs6",
+    "word": "grow"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s004__c8db92",
+    "text": "She carries the bag.",
+    "list": "verbs6",
+    "word": "carry"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s005__2c9ded",
+    "text": "Cut the paper in half.",
+    "list": "verbs6",
+    "word": "cut"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s006__b3ef91",
+    "text": "Put your pen down.",
+    "list": "verbs6",
+    "word": "put"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s007__2fc2a7",
+    "text": "Hold my hand.",
+    "list": "verbs6",
+    "word": "hold"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s008__bcb7b9",
+    "text": "Keep your promise.",
+    "list": "verbs6",
+    "word": "keep"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s009__e89287",
+    "text": "I draw a cat.",
+    "list": "verbs6",
+    "word": "draw"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s010__6f6356",
+    "text": "She runs a small shop.",
+    "list": "verbs6",
+    "word": "run (2)"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s011__7cf73b",
+    "text": "Leaves fall in autumn.",
+    "list": "verbs6",
+    "word": "fall"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs6__s012__3607b4",
+    "text": "Don’t break the glass.",
+    "list": "verbs6",
+    "word": "break"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s001__7f9e45",
+    "text": "Catch the ball!",
+    "list": "verbs7",
+    "word": "catch"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s002__d64ec8",
+    "text": "Stay at home.",
+    "list": "verbs7",
+    "word": "stay"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s003__b775df",
+    "text": "Stop talking, please.",
+    "list": "verbs7",
+    "word": "stop"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s004__ba35fb",
+    "text": "She studies English.",
+    "list": "verbs7",
+    "word": "study"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s005__41ac55",
+    "text": "He sings well.",
+    "list": "verbs7",
+    "word": "sing"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s006__20cb15",
+    "text": "Let’s dance!",
+    "list": "verbs7",
+    "word": "dance"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s007__7f5be5",
+    "text": "I send a message.",
+    "list": "verbs7",
+    "word": "send"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s008__2c549f",
+    "text": "She spends a lot of time studying.",
+    "list": "verbs7",
+    "word": "spend"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s009__230fa1",
+    "text": "Wait for the bus.",
+    "list": "verbs7",
+    "word": "wait"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s010__e46050",
+    "text": "We travel every summer.",
+    "list": "verbs7",
+    "word": "travel"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s011__607dd3",
+    "text": "Choose your favorite color.",
+    "list": "verbs7",
+    "word": "choose"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs7__s012__5d54d6",
+    "text": "They win the match.",
+    "list": "verbs7",
+    "word": "win"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s001__75b0f6",
+    "text": "We lost the game.",
+    "list": "verbs8",
+    "word": "lose"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s002__a25d70",
+    "text": "He paid for lunch.",
+    "list": "verbs8",
+    "word": "pay"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s003__19a3fc",
+    "text": "He answered quickly.",
+    "list": "verbs8",
+    "word": "answer"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s004__68325e",
+    "text": "Mom cooks dinner.",
+    "list": "verbs8",
+    "word": "cook"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s005__1f6e87",
+    "text": "Clean your desk.",
+    "list": "verbs8",
+    "word": "clean"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s006__0b936e",
+    "text": "Wash your hands.",
+    "list": "verbs8",
+    "word": "wash"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s007__e39605",
+    "text": "We swim in the pool.",
+    "list": "verbs8",
+    "word": "swim"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s008__d4a5a6",
+    "text": "Let’s plan our trip.",
+    "list": "verbs8",
+    "word": "plan"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s009__697c84",
+    "text": "She decides to stay.",
+    "list": "verbs8",
+    "word": "decide"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s010__48e404",
+    "text": "Try this new flavor.",
+    "list": "verbs8",
+    "word": "try (2)"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s011__17c2c7",
+    "text": "He fixes the chair.",
+    "list": "verbs8",
+    "word": "fix"
+  },
+  {
+    "type": "sentence",
+    "id": "verbs8__s012__b2c1b2",
+    "text": "The door opens slowly.",
+    "list": "verbs8",
+    "word": "open (2)"
   }
 ]

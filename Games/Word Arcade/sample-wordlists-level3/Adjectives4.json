@@ -1,0 +1,14 @@
+[
+  {"eng":"busy","kor":"바쁜","def":"having a lot to do","ex":"She is busy with homework."},
+  {"eng":"free","kor":"한가한","def":"not busy or not costing money","ex":"I am free this weekend."},
+  {"eng":"important","kor":"중요한","def":"having great meaning or value","ex":"This meeting is important."},
+  {"eng":"interesting","kor":"흥미로운","def":"holding attention or curiosity","ex":"That book is interesting."},
+  {"eng":"boring","kor":"지루한","def":"not fun or exciting","ex":"The class was boring."},
+  {"eng":"safe","kor":"안전한","def":"not dangerous","ex":"It’s safe to cross now."},
+  {"eng":"dangerous","kor":"위험한","def":"likely to cause harm","ex":"That road is dangerous."},
+  {"eng":"healthy","kor":"건강한","def":"in good health","ex":"She eats healthy food."},
+  {"eng":"sick","kor":"아픈","def":"not healthy; ill","ex":"He is sick today."},
+  {"eng":"hungry","kor":"배고픈","def":"wanting food","ex":"I’m hungry after school."},
+  {"eng":"thirsty","kor":"목마른","def":"wanting something to drink","ex":"He felt thirsty after running."},
+  {"eng":"full","kor":"배부른","def":"having eaten enough","ex":"I can’t eat more, I’m full."}
+]

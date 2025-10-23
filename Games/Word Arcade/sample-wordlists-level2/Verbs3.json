@@ -1,0 +1,14 @@
+[
+  {"eng":"sit","kor":"앉다","def":"to rest on a chair or surface","ex":"Please sit down."},
+  {"eng":"stand","kor":"서다","def":"to be on your feet","ex":"He stands by the door."},
+  {"eng":"eat","kor":"먹다","def":"to put food in your mouth","ex":"We eat breakfast together."},
+  {"eng":"drink","kor":"마시다","def":"to take liquid into your mouth","ex":"I drink coffee every morning."},
+  {"eng":"sleep","kor":"자다","def":"to rest your body and mind","ex":"She sleeps early."},
+  {"eng":"walk","kor":"걷다","def":"to move on foot","ex":"Let’s walk to the park."},
+  {"eng":"build","kor":"짓다","def":"to make something by putting parts together","ex":"They build a house."},
+  {"eng":"learn","kor":"배우다","def":"to get knowledge or a skill","ex":"I learn English at school."},
+  {"eng":"teach","kor":"가르치다","def":"to help someone learn","ex":"She teaches math."},
+  {"eng":"show","kor":"보여주다","def":"to let someone see something","ex":"Show me your drawing."},
+  {"eng":"watch","kor":"보다","def":"to look at something carefully","ex":"We watch a movie."},
+  {"eng":"listen","kor":"듣다","def":"to pay attention to sounds","ex":"Listen to the teacher."}
+]

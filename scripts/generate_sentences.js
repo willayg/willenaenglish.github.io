@@ -33,7 +33,11 @@ function getArg(name, def){
   if (!next || next.startsWith('--')) return true; return next;
 }
 const DIR_OVERRIDE = getArg('dir', '').trim();
-const WORDLIST_DIR = DIR_OVERRIDE ? path.join(ROOT, DIR_OVERRIDE) : path.join(ROOT, 'Games', 'Word Arcade', 'sample-wordlists');
+// Support multiple directories via comma-separated --dir values
+const WORDLIST_DIRS = (() => {
+  if (!DIR_OVERRIDE) return [path.join(ROOT, 'Games', 'Word Arcade', 'sample-wordlists')];
+  return DIR_OVERRIDE.split(',').map(d => d.trim()).filter(Boolean).map(d => path.join(ROOT, d));
+})();
 const BUILD_DIR = path.join(ROOT, 'build', 'sentences');
 const DRY = args.includes('--dry-run');
 const LIMIT = (()=>{ const i=args.indexOf('--limit'); if(i!==-1) return parseInt(args[i+1],10)||0; return 0; })();
@@ -135,13 +139,20 @@ function buildOutputs(wordlists, existingManifest){
 }
 
 function loadWordlists(){
-  if(!fs.existsSync(WORDLIST_DIR)) throw new Error('Wordlist dir missing: '+WORDLIST_DIR);
-  const files = fs.readdirSync(WORDLIST_DIR).filter(f=>f.endsWith('.json'));
-  return files.map(file=>{
-    const arr = JSON.parse(fs.readFileSync(path.join(WORDLIST_DIR,file),'utf8'));
-    if(!Array.isArray(arr)) throw new Error('Wordlist not array: '+file);
-    return { slug: slugify(file), title: file.replace(/\.json$/,'') , items: arr };
-  }).sort((a,b)=> a.slug.localeCompare(b.slug));
+  const results = [];
+  for (const dir of WORDLIST_DIRS) {
+    if(!fs.existsSync(dir)) throw new Error('Wordlist dir missing: '+dir);
+    const files = fs.readdirSync(dir).filter(f=>f.endsWith('.json'));
+    for (const file of files) {
+      const arr = JSON.parse(fs.readFileSync(path.join(dir,file),'utf8'));
+      if(!Array.isArray(arr)) throw new Error('Wordlist not array: '+path.join(dir,file));
+      results.push({ slug: slugify(file), title: file.replace(/\.json$/,''), items: arr });
+    }
+  }
+  // Deduplicate by slug with last-one-wins policy (rare case of same filename in multiple dirs)
+  const bySlug = new Map();
+  for (const wl of results) bySlug.set(wl.slug, wl);
+  return Array.from(bySlug.values()).sort((a,b)=> a.slug.localeCompare(b.slug));
 }
 
 (async function main(){

@@ -1,0 +1,14 @@
+[
+  {"eng":"empty","kor":"빈","def":"with nothing inside","ex":"The box is empty."},
+  {"eng":"heavy","kor":"무거운","def":"having a lot of weight","ex":"This bag is heavy."},
+  {"eng":"light","kor":"가벼운","def":"not heavy","ex":"A feather is light."},
+  {"eng":"bright","kor":"밝은","def":"giving a lot of light","ex":"The sun is bright today."},
+  {"eng":"dark","kor":"어두운","def":"without much light","ex":"It’s dark in the room."},
+  {"eng":"clean","kor":"깨끗한","def":"without dirt or marks","ex":"The table is clean."},
+  {"eng":"dirty","kor":"더러운","def":"covered with dirt","ex":"Your shoes are dirty."},
+  {"eng":"quiet","kor":"조용한","def":"making little or no noise","ex":"Be quiet in the library."},
+  {"eng":"loud","kor":"시끄러운","def":"making a lot of noise","ex":"The music is too loud."},
+  {"eng":"soft","kor":"부드러운","def":"easy to press or not hard","ex":"This pillow is soft."},
+  {"eng":"hard","kor":"딱딱한","def":"solid or firm","ex":"The floor is hard."},
+  {"eng":"sharp","kor":"날카로운","def":"having a thin edge or point","ex":"Be careful, the knife is sharp."}
+]

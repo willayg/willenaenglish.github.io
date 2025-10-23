@@ -1,160 +1,288 @@
-The cheetah runs quickly.
-The hippopotamus rests in water.
-The rhinoceros walks slowly.
-The panda eats bamboo.
-The koala sleeps in a tree.
-The sloth moves slowly.
-The otter plays in the water.
-The beaver builds a dam.
-The eagle flies over the mountain.
-The owl hoots at night.
-I see a painting on the wall.
-The sculpture is in the museum.
-We visit the art museum.
-The gallery shows new paintings.
-She paints a portrait.
-This landscape shows mountains.
-I clean my brush.
-The artist paints on canvas.
-There is a statue in the park.
-The art exhibition opens today.
-I wear a jacket.
-She puts on a sweater.
-He wears a scarf.
-I wear gloves in winter.
-She wears boots.
-He wears jeans.
-I put on a belt.
-She wears a hat.
-He wears shorts.
-She buys a dress.
-She wears a skirt.
-I wear sneakers.
-I go to the library.
-We visit the museum.
-She works at a bakery.
-He goes to the pharmacy.
-She goes to the hospital.
-I go to the post office.
-We pass the police station.
-The fire station is near.
-We shop at the supermarket.
-The kids run at the playground.
-The child is curious.
-She feels frustrated.
-He is jealous of the prize.
-I feel embarrassed.
-We feel relaxed.
-He feels lonely.
-I am grateful for your help.
-She feels anxious.
-He stays calm.
-The girl is brave.
-I sleep in the bedroom.
-We cook in the kitchen.
-I wash in the bathroom.
-We sit in the living room.
-Tools are in the basement.
-Old boxes are in the attic.
-I walk up the staircase.
-We sit on the balcony.
-The car is in the garage.
-Pictures hang in the hallway.
-I put milk in the refrigerator.
-She uses the microwave.
-I use a blender for smoothies.
-He puts bread in the toaster.
-We load the dishwasher.
-She bakes cake in the oven.
-I cook on the stove.
-I wash dishes in the sink.
-Plates are in the cabinet.
-I cut vegetables on the counter.
-She plays the violin.
-He plays the guitar.
-She plays the piano.
-He plays the trumpet.
-The drummer plays the drums.
-She plays the flute.
-He plays the clarinet.
-The musician plays the harp.
-He plays the saxophone.
-I shake the tambourine.
-The cymbals make loud noise.
-The old man plays the accordion.
-She shakes maracas.
-The child plays the xylophone.
-He plays the cello.
-She plays the electric guitar.
-He plays the keyboard.
-We climb a mountain.
-The river flows through the valley.
-The river moves fast.
-The ocean is blue.
-The desert is hot.
-Animals live in the forest.
-The island is small.
-The volcano is quiet.
-We see a waterfall.
-We explore a cave.
-The elephant drinks water.
-Penguins live in cold places.
-The peacock displays its tail.
-The crocodile swims in the river.
-The tortoise walks slowly.
-The jellyfish floats in the ocean.
-The butterfly lands on a flower.
-The dragonfly flies fast.
-The caterpillar eats leaves.
-The seahorse swims slowly.
-I use a calculator.
-She uses a compass.
-We use a protractor.
-I use a highlighter.
-He opens a binder.
-I keep papers in a folder.
-She uses a stapler.
-I need a paperclip.
-He uses tape.
-The teacher writes on the whiteboard.
-The projector turns on.
-I cook broccoli.
-She cuts a cucumber.
-We wash lettuce.
-I slice a tomato.
-He chops cabbage.
-I eat spinach.
-We fry eggplant.
-She steams cauliflower.
-I add mushrooms.
-He cuts a pepper.
-I borrow a book.
-I lend a pencil.
-They build a bridge.
-He breaks the stick.
-She fixes the toy.
-I carry the box.
-We cover the pot.
-They discover a cave.
-I improve my writing.
-We decide to go.
-I invite my friend.
+She is busy with homework.
+I am free this weekend.
+This meeting is important.
+That book is interesting.
+The class was boring.
+It’s safe to cross now.
+That road is dangerous.
+She eats healthy food.
+He is sick today.
+I’m hungry after school.
+He felt thirsty after running.
+I can’t eat more, I’m full.
+The box is empty.
+This bag is heavy.
+A feather is light.
+The sun is bright today.
+It’s dark in the room.
+The table is clean.
+Your shoes are dirty.
+Be quiet in the library.
+The music is too loud.
+This pillow is soft.
+The floor is hard.
+Be careful, the knife is sharp.
+The earth is round.
+The table is square.
+The road is wide.
+This street is narrow.
+The water is deep.
+The pool is shallow here.
+He has strong arms.
+She felt weak after running.
+The book is thick.
+She cut a thin slice of bread.
+He is a rich man.
+They are poor farmers.
+The lion rests.
+The tiger walks.
+The elephant drinks.
+The giraffe eats leaves.
+The zebra runs.
+The monkey climbs.
+The bear sleeps.
+The wolf howls.
+The fox hides.
+The kangaroo jumps.
+The dog runs.
+The cat sleeps.
+The rabbit hops.
+The horse trots.
+The cow eats grass.
+The pig rolls.
+The sheep grazes.
+The goat climbs.
+The chicken pecks.
+The duck swims.
+The mouse hides.
+The bear sleeps.
+The tiger walks.
+The lion rests.
+The elephant drinks.
+The monkey climbs.
+The fox hides.
+The wolf howls.
+The deer runs.
+The squirrel jumps.
+I like reading books.
+She enjoys painting pictures.
+I enjoy cooking dinner.
+My mom likes gardening flowers.
+He loves photography work.
+We enjoy dancing songs.
+She likes singing songs.
+He likes playing guitar music.
+She practices playing piano songs.
+We enjoy swimming laps.
+He enjoys cycling roads.
+We go hiking trails.
+Dad likes fishing rivers.
+Our family likes traveling places.
+I enjoy writing stories.
+The child likes drawing animals.
+We enjoy playing chess games.
+He likes playing video games.
+Grandma enjoys knitting hats.
+She enjoys baking cookies.
+The doctor helps patients.
+The nurse checks patients.
+The teacher explains lessons.
+The student reads books.
+The police help people.
+The firefighter sprays water.
+The chef cooks meals.
+The farmer plants seeds.
+The artist paints pictures.
+The musician plays songs.
+The pilot flies an airplane.
+The engineer builds bridges.
+The mechanic fixes cars.
+The scientist tests ideas.
+The programmer writes apps.
+The writer writes books.
+The actor learns lines.
+The dancer practices moves.
+The waiter carries plates.
+The driver drives a bus.
+I run home.
+I eat rice.
+I drink water.
+I sleep well.
+I read a book.
+I write a note.
+I sing a song.
+We dance together.
+I swim laps.
+I jump high.
+We walk home.
+We talk softly.
+I listen carefully.
+I see a bird.
+I buy bread.
+They sell fruit.
+I make a cake.
+I give a gift.
+I take a pen.
+I open a box.
+I feel happy.
+She feels sad.
+He feels angry.
+We feel excited.
+I feel scared.
+They feel bored.
+I feel tired.
+She feels surprised.
+I feel nervous.
+He feels proud.
+The boy feels shy.
+I feel confused.
+I eat an apple.
+I peel a banana.
+I eat an orange.
+She eats grapes.
+We cut a watermelon.
+He picks a strawberry.
+I slice a pear.
+I bite a peach.
+She eats a cherry.
+I cut a lemon.
+I eat rice.
+I slice bread.
+We cook noodles.
+I fry an egg.
+He cooks meat.
+She grills fish.
+We roast chicken.
+I sip soup.
+I eat cheese.
+I cook tofu.
+We eat pizza.
+He eats a hamburger.
+I make a sandwich.
+We eat spaghetti.
+She eats salad.
+I eat a hotdog.
+We share fries.
+I like ice cream.
+She cuts a cake.
+I eat a cookie.
+I eat an apple.
+I peel a banana.
+The cat sleeps.
+The dog runs.
+I go to school.
+The teacher smiles.
+I read a book.
+I use a computer.
+The car stops.
+I like music.
+I eat an apple.
+He eats a banana.
+The cat sleeps.
+The dog runs.
+I drink water.
+I go to school.
+I read a book.
+The car stops.
+The tree grows.
+The sun shines.
+The moon rises.
+A star sparkles.
+I drink milk.
+I cut bread.
+We clean the house.
+I use a pencil.
+I hold a pen.
+I use an eraser.
+I open a notebook.
+I use a ruler.
+She uses scissors.
+I add glue.
+He grabs a crayon.
+I use a marker.
+I pack a backpack.
+I clean the desk.
+He moves the chair.
+She holds chalk.
+The teacher cleans the board.
+I fold paper.
+We play soccer.
+They play basketball.
+He plays baseball.
+She plays tennis.
+We play volleyball.
+I enjoy swimming.
+He likes running.
+She likes cycling.
+We go skiing.
+She enjoys skating.
+He plays golf.
+They play badminton.
+The car stops.
 The bus arrives.
-I prefer tea.
-We compare two pictures.
-The teacher explains the rule.
-The sun is shining.
-It is raining today.
-Snow covers the ground.
-The wind is strong.
-There are many clouds today.
-I like autumn colors.
-Spring is warm and sunny.
-There is frost on the grass.
-I hear thunder during the storm.
-Lightning lights up the sky.
-A rainbow appears after the rain.
-A nice breeze blows today.
-The typhoon is coming.
-Hail hits the roof.
-High humidity makes it feel hot.
+The train leaves.
+The subway comes.
+I ride a bicycle.
+He rides a motorcycle.
+The airplane lands.
+The ship sails.
+I take a taxi.
+The truck delivers boxes.
+She rides a scooter.
+The ferry crosses water.
+The tram turns.
+The van carries tools.
+The jeep climbs hills.
+The cruise visits ports.
+The yacht moves slowly.
+The submarine dives.
+The rocket lifts off.
+The helicopter hovers.
+I believe you.
+I love my family.
+She likes pizza.
+He hates homework.
+I hope it doesn’t rain.
+I need more time.
+She wants a new phone.
+What does this word mean?
+Do you understand me?
+I remember your name.
+I forget my homework.
+Class begins at nine.
+The movie ends.
+He changes his shirt.
+The plant grows fast.
+She carries the bag.
+Cut the paper in half.
+Put your pen down.
+Hold my hand.
+Keep your promise.
+I draw a cat.
+She runs a small shop.
+Leaves fall in autumn.
+Don’t break the glass.
+Catch the ball!
+Stay at home.
+Stop talking, please.
+She studies English.
+He sings well.
+Let’s dance!
+I send a message.
+She spends a lot of time studying.
+Wait for the bus.
+We travel every summer.
+Choose your favorite color.
+They win the match.
+We lost the game.
+He paid for lunch.
+He answered quickly.
+Mom cooks dinner.
+Clean your desk.
+Wash your hands.
+We swim in the pool.
+Let’s plan our trip.
+She decides to stay.
+Try this new flavor.
+He fixes the chair.
+The door opens slowly.

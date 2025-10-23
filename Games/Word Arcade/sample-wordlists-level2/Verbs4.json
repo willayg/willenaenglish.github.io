@@ -1,0 +1,14 @@
+[
+  {"eng":"speak","kor":"말하다","def":"to say words aloud","ex":"He speaks loudly."},
+  {"eng":"hear","kor":"듣다","def":"to notice sounds with your ears","ex":"I hear music."},
+  {"eng":"open","kor":"열다","def":"to move something so it is not closed","ex":"Open the door."},
+  {"eng":"close","kor":"닫다","def":"to move something to make it shut","ex":"Close your book."},
+  {"eng":"buy","kor":"사다","def":"to get something by paying money","ex":"I buy some fruit."},
+  {"eng":"sell","kor":"팔다","def":"to give something for money","ex":"They sell toys."},
+  {"eng":"drive","kor":"운전하다","def":"to control a car or vehicle","ex":"He drives to work."},
+  {"eng":"fly","kor":"날다","def":"to move through the air","ex":"Birds fly in the sky."},
+  {"eng":"live","kor":"살다","def":"to have life or stay somewhere","ex":"We live in Korea."},
+  {"eng":"die","kor":"죽다","def":"to stop living","ex":"The plant dies."},
+  {"eng":"think","kor":"생각하다","def":"to have ideas in your mind","ex":"I think it’s funny."},
+  {"eng":"feel","kor":"느끼다","def":"to experience an emotion or touch","ex":"I feel happy today."}
+]

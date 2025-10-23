@@ -88,19 +88,23 @@ export async function runPictureMode({ wordList, gameArea, startGame, listName =
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Picture Mode Complete!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length}</span></div>`}
-        <button id="playAgainPic" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMorePic\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
+        <button id="playAgainPic" style="display:none;font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMorePic\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
       const again = document.getElementById('playAgainPic');
       if (again) again.onclick = () => startGame('picture');
       const tryMore = document.getElementById('tryMorePic');
-      if (tryMore) tryMore.onclick = () => {
-        if (window.WordArcade?.startModeSelector) {
-          window.WordArcade.startModeSelector();
-        } else {
-          startGame('picture', { shuffle: true });
-        }
-      };
+      if (tryMore) {
+        tryMore.onclick = () => {
+          const quitBtn = document.getElementById('wa-quit-btn');
+          if (quitBtn) quitBtn.style.display = 'none';
+          if (window.WordArcade?.startModeSelector) {
+            window.WordArcade.startModeSelector();
+          } else {
+            startGame('picture', { shuffle: true });
+          }
+        };
+      }
       return;
     }
 

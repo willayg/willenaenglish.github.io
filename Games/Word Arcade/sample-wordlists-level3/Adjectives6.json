@@ -1,0 +1,14 @@
+[
+  {"eng":"round","kor":"둥근","def":"shaped like a circle","ex":"The earth is round."},
+  {"eng":"square","kor":"정사각형의","def":"having four equal sides","ex":"The table is square."},
+  {"eng":"wide","kor":"넓은","def":"having a great width","ex":"The road is wide."},
+  {"eng":"narrow","kor":"좁은","def":"not wide","ex":"This street is narrow."},
+  {"eng":"deep","kor":"깊은","def":"far down from the surface","ex":"The water is deep."},
+  {"eng":"shallow","kor":"얕은","def":"not deep","ex":"The pool is shallow here."},
+  {"eng":"strong","kor":"튼튼한","def":"having power or force","ex":"He has strong arms."},
+  {"eng":"weak","kor":"약한","def":"not strong","ex":"She felt weak after running."},
+  {"eng":"thick","kor":"두꺼운","def":"wide or dense in size","ex":"The book is thick."},
+  {"eng":"thin","kor":"얇은","def":"not thick","ex":"She cut a thin slice of bread."},
+  {"eng":"rich","kor":"부유한","def":"having a lot of money","ex":"He is a rich man."},
+  {"eng":"poor","kor":"가난한","def":"having little money","ex":"They are poor farmers."}
+]

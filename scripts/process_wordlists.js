@@ -47,6 +47,7 @@ const DRY_RUN = flags.has('--dry-run') || getArg('dry-run', false) === 'true';
 const LIMIT = parseInt(getArg('limit', '0'), 10) || 0; // limit words per file
 const VOICE = getArg('voice', process.env.ELEVEN_LABS_DEFAULT_VOICE_ID || '');
 const DIR = getArg('dir', 'Games/Word Arcade/sample-wordlists');
+const FILES_FILTER = getArg('files', ''); // comma-separated basenames to include (e.g., "Verbs1.json,Verbs2.json")
 const CONCURRENCY = Math.max(1, Math.min( parseInt(getArg('concurrency', '3'), 10) || 3, 8));
 const USE_EXAMPLES = flags.has('--use-examples') || getArg('use-examples', false) === 'true';
 const VERBOSE = flags.has('--verbose') || getArg('verbose', false) === 'true';
@@ -247,7 +248,23 @@ async function processFile(base, filePath){
     }
     return out;
   }
-  const files = listJsonFiles(targetDir);
+  let files = listJsonFiles(targetDir);
+  // Optional: filter by basenames provided via --files
+  if (FILES_FILTER && typeof FILES_FILTER === 'string') {
+    const names = new Set(
+      FILES_FILTER.split(',')
+        .map(s => s && s.trim().toLowerCase())
+        .filter(Boolean)
+    );
+    if (names.size) {
+      const before = files.length;
+      files = files.filter(f => names.has(path.basename(f).toLowerCase()));
+      console.log(`[INFO] Filtered files via --files (${names.size} names). ${before} -> ${files.length}`);
+      if (!files.length) {
+        console.warn('[WARN] No matching files after filter. Check --files values.');
+      }
+    }
+  }
   const reports = [];
   for (const f of files) {
     console.log('\n=== Processing', path.relative(root, f), '===');

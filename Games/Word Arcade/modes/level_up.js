@@ -132,16 +132,20 @@ export async function runLevelUpMode({ wordList, gameArea, startGame, listName =
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">
         <h2 style="color:#41b6beff;">Level Up Complete!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.2em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length}</span></div>`}
-        <button id="playAgainLevelUp" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;font-family:'Poppins',Arial,sans-serif;">Play Again</button>
-        ${isLivePlay ? '' : `<button id="tryMoreLevelUp" style="font-size:1.05em;padding:10px 22px;border-radius:12px;background:#fff;color:#27c5ca;font-weight:700;border:3px solid #27c5ca;box-shadow:0 2px 8px rgba(39,197,202,0.12);cursor:pointer;margin-left:12px;font-family:'Poppins',Arial,sans-serif;">Try More</button>`}
+        <button id="playAgainLevelUp" style="display:none;font-size:1.05em;padding:10px 22px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        ${isLivePlay ? '' : `<button id=\"tryMoreLevelUp\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
       const again = document.getElementById('playAgainLevelUp');
       if (again) again.onclick = () => startGame('level_up');
       const more = document.getElementById('tryMoreLevelUp');
-      if (more) more.onclick = () => {
-        if (window.WordArcade?.startModeSelector) window.WordArcade.startModeSelector();
-        else startGame('level_up', { shuffle: true });
-      };
+      if (more) {
+        more.onclick = () => {
+          const quitBtn = document.getElementById('wa-quit-btn');
+          if (quitBtn) quitBtn.style.display = 'none';
+          if (window.WordArcade?.startModeSelector) window.WordArcade.startModeSelector();
+          else startGame('level_up', { shuffle: true });
+        };
+      }
       return;
     }
 

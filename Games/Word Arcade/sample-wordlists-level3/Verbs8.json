@@ -1,0 +1,14 @@
+[
+  {"eng":"lose","kor":"지다","def":"to fail or not win","ex":"We lost the game."},
+  {"eng":"pay","kor":"지불하다","def":"to give money for something","ex":"He paid for lunch."},
+  {"eng":"answer","kor":"대답하다","def":"to reply to a question","ex":"He answered quickly."},
+  {"eng":"cook","kor":"요리하다","def":"to prepare food for eating","ex":"Mom cooks dinner."},
+  {"eng":"clean","kor":"청소하다","def":"to remove dirt","ex":"Clean your desk."},
+  {"eng":"wash","kor":"씻다","def":"to make something clean with water","ex":"Wash your hands."},
+  {"eng":"swim","kor":"수영하다","def":"to move through water","ex":"We swim in the pool."},
+  {"eng":"plan","kor":"계획하다","def":"to decide what to do","ex":"Let’s plan our trip."},
+  {"eng":"decide","kor":"결정하다","def":"to choose what to do","ex":"She decides to stay."},
+  {"eng":"try (2)","kor":"시험하다","def":"to test or experiment with something","ex":"Try this new flavor."},
+  {"eng":"fix","kor":"고치다","def":"to repair or make something work again","ex":"He fixes the chair."},
+  {"eng":"open (2)","kor":"열리다","def":"to become not closed by itself","ex":"The door opens slowly."}
+]
