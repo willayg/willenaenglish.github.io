@@ -7,7 +7,7 @@ import { playSFX } from '../sfx.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 import { ensureMatchingStyles } from '../ui/matching_styles.js';
-import { playTTS } from '../tts.js';
+import { playTTSVariant } from '../tts.js';
 
 export function runMatchingCore({ wordList, gameArea, startGame, listName = null, score: initialScore = 0, round: initialRound = 0 }, { sessionModeKey = 'matching', introTitle = 'Match English with Korean!', roundSize = 5 } = {}) {
   ensureMatchingStyles();
@@ -45,13 +45,15 @@ export function runMatchingCore({ wordList, gameArea, startGame, listName = null
         gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Game Over!</h2>
         ${isReview ? '' : `<div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style=\"color:#19777e;font-weight:700;\">${score.toFixed(1)}%</span></div>`}
-        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-          ${isLivePlay ? '' : `<button id=\"tryMoreMatching\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
+        <button id="playAgainBtn" style="display:none;font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+          ${isLivePlay ? '' : `<button id=\"tryMoreMatching\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => startGame(sessionModeKey);
       const moreBtn = document.getElementById('tryMoreMatching');
       if (moreBtn) {
         moreBtn.onclick = () => {
+          const quitBtn = document.getElementById('wa-quit-btn');
+          if (quitBtn) quitBtn.style.display = 'none';
           if (window.WordArcade && typeof window.WordArcade.startModeSelector === 'function') {
             window.WordArcade.startModeSelector();
           } else {
@@ -85,16 +87,16 @@ export function runMatchingCore({ wordList, gameArea, startGame, listName = null
         e.stopPropagation(); e.preventDefault();
         if (selectedEngCard) selectedEngCard.classList.remove('selected');
         selectedEngCard = card; card.classList.add('selected');
-        // Play the raw word audio ("<word>_itself") when selecting the English card
-        try { const w = card.dataset.eng; if (w) playTTS(`${w}_itself`); } catch {}
+  // Play the base word audio ("<word>.mp3") when selecting the English card
+  try { const w = card.dataset.eng; if (w) playTTSVariant(w); } catch {}
         document.getElementById('dragdrop-feedback').textContent = '';
       });
       card.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (selectedEngCard) selectedEngCard.classList.remove('selected');
         selectedEngCard = card; card.classList.add('selected');
-        // Play the raw word audio ("<word>_itself") on touch as well
-        try { const w = card.dataset.eng; if (w) playTTS(`${w}_itself`); } catch {}
+  // Play the base word audio ("<word>.mp3") on touch as well
+  try { const w = card.dataset.eng; if (w) playTTSVariant(w); } catch {}
         document.getElementById('dragdrop-feedback').textContent = '';
       });
     });

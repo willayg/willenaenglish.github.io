@@ -1,0 +1,14 @@
+[
+  {"eng":"good","kor":"좋은","def":"having a positive quality","ex":"This is a good idea."},
+  {"eng":"bad","kor":"나쁜","def":"having a negative quality","ex":"That was a bad day."},
+  {"eng":"big","kor":"큰","def":"large in size","ex":"He has a big house."},
+  {"eng":"small","kor":"작은","def":"not big; little","ex":"She has a small cat."},
+  {"eng":"long","kor":"긴","def":"having a great length","ex":"It’s a long road."},
+  {"eng":"short","kor":"짧은","def":"not long","ex":"He wrote a short note."},
+  {"eng":"tall","kor":"키가 큰","def":"having a great height","ex":"She is tall and strong."},
+  {"eng":"young","kor":"젊은","def":"not old","ex":"He is still young."},
+  {"eng":"old","kor":"늙은","def":"having lived a long time","ex":"That man is very old."},
+  {"eng":"new","kor":"새로운","def":"recently made or found","ex":"I bought a new phone."},
+  {"eng":"first","kor":"첫 번째의","def":"coming before all others","ex":"This is my first car."},
+  {"eng":"last","kor":"마지막의","def":"coming after all others","ex":"He finished in last place."}
+]

@@ -1,0 +1,14 @@
+[
+  {"eng":"get","kor":"얻다","def":"to receive or obtain something","ex":"I get a new book."},
+  {"eng":"make","kor":"만들다","def":"to create or produce something","ex":"She makes a cake."},
+  {"eng":"go","kor":"가다","def":"to move from one place to another","ex":"We go to school every day."},
+  {"eng":"come","kor":"오다","def":"to move toward a place","ex":"He came home late."},
+  {"eng":"see","kor":"보다","def":"to notice something with your eyes","ex":"I see a bird."},
+  {"eng":"look","kor":"보다","def":"to direct your eyes toward something","ex":"Look at the stars."},
+  {"eng":"take","kor":"가져가다","def":"to carry or remove something","ex":"Take your bag with you."},
+  {"eng":"find","kor":"찾다","def":"to discover something","ex":"I find my keys."},
+  {"eng":"give","kor":"주다","def":"to hand something to someone","ex":"She gives me a pen."},
+  {"eng":"tell","kor":"말하다","def":"to say something to someone","ex":"He tells me a story."},
+  {"eng":"ask","kor":"묻다","def":"to request information","ex":"Ask your teacher for help."},
+  {"eng":"use","kor":"사용하다","def":"to do something with a tool or object","ex":"I use my phone every day."}
+]

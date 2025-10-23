@@ -1,7 +1,8 @@
 // Shared TTS utilities
 
-// Audio cache for preloaded sounds (keyed by normalized word)
-const audioCache = new Map(); // normalizedWord -> Audio object
+// Audio cache for preloaded sounds (keyed by normalized key string)
+// Note: key may be a base word (e.g., "run") or a variant key (e.g., "run_itself")
+const audioCache = new Map(); // normalizedKey -> Audio object
 
 // Strict behavior flags
 // Disable generation completely (per requirement to prevent creating new audio files)
@@ -106,7 +107,7 @@ export async function preloadAllAudio(wordList, onProgress = null) {
   console.log(`Preloading audio for ${totalWords} words...`);
 
   // Check which words already exist in Supabase (batched)
-  const existingAudio = new Map(); // normalizedWord -> url
+  const existingAudio = new Map(); // normalizedKey -> url
   const missingWords = [];
   const failedGenerations = new Set();
   const failedLoads = new Set();
@@ -472,4 +473,106 @@ export async function playTTS(text) {
     }
   } catch {}
   await speakWithSystemTTS(word);
+}
+
+// Variant-aware playback: tries preferred variant keys in order and falls back gracefully
+// variant can be: 'itself' (word-only), 'sentence' (example/sentence), or 'default'
+export async function playTTSVariant(word, variant = 'default') {
+  try {
+    const base = String(word || '').trim();
+    if (!base) return;
+    const v = String(variant || 'default').toLowerCase();
+    // Candidate keys to request from storage (in order)
+    let candidates = [];
+    if (v === 'itself') {
+      candidates = [ `${base}_itself`, base ];
+    } else if (v === 'sentence') {
+      candidates = [ `${base}_sentence`, `${base}_example`, base ];
+    } else {
+      candidates = [ base ];
+    }
+
+    // Internal helper to try a single key (no prompt extraction)
+    const tryPlayKey = async (keyStr) => {
+      const key = normalizeWord(keyStr);
+      const now = Date.now();
+      const lastAt = _lastPlayAt.get(key) || 0;
+      if (now - lastAt < PLAY_COOLDOWN_MS) return true; // treat as success to avoid spamming
+      _lastPlayAt.set(key, now);
+
+      // If cached, play immediately
+      if (audioCache.has(key)) {
+        const audio = audioCache.get(key);
+        if (_playingKeys.has(key)) return true;
+        _playingKeys.add(key);
+        audio.currentTime = 0;
+        const clear = () => { _playingKeys.delete(key); audio.removeEventListener('ended', clear); audio.removeEventListener('pause', clear); audio.removeEventListener('error', clear); };
+        audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
+        try { await audio.play(); return true; } catch { clear(); }
+      }
+
+      // Try to resolve URL via batch endpoint
+      const listEndpoints = [
+        '/.netlify/functions/get_audio_urls',
+        'http://localhost:9000/.netlify/functions/get_audio_urls'
+      ];
+      for (const url of listEndpoints) {
+        try {
+          const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words:[keyStr] }) });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const info = data && data.results && (data.results[keyStr] || data.results[normalizeWord(keyStr)]);
+          if (info && info.exists && info.url) {
+            let audioPromise = _pendingLoads.get(key);
+            if (!audioPromise) {
+              audioPromise = loadAudioElement(info.url).then(a => { audioCache.set(key, a); return a; }).finally(() => _pendingLoads.delete(key));
+              _pendingLoads.set(key, audioPromise);
+            }
+            const audio = await audioPromise;
+            if (_playingKeys.has(key)) return true;
+            _playingKeys.add(key);
+            const clear = () => { _playingKeys.delete(key); audio.removeEventListener('ended', clear); audio.removeEventListener('pause', clear); audio.removeEventListener('error', clear); };
+            audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
+            try { await audio.play(); return true; } catch { clear(); }
+          }
+        } catch {}
+      }
+
+      // Fallback: single lookup
+      const singleEndpoints = [
+        '/.netlify/functions/get_audio_url',
+        'http://localhost:9000/.netlify/functions/get_audio_url'
+      ];
+      for (const url of singleEndpoints) {
+        try {
+          const res = await fetch(`${url}?word=${encodeURIComponent(keyStr)}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data && data.exists && data.url) {
+            let audioPromise = _pendingLoads.get(key);
+            if (!audioPromise) {
+              audioPromise = loadAudioElement(data.url).then(a => { audioCache.set(key, a); return a; }).finally(() => _pendingLoads.delete(key));
+              _pendingLoads.set(key, audioPromise);
+            }
+            const audio = await audioPromise;
+            if (_playingKeys.has(key)) return true;
+            _playingKeys.add(key);
+            const clear = () => { _playingKeys.delete(key); audio.removeEventListener('ended', clear); audio.removeEventListener('pause', clear); audio.removeEventListener('error', clear); };
+            audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
+            try { await audio.play(); return true; } catch { clear(); }
+          }
+        } catch {}
+      }
+      return false;
+    };
+
+    // Try candidates in order
+    for (const cand of candidates) {
+      const ok = await tryPlayKey(cand);
+      if (ok) return;
+    }
+
+    // As last resort, system TTS on base word
+    await speakWithSystemTTS(base);
+  } catch {}
 }

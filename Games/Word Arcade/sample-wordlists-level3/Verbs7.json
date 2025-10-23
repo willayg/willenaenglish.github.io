@@ -1,0 +1,14 @@
+[ 
+  {"eng":"catch","kor":"잡다","def":"to grab or take hold of something","ex":"Catch the ball!"},
+  {"eng":"stay","kor":"머물다","def":"to not leave a place","ex":"Stay at home."},
+  {"eng":"stop","kor":"멈추다","def":"to finish or end an action","ex":"Stop talking, please."},
+  {"eng":"study","kor":"공부하다","def":"to learn about something","ex":"She studies English."},
+  {"eng":"sing","kor":"노래하다","def":"to make music with your voice","ex":"He sings well."},
+  {"eng":"dance","kor":"춤추다","def":"to move your body to music","ex":"Let’s dance!"},
+  {"eng":"send","kor":"보내다","def":"to cause something to go to another place","ex":"I send a message."},
+  {"eng":"spend","kor":"시간을 보내다","def":"to use money or time","ex":"She spends a lot of time studying."},
+  {"eng":"wait","kor":"기다리다","def":"to stay until something happens","ex":"Wait for the bus."},
+  {"eng":"travel","kor":"여행하다","def":"to go to different places","ex":"We travel every summer."},
+  {"eng":"choose","kor":"고르다","def":"to pick one thing from many","ex":"Choose your favorite color."},
+  {"eng":"win","kor":"이기다","def":"to succeed in a game or contest","ex":"They win the match."}
+]

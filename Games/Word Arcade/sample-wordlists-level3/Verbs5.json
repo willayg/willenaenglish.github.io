@@ -1,0 +1,14 @@
+[
+  {"eng":"believe","kor":"믿다","def":"to think something is true","ex":"I believe you."},
+  {"eng":"love","kor":"사랑하다","def":"to care deeply for someone","ex":"I love my family."},
+  {"eng":"like","kor":"좋아하다","def":"to enjoy or prefer something","ex":"She likes pizza."},
+  {"eng":"hate","kor":"싫어하다","def":"to strongly dislike","ex":"He hates homework."},
+  {"eng":"hope","kor":"희망하다","def":"to want something good to happen","ex":"I hope it doesn’t rain."},
+  {"eng":"need","kor":"필요하다","def":"to require something","ex":"I need more time."},
+  {"eng":"want","kor":"원하다","def":"to wish for something","ex":"She wants a new phone."},
+  {"eng":"mean","kor":"의미하다","def":"to have a certain meaning","ex":"What does this word mean?"},
+  {"eng":"understand","kor":"이해하다","def":"to know what something means","ex":"Do you understand me?"},
+  {"eng":"remember","kor":"기억하다","def":"to keep information in your mind","ex":"I remember your name."},
+  {"eng":"forget","kor":"잊다","def":"to not remember something","ex":"I forget my homework."},
+  {"eng":"begin","kor":"시작하다","def":"to start something","ex":"Class begins at nine."}
+]

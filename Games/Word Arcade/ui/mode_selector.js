@@ -6,6 +6,10 @@ import { FN } from '../scripts/api-base.js';
 // Mode Selector UI
 export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const container = document.getElementById('gameArea');
+  
+  // Scroll to top when opening mode selector
+  window.scrollTo(0, 0);
+  if (container) container.scrollTop = 0;
 
   // Show the menu bar
   const menuBar = document.getElementById('menuBar');
@@ -331,101 +335,26 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   if (headerEl) headerEl.innerHTML = buildHeader();
 
   const listContainer = container.querySelector('#modeSelect');
-  modes.forEach((m) => {
-  const btn = document.createElement('button');
-  btn.className = 'mode-btn mode-card';
-  btn.setAttribute('data-mode', m.id);
-  btn.dataset.modeId = m.id; // keep legacy data-modeId for any existing code
-    btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
-    btn.onclick = () => onModeChosen && onModeChosen(m.id);
-    listContainer.appendChild(btn);
-  });
 
-  // Add "Change Level" button (above Main Menu)
-  const changeLevelBtn = document.createElement('button');
-  changeLevelBtn.className = 'mode-btn mode-card change-level-btn';
-  changeLevelBtn.style.cssText = `
-    margin-top: 24px;
-    background: #fff;
-    color: #f59e0b;
-    font-family: 'Poppins', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 18px 32px;
-    border: 2px solid #f59e0b;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-  `;
-  changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
-  changeLevelBtn.onclick = async () => {
-    // Detect which modal to show based on current list
-    const isPhonicsMode = window.__WA_IS_PHONICS__ === true || (listName && listName.toLowerCase().includes('sound'));
-    const isLevel2Mode = listName && listName.startsWith('Level 2 -');
-    
-    if (isPhonicsMode) {
-      // Show phonics modal
-      const { showPhonicsModal } = await import('./phonics_modal.js');
-      showPhonicsModal({
-        onChoose: (data) => {
-          if (window.WordArcade && typeof window.WordArcade.loadPhonicsGame === 'function') {
-            window.WordArcade.loadPhonicsGame(data);
-          }
-        },
-        onClose: () => {}
-      });
-    } else if (isLevel2Mode) {
-      // Show Level 2 modal
-      const { showLevel2Modal } = await import('./level2_modal.js');
-      showLevel2Modal({
-        onChoose: (data) => {
-          if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
-            window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
-          }
-        },
-        onClose: () => {}
-      });
-    } else {
-      // Show Level 1 (sample wordlist) modal
-      showSampleWordlistModal({
-        onChoose: (filename) => {
-          if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
-            window.WordArcade.loadSampleWordlistByFilename(filename, { force: true });
-          }
-        }
-      });
-    }
-  };
-
-  // Add hover effects
-  changeLevelBtn.addEventListener('mouseenter', () => {
-    changeLevelBtn.style.transform = 'translateY(-2px)';
-    changeLevelBtn.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.25)';
-  });
-  changeLevelBtn.addEventListener('mouseleave', () => {
-    changeLevelBtn.style.transform = 'translateY(0)';
-    changeLevelBtn.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.15)';
-  });
-
-  listContainer.appendChild(changeLevelBtn);
-
-  // Add "Main Menu" button at the bottom
+  // Add "Main Menu" button at the top (compact on tablets/iPads)
   const mainMenuBtn = document.createElement('button');
   mainMenuBtn.className = 'mode-btn mode-card main-menu-btn';
   mainMenuBtn.style.cssText = `
-    margin-bottom: 48px;
+    margin-bottom: 12px;
+    grid-column: 1 / -1;
     background: #fff;
     color: #21b5c0ff;
     font-family: 'Poppins', Arial, sans-serif;
     font-weight: 700;
-    font-size: 16px;
-    padding: 18px 32px;
+    font-size: 14px;
+    padding: 10px 16px;
+    height: 56px; max-height: 60px; --mode-btn-height: 56px;
+    display: flex; align-items: center; justify-content: center;
     border: 2px solid #1eb0bbff;
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 4px 12px rgba(25, 119, 126, 0.15);
+    box-shadow: 0 2px 6px rgba(25, 119, 126, 0.1);
   `;
   mainMenuBtn.innerHTML = `<span data-i18n="Main Menu">Main Menu</span>`;
   mainMenuBtn.onclick = () => {
@@ -433,9 +362,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
       window.WordArcade.quitToOpening(true);
     } else {
       // Fallback: navigate to main opening view
-      if (typeof showOpeningButtons === 'function') {
-        showOpeningButtons(true);
-      }
+      if (typeof showOpeningButtons === 'function') showOpeningButtons(true);
     }
   };
 
@@ -450,4 +377,115 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   });
 
   listContainer.appendChild(mainMenuBtn);
+
+  modes.forEach((m) => {
+  const btn = document.createElement('button');
+  btn.className = 'mode-btn mode-card';
+  btn.setAttribute('data-mode', m.id);
+  btn.dataset.modeId = m.id; // keep legacy data-modeId for any existing code
+    btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
+    btn.onclick = () => onModeChosen && onModeChosen(m.id);
+    listContainer.appendChild(btn);
+  });
+
+  // Add "Change Level" button (below modes, compact on tablets/iPads)
+  const changeLevelBtn = document.createElement('button');
+  changeLevelBtn.className = 'mode-btn mode-card change-level-btn';
+  changeLevelBtn.style.cssText = `
+    margin-top: 12px;
+    grid-column: 1 / -1;
+    background: #fff;
+    color: #f59e0b;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 16px;
+    height: 56px; max-height: 60px; --mode-btn-height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);
+  `;
+  changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
+  changeLevelBtn.onclick = async () => {
+    // Detect which modal to show based on current list
+  const isPhonicsMode = window.__WA_IS_PHONICS__ === true || (listName && listName.toLowerCase().includes('sound'));
+    
+    if (isPhonicsMode) {
+      // Show phonics modal
+      const { showPhonicsModal } = await import('./phonics_modal.js');
+      showPhonicsModal({
+        onChoose: (data) => {
+          if (window.WordArcade && typeof window.WordArcade.loadPhonicsGame === 'function') {
+            window.WordArcade.loadPhonicsGame(data);
+          }
+        },
+        onClose: () => {}
+      });
+    } else {
+      // Simple Level chooser (1/2/3) — always show for non-phonics so Level 3 is accessible from anywhere
+      const chooser = document.createElement('div');
+      chooser.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);z-index:1000;';
+      chooser.innerHTML = `
+        <div style="background:#fff;padding:16px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25);min-width:280px;border:2px solid #27c5ca;font-family:'Poppins',Arial,sans-serif;">
+          <div style="font-weight:800;color:#19777e;margin-bottom:10px;text-align:center;">Choose a Level</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button id="lvl1Btn" class="mode-btn" style="height:48px;display:flex;align-items:center;justify-content:center;">Level 1</button>
+            <button id="lvl2Btn" class="mode-btn" style="height:48px;display:flex;align-items:center;justify-content:center;">Level 2</button>
+            <button id="lvl3Btn" class="mode-btn" style="height:48px;display:flex;align-items:center;justify-content:center;">Level 3</button>
+          </div>
+        </div>`;
+      document.body.appendChild(chooser);
+      const closeChooser = () => { chooser.remove(); };
+      chooser.addEventListener('click', (e) => { if (e.target === chooser) closeChooser(); });
+      document.getElementById('lvl1Btn').onclick = () => {
+        closeChooser();
+        showSampleWordlistModal({
+          onChoose: (filename) => {
+            if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+              window.WordArcade.loadSampleWordlistByFilename(filename, { force: true });
+            }
+          }
+        });
+      };
+      document.getElementById('lvl2Btn').onclick = async () => {
+        closeChooser();
+        const { showLevel2Modal } = await import('./level2_modal.js');
+        showLevel2Modal({
+          onChoose: (data) => {
+            if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+              window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+            }
+          },
+          onClose: () => {}
+        });
+      };
+      document.getElementById('lvl3Btn').onclick = async () => {
+        closeChooser();
+        const { showLevel3Modal } = await import('./level3_modal.js');
+        showLevel3Modal({
+          onChoose: (data) => {
+            if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+              window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+            }
+          },
+          onClose: () => {}
+        });
+      };
+    }
+  };
+
+  // Add hover effects
+  changeLevelBtn.addEventListener('mouseenter', () => {
+    changeLevelBtn.style.transform = 'translateY(-2px)';
+    changeLevelBtn.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.25)';
+  });
+  changeLevelBtn.addEventListener('mouseleave', () => {
+    changeLevelBtn.style.transform = 'translateY(0)';
+    changeLevelBtn.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.15)';
+  });
+
+  listContainer.appendChild(changeLevelBtn);
 }

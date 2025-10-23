@@ -107,17 +107,22 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Spelling Game Over!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.3em;margin-bottom:12px;\">Your Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length*2}</span></div>`}
-        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreSpelling\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
+        <button id="playAgainBtn" style="display:none;font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreSpelling\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => runSpellingMode({ wordList, gameArea, listName });
-      document.getElementById('tryMoreSpelling').onclick = () => {
-        if (window.WordArcade?.startModeSelector) {
-          window.WordArcade.startModeSelector();
-        } else {
-          runSpellingMode({ wordList: wordList.sort(() => Math.random() - 0.5), gameArea, listName });
-        }
-      };
+      const tryMoreSpelling = document.getElementById('tryMoreSpelling');
+      if (tryMoreSpelling) {
+        tryMoreSpelling.onclick = () => {
+          const quitBtn = document.getElementById('wa-quit-btn');
+          if (quitBtn) quitBtn.style.display = 'none';
+          if (window.WordArcade?.startModeSelector) {
+            window.WordArcade.startModeSelector();
+          } else {
+            runSpellingMode({ wordList: wordList.sort(() => Math.random() - 0.5), gameArea, listName });
+          }
+        };
+      }
       return;
     }
 

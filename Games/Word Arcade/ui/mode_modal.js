@@ -29,19 +29,6 @@ export async function showModeModal({ onModeChosen, onClose }) {
   // Pre-fetch per-mode best score for this list (if logged in)
   const userId = getUserId && getUserId();
   const listName = (window.WordArcade && typeof window.WordArcade.getListName === 'function') ? window.WordArcade.getListName() : null;
-  
-  // Normalize mode names so phonics_listening -> listening, etc.
-  const canonicalMode = (raw) => {
-    const m = (raw || 'unknown').toString().toLowerCase();
-    if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-    if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-    if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-    if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-    if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-    if (m.includes('level_up')) return 'level_up';
-    return m;
-  };
-  
   // bestByMode: mode -> { pct?: number, pts?: number }
   let bestByMode = {};
   if (listName) {
@@ -55,7 +42,7 @@ export async function showModeModal({ onModeChosen, onClose }) {
         (Array.isArray(sessions) ? sessions : []).forEach(s => {
           if (!s || s.list_name !== listName) return;
           let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-          const key = canonicalMode(s.mode);
+          const key = (s.mode || 'unknown').toString().toLowerCase();
           if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
             const pct = Math.round((sum.score / sum.total) * 100);
             if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };

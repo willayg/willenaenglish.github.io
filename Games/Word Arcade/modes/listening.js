@@ -5,7 +5,7 @@ import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.
 import { ensureImageStyles } from '../ui/image_styles.js';
 
 // Listening mode: English audio, choose correct Korean translation
-export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, startGame, listName = null }) {
+export function runListeningMode({ wordList, gameArea, playTTS, playTTSVariant, preprocessTTS, startGame, listName = null }) {
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   let score = 0;
   let idx = 0;
@@ -119,17 +119,22 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#41b6beff;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
         ${isReview ? '' : `<div style="font-size:1.3em;margin-bottom:12px;">Your Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div>`}
-        <button id="playAgainBtn" style="font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreBtn\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
+        <button id="playAgainBtn" style="display:none;font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+  ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreBtn\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
       document.getElementById('playAgainBtn').onclick = () => startGame('listening');
-      document.getElementById('tryMoreBtn').onclick = () => {
-        if (window.WordArcade?.startModeSelector) {
-          window.WordArcade.startModeSelector();
-        } else {
-          startGame('listening', { shuffle: true });
-        }
-      };
+      const tryMoreBtn = document.getElementById('tryMoreBtn');
+      if (tryMoreBtn) {
+        tryMoreBtn.onclick = () => {
+          const quitBtn = document.getElementById('wa-quit-btn');
+          if (quitBtn) quitBtn.style.display = 'none';
+          if (window.WordArcade?.startModeSelector) {
+            window.WordArcade.startModeSelector();
+          } else {
+            startGame('listening', { shuffle: true });
+          }
+        };
+      }
       return;
     }
     const current = shuffled[idx];
@@ -172,8 +177,8 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
             <div id="listening-score" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
           </div>`;
 
-        // Play audio
-        const playCurrentWord = () => playTTS(current.eng);
+  // Play sentence-style audio when available; fall back to base
+  const playCurrentWord = () => (playTTSVariant ? playTTSVariant(current.eng, 'sentence') : playTTS(current.eng));
         playCurrentWord();
         document.getElementById('playAudioBtn').onclick = playCurrentWord;
         setupChoiceButtons(gameArea);
@@ -226,7 +231,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, preprocessTTS, s
       <div id="listening-score" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
     </div>`;
 
-    const playCurrentWord = () => playTTS(current.eng);
+  const playCurrentWord = () => (playTTSVariant ? playTTSVariant(current.eng, 'sentence') : playTTS(current.eng));
     playCurrentWord();
     document.getElementById('playAudioBtn').onclick = playCurrentWord;
 

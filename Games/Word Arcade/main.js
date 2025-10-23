@@ -2,7 +2,7 @@
 // Rewritten with: Supabase singleton auth, robust fetchJSON, abortable audio preload,
 // safer sample list URLs, inline toasts, and lazy-loaded modes.
 
-import { playTTS, preprocessTTS, preloadAllAudio } from './tts.js';
+import { playTTS, playTTSVariant, preprocessTTS, preloadAllAudio } from './tts.js';
 import { playSFX } from './sfx.js';
 import { renderModeSelector } from './ui/mode_selector.js';
 import { renderGameView } from './ui/game_view.js';
@@ -11,6 +11,7 @@ import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js';
 import { showBrowseModal } from './ui/browse_modal.js';
 import { showPhonicsModal } from './ui/phonics_modal.js';
 import { showLevel2Modal } from './ui/level2_modal.js';
+import { showLevel3Modal } from './ui/level3_modal.js';
 // Ensure star overlay script is loaded once; it attaches window.showRoundStars
 import './ui/star_overlay.js';
 import { FN } from './scripts/api-base.js';
@@ -602,7 +603,7 @@ export async function startGame(mode = 'meaning') {
 
   const pick = modeLoaders[mode] || modeLoaders.meaning;
   const run = await pick();
-  const ctx = { wordList, gameArea, playTTS, preprocessTTS, startGame, listName: currentListName };
+  const ctx = { wordList, gameArea, playTTS, playTTSVariant, preprocessTTS, startGame, listName: currentListName };
   const maybeCleanup = run(ctx);
   if (typeof maybeCleanup === 'function') activeModeCleanup = maybeCleanup;
 }
@@ -771,33 +772,33 @@ function showLevelsMenu() {
   openingButtons.innerHTML = `
     <button id="level0Btn" class="wa-option wa-option-card wa-level-0" type="button" style="border-color: ${level0Color};">
       <img src="./assets/Images/icons/0abc.svg" alt="Level 0" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-      <span style="color: ${level0Color};" data-i18n="Level 0: Phonics">Level 0: Phonics</span>
+      <span style="color: ${level0Color};">Phonics</span>
       <span class="wa-card-stars" id="wa-stars-level0" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
     <button id="level1Btn" class="wa-option wa-option-card wa-level-1" type="button" style="border-color: ${level1Color};">
       <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Level 1" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-      <span style="color: ${level1Color};" data-i18n="Level 1: Easy">Level 1: Easy</span>
+      <span style="color: ${level1Color};">Level 1</span>
       <span class="wa-card-stars" id="wa-stars-level1" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
     <button id="level2Btn" class="wa-option wa-option-card wa-level-2" type="button" style="border-color: ${level2Color};">
       <img src="./assets/Images/icons/2leaf.svg" alt="Level 2" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-      <span style="color: ${level2Color};" data-i18n="Level 2">Level 2</span>
+      <span style="color: ${level2Color};">Level 2</span>
       <span class="wa-card-stars" id="wa-stars-level2" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
-    <button id="level3Btn" class="wa-option wa-option-card wa-level-3 wa-level-inactive" type="button" style="border-color: ${level3Color}; opacity: 0.6;">
+    <button id="level3Btn" class="wa-option wa-option-card wa-level-3" type="button" style="border-color: ${level3Color};">
       <img src="./assets/Images/icons/3blue-flower.svg" alt="Level 3" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-      <span style="color: ${level3Color};" data-i18n="Level 3">Level 3</span>
-      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+      <span style="color: ${level3Color};">Level 3</span>
+      <span class="wa-card-stars" id="wa-stars-level3" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
     <button id="level4Btn" class="wa-option wa-option-card wa-level-4 wa-level-inactive" type="button" style="border-color: ${level4Color}; opacity: 0.6;">
       <img src="./assets/Images/icons/4green-butterfly.svg" alt="Level 4" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-      <span style="color: ${level4Color};" data-i18n="Level 4">Level 4</span>
-      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+      <span style="color: ${level4Color};">Level 4</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;">Coming soon</span>
     </button>
     <button id="level5Btn" class="wa-option wa-option-card wa-level-5 wa-level-inactive" type="button" style="border-color: ${level5Color}; opacity: 0.6;">
       <img src="./assets/Images/icons/5blue-bird.svg" alt="Level 5" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
-      <span style="color: ${level5Color};" data-i18n="Level 5">Level 5</span>
-      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;" data-i18n="Coming soon">Coming soon</span>
+      <span style="color: ${level5Color};">Level 5</span>
+      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;">Coming soon</span>
     </button>
     <button id="levelBackBtn" class="wa-option wa-option-card wa-back" type="button" style="border-color: ${backColor}; height: auto; min-height: auto; padding: 8px 8px 10px;">
       <div class="wa-logo-crop">
@@ -880,8 +881,8 @@ function showLevelsMenu() {
     });
   }
   
-  // Levels 3-5 - Coming Soon
-  [3, 4, 5].forEach(level => {
+  // Levels 4-5 - Coming Soon
+  [4, 5].forEach(level => {
     const btn = document.getElementById(`level${level}Btn`);
     if (btn) {
       // Clone and replace to remove any old listeners
@@ -893,6 +894,22 @@ function showLevelsMenu() {
       });
     }
   });
+
+  // Level 3 - shows the level 3 modal
+  const level3Btn = document.getElementById('level3Btn');
+  if (level3Btn) {
+    const newLevel3Btn = level3Btn.cloneNode(true);
+    level3Btn.replaceWith(newLevel3Btn);
+    newLevel3Btn.addEventListener('click', () => {
+      showLevel3Modal({
+        onChoose: (data) => {
+          // data = { listFile, listName }
+          loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+        },
+        onClose: () => {}
+      });
+    });
+  }
 
   // After wiring buttons, compute and render per-level star counts
   (async () => {
@@ -935,6 +952,7 @@ function showLevelsMenu() {
         level0: new Map(), // list_name -> bestByMode
         level1: new Map(),
         level2: new Map(),
+        level3: new Map(),
       };
 
       const norm = (v) => (v||'').toString().trim();
@@ -945,7 +963,8 @@ function showLevelsMenu() {
         if (!listName) return;
         let bucket = null;
         if (/^phonics\s*-/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
-        else if (/^level\s*2\s*-/i.test(listName)) bucket = 'level2';
+  else if (/^level\s*2\s*-/i.test(listName)) bucket = 'level2';
+  else if (/^level\s*3\s*-/i.test(listName)) bucket = 'level3';
         else if (/\.json$/i.test(listName)) bucket = 'level1';
         if (!bucket) return;
 
@@ -976,14 +995,17 @@ function showLevelsMenu() {
 
       const stars0 = sumStars(byLevel.level0, phonicsModes);
       const stars1 = sumStars(byLevel.level1, generalModes);
-      const stars2 = sumStars(byLevel.level2, generalModes);
+  const stars2 = sumStars(byLevel.level2, generalModes);
+  const stars3 = sumStars(byLevel.level3, generalModes);
 
       const s0 = document.getElementById('wa-stars-level0');
       const s1 = document.getElementById('wa-stars-level1');
-      const s2 = document.getElementById('wa-stars-level2');
+  const s2 = document.getElementById('wa-stars-level2');
+  const s3 = document.getElementById('wa-stars-level3');
       if (s0) s0.textContent = `⭐ ${stars0}`;
       if (s1) s1.textContent = `⭐ ${stars1}`;
-      if (s2) s2.textContent = `⭐ ${stars2}`;
+  if (s2) s2.textContent = `⭐ ${stars2}`;
+  if (s3) s3.textContent = `⭐ ${stars3}`;
     } catch (e) {
       // Silent fail; stars are optional UI sugar
       try { console.info('[levels] stars unavailable', e?.message || e); } catch {}

@@ -50,11 +50,13 @@ export function runMissingLetterMode({ wordList, gameArea, playTTS, /* preproces
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#41b6beff;font-size:2em;margin-bottom:18px;">Missing Letter Complete!</h2>
         ${isReview ? '' : `<div style=\"font-size:1.25em;margin-bottom:12px;\">Score: <span style=\"color:#19777e;font-weight:700;\">${score} / ${ordered.length}</span></div>`}
-        <button id="mlAgain" style="font-size:1.06em;padding:12px 26px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
-        ${document.getElementById('gameStage') ? '' : `<button id=\"mlMenu\" style=\"font-size:1.0em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Try More</button>`}
+        <button id="mlAgain" style="display:none;font-size:1.06em;padding:12px 26px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
+        ${document.getElementById('gameStage') ? '' : `<button id=\"mlMenu\" style=\"font-size:1.0em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
       document.getElementById('mlAgain')?.addEventListener('click', () => startGame('missing_letter'));
       document.getElementById('mlMenu')?.addEventListener('click', () => {
+        const quitBtn = document.getElementById('wa-quit-btn');
+        if (quitBtn) quitBtn.style.display = 'none';
         if (window.WordArcade?.startModeSelector) window.WordArcade.startModeSelector();
         else startGame('missing_letter');
       });
