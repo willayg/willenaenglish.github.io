@@ -168,7 +168,6 @@ function getWordPrompt(word) {
   const templates = [
     `The word is "${word}"...`,
     `This one is "${word}"...`,
-    `Can you say "${word}"?`,
     `Try the word "${word}"...`,
     `Listen: "${word}".`
   ];

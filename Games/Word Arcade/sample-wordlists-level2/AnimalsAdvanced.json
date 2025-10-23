@@ -1,12 +1,12 @@
 [
-  {"eng":"cheetah","kor":"치타","def":"a very fast wild cat with spots","ex":"The cheetah runs quickly."},
-  {"eng":"hippopotamus","kor":"하마","def":"a very large animal that lives in rivers","ex":"The hippopotamus rests in water."},
-  {"eng":"rhinoceros","kor":"코뿔소","def":"a large animal with one or two horns on its nose","ex":"The rhinoceros walks slowly."},
-  {"eng":"panda","kor":"판다","def":"a black and white bear that eats bamboo","ex":"The panda eats bamboo."},
-  {"eng":"koala","kor":"코알라","def":"a gray animal from Australia that eats leaves","ex":"The koala sleeps in a tree."},
+  {"eng":"cheetah","kor":"치타","def":"a very fast wild cat with spots","ex":"The cheetah runs quickly.","emoji":"🐆"},
+  {"eng":"hippopotamus","kor":"하마","def":"a very large animal that lives in rivers","ex":"The hippopotamus rests in water.","emoji":"🦛"},
+  {"eng":"rhinoceros","kor":"코뿔소","def":"a large animal with one or two horns on its nose","ex":"The rhinoceros walks slowly.","emoji":"🦏"},
+  {"eng":"panda","kor":"판다","def":"a black and white bear that eats bamboo","ex":"The panda eats bamboo.","emoji":"🐼"},
+  {"eng":"koala","kor":"코알라","def":"a gray animal from Australia that eats leaves","ex":"The koala sleeps in a tree.","emoji":"🐨"},
   {"eng":"sloth","kor":"나무늘보","def":"a slow animal that hangs from trees","ex":"The sloth moves slowly."},
-  {"eng":"otter","kor":"수달","def":"an animal that swims well and likes rivers","ex":"The otter plays in the water."},
+  {"eng":"otter","kor":"수달","def":"an animal that swims well and likes rivers","ex":"The otter plays in the water.","emoji":"🦦"},
   {"eng":"beaver","kor":"비버","def":"an animal that builds dams in rivers","ex":"The beaver builds a dam."},
-  {"eng":"eagle","kor":"독수리","def":"a large bird that flies high and hunts","ex":"The eagle flies over the mountain."},
-  {"eng":"owl","kor":"올빼미","def":"a bird that sees in the dark and hoots","ex":"The owl hoots at night."}
+  {"eng":"eagle","kor":"독수리","def":"a large bird that flies high and hunts","ex":"The eagle flies over the mountain.","emoji":"🦅"},
+  {"eng":"owl","kor":"부엉이","def":"a bird that sees in the dark and hoots","ex":"The owl hoots at night.","emoji":"🦉"}
 ]

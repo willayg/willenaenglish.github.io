@@ -1,137 +1,222 @@
 [
   {
-    "file": "Animals2.json",
-    "total": 10,
-    "processing": 10,
-    "skippedExisting": 10,
+    "file": "blend-br-bl.json",
+    "total": 23,
+    "processing": 23,
+    "skippedExisting": 23,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "EasyAnimals.json",
-    "total": 20,
-    "processing": 20,
-    "skippedExisting": 20,
+    "file": "blend-cr-cl.json",
+    "total": 23,
+    "processing": 23,
+    "skippedExisting": 23,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 1
   },
   {
-    "file": "EasyHobbies.json",
-    "total": 20,
-    "processing": 20,
-    "skippedExisting": 20,
+    "file": "blend-dr-fl-fr.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 1
   },
   {
-    "file": "EasyJobs.json",
-    "total": 20,
-    "processing": 20,
-    "skippedExisting": 20,
+    "file": "blend-gr-gl.json",
+    "total": 23,
+    "processing": 23,
+    "skippedExisting": 23,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 1
   },
   {
-    "file": "EasyVerbs.json",
-    "total": 20,
-    "processing": 20,
-    "skippedExisting": 20,
+    "file": "blend-pl-pr-sc.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "Feelings.json",
-    "total": 12,
-    "processing": 12,
-    "skippedExisting": 12,
+    "file": "blend-sk-sl-sm-sn-sp-st-sw.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "Food1.json",
-    "total": 10,
-    "processing": 10,
-    "skippedExisting": 10,
+    "file": "blend-tr-tw.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "Food2.json",
-    "total": 10,
-    "processing": 10,
-    "skippedExisting": 10,
+    "file": "long-a-ai-ay.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 1
   },
   {
-    "file": "Food3.json",
-    "total": 10,
-    "processing": 10,
-    "skippedExisting": 10,
+    "file": "long-a.json",
+    "total": 22,
+    "processing": 22,
+    "skippedExisting": 22,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "LongU.json",
-    "total": 19,
-    "processing": 19,
-    "skippedExisting": 19,
+    "file": "long-e.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "sample-wordlist-15.json",
-    "total": 15,
-    "processing": 15,
-    "skippedExisting": 15,
+    "file": "long-i.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "sample-wordlist.json",
-    "total": 10,
-    "processing": 10,
-    "skippedExisting": 10,
+    "file": "long-o-oa-oe.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "SchoolSupplies.json",
-    "total": 15,
-    "processing": 15,
-    "skippedExisting": 15,
+    "file": "long-o.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "Sports.json",
-    "total": 12,
-    "processing": 12,
-    "skippedExisting": 12,
+    "file": "long-u.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
   },
   {
-    "file": "Transportation.json",
-    "total": 20,
-    "processing": 20,
-    "skippedExisting": 20,
+    "file": "ch-sh.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
     "generated": 0,
     "errors": 0,
-    "usedExamples": 0
+    "usedExamples": 0,
+    "generatedItself": 0
+  },
+  {
+    "file": "ck-ng-mp.json",
+    "total": 40,
+    "processing": 40,
+    "skippedExisting": 40,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 0
+  },
+  {
+    "file": "th-wh.json",
+    "total": 25,
+    "processing": 25,
+    "skippedExisting": 25,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 1
+  },
+  {
+    "file": "short-a.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 0
+  },
+  {
+    "file": "short-e.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 1
+  },
+  {
+    "file": "short-i.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 1
+  },
+  {
+    "file": "short-o.json",
+    "total": 24,
+    "processing": 24,
+    "skippedExisting": 24,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 1
+  },
+  {
+    "file": "short-u.json",
+    "total": 22,
+    "processing": 22,
+    "skippedExisting": 22,
+    "generated": 0,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 1
   }
 ]

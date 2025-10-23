@@ -21,10 +21,20 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');  // Go up one level from scripts/
-const WORDLIST_DIR = path.join(ROOT, 'Games', 'Word Arcade', 'sample-wordlists');
-const BUILD_DIR = path.join(ROOT, 'build', 'sentences');
-
+// Allow overriding the wordlist directory via --dir
 const args = process.argv.slice(2);
+function flag(name){ return args.includes(`--${name}`); }
+function getArg(name, def){
+  const idx = args.findIndex(a=> a===`--${name}` || a.startsWith(`--${name}=`));
+  if (idx === -1) return def;
+  const raw = args[idx];
+  if (raw.includes('=')) return raw.split('=').slice(1).join('=');
+  const next = args[idx+1];
+  if (!next || next.startsWith('--')) return true; return next;
+}
+const DIR_OVERRIDE = getArg('dir', '').trim();
+const WORDLIST_DIR = DIR_OVERRIDE ? path.join(ROOT, DIR_OVERRIDE) : path.join(ROOT, 'Games', 'Word Arcade', 'sample-wordlists');
+const BUILD_DIR = path.join(ROOT, 'build', 'sentences');
 const DRY = args.includes('--dry-run');
 const LIMIT = (()=>{ const i=args.indexOf('--limit'); if(i!==-1) return parseInt(args[i+1],10)||0; return 0; })();
 

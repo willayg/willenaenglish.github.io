@@ -50,6 +50,8 @@ const DIR = getArg('dir', 'Games/Word Arcade/sample-wordlists');
 const CONCURRENCY = Math.max(1, Math.min( parseInt(getArg('concurrency', '3'), 10) || 3, 8));
 const USE_EXAMPLES = flags.has('--use-examples') || getArg('use-examples', false) === 'true';
 const VERBOSE = flags.has('--verbose') || getArg('verbose', false) === 'true';
+const FORCE = flags.has('--force') || getArg('force', false) === 'true';
+const ALSO_ITSELF = flags.has('--also-itself') || getArg('also-itself', false) === 'true';
 
 const root = process.cwd();
 const targetDir = path.join(root, DIR);
@@ -106,11 +108,24 @@ async function wordExists(base, word) {
 async function generateTTS(base, text) {
   const body = { text };
   if (VOICE) body.voice_id = VOICE;
-  const res = await fetch(base + '/eleven_labs_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error('TTS proxy failed HTTP ' + res.status);
-  const data = await res.json();
-  if (!data.audio) throw new Error('No audio in response');
-  return data.audio; // base64
+  let attempt = 0; let lastErr = null;
+  const maxAttempts = 3;
+  while (attempt < maxAttempts) {
+    try {
+      const res = await fetch(base + '/eleven_labs_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('TTS proxy failed HTTP ' + res.status);
+      const data = await res.json();
+      if (!data.audio) throw new Error('No audio in response');
+      return data.audio; // base64
+    } catch (e) {
+      lastErr = e; attempt++;
+      if (attempt < maxAttempts) {
+        const delay = 1000 * Math.pow(2, attempt - 1);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastErr || new Error('TTS failed');
 }
 
 async function uploadAudio(base, word, audioBase64) {
@@ -123,12 +138,12 @@ async function uploadAudio(base, word, audioBase64) {
 
 function pickPrompt(word){
   // Mirror subset of templates from tts.js preprocessTTS but simpler and deterministic to avoid many duplicates
+  // Removed "Can you say" and "Please repeat" per content preference
   const templates = [
     (w)=>`The word is "${w}"...`,
     (w)=>`This one is "${w}"...`,
-    (w)=>`Can you say "${w}"?`,
     (w)=>`Try the word "${w}"...`,
-    (w)=>`Please repeat: "${w}".`
+    (w)=>`Listen: "${w}".`
   ];
   // Deterministic index based on hash
   let h = 0; const s = word.toLowerCase();
@@ -158,7 +173,7 @@ async function processFile(base, filePath){
   const unique = Array.from(new Set(words.filter(Boolean)));
   const limited = LIMIT > 0 ? unique.slice(0, LIMIT) : unique;
 
-  const summary = { file: path.basename(filePath), total: unique.length, processing: limited.length, skippedExisting:0, generated:0, errors:0, usedExamples:0 };
+  const summary = { file: path.basename(filePath), total: unique.length, processing: limited.length, skippedExisting:0, generated:0, errors:0, usedExamples:0, generatedItself:0 };
 
   let i = 0; let active = 0; let idx = 0; const results = [];
   async function worker(){
@@ -166,22 +181,47 @@ async function processFile(base, filePath){
       const w = limited[idx++];
       const norm = normalizeWord(w);
       try {
-        const exists = await wordExists(base, w);
-        if (exists) { summary.skippedExisting++; continue; }
-        if (DRY_RUN) { console.log('[DRY] Would generate', w); continue; }
-        let text;
-        if (USE_EXAMPLES && exampleMap[w]) {
-          text = exampleMap[w];
-          summary.usedExamples++;
-          if (VERBOSE) console.log('[GEN][EX]', w, '->', text);
+        const mainExists = await wordExists(base, w);
+        const itselfTarget = `${w}_itself`;
+        const itselfExists = ALSO_ITSELF ? await wordExists(base, itselfTarget) : false;
+
+        // Generate main word audio if missing or forcing
+        if (!mainExists || FORCE) {
+          if (DRY_RUN) { console.log('[DRY] Would generate', w); }
+          else {
+            let text;
+            if (USE_EXAMPLES && exampleMap[w]) {
+              text = exampleMap[w];
+              summary.usedExamples++;
+              if (VERBOSE) console.log('[GEN][EX]', w, '->', text);
+            } else {
+              text = pickPrompt(w);
+              if (VERBOSE) console.log('[GEN][PR]', w, '->', text);
+            }
+            const audioB64 = await generateTTS(base, text);
+            await uploadAudio(base, w, audioB64);
+            summary.generated++;
+            console.log('[OK]', w);
+          }
         } else {
-          text = pickPrompt(w);
-          if (VERBOSE) console.log('[GEN][PR]', w, '->', text);
+          summary.skippedExisting++;
         }
-        const audioB64 = await generateTTS(base, text);
-        await uploadAudio(base, w, audioB64);
-        summary.generated++;
-        console.log('[OK]', w);
+
+        // Independently ensure the "itself" file exists when requested
+        if (ALSO_ITSELF && !itselfExists) {
+          try {
+            if (DRY_RUN) { console.log('[DRY][itself] Would generate', itselfTarget); }
+            else {
+              const audioB64it = await generateTTS(base, w);
+              await uploadAudio(base, itselfTarget, audioB64it);
+              summary.generatedItself++;
+              if (VERBOSE) console.log('[OK][itself]', itselfTarget);
+            }
+          } catch (e2) {
+            summary.errors++;
+            console.warn('[ERR][itself]', itselfTarget, e2.message);
+          }
+        }
       } catch (e){
         summary.errors++;
         console.warn('[ERR]', w, e.message);
@@ -196,11 +236,22 @@ async function processFile(base, filePath){
 (async function main(){
   const base = await pickBase();
   console.log('[INFO] Using functions base:', base);
-  const files = fs.readdirSync(targetDir).filter(f => f.endsWith('.json'));
+  // Recursively gather all JSON files under targetDir
+  function listJsonFiles(dir){
+    const out = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const ent of entries){
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) out.push(...listJsonFiles(full));
+      else if (ent.isFile() && ent.name.toLowerCase().endsWith('.json')) out.push(full);
+    }
+    return out;
+  }
+  const files = listJsonFiles(targetDir);
   const reports = [];
   for (const f of files) {
-    console.log('\n=== Processing', f, '===');
-    const rep = await processFile(base, path.join(targetDir, f));
+    console.log('\n=== Processing', path.relative(root, f), '===');
+    const rep = await processFile(base, f);
     reports.push(rep);
   }
   console.log('\n=== Batch Summary ===');
