@@ -277,17 +277,26 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
       pct = best.pct;
       const metaClass = pct === 0 ? 'zero' : colorClass;
       meta = `<span class="mode-meta ${metaClass}">${pct}%</span>`;
+      const filled = pctToStars(pct);
+      // Render 5 stars, filled or empty
+      for (let i = 0; i < 5; i++) {
+        starsHtml += starSvg(i < filled);
+      }
     } else if (best && best.pts != null) {
       meta = `<span class="mode-meta zero">0%</span>`;
+      // no pct -> show 0 filled stars but show empties
+      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
     } else {
-      // No data yet: show 0% with same styling/spacing
+      // No data yet: show empty stars and 0% with same styling/spacing
       meta = `<span class="mode-meta zero">0%</span>`;
+      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
     }
 
     // Return content block; actual button HTML will wrap this
   return `<div class="mode-content">
       <div class="mode-left">
         <div class="mode-title ${colorClass}">${title}</div>
+        <div class="star-row">${starsHtml}</div>
     <div>${meta}</div>
       </div>
       <div class="mode-icon">${textIcon ? `<div style="font-size:64px;font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}"/>`}</div>

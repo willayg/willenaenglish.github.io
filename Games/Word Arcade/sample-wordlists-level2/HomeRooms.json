@@ -1,12 +1,12 @@
 [
-  {"eng":"bedroom","kor":"침실","def":"a room for sleeping","ex":"I sleep in the bedroom."},
-  {"eng":"kitchen","kor":"주방","def":"a room for cooking","ex":"We cook in the kitchen."},
-  {"eng":"bathroom","kor":"욕실","def":"a room with toilet and shower","ex":"I wash in the bathroom."},
-  {"eng":"living room","kor":"거실","def":"a room for sitting and watching TV","ex":"We sit in the living room."},
+  {"eng":"bedroom","kor":"침실","def":"a room for sleeping","ex":"I sleep in the bedroom.","emoji":"🛏️"},
+  {"eng":"kitchen","kor":"주방","def":"a room for cooking","ex":"We cook in the kitchen.","emoji":"🍳"},
+  {"eng":"bathroom","kor":"욕실","def":"a room with toilet and shower","ex":"I wash in the bathroom.","emoji":"🚿"},
+  {"eng":"living room","kor":"거실","def":"a room for sitting and watching TV","ex":"We sit in the living room.","emoji":"🛋️"},
   {"eng":"basement","kor":"지하실","def":"the part of a building below ground","ex":"Tools are in the basement."},
   {"eng":"attic","kor":"다락","def":"the space under the roof of a building","ex":"Old boxes are in the attic."},
-  {"eng":"staircase","kor":"계단","def":"steps for going up or down","ex":"I walk up the staircase."},
-  {"eng":"balcony","kor":"발코니","def":"a platform outside a room","ex":"We sit on the balcony."},
-  {"eng":"garage","kor":"차고","def":"a room for parking a car","ex":"The car is in the garage."},
+  {"eng":"staircase","kor":"계단","def":"steps for going up or down","ex":"I walk up the staircase.","emoji":"🪜"},
+  {"eng":"balcony","kor":"발코니","def":"a platform outside a room","ex":"We sit on the balcony.","emoji":"🪟"},
+  {"eng":"garage","kor":"차고","def":"a room for parking a car","ex":"The car is in the garage.","emoji":"🚗"},
   {"eng":"hallway","kor":"복도","def":"a long passage with rooms on the sides","ex":"Pictures hang in the hallway."}
 ]

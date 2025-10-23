@@ -1,11 +1,11 @@
 [
-  {"eng":"elephant","kor":"코끼리","def":"a very large animal with a long trunk and big ears","ex":"The elephant drinks water."},
-  {"eng":"penguin","kor":"펭귄","def":"a black and white bird that swims","ex":"Penguins live in cold places."},
+  {"eng":"elephant","kor":"코끼리","def":"a very large animal with a long trunk and big ears","ex":"The elephant drinks water.","emoji":"🐘"},
+  {"eng":"penguin","kor":"펭귄","def":"a black and white bird that swims","ex":"Penguins live in cold places.","emoji":"🐧"},
   {"eng":"peacock","kor":"공작","def":"a large bird with colorful tail feathers","ex":"The peacock displays its tail."},
-  {"eng":"crocodile","kor":"악어","def":"a large reptile with sharp teeth","ex":"The crocodile swims in the river."},
-  {"eng":"tortoise","kor":"거북이","def":"a slow animal with a hard shell on its back","ex":"The tortoise walks slowly."},
+  {"eng":"crocodile","kor":"악어","def":"a large reptile with sharp teeth","ex":"The crocodile swims in the river.","emoji":"🐊"},
+  {"eng":"tortoise","kor":"거북이","def":"a slow animal with a hard shell on its back","ex":"The tortoise walks slowly.","emoji":"🐢"},
   {"eng":"jellyfish","kor":"해파리","def":"a soft sea animal with tentacles","ex":"The jellyfish floats in the ocean."},
-  {"eng":"butterfly","kor":"나비","def":"a colorful insect with big wings","ex":"The butterfly lands on a flower."},
+  {"eng":"butterfly","kor":"나비","def":"a colorful insect with big wings","ex":"The butterfly lands on a flower.","emoji":"🦋"},
   {"eng":"dragonfly","kor":"잠자리","def":"an insect with long wings that lives near water","ex":"The dragonfly flies fast."},
   {"eng":"caterpillar","kor":"애벌레","def":"a small creature that becomes a butterfly","ex":"The caterpillar eats leaves."},
   {"eng":"seahorse","kor":"해마","def":"a small sea animal that looks like a horse","ex":"The seahorse swims slowly."}

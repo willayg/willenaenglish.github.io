@@ -1,12 +1,12 @@
 [
-  {"eng":"broccoli","kor":"브로콜리","def":"a green vegetable with small tree-like parts","ex":"I cook broccoli."},
+  {"eng":"broccoli","kor":"브로콜리","def":"a green vegetable with small tree-like parts","ex":"I cook broccoli.","emoji":"🥦"},
   {"eng":"cucumber","kor":"오이","def":"a long green vegetable","ex":"She cuts a cucumber."},
-  {"eng":"lettuce","kor":"상추","def":"green leaves used in salads","ex":"We wash lettuce."},
-  {"eng":"tomato","kor":"토마토","def":"a red round vegetable used in many dishes","ex":"I slice a tomato."},
+  {"eng":"lettuce","kor":"상추","def":"green leaves used in salads","ex":"We wash lettuce.","emoji":"🥬"},
+  {"eng":"tomato","kor":"토마토","def":"a red round vegetable used in many dishes","ex":"I slice a tomato.","emoji":"🍅"},
   {"eng":"cabbage","kor":"양배추","def":"a round vegetable with many leaves","ex":"He chops cabbage."},
   {"eng":"spinach","kor":"시금치","def":"soft green leaves used as food","ex":"I eat spinach."},
-  {"eng":"eggplant","kor":"가지","def":"a purple vegetable","ex":"We fry eggplant."},
+  {"eng":"eggplant","kor":"가지","def":"a purple vegetable","ex":"We fry eggplant.","emoji":"🍆"},
   {"eng":"cauliflower","kor":"콜리플라워","def":"a white vegetable like broccoli","ex":"She steams cauliflower."},
-  {"eng":"mushroom","kor":"버섯","def":"a soft food that grows in damp places","ex":"I add mushrooms."},
-  {"eng":"pepper","kor":"고추","def":"a vegetable that can be sweet or spicy","ex":"He cuts a pepper."}
+  {"eng":"mushroom","kor":"버섯","def":"a soft food that grows in damp places","ex":"I add mushrooms.","emoji":"🍄"},
+  {"eng":"pepper","kor":"고추","def":"a vegetable that can be sweet or spicy","ex":"He cuts a pepper.","emoji":"🌶️"}
 ]
