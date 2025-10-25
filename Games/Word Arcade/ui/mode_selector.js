@@ -47,7 +47,9 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Clear and render a single stacked rounded panel matching main menu style
   container.innerHTML = `
     <div id="modeHeader" style="text-align:center;margin-top:4px;"></div>
-    <div id="modeSelect" aria-label="Select a mode"></div>
+    <div class="wa-card" id="modeSelectCard" style="background:#fbffff;">
+      <div id="modeSelect" aria-label="Select a mode"></div>
+    </div>
   `;
 
   ensureModeButtonStyles();
@@ -340,7 +342,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const mainMenuBtn = document.createElement('button');
   mainMenuBtn.className = 'mode-btn mode-card main-menu-btn';
   mainMenuBtn.style.cssText = `
-    margin-bottom: 12px;
+    margin-bottom: 5px;
     grid-column: 1 / -1;
     background: #fff;
     color: #21b5c0ff;
@@ -382,7 +384,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const studyWordsBtn = document.createElement('button');
   studyWordsBtn.className = 'mode-btn mode-card study-words-btn';
   studyWordsBtn.style.cssText = `
-    margin-bottom: 12px;
+    margin-bottom: 5px;
     grid-column: 1 / -1;
     background: #fff;
     color: #ec4899;

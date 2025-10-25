@@ -33,6 +33,7 @@ function ensureChoiceButtonStyles() {
       -webkit-tap-highlight-color: transparent;
       position: relative;
       isolation: isolate;
+      will-change: background, box-shadow, transform;
     }
     .choice-btn:focus { outline: none; }
     .choice-btn:active { transform: scale(0.97); }
@@ -69,6 +70,8 @@ function ensureChoiceButtonStyles() {
       position: relative; 
       z-index: 10;
       overflow: hidden;
+      /* Prevent transition conflicts during splash */
+      transition: none !important;
     }
     .splash-correct::after {
       content: '';
@@ -87,6 +90,8 @@ function ensureChoiceButtonStyles() {
       position: relative; 
       z-index: 10;
       overflow: hidden;
+      /* Prevent transition conflicts during splash */
+      transition: none !important;
     }
     .splash-wrong::after {
       content: '';
@@ -346,7 +351,15 @@ export function splashResult(el, isCorrect) {
   // Force reflow to restart animation
   void el.offsetWidth;
   el.classList.add(cls);
-  setTimeout(() => { el.classList.remove('splash-correct', 'splash-wrong'); }, 500);
+  // Prefer animationend over a fixed timeout to avoid mid-frame class flips (which can flicker)
+  const onEnd = () => {
+    el.classList.remove('splash-correct', 'splash-wrong');
+  };
+  el.addEventListener('animationend', onEnd, { once: true });
+  // Fallback safety in case animationend doesn't fire (older browsers)
+  setTimeout(() => {
+    el.classList.remove('splash-correct', 'splash-wrong');
+  }, 800);
   // If answer wrong, reveal correct option (requires data-correct="1" set on the correct button)
   if (!isCorrect) {
     try {
