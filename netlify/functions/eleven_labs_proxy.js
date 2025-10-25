@@ -20,19 +20,21 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: "ELEVEN_LABS_DEFAULT_VOICE_ID env var not set" })
     };
   }
-  let modelId = "eleven_monolingual_v1";
-  let voiceSettings = { stability: 1.0, similarity_boost: 1.0, style: 1.0, use_speaker_boost: false };
+  // Prefer explicit env override; fall back to stable default per docs
+  let modelId = process.env.ELEVEN_LABS_MODEL_ID || "eleven_multilingual_v2";
+  // Defaults requested: max clarity
+  let voiceSettings = { stability: 1.0, similarity_boost: 1.0, style: 0.0, use_speaker_boost: false };
   try {
     const body = JSON.parse(event.body);
     text = body.text;
     if (body.voice_id) voiceId = body.voice_id;
     if (body.model_id && typeof body.model_id === 'string') modelId = body.model_id;
     if (body.voice_settings && typeof body.voice_settings === 'object') {
-      // Shallow merge with defaults to enforce user’s preferred baseline while allowing specific overrides
+      // Shallow merge with defaults to enforce user's preferred baseline while allowing specific overrides
       voiceSettings = {
         stability: 1.0,
         similarity_boost: 1.0,
-        style: 1.0,
+        style: 0.0,
         use_speaker_boost: false,
         ...body.voice_settings
       };
@@ -62,10 +64,13 @@ exports.handler = async (event, context) => {
     });
 
     if (!elevenRes.ok) {
-      console.error(`ElevenLabs API error: ${elevenRes.status} ${elevenRes.statusText}`);
+      let errBody = '';
+      try { errBody = await elevenRes.text(); } catch {}
+      console.error(`ElevenLabs API error: ${elevenRes.status} ${elevenRes.statusText} body=${errBody}`);
       return {
         statusCode: elevenRes.status,
-        body: JSON.stringify({ error: "Failed to fetch from Eleven Labs" })
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+        body: JSON.stringify({ error: "Failed to fetch from Eleven Labs", details: errBody })
       };
     }
 

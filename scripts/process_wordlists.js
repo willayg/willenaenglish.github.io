@@ -46,13 +46,18 @@ function getArg(name, def) {
 const DRY_RUN = flags.has('--dry-run') || getArg('dry-run', false) === 'true';
 const LIMIT = parseInt(getArg('limit', '0'), 10) || 0; // limit words per file
 const VOICE = getArg('voice', process.env.ELEVEN_LABS_DEFAULT_VOICE_ID || '');
+const MODEL = getArg('model', process.env.ELEVEN_LABS_MODEL_ID || '');
 const DIR = getArg('dir', 'Games/Word Arcade/sample-wordlists');
 const FILES_FILTER = getArg('files', ''); // comma-separated basenames to include (e.g., "Verbs1.json,Verbs2.json")
+const EXCLUDE_FILES = getArg('exclude-files', ''); // comma-separated basenames to exclude
 const CONCURRENCY = Math.max(1, Math.min( parseInt(getArg('concurrency', '3'), 10) || 3, 8));
 const USE_EXAMPLES = flags.has('--use-examples') || getArg('use-examples', false) === 'true';
 const VERBOSE = flags.has('--verbose') || getArg('verbose', false) === 'true';
 const FORCE = flags.has('--force') || getArg('force', false) === 'true';
 const ALSO_ITSELF = flags.has('--also-itself') || getArg('also-itself', false) === 'true';
+// Generate only the `<word>_itself` variant without touching the main word audio.
+// Useful when you want to overwrite "itself" files but keep existing word prompts intact.
+const ONLY_ITSELF = flags.has('--only-itself') || getArg('only-itself', false) === 'true';
 
 const root = process.cwd();
 const targetDir = path.join(root, DIR);
@@ -109,12 +114,17 @@ async function wordExists(base, word) {
 async function generateTTS(base, text) {
   const body = { text };
   if (VOICE) body.voice_id = VOICE;
+  if (MODEL) body.model_id = MODEL;
   let attempt = 0; let lastErr = null;
   const maxAttempts = 3;
   while (attempt < maxAttempts) {
     try {
       const res = await fetch(base + '/eleven_labs_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-      if (!res.ok) throw new Error('TTS proxy failed HTTP ' + res.status);
+      if (!res.ok) {
+        let detail = '';
+        try { const d = await res.json(); detail = d && (d.details || d.error) || ''; } catch {}
+        throw new Error('TTS proxy failed HTTP ' + res.status + (detail ? (' :: ' + String(detail).slice(0,200)) : ''));
+      }
       const data = await res.json();
       if (!data.audio) throw new Error('No audio in response');
       return data.audio; // base64
@@ -174,7 +184,7 @@ async function processFile(base, filePath){
   const unique = Array.from(new Set(words.filter(Boolean)));
   const limited = LIMIT > 0 ? unique.slice(0, LIMIT) : unique;
 
-  const summary = { file: path.basename(filePath), total: unique.length, processing: limited.length, skippedExisting:0, generated:0, errors:0, usedExamples:0, generatedItself:0 };
+  const summary = { file: path.basename(filePath), total: unique.length, processing: limited.length, skippedExisting:0, generated:0, errors:0, usedExamples:0, generatedItself:0, onlyItself: ONLY_ITSELF };
 
   let i = 0; let active = 0; let idx = 0; const results = [];
   async function worker(){
@@ -182,34 +192,39 @@ async function processFile(base, filePath){
       const w = limited[idx++];
       const norm = normalizeWord(w);
       try {
-        const mainExists = await wordExists(base, w);
         const itselfTarget = `${w}_itself`;
-        const itselfExists = ALSO_ITSELF ? await wordExists(base, itselfTarget) : false;
+        const WANT_ITSELF = ONLY_ITSELF || ALSO_ITSELF;
 
-        // Generate main word audio if missing or forcing
-        if (!mainExists || FORCE) {
-          if (DRY_RUN) { console.log('[DRY] Would generate', w); }
-          else {
-            let text;
-            if (USE_EXAMPLES && exampleMap[w]) {
-              text = exampleMap[w];
-              summary.usedExamples++;
-              if (VERBOSE) console.log('[GEN][EX]', w, '->', text);
-            } else {
-              text = pickPrompt(w);
-              if (VERBOSE) console.log('[GEN][PR]', w, '->', text);
+        // Check existence selectively to avoid extra calls
+        const mainExists = ONLY_ITSELF ? true : await wordExists(base, w);
+        const itselfExists = WANT_ITSELF ? await wordExists(base, itselfTarget) : false;
+
+        // Optionally generate/overwrite the main word audio (skip entirely if ONLY_ITSELF)
+        if (!ONLY_ITSELF) {
+          if (!mainExists || FORCE) {
+            if (DRY_RUN) { console.log('[DRY] Would generate', w); }
+            else {
+              let text;
+              if (USE_EXAMPLES && exampleMap[w]) {
+                text = exampleMap[w];
+                summary.usedExamples++;
+                if (VERBOSE) console.log('[GEN][EX]', w, '->', text);
+              } else {
+                text = pickPrompt(w);
+                if (VERBOSE) console.log('[GEN][PR]', w, '->', text);
+              }
+              const audioB64 = await generateTTS(base, text);
+              await uploadAudio(base, w, audioB64);
+              summary.generated++;
+              console.log('[OK]', w);
             }
-            const audioB64 = await generateTTS(base, text);
-            await uploadAudio(base, w, audioB64);
-            summary.generated++;
-            console.log('[OK]', w);
+          } else {
+            summary.skippedExisting++;
           }
-        } else {
-          summary.skippedExisting++;
         }
 
         // Independently ensure the "itself" file exists when requested
-        if (ALSO_ITSELF && !itselfExists) {
+        if (WANT_ITSELF && (!itselfExists || FORCE)) {
           try {
             if (DRY_RUN) { console.log('[DRY][itself] Would generate', itselfTarget); }
             else {
@@ -265,6 +280,19 @@ async function processFile(base, filePath){
       }
     }
   }
+  // Optional: exclude by basenames provided via --exclude-files
+  if (EXCLUDE_FILES && typeof EXCLUDE_FILES === 'string') {
+    const excludes = new Set(
+      EXCLUDE_FILES.split(',')
+        .map(s => s && s.trim().toLowerCase())
+        .filter(Boolean)
+    );
+    if (excludes.size) {
+      const before = files.length;
+      files = files.filter(f => !excludes.has(path.basename(f).toLowerCase()));
+      console.log(`[INFO] Excluded via --exclude-files (${excludes.size} names). ${before} -> ${files.length}`);
+    }
+  }
   const reports = [];
   for (const f of files) {
     console.log('\n=== Processing', path.relative(root, f), '===');
@@ -273,7 +301,7 @@ async function processFile(base, filePath){
   }
   console.log('\n=== Batch Summary ===');
   for (const r of reports){
-    console.log(`${r.file}: total=${r.total} considered=${r.processing} generated=${r.generated} skippedExisting=${r.skippedExisting} errors=${r.errors} usedExamples=${r.usedExamples}`);
+    console.log(`${r.file}: total=${r.total} considered=${r.processing} generated=${r.generated} skippedExisting=${r.skippedExisting} errors=${r.errors} usedExamples=${r.usedExamples} generatedItself=${r.generatedItself || 0}`);
   }
   fs.writeFileSync(path.join(root,'build','wordlist-audio-report.json'), JSON.stringify(reports,null,2));
   console.log('\nReport written to build/wordlist-audio-report.json');

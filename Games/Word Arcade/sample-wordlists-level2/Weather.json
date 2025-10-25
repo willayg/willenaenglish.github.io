@@ -11,7 +11,8 @@
   {"eng":"lightning","kor":"번개","def":"a bright flash during a storm","ex":"Lightning lights up the sky.","emoji":"⚡"},
   {"eng":"rainbow","kor":"무지개","def":"colorful arc in the sky after rain","ex":"A rainbow appears after the rain.","emoji":"🌈"},
   {"eng":"breeze","kor":"산들바람","def":"a soft gentle wind","ex":"A nice breeze blows today."},
+  {"eng":"breeze","kor":"산들바람","def":"a soft gentle wind","ex":"A nice breeze blows today.","emoji":"🌬️"},
   {"eng":"typhoon","kor":"태풍","def":"a very strong wind and rain storm","ex":"The typhoon is coming.","emoji":"🌪️"},
   {"eng":"hail","kor":"우박","def":"small balls of ice that fall from clouds","ex":"Hail hits the roof."},
-  {"eng":"humid","kor":"습도가 많은","def":"moisture or wetness in the air","ex":"High humidity makes it feel hot."}
+  {"eng":"humid","kor":"습도가 많은","def":"moisture or wetness in the air","ex":"High humidity makes it feel hot.","emoji":"💦"}
 ]

@@ -27,12 +27,18 @@ function getArg(name, def){
   const next = args[idx+1];
   if (!next || next.startsWith('--')) return true; return next;
 }
+  const FORCE = flag('force') || getArg('force', false) === 'true';
 
 const DRY = flag('dry-run') || getArg('dry-run', false) === 'true';
 const LIMIT = parseInt(getArg('limit','0'),10) || 0; // number of sentences total
 const CONCURRENCY = Math.max(1, Math.min(parseInt(getArg('concurrency','3'),10)||3, 8));
 const VOICE = getArg('voice', process.env.ELEVEN_LABS_DEFAULT_VOICE_ID || '');
+const MODEL = getArg('model', process.env.ELEVEN_LABS_MODEL_ID || '');
 const LIST_FILTER = (getArg('list','')||'').split(',').map(s=>s.trim()).filter(Boolean); // optional list slug filter
+const EXCLUDE_LIST = (getArg('exclude-list','')||'').split(',').map(s=>s.trim()).filter(Boolean); // optional list slug exclude
+// If true, speak only the base word for each sentence entry (i.e., word_itself-style),
+// while still saving to the standard `<word>_sentence` file name.
+const WORD_ITSELF_MODE = flag('word-itself-mode') || getArg('word-itself-mode', false) === 'true';
 
 const ROOT = process.cwd();
 const MANIFEST_PATH = path.join(ROOT, 'build', 'sentences', 'manifest.json');
@@ -76,14 +82,45 @@ async function audioExists(base, name){
   return false;
 }
 
+async function delay(ms){ return new Promise(r=> setTimeout(r, ms)); }
+
 async function tts(base, text){
   const body = { text };
   if (VOICE) body.voice_id = VOICE;
-  const res = await fetch(base + '/eleven_labs_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error('TTS failed HTTP '+res.status);
-  const data = await res.json();
-  if (!data.audio) throw new Error('No audio');
-  return data.audio;
+  if (MODEL) body.model_id = MODEL;
+  let attempt = 0;
+  const maxAttempts = 6;
+  let lastErr = null;
+  while (attempt < maxAttempts){
+    try {
+      const res = await fetch(base + '/eleven_labs_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      if (!res.ok) {
+        let detail = '';
+        try { const d = await res.json(); detail = d && (d.details || d.error) || ''; } catch {}
+        const status = res.status;
+        // Handle rate limiting or transient server errors with backoff
+        if (status === 429 || status === 503) {
+          attempt++;
+          const retryAfter = res.headers && (res.headers.get ? res.headers.get('retry-after') : null);
+          const waitMs = retryAfter ? (parseFloat(retryAfter) * 1000) : Math.min(30000, 2000 * Math.pow(2, attempt));
+          await delay(waitMs);
+          continue;
+        }
+        throw new Error('TTS failed HTTP ' + status + (detail ? (' :: ' + String(detail).slice(0,200)) : ''));
+      }
+      const data = await res.json();
+      if (!data.audio) throw new Error('No audio');
+      return data.audio;
+    } catch (e){
+      lastErr = e;
+      attempt++;
+      if (attempt < maxAttempts) {
+        await delay(Math.min(30000, 1000 * Math.pow(2, attempt-1)));
+        continue;
+      }
+    }
+  }
+  throw lastErr || new Error('TTS failed');
 }
 
 async function upload(base, name, audioB64){
@@ -101,6 +138,7 @@ function loadSentences(){
     const s = manifest.sentences[id];
     if (!s || !s.word || !s.text) continue;
     if (LIST_FILTER.length && !LIST_FILTER.includes(s.list)) continue;
+    if (EXCLUDE_LIST.length && EXCLUDE_LIST.includes(s.list)) continue;
     out.push({ id, word: s.word, text: s.text, list: s.list, index: s.index });
   }
   // Sort stable by list then index
@@ -115,16 +153,17 @@ async function main(){
   const target = LIMIT > 0 ? all.slice(0, LIMIT) : all;
   console.log('[INFO] Total sentences:', all.length, 'Processing:', target.length);
 
-  let idx = 0; const summary = { considered: target.length, skippedExisting:0, generated:0, errors:0 };
+  let idx = 0; const summary = { considered: target.length, skippedExisting:0, generated:0, errors:0, mode: WORD_ITSELF_MODE ? 'word_itself' : 'sentence' };
   async function worker(){
     while (idx < target.length){
       const cur = target[idx++];
       const baseName = normalizeWord(cur.word) + '_sentence';
       try {
         const exists = await audioExists(base, baseName);
-        if (exists){ summary.skippedExisting++; continue; }
-        if (DRY){ console.log('[DRY] Would gen', baseName, 'from:', cur.text); continue; }
-        const audioB64 = await tts(base, cur.text);
+          if (exists && !FORCE){ summary.skippedExisting++; continue; }
+        const textToSpeak = WORD_ITSELF_MODE ? cur.word : cur.text;
+        if (DRY){ console.log('[DRY] Would gen', baseName, 'from:', textToSpeak); continue; }
+        const audioB64 = await tts(base, textToSpeak);
         await upload(base, baseName, audioB64);
         summary.generated++; console.log('[OK]', baseName);
       } catch(e){ summary.errors++; console.warn('[ERR]', baseName, e.message); }

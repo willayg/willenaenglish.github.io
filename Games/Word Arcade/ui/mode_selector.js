@@ -326,8 +326,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
     { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
     { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
-    { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
-    { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'for-you' },
+    { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'for-you' },
+    { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'review' },
   ];
 
   // Neutralized medals logic: always show zero earned (skeleton retained for future redesign)
@@ -378,6 +378,47 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   listContainer.appendChild(mainMenuBtn);
 
+  // Add "Study Words" button (below main menu, above mode list)
+  const studyWordsBtn = document.createElement('button');
+  studyWordsBtn.className = 'mode-btn mode-card study-words-btn';
+  studyWordsBtn.style.cssText = `
+    margin-bottom: 12px;
+    grid-column: 1 / -1;
+    background: #fff;
+    color: #ec4899;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 16px;
+    height: 56px; max-height: 60px; --mode-btn-height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #ec4899;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 2px 6px rgba(236, 72, 153, 0.1);
+  `;
+  studyWordsBtn.innerHTML = `<span data-i18n="Study Words">Study Words</span>`;
+  studyWordsBtn.onclick = async () => {
+    const { showStudyWordsModal } = await import('./study_words_modal.js');
+    showStudyWordsModal({
+      wordList: (window.WordArcade && typeof window.WordArcade.getWordList === 'function') ? window.WordArcade.getWordList() : [],
+      onClose: () => {}
+    });
+  };
+
+  // Add hover effects
+  studyWordsBtn.addEventListener('mouseenter', () => {
+    studyWordsBtn.style.transform = 'translateY(-2px)';
+    studyWordsBtn.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.25)';
+  });
+  studyWordsBtn.addEventListener('mouseleave', () => {
+    studyWordsBtn.style.transform = 'translateY(0)';
+    studyWordsBtn.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.15)';
+  });
+
+  listContainer.appendChild(studyWordsBtn);
+
   modes.forEach((m) => {
   const btn = document.createElement('button');
   btn.className = 'mode-btn mode-card';
@@ -385,6 +426,19 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   btn.dataset.modeId = m.id; // keep legacy data-modeId for any existing code
     btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
     btn.onclick = () => onModeChosen && onModeChosen(m.id);
+    
+    // Apply border color based on colorClass
+    const colorMap = {
+      'for-you': '#21b3be',   // cyan
+      'review': '#5b7fe5',     // blue
+      'basic': '#ff6fb0',      // pink
+      'browse': '#d9923b'      // orange/yellow
+    };
+    const borderColor = colorMap[m.colorClass] || '#c0c0c0';
+    btn.style.border = `2px solid ${borderColor}`;
+    btn.style.borderRadius = '8px';
+    btn.style.background = '#fff';
+    
     listContainer.appendChild(btn);
   });
 
