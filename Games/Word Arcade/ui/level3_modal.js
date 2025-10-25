@@ -43,8 +43,11 @@ export function showLevel3Modal({ onChoose, onClose }) {
   const level3Lists = [
     // Verbs (5-8)
     { label: 'Verbs 5', file: 'sample-wordlists-level3/Verbs5.json', emoji: '🗣️', progressKey: 'Level 3 - Verbs 5' },
+    { label: 'Daily Life', file: 'sample-wordlists-level3/Activities1.json', emoji: '🏠', progressKey: 'Level 3 - Daily Life' },
     { label: 'Verbs 6', file: 'sample-wordlists-level3/Verbs6.json', emoji: '💪', progressKey: 'Level 3 - Verbs 6' },
+    { label: 'Playing Outside', file: 'sample-wordlists-level3/Activities2.json', emoji: '🌳', progressKey: 'Level 3 - Playing Outside' },
     { label: 'Verbs 7', file: 'sample-wordlists-level3/Verbs7.json', emoji: '🏃', progressKey: 'Level 3 - Verbs 7' },
+    { label: 'Being Creative', file: 'sample-wordlists-level3/Activities3.json', emoji: '🎨', progressKey: 'Level 3 - Being Creative' },
     { label: 'Verbs 8', file: 'sample-wordlists-level3/Verbs8.json', emoji: '💬', progressKey: 'Level 3 - Verbs 8' },
     // Adjectives (4-6)
     { label: 'Adjectives 4', file: 'sample-wordlists-level3/Adjectives4.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 4' },

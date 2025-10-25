@@ -1,3 +1,99 @@
+I study English after class.
+We eat breakfast together.
+I go to bed at ten.
+She takes a shower every night.
+I listen to music every day.
+He does his homework at night.
+The baby sleeps all night.
+He washes his face before school.
+Mom cooks dinner every night.
+She cleans her room on Sundays.
+She watches TV after dinner.
+I brush my teeth every morning.
+He feeds the dog every morning.
+I read a book before bed.
+We have lunch at noon.
+I wash the dishes after dinner.
+They go to school by bus.
+I get dressed quickly.
+Dad takes a nap after lunch.
+I wake up at seven.
+He walks the dog every evening.
+We play soccer after school.
+Children play in the playground.
+We go camping in summer.
+He rides his bike to school.
+The boy climbs a tree easily.
+We take a walk after dinner.
+They fly kites in the park.
+I skate in the winter.
+We have a picnic in the park.
+They play badminton together.
+Mom goes shopping on weekends.
+Kids build sandcastles at the beach.
+He fishes at the lake on weekends.
+They play basketball after class.
+He runs in the park every day.
+She rides a bus to the city.
+We play baseball after lunch.
+She takes pictures of flowers.
+We go swimming in summer.
+We make crafts in art class.
+I draw a picture of my family.
+He draws comics for fun.
+We read aloud in class.
+We play games on Fridays.
+We sing a song in class.
+We share snacks at lunch.
+I talk with my friends at lunch.
+Dad reads the news every morning.
+She plays the guitar well.
+I write a story about my dog.
+They plant flowers in spring.
+She paints a picture of a house.
+He helps his friend with homework.
+I study math every day.
+We clean the classroom after school.
+He builds a model airplane.
+They dance at the party.
+The teacher draws on the board.
+He plays the piano every day.
+This is a good idea.
+That was a bad day.
+He has a big house.
+She has a small cat.
+It’s a long road.
+He wrote a short note.
+She is tall and strong.
+He is still young.
+That man is very old.
+I bought a new phone.
+This is my first car.
+He finished in last place.
+She looks happy today.
+He felt sad after the movie.
+Mom is angry at me.
+That movie is very funny.
+She is kind to animals.
+He is a nice person.
+The flowers are beautiful.
+The classroom is clean.
+Your hands are dirty.
+The soup is hot.
+It’s cold outside.
+I like warm weather.
+This question is easy.
+The test was difficult.
+He runs very fast.
+The turtle is slow.
+He is very strong.
+She felt weak after the run.
+They are rich people.
+The poor man needs help.
+That answer is right.
+You chose the wrong door.
+He came early to class.
+She arrived late again.
 She is busy with homework.
 I am free this weekend.
 This meeting is important.
@@ -44,6 +140,278 @@ The bear sleeps.
 The wolf howls.
 The fox hides.
 The kangaroo jumps.
+The cheetah runs quickly.
+The hippopotamus rests in water.
+The rhinoceros walks slowly.
+The panda eats bamboo.
+The koala sleeps in a tree.
+The sloth moves slowly.
+The otter plays in the water.
+The beaver builds a dam.
+The eagle flies over the mountain.
+The owl hoots at night.
+I see a painting on the wall.
+The sculpture is in the museum.
+We visit the art museum.
+The gallery shows new paintings.
+She paints a portrait.
+This landscape shows mountains.
+I clean my brush.
+The artist paints on canvas.
+There is a statue in the park.
+The art exhibition opens today.
+Your brain helps you learn.
+The branch has leaves.
+I eat bread.
+Do not break it!
+We cross the bridge.
+The light is bright.
+Please bring water.
+The toy is broken.
+His hair is brown.
+Use a brush to paint.
+The block is square.
+Blood flows through veins.
+Blow out the candles.
+The sky is blue.
+The paper is blank.
+The cat is black.
+The blade is sharp.
+Do not blame him.
+We heard a blast.
+Blend the colors.
+The light will blink.
+The blister hurts.
+Do not block the door.
+The flower will bloom.
+The crab walks sideways.
+The crack is long.
+We heard a crash.
+The crate is heavy.
+Ice cream is cold.
+The door will creak.
+Create a picture.
+The creature is strange.
+The crew works hard.
+The cookie is crisp.
+Cross the street.
+The crowd is huge.
+The crown is shiny.
+That was cruel.
+Do not crush it!
+Do not cry.
+The crystal shines.
+Join the club!
+The clump is dirty.
+Our class is fun.
+The room is clean.
+The water is clear.
+Climb the ladder.
+The dragon is big.
+The drain is slow.
+She likes drama.
+Draw a picture.
+Open the drawer.
+I had a dream.
+The dress is pretty.
+I drew a cat.
+The boat will drift.
+Drink the water.
+The water will drip.
+My dad will drive.
+Do not drop it!
+Play the drum.
+The towel is dry.
+The frog jumps.
+The frost is cold.
+Eat the fruit.
+Do not frown.
+The bread is fresh.
+You are free.
+She is my friend.
+What a fright!
+The frame is gold.
+The glass is clean.
+I am glad.
+She gave a glance.
+The glare is bright.
+The skater will glide.
+Look at the globe.
+The gloom is dark.
+The glory is great.
+Wear a glove.
+The star will glow.
+Greed is bad.
+The tree is green.
+That is great!
+Grief is hard.
+He has a grin.
+Grind the coffee.
+The grit is rough.
+He began to groan.
+The groom is happy.
+The groove is deep.
+Our group is big.
+Plants will grow.
+The dog will growl.
+This is a nice place.
+The plain is wide.
+Have a plan.
+The plane flies high.
+Water the plant.
+Eat from the plate.
+Go play outside.
+Please do not plead.
+Please sit down.
+The pleat is neat.
+Make a pledge.
+There is plenty.
+The plot is good.
+Plow the field.
+Pluck the flower.
+Plug it in.
+Eat the plum.
+Is it plumb?
+The plume is pretty.
+The tomato is plump.
+Do not plunder.
+Plunge into the pool.
+Cats is plural.
+Five plus two.
+Look at the sky.
+Put on your skate.
+Make a sketch.
+Wear your ski.
+Your skin is soft.
+Skip the puddle.
+The skirt is long.
+The skull is white.
+The skunk smells.
+The rope is slack.
+Do not slam the door.
+Go to sleep.
+The cat is sleek.
+Slide down the slide.
+She is slim.
+The slime is gross.
+Walk slow.
+She is smart.
+Do not smash it.
+Smell the flower.
+Give a smile.
+The smoke is gray.
+The surface is smooth.
+The snake hisses.
+Follow the track.
+Let's trade toys.
+Hike the trail.
+The train is fast.
+Set a trap.
+Put trash away.
+Travel the world.
+Carry the tray.
+Have a treat.
+Climb the tree.
+That is a trend.
+Give it a trial.
+The tribe is strong.
+That is a trick.
+I tried hard.
+Pull the trigger.
+Trim the hedge.
+Take a trip.
+We won a trophy.
+Tropical fruits.
+What is the trouble?
+The truck is big.
+That is true.
+Trust me.
+Sit in the chair.
+I like cheese.
+Eat chicken.
+What is your choice?
+Check the answer.
+Chest pain.
+Chew your food.
+Touch your chin.
+Eat a chip.
+Smoke from the chimney.
+Don't change.
+A chariot is fast.
+She has charm.
+Chase the dog.
+Read this chapter.
+Change the channel.
+Let's chat.
+He is a champ.
+This is cheap.
+The ship is big.
+What shape is it?
+Share your toys.
+A snail shell.
+Go to the shop.
+Stand at the back.
+The cat is black.
+The wall is brick.
+Check this.
+Click here.
+Look at the clock.
+There's a crack.
+Go on the deck.
+The duck swims.
+Kick the ball.
+Knock on the door.
+Lick the ice cream.
+Lock the door.
+Good luck!
+Touch your neck.
+Pack your bag.
+Pick one.
+Be quick!
+The rock is big.
+A sack of flour.
+I am sick.
+Wear a sock.
+Pick up a stick.
+Sing a song.
+She wears a ring.
+The king is wise.
+The bird's wing.
+Bring your book.
+What thing is it?
+Spring is warm.
+Tie a string.
+Go to camp.
+Turn on the lamp.
+Put a stamp.
+Jump high!
+Don't bump.
+Dump the trash.
+Use the pump.
+Go up the ramp.
+Use a clamp.
+I wear a jacket.
+She puts on a sweater.
+He wears a scarf.
+I wear gloves in winter.
+She wears boots.
+He wears jeans.
+I put on a belt.
+She wears a hat.
+He wears shorts.
+She buys a dress.
+She wears a skirt.
+I wear sneakers.
+I go to the library.
+We visit the museum.
+She works at a bakery.
+He goes to the pharmacy.
+She goes to the hospital.
+I go to the post office.
+We pass the police station.
+The fire station is near.
+We shop at the supermarket.
+The kids run at the playground.
 The dog runs.
 The cat sleeps.
 The rabbit hops.
@@ -136,6 +504,16 @@ I feel nervous.
 He feels proud.
 The boy feels shy.
 I feel confused.
+The child is curious.
+She feels frustrated.
+He is jealous of the prize.
+I feel embarrassed.
+We feel relaxed.
+He feels lonely.
+I am grateful for your help.
+She feels anxious.
+He stays calm.
+The girl is brave.
 I eat an apple.
 I peel a banana.
 I eat an orange.
@@ -146,6 +524,16 @@ I slice a pear.
 I bite a peach.
 She eats a cherry.
 I cut a lemon.
+We squeeze a lime for juice.
+He cuts a pineapple.
+I eat a sweet mango.
+She eats a kiwi.
+I eat a plum.
+We share a melon.
+He drinks coconut water.
+She eats blueberries with yogurt.
+I put raspberries in cereal.
+I drink grapefruit juice.
 I eat rice.
 I slice bread.
 We cook noodles.
@@ -166,31 +554,231 @@ We share fries.
 I like ice cream.
 She cuts a cake.
 I eat a cookie.
-I eat an apple.
-I peel a banana.
-The cat sleeps.
-The dog runs.
-I go to school.
-The teacher smiles.
-I read a book.
-I use a computer.
-The car stops.
-I like music.
-I eat an apple.
-He eats a banana.
-The cat sleeps.
-The dog runs.
-I drink water.
-I go to school.
-I read a book.
-The car stops.
-The tree grows.
-The sun shines.
-The moon rises.
-A star sparkles.
-I drink milk.
-I cut bread.
-We clean the house.
+I sleep in the bedroom.
+We cook in the kitchen.
+I wash in the bathroom.
+We sit in the living room.
+Tools are in the basement.
+Old boxes are in the attic.
+I walk up the staircase.
+We sit on the balcony.
+The car is in the garage.
+Pictures hang in the hallway.
+I put milk in the refrigerator.
+She uses the microwave.
+I use a blender for smoothies.
+He puts bread in the toaster.
+We load the dishwasher.
+She bakes cake in the oven.
+I cook on the stove.
+I wash dishes in the sink.
+Plates are in the cabinet.
+I cut vegetables on the counter.
+I like cake.
+I bake bread.
+I make toys.
+Take my hand.
+I wake up early.
+That is fake.
+The lake is big.
+Make a wish.
+What is your name?
+We like the same things.
+Let's play a game.
+I came home.
+The lion is tame.
+He has fame.
+The frame is gold.
+Grapes are sweet.
+Be brave!
+Jump in the wave.
+Save me!
+The cave is dark.
+Bake it in the oven.
+I am late.
+Open the gate.
+What is the date?
+The rain is cold.
+The train is fast.
+I paint pictures.
+Wait for me.
+I got mail.
+The sail is white.
+The cat's tail is long.
+I cut my nail.
+Fill the pail with water.
+Don't fail the test.
+The snail is slow.
+I have a pain.
+This is the main door.
+Gain more points.
+The chain is strong.
+Use your brain.
+I have a stain.
+The plain is big.
+Eat grain.
+Let's play.
+Every day is good.
+Which way?
+Say hello.
+Stay with me.
+The bee buzzes.
+I can see it.
+The tree is tall.
+The bird is free.
+I bent my knee.
+Find the key.
+Let's go to the sea.
+Eat your peas.
+I like tea.
+Let's eat lunch.
+I like meat.
+The sun gives heat.
+Beat the drum.
+Take a seat.
+Climb the peak.
+I feel weak.
+Don't break it.
+Speak clearly.
+String the beads.
+Read the book.
+Lead the way.
+I need help.
+Plant a seed.
+Feed the dog.
+I ride my bike.
+Let's go on a hike.
+I like you.
+Speak into the mike.
+The pike is sharp.
+Be careful of the spike.
+Fly the kite.
+Don't bite your nails.
+The mite is small.
+This is the building site.
+Write your name.
+The snow is white.
+That's right!
+Turn on the light.
+Good night!
+Don't fight!
+What a beautiful sight!
+The pants are tight.
+The pine tree is tall.
+I'm doing fine.
+Let's dine together.
+What time is it?
+The mine is deep.
+Have some wine.
+I sailed the boat.
+Wear your coat.
+The goat ate grass.
+The castle has a moat.
+The road is long.
+The toad hops.
+Load the truck.
+The dog likes bones.
+Ice cream in a cone.
+Use a soft tone.
+This is the no-fly zone.
+Call me on my phone.
+Pick up the stone.
+I go home.
+The dome is big.
+Tell me a joke.
+Don't poke me!
+The smoke is white.
+Climb the rope.
+I hope to win.
+The slope is steep.
+Hold your nose.
+The rose is red.
+Water the garden with the hose.
+The boat is big.
+Wear your coat.
+The goat is white.
+The road is long.
+The toad is bumpy.
+Load the truck.
+Use soap.
+Float on the water.
+My throat hurts.
+I like toast.
+Roast the chicken.
+We live on the coast.
+I hurt my toe.
+Use a hoe.
+He is my foe.
+She goes to school.
+What does it do?
+My nose is big.
+The rose is red.
+Close the door.
+Those are good.
+I chose this.
+I broke the cup.
+I woke up early.
+The puppy is cute.
+Press mute on the TV.
+He's such a brute.
+Play the flute.
+This is a tube of paint.
+Roll the cube.
+The dune is tall.
+Hum a tune.
+It's June.
+Don't be rude!
+Hey, dude!
+Don't be such a prude.
+Ride the mule.
+Follow the rule.
+Yule is coming.
+Put fuel in the car.
+They had a duel.
+Use a spoon.
+The fuse blew.
+Muse on it.
+That's a clever ruse.
+See the fume.
+The plume is beautiful.
+Eat a prune.
+She plays the violin.
+He plays the guitar.
+She plays the piano.
+He plays the trumpet.
+The drummer plays the drums.
+She plays the flute.
+He plays the clarinet.
+The musician plays the harp.
+He plays the saxophone.
+I shake the tambourine.
+The cymbals make loud noise.
+The old man plays the accordion.
+She shakes maracas.
+The child plays the xylophone.
+He plays the cello.
+She plays the electric guitar.
+He plays the keyboard.
+We climb a mountain.
+The river flows through the valley.
+The river moves fast.
+The ocean is blue.
+The desert is hot.
+Animals live in the forest.
+The island is small.
+The volcano is quiet.
+We see a waterfall.
+We explore a cave.
+The elephant drinks water.
+Penguins live in cold places.
+The peacock displays its tail.
+The crocodile swims in the river.
+The tortoise walks slowly.
+The jellyfish floats in the ocean.
+The butterfly lands on a flower.
+The dragonfly flies fast.
+The caterpillar eats leaves.
+The seahorse swims slowly.
 I use a pencil.
 I hold a pen.
 I use an eraser.
@@ -206,6 +794,135 @@ He moves the chair.
 She holds chalk.
 The teacher cleans the board.
 I fold paper.
+I use a calculator.
+She uses a compass.
+We use a protractor.
+I use a highlighter.
+He opens a binder.
+I keep papers in a folder.
+She uses a stapler.
+I need a paperclip.
+He uses tape.
+The teacher writes on the whiteboard.
+The projector turns on.
+The cat sits.
+The bat flies.
+I like my hat.
+The mat is soft.
+The rat runs.
+I sat down.
+The can is full.
+The pan is hot.
+The man works.
+The van is big.
+The bag is heavy.
+The tag has a name.
+The dog wags its tail.
+That was bad.
+My dad is here.
+I am sad today.
+He is mad now.
+I like jam.
+The dam is strong.
+The lass is happy.
+I wear a cap.
+The map shows roads.
+I take a nap.
+The zap was fast.
+I sleep in my bed.
+The apple is red.
+She led the group.
+They will wed.
+The net catches fish.
+I have a pet cat.
+My hair is wet.
+The set is complete.
+I get a prize.
+Let me help you.
+I met my friend.
+The men work hard.
+There are ten fingers.
+Write with a pen.
+The hen lays eggs.
+The fox lives in a den.
+The bell rings loud.
+I sell toys.
+Tell me a story.
+The well is deep.
+I have two legs.
+The dog begs for food.
+I eat an egg.
+Hang it on the peg.
+I ate a bit of cake.
+I sit on the chair.
+The shoe fits well.
+He hit the ball.
+The pit is deep.
+The kit has bandages.
+I lit the candle.
+He has a quick wit.
+The elephant is big.
+The dog digs.
+I eat a fig.
+The band has a gig.
+We dance a jig.
+The pig is pink.
+She wears a wig.
+Put it in the bin.
+The fish has fins.
+I have a pin.
+It is not a sin.
+The tin can is empty.
+We win the game.
+Close the zip.
+My lip is red.
+Give a good tip.
+The box is empty.
+The fox is clever.
+He had the pox.
+I eat cod.
+He believes in God.
+I nod my head.
+The pea is in a pod.
+The rod is long.
+The sod is green.
+The dog is friendly.
+The fog is thick.
+The hog is big.
+I jog in the morning.
+The log is heavy.
+The bog is muddy.
+The baby sleeps in a cot.
+There is a dot on the paper.
+I got a new toy.
+The tea is hot.
+I jot down notes.
+There are a lot of trees.
+I do not like it.
+The pot is on the stove.
+The food will rot.
+I like it but not that.
+I cut the paper.
+The gut digests food.
+We live in a hut.
+The rock juts out.
+I eat a nut.
+I put the book down.
+The wheel left a rut.
+There is a bug on the wall.
+I dug a hole.
+Give me a hug.
+The jug holds milk.
+I lug the suitcase.
+My mug is hot.
+The pug is cute.
+The rug is soft.
+I tug the rope.
+I chew gum.
+I hum a song.
+He drinks rum.
+The sum is correct.
+Yum, that is good!
 We play soccer.
 They play basketball.
 He plays baseball.
@@ -218,6 +935,31 @@ We go skiing.
 She enjoys skating.
 He plays golf.
 They play badminton.
+The cat is soft.
+That is big.
+This is mine.
+I like them.
+Then we went.
+I think so.
+What is this thing?
+Thank you!
+The book is thick.
+This is thin.
+The thief ran.
+My throat hurts.
+I have three apples.
+Throw the ball.
+Use your thumb.
+Thunder is loud.
+Use thread.
+Don't make a threat.
+What is this?
+When is it?
+Where are you?
+Which one?
+The snow is white.
+Wait a while.
+The whale is big.
 The car stops.
 The bus arrives.
 The train leaves.
@@ -238,6 +980,63 @@ The yacht moves slowly.
 The submarine dives.
 The rocket lifts off.
 The helicopter hovers.
+I cook broccoli.
+She cuts a cucumber.
+We wash lettuce.
+I slice a tomato.
+He chops cabbage.
+I eat spinach.
+We fry eggplant.
+She steams cauliflower.
+I add mushrooms.
+He cuts a pepper.
+I get a new book.
+She makes a cake.
+We go to school every day.
+He came home late.
+Look at the stars.
+Take your bag with you.
+I find my keys.
+She gives me a pen.
+He tells me a story.
+Ask your teacher for help.
+I use my phone every day.
+He works at a bank.
+Try your best!
+She leaves home early.
+I call my friend.
+Don’t move!
+We start class at nine.
+Can you help me?
+The children play outside.
+He runs every morning.
+Please bring your homework.
+She writes a letter.
+I read books every night.
+Please sit down.
+He stands by the door.
+We eat breakfast together.
+I drink coffee every morning.
+She sleeps early.
+Let’s walk to the park.
+They build a house.
+I learn English at school.
+She teaches math.
+Show me your drawing.
+We watch a movie.
+Listen to the teacher.
+He speaks loudly.
+I hear music.
+Open the door.
+Close your book.
+I buy some fruit.
+They sell toys.
+He drives to work.
+Birds fly in the sky.
+We live in Korea.
+The plant dies.
+I think it’s funny.
+I feel happy today.
 I believe you.
 I love my family.
 She likes pizza.
@@ -286,3 +1085,19 @@ She decides to stay.
 Try this new flavor.
 He fixes the chair.
 The door opens slowly.
+The sun is shining.
+It is raining today.
+Snow covers the ground.
+The wind is strong.
+There are many clouds today.
+I like autumn colors.
+Spring is warm and sunny.
+There is frost on the grass.
+I hear thunder during the storm.
+Lightning lights up the sky.
+A rainbow appears after the rain.
+A nice breeze blows today.
+A nice breeze blows today.
+The typhoon is coming.
+Hail hits the roof.
+High humidity makes it feel hot.

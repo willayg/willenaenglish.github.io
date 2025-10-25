@@ -1,12 +1,12 @@
 [
-  {"eng": "rice", "kor": "밥", "def": "small white cooked grains", "ex": "I eat rice."},
-  {"eng": "bread", "kor": "빵", "def": "baked food made from flour", "ex": "I slice bread."},
-  {"eng": "noodles", "kor": "국수", "def": "long thin strips of dough", "ex": "We cook noodles."},
-  {"eng": "egg", "kor": "계란", "def": "food with a shell from a hen", "ex": "I fry an egg."},
-  {"eng": "meat", "kor": "고기", "def": "animal flesh used as food", "ex": "He cooks meat."},
-  {"eng": "fish", "kor": "생선", "def": "meat from a fish", "ex": "She grills fish."},
-  {"eng": "chicken", "kor": "치킨", "def": "meat from a chicken", "ex": "We roast chicken."},
-  {"eng": "soup", "kor": "수프", "def": "hot liquid food", "ex": "I sip soup."},
-  {"eng": "cheese", "kor": "치즈", "def": "food made from milk", "ex": "I eat cheese."},
+  {"eng": "rice", "kor": "밥", "def": "small white cooked grains", "ex": "I eat rice.", "emoji": "🍚"},
+  {"eng": "bread", "kor": "빵", "def": "baked food made from flour", "ex": "I slice bread.", "emoji": "🍞"},
+  {"eng": "noodles", "kor": "국수", "def": "long thin strips of dough", "ex": "We cook noodles.", "emoji": "🍜"},
+  {"eng": "egg", "kor": "계란", "def": "food with a shell from a hen", "ex": "I fry an egg.", "emoji": "🥚"},
+  {"eng": "meat", "kor": "고기", "def": "animal flesh used as food", "ex": "He cooks meat.", "emoji": "🍖"},
+  {"eng": "fish", "kor": "생선", "def": "meat from a fish", "ex": "She grills fish.", "emoji": "🐟"},
+  {"eng": "chicken", "kor": "치킨", "def": "meat from a chicken", "ex": "We roast chicken.", "emoji": "🍗"},
+  {"eng": "soup", "kor": "수프", "def": "hot liquid food", "ex": "I sip soup.", "emoji": "🍲"},
+  {"eng": "cheese", "kor": "치즈", "def": "food made from milk", "ex": "I eat cheese.", "emoji": "🧀"},
   {"eng": "tofu", "kor": "두부", "def": "soft white food from soy", "ex": "I cook tofu."}
 ]

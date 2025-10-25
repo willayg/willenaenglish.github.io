@@ -118,8 +118,6 @@ export function showSampleWordlistModal({ onChoose }) {
     { label: 'Hobbies (Easy)', file: 'EasyHobbies.json', emoji: '🎨' },
     { label: 'Sports', file: 'Sports.json', emoji: '🏀' },
     { label: 'School Things', file: 'SchoolSupplies.json', emoji: '✏️' },
-    { label: 'Mixed Words (All)', file: 'sample-wordlist.json', emoji: '📚' },
-    { label: 'Mixed Words (15)', file: 'sample-wordlist-15.json', emoji: '📝' },
     { label: 'Action Words (Easy)', file: 'EasyVerbs.json', emoji: '🏃‍♂️' },
     { label: 'Feelings & Emotions', file: 'Feelings.json', emoji: '😊' }
   ];

@@ -1,12 +1,12 @@
 [
-  {"eng": "lion", "kor": "사자", "def": "a big wild cat with a mane", "ex": "The lion rests."},
-  {"eng": "tiger", "kor": "호랑이", "def": "a large orange and black striped cat", "ex": "The tiger walks."},
-  {"eng": "elephant", "kor": "코끼리", "def": "a very big animal with a trunk", "ex": "The elephant drinks."},
-  {"eng": "giraffe", "kor": "기린", "def": "a tall animal with a long neck", "ex": "The giraffe eats leaves."},
-  {"eng": "zebra", "kor": "얼룩말", "def": "a horse with black and white stripes", "ex": "The zebra runs."},
-  {"eng": "monkey", "kor": "원숭이", "def": "a small animal that climbs trees", "ex": "The monkey climbs."},
-  {"eng": "bear", "kor": "곰", "def": "a large strong animal with thick fur", "ex": "The bear sleeps."},
-  {"eng": "wolf", "kor": "늑대", "def": "a wild dog that howls", "ex": "The wolf howls."},
-  {"eng": "fox", "kor": "여우", "def": "a small wild animal with a bushy tail", "ex": "The fox hides."},
-  {"eng": "kangaroo", "kor": "캥거루", "def": "an animal that jumps and has a pouch", "ex": "The kangaroo jumps."}
+  {"eng": "lion", "kor": "사자", "def": "a big wild cat with a mane", "ex": "The lion rests.", "emoji": "🦁"},
+  {"eng": "tiger", "kor": "호랑이", "def": "a large orange and black striped cat", "ex": "The tiger walks.", "emoji": "🐯"},
+  {"eng": "elephant", "kor": "코끼리", "def": "a very big animal with a trunk", "ex": "The elephant drinks.", "emoji": "🐘"},
+  {"eng": "giraffe", "kor": "기린", "def": "a tall animal with a long neck", "ex": "The giraffe eats leaves.", "emoji": "🦒"},
+  {"eng": "zebra", "kor": "얼룩말", "def": "a horse with black and white stripes", "ex": "The zebra runs.", "emoji": "🦓"},
+  {"eng": "monkey", "kor": "원숭이", "def": "a small animal that climbs trees", "ex": "The monkey climbs.", "emoji": "🐒"},
+  {"eng": "bear", "kor": "곰", "def": "a large strong animal with thick fur", "ex": "The bear sleeps.", "emoji": "🐻"},
+  {"eng": "wolf", "kor": "늑대", "def": "a wild dog that howls", "ex": "The wolf howls.", "emoji": "🐺"},
+  {"eng": "fox", "kor": "여우", "def": "a small wild animal with a bushy tail", "ex": "The fox hides.", "emoji": "🦊"},
+  {"eng": "kangaroo", "kor": "캥거루", "def": "an animal that jumps and has a pouch", "ex": "The kangaroo jumps.", "emoji": "🦘"}
 ]

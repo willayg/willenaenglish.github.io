@@ -1,6 +1,6 @@
 [
   {"eng":"broccoli","kor":"브로콜리","def":"a green vegetable with small tree-like parts","ex":"I cook broccoli.","emoji":"🥦"},
-  {"eng":"cucumber","kor":"오이","def":"a long green vegetable","ex":"She cuts a cucumber."},
+  {"eng":"cucumber","kor":"오이","def":"a long green vegetable","ex":"She cuts a cucumber.","emoji":"🥒"},
   {"eng":"lettuce","kor":"상추","def":"green leaves used in salads","ex":"We wash lettuce.","emoji":"🥬"},
   {"eng":"tomato","kor":"토마토","def":"a red round vegetable used in many dishes","ex":"I slice a tomato.","emoji":"🍅"},
   {"eng":"cabbage","kor":"양배추","def":"a round vegetable with many leaves","ex":"He chops cabbage."},
