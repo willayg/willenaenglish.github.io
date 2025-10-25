@@ -36,6 +36,49 @@ function normalizeWordsToSentenceItems(list){
     const item = { ...raw };
     // Legacy compatibility
     if (!item.sentence && item.legacy_sentence) item.sentence = item.legacy_sentence;
+    // Additional compatibility: pull from common example fields
+    if (!item.sentence) {
+      // Support nested shapes and arrays of examples/sentences
+      const pickFirstString = (arr)=> (Array.isArray(arr) ? arr.find(v=> typeof v === 'string' && v.trim()) : null);
+      const pickFirstTextObj = (arr)=> (Array.isArray(arr) ? (arr.find(v=> v && typeof v.text === 'string' && v.text.trim())?.text || null) : null);
+      // Try a set of candidate fields in order
+      const candidates = [];
+  if (typeof item.example === 'string') candidates.push(item.example);
+  if (typeof item.ex === 'string') candidates.push(item.ex);
+      if (typeof item.example_sentence === 'string') candidates.push(item.example_sentence);
+      if (typeof item.sentence_example === 'string') candidates.push(item.sentence_example);
+      if (typeof item.ex_sentence === 'string') candidates.push(item.ex_sentence);
+      // sentences can be array of strings or objects
+      if (!item.sentence && Array.isArray(item.sentences)) {
+        const sStr = pickFirstString(item.sentences);
+        const sObj = pickFirstTextObj(item.sentences);
+        if (sStr) candidates.push(sStr);
+        if (sObj) candidates.push(sObj);
+      }
+      // examples may be array of strings or objects with text
+      if (Array.isArray(item.examples)) {
+        const eStr = pickFirstString(item.examples);
+        const eObj = pickFirstTextObj(item.examples);
+        if (eStr) candidates.push(eStr);
+        if (eObj) candidates.push(eObj);
+      }
+      // Some lists may store sentence as an object
+      if (!item.sentence && item.sentence && typeof item.sentence === 'object') {
+        const s = item.sentence.text || item.sentence.en || item.sentence.eng;
+        if (typeof s === 'string' && s.trim()) candidates.push(s);
+      }
+      const chosen = candidates.find(s => typeof s === 'string' && s.trim());
+      if (chosen) item.sentence = chosen.trim();
+    }
+    // Optional audio compat: if sentence_mp3 or sentence_audio present, seed sentenceAudioUrl/audio_key
+    if (!item.sentenceAudioUrl && typeof item.sentence_mp3 === 'string') {
+      const mp3 = item.sentence_mp3.trim();
+      if (/^https?:/i.test(mp3)) item.sentenceAudioUrl = mp3; else item.audio_key = item.audio_key || mp3;
+    }
+    if (!item.sentenceAudioUrl && typeof item.sentence_audio === 'string') {
+      const mp3 = item.sentence_audio.trim();
+      if (/^https?:/i.test(mp3)) item.sentenceAudioUrl = mp3; else item.audio_key = item.audio_key || mp3;
+    }
     // If upgraded structure present choose primary sentence
     if (Array.isArray(item.sentences) && item.sentences.length){
       let chosen = null;
@@ -57,9 +100,20 @@ function normalizeWordsToSentenceItems(list){
   }).filter(Boolean);
 }
 
-// Fetch audio URLs with multi-tier fallback: audio_key -> sent_<id>.mp3 -> legacy get_audio_urls lambda.
+// Fetch audio URLs with multi-tier fallback: audio_key -> sent_<id>.mp3 -> direct <eng>_sentence.mp3 via R2 base -> legacy get_audio_urls lambda.
 async function enrichSentenceAudioIDAware(items){
   if (!items || !items.length) return;
+  const SENT_BASE = (window.__SENT_AUDIO_BASE && String(window.__SENT_AUDIO_BASE).trim())
+    || (window.R2_PUBLIC_BASE && String(window.R2_PUBLIC_BASE).trim())
+    || '';
+  const hasBase = !!SENT_BASE;
+  const baseClean = hasBase ? SENT_BASE.replace(/\/$/, '') : '';
+  // Helper: normalize a word token to storage key base (without suffix)
+  const normWord = (w)=> String(w||'')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g,'_')
+    .replace(/[^a-z0-9_\-]/g,'');
     // 1. If any have audio_key try to form a usable URL. IMPORTANT: previously we blindly used the raw key
     //    which produced a relative path (404) when no bucket base was defined, blocking fallback because
     //    playSentenceAudio saw a URL and returned early. Now: only set sentenceAudioUrl if we are confident
@@ -73,8 +127,8 @@ async function enrichSentenceAudioIDAware(items){
         return;
       }
       // key looks like an object name (e.g., sent_<uuid>.mp3) – only build URL if base present
-      if (window.__SENT_AUDIO_BASE){
-        it.sentenceAudioUrl = window.__SENT_AUDIO_BASE.replace(/\/$/,'') + '/' + key;
+      if (hasBase){
+        it.sentenceAudioUrl = baseClean + '/' + key;
       } else {
         // Leave unset; we'll attempt sentence_id heuristic/signed fetch OR legacy fallback.
         // Mark for diagnostics
@@ -83,8 +137,8 @@ async function enrichSentenceAudioIDAware(items){
     });
   // 2. Try heuristic sent_<id>.mp3 if sentence_id present and no url yet
   const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
-  if (needHeuristic.length && window.__SENT_AUDIO_BASE){
-    needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${window.__SENT_AUDIO_BASE.replace(/\/$/,'')}/sent_${it.sentence_id}.mp3`; });
+  if (needHeuristic.length && hasBase){
+    needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
   // 2b. If still missing and we DO have sentence_ids, try signed URL function (no base set scenario)
   const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
@@ -103,19 +157,34 @@ async function enrichSentenceAudioIDAware(items){
       }
     } catch(e){ console.debug('[SentenceMode] sentence id audio signed fetch failed', e?.message); }
   }
+  // 2c. If still missing and we know the word and have a public base, try direct <word>_sentence.mp3
+  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase);
+  if (needWordBase.length){
+    needWordBase.forEach(it=>{
+      const key = `${normWord(it.eng)}_sentence.mp3`;
+      it.sentenceAudioUrl = `${baseClean}/${key}`;
+      // Keep audio_key for potential diagnostics; actual existence will be validated by Audio.onerror
+      it.audio_key = it.audio_key || `${normWord(it.eng)}_sentence`;
+    });
+  }
   // 3. Collect which still lack URL and have eng for legacy lambda
   const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng);
   if (!legacyNeed.length) return;
   try {
-    const keys = Array.from(new Set(legacyNeed.map(i=> `${i.eng}_SENTENCE`)));
+    const keys = Array.from(new Set(legacyNeed.flatMap(i=> {
+      const upper = `${i.eng}_SENTENCE`;
+      const lowerSnake = `${normWord(i.eng)}_sentence`;
+      return [upper, lowerSnake];
+    })));
     const r = await fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
     if (r.ok){
       const data = await r.json();
       if (data && data.results){
         legacyNeed.forEach(it=>{
-          const k = `${it.eng}_SENTENCE`.toLowerCase();
-            const rec = data.results[k] || data.results[k.toUpperCase()] || data.results[k.toLowerCase()];
-            if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
+          const kUpper = `${it.eng}_SENTENCE`;
+          const kLowerSnake = `${normWord(it.eng)}_sentence`;
+          const rec = data.results[kUpper] || data.results[kLowerSnake] || data.results[kUpper.toLowerCase()] || data.results[kUpper.toUpperCase()];
+          if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
         });
       }
     }
@@ -130,7 +199,37 @@ export function run(ctx){
   items = shuffle(items.slice());
   if(!items.length){ root.innerHTML = renderErrorBox('No sentences available for this list. Add sentence examples first.'); return; }
   // Audio enrichment (ID-aware + legacy). Proceed regardless of outcome.
-  enrichSentenceAudioIDAware(items).finally(()=>{ showModeMenu(); });
+  // After enrichment, skip the internal menu and jump straight into Unscramble
+  // with a brief splash intro (consistent with other modes). Allow URL override
+  // via ?variant=fillblank or ?variant=broken during development.
+  function showUnscrambleIntroAndStart(){
+    // Simple intro splash that fades out before starting the round
+    root.innerHTML = `
+      <div id="sentenceIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+        <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">
+          Sentence Unscramble
+        </div>
+      </div>`;
+    // Fade out then start
+    setTimeout(()=>{
+      const intro = document.getElementById('sentenceIntro');
+      if (intro) intro.style.opacity = '0';
+      setTimeout(()=>{ try { startUnscramble(); } catch(e){ try { console.error('[SentenceMode] startUnscramble failed', e); } catch{} root.innerHTML = renderErrorBox('Could not start sentence mode.'); } }, 600);
+    }, 700);
+  }
+
+  enrichSentenceAudioIDAware(items).finally(()=>{
+    // Optional override via query param during testing
+    try {
+      const params = new URLSearchParams(location.search);
+      const variant = params.get('variant');
+      if (variant === 'unscramble') { showUnscrambleIntroAndStart(); return; }
+      if (variant === 'fillblank') { startFillBlank(); return; }
+      if (variant === 'broken') { startBrokenSentence(); return; }
+    } catch {}
+    // Default path: Unscramble with intro splash
+    showUnscrambleIntroAndStart();
+  });
   let index = 0;
   let sentencesCorrect = 0; // count fully correct sentences
   let totalPoints = 0;      // accumulated partial-credit points

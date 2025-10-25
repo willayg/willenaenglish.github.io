@@ -536,6 +536,7 @@ function startFilePicker() {
 // -----------------------------
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
+  sentence:       () => import('./modes/word_sentence_mode.js').then(m => m.run),
   spelling:       () => import('./modes/spelling.js').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),
@@ -921,6 +922,7 @@ function showLevelsMenu() {
       // Helpers
       const canonicalMode = (raw) => {
         const m = (raw || 'unknown').toString().toLowerCase();
+        if (m === 'sentence' || m.includes('sentence')) return 'sentence';
         if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
         if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
         if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
@@ -991,7 +993,7 @@ function showLevelsMenu() {
       };
 
       const phonicsModes = ['listening','spelling','multi_choice','listen_and_spell'];
-      const generalModes = ['meaning','listening','multi_choice','listen_and_spell','spelling','level_up'];
+      const generalModes = ['meaning','listening','multi_choice','listen_and_spell','sentence','level_up'];
 
       const stars0 = sumStars(byLevel.level0, phonicsModes);
       const stars1 = sumStars(byLevel.level1, generalModes);

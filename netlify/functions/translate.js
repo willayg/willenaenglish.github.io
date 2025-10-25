@@ -11,7 +11,9 @@ exports.handler = async (event) => {
     if (!text) return json(400, { error: 'text required' });
 
     // If an environment variable LIBRE_TRANSLATE_URL is set, attempt real translation
-    const libreUrl = process.env.LIBRE_TRANSLATE_URL || '';
+    // If no env configured, fallback to public LibreTranslate as a convenience
+    // Note: public instances may rate-limit or reject heavy usage.
+    const libreUrl = process.env.LIBRE_TRANSLATE_URL || 'https://libretranslate.com';
     const libreKey = process.env.LIBRE_TRANSLATE_KEY || '';
     if (libreUrl) {
       try {
@@ -35,8 +37,10 @@ exports.handler = async (event) => {
       cat: '고양이', dog: '개', apple: '사과', banana: '바나나', hello: '안녕하세요', thanks: '감사합니다'
     };
     const lower = text.toLowerCase();
-    const translated = miniDict[lower] || text; // echo if unknown
-    return json(200, { translated });
+  const translated = miniDict[lower];
+  if (translated) return json(200, { translated });
+  // No translation available in mock; signal no-op
+  return json(204, { translated: '' });
   } catch (e) {
     return json(500, { error: String(e || 'error') });
   }
