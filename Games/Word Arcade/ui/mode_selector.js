@@ -75,6 +75,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Helper: canonicalize raw mode values to the 6 displayed keys (MUST be defined before async code uses it!)
   const canonicalMode = (raw) => {
     const m = (raw || 'unknown').toString().toLowerCase();
+    // Map any sentence variants to a single key so the 'Sentence' button shows progress
+    if (m === 'sentence' || m.includes('sentence')) return 'sentence';
     if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
     if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
     if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
@@ -300,7 +302,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     // Return content block; actual button HTML will wrap this
   return `<div class="mode-content">
       <div class="mode-left">
-        <div class="mode-title ${colorClass}">${title}</div>
+        <div class="mode-title ${colorClass}" style="color:#ff6fb0;">${title}</div>
         <div class="star-row">${starsHtml}</div>
     <div>${meta}</div>
       </div>
@@ -319,15 +321,15 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const modes = isPhonics ? [
     // Use existing mode ids so colors and loaders work out-of-the-box
     { id: 'listen', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
-    { id: 'missing_letter', title: 'Missing Letter', icon: null, textIcon: 'A _', colorClass: 'browse', textColor: '#41b6beff' },
+    { id: 'missing_letter', title: 'Missing Letter', icon: './assets/Images/icons/questions.svg', colorClass: 'browse' },
     { id: 'multi_choice',   title: 'Read & Find',   icon: './assets/Images/icons/reading.png?v=20250910a',   colorClass: 'basic' },
     { id: 'listen_and_spell',  title: 'Spell It Out',  icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
   ] : [
     { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
     { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
     { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
-    { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
-    { id: 'spelling', title: 'Test', icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'for-you' },
+  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
+  { id: 'sentence', title: 'Sentence', icon: './assets/Images/icons/quiz.svg', colorClass: 'for-you' },
     { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'review' },
   ];
 
@@ -377,14 +379,14 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   // Defer appending main menu button to the bottom (outside the card container)
 
-  // Add "Study Words" button (inside the container, at the top of the list)
+  // Add "Study" button (inside the container, at the top of the list)
   const studyWordsBtn = document.createElement('button');
   studyWordsBtn.className = 'mode-btn mode-card study-words-btn';
   studyWordsBtn.style.cssText = `
     margin-bottom: 5px;
     grid-column: 1 / -1;
     background: #fff;
-    color: #21b3be;
+    color: #ff6fb0;
     font-family: 'Poppins', Arial, sans-serif;
     font-weight: 700;
     font-size: 18px;
@@ -399,7 +401,12 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   `;
   {
     const displayName = (typeof humanizeListName === 'function') ? humanizeListName(listName) : (listName || 'Word List');
-    studyWordsBtn.innerHTML = `<span>Study ${displayName}</span>`;
+    studyWordsBtn.setAttribute('aria-label', `${displayName} Word List. Click to study the words.`);
+    studyWordsBtn.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
+        <span style="font-weight:800;">${displayName} Word List</span>
+        <span style="font-size:10px;color:rgba(212, 214, 219, 1);font-weight:600;">click here</span>
+      </div>`;
   }
   studyWordsBtn.onclick = async () => {
     const { showStudyWordsModal } = await import('./study_words_modal.js');
@@ -430,10 +437,11 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
     btn.onclick = () => onModeChosen && onModeChosen(m.id);
     
-    // All mode cards: pink border
-    btn.style.border = `2px solid #ff6fb0`;
+    // All mode cards: cyan border, pink text
+    btn.style.border = `2px solid #21b3be`;
     btn.style.borderRadius = '8px';
     btn.style.background = '#fff';
+    btn.style.color = '#ff6fb0';
     
     listContainer.appendChild(btn);
   });
@@ -461,8 +469,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
   changeLevelBtn.onclick = async () => {
     // Detect which modal to show based on current list
-  const isPhonicsMode = window.__WA_IS_PHONICS__ === true || (listName && listName.toLowerCase().includes('sound'));
-    
+    const isPhonicsMode = window.__WA_IS_PHONICS__ === true || (listName && listName.toLowerCase().includes('sound'));
+
     if (isPhonicsMode) {
       // Show phonics modal
       const { showPhonicsModal } = await import('./phonics_modal.js');
@@ -474,57 +482,48 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
         },
         onClose: () => {}
       });
-    } else {
-      // Simple Level chooser (1/2/3) — always show for non-phonics so Level 3 is accessible from anywhere
-      const chooser = document.createElement('div');
-      chooser.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);z-index:1000;';
-      chooser.innerHTML = `
-        <div style="background:#fff;padding:16px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25);min-width:280px;border:2px solid #27c5ca;font-family:'Poppins',Arial,sans-serif;">
-          <div style="font-weight:800;color:#19777e;margin-bottom:10px;text-align:center;">Choose a Level</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <button id="lvl1Btn" class="mode-btn" style="height:48px;display:flex;align-items:center;justify-content:center;">Level 1</button>
-            <button id="lvl2Btn" class="mode-btn" style="height:48px;display:flex;align-items:center;justify-content:center;">Level 2</button>
-            <button id="lvl3Btn" class="mode-btn" style="height:48px;display:flex;align-items:center;justify-content:center;">Level 3</button>
-          </div>
-        </div>`;
-      document.body.appendChild(chooser);
-      const closeChooser = () => { chooser.remove(); };
-      chooser.addEventListener('click', (e) => { if (e.target === chooser) closeChooser(); });
-      document.getElementById('lvl1Btn').onclick = () => {
-        closeChooser();
-        showSampleWordlistModal({
-          onChoose: (filename) => {
-            if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
-              window.WordArcade.loadSampleWordlistByFilename(filename, { force: true });
-            }
-          }
-        });
-      };
-      document.getElementById('lvl2Btn').onclick = async () => {
-        closeChooser();
-        const { showLevel2Modal } = await import('./level2_modal.js');
-        showLevel2Modal({
-          onChoose: (data) => {
-            if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
-              window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
-            }
-          },
-          onClose: () => {}
-        });
-      };
-      document.getElementById('lvl3Btn').onclick = async () => {
-        closeChooser();
-        const { showLevel3Modal } = await import('./level3_modal.js');
-        showLevel3Modal({
-          onChoose: (data) => {
-            if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
-              window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
-            }
-          },
-          onClose: () => {}
-        });
-      };
+      return;
     }
+
+    // Heuristic to determine current level from listName/path
+    const ln = (listName || '').toLowerCase();
+    const isL2 = ln.includes('level 2 - ') || ln.includes('sample-wordlists-level2/');
+    const isL3 = ln.includes('level 3 - ') || ln.includes('sample-wordlists-level3/');
+
+    if (isL2) {
+      const { showLevel2Modal } = await import('./level2_modal.js');
+      showLevel2Modal({
+        onChoose: (data) => {
+          if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+            window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+          }
+        },
+        onClose: () => {}
+      });
+      return;
+    }
+
+    if (isL3) {
+      const { showLevel3Modal } = await import('./level3_modal.js');
+      showLevel3Modal({
+        onChoose: (data) => {
+          if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+            window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+          }
+        },
+        onClose: () => {}
+      });
+      return;
+    }
+
+    // Default to Level 1 modal
+    showSampleWordlistModal({
+      onChoose: (filename) => {
+        if (filename && window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+          window.WordArcade.loadSampleWordlistByFilename(filename, { force: true });
+        }
+      }
+    });
   };
 
   // Add hover effects

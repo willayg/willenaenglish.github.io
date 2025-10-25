@@ -46,12 +46,18 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
   header.style.cssText = `
     background: #93cbcf;
     color: #fff;
-    padding: 16px 20px;
+    padding: 14px 16px;
     font-weight: 800;
-    font-size: 18px;
+    font-size: clamp(16px, 4vw, 18px);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   `;
-  header.textContent = 'Study Words';
+  header.innerHTML = `
+    <div>Study Words</div>
+    <div style="font-size: clamp(11px, 2.5vw, 13px); font-weight: 600; color: rgba(255,255,255,0.85);">click to hear the words</div>
+  `;
 
   // Word list container with scrollable body
   const listContainer = document.createElement('div');
@@ -127,10 +133,11 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
       wordRow.style.cssText = `
         display: flex;
         align-items: center;
-        padding: 12px 16px;
+        padding: clamp(10px, 2vw, 12px) clamp(12px, 3vw, 16px);
         border-bottom: 1px solid #e5e7eb;
-        gap: 12px;
+        gap: clamp(8px, 2vw, 12px);
         transition: background 0.15s ease;
+        flex-wrap: wrap;
       `;
 
       // Hover effect
@@ -146,8 +153,9 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
       indexSpan.style.cssText = `
         font-weight: 700;
         color: #93cbcf;
-        min-width: 32px;
-        font-size: 14px;
+        min-width: 28px;
+        font-size: clamp(12px, 2.5vw, 14px);
+        flex-shrink: 0;
       `;
       indexSpan.textContent = `${(idx + 1).toString().padStart(2, '0')}.`;
 
@@ -155,9 +163,10 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
       const emoji = getEmoji(item);
       const emojiSpan = document.createElement('span');
       emojiSpan.style.cssText = `
-        font-size: 24px;
-        min-width: 32px;
+        font-size: clamp(18px, 4vw, 24px);
+        min-width: clamp(24px, 5vw, 32px);
         text-align: center;
+        flex-shrink: 0;
       `;
       emojiSpan.textContent = emoji;
 
@@ -178,18 +187,18 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
       const exampleSentence = (item && typeof item === 'object' && item.ex) ? item.ex : '';
       
       if (korMeaning) {
-        wordSpan.innerHTML = `<div style="display: flex; flex-direction: column; gap: 4px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-weight: 700; color: #20a39f; font-size: 16px;">${engWord}</span>
-            <span style="color: #9ca3af; font-size: 14px;">—</span>
-            <span style="color: #9ca3af; font-size: 14px;">${korMeaning}</span>
+        wordSpan.innerHTML = `<div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="font-weight: 700; color: #20a39f; font-size: clamp(14px, 3vw, 16px);">${engWord}</span>
+            <span style="color: #9ca3af; font-size: clamp(12px, 2.5vw, 14px);">—</span>
+            <span style="color: #9ca3af; font-size: clamp(12px, 2.5vw, 14px);">${korMeaning}</span>
           </div>
-          ${exampleSentence ? `<div style="color: #9ca3af; font-size: 12px;">${exampleSentence}</div>` : ''}
+          ${exampleSentence ? `<div style="color: #9ca3af; font-size: clamp(11px, 2.5vw, 12px); line-height: 1.3;">${exampleSentence}</div>` : ''}
         </div>`;
       } else {
-        wordSpan.innerHTML = `<div style="display: flex; flex-direction: column; gap: 4px;">
-          <div style="font-weight: 700; color: #20a39f; font-size: 16px;">${engWord}</div>
-          ${exampleSentence ? `<div style="color: #9ca3af; font-size: 12px;">${exampleSentence}</div>` : ''}
+        wordSpan.innerHTML = `<div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="font-weight: 700; color: #20a39f; font-size: clamp(14px, 3vw, 16px);">${engWord}</div>
+          ${exampleSentence ? `<div style="color: #9ca3af; font-size: clamp(11px, 2.5vw, 12px); line-height: 1.3;">${exampleSentence}</div>` : ''}
         </div>`;
       }
 
@@ -224,19 +233,19 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
         background: #93cbcf;
         color: #fff;
         border: none;
-        padding: 8px 12px;
+        padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2vw, 12px);
         border-radius: 6px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 4px;
         font-family: 'Poppins', Arial, sans-serif;
         font-weight: 700;
-        font-size: 12px;
+        font-size: clamp(11px, 2.5vw, 12px);
         transition: background 0.2s ease;
-        min-width: 44px;
-        height: 40px;
+        min-width: clamp(36px, 8vw, 44px);
+        min-height: clamp(36px, 8vw, 40px);
         flex-shrink: 0;
       `;
       sentenceBtn.innerHTML = playIconSvg;

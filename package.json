@@ -14,6 +14,7 @@
   ,"audio:l3-adjectives": "node scripts/process_wordlists.js --dir \"Games/Word Arcade/sample-wordlists-level3\" --files \"Adjectives4.json,Adjectives5.json,Adjectives6.json\" --concurrency 4 --also-itself"
   ,"sentences:gen:l2l3": "node scripts/generate_sentences.js --dir \"Games/Word Arcade/sample-wordlists,Games/Word Arcade/sample-wordlists-level3\""
   ,"sentences:audio:l3": "node scripts/process_sentence_audio.js --concurrency 4 --list verbs5,verbs6,verbs7,verbs8,adjectives4,adjectives5,adjectives6"
+  ,"sentences:translate": "node scripts/add_sentence_korean.js --dirs \"Games/Word Arcade/sample-wordlists,Games/Word Arcade/sample-wordlists-level2,Games/Word Arcade/sample-wordlists-level3\" --endpoint http://localhost:8888 --write"
   },
   "repository": {
     "type": "git",

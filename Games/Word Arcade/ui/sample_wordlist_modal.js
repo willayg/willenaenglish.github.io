@@ -167,9 +167,10 @@ export function showSampleWordlistModal({ onChoose }) {
 
   // Fetch and update progress for all lists
   (async () => {
-    const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'spelling', 'level_up'];
+    const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'];
     const canonicalMode = (raw) => {
       const m = (raw || 'unknown').toString().toLowerCase();
+      if (m === 'sentence' || m.includes('sentence')) return 'sentence';
       if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
       if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
       if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
@@ -230,7 +231,7 @@ export function showSampleWordlistModal({ onChoose }) {
       });
       let total = 0;
       modeIds.forEach(m => { const v = bestByMode[m]; if (v && typeof v.pct === 'number') total += v.pct; });
-      return Math.round(total / 6);
+      return Math.round(total / modeIds.length);
     }
 
     const percents = await Promise.all(allLists.map(l => computePercent(l.file).catch(() => 0)));
