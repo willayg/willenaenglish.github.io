@@ -44,9 +44,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     if (modeBtn) modeBtn.style.color = '#93cbcf'; // Highlight current section
   }
 
-  // Clear and render a single stacked rounded panel matching main menu style
+  // Clear and render a single stacked rounded panel matching main menu style (no header above)
   container.innerHTML = `
-    <div id="modeHeader" style="text-align:center;margin-top:4px;"></div>
     <div class="wa-card" id="modeSelectCard" style="background:#fbffff;">
       <div id="modeSelect" aria-label="Select a mode"></div>
     </div>
@@ -275,7 +274,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     // In Review mode, don't show any stats - just the icon
     if (isReview) {
       return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div>${textIcon ? `<div style="font-size:64px;font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}" style="width:120px;height:120px;" />`}</div>
+        <div>${textIcon ? `<div style="font-size:clamp(20px, 5vw, 48px);font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}" style="width:120px;height:120px;" />`}</div>
       </div>`;
     }
     
@@ -305,7 +304,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
         <div class="star-row">${starsHtml}</div>
     <div>${meta}</div>
       </div>
-      <div class="mode-icon">${textIcon ? `<div style="font-size:64px;font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}"/>`}</div>
+      <div class="mode-icon">${textIcon ? `<div style="font-size:clamp(20px, 5vw, 48px);font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}"/>`}</div>
     </div>`;
   };
   // Create a single list of modes in the order shown in the image
@@ -320,7 +319,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const modes = isPhonics ? [
     // Use existing mode ids so colors and loaders work out-of-the-box
     { id: 'listen', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
-    { id: 'missing_letter', title: 'Missing Letter', icon: null, textIcon: 'C _ _', colorClass: 'browse', textColor: '#41b6beff' },
+    { id: 'missing_letter', title: 'Missing Letter', icon: null, textIcon: 'A _', colorClass: 'browse', textColor: '#41b6beff' },
     { id: 'multi_choice',   title: 'Read & Find',   icon: './assets/Images/icons/reading.png?v=20250910a',   colorClass: 'basic' },
     { id: 'listen_and_spell',  title: 'Spell It Out',  icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
   ] : [
@@ -332,9 +331,7 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'review' },
   ];
 
-  // Neutralized medals logic: always show zero earned (skeleton retained for future redesign)
-  const headerEl = container.querySelector('#modeHeader');
-  if (headerEl) headerEl.innerHTML = buildHeader();
+  // Neutralized medals logic: header removed per design (no separate title above container)
 
   const listContainer = container.querySelector('#modeSelect');
 
@@ -342,21 +339,21 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const mainMenuBtn = document.createElement('button');
   mainMenuBtn.className = 'mode-btn mode-card main-menu-btn';
   mainMenuBtn.style.cssText = `
-    margin-bottom: 5px;
+    margin-bottom: 0;
     grid-column: 1 / -1;
     background: #fff;
     color: #21b5c0ff;
     font-family: 'Poppins', Arial, sans-serif;
     font-weight: 700;
     font-size: 14px;
-    padding: 10px 16px;
-    height: 56px; max-height: 60px; --mode-btn-height: 56px;
+    padding: 8px 16px;
+    height: 44px; max-height: 44px; --mode-btn-height: 44px;
     display: flex; align-items: center; justify-content: center;
     border: 2px solid #1eb0bbff;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 2px 6px rgba(25, 119, 126, 0.1);
+    box-shadow: 0 2px 6px rgba(33, 181, 192, 0.1);
   `;
   mainMenuBtn.innerHTML = `<span data-i18n="Main Menu">Main Menu</span>`;
   mainMenuBtn.onclick = () => {
@@ -378,29 +375,32 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     mainMenuBtn.style.boxShadow = '0 4px 12px rgba(25, 119, 126, 0.15)';
   });
 
-  listContainer.appendChild(mainMenuBtn);
+  // Defer appending main menu button to the bottom (outside the card container)
 
-  // Add "Study Words" button (below main menu, above mode list)
+  // Add "Study Words" button (inside the container, at the top of the list)
   const studyWordsBtn = document.createElement('button');
   studyWordsBtn.className = 'mode-btn mode-card study-words-btn';
   studyWordsBtn.style.cssText = `
     margin-bottom: 5px;
     grid-column: 1 / -1;
     background: #fff;
-    color: #ec4899;
+    color: #21b3be;
     font-family: 'Poppins', Arial, sans-serif;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 18px;
     padding: 10px 16px;
     height: 56px; max-height: 60px; --mode-btn-height: 56px;
     display: flex; align-items: center; justify-content: center;
-    border: 2px solid #ec4899;
-    border-radius: 8px;
+    border: 2px solid #21b3be;
+    border-radius: 10px;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 2px 6px rgba(236, 72, 153, 0.1);
+    box-shadow: 0 2px 6px rgba(33, 179, 190, 0.1);
   `;
-  studyWordsBtn.innerHTML = `<span data-i18n="Study Words">Study Words</span>`;
+  {
+    const displayName = (typeof humanizeListName === 'function') ? humanizeListName(listName) : (listName || 'Word List');
+    studyWordsBtn.innerHTML = `<span>Study ${displayName}</span>`;
+  }
   studyWordsBtn.onclick = async () => {
     const { showStudyWordsModal } = await import('./study_words_modal.js');
     showStudyWordsModal({
@@ -412,14 +412,15 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Add hover effects
   studyWordsBtn.addEventListener('mouseenter', () => {
     studyWordsBtn.style.transform = 'translateY(-2px)';
-    studyWordsBtn.style.boxShadow = '0 6px 16px rgba(236, 72, 153, 0.25)';
+    studyWordsBtn.style.boxShadow = '0 6px 16px rgba(33, 179, 190, 0.25)';
   });
   studyWordsBtn.addEventListener('mouseleave', () => {
     studyWordsBtn.style.transform = 'translateY(0)';
-    studyWordsBtn.style.boxShadow = '0 4px 12px rgba(236, 72, 153, 0.15)';
+    studyWordsBtn.style.boxShadow = '0 4px 12px rgba(33, 179, 190, 0.15)';
   });
 
-  listContainer.appendChild(studyWordsBtn);
+  // Place Study button at the top inside the card container
+  listContainer.prepend(studyWordsBtn);
 
   modes.forEach((m) => {
   const btn = document.createElement('button');
@@ -429,15 +430,8 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
     btn.onclick = () => onModeChosen && onModeChosen(m.id);
     
-    // Apply border color based on colorClass
-    const colorMap = {
-      'for-you': '#21b3be',   // cyan
-      'review': '#5b7fe5',     // blue
-      'basic': '#ff6fb0',      // pink
-      'browse': '#d9923b'      // orange/yellow
-    };
-    const borderColor = colorMap[m.colorClass] || '#c0c0c0';
-    btn.style.border = `2px solid ${borderColor}`;
+    // All mode cards: pink border
+    btn.style.border = `2px solid #ff6fb0`;
     btn.style.borderRadius = '8px';
     btn.style.background = '#fff';
     
@@ -448,21 +442,21 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   const changeLevelBtn = document.createElement('button');
   changeLevelBtn.className = 'mode-btn mode-card change-level-btn';
   changeLevelBtn.style.cssText = `
-    margin-top: 12px;
+    margin-top: 0;
     grid-column: 1 / -1;
     background: #fff;
-    color: #f59e0b;
+    color: #21b5c0;
     font-family: 'Poppins', Arial, sans-serif;
     font-weight: 700;
     font-size: 14px;
-    padding: 10px 16px;
-    height: 56px; max-height: 60px; --mode-btn-height: 56px;
+    padding: 8px 5px;
+    height: 44px; max-height: 44px; --mode-btn-height: 44px;
     display: flex; align-items: center; justify-content: center;
-    border: 2px solid #f59e0b;
-    border-radius: 8px;
+    border: 2px solid #21b5c0;
+    border-radius: 10px;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);
+    box-shadow: 0 2px 6px rgba(33, 181, 192, 0.1);
   `;
   changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
   changeLevelBtn.onclick = async () => {
@@ -536,12 +530,14 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   // Add hover effects
   changeLevelBtn.addEventListener('mouseenter', () => {
     changeLevelBtn.style.transform = 'translateY(-2px)';
-    changeLevelBtn.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.25)';
+    changeLevelBtn.style.boxShadow = '0 6px 16px rgba(33, 181, 192, 0.25)';
   });
   changeLevelBtn.addEventListener('mouseleave', () => {
     changeLevelBtn.style.transform = 'translateY(0)';
-    changeLevelBtn.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.15)';
+    changeLevelBtn.style.boxShadow = '0 4px 12px rgba(33, 181, 192, 0.15)';
   });
 
+  // Append bottom controls inside the container (grid) in order: Change Level, Main Menu
   listContainer.appendChild(changeLevelBtn);
+  listContainer.appendChild(mainMenuBtn);
 }
