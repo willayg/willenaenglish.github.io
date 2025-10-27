@@ -2,7 +2,7 @@
    Base Styles & Layout
    ===================== */
 body {
-   background: #f5f7fa;
+   background: #202020;
    font-family: 'Poppins', Arial, Helvetica, sans-serif;
    margin: 0;
    overflow-x: hidden;
@@ -45,8 +45,8 @@ html { overflow-x:hidden; }
   .card:nth-child(4) { grid-row: 2; grid-column: 2; }
 }
 .card {
-  background: #fff;
-  border: 1px solid #e6eaef;
+  background: #232729;
+  border: 4px solid #229690;
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   padding: 14px;
@@ -59,6 +59,21 @@ html { overflow-x:hidden; }
 .card-content { border: 2px solid #67e2e6; height: 400px; border-radius: 12px; padding: 12px; background: #fff; }
 .card-content.homework-scroll { max-height: 50vh; overflow-y: auto; }
 .card-content.homework-scroll::-webkit-scrollbar { width: 0px; }
+
+/* =====================
+   Word Arcade Card Hover Effects
+   ===================== */
+.wa-option-card { transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease !important; }
+.wa-option-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 12px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.1) !important; }
+.wa-option-card:active { transform: translateY(-2px) scale(.98); box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important; }
+
+/* Challenge Zone and Profile - white text with cyan glow */
+.wa-challenge span, .wa-profile span { color: #ffffff !important; }
+.wa-challenge { box-shadow: 0 0 20px rgba(89, 215, 219, 0.6), 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08) !important; }
+.wa-profile { box-shadow: 0 0 20px rgba(89, 215, 219, 0.6), 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08) !important; }
+
+/* English Arcade - cyan glow */
+.wa-word-arcade { box-shadow: 0 0 20px rgba(89, 215, 219, 0.6), 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08) !important; }
 
 /* =====================
    Homework Table

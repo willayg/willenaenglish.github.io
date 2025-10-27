@@ -19,6 +19,8 @@ import { FN } from './scripts/api-base.js';
 // Legacy review manager (kept for rollback) not needed for new flow.
 // import { ReviewManager } from './modes/review.js';
 import { showReviewSelectionModal, runReviewSession } from './modes/review_session.js';
+// History manager for browser back button support
+import { historyManager } from './history-manager.js';
 
 // -----------------------------
 // Auth redirect helper
@@ -135,6 +137,31 @@ let currentMode = null;
 let currentListName = null;
 let currentPreloadAbort = null; // for abortable audio preload
 let activeModeCleanup = null; // optional cleanup function returned by mode runners
+
+// Navigation cancellation epoch: bump this to cancel any in-flight async flows
+let __navEpoch = 0;
+// Track any pending splash screen timeout so we can cancel it
+let __pendingSplashTimeout = null;
+
+// Abort any ongoing preload/game work when user navigates back
+function __abortInFlight() {
+  // Increment epoch so pending async continuations bail out
+  __navEpoch++;
+  // Cancel pending splash screen timeout
+  if (__pendingSplashTimeout) {
+    clearTimeout(__pendingSplashTimeout);
+    __pendingSplashTimeout = null;
+  }
+  // Abort audio preload if running
+  if (currentPreloadAbort) {
+    try { currentPreloadAbort.abort(); } catch {}
+    currentPreloadAbort = null;
+  }
+  // Stop any active mode to prevent stray timers/callbacks
+  destroyModeIfActive();
+  // Clear the gameArea to remove any loading/splash screens
+  if (gameArea) gameArea.replaceChildren();
+}
 
 // -------------------------------------------------------------
 // Image normalization (handles builder refactor differences)
@@ -285,7 +312,14 @@ function clearCurrentGameState({ keepWordList = false } = {}) {
 
 function quitToOpening(fully = false) {
   clearCurrentGameState({ keepWordList: !fully });
-  showOpeningButtons(true);
+  // Render the real opening menu (restore original buttons and wire events)
+  renderOpeningMenu();
+  // Only push a new history entry if this is not triggered by a back navigation
+  try {
+    if (!historyManager || !historyManager.isBackNavigation) {
+      historyManager.navigateToOpening();
+    }
+  } catch {}
 }
 
 // -----------------------------
@@ -316,7 +350,8 @@ function showGameStart(callback) {
   playSFX('begin-the-game');
   const content = document.getElementById('gameStartContent');
   setTimeout(() => { content.style.transition = 'opacity .8s ease-in-out'; content.style.opacity = '1'; }, 100);
-  setTimeout(callback, 2000);
+  // Store timeout so it can be cancelled if user presses back
+  __pendingSplashTimeout = setTimeout(callback, 2000);
 }
 
 function showInlineError(text, onRetry) {
@@ -405,6 +440,7 @@ async function fetchChallengingWords() {
 
 async function processWordlist(data) {
   try {
+    const myEpoch = __navEpoch;
     wordList = Array.isArray(data) ? data : [];
     if (!wordList.length) throw new Error('No words provided');
     // Normalize image fields early (supports builder refactor differences)
@@ -430,7 +466,12 @@ async function processWordlist(data) {
       console.warn('[WordArcade] Audio preload partial failure – continuing anyway.', err);
     }
 
+    // If navigation changed (user pressed Back), bail out quietly
+    if (myEpoch !== __navEpoch) return;
+
     showGameStart(() => {
+      // If navigation changed during the splash delay, bail out
+      if (myEpoch !== __navEpoch) return;
       if (preloadSummary && preloadSummary.missing && preloadSummary.missing.length) {
         inlineToast(`Audio unavailable for ${preloadSummary.missing.length} word${preloadSummary.missing.length>1?'s':''}. These will be skipped in audio modes.`);
         window.__WA_MISSING_AUDIO = new Set(preloadSummary.missing.map(w => String(w).trim().toLowerCase()));
@@ -445,6 +486,7 @@ async function processWordlist(data) {
       // Mark that we've already rendered to prevent duplicate mode cards
       const alreadyRendered = !!currentListName;
       setTimeout(() => {
+        if (myEpoch !== __navEpoch) return;
         try {
           // Skip deferred re-render if we already had a list name at first render time
           if (alreadyRendered) return;
@@ -520,6 +562,16 @@ function startModeSelector() {
   showOpeningButtons(false);
   // Ensure we have any cached state back in memory for UI headers
   restoreSessionStateIfEmpty();
+  
+  // Track this state for browser back button
+  // If we came from levels menu, restore back to levels menu (not opening)
+  const underlyingState = currentListName ? 'levels_menu' : 'opening_menu';
+  try {
+    if (!historyManager || !historyManager.isBackNavigation) {
+      historyManager.navigateToModeSelector({ listName: currentListName, wordCount: wordList.length, underlyingState });
+    }
+  } catch {}
+  
   renderModeSelector({
     onModeChosen: (mode) => { currentMode = mode; startGame(mode); },
   onWordsClick: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); },
@@ -590,6 +642,9 @@ export async function startGame(mode = 'meaning') {
   // Clear the game area before rendering new content
   gameArea.innerHTML = '';
 
+  // Track entering game state for browser back button
+  historyManager.navigateToGame(mode, { listName: currentListName, wordCount: wordList.length });
+
   renderGameView({
     modeName: mode,
     onShowModeModal: () => {
@@ -642,7 +697,13 @@ export function hideGameProgress() {
 }
 
 // Saved games modal via Netlify proxy
-async function openSavedGamesModal() {
+async function openSavedGamesModal(underlyingState = 'opening_menu') {
+  // Track that we opened the Browse modal for back/forward support
+  try {
+    if (!historyManager || !historyManager.isBackNavigation) {
+      historyManager.navigateToModal('browseModal', underlyingState);
+    }
+  } catch {}
   await showBrowseModal({
     onOpen: async (id, dismiss) => { await openSavedGameById(id); if (dismiss) dismiss(); },
     onClose: () => {}
@@ -756,10 +817,34 @@ const originalOpeningButtonsHTML = `
       </button>
     `;
 
+// Recreate the opening menu buttons and wire events
+function renderOpeningMenu() {
+  const openingButtons = document.getElementById('openingButtons');
+  if (openingButtons) {
+    openingButtons.innerHTML = originalOpeningButtonsHTML;
+  }
+  showOpeningButtons(true);
+  // Re-attach event listeners to the restored buttons
+  wireUpMainMenuButtons();
+  // Re-apply translations for restored content
+  if (window.StudentLang && typeof window.StudentLang.applyTranslations === 'function') {
+    try { window.StudentLang.applyTranslations(); } catch {}
+  }
+}
+
 // Show levels menu when Word Games button is clicked
 function showLevelsMenu() {
   const openingButtons = document.getElementById('openingButtons');
   if (!openingButtons) return;
+  // Ensure the opening area is visible when restoring from mode selector/back
+  showOpeningButtons(true);
+  
+  // Track navigation to levels menu (but don't push during back/forward restoration)
+  try {
+    if (!historyManager || !historyManager.isBackNavigation) {
+      historyManager.navigateToLevels();
+    }
+  } catch {}
   
   // Generate colors in strict rotation pattern
   const backColor = levelColors[0]; // pink
@@ -824,16 +909,7 @@ function showLevelsMenu() {
       e.preventDefault();
       e.stopPropagation();
       // Restore the original main menu buttons
-      const openingButtons = document.getElementById('openingButtons');
-      if (openingButtons) {
-        openingButtons.innerHTML = originalOpeningButtonsHTML;
-        // Re-attach event listeners to the restored buttons
-        wireUpMainMenuButtons();
-        // Re-apply translations for restored content
-        if (window.StudentLang && typeof window.StudentLang.applyTranslations === 'function') {
-          window.StudentLang.applyTranslations();
-        }
-      }
+      renderOpeningMenu();
     });
   }
   
@@ -844,6 +920,8 @@ function showLevelsMenu() {
     const newLevel1Btn = level1Btn.cloneNode(true);
     level1Btn.replaceWith(newLevel1Btn);
     newLevel1Btn.addEventListener('click', () => {
+      // Track that we opened a modal from levels menu
+      historyManager.navigateToModal('sampleWordlistModal', 'levels_menu');
       showSampleWordlistModal({ onChoose: (filename) => { if (filename) loadSampleWordlistByFilename(filename, { force: true }); } });
     });
   }
@@ -855,6 +933,8 @@ function showLevelsMenu() {
     const newLevel0Btn = level0Btn.cloneNode(true);
     level0Btn.replaceWith(newLevel0Btn);
     newLevel0Btn.addEventListener('click', () => {
+      // Track that we opened a modal from levels menu
+      historyManager.navigateToModal('phonicsModal', 'levels_menu');
       showPhonicsModal({
         onChoose: (data) => {
           // data = { listFile, mode, listName }
@@ -872,6 +952,8 @@ function showLevelsMenu() {
     const newLevel2Btn = level2Btn.cloneNode(true);
     level2Btn.replaceWith(newLevel2Btn);
     newLevel2Btn.addEventListener('click', () => {
+      // Track that we opened a modal from levels menu
+      historyManager.navigateToModal('level2Modal', 'levels_menu');
       showLevel2Modal({
         onChoose: (data) => {
           // data = { listFile, listName }
@@ -902,6 +984,8 @@ function showLevelsMenu() {
     const newLevel3Btn = level3Btn.cloneNode(true);
     level3Btn.replaceWith(newLevel3Btn);
     newLevel3Btn.addEventListener('click', () => {
+      // Track that we opened a modal from levels menu
+      historyManager.navigateToModal('level3Modal', 'levels_menu');
       showLevel3Modal({
         onChoose: (data) => {
           // data = { listFile, listName }
@@ -1049,12 +1133,15 @@ function wireUpMainMenuButtons() {
   if (browseBtn) {
     const newBrowseBtn = browseBtn.cloneNode(true);
     browseBtn.replaceWith(newBrowseBtn);
-    newBrowseBtn.addEventListener('click', () => { openSavedGamesModal(); });
+  newBrowseBtn.addEventListener('click', () => { openSavedGamesModal('opening_menu'); });
   }
 }
 
 // Wire up opening page buttons after DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize history manager for browser back button support
+  historyManager.init();
+  
   // Try restoring session state so the mode menu or headers can show last list
   restoreSessionStateIfEmpty();
   wireUpMainMenuButtons();
@@ -1095,11 +1182,14 @@ window.WordArcade = {
   startModeSelector,
   getWordList: () => wordList,
   getListName: () => currentListName,
-  openSavedGames: () => openSavedGamesModal(),
+  openSavedGames: () => openSavedGamesModal('opening_menu'),
   quitToOpening,
   clearCurrentGameState,
   loadPhonicsGame,
   loadSampleWordlistByFilename,
+  showLevelsMenu,
+  __abortInFlight,
+  historyManager, // Expose for debugging
 };
 
 // Review flow using secure endpoint
@@ -1117,6 +1207,8 @@ async function loadChallengingAndStart() {
     if (!words.length) { inlineToast('No challenging words to review yet.'); return; }
     // Keep full list for selection; enforce max 10 in selection modal.
     try { if (window.__WA_DEBUG_REVIEW) console.debug('[Review] candidate words', words); } catch {}
+    // Track that we opened the 3x (review) selection modal from the opening menu
+    try { if (!historyManager || !historyManager.isBackNavigation) historyManager.navigateToModal('reviewSelectionModal', 'opening_menu'); } catch {}
     showReviewSelectionModal(words, {
       min: 5,
       max: 10,
