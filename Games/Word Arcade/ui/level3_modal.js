@@ -1,5 +1,6 @@
 // Level 3 Modal - Word list selector with progress bars
-import { FN } from '../scripts/api-base.js';
+import { LEVEL3_LISTS } from '../utils/level-lists.js';
+import { loadLevel3Progress } from '../utils/progress-data-service.js';
 import { progressCache } from '../utils/progress-cache.js';
 
 let __l3ModalStylesInjected = false;
@@ -41,20 +42,7 @@ function ensureLevel3ModalStyles() {
 
 export function showLevel3Modal({ onChoose, onClose }) {
   ensureLevel3ModalStyles();
-  const level3Lists = [
-    // Verbs (5-8)
-    { label: 'Verbs 5', file: 'sample-wordlists-level3/Verbs5.json', emoji: '🗣️', progressKey: 'Level 3 - Verbs 5' },
-    { label: 'Daily Life', file: 'sample-wordlists-level3/Activities1.json', emoji: '🏠', progressKey: 'Level 3 - Daily Life' },
-    { label: 'Verbs 6', file: 'sample-wordlists-level3/Verbs6.json', emoji: '💪', progressKey: 'Level 3 - Verbs 6' },
-    { label: 'Playing Outside', file: 'sample-wordlists-level3/Activities2.json', emoji: '🌳', progressKey: 'Level 3 - Playing Outside' },
-    { label: 'Verbs 7', file: 'sample-wordlists-level3/Verbs7.json', emoji: '🏃', progressKey: 'Level 3 - Verbs 7' },
-    { label: 'Being Creative', file: 'sample-wordlists-level3/Activities3.json', emoji: '🎨', progressKey: 'Level 3 - Being Creative' },
-    { label: 'Verbs 8', file: 'sample-wordlists-level3/Verbs8.json', emoji: '💬', progressKey: 'Level 3 - Verbs 8' },
-    // Adjectives (4-6)
-    { label: 'Adjectives 4', file: 'sample-wordlists-level3/Adjectives4.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 4' },
-    { label: 'Adjectives 5', file: 'sample-wordlists-level3/Adjectives5.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 5' },
-    { label: 'Adjectives 6', file: 'sample-wordlists-level3/Adjectives6.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 6' },
-  ];
+  const level3Lists = LEVEL3_LISTS;
 
   let modal = document.getElementById('level3Modal');
   if (!modal) {
@@ -156,98 +144,17 @@ export function showLevel3Modal({ onChoose, onClose }) {
   };
 
   (async () => {
-    const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'];
-    const canonicalMode = (raw) => {
-      const m = (raw || 'unknown').toString().toLowerCase();
-      if (m === 'sentence' || m.includes('sentence')) return 'sentence';
-      if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-      if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-      if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-      if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-      if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-      if (m.includes('level_up')) return 'level_up';
-      return m;
-    };
-    const norm = (v) => (v||'').toString().trim().toLowerCase();
-
-    async function fetchSessionsFor(item) {
-      const urlBase = new URL(FN('progress_summary'), window.location.origin);
-      urlBase.searchParams.set('section', 'sessions');
-      let scoped = new URL(urlBase.toString());
-      scoped.searchParams.set('list_name', item.progressKey);
-      try {
-        let res = await fetch(scoped.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length) return data;
-        }
-      } catch {}
-      try {
-        const res = await fetch(urlBase.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          return Array.isArray(data) ? data : [];
-        }
-      } catch {}
-      return [];
-    }
-
-    function matchesListName(item, rowName) {
-      const targets = [ norm(item.progressKey), norm(item.label), norm(item.file) ];
-      const n = norm(rowName);
-      if (!n) return false;
-      return targets.some(t => n === t);
-    }
-
-    async function computePercent(item) {
-      const sessions = await fetchSessionsFor(item);
-      if (!sessions.length) return 0;
-      const bestByMode = {};
-      sessions.forEach(s => {
-        if (!s) return;
-        if (!matchesListName(item, s.list_name) && !matchesListName(item, s.summary && (s.summary.list_name || s.summary.listName))) return;
-        let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-        const key = canonicalMode(s.mode);
-        let pct = null; let pts = null;
-        if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
-          pct = Math.round((sum.score / sum.total) * 100);
-        } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
-          pct = Math.round((sum.score / sum.max) * 100);
-        } else if (sum && typeof sum.accuracy === 'number') {
-          pct = Math.round((sum.accuracy || 0) * 100);
-        } else if (sum && typeof sum.score === 'number') {
-          pts = Math.round(sum.score);
-        } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
-          pct = Math.round((s.correct / s.total) * 100);
-        } else if (typeof s.accuracy === 'number') {
-          pct = Math.round((s.accuracy || 0) * 100);
-        }
-        if (pct != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-        } else if (pts != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
-        }
-      });
-      let total = 0;
-      modeIds.forEach(m => { const v = bestByMode[m]; if (v && typeof v.pct === 'number') total += v.pct; });
-      return Math.round(total / modeIds.length);
-    }
-
-    const fetchAllProgress = async () => {
-      return await Promise.all(level3Lists.map(l => computePercent(l).catch(() => 0)));
-    };
-
     try {
-      const { data: percents, fromCache } = await progressCache.fetchWithCache(
-        'level3_progress',
-        fetchAllProgress
-      );
-
-      renderProgressBars(percents);
+      const { data, fromCache } = await loadLevel3Progress(level3Lists);
+      if (data?.ready) {
+        renderProgressBars(data.values);
+      }
 
       if (fromCache) {
-        const unsubscribe = progressCache.onUpdate('level3_progress', (freshPercents) => {
-          renderProgressBars(freshPercents);
+        const unsubscribe = progressCache.onUpdate('level3_progress', (fresh) => {
+          if (fresh?.ready) {
+            renderProgressBars(fresh.values);
+          }
           unsubscribe();
         });
       }

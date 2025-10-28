@@ -1,5 +1,6 @@
 // Level 2 Modal - Word list selector with progress bars
-import { FN } from '../scripts/api-base.js';
+import { LEVEL2_LISTS } from '../utils/level-lists.js';
+import { loadLevel2Progress } from '../utils/progress-data-service.js';
 import { progressCache } from '../utils/progress-cache.js';
 
 let __l2ModalStylesInjected = false;
@@ -85,30 +86,7 @@ function ensureLevel2ModalStyles() {
 
 export function showLevel2Modal({ onChoose, onClose }) {
   ensureLevel2ModalStyles();
-  const level2Lists = [
-    { label: 'Animals', file: 'sample-wordlists-level2/AnimalsAdvanced.json', emoji: '🐆', progressKey: 'Level 2 - Animals Advanced' },
-    // Verbs (4 lists)
-    { label: 'Verbs 1', file: 'sample-wordlists-level2/Verbs1.json', emoji: '🗣️', progressKey: 'Level 2 - Verbs 1' },
-    { label: 'Verbs 2', file: 'sample-wordlists-level2/Verbs2.json', emoji: '💪', progressKey: 'Level 2 - Verbs 2' },
-    { label: 'Verbs 3', file: 'sample-wordlists-level2/Verbs3.json', emoji: '🏃', progressKey: 'Level 2 - Verbs 3' },
-    { label: 'Verbs 4', file: 'sample-wordlists-level2/Verbs4.json', emoji: '💬', progressKey: 'Level 2 - Verbs 4' },
-  // Adjectives (Level 2: 1–3 only)
-  { label: 'Adjectives 1', file: 'sample-wordlists-level2/Adjectives1.json', emoji: '✨', progressKey: 'Level 2 - Adjectives 1' },
-  { label: 'Adjectives 2', file: 'sample-wordlists-level2/Adjectives2.json', emoji: '✨', progressKey: 'Level 2 - Adjectives 2' },
-  { label: 'Adjectives 3', file: 'sample-wordlists-level2/Adjectives3.json', emoji: '✨', progressKey: 'Level 2 - Adjectives 3' },
-    { label: 'Feelings', file: 'sample-wordlists-level2/Feelings2.json', emoji: '😌', progressKey: 'Level 2 - Feelings Advanced' },
-    { label: 'Vegetables', file: 'sample-wordlists-level2/Vegetables.json', emoji: '🥦', progressKey: 'Level 2 - Vegetables' },
-    { label: 'Clothing & Accessories', file: 'sample-wordlists-level2/ClothingAccessories.json', emoji: '👔', progressKey: 'Level 2 - Clothing & Accessories' },
-    { label: 'School Supplies', file: 'sample-wordlists-level2/SchoolSupplies2.json', emoji: '📐', progressKey: 'Level 2 - School Supplies 2' },
-    { label: 'Community Places', file: 'sample-wordlists-level2/CommunityPlaces2.json', emoji: '🏛️', progressKey: 'Level 2 - Community Places' },
-    { label: 'Nature & Landforms', file: 'sample-wordlists-level2/NatureLandforms.json', emoji: '🏔️', progressKey: 'Level 2 - Nature & Landforms' },
-    { label: 'Kitchen Appliances', file: 'sample-wordlists-level2/KitchenAppliances.json', emoji: '🍳', progressKey: 'Level 2 - Kitchen Appliances' },
-    { label: 'Art & Culture', file: 'sample-wordlists-level2/ArtCulture.json', emoji: '🎨', progressKey: 'Level 2 - Art & Culture' },
-    { label: 'Rare Animals', file: 'sample-wordlists-level2/RareAnimals.json', emoji: '🦋', progressKey: 'Level 2 - Rare Animals' },
-    { label: 'Weather', file: 'sample-wordlists-level2/Weather.json', emoji: '⛈️', progressKey: 'Level 2 - Weather' },
-    { label: 'Home Rooms', file: 'sample-wordlists-level2/HomeRooms.json', emoji: '🏠', progressKey: 'Level 2 - Home Rooms' },
-    { label: 'Musical Instruments', file: 'sample-wordlists-level2/MusicalInstruments.json', emoji: '🎸', progressKey: 'Level 2 - Musical Instruments' }
-  ];
+  const level2Lists = LEVEL2_LISTS;
 
   let modal = document.getElementById('level2Modal');
   if (!modal) {
@@ -211,115 +189,25 @@ export function showLevel2Modal({ onChoose, onClose }) {
     });
   };
 
-  // Compute and render progress like sample_wordlist_modal (WITH CACHING)
+  // Compute and render progress using shared progress service
   (async () => {
-    const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'];
-    const canonicalMode = (raw) => {
-      const m = (raw || 'unknown').toString().toLowerCase();
-      if (m === 'sentence' || m.includes('sentence')) return 'sentence';
-      if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-      if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-      if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-      if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-      if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-      if (m.includes('level_up')) return 'level_up';
-      return m;
-    };
-    const norm = (v) => (v||'').toString().trim().toLowerCase();
+    try {
+      const { data, fromCache } = await loadLevel2Progress(level2Lists);
+      if (data?.ready) {
+        renderProgressBars(data.values);
+      }
 
-    async function fetchSessionsFor(item) {
-      const urlBase = new URL(FN('progress_summary'), window.location.origin);
-      urlBase.searchParams.set('section', 'sessions');
-      // Try progressKey first (fast path)
-      let scoped = new URL(urlBase.toString());
-      scoped.searchParams.set('list_name', item.progressKey);
-      try {
-        let res = await fetch(scoped.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length) return data;
-        }
-      } catch {}
-      // Fallback: fetch all and filter client-side
-      try {
-        const res = await fetch(urlBase.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          return Array.isArray(data) ? data : [];
-        }
-      } catch {}
-      return [];
+      if (fromCache) {
+        const unsubscribe = progressCache.onUpdate('level2_progress', (fresh) => {
+          if (fresh?.ready) {
+            renderProgressBars(fresh.values);
+          }
+          unsubscribe();
+        });
+      }
+    } catch (e) {
+      console.error('[level2_modal] Failed to load progress:', e);
+      renderProgressBars(level2Lists.map(() => 0));
     }
-
-    function matchesListName(item, rowName) {
-      const targets = [
-        norm(item.progressKey),
-        norm(item.label),
-        norm(item.file)
-      ];
-      const n = norm(rowName);
-      if (!n) return false;
-      return targets.some(t => n === t);
-    }
-
-    async function computePercent(item) {
-      const sessions = await fetchSessionsFor(item);
-      if (!sessions.length) return 0;
-      const bestByMode = {};
-      sessions.forEach(s => {
-        if (!s) return;
-        if (!matchesListName(item, s.list_name) && !matchesListName(item, s.summary && (s.summary.list_name || s.summary.listName))) return;
-        let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-        const key = canonicalMode(s.mode);
-        let pct = null; let pts = null;
-        if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
-          pct = Math.round((sum.score / sum.total) * 100);
-        } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
-          pct = Math.round((sum.score / sum.max) * 100);
-        } else if (sum && typeof sum.accuracy === 'number') {
-          pct = Math.round((sum.accuracy || 0) * 100);
-        } else if (sum && typeof sum.score === 'number') {
-          pts = Math.round(sum.score);
-        } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
-          pct = Math.round((s.correct / s.total) * 100);
-        } else if (typeof s.accuracy === 'number') {
-          pct = Math.round((s.accuracy || 0) * 100);
-        }
-        if (pct != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-        } else if (pts != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
-        }
-      });
-      let total = 0;
-      modeIds.forEach(m => { const v = bestByMode[m]; if (v && typeof v.pct === 'number') total += v.pct; });
-      return Math.round(total / modeIds.length);
-    }
-
-  const fetchAllProgress = async () => {
-    return await Promise.all(level2Lists.map(l => computePercent(l).catch(() => 0)));
-  };
-
-  try {
-    const { data: percents, fromCache } = await progressCache.fetchWithCache(
-      'level2_progress',
-      fetchAllProgress
-    );
-
-    // Render immediately (instant if from cache!)
-    renderProgressBars(percents);
-
-    // If from cache, listen for background refresh
-    if (fromCache) {
-      const unsubscribe = progressCache.onUpdate('level2_progress', (freshPercents) => {
-        renderProgressBars(freshPercents);
-        unsubscribe(); // Clean up listener
-      });
-    }
-  } catch (e) {
-    console.error('[level2_modal] Failed to load progress:', e);
-    // Render with zeros on error
-    renderProgressBars(level2Lists.map(() => 0));
-  }
   })();
 }

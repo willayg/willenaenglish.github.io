@@ -1,6 +1,7 @@
 // Sample Wordlist Modal
 
-import { FN } from '../scripts/api-base.js';
+import { LEVEL1_LISTS } from '../utils/level-lists.js';
+import { loadSampleWordlistProgress } from '../utils/progress-data-service.js';
 import { progressCache } from '../utils/progress-cache.js';
 
 // Scoped styles for this modal to avoid interference from global .mode-btn rules
@@ -107,21 +108,7 @@ export function showSampleWordlistModal({ onChoose }) {
     document.body.appendChild(modal);
   }
 
-  // Flat list of all word lists (no categories, except Long U excluded)
-  const allLists = [
-    { label: 'Easy Animals', file: 'EasyAnimals.json', emoji: '🐯' },
-    { label: 'More Animals', file: 'Animals2.json', emoji: '🐼' },
-    { label: 'Fruits & Veggies', file: 'Food1.json', emoji: '🍎' },
-    { label: 'Meals & Snacks', file: 'Food2.json', emoji: '🍔' },
-    { label: 'World Foods', file: 'Food3.json', emoji: '🍣' },
-    { label: 'Jobs (Easy)', file: 'EasyJobs.json', emoji: '👩‍🔧' },
-    { label: 'Getting Around', file: 'Transportation.json', emoji: '🚗' },
-    { label: 'Hobbies (Easy)', file: 'EasyHobbies.json', emoji: '🎨' },
-    { label: 'Sports', file: 'Sports.json', emoji: '🏀' },
-    { label: 'School Things', file: 'SchoolSupplies.json', emoji: '✏️' },
-    { label: 'Action Words (Easy)', file: 'EasyVerbs.json', emoji: '🏃‍♂️' },
-    { label: 'Feelings & Emotions', file: 'Feelings.json', emoji: '😊' }
-  ];
+  const allLists = LEVEL1_LISTS;
 
   // Render flat list immediately with 0% skeleton
   modal.innerHTML = `
@@ -198,92 +185,18 @@ export function showSampleWordlistModal({ onChoose }) {
 
   // Fetch and update progress for all lists (WITH CACHING)
   (async () => {
-    const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'];
-    const canonicalMode = (raw) => {
-      const m = (raw || 'unknown').toString().toLowerCase();
-      if (m === 'sentence' || m.includes('sentence')) return 'sentence';
-      if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-      if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-      if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-      if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-      if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-      if (m.includes('level_up')) return 'level_up';
-      return m;
-    };
-    const norm = (v) => (v||'').toString().trim().toLowerCase();
-    const stripExt = (v) => v.replace(/\.json$/i, '');
-
-    async function fetchSessionsFor(listFile) {
-      const urlBase = new URL(FN('progress_summary'), window.location.origin);
-      urlBase.searchParams.set('section', 'sessions');
-      const scoped = new URL(urlBase.toString());
-      scoped.searchParams.set('list_name', listFile);
-      let res = await fetch(scoped.toString(), { cache: 'no-store', credentials: 'include' });
-      let data = [];
-      if (res.ok) data = await res.json();
-      if (!data || !data.length) {
-        res = await fetch(urlBase.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) data = await res.json();
-      }
-      return Array.isArray(data) ? data : [];
-    }
-
-    function matchesListName(listFile, rowName) {
-      const target = norm(listFile);
-      const targetNoExt = stripExt(target);
-      const n = norm(rowName);
-      return (n === target || n === targetNoExt || stripExt(n) === targetNoExt);
-    }
-
-    async function computePercent(listFile) {
-      const sessions = await fetchSessionsFor(listFile);
-      if (!sessions.length) return 0;
-      const bestByMode = {};
-      sessions.forEach(s => {
-        if (!s) return;
-        if (!matchesListName(listFile, s.list_name) && !matchesListName(listFile, s.summary && (s.summary.list_name || s.summary.listName))) return;
-        let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-        const key = canonicalMode(s.mode);
-        let pct = null;
-        if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
-          pct = Math.round((sum.score / sum.total) * 100);
-        } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
-          pct = Math.round((sum.score / sum.max) * 100);
-        } else if (sum && typeof sum.accuracy === 'number') {
-          pct = Math.round((sum.accuracy || 0) * 100);
-        } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
-          pct = Math.round((s.correct / s.total) * 100);
-        } else if (typeof s.accuracy === 'number') {
-          pct = Math.round((s.accuracy || 0) * 100);
-        }
-        if (pct != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-        }
-      });
-      let total = 0;
-      modeIds.forEach(m => { const v = bestByMode[m]; if (v && typeof v.pct === 'number') total += v.pct; });
-      return Math.round(total / modeIds.length);
-    }
-
-    // NEW: Fetch with cache (stale-while-revalidate)
-    const fetchAllProgress = async () => {
-      return await Promise.all(allLists.map(l => computePercent(l.file).catch(() => 0)));
-    };
-
     try {
-      const { data: percents, fromCache } = await progressCache.fetchWithCache(
-        'level1_progress',
-        fetchAllProgress
-      );
+      const { data, fromCache } = await loadSampleWordlistProgress(allLists);
+      if (data?.ready) {
+        renderProgressBars(data.values);
+      }
 
-      // Render immediately (instant if from cache!)
-      renderProgressBars(percents);
-
-      // If from cache, listen for background refresh
       if (fromCache) {
-        const unsubscribe = progressCache.onUpdate('level1_progress', (freshPercents) => {
-          renderProgressBars(freshPercents);
-          unsubscribe(); // Clean up listener after first update
+        const unsubscribe = progressCache.onUpdate('level1_progress', (fresh) => {
+          if (fresh?.ready) {
+            renderProgressBars(fresh.values);
+          }
+          unsubscribe();
         });
       }
     } catch (e) {

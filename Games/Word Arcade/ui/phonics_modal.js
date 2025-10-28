@@ -1,8 +1,8 @@
 // Phonics Learning Modal
 // Matches the sample wordlist style with progress bars
 
-import { FN } from '../scripts/api-base.js';
-import { showModeModal } from './mode_modal.js';
+import { PHONICS_LISTS } from '../utils/level-lists.js';
+import { loadPhonicsProgress } from '../utils/progress-data-service.js';
 import { progressCache } from '../utils/progress-cache.js';
 
 let __phonicsModalStylesInjected = false;
@@ -89,34 +89,7 @@ function ensurePhonicsModalStyles() {
 export function showPhonicsModal({ onChoose, onClose }) {
   ensurePhonicsModalStyles();
 
-  const phonicsLists = [
-    // Short Vowels
-    { label: 'Short A Sound', file: 'phonics-lists/short-vowels/short-a.json', emoji: '🐱', progressKey: 'Phonics - Short A Sound' },
-    { label: 'Short E Sound', file: 'phonics-lists/short-vowels/short-e.json', emoji: '🥚', progressKey: 'Phonics - Short E Sound' },
-    { label: 'Short I Sound', file: 'phonics-lists/short-vowels/short-i.json', emoji: '🏠', progressKey: 'Phonics - Short I Sound' },
-    { label: 'Short O Sound', file: 'phonics-lists/short-vowels/short-o.json', emoji: '🐕', progressKey: 'Phonics - Short O Sound' },
-    { label: 'Short U Sound', file: 'phonics-lists/short-vowels/short-u.json', emoji: '☀️', progressKey: 'Phonics - Short U Sound' },
-    // Long Vowels
-    { label: 'Long A Sound', file: 'phonics-lists/long-vowels/long-a.json', emoji: '🍰', progressKey: 'Phonics - Long A Sound' },
-    { label: 'Long E Sound', file: 'phonics-lists/long-vowels/long-e.json', emoji: '🐝', progressKey: 'Phonics - Long E Sound' },
-    { label: 'Long I Sound', file: 'phonics-lists/long-vowels/long-i.json', emoji: '🍦', progressKey: 'Phonics - Long I Sound' },
-    { label: 'Long O Sound', file: 'phonics-lists/long-vowels/long-o.json', emoji: '🌊', progressKey: 'Phonics - Long O Sound' },
-    { label: 'Long U Sound', file: 'phonics-lists/long-vowels/long-u.json', emoji: '🐮', progressKey: 'Phonics - Long U Sound' },
-    { label: 'Long A: AI, AY', file: 'phonics-lists/long-vowels/long-a-ai-ay.json', emoji: '☔', progressKey: 'Phonics - Long A: AI, AY' },
-    { label: 'Long O: OA, OE', file: 'phonics-lists/long-vowels/long-o-oa-oe.json', emoji: '⛵', progressKey: 'Phonics - Long O: OA, OE' },
-    // Consonant Blends
-    { label: 'Blend: BL, BR', file: 'phonics-lists/consonant-blends/blend-br-bl.json', emoji: '🎈', progressKey: 'Phonics - Blend: BL, BR' },
-    { label: 'Blend: CL, CR', file: 'phonics-lists/consonant-blends/blend-cr-cl.json', emoji: '☁️', progressKey: 'Phonics - Blend: CL, CR' },
-    { label: 'Blend: DR, FL, FR', file: 'phonics-lists/consonant-blends/blend-dr-fl-fr.json', emoji: '🌸', progressKey: 'Phonics - Blend: DR, FL, FR' },
-    { label: 'Blend: GL, GR', file: 'phonics-lists/consonant-blends/blend-gr-gl.json', emoji: '🍇', progressKey: 'Phonics - Blend: GL, GR' },
-    { label: 'Blend: PL, PR', file: 'phonics-lists/consonant-blends/blend-pl-pr-sc.json', emoji: '🌳', progressKey: 'Phonics - Blend: PL, PR' },
-    { label: 'Blend: SK, SL, SM, SN, SP, ST, SW', file: 'phonics-lists/consonant-blends/blend-sk-sl-sm-sn-sp-st-sw.json', emoji: '⭐', progressKey: 'Phonics - Blend: SK, SL, SM, SN, SP, ST, SW' },
-    { label: 'Blend: TR, TW', file: 'phonics-lists/consonant-blends/blend-tr-tw.json', emoji: '🎄', progressKey: 'Phonics - Blend: TR, TW' },
-    // More Patterns
-    { label: 'CH, SH Words', file: 'phonics-lists/more/ch-sh.json', emoji: '🪑', progressKey: 'Phonics - CH, SH Words' },
-    { label: 'TH, WH Words', file: 'phonics-lists/more/th-wh.json', emoji: '⚡', progressKey: 'Phonics - TH, WH Words' },
-    { label: 'CK, NG, MP Endings', file: 'phonics-lists/more/ck-ng-mp.json', emoji: '🎵', progressKey: 'Phonics - CK, NG, MP Endings' }
-  ];
+  const phonicsLists = PHONICS_LISTS;
 
   let modal = document.getElementById('phonicsModal');
   if (!modal) {
@@ -219,107 +192,19 @@ export function showPhonicsModal({ onChoose, onClose }) {
     });
   };
 
-  // Compute and render progress like Level 2 modal (WITH CACHING)
+  // Compute and render progress using shared progress service
   (async () => {
-    // Phonics only has 4 modes: Listen & Pick, Missing Letter, Read & Find, Spell It Out
-    const modeIds = ['listening', 'spelling', 'multi_choice', 'listen_and_spell'];
-    const canonicalMode = (raw) => {
-      const m = (raw || 'unknown').toString().toLowerCase();
-      if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-      if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-      if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-      if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-      if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-      if (m.includes('level_up')) return 'level_up';
-      return m;
-    };
-    const norm = (v) => (v||'').toString().trim().toLowerCase();
-
-    async function fetchSessionsFor(item) {
-      const urlBase = new URL(FN('progress_summary'), window.location.origin);
-      urlBase.searchParams.set('section', 'sessions');
-      // Try progressKey first (fast path)
-      let scoped = new URL(urlBase.toString());
-      scoped.searchParams.set('list_name', item.progressKey);
-      try {
-        let res = await fetch(scoped.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length) return data;
-        }
-      } catch {}
-      // Fallback: fetch all and filter client-side
-      try {
-        const res = await fetch(urlBase.toString(), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          return Array.isArray(data) ? data : [];
-        }
-      } catch {}
-      return [];
-    }
-
-    function matchesListName(item, rowName) {
-      const targets = [
-        norm(item.progressKey),
-        norm(item.label),
-        norm(item.file)
-      ];
-      const n = norm(rowName);
-      if (!n) return false;
-      return targets.some(t => n === t);
-    }
-
-    async function computePercent(item) {
-      const sessions = await fetchSessionsFor(item);
-      if (!sessions.length) return 0;
-      const bestByMode = {};
-      sessions.forEach(s => {
-        if (!s) return;
-        if (!matchesListName(item, s.list_name) && !matchesListName(item, s.summary && (s.summary.list_name || s.summary.listName))) return;
-        let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-        const key = canonicalMode(s.mode);
-        let pct = null; let pts = null;
-        if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
-          pct = Math.round((sum.score / sum.total) * 100);
-        } else if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
-          pct = Math.round((sum.score / sum.max) * 100);
-        } else if (sum && typeof sum.accuracy === 'number') {
-          pct = Math.round((sum.accuracy || 0) * 100);
-        } else if (sum && typeof sum.score === 'number') {
-          pts = Math.round(sum.score);
-        } else if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) {
-          pct = Math.round((s.correct / s.total) * 100);
-        } else if (typeof s.accuracy === 'number') {
-          pct = Math.round((s.accuracy || 0) * 100);
-        }
-        if (pct != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pct ?? -1) < pct) bestByMode[key] = { pct };
-        } else if (pts != null) {
-          if (!(key in bestByMode) || (bestByMode[key].pts ?? -1) < pts) bestByMode[key] = { pts };
-        }
-      });
-      let total = 0;
-      modeIds.forEach(m => { const v = bestByMode[m]; if (v && typeof v.pct === 'number') total += v.pct; });
-      // Phonics has 4 modes, so divide by 4
-      return Math.round(total / 4);
-    }
-
-    const fetchAllProgress = async () => {
-      return await Promise.all(phonicsLists.map(l => computePercent(l).catch(() => 0)));
-    };
-
     try {
-      const { data: percents, fromCache } = await progressCache.fetchWithCache(
-        'phonics_progress',
-        fetchAllProgress
-      );
-
-      renderProgressBars(percents);
+      const { data, fromCache } = await loadPhonicsProgress(phonicsLists);
+      if (data?.ready) {
+        renderProgressBars(data.values);
+      }
 
       if (fromCache) {
-        const unsubscribe = progressCache.onUpdate('phonics_progress', (freshPercents) => {
-          renderProgressBars(freshPercents);
+        const unsubscribe = progressCache.onUpdate('phonics_progress', (fresh) => {
+          if (fresh?.ready) {
+            renderProgressBars(fresh.values);
+          }
           unsubscribe();
         });
       }
