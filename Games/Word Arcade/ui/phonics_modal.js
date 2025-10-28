@@ -3,6 +3,7 @@
 
 import { FN } from '../scripts/api-base.js';
 import { showModeModal } from './mode_modal.js';
+import { progressCache } from '../utils/progress-cache.js';
 
 let __phonicsModalStylesInjected = false;
 function ensurePhonicsModalStyles() {
@@ -183,7 +184,42 @@ export function showPhonicsModal({ onChoose, onClose }) {
     btn.onmouseleave = () => btn.style.backgroundColor = '';
   });
 
-  // Compute and render progress like Level 2 modal
+  // Helper to render progress bars
+  const renderProgressBars = (percents) => {
+    const container = document.getElementById('phonicsListContainer');
+    if (!container) return;
+    
+    container.innerHTML = phonicsLists.map((item, idx) => {
+      const pct = Math.max(0, Math.min(100, percents[idx] || 0));
+      return `<button class="phonics-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-progress="${item.progressKey}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
+            <span class="phonics-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
+          </div>
+          <div class="phonics-bar" style="margin-top:7px;">
+            <div class="phonics-bar-fill" data-final="true" style="width:${pct}%;"></div>
+          </div>
+        </div>
+      </button>`;
+    }).join('');
+
+    // Re-bind click handlers
+    container.querySelectorAll('.phonics-btn').forEach(btn => {
+      btn.onclick = () => {
+        const file = btn.getAttribute('data-file');
+        const label = btn.getAttribute('data-label');
+        const progressKey = btn.getAttribute('data-progress') || label;
+        modal.style.display = 'none';
+        if (onChoose) onChoose({ listFile: file, listName: progressKey, progressKey });
+      };
+      btn.onmouseenter = () => btn.style.backgroundColor = '#f0f9fa';
+      btn.onmouseleave = () => btn.style.backgroundColor = '';
+    });
+  };
+
+  // Compute and render progress like Level 2 modal (WITH CACHING)
   (async () => {
     // Phonics only has 4 modes: Listen & Pick, Missing Letter, Read & Find, Spell It Out
     const modeIds = ['listening', 'spelling', 'multi_choice', 'listen_and_spell'];
@@ -269,38 +305,27 @@ export function showPhonicsModal({ onChoose, onClose }) {
       return Math.round(total / 4);
     }
 
-    const percents = await Promise.all(phonicsLists.map(l => computePercent(l).catch(() => 0)));
+    const fetchAllProgress = async () => {
+      return await Promise.all(phonicsLists.map(l => computePercent(l).catch(() => 0)));
+    };
 
-    // Re-render list with actual percents
-    const container = document.getElementById('phonicsListContainer');
-    container.innerHTML = phonicsLists.map((item, idx) => {
-      const pct = Math.max(0, Math.min(100, percents[idx] || 0));
-      return `<button class="phonics-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-progress="${item.progressKey}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
-          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-            <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
-            <span class="phonics-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
-          </div>
-          <div class="phonics-bar" style="margin-top:7px;">
-            <div class="phonics-bar-fill" data-final="true" style="width:${pct}%;"></div>
-          </div>
-        </div>
-      </button>`;
-    }).join('');
+    try {
+      const { data: percents, fromCache } = await progressCache.fetchWithCache(
+        'phonics_progress',
+        fetchAllProgress
+      );
 
-    // Re-bind click handlers
-    container.querySelectorAll('.phonics-btn').forEach(btn => {
-      btn.onclick = () => {
-        const file = btn.getAttribute('data-file');
-        const label = btn.getAttribute('data-label');
-        const progressKey = btn.getAttribute('data-progress') || label;
-        modal.style.display = 'none';
-        // Use progressKey to ensure consistency with progress tracking
-        if (onChoose) onChoose({ listFile: file, listName: progressKey, progressKey });
-      };
-      btn.onmouseenter = () => btn.style.backgroundColor = '#f0f9fa';
-      btn.onmouseleave = () => btn.style.backgroundColor = '';
-    });
+      renderProgressBars(percents);
+
+      if (fromCache) {
+        const unsubscribe = progressCache.onUpdate('phonics_progress', (freshPercents) => {
+          renderProgressBars(freshPercents);
+          unsubscribe();
+        });
+      }
+    } catch (e) {
+      console.error('[phonics_modal] Failed to load progress:', e);
+      renderProgressBars(phonicsLists.map(() => 0));
+    }
   })();
 }

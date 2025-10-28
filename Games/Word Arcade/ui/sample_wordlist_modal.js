@@ -1,6 +1,7 @@
 // Sample Wordlist Modal
 
 import { FN } from '../scripts/api-base.js';
+import { progressCache } from '../utils/progress-cache.js';
 
 // Scoped styles for this modal to avoid interference from global .mode-btn rules
 let __wlModalStylesInjected = false;
@@ -165,7 +166,37 @@ export function showSampleWordlistModal({ onChoose }) {
     };
   });
 
-  // Fetch and update progress for all lists
+  // Helper to render progress bars with given percentages
+  const renderProgressBars = (percents) => {
+    const container = document.getElementById('sampleWordlistList');
+    if (!container) return;
+    
+    container.innerHTML = allLists.map((item, idx) => {
+      const pct = Math.max(0, Math.min(100, percents[idx] || 0));
+      return `<button class="wl-btn" data-idx="${idx}" data-file="${item.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
+            <span class="wl-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
+          </div>
+          <div class="wl-bar" style="margin-top:7px;">
+            <div class="wl-bar-fill" data-final="true" style="width:${pct}%;"></div>
+          </div>
+        </div>
+      </button>`;
+    }).join('');
+
+    // Re-bind click handlers after re-render
+    Array.from(container.children).forEach((btn) => {
+      btn.onclick = () => {
+        modal.style.display = 'none';
+        if (onChoose) onChoose(allLists[Number(btn.getAttribute('data-idx'))].file);
+      };
+    });
+  };
+
+  // Fetch and update progress for all lists (WITH CACHING)
   (async () => {
     const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'];
     const canonicalMode = (raw) => {
@@ -234,32 +265,31 @@ export function showSampleWordlistModal({ onChoose }) {
       return Math.round(total / modeIds.length);
     }
 
-    const percents = await Promise.all(allLists.map(l => computePercent(l.file).catch(() => 0)));
+    // NEW: Fetch with cache (stale-while-revalidate)
+    const fetchAllProgress = async () => {
+      return await Promise.all(allLists.map(l => computePercent(l.file).catch(() => 0)));
+    };
 
-    // Re-render with actual percentages
-    const container = document.getElementById('sampleWordlistList');
-    container.innerHTML = allLists.map((item, idx) => {
-      const pct = Math.max(0, Math.min(100, percents[idx] || 0));
-      return `<button class="wl-btn" data-idx="${idx}" data-file="${item.file}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
-          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-            <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
-            <span class="wl-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
-          </div>
-          <div class="wl-bar" style="margin-top:7px;">
-            <div class="wl-bar-fill" data-final="true" style="width:${pct}%;"></div>
-          </div>
-        </div>
-      </button>`;
-    }).join('');
+    try {
+      const { data: percents, fromCache } = await progressCache.fetchWithCache(
+        'level1_progress',
+        fetchAllProgress
+      );
 
-    // Re-bind click handlers
-    Array.from(container.children).forEach((btn) => {
-      btn.onclick = () => {
-        modal.style.display = 'none';
-        if (onChoose) onChoose(allLists[Number(btn.getAttribute('data-idx'))].file);
-      };
-    });
+      // Render immediately (instant if from cache!)
+      renderProgressBars(percents);
+
+      // If from cache, listen for background refresh
+      if (fromCache) {
+        const unsubscribe = progressCache.onUpdate('level1_progress', (freshPercents) => {
+          renderProgressBars(freshPercents);
+          unsubscribe(); // Clean up listener after first update
+        });
+      }
+    } catch (e) {
+      console.error('[sample_wordlist_modal] Failed to load progress:', e);
+      // Render with zeros on error
+      renderProgressBars(allLists.map(() => 0));
+    }
   })();
 }

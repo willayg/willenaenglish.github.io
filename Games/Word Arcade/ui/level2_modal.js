@@ -1,5 +1,6 @@
 // Level 2 Modal - Word list selector with progress bars
 import { FN } from '../scripts/api-base.js';
+import { progressCache } from '../utils/progress-cache.js';
 
 let __l2ModalStylesInjected = false;
 function ensureLevel2ModalStyles() {
@@ -175,7 +176,42 @@ export function showLevel2Modal({ onChoose, onClose }) {
     btn.onmouseleave = () => btn.style.backgroundColor = '';
   });
 
-  // Compute and render progress like sample_wordlist_modal
+  // Helper to render progress bars with given percentages
+  const renderProgressBars = (percents) => {
+    const container = document.getElementById('level2ListContainer');
+    if (!container) return;
+    
+    container.innerHTML = level2Lists.map((item, idx) => {
+      const pct = Math.max(0, Math.min(100, percents[idx] || 0));
+      return `<button class="l2-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-progress="${item.progressKey}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
+            <span class="l2-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
+          </div>
+          <div class="l2-bar" style="margin-top:7px;">
+            <div class="l2-bar-fill" data-final="true" style="width:${pct}%;"></div>
+          </div>
+        </div>
+      </button>`;
+    }).join('');
+
+    // Re-bind click handlers after re-render
+    container.querySelectorAll('.l2-btn').forEach(btn => {
+      btn.onclick = () => {
+        const file = btn.getAttribute('data-file');
+        const label = btn.getAttribute('data-label');
+        const progressKey = btn.getAttribute('data-progress') || label;
+        modal.style.display = 'none';
+        if (onChoose) onChoose({ listFile: file, listName: progressKey, progressKey });
+      };
+      btn.onmouseenter = () => btn.style.backgroundColor = '#f0f9fa';
+      btn.onmouseleave = () => btn.style.backgroundColor = '';
+    });
+  };
+
+  // Compute and render progress like sample_wordlist_modal (WITH CACHING)
   (async () => {
     const modeIds = ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'];
     const canonicalMode = (raw) => {
@@ -260,38 +296,30 @@ export function showLevel2Modal({ onChoose, onClose }) {
       return Math.round(total / modeIds.length);
     }
 
-  const percents = await Promise.all(level2Lists.map(l => computePercent(l).catch(() => 0)));
+  const fetchAllProgress = async () => {
+    return await Promise.all(level2Lists.map(l => computePercent(l).catch(() => 0)));
+  };
 
-    // Re-render list with actual percents
-    const container = document.getElementById('level2ListContainer');
-    container.innerHTML = level2Lists.map((item, idx) => {
-      const pct = Math.max(0, Math.min(100, percents[idx] || 0));
-      return `<button class="l2-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-progress="${item.progressKey}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
-          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-            <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
-            <span class="l2-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
-          </div>
-          <div class="l2-bar" style="margin-top:7px;">
-            <div class="l2-bar-fill" data-final="true" style="width:${pct}%;"></div>
-          </div>
-        </div>
-      </button>`;
-    }).join('');
+  try {
+    const { data: percents, fromCache } = await progressCache.fetchWithCache(
+      'level2_progress',
+      fetchAllProgress
+    );
 
-    // Re-bind click handlers after re-render
-    container.querySelectorAll('.l2-btn').forEach(btn => {
-      btn.onclick = () => {
-        const file = btn.getAttribute('data-file');
-        const label = btn.getAttribute('data-label');
-        const progressKey = btn.getAttribute('data-progress') || label;
-        modal.style.display = 'none';
-        // Use progressKey to ensure consistency with progress tracking
-        if (onChoose) onChoose({ listFile: file, listName: progressKey, progressKey });
-      };
-      btn.onmouseenter = () => btn.style.backgroundColor = '#f0f9fa';
-      btn.onmouseleave = () => btn.style.backgroundColor = '';
-    });
+    // Render immediately (instant if from cache!)
+    renderProgressBars(percents);
+
+    // If from cache, listen for background refresh
+    if (fromCache) {
+      const unsubscribe = progressCache.onUpdate('level2_progress', (freshPercents) => {
+        renderProgressBars(freshPercents);
+        unsubscribe(); // Clean up listener
+      });
+    }
+  } catch (e) {
+    console.error('[level2_modal] Failed to load progress:', e);
+    // Render with zeros on error
+    renderProgressBars(level2Lists.map(() => 0));
+  }
   })();
 }
