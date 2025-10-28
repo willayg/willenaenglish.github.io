@@ -23,6 +23,8 @@ import { showReviewSelectionModal, runReviewSession } from './modes/review_sessi
 import { historyManager } from './history-manager.js';
 // Progress cache for instant progress bar loading
 import { progressCache } from './utils/progress-cache.js';
+import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, PHONICS_LISTS } from './utils/level-lists.js';
+import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js';
 
 // -----------------------------
 // Auth redirect helper
@@ -834,105 +836,6 @@ function renderOpeningMenu() {
   }
 }
 
-// ----------------------------- 
-// Progress computation helpers for cache prefetching
-// -----------------------------
-function computeProgressForLevel(sessions, level) {
-  // This is a placeholder - the actual computation happens in each modal
-  // We return empty array here; prefetch will trigger modal's own fetchFn
-  return [];
-}
-
-function computeStarCounts(sessions) {
-  if (!Array.isArray(sessions) || sessions.length === 0) {
-    return { level0: 0, level1: 0, level2: 0, level3: 0 };
-  }
-
-  const canonicalMode = (raw) => {
-    const m = (raw || 'unknown').toString().toLowerCase();
-    if (m === 'sentence' || m.includes('sentence')) return 'sentence';
-    if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
-    if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
-    if (m.includes('listen') && m.includes('spell')) return 'listen_and_spell';
-    if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
-    if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
-    if (m.includes('level_up')) return 'level_up';
-    return m;
-  };
-
-  const pctFrom = (s) => {
-    let sum = s.summary; try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch {}
-    if (sum && typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) return Math.round((sum.score / sum.total) * 100);
-    if (sum && typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) return Math.round((sum.score / sum.max) * 100);
-    if (sum && typeof sum.accuracy === 'number') return Math.round((sum.accuracy || 0) * 100);
-    if (typeof s.correct === 'number' && typeof s.total === 'number' && s.total > 0) return Math.round((s.correct / s.total) * 100);
-    if (typeof s.accuracy === 'number') return Math.round((s.accuracy || 0) * 100);
-    return null;
-  };
-
-  const pctToStars = (pct) => {
-    if (pct == null) return 0;
-    if (pct >= 100) return 5;
-    if (pct > 90) return 4;
-    if (pct > 80) return 3;
-    if (pct > 70) return 2;
-    if (pct >= 60) return 1;
-    return 0;
-  };
-
-  const byLevel = {
-    level0: new Map(),
-    level1: new Map(),
-    level2: new Map(),
-    level3: new Map(),
-  };
-
-  const norm = (v) => (v||'').toString().trim();
-
-  sessions.forEach((s) => {
-    if (!s) return;
-    const listName = norm(s.list_name) || norm((s.summary && (s.summary.list_name || s.summary.listName)));
-    if (!listName) return;
-    let bucket = null;
-    if (/^phonics\s*-/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
-    else if (/^level\s*2\s*-/i.test(listName)) bucket = 'level2';
-    else if (/^level\s*3\s*-/i.test(listName)) bucket = 'level3';
-    else if (/\.json$/i.test(listName)) bucket = 'level1';
-    if (!bucket) return;
-
-    const key = listName.toLowerCase();
-    const map = byLevel[bucket];
-    if (!map.has(key)) map.set(key, {});
-    const best = map.get(key);
-    const mode = canonicalMode(s.mode);
-    const pct = pctFrom(s);
-    if (pct != null) {
-      if (!(mode in best) || best[mode] < pct) best[mode] = pct;
-    }
-  });
-
-  const sumStars = (map, modeIds) => {
-    let total = 0;
-    map.forEach((bestByMode) => {
-      modeIds.forEach((m) => {
-        const pct = bestByMode[m];
-        total += pctToStars(pct);
-      });
-    });
-    return total;
-  };
-
-  const phonicsModes = ['listening','spelling','multi_choice','listen_and_spell'];
-  const generalModes = ['meaning','listening','multi_choice','listen_and_spell','sentence','level_up'];
-
-  return {
-    level0: sumStars(byLevel.level0, phonicsModes),
-    level1: sumStars(byLevel.level1, generalModes),
-    level2: sumStars(byLevel.level2, generalModes),
-    level3: sumStars(byLevel.level3, generalModes),
-  };
-}
-
 // Show levels menu when Word Games button is clicked
 function showLevelsMenu() {
   const openingButtons = document.getElementById('openingButtons');
@@ -1112,27 +1015,20 @@ function showLevelsMenu() {
         if (s3) s3.textContent = `⭐ ${starCounts.level3 || 0}`;
       };
 
-      // Fetch with cache (instant if prefetched!)
-      const fetchStarCounts = async () => {
-        const sessions = await callProgressSummary('sessions');
-        if (!Array.isArray(sessions) || sessions.length === 0) {
-          return { level0: 0, level1: 0, level2: 0, level3: 0 };
-        }
-        return computeStarCounts(sessions);
-      };
+      // Fetch from shared progress service (instant if prefetched!)
+      const { data, fromCache } = await loadStarCounts();
 
-      const { data: starCounts, fromCache } = await progressCache.fetchWithCache(
-        'level_stars',
-        fetchStarCounts
-      );
+      if (data?.ready) {
+        renderStars(data.counts);
+      } else {
+        renderStars({ level0: 0, level1: 0, level2: 0, level3: 0 });
+      }
 
-      // Render immediately (instant if from cache!)
-      renderStars(starCounts);
-
-      // Listen for background updates
       if (fromCache) {
-        const unsubscribe = progressCache.onUpdate('level_stars', (freshStars) => {
-          renderStars(freshStars);
+        const unsubscribe = progressCache.onUpdate('level_stars', (fresh) => {
+          if (fresh?.ready) {
+            renderStars(fresh.counts);
+          }
           unsubscribe();
         });
       }
@@ -1194,41 +1090,11 @@ window.addEventListener('DOMContentLoaded', () => {
   // This warms up the cache so modals open instantly
   setTimeout(() => {
     console.log('[WordArcade] Prefetching progress data for instant modal loading...');
-    
-    // Helper to silently prefetch without errors
-    const prefetch = async (type, fetchFn) => {
-      try {
-        await progressCache.fetchWithCache(type, fetchFn);
-      } catch (e) {
-        console.warn(`[WordArcade] Prefetch failed for ${type}:`, e);
-      }
-    };
-
-    // Prefetch all level progress (these match the modal cache keys)
-    prefetch('level1_progress', async () => {
-      const sessions = await callProgressSummary('sessions');
-      return computeProgressForLevel(sessions, 'level1');
-    });
-    
-    prefetch('level2_progress', async () => {
-      const sessions = await callProgressSummary('sessions');
-      return computeProgressForLevel(sessions, 'level2');
-    });
-    
-    prefetch('level3_progress', async () => {
-      const sessions = await callProgressSummary('sessions');
-      return computeProgressForLevel(sessions, 'level3');
-    });
-    
-    prefetch('phonics_progress', async () => {
-      const sessions = await callProgressSummary('sessions');
-      return computeProgressForLevel(sessions, 'phonics');
-    });
-    
-    // Prefetch star counts for level menu
-    prefetch('level_stars', async () => {
-      const sessions = await callProgressSummary('sessions');
-      return computeStarCounts(sessions);
+    prefetchAllProgress({
+      level1Lists: LEVEL1_LISTS,
+      level2Lists: LEVEL2_LISTS,
+      level3Lists: LEVEL3_LISTS,
+      phonicsLists: PHONICS_LISTS,
     });
   }, 500); // Delay 500ms to not block initial render
 

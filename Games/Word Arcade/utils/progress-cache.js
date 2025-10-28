@@ -15,8 +15,8 @@
 
 class ProgressCache {
   constructor() {
-    this.CACHE_KEY_PREFIX = 'wa_progress_';
-    this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  this.CACHE_KEY_PREFIX = 'wa_progress_';
+  this.CACHE_DURATION = 10 * 60 * 1000; // 10 minutes default TTL
     this.USER_KEY_CACHE = 'wa_user_key';
     this.inFlight = new Map(); // Prevent duplicate fetches
     this.listeners = new Map(); // Event listeners per cache type
