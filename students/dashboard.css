@@ -60,6 +60,14 @@ html { overflow-x:hidden; }
 .card-content.homework-scroll { max-height: 50vh; overflow-y: auto; }
 .card-content.homework-scroll::-webkit-scrollbar { width: 0px; }
 
+/* Dark background for Account, Settings, Your Work containers */
+.card:has(> h2[data-i18n="Account"]) .card-content,
+.card:has(> h2[data-i18n="Settings"]) .card-content,
+.card:has(> h2[data-i18n="Your Work"]) .card-content {
+  background: #232729;
+  border-color: #229690;
+}
+
 /* =====================
    Word Arcade Card Hover Effects
    ===================== */
