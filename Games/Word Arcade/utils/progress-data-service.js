@@ -13,6 +13,7 @@ const CACHE_KEYS = {
   level1: 'level1_progress',
   level2: 'level2_progress',
   level3: 'level3_progress',
+  level4: 'level4_progress',
   phonics: 'phonics_progress',
   stars: 'level_stars',
 };
@@ -247,6 +248,10 @@ export async function loadLevel3Progress(lists) {
   return loadProgress(CACHE_KEYS.level3, lists, 'general', matchesLevelList);
 }
 
+export async function loadLevel4Progress(lists) {
+  return loadProgress(CACHE_KEYS.level4, lists, 'general', matchesLevelList);
+}
+
 export async function loadPhonicsProgress(lists) {
   return loadProgress(CACHE_KEYS.phonics, lists, 'phonics', matchesLevelList);
 }
@@ -266,6 +271,7 @@ export async function prefetchAllProgress(levels) {
     if (!levels || levels.level1 !== false) tasks.push(loadSampleWordlistProgress(levels?.level1Lists || []));
     if (!levels || levels.level2 !== false) tasks.push(loadLevel2Progress(levels?.level2Lists || []));
     if (!levels || levels.level3 !== false) tasks.push(loadLevel3Progress(levels?.level3Lists || []));
+    if (!levels || levels.level4 !== false) tasks.push(loadLevel4Progress(levels?.level4Lists || []));
     if (!levels || levels.phonics !== false) tasks.push(loadPhonicsProgress(levels?.phonicsLists || []));
     if (!levels || levels.stars !== false) tasks.push(loadStarCounts());
     await Promise.allSettled(tasks);

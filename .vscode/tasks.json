@@ -22,6 +22,17 @@
 			"type": "shell",
 			"command": "echo Cache-bust ready. Please hard refresh browser (Ctrl+F5) and re-test Library Parse.",
 			"group": "build"
+		},
+		{
+			"label": "Netlify functions quick env check (9000, PS)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"(Invoke-RestMethod 'http://localhost:9000/.netlify/functions/log_word_attempt?env=1').env.hasServiceKey"
+			],
+			"group": "build"
 		}
 	]
 }

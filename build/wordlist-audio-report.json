@@ -1,13 +1,79 @@
 [
   {
-    "file": "EasyAnimals.json",
-    "total": 20,
-    "processing": 20,
-    "skippedExisting": 0,
-    "generated": 0,
+    "file": "ChoresKids.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 2,
+    "generated": 8,
     "errors": 0,
     "usedExamples": 0,
-    "generatedItself": 20,
-    "onlyItself": true
+    "generatedItself": 9,
+    "onlyItself": false
+  },
+  {
+    "file": "ClassroomPhrasesKids.json",
+    "total": 12,
+    "processing": 12,
+    "skippedExisting": 1,
+    "generated": 11,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 11,
+    "onlyItself": false
+  },
+  {
+    "file": "DailyRoutines2.json",
+    "total": 12,
+    "processing": 12,
+    "skippedExisting": 1,
+    "generated": 11,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 11,
+    "onlyItself": false
+  },
+  {
+    "file": "PhrasalVerbsKids1.json",
+    "total": 17,
+    "processing": 17,
+    "skippedExisting": 2,
+    "generated": 15,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 16,
+    "onlyItself": false
+  },
+  {
+    "file": "PhrasalVerbsKids2.json",
+    "total": 16,
+    "processing": 16,
+    "skippedExisting": 0,
+    "generated": 16,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 16,
+    "onlyItself": false
+  },
+  {
+    "file": "PlaygroundActions.json",
+    "total": 10,
+    "processing": 10,
+    "skippedExisting": 0,
+    "generated": 10,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 10,
+    "onlyItself": false
+  },
+  {
+    "file": "SportsHobbiesKids2.json",
+    "total": 18,
+    "processing": 18,
+    "skippedExisting": 5,
+    "generated": 13,
+    "errors": 0,
+    "usedExamples": 0,
+    "generatedItself": 14,
+    "onlyItself": false
   }
 ]

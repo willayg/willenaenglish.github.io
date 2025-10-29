@@ -486,8 +486,9 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
     // Heuristic to determine current level from listName/path
     const ln = (listName || '').toLowerCase();
-    const isL2 = ln.includes('level 2 - ') || ln.includes('sample-wordlists-level2/');
-    const isL3 = ln.includes('level 3 - ') || ln.includes('sample-wordlists-level3/');
+  const isL2 = ln.includes('level 2 - ') || ln.includes('sample-wordlists-level2/');
+  const isL3 = ln.includes('level 3 - ') || ln.includes('sample-wordlists-level3/');
+  const isL4 = ln.includes('level 4 - ') || ln.includes('sample-wordlists-level4/');
 
     if (isL2) {
       const { showLevel2Modal } = await import('./level2_modal.js');
@@ -505,6 +506,19 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     if (isL3) {
       const { showLevel3Modal } = await import('./level3_modal.js');
       showLevel3Modal({
+        onChoose: (data) => {
+          if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
+            window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+          }
+        },
+        onClose: () => {}
+      });
+      return;
+    }
+
+    if (isL4) {
+      const { showLevel4Modal } = await import('./level4_modal.js');
+      showLevel4Modal({
         onChoose: (data) => {
           if (window.WordArcade && typeof window.WordArcade.loadSampleWordlistByFilename === 'function') {
             window.WordArcade.loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
