@@ -48,9 +48,12 @@ function redirectToStudentLogin() {
 // -----------------------------
 async function fetchJSON(url, {
   method = 'GET', timeoutMs = 15000,
-  headers = {}, body, cache = 'no-store', credentials = 'include'
+  headers = {}, body, cache = 'no-store', credentials = 'include',
+  externalSignal
 } = {}) {
   const ctrl = new AbortController();
+  // Allow callers to abort via their own signal
+  try { if (externalSignal) externalSignal.addEventListener('abort', () => { try { ctrl.abort(); } catch {} }); } catch {}
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
@@ -375,20 +378,34 @@ function showInlineError(text, onRetry) {
 // -----------------------------
 // Core flow
 // -----------------------------
-async function callProgressSummary(section, params = {}) {
+async function callProgressSummary(section, params = {}, opts = {}) {
   const url = new URL(FN('progress_summary'), window.location.origin);
   url.searchParams.set('section', section);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
   // Use cookie-based auth only
-  return fetchJSON(url.toString());
+  return fetchJSON(url.toString(), {
+    timeoutMs: typeof opts.timeoutMs === 'number' ? opts.timeoutMs : 15000,
+    cache: 'no-store',
+    credentials: 'include',
+    externalSignal: opts.signal,
+  });
 }
 
-async function fetchChallengingWords() {
+// Lightweight in-memory cache for review candidates
+let __reviewCache = { words: null, ts: 0, inflight: null };
+
+async function fetchChallengingWords(opts = {}) {
   // Prefer new v2 algorithm; allow fallback if disabled globally
-  const section = (window.__WA_REVIEW_ALGO === 'legacy') ? 'challenging' : 'challenging_v2';
-  const list = await callProgressSummary(section);
+  const sectionPrimary = (window.__WA_REVIEW_ALGO === 'legacy') ? 'challenging' : 'challenging_v2';
+  let list;
+  try {
+    list = await callProgressSummary(sectionPrimary, {}, { signal: opts.signal, timeoutMs: opts.timeoutMs });
+  } catch (e) {
+    // Fallback to legacy endpoint quickly on error/timeout
+    try { list = await callProgressSummary('challenging', {}, { signal: opts.signal, timeoutMs: Math.min(8000, opts.timeoutMs || 8000) }); } catch {}
+  }
   if (!Array.isArray(list)) return [];
   const hasHangul = (s) => /[\u3131-\uD79D\uAC00-\uD7AF]/.test(s);
   const hasLatin = (s) => /[A-Za-z]/.test(s);
@@ -423,7 +440,7 @@ async function fetchChallengingWords() {
     return { eng, kor, ...(def?{def}:{} )};
   };
   const cleaned = list.map(sanitizeEntry).filter(Boolean);
-  // If after cleaning we have <5, relax duplicate Korean rule by reprocessing skipped ones (without the identical Hangul check)
+  // If after cleaning we have <5, try a relaxed pass on the same data
   if (cleaned.length < 5) {
     const relaxed = list.map(it => {
       if (!it || typeof it !== 'object') return null;
@@ -1098,6 +1115,21 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }, 500); // Delay 500ms to not block initial render
 
+  // Also prefetch review candidates in the background to avoid cold-start latency
+  setTimeout(() => {
+    if (__reviewCache.inflight) return;
+    __reviewCache.inflight = (async () => {
+      try {
+        const words = await fetchChallengingWords({ timeoutMs: 10000 });
+        if (Array.isArray(words) && words.length) {
+          __reviewCache.words = words;
+          __reviewCache.ts = Date.now();
+        }
+      } catch {}
+      __reviewCache.inflight = null;
+    })();
+  }, 1200);
+
   // Auto-open a saved game when linked with ?open=saved&id=123
   try {
     const params = new URLSearchParams(window.location.search);
@@ -1167,11 +1199,32 @@ async function loadChallengingAndStart() {
     return;
   }
   try {
-    let words = await fetchChallengingWords();
+    // Show a tiny loading overlay to avoid "nothing is happening" feeling
+    const abort = new AbortController();
+    const hide = showLoadingOverlay('Loading review candidates…', () => abort.abort());
+    // Use warm cache if present (under 2 minutes old)
+    const now = Date.now();
+    if (__reviewCache.words && (now - __reviewCache.ts) < 2 * 60 * 1000) {
+      const cached = __reviewCache.words.slice(0);
+      hide();
+      return showReviewSelectionModal(cached, {
+        min: 5,
+        max: 10,
+        onStart: (chosen) => {
+          try { startNewReviewCombined(chosen); } catch (e) { console.error('Review start failed', e); inlineToast('Could not start review.'); }
+        },
+        onCancel: () => {}
+      });
+    }
+
+    let words = await fetchChallengingWords({ signal: abort.signal, timeoutMs: 12000 });
+    hide();
     if (!Array.isArray(words)) words = [];
     // Defensive sanitize: drop any non-object or missing eng/kor pairs
     words = words.filter(w => w && typeof w === 'object' && typeof w.eng === 'string' && typeof w.kor === 'string' && w.eng.trim() && w.kor.trim());
     if (!words.length) { inlineToast('No challenging words to review yet.'); return; }
+    // Update cache
+    try { __reviewCache.words = words.slice(0); __reviewCache.ts = Date.now(); } catch {}
     // Keep full list for selection; enforce max 10 in selection modal.
     try { if (window.__WA_DEBUG_REVIEW) console.debug('[Review] candidate words', words); } catch {}
     // Track that we opened the 3x (review) selection modal from the opening menu
@@ -1189,6 +1242,34 @@ async function loadChallengingAndStart() {
     console.error('Failed to load challenging words:', e);
     inlineToast('Could not load review candidates.');
   }
+}
+
+// Minimal loading overlay
+function showLoadingOverlay(message = 'Loading…', onCancel) {
+  try { hideLoadingOverlay(); } catch {}
+  const el = document.createElement('div');
+  el.id = 'wa_loading_overlay';
+  el.style.position = 'fixed';
+  el.style.inset = '0';
+  el.style.background = 'rgba(0,0,0,0.35)';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'center';
+  el.style.zIndex = '9998';
+  el.innerHTML = `
+    <div style="background:#ffffff; padding:16px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.18); min-width: 240px; text-align:center; font:14px/1.4 system-ui, Arial, sans-serif; color:#222;">
+      <div style="margin-bottom:10px; font-weight:600;">${message}</div>
+      <div style="margin-bottom:12px; opacity:.75;">Please wait…</div>
+      <button id="wa_loading_cancel" style="padding:8px 12px; border-radius:10px; border:none; background:#93cbcf; color:#fff; font-weight:700; cursor:pointer;">Cancel</button>
+    </div>`;
+  document.body.appendChild(el);
+  const btn = el.querySelector('#wa_loading_cancel');
+  if (btn) btn.addEventListener('click', () => { try { if (typeof onCancel === 'function') onCancel(); } finally { hideLoadingOverlay(); } });
+  return () => { try { hideLoadingOverlay(); } catch {} };
+}
+function hideLoadingOverlay() {
+  const el = document.getElementById('wa_loading_overlay');
+  if (el && el.parentNode) el.parentNode.removeChild(el);
 }
 
 function startNewReviewCombined(chosenWords) {
