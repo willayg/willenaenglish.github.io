@@ -263,51 +263,33 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   // canonicalMode already defined at top of function
 
-  // Grouped items in requested order
-  const labelWithBest = (id, svgPath, title, colorClass, textIcon, textColor) => {
-    // Canonicalize the mode ID to match how it's stored in bestByMode
+  // Build visual parts for a mode: stacked layout (icon large → stars → small colored title)
+  const buildModeVisual = (id, svgPath, title, colorClass, textIcon, textColor) => {
     const canonicalId = canonicalMode(id);
     const best = bestByMode[canonicalId];
-    // If no data, show 0% (per request)
-    let meta = '0%';
-    let pct = null;
     let starsHtml = '';
-    
-    // In Review mode, don't show any stats - just the icon
-    if (isReview) {
-      return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div>${textIcon ? `<div style="font-size:clamp(20px, 5vw, 48px);font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}" style="width:120px;height:120px;" />`}</div>
-      </div>`;
-    }
-    
-    if (best && best.pct != null) {
-      pct = best.pct;
-      const metaClass = pct === 0 ? 'zero' : colorClass;
-      meta = `<span class="mode-meta ${metaClass}">${pct}%</span>`;
-      const filled = pctToStars(pct);
-      // Render 5 stars, filled or empty
-      for (let i = 0; i < 5; i++) {
-        starsHtml += starSvg(i < filled);
+
+    if (!isReview) {
+      if (best && typeof best.pct === 'number') {
+        const filled = pctToStars(best.pct);
+        for (let i = 0; i < 5; i++) starsHtml += starSvg(i < filled);
+      } else {
+        // No data or points-only: show empty stars
+        for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
       }
-    } else if (best && best.pts != null) {
-      meta = `<span class="mode-meta zero">0%</span>`;
-      // no pct -> show 0 filled stars but show empties
-      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
-    } else {
-      // No data yet: show empty stars and 0% with same styling/spacing
-      meta = `<span class="mode-meta zero">0%</span>`;
-      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
     }
 
-    // Return content block; actual button HTML will wrap this
-  return `<div class="mode-content">
-      <div class="mode-left">
-        <div class="mode-title ${colorClass}" style="color:#ff6fb0;">${title}</div>
-        <div class="star-row">${starsHtml}</div>
-    <div>${meta}</div>
-      </div>
-      <div class="mode-icon">${textIcon ? `<div style="font-size:clamp(20px, 5vw, 48px);font-weight:800;color:${textColor || '#19777e'};">${textIcon}</div>` : `<img src="${svgPath}" alt="${id}"/>`}</div>
-    </div>`;
+    // Button inner: stacked vertically: large icon → stars → small title (all centered)
+    return `
+      <div class="mode-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;height:100%;padding:12px;">
+        <div class="mode-icon" style="flex-shrink:0;">
+          ${textIcon
+            ? `<div style="font-size:clamp(48px, 12vw, 94px);font-weight:800;color:${textColor || '#19777e'};line-height:1;display:block;">${textIcon}</div>`
+            : `<img src="${svgPath}" alt="${id}" style="width:119px;height:119px;object-fit:contain;flex-shrink:0;display:block;"/>`}
+        </div>
+        ${isReview ? '' : `<div class="star-row" style="justify-content:center;gap:4px;margin:4px 0;flex-shrink:0;">${starsHtml}</div>`}
+        <div class="mode-title ${colorClass}" style="font-size:13px;font-weight:700;margin:0;text-align:center;line-height:1.3;flex-shrink:0;color:#888888;">${title}</div>
+      </div>`;
   };
   // Create a single list of modes in the order shown in the image
   // Check if this is a phonics list to show different modes.
@@ -322,13 +304,13 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     // Use existing mode ids so colors and loaders work out-of-the-box
     { id: 'listen', title: 'Listen & Pick', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
     { id: 'missing_letter', title: 'Missing Letter', icon: './assets/Images/icons/questions.svg', colorClass: 'browse' },
-    { id: 'multi_choice',   title: 'Read & Find',   icon: './assets/Images/icons/reading.png?v=20250910a',   colorClass: 'basic' },
-    { id: 'listen_and_spell',  title: 'Spell It Out',  icon: './assets/Images/icons/translate-and-spell.png?v=20250910a', colorClass: 'browse' },
+    { id: 'multi_choice',   title: 'Read & Find',   icon: './assets/Images/icons/read.svg',   colorClass: 'basic' },
+    { id: 'listen_and_spell',  title: 'Spell It Out',  icon: './assets/Images/icons/listen-and-spell.svg', colorClass: 'browse' },
   ] : [
     { id: 'meaning', title: 'Match', icon: './assets/Images/icons/matching.png?v=20250910a', colorClass: 'for-you' },
     { id: 'listening', title: 'Listen', icon: './assets/Images/icons/listening.png?v=20250910a', colorClass: 'review' },
-    { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/reading.png?v=20250910a', colorClass: 'basic' },
-  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.png?v=20250910a', colorClass: 'browse' },
+    { id: 'multi_choice', title: 'Read', icon: './assets/Images/icons/read.svg', colorClass: 'basic' },
+  { id: 'listen_and_spell', title: 'Spell', icon: './assets/Images/icons/listen-and-spell.svg', colorClass: 'browse' },
   { id: 'sentence', title: 'Sentence', icon: './assets/Images/icons/quiz.svg', colorClass: 'for-you' },
     { id: 'level_up', title: 'Level up', icon: './assets/Images/icons/level up.png?v=20250910a', colorClass: 'review' },
   ];
@@ -394,17 +376,17 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     height: 56px; max-height: 60px; --mode-btn-height: 56px;
     display: flex; align-items: center; justify-content: center;
     border: 2px solid #21b3be;
-    border-radius: 10px;
+    border-radius: 20px;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease;
     box-shadow: 0 2px 6px rgba(33, 179, 190, 0.1);
   `;
   {
     const displayName = (typeof humanizeListName === 'function') ? humanizeListName(listName) : (listName || 'Word List');
-    studyWordsBtn.setAttribute('aria-label', `${displayName} Word List. Click to study the words.`);
+    studyWordsBtn.setAttribute('aria-label', `${displayName}. Click to study the words.`);
     studyWordsBtn.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
-        <span style="font-weight:800;">${displayName} Word List</span>
+        <span style="font-weight:800;">${displayName}</span>
         <span style="font-size:10px;color:rgba(212, 214, 219, 1);font-weight:600;">click here</span>
       </div>`;
   }
@@ -434,16 +416,33 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   btn.className = 'mode-btn mode-card';
   btn.setAttribute('data-mode', m.id);
   btn.dataset.modeId = m.id; // keep legacy data-modeId for any existing code
-    btn.innerHTML = labelWithBest(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
-    btn.onclick = () => onModeChosen && onModeChosen(m.id);
+  btn.setAttribute('aria-label', m.title);
+  
+  btn.innerHTML = buildModeVisual(m.id, m.icon, m.title, m.colorClass, m.textIcon, m.textColor);
+  btn.onclick = () => onModeChosen && onModeChosen(m.id);
     
-    // All mode cards: cyan border, pink text
-    btn.style.border = `2px solid #21b3be`;
-    btn.style.borderRadius = '8px';
-    btn.style.background = '#fff';
-    btn.style.color = '#ff6fb0';
+  // Determine border color by mode ID (10% brighter and more vivid)
+  let borderColor = '#40D4DE'; // default bright cyan
+  if (m.id === 'listening' || m.id === 'level_up') {
+    borderColor = '#FF85D0'; // bright pink
+  } else if (m.id === 'multi_choice') {
+    borderColor = '#FFB84D'; // bright orange
+  } else if (m.id === 'spelling' || m.id === 'listen_and_spell' || m.id === 'missing_letter') {
+    borderColor = '#7B9FFF'; // bright blue
+  } else if (m.id === 'meaning') {
+    borderColor = '#40D4DE'; // bright cyan
+  } else if (m.id === 'sentence') {
+    borderColor = '#40D4DE'; // bright cyan
+  }
+
+  // All mode cards: individualized borders, white background, more rounded corners
+  btn.style.border = `3px solid ${borderColor}`;
+  btn.style.borderRadius = '28px';
+  btn.style.background = '#fff';
+  btn.style.color = '#ff6fb0';
+  btn.style.minHeight = '220px';
     
-    listContainer.appendChild(btn);
+  listContainer.appendChild(btn);
   });
 
   // Add "Change Level" button (below modes, compact on tablets/iPads)
@@ -537,6 +536,19 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
   });
 
   // Append bottom controls inside the container (grid) in order: Change Level, Main Menu
-  listContainer.appendChild(changeLevelBtn);
-  listContainer.appendChild(mainMenuBtn);
+  const buttonContainer = document.getElementById('modeSelectCard');
+  
+  // Create a wrapper for buttons outside the mode list
+  const buttonsWrapper = document.createElement('div');
+  buttonsWrapper.style.cssText = `
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 16px;
+    padding: 0 12px;
+  `;
+  
+  buttonsWrapper.appendChild(changeLevelBtn);
+  buttonsWrapper.appendChild(mainMenuBtn);
+  buttonContainer.appendChild(buttonsWrapper);
 }
