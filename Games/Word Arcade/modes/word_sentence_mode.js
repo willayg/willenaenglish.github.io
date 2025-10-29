@@ -397,17 +397,28 @@ export function run(ctx){
   function updateHeaderScore(){ const el = root.querySelector('#smScore'); if (el) el.textContent = `${totalPoints} pts`; }
 
   function playSentenceAudio(item){
+    if (playSentenceAudio.isPlaying) return;
     if (item.sentenceAudioUrl){
       try {
         const a = new Audio(item.sentenceAudioUrl);
         let fellBack = false;
-        const fallback = (reason)=>{ if (fellBack) return; fellBack = true; if (ctx.playTTS) ctx.playTTS(item.sentence); };
+        const fallback = (reason)=>{ if (fellBack) return; fellBack = true; playSentenceAudio.isPlaying = false; if (ctx.playTTS) ctx.playTTS(item.sentence); };
         a.onerror = ()=> fallback(new Error('audio error'));
+        playSentenceAudio.isPlaying = true;
+        a.onended = () => { playSentenceAudio.isPlaying = false; };
         const p = a.play(); if (p && typeof p.catch === 'function') p.catch(err=> fallback(err));
         return;
       } catch { /* fallback below */ }
     }
-    if (ctx.playTTS){ ctx.playTTS(item.sentence); }
+    if (ctx.playTTS){ 
+      playSentenceAudio.isPlaying = true;
+      try {
+        ctx.playTTS(item.sentence);
+        setTimeout(() => { playSentenceAudio.isPlaying = false; }, 12000);
+      } catch(e) {
+        playSentenceAudio.isPlaying = false;
+      }
+    }
   }
 
   function playSfx(kind){
