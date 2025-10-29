@@ -1088,6 +1088,9 @@ export function run(ctx){
 	function updateHeaderScore(){ const el = root.querySelector('#smScore'); if (el) el.textContent = `${totalPoints} pts`; }
 
 	function playSentenceAudio(item){
+    // Prevent rapid-clicking: skip if audio is already playing
+    if (playSentenceAudio.isPlaying) return;
+    
     // Robust playback with fallback on async rejection or load error.
     if (item.sentenceAudioUrl){
       try {
@@ -1096,12 +1099,24 @@ export function run(ctx){
         let fellBack = false;
         const fallback = (reason)=>{
           if (fellBack) return; fellBack = true;
+          playSentenceAudio.isPlaying = false;
           console.warn('[SentenceMode] sentence audio failed, falling back to TTS', reason?.message || reason, item.sentenceAudioUrl);
           if (ctx.playTTS) ctx.playTTS(item.sentence);
         };
         a.onerror = (ev)=> fallback(ev instanceof Event ? new Error('audio error event') : ev);
+        
+        // Mark as playing and unlock when done
+        playSentenceAudio.isPlaying = true;
+        a.onended = () => { playSentenceAudio.isPlaying = false; };
+        
         const p = a.play();
-        if (p && typeof p.catch === 'function') p.catch(err=> fallback(err));
+        if (p && typeof p.catch === 'function') {
+          p.catch(err=> fallback(err));
+          p.then(() => {
+            // Wait for audio to finish before unlocking
+            a.onended = () => { playSentenceAudio.isPlaying = false; };
+          });
+        }
         return; // do not run TTS immediately; wait for success/failure
       } catch(e){
         console.warn('[SentenceMode] sentence audio immediate play exception', e);
@@ -1109,7 +1124,21 @@ export function run(ctx){
       }
     }
     // No usable sentenceAudioUrl OR playback failed synchronously
-    if (ctx.playTTS){ ctx.playTTS(item.sentence); }
+    if (ctx.playTTS){
+      playSentenceAudio.isPlaying = true;
+      // TTS should handle its own playback, but we'll try to detect when it's done
+      try {
+        const origPlayTTS = ctx.playTTS(item.sentence);
+        // If playTTS returns a promise or has cleanup, handle it
+        if (origPlayTTS && typeof origPlayTTS.finally === 'function') {
+          origPlayTTS.finally(() => { playSentenceAudio.isPlaying = false; });
+        }
+        // Fallback: unlock after a reasonable timeout (most sentences < 10s)
+        setTimeout(() => { playSentenceAudio.isPlaying = false; }, 12000);
+      } catch(e) {
+        playSentenceAudio.isPlaying = false;
+      }
+    }
 	}
 
 	function playSfx(kind){
