@@ -13,6 +13,7 @@ export const LEVEL1_LISTS = [
   { label: 'School Things', file: 'SchoolSupplies.json', emoji: '✏️' },
   { label: 'Action Words (Easy)', file: 'EasyVerbs.json', emoji: '🏃‍♂️' },
   { label: 'Feelings & Emotions', file: 'Feelings.json', emoji: '😊' },
+  { label: 'Questions (Basics)', file: 'QuestionsBasics.json', emoji: '❓' },
 ];
 
 export const LEVEL2_LISTS = [
@@ -21,6 +22,7 @@ export const LEVEL2_LISTS = [
   { label: 'Verbs 2', file: 'sample-wordlists-level2/Verbs2.json', emoji: '💪', progressKey: 'Level 2 - Verbs 2' },
   { label: 'Verbs 3', file: 'sample-wordlists-level2/Verbs3.json', emoji: '🏃', progressKey: 'Level 2 - Verbs 3' },
   { label: 'Verbs 4', file: 'sample-wordlists-level2/Verbs4.json', emoji: '💬', progressKey: 'Level 2 - Verbs 4' },
+  { label: 'Polite Requests (Kids)', file: 'sample-wordlists-level2/PoliteRequestsKids.json', emoji: '🙏', progressKey: 'Level 2 - Polite Requests (Kids)' },
   { label: 'Adjectives 1', file: 'sample-wordlists-level2/Adjectives1.json', emoji: '✨', progressKey: 'Level 2 - Adjectives 1' },
   { label: 'Adjectives 2', file: 'sample-wordlists-level2/Adjectives2.json', emoji: '✨', progressKey: 'Level 2 - Adjectives 2' },
   { label: 'Adjectives 3', file: 'sample-wordlists-level2/Adjectives3.json', emoji: '✨', progressKey: 'Level 2 - Adjectives 3' },
@@ -49,6 +51,16 @@ export const LEVEL3_LISTS = [
   { label: 'Adjectives 4', file: 'sample-wordlists-level3/Adjectives4.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 4' },
   { label: 'Adjectives 5', file: 'sample-wordlists-level3/Adjectives5.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 5' },
   { label: 'Adjectives 6', file: 'sample-wordlists-level3/Adjectives6.json', emoji: '✨', progressKey: 'Level 3 - Adjectives 6' },
+];
+
+export const LEVEL4_LISTS = [
+  { label: 'Phrasal Verbs 1 (Kids)', file: 'sample-wordlists-level4/PhrasalVerbsKids1.json', emoji: '🧩', progressKey: 'Level 4 - Phrasal Verbs Kids 1' },
+  { label: 'Phrasal Verbs 2 (Kids)', file: 'sample-wordlists-level4/PhrasalVerbsKids2.json', emoji: '🧩', progressKey: 'Level 4 - Phrasal Verbs Kids 2' },
+  { label: 'Classroom Phrases (Kids)', file: 'sample-wordlists-level4/ClassroomPhrasesKids.json', emoji: '🏫', progressKey: 'Level 4 - Classroom Phrases Kids' },
+  { label: 'Daily Routines 2', file: 'sample-wordlists-level4/DailyRoutines2.json', emoji: '🕒', progressKey: 'Level 4 - Daily Routines 2' },
+  { label: 'Chores (Kids)', file: 'sample-wordlists-level4/ChoresKids.json', emoji: '🧹', progressKey: 'Level 4 - Chores Kids' },
+  { label: 'Playground Actions', file: 'sample-wordlists-level4/PlaygroundActions.json', emoji: '🎠', progressKey: 'Level 4 - Playground Actions' },
+  { label: 'Sports & Hobbies 2 (Kids)', file: 'sample-wordlists-level4/SportsHobbiesKids2.json', emoji: '🎯', progressKey: 'Level 4 - Sports & Hobbies Kids 2' },
 ];
 
 export const PHONICS_LISTS = [

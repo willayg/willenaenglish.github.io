@@ -12,6 +12,7 @@ import { showBrowseModal } from './ui/browse_modal.js';
 import { showPhonicsModal } from './ui/phonics_modal.js';
 import { showLevel2Modal } from './ui/level2_modal.js';
 import { showLevel3Modal } from './ui/level3_modal.js';
+import { showLevel4Modal } from './ui/level4_modal.js';
 // Ensure star overlay script is loaded once; it attaches window.showRoundStars
 import './ui/star_overlay.js';
 import { FN } from './scripts/api-base.js';
@@ -23,7 +24,7 @@ import { showReviewSelectionModal, runReviewSession } from './modes/review_sessi
 import { historyManager } from './history-manager.js';
 // Progress cache for instant progress bar loading
 import { progressCache } from './utils/progress-cache.js';
-import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, PHONICS_LISTS } from './utils/level-lists.js';
+import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js';
 
 // -----------------------------
@@ -897,10 +898,9 @@ function showLevelsMenu() {
       <span style="color: ${level3Color};">Level 3</span>
       <span class="wa-card-stars" id="wa-stars-level3" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
-    <button id="level4Btn" class="wa-option wa-option-card wa-level-4 wa-level-inactive" type="button" style="border-color: ${level4Color}; opacity: 0.6;">
+    <button id="level4Btn" class="wa-option wa-option-card wa-level-4" type="button" style="border-color: ${level4Color};">
       <img src="./assets/Images/icons/4green-butterfly.svg" alt="Level 4" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level4Color};">Level 4</span>
-      <span style="font-size: 0.75rem; color: #999; margin-top: 4px;">Coming soon</span>
     </button>
     <button id="level5Btn" class="wa-option wa-option-card wa-level-5 wa-level-inactive" type="button" style="border-color: ${level5Color}; opacity: 0.6;">
       <img src="./assets/Images/icons/5blue-bird.svg" alt="Level 5" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
@@ -985,11 +985,10 @@ function showLevelsMenu() {
     });
   }
   
-  // Levels 4-5 - Coming Soon
-  [4, 5].forEach(level => {
+  // Level 5 - Coming Soon
+  [5].forEach(level => {
     const btn = document.getElementById(`level${level}Btn`);
     if (btn) {
-      // Clone and replace to remove any old listeners
       const newBtn = btn.cloneNode(true);
       btn.replaceWith(newBtn);
       newBtn.addEventListener('click', () => {
@@ -998,6 +997,22 @@ function showLevelsMenu() {
       });
     }
   });
+
+  // Level 4 - shows the level 4 modal
+  const level4Btn = document.getElementById('level4Btn');
+  if (level4Btn) {
+    const newLevel4Btn = level4Btn.cloneNode(true);
+    level4Btn.replaceWith(newLevel4Btn);
+    newLevel4Btn.addEventListener('click', () => {
+      historyManager.navigateToModal('level4Modal', 'levels_menu');
+      showLevel4Modal({
+        onChoose: (data) => {
+          loadSampleWordlistByFilename(data.listFile, { force: true, listName: data.listName });
+        },
+        onClose: () => {}
+      });
+    });
+  }
 
   // Level 3 - shows the level 3 modal
   const level3Btn = document.getElementById('level3Btn');
@@ -1111,6 +1126,7 @@ window.addEventListener('DOMContentLoaded', () => {
       level1Lists: LEVEL1_LISTS,
       level2Lists: LEVEL2_LISTS,
       level3Lists: LEVEL3_LISTS,
+      level4Lists: LEVEL4_LISTS,
       phonicsLists: PHONICS_LISTS,
     });
   }, 500); // Delay 500ms to not block initial render
@@ -1162,6 +1178,7 @@ window.addEventListener('DOMContentLoaded', () => {
           'level1_progress',
           'level2_progress',
           'level3_progress',
+          'level4_progress',
           'phonics_progress',
           'level_stars'
         ]);

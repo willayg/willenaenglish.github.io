@@ -185,7 +185,16 @@ export function run(ctx){
     }, 700);
   }
 
-  enrichSentenceAudioIDAware(items).finally(()=>{ showIntroThenStart(); });
+  // Preflight: resolve sentence_ids server-side (fast, idempotent) so audio can be disambiguated per sentence.
+  // This uses the existing Netlify function upsert_sentences_batch with skip_audio=true (no generation at runtime).
+  (async () => {
+    try {
+      await resolveSentenceIdsIfMissing(items);
+    } catch(e){ console.debug('[WordSentenceMode] resolveSentenceIdsIfMissing failed', e?.message); }
+    try {
+      await enrichSentenceAudioIDAware(items);
+    } catch(e){ console.debug('[WordSentenceMode] enrichSentenceAudio failed', e?.message); }
+  })().finally(()=>{ showIntroThenStart(); });
 
   let index = 0;
   let sentencesCorrect = 0;
@@ -433,6 +442,42 @@ export function run(ctx){
       }
       const a = playSfx.cache[kind]; if(!a) return; a.currentTime = 0; const p = a.play(); if (p && typeof p.catch === 'function') p.catch(()=>{});
     } catch {}
+  }
+}
+
+// Resolve and attach sentence_id for each item when missing by upserting/finding in the Sentences table.
+// Leverages server function to ensure stable IDs for audio keying (sent_<id>.mp3).
+async function resolveSentenceIdsIfMissing(items){
+  if (!Array.isArray(items) || !items.length) return;
+  const need = items.filter(it => !it.sentence_id && it.sentence && typeof it.sentence === 'string');
+  if (!need.length) return;
+  // Build unique list of texts; include word link to help future analytics (word_sentences join).
+  const byText = new Map();
+  need.forEach(it => {
+    const text = it.sentence.trim().replace(/\s+/g,' ');
+    if (!byText.has(text)) byText.set(text, new Set());
+    if (it.eng) byText.get(text).add(String(it.eng));
+  });
+  const payload = {
+    action: 'upsert_sentences_batch',
+    skip_audio: true,
+    sentences: Array.from(byText.entries()).map(([text, wordsSet]) => ({ text, words: Array.from(wordsSet) }))
+  };
+  try {
+    const r = await fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    if (!r.ok) { throw new Error('upsert_sentences_batch HTTP '+r.status); }
+    const js = await r.json();
+    if (!js || !js.success || !Array.isArray(js.sentences)) return;
+    const idByText = new Map(js.sentences.map(s => [s.text, s.id]));
+    // Attach ids back to items; if item already had a chosen nested sentence, prefer that id.
+    items.forEach(it => {
+      if (it.sentence_id) return;
+      const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
+      const id = key ? idByText.get(key) : null;
+      if (id) it.sentence_id = id;
+    });
+  } catch(e){
+    console.debug('[WordSentenceMode] sentence id resolve error', e?.message);
   }
 }
 

@@ -144,7 +144,12 @@ exports.handler = async (event) => {
           const site = process.env.URL || process.env.DEPLOY_PRIME_URL || '';
           proxyUrl = site ? site.replace(/\/$/,'') + '/.netlify/functions/eleven_labs_proxy' : '/.netlify/functions/eleven_labs_proxy';
         }
-        const tRes = await fetch(proxyUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: sentObj.text, voice_id: voiceId }) });
+        const proxyBody = { text: sentObj.text, voice_id: voiceId };
+        // Allow caller to select Eleven Labs model explicitly via request body
+        if (body.model_id && typeof body.model_id === 'string') proxyBody.model_id = body.model_id;
+        // Optional voice_settings passthrough if provided
+        if (body.voice_settings && typeof body.voice_settings === 'object') proxyBody.voice_settings = body.voice_settings;
+        const tRes = await fetch(proxyUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(proxyBody) });
         let js = null;
         try { js = await tRes.json(); } catch(parseErr){ /* keep null for diagnostics */ }
         if(!tRes.ok){

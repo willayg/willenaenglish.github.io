@@ -58,17 +58,33 @@ function looksKorean(str){
 }
 
 async function translate(text){
-  if (!endpoint){
-    return null; // no endpoint configured; skip translation
+  // If an endpoint is provided, use the Netlify translate function
+  if (endpoint){
+    const url = endpoint.includes('/.netlify/functions/translate')
+      ? endpoint
+      : endpoint + '/.netlify/functions/translate';
+    const res = await fetch(url + `?target=ko&text=${encodeURIComponent(text)}`);
+    if (!res.ok) throw new Error(`translate failed ${res.status}`);
+    const js = await res.json();
+    const out = (js && (js.translated || js.translatedText)) || null;
+    return out;
   }
-  const url = endpoint.includes('/.netlify/functions/translate')
-    ? endpoint
-    : endpoint + '/.netlify/functions/translate';
-  const res = await fetch(url + `?target=ko&text=${encodeURIComponent(text)}`);
-  if (!res.ok) throw new Error(`translate failed ${res.status}`);
-  const js = await res.json();
-  const out = (js && (js.translated || js.translatedText)) || null;
-  return out;
+  // Fallback: call public LibreTranslate directly (no key). May be rate-limited.
+  try {
+    const libreUrl = (process.env.LIBRE_TRANSLATE_URL || 'https://libretranslate.com').replace(/\/$/, '');
+    const libreKey = process.env.LIBRE_TRANSLATE_KEY || '';
+    const res = await fetch(libreUrl + '/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text, source: 'en', target: 'ko', format: 'text', api_key: libreKey || undefined })
+    });
+    if (res.ok){
+      const js = await res.json().catch(()=>null);
+      const translated = js?.translatedText || js?.translated || '';
+      if (translated) return translated;
+    }
+  } catch(e){ /* ignore and return null below */ }
+  return null;
 }
 
 async function processFile(filePath){
