@@ -821,11 +821,11 @@ const abcColors = ['#21b3be', '#d9923b', '#ff6fb0']; // cyan, orange, pink for l
 // Store original opening buttons HTML for back button
 const originalOpeningButtonsHTML = `
       <button id="basicWordsBtn" class="wa-option wa-option-card wa-basic" type="button">
-        <img src="./assets/Images/icons/basic.png?v=20250910a" alt="Word Games" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <img src="./assets/Images/icons/cutie.svg" alt="Word Games" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
         <span data-i18n="Word Games">Word Games</span>
       </button>
       <button id="reviewBtn" class="wa-option wa-option-card wa-review" type="button">
-        <img src="./assets/Images/icons/review.png?v=20250910a" alt="X3 Point Challenge" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <img src="./assets/Images/icons/fire-fist.svg" alt="X3 Point Challenge" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
         <span data-i18n="X3 Point Challenge">X3 Point Challenge</span>
       </button>
       <button id="assignmentsBtn" class="wa-option wa-option-card wa-for-you" type="button">
