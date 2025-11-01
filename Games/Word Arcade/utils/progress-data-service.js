@@ -141,6 +141,7 @@ function computeStarCountsFromSessions(sessions) {
     level1: new Map(),
     level2: new Map(),
     level3: new Map(),
+    level4: new Map(),
   };
 
   const normName = (value) => norm(value);
@@ -149,9 +150,10 @@ function computeStarCountsFromSessions(sessions) {
     const listName = normName(session.list_name) || normName(parseSummary(session.summary)?.list_name || parseSummary(session.summary)?.listName);
     if (!listName) return;
     let bucket = null;
-    if (/^phonics\s*-/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
-    else if (/^level\s*2\s*-/i.test(listName)) bucket = 'level2';
-    else if (/^level\s*3\s*-/i.test(listName)) bucket = 'level3';
+  if (/^phonics\s*-?/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
+  else if (/^level\s*2\s*-?/i.test(listName)) bucket = 'level2';
+  else if (/^level\s*3\s*-?/i.test(listName)) bucket = 'level3';
+  else if (/^level\s*4\s*-?/i.test(listName)) bucket = 'level4';
     else if (/\.json$/i.test(listName)) bucket = 'level1';
     if (!bucket) return;
 
@@ -191,6 +193,7 @@ function computeStarCountsFromSessions(sessions) {
     level1: sumStars(byLevel.level1, generalModes),
     level2: sumStars(byLevel.level2, generalModes),
     level3: sumStars(byLevel.level3, generalModes),
+    level4: sumStars(byLevel.level4, generalModes),
   };
 }
 

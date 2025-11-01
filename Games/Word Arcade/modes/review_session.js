@@ -503,10 +503,12 @@ export function runReviewSession({ words, mount, onFinish }) {
       const rect = anchorEl.getBoundingClientRect();
       const el = document.createElement('div');
       el.textContent = text;
-      el.style.cssText = 'position:fixed;left:'+(rect.left + rect.width/2)+'px;top:'+(rect.top - 8)+'px;transform:translate(-50%,0);background:rgba(25,119,126,0.9);color:#fff;font-size:12px;padding:4px 8px;border-radius:20px;font-weight:700;pointer-events:none;z-index:9999;opacity:1;transition:all .8s ease;';
+      // Enlarged visual for point burst
+      el.style.cssText = 'position:fixed;left:'+(rect.left + rect.width/2)+'px;top:'+(rect.top - 10)+'px;transform:translate(-50%,0);background:rgba(25,119,126,0.92);color:#fff;font-size:18px;padding:8px 14px;border-radius:26px;font-weight:900;letter-spacing:0.3px;pointer-events:none;z-index:9999;opacity:1;transition:all .9s ease;box-shadow:0 8px 24px rgba(0,0,0,.18);';
       document.body.appendChild(el);
-      requestAnimationFrame(()=>{ el.style.top = (rect.top - 34)+'px'; el.style.opacity='0'; });
-      setTimeout(()=>{ el.remove(); }, 820);
+      // Float farther and fade a touch slower for emphasis
+      requestAnimationFrame(()=>{ el.style.top = (rect.top - 60)+'px'; el.style.opacity='0'; });
+      setTimeout(()=>{ el.remove(); }, 950);
     } catch {}
   }
 

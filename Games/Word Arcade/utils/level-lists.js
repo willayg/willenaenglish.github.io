@@ -61,6 +61,22 @@ export const LEVEL4_LISTS = [
   { label: 'Chores (Kids)', file: 'sample-wordlists-level4/ChoresKids.json', emoji: '🧹', progressKey: 'Level 4 - Chores Kids' },
   { label: 'Playground Actions', file: 'sample-wordlists-level4/PlaygroundActions.json', emoji: '🎠', progressKey: 'Level 4 - Playground Actions' },
   { label: 'Sports & Hobbies 2 (Kids)', file: 'sample-wordlists-level4/SportsHobbiesKids2.json', emoji: '🎯', progressKey: 'Level 4 - Sports & Hobbies Kids 2' },
+  { label: 'Community Helpers & Jobs', file: 'sample-wordlists-level4/CommunityHelpersJobs.json', emoji: '🧑‍🚒', progressKey: 'Level 4 - Community Helpers & Jobs' },
+  { label: 'Emotions in Stories', file: 'sample-wordlists-level4/EmotionsInStories.json', emoji: '📖', progressKey: 'Level 4 - Emotions in Stories' },
+  { label: 'Environmental Actions', file: 'sample-wordlists-level4/EnvironmentalActions.json', emoji: '🌿', progressKey: 'Level 4 - Environmental Actions' },
+  { label: 'Feelings About Weather', file: 'sample-wordlists-level4/FeelingsAboutWeather.json', emoji: '🌦️', progressKey: 'Level 4 - Feelings About Weather' },
+  { label: 'Feelings in School', file: 'sample-wordlists-level4/FeelingsInSchool.json', emoji: '🏫', progressKey: 'Level 4 - Feelings in School' },
+  { label: 'Feelings & Social Skills', file: 'sample-wordlists-level4/FeelingsSocialSkills.json', emoji: '🤝', progressKey: 'Level 4 - Feelings & Social Skills' },
+  { label: 'Food & Cooking Actions', file: 'sample-wordlists-level4/FoodCookingActions.json', emoji: '🍳', progressKey: 'Level 4 - Food & Cooking Actions' },
+  { label: 'Games: Board Games', file: 'sample-wordlists-level4/GamesBoardGames.json', emoji: '🎲', progressKey: 'Level 4 - Games Board Games' },
+  { label: 'Household Tools & Fixes', file: 'sample-wordlists-level4/HouseholdToolsFixes.json', emoji: '🛠️', progressKey: 'Level 4 - Household Tools & Fixes' },
+  { label: 'Outdoor Adventure: Camping', file: 'sample-wordlists-level4/OutdoorAdventureCamping.json', emoji: '⛺', progressKey: 'Level 4 - Outdoor Adventure Camping' },
+  { label: 'School Clubs & Hobbies', file: 'sample-wordlists-level4/SchoolClubsHobbies.json', emoji: '🎭', progressKey: 'Level 4 - School Clubs & Hobbies' },
+  { label: 'Science Lab Tools', file: 'sample-wordlists-level4/ScienceLabTools.json', emoji: '🧪', progressKey: 'Level 4 - Science Lab Tools' },
+  { label: 'Shopping & Money', file: 'sample-wordlists-level4/ShoppingMoney.json', emoji: '🛍️', progressKey: 'Level 4 - Shopping & Money' },
+  { label: 'Simple Science Actions', file: 'sample-wordlists-level4/SimpleScienceActions.json', emoji: '🔬', progressKey: 'Level 4 - Simple Science Actions' },
+  { label: 'Technology & Gadgets', file: 'sample-wordlists-level4/TechnologyGadgets.json', emoji: '📱', progressKey: 'Level 4 - Technology & Gadgets' },
+  { label: 'Travel & Transportation', file: 'sample-wordlists-level4/TravelTransportation.json', emoji: '✈️', progressKey: 'Level 4 - Travel & Transportation' },
 ];
 
 export const PHONICS_LISTS = [

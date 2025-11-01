@@ -657,6 +657,8 @@ exports.handler = async (event) => {
         const total = recent.length;
         const correct = recent.reduce((n, r) => n + (r.is_correct ? 1 : 0), 0);
         const overallAcc = total ? (correct / total) : 0;
+        // Total incorrect across all attempts for fixed-rule gating
+        const incorrectTotal = arr.reduce((n, r) => n + (r.is_correct ? 0 : 1), 0);
         // If accuracy is decent, deprioritize; still might show if due and low attempts
         // We'll filter later using due schedule and also skip if quite good.
 
@@ -711,7 +713,7 @@ exports.handler = async (event) => {
         const intervalDays = lastWasCorrect ? mapDays[idx] : 0.5;
         const dueAt = lastTs ? (lastTs + intervalDays * 24 * 60 * 60 * 1000) : 0;
 
-        out.push({ word: word_en, word_en, word_kr, skill, accuracy: overallAcc, attempts: total, last_ts: lastTs, due_at: dueAt });
+        out.push({ word: word_en, word_en, word_kr, skill, accuracy: overallAcc, attempts: total, last_ts: lastTs, due_at: dueAt, incorrect_total: incorrectTotal });
       });
 
       // Filter and rank:
@@ -727,6 +729,8 @@ exports.handler = async (event) => {
       })).filter(it => {
         // Drop empties/placeholders after sanitize
         if (!it.word_en || isPicturePlaceholder(it.word_en) || isPicturePlaceholder(it.word_kr)) return false;
+        // Fixed rule: must have at least 2 incorrect attempts overall
+        if (typeof it.incorrect_total === 'number' && it.incorrect_total < 2) return false;
         // Keep if never attempted; else must be due
         const due = (it.last_ts === 0) || (it.due_at <= now);
         // If accuracy good (>= 0.7) and not due, drop; if due, we can still show sometimes

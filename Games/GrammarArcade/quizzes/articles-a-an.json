@@ -1,0 +1,162 @@
+[
+  {
+    "id": "articles-a-an-001",
+    "prompt": "Choose the correct article:",
+    "question": "___ apple",
+    "context": "Use 'a' before consonant sounds and 'an' before vowel sounds.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-002",
+    "prompt": "Choose the correct article:",
+    "question": "___ dog",
+    "context": "Think about the sound at the beginning of the word.",
+    "options": [
+      {
+        "text": "a",
+        "correct": true
+      },
+      {
+        "text": "an",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-003",
+    "prompt": "Choose the correct article:",
+    "question": "___ orange",
+    "context": "Pay attention to the vowel sound, not the first letter.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-004",
+    "prompt": "Choose the correct article:",
+    "question": "___ umbrella",
+    "context": "Remember: 'an' is used before vowel sounds.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-005",
+    "prompt": "Choose the correct article:",
+    "question": "___ hour",
+    "context": "The 'h' in 'hour' is silent, so it sounds like it starts with a vowel.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-006",
+    "prompt": "Choose the correct article:",
+    "question": "___ elephant",
+    "context": "Vowel sounds need 'an'.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-007",
+    "prompt": "Choose the correct article:",
+    "question": "___ book",
+    "context": "Consonant sounds use 'a'.",
+    "options": [
+      {
+        "text": "a",
+        "correct": true
+      },
+      {
+        "text": "an",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-008",
+    "prompt": "Choose the correct article:",
+    "question": "___ egg",
+    "context": "This starts with a vowel sound.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-009",
+    "prompt": "Choose the correct article:",
+    "question": "___ university",
+    "context": "Although it starts with 'u', the sound is 'yoo...' which is a consonant sound.",
+    "options": [
+      {
+        "text": "a",
+        "correct": true
+      },
+      {
+        "text": "an",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": "articles-a-an-010",
+    "prompt": "Choose the correct article:",
+    "question": "___ ice cream",
+    "context": "Starts with a vowel sound.",
+    "options": [
+      {
+        "text": "a",
+        "correct": false
+      },
+      {
+        "text": "an",
+        "correct": true
+      }
+    ]
+  }
+]
