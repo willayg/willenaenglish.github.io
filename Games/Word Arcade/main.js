@@ -408,6 +408,17 @@ async function fetchChallengingWords(opts = {}) {
     try { list = await callProgressSummary('challenging', {}, { signal: opts.signal, timeoutMs: Math.min(8000, opts.timeoutMs || 8000) }); } catch {}
   }
   if (!Array.isArray(list)) return [];
+  // Enforce fixed rule: include only words with >= 2 incorrect attempts when available
+  try {
+    list = list.filter(it => {
+      if (!it || typeof it !== 'object') return false;
+      const wrong = (typeof it.incorrect === 'number') ? it.incorrect
+        : (typeof it.incorrect_total === 'number') ? it.incorrect_total
+        : null;
+      // If we can't determine, keep it (backend may already have enforced); else require >= 2
+      return (wrong == null) ? true : (Number(wrong) >= 2);
+    });
+  } catch {}
   const hasHangul = (s) => /[\u3131-\uD79D\uAC00-\uD7AF]/.test(s);
   const hasLatin = (s) => /[A-Za-z]/.test(s);
   const sanitizeToken = (s) => {
@@ -901,6 +912,7 @@ function showLevelsMenu() {
     <button id="level4Btn" class="wa-option wa-option-card wa-level-4" type="button" style="border-color: ${level4Color};">
       <img src="./assets/Images/icons/4green-butterfly.svg" alt="Level 4" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level4Color};">Level 4</span>
+      <span class="wa-card-stars" id="wa-stars-level4" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
     <button id="level5Btn" class="wa-option wa-option-card wa-level-5 wa-level-inactive" type="button" style="border-color: ${level5Color}; opacity: 0.6;">
       <img src="./assets/Images/icons/5blue-bird.svg" alt="Level 5" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
@@ -1041,10 +1053,12 @@ function showLevelsMenu() {
         const s1 = document.getElementById('wa-stars-level1');
         const s2 = document.getElementById('wa-stars-level2');
         const s3 = document.getElementById('wa-stars-level3');
+        const s4 = document.getElementById('wa-stars-level4');
         if (s0) s0.textContent = `⭐ ${starCounts.level0 || 0}`;
         if (s1) s1.textContent = `⭐ ${starCounts.level1 || 0}`;
         if (s2) s2.textContent = `⭐ ${starCounts.level2 || 0}`;
         if (s3) s3.textContent = `⭐ ${starCounts.level3 || 0}`;
+        if (s4) s4.textContent = `⭐ ${starCounts.level4 || 0}`;
       };
 
       // Fetch from shared progress service (instant if prefetched!)
@@ -1053,7 +1067,7 @@ function showLevelsMenu() {
       if (data?.ready) {
         renderStars(data.counts);
       } else {
-        renderStars({ level0: 0, level1: 0, level2: 0, level3: 0 });
+        renderStars({ level0: 0, level1: 0, level2: 0, level3: 0, level4: 0 });
       }
 
       if (fromCache) {
@@ -1226,7 +1240,7 @@ async function loadChallengingAndStart() {
       hide();
       return showReviewSelectionModal(cached, {
         min: 5,
-        max: 10,
+        max: 15,
         onStart: (chosen) => {
           try { startNewReviewCombined(chosen); } catch (e) { console.error('Review start failed', e); inlineToast('Could not start review.'); }
         },
@@ -1248,7 +1262,7 @@ async function loadChallengingAndStart() {
     try { if (!historyManager || !historyManager.isBackNavigation) historyManager.navigateToModal('reviewSelectionModal', 'opening_menu'); } catch {}
     showReviewSelectionModal(words, {
       min: 5,
-      max: 10,
+      max: 15,
       onStart: (chosen) => {
         try { startNewReviewCombined(chosen); } catch (e) { console.error('Review start failed', e); inlineToast('Could not start review.'); }
       },

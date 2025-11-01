@@ -1,0 +1,239 @@
+/* Grammar Arcade overrides layered after Word Arcade styles */
+
+/* Force consistent header height to prevent jumpiness */
+student-header {
+  --header-height: 180px;
+}
+
+/* Grammar Arcade: bluish grey header only on this page */
+body.grammar-arcade student-header {
+  --header-bg: #2a3842;
+  --header-border: #3a4a56;
+}
+
+/* Dark bluish grey background + light text */
+body.grammar-arcade {
+  background: #1f2a34;
+  color: #e9f1f4;
+  font-family: 'Poppins', Arial, sans-serif;
+  margin: 0;
+}
+
+/* Cropped logo wrapper for header */
+.logo-crop {
+  height: 4.2em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-crop .logo-img {
+  height: 280%;
+  width: auto;
+  display: block;
+  object-fit: cover;
+  object-position: 70% 20%;
+}
+
+/* Bright menu bar with strong contrast for tabs */
+body.grammar-arcade .wa-menu {
+  background: #2a3842;
+  border-top-color: #3a4a56;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Remove white container and shadow from main on this page */
+body.grammar-arcade main {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Card container: transparent so page bg shows between cards */
+body.grammar-arcade .wa-card {
+  background: transparent;
+  box-shadow: none;
+  border-color: #2bb2c4;
+}
+
+/* Cards themselves: slightly lighter bluish grey */
+body.grammar-arcade .wa-option.wa-option-card {
+  background: #2a3842;
+  color: #eef6f8;
+}
+body.grammar-arcade .wa-option.wa-option-card span { color: #eef6f8; }
+body.grammar-arcade .wa-option.wa-option-card .wa-icon { filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+
+/* Preserve original Word Arcade card border colors (per card type) */
+body.grammar-arcade .wa-option-card.wa-for-you { border-color: #21b3be; }
+body.grammar-arcade .wa-option-card.wa-for-you:hover { border-color: #19777e; }
+body.grammar-arcade .wa-option-card.wa-review { border-color: #d9923b; }
+body.grammar-arcade .wa-option-card.wa-review:hover { border-color: #b97421; }
+body.grammar-arcade .wa-option-card.wa-basic { border-color: #ff6fb0; }
+body.grammar-arcade .wa-option-card.wa-basic:hover { border-color: #e45497; }
+body.grammar-arcade .wa-option-card.wa-browse { border-color: #5b7fe5; }
+body.grammar-arcade .wa-option-card.wa-browse:hover { border-color: #3f5fb1; }
+
+/* Hover/focus accent */
+body.grammar-arcade .wa-option.wa-option-card:hover,
+body.grammar-arcade .wa-option.wa-option-card:focus-visible {
+  background: #33424d;
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 12px 24px rgba(0,0,0,.25);
+}
+
+/* Tabs readable on dark header */
+body.grammar-arcade .wa-menu-btn { color: #e6fdff !important; }
+body.grammar-arcade .wa-tab { color: #e6fdff !important; }
+body.grammar-arcade .wa-tab.active { color: #93cbcf !important; font-weight: 700 !important; }
+body.grammar-arcade .wa-tab:not(.active) { color: #b0d0d5 !important; }
+body.grammar-arcade .wa-menu-btn:hover,
+body.grammar-arcade .wa-menu-btn:focus,
+body.grammar-arcade .wa-menu-btn:active { color: #ffffff !important; }
+
+/* Tab underline gradient stays visible */
+body.grammar-arcade .wa-tab::after {
+  background: linear-gradient(90deg, #93cbcf, #5b9fd3, #93cbcf) !important;
+}
+
+/* === Modal Styling === */
+.ga-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  align-items: center;
+  justify-content: center;
+}
+
+.ga-modal.open {
+  display: flex;
+}
+
+.ga-modal-content {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px rgba(25, 119, 126, 0.33);
+  padding: 38px 32px 32px;
+  max-width: 340px;
+  text-align: center;
+  margin: auto;
+}
+
+.ga-modal-content.coming-soon {
+  max-width: 340px;
+  width: auto;
+}
+
+.ga-modal-content.grammar-games {
+  max-width: 520px;
+  width: 92vw;
+  border: 2px solid #21b3be;
+  padding: 28px;
+}
+
+.ga-modal-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 0 8px #19777e);
+}
+
+.ga-modal-title {
+  font-size: 2.1em;
+  font-weight: 700;
+  color: #19777e;
+  margin-bottom: 12px;
+}
+
+.ga-modal-content.grammar-games .ga-modal-title {
+  font-size: 1.6em;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.ga-modal-description {
+  font-size: 1.1em;
+  color: #444;
+  margin-bottom: 18px;
+}
+
+.ga-modal-content.grammar-games .ga-modal-description {
+  font-size: 1em;
+  color: #234f54;
+  margin-bottom: 16px;
+}
+
+.ga-modal-btn {
+  font-size: 1em;
+  padding: 8px 22px;
+  border-radius: 8px;
+  background: #19777e;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(25, 119, 126, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ga-modal-content.grammar-games .ga-modal-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.ga-modal-btn:hover {
+  background: #0f5962;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 119, 126, 0.3);
+}
+
+.ga-modal-btn:active {
+  transform: translateY(0);
+}
+
+/* === Levels Modal === */
+.ga-levels { max-width: 900px; width: 95vw; }
+.ga-levels-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.ga-levels-title { font-size:1.4em; font-weight:800; color:#19777e; }
+.ga-levels .ga-close { padding:6px 12px; border-radius:8px; }
+
+.ga-levels-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.ga-level-card { background:#2a3842; border:2px solid #2bb2c4; color:#eef6f8; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; }
+.ga-level-card.locked { opacity:.6; filter:grayscale(0.15); }
+.ga-level-top { display:flex; align-items:center; gap:12px; }
+.ga-level-icon { width:48px; height:48px; object-fit:contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+.ga-level-name { font-weight:800; font-size:1.05rem; }
+.ga-level-desc { font-size:.95rem; opacity:.9; }
+.ga-level-actions { display:flex; justify-content:flex-end; }
+.ga-level-start { font-size:.95rem; padding:8px 14px; border-radius:10px; background:#19777e; color:#fff; border:none; box-shadow:0 2px 8px rgba(25,119,126,0.2); cursor:pointer; }
+.ga-level-start.disabled { cursor:not-allowed; opacity:.6; }
+
+@media (min-width:600px){ .ga-levels-grid { grid-template-columns:repeat(2,1fr); } }
+@media (min-width:900px){ .ga-levels-grid { grid-template-columns:repeat(3,1fr); } }
+
+/* === Simple mode container styling === */
+.ga-mode-wrap { background:#2a3842; border:2px solid #3a4a56; color:#eef6f8; border-radius:14px; padding:16px; margin:12px auto; max-width:900px; }
+.ga-mode-header { font-weight:800; font-size:1.2rem; margin-bottom:8px; color:#e6fdff; }
+.ga-mode-body { margin-bottom:12px; }
+.ga-mode-actions { display:flex; gap:10px; }
+
+/* Make Grammar Games card icon larger */
+#grammarGamesBtn .wa-icon {
+  width: 200px !important;
+}
+
+/* Subtle colorful glow for Grammar Arcade level cards (pink, bright cyan, orange, blue, pink) */
+body.grammar-arcade .wa-option.wa-option-card.wa-level-1 { box-shadow: 0 0 14px rgba(255,111,176,0.30), 0 2px 8px rgba(0,0,0,0.20); }
+body.grammar-arcade .wa-option.wa-option-card.wa-level-2 { box-shadow: 0 0 14px rgba(57,207,224,0.30), 0 2px 8px rgba(0,0,0,0.20); }
+body.grammar-arcade .wa-option.wa-option-card.wa-level-3 { box-shadow: 0 0 14px rgba(217,146,59,0.28), 0 2px 8px rgba(0,0,0,0.20); }
+body.grammar-arcade .wa-option.wa-option-card.wa-level-4 { box-shadow: 0 0 14px rgba(91,127,229,0.28), 0 2px 8px rgba(0,0,0,0.20); }
+body.grammar-arcade .wa-option.wa-option-card.wa-level-5 { box-shadow: 0 0 14px rgba(255,111,176,0.30), 0 2px 8px rgba(0,0,0,0.20); }
+
+/* Keep inactive look but allow hover hint (no click) */
+body.grammar-arcade .wa-option-card.wa-level-inactive { cursor: not-allowed; }
+body.grammar-arcade .wa-option-card.wa-level-inactive:hover { transform: translateY(-2px) scale(1.01); }

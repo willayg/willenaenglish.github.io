@@ -1,14 +1,14 @@
 [
-  {"eng":"jacket","kor":"자켓","def":"a short coat you wear over clothes","ex":"I wear a jacket.","emoji":"🧥"},
-  {"eng":"sweater","kor":"스웨터","def":"a warm top made of yarn","ex":"She puts on a sweater."},
-  {"eng":"scarf","kor":"목도리","def":"a long cloth worn around the neck","ex":"He wears a scarf."},
-  {"eng":"gloves","kor":"장갑","def":"covers for the hands","ex":"I wear gloves in winter.","emoji":"🧤"},
-  {"eng":"boots","kor":"부츠","def":"shoes that cover the ankle or higher","ex":"She wears boots.","emoji":"🥾"},
-  {"eng":"jeans","kor":"청바지","def":"pants made of denim","ex":"He wears jeans.","emoji":"👖"},
-  {"eng":"belt","kor":"벨트","def":"a strap worn around the waist","ex":"I put on a belt."},
-  {"eng":"hat","kor":"모자","def":"a thing worn on the head","ex":"She wears a hat.","emoji":"🎩"},
-  {"eng":"shorts","kor":"반바지","def":"short pants","ex":"He wears shorts."},
-  {"eng":"dress","kor":"드레스","def":"a one-piece clothing for women or girls","ex":"She buys a dress.","emoji":"👗"},
-  {"eng":"skirt","kor":"치마","def":"a piece of clothing worn from the waist down","ex":"She wears a skirt."},
-  {"eng":"sneakers","kor":"운동화","def":"comfortable sports shoes","ex":"I wear sneakers.","emoji":"👟"}
+  {"eng":"jacket","kor":"자켓","def":"a short coat you wear over clothes","ex":"I wear a jacket.","ex_kor":"나는 자켓을 입어요.","emoji":"🧥"},
+  {"eng":"sweater","kor":"스웨터","def":"a warm top made of yarn","ex":"She puts on a sweater.","ex_kor":"그녀는 스웨터를 입어요."},
+  {"eng":"scarf","kor":"목도리","def":"a long cloth worn around the neck","ex":"He wears a scarf.","ex_kor":"그는 목도리를 해요."},
+  {"eng":"gloves","kor":"장갑","def":"covers for the hands","ex":"I wear gloves in winter.","ex_kor":"나는 겨울에 장갑을 껴요.","emoji":"🧤"},
+  {"eng":"boots","kor":"부츠","def":"shoes that cover the ankle or higher","ex":"She wears boots.","ex_kor":"그녀는 부츠를 신어요.","emoji":"🥾"},
+  {"eng":"jeans","kor":"청바지","def":"pants made of denim","ex":"He wears jeans.","ex_kor":"그는 청바지를 입어요.","emoji":"👖"},
+  {"eng":"belt","kor":"벨트","def":"a strap worn around the waist","ex":"I put on a belt.","ex_kor":"나는 벨트를 매요."},
+  {"eng":"hat","kor":"모자","def":"a thing worn on the head","ex":"She wears a hat.","ex_kor":"그녀는 모자를 써요.","emoji":"🎩"},
+  {"eng":"shorts","kor":"반바지","def":"short pants","ex":"He wears shorts.","ex_kor":"그는 반바지를 입어요."},
+  {"eng":"dress","kor":"드레스","def":"a one-piece clothing for women or girls","ex":"She buys a dress.","ex_kor":"그녀는 드레스를 사요.","emoji":"👗"},
+  {"eng":"skirt","kor":"치마","def":"a piece of clothing worn from the waist down","ex":"She wears a skirt.","ex_kor":"그녀는 치마를 입어요."},
+  {"eng":"sneakers","kor":"운동화","def":"comfortable sports shoes","ex":"I wear sneakers.","ex_kor":"나는 운동화를 신어요.","emoji":"👟"}
 ]

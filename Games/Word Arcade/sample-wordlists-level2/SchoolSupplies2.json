@@ -1,13 +1,13 @@
 [
-  {"eng":"calculator","kor":"계산기","def":"a small machine for math","ex":"I use a calculator.","emoji":"🧮"},
-  {"eng":"compass","kor":"컴퍼스","def":"a tool for drawing circles","ex":"She uses a compass.","emoji":"🧭"},
-  {"eng":"protractor","kor":"각도기","def":"a tool for measuring angles","ex":"We use a protractor."},
-  {"eng":"highlighter","kor":"형광펜","def":"a bright pen for marking text","ex":"I use a highlighter.","emoji":"🖍️"},
-  {"eng":"binder","kor":"바인더","def":"a hard cover that holds papers","ex":"He opens a binder."},
-  {"eng":"folder","kor":"폴더","def":"a thin cover for papers","ex":"I keep papers in a folder.","emoji":"📁"},
-  {"eng":"stapler","kor":"스테이플러","def":"a tool to join papers with metal","ex":"She uses a stapler."},
-  {"eng":"paperclip","kor":"클립","def":"a small metal clip for papers","ex":"I need a paperclip.","emoji":"📎"},
-  {"eng":"tape","kor":"테이프","def":"a thin sticky strip","ex":"He uses tape."},
-  {"eng":"whiteboard","kor":"화이트보드","def":"a board for writing with markers","ex":"The teacher writes on the whiteboard."},
-  {"eng":"projector","kor":"프로젝터","def":"a machine that shows pictures on a wall","ex":"The projector turns on."}
+  {"eng":"calculator","kor":"계산기","def":"a small machine for math","ex":"I use a calculator.","ex_kor":"나는 계산기를 사용해요.","emoji":"🧮"},
+  {"eng":"compass","kor":"컴퍼스","def":"a tool for drawing circles","ex":"She uses a compass.","ex_kor":"그녀는 컴퍼스를 사용해요.","emoji":"🧭"},
+  {"eng":"protractor","kor":"각도기","def":"a tool for measuring angles","ex":"We use a protractor.","ex_kor":"우리는 각도기를 사용해요."},
+  {"eng":"highlighter","kor":"형광펜","def":"a bright pen for marking text","ex":"I use a highlighter.","ex_kor":"나는 형광펜을 사용해요.","emoji":"🖍️"},
+  {"eng":"binder","kor":"바인더","def":"a hard cover that holds papers","ex":"He opens a binder.","ex_kor":"그는 바인더를 열어요."},
+  {"eng":"folder","kor":"폴더","def":"a thin cover for papers","ex":"I keep papers in a folder.","ex_kor":"나는 폴더에 종이를 넣어요.","emoji":"📁"},
+  {"eng":"stapler","kor":"스테이플러","def":"a tool to join papers with metal","ex":"She uses a stapler.","ex_kor":"그녀는 스테이플러를 사용해요."},
+  {"eng":"paperclip","kor":"클립","def":"a small metal clip for papers","ex":"I need a paperclip.","ex_kor":"나는 클립이 필요해요.","emoji":"📎"},
+  {"eng":"tape","kor":"테이프","def":"a thin sticky strip","ex":"He uses tape.","ex_kor":"그는 테이프를 사용해요."},
+  {"eng":"whiteboard","kor":"화이트보드","def":"a board for writing with markers","ex":"The teacher writes on the whiteboard.","ex_kor":"선생님이 화이트보드에 글을 써요."},
+  {"eng":"projector","kor":"프로젝터","def":"a machine that shows pictures on a wall","ex":"The projector turns on.","ex_kor":"프로젝터가 켜져요."}
 ]
