@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+  <script src="students/language.js"></script>
   <style>
     * {
       margin: 0;
@@ -169,7 +170,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.5rem;
+      text-align: center;
+      font-size: clamp(1.2rem, 5vw, 2.5rem);
       font-weight: 700;
       text-decoration: none;
       color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
@@ -179,6 +181,7 @@
       overflow: hidden;
       background-color: #2e2b3f;
       border: 3px solid #2e2b3f;
+      padding: 10px;
     }
 
     .grid-item:hover {
@@ -190,7 +193,7 @@
     .play-section {
       background: linear-gradient(135deg, #6b5b95, #8e7cc3);
       grid-row: 1 / 3;
-      font-size: 12rem; /* 3x larger than original 4rem */
+      font-size: clamp(2.5rem, 15vw, 12rem);
       text-shadow: 0 0 24px rgba(255, 255, 255, 1); /* Stronger glow for Play button */
     }
 
@@ -215,12 +218,14 @@
 
     @media (max-width: 768px) {
       .grid-item {
-        font-size: 1.8rem;
+        font-size: clamp(1.1rem, 4vw, 1.8rem);
         text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Make text glow more dramatic */
+        padding: 8px;
+        text-align: center;
       }
 
       .play-section {
-        font-size: 3rem;
+        font-size: clamp(2rem, 12vw, 3rem);
         text-shadow: 0 0 24px rgba(255, 255, 255, 1); /* Stronger glow for Play button */
       }
 
@@ -249,11 +254,13 @@
       }
 
       .grid-item {
-        font-size: 1.4rem;
+        font-size: clamp(0.9rem, 3vw, 1.4rem);
+        padding: 6px;
+        text-align: center;
       }
 
       .play-section {
-        font-size: 5rem;
+        font-size: clamp(1.5rem, 10vw, 2.5rem);
       }
     }
 
@@ -363,8 +370,8 @@
   </div>
 
   <div class="grid-section" data-aos="fade" data-aos-delay="400">
-    <a href="students/dashboard.html" class="grid-item play-section" data-aos="fade" data-aos-delay="600">
-      Play
+    <a href="students/dashboard.html" class="grid-item play-section" data-aos="fade" data-aos-delay="600" data-i18n="Games">
+      Games
     </a>
     <a href="#aboutWillenaSection" class="grid-item about-section" data-aos="fade" data-aos-delay="800">
       About<br>Willena
@@ -375,7 +382,7 @@
   </div>
 
   <div class="desktop-buttons" data-aos="fade" data-aos-delay="1200">
-    <button class="desktop-button" onclick="location.href='students/dashboard.html'" data-aos="fade" data-aos-delay="1400">Play</button>
+    <button class="desktop-button" onclick="location.href='students/dashboard.html'" data-aos="fade" data-aos-delay="1400" data-i18n="Games">Games</button>
     <button class="desktop-button" onclick="location.href='#aboutWillenaSection'" data-aos="fade" data-aos-delay="1600">About Willena</button>
     <button class="desktop-button" onclick="location.href='Teachers/index.html'" data-aos="fade" data-aos-delay="1800">Teacher Login</button>
   </div>
