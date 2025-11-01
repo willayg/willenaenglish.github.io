@@ -1,9 +1,0 @@
-# Local Netlify folder
-.netlify
-.env
-node_modules
-questions.py
-Teachers/tools/worksheet-builder-vanilla/References/
-11_labs_test.html
-
-
