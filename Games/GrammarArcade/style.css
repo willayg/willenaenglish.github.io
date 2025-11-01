@@ -237,3 +237,100 @@ body.grammar-arcade .wa-option.wa-option-card.wa-level-5 { box-shadow: 0 0 14px 
 /* Keep inactive look but allow hover hint (no click) */
 body.grammar-arcade .wa-option-card.wa-level-inactive { cursor: not-allowed; }
 body.grammar-arcade .wa-option-card.wa-level-inactive:hover { transform: translateY(-2px) scale(1.01); }
+
+/* === Level 1 Quiz Selection Modal === */
+.ga-quiz-modal {
+  max-width: 520px;
+  width: 92vw;
+  border: 2px solid #39cfe0;
+  padding: 32px 28px 28px;
+  position: relative;
+}
+
+.ga-modal-close-x {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 1.6em;
+  background: none;
+  border: none;
+  color: #19777e;
+  cursor: pointer;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  z-index: 2;
+  transition: color 0.2s ease;
+}
+
+.ga-modal-close-x:hover {
+  color: #0f5962;
+}
+
+.ga-quiz-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.ga-quiz-btn {
+  background: #2a3842;
+  border: 2px solid #39cfe0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  color: #eef6f8;
+  font-size: 1.05em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ga-quiz-btn:hover {
+  background: #33424d;
+  border-color: #5bdfef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(57, 207, 224, 0.25);
+}
+
+.ga-quiz-btn:active {
+  transform: translateY(0);
+}
+
+.ga-quiz-title {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #39cfe0;
+}
+
+.ga-quiz-desc {
+  font-size: 0.9em;
+  color: #b0d0d5;
+  line-height: 1.4;
+}
+
+/* Scrollbar styling for quiz list */
+.ga-quiz-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ga-quiz-list::-webkit-scrollbar-track {
+  background: #1f2a34;
+  border-radius: 4px;
+}
+
+.ga-quiz-list::-webkit-scrollbar-thumb {
+  background: #39cfe0;
+  border-radius: 4px;
+}
+
+.ga-quiz-list::-webkit-scrollbar-thumb:hover {
+  background: #5bdfef;
+}

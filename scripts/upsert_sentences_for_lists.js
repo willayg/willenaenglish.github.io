@@ -6,11 +6,11 @@
  *
  * Usage:
  *   node scripts/upsert_sentences_for_lists.js \
- *     --dirs "Games/Word Arcade/sample-wordlists,Games/Word Arcade/sample-wordlists-level2,Games/Word Arcade/sample-wordlists-level3" \
+ *     --dirs "Games/english_arcade/sample-wordlists,Games/english_arcade/sample-wordlists-level2,Games/english_arcade/sample-wordlists-level3" \
  *     [--generate-audio true|false] [--voice <ELEVEN_VOICE_ID>] [--concurrency 3]
  *
  * Defaults:
- *   --dirs: Games/Word Arcade/sample-wordlists
+ *   --dirs: Games/english_arcade/sample-wordlists
  *   --generate-audio: true
  *   --concurrency: 3
  */
@@ -30,7 +30,7 @@ function getArg(name, def){
   return next;
 }
 
-const DDIRS = getArg('dirs', 'Games/Word Arcade/sample-wordlists');
+const DDIRS = getArg('dirs', 'Games/english_arcade/sample-wordlists');
 const GEN_AUDIO = String(getArg('generate-audio', 'true')).toLowerCase() !== 'false';
 const CONCURRENCY = Math.max(1, Math.min(parseInt(getArg('concurrency','3'),10)||3, 8));
 const CHUNK_SIZE = Math.max(10, Math.min(parseInt(getArg('chunk-size','200'),10)||200, 200));

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Batch processor for sample word list JSON files.
- * For each JSON file in Games/Word Arcade/sample-wordlists:
+ * For each JSON file in Games/english_arcade/sample-wordlists:
  *  - Load array of entries with shape: { eng, kor, def?, ex? }
  *  - For each unique English word (eng):
  *      * Check if audio already exists in R2 via get_audio_url (HEAD logic through existing function)
@@ -47,7 +47,7 @@ const DRY_RUN = flags.has('--dry-run') || getArg('dry-run', false) === 'true';
 const LIMIT = parseInt(getArg('limit', '0'), 10) || 0; // limit words per file
 const VOICE = getArg('voice', process.env.ELEVEN_LABS_DEFAULT_VOICE_ID || '');
 const MODEL = getArg('model', process.env.ELEVEN_LABS_MODEL_ID || '');
-const DIR = getArg('dir', 'Games/Word Arcade/sample-wordlists');
+const DIR = getArg('dir', 'Games/english_arcade/sample-wordlists');
 const FILES_FILTER = getArg('files', ''); // comma-separated basenames to include (e.g., "Verbs1.json,Verbs2.json")
 const EXCLUDE_FILES = getArg('exclude-files', ''); // comma-separated basenames to exclude
 const CONCURRENCY = Math.max(1, Math.min( parseInt(getArg('concurrency', '3'), 10) || 3, 8));

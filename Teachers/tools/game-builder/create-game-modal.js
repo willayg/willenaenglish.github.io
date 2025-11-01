@@ -14,7 +14,7 @@
 // .cgm-mode-tile, .cgm-mode-tile.active, .cgm-mode-tile.disabled, etc.
 // -------------------------------------------------------------
 
-import { preprocessTTS } from '../../../Games/Word Arcade/tts.js';
+import { preprocessTTS } from '../../../Games/english_arcade/tts.js';
 
 // -------------------------------------------------------------
 // State & Utility
@@ -753,7 +753,7 @@ function showQrForUrl(urlStr) {
     lbBtn.addEventListener('click', () => {
       const id = (typeof window !== 'undefined' && window.__lastLiveGameId) ? window.__lastLiveGameId : null;
       if (!id) { alert('Session id not ready yet. Launch the game first.'); return; }
-      const url = new URL(window.location.origin + '/Games/Word Arcade/leaderboard.html');
+      const url = new URL(window.location.origin + '/Games/english_arcade/leaderboard.html');
       url.searchParams.set('id', id);
       window.open(url.toString(), 'waLeaderboard'+id, 'noopener');
     });
@@ -1030,7 +1030,7 @@ async function launchLiveMode() {
   } finally {
     setStatus('');
   }
-  const url = new URL(window.location.origin + '/Games/Word Arcade/play.html');
+  const url = new URL(window.location.origin + '/Games/english_arcade/play.html');
   url.searchParams.set('id', id);
   url.searchParams.set('src', 'builder');
   // Pass the intended mode explicitly so play-main can force it
