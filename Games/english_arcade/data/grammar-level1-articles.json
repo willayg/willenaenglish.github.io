@@ -1,0 +1,122 @@
+[
+  {
+    "id": "article_apple",
+    "word": "apple",
+    "article": "an",
+    "exampleSentence": "I eat an apple every day.",
+    "exampleSentenceKo": "나는 매일 사과를 먹습니다.",
+    "explanation": "We use 'an' before words that start with a vowel sound."
+  },
+  {
+    "id": "article_banana",
+    "word": "banana",
+    "article": "a",
+    "exampleSentence": "I have a banana in my backpack.",
+    "exampleSentenceKo": "나는 내 배낭에 바나나가 있습니다.",
+    "explanation": "We use 'a' before words that start with a consonant sound."
+  },
+  {
+    "id": "article_egg",
+    "word": "egg",
+    "article": "an",
+    "exampleSentence": "She found an egg in the garden.",
+    "exampleSentenceKo": "그녀는 정원에서 계란을 찾았습니다.",
+    "explanation": "The word 'egg' starts with a vowel sound, so we use 'an'."
+  },
+  {
+    "id": "article_orange",
+    "word": "orange",
+    "article": "an",
+    "exampleSentence": "Can I have an orange, please?",
+    "exampleSentenceKo": "주황색 좀 줄 수 있을까요?",
+    "explanation": "The word 'orange' starts with a vowel sound, so we use 'an'."
+  },
+  {
+    "id": "article_cat",
+    "word": "cat",
+    "article": "a",
+    "exampleSentence": "I have a cat named Fluffy.",
+    "exampleSentenceKo": "나는 플루피라는 고양이가 있습니다.",
+    "explanation": "The word 'cat' starts with a consonant sound, so we use 'a'."
+  },
+  {
+    "id": "article_dog",
+    "word": "dog",
+    "article": "a",
+    "exampleSentence": "She plays with a dog every afternoon.",
+    "exampleSentenceKo": "그녀는 매일 오후에 개와 놀고 있습니다.",
+    "explanation": "The word 'dog' starts with a consonant sound, so we use 'a'."
+  },
+  {
+    "id": "article_ice_cream",
+    "word": "ice cream",
+    "article": "an",
+    "exampleSentence": "I want an ice cream cone.",
+    "exampleSentenceKo": "나는 아이스크림 콘을 원합니다.",
+    "explanation": "Even though 'ice' starts with 'i', we hear the vowel sound first, so we use 'an'."
+  },
+  {
+    "id": "article_umbrella",
+    "word": "umbrella",
+    "article": "an",
+    "exampleSentence": "Take an umbrella when it rains.",
+    "exampleSentenceKo": "비가 올 때 우산을 가지고 가세요.",
+    "explanation": "The word 'umbrella' starts with a vowel sound, so we use 'an'."
+  },
+  {
+    "id": "article_book",
+    "word": "book",
+    "article": "a",
+    "exampleSentence": "I'm reading a book right now.",
+    "exampleSentenceKo": "나는 지금 책을 읽고 있습니다.",
+    "explanation": "The word 'book' starts with a consonant sound, so we use 'a'."
+  },
+  {
+    "id": "article_elephant",
+    "word": "elephant",
+    "article": "an",
+    "exampleSentence": "I saw an elephant at the zoo.",
+    "exampleSentenceKo": "나는 동물원에서 코끼리를 봤습니다.",
+    "explanation": "The word 'elephant' starts with a vowel sound, so we use 'an'."
+  },
+  {
+    "id": "article_house",
+    "word": "house",
+    "article": "a",
+    "exampleSentence": "They live in a big house.",
+    "exampleSentenceKo": "그들은 큰 집에 살고 있습니다.",
+    "explanation": "The word 'house' starts with a consonant sound, so we use 'a'."
+  },
+  {
+    "id": "article_island",
+    "word": "island",
+    "article": "an",
+    "exampleSentence": "We spent our vacation on an island.",
+    "exampleSentenceKo": "우리는 섬에서 휴가를 보냈습니다.",
+    "explanation": "The word 'island' starts with a vowel sound, so we use 'an'."
+  },
+  {
+    "id": "article_toy",
+    "word": "toy",
+    "article": "a",
+    "exampleSentence": "My son wants a toy for his birthday.",
+    "exampleSentenceKo": "내 아들은 생일 선물로 장난감을 원합니다.",
+    "explanation": "The word 'toy' starts with a consonant sound, so we use 'a'."
+  },
+  {
+    "id": "article_anchor",
+    "word": "anchor",
+    "article": "an",
+    "exampleSentence": "The ship dropped an anchor in the water.",
+    "exampleSentenceKo": "배는 물에 닻을 내렸습니다.",
+    "explanation": "The word 'anchor' starts with a vowel sound, so we use 'an'."
+  },
+  {
+    "id": "article_phone",
+    "word": "phone",
+    "article": "a",
+    "exampleSentence": "She has a new phone.",
+    "exampleSentenceKo": "그녀는 새로운 전화기를 가지고 있습니다.",
+    "explanation": "The word 'phone' starts with a consonant sound, so we use 'a'."
+  }
+]

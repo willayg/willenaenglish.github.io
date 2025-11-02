@@ -1,0 +1,17 @@
+[
+  {"eng": "pencil", "kor": "연필", "def": "a tool for writing with graphite", "ex": "I use a pencil.", "ex_kor": "나는 연필을 사용한다.", "emoji": "✏️"},
+  {"eng": "pen", "kor": "펜", "def": "a tool for writing with ink", "ex": "I hold a pen.", "ex_kor": "나는 펜을 잡는다.", "emoji": "🖊️"},
+  {"eng": "eraser", "kor": "지우개", "def": "a thing that removes pencil marks", "ex": "I use an eraser.", "ex_kor": "나는 지우개를 사용한다.", "emoji": "🧹"},
+  {"eng": "notebook", "kor": "공책", "def": "a small book of blank pages", "ex": "I open a notebook.", "ex_kor": "나는 공책을 연다.", "emoji": "📓"},
+  {"eng": "ruler", "kor": "자", "def": "a tool to measure length", "ex": "I use a ruler.", "ex_kor": "나는 자를 사용한다.", "emoji": "📏"},
+  {"eng": "scissors", "kor": "가위", "def": "a tool that cuts paper", "ex": "She uses scissors.", "ex_kor": "그녀는 가위를 사용한다.", "emoji": "✂️"},
+  {"eng": "glue", "kor": "풀", "def": "a sticky substance for joining", "ex": "I add glue.", "ex_kor": "나는 풀을 칠한다.", "emoji": "🧴"},
+  {"eng": "crayon", "kor": "크레용", "def": "a colored stick for drawing", "ex": "He grabs a crayon.", "ex_kor": "그는 크레용을 잡는다.", "emoji": "🖍️"},
+  {"eng": "marker", "kor": "마커", "def": "a pen with strong ink", "ex": "I use a marker.", "ex_kor": "나는 마커를 사용한다.", "emoji": "🖌️"},
+  {"eng": "backpack", "kor": "책가방", "def": "a bag carried on the back", "ex": "I pack a backpack.", "ex_kor": "나는 책가방을 챙긴다.", "emoji": "🎒"},
+  {"eng": "desk", "kor": "책상", "def": "a table for work or study", "ex": "I clean the desk.", "ex_kor": "나는 책상을 정소한다.", "emoji": "🪑"},
+  {"eng": "chair", "kor": "의자", "def": "a seat for one person", "ex": "He moves the chair.", "ex_kor": "그는 의자를 옮긴다.", "emoji": "💺"},
+  {"eng": "chalk", "kor": "분필", "def": "a white stick for writing on boards", "ex": "She holds chalk.", "ex_kor": "그녀는 분필을 잡는다.", "emoji": "⚪"},
+  {"eng": "board", "kor": "칠판", "def": "a flat surface for writing", "ex": "The teacher cleans the board.", "ex_kor": "선생님이 칠판을 지운다.", "emoji": "📋"},
+  {"eng": "paper", "kor": "종이", "def": "thin material for writing", "ex": "I fold paper.", "ex_kor": "나는 종이를 접는다.", "emoji": "📄"}
+]

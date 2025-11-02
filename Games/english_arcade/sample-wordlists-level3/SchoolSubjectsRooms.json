@@ -1,0 +1,14 @@
+[
+  {"eng":"math","kor":"수학","def":"the study of numbers and shapes","ex":"We learn math at school.","ex_kor":"우리는 학교에서 수학을 배워요."},
+  {"eng":"science","kor":"과학","def":"the study of nature and how things work","ex":"Science is my favorite subject.","ex_kor":"과학은 내가 가장 좋아하는 과목이에요."},
+  {"eng":"art","kor":"미술","def":"drawing, painting, and making things","ex":"We have art class on Monday.","ex_kor":"우리는 월요일에 미술 수업이 있어요."},
+  {"eng":"music","kor":"음악","def":"singing or playing instruments","ex":"Music class is fun.","ex_kor":"음악 수업은 재미있어요."},
+  {"eng":"gym","kor":"체육","def":"exercise and sports at school","ex":"We play basketball in gym.","ex_kor":"우리는 체육 시간에 농구를 해요."},
+  {"eng":"library","kor":"도서관","def":"a place with many books","ex":"Read books in the library.","ex_kor":"도서관에서 책을 읽으세요."},
+  {"eng":"cafeteria","kor":"식당","def":"a place to eat at school","ex":"Eat lunch in the cafeteria.","ex_kor":"식당에서 점심을 먹으세요."},
+  {"eng":"office","kor":"교무실","def":"a room for teachers and staff","ex":"Go to the office for help.","ex_kor":"도움이 필요하면 교무실에 가세요."},
+  {"eng":"playground","kor":"운동장","def":"an outdoor area for playing","ex":"We play soccer on the playground.","ex_kor":"우리는 운동장에서 축구를 해요."},
+  {"eng":"classroom","kor":"교실","def":"a room where students learn","ex":"Sit at your desk in the classroom.","ex_kor":"교실에서 책상에 앉으세요."},
+  {"eng":"hallway","kor":"복도","def":"a long passage in a building","ex":"Walk quietly in the hallway.","ex_kor":"복도에서 조용히 걸으세요."},
+  {"eng":"auditorium","kor":"강당","def":"a large room for shows or meetings","ex":"We watch a play in the auditorium.","ex_kor":"우리는 강당에서 연극을 봐요."}
+]
