@@ -1,4 +1,3 @@
-html, body { height: 100%; }
 body {
   font-family: 'Poppins', Arial, sans-serif;
   margin: 0;
@@ -6,11 +5,6 @@ body {
   color: #222;
   touch-action: manipulation;
   overflow-y: hidden;
-  /* Layout so header takes natural height and main fills the rest of the viewport */
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: 100vh;
-  min-height: 100dvh;
 }
 
 /* === Force consistent header height across apps === */
@@ -195,13 +189,10 @@ main {
   margin:0 auto;
   background:#ffffff; /* slightly darker gray container under white cards */
   border-radius:0px;
-  box-shadow:0 4px 24px rgba(62,159,167,0.08);
+  /* Allow page-level scrolling by default; vertical fit handled inside game containers */
+  overflow-y: auto;
   padding:12px clamp(8px,3vw,32px) 24px; /* horizontal padding scales with viewport */
   box-sizing:border-box;
-  /* Allow internal sections to size within viewport height */
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: 0; /* enable child to shrink */
 }
 .wa-card { background:#fbffff; border:3px solid #59d7db; border-radius:20px; width:min(92%, 420px); margin:12px auto 20px; padding:12px 12px; box-shadow:0 3px 14px rgba(62,159,167,0.1); max-width:920px; }
 
@@ -408,61 +399,13 @@ h1 {
   .mode-btn { font-size:1.25rem; padding:26px 24px 30px; }
 }
 #gameArea {
-  /* Fill the remaining viewport area under the header/progress bar */
   padding: 18px;
   min-height: 300px;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  /* Leave breathing room for the fixed quit button so content never hides behind it */
-  padding-bottom: calc(72px + max(12px, env(safe-area-inset-bottom)));
 }
 #gameArea:empty {
   min-height: 0 !important;
   padding: 0 !important;
 }
-
-/* =============================
-   Grammar mode: vertical fit
-   ============================= */
-:root {
-  /* Scales based on smaller viewport dimension for tablet/phone landscape */
-  --g-gap: clamp(10px, 3vmin, 24px);
-  --g-pad: clamp(10px, 3vmin, 24px);
-  --g-word: clamp(2rem, 9.5vmin, 3.5rem);
-  --g-emoji: clamp(2.5rem, 12vmin, 4.5rem);
-  --g-article-w: clamp(72px, 12vmin, 100px);
-  --g-article-h: clamp(40px, 8vmin, 56px);
-  --g-article-font: clamp(1.2rem, 5vmin, 1.9rem);
-  --g-answers-gap: clamp(10px, 3.2vmin, 20px);
-  --g-answer-font: clamp(1rem, 4.8vmin, 1.4rem);
-  --g-answer-pad-v: clamp(10px, 2.6vmin, 14px);
-  --g-answer-pad-h: clamp(14px, 3.0vmin, 22px);
-}
-
-.grammar-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  height: 100%;
-  gap: var(--g-gap);
-  padding: var(--g-pad);
-  max-width: 640px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.grammar-stage .progress-label { width: 100%; text-align: center; font-size: 1rem; color: #666; font-weight: 600; margin: 2px 0; }
-.grammar-stage .emoji { font-size: var(--g-emoji); line-height: 1; margin-bottom: clamp(8px, 3vmin, 16px); }
-#grammarArticleBox { display:inline-flex;align-items:center;justify-content:center;width: var(--g-article-w);height: var(--g-article-h);border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size: var(--g-article-font);font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s; }
-.grammar-word { font-size: var(--g-word); font-weight: 800; color: #21b3be; letter-spacing: 1px; max-width: 88vw; white-space: nowrap; line-height: 1.1; padding: 0 8px; text-align: center; }
-.grammar-answers { display:flex; flex-wrap: wrap; gap: var(--g-answers-gap); width:100%; max-width:520px; justify-content:center; margin-top: clamp(12px, 4vmin, 20px); margin-bottom: 4px; }
-.grammar-choice-btn { flex:1; min-width: 120px; padding: var(--g-answer-pad-v) var(--g-answer-pad-h); font-size: var(--g-answer-font); font-weight: 800; border-radius: 22px; border: 3px solid #ff6fb0; background: #fff; color: #ff6fb0; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-transform: lowercase; font-family: 'Poppins', Arial, sans-serif; }
-.grammar-choice-btn:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.grammar-choice-btn:active { transform: scale(0.99); }
-
 
 /* Drag and Drop Game Styles */
 .dragdrop-game {
