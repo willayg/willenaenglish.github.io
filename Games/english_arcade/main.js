@@ -640,7 +640,8 @@ const modeLoaders = {
   missing_letter: () => import('./modes/missing_letter.js').then(m => m.runMissingLetterMode),
   phonics_listening: () => import('./modes/phonics_listening.js').then(m => m.runPhonicsListeningMode),
   // Grammar modes
-  grammar:        () => import('./modes/grammar_mode.js').then(m => m.runGrammarMode),
+  grammar_choose: () => import('./modes/grammar_mode.js').then(m => m.runGrammarMode),
+  grammar_lesson: () => import('./modes/grammar_lesson.js').then(m => m.runGrammarLesson),
 };
 
 // Load and start a phonics game
@@ -686,11 +687,12 @@ async function loadGrammarGame({ grammarFile, grammarName }) {
       grammarName,
       onModeChosen: async (config) => {
         // Now start the actual game with the chosen mode
-        const { mode } = config;
-        const modeLoader = modeLoaders.grammar;
-        if (!modeLoader) throw new Error('Grammar mode loader not found');
-        
-        const runGrammarMode = await modeLoader();
+  const { mode } = config;
+  // Choose appropriate grammar loader based on selected card
+  const modeKey = (mode === 'lesson') ? 'grammar_lesson' : 'grammar_choose';
+  const modeLoader = modeLoaders[modeKey];
+  if (!modeLoader) throw new Error('Grammar mode loader not found');
+  const runGrammarMode = await modeLoader();
         
         // Remember last grammar config for restoring mode menu and back/forward
         try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
@@ -701,7 +703,7 @@ async function loadGrammarGame({ grammarFile, grammarName }) {
           }
         } catch {}
 
-        // Call grammar mode with context
+        // Call grammar runner with context
         runGrammarMode({
           grammarFile: config.grammarFile,
           grammarName: config.grammarName,
@@ -1361,7 +1363,7 @@ window.WordArcade = {
         grammarFile: cfg.grammarFile || 'data/grammar/level1/articles.json',
         grammarName: cfg.grammarName || 'A vs An',
         onModeChosen: async (config) => {
-          const runGrammarMode = await modeLoaders.grammar();
+          const runGrammarMode = await modeLoaders.grammar_choose();
           try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
           try { if (!historyManager || !historyManager.isBackNavigation) historyManager.navigateToGame('grammar_choose', { grammar: window.__WA_LAST_GRAMMAR__ }); } catch {}
           runGrammarMode({
