@@ -30,6 +30,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, onMode
 
   // Modes (styleMode borrows Word Arcade accent colors)
   const modes = [
+    // New: put Lesson first
+    { mode: 'lesson', title: 'Lesson', svgPath: './grammar_rainbow.svg', styleMode: 'basic' },
     { mode: 'choose', title: 'Choose', svgPath: './ui/rainbow.svg', styleMode: 'multi_choice' },
     { mode: 'fill_gap', title: 'Fill the Gap', svgPath: './ui/rainbow.svg', styleMode: 'missing_letter', disabled: true }
   ];
@@ -131,7 +133,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, onMode
     iconDiv.className = 'mode-icon';
 
     const img = document.createElement('img');
-    img.src = m.svgPath;
+  img.src = m.svgPath;
     img.alt = m.title;
     img.style.width = '96px';
     img.style.height = '96px';
