@@ -80,38 +80,27 @@ export async function runGrammarMode(ctx) {
       const item = shuffled[currentIdx];
       const isLastQuestion = currentIdx === shuffled.length - 1;
 
-      // Main content (no example or translation). Show a fixed-size article box and the word in bright cyan.
-          const contentHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:32px;padding:24px;max-width:640px;margin:0 auto;">
-              <!-- Progress indicator -->
-              <div style="width:100%;text-align:center;font-size:1rem;color:#666;font-weight:600;margin-top:4px;margin-bottom:4px;">
-                Question ${currentIdx + 1} of ${shuffled.length}
-              </div>
-  
+      // Main content (no example or translation).
+      // Use CSS classes so sizes can scale with viewport height/width (vmin) without overflow.
+      const contentHTML = `
+        <div class="grammar-stage">
+          <!-- Progress indicator -->
+          <div class="progress-label">Question ${currentIdx + 1} of ${shuffled.length}</div>
+
           <!-- Main question -->
           <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;">
-            ${item.emoji ? `<div style=\"font-size:4.6rem;line-height:1;margin-bottom:30px;\">${item.emoji}</div>` : ''}
-            <div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:1.92rem;font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;"></div>
-            <div style="font-size:clamp(2.88rem, 12vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:1px;max-width:88vw;white-space:nowrap;line-height:1.1;padding:0 8px;">${item.word}</div>
-          </div>              <!-- Answer buttons (extra spacing above) -->
-              <div style="display:flex;gap:20px;width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;">
-                <button class="grammar-choice-btn" data-answer="a" style="flex:1;min-width:140px;padding:16px 24px;font-size:1.5rem;font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
-                  a
-                </button>
-                <button class="grammar-choice-btn" data-answer="an" style="flex:1;min-width:140px;padding:16px 24px;font-size:1.5rem;font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
-                  an
-                </button>
-              </div>
-  
-              <!-- Spacer pushes the quit button to the bottom -->
-              <div style="flex:1;width:100%;"></div>
-  
-              <!-- Quit button -->
-              <button id="grammarQuitBtn" class="wa-quit-btn" style="margin-top:auto;margin-bottom:8px;align-self:center;background:#fff;color:#6273e4;border:2px solid #39d5da;font-weight:800;cursor:pointer;">
-                Quit Game
-              </button>
-            </div>
-          `;
+            ${item.emoji ? `<div class="emoji">${item.emoji}</div>` : ''}
+            <div id="grammarArticleBox"></div>
+            <div class="grammar-word">${item.word}</div>
+          </div>
+
+          <!-- Answer buttons -->
+          <div class="grammar-answers">
+            <button class="grammar-choice-btn" data-answer="a">a</button>
+            <button class="grammar-choice-btn" data-answer="an">an</button>
+          </div>
+        </div>
+      `;
 
       // Render directly in the game area with progress
       setView({
@@ -191,22 +180,7 @@ export async function runGrammarMode(ctx) {
         };
       });
 
-      // Quit Game button -> return to grammar mode selector
-      const quitBtn = document.getElementById('grammarQuitBtn');
-      if (quitBtn) {
-        quitBtn.onclick = () => {
-          try {
-            if (window.WordArcade && typeof window.WordArcade.startGrammarModeSelector === 'function') {
-              window.WordArcade.startGrammarModeSelector();
-            } else if (window.WordArcade && typeof window.WordArcade.quitToOpening === 'function') {
-              window.WordArcade.quitToOpening(true);
-            } else {
-              location.hash = '#state-mode_selector';
-              location.reload();
-            }
-          } catch { /* noop */ }
-        };
-      }
+      // Use the global fixed quit button provided by game_view.js; no duplicate in-content button needed here.
     }
 
     // ===========================
