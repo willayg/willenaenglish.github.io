@@ -1,0 +1,136 @@
+{
+  "animals": {
+    "dog": "🐶", "cat": "🐱", "rabbit": "🐰", "horse": "🐴", "cow": "🐮", "pig": "🐷",
+    "sheep": "🐑", "goat": "🐐", "chicken": "🐔", "duck": "🦆", "mouse": "🐭", "bear": "🐻",
+    "tiger": "🐯", "lion": "🦁", "elephant": "🐘", "monkey": "🐒", "fox": "🦊", "wolf": "🐺",
+    "deer": "🦌", "squirrel": "🐿️", "bird": "🐦", "penguin": "🐧", "fish": "🐟", "shark": "🦈",
+    "whale": "🐋", "dolphin": "🐬", "turtle": "🐢", "frog": "🐸", "snake": "🐍", "lizard": "🦎",
+    "spider": "🕷️", "bee": "🐝", "ant": "🐜", "butterfly": "🦋", "snail": "🐌", "ladybug": "🐞",
+    "crab": "🦀", "octopus": "🐙", "shrimp": "🦐", "lobster": "🦞", "zebra": "🦓", "giraffe": "🦒",
+    "kangaroo": "🦘", "koala": "🐨", "panda": "🐼", "hamster": "🐹", "chick": "🐣", "owl": "🦉",
+    "cheetah": "🐆", "hippopotamus": "🦛", "rhinoceros": "🦏", "sloth": "🦥", "otter": "🦦", "beaver": "🦫",
+    "eagle": "🦅", "peacock": "🦚", "crocodile": "🐊", "tortoise": "🐢", "jellyfish": "🪼", "dragonfly": "🪰", "caterpillar": "🐛", "seahorse": "🐴"
+  },
+  "food": {
+    "apple": "🍎", "banana": "🍌", "orange": "🍊", "grape": "🍇", "grapes": "🍇", "strawberry": "🍓",
+    "watermelon": "🍉", "peach": "🍑", "pineapple": "🍍", "cherry": "🍒", "lemon": "🍋", "coconut": "🥥",
+    "tomato": "🍅", "carrot": "🥕", "corn": "🌽", "broccoli": "🥦", "cucumber": "🥒", "pepper": "🌶️",
+    "potato": "🥔", "onion": "🧅", "garlic": "🧄", "bread": "🍞", "cheese": "🧀", "egg": "🥚",
+    "bacon": "🥓", "steak": "🥩", "chicken": "🍗", "pizza": "🍕", "burger": "🍔", "fries": "🍟",
+    "hotdog": "🌭", "taco": "🌮", "burrito": "🌯", "sandwich": "🥪", "salad": "🥗", "soup": "🍲",
+    "pasta": "🍝", "rice": "🍚", "cookie": "🍪", "cake": "🎂", "pie": "🥧", "donut": "🍩",
+    "candy": "🍬", "chocolate": "🍫", "honey": "🍯", "milk": "🥛", "coffee": "☕", "tea": "🍵",
+    "pear": "🍐", "noodles": "🍜", "meat": "🥩", "tofu": "🍲", "hamburger": "🍔", "spaghetti": "🍝", "ice cream": "🍦", "lettuce": "🥬", "cabbage": "🥬", "spinach": "🥬", "eggplant": "🍆", "cauliflower": "🥦", "mushroom": "🍄"
+  },
+  "transport": {
+    "car": "🚗", "bus": "🚌", "train": "🚆", "plane": "✈️", "airplane": "✈️", "boat": "🛥️",
+    "ship": "🚢", "bicycle": "🚲", "bike": "🚲", "motorcycle": "🏍️", "truck": "🚚", "taxi": "🚕",
+    "ambulance": "🚑", "police": "🚓", "fire": "🚒", "rocket": "🚀", "helicopter": "🚁", "metro": "🚇",
+    "tram": "🚊", "monorail": "🚝", "scooter": "🛴", "skateboard": "🛹", "canoe": "🛶", "yacht": "🛥️",
+    "subway": "🚇", "van": "🚐", "jeep": "🚙", "cruise": "🚢"
+  },
+  "objects": {
+    "house": "🏠", "school": "🏫", "hospital": "🏥", "bank": "🏦", "hotel": "🏨", "store": "🏪",
+    "book": "📖", "pencil": "✏️", "pen": "🖊️", "scissors": "✂️", "ruler": "📏", "eraser": "🧹",
+    "chair": "🪑", "table": "🛋️", "bed": "🛏️", "door": "🚪",
+    "computer": "💻", "phone": "📱", "camera": "📷", "watch": "⌚", "clock": "🕒", "key": "🔑",
+    "lock": "🔒", "umbrella": "☂️", "glasses": "👓", "hat": "👒", "shoe": "👟", "sock": "🧦",
+    "shirt": "👕", "pants": "👖", "dress": "👗", "coat": "🧥", "glove": "🧤", "scarf": "🧣",
+    "bag": "👜", "backpack": "🎒", "suitcase": "🧳", "wallet": "👛", "purse": "👛", "belt": "👞",
+    "jacket": "🧥", "sweater": "🧶", "boots": "👢", "jeans": "👖", "shorts": "🩳", "skirt": "👗", "sneakers": "👟"
+  },
+  "nature": {
+    "sun": "☀️", "moon": "🌙", "star": "⭐", "cloud": "☁️", "rain": "🌧️", "snow": "❄️",
+    "lightning": "⚡", "rainbow": "🌈", "wind": "💨", "fire": "🔥", "water": "💧", "earth": "🌍",
+    "tree": "🌳", "flower": "🌸", "rose": "🌹", "tulip": "🌷", "sunflower": "🌻", "leaf": "🍃",
+    "grass": "🌱", "plant": "🌿", "cactus": "🌵", "mountain": "⛰️", "volcano": "🌋", "desert": "🏜️",
+    "beach": "🏖️", "ocean": "🌊", "river": "🌊", "lake": "🏞️", "forest": "🌲", "jungle": "🌴",
+    "valley": "🏔️", "island": "🏝️", "waterfall": "💦", "cave": "🗻"
+  },
+  "sports": {
+    "ball": "⚽", "soccer": "⚽", "football": "🏈", "basketball": "🏀", "tennis": "🎾", "baseball": "⚾",
+    "golf": "⛳", "bowling": "🎳", "ping": "🏓", "badminton": "🏸", "hockey": "🏒", "cricket": "🏏",
+    "rugby": "🏉", "volleyball": "🏐", "swimming": "🏊", "running": "🏃", "cycling": "🚴", "skiing": "⛷️",
+    "snowboard": "🏂", "surfing": "🏄", "boxing": "🥊", "wrestling": "🤼", "climbing": "🧗", "gym": "🏋️",
+    "skating": "⛸️"
+  },
+  "emotions": {
+    "happy": "😊", "sad": "😢", "angry": "😠", "surprised": "😲", "scared": "😨", "excited": "🤩",
+    "love": "❤️", "heart": "❤️", "kiss": "💋", "hug": "🤗", "smile": "😄", "laugh": "😂",
+    "cry": "😭", "worry": "😟", "confused": "😕", "tired": "😴", "sick": "🤒", "cool": "😎",
+    "bored": "😑", "nervous": "😰", "proud": "😌", "shy": "😳", "curious": "🤔", "frustrated": "😤", "jealous": "😒", "embarrassed": "😳", "relaxed": "😌", "lonely": "😔", "grateful": "🙏", "anxious": "😟", "calm": "😌", "brave": "💪"
+  },
+  "colors": {
+    "red": "🔴", "blue": "🔵", "green": "🟢", "yellow": "🟡", "orange": "🟠", "purple": "🟣",
+    "pink": "🩷", "brown": "🤎", "black": "⚫", "white": "⚪", "gray": "🩶", "grey": "🩶"
+  },
+  "numbers": {
+    "one": "1️⃣", "two": "2️⃣", "three": "3️⃣", "four": "4️⃣", "five": "5️⃣", "six": "6️⃣",
+    "seven": "7️⃣", "eight": "8️⃣", "nine": "9️⃣", "ten": "🔟", "zero": "0️⃣"
+  },
+  "body": {
+    "face": "😊", "eye": "👁️", "nose": "👃", "mouth": "👄", "ear": "👂", "hair": "💇",
+    "hand": "✋", "finger": "👆", "foot": "🦶", "leg": "🦵", "arm": "💪", "head": "👤",
+    "brain": "🧠", "heart": "❤️", "tooth": "🦷", "bone": "🦴", "muscle": "💪", "skin": "🤲"
+  },
+  "weather": {
+    "sunny": "☀️", "cloudy": "☁️", "rainy": "🌧️", "snowy": "❄️", "windy": "💨", "stormy": "⛈️",
+    "foggy": "🌫️", "hot": "🔥", "cold": "🧊", "warm": "🌤️", "cool": "❄️", "humid": "💧"
+  },
+  "time": {
+    "morning": "🌅", "afternoon": "☀️", "evening": "🌆", "night": "🌙", "today": "📅", "tomorrow": "📆",
+    "yesterday": "📋", "week": "📅", "month": "🗓️", "year": "📆", "birthday": "🎂", "holiday": "🎉"
+  },
+  "music": {
+    "music": "🎵", "song": "🎶", "piano": "🎹", "guitar": "🎸", "violin": "🎻", "drum": "🥁",
+    "trumpet": "🎺", "flute": "🪈", "microphone": "🎤", "speaker": "🔊", "headphones": "🎧", "radio": "📻",
+    "clarinet": "🎷", "harp": "🎼", "saxophone": "🎷", "tambourine": "🥁", "cymbals": "🥁", "accordion": "🎹", "maracas": "🪕", "xylophone": "🎶", "cello": "🎻", "electric guitar": "🎸", "keyboard": "🎹"
+  },
+  "tools": {
+    "hammer": "🔨", "wrench": "🔧",
+    "screw": "🔩", "rope": "🪢", "ladder": "🪜", "brush": "🖌️", "knife": "🔪", "fork": "🍴",
+    "spoon": "🥄", "plate": "🍽️", "cup": "☕", "glass": "🥛", "bottle": "🍼", "can": "🥫"
+  },
+  "school": {
+    "teacher": "👩‍🏫", "student": "👨‍🎓", "classroom": "🏫", "desk": "🪑", "blackboard": "📋", "chalk": "✏️",
+    "homework": "📝", "test": "📄", "grade": "📊", "diploma": "🎓", "library": "📚", "notebook": "📓",
+    "calculator": "🧮", "compass": "🧭", "protractor": "📐", "highlighter": "🖍️", "binder": "📁", "folder": "📁", "stapler": "📎", "paperclip": "📎", "tape": "📦", "whiteboard": "🖊️", "projector": "📽️",
+    "crayon": "🖍️", "marker": "🖍️", "board": "🖊️", "paper": "📄", "glue": "🧴"
+  },
+  "work": {
+    "office": "🏢", "meeting": "👥", "computer": "💻", "email": "📧", "document": "📄", "printer": "🖨️",
+    "calculator": "🧮", "money": "💰", "coin": "🪙", "bank": "🏦", "credit": "💳", "receipt": "🧾"
+  },
+  "jobs": {
+  "doctor": "👨‍⚕️", "nurse": "👩‍⚕️", "teacher": "👩‍🏫", "student": "👨‍🎓", "police": "👮", "firefighter": "👨‍🚒",
+  "chef": "👨‍🍳", "cook": "👨‍🍳", "farmer": "👨‍🌾", "artist": "👩‍🎨", "musician": "👨‍🎤", "singer": "👩‍🎤",
+  "pilot": "👨‍✈️", "astronaut": "👨‍🚀", "judge": "👨‍⚖️", "engineer": "👷", "mechanic": "🧑‍🔧", "scientist": "👩‍🔬",
+  "programmer": "👨‍💻", "writer": "🧑‍💼", "actor": "🧑‍🎤", "dancer": "🕺", "waiter": "🧑‍🍳", "driver": "🚗",
+    "manager": "🧑‍💼", "business": "👔", "builder": "👷", "plumber": "🧑‍🔧", "electrician": "🧑‍🔧", "barber": "💈",
+    "hairdresser": "💇", "soldier": "🪖", "guard": "🛡️", "detective": "🕵️", "lawyer": "👨‍⚖️", "cashier": "💳"
+  },
+  "hobbies": {
+    "reading": "📚", "painting": "🎨", "cooking": "👨‍🍳", "gardening": "🌱", "photography": "📷",
+    "dancing": "🕺", "singing": "🎤", "playing guitar": "🎸", "playing piano": "🎹", "swimming": "🏊",
+    "cycling": "🚴", "hiking": "⛰️", "fishing": "🎣", "traveling": "✈️", "writing": "✍️", "drawing": "🎨",
+    "playing chess": "♟️", "playing video games": "🎮", "knitting": "🧶", "baking": "🍰"
+  },
+  "verbs": {
+    "run": "🏃", "eat": "🍽️", "drink": "🥤", "sleep": "😴", "read": "📖", "write": "✍️", "sing": "🎤", "dance": "🕺", "swim": "🏊", "jump": "⬆️",
+    "walk": "🚶", "talk": "💬", "listen": "👂", "see": "👀", "buy": "🛍️", "sell": "💰", "make": "🔨", "give": "🤝", "take": "🤚", "open": "🚪",
+    "borrow": "📚", "lend": "💸", "build": "🏗️", "break": "💥", "fix": "🔧", "carry": "💪", "cover": "📦", "discover": "🔍", "improve": "📈", "decide": "🤔",
+    "invite": "🤗", "arrive": "🚗", "prefer": "❤️", "compare": "⚖️", "explain": "📝"
+  },
+  "places": {
+    "library": "📚", "museum": "🏛️", "bakery": "🍞", "pharmacy": "💊", "hospital": "🏥", "post office": "📮", "police station": "🚔", "fire station": "🚒", "supermarket": "🛒", "playground": "🎪"
+  },
+  "home": {
+    "bedroom": "🛏️", "kitchen": "👨‍🍳", "bathroom": "🚽", "living room": "🛋️", "basement": "🏚️", "attic": "📦", "staircase": "🪜", "balcony": "🪟", "garage": "🚗", "hallway": "🚪"
+  },
+  "appliances": {
+    "refrigerator": "🧊", "microwave": "🔥", "blender": "🥤", "toaster": "🍞", "dishwasher": "🍽️", "oven": "🔥", "stove": "🔥", "sink": "💧", "cabinet": "🗄️", "counter": "🍽️"
+  },
+  "art": {
+    "painting": "🎨", "sculpture": "🗿", "museum": "🏛️", "gallery": "🖼️", "portrait": "🖼️", "landscape": "🏞️", "brush": "🖌️", "canvas": "🖼️", "statue": "🗿", "exhibition": "🎭"
+  }
+}

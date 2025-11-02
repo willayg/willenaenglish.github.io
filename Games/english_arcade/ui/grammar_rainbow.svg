@@ -1,0 +1,11 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rainbow arc with 6 bands -->
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#FF4444" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#FF8844" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="100" cy="100" r="50" fill="none" stroke="#FFFF44" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="100" cy="100" r="30" fill="none" stroke="#44DD44" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="100" cy="100" r="10" fill="#4444FF"/>
+  
+  <!-- Center gradient circle -->
+  <circle cx="100" cy="100" r="8" fill="#9944FF"/>
+</svg>

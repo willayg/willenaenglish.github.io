@@ -1,0 +1,14 @@
+[
+  {"eng":"tent","kor":"텐트","def":"a shelter made of cloth for camping","ex":"We sleep in a tent.","ex_kor":"우리는 텐트에서 잡니다."},
+  {"eng":"backpack","kor":"배낭","def":"a bag you carry on your back","ex":"Pack your backpack for the trip.","ex_kor":"여행을 위해 배낭을 챙기세요."},
+  {"eng":"compass","kor":"나침반","def":"a tool to find direction","ex":"Use a compass to find north.","ex_kor":"나침반으로 북쪽을 찾으세요."},
+  {"eng":"flashlight","kor":"손전등","def":"a small light you carry","ex":"Turn on your flashlight at night.","ex_kor":"밤에 손전등을 켜세요."},
+  {"eng":"campfire","kor":"모닥불","def":"a fire for warmth and cooking outside","ex":"We sit around the campfire.","ex_kor":"우리는 모닥불 주위에 앉아요."},
+  {"eng":"hike","kor":"등산하다","def":"to walk in nature for fun","ex":"Let’s hike up the mountain.","ex_kor":"산을 등산합시다."},
+  {"eng":"trail","kor":"산길","def":"a path in the forest or mountains","ex":"Follow the trail through the woods.","ex_kor":"숲을 지나 산길을 따라가세요."},
+  {"eng":"map","kor":"지도","def":"a drawing that shows places","ex":"Check the map for our campsite.","ex_kor":"우리 야영지를 지도에서 확인하세요."},
+  {"eng":"bug spray","kor":"벌레 퇴치제","def":"a spray to keep insects away","ex":"Use bug spray to stop mosquito bites.","ex_kor":"모기 물림을 막으려면 벌레 퇴치제를 사용하세요."},
+  {"eng":"sleeping bag","kor":"침낭","def":"a warm bag to sleep in","ex":"Unroll your sleeping bag.","ex_kor":"침낭을 펴세요."},
+  {"eng":"binoculars","kor":"쌍안경","def":"a tool to see far away","ex":"Look at birds with binoculars.","ex_kor":"쌍안경으로 새를 보세요."},
+  {"eng":"canoe","kor":"카누","def":"a small boat you paddle","ex":"We ride a canoe on the lake.","ex_kor":"우리는 호수에서 카누를 탑니다."}
+]
