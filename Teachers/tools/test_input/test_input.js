@@ -57,6 +57,9 @@ const gridFoot = el('gridFoot');
 const testPicker = el('testPicker'); // deprecated in UI; kept for compatibility if present
 const testName = el('testName');
 const testDate = el('testDate');
+// Term period inputs (month range)
+const termFrom = el('termFrom');
+const termTo = el('termTo');
 const testMeta = el('testMeta');
 const msg = el('msg');
 const testMonthFilter = el('testMonthFilter');
@@ -155,6 +158,11 @@ function loadCommentsFromColumns(test) {
   if (carrier && carrier._comment !== undefined) {
     classComments.set(key, String(carrier._comment || ''));
   }
+  // Term period (month range) metadata embedded in carrier
+  if (carrier && (carrier._term_from || carrier._term_to)) {
+    if (carrier._term_from) test.term_from = String(carrier._term_from);
+    if (carrier._term_to) test.term_to = String(carrier._term_to);
+  }
   // Backward-compat: if legacy map exists, merge as fallback
   const map = carrier && carrier._classComments;
   if (map && typeof map === 'object') {
@@ -170,6 +178,13 @@ function persistCommentsToColumns(test) {
   const key = (test && (test.class || '')) || '';
   const val = classComments.get(key) || '';
   carrier._comment = String(val);
+  // Persist term period month range in carrier
+  try {
+    const tf = (typeof document !== 'undefined' && document.getElementById) ? (document.getElementById('termFrom')?.value || '') : (test.term_from || '');
+    const tt = (typeof document !== 'undefined' && document.getElementById) ? (document.getElementById('termTo')?.value || '') : (test.term_to || '');
+    if (tf) carrier._term_from = tf; else if (carrier._term_from) delete carrier._term_from;
+    if (tt) carrier._term_to = tt; else if (carrier._term_to) delete carrier._term_to;
+  } catch {}
   if (carrier._classComments) delete carrier._classComments; // stop writing legacy structure
   if (test && test.columns && test.columns !== cols) test.columns = cols;
   return cols;
@@ -552,7 +567,12 @@ async function handleImportConfirm() {
       const classCols = JSON.parse(JSON.stringify(lastParsed.columns));
       const gMax = bucket?.maxima || lastParsed.globalMaxima || null;
       if (gMax) classCols.forEach(c => { if (c.type === 'number' && gMax[c.key] != null) c.max = gMax[c.key]; });
-      const payload = { name, date, class: perClass ? (klass || null) : (testClassFilter && testClassFilter.value) || null, columns: classCols };
+      // Embed term metadata into columns for persistence
+      (function embedTerm(cols){ const carrier = getMetaCarrierColumn(cols); if (!carrier) return; const tf = (termFrom && termFrom.value) || ''; const tt = (termTo && termTo.value) || ''; if (tf) carrier._term_from = tf; if (tt) carrier._term_to = tt; })(classCols);
+      const payload = { name, date, class: perClass ? (klass || null) : (testClassFilter && testClassFilter.value) || null, columns: classCols,
+        term_from: (termFrom && termFrom.value) || null,
+        term_to: (termTo && termTo.value) || null
+      };
       const crt = await api('create_test', payload);
   const test = crt.test;
   createdItems.push({ id: test.id, class: payload.class || '' });
@@ -1367,6 +1387,9 @@ async function loadTestById(id) {
   loadCommentsFromColumns(currentTest);
   testName.value = currentTest.name || '';
   if (testDate) testDate.value = currentTest.date || '';
+  // Restore term period inputs if present
+  if (termFrom) termFrom.value = currentTest.term_from ? String(currentTest.term_from).slice(0,7) : '';
+  if (termTo) termTo.value = currentTest.term_to ? String(currentTest.term_to).slice(0,7) : '';
   if (testClassFilter) {
     // Try to reflect the loaded class in the class switcher if present
     const val = currentTest.class || '';
@@ -1463,16 +1486,25 @@ if (testClassFilter) testClassFilter.addEventListener('change', async ()=>{
 });
 
 async function saveCurrent() {
+  const prevName = currentTest ? (currentTest.name || '') : '';
   if (!currentTest) {
   // No test yet: create one. Comments (if any) will be saved on subsequent metadata save.
-  const payload = { name: (testName.value||'Untitled Test').trim(), date: (testDate && testDate.value) || null, columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null };
+  // Persist term/comment metadata into columns before create
+  const preCols = persistCommentsToColumns({ columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null, term_from: (termFrom && termFrom.value) || null, term_to: (termTo && termTo.value) || null });
+  const payload = { name: (testName.value||'Untitled Test').trim(), date: (testDate && testDate.value) || null, columns: preCols, class: (testClassFilter && testClassFilter.value) || null,
+    term_from: (termFrom && termFrom.value) || null,
+    term_to: (termTo && termTo.value) || null
+  };
     const data = await api('create_test', payload);
     currentTest = data.test;
   } else if (currentTest && currentTest.id) {
     // Persist any metadata changes (name/date/class/columns)
   // Make sure class comments are embedded into columns before saving
   const colsWithMeta = persistCommentsToColumns(currentTest);
-  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), columns: colsWithMeta };
+  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), columns: colsWithMeta,
+    term_from: (termFrom && termFrom.value) || currentTest.term_from || null,
+    term_to: (termTo && termTo.value) || currentTest.term_to || null
+  };
     try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; } catch {}
   }
   // Build entries using snapshot identity to preserve historical class/name
@@ -1498,6 +1530,12 @@ async function saveCurrent() {
   const ss = String(t.getSeconds()).padStart(2,'0');
   msg.textContent = `Saved ${res?.upserted ?? entries.length} row(s) at ${hh}:${mm}:${ss}`;
   testMeta.textContent = `${currentTest.name} — ${students.length} students`;
+
+  // If the test name changed, propagate across the group to keep sheets together
+  const newName = (testName.value || '').trim();
+  if (newName && newName !== prevName) {
+    try { await propagateGroupRename(newName, { oldName: prevName }); } catch {}
+  }
 }
 
 // Minimal autosave to approximate live updates
@@ -1513,7 +1551,10 @@ function scheduleSave() {
 
 async function ensureTestCreated() {
   if (currentTest && currentTest.id) return;
-  const payload = { name: (testName.value||'Untitled Test').trim() || 'Untitled Test', date: (testDate && testDate.value) || null, columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null };
+  const payload = { name: (testName.value||'Untitled Test').trim() || 'Untitled Test', date: (testDate && testDate.value) || null, columns: activeColumns(), class: (testClassFilter && testClassFilter.value) || null,
+    term_from: (termFrom && termFrom.value) || null,
+    term_to: (termTo && termTo.value) || null
+  };
   const data = await api('create_test', payload);
   currentTest = data.test;
 }
@@ -1571,6 +1612,9 @@ function getDesiredTestDate() {
 // Persist test metadata (columns/name/date/class) when available
 async function saveTestMeta(opts={ captureActive: true }) {
   if (!currentTest || !currentTest.id) return;
+  const prevName = currentTest.name || '';
+  const prevTf = currentTest.term_from || '';
+  const prevTt = currentTest.term_to || '';
   // Optionally capture the current textarea into the active class slot
   if (opts.captureActive) {
     const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
@@ -1579,8 +1623,87 @@ async function saveTestMeta(opts={ captureActive: true }) {
   }
   // Persist into columns on a carrier column without adding visible columns
   const cols = persistCommentsToColumns(currentTest);
-  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), columns: cols };
+  const tf = (termFrom && termFrom.value) || currentTest.term_from || '';
+  const tt = (termTo && termTo.value) || currentTest.term_to || '';
+  const up = { test_id: currentTest.id, name: (testName.value||currentTest.name||'').trim(), columns: cols,
+    term_from: tf || null,
+    term_to: tt || null
+  };
   try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; msg.style.color = '#0369a1'; msg.textContent = 'Updated test settings.'; } catch {}
+  // Ensure in-memory fields reflect the UI (backend may ignore top-level fields)
+  currentTest.term_from = tf; currentTest.term_to = tt;
+
+  // Propagate a name change to all class tests in the same group
+  const newName = (testName.value || '').trim();
+  if (newName && newName !== prevName) {
+    try { await propagateGroupRename(newName, { oldName: prevName }); } catch {}
+  }
+  if ((tf !== prevTf) || (tt !== prevTt)) {
+    try { await propagateGroupTermRange(tf, tt); } catch {}
+  }
+}
+
+// Helper: find the test group that contains a given test id
+function _findGroupByTestId(id) {
+  for (const [key, g] of Object.entries(testGroups||{})) {
+    if ((g.items||[]).some(it=> it.id === id)) return { key, group: g };
+  }
+  return { key: null, group: null };
+}
+
+// Rename helper: apply new name to all tests in the same (name+date) group
+async function propagateGroupRename(newName, opts={}) {
+  if (!currentTest) return;
+  const date = currentTest.date || '';
+  const oldName = (opts && opts.oldName) ? String(opts.oldName) : (currentTest.name||'');
+  const expectedKey = `${oldName}||${date}`;
+  // Try explicit key, then active, then by membership
+  let group = testGroups[expectedKey] || testGroups[activeTestGroupKey] || null;
+  let oldKey = testGroups[expectedKey] ? expectedKey : activeTestGroupKey;
+  if (!group) { const found = _findGroupByTestId(currentTest.id); oldKey = found.key; group = found.group; }
+  if (!group || !Array.isArray(group.items) || !group.items.length) return;
+  // Batch update all tests in the group
+  for (const it of group.items) {
+    try { await api('update_test', { test_id: it.id, name: newName }); } catch {}
+  }
+  // Refresh groups and keep active selection
+  await loadTests();
+  const newKey = `${newName}||${date}`;
+  activeTestGroupKey = newKey;
+  if (lastImported && lastImported.groupKey === oldKey) lastImported.groupKey = newKey;
+  // Update UI label and in-memory name
+  currentTest.name = newName;
+  testMeta.textContent = `${currentTest.name} — ${students.length} students`;
+  msg.style.color = '#0369a1';
+  msg.textContent = `Renamed group to “${newName}”.`;
+}
+
+// Apply term period month range to all tests in the current (name+date) group
+async function propagateGroupTermRange(term_from, term_to) {
+  if (!currentTest) return;
+  const date = currentTest.date || '';
+  const oldKey = `${(currentTest.name||'')}||${date}`;
+  const group = testGroups[oldKey] || testGroups[activeTestGroupKey] || null;
+  if (!group || !Array.isArray(group.items) || !group.items.length) return;
+  const applyToColumns = (cols) => {
+    const c = getMetaCarrierColumn(cols) || null; if (!c) return cols;
+    if (term_from) c._term_from = term_from; else if (c._term_from) delete c._term_from;
+    if (term_to) c._term_to = term_to; else if (c._term_to) delete c._term_to;
+    return cols;
+  };
+  for (const it of group.items) {
+    try {
+      // Fetch current columns for each class test, then update carrier fields
+      const resp = await fetch(`${API}?action=get_test&test_id=${encodeURIComponent(it.id)}`, { credentials:'include', cache:'no-store' });
+      const data = await resp.json();
+      if (!data?.success) continue;
+      const cols = Array.isArray(data.test?.columns) ? JSON.parse(JSON.stringify(data.test.columns)) : [];
+      const patched = applyToColumns(cols);
+      await api('update_test', { test_id: it.id, columns: patched });
+    } catch {}
+  }
+  msg.style.color = '#0369a1';
+  msg.textContent = `Applied term period to ${group.items.length} class test(s).`;
 }
 
 // API helpers and student loading (restored)
@@ -1853,7 +1976,12 @@ if (campaignCreate) campaignCreate.addEventListener('click', async ()=>{
   let created = [];
   for (const klass of selected) {
     try {
-      const payload = { name, date, class: klass, columns: activeColumns() };
+      // Embed term metadata into columns
+      const cols = persistCommentsToColumns({ columns: activeColumns(), class: klass, term_from: (termFrom && termFrom.value) || null, term_to: (termTo && termTo.value) || null });
+      const payload = { name, date, class: klass, columns: cols,
+        term_from: (termFrom && termFrom.value) || null,
+        term_to: (termTo && termTo.value) || null
+      };
       const data = await api('create_test', payload);
       created.push(data.test);
     } catch (e) {
@@ -1878,6 +2006,24 @@ if (campaignCreate) campaignCreate.addEventListener('click', async ()=>{
 if (saveBtn) saveBtn.addEventListener('click', async ()=>{
   await saveCurrent();
 });
+
+// Rename-on-change: when title input changes, rename group so all class sheets stay together
+if (testName) {
+  let lastTitle = testName.value || '';
+  testName.addEventListener('change', async ()=>{
+    const newTitle = (testName.value || '').trim();
+    if (!currentTest || !currentTest.id) { lastTitle = newTitle; return; }
+    if (!newTitle || newTitle === (currentTest.name || '')) return;
+    try {
+      // Update current test
+      await api('update_test', { test_id: currentTest.id, name: newTitle });
+      currentTest.name = newTitle;
+      // Propagate to group mates
+      await propagateGroupRename(newTitle, { oldName: lastTitle || undefined });
+    } catch {}
+    lastTitle = newTitle;
+  });
+}
 
 // Wire Add Column button
 if (addColumnBtn) addColumnBtn.addEventListener('click', async ()=>{
@@ -1930,6 +2076,13 @@ if (classCommentEl) {
     commentSaveTimer = setTimeout(()=>{ saveTestMeta(); }, 1200);
   });
 }
+// Persist term period when month inputs change
+if (typeof termFrom !== 'undefined' && termFrom) {
+  termFrom.addEventListener('change', ()=>{ if (commentSaveTimer) clearTimeout(commentSaveTimer); commentSaveTimer = setTimeout(()=> saveTestMeta(), 400); });
+}
+if (typeof termTo !== 'undefined' && termTo) {
+  termTo.addEventListener('change', ()=>{ if (commentSaveTimer) clearTimeout(commentSaveTimer); commentSaveTimer = setTimeout(()=> saveTestMeta(), 400); });
+}
 
 // Report Cards Modal logic
 (function(){
@@ -1937,6 +2090,7 @@ if (classCommentEl) {
   const modalBg = document.getElementById('rcModalBg');
   const closeBtn = document.getElementById('rcCloseBtn');
   const printBtn = document.getElementById('rcPrintBtn');
+  const pdfBtn = document.getElementById('rcPdfBtn');
   const cardsWrap = document.getElementById('rcCardsWrap');
   const cardsContainer = document.getElementById('rcCardsContainer');
   const rcStatus = document.getElementById('rcStatus');
@@ -1944,6 +2098,8 @@ if (classCommentEl) {
 
   function esc(s=''){ return String(s).replace(/[&<>"'`]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","`":"&#96;"}[m]||m)); }
   function fmtDate(dateStr){ if(!dateStr) return ''; const d=new Date(dateStr); if(Number.isNaN(d)) return String(dateStr); return d.toLocaleDateString(undefined,{ year:'numeric', month:'long', day:'numeric' }); }
+  // Month-Year only (e.g., October 2025). Accepts 'YYYY-MM' or full ISO.
+  function fmtMonthYear(dateStr){ if(!dateStr) return ''; let src = String(dateStr); if(/^\d{4}-\d{2}$/.test(src)) src = src + '-01'; const d=new Date(src); if(Number.isNaN(d)) return String(dateStr); return d.toLocaleDateString(undefined,{ year:'numeric', month:'long' }); }
   function parseNumber(v){ if(v===null||v===undefined) return null; if(typeof v==='number' && Number.isFinite(v)) return v; if(typeof v==='string'){ const m=v.trim().match(/-?[0-9]+(?:\.[0-9]+)?/); if(!m) return null; const n=Number(m[0]); return Number.isFinite(n)?n:null; } return null; }
   function formatNumber(v,{decimals=0}={}){ if(v===null||v===undefined||Number.isNaN(v)) return '—'; const opts={minimumFractionDigits:decimals, maximumFractionDigits:decimals}; if(!Number.isFinite(v)) return '—'; if(decimals===0 && Math.abs(v-Math.round(v))>0.0001){ return v.toLocaleString(undefined,{minimumFractionDigits:1, maximumFractionDigits:1}); } return v.toLocaleString(undefined,opts); }
   const formatPercent = (v)=> (v===null||v===undefined||Number.isNaN(v)) ? '—' : `${formatNumber(v,{decimals:1})}%`;
@@ -1955,9 +2111,10 @@ if (classCommentEl) {
     const out = [];
     trs.forEach(tr => {
       const tds = tr.children; if (!tds || tds.length < 2) return;
-      const name = tds[0]?.textContent?.trim() || '';
-      const korean = tds[1]?.textContent?.trim() || '';
-      const row = { username:'', name, korean_name: korean, class:'', data: {} };
+  const name = tds[0]?.textContent?.trim() || '';
+  const korean = tds[1]?.textContent?.trim() || '';
+  const klass = tds[2]?.textContent?.trim() || '';
+  const row = { username:'', name, korean_name: korean, class: klass, data: {} };
       const cols = activeColumns();
       for (let i = 2; i < tds.length; i++) {
         const td = tds[i];
@@ -1979,9 +2136,16 @@ if (classCommentEl) {
 
   function currentTestMeta() {
     const name = document.getElementById('testName')?.value || '';
-    const date = document.getElementById('testDate')?.value || '';
+    // Prefer explicit input if present; otherwise use the loaded test's date
+    const inputDate = document.getElementById('testDate')?.value || '';
+    const date = inputDate || (window.currentTest && currentTest.date) || '';
+    // Month range
+    const tfEl = document.getElementById('termFrom');
+    const ttEl = document.getElementById('termTo');
+    const term_from = (tfEl && tfEl.value) || (window.currentTest && currentTest.term_from) || '';
+    const term_to = (ttEl && ttEl.value) || (window.currentTest && currentTest.term_to) || '';
     const cols = activeColumns();
-    return { name, date, columns: cols };
+    return { name, date, term_from, term_to, columns: cols };
   }
 
   // Korean skill labels mapping
@@ -2068,6 +2232,22 @@ if (classCommentEl) {
     ).join('');
 
   const logo = '/Logo.png';
+  // Prefer explicit student class; fall back to loaded test class
+  const displayClass = (student && student.class) ? student.class : ((window.currentTest && currentTest.class) || '');
+    // Compute term period display: prefer month range; fallback to test date
+    function normMonth(s){ if(!s) return ''; const str=String(s); return /^\d{4}-\d{2}$/.test(str) ? (str+'-01') : str; }
+    let termText = '';
+    const tf = test.term_from || '';
+    const tt = test.term_to || '';
+    if (tf && tt) {
+      const a = fmtMonthYear(normMonth(tf));
+      const b = fmtMonthYear(normMonth(tt));
+      termText = a && b ? (a===b ? a : `${a} – ${b}`) : (a||b);
+    } else if (tf || tt) {
+      termText = fmtMonthYear(normMonth(tf||tt));
+    } else {
+      termText = fmtMonthYear(test.date);
+    }
     return `
       <section class="rc-page">
         <header class="rc-header">
@@ -2077,8 +2257,8 @@ if (classCommentEl) {
         <div class="rc-info">
           <div class="rc-field"><span class="rc-label">Student Name:</span><div class="rc-line"><div class="rc-value">${esc(student.name||'')}</div></div></div>
           <div class="rc-field"><span class="rc-label">Korean Name:</span><div class="rc-line"><div class="rc-value">${esc(student.korean_name||'')}</div></div></div>
-          <div class="rc-field"><span class="rc-label">Class:</span><div class="rc-line"><div class="rc-value">${esc(student.class||'')}</div></div></div>
-          <div class="rc-field"><span class="rc-label">Term Period:</span><div class="rc-line"><div class="rc-value">${esc(fmtDate(test.date)||'')}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Class:</span><div class="rc-line"><div class="rc-value">${esc(displayClass)}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Term Period:</span><div class="rc-line"><div class="rc-value">${esc(termText||'')}</div></div></div>
         </div>
 
         <div class="rc-columns">
@@ -2126,7 +2306,7 @@ if (classCommentEl) {
     // Ensure inline styles for gauge layout are present (defensive against other CSS overrides)
     (function ensureInlineGaugeStyles(){
       if (document.getElementById('rcInlineGaugeStyles')) return;
-      const css = `#rcModal .rc-library{display:grid;gap:9mm;justify-items:center}#rcModal .rc-lib-item{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}#rcModal .rc-gauge{width:120px;height:72px;position:relative}#rcModal .rc-gauge svg{width:100%;height:100%;display:block}#rcModal .rc-gauge .grade-text{position:absolute;left:0;right:0;top:50%;transform:translateY(-35%);font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}`;
+  const css = `#rcModal .rc-library{display:grid;gap:9mm;justify-items:center}#rcModal .rc-lib-item{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}#rcModal .rc-gauge{width:120px;height:90px;position:relative}#rcModal .rc-gauge svg{width:100%;height:100%;display:block}#rcModal .rc-gauge .grade-text{position:absolute;left:0;right:0;bottom:0;transform:none;font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}`;
       const tag = document.createElement('style');
       tag.id = 'rcInlineGaugeStyles';
       tag.textContent = css;
@@ -2173,7 +2353,7 @@ if (classCommentEl) {
               .rc-lib-item{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
               .rc-gauge{width:120px;height:72px;position:relative}
               .rc-gauge svg{width:100%;height:100%;display:block}
-              .rc-gauge .grade-text{position:absolute;left:0;right:0;top:50%;transform:translateY(-35%);font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}
+              .rc-gauge .grade-text{position:absolute;left:0;right:0;bottom:0;transform:none;font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}
             </style>
           </head>
           <body>
@@ -2194,4 +2374,57 @@ if (classCommentEl) {
     // Use standalone window to avoid visibility/overlay conflicts in print
     printCardsStandalone();
   });
+
+  async function ensurePdfLibs() {
+    if (window.jspdf && window.html2canvas) return;
+    const inject = (src) => new Promise((resolve, reject)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=resolve; s.onerror=reject; document.head.appendChild(s); });
+    // Load html2canvas then jsPDF (UMD builds)
+    if (!window.html2canvas) await inject('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+    if (!window.jspdf) await inject('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+  }
+
+  async function exportCardsToPdf() {
+    try {
+      rcStatus.textContent = 'Rendering PDF…';
+      await ensurePdfLibs();
+      const { jsPDF } = window.jspdf;
+      const pages = Array.from(cardsContainer.querySelectorAll('.rc-page'));
+      if (!pages.length) { rcStatus.textContent = 'No cards to export.'; return; }
+      // Emulate print CSS during rasterization
+      const modalRoot = document.getElementById('rcModal');
+      if (modalRoot) modalRoot.classList.add('rc-pdf');
+      const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+      const pageW = 210, pageH = 297;
+      for (let i=0; i<pages.length; i++) {
+        const node = pages[i];
+        // Ensure white background when rasterizing
+        const canvas = await window.html2canvas(node, { scale:2, backgroundColor:'#ffffff', useCORS:true });
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgW = pageW, imgH = (canvas.height / canvas.width) * imgW;
+        if (i>0) pdf.addPage('a4', 'portrait');
+        pdf.addImage(imgData, 'JPEG', 0, Math.max(0, (pageH - imgH)/2), imgW, imgH);
+      }
+      const test = currentTestMeta();
+      const title = (test.name || 'Report_Cards').replace(/[^a-z0-9_\-]+/gi,'_');
+      // Prefer selected class, then loaded test class; else infer from visible students
+      let cls = ((testClassFilter && testClassFilter.value) || (window.currentTest && currentTest.class) || '').trim();
+      if (!cls) {
+        try {
+          const vs = (typeof visibleStudents === 'function') ? visibleStudents() : [];
+          const set = Array.from(new Set((vs||[]).map(s=> (s.class||'').trim()).filter(Boolean)));
+          if (set.length === 1) cls = set[0];
+          else if (set.length > 1) cls = 'AllClasses';
+        } catch {}
+      }
+      const safeClass = cls ? cls.replace(/[^a-z0-9_\-]+/gi,'_') : '';
+      const filename = safeClass ? `${title}_${safeClass}.pdf` : `${title}.pdf`;
+      pdf.save(filename);
+      rcStatus.textContent = `Exported ${pages.length} page${pages.length===1?'':'s'} to PDF.`;
+      if (modalRoot) modalRoot.classList.remove('rc-pdf');
+    } catch (e) {
+      rcStatus.textContent = 'PDF export failed.';
+    }
+  }
+
+  pdfBtn?.addEventListener('click', exportCardsToPdf);
 })();
