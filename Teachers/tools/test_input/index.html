@@ -92,6 +92,9 @@
         </div>
         <div class="ta-row2">
           <input id="testName" class="input-field" placeholder="Test name (e.g., Brown Midterm)" style="flex:0 0 200px; width:200px; max-width:200px;" />
+          <!-- Term period (start/end month) -->
+          <input id="termFrom" type="month" class="input-field" title="Term start month" style="flex:0 0 140px; max-width:140px;" />
+          <input id="termTo" type="month" class="input-field" title="Term end month" style="flex:0 0 140px; max-width:140px;" />
           <select id="testClassFilter" class="select"><option value="">All Classes</option></select>
           <button id="newTestBtn" class="btn-link">New Test</button>
           <button id="importTableBtn" class="btn-link">Import</button>
@@ -245,6 +248,7 @@
           <span id="rcStatus" class="note"></span>
         </div>
         <div style="display:flex; gap:8px;">
+          <button id="rcPdfBtn" class="layout-btn">Export PDF</button>
           <button id="rcPrintBtn" class="extract-btn">Print</button>
           <button id="rcCloseBtn" class="clear-btn">Close</button>
         </div>
