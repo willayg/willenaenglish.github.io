@@ -642,6 +642,8 @@ const modeLoaders = {
   // Grammar modes
   grammar_choose: () => import('./modes/grammar_mode.js').then(m => m.runGrammarMode),
   grammar_lesson: () => import('./modes/grammar_lesson.js').then(m => m.runGrammarLesson),
+  grammar_fill_gap: () => import('./modes/grammar_fill_gap.js').then(m => m.runGrammarFillGapMode),
+  grammar_sentence_unscramble: () => import('./modes/grammar_sentence_unscramble.js').then(m => m.runGrammarSentenceUnscramble),
 };
 
 // Load and start a phonics game
@@ -677,9 +679,12 @@ async function loadGrammarGame({ grammarFile, grammarName }) {
     console.log('[loadGrammarGame] Starting grammar game:', { grammarFile, grammarName });
     showOpeningButtons(false);
     gameArea.innerHTML = '';
+    currentListName = grammarName || null;
+    wordList = [];
     
     // Mark as grammar flow
     window.__WA_IS_GRAMMAR__ = true;
+    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName }; } catch {}
     
     // Show grammar mode selector first
     showGrammarModeSelector({
@@ -687,19 +692,24 @@ async function loadGrammarGame({ grammarFile, grammarName }) {
       grammarName,
       onModeChosen: async (config) => {
         // Now start the actual game with the chosen mode
-  const { mode } = config;
-  // Choose appropriate grammar loader based on selected card
-  const modeKey = (mode === 'lesson') ? 'grammar_lesson' : 'grammar_choose';
-  const modeLoader = modeLoaders[modeKey];
-  if (!modeLoader) throw new Error('Grammar mode loader not found');
-  const runGrammarMode = await modeLoader();
+        const { mode } = config;
+        const loaderMap = {
+          lesson: 'grammar_lesson',
+          choose: 'grammar_choose',
+          fill_gap: 'grammar_fill_gap',
+          unscramble: 'grammar_sentence_unscramble',
+        };
+        const loaderKey = loaderMap[mode] || 'grammar_choose';
+        const modeLoader = modeLoaders[loaderKey];
+        if (!modeLoader) throw new Error('Grammar mode loader not found');
+        const runGrammarMode = await modeLoader();
         
         // Remember last grammar config for restoring mode menu and back/forward
         try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
         // Track entering grammar game for back/forward support
         try {
           if (!historyManager || !historyManager.isBackNavigation) {
-            historyManager.navigateToGame('grammar_choose', { grammar: window.__WA_LAST_GRAMMAR__ });
+            historyManager.navigateToGame(loaderKey, { grammar: window.__WA_LAST_GRAMMAR__ });
           }
         } catch {}
 
@@ -1167,7 +1177,7 @@ function showGrammarLevelsMenu() {
   // Track navigation to grammar levels menu
   try {
     if (!historyManager || !historyManager.isBackNavigation) {
-      historyManager.navigateToLevels();
+      historyManager.navigateToGrammarLevels();
     }
   } catch {}
   
@@ -1194,6 +1204,36 @@ function showGrammarLevelsMenu() {
     window.StudentLang.applyTranslations();
   }
   
+  // Update grammar level progress stars using shared progress service
+  (async () => {
+    const targetEl = document.getElementById('wa-stars-grammar-level1');
+    if (!targetEl) return;
+
+    const applyStars = (count) => {
+      targetEl.textContent = `⭐ ${Math.max(0, count || 0)}`;
+    };
+
+    applyStars(0);
+
+    try {
+      const { data, fromCache } = await loadStarCounts();
+      if (data?.ready) {
+        applyStars(data.counts?.grammarLevel1 || 0);
+      }
+
+      if (fromCache) {
+        const unsubscribe = progressCache.onUpdate('level_stars', (fresh) => {
+          if (fresh?.ready) {
+            applyStars(fresh.counts?.grammarLevel1 || 0);
+          }
+          unsubscribe();
+        });
+      }
+    } catch (err) {
+      console.info('[GrammarLevels] stars unavailable', err?.message || err);
+    }
+  })();
+
   // Back button - go back to main menu
   const backBtn = document.getElementById('grammarLevelBackBtn');
   if (backBtn) {
@@ -1363,22 +1403,49 @@ window.WordArcade = {
         grammarFile: cfg.grammarFile || 'data/grammar/level1/articles.json',
         grammarName: cfg.grammarName || 'A vs An',
         onModeChosen: async (config) => {
-          const runGrammarMode = await modeLoaders.grammar_choose();
-          try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
-          try { if (!historyManager || !historyManager.isBackNavigation) historyManager.navigateToGame('grammar_choose', { grammar: window.__WA_LAST_GRAMMAR__ }); } catch {}
-          runGrammarMode({
-            grammarFile: config.grammarFile,
-            grammarName: config.grammarName,
-            renderGameView,
-            showModeModal,
-            playSFX,
-            playTTS,
-            inlineToast,
-            getListName: () => currentListName,
-            getUserId: () => { try { return (window.WordArcade && typeof window.WordArcade.getUserId === 'function') ? window.WordArcade.getUserId() : null; } catch { return null; } },
-            FN,
-            showOpeningButtons
-          });
+          try {
+            const mapping = {
+              lesson: 'grammar_lesson',
+              choose: 'grammar_choose',
+              fill_gap: 'grammar_fill_gap',
+              unscramble: 'grammar_sentence_unscramble',
+            };
+            const targetKey = mapping[config?.mode] || 'grammar_choose';
+            const loader = modeLoaders[targetKey];
+            if (!loader) throw new Error(`Grammar mode loader missing for ${targetKey}`);
+            const runGrammarMode = await loader();
+            try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
+            try {
+              if (!historyManager || !historyManager.isBackNavigation) {
+                historyManager.navigateToGame(targetKey, { grammar: window.__WA_LAST_GRAMMAR__ });
+              }
+            } catch {}
+            runGrammarMode({
+              grammarFile: config.grammarFile,
+              grammarName: config.grammarName,
+              renderGameView,
+              showModeModal,
+              playSFX,
+              playTTS,
+              inlineToast,
+              getListName: () => currentListName,
+              getUserId: () => {
+                try {
+                  return (window.WordArcade && typeof window.WordArcade.getUserId === 'function')
+                    ? window.WordArcade.getUserId()
+                    : null;
+                } catch {
+                  return null;
+                }
+              },
+              FN,
+              showOpeningButtons
+            });
+          } catch (err) {
+            console.error('[WordArcade] Failed to start grammar mode from selector', err);
+            inlineToast?.('Could not start this grammar mode');
+            showOpeningButtons(true);
+          }
         },
         onClose: () => { showGrammarLevelsMenu(); }
       });
@@ -1389,6 +1456,7 @@ window.WordArcade = {
   openSavedGames: () => openSavedGamesModal('opening_menu'),
   quitToOpening,
   clearCurrentGameState,
+  loadGrammarGame,
   loadPhonicsGame,
   loadSampleWordlistByFilename,
   showLevelsMenu,

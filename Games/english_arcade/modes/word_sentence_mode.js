@@ -163,7 +163,12 @@ async function enrichSentenceAudioIDAware(items){
 }
 
 export function run(ctx){
-  const root = ctx.gameArea || document.getElementById('gameStage') || document.body; if(!root) return console.error('[WordSentenceMode] Missing root');
+  // Prefer #gameArea (Word Arcade surface), then legacy #gameStage, then body
+  const root = ctx.gameArea || document.getElementById('gameArea') || document.getElementById('gameStage') || document.body; 
+  if(!root) return console.error('[WordSentenceMode] Missing root');
+  const sessionModeId = ctx?.sessionMode || 'word_sentence_mode';
+  const layout = ctx?.sentenceLayout || {};
+  const onSentenceQuit = (typeof ctx?.onSentenceQuit === 'function') ? ctx.onSentenceQuit : null;
   // Normalize & filter items
   let items = normalizeWordsToSentenceItems(ctx.wordList || []);
   items = items.filter(w => w && w.sentence && typeof w.sentence === 'string' && w.sentence.trim().split(/\s+/).length >= 3);
@@ -172,10 +177,15 @@ export function run(ctx){
 
   // Splash then start
   function showIntroThenStart(){
+    if (layout.skipIntro) {
+      try { startUnscramble(); } catch(e){ console.error('[WordSentenceMode] start failed', e); root.innerHTML = renderErrorBox('Could not start sentence mode.'); }
+      return;
+    }
+    const introTitle = layout.hideTitle ? '' : (layout.customTitle || 'Sentence Unscramble');
     root.innerHTML = `
       <div id="wsIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
         <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">
-          Sentence Unscramble
+          ${introTitle}
         </div>
       </div>`;
     setTimeout(()=>{
@@ -201,20 +211,71 @@ export function run(ctx){
   let totalPoints = 0;
   let sessionId = null;
 
+  function exitToMenu() {
+    // Always try browser back first if possible
+    if (window.history && window.history.length > 1) {
+      window.history.back();
+      // Give browser a moment to navigate, but if it doesn't, fallback after a short delay
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          fallbackQuit();
+        }
+      }, 500);
+      return;
+    }
+    fallbackQuit();
+  }
+
+  function fallbackQuit() {
+    // Always make sure quit button is visible if present
+    const quitBtn = document.getElementById('wa-quit-btn') || document.getElementById('smQuitBtn') || document.getElementById('grammarQuitBtn');
+    if (quitBtn) quitBtn.style.display = '';
+    if (typeof ctx?.onSummaryExit === 'function') {
+      ctx.onSummaryExit();
+      return;
+    }
+    if (onSentenceQuit) {
+      onSentenceQuit();
+      return;
+    }
+    if (ctx?.sessionMode && String(ctx.sessionMode).startsWith('grammar_') && window.WordArcade?.startGrammarModeSelector) {
+      window.WordArcade.startGrammarModeSelector();
+      return;
+    }
+    if (window.WordArcade?.startModeSelector) {
+      window.WordArcade.startModeSelector();
+      return;
+    }
+    if (window.WordArcade?.quitToOpening) {
+      window.WordArcade.quitToOpening(true);
+      return;
+    }
+    if (typeof ctx?.showOpeningButtons === 'function') {
+      ctx.showOpeningButtons(true);
+      return;
+    }
+  }
+
   function startUnscramble(){
     root.innerHTML = '';
     root.classList.add('cgm-mode-root');
+    injectStylesOnce();
+    root.classList.toggle('sm-center-root', !!layout.centerContent);
     const wrap = document.createElement('div');
     wrap.className = 'sentence-mode';
-    injectStylesOnce();
-    wrap.innerHTML = `
-      <div class="sm-header">
-        <div class="sm-title">Sentence Unscramble</div>
+    const headerClasses = ['sm-header'];
+    if (layout.hideTitle) headerClasses.push('sm-header-no-title');
+    const titleHtml = layout.hideTitle ? '' : `<div class="sm-title">${layout.customTitle || 'Sentence Unscramble'}</div>`;
+    const headerHtml = `
+      <div class="${headerClasses.join(' ')}">
+        ${titleHtml}
         <div class="sm-header-right">
           <div id="smCounter" class="sm-counter">1 / ${items.length}</div>
           <div id="smScore" class="sm-score" aria-label="Points earned this session">0 pts</div>
         </div>
-      </div>
+      </div>`;
+    wrap.innerHTML = `
+      ${headerHtml}
       <div id="smSentenceBox" class="sm-box fade-in">
         <div class="sm-section-label">Build the sentence:</div>
         <div id="smConstruct" class="sm-construct sm-construct-line" aria-label="Your assembled sentence" role="presentation"><span class="sm-line-placeholder">Tap words below…</span></div>
@@ -232,7 +293,20 @@ export function run(ctx){
       </div>`;
     root.appendChild(wrap);
 
-    try { sessionId = startSession({ mode: 'word_sentence_mode', wordList: items, listName: ctx?.listName || null }); } catch(e){ console.debug('[WordSentenceMode] startSession skipped', e?.message); }
+    if (layout.showQuitButton) {
+      const quitFooter = document.createElement('div');
+      quitFooter.className = 'sentence-mode-quit-footer';
+      const quitBtn = document.createElement('button');
+      quitBtn.type = 'button';
+      quitBtn.id = layout.quitButtonId || 'smQuitBtn';
+      quitBtn.className = 'sentence-mode-quit-btn';
+      quitBtn.textContent = layout.quitButtonLabel || 'Quit Game';
+      quitBtn.addEventListener('click', exitToMenu);
+      quitFooter.appendChild(quitBtn);
+      root.appendChild(quitFooter);
+    }
+
+  try { sessionId = startSession({ mode: sessionModeId, wordList: items, listName: ctx?.listName || null }); } catch(e){ console.debug('[WordSentenceMode] startSession skipped', e?.message); }
     renderRound();
   }
 
@@ -315,7 +389,7 @@ export function run(ctx){
       totalPoints += awardedPoints; updateHeaderScore();
       try {
         const wordKey = (items[index]?.eng ? `${items[index].eng}__sentence` : `sentence_${index+1}`);
-        logAttempt({ session_id: sessionId, mode: 'word_sentence_mode', word: wordKey, is_correct: ok, answer: attemptNorm, correct_answer: correctNorm, points: awardedPoints, attempt_index: index, round: index + 1, extra: { pct, tokens_total, tokens_correct, sentence: items[index].sentence, sentence_id: items[index].sentence_id || null } });
+  logAttempt({ session_id: sessionId, mode: sessionModeId, word: wordKey, is_correct: ok, answer: attemptNorm, correct_answer: correctNorm, points: awardedPoints, attempt_index: index, round: index + 1, extra: { pct, tokens_total, tokens_correct, sentence: items[index].sentence, sentence_id: items[index].sentence_id || null } });
       } catch(e){ console.debug('[WordSentenceMode] logAttempt failed', e?.message); }
       submitBtn.classList.remove('sm-floating-visible'); submitBtn.style.display='none'; nextBtn.style.display='';
     };
@@ -330,7 +404,7 @@ export function run(ctx){
   const pct = items.length ? Math.round((sentencesCorrect / items.length) * 100) : 0;
   const maxPoints = items.length * 2;
   // Persist score in the same shape other modes use so mode selector can compute %
-  try { endSession(sessionId, { mode: 'word_sentence_mode', summary: { score: totalPoints, total: maxPoints, correct: sentencesCorrect, points: totalPoints, pct } }); } catch {}
+  try { endSession(sessionId, { mode: sessionModeId, summary: { score: totalPoints, total: maxPoints, correct: sentencesCorrect, points: totalPoints, pct } }); } catch {}
     try {
       // Fire global event so stars overlay can appear like other modes
       const ev = new CustomEvent('wa:session-ended', { detail: { summary: { score: totalPoints, total: maxPoints } } });
@@ -345,15 +419,7 @@ export function run(ctx){
     const playAgainBtn = document.getElementById('playAgainBtn');
     if (playAgainBtn) playAgainBtn.onclick = () => location.reload();
     const tryMoreBtn = document.getElementById('tryMoreBtn');
-    if (tryMoreBtn) {
-      tryMoreBtn.onclick = () => {
-        const quitBtn = document.getElementById('wa-quit-btn');
-        if (quitBtn) quitBtn.style.display = 'none';
-        if (window.WordArcade?.startModeSelector) {
-          window.WordArcade.startModeSelector();
-        }
-      };
-    }
+    if (tryMoreBtn) tryMoreBtn.onclick = exitToMenu;
   }
 
   // Helpers
@@ -492,7 +558,8 @@ function injectStylesOnce(){
   if (document.getElementById('sentenceModeStyles')) return;
   const style = document.createElement('style'); style.id = 'sentenceModeStyles';
   style.textContent = `
-    .sentence-mode { font-family:Poppins,system-ui,sans-serif; animation:smFade .5s ease; }
+  .sentence-mode { font-family:Poppins,system-ui,sans-serif; animation:smFade .5s ease; }
+  .sentence-mode .sm-header.sm-header-no-title { justify-content:flex-end; }
     .sentence-mode .sm-header { display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 16px; flex-wrap:wrap; }
     .sentence-mode .sm-title { font-weight:800;color:#19777e;font-size:clamp(1rem,2vw,1.25rem); letter-spacing:.5px; }
     .sentence-mode .sm-counter { font-size:.75rem;font-weight:700;background:#e6f7f8;color:#19777e;padding:6px 12px;border-radius:20px;letter-spacing:.5px; border:1px solid #b9d9db; }
@@ -535,6 +602,14 @@ function injectStylesOnce(){
   .sentence-mode #smSubmit.sm-floating { position:absolute; top:calc(50% + 50px); left:50%; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none; font-size:clamp(2.2rem,4vw,3.2rem); padding:30px 68px; border-radius:48px; letter-spacing:.9px; font-weight:800; background:#ff7a1a; color:#fff; border:3px solid #ff7a1a; box-shadow:0 22px 55px -12px rgba(0,0,0,0.4),0 0 0 5px rgba(255,122,26,0.18); backdrop-filter:blur(4px); transition:opacity .45s ease, transform .55s cubic-bezier(.16,.8,.24,1); }
   .sentence-mode #smSubmit.sm-floating:hover { background:#ff8c3a; border-color:#ff8c3a; }
     .sentence-mode #smSubmit.sm-floating-visible { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
+    .sentence-mode-quit-footer { width:100%; display:flex; justify-content:center; margin-top:28px; }
+    .sentence-mode-quit-btn { font-family:Poppins,system-ui,sans-serif; font-weight:800; font-size:1.05rem; padding:14px 34px; border-radius:20px; border:2px solid #19777e; background:#ffffff; color:#19777e; letter-spacing:.04em; cursor:pointer; box-shadow:0 18px 36px -16px rgba(25,119,126,0.4); transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
+    .sentence-mode-quit-btn:hover { transform:translateY(-2px); box-shadow:0 24px 42px -16px rgba(25,119,126,0.45); background:#f2fbfc; }
+    .sentence-mode-quit-btn:active { transform:scale(0.97); }
+    .sentence-mode-quit-btn:focus-visible { outline:3px solid rgba(25,119,126,0.45); outline-offset:4px; }
+    .cgm-mode-root.sm-center-root { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; min-height:calc(100vh - 220px); padding:clamp(32px,6vh,56px) clamp(18px,7vw,36px); box-sizing:border-box; background:linear-gradient(180deg,#f6feff 0%, #ffffff 90%); }
+    .cgm-mode-root.sm-center-root .sentence-mode { width:min(640px, 94vw); }
+    .cgm-mode-root.sm-center-root .sentence-mode-quit-wrap { width:min(640px, 94vw); }
     @keyframes smFade { 0% { opacity:0;} 100% { opacity:1;} }
   `;
   document.head.appendChild(style);

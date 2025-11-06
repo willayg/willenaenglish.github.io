@@ -74,6 +74,7 @@
       <div class="top-actions">
         <span id="openBulkModal" class="action-link">Add Full Class</span>
         <span id="openAddAllModal" class="action-link">Add All</span>
+        <span id="openRosterUploadModal" class="action-link">Upload Class Rosters</span>
         <span id="openSingleAddModal" class="action-link">Add Student</span>
         <span id="openRenameClassModal" class="action-link">Move Class Up</span>
         <span id="openTestInput" class="action-link">Test Input</span>
@@ -135,6 +136,27 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Upload Class Rosters Modal (tabular single-class parser) -->
+  <div id="rosterUploadModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="rosterUploadModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:920px; width:96vw; margin:auto; padding:24px; display:flex; flex-direction:column; gap:14px;">
+      <h2 style="margin:0; color:#19777e; font-size:1.18em; font-weight:800;">Upload Class Rosters</h2>
+      <p style="margin:0; font-size:0.95em; color:#334155;">Paste your tab-delimited export for a single class. The first non-empty line should contain the class header (e.g., "9.4 MIT" or "Brown 왕기초1"). Columns like Korean Name and Phone should be in the first two columns as in your export.</p>
+      <textarea id="rosterUploadText" rows="12" class="textarea-field" style="width:100%;" placeholder="9.4 MIT\n강규원\t010-3646-1347\t...\tHenry\t은계초\t초5\t...\tWashington\t9.4 MIT\t재원생\n..."></textarea>
+      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+        <div id="rosterPreviewStats" style="font-size:12px; color:#475569;"></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <label style="font-size:12px; color:#334155; display:flex; gap:6px; align-items:center;"><input id="optUpdatePhoneIfMissing" type="checkbox" checked /> Update phone if missing</label>
+          <label style="font-size:12px; color:#334155; display:flex; gap:6px; align-items:center;"><input id="optOnlyChangeDifferentClass" type="checkbox" checked /> Only change when class differs</label>
+          <button id="rosterCancel" class="clear-btn" type="button">Cancel</button>
+          <button id="rosterPreviewBtn" class="layout-btn" type="button">Preview</button>
+          <button id="rosterUploadSubmit" class="extract-btn" type="button" disabled>Upload & Update</button>
+        </div>
+      </div>
+      <div id="rosterUploadMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+      <div id="rosterPreviewDetails" style="max-height:42vh; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; padding:8px; display:none;"></div>
     </div>
   </div>
 

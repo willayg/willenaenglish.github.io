@@ -28,7 +28,7 @@ export async function runGrammarLesson(ctx = {}) {
       #gameArea .lesson-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(33, 181, 192, 0.18) }
       #gameArea .lesson-btn.primary{ background:#21b3be;color:#fff;border-color:#21b3be }
       #gameArea .choice-grid{ display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-width:680px;margin:12px auto }
-      #gameArea .chip{ user-select:none;border:2px solid #93cbcf;background:#ffffff;color:#19777e;border-radius:9999px;padding:10px 12px;font-weight:800;cursor:pointer;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .12s ease, box-shadow .12s ease }
+  #gameArea .chip{ user-select:none;border:2px solid #93cbcf;background:#ffffff;color:#ff6fb0;border-radius:9999px;padding:10px 12px;font-weight:800;cursor:pointer;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .12s ease, box-shadow .12s ease }
       #gameArea .chip:hover{ transform:scale(1.04); box-shadow:0 6px 16px rgba(0,0,0,.12) }
   #gameArea .chip.selected{ outline:3px solid #21b3be; border-color:#21b3be }
       #gameArea .chip.bad{ border-color:#f44336;color:#c62828;background:#ffebee }
@@ -90,10 +90,14 @@ export async function runGrammarLesson(ctx = {}) {
     sampleAn = fallbackAn.map(w => ({ id: w, word: w, article: 'an' }));
     sampleA = fallbackA.map(w => ({ id: w, word: w, article: 'a' }));
   }
-  // Create final 5+5 unique lists
+  // Create final 5+5 unique lists for examples
   sampleAn = uniqueWords(sampleAn).slice(0,5);
   sampleA = uniqueWords(sampleA).slice(0,5);
-  const activitySet = shuffle([...sampleAn, ...sampleA]);
+  // Sorting mini-game uses only 6 total words: 3 with vowels (an) and 3 with consonants (a)
+  const activitySet = shuffle([
+    ...shuffle(sampleAn).slice(0,3),
+    ...shuffle(sampleA).slice(0,3)
+  ]);
 
   // Step renderers
   function renderStep1Language(stage, prog, stepEl, nav) {
@@ -351,7 +355,8 @@ export async function runGrammarLesson(ctx = {}) {
   }
 
   function renderStep3Vowels(stage, prog, stepEl, nav) {
-    prog.textContent = displayStep(2);
+    // Hide progress indicator for this step
+    prog.textContent = '';
     stepEl.innerHTML = '';
 
     // Phase flow: first AN (left), then A (right)
@@ -373,10 +378,14 @@ export async function runGrammarLesson(ctx = {}) {
 
     let phase = 0; // 0 = an on left, 1 = a on right
 
-    const tap = document.createElement('button');
-    tap.className = 'next-line-tap';
-    tap.style.marginTop = '4px';
-    tap.textContent = (lang === 'ko') ? '알겠어요' : 'Got it';
+  // Styled Got it button consistent with other cyan/pink buttons
+  const tap = button((lang === 'ko') ? '알겠어요' : 'Got it');
+  tap.style.borderColor = '#21b3be';
+  tap.style.color = '#ff6fb0';
+  // Bottom bar for positioning Got it at bottom center, below vowel list
+  const bottomBar = document.createElement('div');
+  bottomBar.style.cssText = 'display:flex;align-items:center;justify-content:center;margin-top:12px;width:100%';
+  bottomBar.appendChild(tap);
 
     function renderExamples(col, list, article) {
       col.innerHTML = '';
@@ -396,7 +405,8 @@ export async function runGrammarLesson(ctx = {}) {
           : `We use <b>an</b> before a vowel sound like <b>a, e, i, o, u</b>.`;
         renderExamples(leftCol, sampleAn, 'an');
         rightCol.innerHTML = '';
-        if (!tap.isConnected) stepEl.insertBefore(tap, grid); // tap near top
+        // Place Got it below the vowel examples grid at bottom center
+        if (!bottomBar.isConnected) stepEl.appendChild(bottomBar);
         if (nav) nav.style.display = 'none';
       } else {
         sentence.innerHTML = (lang === 'ko')
@@ -404,6 +414,8 @@ export async function runGrammarLesson(ctx = {}) {
           : `We use <b>a</b> before consonant sounds like <b>b, t, f, p</b>.`;
         renderExamples(rightCol, sampleA, 'a');
         if (tap.parentNode) tap.remove();
+        if (bottomBar.parentNode) bottomBar.remove();
+        // After acknowledging vowels, show Back/Next controls
         if (nav) nav.style.display = 'flex';
       }
     }
@@ -413,7 +425,8 @@ export async function runGrammarLesson(ctx = {}) {
   }
 
   function renderStep4Sort(stage, prog, stepEl, nav, nextBtn) {
-    prog.textContent = displayStep(3);
+    // Hide progress indicator for this step
+    prog.textContent = '';
     stepEl.innerHTML = '';
     // Hide page nav; we'll show an inline Continue when perfect
     if (nav) nav.style.display = 'none';
@@ -421,8 +434,8 @@ export async function runGrammarLesson(ctx = {}) {
     body.className = 'lesson-body';
     body.style.cssText = 'font-size:1.15rem;line-height:1.8;margin-bottom:16px;';
     body.innerHTML = (lang === 'ko')
-      ? '단어 10개를 <b>a</b> 바구니와 <b>an</b> 바구니로 나눠 보세요. 모두 맞으면 다음으로 갈 수 있어요!'
-      : 'Sort the 10 words into the <b>a</b> bucket and the <b>an</b> bucket. Get all correct to move on!';
+      ? '단어 6개를 <b>a</b> 바구니와 <b>an</b> 바구니로 나눠 보세요. 모두 맞으면 다음으로 갈 수 있어요!'
+      : 'Sort the 6 words into the <b>a</b> bucket and the <b>an</b> bucket. Get all correct to move on!';
     stepEl.appendChild(body);
 
     // Pool + Buckets
@@ -524,13 +537,23 @@ export async function runGrammarLesson(ctx = {}) {
   }
 
   function renderStep5Finish(stage, prog, stepEl, nav) {
-    prog.textContent = displayStep(4);
+    // Hide progress and global nav on the last screen
+    prog.textContent = '';
+    if (nav) nav.style.display = 'none';
     stepEl.innerHTML = '';
+    // Increase spacing between all elements
+    stepEl.style.display = 'flex';
+    stepEl.style.flexDirection = 'column';
+    stepEl.style.gap = '30px';
     const body = document.createElement('div');
     body.className = 'lesson-body';
+    body.style.display = 'flex';
+    body.style.flexDirection = 'column';
+    body.style.alignItems = 'center';
+    body.style.gap = '30px';
     body.innerHTML = (lang==='ko')
-      ? '<div style="font-weight:800;color:#19777e">아주 잘했어요!</div><div class="stars">⭐⭐⭐⭐⭐</div><div style="margin-top:6px;">이번 수업으로 <b>20점</b>을 받았어요!</div>'
-      : '<div style="font-weight:800;color:#19777e">Great job!</div><div class="stars">⭐⭐⭐⭐⭐</div><div style="margin-top:6px;">You earned <b>20 points</b> for this lesson!</div>';
+      ? '<div style="font-weight:800;color:#19777e">아주 잘했어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">Great job!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const navWrap = document.createElement('div');
@@ -563,7 +586,9 @@ export async function runGrammarLesson(ctx = {}) {
 
     const top = document.createElement('div'); top.className = 'lesson-topbar';
     const title = document.createElement('div'); title.className = 'lesson-title'; title.textContent = grammarName || 'A vs. An';
-    const prog = document.createElement('div'); prog.className = 'lesson-progress';
+  const prog = document.createElement('div'); prog.className = 'lesson-progress';
+  // Hide progress display globally
+  prog.style.display = 'none';
     const stepEl = document.createElement('div'); stepEl.className = 'lesson-step';
     const nav = document.createElement('div'); nav.className = 'lesson-nav';
     const back = button((lang==='ko')?'뒤로':'Back');
@@ -584,10 +609,10 @@ export async function runGrammarLesson(ctx = {}) {
 
     function renderStep() {
       stepEl.classList.remove('enter');
-  // Clear navigation defaults each time
-  next.disabled = false;
-  // Hide page nav until the lesson is fully complete (finish step)
-  nav.style.display = (stepIndex >= 4 ? 'flex' : 'none');
+      // Clear navigation defaults each time
+      next.disabled = false;
+      // Hide global back/next by default
+      nav.style.display = 'none';
       // Switch per step
       if (stepIndex === 0)      renderStep1Language(stage, prog, stepEl, nav);
       else if (stepIndex === 1) renderStep2Intro(stage, prog, stepEl, nav);

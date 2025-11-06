@@ -7,6 +7,7 @@ import { progressCache } from './progress-cache.js';
 const MODE_GROUPS = {
   general: ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'],
   phonics: ['listening', 'spelling', 'multi_choice', 'listen_and_spell'],
+  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_fill_gap', 'grammar_sentence_unscramble'],
 };
 
 const CACHE_KEYS = {
@@ -142,26 +143,89 @@ function computeStarCountsFromSessions(sessions) {
     level2: new Map(),
     level3: new Map(),
     level4: new Map(),
+    grammarLevel1: new Map(),
+    grammarLevel2: new Map(),
+    grammarLevel3: new Map(),
+    grammarLevel4: new Map(),
   };
 
   const normName = (value) => norm(value);
+  const grammarModes = MODE_GROUPS.grammar;
 
   sessions.forEach((session) => {
-    const listName = normName(session.list_name) || normName(parseSummary(session.summary)?.list_name || parseSummary(session.summary)?.listName);
+    const summary = parseSummary(session.summary);
+    const mode = canonicalMode(session.mode);
+    const category = normName(summary?.category || session.category);
+    const isGrammar = category === 'grammar' || (mode && mode.includes('grammar'));
+
+    if (isGrammar) {
+      const hints = new Set();
+      const pushHint = (val) => {
+        const n = normName(val);
+        if (n) hints.add(n);
+      };
+
+      pushHint(session.list_name);
+      if (summary) {
+        pushHint(summary.list_name);
+        pushHint(summary.listName);
+        pushHint(summary.list);
+        pushHint(summary.name);
+        pushHint(summary.file);
+        pushHint(summary.grammarName);
+        pushHint(summary.grammar);
+      }
+
+      const metaRaw = session.meta || summary?.meta;
+      if (metaRaw) {
+        let metaObj = metaRaw;
+        if (typeof metaObj === 'string') {
+          try { metaObj = JSON.parse(metaObj); } catch { metaObj = null; }
+        }
+        if (metaObj && typeof metaObj === 'object') {
+          ['file', 'list', 'listName', 'grammarName', 'grammar', 'level'].forEach((key) => pushHint(metaObj[key]));
+        }
+      }
+
+      const hintList = Array.from(hints).filter(Boolean);
+      const targetKey = hintList[0] || 'grammar_level1';
+
+      let bucketKey = 'grammarLevel1';
+      if (hintList.some((h) => /level\s*4/.test(h))) bucketKey = 'grammarLevel4';
+      else if (hintList.some((h) => /level\s*3/.test(h))) bucketKey = 'grammarLevel3';
+      else if (hintList.some((h) => /level\s*2/.test(h))) bucketKey = 'grammarLevel2';
+      else if (hintList.some((h) => /level\s*1/.test(h))) bucketKey = 'grammarLevel1';
+      else if (hintList.some((h) => h === 'a vs an' || h.includes('articles'))) bucketKey = 'grammarLevel1';
+
+      const bucket = byLevel[bucketKey];
+      if (bucket) {
+        if (!bucket.has(targetKey)) bucket.set(targetKey, {});
+        const best = bucket.get(targetKey);
+        const pct = extractPercent(session, summary);
+        if (pct != null) {
+          if (!(mode in best) || best[mode] < pct) {
+            best[mode] = pct;
+          }
+        }
+      }
+      return;
+    }
+
+    const listName = normName(session.list_name) || normName(summary?.list_name || summary?.listName);
     if (!listName) return;
+
     let bucket = null;
-  if (/^phonics\s*-?/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
-  else if (/^level\s*2\s*-?/i.test(listName)) bucket = 'level2';
-  else if (/^level\s*3\s*-?/i.test(listName)) bucket = 'level3';
-  else if (/^level\s*4\s*-?/i.test(listName)) bucket = 'level4';
+    if (/^phonics\s*-?/i.test(listName) || /sound/i.test(listName)) bucket = 'level0';
+    else if (/^level\s*2\s*-?/i.test(listName)) bucket = 'level2';
+    else if (/^level\s*3\s*-?/i.test(listName)) bucket = 'level3';
+    else if (/^level\s*4\s*-?/i.test(listName)) bucket = 'level4';
     else if (/\.json$/i.test(listName)) bucket = 'level1';
     if (!bucket) return;
 
     const key = listName.toLowerCase();
     if (!byLevel[bucket].has(key)) byLevel[bucket].set(key, {});
     const best = byLevel[bucket].get(key);
-    const pct = extractPercent(session, parseSummary(session.summary));
-    const mode = canonicalMode(session.mode);
+    const pct = extractPercent(session, summary);
     if (pct != null) {
       if (!(mode in best) || best[mode] < pct) {
         best[mode] = pct;
@@ -194,6 +258,10 @@ function computeStarCountsFromSessions(sessions) {
     level2: sumStars(byLevel.level2, generalModes),
     level3: sumStars(byLevel.level3, generalModes),
     level4: sumStars(byLevel.level4, generalModes),
+    grammarLevel1: sumStars(byLevel.grammarLevel1, grammarModes),
+    grammarLevel2: sumStars(byLevel.grammarLevel2, grammarModes),
+    grammarLevel3: sumStars(byLevel.grammarLevel3, grammarModes),
+    grammarLevel4: sumStars(byLevel.grammarLevel4, grammarModes),
   };
 }
 

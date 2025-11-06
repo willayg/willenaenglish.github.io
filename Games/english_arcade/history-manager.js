@@ -10,6 +10,7 @@
  * 3. Mode Selection (mode_selector) - after choosing a level
  * 4. In-Game (game) - during gameplay
  * 5. Modals (modal) - any modal overlay
+ * Grammar flows mirror these with grammar_levels_menu and grammar_mode_selector states.
  */
 
 class HistoryManager {
@@ -149,8 +150,16 @@ class HistoryManager {
         this.restoreLevelsMenu(data);
         break;
 
+      case 'grammar_levels_menu':
+        this.restoreGrammarLevelsMenu(data);
+        break;
+
       case 'mode_selector':
         this.restoreModeSelector(data);
+        break;
+
+      case 'grammar_mode_selector':
+        this.restoreGrammarModeSelector(data);
         break;
 
       case 'in_game':
@@ -198,6 +207,17 @@ class HistoryManager {
   }
 
   /**
+   * Restore to grammar levels menu
+   */
+  restoreGrammarLevelsMenu(data) {
+    this.closeAllModals();
+    if (window.WordArcade?.showGrammarLevelsMenu) {
+      window.WordArcade.showGrammarLevelsMenu();
+    }
+    console.log('[HistoryManager] Restored grammar levels menu');
+  }
+
+  /**
    * Restore to mode selector after a word list was chosen
    */
   restoreModeSelector(data) {
@@ -213,13 +233,53 @@ class HistoryManager {
   }
 
   /**
+   * Restore grammar mode selector (grammar-specific mode cards)
+   */
+  restoreGrammarModeSelector(data) {
+    this.closeAllModals();
+    const grammarInfo = (data && data.grammar) || {};
+    const fallback = window.__WA_LAST_GRAMMAR__ || {};
+    const grammarFile = grammarInfo.grammarFile || fallback.grammarFile || 'data/grammar/level1/articles.json';
+    const grammarName = grammarInfo.grammarName || fallback.grammarName || 'A vs An';
+    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName }; window.__WA_IS_GRAMMAR__ = true; } catch {}
+    const app = window.WordArcade;
+    if (app?.loadGrammarGame) {
+      app.loadGrammarGame({ grammarFile, grammarName });
+      console.log('[HistoryManager] Restored grammar mode selector via loadGrammarGame', grammarName);
+      return;
+    }
+    if (app?.startGrammarModeSelector) {
+      app.startGrammarModeSelector();
+      console.log('[HistoryManager] Restored grammar mode selector via startGrammarModeSelector');
+      return;
+    }
+    this.restoreOpeningMenu(data);
+  }
+
+  /**
    * Restore to in-game state
    * This is complex since we can't resume mid-game, so we restart the game
    */
   restoreInGame(data) {
     // Cannot resume mid-game; route back to the appropriate mode selector
     const app = window.WordArcade;
-    if (window.__WA_IS_GRAMMAR__ && typeof app?.startGrammarModeSelector === 'function') {
+    const info = (data && data.wordListInfo) || {};
+    const grammarInfo = info.grammar || info.grammarInfo || data?.grammar;
+
+    if (grammarInfo && typeof app?.loadGrammarGame === 'function') {
+      const last = (typeof window.__WA_LAST_GRAMMAR__ === 'object' && window.__WA_LAST_GRAMMAR__) || {};
+      const grammarFile = grammarInfo.grammarFile || last.grammarFile || 'data/grammar/level1/articles.json';
+      const grammarName = grammarInfo.grammarName || last.grammarName || 'A vs An';
+      try {
+        window.__WA_IS_GRAMMAR__ = true;
+        window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName };
+      } catch {}
+  app.loadGrammarGame({ grammarFile, grammarName });
+  console.log('[HistoryManager] Restored grammar game via loadGrammarGame', grammarName);
+      return;
+    }
+
+    if ((window.__WA_IS_GRAMMAR__ || grammarInfo) && typeof app?.startGrammarModeSelector === 'function') {
       app.startGrammarModeSelector();
       console.log('[HistoryManager] Restored to grammar mode selector');
       return;
@@ -267,6 +327,7 @@ class HistoryManager {
       'phonicsModal',
       'level2Modal',
       'level3Modal',
+      'grammarL1Modal',
       'reviewSelectionModal',
       'wa_toast_host', // toast messages
     ];
@@ -310,6 +371,13 @@ class HistoryManager {
   }
 
   /**
+   * Record navigation to grammar levels menu
+   */
+  navigateToGrammarLevels() {
+    this.pushState('grammar_levels_menu', { type: 'grammar_levels_menu' });
+  }
+
+  /**
    * Record navigation to mode selector
    */
   navigateToModeSelector(info = {}) {
@@ -318,6 +386,16 @@ class HistoryManager {
       type: 'mode_selector',
       wordListInfo,
       underlyingState,
+    });
+  }
+
+  /**
+   * Record navigation to grammar mode selector
+   */
+  navigateToGrammarModeSelector(info = {}) {
+    this.pushState('grammar_mode_selector', {
+      type: 'grammar_mode_selector',
+      ...info,
     });
   }
 
