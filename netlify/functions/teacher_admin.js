@@ -94,7 +94,7 @@ exports.handler = async (event) => {
     if (action === 'update_student' && event.httpMethod === 'POST') {
   if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
-      const { user_id, name, username, korean_name, class: className } = body;
+      const { user_id, name, username, korean_name, class: className, grade, school, phone } = body;
       if (!user_id) return respond(event, 400, { success:false, error:'Missing user_id' });
       const { data: tprof, error: perr2 } = await db.from('profiles').select('role').eq('id', user_id).single();
       if (perr2 || !tprof) return respond(event, 404, { success:false, error:'Profile not found' });
@@ -104,6 +104,18 @@ exports.handler = async (event) => {
       if (typeof username === 'string') updateFields.username = username;
       if (typeof korean_name === 'string') updateFields.korean_name = korean_name;
       if (typeof className === 'string') updateFields.class = className;
+      if (grade !== undefined) {
+        const g = typeof grade === 'string' ? grade.trim() : grade;
+        updateFields.grade = g ? g : null;
+      }
+      if (school !== undefined) {
+        const sch = typeof school === 'string' ? school.trim() : school;
+        updateFields.school = sch ? sch : null;
+      }
+      if (phone !== undefined) {
+        const ph = typeof phone === 'string' ? phone.trim() : phone;
+        updateFields.phone = ph ? ph : null;
+      }
       if (Object.keys(updateFields).length === 0) return respond(event, 400, { success:false, error:'No fields to update' });
       const { error } = await db.from('profiles').update(updateFields).eq('id', user_id);
       if (error) return respond(event, 400, { success:false, error: error.message });
@@ -128,7 +140,7 @@ exports.handler = async (event) => {
     if (action === 'list_students') {
       const search = (qs.search || '').trim();
       const classFilter = (qs.class || '').trim();
-      const limit = Math.min(parseInt(qs.limit || '100', 10) || 100, 500);
+  const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
       const offset = parseInt(qs.offset || '0', 10) || 0;
       let q = db
         .from('profiles')
@@ -303,7 +315,7 @@ exports.handler = async (event) => {
 
     if (action === 'create_student' && event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      let { username, password, name, class: className, approved } = body;
+  let { username, password, name, class: className, approved, grade, school, phone } = body;
       username = (username || '').trim();
       if (!username || !password) return respond(event, 400, { success:false, error:'username and password required' });
       // Check existing username
@@ -316,7 +328,10 @@ exports.handler = async (event) => {
       if (cErr || !created?.user) return respond(event, 400, { success:false, error: cErr?.message || 'Failed to create auth user' });
       const uid = created.user.id;
   // Insert profile
-  const { error: iErr } = await db.from('profiles').insert({ id: uid, email, username, name: name || username, korean_name: body.korean_name || null, role: 'student', approved: approved ?? true, class: className || null });
+  const cleanGrade = typeof grade === 'string' && grade.trim() ? grade.trim() : null;
+  const cleanSchool = typeof school === 'string' && school.trim() ? school.trim() : null;
+  const cleanPhone = typeof phone === 'string' && phone.trim() ? phone.trim() : null;
+  const { error: iErr } = await db.from('profiles').insert({ id: uid, email, username, name: name || username, korean_name: body.korean_name || null, role: 'student', approved: approved ?? true, class: className || null, grade: cleanGrade, school: cleanSchool, phone: cleanPhone });
       if (iErr) {
         // Cleanup auth user if profile insert fails
         try { await admin.auth.admin.deleteUser(uid); } catch {}

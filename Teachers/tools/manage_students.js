@@ -174,11 +174,26 @@ const el = (id) => document.getElementById(id);
 
 // Custom class ordering for dropdowns
 const CLASS_ORDER = [
-  'brown','stanford','manchester','melbourne','newyork','hawaii','boston','paris','sydney','berkeley',
+  'brown','stanford','manchester','melbourne','newyork','ny','hawaii','boston','paris','sydney','berkeley',
   'chicago','chicage','london','cambridge','yale','trinity','washington','oxford','princeton','dublin','mit','harvard'
 ];
+const CLASS_DISPLAY = {
+  brown:'Brown', stanford:'Stanford', manchester:'Manchester', melbourne:'Melbourne', newyork:'NY', ny:'NY', hawaii:'Hawaii', boston:'Boston', paris:'Paris', sydney:'Sydney', berkeley:'Berkeley',
+  chicago:'Chicago', chicage:'Chicago', london:'London', cambridge:'Cambridge', yale:'Yale', trinity:'Trinity', washington:'Washington', oxford:'Oxford', princeton:'Princeton', dublin:'Dublin', mit:'MIT', harvard:'Harvard'
+};
 function normalizeClassName(name) {
   return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+const CLASS_ALIASES = {
+  newyork: 'NY',
+  ny: 'NY'
+};
+function canonicalizeClassName(name) {
+  const norm = normalizeClassName(name);
+  if (!norm) return '';
+  if (CLASS_ALIASES[norm]) return CLASS_ALIASES[norm];
+  if (CLASS_DISPLAY[norm]) return CLASS_DISPLAY[norm];
+  return name || '';
 }
 function sortClassesCustom(arr) {
   const orderIndex = new Map(CLASS_ORDER.map((c, i) => [c, i]));
@@ -191,6 +206,30 @@ function sortClassesCustom(arr) {
     // fallback alphabetical (case-insensitive)
     return String(a).toLowerCase() < String(b).toLowerCase() ? -1 : (String(a).toLowerCase() > String(b).toLowerCase() ? 1 : 0);
   });
+}
+
+function detectClassFromHeader(text) {
+  const s = String(text || '').toLowerCase();
+  const words = (s.match(/[a-z0-9]+/g) || []).map(w => w.toLowerCase());
+  for (let i = words.length - 1; i >= 0; i--) {
+    const w = words[i];
+    if (CLASS_ORDER.includes(w)) return canonicalizeClassName(w);
+    if (CLASS_ALIASES[w]) return canonicalizeClassName(w);
+    if (i > 0) {
+      const combo = `${words[i - 1]}${w}`;
+      if (CLASS_ORDER.includes(combo) || CLASS_ALIASES[combo]) return canonicalizeClassName(combo);
+    }
+  }
+  for (const c of CLASS_ORDER) {
+    if (s.includes(c)) return canonicalizeClassName(c);
+  }
+  return null;
+}
+
+function normalizePhone(p) {
+  if (!p) return null;
+  const digits = String(p).replace(/\D/g, '');
+  return digits || null;
 }
 
 function rowTpl(s) {
@@ -420,6 +459,11 @@ function parseRoster(text) {
     if (!/^\d/.test(line)) {
       const asciiWord = (line.match(/[A-Za-z][A-Za-z0-9_-]*/g) || [])[0];
       if (asciiWord && asciiWord.toLowerCase() !== 'no') {
+        const canonical = canonicalizeClassName(asciiWord);
+        if (canonical) {
+          currentClass = canonical;
+          continue;
+        }
         currentClass = asciiWord;
         continue;
       }
@@ -433,8 +477,82 @@ function parseRoster(text) {
       const name = (m.groups.eng || '').trim();
       let phone = (m.groups.phone || '').replace(/\s+/g, ' ').trim();
       if (!/\d/.test(phone)) phone = null;
-      items.push({ class: currentClass, school, grade, korean_name, name, phone });
+      const classLabel = currentClass ? canonicalizeClassName(currentClass) : currentClass;
+      items.push({ class: classLabel, school, grade, korean_name, name, phone });
       continue;
+    }
+  }
+  return items;
+}
+
+// Parser tailored for tab-delimited single-class exports (Korean name in column 0, phone in column 1).
+function parseSingleClassWithPhone(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  let className = null;
+  const items = [];
+  for (const raw of lines) {
+    const line = (raw || '').trim();
+    if (!line) continue;
+
+    if (!className) {
+      const detected = detectClassFromHeader(line);
+      if (detected) { className = canonicalizeClassName(detected); continue; }
+    }
+
+    if (/^no\.?/i.test(line)) continue;
+
+    const parts = line.split(/\t+/).map(s => s.trim()).filter(Boolean);
+    const hangul = /[\uac00-\ud7af]/;
+    if (parts.length >= 2 && hangul.test(parts[0]) && /\d/.test(parts[1])) {
+      const korean_name = parts[0];
+  const phoneDisplay = (parts[1] || '').replace(/\s+/g, ' ').trim();
+  const phone = phoneDisplay || normalizePhone(parts[1]) || null;
+      let name = '';
+      let school = '';
+      let grade = '';
+      for (let i = 2; i < parts.length; i++) {
+        if (/^[A-Za-z][A-Za-z\s\-']+$/.test(parts[i])) {
+          name = parts[i];
+          if (i + 1 < parts.length) school = (parts[i + 1] || '').trim();
+          if (i + 2 < parts.length) grade = (parts[i + 2] || '').trim();
+          break;
+        }
+      }
+      let target = null;
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const detected = detectClassFromHeader(parts[i]);
+        if (detected) { target = detected; break; }
+        const words = (parts[i] || '').split(/\s+/);
+        for (const w of words) {
+          const d2 = detectClassFromHeader(w);
+          if (d2) { target = d2; break; }
+        }
+        if (target) break;
+      }
+      const intendedRaw = target || className || null;
+      const intended = intendedRaw ? canonicalizeClassName(intendedRaw) : null;
+      items.push({ class: intended, school, grade, korean_name, name, phone });
+      continue;
+    }
+
+    if (parts.length >= 6 && /^\d{1,3}$/.test(parts[0])) {
+  const school = (parts[1] || '').trim();
+  const grade = (parts[2] || '').trim();
+  const korean_name = (parts[3] || '').trim();
+  const name = (parts[4] || '').trim();
+  const phoneDisplay = (parts[5] || '').replace(/\s+/g, ' ').trim();
+  const phone = phoneDisplay || normalizePhone(parts[5]) || null;
+      const intended = className ? canonicalizeClassName(className) : className;
+      items.push({ class: intended, school, grade, korean_name, name, phone });
+      continue;
+    }
+
+    const m = /^\s*(?<no>\d{1,3})\s+(?<school>\S+)\s+(?<grade>\S+)\s+(?<korean>.+?)\s+(?<eng>[A-Za-z][A-Za-z\s\-']*)\s+(?<phone>[+\d][\d\-\s]*)\s*$/.exec(line);
+    if (m) {
+  const phoneDisplay = (m.groups.phone || '').replace(/\s+/g, ' ').trim();
+  const phone = phoneDisplay || normalizePhone(m.groups.phone) || null;
+      const intended = className ? canonicalizeClassName(className) : className;
+  items.push({ class: intended, school: (m.groups.school || '').trim(), grade: (m.groups.grade || '').trim(), korean_name: m.groups.korean.trim(), name: m.groups.eng.trim(), phone });
     }
   }
   return items;
@@ -448,6 +566,17 @@ function usernameFrom(name, phone) {
     last4 = digits.slice(-4);
   }
   return base + last4;
+}
+function formatPhoneForStorage(phone) {
+  const digits = normalizePhone(phone);
+  if (!digits) return null;
+  if (digits.length === 11) return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  if (digits.length === 10) {
+    if (digits.startsWith('02')) return digits.replace(/(02)(\d{4})(\d{4})/, '$1-$2-$3');
+    return digits.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+  if (digits.length === 9 && digits.startsWith('02')) return digits.replace(/(02)(\d{3})(\d{4})/, '$1-$2-$3');
+  return digits;
 }
 
 if (addAllParse) addAllParse.onclick = function() {
@@ -658,6 +787,234 @@ async function createStudentSingle() {
   }
 }
 if (singleAddSubmit) singleAddSubmit.onclick = createStudentSingle;
+
+// Upload Class Rosters modal wiring
+const rosterUploadModalBg = document.getElementById('rosterUploadModalBg');
+const openRosterUploadModal = document.getElementById('openRosterUploadModal');
+const rosterCancel = document.getElementById('rosterCancel');
+const rosterUploadText = document.getElementById('rosterUploadText');
+const rosterPreviewBtn = document.getElementById('rosterPreviewBtn');
+const rosterUploadSubmit = document.getElementById('rosterUploadSubmit');
+const rosterPreviewStats = document.getElementById('rosterPreviewStats');
+const rosterPreviewDetails = document.getElementById('rosterPreviewDetails');
+const rosterUploadMsg = document.getElementById('rosterUploadMsg');
+const optUpdatePhoneIfMissing = document.getElementById('optUpdatePhoneIfMissing');
+const optOnlyChangeDifferentClass = document.getElementById('optOnlyChangeDifferentClass');
+
+let _rosterPreviewData = null;
+
+function showRosterUploadModal() {
+  if (rosterUploadModalBg) rosterUploadModalBg.style.display = 'flex';
+  if (rosterUploadMsg) rosterUploadMsg.textContent = '';
+  if (rosterPreviewStats) rosterPreviewStats.textContent = '';
+  if (rosterPreviewDetails) { rosterPreviewDetails.innerHTML = ''; rosterPreviewDetails.style.display = 'none'; }
+  if (rosterUploadSubmit) rosterUploadSubmit.disabled = true;
+}
+function hideRosterUploadModal() {
+  if (rosterUploadModalBg) rosterUploadModalBg.style.display = 'none';
+}
+if (openRosterUploadModal) openRosterUploadModal.onclick = showRosterUploadModal;
+if (rosterCancel) rosterCancel.onclick = hideRosterUploadModal;
+if (rosterUploadModalBg) rosterUploadModalBg.onclick = (e) => { if (e.target === rosterUploadModalBg) hideRosterUploadModal(); };
+
+function normKo(s) { return String(s || '').replace(/\s+/g, '').trim(); }
+function normEn(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+function last4(p) { return (normalizePhone(p) || '').slice(-4); }
+
+async function previewRosterSingle() {
+  if (!rosterPreviewStats || !rosterPreviewDetails) return;
+  rosterUploadMsg.textContent = '';
+  rosterUploadSubmit.disabled = true;
+  const txt = rosterUploadText.value || '';
+  const parsed = parseSingleClassWithPhone(txt);
+  if (!parsed.length) {
+    rosterPreviewStats.textContent = 'No rows detected. Add a class header line or ensure Korean name and phone are in the first two columns.';
+    rosterPreviewDetails.style.display = 'none';
+    return;
+  }
+
+  let data = { students: [] };
+  try {
+    const res = await fetch('/.netlify/functions/teacher_admin?action=list_students', { credentials:'include', cache:'no-store' });
+    data = await res.json();
+  } catch {}
+  const all = Array.isArray(data.students) ? data.students : [];
+
+  const byKoEn = new Map();
+  for (const s of all) {
+    const key = `${normKo(s.korean_name)}|${normEn(s.name)}`;
+    if (!byKoEn.has(key)) byKoEn.set(key, []);
+    byKoEn.get(key).push(s);
+  }
+
+  const matches = [];
+  const news = [];
+  const conflicts = [];
+  let sameClass = 0;
+  let noClass = 0;
+
+  for (const it of parsed) {
+    const key = `${normKo(it.korean_name)}|${normEn(it.name)}`;
+    const candidates = byKoEn.get(key) || [];
+    let found = null;
+    let reason = 'korean+english';
+
+    if (candidates.length === 1) {
+      found = candidates[0];
+    } else if (candidates.length > 1) {
+      const digits = normalizePhone(it.phone) || '';
+      if (digits) {
+        const exact = candidates.filter(s => (normalizePhone(s.phone) || '') === digits);
+        if (exact.length === 1) {
+          found = exact[0];
+          reason = 'korean+english+phone';
+        } else {
+          const byLast = candidates.filter(s => last4(s.phone) === digits.slice(-4));
+          if (byLast.length === 1) {
+            found = byLast[0];
+            reason = 'korean+english+last4';
+          }
+        }
+      }
+      if (!found) {
+        conflicts.push({ parsed: it, candidates });
+        continue;
+      }
+    }
+
+    if (!it.class) {
+      noClass++;
+      news.push(it);
+    } else if (found) {
+      const willChangeClass = found.class !== it.class;
+      if (!willChangeClass) sameClass++;
+      matches.push({ parsed: it, existing: found, reason, willChangeClass });
+    } else {
+      news.push(it);
+    }
+  }
+
+  _rosterPreviewData = { parsed, matches, news, conflicts, noClass };
+
+  const msgParts = [`Parsed ${parsed.length}`, `Matched ${matches.length}`, `New ${news.length}`];
+  if (sameClass) msgParts.push(`Same-class ${sameClass}`);
+  if (conflicts.length) msgParts.push(`Conflicts ${conflicts.length}`);
+  if (noClass) msgParts.push(`No-class ${noClass}`);
+  rosterPreviewStats.textContent = msgParts.join('. ') + '.';
+
+  const rows = [];
+  rows.push('<table style="width:100%; border-collapse:collapse; font-size:13px;">');
+  rows.push('<thead><tr><th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Korean</th><th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">English</th><th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Phone</th><th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Target Class</th><th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Status</th><th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Current Class</th></tr></thead><tbody>');
+  for (const m of matches) {
+    rows.push(`<tr><td style="padding:6px;">${m.parsed.korean_name || ''}</td><td style="padding:6px;">${m.parsed.name || ''}</td><td style="padding:6px;">${m.parsed.phone || ''}</td><td style="padding:6px;">${m.parsed.class || ''}</td><td style="padding:6px; color:#065f46;">match (${m.reason})</td><td style="padding:6px;">${m.existing.class || ''}</td></tr>`);
+  }
+  for (const c of conflicts) {
+    const current = c.candidates.map(s => s.class || '(no class)').join(', ');
+    rows.push(`<tr><td style="padding:6px;">${c.parsed.korean_name || ''}</td><td style="padding:6px;">${c.parsed.name || ''}</td><td style="padding:6px;">${c.parsed.phone || ''}</td><td style="padding:6px;">${c.parsed.class || ''}</td><td style="padding:6px; color:#b45309;">conflict – multiple matches</td><td style="padding:6px;">${current}</td></tr>`);
+  }
+  for (const n of news) {
+    const badge = n.class ? 'new' : 'no-class';
+    const color = n.class ? '#a11' : '#92400e';
+    rows.push(`<tr><td style="padding:6px;">${n.korean_name || ''}</td><td style="padding:6px;">${n.name || ''}</td><td style="padding:6px;">${n.phone || ''}</td><td style="padding:6px;">${n.class || ''}</td><td style="padding:6px; color:${color};">${badge}</td><td style="padding:6px;"></td></tr>`);
+  }
+  rows.push('</tbody></table>');
+  rosterPreviewDetails.innerHTML = rows.join('');
+  rosterPreviewDetails.style.display = 'block';
+
+  rosterUploadSubmit.disabled = !(parsed.length > 0 && conflicts.length === 0);
+  if (conflicts.length) {
+    rosterUploadMsg.style.color = '#b45309';
+    rosterUploadMsg.textContent = 'Resolve conflicts (add phone numbers or adjust data) before uploading.';
+  }
+}
+
+async function uploadRosterSingle() {
+  rosterUploadMsg.textContent = '';
+  rosterUploadSubmit.disabled = true;
+  const data = _rosterPreviewData;
+  if (!data || (data.matches.length === 0 && data.news.length === 0)) {
+    rosterUploadMsg.textContent = 'Nothing to upload.';
+    rosterUploadSubmit.disabled = false;
+    return;
+  }
+  if (data.conflicts && data.conflicts.length) {
+    rosterUploadMsg.textContent = 'Resolve conflicts before uploading.';
+    rosterUploadSubmit.disabled = false;
+    return;
+  }
+
+  let updated = 0;
+  let created = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const m of data.matches) {
+    try {
+      const patch = { user_id: m.existing.id };
+      let hasChange = false;
+      if (!optOnlyChangeDifferentClass.checked || m.existing.class !== m.parsed.class) {
+        patch.class = m.parsed.class;
+        hasChange = true;
+      }
+      if (m.parsed.grade && !m.existing.grade) {
+        patch.grade = m.parsed.grade;
+        hasChange = true;
+      }
+      if (optUpdatePhoneIfMissing.checked && m.parsed.phone) {
+        const formattedPhone = formatPhoneForStorage(m.parsed.phone);
+        const existingDigits = normalizePhone(m.existing.phone);
+        if (formattedPhone && !existingDigits) {
+          patch.phone = formattedPhone;
+          hasChange = true;
+        }
+      }
+      if (hasChange) {
+        await api('update_student', { method:'POST', body: patch });
+        updated++;
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      errors++;
+    }
+  }
+
+  for (const n of data.news) {
+    if (!n.class) { skipped++; continue; }
+    try {
+      const username = usernameFrom(n.name, n.phone);
+      const phoneForInsert = formatPhoneForStorage(n.phone);
+      const payload = {
+        username,
+        password: username,
+        name: n.name,
+        korean_name: n.korean_name,
+        class: n.class,
+        phone: phoneForInsert,
+        grade: n.grade || null,
+        school: n.school || null,
+        approved: true
+      };
+      await api('create_student', { method:'POST', body: payload });
+      created++;
+    } catch (err) {
+      errors++;
+    }
+  }
+
+  rosterUploadMsg.style.color = errors ? '#a11' : '#065f46';
+  rosterUploadMsg.textContent = `Done. Updated ${updated}, Created ${created}${skipped ? `, Skipped ${skipped}` : ''}${errors ? `, Errors ${errors}` : ''}`;
+
+  try {
+    await populateClassFilter();
+    await refresh();
+  } catch {}
+
+  rosterUploadSubmit.disabled = false;
+}
+
+if (rosterPreviewBtn) rosterPreviewBtn.onclick = previewRosterSingle;
+if (rosterUploadSubmit) rosterUploadSubmit.onclick = uploadRosterSingle;
 
 document.addEventListener('DOMContentLoaded', async () => {
   wire();

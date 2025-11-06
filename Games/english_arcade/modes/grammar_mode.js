@@ -31,17 +31,26 @@ export async function runGrammarMode(ctx) {
 
   // Shuffle items for variety and limit to 15 questions per session
   const shuffled = [...grammarData].sort(() => Math.random() - 0.5).slice(0, 15);
+  const sessionWords = shuffled.map(it => it.word);
     let currentIdx = 0;
     let score = 0;
     let totalAnswered = 0;
     const sessionStartTime = Date.now();
+    let sessionEnded = false;
+    let advanceTimer = null;
+    const clearAdvanceTimer = () => {
+      if (advanceTimer) {
+        clearTimeout(advanceTimer);
+        advanceTimer = null;
+      }
+    };
     // Create a proper tracking session (records.js) so backend receives session_start
     const sessionId = (function(){
       try {
         const listName = (typeof getListName === 'function' ? getListName() : null) || grammarName || null;
         return startSession({
           mode: 'grammar_mode',
-          wordList: Array.isArray(grammarData) ? grammarData.map(it => it.word) : [],
+          wordList: sessionWords,
           listName,
           meta: { category: 'grammar', file: grammarFile }
         });
@@ -72,6 +81,9 @@ export async function runGrammarMode(ctx) {
     // Core game render function
     // ===========================
     async function renderGrammarQuestion() {
+      if (sessionEnded) {
+        return;
+      }
       if (currentIdx >= shuffled.length) {
         endGrammarSession();
         return;
@@ -173,9 +185,12 @@ export async function runGrammarMode(ctx) {
           document.querySelectorAll('.grammar-choice-btn').forEach(b => b.disabled = true);
 
           // Wait before next question
-          await new Promise(r => setTimeout(r, 1500));
-          currentIdx++;
-          renderGrammarQuestion();
+          clearAdvanceTimer();
+          advanceTimer = setTimeout(() => {
+            if (sessionEnded) return;
+            currentIdx++;
+            renderGrammarQuestion();
+          }, 1500);
         };
 
         // Hover effect
@@ -195,6 +210,8 @@ export async function runGrammarMode(ctx) {
       const quitBtn = document.getElementById('grammarQuitBtn');
       if (quitBtn) {
         quitBtn.onclick = () => {
+          sessionEnded = true;
+          clearAdvanceTimer();
           try {
             if (window.WordArcade && typeof window.WordArcade.startGrammarModeSelector === 'function') {
               window.WordArcade.startGrammarModeSelector();
@@ -213,27 +230,16 @@ export async function runGrammarMode(ctx) {
     // End session and score screen
     // ===========================
     function endGrammarSession() {
+      if (sessionEnded) return;
+      sessionEnded = true;
+      clearAdvanceTimer();
       const accuracy = totalAnswered > 0 ? Math.round((score / totalAnswered) * 100) : 0;
       const sessionDuration = Math.round((Date.now() - sessionStartTime) / 1000);
-
-      // Fire session-ended event so header/dashboard updates (like word modes do)
-      try {
-        const ev = new CustomEvent('wa:session-ended', { 
-          detail: { 
-            summary: { 
-              score: score,           // points earned in this session
-              total: shuffled.length,  // max possible points
-              accuracy: accuracy
-            } 
-          } 
-        });
-        window.dispatchEvent(ev);
-      } catch {}
 
       // Call endSession with sessionId (matches word-mode pattern exactly)
       try {
         const listName = (typeof getListName === 'function' ? getListName() : null) || grammarName || null;
-        endSession(sessionId, { mode: 'grammar_mode', summary: { score, total: shuffled.length, correct: score, points: score, pct: accuracy, category: 'grammar', context: 'game' }, listName, wordList: grammarData });
+        endSession(sessionId, { mode: 'grammar_mode', summary: { score, total: shuffled.length, correct: score, points: score, pct: accuracy, category: 'grammar', context: 'game', duration_s: sessionDuration }, listName, wordList: sessionWords });
       } catch {}
 
       const summaryHTML = `

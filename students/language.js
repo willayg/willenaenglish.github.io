@@ -31,10 +31,10 @@
 			'Past Tense Quiz!':'Past Tense Quiz!','Eat or ate?':'Eat or ate?','Fruit & Veg Quiz!':'Fruit & Veg Quiz!','Random Words':'Random Words','Guess The Animals!':'Guess The Animals!','Is it "Go or Goes?"':'Is it "Go or Goes?"','Guess School Stuff':'Guess School Stuff','Unscramble Sentences!':'Unscramble Sentences!','Dramady Music':'Dramady Music','Past Participles!':'Past Participles!',
 			'Phone':'Phone','All rights reserved.':'All rights reserved.','Home':'Home','Profile':'Profile','Games':'Games','Close':'Close','No badges earned yet.':'No badges earned yet.','No badges yet.':'No badges yet.','No challenging words yet.':'No challenging words yet.','Current Password':'Current Password','New Password':'New Password','Confirm Password':'Confirm Password','Password updated':'Password updated','Incorrect current password':'Incorrect current password','Passwords do not match':'Passwords do not match','Password must be at least 6 characters.':'Password must be at least 6 characters.','On':'On',
 			// Mode menu labels
-			'Match':'Match','Listen':'Listen','Read':'Read','Spell':'Spell','Sentence':'Sentence','Level up':'Level up',
+				'Match':'Match','Listen':'Listen','Read':'Read','Spell':'Spell','Sentence':'Sentence','Unscramble':'Unscramble','Level up':'Level up',
 			'Listen & Pick':'Listen & Pick','Missing Letter':'Missing Letter','Read & Find':'Read & Find','Spell It Out':'Spell It Out',
 			// Mode menu controls
-			'Main Menu':'Main Menu','Change Level':'Change Level','Word List':'Word List','click here':'click here'
+			'Main Menu':'Main Menu','Change Level':'Change Level','Word List':'Word List','click here':'click here','How To Win':'How To Win'
 		},
 			ko: {
 			// NOTE: User requested specific forms: Word Arcade => 단어 오락실, 3X Challenge => 3x 도전
@@ -47,10 +47,10 @@
 			'Past Tense Quiz!':'과거 시제 퀴즈!','Eat or ate?':'eat 또는 ate?','Fruit & Veg Quiz!':'과일 & 야채 퀴즈!','Random Words':'무작위 단어','Guess The Animals!':'동물 맞히기!','Is it "Go or Goes?"':'"Go" 또는 "Goes"?','Guess School Stuff':'학교 물건 맞히기','Unscramble Sentences!':'문장 재배열!','Dramady Music':'드라마디 음악','Past Participles!':'과거분사!',
 			'Phone':'전화','All rights reserved.':'판권 소유.','Home':'홈','Profile':'프로필','Games':'게임','Close':'닫기','No badges earned yet.':'아직 배지가 없습니다.','No badges yet.':'아직 배지가 없습니다.','No challenging words yet.':'아직 어려운 단어가 없습니다.','Current Password':'현재 비밀번호','New Password':'새 비밀번호','Confirm Password':'비밀번호 확인','Password updated':'비밀번호가 변경되었습니다','Incorrect current password':'현재 비밀번호가 올바르지 않습니다','Passwords do not match':'비밀번호가 일치하지 않습니다','Password must be at least 6 characters.':'비밀번호는 최소 6자 이상이어야 합니다.','On':'켬',
 			// Mode menu labels (Korean)
-			'Match':'짝 맞추기','Listen':'듣기','Read':'읽기','Spell':'철자 쓰기','Sentence':'문장','Level up':'레벨 업',
+				'Match':'짝 맞추기','Listen':'듣기','Read':'읽기','Spell':'철자 쓰기','Sentence':'문장','Unscramble':'문장 재배열','Level up':'레벨 업',
 			'Listen & Pick':'듣고 선택하기','Missing Letter':'빠진 글자','Read & Find':'읽고 찾기','Spell It Out':'철자하기',
 			// Mode menu controls
-			'Main Menu':'메인 메뉴','Change Level':'레벨 변경','Word List':'단어 목록','click here':'여기를 클릭'
+			'Main Menu':'메인 메뉴','Change Level':'레벨 변경','Word List':'단어 목록','click here':'여기를 클릭','How To Win':'이기는 방법'
 		}
 	};
 
