@@ -76,6 +76,442 @@ exports.handler = async (event) => {
       catch { return null; }
     };
 
+    // ---------- CLASS LEADERBOARD ----------
+    if (section === 'leaderboard_class') {
+      try {
+        const { data: meProf, error: meErr } = await adminClient.from('profiles').select('class').eq('id', userId).single();
+        if (meErr || !meProf) return json(400, { success: false, error: 'Profile missing' });
+        const className = meProf.class || null;
+        if (!className) return json(200, { success: true, leaderboard: [], class: null });
+        
+        // Exclude single-letter class names (test profiles)
+        if (className.length === 1) return json(200, { success: true, leaderboard: [], class: null });
+
+        const { data: classmates, error: clsErr } = await adminClient
+          .from('profiles')
+          .select('id, name, username, avatar')
+          .eq('role', 'student')
+          .eq('class', className)
+          .eq('approved', true)
+          .limit(200);
+        if (clsErr) return json(400, { success: false, error: clsErr.message });
+        if (!classmates || !classmates.length) return json(200, { success: true, leaderboard: [], class: className });
+        
+        // Filter out test profiles (single-letter usernames)
+        const filteredClassmates = classmates.filter(p => !p.username || p.username.length > 1);
+        if (!filteredClassmates.length) return json(200, { success: true, leaderboard: [], class: className });
+
+        // Fetch ALL attempts without limit for accurate totals
+        const ids = filteredClassmates.map(p => p.id);
+        let allAttempts = [];
+        let offset = 0;
+        const batchSize = 1000;
+        while (true) {
+          const { data: batch, error: attErr } = await adminClient
+            .from('progress_attempts')
+            .select('user_id, points')
+            .in('user_id', ids)
+            .not('points', 'is', null)
+            .order('id', { ascending: true })
+            .range(offset, offset + batchSize - 1);
+          if (attErr) return json(400, { success: false, error: attErr.message });
+          if (!batch || batch.length === 0) break;
+          allAttempts = allAttempts.concat(batch);
+          if (batch.length < batchSize) break;
+          offset += batchSize;
+        }
+
+        const totals = new Map();
+        allAttempts.forEach(a => { if (a.user_id) totals.set(a.user_id, (totals.get(a.user_id) || 0) + (Number(a.points) || 0)); });
+
+  const entries = filteredClassmates.map(p => ({ user_id: p.id, name: p.name || p.username || 'Player', avatar: p.avatar || null, class: className, points: totals.get(p.id) || 0, self: p.id === userId }));
+  entries.sort((a,b) => b.points - a.points || a.name.localeCompare(b.name));
+  entries.forEach((e,i) => e.rank = i + 1);
+
+  let top = entries.slice(0, 5);
+  const me = entries.find(e => e.self);
+  if (me && !top.some(e => e.user_id === me.user_id)) top = [...top, me];
+
+  return json(200, { success: true, class: className, leaderboard: top });
+      } catch (e) {
+        console.error('[progress_summary] leaderboard_class error:', e);
+        return json(500, { success: false, error: 'Internal error', details: e?.message });
+      }
+    }
+
+    // ---------- STARS CLASS LEADERBOARD ----------
+    // Computes total stars per student in the current class based on completed sessions.
+    // Star logic mirrors the 'overview' section: best stars per (list_name, mode) pair.
+    if (section === 'leaderboard_stars_class') {
+      try {
+        // Optional timeframe filter: all (default) | month (current calendar month)
+        const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
+        let firstOfMonthIso = null;
+        if (timeframe === 'month') {
+          const now = new Date();
+          const firstUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
+          firstOfMonthIso = firstUtc.toISOString();
+        }
+
+        const { data: meProf, error: meErr } = await adminClient.from('profiles').select('class').eq('id', userId).single();
+        if (meErr || !meProf) return json(400, { success: false, error: 'Profile missing' });
+        const className = meProf.class || null;
+        if (!className) return json(200, { success: true, leaderboard: [], class: null });
+        
+        // Exclude single-letter class names (test profiles)
+        if (className.length === 1) return json(200, { success: true, leaderboard: [], class: null });
+
+        // Fetch classmates (approved students in same class)
+        const { data: classmates, error: clsErr } = await adminClient
+          .from('profiles')
+          .select('id, name, username, avatar')
+          .eq('role', 'student')
+          .eq('class', className)
+          .eq('approved', true)
+          .limit(200);
+        if (clsErr) return json(400, { success: false, error: clsErr.message });
+        if (!classmates || !classmates.length) return json(200, { success: true, leaderboard: [], class: className });
+        
+        // Filter out test profiles (single-letter usernames)
+        const filteredClassmates = classmates.filter(p => !p.username || p.username.length > 1);
+        if (!filteredClassmates.length) return json(200, { success: true, leaderboard: [], class: className });
+
+        const ids = filteredClassmates.map(p => p.id);
+
+        // Paginate through sessions for these classmates.
+        // We only need: user_id, list_name, mode, summary (for accuracy / completion flags).
+        let allSessions = [];
+        let offset = 0;
+        const batchSize = 800; // smaller payload per row; tune if needed
+        while (true) {
+          let sessQuery = adminClient
+            .from('progress_sessions')
+            .select('user_id, list_name, mode, summary')
+            .in('user_id', ids)
+            .not('ended_at', 'is', null)
+            .order('id', { ascending: true })
+            .range(offset, offset + batchSize - 1);
+          if (firstOfMonthIso) sessQuery = sessQuery.gte('ended_at', firstOfMonthIso);
+          const { data: batch, error: sessErr } = await sessQuery;
+          if (sessErr) return json(400, { success: false, error: sessErr.message });
+          if (!batch || !batch.length) break;
+          allSessions = allSessions.concat(batch);
+          if (batch.length < batchSize) break;
+          offset += batchSize;
+        }
+
+        // Paginate through attempts for classmates to get points.
+        let allAttempts = [];
+        offset = 0;
+        while (true) {
+          let attQuery = adminClient
+            .from('progress_attempts')
+            .select('user_id, points')
+            .in('user_id', ids)
+            .order('id', { ascending: true })
+            .range(offset, offset + batchSize - 1);
+          if (firstOfMonthIso) attQuery = attQuery.gte('created_at', firstOfMonthIso);
+          const { data: batch, error: attErr } = await attQuery;
+          if (attErr) return json(400, { success: false, error: attErr.message });
+          if (!batch || !batch.length) break;
+          allAttempts = allAttempts.concat(batch);
+          if (batch.length < batchSize) break;
+          offset += batchSize;
+        }
+
+        // Helper: derive accuracy -> stars (0-5) identical to overview logic.
+        function deriveStars(summ) {
+          const s = summ || {};
+          let acc = null;
+            if (typeof s.accuracy === 'number') acc = s.accuracy;
+            else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
+            else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
+          if (acc != null) {
+            if (acc >= 1) return 5;
+            if (acc >= 0.95) return 4;
+            if (acc >= 0.90) return 3;
+            if (acc >= 0.80) return 2;
+            if (acc >= 0.60) return 1;
+            return 0;
+          }
+          if (typeof s.stars === 'number') return s.stars; // fallback
+          return 0;
+        }
+
+        // Aggregate best stars per (list_name, mode) per user
+        const starsByUser = new Map(); // user_id -> Map(pairKey -> stars)
+        allSessions.forEach(sess => {
+          if (!sess || !sess.user_id) return;
+          const list = (sess.list_name || '').trim();
+          const mode = (sess.mode || '').trim();
+          if (!list || !mode) return; // need both identifiers to form a pair
+          const parsed = parseSummary(sess.summary);
+          if (parsed && parsed.completed === false) return; // ignore incomplete
+          const stars = deriveStars(parsed);
+          if (stars <= 0) return; // skip zero-star sessions (no contribution)
+          let userMap = starsByUser.get(sess.user_id);
+          if (!userMap) { userMap = new Map(); starsByUser.set(sess.user_id, userMap); }
+          const key = `${list}||${mode}`;
+          const prev = userMap.get(key) || 0;
+          if (stars > prev) userMap.set(key, stars); // keep best for pair
+        });
+
+        // Aggregate points per user
+        const pointsByUser = new Map();
+        allAttempts.forEach(att => {
+          if (!att || !att.user_id) return;
+          const current = pointsByUser.get(att.user_id) || 0;
+          pointsByUser.set(att.user_id, current + (att.points || 0));
+        });
+
+        // Build leaderboard entries
+        const entries = filteredClassmates.map(p => {
+          const userMap = starsByUser.get(p.id) || new Map();
+          let totalStars = 0; userMap.forEach(v => { totalStars += v; });
+          const totalPoints = pointsByUser.get(p.id) || 0;
+          return {
+            user_id: p.id,
+            name: p.name || p.username || 'Player',
+            avatar: p.avatar || null,
+            class: className,
+            stars: totalStars,
+            points: totalPoints,
+            self: p.id === userId
+          };
+        });
+
+        entries.sort((a, b) => b.stars - a.stars || a.name.localeCompare(b.name));
+        entries.forEach((e, i) => e.rank = i + 1);
+
+        let top = entries.slice(0, 5);
+        const me = entries.find(e => e.self);
+        if (me && !top.some(e => e.user_id === me.user_id)) top = [...top, me];
+
+        return json(200, { success: true, class: className, leaderboard: top });
+      } catch (e) {
+        console.error('[progress_summary] leaderboard_stars_class error:', e);
+        return json(500, { success: false, error: 'Internal error', details: e?.message });
+      }
+    }
+
+    // ---------- STARS GLOBAL LEADERBOARD ----------
+    // Computes total stars per student across all approved students globally.
+    if (section === 'leaderboard_stars_global') {
+      try {
+        // Optional timeframe filter: all (default) | month (current calendar month)
+        const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
+        let firstOfMonthIso = null;
+        if (timeframe === 'month') {
+          const now = new Date();
+          // Use UTC month boundary to keep consistent ordering server-side
+          const firstUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
+          firstOfMonthIso = firstUtc.toISOString();
+        }
+        let students = [];
+        let studentOffset = 0;
+        const studentBatchSize = 500;
+        while (true) {
+          const { data: batch, error: stuErr } = await adminClient
+            .from('profiles')
+            .select('id, name, username, avatar, class')
+            .eq('role', 'student')
+            .eq('approved', true)
+            .order('id', { ascending: true })
+            .range(studentOffset, studentOffset + studentBatchSize - 1);
+          if (stuErr) return json(400, { success: false, error: stuErr.message });
+          if (!batch || batch.length === 0) break;
+          students = students.concat(batch);
+          if (batch.length < studentBatchSize) break;
+          studentOffset += studentBatchSize;
+        }
+
+        if (!students.length) return json(200, { success: true, leaderboard: [] });
+        
+        // Filter out test profiles (single-letter usernames)
+        const filteredStudents = students.filter(p => !p.username || p.username.length > 1);
+        if (!filteredStudents.length) return json(200, { success: true, leaderboard: [] });
+
+        const ids = filteredStudents.map(p => p.id);
+
+        // Paginate through sessions for all students.
+        let allSessions = [];
+        let offset = 0;
+        const batchSize = 800;
+        while (true) {
+          let sessQuery = adminClient
+            .from('progress_sessions')
+            .select('user_id, list_name, mode, summary')
+            .in('user_id', ids)
+            .not('ended_at', 'is', null)
+            .order('id', { ascending: true })
+            .range(offset, offset + batchSize - 1);
+          if (firstOfMonthIso) sessQuery = sessQuery.gte('ended_at', firstOfMonthIso);
+          const { data: batch, error: sessErr } = await sessQuery;
+          if (sessErr) return json(400, { success: false, error: sessErr.message });
+          if (!batch || !batch.length) break;
+          allSessions = allSessions.concat(batch);
+          if (batch.length < batchSize) break;
+          offset += batchSize;
+        }
+
+        // Paginate through attempts for all students to get points.
+        let allAttempts = [];
+        offset = 0;
+        while (true) {
+          let attQuery = adminClient
+            .from('progress_attempts')
+            .select('user_id, points')
+            .in('user_id', ids)
+            .order('id', { ascending: true })
+            .range(offset, offset + batchSize - 1);
+          if (firstOfMonthIso) attQuery = attQuery.gte('created_at', firstOfMonthIso);
+          const { data: batch, error: attErr } = await attQuery;
+          if (attErr) return json(400, { success: false, error: attErr.message });
+          if (!batch || !batch.length) break;
+          allAttempts = allAttempts.concat(batch);
+          if (batch.length < batchSize) break;
+          offset += batchSize;
+        }
+
+        // Helper: derive accuracy -> stars (0-5) identical to overview logic.
+        function deriveStars(summ) {
+          const s = summ || {};
+          let acc = null;
+            if (typeof s.accuracy === 'number') acc = s.accuracy;
+            else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
+            else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
+          if (acc != null) {
+            if (acc >= 1) return 5;
+            if (acc >= 0.95) return 4;
+            if (acc >= 0.90) return 3;
+            if (acc >= 0.80) return 2;
+            if (acc >= 0.60) return 1;
+            return 0;
+          }
+          if (typeof s.stars === 'number') return s.stars; // fallback
+          return 0;
+        }
+
+        // Aggregate best stars per (list_name, mode) per user
+        const starsByUser = new Map(); // user_id -> Map(pairKey -> stars)
+        allSessions.forEach(sess => {
+          if (!sess || !sess.user_id) return;
+          const list = (sess.list_name || '').trim();
+          const mode = (sess.mode || '').trim();
+          if (!list || !mode) return; // need both identifiers to form a pair
+          const parsed = parseSummary(sess.summary);
+          if (parsed && parsed.completed === false) return; // ignore incomplete
+          const stars = deriveStars(parsed);
+          if (stars <= 0) return; // skip zero-star sessions (no contribution)
+          let userMap = starsByUser.get(sess.user_id);
+          if (!userMap) { userMap = new Map(); starsByUser.set(sess.user_id, userMap); }
+          const key = `${list}||${mode}`;
+          const prev = userMap.get(key) || 0;
+          if (stars > prev) userMap.set(key, stars); // keep best for pair
+        });
+
+        // Aggregate points per user
+        const pointsByUser = new Map();
+        allAttempts.forEach(att => {
+          if (!att || !att.user_id) return;
+          const current = pointsByUser.get(att.user_id) || 0;
+          pointsByUser.set(att.user_id, current + (att.points || 0));
+        });
+
+        // Build leaderboard entries
+        const entries = filteredStudents.map(p => {
+          const userMap = starsByUser.get(p.id) || new Map();
+          let totalStars = 0; userMap.forEach(v => { totalStars += v; });
+          const totalPoints = pointsByUser.get(p.id) || 0;
+          return {
+            user_id: p.id,
+            name: p.name || p.username || 'Player',
+            avatar: p.avatar || null,
+            class: p.class || null,
+            stars: totalStars,
+            points: totalPoints,
+            self: p.id === userId
+          };
+        });
+
+        entries.sort((a, b) => b.stars - a.stars || a.name.localeCompare(b.name));
+        entries.forEach((e, i) => e.rank = i + 1);
+
+        let top = entries.slice(0, 10);
+        const me = entries.find(e => e.self);
+        if (me && !top.some(e => e.user_id === me.user_id)) top = [...top, me];
+
+        return json(200, { success: true, leaderboard: top });
+      } catch (e) {
+        console.error('[progress_summary] leaderboard_stars_global error:', e);
+        return json(500, { success: false, error: 'Internal error', details: e?.message });
+      }
+    }
+
+    // ---------- GLOBAL LEADERBOARD ----------
+    if (section === 'leaderboard_global') {
+      try {
+        let students = [];
+        let studentOffset = 0;
+        const studentBatchSize = 500;
+        while (true) {
+          const { data: batch, error: stuErr } = await adminClient
+            .from('profiles')
+            .select('id, name, username, avatar, class')
+            .eq('role', 'student')
+            .eq('approved', true)
+            .order('id', { ascending: true })
+            .range(studentOffset, studentOffset + studentBatchSize - 1);
+          if (stuErr) return json(400, { success: false, error: stuErr.message });
+          if (!batch || batch.length === 0) break;
+          students = students.concat(batch);
+          if (batch.length < studentBatchSize) break;
+          studentOffset += studentBatchSize;
+        }
+
+        if (!students.length) return json(200, { success: true, leaderboard: [] });
+        
+        // Filter out test profiles (single-letter usernames)
+        const filteredStudents = students.filter(p => !p.username || p.username.length > 1);
+        if (!filteredStudents.length) return json(200, { success: true, leaderboard: [] });
+
+        // Fetch ALL attempts without limit for accurate totals
+        const ids = filteredStudents.map(p => p.id);
+        let allAttempts = [];
+        let offset = 0;
+        const batchSize = 1000;
+        while (true) {
+          const { data: batch, error: attErr } = await adminClient
+            .from('progress_attempts')
+            .select('user_id, points')
+            .in('user_id', ids)
+            .not('points', 'is', null)
+            .order('id', { ascending: true })
+            .range(offset, offset + batchSize - 1);
+          if (attErr) return json(400, { success: false, error: attErr.message });
+          if (!batch || batch.length === 0) break;
+          allAttempts = allAttempts.concat(batch);
+          if (batch.length < batchSize) break;
+          offset += batchSize;
+        }
+
+        const totals = new Map();
+        allAttempts.forEach(a => { if (a.user_id) totals.set(a.user_id, (totals.get(a.user_id) || 0) + (Number(a.points) || 0)); });
+
+        const entries = filteredStudents.map(p => ({ user_id: p.id, name: p.name || p.username || 'Player', avatar: p.avatar || null, class: p.class || null, points: totals.get(p.id) || 0, self: p.id === userId }));
+        entries.sort((a,b) => b.points - a.points || a.name.localeCompare(b.name));
+        entries.forEach((e,i) => e.rank = i + 1);
+
+        let top = entries.slice(0, 5);
+        const me = entries.find(e => e.self);
+        if (me && !top.some(e => e.user_id === me.user_id)) top = [...top, me];
+        return json(200, { success: true, leaderboard: top });
+      } catch (e) {
+        console.error('[progress_summary] leaderboard_global error:', e);
+        return json(500, { success: false, error: 'Internal error', details: e?.message });
+      }
+    }
+
     // ---------- KPI ----------
     if (section === 'kpi') {
       const { data: attempts, error: e1 } = await scope(

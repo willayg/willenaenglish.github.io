@@ -40,17 +40,43 @@
          
           <!-- Challenge Zone -->
           <a href="/playzone.html" class="wa-option-card wa-challenge" style="text-decoration: none; color: inherit; background: #343d44; border: 3px solid #ff6fb0; border-radius: 16px; padding: 18px 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease; cursor: pointer;">
-            <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="#ff6fb0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><circle cx="8" cy="12" r="1" fill="#ff6fb0"/><circle cx="10" cy="10" r="1" fill="#ff6fb0"/><circle cx="10" cy="14" r="1" fill="#ff6fb0"/><circle cx="12" cy="12" r="1" fill="#ff6fb0"/><circle cx="16" cy="12" r="1.5" fill="#ff6fb0"/></svg>
             <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: .5px; color: #ff6fb0;" data-i18n="More Games">More Games</span>
           </a>
           
           <!-- My Profile -->
           <a href="/students/profile.html" class="wa-option-card wa-profile" style="text-decoration: none; color: inherit; background: #343d44; border: 3px solid #5b7fe5; border-radius: 16px; padding: 18px 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease; cursor: pointer;">
-            <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="#5b7fe5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: .5px; color: #5b7fe5;" data-i18n="My Profile">My Profile</span>
           </a>
         </div>
       </section>
+
+      <!-- Class Leaderboard -->
+      <!-- Stars Leaderboard (appears above points-based class leaderboard) -->
+      <!-- Stars Class Leaderboard -->
+      <section class="card" id="starsLeaderboardCard" style="display:none;">
+        <h2 class="card-title" data-i18n="Class Leaders">Class Leaders</h2>
+        <div id="starsClassNameDisplay" style="font-size:1.1rem;font-weight:500;color:#67e2e6;text-align:center;margin-top:4px;margin-bottom:12px;text-shadow:0 0 10px rgba(103,226,230,0.4);"></div>
+        <div id="starsLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
+          <button id="slFilterAll" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="All Time">All Time</button>
+          <button id="slFilterMonth" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="This Month">This Month</button>
+        </div>
+        <div class="card-content" id="starsLeaderboardContent" style="min-height:120px;">
+          <div style="text-align:center;padding:20px;color:#666;">Loading...</div>
+        </div>
+      </section>
+
+      <!-- Global Leaderboard -->
+      <section class="card" id="globalLeaderboardCard" style="display:none;">
+        <h2 class="card-title" data-i18n="Willena Leaders">Willena Leaders</h2>
+        <div id="globalLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
+          <button id="glFilterAll" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="All Time">All Time</button>
+          <button id="glFilterMonth" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="This Month">This Month</button>
+        </div>
+        <div class="card-content" id="globalLeaderboardContent" style="min-height:120px;">
+          <div style="text-align:center;padding:20px;color:#666;">Loading...</div>
+        </div>
+      </section>
+
       <section class="card">
         <h2 class="card-title" data-i18n="Account">Account</h2>
         <div class="card-content">
@@ -331,5 +357,433 @@
       } catch {}
     })();
   </script>
+
+  <script>
+    // Leaderboards rendering
+    (async function() {
+      const t = (k) => (window.StudentLang && StudentLang.translate(k)) || k;
+      
+      // Normalize class names (e.g., "NY" -> "New York", "CA" -> "California")
+      function normalizeClassName(name) {
+        if (!name || typeof name !== 'string') return name;
+        const stateMap = {
+          'NY': 'New York',
+          'CA': 'California',
+          'TX': 'Texas',
+          'FL': 'Florida',
+          'PA': 'Pennsylvania',
+          'IL': 'Illinois',
+          'OH': 'Ohio',
+          'GA': 'Georgia',
+          'NC': 'North Carolina',
+          'MI': 'Michigan',
+          'NJ': 'New Jersey',
+          'VA': 'Virginia',
+          'WA': 'Washington',
+          'AZ': 'Arizona',
+          'MA': 'Massachusetts',
+          'TN': 'Tennessee',
+          'IN': 'Indiana',
+          'MD': 'Maryland',
+          'MO': 'Missouri',
+          'WI': 'Wisconsin',
+          'CO': 'Colorado',
+          'MN': 'Minnesota',
+          'SC': 'South Carolina',
+          'AL': 'Alabama',
+          'LA': 'Louisiana',
+          'KY': 'Kentucky',
+          'OR': 'Oregon',
+          'OK': 'Oklahoma',
+          'CT': 'Connecticut',
+          'UT': 'Utah',
+          'NV': 'Nevada',
+          'AR': 'Arkansas',
+          'MS': 'Mississippi',
+          'KS': 'Kansas',
+          'NM': 'New Mexico',
+          'NE': 'Nebraska',
+          'ID': 'Idaho',
+          'HI': 'Hawaii',
+          'NH': 'New Hampshire',
+          'ME': 'Maine',
+          'RI': 'Rhode Island',
+          'MT': 'Montana',
+          'DE': 'Delaware',
+          'SD': 'South Dakota',
+          'ND': 'North Dakota',
+          'AK': 'Alaska',
+          'VT': 'Vermont',
+          'WY': 'Wyoming',
+          'WV': 'West Virginia',
+          'DC': 'Washington D.C.'
+        };
+        return stateMap[name.trim().toUpperCase()] || name;
+      }
+      
+      // Rank badges with SVG medals for top 3
+      function getRankBadge(rank) {
+        const medalSvgs = { 
+          1: '/Games/english_arcade/assets/Images/icons/gold.svg', 
+          2: '/Games/english_arcade/assets/Images/icons/silver.svg', 
+          3: '/Games/english_arcade/assets/Images/icons/bronze.svg' 
+        };
+        if (medalSvgs[rank]) {
+          return `<img src="${medalSvgs[rank]}" alt="Rank ${rank}" class="rank-medal">`;
+        }
+        return `${rank}.`;
+      }
+
+      // Render class leaderboard
+      // Render stars leaderboard (class-only, shows total stars)
+      function renderStarsLeaderboard(containerId, cardId, data) {
+        const container = document.getElementById(containerId);
+        const card = document.getElementById(cardId);
+        const classNameEl = document.getElementById('starsClassNameDisplay');
+        if (!container || !card) return;
+
+        if (!data || !data.success || !data.leaderboard || data.leaderboard.length === 0) {
+          container.innerHTML = `<p style="text-align:center;color:#666;">${t('No data available')}</p>`;
+          if (classNameEl && data.class) classNameEl.textContent = data.class;
+          card.style.display = 'block';
+          return;
+        }
+
+        if (classNameEl && data.class) classNameEl.textContent = normalizeClassName(data.class);
+
+        let html = '<ul class="leaderboard-list">';
+        data.leaderboard.forEach(entry => {
+          const rankBadgeHtml = getRankBadge(entry.rank);
+          const selfClass = entry.self ? ' self' : '';
+          const starsDisplay = (entry.stars || 0).toLocaleString();
+          const pointsDisplay = (entry.points || 0).toLocaleString();
+          const selfBadge = entry.self ? `<span class="you-badge">${t('You')}</span>` : '';
+          html += `
+            <li class="leaderboard-item${selfClass}" data-rank="${entry.rank}">
+              <span class="rank-badge">${rankBadgeHtml}</span>
+              <div class="player-info">
+                <span class="player-name">${entry.name || 'Student'}</span>
+              </div>
+              ${selfBadge}
+              <div style="text-align:right;">
+                <div class="player-points">${starsDisplay} ⭐</div>
+                <div style="color:#888;font-size:0.85rem;margin-top:2px;">${pointsDisplay} pts</div>
+              </div>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+        card.style.display = 'block';
+      }
+
+      // Render global leaderboard with class names
+      function renderGlobalLeaderboard(containerId, cardId, data) {
+        const container = document.getElementById(containerId);
+        const card = document.getElementById(cardId);
+        if (!container || !card) return;
+
+        if (!data || !data.success || !data.leaderboard || data.leaderboard.length === 0) {
+          container.innerHTML = `<p style="text-align:center;color:#666;">${t('No data available')}</p>`;
+          card.style.display = 'block';
+          return;
+        }
+
+        let html = '<ul class="leaderboard-list">';
+        data.leaderboard.forEach(entry => {
+          const rankBadgeHtml = getRankBadge(entry.rank);
+          const selfClass = entry.self ? ' self' : '';
+          const starsDisplay = (entry.stars || 0).toLocaleString();
+          const pointsDisplay = (entry.points || 0).toLocaleString();
+          const selfBadge = entry.self ? `<span class="you-badge">${t('You')}</span>` : '';
+          const classDisplay = entry.class ? `<span class="player-class">${normalizeClassName(entry.class)}</span>` : '';
+          
+          html += `
+            <li class="leaderboard-item${selfClass}" data-rank="${entry.rank}">
+              <span class="rank-badge">${rankBadgeHtml}</span>
+              <div class="player-info">
+                <span class="player-name">${entry.name || 'Student'}</span>
+                ${classDisplay}
+              </div>
+              ${selfBadge}
+              <div style="text-align:right;">
+                <div class="player-points">${starsDisplay} ⭐</div>
+                <div style="color:#888;font-size:0.85rem;margin-top:2px;">${pointsDisplay} pts</div>
+              </div>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+        card.style.display = 'block';
+      }
+
+      // Fetch and render stars leaderboard
+      let starsLbTimeframe = 'all'; // 'all' | 'month'
+
+      async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
+        try {
+          starsLbTimeframe = timeframe;
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}`;
+          const r = await fetch(url, { credentials: 'include' });
+          const data = await r.json();
+          renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', data);
+        } catch (err) {
+          console.error('Stars leaderboard error:', err);
+          const container = document.getElementById('starsLeaderboardContent');
+          if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+          document.getElementById('starsLeaderboardCard').style.display = 'block';
+        }
+      }
+
+      function updateStarsLbFilterUI() {
+        const allBtn = document.getElementById('slFilterAll');
+        const monBtn = document.getElementById('slFilterMonth');
+        if (!allBtn || !monBtn) return;
+        if (starsLbTimeframe === 'all') {
+          allBtn.classList.add('active');
+          allBtn.setAttribute('aria-pressed','true');
+          monBtn.classList.remove('active');
+          monBtn.setAttribute('aria-pressed','false');
+        } else {
+          monBtn.classList.add('active');
+          monBtn.setAttribute('aria-pressed','true');
+          allBtn.classList.remove('active');
+          allBtn.setAttribute('aria-pressed','false');
+        }
+      }
+
+      // Wire up Class Leaders filter buttons
+      document.getElementById('slFilterAll')?.addEventListener('click', async () => {
+        await loadStarsLeaderboard('all');
+        updateStarsLbFilterUI();
+      });
+      document.getElementById('slFilterMonth')?.addEventListener('click', async () => {
+        await loadStarsLeaderboard('month');
+        updateStarsLbFilterUI();
+      });
+
+      // Fetch and render global leaderboard
+      let globalLbTimeframe = 'all'; // 'all' | 'month'
+
+      async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
+        try {
+          globalLbTimeframe = timeframe;
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}`;
+          const r = await fetch(url, { credentials: 'include' });
+          const data = await r.json();
+          renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', data);
+        } catch (err) {
+          console.error('Global leaderboard error:', err);
+          const container = document.getElementById('globalLeaderboardContent');
+          if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+          document.getElementById('globalLeaderboardCard').style.display = 'block';
+        }
+      }
+
+      function updateGlobalLbFilterUI() {
+        const allBtn = document.getElementById('glFilterAll');
+        const monBtn = document.getElementById('glFilterMonth');
+        if (!allBtn || !monBtn) return;
+        if (globalLbTimeframe === 'all') {
+          allBtn.classList.add('active');
+          allBtn.setAttribute('aria-pressed','true');
+          monBtn.classList.remove('active');
+          monBtn.setAttribute('aria-pressed','false');
+        } else {
+          monBtn.classList.add('active');
+          monBtn.setAttribute('aria-pressed','true');
+          allBtn.classList.remove('active');
+          allBtn.setAttribute('aria-pressed','false');
+        }
+      }
+
+      // Wire up filter buttons
+      document.getElementById('glFilterAll')?.addEventListener('click', async () => {
+        await loadGlobalLeaderboard('all');
+        updateGlobalLbFilterUI();
+      });
+      document.getElementById('glFilterMonth')?.addEventListener('click', async () => {
+        await loadGlobalLeaderboard('month');
+        updateGlobalLbFilterUI();
+      });
+
+      // Load both on page load
+  await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+
+      // Re-translate on language change
+      window.addEventListener('studentlang:changed', async () => {
+    await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+      });
+    })();
+  </script>
+
+  <style>
+    /* Leaderboard container */
+    #starsLeaderboardCard .card-content,
+    #globalLeaderboardCard .card-content {
+      background: #2a3138;
+      border-radius: 12px;
+      padding: 16px !important;
+      height: auto; /* allow dynamic growth when 6 entries (top 5 + self) */
+      min-height: 120px;
+    }
+
+    html.dark #starsLeaderboardCard .card-content,
+    html.dark #globalLeaderboardCard .card-content {
+      background: #1f252d;
+    }
+
+    /* Simple text button styles for Willena Leaders filters */
+    #globalLeaderboardFilters { display:flex; justify-content:center; gap:16px; align-items:center; }
+    .gl-filter-btn {
+      background: transparent;
+      border: none;
+      color: #8ea0b3;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .gl-filter-btn:hover { color: #cfe7ff; }
+    .gl-filter-btn.active { color: #ffffff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Simple text button styles for Class Leaders filters */
+    #starsLeaderboardFilters { display:flex; justify-content:center; gap:16px; align-items:center; }
+    .sl-filter-btn {
+      background: transparent;
+      border: none;
+      color: #8ea0b3;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .sl-filter-btn:hover { color: #cfe7ff; }
+    .sl-filter-btn.active { color: #ffffff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Leaderboard styles */
+    .leaderboard-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 0;
+      background: transparent;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background 0.2s;
+    }
+
+    .leaderboard-item:last-child {
+      border-bottom: none;
+    }
+
+    .leaderboard-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .leaderboard-item.self {
+      background: transparent;
+    }
+
+    /* Glow effects - gold, silver, bronze for top 3 */
+    .leaderboard-item[data-rank="1"] .player-name {
+      text-shadow: 0 0px 5px #c9a961, 0 0px 16px #ffd700;
+    }
+
+    .leaderboard-item[data-rank="2"] .player-name {
+      text-shadow: 0 0px 5px #c0c0c0, 0 0px 16px #e8e8e8;
+    }
+
+    .leaderboard-item[data-rank="3"] .player-name {
+      text-shadow: 0 0px 5px #cd7f32, 0 0px 16px #e09755;
+    }
+
+    .rank-badge {
+      font-size: 1.5rem;
+      min-width: 50px;
+      text-align: center;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .rank-medal {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border: 2px solid #3a4248;
+      border-radius: 50%;
+      padding: 4px;
+      background: #1a1f26;
+    }
+
+    .player-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .player-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.3px;
+    }
+
+    .player-class {
+      font-size: 0.8rem;
+      color: #aaa;
+      font-weight: 400;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .you-badge {
+      padding: 0;
+      background: transparent;
+      color: #9a9c9c;
+      border-radius: 0;
+      font-size: 0.9em;
+      font-weight: bold;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .player-points {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      color: white;
+      font-size: 1rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    html.dark .player-points {
+      color: white;
+    }
+
+    /* Dark mode adjustments */
+    html.dark .leaderboard-item {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    html.dark .player-name {
+      color: white;
+    }
+
+    html.dark .player-class {
+      color: #888;
+    }
+  </style>
 </body>
 </html>
