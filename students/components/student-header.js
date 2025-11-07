@@ -26,6 +26,8 @@ class StudentHeader extends HTMLElement {
     } catch {}
   };
   this._points = null;
+  this._stars = null;
+  this._fetchingOverview = false;
   }
 
   attributeChangedCallback() {
@@ -42,13 +44,8 @@ class StudentHeader extends HTMLElement {
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
     // If points not yet known, fetch once to seed
-    if (this._points == null && !this._fetchingPoints) {
-      this._fetchingPoints = true;
-      fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
-        .then(r => r.ok ? r.json() : null)
-        .then(ov => { if (ov && typeof ov.points === 'number') { this._points = ov.points; this.refresh(); } })
-        .catch(() => {})
-        .finally(() => { this._fetchingPoints = false; });
+    if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
+      this._fetchOverview();
     }
   }
 
@@ -99,7 +96,22 @@ class StudentHeader extends HTMLElement {
     }
   }
 
-  _onFocus() { this._hydrateProfile(); }
+  _onFocus() { this._hydrateProfile(); this._fetchOverview(); }
+
+  _fetchOverview() {
+    if (this._fetchingOverview) return;
+    this._fetchingOverview = true;
+    fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(ov => {
+        let changed = false;
+        if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
+        if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
+        if (changed) this.refresh();
+      })
+      .catch(() => {})
+      .finally(() => { this._fetchingOverview = false; });
+  }
 
   get homeHref() {
     return this.getAttribute("home-href") || "/index.html";
@@ -163,6 +175,7 @@ class StudentHeader extends HTMLElement {
       "🙂";
 
   const points = (this.showPoints && typeof this._points === 'number') ? this._points : null;
+  const stars = (this.showPoints && typeof this._stars === 'number') ? this._stars : null;
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -174,6 +187,8 @@ class StudentHeader extends HTMLElement {
   .info { display:flex; flex-direction:column; gap:2px; align-items:center; }
   .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#f7fcfd; border:1px solid #a9d6e9; color:#19777e; font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .points-pill svg { width:14px; height:14px; display:block; }
+  .stars-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#fffaf0; border:1px solid #e8d28a; color:#b8860b; font-weight:700; font-size:12px; line-height:1; width:max-content; }
+  .stars-pill svg { width:14px; height:14px; display:block; }
   .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin:0 auto; justify-content:center; text-align:center; min-width:0; }
   .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; margin-right:auto; }
   .spacer { flex:1; }
@@ -275,6 +290,7 @@ class StudentHeader extends HTMLElement {
       :host-context(html.dark) .page-title-text { color:#e3e8ed; }
       :host-context(html.dark) .mut { color:#b0bcc7; }
       :host-context(html.dark) .points-pill { background:#1f2a33; border-color:#2f3a45; color:#67e2e6; }
+  :host-context(html.dark) .stars-pill { background:#2a1f13; border-color:#4a3a1a; color:#ffd36b; }
       :host-context(html.dark) .avatar { background:#182028; border-color:#67e2e6; }
       :host-context(html.dark) ::slotted(.menu-item) { color:#9fd8df; }
       :host-context(html.dark) ::slotted(.menu-item:hover),
@@ -297,9 +313,13 @@ class StudentHeader extends HTMLElement {
         <div class="top">
           <div class="info">
             <div class="title" id="name" part="name">${name || "Profile"}</div>
-            ${points != null ? `<div class="points-pill" title="Total points">
+            ${points != null ? `<div class="points-pill" title="Total points" style="margin-bottom:4px;">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 5v3h3a1 1 0 010 2h-3v3a1 1 0 01-2 0v-3H8a1 1 0 010-2h3V7a1 1 0 012 0z" fill="currentColor"/></svg>
               <span id="pointsVal">${points}</span>
+            </div>` : ''}
+            ${stars != null ? `<div class="stars-pill" title="Total stars">
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.9 6.1 6.7.9-4.8 4.6 1.2 6.7L12 17.8 6 21.3l1.2-6.7L2.4 9l6.7-.9L12 2z"/></svg>
+              <span id="starsVal">${stars}</span>
             </div>` : ''}
             ${this.showId ? `<div class="mut" id="id" part="id">${uid ? `ID: ${uid}` : "Not signed in"}</div>` : ""}
           </div>
@@ -407,18 +427,8 @@ class StudentHeader extends HTMLElement {
     }
 
   // If points are enabled and missing, try to fetch from overview once
-  if (this.showPoints && points == null && !this._fetchingPoints) {
-      this._fetchingPoints = true;
-      fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
-        .then(r => r.ok ? r.json() : null)
-        .then(ov => {
-          if (ov && typeof ov.points === 'number') {
-      this._points = ov.points;
-      if (typeof this.refresh === 'function') this.refresh(); else this.render();
-          }
-        })
-        .catch(() => {})
-        .finally(() => { this._fetchingPoints = false; });
+  if (this.showPoints && (points == null || stars == null)) {
+      this._fetchOverview();
     }
 
     // Avatar dropdown
