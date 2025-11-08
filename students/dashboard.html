@@ -61,7 +61,17 @@
           <button id="slFilterMonth" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="This Month">This Month</button>
         </div>
         <div class="card-content" id="starsLeaderboardContent" style="min-height:120px;">
-          <div style="text-align:center;padding:20px;color:#666;">Loading...</div>
+          <div class="lb-loading">
+            <div class="lb-spinner" aria-hidden="true"></div>
+            <div class="lb-loading-text" data-i18n="Loading leaderboard">Loading leaderboard</div>
+            <ul class="lb-skeleton-list" aria-hidden="true">
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -73,7 +83,18 @@
           <button id="glFilterMonth" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="This Month">This Month</button>
         </div>
         <div class="card-content" id="globalLeaderboardContent" style="min-height:120px;">
-          <div style="text-align:center;padding:20px;color:#666;">Loading...</div>
+          <div class="lb-loading">
+            <div class="lb-spinner" aria-hidden="true"></div>
+            <div class="lb-loading-text" data-i18n="Loading leaderboard">Loading leaderboard</div>
+            <ul class="lb-skeleton-list" aria-hidden="true">
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+              <li class="lb-skel-item"><div class="lb-skel-rank"></div><div class="lb-skel-text"></div><div class="lb-skel-score"></div></li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -521,8 +542,15 @@
       // Fetch and render stars leaderboard
       let starsLbTimeframe = 'all'; // 'all' | 'month'
 
+      function showStarsLoading(){
+        const container = document.getElementById('starsLeaderboardContent');
+        if(!container) return;
+        container.innerHTML = document.querySelector('#globalLeaderboardContent .lb-loading')?.outerHTML || '<div class="lb-loading"><div class="lb-spinner"></div></div>';
+        if(window.StudentLang) StudentLang.applyTranslations();
+      }
       async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
         try {
+          showStarsLoading();
           starsLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
@@ -566,8 +594,15 @@
       // Fetch and render global leaderboard
       let globalLbTimeframe = 'all'; // 'all' | 'month'
 
+      function showGlobalLoading(){
+        const container = document.getElementById('globalLeaderboardContent');
+        if(!container) return;
+        container.innerHTML = document.querySelector('#globalLeaderboardContent .lb-loading')?.outerHTML || '<div class="lb-loading"><div class="lb-spinner"></div></div>';
+        if(window.StudentLang) StudentLang.applyTranslations();
+      }
       async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
         try {
+          showGlobalLoading();
           globalLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
@@ -608,12 +643,18 @@
         updateGlobalLbFilterUI();
       });
 
-      // Load both on page load
-  await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+    // Initial loading skeletons
+    showStarsLoading();
+    showGlobalLoading();
+    // Load both on page load
+    await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
 
       // Re-translate on language change
       window.addEventListener('studentlang:changed', async () => {
-    await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+        // Reapply loading text translation if still loading
+        if(document.querySelector('#starsLeaderboardContent .lb-loading')) showStarsLoading();
+        if(document.querySelector('#globalLeaderboardContent .lb-loading')) showGlobalLoading();
+        await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
       });
     })();
   </script>

@@ -38,6 +38,49 @@ function json(status, body) {
   };
 }
 
+// ========== LEADERBOARD CACHE (2-5 min TTL) ==========
+// Simple in-memory cache for leaderboard results
+// Cache key: leaderboard_{section}:{timeframe}:{userId}
+const leaderboardCache = new Map(); // key -> { data, timestamp }
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+function getCacheKey(section, timeframe, userId) {
+  return `leaderboard_${section}:${timeframe}:${userId}`;
+}
+
+function getCachedLeaderboard(section, timeframe, userId) {
+  const key = getCacheKey(section, timeframe, userId);
+  const cached = leaderboardCache.get(key);
+  if (!cached) return null;
+  
+  const age = Date.now() - cached.timestamp;
+  if (age > CACHE_TTL_MS) {
+    leaderboardCache.delete(key);
+    return null;
+  }
+  
+  return cached.data;
+}
+
+function setCachedLeaderboard(section, timeframe, userId, data) {
+  const key = getCacheKey(section, timeframe, userId);
+  leaderboardCache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+  
+  // Optional: clean up very old entries if cache grows too large
+  if (leaderboardCache.size > 1000) {
+    const now = Date.now();
+    for (const [k, v] of leaderboardCache.entries()) {
+      if (now - v.timestamp > CACHE_TTL_MS * 2) {
+        leaderboardCache.delete(k);
+      }
+    }
+  }
+}
+// ========== END CACHE ==========
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod !== 'GET') {
@@ -146,6 +189,15 @@ exports.handler = async (event) => {
       try {
         // Optional timeframe filter: all (default) | month (current calendar month)
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
+        
+        // ===== CACHE CHECK =====
+        const cachedResult = getCachedLeaderboard('stars_class', timeframe, userId);
+        if (cachedResult) {
+          console.log(`[progress_summary] Cache hit for leaderboard_stars_class (${timeframe})`);
+          return json(200, cachedResult);
+        }
+        // ===== END CACHE CHECK =====
+        
         let firstOfMonthIso = null;
         if (timeframe === 'month') {
           const now = new Date();
@@ -351,7 +403,9 @@ exports.handler = async (event) => {
           top = [...topPlayers, myEntry];
         }
 
-        return json(200, { success: true, class: className, leaderboard: top });
+        const result = { success: true, class: className, leaderboard: top };
+        setCachedLeaderboard('stars_class', timeframe, userId, result);
+        return json(200, result);
       } catch (e) {
         console.error('[progress_summary] leaderboard_stars_class error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });
@@ -364,6 +418,15 @@ exports.handler = async (event) => {
       try {
         // Optional timeframe filter: all (default) | month (current calendar month)
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
+        
+        // ===== CACHE CHECK =====
+        const cachedResult = getCachedLeaderboard('stars_global', timeframe, userId);
+        if (cachedResult) {
+          console.log(`[progress_summary] Cache hit for leaderboard_stars_global (${timeframe})`);
+          return json(200, cachedResult);
+        }
+        // ===== END CACHE CHECK =====
+        
         let firstOfMonthIso = null;
         if (timeframe === 'month') {
           const now = new Date();
@@ -570,7 +633,9 @@ exports.handler = async (event) => {
           top = [...topPlayers, myEntry];
         }
 
-        return json(200, { success: true, leaderboard: top });
+        const result = { success: true, leaderboard: top };
+        setCachedLeaderboard('stars_global', timeframe, userId, result);
+        return json(200, result);
       } catch (e) {
         console.error('[progress_summary] leaderboard_stars_global error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });

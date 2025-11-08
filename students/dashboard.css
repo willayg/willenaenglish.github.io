@@ -28,17 +28,16 @@ html { overflow-x:hidden; }
 @media (min-width: 900px) {
    .cards {
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+         /* Let rows auto-size to their own content instead of equal height */
+         grid-template-rows: auto;
+         align-items: start; /* prevent stretch to tallest card */
       gap: 40px 40px; /* tightened gaps */
       max-width: 900px;
       margin: 0 auto;
       padding-left: 0;
       padding-right: 0;
    }
-  .card {
-    min-width: 0;
-    height: 100%;
-  }
+   .card { min-width: 0; align-self: start; }
   .card:nth-child(1) { grid-row: 1; grid-column: 1; }
   .card:nth-child(2) { grid-row: 1; grid-column: 2; }
   .card:nth-child(3) { grid-row: 2; grid-column: 1; }
@@ -57,7 +56,8 @@ html { overflow-x:hidden; }
 .card-title { text-align: center; color: rgb(64, 167, 185); font-size: 24px; margin: 8px 0 16px; font-weight: 800; }
 .card-subtitle { font-size: 0.92em; color: #6b7a8f; font-weight: 500; text-align: center; margin-top: 2px; margin-bottom: 12px; }
 .card-content { border: 2px solid #67e2e6; height: 400px; border-radius: 12px; padding: 12px; background: #fff; }
-.card:first-child .card-content { height: 80vh; }
+/* Do not force the first card to a huge fixed height; let content define it */
+.card:first-child .card-content { height: auto; }
 .card-content.homework-scroll { max-height: 50vh; overflow-y: auto; }
 .card-content.homework-scroll::-webkit-scrollbar { width: 0px; }
 
@@ -133,3 +133,22 @@ html { overflow-x:hidden; }
 .status-blue { color: #9da6a7 !important; text-align: right; font-weight: 700; }
 
 /* Dark theme overrides moved to students/theme.css */
+
+/* =====================
+   Leaderboard Loading Skeletons / Spinners
+   ===================== */
+.lb-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:16px; color:#6b7a8f; }
+.lb-spinner { width:28px; height:28px; border:3px solid rgba(103,226,230,0.25); border-top-color:#67e2e6; border-radius:50%; animation: lb-spin 0.9s linear infinite; }
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+.lb-skeleton-list { list-style:none; padding:0; margin:8px 0 0; width:100%; }
+.lb-skel-item { display:flex; align-items:center; gap:12px; padding:12px 0; }
+.lb-skel-rank { width:50px; height:24px; border-radius:6px; background: linear-gradient(90deg,#e8eef4 0%, #f3f7fa 50%, #e8eef4 100%); background-size:200% 100%; animation: lb-shimmer 1.2s ease-in-out infinite; }
+.lb-skel-text { flex:1; height:18px; border-radius:6px; background: linear-gradient(90deg,#e8eef4 0%, #f3f7fa 50%, #e8eef4 100%); background-size:200% 100%; animation: lb-shimmer 1.2s ease-in-out infinite; }
+.lb-skel-score { width:80px; height:18px; border-radius:6px; background: linear-gradient(90deg,#e8eef4 0%, #f3f7fa 50%, #e8eef4 100%); background-size:200% 100%; animation: lb-shimmer 1.2s ease-in-out infinite; }
+@keyframes lb-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Dark mode tweaks for skeletons */
+html.dark .lb-skel-rank,
+html.dark .lb-skel-text,
+html.dark .lb-skel-score { background: linear-gradient(90deg,#24313b 0%, #2c3a44 50%, #24313b 100%); }
+html.dark .lb-loading { color:#9fb2c6; }
