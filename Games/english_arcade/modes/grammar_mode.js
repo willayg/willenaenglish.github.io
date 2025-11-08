@@ -6,7 +6,7 @@ import { startSession, logAttempt, endSession } from '../../../students/records.
 export async function runGrammarMode(ctx) {
   const {
     playTTS, playTTSVariant, preprocessTTS,
-    grammarFile, grammarName,
+    grammarFile, grammarName, grammarConfig,
     renderGameView, showModeModal, playSFX, inlineToast,
     getListName, getUserId, FN
   } = ctx || {};
@@ -28,6 +28,11 @@ export async function runGrammarMode(ctx) {
     }
 
     console.log('[Grammar Mode] Loaded', grammarData.length, 'grammar items');
+
+    // Extract answer choices from config (e.g., ['a', 'an'] or ['it', 'they'])
+    const answerChoices = (grammarConfig && grammarConfig.answerChoices && Array.isArray(grammarConfig.answerChoices))
+      ? grammarConfig.answerChoices
+      : ['a', 'an']; // Default fallback
 
   // Shuffle items for variety and limit to 15 questions per session
   const shuffled = [...grammarData].sort(() => Math.random() - 0.5).slice(0, 15);
@@ -107,12 +112,11 @@ export async function runGrammarMode(ctx) {
             <div style="font-size:clamp(2.88rem, 12vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:1px;max-width:88vw;white-space:nowrap;line-height:1.1;padding:0 8px;">${item.word}</div>
           </div>              <!-- Answer buttons (extra spacing above) -->
               <div style="display:flex;gap:20px;width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;">
-                <button class="grammar-choice-btn" data-answer="a" style="flex:1;min-width:140px;padding:16px 24px;font-size:1.5rem;font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
-                  a
-                </button>
-                <button class="grammar-choice-btn" data-answer="an" style="flex:1;min-width:140px;padding:16px 24px;font-size:1.5rem;font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
-                  an
-                </button>
+                ${answerChoices.map((choice, idx) => `
+                  <button class="grammar-choice-btn" data-answer="${choice}" style="flex:1;min-width:140px;padding:16px 24px;font-size:1.5rem;font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
+                    ${choice}
+                  </button>
+                `).join('')}
               </div>
   
               <!-- Spacer pushes the quit button to the bottom -->

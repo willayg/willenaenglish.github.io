@@ -1,0 +1,22 @@
+[
+	{ "id": "it_cat", "word": "cat", "article": "it", "emoji": "🐱", "exampleSentence": "It is a sleepy cat.", "exampleSentenceKo": "그것은 졸린 고양이에요.", "explanation": "Use 'it' for one animal or thing." },
+	{ "id": "it_dog", "word": "dog", "article": "it", "emoji": "🐶", "exampleSentence": "It is a playful dog.", "exampleSentenceKo": "그것은 장난스러운 강아지예요.", "explanation": "Use 'it' when there is only one." },
+	{ "id": "it_robot", "word": "robot", "article": "it", "emoji": "🤖", "exampleSentence": "It is a shiny robot.", "exampleSentenceKo": "그것은 반짝이는 로봇이에요.", "explanation": "One machine uses 'it'." },
+	{ "id": "it_flower", "word": "flower", "article": "it", "emoji": "🌸", "exampleSentence": "It is a pink flower.", "exampleSentenceKo": "그것은 분홍색 꽃이에요.", "explanation": "One flower is 'it'." },
+	{ "id": "it_ball", "word": "ball", "article": "it", "emoji": "⚽", "exampleSentence": "It is a soccer ball.", "exampleSentenceKo": "그것은 축구공이에요.", "explanation": "One ball takes 'it'." },
+	{ "id": "it_cookie", "word": "cookie", "article": "it", "emoji": "🍪", "exampleSentence": "It is a big cookie.", "exampleSentenceKo": "그것은 큰 쿠키예요.", "explanation": "One cookie is 'it'." },
+	{ "id": "it_leaf", "word": "leaf", "article": "it", "emoji": "🍁", "exampleSentence": "It is a red leaf.", "exampleSentenceKo": "그것은 빨간 나뭇잎이에요.", "explanation": "One leaf uses 'it'." },
+	{ "id": "it_turtle", "word": "turtle", "article": "it", "emoji": "🐢", "exampleSentence": "It is a slow turtle.", "exampleSentenceKo": "그것은 느린 거북이에요.", "explanation": "Single animals use 'it'." },
+	{ "id": "it_backpack", "word": "backpack", "article": "it", "emoji": "🎒", "exampleSentence": "It is a heavy backpack.", "exampleSentenceKo": "그것은 무거운 가방이에요.", "explanation": "One object is 'it'." },
+	{ "id": "it_penguin", "word": "penguin", "article": "it", "emoji": "🐧", "exampleSentence": "It is a baby penguin.", "exampleSentenceKo": "그것은 아기 펭귄이에요.", "explanation": "Use 'it' for one penguin." },
+	{ "id": "they_cats", "word": "cats", "article": "they", "emoji": "🐱🐱", "exampleSentence": "They are fluffy cats.", "exampleSentenceKo": "그것들은 포근한 고양이들이에요.", "explanation": "Use 'they' for more than one." },
+	{ "id": "they_dogs", "word": "dogs", "article": "they", "emoji": "🐶🐶", "exampleSentence": "They are loud dogs.", "exampleSentenceKo": "그것들은 시끄러운 강아지들이에요.", "explanation": "Two or more animals use 'they'." },
+	{ "id": "they_robots", "word": "robots", "article": "they", "emoji": "🤖🤖", "exampleSentence": "They are helper robots.", "exampleSentenceKo": "그것들은 도와주는 로봇들이에요.", "explanation": "Many machines use 'they'." },
+	{ "id": "they_flowers", "word": "flowers", "article": "they", "emoji": "🌼🌼", "exampleSentence": "They are yellow flowers.", "exampleSentenceKo": "그것들은 노란 꽃들이에요.", "explanation": "More than one flower is 'they'." },
+	{ "id": "they_balls", "word": "balls", "article": "they", "emoji": "⚽⚽", "exampleSentence": "They are bouncing balls.", "exampleSentenceKo": "그것들은 튀는 공들이에요.", "explanation": "Many balls need 'they'." },
+	{ "id": "they_cookies", "word": "cookies", "article": "they", "emoji": "🍪🍪", "exampleSentence": "They are sweet cookies.", "exampleSentenceKo": "그것들은 달콤한 쿠키들이에요.", "explanation": "More than one cookie is 'they'." },
+	{ "id": "they_leaves", "word": "leaves", "article": "they", "emoji": "🍁🍁", "exampleSentence": "They are orange leaves.", "exampleSentenceKo": "그것들은 주황색 나뭇잎들이에요.", "explanation": "Many leaves use 'they'." },
+	{ "id": "they_turtles", "word": "turtles", "article": "they", "emoji": "🐢🐢", "exampleSentence": "They are friendly turtles.", "exampleSentenceKo": "그것들은 친절한 거북이들이에요.", "explanation": "Two or more turtles use 'they'." },
+	{ "id": "they_backpacks", "word": "backpacks", "article": "they", "emoji": "🎒🎒", "exampleSentence": "They are new backpacks.", "exampleSentenceKo": "그것들은 새 가방들이에요.", "explanation": "Multiple objects use 'they'." },
+	{ "id": "they_penguins", "word": "penguins", "article": "they", "emoji": "🐧🐧", "exampleSentence": "They are marching penguins.", "exampleSentenceKo": "그것들은 행진하는 펭귄들이에요.", "explanation": "Group of penguins uses 'they'." }
+]

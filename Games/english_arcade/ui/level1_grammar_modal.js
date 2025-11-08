@@ -43,8 +43,48 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
   
   // Grammar games list for Level 1
   const grammarGames = [
-    { id: 'articles', label: 'A vs An', emoji: '📝', file: 'data/grammar/level1/articles.json' }
+    {
+      id: 'articles',
+      label: 'A vs An',
+      emoji: '📝',
+      file: 'data/grammar/level1/articles.json',
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'articles',
+        answerChoices: ['a', 'an'],
+        bucketLabels: { a: 'a', an: 'an' }
+      }
+    },
+    {
+      id: 'it_vs_they',
+      label: 'It vs They',
+      emoji: '👥',
+      file: 'data/grammar/level1/it_vs_they.json',
+      config: {
+        lessonModule: 'grammar_lesson_it_vs_they',
+        lessonId: 'it_vs_they',
+        answerChoices: ['it', 'they'],
+        bucketLabels: { it: 'it', they: 'they' }
+      }
+    }
   ];
+
+  const encodeConfig = (config) => {
+    try {
+      return encodeURIComponent(JSON.stringify(config || {}));
+    } catch {
+      return encodeURIComponent('{}');
+    }
+  };
+
+  const decodeConfig = (encoded) => {
+    if (!encoded) return {};
+    try {
+      return JSON.parse(decodeURIComponent(encoded));
+    } catch {
+      return {};
+    }
+  };
 
   let modal = document.getElementById('grammarL1Modal');
   if (!modal) {
@@ -62,7 +102,7 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       </div>
       <div id="grammarL1ListContainer" style="padding:12px 0;overflow:auto;flex:1;">
         ${grammarGames.map((item, idx) => `
-          <button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+          <button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-config="${encodeConfig(item.config)}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
               <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
@@ -104,8 +144,9 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       btn.onclick = () => {
         const file = btn.getAttribute('data-file');
         const label = btn.getAttribute('data-label');
+        const cfg = decodeConfig(btn.getAttribute('data-config'));
         modal.style.display = 'none';
-        if (onChoose) onChoose({ grammarFile: file, grammarName: label });
+        if (onChoose) onChoose({ grammarFile: file, grammarName: label, grammarConfig: cfg });
       };
       btn.onmouseenter = () => btn.style.backgroundColor = '#f0f9fa';
       btn.onmouseleave = () => btn.style.backgroundColor = '';
@@ -119,7 +160,7 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
     if (!container) return;
     container.innerHTML = grammarGames.map((item, idx) => {
       const pct = Math.max(0, Math.min(100, percents[idx] || 0));
-      return `<button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+      return `<button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-config="${encodeConfig(item.config)}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
         <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">

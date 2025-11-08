@@ -122,6 +122,21 @@ export async function runGrammarFillGapMode(ctx) {
 
   ensureStyles();
 
+  const choiceLabelMap = new Map();
+  usable.forEach((item) => {
+    const raw = (item?.article ?? '').toString().trim();
+    if (!raw) return;
+    const key = raw.toLowerCase();
+    if (!choiceLabelMap.has(key)) {
+      choiceLabelMap.set(key, raw);
+    }
+  });
+  if (!choiceLabelMap.size) {
+    choiceLabelMap.set('a', 'a');
+    choiceLabelMap.set('an', 'an');
+  }
+  const choiceKeys = Array.from(choiceLabelMap.keys()).sort((a, b) => a.localeCompare(b));
+
   const deck = shuffle(usable).slice(0, 15);
   const sessionWords = deck.map((item) => item.word);
 
@@ -177,16 +192,18 @@ export async function runGrammarFillGapMode(ctx) {
   }
 
   function renderLayout() {
+    const optionsMarkup = choiceKeys.map((choice) => {
+      const label = choiceLabelMap.get(choice) || choice;
+      return `<button type="button" class="fg-chip" data-value="${choice}">${label}</button>`;
+    }).join('');
+
     gameArea.innerHTML = `
       <div class="fg-root">
         <div class="fg-content" role="group" aria-live="polite">
           <div class="fg-emoji" id="fgEmoji" aria-hidden="true"></div>
           <div class="fg-word" id="fgWord"></div>
           <div class="fg-sentence" id="fgSentence"></div>
-          <div class="fg-chip-row" id="fgOptions">
-            <button type="button" class="fg-chip" data-value="a">a</button>
-            <button type="button" class="fg-chip" data-value="an">an</button>
-          </div>
+          <div class="fg-chip-row" id="fgOptions">${optionsMarkup}</div>
           <div class="fg-hint" id="fgHint"></div>
         </div>
         <div class="fg-footer">
