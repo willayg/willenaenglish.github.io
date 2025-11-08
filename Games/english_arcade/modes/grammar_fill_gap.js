@@ -19,8 +19,8 @@ function ensureStyles() {
     .fg-word { text-align:center; font-size:clamp(2rem, 8vw, 3rem); font-weight:800; color:#21b3be; letter-spacing:0.04em; }
     .fg-sentence { font-size:1.15rem; line-height:1.55; color:#0f172a; background:#f2fbfc; border-radius:18px; padding:16px 18px; border:2px solid rgba(33,181,192,0.24); }
     .fg-sentence strong { color:#19777e; font-weight:800; }
-    .fg-chip-row { display:flex; justify-content:center; gap:18px; }
-  .fg-chip { font-family:inherit; font-weight:700; font-size:1.05rem; padding:12px 24px; border-radius:999px; border:3px solid #21b3be; background:#ffffff; color:#21b3be; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease; box-shadow:0 16px 32px -16px rgba(0,0,0,0.25); letter-spacing:0.05em; }
+    .fg-chip-row { display:flex; justify-content:center; gap:clamp(12px, 3vw, 18px); flex-wrap:wrap; }
+    .fg-chip { font-family:inherit; font-weight:700; font-size:clamp(0.9rem, 2.5vw, 1.05rem); padding:clamp(10px, 2vh, 12px) clamp(18px, 4vw, 24px); border-radius:999px; border:3px solid #21b3be; background:#ffffff; color:#21b3be; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease; box-shadow:0 16px 32px -16px rgba(0,0,0,0.25); letter-spacing:0.05em; min-width:clamp(60px, 15vw, 80px); }
     .fg-chip:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 22px -10px rgba(0,0,0,0.28); background:#f1feff; }
     .fg-chip:active:not(:disabled) { transform:scale(0.94); }
     .fg-chip:disabled { opacity:0.45; cursor:default; box-shadow:none; }
@@ -82,6 +82,7 @@ export async function runGrammarFillGapMode(ctx) {
   const {
     grammarFile,
     grammarName,
+    grammarConfig,
     playSFX,
     inlineToast,
     showOpeningButtons,
@@ -122,20 +123,10 @@ export async function runGrammarFillGapMode(ctx) {
 
   ensureStyles();
 
-  const choiceLabelMap = new Map();
-  usable.forEach((item) => {
-    const raw = (item?.article ?? '').toString().trim();
-    if (!raw) return;
-    const key = raw.toLowerCase();
-    if (!choiceLabelMap.has(key)) {
-      choiceLabelMap.set(key, raw);
-    }
-  });
-  if (!choiceLabelMap.size) {
-    choiceLabelMap.set('a', 'a');
-    choiceLabelMap.set('an', 'an');
-  }
-  const choiceKeys = Array.from(choiceLabelMap.keys()).sort((a, b) => a.localeCompare(b));
+  // Extract answer choices from config (e.g., ['a', 'an'] or ['am', 'is', 'are'])
+  const answerChoices = (grammarConfig && grammarConfig.answerChoices && Array.isArray(grammarConfig.answerChoices))
+    ? grammarConfig.answerChoices
+    : ['a', 'an']; // Default fallback
 
   const deck = shuffle(usable).slice(0, 15);
   const sessionWords = deck.map((item) => item.word);
@@ -192,18 +183,15 @@ export async function runGrammarFillGapMode(ctx) {
   }
 
   function renderLayout() {
-    const optionsMarkup = choiceKeys.map((choice) => {
-      const label = choiceLabelMap.get(choice) || choice;
-      return `<button type="button" class="fg-chip" data-value="${choice}">${label}</button>`;
-    }).join('');
-
     gameArea.innerHTML = `
       <div class="fg-root">
         <div class="fg-content" role="group" aria-live="polite">
           <div class="fg-emoji" id="fgEmoji" aria-hidden="true"></div>
           <div class="fg-word" id="fgWord"></div>
           <div class="fg-sentence" id="fgSentence"></div>
-          <div class="fg-chip-row" id="fgOptions">${optionsMarkup}</div>
+          <div class="fg-chip-row" id="fgOptions">
+            ${answerChoices.map((choice) => `<button type="button" class="fg-chip" data-value="${choice.toLowerCase()}">${choice}</button>`).join('')}
+          </div>
           <div class="fg-hint" id="fgHint"></div>
         </div>
         <div class="fg-footer">
@@ -295,7 +283,7 @@ export async function runGrammarFillGapMode(ctx) {
     updateProgressBar(true, currentIndex, deck.length);
 
     emojiEl.textContent = item.emoji || '🧠';
-    wordEl.textContent = item.word;
+  wordEl.textContent = item.prompt || item.word;
     sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
     hintEl.textContent = item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '';
     setReveal('');

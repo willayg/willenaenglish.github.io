@@ -643,6 +643,7 @@ const modeLoaders = {
   grammar_choose: () => import('./modes/grammar_mode.js').then(m => m.runGrammarMode),
   grammar_lesson: () => import('./modes/grammar_lesson.js').then(m => m.runGrammarLesson),
   grammar_lesson_it_vs_they: () => import('./modes/grammar_lesson_it_vs_they.js').then(m => m.runGrammarLessonItVsThey),
+  grammar_lesson_am_are_is: () => import('./modes/grammar_lesson_am_are_is.js').then(m => m.runGrammarLessonAmAreIs),
   grammar_fill_gap: () => import('./modes/grammar_fill_gap.js').then(m => m.runGrammarFillGapMode),
   grammar_sentence_unscramble: () => import('./modes/grammar_sentence_unscramble.js').then(m => m.runGrammarSentenceUnscramble),
 };
@@ -1413,10 +1414,11 @@ window.WordArcade = {
       showGrammarModeSelector({
         grammarFile: cfg.grammarFile || 'data/grammar/level1/articles.json',
         grammarName: cfg.grammarName || 'A vs An',
+        grammarConfig: cfg.grammarConfig || {},
         onModeChosen: async (config) => {
           try {
             const mapping = {
-              lesson: 'grammar_lesson',
+              lesson: config?.grammarConfig?.lessonModule || 'grammar_lesson',
               choose: 'grammar_choose',
               fill_gap: 'grammar_fill_gap',
               unscramble: 'grammar_sentence_unscramble',
@@ -1425,7 +1427,7 @@ window.WordArcade = {
             const loader = modeLoaders[targetKey];
             if (!loader) throw new Error(`Grammar mode loader missing for ${targetKey}`);
             const runGrammarMode = await loader();
-            try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
+            try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName, grammarConfig: config.grammarConfig }; } catch {}
             try {
               if (!historyManager || !historyManager.isBackNavigation) {
                 historyManager.navigateToGame(targetKey, { grammar: window.__WA_LAST_GRAMMAR__ });
@@ -1434,6 +1436,7 @@ window.WordArcade = {
             runGrammarMode({
               grammarFile: config.grammarFile,
               grammarName: config.grammarName,
+              grammarConfig: config.grammarConfig,
               renderGameView,
               showModeModal,
               playSFX,

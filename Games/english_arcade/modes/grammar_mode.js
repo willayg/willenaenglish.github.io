@@ -11,6 +11,20 @@ export async function runGrammarMode(ctx) {
     getListName, getUserId, FN
   } = ctx || {};
 
+  const sanitizeText = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Extract subject and blank from prompt (e.g., "I ___ happy." → "I ___")
+  const extractSubjectAndBlank = (prompt) => {
+    if (!prompt) return '___';
+    const text = String(prompt).trim();
+    // Look for the first blank
+    const blankIndex = text.indexOf('___');
+    if (blankIndex === -1) return text;
+    // Extract from start to blank, then add the blank
+    const beforeBlank = text.substring(0, blankIndex).trim();
+    return `${beforeBlank} ___`;
+  };
+
   if (!grammarFile) {
     console.error('[Grammar Mode] No grammar file provided');
     if (inlineToast) inlineToast('Error: No grammar file selected');
@@ -96,6 +110,8 @@ export async function runGrammarMode(ctx) {
 
       const item = shuffled[currentIdx];
       const isLastQuestion = currentIdx === shuffled.length - 1;
+      const rawPrompt = item?.prompt || item?.word || '';
+      const displayText = sanitizeText(extractSubjectAndBlank(rawPrompt));
 
       // Main content (no example or translation). Show a fixed-size article box and the word in bright cyan.
           const contentHTML = `
@@ -109,11 +125,11 @@ export async function runGrammarMode(ctx) {
           <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;">
             ${item.emoji ? `<div style=\"font-size:4.6rem;line-height:1;margin-bottom:30px;\">${item.emoji}</div>` : ''}
             <div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:1.92rem;font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;"></div>
-            <div style="font-size:clamp(2.88rem, 12vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:1px;max-width:88vw;white-space:nowrap;line-height:1.1;padding:0 8px;">${item.word}</div>
+            <div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${displayText}</div>
           </div>              <!-- Answer buttons (extra spacing above) -->
-              <div style="display:flex;gap:20px;width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;">
+              <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;flex-wrap:wrap;">
                 ${answerChoices.map((choice, idx) => `
-                  <button class="grammar-choice-btn" data-answer="${choice}" style="flex:1;min-width:140px;padding:16px 24px;font-size:1.5rem;font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
+                  <button class="grammar-choice-btn" data-answer="${choice}" style="flex:1;min-width:clamp(90px, 18vw, 140px);padding:clamp(12px, 2.5vh, 16px) clamp(16px, 3vw, 24px);font-size:clamp(1.1rem, 3vw, 1.5rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
                     ${choice}
                   </button>
                 `).join('')}

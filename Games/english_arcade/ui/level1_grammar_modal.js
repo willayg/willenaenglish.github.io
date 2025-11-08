@@ -66,6 +66,19 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         answerChoices: ['it', 'they'],
         bucketLabels: { it: 'it', they: 'they' }
       }
+    },
+    {
+      id: 'am_are_is',
+      label: 'Am vs Are vs Is',
+      emoji: '🗣️',
+      file: 'data/grammar/level1/am_are_is.json',
+      config: {
+        lessonModule: 'grammar_lesson_am_are_is',
+        lessonId: 'am_are_is',
+        answerChoices: ['am', 'is', 'are'],
+        bucketLabels: { am: 'am', is: 'is', are: 'are' },
+        ruleHint: 'Use am with I, is with one person or thing, and are with many or you.'
+      }
     }
   ];
 
