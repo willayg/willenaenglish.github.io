@@ -8,7 +8,7 @@ body {
    overflow-x: hidden;
 }
 html { overflow-x:hidden; }
-.wrap { max-width: 980px; margin: 0 auto; padding: 12px; box-sizing:border-box; width:100%; overflow-x:hidden; }
+.wrap { max-width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing:border-box; width:100%; overflow-x:hidden; }
 
 /* =====================
    Card Styles
@@ -24,6 +24,7 @@ html { overflow-x:hidden; }
    padding-left: 4px;
    padding-right: 4px;
    overflow:hidden;
+   grid-auto-flow: row dense; /* pack items to reduce vertical gaps */
 }
 @media (min-width: 900px) {
    .cards {
@@ -31,17 +32,41 @@ html { overflow-x:hidden; }
          /* Let rows auto-size to their own content instead of equal height */
          grid-template-rows: auto;
          align-items: start; /* prevent stretch to tallest card */
+      grid-auto-flow: row dense;
       gap: 40px 40px; /* tightened gaps */
       max-width: 900px;
       margin: 0 auto;
       padding-left: 0;
       padding-right: 0;
    }
-   .card { min-width: 0; align-self: start; }
-  .card:nth-child(1) { grid-row: 1; grid-column: 1; }
-  .card:nth-child(2) { grid-row: 1; grid-column: 2; }
-  .card:nth-child(3) { grid-row: 2; grid-column: 1; }
-  .card:nth-child(4) { grid-row: 2; grid-column: 2; }
+  .card { min-width: 0; align-self: start; }
+}
+/* 3-column layout on wider screens */
+@media (min-width: 1240px) {
+  .cards {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px 32px;
+    max-width: 1200px;
+  }
+}
+
+/* =====================
+    Masonry-style packing (denser vertical flow)
+    Switch to CSS columns at larger breakpoints for natural stacking.
+    ===================== */
+@media (min-width: 900px) {
+  .cards.masonry, .cards.masonry-2col { display: block; column-count: 2; column-gap: 48px; max-width: none; width: 100%; }
+  .cards.masonry .card, .cards.masonry-2col .card { break-inside: avoid; margin-bottom: 32px; width: 100%; }
+}
+@media (min-width: 1240px) {
+  .cards.masonry, .cards.masonry-3col { display: block; column-count: 3; column-gap: 48px; max-width: none; width: 100%; }
+  .cards.masonry .card, .cards.masonry-3col .card { break-inside: avoid; margin-bottom: 32px; width: 100%; }
+}
+@media (min-width: 1600px) {
+  .cards.masonry { column-count: 4; column-gap: 40px; }
+}
+@media (min-width: 1920px) {
+  .cards.masonry { column-count: 5; column-gap: 36px; }
 }
 .card {
   background: #232729;
@@ -55,7 +80,7 @@ html { overflow-x:hidden; }
 }
 .card-title { text-align: center; color: rgb(64, 167, 185); font-size: 24px; margin: 8px 0 16px; font-weight: 800; }
 .card-subtitle { font-size: 0.92em; color: #6b7a8f; font-weight: 500; text-align: center; margin-top: 2px; margin-bottom: 12px; }
-.card-content { border: 2px solid #67e2e6; height: 400px; border-radius: 12px; padding: 12px; background: #fff; }
+.card-content { border: 2px solid #67e2e6; height: auto; border-radius: 12px; padding: 12px; background: #fff; }
 /* Do not force the first card to a huge fixed height; let content define it */
 .card:first-child .card-content { height: auto; }
 .card-content.homework-scroll { max-height: 50vh; overflow-y: auto; }

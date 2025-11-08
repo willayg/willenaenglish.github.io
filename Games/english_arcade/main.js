@@ -642,6 +642,7 @@ const modeLoaders = {
   // Grammar modes
   grammar_choose: () => import('./modes/grammar_mode.js').then(m => m.runGrammarMode),
   grammar_lesson: () => import('./modes/grammar_lesson.js').then(m => m.runGrammarLesson),
+  grammar_lesson_it_vs_they: () => import('./modes/grammar_lesson_it_vs_they.js').then(m => m.runGrammarLessonItVsThey),
   grammar_fill_gap: () => import('./modes/grammar_fill_gap.js').then(m => m.runGrammarFillGapMode),
   grammar_sentence_unscramble: () => import('./modes/grammar_sentence_unscramble.js').then(m => m.runGrammarSentenceUnscramble),
 };
@@ -674,38 +675,47 @@ async function loadPhonicsGame({ listFile, mode, listName }) {
 }
 
 // Load and start a grammar game
-async function loadGrammarGame({ grammarFile, grammarName }) {
+async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
   try {
     console.log('[loadGrammarGame] Starting grammar game:', { grammarFile, grammarName });
     showOpeningButtons(false);
     gameArea.innerHTML = '';
     currentListName = grammarName || null;
     wordList = [];
+  const baseConfig = grammarConfig || {};
     
     // Mark as grammar flow
     window.__WA_IS_GRAMMAR__ = true;
-    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName }; } catch {}
+    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName, grammarConfig: baseConfig }; } catch {}
     
     // Show grammar mode selector first
     showGrammarModeSelector({
       grammarFile,
       grammarName,
-      onModeChosen: async (config) => {
+      grammarConfig: baseConfig,
+      onModeChosen: async (selection) => {
         // Now start the actual game with the chosen mode
-        const { mode } = config;
+        const memo = selection || {};
+        const { mode, grammarFile: selectedFile, grammarName: selectedName, grammarConfig: selectedConfig } = memo;
         const loaderMap = {
           lesson: 'grammar_lesson',
           choose: 'grammar_choose',
           fill_gap: 'grammar_fill_gap',
           unscramble: 'grammar_sentence_unscramble',
         };
-        const loaderKey = loaderMap[mode] || 'grammar_choose';
+        let loaderKey = loaderMap[mode] || 'grammar_choose';
+        if (mode === 'lesson') {
+          loaderKey = (selectedConfig && selectedConfig.lessonModule) || memo.lessonModule || baseConfig.lessonModule || 'grammar_lesson';
+        }
         const modeLoader = modeLoaders[loaderKey];
         if (!modeLoader) throw new Error('Grammar mode loader not found');
         const runGrammarMode = await modeLoader();
         
         // Remember last grammar config for restoring mode menu and back/forward
-        try { window.__WA_LAST_GRAMMAR__ = { grammarFile: config.grammarFile, grammarName: config.grammarName }; } catch {}
+        const fileToUse = selectedFile || grammarFile;
+        const nameToUse = selectedName || grammarName;
+        const configToUse = selectedConfig || baseConfig;
+        try { window.__WA_LAST_GRAMMAR__ = { grammarFile: fileToUse, grammarName: nameToUse, grammarConfig: configToUse }; } catch {}
         // Track entering grammar game for back/forward support
         try {
           if (!historyManager || !historyManager.isBackNavigation) {
@@ -715,8 +725,9 @@ async function loadGrammarGame({ grammarFile, grammarName }) {
 
         // Call grammar runner with context
         runGrammarMode({
-          grammarFile: config.grammarFile,
-          grammarName: config.grammarName,
+          grammarFile: fileToUse,
+          grammarName: nameToUse,
+          grammarConfig: configToUse,
           renderGameView,
           showModeModal,
           playSFX,
