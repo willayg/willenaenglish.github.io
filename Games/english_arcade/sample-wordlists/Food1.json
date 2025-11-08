@@ -6,10 +6,10 @@
   {"eng":"watermelon","kor":"수박","def":"a very large green melon","ex":"We cut a watermelon.","ex_kor":"우리는 수박을 자른다.","emoji":"🍉"},
   {"eng":"strawberry","kor":"딸기","def":"a small red sweet fruit","ex":"He picks a strawberry.","ex_kor":"그는 딸기를 딴다.","emoji":"🍓"},
   {"eng":"pear","kor":"배","def":"a sweet fruit with a wide bottom","ex":"I slice a pear.","ex_kor":"나는 배를 자른다.","emoji":"🍐"},
-  {"eng":"peach","kor":"복숭아","def":"a soft fruit with fuzzy skin","ex":"I bite a peach.","ex_kor":"나는 복숭아를 물어뜯는다.","emoji":"🍑"},
+  {"eng":"peach","kor":"복숭아","def":"a soft fruit with fuzzy skin","ex":"I bite a peach.","ex_kor":"나는 복숭아를 물어뜯는다."},
   {"eng":"cherry","kor":"체리","def":"a small round red fruit","ex":"She eats a cherry.","ex_kor":"그녀는 체리를 먹는다.","emoji":"🍒"},
   {"eng":"lemon","kor":"레몬","def":"a sour yellow citrus fruit","ex":"I cut a lemon.","ex_kor":"나는 레몬을 자른다.","emoji":"🍋"},
-  {"eng":"lime","kor":"라임","def":"a small green sour fruit","ex":"We squeeze a lime for juice.","ex_kor":"우리는 주스를 위해 라임을 짠다.","emoji":"🍈"},
+  {"eng":"lime","kor":"라임","def":"a small green sour fruit","ex":"We squeeze a lime for juice.","ex_kor":"우리는 주스를 위해 라임을 짠다."},
   {"eng":"pineapple","kor":"파인애플","def":"a tropical fruit with sharp skin","ex":"He cuts a pineapple.","ex_kor":"그는 파인애플을 자른다.","emoji":"🍍"},
   {"eng":"mango","kor":"망고","def":"a soft yellow tropical fruit","ex":"I eat a sweet mango.","ex_kor":"나는 달콤한 망고를 먹는다.","emoji":"🥭"},
   {"eng":"kiwi","kor":"키위","def":"a small brown fruit with green inside","ex":"She eats a kiwi.","ex_kor":"그녀는 키위를 먹는다.","emoji":"🥝"},
@@ -17,6 +17,6 @@
   {"eng":"melon","kor":"멜론","def":"a large round sweet fruit","ex":"We share a melon.","ex_kor":"우리는 멜론을 나눈다.","emoji":"🍈"},
   {"eng":"coconut","kor":"코코넛","def":"a large brown fruit with white flesh","ex":"He drinks coconut water.","ex_kor":"그는 코코넛 물을 마신다.","emoji":"🥥"},
   {"eng":"blueberry","kor":"블루베리","def":"a small round blue fruit","ex":"She eats blueberries with yogurt.","ex_kor":"그녀는 요구르트와 블루베리를 먹는다.","emoji":"🫐"},
-  {"eng":"raspberry","kor":"라즈베리","def":"a small red soft fruit","ex":"I put raspberries in cereal.","ex_kor":"나는 시리얼에 라즈베리를 넣는다.","emoji":"🫐"},
+  {"eng":"raspberry","kor":"라즈베리","def":"a small red soft fruit","ex":"I put raspberries in cereal.","ex_kor":"나는 시리얼에 라즈베리를 넣는다."},
   {"eng":"grapefruit","kor":"자몽","def":"a large sour citrus fruit","ex":"I drink grapefruit juice.","ex_kor":"나는 자몽 주스를 마신다."}
 ]
