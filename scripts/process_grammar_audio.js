@@ -121,11 +121,13 @@ function collectSentencesFromFile(filePath, register) {
 		if (!entry || typeof entry !== 'object') return;
 		const sentence = String(entry.exampleSentence || '').trim();
 		if (!sentence) return;
-		const baseWord = entry.word || entry.id || `${relative}:${index}`;
+		const entryId = entry.id ? String(entry.id).trim() : null;
+		const baseWord = entry.word || entryId || `${relative}:${index}`;
 		const article = entry.article ? String(entry.article).trim().toLowerCase() : '';
 		register({
 			file: relative,
 			word: baseWord,
+			entryId: entryId,
 			article,
 			text: sentence,
 		});
@@ -159,18 +161,35 @@ function buildSentenceCatalog() {
 	const catalog = [];
 	const keyMap = new Map();
 
-	const register = ({ file, word, article, text }) => {
-		const normalizedWord = normalizeKey(word);
-		let base = normalizedWord ? `${normalizedWord}_grammar` : 'grammar_clip';
+	const register = ({ file, word, entryId, article, text }) => {
+		// Generate a simple hash of the sentence for uniqueness
+		let hash = 0;
+		for (let i = 0; i < text.length; i++) {
+			const char = text.charCodeAt(i);
+			hash = ((hash << 5) - hash) + char;
+			hash = hash & hash; // Convert to 32bit integer
+		}
+		hash = Math.abs(hash) % 10000; // Keep it short (4 digits)
+
+		// If entry has an explicit id, use it as-is with _grammar suffix
+		let base;
+		if (entryId) {
+			base = `${entryId}_grammar`;
+		} else {
+			const normalizedWord = normalizeKey(word);
+			base = normalizedWord ? `${normalizedWord}_grammar` : 'grammar_clip';
+		}
 
 		const ensureUnique = (candidate, depth = 0) => {
 			if (!keyMap.has(candidate)) return candidate;
 			const existing = keyMap.get(candidate);
 			if (existing.text === text) return candidate; // identical sentence, reuse key
-			const suffixParts = [];
+			// When collision detected, append hash to make it unique
+			const suffixParts = [hash.toString().padStart(4, '0')];
 			if (depth === 0 && article) suffixParts.push(normalizeKey(article));
-			if (suffixParts.length === 0) suffixParts.push(`alt${depth + 1}`);
-			const nextCandidate = `${normalizedWord}_${suffixParts.join('_')}_grammar`;
+			const nextCandidate = entryId 
+				? `${entryId}_${suffixParts.join('_')}_grammar`
+				: `${normalizeKey(word)}_${suffixParts.join('_')}_grammar`;
 			return ensureUnique(nextCandidate, depth + 1);
 		};
 
@@ -178,8 +197,8 @@ function buildSentenceCatalog() {
 		const existing = keyMap.get(key);
 		if (existing && existing.text === text) return; // duplicate entry
 
-		keyMap.set(key, { file, word, article, text });
-		catalog.push({ key, file, word, article, text });
+		keyMap.set(key, { file, word, entryId, article, text });
+		catalog.push({ key, file, word, entryId, article, text });
 	};
 
 	files.forEach(file => collectSentencesFromFile(file, register));

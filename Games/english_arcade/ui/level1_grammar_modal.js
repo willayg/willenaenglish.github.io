@@ -82,8 +82,22 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         lessonModule: 'grammar_lesson_this_that',
         lessonId: 'this_vs_that',
         answerChoices: ['this', 'that'],
-        bucketLabels: { this: 'this', that: 'that' },
-        ruleHint: "Use this for near objects (이것) and that for far objects (저것)."
+        bucketLabels: { this: 'this (near)', that: 'that (far)' },
+        ruleHint: 'Use this for things close to you, that for things far away.'
+      }
+    },
+    {
+      id: 'these_vs_those',
+      label: 'These vs Those',
+      emoji: '📍📍',
+      file: 'data/grammar/level1/these_vs_those.json',
+      aliases: ['these_vs_those', 'these vs those'],
+      config: {
+        lessonModule: 'grammar_lesson_these_those',
+        lessonId: 'these_vs_those',
+        answerChoices: ['these', 'those'],
+        bucketLabels: { these: 'these (near)', those: 'those (far)' },
+        ruleHint: 'Use these for things close to you, those for things far away. Plural forms of this and that.'
       }
     },
     {
@@ -98,6 +112,34 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         answerChoices: ['am', 'is', 'are'],
         bucketLabels: { am: 'am', is: 'is', are: 'are' },
         ruleHint: 'Use am with I, is with one person or thing, and are with many or you.'
+      }
+    },
+    {
+      id: 'have_has',
+      label: 'Have vs Has',
+      emoji: '🤝',
+      file: 'data/grammar/level1/have_vs_has.json',
+      aliases: ['have_vs_has', 'have vs has', 'havehas'],
+      config: {
+        lessonModule: 'grammar_lesson_have_has',
+        lessonId: 'have_vs_has',
+        answerChoices: ['have', 'has'],
+        bucketLabels: { have: 'have', has: 'has' },
+        ruleHint: 'Use have with I, you, we, they, or plural nouns. Use has with he, she, it, or one noun.'
+      }
+    },
+    {
+      id: 'contractions_be',
+      label: 'I am → I\'m',
+      emoji: '🔀',
+      file: 'data/grammar/level1/contractions_be.json',
+      aliases: ['contractions_be', 'contractions be', 'be contractions'],
+      config: {
+        lessonModule: 'grammar_lesson_contractions_be',
+        lessonId: 'contractions_be',
+        answerChoices: ["'m", "'re", "'s"],
+        bucketLabels: { contraction: 'contractions' },
+        ruleHint: 'Choose the correct contraction ending.'
       }
     }
   ];
