@@ -366,7 +366,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
-    backBtn.onclick = () => { if (onBack) onBack(); };
+    backBtn.onclick = () => { if (stepIndex > 0) { stepIndex -= 1; render(); } };
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
 
