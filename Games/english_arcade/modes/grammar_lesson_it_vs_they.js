@@ -359,16 +359,16 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     checkBtn.style.marginTop = '12px';
     stepEl.appendChild(checkBtn);
 
-    const nav = document.createElement('div');
-    nav.className = 'lesson-nav';
-    nav.style.marginTop = '14px';
+  const navLocal = document.createElement('div');
+  navLocal.className = 'lesson-nav';
+  navLocal.style.marginTop = '14px';
     const backBtn = button((lang === 'ko') ? '뒤로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
     backBtn.onclick = () => { if (stepIndex > 0) { stepIndex -= 1; render(); } };
-    nav.appendChild(backBtn);
-    stepEl.appendChild(nav);
+  navLocal.appendChild(backBtn);
+  stepEl.appendChild(navLocal);
 
     let continueBtn = null;
     checkBtn.onclick = () => {
@@ -398,7 +398,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
           continueBtn.style.color = '#ff6fb0';
           continueBtn.style.borderColor = '#ff6fb0';
           continueBtn.onclick = () => nextStep();
-          nav.appendChild(continueBtn);
+          navLocal.appendChild(continueBtn);
         }
         if (inlineToast) inlineToast((lang === 'ko') ? "완벽해요! 'it' (그것)은 하나, 'they' (그것들/그 사람들)는 여러 개!" : 'Awesome! "it" is for one, "they" is for more than one!');
       } else {
@@ -485,8 +485,8 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     prog.className = 'lesson-progress';
     const stepEl = document.createElement('div');
     stepEl.className = 'lesson-step';
-    const nav = document.createElement('div');
-    nav.className = 'lesson-nav';
+    const navBottom = document.createElement('div');
+    navBottom.className = 'lesson-nav';
     const back = button((lang === 'ko') ? '뒤로' : 'Back');
     const next = button((lang === 'ko') ? '다음' : 'Next');
     back.style.borderColor = '#21b3be';
@@ -495,32 +495,32 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     next.style.color = '#ff6fb0';
     back.onclick = () => { if (stepIndex > 0) { stepIndex -= 1; renderStep(); } };
     next.onclick = () => { stepIndex += 1; renderStep(); };
-    nav.appendChild(back);
-    nav.appendChild(next);
+    navBottom.appendChild(back);
+    navBottom.appendChild(next);
 
     top.appendChild(title);
     top.appendChild(prog);
     stage.appendChild(top);
     stage.appendChild(prog);
     stage.appendChild(stepEl);
-    stage.appendChild(nav);
+    stage.appendChild(navBottom);
     root.appendChild(stage);
 
     function renderStep() {
       stepEl.classList.remove('enter');
-      nav.style.display = 'none';
+      navBottom.style.display = 'none';
       if (stepIndex <= 0) {
         stepIndex = 0;
-        renderStep1Language(stage, prog, stepEl, nav);
+        renderStep1Language(stage, prog, stepEl, navBottom);
       } else if (stepIndex === 1) {
-        renderStep2Intro(stage, prog, stepEl, nav);
+        renderStep2Intro(stage, prog, stepEl, navBottom);
       } else if (stepIndex === 2) {
-        renderStep3Examples(stage, prog, stepEl, nav);
+        renderStep3Examples(stage, prog, stepEl, navBottom);
       } else if (stepIndex === 3) {
-        renderStep4Sort(stage, prog, stepEl, nav);
+        renderStep4Sort(stage, prog, stepEl, navBottom);
       } else {
         stepIndex = 4;
-        renderStep5Finish(stage, prog, stepEl, nav);
+        renderStep5Finish(stage, prog, stepEl, navBottom);
       }
       requestAnimationFrame(() => stepEl.classList.add('enter'));
     }

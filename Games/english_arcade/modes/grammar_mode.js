@@ -96,6 +96,31 @@ export async function runGrammarMode(ctx) {
       updateProgressBar(showProgressBar, progressValue, progressMax);
     };
 
+    const buildProximityScene = (article, emoji) => {
+      const isThis = String(article || '').toLowerCase() === 'this';
+      const personEmoji = '🧍';
+      const objectEmoji = emoji || (isThis ? '📘' : '🚌');
+      if (isThis) {
+        return `
+          <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px;margin:0 auto;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:3.6rem;">
+              <span style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.12));">${personEmoji}</span>
+              <span style="font-size:3.8rem;">${objectEmoji}</span>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px;margin:0 auto;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-size:3.6rem;width:100%;max-width:420px;">
+            <span style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.12));transform:translateX(-12px);">${personEmoji}</span>
+            <div style="flex:1;height:4px;margin:0 12px;border-radius:999px;background:repeating-linear-gradient(90deg,#21b3be 0,#21b3be 10px,rgba(33,179,190,0) 10px,rgba(33,179,190,0) 26px);opacity:0.45;"></div>
+            <span style="font-size:3.9rem;transform:translateX(48px);">${objectEmoji}</span>
+          </div>
+        </div>
+      `;
+    };
+
     // ===========================
     // Core game render function
     // ===========================
@@ -112,6 +137,16 @@ export async function runGrammarMode(ctx) {
       const isLastQuestion = currentIdx === shuffled.length - 1;
       const rawPrompt = item?.prompt || item?.word || '';
       const displayText = sanitizeText(extractSubjectAndBlank(rawPrompt));
+      const isThisThatMode = Array.isArray(answerChoices)
+        && answerChoices.length === 2
+        && answerChoices.includes('this')
+        && answerChoices.includes('that');
+      const promptSafe = rawPrompt ? sanitizeText(rawPrompt) : '';
+      const highlightedPrompt = promptSafe ? promptSafe.replace(/___/g, '<span style="color:#21b3be;font-weight:800;">___</span>') : '';
+      const questionText = (isThisThatMode && highlightedPrompt) ? highlightedPrompt : displayText;
+      const visualCueHTML = isThisThatMode
+        ? buildProximityScene(item?.article, item?.emoji)
+        : (item.emoji ? `<div style="font-size:4.6rem;line-height:1;margin-bottom:30px;">${item.emoji}</div>` : '');
 
       // Main content (no example or translation). Show a fixed-size article box and the word in bright cyan.
           const contentHTML = `
@@ -123,9 +158,9 @@ export async function runGrammarMode(ctx) {
   
           <!-- Main question -->
           <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;">
-            ${item.emoji ? `<div style=\"font-size:4.6rem;line-height:1;margin-bottom:30px;\">${item.emoji}</div>` : ''}
+            ${visualCueHTML}
             <div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:1.92rem;font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;"></div>
-            <div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${displayText}</div>
+            <div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${isThisThatMode ? sanitizeText(item?.word || '') : questionText}</div>
           </div>              <!-- Answer buttons (extra spacing above) -->
               <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;flex-wrap:wrap;">
                 ${answerChoices.map((choice, idx) => `
