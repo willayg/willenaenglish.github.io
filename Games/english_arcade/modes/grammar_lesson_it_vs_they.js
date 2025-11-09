@@ -1,6 +1,8 @@
 // Grammar Lesson Runner – It vs. They
 // Mirrors the article lesson structure while teaching singular vs plural pronouns.
 
+import { startSession, endSession } from '../../../students/records.js';
+
 export async function runGrammarLessonItVsThey(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
   const root = document.getElementById('gameArea');
@@ -67,6 +69,24 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     }
   } catch (e) {
     console.warn('[lesson-it-vs-they] failed to load items:', e);
+  }
+
+  const sessionWords = (items || [])
+    .map((it) => (it && typeof it.word === 'string' ? it.word : null))
+    .filter(Boolean)
+    .slice(0, 25);
+
+  let sessionId = null;
+  let sessionClosed = false;
+  try {
+    sessionId = startSession({
+      mode: 'grammar_lesson_it_vs_they',
+      wordList: sessionWords,
+      listName: grammarName || null,
+      meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'It vs They' },
+    });
+  } catch (err) {
+    console.debug('[ItVsTheyLesson] startSession failed', err?.message);
   }
 
   const fallbackIt = [
@@ -142,7 +162,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     const blurb = document.createElement('div');
     blurb.className = 'lesson-body';
     blurb.innerHTML = (lang === 'ko')
-      ? `하나는 <b>it</b>, 두 개 이상은 <b>they</b>를 써요.`
+      ? `하나는 <b>it</b> (그것), 두 개 이상은 <b>they</b> (그것들/그 사람들)를 써요.`
       : `Use <b>it</b> for one animal or thing, and <b>they</b> when there is more than one.`;
     container.appendChild(blurb);
 
@@ -208,11 +228,13 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
       currentPronoun = pronoun;
       itBtn.classList.toggle('primary', pronoun === 'it');
       theyBtn.classList.toggle('primary', pronoun === 'they');
+      itBtn.style.color = pronoun === 'it' ? '#fff' : '#ff6fb0';
+      theyBtn.style.color = pronoun === 'they' ? '#fff' : '#ff6fb0';
       const item = getPronounItem(pronoun, advance);
       if (!item) return;
       pronounLabel.textContent = (pronoun === 'it')
-        ? ((lang === 'ko') ? "'it' → 하나" : '“it” means just one')
-        : ((lang === 'ko') ? "'they' → 여러 개" : '“they” means more than one');
+        ? ((lang === 'ko') ? "'it' → 그것 (하나)" : '"it" means just one')
+        : ((lang === 'ko') ? "'they' → 그것들/그 사람들 (여러 개)" : '"they" means more than one');
       emojiEl.textContent = item.emoji || (pronoun === 'it' ? '🐾' : '🐾🐾');
       sentenceEl.innerHTML = highlightPronoun(item.exampleSentence, pronoun);
       if (lang === 'ko') {
@@ -272,15 +294,15 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? "한 개는 <b>it</b>, 여러 개는 <b>they</b> 바구니에 넣어 보세요."
+      ? "한 개는 <b>it</b> (그것), 여러 개는 <b>they</b> (그것들/그 사람들) 바구니에 넣어 보세요."
       : 'Place single items in the <b>it</b> basket and groups in the <b>they</b> basket.';
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets';
     const pool = makeBucket('pool', (lang === 'ko') ? '단어 모음' : 'Word Pool');
-    const bucketIt = makeBucket('it', (lang === 'ko') ? 'it (하나)' : 'it (one)');
-    const bucketThey = makeBucket('they', (lang === 'ko') ? 'they (여러 개)' : 'they (more than one)');
+      const bucketIt = makeBucket('it', (lang === 'ko') ? "it (그것 - 하나)" : 'it (one)');
+      const bucketThey = makeBucket('they', (lang === 'ko') ? "they (그것들/그 사람들 - 여러 개)" : 'they (more than one)');
     buckets.appendChild(pool.wrap);
     buckets.appendChild(bucketIt.wrap);
     buckets.appendChild(bucketThey.wrap);
@@ -365,7 +387,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
           continueBtn.onclick = () => nextStep();
           stepEl.appendChild(continueBtn);
         }
-        if (inlineToast) inlineToast((lang === 'ko') ? "완벽해요! 'it'은 하나, 'they'는 여러 개!" : 'Awesome! “it” is for one, “they” is for more than one!');
+        if (inlineToast) inlineToast((lang === 'ko') ? "완벽해요! 'it' (그것)은 하나, 'they' (그것들/그 사람들)는 여러 개!" : 'Awesome! "it" is for one, "they" is for more than one!');
       } else {
         if (playSFX) playSFX('wrong');
         if (inlineToast) inlineToast((lang === 'ko') ? '빨간 카드를 다시 옮겨 보세요.' : 'Try again! Move the red cards.');
@@ -388,8 +410,8 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">이제 it과 they를 구별할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
-      : '<div style="font-weight:800;color:#19777e">Now you can tell “it” from “they”!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
+      ? '<div style="font-weight:800;color:#19777e">이제 it (그것)과 they (그것들/그 사람들)을 구별할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">Now you can tell "it" from "they"!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const navWrap = document.createElement('div');
@@ -407,10 +429,33 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     navWrap.appendChild(backToModes);
     stepEl.appendChild(navWrap);
 
-    try {
-      const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 18, total: 18, grammarName: grammarName || 'It vs They' } } });
-      window.dispatchEvent(ev);
-    } catch {}
+    if (!sessionClosed) {
+      sessionClosed = true;
+      try {
+        endSession(sessionId, {
+          mode: 'grammar_lesson_it_vs_they',
+          summary: {
+            score: 1,
+            total: 1,
+            correct: 1,
+            pct: 100,
+            accuracy: 100,
+            category: 'grammar',
+            context: 'lesson',
+            grammarName: grammarName || 'It vs They',
+          },
+          listName: grammarName || null,
+          wordList: sessionWords,
+        });
+      } catch (err) {
+        console.debug('[ItVsTheyLesson] endSession failed', err?.message);
+      }
+
+      try {
+        const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 1, total: 1, grammarName: grammarName || 'It vs They', category: 'grammar' } } });
+        window.dispatchEvent(ev);
+      } catch {}
+    }
   }
 
   function render() {
@@ -520,8 +565,8 @@ function buildPronounColumn(pronoun, list, lang) {
   const heading = document.createElement('div');
   heading.style.cssText = 'font-weight:800;color:#19777e;text-align:center;font-size:1.05rem;';
   heading.textContent = pronoun === 'it'
-    ? (lang === 'ko' ? "it (하나)" : 'it • just one')
-    : (lang === 'ko' ? "they (여러 개)" : 'they • more than one');
+    ? (lang === 'ko' ? "it (그것 - 하나)" : 'it • just one')
+    : (lang === 'ko' ? "they (그것들/그 사람들 - 여러 개)" : 'they • more than one');
   column.appendChild(heading);
 
   const cards = list.length ? list : [];
@@ -573,7 +618,7 @@ function defaultPronounExplanation(pronoun) {
 }
 
 function defaultPronounExplanationKo(pronoun) {
-  return pronoun === 'it' ? "'it'은 한 개일 때 써요." : "'they'는 두 개 이상일 때 써요.";
+  return pronoun === 'it' ? "'it' (그것)은 한 개일 때 써요." : "'they' (그것들/그 사람들)는 두 개 이상일 때 써요.";
 }
 
 function uniqueItems(arr) {

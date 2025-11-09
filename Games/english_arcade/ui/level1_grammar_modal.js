@@ -1,6 +1,9 @@
 // Grammar Level 1 Modal - Article game selector with progress bars
 // Styled exactly like level4_modal.js
 
+import { loadGrammarLevelProgress } from '../utils/progress-data-service.js';
+import { progressCache } from '../utils/progress-cache.js';
+
 let __grammarL1ModalStylesInjected = false;
 function ensureGrammarL1ModalStyles() {
   if (__grammarL1ModalStylesInjected) return;
@@ -48,6 +51,7 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       label: 'A vs An',
       emoji: '📝',
       file: 'data/grammar/level1/articles.json',
+      aliases: ['articles', 'a_vs_an', 'a vs an'],
       config: {
         lessonModule: 'grammar_lesson',
         lessonId: 'articles',
@@ -60,6 +64,7 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       label: 'It vs They',
       emoji: '👥',
       file: 'data/grammar/level1/it_vs_they.json',
+      aliases: ['it_vs_they', 'it vs they'],
       config: {
         lessonModule: 'grammar_lesson_it_vs_they',
         lessonId: 'it_vs_they',
@@ -72,6 +77,7 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       label: 'Am vs Are vs Is',
       emoji: '🗣️',
       file: 'data/grammar/level1/am_are_is.json',
+      aliases: ['am_are_is', 'am vs are vs is', 'am are is'],
       config: {
         lessonModule: 'grammar_lesson_am_are_is',
         lessonId: 'am_are_is',
@@ -190,5 +196,26 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
   };
 
   // For now, render with 0% progress (grammar progress tracking can be added later)
-  renderProgressBars(grammarGames.map(() => 0));
+  (async () => {
+    try {
+      const { data, fromCache } = await loadGrammarLevelProgress(grammarGames);
+      if (data?.ready) {
+        renderProgressBars(Array.isArray(data.values) ? data.values : grammarGames.map(() => 0));
+      } else {
+        renderProgressBars(grammarGames.map(() => 0));
+      }
+
+      if (fromCache) {
+        const unsubscribe = progressCache.onUpdate('grammar_level1_progress', (fresh) => {
+          if (fresh?.ready && Array.isArray(fresh.values)) {
+            renderProgressBars(fresh.values);
+          }
+          unsubscribe();
+        });
+      }
+    } catch (error) {
+      console.warn('[GrammarL1Modal] Failed to load progress', error);
+      renderProgressBars(grammarGames.map(() => 0));
+    }
+  })();
 }

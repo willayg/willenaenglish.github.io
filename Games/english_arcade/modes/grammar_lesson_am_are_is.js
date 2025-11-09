@@ -1,6 +1,8 @@
 // Grammar Lesson Runner – Am / Is / Are
 // Provides a five-step lesson teaching "to be" verb agreement in present tense.
 
+import { startSession, endSession } from '../../../students/records.js';
+
 export async function runGrammarLessonAmAreIs(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
   const root = document.getElementById('gameArea');
@@ -18,6 +20,24 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     if (Array.isArray(data)) items = data;
   } catch (err) {
     console.warn('[lesson-am-are-is] failed to load grammar list', err);
+  }
+
+  const sessionWords = (items || [])
+    .map((it) => (it && typeof it.word === 'string' ? it.word : null))
+    .filter(Boolean)
+    .slice(0, 25);
+
+  let sessionId = null;
+  let sessionClosed = false;
+  try {
+    sessionId = startSession({
+      mode: 'grammar_lesson_am_are_is',
+      wordList: sessionWords,
+      listName: grammarName || null,
+      meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'Am vs Are vs Is' },
+    });
+  } catch (err) {
+    console.debug('[AmAreIsLesson] startSession failed', err?.message);
   }
 
   const amList = normalizeList(items.filter((it) => (it?.article || '').toLowerCase() === 'am'), fallbackAm);
@@ -55,7 +75,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "주어에 따라 <b>am</b>, <b>is</b>, <b>are</b>가 바뀌어요. 버튼을 눌러서 어떤 말을 쓰는지 확인해 보세요!"
+      ? "주어에 따라 <b>am</b> (이다), <b>is</b> (이다), <b>are</b> (이다)가 바뀌어요. 버튼을 눌러서 어떤 말을 쓰는지 확인해 보세요!"
       : "The verb <b>am</b>, <b>is</b>, or <b>are</b> changes with the subject. Tap each button to see which one fits!";
 
     const subjectRow = document.createElement('div');
@@ -110,7 +130,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "왼쪽부터 <b>am</b>, <b>is</b>, <b>are</b> 예문이에요. 소리를 내어 읽어 보세요!"
+      ? "왼쪽부터 <b>am</b> (이다), <b>is</b> (이다), <b>are</b> (이다) 예문이에요. 소리를 내어 읽어 보세요!"
       : "Examples for <b>am</b>, <b>is</b>, and <b>are</b>. Try reading them out loud!";
     stepEl.appendChild(intro);
 
@@ -132,7 +152,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "문장을 눌러서 <b>am</b>, <b>is</b>, <b>are</b> 바구니에 넣어 보세요. 모두 맞으면 다음으로 갈 수 있어요!"
+      ? "문장을 눌러서 <b>am</b> (이다), <b>is</b> (이다), <b>are</b> (이다) 바구니에 넣어 보세요. 모두 맞으면 다음으로 갈 수 있어요!"
       : "Tap each strip and place it into the <b>am</b>, <b>is</b>, or <b>are</b> basket. Get them all correct to continue!";
     stepEl.appendChild(body);
 
@@ -209,7 +229,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
 
       if (poolCount === 0 && wrongCount === 0) {
         playSFX?.('correct');
-        inlineToast?.(lang === 'ko' ? "완벽해요! am, is, are를 잘 골랐어요." : 'Perfect! You matched am, is, and are.');
+        inlineToast?.(lang === 'ko' ? "완벽해요! am (이다), is (이다), are (이다)를 잘 골랐어요." : 'Perfect! You matched am, is, and are.');
         if (!continueBtn) {
           continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next Step');
           continueBtn.onclick = nextStep;
@@ -237,7 +257,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = lang === 'ko'
-      ? '<div style="font-weight:800;color:#19777e">이제 am / is / are를 바르게 쓸 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      ? '<div style="font-weight:800;color:#19777e">이제 am (이다) / is (이다) / are (이다)를 바르게 쓸 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
       : '<div style="font-weight:800;color:#19777e">You now know when to use am, is, or are!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
@@ -256,10 +276,33 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
 
-    try {
-      const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 18, total: 18, grammarName: grammarName || 'Am vs Are vs Is' } } });
-      window.dispatchEvent(ev);
-    } catch {}
+    if (!sessionClosed) {
+      sessionClosed = true;
+      try {
+        endSession(sessionId, {
+          mode: 'grammar_lesson_am_are_is',
+          summary: {
+            score: 1,
+            total: 1,
+            correct: 1,
+            pct: 100,
+            accuracy: 100,
+            category: 'grammar',
+            context: 'lesson',
+            grammarName: grammarName || 'Am vs Are vs Is',
+          },
+          listName: grammarName || null,
+          wordList: sessionWords,
+        });
+      } catch (err) {
+        console.debug('[AmAreIsLesson] endSession failed', err?.message);
+      }
+
+      try {
+        const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 1, total: 1, grammarName: grammarName || 'Am vs Are vs Is', category: 'grammar' } } });
+        window.dispatchEvent(ev);
+      } catch {}
+    }
   }
 
   function render() {
@@ -383,7 +426,7 @@ function ensureAmAreIsStyles() {
     #gameArea .amareis-highlight-card .verb-sentence{font-size:1.12rem;line-height:1.6;color:#27323a;font-weight:600}
     #gameArea .amareis-highlight-card .verb-tip{font-size:0.95rem;color:#546070}
     #gameArea .amareis-example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:16px}
-    #gameArea .amareis-example-card{background:#ffffff;border:2px solid #d1e6f0;border-radius:16px;padding:14px 16px;text-align:left;box-shadow:0 10px 20px -18px rgba(0,0,0,0.22);display:flex;flex-direction:column;gap:6px;font-size:0.98rem;color:#334155}
+    #gameArea .amareis-example-card{background:#ffffff;border:2px solid #d1e6f0;border-radius:16px;padding:14px 16px;text-align:left;box-shadow:0 10px 20px -18px rgba(0,0,0,0.22);display:flex;flex-direction:column;gap:5px;font-size:0.98rem;color:#334155}
     #gameArea .amareis-example-card .card-title{font-weight:800;color:#19777e}
     #gameArea .amareis-example-card .card-korean{font-size:0.9rem;color:#64748b}
     #gameArea .amareis-example-card .card-tip{font-size:0.9rem;color:#19777e;font-weight:600}
@@ -417,7 +460,7 @@ function buildActivityPool(amList, isList, areList) {
   return shuffle(chips).map((item, idx) => ({
     id: item.id || `${item.article}_${idx}`,
     article: item.article,
-    text: item.prompt || buildPromptFromSentence(item)
+    text: item.word || 'Subject'
   }));
 }
 
@@ -446,10 +489,10 @@ function buildExampleColumn(verb, list, lang) {
   const titleWrap = document.createElement('div');
   titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
   titleWrap.textContent = verb === 'am'
-    ? (lang === 'ko' ? "am (I)" : 'am → with I')
+    ? (lang === 'ko' ? "am (이다 - I와 함께)" : 'am → with I')
     : verb === 'is'
-      ? (lang === 'ko' ? "is (한 사람/물건)" : 'is → one person or thing')
-      : (lang === 'ko' ? "are (여럿/you)" : 'are → many or you');
+      ? (lang === 'ko' ? "is (이다 - 한 사람/물건)" : 'is → one person or thing')
+      : (lang === 'ko' ? "are (이다 - 여럿/you)" : 'are → many or you');
   col.appendChild(titleWrap);
 
   list.slice(0, 5).forEach((item) => {
@@ -458,7 +501,7 @@ function buildExampleColumn(verb, list, lang) {
     card.innerHTML = `
       <div class="card-title">${escapeHtml(item.prompt || buildPromptFromSentence(item))}</div>
       <div>${escapeHtml(item.exampleSentence)}</div>
-      ${item.explanation ? `<div class="card-tip">${escapeHtml(lang === 'ko' ? (item.explanationKo || item.explanation) : item.explanation)}</div>` : ''}
+      ${item.exampleSentenceKo ? `<div class="card-korean">${escapeHtml(item.exampleSentenceKo)}</div>` : ''}
     `;
     col.appendChild(card);
   });
