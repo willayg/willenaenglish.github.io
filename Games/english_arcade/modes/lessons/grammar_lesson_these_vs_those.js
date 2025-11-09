@@ -1,15 +1,15 @@
-// Grammar Lesson Runner – This vs. That
-// Teaches proximity with a fading slider experience.
+// Grammar Lesson Runner – These vs. Those
+// Teaches proximity with plural forms using a fading slider experience.
 
-import { startSession, endSession } from '../../../students/records.js';
+import { startSession, endSession } from '../../../../students/records.js';
 
-export async function runGrammarLessonThisThat(ctx = {}) {
+export async function runGrammarLessonTheseThose(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
   const root = document.getElementById('gameArea');
   if (!root) return;
 
   ensureBaseStyles();
-  ensureThisThatStyles();
+  ensureTheseThoseStyles();
 
   let items = [];
   try {
@@ -19,38 +19,38 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     const data = await res.json();
     if (Array.isArray(data)) items = data;
   } catch (err) {
-    console.warn('[lesson-this-that] failed to load list', err);
+    console.warn('[lesson-these-those] failed to load list', err);
   }
 
-  const fallbackThis = [
-    { id: 'fb_this_phone', word: 'phone', emoji: '📱', exampleSentence: 'This is a phone.', exampleSentenceKo: '이것은 전화예요.' },
-    { id: 'fb_this_book', word: 'book', emoji: '📘', exampleSentence: 'This is a book.', exampleSentenceKo: '이것은 책이에요.' },
-    { id: 'fb_this_cup', word: 'cup', emoji: '☕', exampleSentence: 'This is a cup.', exampleSentenceKo: '이것은 컵이에요.' }
+  const fallbackThese = [
+    { id: 'fb_these_phones', word: 'phones', emoji: '📱📱', exampleSentence: 'These are phones.', exampleSentenceKo: '이것들은 전화예요.' },
+    { id: 'fb_these_books', word: 'books', emoji: '📘📘', exampleSentence: 'These are books.', exampleSentenceKo: '이것들은 책이에요.' },
+    { id: 'fb_these_cups', word: 'cups', emoji: '☕☕', exampleSentence: 'These are cups.', exampleSentenceKo: '이것들은 컵이에요.' }
   ];
-  const fallbackThat = [
-    { id: 'fb_that_tree', word: 'tree', emoji: '🌳', exampleSentence: 'That is a tree.', exampleSentenceKo: '저것은 나무예요.' },
-    { id: 'fb_that_kite', word: 'kite', emoji: '🪁', exampleSentence: 'That is a kite.', exampleSentenceKo: '저것은 연이에요.' },
-    { id: 'fb_that_bus', word: 'bus', emoji: '🚌', exampleSentence: 'That is a bus.', exampleSentenceKo: '저것은 버스예요.' }
+  const fallbackThose = [
+    { id: 'fb_those_trees', word: 'trees', emoji: '🌳🌳', exampleSentence: 'Those are trees.', exampleSentenceKo: '저것들은 나무예요.' },
+    { id: 'fb_those_kites', word: 'kites', emoji: '🪁🪁', exampleSentence: 'Those are kites.', exampleSentenceKo: '저것들은 연이에요.' },
+    { id: 'fb_those_buses', word: 'buses', emoji: '🚌🚌', exampleSentence: 'Those are buses.', exampleSentenceKo: '저것들은 버스예요.' }
   ];
 
-  const thisList = normalizeList(items.filter((it) => (it?.article || '').toLowerCase() === 'this'), 'this', fallbackThis);
-  const thatList = normalizeList(items.filter((it) => (it?.article || '').toLowerCase() === 'that'), 'that', fallbackThat);
-  const sliderSample = thisList[0] || fallbackThis[0];
+  const theseList = normalizeList(items.filter((it) => (it?.article || '').toLowerCase() === 'these'), 'these', fallbackThese);
+  const thoseList = normalizeList(items.filter((it) => (it?.article || '').toLowerCase() === 'that' || (it?.article || '').toLowerCase() === 'those'), 'those', fallbackThose);
+  const sliderSample = theseList[0] || fallbackThese[0];
 
-  const activitySet = buildActivitySet(thisList, thatList).slice(0, 6);
+  const activitySet = buildActivitySet(theseList, thoseList).slice(0, 6);
   const sessionWords = items.map((it) => it?.word).filter(Boolean).slice(0, 30);
 
   let sessionId = null;
   let sessionClosed = false;
   try {
     sessionId = startSession({
-      mode: 'grammar_lesson_this_that',
+      mode: 'grammar_lesson_these_those',
       wordList: sessionWords,
       listName: grammarName || null,
-      meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'This vs That' }
+      meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'These vs Those' }
     });
   } catch (err) {
-    console.debug('[ThisThatLesson] startSession failed', err?.message);
+    console.debug('[TheseThoseLesson] startSession failed', err?.message);
   }
 
   let lang = detectLang();
@@ -79,14 +79,14 @@ export async function runGrammarLessonThisThat(ctx = {}) {
   prog.textContent = displayStep(1, lang);
     stepEl.innerHTML = '';
 
-    const nearItem = sliderSample || thisList[0] || fallbackThis[0];
-    const farItem = thatList[0] || fallbackThat[0];
+    const nearItem = sliderSample || theseList[0] || fallbackThese[0];
+    const farItem = thoseList[0] || fallbackThose[0];
 
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? "가까운 것은 <span class=\"tt-highlight\">this</span>(이것), 멀리 있는 것은 <span class=\"tt-highlight\">that</span>(저것)이라고 말해요. 슬라이더를 움직여 보세요!"
-      : "When something is close we say <span class=\"tt-highlight\">this</span>; when it is far we say <span class=\"tt-highlight\">that</span>. Slide to feel the change.";
+      ? "가까운 물건들은 <span class=\"tt-highlight\">these</span>(이것들), 멀리 있는 물건들은 <span class=\"tt-highlight\">those</span>(저것들)이라고 말해요. 슬라이더를 움직여 보세요!"
+      : "When things are close we say <span class=\"tt-highlight\">these</span>; when they are far we say <span class=\"tt-highlight\">those</span>. Slide to feel the change.";
     stepEl.appendChild(intro);
 
     const scene = document.createElement('div');
@@ -104,7 +104,7 @@ export async function runGrammarLessonThisThat(ctx = {}) {
 
     const object = document.createElement('div');
     object.className = 'tt-object';
-  object.textContent = nearItem?.emoji || '📘';
+  object.textContent = nearItem?.emoji || '📘📘';
 
     row.appendChild(you);
     row.appendChild(bar);
@@ -113,25 +113,25 @@ export async function runGrammarLessonThisThat(ctx = {}) {
 
     const labelWrap = document.createElement('div');
     labelWrap.className = 'tt-label-wrap';
-    const thisLabel = document.createElement('div');
-    thisLabel.className = 'tt-label';
-    thisLabel.textContent = 'This is a phone.';
-    const thatLabel = document.createElement('div');
-    thatLabel.className = 'tt-label';
-    thatLabel.textContent = 'That is a phone.';
-    labelWrap.appendChild(thisLabel);
-    labelWrap.appendChild(thatLabel);
+    const theseLabel = document.createElement('div');
+    theseLabel.className = 'tt-label';
+    theseLabel.textContent = 'These are phones.';
+    const thoseLabel = document.createElement('div');
+    thoseLabel.className = 'tt-label';
+    thoseLabel.textContent = 'Those are phones.';
+    labelWrap.appendChild(theseLabel);
+    labelWrap.appendChild(thoseLabel);
 
     const labelKoWrap = document.createElement('div');
     labelKoWrap.className = 'tt-label-wrap tt-label-ko';
-    const thisKo = document.createElement('div');
-    thisKo.className = 'tt-label';
-    thisKo.textContent = '이것은 전화예요.';
-    const thatKo = document.createElement('div');
-    thatKo.className = 'tt-label';
-    thatKo.textContent = '저것은 전화예요.';
-    labelKoWrap.appendChild(thisKo);
-    labelKoWrap.appendChild(thatKo);
+    const theseKo = document.createElement('div');
+    theseKo.className = 'tt-label';
+    theseKo.textContent = '이것들은 전화예요.';
+    const thoseKo = document.createElement('div');
+    thoseKo.className = 'tt-label';
+    thoseKo.textContent = '저것들은 전화예요.';
+    labelKoWrap.appendChild(theseKo);
+    labelKoWrap.appendChild(thoseKo);
 
   const slider = document.createElement('input');
   slider.type = 'range';
@@ -143,8 +143,8 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     const tip = document.createElement('div');
     tip.className = 'tt-tip';
     tip.textContent = (lang === 'ko')
-      ? '가까이 끌어오면 이것, 멀리 보내면 저것으로 바뀌어요.'
-      : 'Drag close for "this" and push away for "that".';
+      ? '가까이 끌어오면 이것들, 멀리 보내면 저것들로 바뀌어요.'
+      : 'Drag close for "these" and push away for "those".';
 
     scene.appendChild(labelWrap);
     scene.appendChild(labelKoWrap);
@@ -157,20 +157,20 @@ export async function runGrammarLessonThisThat(ctx = {}) {
   const distance = 10 + val * 2;
       bar.style.width = `${distance}px`;
   const blend = clamp((val - 18) / 26, 0, 1);
-      thisLabel.style.opacity = 1 - blend;
-      thatLabel.style.opacity = blend;
-      thisKo.style.opacity = 1 - blend;
-      thatKo.style.opacity = blend;
+      theseLabel.style.opacity = 1 - blend;
+      thoseLabel.style.opacity = blend;
+      theseKo.style.opacity = 1 - blend;
+      thoseKo.style.opacity = blend;
       bar.style.background = `linear-gradient(90deg, rgba(33,179,190,0.7), rgba(120,120,255,${0.4 + blend * 0.4}))`;
       object.style.transform = `translateX(${blend * 6}px)`;
       const showFar = blend > 0.55;
-      const activeNear = nearItem || { exampleSentence: 'This is near me.', exampleSentenceKo: '이것은 내 옆에 있어요.', emoji: '📘' };
-      const activeFar = farItem || { exampleSentence: 'That is over there.', exampleSentenceKo: '저것은 저쪽에 있어요.', emoji: '🏔️' };
+      const activeNear = nearItem || { exampleSentence: 'These are near me.', exampleSentenceKo: '이것들은 내 옆에 있어요.', emoji: '📘📘' };
+      const activeFar = farItem || { exampleSentence: 'Those are over there.', exampleSentenceKo: '저것들은 저쪽에 있어요.', emoji: '🏔️🏔️' };
       object.textContent = showFar ? activeFar.emoji : activeNear.emoji;
-      thisLabel.innerHTML = highlightSentence(activeNear.exampleSentence, 'en');
-      thatLabel.innerHTML = highlightSentence(activeFar.exampleSentence, 'en');
-      thisKo.innerHTML = highlightSentence(activeNear.exampleSentenceKo, 'ko');
-      thatKo.innerHTML = highlightSentence(activeFar.exampleSentenceKo, 'ko');
+      theseLabel.innerHTML = highlightSentence(activeNear.exampleSentence, 'en');
+      thoseLabel.innerHTML = highlightSentence(activeFar.exampleSentence, 'en');
+      theseKo.innerHTML = highlightSentence(activeNear.exampleSentenceKo, 'ko');
+      thoseKo.innerHTML = highlightSentence(activeFar.exampleSentenceKo, 'ko');
     };
 
     slider.addEventListener('input', updateSlider);
@@ -187,14 +187,14 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? "<span class=\"tt-highlight\">this</span>(이것)은 바로 여기에 있는 물건, <span class=\"tt-highlight\">that</span>(저것)은 저쪽에 있는 물건이에요." 
-      : "<span class=\"tt-highlight\">this</span> talks about something right here, <span class=\"tt-highlight\">that</span> points to something over there.";
+      ? "<span class=\"tt-highlight\">these</span>(이것들)은 바로 여기에 있는 물건들, <span class=\"tt-highlight\">those</span>(저것들)은 저쪽에 있는 물건들이에요." 
+      : "<span class=\"tt-highlight\">these</span> talks about things right here, <span class=\"tt-highlight\">those</span> points to things over there.";
     stepEl.appendChild(intro);
 
     const grid = document.createElement('div');
     grid.className = 'lesson-examples';
-    grid.appendChild(buildExampleColumn('this', thisList, lang));
-    grid.appendChild(buildExampleColumn('that', thatList, lang));
+    grid.appendChild(buildExampleColumn('these', theseList, lang));
+    grid.appendChild(buildExampleColumn('those', thoseList, lang));
     stepEl.appendChild(grid);
 
     const nav = buildNavRow(() => { stepIndex = Math.max(0, stepIndex - 1); render(); }, nextStep, lang);
@@ -208,17 +208,17 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? "문장을 눌러서 <span class=\"tt-highlight\">this</span>(이것) 바구니 또는 <span class=\"tt-highlight\">that</span>(저것) 바구니에 넣어 보세요." 
-      : "Tap each strip and drop it into the <span class=\"tt-highlight\">this</span> basket or the <span class=\"tt-highlight\">that</span> basket.";
+      ? "문장을 눌러서 <span class=\"tt-highlight\">these</span>(이것들) 바구니 또는 <span class=\"tt-highlight\">those</span>(저것들) 바구니에 넣어 보세요." 
+      : "Tap each strip and drop it into the <span class=\"tt-highlight\">these</span> basket or the <span class=\"tt-highlight\">those</span> basket.";
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets tt-buckets';
     const pool = makeBucket('pool', lang === 'ko' ? '문장 모음' : 'Sentence Pool');
-    const bucketThis = makeBucket('this', lang === 'ko' ? 'this (이것)' : 'this (near me)');
-    const bucketThat = makeBucket('that', lang === 'ko' ? 'that (저것)' : 'that (far away)');
+    const bucketThese = makeBucket('these', lang === 'ko' ? 'these (이것들)' : 'these (near me)');
+    const bucketThose = makeBucket('those', lang === 'ko' ? 'those (저것들)' : 'those (far away)');
 
-    [pool.wrap, bucketThis.wrap, bucketThat.wrap].forEach((wrap) => buckets.appendChild(wrap));
+    [pool.wrap, bucketThese.wrap, bucketThose.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
 
     activitySet.forEach((item) => pool.body.appendChild(makeChip(item)));
@@ -243,7 +243,7 @@ export async function runGrammarLessonThisThat(ctx = {}) {
       }
     });
 
-    [pool.wrap, bucketThis.wrap, bucketThat.wrap].forEach((wrap) => {
+    [pool.wrap, bucketThese.wrap, bucketThose.wrap].forEach((wrap) => {
       wrap.addEventListener('click', (evt) => {
         if (evt.target.closest('.chip')) return;
         if (!selectedChip) return;
@@ -273,8 +273,8 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     let continueBtn = null;
 
     checkBtn.onclick = () => {
-      const thisIds = new Set(activitySet.filter((item) => item.article === 'this').map((item) => item.id));
-      const thatIds = new Set(activitySet.filter((item) => item.article === 'that').map((item) => item.id));
+      const theseIds = new Set(activitySet.filter((item) => item.article === 'these').map((item) => item.id));
+      const thoseIds = new Set(activitySet.filter((item) => item.article === 'those').map((item) => item.id));
 
       const mark = (bucketBody, allowed) => {
         bucketBody.querySelectorAll('.chip').forEach((chip) => {
@@ -284,8 +284,8 @@ export async function runGrammarLessonThisThat(ctx = {}) {
         });
       };
 
-      mark(bucketThis.body, thisIds);
-      mark(bucketThat.body, thatIds);
+      mark(bucketThese.body, theseIds);
+      mark(bucketThose.body, thoseIds);
       mark(pool.body, new Set());
 
       // Remove any existing message
@@ -300,7 +300,7 @@ export async function runGrammarLessonThisThat(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '완벽해요! 이것과 저것을 잘 골랐어요.' : 'Great job! You sorted this vs. that.';
+        message.textContent = lang === 'ko' ? '완벽해요! 이것들과 저것들을 잘 골랐어요.' : 'Great job! You sorted these vs. those.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
@@ -338,8 +338,8 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">이제 가까운 것은 이것, 먼 것은 저것이라고 말할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
-      : '<div style="font-weight:800;color:#19777e">Now you know when to say this or that!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
+      ? '<div style="font-weight:800;color:#19777e">이제 가까운 물건들은 이것들, 먼 물건들은 저것들이라고 말할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">Now you know when to say these or those!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
@@ -361,7 +361,7 @@ export async function runGrammarLessonThisThat(ctx = {}) {
       sessionClosed = true;
       try {
         endSession(sessionId, {
-          mode: 'grammar_lesson_this_that',
+          mode: 'grammar_lesson_these_those',
           summary: {
             score: 1,
             total: 1,
@@ -370,16 +370,16 @@ export async function runGrammarLessonThisThat(ctx = {}) {
             accuracy: 100,
             category: 'grammar',
             context: 'lesson',
-            grammarName: grammarName || 'This vs That'
+            grammarName: grammarName || 'These vs Those'
           },
           listName: grammarName || null,
           wordList: sessionWords
         });
       } catch (err) {
-        console.debug('[ThisThatLesson] endSession failed', err?.message);
+        console.debug('[TheseThoseLesson] endSession failed', err?.message);
       }
       try {
-        const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 1, total: 1, grammarName: grammarName || 'This vs That', category: 'grammar' } } });
+        const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 1, total: 1, grammarName: grammarName || 'These vs Those', category: 'grammar' } } });
         window.dispatchEvent(ev);
       } catch {}
     }
@@ -394,7 +394,7 @@ export async function runGrammarLessonThisThat(ctx = {}) {
     top.className = 'lesson-topbar';
     const title = document.createElement('div');
     title.className = 'lesson-title';
-    title.textContent = grammarName || 'This vs. That';
+    title.textContent = grammarName || 'These vs. Those';
     const prog = document.createElement('div');
     prog.className = 'lesson-progress';
     const stepEl = document.createElement('div');
@@ -431,18 +431,18 @@ function normalizeList(list, article, fallback) {
   const source = list && list.length ? list : fallback;
   return source.map((item, idx) => ({
     id: item.id || `${article}_${idx}`,
-    word: item.word || (article === 'this' ? 'item' : 'thing'),
+    word: item.word || (article === 'these' ? 'items' : 'things'),
     article,
-    emoji: item.emoji || (article === 'this' ? '📗' : '🏔️'),
-    exampleSentence: item.exampleSentence || (article === 'this' ? 'This is near me.' : 'That is over there.'),
-    exampleSentenceKo: item.exampleSentenceKo || (article === 'this' ? '이것은 내 옆에 있어요.' : '저것은 저쪽에 있어요.'),
+    emoji: item.emoji || (article === 'these' ? '📗📗' : '🏔️🏔️'),
+    exampleSentence: item.exampleSentence || (article === 'these' ? 'These are near me.' : 'Those are over there.'),
+    exampleSentenceKo: item.exampleSentenceKo || (article === 'these' ? '이것들은 내 옆에 있어요.' : '저것들은 저쪽에 있어요.'),
   }));
 }
 
-function buildActivitySet(thisList, thatList) {
-  const sampleThis = shuffle(thisList).slice(0, 3);
-  const sampleThat = shuffle(thatList).slice(0, 3);
-  return shuffle([...sampleThis, ...sampleThat]);
+function buildActivitySet(theseList, thoseList) {
+  const sampleThese = shuffle(theseList).slice(0, 3);
+  const sampleThose = shuffle(thoseList).slice(0, 3);
+  return shuffle([...sampleThese, ...sampleThose]);
 }
 
 function makeChip(item) {
@@ -459,9 +459,9 @@ function buildExampleColumn(label, list, lang) {
   wrap.className = 'lesson-example-column';
   const header = document.createElement('div');
   header.className = 'tt-column-header';
-  header.textContent = label === 'this'
-    ? (lang === 'ko' ? 'this (이것)' : 'this (near)')
-    : (lang === 'ko' ? 'that (저것)' : 'that (far)');
+  header.textContent = label === 'these'
+    ? (lang === 'ko' ? 'these (이것들)' : 'these (near)')
+    : (lang === 'ko' ? 'those (저것들)' : 'those (far)');
   wrap.appendChild(header);
   list.slice(0, 4).forEach((item) => {
     const en = highlightSentence(item.exampleSentence, 'en');
@@ -578,10 +578,10 @@ function ensureBaseStyles() {
   document.head.appendChild(st);
 }
 
-function ensureThisThatStyles() {
-  if (document.getElementById('wa-lesson-this-that-styles')) return;
+function ensureTheseThoseStyles() {
+  if (document.getElementById('wa-lesson-these-those-styles')) return;
   const st = document.createElement('style');
-  st.id = 'wa-lesson-this-that-styles';
+  st.id = 'wa-lesson-these-those-styles';
   st.textContent = `
     #gameArea .tt-scene{display:flex;flex-direction:column;gap:18px;align-items:center;margin:18px auto;width:100%;max-width:520px}
   #gameArea .tt-row{display:flex;align-items:center;gap:4px;font-size:1.1rem;color:#19777e;font-weight:700}
@@ -606,9 +606,9 @@ function highlightSentence(text, lang) {
   if (!text) return '';
   const clean = String(text);
   if (lang === 'ko') {
-    return clean.replace(/이것(?!\s)/g, '<span class="tt-highlight">이것</span> ').replace(/저것(?!\s)/g, '<span class="tt-highlight">저것</span> ');
+    return clean.replace(/이것들(?!\s)/g, '<span class="tt-highlight">이것들</span> ').replace(/저것들(?!\s)/g, '<span class="tt-highlight">저것들</span> ');
   }
-  return clean.replace(/([Tt]his)(\s)/g, '<span class="tt-highlight">$1</span>$2').replace(/([Tt]hat)(\s)/g, '<span class="tt-highlight">$1</span>$2');
+  return clean.replace(/([Tt]hese)(\s)/g, '<span class="tt-highlight">$1</span>$2').replace(/([Tt]hose)(\s)/g, '<span class="tt-highlight">$1</span>$2');
 }
 
 function detectLang() {

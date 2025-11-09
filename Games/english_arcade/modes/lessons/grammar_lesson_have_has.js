@@ -1,7 +1,7 @@
 ﻿// Grammar Lesson Runner – Have vs. Has
 // Lightweight lesson that explains verb agreement for possession.
 
-import { startSession, endSession } from '../../../students/records.js';
+import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonHaveHas(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
@@ -15,13 +15,11 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
   try {
     if (!grammarFile) throw new Error('No grammar file provided');
     const res = await fetch(grammarFile, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Failed to load ${grammarFile}: ${res.status} ${res.statusText}`);
+    if (!res.ok) throw new Error(`Failed to load ${grammarFile}`);
     const data = await res.json();
     if (Array.isArray(data)) items = data;
-    else if (data && typeof data === 'object') items = [data];
   } catch (err) {
     console.warn('[lesson-have-has] failed to load list', err);
-    console.warn('[lesson-have-has] attempted to load:', grammarFile);
   }
 
   const haveList = normalizeList(items.filter((it) => isVerb(it, 'have')), fallbackHave);

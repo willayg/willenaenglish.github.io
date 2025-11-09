@@ -21,16 +21,17 @@ function ensureGrammarL1ModalStyles() {
       height: auto !important;
       margin: 8px 0 !important;
       padding: 12px 18px !important;
-      background: none !important;
-      border: none !important;
-      box-shadow: none !important;
-      border-radius: 0px !important;
+      background: transparent !important;
+      border: 2px solid #27c5ca !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 6px rgba(39, 197, 202, 0.15) !important;
       cursor: pointer !important;
       font-family: 'Poppins', Arial, sans-serif !important;
-      color: #19777e !important;
+      color: #ff66c4 !important;
+      font-weight: 600 !important;
     }
-    #grammarL1Modal .gl1-btn:hover { background-color: #f0f9fa !important; }
-    #grammarL1Modal .gl1-btn + .gl1-btn { border-top: 1px solid #b0e2e4ff !important; }
+    #grammarL1Modal .gl1-btn:hover { background-color: rgba(39, 197, 202, 0.08) !important; box-shadow: 0 4px 12px rgba(39, 197, 202, 0.25) !important; }
+    #grammarL1Modal .gl1-btn + .gl1-btn { border-top: 2px solid #27c5ca !important; margin-top: 8px !important; }
     #grammarL1Modal .gl1-btn::before, #grammarL1Modal .gl1-btn::after { display: none !important; content: none !important; }
 
     #grammarL1Modal .gl1-bar { width: 100%; height: 16px; border-radius: 9999px; border: 2px solid #27c5ca; background: #fff; overflow: hidden; }
@@ -141,6 +142,34 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         bucketLabels: { contraction: 'contractions' },
         ruleHint: 'Choose the correct contraction ending.'
       }
+    },
+    {
+      id: 'want_vs_wants',
+      label: 'Want vs Wants',
+      emoji: '🙏',
+      file: 'data/grammar/level1/want_vs_wants.json',
+      aliases: ['want_vs_wants', 'want vs wants', 'wantvswants'],
+      config: {
+        lessonModule: 'grammar_lesson_want_wants',
+        lessonId: 'want_vs_wants',
+        answerChoices: ['want', 'wants'],
+        bucketLabels: { want: 'want', wants: 'wants' },
+        ruleHint: 'Use want with I, you, we, they, or plural nouns. Use wants with he, she, it, or one noun.'
+      }
+    },
+    {
+      id: 'like_vs_likes',
+      label: 'Like vs Likes',
+      emoji: '❤️',
+      file: 'data/grammar/level1/like_vs_likes.json',
+      aliases: ['like_vs_likes', 'like vs likes', 'likesvslikes'],
+      config: {
+        lessonModule: 'grammar_lesson_like_likes',
+        lessonId: 'like_vs_likes',
+        answerChoices: ['like', 'likes'],
+        bucketLabels: { like: 'like', likes: 'likes' },
+        ruleHint: 'Use like with I, you, we, they, or plural nouns. Use likes with he, she, it, or one noun.'
+      }
     }
   ];
 
@@ -177,12 +206,12 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       </div>
       <div id="grammarL1ListContainer" style="padding:12px 0;overflow:auto;flex:1;">
         ${grammarGames.map((item, idx) => `
-          <button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-config="${encodeConfig(item.config)}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+          <button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-config="${encodeConfig(item.config)}" style="width:100%;height:auto;margin:8px 0;background:transparent;border:2px solid #27c5ca;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#ff66c4;padding:12px 18px;border-radius:8px;position:relative;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(39,197,202,0.15);">
             <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
               <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
                 <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
-                <span class="gl1-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">0%</span>
+                <span class="gl1-percent" style="font-size:0.95em;color:#ff66c4;font-weight:500;text-align:right;">0%</span>
               </div>
               <div class="gl1-bar" style="margin-top:7px;">
                 <div class="gl1-bar-fill loading" data-final="false"></div>
@@ -235,12 +264,12 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
     if (!container) return;
     container.innerHTML = grammarGames.map((item, idx) => {
       const pct = Math.max(0, Math.min(100, percents[idx] || 0));
-      return `<button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-config="${encodeConfig(item.config)}" style="width:100%;height:auto;margin:0;background:none;border:none;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#19777e;padding:12px 18px;border-radius:0px;position:relative;display:flex;align-items:center;justify-content:space-between;">
+      return `<button class="gl1-btn" data-idx="${idx}" data-file="${item.file}" data-label="${item.label}" data-config="${encodeConfig(item.config)}" style="width:100%;height:auto;margin:8px 0;background:transparent;border:2px solid #27c5ca;font-size:1.1rem;cursor:pointer;font-family:'Poppins',Arial,sans-serif;color:#ff66c4;padding:12px 18px;border-radius:8px;position:relative;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(39,197,202,0.15);">
         <span style="font-size:2em;flex-shrink:0;">${item.emoji}</span>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
             <span style="font-weight:600;min-width:0;text-align:right;">${item.label}</span>
-            <span class="gl1-percent" style="font-size:0.95em;color:#19777e;font-weight:500;text-align:right;">${pct}%</span>
+            <span class="gl1-percent" style="font-size:0.95em;color:#ff66c4;font-weight:500;text-align:right;">${pct}%</span>
           </div>
           <div class="gl1-bar" style="margin-top:7px;">
             <div class="gl1-bar-fill" data-final="true" style="width:${pct}%;"></div>

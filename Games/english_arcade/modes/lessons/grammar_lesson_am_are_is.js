@@ -1,7 +1,7 @@
 // Grammar Lesson Runner – Am / Is / Are
 // Provides a five-step lesson teaching "to be" verb agreement in present tense.
 
-import { startSession, endSession } from '../../../students/records.js';
+import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonAmAreIs(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
