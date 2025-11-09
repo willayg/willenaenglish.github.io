@@ -4,6 +4,117 @@
 
 import { run as runSentenceMode } from './word_sentence_mode.js';
 
+const AUDIO_ENDPOINTS = [
+  '/.netlify/functions/get_audio_urls',
+  'http://localhost:9000/.netlify/functions/get_audio_urls',
+  'http://127.0.0.1:9000/.netlify/functions/get_audio_urls',
+  'http://localhost:8888/.netlify/functions/get_audio_urls',
+  'http://127.0.0.1:8888/.netlify/functions/get_audio_urls'
+];
+
+function normalizeForGrammarKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['"`]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function getGrammarField(item, key) {
+  if (!item) return '';
+  if (item[key]) return item[key];
+  if (item.grammarMeta && item.grammarMeta[key]) return item.grammarMeta[key];
+  return '';
+}
+
+function buildGrammarAudioCandidates(item) {
+  const candidates = [];
+  const seen = new Set();
+  const add = (key) => {
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    candidates.push(key);
+  };
+  const wordBase = normalizeForGrammarKey(getGrammarField(item, 'word'));
+  const articleBase = normalizeForGrammarKey(getGrammarField(item, 'article'));
+  const idBase = normalizeForGrammarKey(getGrammarField(item, 'id'));
+
+  if (wordBase && articleBase) add(`${wordBase}_${articleBase}_grammar`);
+  if (idBase && idBase !== wordBase) add(`${idBase}_grammar`);
+  if (wordBase) add(`${wordBase}_grammar`);
+  return candidates;
+}
+
+async function hydrateGrammarAudio(items) {
+  if (!Array.isArray(items) || !items.length) return;
+  const candidateMap = new Map();
+  const allCandidates = new Set();
+
+  items.forEach((item) => {
+    const candidates = buildGrammarAudioCandidates(item);
+    if (!candidates.length) return;
+    candidateMap.set(item, candidates);
+    candidates.forEach((key) => allCandidates.add(key));
+  });
+
+  if (!candidateMap.size) return;
+
+  const words = Array.from(allCandidates);
+  let results = null;
+
+  const isSecureOrigin = typeof window !== 'undefined' && window.location && window.location.protocol === 'https:';
+  const endpoints = AUDIO_ENDPOINTS.filter((url) => {
+    if (!isSecureOrigin) return true;
+    return !/^http:\/\//i.test(url);
+  });
+
+  for (const endpoint of endpoints) {
+    try {
+      const init = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ words })
+      };
+      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+        init.signal = AbortSignal.timeout(10000);
+      }
+      const res = await fetch(endpoint, init);
+      if (!res.ok) {
+        console.warn('[GrammarUnscramble] audio lookup failed', endpoint, res.status);
+        continue;
+      }
+      const data = await res.json();
+      if (data && data.results && typeof data.results === 'object') {
+        results = data.results;
+        break;
+      }
+    } catch (err) {
+      console.debug('[GrammarUnscramble] audio lookup error', endpoint, err?.message);
+    }
+  }
+
+  if (!results) return;
+
+  candidateMap.forEach((candidates, item) => {
+    for (const key of candidates) {
+      const lower = key?.toLowerCase?.();
+      const withExt = `${key}.mp3`;
+      const lowerExt = lower ? `${lower}.mp3` : null;
+      const info = results[key]
+        || (lower && results[lower])
+        || results[withExt]
+        || (lowerExt && results[lowerExt])
+        || null;
+      if (info && info.exists && info.url) {
+        item.sentenceAudioUrl = info.url;
+        item.audio_key = key;
+        break;
+      }
+    }
+  });
+}
+
 function shuffle(arr) {
   const copy = arr.slice();
   for (let i = copy.length - 1; i > 0; i--) {
@@ -57,6 +168,8 @@ export async function runGrammarSentenceUnscramble(ctx) {
       sentence,
       sentence_kor: translation,
       article: item.article,
+      word: item.word,
+      id: baseId,
       grammarMeta: {
         article: item.article,
         word: item.word,
@@ -66,6 +179,18 @@ export async function runGrammarSentenceUnscramble(ctx) {
       payload.sentences = [{ id: baseId, text: sentence, weight: 1, ko: translation }];
     }
     return payload;
+  });
+
+  try {
+    await hydrateGrammarAudio(mapped);
+  } catch (err) {
+    console.debug('[GrammarUnscramble] Audio hydrate failed', err?.message);
+  }
+
+  mapped.forEach((item) => {
+    if (!item.sentenceAudioUrl) {
+      console.debug('[GrammarUnscramble] sentence audio missing', item.eng, buildGrammarAudioCandidates(item));
+    }
   });
 
   const usable = shuffle(mapped).slice(0, 15);
