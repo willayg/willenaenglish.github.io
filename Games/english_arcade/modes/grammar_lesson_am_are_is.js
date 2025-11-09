@@ -239,9 +239,20 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
       const wrongCount = stepEl.querySelectorAll('.chip.bad').length;
       const correct = activityPool.length - wrongCount;
 
+      // Remove any existing message
+      const existingMsg = stepEl.querySelector('.completion-message');
+      if (existingMsg) existingMsg.remove();
+
       if (poolCount === 0 && wrongCount === 0) {
         playSFX?.('correct');
-        inlineToast?.(lang === 'ko' ? "완벽해요! am (이다), is (이다), are (이다)를 잘 골랐어요." : 'Perfect! You matched am, is, and are.');
+        
+        // Add message at top
+        const message = document.createElement('div');
+        message.className = 'completion-message';
+        message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
+        message.textContent = lang === 'ko' ? "완벽해요! am (이다), is (이다), are (이다)를 잘 골랐어요." : 'Perfect! You matched am, is, and are.';
+        stepEl.insertBefore(message, stepEl.firstChild);
+        
         if (!continueBtn) {
           continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next Step');
           continueBtn.style.background = '#fff';
@@ -252,7 +263,13 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
         }
       } else {
         playSFX?.('wrong');
-        inlineToast?.(lang === 'ko' ? '빨간 카드를 다시 옮겨 보세요.' : 'Try again! Fix the red cards.');
+        
+        // Add message at top
+        const message = document.createElement('div');
+        message.className = 'completion-message';
+        message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
+        message.textContent = lang === 'ko' ? '빨간 카드를 다시 옮겨 보세요.' : 'Try again! Fix the red cards.';
+        stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
   }

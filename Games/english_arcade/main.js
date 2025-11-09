@@ -645,6 +645,9 @@ const modeLoaders = {
   grammar_lesson_it_vs_they: () => import('./modes/grammar_lesson_it_vs_they.js').then(m => m.runGrammarLessonItVsThey),
   grammar_lesson_am_are_is: () => import('./modes/grammar_lesson_am_are_is.js').then(m => m.runGrammarLessonAmAreIs),
   grammar_lesson_this_that: () => import('./modes/grammar_lesson_this_that.js').then(m => m.runGrammarLessonThisThat),
+  grammar_lesson_these_those: () => import('./modes/grammar_lesson_these_vs_those.js').then(m => m.runGrammarLessonTheseThose),
+  grammar_lesson_have_has: () => import('./modes/grammar_lesson_have_has.js').then(m => m.runGrammarLessonHaveHas),
+  grammar_lesson_contractions_be: () => import('./modes/grammar_lesson_contractions_be.js').then(m => m.runGrammarLessonContractionsBe),
   grammar_fill_gap: () => import('./modes/grammar_fill_gap.js').then(m => m.runGrammarFillGapMode),
   grammar_sentence_unscramble: () => import('./modes/grammar_sentence_unscramble.js').then(m => m.runGrammarSentenceUnscramble),
 };

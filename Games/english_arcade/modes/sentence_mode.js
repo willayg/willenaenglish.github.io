@@ -705,12 +705,12 @@ export function run(ctx){
       const pct = items.length ? Math.round((fbCorrectFull / items.length) * 100) : 0;
       try { endSession(fbSessionId, { mode:'fill_blank_sentence_mode', summary:{ total: items.length, perfect: fbCorrectFull, points: fbPoints, pct }}); } catch {}
       const heading = inFillBlankReview ? 'Review Complete' : 'Fill Gaps Complete';
-      root.innerHTML = `<div style="max-width:520px;margin:40px auto;text-align:center;font-family:Poppins,system-ui;padding:34px 26px 38px;background:linear-gradient(165deg,#ffffff,#f2fbfc);border:2px solid #93cbcf;border-radius:24px;box-shadow:0 8px 28px -4px rgba(8,70,74,0.18);position:relative;">
-        <div class="sm-back-link" data-nav="menu" style="position:absolute;left:10px;bottom:6px;">← Back to Sentence Menu</div>
-        <h2 style="margin:0 0 14px;font-size:1.6rem;color:#19777e;font-weight:800;">${heading}</h2>
-        <div style="font-size:1rem;color:#334155;margin-bottom:8px;">You completed ${items.length} round${items.length===1?'':'s'}.</div>
-        <div style="font-size:.95rem;color:#334155;margin-bottom:4px;">Perfect Rounds: <strong>${fbCorrectFull}</strong> / ${items.length} (${pct}%)</div>
-        <div style="font-size:.95rem;color:#334155;margin-bottom:14px;">Points (1 per correct word): <strong>${fbPoints}</strong></div>
+      root.innerHTML = `<div style="max-width:520px;margin:clamp(20px,5vh,40px) auto;text-align:center;font-family:Poppins,system-ui;padding:clamp(16px,4vw,34px) clamp(14px,5vw,26px) clamp(20px,4vw,38px);background:linear-gradient(165deg,#ffffff,#f2fbfc);border:2px solid #93cbcf;border-radius:24px;box-shadow:0 8px 28px -4px rgba(8,70,74,0.18);position:relative;width:90%;box-sizing:border-box;">
+        <div class="sm-back-link" data-nav="menu" style="position:absolute;left:10px;bottom:6px;font-size:0.85rem;">← Back</div>
+        <h2 style="margin:0 0 14px;font-size:clamp(1.3rem,5vw,1.6rem);color:#19777e;font-weight:800;">${heading}</h2>
+        <div style="font-size:clamp(0.85rem,3.5vw,1rem);color:#334155;margin-bottom:8px;">You completed ${items.length} round${items.length===1?'':'s'}.</div>
+        <div style="font-size:clamp(0.8rem,3vw,0.95rem);color:#334155;margin-bottom:4px;">Perfect Rounds: <strong>${fbCorrectFull}</strong> / ${items.length} (${pct}%)</div>
+        <div style="font-size:clamp(0.8rem,3vw,0.95rem);color:#334155;margin-bottom:14px;">Points (1 per correct word): <strong>${fbPoints}</strong></div>
         <div class="sm-summary-actions">
           ${inFillBlankReview ? '' : '<button class="sm-summary-btn" data-act="replay">Play Again</button>'}
           <button class="sm-summary-btn" data-act="menu">${inFillBlankReview ? 'Done' : 'Start Menu'}</button>

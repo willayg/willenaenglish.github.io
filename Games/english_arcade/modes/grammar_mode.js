@@ -97,10 +97,10 @@ export async function runGrammarMode(ctx) {
     };
 
     const buildProximityScene = (article, emoji) => {
-      const isThis = String(article || '').toLowerCase() === 'this';
+      const isNear = ['this', 'these'].includes(String(article || '').toLowerCase());
       const personEmoji = '🧍';
-      const objectEmoji = emoji || (isThis ? '📘' : '🚌');
-      if (isThis) {
+      const objectEmoji = emoji || (isNear ? '📘' : '🚌');
+      if (isNear) {
         return `
           <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px;margin:0 auto;">
             <div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:3.6rem;">
@@ -141,10 +141,15 @@ export async function runGrammarMode(ctx) {
         && answerChoices.length === 2
         && answerChoices.includes('this')
         && answerChoices.includes('that');
+      const isTheseThooseMode = Array.isArray(answerChoices)
+        && answerChoices.length === 2
+        && answerChoices.includes('these')
+        && answerChoices.includes('those');
+      const hasProximityMode = isThisThatMode || isTheseThooseMode;
       const promptSafe = rawPrompt ? sanitizeText(rawPrompt) : '';
       const highlightedPrompt = promptSafe ? promptSafe.replace(/___/g, '<span style="color:#21b3be;font-weight:800;">___</span>') : '';
-      const questionText = (isThisThatMode && highlightedPrompt) ? highlightedPrompt : displayText;
-      const visualCueHTML = isThisThatMode
+      const questionText = (hasProximityMode && highlightedPrompt) ? highlightedPrompt : displayText;
+      const visualCueHTML = hasProximityMode
         ? buildProximityScene(item?.article, item?.emoji)
         : (item.emoji ? `<div style="font-size:4.6rem;line-height:1;margin-bottom:30px;">${item.emoji}</div>` : '');
 
@@ -192,7 +197,9 @@ export async function runGrammarMode(ctx) {
       document.querySelectorAll('.grammar-choice-btn').forEach(btn => {
         btn.onclick = async () => {
           const userAnswer = btn.getAttribute('data-answer');
-          const correct = userAnswer === item.article;
+          // Support both article (for a/an) and ending (for contractions)
+          const correctAnswer = item.article || item.ending;
+          const correct = userAnswer === correctAnswer;
 
           // Visual feedback
           btn.style.borderColor = correct ? '#4caf50' : '#f44336';
@@ -204,7 +211,8 @@ export async function runGrammarMode(ctx) {
             articleBox.style.borderColor = correct ? '#4caf50' : '#f44336';
             articleBox.style.backgroundColor = correct ? '#c8e6c9' : '#fde8e8';
             articleBox.style.color = correct ? '#2e7d32' : '#c62828';
-            articleBox.innerHTML = `<span style=\"display:inline-block;line-height:1\">${item.article}</span>`;
+            const displayAnswer = item.article || item.ending;
+            articleBox.innerHTML = `<span style=\"display:inline-block;line-height:1\">${displayAnswer}</span>`;
           }
 
           if (correct) {
@@ -226,7 +234,7 @@ export async function runGrammarMode(ctx) {
               word: item.id || item.word, 
               is_correct: correct, 
               answer: userAnswer, 
-              correct_answer: item.article, 
+              correct_answer: correctAnswer, 
               points: correct ? 1 : 0, 
               attempt_index: currentIdx, 
               round: currentIdx + 1,

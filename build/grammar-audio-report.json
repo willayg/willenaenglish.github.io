@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2025-11-09T07:54:39.072Z",
+  "generatedAt": "2025-11-09T13:28:48.578Z",
   "summary": {
-    "considered": 70,
-    "generated": 70,
+    "considered": 13,
+    "generated": 13,
     "skippedExisting": 0,
     "errors": 0,
     "dryRun": false,
@@ -10,494 +10,108 @@
   },
   "items": [
     {
-      "key": "airplane_grammar",
-      "file": "level1\\articles.json",
-      "word": "airplane",
-      "article": "an",
-      "text": "She took an airplane."
-    },
-    {
-      "key": "alligator_grammar",
-      "file": "level1\\articles.json",
-      "word": "alligator",
-      "article": "an",
-      "text": "We saw an alligator."
-    },
-    {
-      "key": "anchor_grammar",
-      "file": "level1\\articles.json",
-      "word": "anchor",
-      "article": "an",
-      "text": "The ship dropped an anchor."
-    },
-    {
-      "key": "ant_grammar",
-      "file": "level1\\articles.json",
-      "word": "ant",
-      "article": "an",
-      "text": "She saw an ant."
-    },
-    {
-      "key": "apple_grammar",
-      "file": "level1\\articles.json",
-      "word": "apple",
-      "article": "an",
-      "text": "I eat an apple."
-    },
-    {
-      "key": "apple_this_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "apple",
-      "article": "this",
-      "text": "This is an apple."
-    },
-    {
-      "key": "astronaut_grammar",
-      "file": "level1\\articles.json",
-      "word": "astronaut",
-      "article": "an",
-      "text": "She wants to be an astronaut."
-    },
-    {
-      "key": "backpack_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "backpack",
-      "article": "it",
-      "text": "It is a heavy backpack."
-    },
-    {
-      "key": "backpacks_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "backpacks",
-      "article": "they",
-      "text": "They are new backpacks."
-    },
-    {
-      "key": "ball_grammar",
-      "file": "level1\\articles.json",
-      "word": "ball",
-      "article": "a",
-      "text": "He kicked a ball."
-    },
-    {
-      "key": "ball_it_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "ball",
-      "article": "it",
-      "text": "It is a soccer ball."
-    },
-    {
-      "key": "ball_that_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "ball",
-      "article": "that",
-      "text": "That is a ball."
-    },
-    {
-      "key": "balls_grammar",
-      "file": "level1\\it_vs_they.json",
+      "key": "that_balls_grammar",
+      "file": "level1\\these_vs_those.json",
       "word": "balls",
-      "article": "they",
-      "text": "They are bouncing balls."
-    },
-    {
-      "key": "banana_grammar",
-      "file": "level1\\articles.json",
-      "word": "banana",
-      "article": "a",
-      "text": "I have a banana."
-    },
-    {
-      "key": "book_grammar",
-      "file": "level1\\articles.json",
-      "word": "book",
-      "article": "a",
-      "text": "I'm reading a book."
-    },
-    {
-      "key": "book_this_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "book",
-      "article": "this",
-      "text": "This is a book."
-    },
-    {
-      "key": "bus_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "bus",
+      "entryId": "that_balls",
       "article": "that",
-      "text": "That is a bus."
+      "text": "Those are balls."
     },
     {
-      "key": "car_grammar",
-      "file": "level1\\articles.json",
-      "word": "car",
-      "article": "a",
-      "text": "He drove a car."
-    },
-    {
-      "key": "carrot_grammar",
-      "file": "level1\\articles.json",
-      "word": "carrot",
-      "article": "a",
-      "text": "She ate a carrot."
-    },
-    {
-      "key": "cat_grammar",
-      "file": "level1\\articles.json",
-      "word": "cat",
-      "article": "a",
-      "text": "I have a cat."
-    },
-    {
-      "key": "cat_it_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "cat",
-      "article": "it",
-      "text": "It is a sleepy cat."
-    },
-    {
-      "key": "cats_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "cats",
-      "article": "they",
-      "text": "They are fluffy cats."
-    },
-    {
-      "key": "cookie_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "cookie",
-      "article": "it",
-      "text": "It is a big cookie."
-    },
-    {
-      "key": "cookies_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "cookies",
-      "article": "they",
-      "text": "They are sweet cookies."
-    },
-    {
-      "key": "cup_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "cup",
-      "article": "this",
-      "text": "This is a cup."
-    },
-    {
-      "key": "dog_grammar",
-      "file": "level1\\articles.json",
-      "word": "dog",
-      "article": "a",
-      "text": "She plays with a dog."
-    },
-    {
-      "key": "dog_it_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "dog",
-      "article": "it",
-      "text": "It is a playful dog."
-    },
-    {
-      "key": "dogs_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "dogs",
-      "article": "they",
-      "text": "They are loud dogs."
-    },
-    {
-      "key": "eagle_grammar",
-      "file": "level1\\articles.json",
-      "word": "eagle",
-      "article": "an",
-      "text": "I saw an eagle."
-    },
-    {
-      "key": "egg_grammar",
-      "file": "level1\\articles.json",
-      "word": "egg",
-      "article": "an",
-      "text": "She found an egg."
-    },
-    {
-      "key": "elephant_grammar",
-      "file": "level1\\articles.json",
-      "word": "elephant",
-      "article": "an",
-      "text": "I saw an elephant."
-    },
-    {
-      "key": "envelope_grammar",
-      "file": "level1\\articles.json",
-      "word": "envelope",
-      "article": "an",
-      "text": "Put it in an envelope."
-    },
-    {
-      "key": "flower_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "flower",
-      "article": "it",
-      "text": "It is a pink flower."
-    },
-    {
-      "key": "flowers_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "flowers",
-      "article": "they",
-      "text": "They are yellow flowers."
-    },
-    {
-      "key": "hat_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "hat",
-      "article": "this",
-      "text": "This is a hat."
-    },
-    {
-      "key": "he_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "He",
-      "article": "is",
-      "text": "He is tall."
-    },
-    {
-      "key": "house_grammar",
-      "file": "level1\\articles.json",
-      "word": "house",
-      "article": "a",
-      "text": "They live in a house."
-    },
-    {
-      "key": "i_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "I",
-      "article": "am",
-      "text": "I am happy."
-    },
-    {
-      "key": "ice_cream_grammar",
-      "file": "level1\\articles.json",
-      "word": "ice cream",
-      "article": "an",
-      "text": "I want an ice cream."
-    },
-    {
-      "key": "iguana_grammar",
-      "file": "level1\\articles.json",
-      "word": "iguana",
-      "article": "an",
-      "text": "He has an iguana."
-    },
-    {
-      "key": "island_grammar",
-      "file": "level1\\articles.json",
-      "word": "island",
-      "article": "an",
-      "text": "We stayed on an island."
-    },
-    {
-      "key": "it_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "It",
-      "article": "is",
-      "text": "It is raining."
-    },
-    {
-      "key": "kite_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "kite",
+      "key": "that_buses_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "buses",
+      "entryId": "that_buses",
       "article": "that",
-      "text": "That is a kite."
+      "text": "Those are buses."
     },
     {
-      "key": "leaf_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "leaf",
-      "article": "it",
-      "text": "It is a red leaf."
-    },
-    {
-      "key": "leaves_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "leaves",
-      "article": "they",
-      "text": "They are orange leaves."
-    },
-    {
-      "key": "lion_grammar",
-      "file": "level1\\articles.json",
-      "word": "lion",
-      "article": "a",
-      "text": "We saw a lion."
-    },
-    {
-      "key": "marker_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "marker",
-      "article": "this",
-      "text": "This is a marker."
-    },
-    {
-      "key": "mountain_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "mountain",
+      "key": "that_kites_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "kites",
+      "entryId": "that_kites",
       "article": "that",
-      "text": "That is a mountain."
+      "text": "Those are kites."
     },
     {
-      "key": "octopus_grammar",
-      "file": "level1\\articles.json",
-      "word": "octopus",
-      "article": "an",
-      "text": "We saw an octopus."
-    },
-    {
-      "key": "orange_grammar",
-      "file": "level1\\articles.json",
-      "word": "orange",
-      "article": "an",
-      "text": "Can I have an orange?"
-    },
-    {
-      "key": "owl_grammar",
-      "file": "level1\\articles.json",
-      "word": "owl",
-      "article": "an",
-      "text": "I heard an owl."
-    },
-    {
-      "key": "penguin_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "penguin",
-      "article": "it",
-      "text": "It is a baby penguin."
-    },
-    {
-      "key": "penguins_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "penguins",
-      "article": "they",
-      "text": "They are marching penguins."
-    },
-    {
-      "key": "phone_grammar",
-      "file": "level1\\articles.json",
-      "word": "phone",
-      "article": "a",
-      "text": "She has a phone."
-    },
-    {
-      "key": "phone_that_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "phone",
+      "key": "that_mountains_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "mountains",
+      "entryId": "that_mountains",
       "article": "that",
-      "text": "That is a phone."
+      "text": "Those are mountains."
     },
     {
-      "key": "phone_this_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "phone",
-      "article": "this",
-      "text": "This is a phone."
-    },
-    {
-      "key": "robot_grammar",
-      "file": "level1\\articles.json",
-      "word": "robot",
-      "article": "a",
-      "text": "He built a robot."
-    },
-    {
-      "key": "robot_it_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "robot",
-      "article": "it",
-      "text": "It is a shiny robot."
-    },
-    {
-      "key": "robots_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "robots",
-      "article": "they",
-      "text": "They are helper robots."
-    },
-    {
-      "key": "she_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "She",
-      "article": "is",
-      "text": "She is on the bus."
-    },
-    {
-      "key": "the_cat_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "The cat",
-      "article": "is",
-      "text": "The cat is sleepy."
-    },
-    {
-      "key": "they_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "They",
-      "article": "are",
-      "text": "They are playing basketball."
-    },
-    {
-      "key": "toy_grammar",
-      "file": "level1\\articles.json",
-      "word": "toy",
-      "article": "a",
-      "text": "My son wants a toy."
-    },
-    {
-      "key": "tree_grammar",
-      "file": "level1\\this_vs_that.json",
-      "word": "tree",
+      "key": "that_phones_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "phones",
+      "entryId": "that_phones",
       "article": "that",
-      "text": "That is a tree."
+      "text": "Those are phones."
     },
     {
-      "key": "turtle_grammar",
-      "file": "level1\\articles.json",
-      "word": "turtle",
-      "article": "a",
-      "text": "We found a turtle."
+      "key": "that_trees_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "trees",
+      "entryId": "that_trees",
+      "article": "that",
+      "text": "Those are trees."
     },
     {
-      "key": "turtle_it_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "turtle",
-      "article": "it",
-      "text": "It is a slow turtle."
+      "key": "these_apples_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "apples",
+      "entryId": "these_apples",
+      "article": "these",
+      "text": "These are apples."
     },
     {
-      "key": "turtles_grammar",
-      "file": "level1\\it_vs_they.json",
-      "word": "turtles",
-      "article": "they",
-      "text": "They are friendly turtles."
+      "key": "these_books_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "books",
+      "entryId": "these_books",
+      "article": "these",
+      "text": "These are books."
     },
     {
-      "key": "umbrella_grammar",
-      "file": "level1\\articles.json",
-      "word": "umbrella",
-      "article": "an",
-      "text": "Take an umbrella."
+      "key": "these_cups_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "cups",
+      "entryId": "these_cups",
+      "article": "these",
+      "text": "These are cups."
     },
     {
-      "key": "we_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "We",
-      "article": "are",
-      "text": "We are in class."
+      "key": "these_hats_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "hats",
+      "entryId": "these_hats",
+      "article": "these",
+      "text": "These are hats."
     },
     {
-      "key": "you_grammar",
-      "file": "level1\\am_are_is.json",
-      "word": "You",
-      "article": "are",
-      "text": "You are my friend."
+      "key": "these_markers_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "markers",
+      "entryId": "these_markers",
+      "article": "these",
+      "text": "These are markers."
+    },
+    {
+      "key": "these_phones_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "phones",
+      "entryId": "these_phones",
+      "article": "these",
+      "text": "These are phones."
+    },
+    {
+      "key": "these_toys_grammar",
+      "file": "level1\\these_vs_those.json",
+      "word": "toys",
+      "entryId": "these_toys",
+      "article": "these",
+      "text": "These are toys."
     }
   ]
 }

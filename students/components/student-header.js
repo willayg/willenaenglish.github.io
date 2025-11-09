@@ -337,9 +337,9 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" fill="#19777e"/></svg>
                 Dashboard
               </a>
-              <a class="dd-item" role="menuitem" href="/Games/english_arcade/index.html" data-i18n="Word Arcade">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">W</text></svg>
-                Word Arcade
+              <a class="dd-item" role="menuitem" href="/Games/english_arcade/index.html" data-i18n="English Arcade">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">E</text></svg>
+                English Arcade
               </a>
               <a class="dd-item" role="menuitem" href="/Games/GrammarArcade/index.html" data-i18n="Grammar Arcade">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><rect x="4" y="4" width="16" height="16" rx="4" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">G</text></svg>

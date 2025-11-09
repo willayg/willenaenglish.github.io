@@ -43,9 +43,23 @@ function buildGrammarAudioCandidates(item) {
   const wordBase = normalizeForGrammarKey(getGrammarField(item, 'word'));
   const articleBase = normalizeForGrammarKey(getGrammarField(item, 'article'));
   const idBase = normalizeForGrammarKey(getGrammarField(item, 'id'));
+  const sentence = String(item?.exampleSentence || '').trim();
 
+  // Generate sentence hash for uniqueness
+  let hash = 0;
+  for (let i = 0; i < sentence.length; i++) {
+    const char = sentence.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  hash = Math.abs(hash) % 10000;
+  const hashStr = hash.toString().padStart(4, '0');
+
+  // Try exact id first, then with hash, then fallbacks
+  if (idBase) add(`${idBase}_grammar`);
+  if (idBase) add(`${idBase}_${hashStr}_grammar`);
   if (wordBase && articleBase) add(`${wordBase}_${articleBase}_grammar`);
-  if (idBase && idBase !== wordBase) add(`${idBase}_grammar`);
+  if (wordBase && articleBase) add(`${wordBase}_${articleBase}_${hashStr}_grammar`);
   if (wordBase) add(`${wordBase}_grammar`);
 
   return candidates;
@@ -184,9 +198,9 @@ function ensureStyles() {
     #gameArea #grammarQuitBtn:hover { transform:translateY(-3px); box-shadow:0 26px 42px -16px rgba(25,119,126,0.48) !important; background:#f2fbfc !important; }
     #gameArea #grammarQuitBtn:active { transform:scale(0.97); }
     #gameArea #grammarQuitBtn:focus-visible { outline:3px solid rgba(25,119,126,0.45); outline-offset:4px; }
-    .fg-summary-card { width:min(640px, 92vw); margin:0 auto; background:#ffffff; border-radius:26px; border:2px solid #cbeef0; padding:32px 28px; box-shadow:0 24px 54px -22px rgba(20,126,130,0.45); text-align:center; display:flex; flex-direction:column; gap:22px; }
-    .fg-summary-card h2 { margin:0; font-size:2.2rem; color:#19777e; font-weight:800; }
-    .fg-summary-card .fg-score { font-size:1.4rem; font-weight:700; color:#0f172a; }
+    .fg-summary-card { width:min(520px, 85vw); margin:clamp(30px,5vh,50px) auto; background:#ffffff; border-radius:20px; border:2px solid #cbeef0; padding:clamp(14px,3.5vw,24px) clamp(12px,4vw,20px); box-shadow:0 24px 54px -22px rgba(20,126,130,0.45); text-align:center; display:flex; flex-direction:column; gap:clamp(10px,2.5vw,16px); box-sizing:border-box; }
+    .fg-summary-card h2 { margin:0; font-size:clamp(1.4rem,5vw,1.8rem); color:#19777e; font-weight:800; }
+    .fg-summary-card .fg-score { font-size:clamp(0.9rem,3.5vw,1.1rem); font-weight:700; color:#0f172a; line-height:1.5; }
     .fg-summary-card .fg-score strong { color:#21b3be; }
   `;
   document.head.appendChild(style);
@@ -208,27 +222,52 @@ function escapeRegex(text) {
 function buildSentenceWithBlank(item) {
   const sentence = (item?.exampleSentence || item?.example || '').trim();
   const article = (item?.article || '').trim();
+  const contraction = (item?.contraction || '').trim();
   const word = (item?.word || '').trim();
   if (!sentence) {
     return `___ ${word}`.trim();
   }
+  // Check for contraction first (for contractions_be mode)
+  if (contraction) {
+    const contractionPattern = new RegExp(escapeRegex(contraction), 'i');
+    if (contractionPattern.test(sentence)) {
+      return sentence.replace(contractionPattern, '___');
+    }
+  }
   if (!article) return sentence;
-  const articleWordPattern = new RegExp(`\\b${escapeRegex(article)}\\s+${escapeRegex(word)}\\b`, 'i');
+  const articleWordPattern = new RegExp('\\b' + escapeRegex(article) + '\\s+' + escapeRegex(word) + '\\b', 'i');
   if (word && articleWordPattern.test(sentence)) {
     return sentence.replace(articleWordPattern, `___ ${word}`);
   }
-  const articleOnlyPattern = new RegExp(`\\b${escapeRegex(article)}\\b`, 'i');
+  const articleOnlyPattern = new RegExp('\\b' + escapeRegex(article) + '\\b', 'i');
   if (articleOnlyPattern.test(sentence)) {
     return sentence.replace(articleOnlyPattern, '___');
   }
   return `___ ${word}`.trim();
 }
 
+function buildContractionOptions(item, allEndings) {
+  // For contractions: combine subject (word) with each ending to create options
+  // E.g., item.word = "We", endings = ["'m", "'re", "'s"] → [{label:"We'm", value:"we'm"}, ...]
+  const subject = (item?.word || '').trim();
+  const endings = (allEndings && allEndings.length) ? allEndings : ["'m", "'re", "'s"];
+
+  if (!subject) {
+    return shuffle(endings.map((ending) => ({ label: ending, value: ending.toLowerCase() })));
+  }
+
+  const options = endings.map((ending) => {
+    const label = `${subject}${ending}`;
+    return { label, value: label.toLowerCase() };
+  });
+  return shuffle(options);
+}
+
 function buildProximityScene(article, emoji) {
   const personEmoji = '🧍';
-  const isThis = String(article || '').toLowerCase() === 'this';
-  const objectEmoji = emoji || (isThis ? '📘' : '🚌');
-  if (isThis) {
+  const isNear = ['this', 'these'].includes(String(article || '').toLowerCase());
+  const objectEmoji = emoji || (isNear ? '📘' : '🚌');
+  if (isNear) {
     return `
       <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:320px;margin:0 auto;">
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:3.4rem;">
@@ -284,7 +323,7 @@ export async function runGrammarFillGapMode(ctx) {
   }
 
   const usable = Array.isArray(rawData)
-    ? rawData.filter((item) => item && item.word && item.article)
+    ? rawData.filter((item) => item && item.word && (item.article || item.contraction || item.ending))
     : [];
 
   if (!usable.length) {
@@ -304,6 +343,19 @@ export async function runGrammarFillGapMode(ctx) {
     && answerChoices.length === 2
     && answerChoices.includes('this')
     && answerChoices.includes('that');
+
+  const isTheseThooseMode = Array.isArray(answerChoices)
+    && answerChoices.length === 2
+    && answerChoices.includes('these')
+    && answerChoices.includes('those');
+
+  const hasProximityMode = isThisThatMode || isTheseThooseMode;
+
+  const isContractionMode = Array.isArray(answerChoices)
+    && answerChoices.length === 3
+    && answerChoices.includes("'m")
+    && answerChoices.includes("'re")
+    && answerChoices.includes("'s");
 
   const deck = shuffle(usable).slice(0, 15);
 
@@ -373,7 +425,8 @@ export async function runGrammarFillGapMode(ctx) {
           <div class="fg-word" id="fgWord"></div>
           <div class="fg-sentence" id="fgSentence"></div>
           <div class="fg-chip-row" id="fgOptions">
-            ${answerChoices.map((choice) => `<button type="button" class="fg-chip" data-value="${choice.toLowerCase()}">${choice}</button>`).join('')}
+            <!-- Options will be populated by renderQuestion for contractions -->
+            ${!isContractionMode ? answerChoices.map((choice) => `<button type="button" class="fg-chip" data-value="${choice.toLowerCase()}">${choice}</button>`).join('') : ''}
           </div>
           <div class="fg-hint" id="fgHint"></div>
         </div>
@@ -458,22 +511,35 @@ export async function runGrammarFillGapMode(ctx) {
     const optionButtons = optionsRow ? Array.from(optionsRow.querySelectorAll('.fg-chip')) : [];
     const hintEl = document.getElementById('fgHint');
 
-    if (!optionsRow || !optionButtons.length || !sentenceEl) {
+    if (!optionsRow || (!isContractionMode && !optionButtons.length) || !sentenceEl) {
       console.error('[GrammarFillGap] Missing layout nodes');
       return;
     }
 
     updateProgressBar(true, currentIndex, deck.length);
 
-    if (isThisThatMode) {
+    if (hasProximityMode) {
       emojiEl.innerHTML = buildProximityScene(item.article, item.emoji);
     } else {
       emojiEl.textContent = item.emoji || '🧠';
     }
-    wordEl.textContent = isThisThatMode ? (item.word || '') : (item.prompt || item.word);
-  sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
-  hintEl.textContent = isThisThatMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
+    wordEl.textContent = item.word || '';
+    sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
+    hintEl.textContent = hasProximityMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
     setReveal('');
+
+    // For contractions, dynamically populate options
+    if (isContractionMode) {
+      const contractionOptions = buildContractionOptions(item, answerChoices);
+      optionsRow.innerHTML = contractionOptions.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      // Refresh optionButtons after updating HTML
+      optionButtons.length = 0;
+      optionsRow.querySelectorAll('.fg-chip').forEach((btn) => optionButtons.push(btn));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No contraction options rendered');
+        return;
+      }
+    }
 
     optionButtons.forEach((btn) => {
       btn.disabled = false;
@@ -491,7 +557,9 @@ export async function runGrammarFillGapMode(ctx) {
 
       optionButtons.forEach((b) => { b.disabled = true; });
 
-      const correctArticle = String(item.article || '').trim().toLowerCase();
+  // For contractions, check against the complete contraction string; otherwise use article
+  const correctAnswerSource = isContractionMode ? (item.contraction || item.article || '') : (item.article || '');
+  const correctArticle = String(correctAnswerSource || '').trim().toLowerCase();
       const guess = String(choice || '').trim().toLowerCase();
       const correct = guess === correctArticle;
 
@@ -522,13 +590,14 @@ export async function runGrammarFillGapMode(ctx) {
           word: item.id || item.word,
           is_correct: correct,
           answer: guess,
-          correct_answer: item.article,
+          correct_answer: correctAnswerSource,
           points: correct ? 1 : 0,
           attempt_index: currentIndex,
           round: currentIndex + 1,
           extra: {
             word: item.word,
             article: item.article,
+            contraction: item.contraction,
             sentence: item.exampleSentence,
             category: 'grammar',
           },
