@@ -644,6 +644,7 @@ const modeLoaders = {
   grammar_lesson: () => import('./modes/grammar_lesson.js').then(m => m.runGrammarLesson),
   grammar_lesson_it_vs_they: () => import('./modes/grammar_lesson_it_vs_they.js').then(m => m.runGrammarLessonItVsThey),
   grammar_lesson_am_are_is: () => import('./modes/grammar_lesson_am_are_is.js').then(m => m.runGrammarLessonAmAreIs),
+  grammar_lesson_this_that: () => import('./modes/grammar_lesson_this_that.js').then(m => m.runGrammarLessonThisThat),
   grammar_fill_gap: () => import('./modes/grammar_fill_gap.js').then(m => m.runGrammarFillGapMode),
   grammar_sentence_unscramble: () => import('./modes/grammar_sentence_unscramble.js').then(m => m.runGrammarSentenceUnscramble),
 };

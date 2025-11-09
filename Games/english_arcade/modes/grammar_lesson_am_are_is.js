@@ -203,6 +203,18 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '15px';
     stepEl.appendChild(checkBtn);
+
+    const nav = document.createElement('div');
+    nav.className = 'lesson-nav';
+    nav.style.marginTop = '18px';
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
+    backBtn.style.background = '#fff';
+    backBtn.style.color = '#ff6fb0';
+    backBtn.style.borderColor = '#ff6fb0';
+    backBtn.onclick = () => { stepIndex = Math.max(0, stepIndex - 1); render(); };
+    nav.appendChild(backBtn);
+    stepEl.appendChild(nav);
+
     let continueBtn = null;
 
     checkBtn.onclick = () => {
@@ -232,9 +244,11 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
         inlineToast?.(lang === 'ko' ? "완벽해요! am (이다), is (이다), are (이다)를 잘 골랐어요." : 'Perfect! You matched am, is, and are.');
         if (!continueBtn) {
           continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next Step');
+          continueBtn.style.background = '#fff';
+          continueBtn.style.color = '#ff6fb0';
+          continueBtn.style.borderColor = '#ff6fb0';
           continueBtn.onclick = nextStep;
-          continueBtn.style.marginTop = '15px';
-          stepEl.appendChild(continueBtn);
+          nav.appendChild(continueBtn);
         }
       } else {
         playSFX?.('wrong');
