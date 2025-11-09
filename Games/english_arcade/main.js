@@ -1200,7 +1200,7 @@ function showGrammarLevelsMenu() {
   
   openingButtons.innerHTML = `
     <button id="grammarLevel1Btn" class="wa-option wa-option-card wa-level-1" type="button" style="border-color: ${level1Color};">
-      <img src="./assets/Images/icons/grammar.svg" alt="Grammar Level 1" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+      <img src="./assets/Images/icons/rainbow.svg" alt="Grammar Level 1" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color: ${level1Color};">Level 1</span>
       <span class="wa-card-stars" id="wa-stars-grammar-level1" style="font-size: 0.85rem; color: #19777e; margin-top: 4px; display: block;">⭐ 0</span>
     </button>
@@ -1219,11 +1219,12 @@ function showGrammarLevelsMenu() {
   
   // Update grammar level progress stars using shared progress service
   (async () => {
-    const targetEl = document.getElementById('wa-stars-grammar-level1');
-    if (!targetEl) return;
-
+    const TARGET_ID = 'wa-stars-grammar-level1';
     const applyStars = (count) => {
-      targetEl.textContent = `⭐ ${Math.max(0, count || 0)}`;
+      const el = document.getElementById(TARGET_ID);
+      if (!el) return;
+      const value = Number(count) || 0;
+      el.textContent = `⭐ ${Math.max(0, Math.round(value))}`;
     };
 
     applyStars(0);
