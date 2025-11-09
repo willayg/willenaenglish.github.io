@@ -15,7 +15,7 @@ function ensureStyles() {
     .fg-root { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; width:100%; gap:clamp(30px, 4vh, 44px); padding:clamp(32px, 6vh, 56px) clamp(18px, 8vw, 36px) clamp(40px, 8vh, 60px); font-family:'Poppins', Arial, sans-serif; background:#ffffff; box-sizing:border-box; min-height:calc(100vh - 220px); }
     .fg-content { width:100%; max-width:640px; display:flex; flex-direction:column; gap:clamp(30px, 5vh, 42px); position:relative; }
     .fg-counter { font-size:0.82rem; font-weight:700; color:#19777e; text-transform:uppercase; letter-spacing:0.08rem; }
-    .fg-emoji { font-size:4rem; text-align:center; filter:drop-shadow(0 8px 24px rgba(0,0,0,0.08)); }
+  .fg-emoji { font-size:4rem; text-align:center; filter:drop-shadow(0 8px 24px rgba(0,0,0,0.08)); display:flex; align-items:center; justify-content:center; }
     .fg-word { text-align:center; font-size:clamp(2rem, 8vw, 3rem); font-weight:800; color:#21b3be; letter-spacing:0.04em; }
     .fg-sentence { font-size:1.15rem; line-height:1.55; color:#0f172a; background:#f2fbfc; border-radius:18px; padding:16px 18px; border:2px solid rgba(33,181,192,0.24); }
     .fg-sentence strong { color:#19777e; font-weight:800; }
@@ -78,6 +78,31 @@ function buildSentenceWithBlank(item) {
   return `___ ${word}`.trim();
 }
 
+function buildProximityScene(article, emoji) {
+  const personEmoji = '🧍';
+  const isThis = String(article || '').toLowerCase() === 'this';
+  const objectEmoji = emoji || (isThis ? '📘' : '🚌');
+  if (isThis) {
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:320px;margin:0 auto;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:3.4rem;">
+          <span style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.12));">${personEmoji}</span>
+          <span style="font-size:3.6rem;">${objectEmoji}</span>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px;margin:0 auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-size:3.4rem;width:100%;max-width:420px;">
+        <span style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.12));transform:translateX(-16px);">${personEmoji}</span>
+        <div style="flex:1;height:4px;margin:0 12px;border-radius:999px;background:repeating-linear-gradient(90deg,#21b3be 0,#21b3be 10px,rgba(33,179,190,0) 10px,rgba(33,179,190,0) 28px);opacity:0.45;"></div>
+        <span style="font-size:3.7rem;transform:translateX(60px);">${objectEmoji}</span>
+      </div>
+    </div>
+  `;
+}
+
 export async function runGrammarFillGapMode(ctx) {
   const {
     grammarFile,
@@ -127,6 +152,11 @@ export async function runGrammarFillGapMode(ctx) {
   const answerChoices = (grammarConfig && grammarConfig.answerChoices && Array.isArray(grammarConfig.answerChoices))
     ? grammarConfig.answerChoices
     : ['a', 'an']; // Default fallback
+
+  const isThisThatMode = Array.isArray(answerChoices)
+    && answerChoices.length === 2
+    && answerChoices.includes('this')
+    && answerChoices.includes('that');
 
   const deck = shuffle(usable).slice(0, 15);
   const sessionWords = deck.map((item) => item.word);
@@ -282,10 +312,14 @@ export async function runGrammarFillGapMode(ctx) {
 
     updateProgressBar(true, currentIndex, deck.length);
 
-    emojiEl.textContent = item.emoji || '🧠';
-  wordEl.textContent = item.prompt || item.word;
-    sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
-    hintEl.textContent = item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '';
+    if (isThisThatMode) {
+      emojiEl.innerHTML = buildProximityScene(item.article, item.emoji);
+    } else {
+      emojiEl.textContent = item.emoji || '🧠';
+    }
+    wordEl.textContent = isThisThatMode ? (item.word || '') : (item.prompt || item.word);
+  sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
+  hintEl.textContent = isThisThatMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
     setReveal('');
 
     optionButtons.forEach((btn) => {

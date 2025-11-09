@@ -241,10 +241,11 @@ class HistoryManager {
     const fallback = window.__WA_LAST_GRAMMAR__ || {};
     const grammarFile = grammarInfo.grammarFile || fallback.grammarFile || 'data/grammar/level1/articles.json';
     const grammarName = grammarInfo.grammarName || fallback.grammarName || 'A vs An';
-    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName }; window.__WA_IS_GRAMMAR__ = true; } catch {}
+    const grammarConfig = grammarInfo.grammarConfig || fallback.grammarConfig || {};
+    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName, grammarConfig }; window.__WA_IS_GRAMMAR__ = true; } catch {}
     const app = window.WordArcade;
     if (app?.loadGrammarGame) {
-      app.loadGrammarGame({ grammarFile, grammarName });
+      app.loadGrammarGame({ grammarFile, grammarName, grammarConfig });
       console.log('[HistoryManager] Restored grammar mode selector via loadGrammarGame', grammarName);
       return;
     }
@@ -270,12 +271,13 @@ class HistoryManager {
       const last = (typeof window.__WA_LAST_GRAMMAR__ === 'object' && window.__WA_LAST_GRAMMAR__) || {};
       const grammarFile = grammarInfo.grammarFile || last.grammarFile || 'data/grammar/level1/articles.json';
       const grammarName = grammarInfo.grammarName || last.grammarName || 'A vs An';
+      const grammarConfig = grammarInfo.grammarConfig || last.grammarConfig || {};
       try {
         window.__WA_IS_GRAMMAR__ = true;
-        window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName };
+        window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName, grammarConfig };
       } catch {}
-  app.loadGrammarGame({ grammarFile, grammarName });
-  console.log('[HistoryManager] Restored grammar game via loadGrammarGame', grammarName);
+      app.loadGrammarGame({ grammarFile, grammarName, grammarConfig });
+      console.log('[HistoryManager] Restored grammar game via loadGrammarGame', grammarName);
       return;
     }
 
