@@ -80,6 +80,8 @@ function buildGrammarKeys(value) {
 
 function canonicalMode(raw) {
   const m = norm(raw);
+  if (!m) return 'unknown';
+  if (m.includes('grammar')) return m.replace(/\s+/g, '_');
   if (m === 'sentence' || m.includes('sentence')) return 'sentence';
   if (m === 'matching' || m.startsWith('matching_') || m === 'meaning') return 'meaning';
   if (m === 'phonics_listening' || m === 'listen' || m === 'listening' || (m.startsWith('listening_') && !m.includes('spell'))) return 'listening';
@@ -87,7 +89,7 @@ function canonicalMode(raw) {
   if (m === 'multi_choice' || m.includes('multi_choice') || m.includes('picture_multi_choice') || m === 'easy_picture' || m === 'picture' || m === 'picture_mode' || m.includes('read')) return 'multi_choice';
   if (m === 'spelling' || m === 'missing_letter' || (m.includes('spell') && !m.includes('listen'))) return 'spelling';
   if (m.includes('level_up')) return 'level_up';
-  return m || 'unknown';
+  return m;
 }
 
 function extractPercent(session, summary) {
@@ -318,14 +320,16 @@ function computeStarCountsFromSessions(sessions) {
       }
 
       const hintList = Array.from(hints).filter(Boolean);
-      const targetKey = hintList[0] || 'grammar_level1';
+      const canonicalHints = hintList.map((hint) => canonKey(hint)).filter(Boolean);
+      const targetKey = canonicalHints[0] || hintList[0] || 'grammar_level1';
+      const allHints = [...canonicalHints, ...hintList];
 
       let bucketKey = 'grammarLevel1';
-      if (hintList.some((h) => /level\s*4/.test(h))) bucketKey = 'grammarLevel4';
-      else if (hintList.some((h) => /level\s*3/.test(h))) bucketKey = 'grammarLevel3';
-      else if (hintList.some((h) => /level\s*2/.test(h))) bucketKey = 'grammarLevel2';
-      else if (hintList.some((h) => /level\s*1/.test(h))) bucketKey = 'grammarLevel1';
-      else if (hintList.some((h) => h === 'a vs an' || h.includes('articles'))) bucketKey = 'grammarLevel1';
+      if (allHints.some((h) => /level\s*4/.test(h) || h.includes('level4'))) bucketKey = 'grammarLevel4';
+      else if (allHints.some((h) => /level\s*3/.test(h) || h.includes('level3'))) bucketKey = 'grammarLevel3';
+      else if (allHints.some((h) => /level\s*2/.test(h) || h.includes('level2'))) bucketKey = 'grammarLevel2';
+      else if (allHints.some((h) => /level\s*1/.test(h) || h.includes('level1'))) bucketKey = 'grammarLevel1';
+      else if (allHints.some((h) => h === 'a vs an' || h.includes('articles') || h.includes('a_vs_an'))) bucketKey = 'grammarLevel1';
 
       const bucket = byLevel[bucketKey];
       if (bucket) {
