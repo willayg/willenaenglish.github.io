@@ -50,7 +50,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
 
   // Modes (styleMode borrows Word Arcade accent colors)
   const modes = [
-    { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', showStars: false },
+    { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is'] },
     { mode: 'choose', title: 'Choose', svgPath: './assets/Images/icons/choose2.svg', styleMode: 'multi_choice', sessionMode: 'grammar_mode' },
     { mode: 'fill_gap', title: 'Fill the Gap', svgPath: './assets/Images/icons/fill.svg', styleMode: 'missing_letter', sessionMode: 'grammar_fill_gap' },
     { mode: 'unscramble', title: 'Unscramble', svgPath: './assets/Images/icons/unscramble.svg', styleMode: 'sentence', sessionMode: 'grammar_sentence_unscramble' }
@@ -288,8 +288,26 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           renderStarsInto(starEl, null);
           return;
         }
-        const key = canon(modeDef.sessionMode);
-        const pct = (key in bestByMode) ? bestByMode[key] : null;
+        const candidates = Array.isArray(modeDef.sessionMode) ? modeDef.sessionMode : [modeDef.sessionMode];
+        let pct = null;
+        candidates.forEach((modeName) => {
+          const key = canon(modeName);
+          if (!key) return;
+          if (key in bestByMode) {
+            const val = bestByMode[key];
+            if (typeof val === 'number') {
+              pct = pct == null ? val : Math.max(pct, val);
+            }
+          }
+        });
+        if (pct == null && modeDef.mode === 'lesson') {
+          Object.entries(bestByMode).forEach(([modeName, val]) => {
+            if (pct != null) return;
+            if (modeName.includes('lesson') && typeof val === 'number') {
+              pct = val;
+            }
+          });
+        }
         renderStarsInto(starEl, pct);
       });
     } catch (e) {

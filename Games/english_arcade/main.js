@@ -1391,6 +1391,7 @@ window.addEventListener('DOMContentLoaded', () => {
           'level3_progress',
           'level4_progress',
           'phonics_progress',
+          'grammar_level1_progress',
           'level_stars'
         ]);
         console.log('[WordArcade] Progress cache invalidated after session completion');

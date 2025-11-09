@@ -1,6 +1,8 @@
 // Grammar Lesson Runner – Articles (a vs. an)
 // Implements a 5-step, bilingual, kid-friendly lesson with an interactive sorting activity.
 
+import { startSession, endSession } from '../../../students/records.js';
+
 export async function runGrammarLesson(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
   const root = document.getElementById('gameArea');
@@ -67,6 +69,24 @@ export async function runGrammarLesson(ctx = {}) {
     if (Array.isArray(data)) items = data;
   } catch (e) {
     console.warn('[lesson] failed to load grammar items', e);
+  }
+
+  const sessionWords = items
+    .map((it) => (it && typeof it.word === 'string' ? it.word : null))
+    .filter(Boolean)
+    .slice(0, 25);
+
+  let sessionId = null;
+  let sessionClosed = false;
+  try {
+    sessionId = startSession({
+      mode: 'grammar_lesson',
+      wordList: sessionWords,
+      listName: grammarName || null,
+      meta: { category: 'grammar', file: grammarFile, lesson: grammarName || null },
+    });
+  } catch (err) {
+    console.debug('[GrammarLesson] startSession failed', err?.message);
   }
 
   // Language (step 1 will set this explicitly)
@@ -572,10 +592,33 @@ export async function runGrammarLesson(ctx = {}) {
     stepEl.appendChild(navWrap);
 
     // Optional: fire a session-ended event so star overlay can show
-    try {
-      const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 20, total: 20 } } });
-      window.dispatchEvent(ev);
-    } catch {}
+    if (!sessionClosed) {
+      sessionClosed = true;
+      try {
+        endSession(sessionId, {
+          mode: 'grammar_lesson',
+          summary: {
+            score: 1,
+            total: 1,
+            correct: 1,
+            pct: 100,
+            accuracy: 100,
+            category: 'grammar',
+            context: 'lesson',
+            grammarName: grammarName || null,
+          },
+          listName: grammarName || null,
+          wordList: sessionWords,
+        });
+      } catch (err) {
+        console.debug('[GrammarLesson] endSession failed', err?.message);
+      }
+
+      try {
+        const ev = new CustomEvent('wa:session-ended', { detail: { summary: { correct: 1, total: 1, category: 'grammar' } } });
+        window.dispatchEvent(ev);
+      } catch {}
+    }
   }
 
   // Root render

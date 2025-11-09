@@ -7,7 +7,7 @@ import { progressCache } from './progress-cache.js';
 const MODE_GROUPS = {
   general: ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'],
   phonics: ['listening', 'spelling', 'multi_choice', 'listen_and_spell'],
-  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_fill_gap', 'grammar_sentence_unscramble'],
+  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_fill_gap', 'grammar_sentence_unscramble'],
 };
 
 const CACHE_KEYS = {
@@ -16,6 +16,7 @@ const CACHE_KEYS = {
   level3: 'level3_progress',
   level4: 'level4_progress',
   phonics: 'phonics_progress',
+  grammarLevel1: 'grammar_level1_progress',
   stars: 'level_stars',
 };
 
@@ -41,6 +42,40 @@ function parseSummary(summary) {
   } catch {
     return null;
   }
+}
+
+function canonKey(value) {
+  if (value == null) return '';
+  const stripped = stripExt(norm(value));
+  if (!stripped) return '';
+  return stripped.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function buildGrammarKeys(value) {
+  const keys = new Set();
+  const pushForms = (raw) => {
+    const base = norm(raw);
+    if (!base) return;
+    const candidates = [base, stripExt(base)];
+    candidates.forEach((candidate) => {
+      if (!candidate) return;
+      const noSpace = candidate.replace(/\s+/g, '');
+      const underscored = candidate.replace(/\s+/g, '_');
+      [candidate, noSpace, underscored, stripExt(noSpace), stripExt(underscored)].forEach((form) => {
+        if (form) keys.add(form);
+      });
+    });
+  };
+
+  if (typeof value === 'string') {
+    pushForms(value);
+    if (value.includes('/')) pushForms(value.split('/').pop());
+    if (value.includes('\\')) pushForms(value.split('\\').pop());
+  } else {
+    pushForms(value);
+  }
+
+  return Array.from(keys).filter(Boolean);
 }
 
 function canonicalMode(raw) {
@@ -83,6 +118,18 @@ function collectSessionNames(session) {
     if (summary.list_name) names.push(summary.list_name);
     if (summary.listName) names.push(summary.listName);
     if (summary.listFile) names.push(summary.listFile);
+    if (summary.grammarName) names.push(summary.grammarName);
+    if (summary.grammar) names.push(summary.grammar);
+  }
+
+  let meta = session.meta || summary?.meta;
+  if (typeof meta === 'string') {
+    try { meta = JSON.parse(meta); } catch { meta = null; }
+  }
+  if (meta && typeof meta === 'object') {
+    ['grammarName', 'grammar', 'list', 'listName', 'file', 'name'].forEach((key) => {
+      if (meta[key]) names.push(meta[key]);
+    });
   }
   return names;
 }
@@ -111,6 +158,30 @@ function matchesLevelList(item, name) {
   return targets.includes(n);
 }
 
+function matchesGrammarList(item, name) {
+  if (!item) return false;
+  const targetKeys = new Set(buildGrammarKeys(name));
+  if (!targetKeys.size) return false;
+
+  const pushValues = [];
+  pushValues.push(item.label, item.file, item.id);
+  if (item.config && typeof item.config === 'object') {
+    pushValues.push(item.config.listName, item.config.lessonId, item.config.grammarName, item.config.lessonModule);
+  }
+  if (Array.isArray(item.aliases)) pushValues.push(...item.aliases);
+
+  const candidateKeys = new Set();
+  pushValues.forEach((value) => {
+    buildGrammarKeys(value).forEach((key) => candidateKeys.add(key));
+  });
+
+  if (!candidateKeys.size) return false;
+  for (const key of targetKeys) {
+    if (candidateKeys.has(key)) return true;
+  }
+  return false;
+}
+
 function computePercentages(lists, sessions, modeIds, matchFn) {
   return lists.map((item) => {
     const bestByMode = {};
@@ -121,10 +192,14 @@ function computePercentages(lists, sessions, modeIds, matchFn) {
       const summary = parseSummary(session.summary);
       const pct = extractPercent(session, summary);
       if (pct == null) return;
-      const mode = canonicalMode(session.mode);
-      if (!(mode in bestByMode) || bestByMode[mode] < pct) {
-        bestByMode[mode] = pct;
-      }
+      const canonical = canonicalMode(session.mode);
+      const raw = norm(session.mode);
+      [canonical, raw].forEach((mode) => {
+        if (!mode) return;
+        if (!(mode in bestByMode) || bestByMode[mode] < pct) {
+          bestByMode[mode] = pct;
+        }
+      });
     });
 
     let total = 0;
@@ -133,6 +208,61 @@ function computePercentages(lists, sessions, modeIds, matchFn) {
       total += typeof pct === 'number' ? pct : 0;
     });
     return Math.round(total / modeIds.length);
+  });
+}
+
+function isGrammarSession(session) {
+  const summary = parseSummary(session.summary);
+  const category = norm(summary?.category || session.category);
+  const mode = norm(session.mode);
+  if (category === 'grammar') return true;
+  if (mode && mode.includes('grammar')) return true;
+  return false;
+}
+
+function identifyGrammarBucket(mode) {
+  const m = norm(mode);
+  if (!m) return null;
+  if (m.includes('lesson')) return 'lesson';
+  if (m.includes('fill') && m.includes('gap')) return 'fill';
+  if (m.includes('unscramble')) return 'unscramble';
+  if (m.includes('sentence') && m.includes('grammar')) return 'unscramble';
+  if (m.includes('choose')) return 'choose';
+  if (m === 'grammar_mode') return 'choose';
+  if (m === 'grammar') return 'choose';
+  return null;
+}
+
+function computeGrammarLevelProgress(lists, sessions) {
+  return lists.map((item) => {
+    const best = {
+      lesson: null,
+      choose: null,
+      fill: null,
+      unscramble: null,
+    };
+
+    sessions.forEach((session) => {
+      if (!isGrammarSession(session)) return;
+      const names = collectSessionNames(session) || [];
+      if (!names.some((name) => matchesGrammarList(item, name))) return;
+      const bucket = identifyGrammarBucket(session.mode);
+      if (!bucket) return;
+      const summary = parseSummary(session.summary);
+      const pct = extractPercent(session, summary);
+      if (pct == null) return;
+      if (best[bucket] == null || best[bucket] < pct) {
+        best[bucket] = pct;
+      }
+    });
+
+    const total =
+      (best.lesson ?? 0) * 0.25 +
+      (best.choose ?? 0) * 0.25 +
+      (best.fill ?? 0) * 0.25 +
+      (best.unscramble ?? 0) * 0.25;
+
+    return Math.round(total);
   });
 }
 
@@ -325,6 +455,14 @@ export async function loadLevel4Progress(lists) {
 
 export async function loadPhonicsProgress(lists) {
   return loadProgress(CACHE_KEYS.phonics, lists, 'phonics', matchesLevelList);
+}
+
+export async function loadGrammarLevelProgress(lists) {
+  return progressCache.fetchWithCache(CACHE_KEYS.grammarLevel1, async () => {
+    const sessions = await fetchAllSessions();
+    const values = computeGrammarLevelProgress(lists, sessions);
+    return ensureProgressPayload(values);
+  });
 }
 
 export async function loadStarCounts() {
