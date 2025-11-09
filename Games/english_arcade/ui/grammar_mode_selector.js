@@ -50,7 +50,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
 
   // Modes (styleMode borrows Word Arcade accent colors)
   const modes = [
-    { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is'] },
+    { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that'] },
     { mode: 'choose', title: 'Choose', svgPath: './assets/Images/icons/choose2.svg', styleMode: 'multi_choice', sessionMode: 'grammar_mode' },
     { mode: 'fill_gap', title: 'Fill the Gap', svgPath: './assets/Images/icons/fill.svg', styleMode: 'missing_letter', sessionMode: 'grammar_fill_gap' },
     { mode: 'unscramble', title: 'Unscramble', svgPath: './assets/Images/icons/unscramble.svg', styleMode: 'sentence', sessionMode: 'grammar_sentence_unscramble' }

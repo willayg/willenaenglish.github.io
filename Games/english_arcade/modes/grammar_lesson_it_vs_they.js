@@ -359,6 +359,17 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     checkBtn.style.marginTop = '12px';
     stepEl.appendChild(checkBtn);
 
+    const nav = document.createElement('div');
+    nav.className = 'lesson-nav';
+    nav.style.marginTop = '14px';
+    const backBtn = button((lang === 'ko') ? '뒤로' : 'Back');
+    backBtn.style.background = '#fff';
+    backBtn.style.color = '#ff6fb0';
+    backBtn.style.borderColor = '#ff6fb0';
+    backBtn.onclick = () => { if (onBack) onBack(); };
+    nav.appendChild(backBtn);
+    stepEl.appendChild(nav);
+
     let continueBtn = null;
     checkBtn.onclick = () => {
       stepEl.querySelectorAll('.chip').forEach(c => c.classList.remove('good', 'bad'));
@@ -383,9 +394,11 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
         if (playSFX) playSFX('correct');
         if (!continueBtn) {
           continueBtn = button((lang === 'ko') ? '다음 단계로' : 'Next');
-          continueBtn.style.marginTop = '12px';
+          continueBtn.style.background = '#fff';
+          continueBtn.style.color = '#ff6fb0';
+          continueBtn.style.borderColor = '#ff6fb0';
           continueBtn.onclick = () => nextStep();
-          stepEl.appendChild(continueBtn);
+          nav.appendChild(continueBtn);
         }
         if (inlineToast) inlineToast((lang === 'ko') ? "완벽해요! 'it' (그것)은 하나, 'they' (그것들/그 사람들)는 여러 개!" : 'Awesome! "it" is for one, "they" is for more than one!');
       } else {

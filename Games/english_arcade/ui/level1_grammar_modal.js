@@ -73,6 +73,20 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       }
     },
     {
+      id: 'this_vs_that',
+      label: 'This vs That',
+      emoji: '📍',
+      file: 'data/grammar/level1/this_vs_that.json',
+      aliases: ['this_vs_that', 'this vs that'],
+      config: {
+        lessonModule: 'grammar_lesson_this_that',
+        lessonId: 'this_vs_that',
+        answerChoices: ['this', 'that'],
+        bucketLabels: { this: 'this', that: 'that' },
+        ruleHint: "Use this for near objects (이것) and that for far objects (저것)."
+      }
+    },
+    {
       id: 'am_are_is',
       label: 'Am vs Are vs Is',
       emoji: '🗣️',

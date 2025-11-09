@@ -7,7 +7,7 @@ import { progressCache } from './progress-cache.js';
 const MODE_GROUPS = {
   general: ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'],
   phonics: ['listening', 'spelling', 'multi_choice', 'listen_and_spell'],
-  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_fill_gap', 'grammar_sentence_unscramble'],
+  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_fill_gap', 'grammar_sentence_unscramble'],
 };
 
 const CACHE_KEYS = {
