@@ -1,7 +1,7 @@
 // Grammar Lesson Runner – It vs. They
 // Mirrors the article lesson structure while teaching singular vs plural pronouns.
 
-import { startSession, endSession } from '../../../students/records.js';
+import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonItVsThey(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;

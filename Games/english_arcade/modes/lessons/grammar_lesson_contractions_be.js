@@ -1,7 +1,7 @@
 // Grammar Lesson Runner – Contractions with the Be verb
 // Simple multi-step lesson with sliders that show how words combine into contractions.
 
-import { startSession, endSession } from '../../../students/records.js';
+import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonContractionsBe(ctx = {}) {
   const { grammarFile, grammarName } = ctx;

@@ -1,1 +1,12 @@
+# Don't redirect static assets - let them be served normally
+/Games/*  200
+/students/*  200
+/Assets/*  200
+/js/*  200
+/*.js  200
+/*.css  200
+/*.json  200
+/*.html  200
+
+# SPA fallback for everything else
 /*    /index.html   200

@@ -1,7 +1,7 @@
 // Grammar Lesson Runner – Articles (a vs. an)
 // Implements a 5-step, bilingual, kid-friendly lesson with an interactive sorting activity.
 
-import { startSession, endSession } from '../../../students/records.js';
+import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLesson(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
