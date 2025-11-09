@@ -5,6 +5,152 @@
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
+const AUDIO_ENDPOINTS = [
+  '/.netlify/functions/get_audio_urls',
+  'http://localhost:9000/.netlify/functions/get_audio_urls',
+  'http://127.0.0.1:9000/.netlify/functions/get_audio_urls',
+  'http://localhost:8888/.netlify/functions/get_audio_urls',
+  'http://127.0.0.1:8888/.netlify/functions/get_audio_urls'
+];
+
+const sentenceAudioCache = new Map();
+let activeSentenceAudio = null;
+
+function normalizeForGrammarKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['"`]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function getGrammarField(item, key) {
+  if (!item) return '';
+  if (item[key]) return item[key];
+  if (item.grammarMeta && item.grammarMeta[key]) return item.grammarMeta[key];
+  return '';
+}
+
+function buildGrammarAudioCandidates(item) {
+  const candidates = [];
+  const seen = new Set();
+  const add = (key) => {
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    candidates.push(key);
+  };
+  const wordBase = normalizeForGrammarKey(getGrammarField(item, 'word'));
+  const articleBase = normalizeForGrammarKey(getGrammarField(item, 'article'));
+  const idBase = normalizeForGrammarKey(getGrammarField(item, 'id'));
+
+  if (wordBase && articleBase) add(`${wordBase}_${articleBase}_grammar`);
+  if (idBase && idBase !== wordBase) add(`${idBase}_grammar`);
+  if (wordBase) add(`${wordBase}_grammar`);
+
+  return candidates;
+}
+
+async function hydrateGrammarAudio(items) {
+  if (!Array.isArray(items) || !items.length) return;
+  const candidateMap = new Map();
+  const allCandidates = new Set();
+
+  items.forEach((item) => {
+    const candidates = buildGrammarAudioCandidates(item);
+    if (!candidates.length) return;
+    candidateMap.set(item, candidates);
+    candidates.forEach((key) => allCandidates.add(key));
+  });
+
+  if (!candidateMap.size) return;
+
+  const words = Array.from(allCandidates);
+  const isSecureOrigin = typeof window !== 'undefined' && window.location && window.location.protocol === 'https:';
+  const endpoints = AUDIO_ENDPOINTS.filter((url) => {
+    if (!isSecureOrigin) return true;
+    return !/^http:\/\//i.test(url);
+  });
+
+  let results = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const init = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ words })
+      };
+      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+        init.signal = AbortSignal.timeout(10000);
+      }
+      const res = await fetch(endpoint, init);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data && data.results && typeof data.results === 'object') {
+        results = data.results;
+        break;
+      }
+    } catch (err) {
+      console.debug('[GrammarFillGap] audio lookup error', endpoint, err?.message);
+    }
+  }
+
+  if (!results) return;
+
+  candidateMap.forEach((candidates, item) => {
+    for (const key of candidates) {
+      const lower = key?.toLowerCase?.();
+      const variants = [key, lower, `${key}.mp3`, lower ? `${lower}.mp3` : null];
+      const info = variants
+        .map((variant) => (variant ? results[variant] : null))
+        .find((record) => record && record.exists && record.url);
+      if (info) {
+        item.sentenceAudioUrl = info.url;
+        item.audio_key = key;
+        break;
+      }
+    }
+  });
+}
+
+function getSentenceText(item) {
+  return String(item?.exampleSentence || item?.example || item?.sentence || '').trim();
+}
+
+async function playSentenceClip(item, playTTS) {
+  if (!item) return;
+  const url = item.sentenceAudioUrl;
+  const sentence = getSentenceText(item);
+
+  if (activeSentenceAudio) {
+    try { activeSentenceAudio.pause(); } catch {}
+    try { activeSentenceAudio.currentTime = 0; } catch {}
+    activeSentenceAudio = null;
+  }
+
+  if (url) {
+    try {
+      let audio = sentenceAudioCache.get(url);
+      if (!audio) {
+        audio = new Audio(url);
+        audio.preload = 'auto';
+        sentenceAudioCache.set(url, audio);
+      }
+      activeSentenceAudio = audio;
+      audio.currentTime = 0;
+      await audio.play();
+      return;
+    } catch (err) {
+      console.debug('[GrammarFillGap] sentence audio play failed', err?.message);
+    }
+  }
+
+  if (typeof playTTS === 'function' && sentence) {
+    try { playTTS(sentence); } catch {}
+  }
+}
+
 let stylesInjected = false;
 function ensureStyles() {
   if (stylesInjected) return;
@@ -108,6 +254,7 @@ export async function runGrammarFillGapMode(ctx) {
     grammarFile,
     grammarName,
     grammarConfig,
+    playTTS,
     playSFX,
     inlineToast,
     showOpeningButtons,
@@ -159,6 +306,12 @@ export async function runGrammarFillGapMode(ctx) {
     && answerChoices.includes('that');
 
   const deck = shuffle(usable).slice(0, 15);
+
+  try {
+    await hydrateGrammarAudio(deck);
+  } catch (err) {
+    console.debug('[GrammarFillGap] audio hydrate failed', err?.message);
+  }
   const sessionWords = deck.map((item) => item.word);
 
   const updateProgressBar = (show, value = 0, max = 0) => {
@@ -384,12 +537,14 @@ export async function runGrammarFillGapMode(ctx) {
         console.debug('[GrammarFillGap] logAttempt failed', err?.message);
       }
 
+  playSentenceClip(item, playTTS).catch(() => {});
+
       clearAutoNext();
       autoNextTimer = setTimeout(() => {
         if (sessionEnded) return;
         currentIndex += 1;
         renderQuestion();
-      }, correct ? 1200 : 1700);
+      }, correct ? 2600 : 3400);
     };
 
     optionButtons.forEach((btn) => {

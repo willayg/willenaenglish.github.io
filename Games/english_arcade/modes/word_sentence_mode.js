@@ -100,7 +100,8 @@ async function enrichSentenceAudioIDAware(items){
     .replace(/[^a-z0-9_\-]/g,'');
   // 1) Use explicit audio_key when absolute or build with base
   items.forEach(it=>{
-    if(!it || !it.audio_key) return;
+    if(!it || it.sentenceAudioUrl) return;
+    if(!it.audio_key) return;
     const key = String(it.audio_key).trim();
     if(/^https?:/i.test(key)){
       it.sentenceAudioUrl = key; return;
