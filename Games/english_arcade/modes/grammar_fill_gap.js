@@ -4,6 +4,7 @@
 // wa:session-ended event so stars/upgrades refresh automatically.
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { buildPrepositionScene, isInOnUnderMode } from './grammar_prepositions_data.js';
 
 const AUDIO_ENDPOINTS = [
   '/.netlify/functions/get_audio_urls',
@@ -349,6 +350,8 @@ export async function runGrammarFillGapMode(ctx) {
     && answerChoices.includes('these')
     && answerChoices.includes('those');
 
+  const inOnUnderMode = isInOnUnderMode(answerChoices);
+
   const hasProximityMode = isThisThatMode || isTheseThooseMode;
 
   const isContractionMode = Array.isArray(answerChoices)
@@ -520,12 +523,14 @@ export async function runGrammarFillGapMode(ctx) {
 
     if (hasProximityMode) {
       emojiEl.innerHTML = buildProximityScene(item.article, item.emoji);
+    } else if (inOnUnderMode) {
+      emojiEl.innerHTML = buildPrepositionScene(item.article, item.emoji, item.word);
     } else {
       emojiEl.textContent = item.emoji || '🧠';
     }
     wordEl.textContent = item.word || '';
     sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
-    hintEl.textContent = hasProximityMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
+    hintEl.textContent = hasProximityMode || inOnUnderMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
     setReveal('');
 
     // For contractions, dynamically populate options

@@ -39,9 +39,13 @@ function buildGrammarAudioCandidates(item) {
   const wordBase = normalizeForGrammarKey(getGrammarField(item, 'word'));
   const articleBase = normalizeForGrammarKey(getGrammarField(item, 'article'));
   const idBase = normalizeForGrammarKey(getGrammarField(item, 'id'));
-
+  
+  // Fix: Try sentence-specific audio first (using id which maps to sentence)
+  if (idBase) add(`${idBase}_grammar`);
+  if (idBase && articleBase) add(`${idBase}_${articleBase}_grammar`);
+  
+  // Fallback: word + article combination
   if (wordBase && articleBase) add(`${wordBase}_${articleBase}_grammar`);
-  if (idBase && idBase !== wordBase) add(`${idBase}_grammar`);
   if (wordBase) add(`${wordBase}_grammar`);
   return candidates;
 }
