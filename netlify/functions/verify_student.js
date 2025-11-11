@@ -4,7 +4,7 @@
  * Verifies a student's identity by matching provided information
  * against the profiles table.
  * 
- * Expects POST body: { korean_name, name, grade, class }
+ * Expects POST body: { korean_name, name, auth_code }
  * Returns: { success: true, student: { id, username } } or error
  */
 
@@ -49,16 +49,36 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body);
-    console.log('Received verification request:', body);
-    
-    const { korean_name, name, grade, class: className } = body;
+    const { korean_name, name, auth_code } = body;
 
-    if (!korean_name || !name || !grade || !className) {
-      console.log('Missing fields:', { korean_name: !!korean_name, name: !!name, grade: !!grade, className: !!className });
+    if (!korean_name || !name || !auth_code) {
+      console.log('Missing fields:', { korean_name: !!korean_name, name: !!name, auth_code: !!auth_code });
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ success: false, error: 'Missing required fields' })
+      };
+    }
+
+    const koreanNameValue = String(korean_name).trim();
+    const englishNameValue = String(name).trim();
+
+  console.log('Received verification request:', { korean_name: koreanNameValue, name: englishNameValue });
+
+    if (!koreanNameValue || !englishNameValue) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Missing required fields' })
+      };
+    }
+
+    const normalizedAuthCode = String(auth_code).replace(/\D/g, '').slice(-4);
+    if (normalizedAuthCode.length !== 4) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Authentication code must be 4 digits.' })
       };
     }
 
@@ -86,13 +106,10 @@ exports.handler = async (event) => {
     // Use case-insensitive matching with ilike for better UX
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, email, name, korean_name, grade, class, role')
-      .ilike('korean_name', korean_name)
-      .ilike('name', name)
-      .eq('grade', grade)
-      .ilike('class', className)
-      .eq('role', 'student') // Only match students, not teachers
-      .maybeSingle(); // Use maybeSingle instead of single to avoid throwing on no match
+  .select('id, username, email, name, korean_name, phone, role')
+  .ilike('korean_name', koreanNameValue)
+  .ilike('name', englishNameValue)
+      .eq('role', 'student');
 
     if (error) {
       console.error('Database error:', error);
@@ -106,18 +123,24 @@ exports.handler = async (event) => {
       };
     }
 
-    if (!data) {
-      console.log('Student not found with criteria:', { korean_name, name, grade, className });
-      
-      // Debug: try to find partial matches to help troubleshoot
-      const { data: debugData } = await supabase
-        .from('profiles')
-        .select('name, korean_name, grade, class, role')
-        .eq('role', 'student')
-        .limit(5);
-      
-      console.log('Sample students in database:', debugData);
-      
+    const records = Array.isArray(data) ? data : (data ? [data] : []);
+    const match = records.find((row) => {
+      if (!row || !row.phone) return false;
+      const phoneDigits = String(row.phone).replace(/\D/g, '');
+      if (phoneDigits.length < 4) return false;
+      return phoneDigits.slice(-4) === normalizedAuthCode;
+    });
+
+    const hadNameMatches = records.length > 0;
+    const hasPhoneData = records.some((row) => row && row.phone);
+
+    if (!match) {
+      console.log('Student not found with provided info:', {
+        korean_name: koreanNameValue,
+        name: englishNameValue,
+        matchedOnName: hadNameMatches,
+        anyPhonePresent: hasPhoneData
+      });
       return {
         statusCode: 404,
         headers,
@@ -128,6 +151,13 @@ exports.handler = async (event) => {
       };
     }
 
+    if (records.length > 1) {
+      console.log('Multiple records matched names. Selected first phone match.', {
+        totalMatches: records.length,
+        matchedId: match.id
+      });
+    }
+
     // Student found
     return {
       statusCode: 200,
@@ -135,11 +165,11 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         student: {
-          id: data.id,
-          username: data.username,
-          email: data.email,
-          name: data.name,
-          korean_name: data.korean_name
+          id: match.id,
+          username: match.username,
+          email: match.email,
+          name: match.name,
+          korean_name: match.korean_name
         }
       })
     };

@@ -57,7 +57,7 @@ exports.handler = async (event) => {
     // Try to get students with the role 'student'
     const { data: students, error: studentsError } = await supabase
       .from('profiles')
-      .select('id, username, name, korean_name, grade, class, role')
+      .select('id, username, name, korean_name, phone, grade, class, role')
       .eq('role', 'student')
       .limit(3);
 
@@ -76,21 +76,29 @@ exports.handler = async (event) => {
 
     // If body has search criteria, try to find match
     let matchResult = null;
-    if (body.korean_name && body.name && body.grade && body.class) {
-      const { data: match, error: matchError } = await supabase
+    const normalizedAuthCode = body.auth_code ? String(body.auth_code).replace(/\D/g, '').slice(-4) : null;
+
+    if (body.korean_name && body.name && normalizedAuthCode && normalizedAuthCode.length === 4) {
+      const { data: matchData, error: matchError } = await supabase
         .from('profiles')
-        .select('id, username, name, korean_name, grade, class, role')
+        .select('id, username, name, korean_name, phone, role')
         .ilike('korean_name', body.korean_name)
         .ilike('name', body.name)
-        .eq('grade', body.grade)
-        .ilike('class', body.class)
-        .eq('role', 'student')
-        .maybeSingle();
+        .eq('role', 'student');
+
+      const rows = Array.isArray(matchData) ? matchData : (matchData ? [matchData] : []);
+      const matched = rows.find((row) => {
+        if (!row || !row.phone) return false;
+        const phoneDigits = String(row.phone).replace(/\D/g, '');
+        if (phoneDigits.length < 4) return false;
+        return phoneDigits.slice(-4) === normalizedAuthCode;
+      });
 
       matchResult = {
-        found: !!match,
+        providedAuthCode: normalizedAuthCode,
+        found: !!matched,
         error: matchError ? matchError.message : null,
-        match: match || null
+        match: matched || null
       };
     }
 
@@ -103,6 +111,7 @@ exports.handler = async (event) => {
         sampleStudents: students,
         totalSampleStudents: students ? students.length : 0,
         matchResult: matchResult,
+        hasPhoneColumn: students && students.length > 0 ? ('phone' in students[0]) : 'unknown',
         hasGradeColumn: students && students.length > 0 ? ('grade' in students[0]) : 'unknown'
       })
     };
