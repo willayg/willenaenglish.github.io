@@ -110,12 +110,21 @@ export function showGrammarChartModal({ grammarFile, grammarName, grammarData, o
 
 function buildGrammarChart(grammarName, grammarData, isKorean = false) {
   const name = (grammarName || '').toLowerCase();
+  const hasContractions = Array.isArray(grammarData) && grammarData.some(it => it && (it.contraction || it.ending));
   
   // Determine chart type
-  if (name.includes('articles') || name.includes('a vs an')) {
+  if (hasContractions) {
+    return buildBeContractionsChart(grammarData, isKorean, grammarName);
+  } else if (name.includes('articles') || name.includes('a vs an')) {
     return buildArticlesChart(grammarData, isKorean);
+  } else if (name.includes('want') || name.includes('wants') || name.includes('want vs wants') || name.includes('want vs wants')) {
+    return buildWantWantsChart(grammarData, isKorean, grammarName);
+  } else if (name.includes('like') || name.includes('likes') || name.includes('like vs likes')) {
+    return buildLikeLikesChart(grammarData, isKorean, grammarName);
   } else if (name.includes('this') || name.includes('that') || name.includes('these') || name.includes('those')) {
     return buildDemonstrativesChart(grammarName, grammarData, isKorean);
+  } else if (name.includes('in_on_under') || name.includes('in vs on') || name.includes('in vs on vs under') || /\b(in|on|under)\b/.test(name)) {
+    return buildInOnUnderChart(grammarData, isKorean, grammarName);
   } else if (name.includes('am') || name.includes('are') || name.includes('is')) {
     return buildBeVerbChart(grammarData, isKorean);
   } else if (name.includes('it') || name.includes('they')) {
@@ -128,6 +137,116 @@ function buildGrammarChart(grammarName, grammarData, isKorean = false) {
     // Default generic chart
     return buildGenericChart(grammarData, isKorean);
   }
+}
+
+function buildWantWantsChart(data, isKorean = false, grammarName = '') {
+  const wantExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'want').slice(0, 4) : [];
+  const wantsExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'wants').slice(0, 4) : [];
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">규칙</h3>
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;"><strong>want</strong>는 I, you, we, they, 그리고 복수 명사와 함께 사용됩니다.</p>
+          <p style="margin:0;"><strong>wants</strong>는 he, she, it, 또는 단수 명사와 함께 사용됩니다.</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">want (복수/I/you)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${wantExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">wants (단수/he/she/it)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${wantsExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="margin-bottom:18px;">
+      <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">Rule</h3>
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;"><strong>want</strong> is used with I, you, we, they, or plural nouns.</p>
+        <p style="margin:0;"><strong>wants</strong> is used with he, she, it, or singular nouns.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">want (I/you/we/they)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${wantExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanation || ''}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">wants (he/she/it)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${wantsExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanation || ''}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function buildLikeLikesChart(data, isKorean = false, grammarName = '') {
+  const likeExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'like').slice(0, 4) : [];
+  const likesExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'likes').slice(0, 4) : [];
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">규칙</h3>
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;"><strong>like</strong>는 I, you, we, they, 그리고 복수 명사와 함께 사용됩니다.</p>
+          <p style="margin:0;"><strong>likes</strong>는 he, she, it, 또는 단수 명사와 함께 사용됩니다.</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">like (복수/I/you)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${likeExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">likes (단수/he/she/it)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${likesExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="margin-bottom:18px;">
+      <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">Rule</h3>
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;"><strong>like</strong> is used with I, you, we, they, or plural nouns.</p>
+        <p style="margin:0;"><strong>likes</strong> is used with he, she, it, or singular nouns.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">like (I/you/we/they)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${likeExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanation || ''}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">likes (he/she/it)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${likesExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''} — ${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#666;">${item.explanation || ''}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
 }
 
 function buildArticlesChart(data, isKorean = false) {
@@ -275,6 +394,71 @@ function buildBeVerbChart(data, isKorean = false) {
   `;
 }
 
+function buildBeContractionsChart(data, isKorean = false, grammarName = '') {
+  if (!data || !data.length) return buildGenericChart(data, isKorean);
+
+  // Normalize entries and ensure we have pronoun, fullForm, contraction and examples
+  const entries = data.map(item => ({
+    pronoun: item.pronoun || item.word || '',
+    fullForm: `${item.pronoun || item.word || ''} ${item.fullForm || item.article || ''}`.trim(),
+    contraction: item.contraction || item.ending || '',
+    example: item.exampleSentence || item.example || '',
+    exampleKo: item.exampleSentenceKo || item.exampleKo || ''
+  }));
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">규칙</h3>
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 6px 0;">주어와 be 동사를 결합해 줄여 말할 때 쓰는 표현이에요. 예: <strong>I am → I\'m</strong></p>
+          <p style="margin:0;">단축형은 말할 때 자주 쓰이며, 공식 문서에서는 약간 덜 사용될 수 있어요.</p>
+        </div>
+      </div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+          <div style="background:#e6f7f8;padding:8px 12px;border-radius:8px;border:2px solid #40d4de;font-weight:700;color:#19777e;">${grammarName || "I am → I'm"}</div>
+          <div style="font-size:0.93em;color:#666;">주어 + be 동사의 줄임말을 연습해요: 'm, 're, 's</div>
+        </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+        ${entries.map(e => `
+          <div style="background:#fff; border-left:4px solid #27c5ca;border-radius:8px;padding:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
+              <strong style="color:#19777e;">${e.pronoun}</strong>
+              <span style="font-size:0.95em;color:#666;">${e.fullForm} → <span style="background:#e6f7f8;padding:3px 6px;border-radius:4px;color:#19777e;">${e.contraction}</span></span>
+            </div>
+            <div style="font-size:0.9em;color:#444;">${e.exampleKo || e.example || ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  return `
+    <div style="margin-bottom:18px;">
+      <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">Rule</h3>
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 6px 0;">Contractions combine a pronoun and the verb "be". For example: <strong>I am → I'm</strong>.</p>
+        <p style="margin:0;">They are common in speech and informal writing. Use the correct contraction to match the subject.</p>
+      </div>
+    </div>
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <div style="background:#e6f7f8;padding:8px 12px;border-radius:8px;border:2px solid #40d4de;font-weight:700;color:#19777e;">${grammarName || "I am → I'm"}</div>
+        <div style="font-size:0.93em;color:#666;">Try: choose the correct contraction to match the subject and meaning.</div>
+      </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+      ${entries.map(e => `
+        <div style="background:#fff;border-left:4px solid #27c5ca;border-radius:8px;padding:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
+            <strong style="color:#19777e;">${e.pronoun}</strong>
+            <span style="font-size:0.95em;color:#444;">${e.fullForm} → <span style="background:#e6f7f8;padding:3px 6px;border-radius:4px;color:#19777e;font-weight:700;">${e.contraction}</span></span>
+          </div>
+          <div style="font-size:0.9em;color:#666;">${e.example || ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 function buildDemonstrativesChart(grammarName, data, isKorean = false) {
   const name = (grammarName || '').toLowerCase();
   const isPluralDemo = /\b(these|those)\b/i.test(name);
@@ -340,6 +524,78 @@ function buildDemonstrativesChart(grammarName, data, isKorean = false) {
   <p style="font-size:0.85em;color:#666;margin:0 0 10px 0;font-style:italic;">${isPluralDemo ? 'far away (plural)' : 'far away'}</p>
         <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
           ${rightExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.9em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${item.emoji || '•'}</span><span>${item.exampleSentence || (isPluralDemo ? 'Those' : 'That')}</span></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function buildInOnUnderChart(data, isKorean = false, grammarName = '') {
+  const inExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'in').slice(0, 2) : [];
+  const onExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'on').slice(0, 2) : [];
+  const underExamples = data ? data.filter(item => (item.article || '').toLowerCase() === 'under').slice(0, 2) : [];
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">규칙</h3>
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;">위치 전치사: 간단한 번역과 예제만 보여줍니다.</p>
+          <p style="margin:0 0 4px 0;"><strong>in</strong> — 안에</p>
+          <p style="margin:0 0 4px 0;"><strong>on</strong> — 위에</p>
+          <p style="margin:0;"><strong>under</strong> — 아래에</p>
+        </div>
+      </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">in — 안에</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${inExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:0.95em;display:flex;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''}</div><div style="font-size:0.9em;color:#666;">${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#777;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">on — 위에</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${onExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.95em;display:flex;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''}</div><div style="font-size:0.9em;color:#666;">${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#777;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ff85d0;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">under — 아래에</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${underExamples.map(item => `<li style="padding:8px;background:#ffe6f5;border-left:3px solid #ff85d0;border-radius:4px;font-size:0.95em;display:flex;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''}</div><div style="font-size:0.9em;color:#666;">${item.exampleSentenceKo || item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#777;">${item.explanationKo || item.explanation || ''}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+  <div style="margin-bottom:18px;">
+      <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">Rule</h3>
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+  <p style="margin:0 0 8px 0;">Prepositions that describe position.</p>
+  <p style="margin:0 0 4px 0;"><strong>in</strong> - inside a space</p>
+  <p style="margin:0 0 4px 0;"><strong>on</strong> - on a surface</p>
+  <p style="margin:0;"><strong>under</strong> - below an object</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">in</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${inExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:0.95em;display:flex;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''}</div><div style="font-size:0.9em;color:#666;">${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#777;">${item.explanation || ''}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">on</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${onExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:0.95em;display:flex;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''}</div><div style="font-size:0.9em;color:#666;">${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#777;">${item.explanation || ''}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ff85d0;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">under</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${underExamples.map(item => `<li style="padding:8px;background:#ffe6f5;border-left:3px solid #ff85d0;border-radius:4px;font-size:0.95em;display:flex;gap:8px;"><span style="font-size:1.2em;">${item.emoji || '•'}</span><div><div style="font-weight:700;color:#19777e;">${item.word || ''}</div><div style="font-size:0.9em;color:#666;">${item.exampleSentence || ''}</div><div style="font-size:0.85em;color:#777;">${item.explanation || ''}</div></div></li>`).join('')}
         </ul>
       </div>
     </div>
