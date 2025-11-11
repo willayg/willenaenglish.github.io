@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2025-11-09T16:33:05.674Z",
+  "generatedAt": "2025-11-11T14:46:25.370Z",
   "summary": {
-    "considered": 72,
-    "generated": 72,
+    "considered": 8,
+    "generated": 8,
     "skippedExisting": 0,
     "errors": 0,
     "dryRun": false,
@@ -10,580 +10,68 @@
   },
   "items": [
     {
-      "key": "like_animals_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "You",
-      "entryId": "like_animals",
-      "article": "like",
-      "text": "You like animals very much."
-    },
-    {
-      "key": "like_apples_grammar",
-      "file": "level1\\like_vs_likes.json",
+      "key": "am_happy_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "I",
-      "entryId": "like_apples",
-      "article": "like",
-      "text": "I like fresh apples."
+      "entryId": "am_happy",
+      "article": "am",
+      "text": "I am happy."
     },
     {
-      "key": "like_beach_grammar",
-      "file": "level1\\like_vs_likes.json",
+      "key": "are_in_class_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "We",
-      "entryId": "like_beach",
-      "article": "like",
-      "text": "We like going to the beach."
+      "entryId": "are_in_class",
+      "article": "are",
+      "text": "We are in class."
     },
     {
-      "key": "like_chocolate_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "We",
-      "entryId": "like_chocolate",
-      "article": "like",
-      "text": "We like chocolate ice cream."
-    },
-    {
-      "key": "like_climbing_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The cats",
-      "entryId": "like_climbing",
-      "article": "like",
-      "text": "The cats like eating fish."
-    },
-    {
-      "key": "like_computers_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "They",
-      "entryId": "like_computers",
-      "article": "like",
-      "text": "They like using computers."
-    },
-    {
-      "key": "like_cookies_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The kids",
-      "entryId": "like_cookies",
-      "article": "like",
-      "text": "The kids like homemade cookies."
-    },
-    {
-      "key": "like_games_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "Children",
-      "entryId": "like_games",
-      "article": "like",
-      "text": "Children like playing games outside."
-    },
-    {
-      "key": "like_gardening_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "My parents",
-      "entryId": "like_gardening",
-      "article": "like",
-      "text": "My parents like gardening together."
-    },
-    {
-      "key": "like_movies_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "We",
-      "entryId": "like_movies",
-      "article": "like",
-      "text": "We like action movies on weekends."
-    },
-    {
-      "key": "like_music_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "I",
-      "entryId": "like_music",
-      "article": "like",
-      "text": "I like music."
-    },
-    {
-      "key": "like_painting_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "They",
-      "entryId": "like_painting",
-      "article": "like",
-      "text": "They like drawing."
-    },
-    {
-      "key": "like_pizza_grammar",
-      "file": "level1\\like_vs_likes.json",
+      "key": "are_my_friend_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "You",
-      "entryId": "like_pizza",
-      "article": "like",
-      "text": "You like pizza, don't you?"
+      "entryId": "are_my_friend",
+      "article": "are",
+      "text": "You are my friend."
     },
     {
-      "key": "like_reading_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "You",
-      "entryId": "like_reading",
-      "article": "like",
-      "text": "You like reading books."
-    },
-    {
-      "key": "like_running_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The dogs",
-      "entryId": "like_running",
-      "article": "like",
-      "text": "The dogs like running in the park."
-    },
-    {
-      "key": "like_science_grammar",
-      "file": "level1\\like_vs_likes.json",
+      "key": "are_playing_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "They",
-      "entryId": "like_science",
-      "article": "like",
-      "text": "They like science experiments."
+      "entryId": "are_playing",
+      "article": "are",
+      "text": "They are playing basketball."
     },
     {
-      "key": "like_sports_6840_like_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The students",
-      "entryId": "like_sports",
-      "article": "like",
-      "text": "The students like different sports."
-    },
-    {
-      "key": "like_sports_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "I",
-      "entryId": "like_sports",
-      "article": "like",
-      "text": "I like many kinds of sports."
-    },
-    {
-      "key": "like_team_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "Emma and Noah",
-      "entryId": "like_team",
-      "article": "like",
-      "text": "Emma and Noah like working together."
-    },
-    {
-      "key": "likes_adventure_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "He",
-      "entryId": "likes_adventure",
-      "article": "likes",
-      "text": "He likes soccer."
-    },
-    {
-      "key": "likes_being_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "This car",
-      "entryId": "likes_being",
-      "article": "likes",
-      "text": "This car likes going fast."
-    },
-    {
-      "key": "likes_birdseed_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The bird",
-      "entryId": "likes_birdseed",
-      "article": "likes",
-      "text": "The bird likes birdseed and fresh water."
-    },
-    {
-      "key": "likes_books_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "My friend",
-      "entryId": "likes_books",
-      "article": "likes",
-      "text": "My friend likes mystery books."
-    },
-    {
-      "key": "likes_coffee_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "He",
-      "entryId": "likes_coffee",
-      "article": "likes",
-      "text": "He likes coffee every morning."
-    },
-    {
-      "key": "likes_cooking_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "He",
-      "entryId": "likes_cooking",
-      "article": "likes",
-      "text": "He likes cooking."
-    },
-    {
-      "key": "likes_dancing_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "She",
-      "entryId": "likes_dancing",
-      "article": "likes",
-      "text": "She likes dancing."
-    },
-    {
-      "key": "likes_fetch_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The dog",
-      "entryId": "likes_fetch",
-      "article": "likes",
-      "text": "The dog likes playing fetch."
-    },
-    {
-      "key": "likes_flowers_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "She",
-      "entryId": "likes_flowers",
-      "article": "likes",
-      "text": "She likes roses and tulips."
-    },
-    {
-      "key": "likes_helping_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The teacher",
-      "entryId": "likes_helping",
-      "article": "likes",
-      "text": "The teacher likes helping students learn."
-    },
-    {
-      "key": "likes_napping_grammar",
-      "file": "level1\\like_vs_likes.json",
+      "key": "is_cat_sleepy_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "The cat",
-      "entryId": "likes_napping",
-      "article": "likes",
-      "text": "The cat likes napping."
+      "entryId": "is_cat_sleepy",
+      "article": "is",
+      "text": "The cat is sleepy."
     },
     {
-      "key": "likes_play_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "It",
-      "entryId": "likes_play",
-      "article": "likes",
-      "text": "It likes to play with toy balls."
-    },
-    {
-      "key": "likes_sunlight_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "That flower",
-      "entryId": "likes_sunlight",
-      "article": "likes",
-      "text": "That flower likes bright sunlight."
-    },
-    {
-      "key": "likes_sunshine_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "It",
-      "entryId": "likes_sunshine",
-      "article": "likes",
-      "text": "It likes sitting outside."
-    },
-    {
-      "key": "likes_swimming_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "It",
-      "entryId": "likes_swimming",
-      "article": "likes",
-      "text": "It likes swimming in the pool."
-    },
-    {
-      "key": "likes_tasks_grammar",
-      "file": "level1\\like_vs_likes.json",
-      "word": "The robot",
-      "entryId": "likes_tasks",
-      "article": "likes",
-      "text": "The robot likes playing games."
-    },
-    {
-      "key": "likes_travel_grammar",
-      "file": "level1\\like_vs_likes.json",
+      "key": "is_on_bus_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "She",
-      "entryId": "likes_travel",
-      "article": "likes",
-      "text": "She likes to travel."
+      "entryId": "is_on_bus",
+      "article": "is",
+      "text": "She is on the bus."
     },
     {
-      "key": "want_camping_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "We",
-      "entryId": "want_camping",
-      "article": "want",
-      "text": "We want to go camping this weekend."
+      "key": "is_raining_grammar",
+      "file": "level1\\am_are_is.json",
+      "word": "It",
+      "entryId": "is_raining",
+      "article": "is",
+      "text": "It is raining."
     },
     {
-      "key": "want_candy_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The kids",
-      "entryId": "want_candy",
-      "article": "want",
-      "text": "The kids want candy for dessert."
-    },
-    {
-      "key": "want_dance_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "They",
-      "entryId": "want_dance",
-      "article": "want",
-      "text": "They want to dance at the party."
-    },
-    {
-      "key": "want_garden_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "My parents",
-      "entryId": "want_garden",
-      "article": "want",
-      "text": "My parents want a bigger house."
-    },
-    {
-      "key": "want_help_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "I",
-      "entryId": "want_help",
-      "article": "want",
-      "text": "I want some help with my homework."
-    },
-    {
-      "key": "want_improve_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "They",
-      "entryId": "want_improve",
-      "article": "want",
-      "text": "They want to improve their skills."
-    },
-    {
-      "key": "want_join_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "You",
-      "entryId": "want_join",
-      "article": "want",
-      "text": "You want to join our team."
-    },
-    {
-      "key": "want_learn_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "You",
-      "entryId": "want_learn",
-      "article": "want",
-      "text": "You want to learn English."
-    },
-    {
-      "key": "want_movie_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "We",
-      "entryId": "want_movie",
-      "article": "want",
-      "text": "We want to watch a movie tonight."
-    },
-    {
-      "key": "want_pets_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "Children",
-      "entryId": "want_pets",
-      "article": "want",
-      "text": "Children want pets to play with."
-    },
-    {
-      "key": "want_pizza_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "I",
-      "entryId": "want_pizza",
-      "article": "want",
-      "text": "I want pizza for lunch."
-    },
-    {
-      "key": "want_play_6369_want_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The cats",
-      "entryId": "want_play",
-      "article": "want",
-      "text": "The cats want to play together."
-    },
-    {
-      "key": "want_play_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "They",
-      "entryId": "want_play",
-      "article": "want",
-      "text": "They want to play outside."
-    },
-    {
-      "key": "want_team_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "Emma and Noah",
-      "entryId": "want_team",
-      "article": "want",
-      "text": "Emma and Noah want to be on the same team."
-    },
-    {
-      "key": "want_toys_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The dogs",
-      "entryId": "want_toys",
-      "article": "want",
-      "text": "The dogs want new toys."
-    },
-    {
-      "key": "want_travel_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The students",
-      "entryId": "want_travel",
-      "article": "want",
-      "text": "The students want to travel the world."
-    },
-    {
-      "key": "want_vacation_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "I",
-      "entryId": "want_vacation",
-      "article": "want",
-      "text": "I want a long vacation."
-    },
-    {
-      "key": "want_visit_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "We",
-      "entryId": "want_visit",
-      "article": "want",
-      "text": "We want to visit Paris."
-    },
-    {
-      "key": "want_win_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "You",
-      "entryId": "want_win",
-      "article": "want",
-      "text": "You want to win the game."
-    },
-    {
-      "key": "wants_attention_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The cat",
-      "entryId": "wants_attention",
-      "article": "wants",
-      "text": "The cat wants your attention."
-    },
-    {
-      "key": "wants_become_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "She",
-      "entryId": "wants_become",
-      "article": "wants",
-      "text": "She wants to become a doctor."
-    },
-    {
-      "key": "wants_bicycle_grammar",
-      "file": "level1\\want_vs_wants.json",
+      "key": "is_tall_grammar",
+      "file": "level1\\am_are_is.json",
       "word": "He",
-      "entryId": "wants_bicycle",
-      "article": "wants",
-      "text": "He wants a red bicycle."
-    },
-    {
-      "key": "wants_bone_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The dog",
-      "entryId": "wants_bone",
-      "article": "wants",
-      "text": "The dog wants a bone."
-    },
-    {
-      "key": "wants_charge_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The robot",
-      "entryId": "wants_charge",
-      "article": "wants",
-      "text": "The robot wants to be charged."
-    },
-    {
-      "key": "wants_computer_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "My friend",
-      "entryId": "wants_computer",
-      "article": "wants",
-      "text": "My friend wants a new computer."
-    },
-    {
-      "key": "wants_crackers_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The bird",
-      "entryId": "wants_crackers",
-      "article": "wants",
-      "text": "The bird wants crackers as a treat."
-    },
-    {
-      "key": "wants_eat_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "It",
-      "entryId": "wants_eat",
-      "article": "wants",
-      "text": "It wants to eat every two hours."
-    },
-    {
-      "key": "wants_flowers_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "She",
-      "entryId": "wants_flowers",
-      "article": "wants",
-      "text": "She wants flowers for her birthday."
-    },
-    {
-      "key": "wants_ice_cream_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "He",
-      "entryId": "wants_ice_cream",
-      "article": "wants",
-      "text": "He wants ice cream right now."
-    },
-    {
-      "key": "wants_owner_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "The teacher",
-      "entryId": "wants_owner",
-      "article": "wants",
-      "text": "The teacher wants to help her students."
-    },
-    {
-      "key": "wants_run_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "It",
-      "entryId": "wants_run",
-      "article": "wants",
-      "text": "It wants to run in the field."
-    },
-    {
-      "key": "wants_sleep_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "It",
-      "entryId": "wants_sleep",
-      "article": "wants",
-      "text": "It wants to sleep in the sunshine."
-    },
-    {
-      "key": "wants_succeed_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "He",
-      "entryId": "wants_succeed",
-      "article": "wants",
-      "text": "He wants to succeed in his career."
-    },
-    {
-      "key": "wants_travel_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "She",
-      "entryId": "wants_travel",
-      "article": "wants",
-      "text": "She wants to travel to new places."
-    },
-    {
-      "key": "wants_upgrade_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "This phone",
-      "entryId": "wants_upgrade",
-      "article": "wants",
-      "text": "This phone wants an upgrade."
-    },
-    {
-      "key": "wants_water_grammar",
-      "file": "level1\\want_vs_wants.json",
-      "word": "That plant",
-      "entryId": "wants_water",
-      "article": "wants",
-      "text": "That plant wants more water."
+      "entryId": "is_tall",
+      "article": "is",
+      "text": "He is tall."
     }
   ]
 }

@@ -170,6 +170,20 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         bucketLabels: { like: 'like', likes: 'likes' },
         ruleHint: 'Use like with I, you, we, they, or plural nouns. Use likes with he, she, it, or one noun.'
       }
+    },
+    {
+      id: 'in_on_under',
+      label: 'In vs On vs Under',
+      emoji: '📦',
+      file: 'data/grammar/level1/in_on_under.json',
+      aliases: ['in_on_under', 'in vs on vs under', 'prepositions location'],
+      config: {
+        lessonModule: 'grammar_lesson_in_on_under',
+        lessonId: 'in_on_under',
+        answerChoices: ['in', 'on', 'under'],
+        bucketLabels: { in: 'in', on: 'on', under: 'under' },
+        ruleHint: 'Use in for inside, on for on top of, and under for below something.'
+      }
     }
   ];
 

@@ -141,26 +141,28 @@ async function enrichSentenceAudioIDAware(items){
   }
   // 3) Legacy lambda fallback: try WORD_SENTENCE and word_sentence
   const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng);
-  if (!legacyNeed.length) return;
-  try {
-    const keys = Array.from(new Set(legacyNeed.flatMap(i=> {
-      const upper = `${i.eng}_SENTENCE`;
-      const lowerSnake = `${normWord(i.eng)}_sentence`;
-      return [upper, lowerSnake];
-    })));
-    const r = await fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
-    if (r.ok){
-      const data = await r.json();
-      if (data && data.results){
-        legacyNeed.forEach(it=>{
-          const kUpper = `${it.eng}_SENTENCE`;
-          const kLowerSnake = `${normWord(it.eng)}_sentence`;
-          const rec = data.results[kUpper] || data.results[kLowerSnake] || data.results[kUpper.toLowerCase()] || data.results[kUpper.toUpperCase()];
-          if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
-        });
+  if (legacyNeed.length){
+    try {
+      // Fix #3: Optimize batching - only request unique words, not every variant
+      const uniqueWords = Array.from(new Set(legacyNeed.map(i=> i.eng)));
+      const keys = uniqueWords.flatMap(word => [
+        `${word}_SENTENCE`,
+        `${normWord(word)}_sentence`
+      ]);
+      const r = await fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
+      if (r.ok){
+        const data = await r.json();
+        if (data && data.results){
+          legacyNeed.forEach(it=>{
+            const kUpper = `${it.eng}_SENTENCE`;
+            const kLowerSnake = `${normWord(it.eng)}_sentence`;
+            const rec = data.results[kUpper] || data.results[kLowerSnake] || data.results[kUpper.toLowerCase()] || data.results[kUpper.toUpperCase()];
+            if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
+          });
+        }
       }
-    }
-  } catch(e){ console.debug('[WordSentenceMode] legacy audio fetch failed', e?.message); }
+    } catch(e){ console.debug('[WordSentenceMode] legacy audio fetch failed', e?.message); }
+  }
 }
 
 export function run(ctx){
@@ -176,6 +178,12 @@ export function run(ctx){
   items = shuffle(items.slice());
   if(!items.length){ root.innerHTML = renderErrorBox('No sentences available for this list. Add sentence examples first.'); return; }
 
+  // Declare state variables first (before calling functions that use them)
+  let index = 0;
+  let sentencesCorrect = 0;
+  let totalPoints = 0;
+  let sessionId = null;
+
   // Splash then start
   function showIntroThenStart(){
     if (layout.skipIntro) {
@@ -183,12 +191,21 @@ export function run(ctx){
       return;
     }
     const introTitle = layout.hideTitle ? '' : (layout.customTitle || 'Sentence Unscramble');
+    // Fix #4: Add loading spinner during background audio fetch
     root.innerHTML = `
-      <div id="wsIntro" style="display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
-        <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;">
+      <div id="wsIntro" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;margin:0 auto;height:40vh;opacity:1;transition:opacity .6s ease;">
+        <div style="font-size:clamp(1.5rem,6vw,4.5rem);font-weight:800;color:#19777e;text-align:center;max-width:90%;margin:0 auto;margin-bottom:30px;">
           ${introTitle}
         </div>
+        <div style="width:40px;height:40px;border:4px solid #d0d8e0;border-top:4px solid #19777e;border-radius:50%;animation:wsLoadingSpin 0.8s linear infinite;"></div>
       </div>`;
+    // Add spinner animation if not already present
+    if (!document.getElementById('wsLoadingSpinStyles')) {
+      const style = document.createElement('style');
+      style.id = 'wsLoadingSpinStyles';
+      style.textContent = '@keyframes wsLoadingSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+      document.head.appendChild(style);
+    }
     setTimeout(()=>{
       const intro = document.getElementById('wsIntro');
       if (intro) intro.style.opacity = '0';
@@ -198,19 +215,22 @@ export function run(ctx){
 
   // Preflight: resolve sentence_ids server-side (fast, idempotent) so audio can be disambiguated per sentence.
   // This uses the existing Netlify function upsert_sentences_batch with skip_audio=true (no generation at runtime).
+  // Show intro immediately (non-blocking), fetch audio in background
+  showIntroThenStart();
+  
+  // Background audio enrichment (non-blocking) - doesn't wait for intro
   (async () => {
     try {
-      await resolveSentenceIdsIfMissing(items);
+      // Fix #2: Skip ID resolution if audio_keys are already present (faster for grammar data)
+      const needsIdResolution = items.some(it => !it.sentence_id && !it.audio_key && it.sentence);
+      if (needsIdResolution) {
+        await resolveSentenceIdsIfMissing(items);
+      }
     } catch(e){ console.debug('[WordSentenceMode] resolveSentenceIdsIfMissing failed', e?.message); }
     try {
       await enrichSentenceAudioIDAware(items);
     } catch(e){ console.debug('[WordSentenceMode] enrichSentenceAudio failed', e?.message); }
-  })().finally(()=>{ showIntroThenStart(); });
-
-  let index = 0;
-  let sentencesCorrect = 0;
-  let totalPoints = 0;
-  let sessionId = null;
+  })();
 
   function exitToMenu() {
     // Always try browser back first if possible

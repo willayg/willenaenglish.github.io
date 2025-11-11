@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prepositions Visual Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      gap: 40px;
+      padding: 40px;
+      background: #f0f0f0;
+      flex-wrap: wrap;
+    }
+    .demo {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .demo h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .demo p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    /* Clickable animal styles */
+    .animal {
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+    .animal:hover {
+      transform: scale(1.1);
+    }
+
+    /* IN - Cat inside the box */
+    .in-container {
+      width: 150px;
+      height: 150px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      background: #e8f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 0 auto;
+    }
+    .in-container .cat {
+      font-size: 60px;
+    }
+
+    /* ON - Cat on top of the box */
+    .on-container {
+      width: 150px;
+      margin: 0 auto;
+    }
+    .on-cat {
+      font-size: 60px;
+      margin-bottom: -10px;
+      position: relative;
+      z-index: 2;
+    }
+    .on-box {
+      width: 150px;
+      height: 100px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      background: #e8f4f8;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* UNDER - Cat under the box */
+    .under-container {
+      width: 150px;
+      margin: 0 auto;
+    }
+    .under-box {
+      width: 150px;
+      height: 100px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      background: #e8f4f8;
+      position: relative;
+      z-index: 2;
+      margin-bottom: -10px;
+    }
+    .under-cat {
+      font-size: 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* BY - Cat next to the box */
+    .by-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin: 0 auto;
+      width: fit-content;
+    }
+    .by-box {
+      width: 120px;
+      height: 120px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      background: #e8f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .by-cat {
+      font-size: 60px;
+    }
+
+    /* BETWEEN - Cat between two boxes */
+    .between-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin: 0 auto;
+      width: fit-content;
+    }
+    .between-box {
+      width: 100px;
+      height: 100px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      background: #e8f4f8;
+    }
+    .between-cat {
+      font-size: 50px;
+    }
+
+    /* ABOVE - Cat above the box */
+    .above-container {
+      width: 150px;
+      margin: 0 auto;
+    }
+    .above-cat {
+      font-size: 60px;
+      margin-bottom: 10px;
+    }
+    .above-box {
+      width: 150px;
+      height: 100px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      background: #e8f4f8;
+    }
+
+    .emoji-label {
+      font-size: 12px;
+      color: #999;
+      margin-top: 10px;
+    }
+
+    /* TABLE STYLES */
+    .table {
+      width: 150px;
+      margin: 0 auto;
+    }
+    .table-top {
+      width: 150px;
+      height: 30px;
+      background: #d4a574;
+      border: 2px solid #8b6f47;
+      border-radius: 4px;
+      margin: 0 auto;
+      position: relative;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .table-legs {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
+      margin-top: 0;
+      width: 150px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    .leg {
+      width: 12px;
+      height: 60px;
+      background: #8b6f47;
+      border-radius: 2px;
+      border-top: 2px solid #8b6f47;
+      margin-top: -2px;
+    }
+
+    .dog {
+      font-size: 60px;
+      margin-bottom: 10px;
+    }
+
+    /* TABLE ON - Dog on top of table */
+    .table-on-container {
+      text-align: center;
+    }
+    .table-on-container .dog {
+      margin-bottom: -5px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* TABLE UNDER - Dog under table */
+    .table-under-container {
+      text-align: center;
+      position: relative;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .table-under-container .table {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .table-under-container .dog {
+      position: absolute;
+      bottom: 0;
+      font-size: 50px;
+      margin: 0;
+    }
+
+    /* TABLE BY - Dog next to table */
+    .table-by-container {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 30px;
+      margin: 0 auto;
+    }
+    .table-by-container .dog {
+      margin-bottom: 0;
+      font-size: 50px;
+    }
+
+    /* TABLE IN FRONT - Dog in front of table */
+    .table-front-container {
+      text-align: center;
+      position: relative;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .table-front-container .dog {
+      position: absolute;
+      bottom: 30px;
+      font-size: 80px;
+      margin: 0;
+      z-index: 10;
+    }
+    .table-front-container .table {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+
+    /* TABLE BEHIND - Dog behind table */
+    .table-behind-container {
+      text-align: center;
+      position: relative;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .table-behind-container .table {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .table-behind-container .dog {
+      position: absolute;
+      bottom: 40px;
+      font-size: 60px;
+      margin: 0;
+      z-index: 5;
+    }
+
+    /* TREE STYLES */
+    .tree {
+      width: 120px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .tree-crown {
+      width: 120px;
+      height: 120px;
+      background: #228B22;
+      border-radius: 50%;
+      position: relative;
+      margin: 0 auto;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .tree-trunk {
+      width: 24px;
+      height: 70px;
+      background: #8b6f47;
+      margin: -15px auto 0;
+      border-radius: 4px;
+    }
+
+    /* MONKEY IN TREE */
+    .tree-in-container {
+      position: relative;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .tree-in-container .tree {
+      position: absolute;
+    }
+    .monkey-in {
+      font-size: 50px;
+      position: absolute;
+      left: 50%;
+      top: 45px;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    /* MONKEY UNDER TREE */
+    .tree-under-container {
+      position: relative;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .tree-under-container .tree {
+      position: absolute;
+      top: 20px;
+    }
+    .monkey-under {
+      font-size: 60px;
+      position: absolute;
+      bottom: 10px;
+    }
+
+    /* MONKEY BEHIND TREE */
+    .tree-behind-container {
+      position: relative;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .tree-behind-container .tree {
+      position: absolute;
+      z-index: 10;
+    }
+    .monkey-behind {
+      font-size: 55px;
+      position: absolute;
+      right: 20%;
+      bottom: 40px;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- IN -->
+  <div class="demo">
+    <h3>IN</h3>
+    <p>Cat is inside the box</p>
+    <div class="in-container">
+      <div class="cat animal">🐱</div>
+    </div>
+    <div class="emoji-label">The cat is in the box</div>
+  </div>
+
+  <!-- ON -->
+  <div class="demo">
+    <h3>ON</h3>
+    <p>Cat is on top of the box</p>
+    <div class="on-container">
+      <div class="on-cat animal">🐱</div>
+      <div class="on-box"></div>
+    </div>
+    <div class="emoji-label">The cat is on the box</div>
+  </div>
+
+  <!-- UNDER -->
+  <div class="demo">
+    <h3>UNDER</h3>
+    <p>Cat is under the box</p>
+    <div class="under-container">
+      <div class="under-box"></div>
+      <div class="under-cat animal">🐱</div>
+    </div>
+    <div class="emoji-label">The cat is under the box</div>
+  </div>
+
+  <!-- BY / NEXT TO -->
+  <div class="demo">
+    <h3>BY / NEXT TO</h3>
+    <p>Cat is next to the box</p>
+    <div class="by-container">
+      <div class="by-box"></div>
+      <div class="by-cat animal">🐱</div>
+    </div>
+    <div class="emoji-label">The cat is by the box</div>
+  </div>
+
+  <!-- BETWEEN -->
+  <div class="demo">
+    <h3>BETWEEN</h3>
+    <p>Cat is between two boxes</p>
+    <div class="between-container">
+      <div class="between-box"></div>
+      <div class="between-cat animal">🐱</div>
+      <div class="between-box"></div>
+    </div>
+    <div class="emoji-label">The cat is between the boxes</div>
+  </div>
+
+  <!-- ABOVE -->
+  <div class="demo">
+    <h3>ABOVE</h3>
+    <p>Cat is above the box</p>
+    <div class="above-container">
+      <div class="above-cat animal">🐱</div>
+      <div class="above-box"></div>
+    </div>
+    <div class="emoji-label">The cat is above the box</div>
+  </div>
+
+  <!-- DOG ON TABLE -->
+  <div class="demo">
+    <h3>ON (Table)</h3>
+    <p>Dog is on the table</p>
+    <div class="table-on-container">
+      <div class="dog">🐕</div>
+      <div class="table">
+        <div class="table-top"></div>
+        <div class="table-legs">
+          <div class="leg"></div>
+          <div class="leg"></div>
+        </div>
+      </div>
+    </div>
+    <div class="emoji-label">The dog is on the table</div>
+  </div>
+
+  <!-- DOG UNDER TABLE -->
+  <div class="demo">
+    <h3>UNDER (Table)</h3>
+    <p>Dog is under the table</p>
+    <div class="table-under-container">
+      <div class="table">
+        <div class="table-top"></div>
+        <div class="table-legs">
+          <div class="leg"></div>
+          <div class="leg"></div>
+        </div>
+      </div>
+      <div class="dog">🐕</div>
+    </div>
+    <div class="emoji-label">The dog is under the table</div>
+  </div>
+
+  <!-- DOG BY TABLE -->
+  <div class="demo">
+    <h3>BY (Table)</h3>
+    <p>Dog is by the table</p>
+    <div class="table-by-container">
+      <div class="table">
+        <div class="table-top"></div>
+        <div class="table-legs">
+          <div class="leg"></div>
+          <div class="leg"></div>
+        </div>
+      </div>
+      <div class="dog">🐕</div>
+    </div>
+    <div class="emoji-label">The dog is by the table</div>
+  </div>
+
+  <!-- DOG IN FRONT OF TABLE -->
+  <div class="demo">
+    <h3>IN FRONT OF (Table)</h3>
+    <p>Dog is in front of the table</p>
+    <div class="table-front-container">
+      <div class="dog">🐕</div>
+      <div class="table" style="margin-top: 20px;">
+        <div class="table-top"></div>
+        <div class="table-legs">
+          <div class="leg"></div>
+          <div class="leg"></div>
+        </div>
+      </div>
+    </div>
+    <div class="emoji-label">The dog is in front of the table</div>
+  </div>
+
+  <!-- DOG BEHIND TABLE -->
+  <div class="demo">
+    <h3>BEHIND (Table)</h3>
+    <p>Dog is behind the table</p>
+    <div class="table-behind-container">
+      <div class="table">
+        <div class="table-top"></div>
+        <div class="table-legs">
+          <div class="leg"></div>
+          <div class="leg"></div>
+        </div>
+      </div>
+      <div class="dog">🐕</div>
+    </div>
+    <div class="emoji-label">The dog is behind the table</div>
+  </div>
+
+  <!-- MONKEY IN TREE -->
+  <div class="demo">
+    <h3>IN (Tree)</h3>
+    <p>Monkey is in the tree</p>
+    <div class="tree-in-container">
+      <div class="tree">
+        <div class="tree-crown"></div>
+        <div class="tree-trunk"></div>
+      </div>
+      <div class="monkey-in animal">🐵</div>
+    </div>
+    <div class="emoji-label">The monkey is in the tree</div>
+  </div>
+
+  <!-- MONKEY UNDER TREE -->
+  <div class="demo">
+    <h3>UNDER (Tree)</h3>
+    <p>Monkey is under the tree</p>
+    <div class="tree-under-container">
+      <div class="tree">
+        <div class="tree-crown"></div>
+        <div class="tree-trunk"></div>
+      </div>
+      <div class="monkey-under animal">🐵</div>
+    </div>
+    <div class="emoji-label">The monkey is under the tree</div>
+  </div>
+
+  <!-- MONKEY BEHIND TREE -->
+  <div class="demo">
+    <h3>BEHIND (Tree)</h3>
+    <p>Monkey is behind the tree</p>
+    <div class="tree-behind-container">
+      <div class="tree">
+        <div class="tree-crown"></div>
+        <div class="tree-trunk"></div>
+      </div>
+      <div class="monkey-behind animal">🐵</div>
+    </div>
+    <div class="emoji-label">The monkey is behind the tree</div>
+  </div>
+
+  <script>
+    const animals = ['🐱', '🐶', '🐵', '🐰', '🐻', '🦊', '🐸', '🦉'];
+    let currentAnimalIndex = 0;
+
+    document.querySelectorAll('.animal').forEach(el => {
+      el.addEventListener('click', function() {
+        currentAnimalIndex = (currentAnimalIndex + 1) % animals.length;
+        this.textContent = animals[currentAnimalIndex];
+      });
+    });
+  </script>
+</body>
+</html>

@@ -650,6 +650,7 @@ const modeLoaders = {
   grammar_lesson_want_wants: () => import('./modes/lessons/grammar_lesson_want_wants.js').then(m => m.runGrammarLessonWantWants),
   grammar_lesson_like_likes: () => import('./modes/lessons/grammar_lesson_like_likes.js').then(m => m.runGrammarLessonLikeLikes),
   grammar_lesson_contractions_be: () => import('./modes/lessons/grammar_lesson_contractions_be.js').then(m => m.runGrammarLessonContractionsBe),
+  grammar_lesson_in_on_under: () => import('./modes/lessons/grammar_lesson_in_on_under.js').then(m => m.runGrammarLessonInOnUnder),
   grammar_fill_gap: () => import('./modes/grammar_fill_gap.js').then(m => m.runGrammarFillGapMode),
   grammar_sentence_unscramble: () => import('./modes/grammar_sentence_unscramble.js').then(m => m.runGrammarSentenceUnscramble),
 };

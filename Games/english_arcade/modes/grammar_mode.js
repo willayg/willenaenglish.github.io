@@ -2,6 +2,7 @@
 // Works as a choice mode where students pick between "a" or "an" for each word
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { buildPrepositionScene, isInOnUnderMode } from './grammar_prepositions_data.js';
 
 export async function runGrammarMode(ctx) {
   const {
@@ -145,13 +146,14 @@ export async function runGrammarMode(ctx) {
         && answerChoices.length === 2
         && answerChoices.includes('these')
         && answerChoices.includes('those');
+      const inOnUnderMode = isInOnUnderMode(answerChoices);
       const hasProximityMode = isThisThatMode || isTheseThooseMode;
       const promptSafe = rawPrompt ? sanitizeText(rawPrompt) : '';
       const highlightedPrompt = promptSafe ? promptSafe.replace(/___/g, '<span style="color:#21b3be;font-weight:800;">___</span>') : '';
-      const questionText = (hasProximityMode && highlightedPrompt) ? highlightedPrompt : displayText;
+      const questionText = (hasProximityMode && highlightedPrompt) ? highlightedPrompt : (inOnUnderMode && highlightedPrompt ? highlightedPrompt : displayText);
       const visualCueHTML = hasProximityMode
         ? buildProximityScene(item?.article, item?.emoji)
-        : (item.emoji ? `<div style="font-size:4.6rem;line-height:1;margin-bottom:30px;">${item.emoji}</div>` : '');
+        : (inOnUnderMode ? buildPrepositionScene(item?.article, item?.emoji, item?.word) : (item.emoji ? `<div style="font-size:4.6rem;line-height:1;margin-bottom:30px;">${item.emoji}</div>` : ''));
 
       // Main content (no example or translation). Show a fixed-size article box and the word in bright cyan.
           const contentHTML = `
@@ -164,8 +166,8 @@ export async function runGrammarMode(ctx) {
           <!-- Main question -->
           <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;">
             ${visualCueHTML}
-            <div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:1.92rem;font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;"></div>
-            <div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${isThisThatMode ? sanitizeText(item?.word || '') : questionText}</div>
+            ${!inOnUnderMode ? `<div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:1.92rem;font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;"></div>` : ''}
+            ${!inOnUnderMode ? `<div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${isThisThatMode ? sanitizeText(item?.word || '') : questionText}</div>` : ''}
           </div>              <!-- Answer buttons (extra spacing above) -->
               <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;flex-wrap:wrap;">
                 ${answerChoices.map((choice, idx) => `
