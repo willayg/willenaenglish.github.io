@@ -232,6 +232,9 @@
     <section class="login-card">
   <h1 class="login-title" data-i18n="Student Login">Student Login</h1>
   <p class="mut" data-i18n="Use your username and password.">Use your username and password.</p>
+      <button id="helpBtn" type="button" data-i18n="Help Please" style="display:block;width:100%;background:#fff;color:#ff1493;border:2px solid #67e2e6;margin-bottom:18px;box-shadow:0 2px 8px rgba(103,226,230,0.15);">
+        Easy Login
+      </button>
       <div class="field">
   <label for="username" data-i18n="Username">Username</label>
         <input id="username" autocomplete="username" />
@@ -244,9 +247,6 @@
   <button id="loginBtn" data-i18n="Log in">Log in</button>
   <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button>
       </div>
-      <button id="helpBtn" type="button" data-i18n="Help Please" style="display:block;width:100%;background:#fff;color:#19777e;border:2px solid #e6eaef;margin-top:8px;">
-        Help Please
-      </button>
       <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
     </section>
   </main>
@@ -268,9 +268,9 @@
     if (helpBtn) {
       const lang = (window.StudentLang && window.StudentLang.currentLang) || navigator.language || 'en';
       if (lang.startsWith('ko')) {
-        helpBtn.textContent = '도와주세요ㅠㅠ';
+        helpBtn.textContent = '쉽게 로그인';
       } else {
-        helpBtn.textContent = 'Help Please';
+        helpBtn.textContent = 'Easy Login';
       }
     }
   });
@@ -380,21 +380,17 @@
         koreanNamePlaceholder: "한국어 이름",
         enterEnglishName: "What is your English name?",
         englishNamePlaceholder: "English Name",
-        enterGrade: "What is your grade?",
-        gradePlaceholder: "e.g., 1, 2, 3, 4, 5, 6",
-        enterClass: "What is your class name?",
-        classPlaceholder: "Class Name",
+        enterAuthCode: "What is the 인증번호?",
+        authCodePlaceholder: "Last 4 digits",
+        authCodeHelper: "Enter the last four digits of mom's phone number.",
+        authCodeInvalid: "Please enter the last four digits (numbers only).",
         next: "Next",
         back: "Back",
         verifying: "Verifying...",
-        notFound: "We couldn't find a student with that information. Please check your details and try again.",
-        createPassword: "Create a new password",
-        passwordPlaceholder: "New Password",
-        confirmPassword: "Confirm Password",
-        setPassword: "Set Password",
-        passwordMismatch: "Passwords do not match",
-        passwordTooShort: "Password must be at least 6 characters",
-        success: "Password set successfully! Redirecting...",
+        loggingIn: "Logging you in...",
+        notFound: "We couldn't find a student with that information. Please check the 인증번호 and try again.",
+        tryAgain: "Try Again",
+        success: "Login successful! Redirecting...",
         errorOccurred: "An error occurred. Please try again."
       },
       ko: {
@@ -405,21 +401,17 @@
         koreanNamePlaceholder: "한국어 이름",
         enterEnglishName: "영어 이름을 입력하세요",
         englishNamePlaceholder: "English Name",
-        enterGrade: "학년을 입력하세요",
-        gradePlaceholder: "예: 1, 2, 3, 4, 5, 6",
-        enterClass: "반 이름을 입력하세요",
-        classPlaceholder: "반 이름",
+        enterAuthCode: "인증번호(엄마 전화번호 뒤 4자리)는 무엇인가요?",
+        authCodePlaceholder: "마지막 4자리",
+        authCodeHelper: "엄마 전화번호 뒤 4자리인 인증번호를 입력하세요.",
+        authCodeInvalid: "인증번호는 숫자 4자리여야 합니다.",
         next: "다음",
         back: "뒤로",
         verifying: "확인 중...",
-        notFound: "해당 정보로 학생을 찾을 수 없습니다. 정보를 확인하고 다시 시도해 주세요.",
-        createPassword: "새 비밀번호를 만드세요",
-        passwordPlaceholder: "새 비밀번호",
-        confirmPassword: "비밀번호 확인",
-        setPassword: "비밀번호 설정",
-        passwordMismatch: "비밀번호가 일치하지 않습니다",
-        passwordTooShort: "비밀번호는 최소 6자 이상이어야 합니다",
-        success: "비밀번호가 설정되었습니다! 리디렉션 중...",
+        loggingIn: "로그인 중...",
+        notFound: "해당 정보로 학생을 찾을 수 없습니다. 인증번호를 확인하고 다시 시도해 주세요.",
+        tryAgain: "다시 시도",
+        success: "로그인 성공! 이동 중...",
         errorOccurred: "오류가 발생했습니다. 다시 시도해 주세요."
       }
     };
@@ -458,6 +450,7 @@
 
     // Step 1: Are you a student?
     function showStep1() {
+      studentData = {};
       modalTitle.textContent = mt('areYouStudent');
       modalBody.innerHTML = '';
       modalActions.innerHTML = `
@@ -490,6 +483,9 @@
         studentData.korean_name = val;
         showStep3();
       });
+
+      const koreanInput = document.getElementById('koreanNameInput');
+      if (koreanInput) koreanInput.focus();
     }
 
     // Step 3: English name
@@ -512,50 +508,49 @@
         studentData.name = val;
         showStep4();
       });
+
+      const englishInput = document.getElementById('englishNameInput');
+      if (englishInput) englishInput.focus();
     }
 
-    // Step 4: Grade
+    // Step 4: 인증번호 (mom's phone last four digits)
     function showStep4() {
-      modalTitle.textContent = mt('enterGrade');
+      modalTitle.textContent = mt('enterAuthCode');
       modalBody.innerHTML = `
         <div class="field">
-          <input id="gradeInput" class="field input" placeholder="${mt('gradePlaceholder')}" style="width:100%;" />
-        </div>
-      `;
-      modalActions.innerHTML = `
-        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
-        <button class="modal-btn modal-btn-primary" id="nextBtn">${mt('next')}</button>
-      `;
-      
-      document.getElementById('backBtn').addEventListener('click', showStep3);
-      document.getElementById('nextBtn').addEventListener('click', () => {
-        const val = document.getElementById('gradeInput').value.trim();
-        if (!val) return;
-        studentData.grade = val;
-        showStep5();
-      });
-    }
-
-    // Step 5: Class
-    function showStep5() {
-      modalTitle.textContent = mt('enterClass');
-      modalBody.innerHTML = `
-        <div class="field">
-          <input id="classInput" class="field input" placeholder="${mt('classPlaceholder')}" style="width:100%;" />
+          <p style="margin-bottom:12px;">${mt('authCodeHelper')}</p>
+          <input id="authCodeInput" class="field input" placeholder="${mt('authCodePlaceholder')}" style="width:100%;" inputmode="numeric" />
         </div>
       `;
       modalActions.innerHTML = `
         <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
         <button class="modal-btn modal-btn-primary" id="verifyBtn">${mt('next')}</button>
       `;
-      
-      document.getElementById('backBtn').addEventListener('click', showStep4);
+
+      document.getElementById('backBtn').addEventListener('click', showStep3);
       document.getElementById('verifyBtn').addEventListener('click', async () => {
-        const val = document.getElementById('classInput').value.trim();
-        if (!val) return;
-        studentData.class = val;
+        const raw = document.getElementById('authCodeInput').value.trim();
+        const digits = raw.replace(/\D/g, '');
+        if (digits.length !== 4) {
+          alert(mt('authCodeInvalid'));
+          return;
+        }
+        studentData.auth_code = digits;
         await verifyStudent();
       });
+
+      const authInput = document.getElementById('authCodeInput');
+      if (authInput) authInput.focus();
+    }
+
+    function generateTemporaryPassword() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$';
+      let result = '';
+      for (let i = 0; i < 12; i += 1) {
+        const idx = Math.floor(Math.random() * chars.length);
+        result += chars[idx];
+      }
+      return result;
     }
 
     // Verify student with backend
@@ -568,7 +563,11 @@
         const res = await fetch('/.netlify/functions/verify_student', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(studentData)
+          body: JSON.stringify({
+            korean_name: studentData.korean_name,
+            name: studentData.name,
+            auth_code: studentData.auth_code
+          })
         });
         const data = await res.json();
 
@@ -576,9 +575,19 @@
           studentData.id = data.student.id;
           studentData.username = data.student.username;
           studentData.email = data.student.email || null;
-          showStep6();
+          await completeEasyLogin();
         } else {
-          showError(mt('notFound'));
+          let message = (data && data.error) ? data.error : mt('notFound');
+          if (typeof message === 'string') {
+            if (message === 'Student not found. Please check your information.') {
+              message = mt('notFound');
+            } else if (message === 'Authentication code must be 4 digits.') {
+              message = mt('authCodeInvalid');
+            }
+          } else {
+            message = mt('notFound');
+          }
+          showError(message);
         }
       } catch (err) {
         console.error('Verification error:', err);
@@ -586,78 +595,42 @@
       }
     }
 
-    // Step 6: Create password
-    function showStep6() {
-      modalTitle.textContent = mt('createPassword');
-      modalBody.innerHTML = `
-        <div class="field">
-          <input id="newPasswordInput" type="password" class="field input" placeholder="${mt('passwordPlaceholder')}" style="width:100%;margin-bottom:12px;" />
-          <input id="confirmPasswordInput" type="password" class="field input" placeholder="${mt('confirmPassword')}" style="width:100%;" />
-        </div>
-      `;
-      modalActions.innerHTML = `
-        <button class="modal-btn modal-btn-primary" id="setPasswordBtn">${mt('setPassword')}</button>
-      `;
-      
-      document.getElementById('setPasswordBtn').addEventListener('click', async () => {
-        const pass1 = document.getElementById('newPasswordInput').value;
-        const pass2 = document.getElementById('confirmPasswordInput').value;
-
-        if (pass1 !== pass2) {
-          alert(mt('passwordMismatch'));
-          return;
-        }
-        if (pass1.length < 6) {
-          alert(mt('passwordTooShort'));
-          return;
-        }
-
-        await setPassword(pass1);
-      });
-    }
-
-    // Set password and log in
-    async function setPassword(password) {
-      modalTitle.textContent = mt('verifying');
+    async function completeEasyLogin() {
+      modalTitle.textContent = mt('loggingIn');
       modalBody.innerHTML = '<p>⏳</p>';
       modalActions.innerHTML = '';
 
       try {
+        const tempPassword = generateTemporaryPassword();
         const res = await fetch('/.netlify/functions/set_student_password', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             student_id: studentData.id,
-            password: password
+            password: tempPassword
           })
         });
         const data = await res.json();
 
-        if (res.ok && data.success) {
-          modalTitle.textContent = mt('success');
-          modalBody.innerHTML = '<p>✅</p>';
-          
-          // Now log in with the new credentials
-          setTimeout(async () => {
-            try {
-              if (studentData.email) {
-                await loginWithEmailPassword(studentData.email, password);
-              } else if (studentData.username) {
-                await loginWithUsernamePassword(studentData.username, password);
-              } else {
-                throw new Error('Missing login identifier');
-              }
-              location.href = getNextDest();
-            } catch (e) {
-              hideModal();
-              show(t('Login failed. Please try logging in manually.'));
-            }
-          }, 1500);
-        } else {
-          showError(data.error || mt('errorOccurred'));
+        if (!res.ok || !data || !data.success) {
+          throw new Error((data && data.error) || 'Failed to set password');
         }
+
+        if (studentData.email) {
+          await loginWithEmailPassword(studentData.email, tempPassword);
+        } else if (studentData.username) {
+          await loginWithUsernamePassword(studentData.username, tempPassword);
+        } else {
+          throw new Error('Missing login identifier');
+        }
+
+        modalTitle.textContent = mt('success');
+        modalBody.innerHTML = '<p>✅</p>';
+        setTimeout(() => {
+          location.href = getNextDest();
+        }, 1200);
       } catch (err) {
-        console.error('Set password error:', err);
+        console.error('Easy login error:', err);
         showError(mt('errorOccurred'));
       }
     }
@@ -666,9 +639,12 @@
       modalTitle.textContent = '⚠️';
       modalBody.innerHTML = `<p>${message}</p>`;
       modalActions.innerHTML = `
-        <button class="modal-btn modal-btn-secondary" id="closeBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-secondary" id="retryBtn">${mt('tryAgain')}</button>
       `;
-      document.getElementById('closeBtn').addEventListener('click', hideModal);
+      document.getElementById('retryBtn').addEventListener('click', () => {
+        studentData = {};
+        showStep2();
+      });
     }
 
     // Attach to Help button

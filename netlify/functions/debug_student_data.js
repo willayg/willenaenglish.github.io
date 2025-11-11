@@ -69,7 +69,7 @@ exports.handler = async (event) => {
       // Look up specific student by username
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, name, korean_name, grade, class, role, approved')
+  .select('id, username, name, korean_name, grade, class, role, approved, phone')
         .eq('username', username)
         .single();
 
@@ -85,6 +85,9 @@ exports.handler = async (event) => {
         };
       }
 
+      const phoneDigits = data.phone ? String(data.phone).replace(/\D/g, '') : '';
+      const phoneLast4 = phoneDigits.length >= 4 ? phoneDigits.slice(-4) : null;
+
       return {
         statusCode: 200,
         headers,
@@ -98,6 +101,8 @@ exports.handler = async (event) => {
             class: data.class,
             role: data.role,
             approved: data.approved,
+            phone: data.phone,
+            phone_last4: phoneLast4,
             // Show field types for debugging
             name_length: data.name ? data.name.length : 0,
             korean_name_length: data.korean_name ? data.korean_name.length : 0,
@@ -110,7 +115,7 @@ exports.handler = async (event) => {
       // Return sample of students (first 5) to see what data looks like
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, name, korean_name, grade, class, role')
+  .select('username, name, korean_name, grade, class, role, phone')
         .eq('role', 'student')
         .limit(5);
 
@@ -123,7 +128,8 @@ exports.handler = async (event) => {
       }
 
       // Check if grade column exists
-      const hasGradeColumn = data && data.length > 0 && 'grade' in data[0];
+  const hasGradeColumn = data && data.length > 0 && 'grade' in data[0];
+  const hasPhoneColumn = data && data.length > 0 && 'phone' in data[0];
 
       return {
         statusCode: 200,
@@ -132,15 +138,21 @@ exports.handler = async (event) => {
           success: true,
           message: 'Sample students (showing first 5)',
           has_grade_column: hasGradeColumn,
+          has_phone_column: hasPhoneColumn,
           total_students: data ? data.length : 0,
-          students: data ? data.map(s => ({
-            username: s.username,
-            name: s.name,
-            korean_name: s.korean_name,
-            grade: s.grade,
-            class: s.class,
-            role: s.role
-          })) : []
+          students: data ? data.map(s => {
+            const digits = s.phone ? String(s.phone).replace(/\D/g, '') : '';
+            return {
+              username: s.username,
+              name: s.name,
+              korean_name: s.korean_name,
+              grade: s.grade,
+              class: s.class,
+              role: s.role,
+              phone: s.phone,
+              phone_last4: digits.length >= 4 ? digits.slice(-4) : null
+            };
+          }) : []
         })
       };
     }

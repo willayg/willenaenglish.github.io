@@ -77,17 +77,17 @@
 
     <div class="section">
       <h2>Step 3: Test Full Verification</h2>
+      <p>Enter the Korean name, English name, and 인증번호 (last four digits of mom's phone).</p>
       <input type="text" id="koreanName" placeholder="Korean Name (한국어 이름)" />
       <input type="text" id="englishName" placeholder="English Name" />
-      <input type="text" id="grade" placeholder="Grade (e.g., 3)" />
-      <input type="text" id="className" placeholder="Class Name" />
+      <input type="text" id="authCode" placeholder="인증번호 (엄마 전화번호 뒤 4자리)" />
       <button onclick="testVerification()">Test Verification</button>
       <div id="verifyResult"></div>
     </div>
 
     <div class="section">
       <h2>Step 4: Test with Test Endpoint</h2>
-      <p>This uses a more detailed test function:</p>
+      <p>This uses the diagnostic endpoint with the same 인증번호 flow.</p>
       <button onclick="testWithTestEndpoint()">Run Test Verification</button>
       <div id="testResult"></div>
     </div>
@@ -106,6 +106,7 @@
           result.innerHTML = `
             <p class="success">✅ Found ${data.total_students} students</p>
             <p><strong>Has grade column:</strong> ${data.has_grade_column}</p>
+            <p><strong>Has phone column:</strong> ${data.has_phone_column}</p>
             <pre>${JSON.stringify(data.students, null, 2)}</pre>
           `;
         } else {
@@ -153,12 +154,13 @@
     async function testVerification() {
       const korean_name = document.getElementById('koreanName').value.trim();
       const name = document.getElementById('englishName').value.trim();
-      const grade = document.getElementById('grade').value.trim();
-      const className = document.getElementById('className').value.trim();
+      const authCodeRaw = document.getElementById('authCode').value.trim();
       const result = document.getElementById('verifyResult');
+
+      const auth_code = authCodeRaw.replace(/\D/g, '').slice(-4);
       
-      if (!korean_name || !name || !grade || !className) {
-        result.innerHTML = '<p class="error">Please fill in all fields</p>';
+      if (!korean_name || !name || auth_code.length !== 4) {
+        result.innerHTML = '<p class="error">Please enter both names and a 4-digit 인증번호.</p>';
         return;
       }
       
@@ -168,7 +170,7 @@
         const res = await fetch('/.netlify/functions/verify_student', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ korean_name, name, grade, class: className })
+          body: JSON.stringify({ korean_name, name, auth_code })
         });
         const data = await res.json();
         
@@ -182,7 +184,7 @@
             <p class="error">❌ Verification failed</p>
             <p>${data.error}</p>
             <p><strong>Sent data:</strong></p>
-            <pre>${JSON.stringify({ korean_name, name, grade, class: className }, null, 2)}</pre>
+            <pre>${JSON.stringify({ korean_name, name, auth_code }, null, 2)}</pre>
           `;
         }
       } catch (err) {
@@ -193,15 +195,15 @@
     async function testWithTestEndpoint() {
       const korean_name = document.getElementById('koreanName').value.trim();
       const name = document.getElementById('englishName').value.trim();
-      const grade = document.getElementById('grade').value.trim();
-      const className = document.getElementById('className').value.trim();
+      const authCodeRaw = document.getElementById('authCode').value.trim();
+      const auth_code = authCodeRaw.replace(/\D/g, '').slice(-4);
       const result = document.getElementById('testResult');
       
       result.innerHTML = '<p>Testing...</p>';
       
       try {
-        const body = korean_name && name && grade && className 
-          ? { korean_name, name, grade, class: className }
+        const body = (korean_name && name && auth_code.length === 4)
+          ? { korean_name, name, auth_code }
           : {};
           
         const res = await fetch('/.netlify/functions/test_verify', {
@@ -214,7 +216,7 @@
         if (data.success) {
           result.innerHTML = `
             <p class="success">✅ Test successful!</p>
-            <p><strong>Has grade column:</strong> ${data.hasGradeColumn}</p>
+            <p><strong>Has phone column:</strong> ${data.hasPhoneColumn}</p>
             <p><strong>Sample students found:</strong> ${data.totalSampleStudents}</p>
             ${data.matchResult ? `<p><strong>Match found:</strong> ${data.matchResult.found}</p>` : ''}
             <pre>${JSON.stringify(data, null, 2)}</pre>
