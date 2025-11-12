@@ -49,6 +49,11 @@ export async function runGrammarMode(ctx) {
       ? grammarConfig.answerChoices
       : ['a', 'an']; // Default fallback
 
+    // Check if this is a plurals game (answerChoices will indicate singular vs plural)
+    const isPluralsMode = grammarConfig && grammarConfig.isPluralMode === true;
+    const singularChoice = answerChoices[0]; // First choice should be the singular form
+    const pluralChoice = answerChoices[1];   // Second choice should be the plural form
+
   // Shuffle items for variety and limit to 15 questions per session
   const shuffled = [...grammarData].sort(() => Math.random() - 0.5).slice(0, 15);
   const sessionWords = shuffled.map(it => it.word);
@@ -155,37 +160,99 @@ export async function runGrammarMode(ctx) {
         ? buildProximityScene(item?.article, item?.emoji)
         : (inOnUnderMode ? buildPrepositionScene(item?.article, item?.emoji, item?.word) : (item.emoji ? `<div style="font-size:4.6rem;line-height:1;margin-bottom:30px;">${item.emoji}</div>` : ''));
 
-      // Main content (no example or translation). Show a fixed-size article box and the word in bright cyan.
-          const contentHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:32px;padding:24px;max-width:640px;margin:0 auto;">
-              <!-- Progress indicator -->
-              <div style="width:100%;text-align:center;font-size:1rem;color:#666;font-weight:600;margin-top:4px;margin-bottom:4px;">
-                Question ${currentIdx + 1} of ${shuffled.length}
-              </div>
-  
-          <!-- Main question -->
-          <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;">
-            ${visualCueHTML}
-            ${!inOnUnderMode ? `<div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:1.92rem;font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;"></div>` : ''}
-            ${!inOnUnderMode ? `<div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${isThisThatMode ? sanitizeText(item?.word || '') : questionText}</div>` : ''}
-          </div>              <!-- Answer buttons (extra spacing above) -->
-              <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;flex-wrap:wrap;">
-                ${answerChoices.map((choice, idx) => `
-                  <button class="grammar-choice-btn" data-answer="${choice}" style="flex:1;min-width:clamp(90px, 18vw, 140px);padding:clamp(12px, 2.5vh, 16px) clamp(16px, 3vw, 24px);font-size:clamp(1.1rem, 3vw, 1.5rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
-                    ${choice}
-                  </button>
-                `).join('')}
-              </div>
-  
-              <!-- Spacer pushes the quit button to the bottom -->
-              <div style="flex:1;width:100%;"></div>
-  
-              <!-- Quit button -->
-              <button id="grammarQuitBtn" class="wa-quit-btn" style="margin-top:auto;margin-bottom:8px;align-self:center;background:#fff;color:#6273e4;border:2px solid #39d5da;font-weight:800;cursor:pointer;">
-                Quit Game
+      // Main content - different layout for plurals mode
+      let contentHTML;
+      
+      if (isPluralsMode) {
+        // Plurals mode: show emoji + word form, let them pick between singular/plural word forms
+        // Find the base singular form - entries ending in _singular have singular, _plural have plural
+        const isSingularEntry = item.id.includes('_singular');
+        const isPluralEntry = item.id.includes('_plural');
+        
+        // Extract base word (e.g., "dog" from "dog_singular" or "dogs")
+        const baseWord = item.word;
+        
+        // Find the paired word - search in the data for the matching pair
+        const currentIndex = grammarData.findIndex(d => d.id === item.id);
+        let singularWord, pluralWord;
+        
+        if (isSingularEntry) {
+          singularWord = item.word;
+          // Find the plural pair (next item usually)
+          const pluralItem = grammarData[currentIndex + 1];
+          pluralWord = pluralItem ? pluralItem.word : item.word + 's';
+        } else {
+          pluralWord = item.word;
+          // Find the singular pair (previous item usually)
+          const singularItem = grammarData[currentIndex - 1];
+          singularWord = singularItem ? singularItem.word : item.word.replace(/s$/, '');
+        }
+        
+        contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:32px;padding:24px;max-width:640px;margin:0 auto;">
+            <!-- Progress indicator -->
+            <div style="width:100%;text-align:center;font-size:1rem;color:#666;font-weight:600;margin-top:4px;margin-bottom:4px;">
+              Question ${currentIdx + 1} of ${shuffled.length}
+            </div>
+            
+            <!-- Main question - ONLY emoji, NO text answer -->
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:6px;">
+              <!-- Emoji only -->
+              ${item.emoji ? `<div style="font-size:5rem;line-height:1;">${item.emoji}</div>` : ''}
+            </div>
+            
+            <!-- Answer buttons - show actual word choices -->
+            <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;flex-wrap:wrap;">
+              <button class="grammar-choice-btn" data-answer="singular" style="flex:1;min-width:clamp(110px, 20vw, 160px);padding:clamp(14px, 2.5vh, 18px) clamp(18px, 3vw, 28px);font-size:clamp(1.2rem, 3.5vw, 1.7rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);font-family:'Poppins', Arial, sans-serif;">
+                ${singularWord}
+              </button>
+              <button class="grammar-choice-btn" data-answer="plural" style="flex:1;min-width:clamp(110px, 20vw, 160px);padding:clamp(14px, 2.5vh, 18px) clamp(18px, 3vw, 28px);font-size:clamp(1.2rem, 3.5vw, 1.7rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);font-family:'Poppins', Arial, sans-serif;">
+                ${pluralWord}
               </button>
             </div>
-          `;
+            
+            <!-- Spacer pushes the quit button to the bottom -->
+            <div style="flex:1;width:100%;"></div>
+            
+            <!-- Quit button -->
+            <button id="grammarQuitBtn" class="wa-quit-btn" style="margin-top:auto;margin-bottom:8px;align-self:center;background:#fff;color:#6273e4;border:2px solid #39d5da;font-weight:800;cursor:pointer;">
+              Quit Game
+            </button>
+          </div>
+        `;
+      } else {
+        // Original grammar mode layout
+        contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:32px;padding:24px;max-width:640px;margin:0 auto;">
+            <!-- Progress indicator -->
+            <div style="width:100%;text-align:center;font-size:1rem;color:#666;font-weight:600;margin-top:4px;margin-bottom:4px;">
+              Question ${currentIdx + 1} of ${shuffled.length}
+            </div>
+
+        <!-- Main question -->
+        <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;">
+          ${visualCueHTML}
+          ${!inOnUnderMode ? `<div id="grammarArticleBox" style="display:inline-flex;align-items:center;justify-content:center;min-width:90px;padding:8px 16px;max-width:280px;height:52px;border:3px solid #d1e6f0;border-radius:14px;background:#fff;vertical-align:middle;font-size:clamp(1.2rem, 4vw, 1.92rem);font-weight:800;color:#21b3be;font-family:'Poppins', Arial, sans-serif;transition:all 0.2s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>` : ''}
+          ${!inOnUnderMode ? `<div style="font-size:clamp(1.8rem, 8vw, 4.56rem);font-weight:800;color:#21b3be;letter-spacing:0.02em;max-width:min(90vw, 500px);word-wrap:break-word;overflow-wrap:break-word;line-height:1.3;padding:0 8px;white-space:normal;">${isThisThatMode ? sanitizeText(item?.word || '') : questionText}</div>` : ''}
+        </div>              <!-- Answer buttons (extra spacing above) -->
+          <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:460px;justify-content:center;margin-top:40px;margin-bottom:8px;flex-wrap:wrap;">
+            ${answerChoices.map((choice, idx) => `
+              <button class="grammar-choice-btn" data-answer="${choice}" style="flex:1;min-width:clamp(90px, 18vw, 140px);padding:clamp(12px, 2.5vh, 16px) clamp(16px, 3vw, 24px);font-size:clamp(1.1rem, 3vw, 1.5rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:lowercase;font-family:'Poppins', Arial, sans-serif;">
+                ${choice}
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Spacer pushes the quit button to the bottom -->
+          <div style="flex:1;width:100%;"></div>
+
+          <!-- Quit button -->
+          <button id="grammarQuitBtn" class="wa-quit-btn" style="margin-top:auto;margin-bottom:8px;align-self:center;background:#fff;color:#6273e4;border:2px solid #39d5da;font-weight:800;cursor:pointer;">
+            Quit Game
+          </button>
+        </div>
+        `;
+      }
 
       // Render directly in the game area with progress
       setView({
@@ -204,15 +271,16 @@ export async function runGrammarMode(ctx) {
           const correct = userAnswer === correctAnswer;
 
           // Visual feedback
-          btn.style.borderColor = correct ? '#4caf50' : '#f44336';
-          btn.style.backgroundColor = correct ? '#e8f5e9' : '#ffebee';
+          btn.style.borderColor = correct ? '#00897b' : '#f44336';
+          btn.style.backgroundColor = correct ? '#b2dfdb' : '#ffebee';
+          btn.style.color = correct ? '#fff' : '#f44336';
 
           // Change answer box color to green or red
           const articleBox = document.getElementById('grammarArticleBox');
           if (articleBox) {
-            articleBox.style.borderColor = correct ? '#4caf50' : '#f44336';
-            articleBox.style.backgroundColor = correct ? '#c8e6c9' : '#fde8e8';
-            articleBox.style.color = correct ? '#2e7d32' : '#c62828';
+            articleBox.style.borderColor = correct ? '#00897b' : '#f44336';
+            articleBox.style.backgroundColor = correct ? '#80cbc4' : '#fde8e8';
+            articleBox.style.color = correct ? '#fff' : '#c62828';
             const displayAnswer = item.article || item.ending;
             articleBox.innerHTML = `<span style=\"display:inline-block;line-height:1\">${displayAnswer}</span>`;
           }
@@ -223,8 +291,7 @@ export async function runGrammarMode(ctx) {
           } else {
             if (playSFX) playSFX('wrong');
           }
-              // Update text color to match feedback (redundant safety)
-              btn.style.color = correct ? '#2e7d32' : '#c62828';
+              // Update text color to match feedback (already set above)
 
           totalAnswered++;
 

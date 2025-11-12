@@ -1,0 +1,31 @@
+[
+  { "id": "bus_singular", "word": "bus", "article": "singular", "emoji": "🚌", "exampleSentence": "One bus is here.", "exampleSentenceKo": "버스 한 대가 여기 있어요.", "explanation": "Singular: one bus.", "explanationKo": "단수: 버스 한 대" },
+  { "id": "bus_plural", "word": "buses", "article": "plural", "emoji": "🚌🚌", "exampleSentence": "Many buses are here.", "exampleSentenceKo": "버스 여러 대가 여기 있어요.", "explanation": "Plural: many buses.", "explanationKo": "복수: 버스 여러 대" },
+  
+  { "id": "box_singular", "word": "box", "article": "singular", "emoji": "📦", "exampleSentence": "One box is on the truck.", "exampleSentenceKo": "상자 하나가 트럭에 있어요.", "explanation": "Singular: one box.", "explanationKo": "단수: 상자 하나" },
+  { "id": "box_plural", "word": "boxes", "article": "plural", "emoji": "📦📦", "exampleSentence": "Many boxes are on the truck.", "exampleSentenceKo": "상자들이 트럭에 있어요.", "explanation": "Plural: many boxes.", "explanationKo": "복수: 많은 상자" },
+  
+  { "id": "church_singular", "word": "church", "article": "singular", "emoji": "⛪", "exampleSentence": "The church is old.", "exampleSentenceKo": "교회가 오래되었어요.", "explanation": "Singular: one church.", "explanationKo": "단수: 교회 하나" },
+  { "id": "church_plural", "word": "churches", "article": "plural", "emoji": "⛪⛪", "exampleSentence": "The churches are closed on Monday.", "exampleSentenceKo": "교회들이 월요일에는 닫혀 있어요.", "explanation": "Plural: many churches.", "explanationKo": "복수: 여러 교회" },
+  
+  { "id": "fox_singular", "word": "fox", "article": "singular", "emoji": "🦊", "exampleSentence": "One fox is clever.", "exampleSentenceKo": "여우 한 마리가 영리해요.", "explanation": "Singular: one fox.", "explanationKo": "단수: 여우 한 마리" },
+  { "id": "fox_plural", "word": "foxes", "article": "plural", "emoji": "🦊🦊", "exampleSentence": "Foxes are clever.", "exampleSentenceKo": "여우들은 영리해요.", "explanation": "Plural: many foxes.", "explanationKo": "복수: 여러 여우" },
+  
+  { "id": "dish_singular", "word": "dish", "article": "singular", "emoji": "🍽️", "exampleSentence": "Wash the dish, please.", "exampleSentenceKo": "그릇을 씻어 주세요.", "explanation": "Singular: one dish.", "explanationKo": "단수: 그릇 하나" },
+  { "id": "dish_plural", "word": "dishes", "article": "plural", "emoji": "🍽️🍽️", "exampleSentence": "Wash the dishes, please.", "exampleSentenceKo": "그릇들을 씻어 주세요.", "explanation": "Plural: many dishes.", "explanationKo": "복수: 여러 그릇" },
+  
+  { "id": "match_singular", "word": "match", "article": "singular", "emoji": "🔥", "exampleSentence": "One match is in the box.", "exampleSentenceKo": "성냥 하나가 상자 안에 있어요.", "explanation": "Singular: one match.", "explanationKo": "단수: 성냥 하나" },
+  { "id": "match_plural", "word": "matches", "article": "plural", "emoji": "🔥🔥", "exampleSentence": "Matches are in the box.", "exampleSentenceKo": "성냥들이 상자 안에 있어요.", "explanation": "Plural: many matches.", "explanationKo": "복수: 여러 성냥" },
+  
+  { "id": "watch_singular", "word": "watch", "article": "singular", "emoji": "⌚", "exampleSentence": "He collects one watch.", "exampleSentenceKo": "그는 시계 하나를 수집해요.", "explanation": "Singular: one watch.", "explanationKo": "단수: 시계 하나" },
+  { "id": "watch_plural", "word": "watches", "article": "plural", "emoji": "⌚⌚", "exampleSentence": "He collects watches.", "exampleSentenceKo": "그는 시계를 수집해요.", "explanation": "Plural: many watches.", "explanationKo": "복수: 여러 시계" },
+  
+  { "id": "glass_singular", "word": "glass", "article": "singular", "emoji": "🍷", "exampleSentence": "One glass breaks easily.", "exampleSentenceKo": "유리잔 하나가 쉽게 깨져요.", "explanation": "Singular: one glass.", "explanationKo": "단수: 유리잔 하나" },
+  { "id": "glass_plural", "word": "glasses", "article": "plural", "emoji": "🍷🍷", "exampleSentence": "Glasses break easily.", "exampleSentenceKo": "유리잔들이 쉽게 깨져요.", "explanation": "Plural: many glasses.", "explanationKo": "복수: 여러 유리잔" },
+  
+  { "id": "brush_singular", "word": "brush", "article": "singular", "emoji": "🖌️", "exampleSentence": "She buys one brush.", "exampleSentenceKo": "그녀는 브러시 하나를 사요.", "explanation": "Singular: one brush.", "explanationKo": "단수: 브러시 하나" },
+  { "id": "brush_plural", "word": "brushes", "article": "plural", "emoji": "🖌️🖌️", "exampleSentence": "She buys new brushes.", "exampleSentenceKo": "그녀는 새 브러시를 사요.", "explanation": "Plural: many brushes.", "explanationKo": "복수: 여러 브러시" },
+  
+  { "id": "peach_singular", "word": "peach", "article": "singular", "emoji": "🍑", "exampleSentence": "One peach is sweet.", "exampleSentenceKo": "복숭아 하나가 달아요.", "explanation": "Singular: one peach.", "explanationKo": "단수: 복숭아 하나" },
+  { "id": "peach_plural", "word": "peaches", "article": "plural", "emoji": "🍑🍑", "exampleSentence": "Many peaches are sweet.", "exampleSentenceKo": "복숭아들이 달아요.", "explanation": "Plural: many peaches.", "explanationKo": "복수: 여러 복숭아" }
+]
