@@ -219,6 +219,14 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     btn.style.boxShadow = '0 6px 14px rgba(166, 234, 246, 0.35)';
 
     btn.addEventListener('click', () => {
+      // Check if this grammar lesson is marked as "coming soon"
+      if (currentGrammarConfig?.comingSoon === true) {
+        const comingSoonModal = document.getElementById('comingSoonModal');
+        if (comingSoonModal) {
+          comingSoonModal.style.display = 'flex';
+        }
+        return;
+      }
       if (onModeChosen) onModeChosen({ mode: m.mode, grammarFile: currentGrammarFile, grammarName: currentGrammarName, grammarConfig: currentGrammarConfig });
     });
 

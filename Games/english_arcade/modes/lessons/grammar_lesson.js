@@ -44,8 +44,8 @@ export async function runGrammarLesson(ctx = {}) {
       #gameArea .stars{ font-size:clamp(1.6rem,6vmin,2.2rem);line-height:1 }
 
     /* Step 1 tweaks: subtle inline next link and emoji hint */
-    #gameArea .next-line-tap{ border:none;background:transparent;color:#7d8a97;font-weight:800;cursor:pointer;font-size:1rem;margin-top:10px;padding:4px 8px;text-decoration:underline dotted; }
-    #gameArea .next-line-tap:hover{ color:#5f6b75 }
+    #gameArea .next-line-tap{ border:2px solid #21b3be;background:#fff;color:#ff6fb0;font-weight:800;cursor:pointer;font-size:1rem;margin-top:10px;padding:10px 16px;border-radius:12px;transition:transform .15s ease, box-shadow .15s ease;box-shadow:0 2px 6px rgba(0,0,0,.06); }
+    #gameArea .next-line-tap:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(33,181,192,0.18) }
   #gameArea .emoji-swap{ position:relative }
   /* Halo pulse + tiny bounce to suggest interactivity */
   #gameArea .emoji-swap.hinting{ animation: wa-bounce 1.6s ease-in-out infinite; }
@@ -350,10 +350,10 @@ export async function runGrammarLesson(ctx = {}) {
         requestAnimationFrame(() => { requestAnimationFrame(reveal); });
         setTimeout(reveal, 80);
         
-        // Inline minimal "Got it" text control
+        // Inline minimal "Next" text control
         const tap = document.createElement('button');
         tap.className = 'next-line-tap';
-        tap.textContent = (lang === 'ko') ? '알겠어요' : 'Got it';
+        tap.textContent = (lang === 'ko') ? '다음' : 'Next';
         tap.onclick = () => { tap.remove(); showNextLine(); };
         container.appendChild(tap);
 
@@ -398,11 +398,11 @@ export async function runGrammarLesson(ctx = {}) {
 
     let phase = 0; // 0 = an on left, 1 = a on right
 
-  // Styled Got it button consistent with other cyan/pink buttons
-  const tap = button((lang === 'ko') ? '알겠어요' : 'Got it');
+  // Styled Next button consistent with other cyan/pink buttons
+  const tap = button((lang === 'ko') ? '다음' : 'Next');
   tap.style.borderColor = '#21b3be';
   tap.style.color = '#ff6fb0';
-  // Bottom bar for positioning Got it at bottom center, below vowel list
+  // Bottom bar for positioning Next at bottom center, below vowel list
   const bottomBar = document.createElement('div');
   bottomBar.style.cssText = 'display:flex;align-items:center;justify-content:center;margin-top:12px;width:100%';
   bottomBar.appendChild(tap);

@@ -220,7 +220,7 @@ function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildSentenceWithBlank(item) {
+function buildSentenceWithBlank(item, isPluralMode = false, isCountableMode = false) {
   const sentence = (item?.exampleSentence || item?.example || '').trim();
   const article = (item?.article || '').trim();
   const contraction = (item?.contraction || '').trim();
@@ -228,6 +228,48 @@ function buildSentenceWithBlank(item) {
   if (!sentence) {
     return `___ ${word}`.trim();
   }
+  
+  // For countable/uncountable mode, replace the target word with blank
+  // Try both singular and common plural forms
+  if (isCountableMode && word) {
+    // First try exact word match
+    let wordPattern = new RegExp('\\b' + escapeRegex(word) + '\\b', 'i');
+    if (wordPattern.test(sentence)) {
+      return sentence.replace(wordPattern, '___');
+    }
+    
+    // Try common plural forms: word + s, es, ies
+    const pluralForms = [
+      word + 's',
+      word + 'es',
+      word.endsWith('y') ? word.slice(0, -1) + 'ies' : null
+    ].filter(Boolean);
+    
+    for (const plural of pluralForms) {
+      wordPattern = new RegExp('\\b' + escapeRegex(plural) + '\\b', 'i');
+      if (wordPattern.test(sentence)) {
+        return sentence.replace(wordPattern, '___');
+      }
+    }
+  }
+  
+  // For plurals mode, replace the target word with blank
+  // Try both the word field and article field (which may contain the plural form)
+  if (isPluralMode) {
+    if (word) {
+      const wordPattern = new RegExp('\\b' + escapeRegex(word) + '\\b', 'i');
+      if (wordPattern.test(sentence)) {
+        return sentence.replace(wordPattern, '___');
+      }
+    }
+    if (article && article !== 'singular' && article !== 'plural') {
+      const articlePattern = new RegExp('\\b' + escapeRegex(article) + '\\b', 'i');
+      if (articlePattern.test(sentence)) {
+        return sentence.replace(articlePattern, '___');
+      }
+    }
+  }
+  
   // Check for contraction first (for contractions_be mode)
   if (contraction) {
     const contractionPattern = new RegExp(escapeRegex(contraction), 'i');
@@ -261,6 +303,53 @@ function buildContractionOptions(item, allEndings) {
     const label = `${subject}${ending}`;
     return { label, value: label.toLowerCase() };
   });
+  return shuffle(options);
+}
+
+function buildPluralOptions(item, allItems, isCountableMode = false) {
+  // For plurals/countable mode: generate 4 options including the correct word and 3 distractors
+  const correctWord = (item?.word || '').trim();
+  const correctArticle = (item?.article || '').trim();
+  
+  // Determine the correct answer - could be in word or article field
+  let correctAnswer = correctWord;
+  if (!isCountableMode && correctArticle && correctArticle !== 'singular' && correctArticle !== 'plural') {
+    // For plurals_es, plurals_ies, plurals_irregular: article contains the plural form
+    correctAnswer = correctArticle;
+  }
+  
+  if (!correctAnswer || !Array.isArray(allItems) || allItems.length < 2) {
+    return [{ label: correctAnswer, value: correctAnswer.toLowerCase() }];
+  }
+
+  // Collect all unique word forms from the dataset
+  const allWordForms = new Set();
+  allItems.forEach((otherItem) => {
+    const word = (otherItem?.word || '').trim();
+    const article = (otherItem?.article || '').trim();
+    
+    if (word && word.toLowerCase() !== correctAnswer.toLowerCase()) {
+      allWordForms.add(word);
+    }
+    
+    // For plurals mode (NOT countable), also collect from article field
+    if (!isCountableMode && article && 
+        article !== 'singular' && article !== 'plural' && 
+        article !== 'countable' && article !== 'uncountable' &&
+        article.toLowerCase() !== correctAnswer.toLowerCase()) {
+      allWordForms.add(article);
+    }
+  });
+
+  // Convert to array and shuffle to pick random distractors
+  const distractors = shuffle(Array.from(allWordForms)).slice(0, 3);
+  
+  // Combine correct answer with distractors
+  const options = [correctAnswer, ...distractors].map((word) => ({
+    label: word,
+    value: word.toLowerCase()
+  }));
+
   return shuffle(options);
 }
 
@@ -360,6 +449,18 @@ export async function runGrammarFillGapMode(ctx) {
     && answerChoices.includes("'re")
     && answerChoices.includes("'s");
 
+  const isPluralMode = (grammarConfig && grammarConfig.isPluralMode === true)
+    || (Array.isArray(answerChoices)
+      && answerChoices.length === 2
+      && answerChoices.includes('singular')
+      && answerChoices.includes('plural'))
+    || (grammarFile && /plurals?_/.test(grammarFile)); // Also detect by filename
+
+  const isCountableMode = Array.isArray(answerChoices)
+    && answerChoices.length === 2
+    && answerChoices.includes('countable')
+    && answerChoices.includes('uncountable');
+
   const deck = shuffle(usable).slice(0, 15);
 
   try {
@@ -428,8 +529,8 @@ export async function runGrammarFillGapMode(ctx) {
           <div class="fg-word" id="fgWord"></div>
           <div class="fg-sentence" id="fgSentence"></div>
           <div class="fg-chip-row" id="fgOptions">
-            <!-- Options will be populated by renderQuestion for contractions -->
-            ${!isContractionMode ? answerChoices.map((choice) => `<button type="button" class="fg-chip" data-value="${choice.toLowerCase()}">${choice}</button>`).join('') : ''}
+            <!-- Options will be populated dynamically for contractions, plurals, and countable -->
+            ${(!isContractionMode && !isPluralMode && !isCountableMode) ? answerChoices.map((choice) => `<button type="button" class="fg-chip" data-value="${choice.toLowerCase()}">${choice}</button>`).join('') : ''}
           </div>
           <div class="fg-hint" id="fgHint"></div>
         </div>
@@ -511,10 +612,10 @@ export async function runGrammarFillGapMode(ctx) {
     const wordEl = document.getElementById('fgWord');
     const sentenceEl = document.getElementById('fgSentence');
     const optionsRow = document.getElementById('fgOptions');
-    const optionButtons = optionsRow ? Array.from(optionsRow.querySelectorAll('.fg-chip')) : [];
+    let optionButtons = optionsRow ? Array.from(optionsRow.querySelectorAll('.fg-chip')) : [];
     const hintEl = document.getElementById('fgHint');
 
-    if (!optionsRow || (!isContractionMode && !optionButtons.length) || !sentenceEl) {
+    if (!optionsRow || !sentenceEl) {
       console.error('[GrammarFillGap] Missing layout nodes');
       return;
     }
@@ -528,20 +629,35 @@ export async function runGrammarFillGapMode(ctx) {
     } else {
       emojiEl.textContent = item.emoji || '🧠';
     }
-    wordEl.textContent = item.word || '';
-    sentenceEl.innerHTML = buildSentenceWithBlank(item).replace('___', '<strong>___</strong>');
+    
+    // In plurals or countable mode, don't show the word separately since it's the answer
+    if (isPluralMode || isCountableMode) {
+      wordEl.textContent = '';
+    } else {
+      wordEl.textContent = item.word || '';
+    }
+    
+    sentenceEl.innerHTML = buildSentenceWithBlank(item, isPluralMode, isCountableMode).replace('___', '<strong>___</strong>');
     hintEl.textContent = hasProximityMode || inOnUnderMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
     setReveal('');
 
-    // For contractions, dynamically populate options
+    // For contractions, plurals, or countable, dynamically populate options
     if (isContractionMode) {
       const contractionOptions = buildContractionOptions(item, answerChoices);
       optionsRow.innerHTML = contractionOptions.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
       // Refresh optionButtons after updating HTML
-      optionButtons.length = 0;
-      optionsRow.querySelectorAll('.fg-chip').forEach((btn) => optionButtons.push(btn));
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
       if (!optionButtons.length) {
         console.error('[GrammarFillGap] No contraction options rendered');
+        return;
+      }
+    } else if (isPluralMode || isCountableMode) {
+      const wordOptions = buildPluralOptions(item, usable, isCountableMode);
+      optionsRow.innerHTML = wordOptions.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      // Refresh optionButtons after updating HTML
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No word options rendered');
         return;
       }
     }
@@ -562,9 +678,27 @@ export async function runGrammarFillGapMode(ctx) {
 
       optionButtons.forEach((b) => { b.disabled = true; });
 
-  // For contractions, check against the complete contraction string; otherwise use article
-  const correctAnswerSource = isContractionMode ? (item.contraction || item.article || '') : (item.article || '');
-  const correctArticle = String(correctAnswerSource || '').trim().toLowerCase();
+      // For contractions, check against the complete contraction string
+      // For plurals or countable, check against the word
+      // Otherwise use article
+      let correctAnswerSource;
+      if (isPluralMode || isCountableMode) {
+        // Check article first (for plurals_es, plurals_ies, plurals_irregular)
+        // Then fall back to word (for plurals_s and countable)
+        const article = (item.article || '').trim();
+        const word = (item.word || '').trim();
+        if (article && article !== 'singular' && article !== 'plural' && article !== 'countable' && article !== 'uncountable') {
+          correctAnswerSource = article;
+        } else {
+          correctAnswerSource = word;
+        }
+      } else if (isContractionMode) {
+        correctAnswerSource = item.contraction || item.article || '';
+      } else {
+        correctAnswerSource = item.article || '';
+      }
+      
+      const correctArticle = String(correctAnswerSource || '').trim().toLowerCase();
       const guess = String(choice || '').trim().toLowerCase();
       const correct = guess === correctArticle;
 

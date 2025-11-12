@@ -44,9 +44,11 @@ function ensureGrammarL1ModalStyles() {
 
 export function showGrammarL1Modal({ onChoose, onClose }) {
   ensureGrammarL1ModalStyles();
+  const SCROLL_KEY = 'grammarL1Modal_scrollTop';
   
   // Grammar games list for Level 1
   const grammarGames = [
+    // --- Core basics ---
     {
       id: 'articles',
       label: 'A vs An',
@@ -58,6 +60,106 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         lessonId: 'articles',
         answerChoices: ['a', 'an'],
         bucketLabels: { a: 'a', an: 'an' }
+      }
+    },
+    {
+      id: 'he_vs_she_vs_it',
+      label: 'He vs She vs It',
+      emoji: '👨👩🐶',
+      file: 'data/grammar/level1/he_she_it.json',
+      aliases: ['he_vs_she_vs_it', 'he vs she vs it'],
+      config: {
+        lessonModule: 'grammar_lesson_he_she_it',
+        lessonId: 'he_vs_she_vs_it',
+        answerChoices: ['he', 'she', 'it'],
+        bucketLabels: { he: 'he', she: 'she', it: 'it' },
+        ruleHint: 'Choose the correct pronoun (he for males, she for females, it for animals/objects).'
+      }
+    },
+    // --- Early learning lists ---
+    {
+      id: 'want_vs_wants',
+      label: 'Want vs Wants',
+      emoji: '🙏',
+      file: 'data/grammar/level1/want_vs_wants.json',
+      aliases: ['want_vs_wants', 'want vs wants', 'wantvswants'],
+      config: {
+        lessonModule: 'grammar_lesson_want_wants',
+        lessonId: 'want_vs_wants',
+        answerChoices: ['want', 'wants'],
+        bucketLabels: { want: 'want', wants: 'wants' },
+        ruleHint: 'Use want with I, you, we, they, or plural nouns. Use wants with he, she, it, or one noun.'
+      }
+    },
+    {
+      id: 'like_vs_likes',
+      label: 'Like vs Likes',
+      emoji: '❤️',
+      file: 'data/grammar/level1/like_vs_likes.json',
+      aliases: ['like_vs_likes', 'like vs likes', 'likesvslikes'],
+      config: {
+        lessonModule: 'grammar_lesson_like_likes',
+        lessonId: 'like_vs_likes',
+        answerChoices: ['like', 'likes'],
+        bucketLabels: { like: 'like', likes: 'likes' },
+        ruleHint: 'Use like with I, you, we, they, or plural nouns. Use likes with he, she, it, or one noun.'
+      }
+    },
+    {
+      id: 'in_on_under',
+      label: 'In vs On vs Under',
+      emoji: '📦',
+      file: 'data/grammar/level1/in_on_under.json',
+      aliases: ['in_on_under', 'in vs on vs under', 'prepositions location'],
+      config: {
+        lessonModule: 'grammar_lesson_in_on_under',
+        lessonId: 'in_on_under',
+        answerChoices: ['in', 'on', 'under'],
+        bucketLabels: { in: 'in', on: 'on', under: 'under' },
+        ruleHint: 'Use in for inside, on for on top of, and under for below something.'
+      }
+    },
+    {
+      id: 'am_are_is',
+      label: 'Am vs Are vs Is',
+      emoji: '🗣️',
+      file: 'data/grammar/level1/am_are_is.json',
+      aliases: ['am_are_is', 'am vs are vs is', 'am are is'],
+      config: {
+        lessonModule: 'grammar_lesson_am_are_is',
+        lessonId: 'am_are_is',
+        answerChoices: ['am', 'is', 'are'],
+        bucketLabels: { am: 'am', is: 'is', are: 'are' },
+        ruleHint: 'Use am with I, is with one person or thing, and are with many or you.'
+      }
+    },
+    {
+      id: 'have_vs_has',
+      label: 'Have vs Has',
+      emoji: '🤝',
+      file: 'data/grammar/level1/have_vs_has.json',
+      aliases: ['have_vs_has', 'have vs has', 'havehas'],
+      config: {
+        lessonModule: 'grammar_lesson_have_has',
+        lessonId: 'have_vs_has',
+        answerChoices: ['have', 'has'],
+        bucketLabels: { have: 'have', has: 'has' },
+        ruleHint: 'Use have with I, you, we, they, or plural nouns. Use has with he, she, it, or one noun.'
+      }
+    },
+    // --- Contractions and demonstratives (before questions) ---
+    {
+      id: 'contractions_be',
+      label: 'I am → I\'m',
+      emoji: '🔀',
+      file: 'data/grammar/level1/contractions_be.json',
+      aliases: ['contractions_be', 'contractions be', 'be contractions'],
+      config: {
+        lessonModule: 'grammar_lesson_contractions_be',
+        lessonId: 'contractions_be',
+        answerChoices: ["'m", "'re", "'s"],
+        bucketLabels: { contraction: 'contractions' },
+        ruleHint: 'Choose the correct contraction ending.'
       }
     },
     {
@@ -101,90 +203,203 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         ruleHint: 'Use these for things close to you, those for things far away. Plural forms of this and that.'
       }
     },
+    // --- Questions and negatives ---
     {
-      id: 'am_are_is',
-      label: 'Am vs Are vs Is',
-      emoji: '🗣️',
-      file: 'data/grammar/level1/am_are_is.json',
-      aliases: ['am_are_is', 'am vs are vs is', 'am are is'],
+      id: 'is_are_questions',
+      label: 'Is vs Are (Questions)',
+      emoji: '🤔',
+      file: 'data/grammar/level1/is_are_questions.json',
+      aliases: ['is_are_questions', 'is vs are questions', 'is vs are'],
       config: {
-        lessonModule: 'grammar_lesson_am_are_is',
-        lessonId: 'am_are_is',
-        answerChoices: ['am', 'is', 'are'],
-        bucketLabels: { am: 'am', is: 'is', are: 'are' },
-        ruleHint: 'Use am with I, is with one person or thing, and are with many or you.'
+        lessonModule: 'grammar_lesson_is_are_questions',
+        lessonId: 'is_are_questions',
+        answerChoices: ['is', 'are'],
+        bucketLabels: { is: 'is', are: 'are' },
+        ruleHint: 'Start the question with Is (singular) or Are (plural).'
       }
     },
     {
-      id: 'have_has',
-      label: 'Have vs Has',
-      emoji: '🤝',
-      file: 'data/grammar/level1/have_vs_has.json',
-      aliases: ['have_vs_has', 'have vs has', 'havehas'],
+      id: 'do_does_questions',
+      label: 'Do vs Does (Questions)',
+      emoji: '❓',
+      file: 'data/grammar/level1/do_does_questions.json',
+      aliases: ['do_does_questions', 'do vs does questions', 'do does'],
       config: {
-        lessonModule: 'grammar_lesson_have_has',
-        lessonId: 'have_vs_has',
-        answerChoices: ['have', 'has'],
-        bucketLabels: { have: 'have', has: 'has' },
-        ruleHint: 'Use have with I, you, we, they, or plural nouns. Use has with he, she, it, or one noun.'
+        lessonModule: 'grammar_lesson_do_does_questions',
+        lessonId: 'do_does_questions',
+        answerChoices: ['do', 'does'],
+        bucketLabels: { do: 'do', does: 'does' },
+        ruleHint: 'Use Do for I/you/we/they; Does for he/she/it.'
       }
     },
     {
-      id: 'contractions_be',
-      label: 'I am → I\'m',
-      emoji: '🔀',
-      file: 'data/grammar/level1/contractions_be.json',
-      aliases: ['contractions_be', 'contractions be', 'be contractions'],
+      id: 'negative_contractions',
+      label: 'Negative Contractions',
+      emoji: '➖',
+      file: 'data/grammar/level1/negative_contractions.json',
+      aliases: ['negative_contractions', 'contractions negative'],
       config: {
-        lessonModule: 'grammar_lesson_contractions_be',
-        lessonId: 'contractions_be',
-        answerChoices: ["'m", "'re", "'s"],
-        bucketLabels: { contraction: 'contractions' },
-        ruleHint: 'Choose the correct contraction ending.'
+        lessonModule: 'grammar_lesson',
+        lessonId: 'negative_contractions',
+        answerChoices: ["isn't", "aren't", "don't", "doesn't", "can't"],
+        bucketLabels: { isnt: "isn't", arent: "aren't", dont: "don't", doesnt: "doesn't", cant: "can't" },
+        ruleHint: 'Learn short forms of not (isn\'t, aren\'t, don\'t, doesn\'t, can\'t).',
+        comingSoon: true
       }
     },
     {
-      id: 'want_vs_wants',
-      label: 'Want vs Wants',
-      emoji: '🙏',
-      file: 'data/grammar/level1/want_vs_wants.json',
-      aliases: ['want_vs_wants', 'want vs wants', 'wantvswants'],
+      id: 'can_vs_cant',
+      label: 'Can vs Can\'t',
+      emoji: '💪',
+      file: 'data/grammar/level1/can_cant.json',
+      aliases: ['can_vs_cant', 'can vs cant'],
       config: {
-        lessonModule: 'grammar_lesson_want_wants',
-        lessonId: 'want_vs_wants',
-        answerChoices: ['want', 'wants'],
-        bucketLabels: { want: 'want', wants: 'wants' },
-        ruleHint: 'Use want with I, you, we, they, or plural nouns. Use wants with he, she, it, or one noun.'
+        lessonModule: 'grammar_lesson_can_cant',
+        lessonId: 'can_vs_cant',
+        answerChoices: ['can', "can't"],
+        bucketLabels: { can: 'can', cant: "can't" },
+        ruleHint: 'Can = can do, can\'t = cannot.'
       }
     },
     {
-      id: 'like_vs_likes',
-      label: 'Like vs Likes',
-      emoji: '❤️',
-      file: 'data/grammar/level1/like_vs_likes.json',
-      aliases: ['like_vs_likes', 'like vs likes', 'likesvslikes'],
+      id: 'isnt_vs_arent',
+      label: "Isn't vs Aren't",
+      emoji: '�',
+      file: 'data/grammar/level1/isnt_arent.json',
+      aliases: ['isnt_vs_arent', 'isnt vs arent'],
       config: {
-        lessonModule: 'grammar_lesson_like_likes',
-        lessonId: 'like_vs_likes',
-        answerChoices: ['like', 'likes'],
-        bucketLabels: { like: 'like', likes: 'likes' },
-        ruleHint: 'Use like with I, you, we, they, or plural nouns. Use likes with he, she, it, or one noun.'
+        lessonModule: 'grammar_lesson_isnt_arent',
+        lessonId: 'isnt_vs_arent',
+        answerChoices: ["isn't", "aren't"],
+        bucketLabels: { isnt: "isn't", arent: "aren't" },
+        ruleHint: 'Use isn\'t with singular, aren\'t with plural.'
       }
     },
     {
-      id: 'in_on_under',
-      label: 'In vs On vs Under',
-      emoji: '📦',
-      file: 'data/grammar/level1/in_on_under.json',
-      aliases: ['in_on_under', 'in vs on vs under', 'prepositions location'],
+      id: 'dont_vs_doesnt',
+      label: "Don't vs Doesn't",
+      emoji: '⛔',
+      file: 'data/grammar/level1/dont_doesnt.json',
+      aliases: ['dont_vs_doesnt', 'dont vs doesnt'],
       config: {
-        lessonModule: 'grammar_lesson_in_on_under',
-        lessonId: 'in_on_under',
-        answerChoices: ['in', 'on', 'under'],
-        bucketLabels: { in: 'in', on: 'on', under: 'under' },
-        ruleHint: 'Use in for inside, on for on top of, and under for below something.'
+        lessonModule: 'grammar_lesson_dont_doesnt',
+        lessonId: 'dont_vs_doesnt',
+        answerChoices: ["don't", "doesn't"],
+        bucketLabels: { dont: "don't", doesnt: "doesn't" },
+        ruleHint: 'Use don\'t for I/you/we/they; doesn\'t for he/she/it.'
+      }
+    },
+    // --- Plurals and countables ---
+    {
+      id: 'plurals_s',
+      label: 'bear/bears',
+      emoji: '🐻🐻',
+      file: 'data/grammar/level1/plurals_s.json',
+      aliases: ['plurals_s', 'plurals s', 'add s'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'plurals_s',
+        isPluralMode: true,
+        answerChoices: ['singular', 'plural'],
+        bucketLabels: { singular: 'singular', plural: 'plural' },
+        ruleHint: 'Identify if the word is singular or plural.',
+        comingSoon: true
+      }
+    },
+    {
+      id: 'plurals_es',
+      label: 'watch/watches',
+      emoji: '⌚⌚',
+      file: 'data/grammar/level1/plurals_es.json',
+      aliases: ['plurals_es', 'plurals es', 'add es'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'plurals_es',
+        isPluralMode: true,
+        answerChoices: ['singular', 'plural'],
+        bucketLabels: { singular: 'singular', plural: 'plural' },
+        ruleHint: 'Nouns ending in s, x, z, ch, sh add es.',
+        comingSoon: true
+      }
+    },
+    {
+      id: 'plurals_ies',
+      label: 'baby/babies',
+      emoji: '👶👶',
+      file: 'data/grammar/level1/plurals_ies.json',
+      aliases: ['plurals_ies', 'plurals ies', 'y to ies'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'plurals_ies',
+        isPluralMode: true,
+        answerChoices: ['singular', 'plural'],
+        bucketLabels: { singular: 'singular', plural: 'plural' },
+        ruleHint: 'When a noun ends with consonant+y, change y to ies.',
+        comingSoon: true
+      }
+    },
+    {
+      id: 'plurals_irregular',
+      label: 'mouse/mice',
+      emoji: '🐭🐭',
+      file: 'data/grammar/level1/plurals_irregular.json',
+      aliases: ['plurals_irregular', 'plural irregular', 'mouse mice'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'plurals_irregular',
+        isPluralMode: true,
+        answerChoices: ['singular', 'plural'],
+        bucketLabels: { singular: 'singular', plural: 'plural' },
+        ruleHint: 'Some nouns have irregular plural forms.',
+        comingSoon: true
+      }
+    },
+    {
+      id: 'countable_vs_uncountable',
+      label: 'Countable vs Uncountable',
+      emoji: '🔢',
+      file: 'data/grammar/level1/countable_uncountable.json',
+      aliases: ['countable_vs_uncountable', 'countable uncountable'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'countable_vs_uncountable',
+        answerChoices: ['countable', 'uncountable'],
+        bucketLabels: { countable: 'countable', uncountable: 'uncountable' },
+        ruleHint: 'Countable nouns can be counted; uncountable nouns cannot.',
+        comingSoon: true
+      }
+    },
+    // --- Existence and demonstratives ---
+    /*
+    {
+      id: 'there_is_are',
+      label: 'There is vs There are',
+      emoji: '📍',
+      file: 'data/grammar/level1/there_is_are.json',
+      aliases: ['there_is_are', 'there is are'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'there_is_are',
+        answerChoices: ['is', 'are'],
+        bucketLabels: { is: 'is', are: 'are' },
+        ruleHint: 'There is for singular; There are for plural.'
+      }
+    },
+    {
+      id: 'there_are_vs_they_are',
+      label: 'There are vs They are',
+      emoji: '🔁',
+      file: 'data/grammar/level1/there_are_vs_they_are.json',
+      aliases: ['there_are_vs_they_are', 'there are vs they are'],
+      config: {
+        lessonModule: 'grammar_lesson',
+        lessonId: 'there_are_vs_they_are',
+        answerChoices: ['there_are', 'they_are'],
+        bucketLabels: { there_are: 'there are', they_are: 'they are' },
+        ruleHint: 'There are points out existence; They are describes who/what they are.'
       }
     }
+    */
   ];
 
   const encodeConfig = (config) => {
@@ -241,17 +456,42 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
   `;
 
   modal.style.display = 'flex';
+  // Restore the user's previous scroll position if available
+  const restoreScroll = () => {
+    try {
+      const container = document.getElementById('grammarL1ListContainer');
+      if (!container) return;
+      const saved = Number(localStorage.getItem(SCROLL_KEY)) || 0;
+      const max = Math.max(0, container.scrollHeight - container.clientHeight);
+      container.scrollTop = Math.max(0, Math.min(saved, max));
+    } catch (err) {
+      // ignore storage errors
+    }
+  };
+  const saveScroll = () => {
+    try {
+      const container = document.getElementById('grammarL1ListContainer');
+      if (!container) return;
+      localStorage.setItem(SCROLL_KEY, String(container.scrollTop));
+    } catch (err) {
+      // ignore storage errors
+    }
+  };
+  restoreScroll();
 
   document.getElementById('closeGrammarL1ModalX').onclick = () => {
+    saveScroll();
     modal.style.display = 'none';
     if (onClose) onClose();
   };
   document.getElementById('closeGrammarL1Modal').onclick = () => {
+    saveScroll();
     modal.style.display = 'none';
     if (onClose) onClose();
   };
   modal.onclick = (e) => {
     if (e.target === modal) {
+      saveScroll();
       modal.style.display = 'none';
       if (onClose) onClose();
     }
@@ -263,6 +503,8 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         const file = btn.getAttribute('data-file');
         const label = btn.getAttribute('data-label');
         const cfg = decodeConfig(btn.getAttribute('data-config'));
+        // save the scroll position before we hide the modal
+        saveScroll();
         modal.style.display = 'none';
         if (onChoose) onChoose({ grammarFile: file, grammarName: label, grammarConfig: cfg });
       };
