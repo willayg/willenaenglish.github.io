@@ -116,11 +116,10 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
 
       cardDisplay.innerHTML = `
         <div class="prep-label">${set.prep.toUpperCase()}</div>
-        <div class="prep-scene" id="prep-scene-clickable" style="cursor:pointer;min-height:160px;display:flex;align-items:center;justify-content:center;">${sceneHTML}</div>
+        <div class="prep-scene" id="prep-scene-clickable" style="cursor:pointer;">${sceneHTML}</div>
         <div class="prep-sentence">${escapeHtml(sentenceEn)}</div>
         <div class="prep-sentence-ko">${escapeHtml(sentenceKo)}</div>
         <div class="prep-tip">${escapeHtml(lang === 'ko' ? set.tipKo : set.tipEn)}</div>
-        <div style="font-size:0.9rem;color:#666;margin-top:8px;font-weight:600;">Click the scene to rotate animals</div>
       `;
       
       // Add click handler to scene to rotate animals
@@ -434,6 +433,22 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     root.innerHTML = '';
     const stage = document.createElement('div');
     stage.className = 'lesson-stage';
+
+    const quitBtn = document.createElement('button');
+    quitBtn.className = 'wa-quit-btn';
+    quitBtn.setAttribute('aria-label', 'Quit lesson');
+    quitBtn.innerHTML = `<img class="wa-quit-icon" src="assets/Images/icons/quit-game.svg" alt="" /><span class="wa-sr-only">Quit</span>`;
+    quitBtn.style.cssText = 'opacity:0; transition:opacity 0.3s ease 0.5s;';
+    quitBtn.onclick = () => {
+      playSFX?.('click');
+      if (window.WordArcade?.startGrammarModeSelector) {
+        window.WordArcade.startGrammarModeSelector();
+      } else if (window.WordArcade?.quitToOpening) {
+        window.WordArcade.quitToOpening(true);
+      }
+    };
+    root.appendChild(quitBtn);
+    requestAnimationFrame(() => { quitBtn.style.opacity = '1'; });
 
     const top = document.createElement('div');
     top.className = 'lesson-topbar';

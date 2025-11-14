@@ -54,6 +54,21 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
   function render() {
     root.innerHTML = '';
 
+    const quitBtn = document.createElement('button');
+    quitBtn.className = 'wa-quit-btn';
+    quitBtn.setAttribute('aria-label', 'Quit lesson');
+    quitBtn.innerHTML = `<img class="wa-quit-icon" src="assets/Images/icons/quit-game.svg" alt="" /><span class="wa-sr-only">Quit</span>`;
+    quitBtn.style.cssText = 'opacity:0; transition:opacity 0.3s ease 0.5s;';
+    quitBtn.onclick = () => {
+      if (window.WordArcade?.startGrammarModeSelector) {
+        window.WordArcade.startGrammarModeSelector();
+      } else if (window.WordArcade?.quitToOpening) {
+        window.WordArcade.quitToOpening(true);
+      }
+    };
+    root.appendChild(quitBtn);
+    requestAnimationFrame(() => { quitBtn.style.opacity = '1'; });
+
     const stage = document.createElement('div');
     stage.className = 'lesson-stage contractions-lesson';
 

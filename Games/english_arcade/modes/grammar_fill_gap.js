@@ -195,10 +195,7 @@ function ensureStyles() {
     .fg-btn { font-family:inherit; font-weight:800; font-size:1.05rem; padding:14px 32px; border-radius:18px; border:2px solid transparent; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
     .fg-btn.primary { background:#21b3be; color:#ffffff; border-color:#21b3be; box-shadow:0 18px 36px -14px rgba(20,126,130,0.55); }
     .fg-btn.primary:hover { transform:translateY(-2px); box-shadow:0 22px 34px -12px rgba(20,126,130,0.55); }
-    #gameArea #grammarQuitBtn { font-family:'Poppins', Arial, sans-serif !important; font-weight:800 !important; font-size:1.05rem !important; padding:14px 36px !important; border-radius:20px !important; border-width:2px !important; border-color:#19777e !important; background:#ffffff !important; color:#19777e !important; letter-spacing:0.04em !important; box-shadow:0 20px 36px -16px rgba(25,119,126,0.45) !important; cursor:pointer !important; transition:transform .18s ease, box-shadow .18s ease, background .18s ease !important; }
-    #gameArea #grammarQuitBtn:hover { transform:translateY(-3px); box-shadow:0 26px 42px -16px rgba(25,119,126,0.48) !important; background:#f2fbfc !important; }
-    #gameArea #grammarQuitBtn:active { transform:scale(0.97); }
-    #gameArea #grammarQuitBtn:focus-visible { outline:3px solid rgba(25,119,126,0.45); outline-offset:4px; }
+  #gameArea #grammarQuitBtn { z-index: 1100 !important; }
     .fg-summary-card { width:min(520px, 85vw); margin:clamp(30px,5vh,50px) auto; background:#ffffff; border-radius:20px; border:2px solid #cbeef0; padding:clamp(14px,3.5vw,24px) clamp(12px,4vw,20px); box-shadow:0 24px 54px -22px rgba(20,126,130,0.45); text-align:center; display:flex; flex-direction:column; gap:clamp(10px,2.5vw,16px); box-sizing:border-box; }
     .fg-summary-card h2 { margin:0; font-size:clamp(1.4rem,5vw,1.8rem); color:#19777e; font-weight:800; }
     .fg-summary-card .fg-score { font-size:clamp(0.9rem,3.5vw,1.1rem); font-weight:700; color:#0f172a; line-height:1.5; }
@@ -535,7 +532,10 @@ export async function runGrammarFillGapMode(ctx) {
           <div class="fg-hint" id="fgHint"></div>
         </div>
         <div class="fg-footer">
-          <button id="grammarQuitBtn" type="button">Quit Game</button>
+          <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+            <span class="wa-sr-only">Quit Game</span>
+            <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+          </button>
         </div>
       </div>
     `;
