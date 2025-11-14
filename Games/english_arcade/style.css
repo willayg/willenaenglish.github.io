@@ -580,11 +580,74 @@ h1 {
   line-height: 0.9;
 }
 
-/* Universal Quit button sizing (applies to all modes) */
-#wa-quit-btn, .wa-quit-btn, #grammarQuitBtn {
-  font-size: 0.85rem !important;
-  padding: 8px 14px !important;
-  border-radius: 9999px !important;
-  border-width: 2px !important;
-  box-shadow: none !important;
+/* Universal Quit button refresh (applies to all modes) */
+#wa-quit-btn,
+.wa-quit-btn,
+#grammarQuitBtn,
+#smQuitBtn {
+  position: fixed !important;
+  right: clamp(12px, 3vw, 24px) !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(12px, 3vw, 24px)) !important;
+  width: clamp(48px, 7vmin, 60px) !important;
+  height: clamp(48px, 7vmin, 60px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border-radius: 18px !important;
+  border: 2px solid rgba(57, 213, 218, 0.75) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 10px 26px -12px rgba(25, 119, 126, 0.45) !important;
+  cursor: pointer !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease !important;
+  z-index: 1100 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+#wa-quit-btn:hover,
+.wa-quit-btn:hover,
+#grammarQuitBtn:hover,
+#smQuitBtn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 16px 32px -14px rgba(25, 119, 126, 0.55) !important;
+  border-color: rgba(57, 213, 218, 0.92) !important;
+}
+
+#wa-quit-btn:active,
+.wa-quit-btn:active,
+#grammarQuitBtn:active,
+#smQuitBtn:active {
+  transform: scale(0.94) !important;
+  box-shadow: 0 10px 20px -16px rgba(17, 94, 89, 0.45) !important;
+}
+
+#wa-quit-btn:focus-visible,
+.wa-quit-btn:focus-visible,
+#grammarQuitBtn:focus-visible,
+#smQuitBtn:focus-visible {
+  outline: 3px solid rgba(57, 213, 218, 0.6) !important;
+  outline-offset: 3px !important;
+}
+
+#wa-quit-btn .wa-quit-icon,
+.wa-quit-btn .wa-quit-icon,
+#grammarQuitBtn .wa-quit-icon,
+#smQuitBtn .wa-quit-icon {
+  width: clamp(22px, 4vmin, 28px) !important;
+  height: auto !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.wa-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }

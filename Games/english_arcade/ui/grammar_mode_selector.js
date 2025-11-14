@@ -51,7 +51,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
 
   // Modes (styleMode borrows Word Arcade accent colors)
   const modes = [
-    { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_in_on_under'] },
+    { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable'] },
     { mode: 'choose', title: 'Choose', svgPath: './assets/Images/icons/choose2.svg', styleMode: 'multi_choice', sessionMode: 'grammar_mode' },
     { mode: 'fill_gap', title: 'Fill the Gap', svgPath: './assets/Images/icons/fill.svg', styleMode: 'missing_letter', sessionMode: 'grammar_fill_gap' },
     { mode: 'unscramble', title: 'Unscramble', svgPath: './assets/Images/icons/unscramble.svg', styleMode: 'sentence', sessionMode: 'grammar_sentence_unscramble' }
@@ -219,14 +219,6 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     btn.style.boxShadow = '0 6px 14px rgba(166, 234, 246, 0.35)';
 
     btn.addEventListener('click', () => {
-      // Check if this grammar lesson is marked as "coming soon"
-      if (currentGrammarConfig?.comingSoon === true) {
-        const comingSoonModal = document.getElementById('comingSoonModal');
-        if (comingSoonModal) {
-          comingSoonModal.style.display = 'flex';
-        }
-        return;
-      }
       if (onModeChosen) onModeChosen({ mode: m.mode, grammarFile: currentGrammarFile, grammarName: currentGrammarName, grammarConfig: currentGrammarConfig });
     });
 

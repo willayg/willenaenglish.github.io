@@ -59,48 +59,19 @@ export function renderGameView({ modeName, onShowModeModal, onWordsClick, onMode
     };
   }
 
-  // Add bottom-centered Quit Game button (hidden until after splash)
+  // Add bottom-right Quit Game button (hidden until after splash)
   try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
   const quitBtn = document.createElement('button');
   quitBtn.id = 'wa-quit-btn';
-  quitBtn.textContent = 'Quit Game';
+  quitBtn.type = 'button';
+  quitBtn.classList.add('wa-quit-btn');
   quitBtn.setAttribute('aria-label', 'Quit current game and return to mode menu');
-  // Visuals: white pill, teal border, bluish text (match provided image)
-  quitBtn.style.cssText = [
-    'font-family:\'Poppins\', Arial, sans-serif',
-    'position:fixed',
-    'left:50%',
-    'transform:translateX(-50%)',
-    'bottom:max(16px, env(safe-area-inset-bottom))',
-    'z-index:1000',
-    'padding:10px 22px',
-    'border-radius:9999px',
-    'background:#fff',
-    'color:#6273e4',
-    'font-weight:800',
-    'font-size:13px',
-    'border:3px solid #39d5da',
-    'box-shadow:none',
-    'cursor:pointer',
-    'outline:none',
-    '-webkit-tap-highlight-color:transparent',
-    'transition:transform .15s ease, box-shadow .15s ease, opacity .2s ease',
-    'opacity:0' // start hidden; reveal after splash
-  ].join(';');
-
-  // Hover/active micro-interactions
-  quitBtn.addEventListener('mouseenter', () => {
-    quitBtn.style.transform = 'translateX(-50%) translateY(-1px)';
-  });
-  quitBtn.addEventListener('mouseleave', () => {
-    quitBtn.style.transform = 'translateX(-50%) translateY(0)';
-  });
-  quitBtn.addEventListener('mousedown', () => {
-    quitBtn.style.transform = 'translateX(-50%) translateY(1px)';
-  });
-  quitBtn.addEventListener('mouseup', () => {
-    quitBtn.style.transform = 'translateX(-50%) translateY(0)';
-  });
+  quitBtn.title = 'Quit Game';
+  quitBtn.innerHTML = `
+    <span class="wa-sr-only">Quit Game</span>
+    <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+  `;
+  quitBtn.style.opacity = '0';
 
   quitBtn.addEventListener('click', () => {
     // Soft quit: keep wordList so user can pick a new mode quickly

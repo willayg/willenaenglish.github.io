@@ -341,9 +341,9 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">E</text></svg>
                 English Arcade
               </a>
-              <a class="dd-item" role="menuitem" href="/Games/GrammarArcade/index.html" data-i18n="Grammar Arcade">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><rect x="4" y="4" width="16" height="16" rx="4" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">G</text></svg>
-                Grammar Arcade
+              <a class="dd-item" role="menuitem" href="/playzone.html" data-i18n="More Games">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M20 6h-2.18c.09-.3.18-.58.18-.9a2.5 2.5 0 00-5-1.45A2.5 2.5 0 005 5.1a2.5 2.5 0 00-5 1.45c0 .32.09.6.18.9H2a2 2 0 00-2 2v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c.83 0 1.5.67 1.5 1.5S15.83 7 15 7s-1.5-.67-1.5-1.5S14.17 4 15 4zm-4 0c.83 0 1.5.67 1.5 1.5S11.83 7 11 7s-1.5-.67-1.5-1.5S10.17 4 11 4zm3.5 9.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z" fill="#19777e"/></svg>
+                More Games
               </a>
               <a class="dd-item" role="menuitem" href="/students/profile.html" data-i18n="Profile">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M12 12c2.7 0 8 1.34 8 4v4H4v-4c0-2.66 5.3-4 8-4zm0-2a4 4 0 100-8 4 4 0 000 8z" fill="#19777e"/></svg>

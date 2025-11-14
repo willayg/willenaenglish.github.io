@@ -315,16 +315,18 @@ export function run(ctx){
     root.appendChild(wrap);
 
     if (layout.showQuitButton) {
-      const quitFooter = document.createElement('div');
-      quitFooter.className = 'sentence-mode-quit-footer';
       const quitBtn = document.createElement('button');
+      const quitLabel = layout.quitButtonLabel || 'Quit Game';
       quitBtn.type = 'button';
       quitBtn.id = layout.quitButtonId || 'smQuitBtn';
-      quitBtn.className = 'sentence-mode-quit-btn';
-      quitBtn.textContent = layout.quitButtonLabel || 'Quit Game';
+      quitBtn.className = 'sentence-mode-quit-btn wa-quit-btn';
+      quitBtn.setAttribute('aria-label', quitLabel);
+      quitBtn.innerHTML = `
+        <span class="wa-sr-only">${quitLabel}</span>
+        <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+      `;
       quitBtn.addEventListener('click', exitToMenu);
-      quitFooter.appendChild(quitBtn);
-      root.appendChild(quitFooter);
+      root.appendChild(quitBtn);
     }
 
   try { sessionId = startSession({ mode: sessionModeId, wordList: items, listName: ctx?.listName || null }); } catch(e){ console.debug('[WordSentenceMode] startSession skipped', e?.message); }
@@ -623,11 +625,7 @@ function injectStylesOnce(){
   .sentence-mode #smSubmit.sm-floating { position:absolute; top:calc(50% + 50px); left:50%; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none; font-size:clamp(2.2rem,4vw,3.2rem); padding:30px 68px; border-radius:48px; letter-spacing:.9px; font-weight:800; background:#ff7a1a; color:#fff; border:3px solid #ff7a1a; box-shadow:0 22px 55px -12px rgba(0,0,0,0.4),0 0 0 5px rgba(255,122,26,0.18); backdrop-filter:blur(4px); transition:opacity .45s ease, transform .55s cubic-bezier(.16,.8,.24,1); }
   .sentence-mode #smSubmit.sm-floating:hover { background:#ff8c3a; border-color:#ff8c3a; }
     .sentence-mode #smSubmit.sm-floating-visible { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
-    .sentence-mode-quit-footer { width:100%; display:flex; justify-content:center; margin-top:28px; }
-    .sentence-mode-quit-btn { font-family:Poppins,system-ui,sans-serif; font-weight:800; font-size:1.05rem; padding:14px 34px; border-radius:20px; border:2px solid #19777e; background:#ffffff; color:#19777e; letter-spacing:.04em; cursor:pointer; box-shadow:0 18px 36px -16px rgba(25,119,126,0.4); transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
-    .sentence-mode-quit-btn:hover { transform:translateY(-2px); box-shadow:0 24px 42px -16px rgba(25,119,126,0.45); background:#f2fbfc; }
-    .sentence-mode-quit-btn:active { transform:scale(0.97); }
-    .sentence-mode-quit-btn:focus-visible { outline:3px solid rgba(25,119,126,0.45); outline-offset:4px; }
+  .sentence-mode-quit-btn { z-index: 1100; position: fixed; right: clamp(12px, 3vw, 24px); bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(12px, 3vw, 24px)); }
     .cgm-mode-root.sm-center-root { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; min-height:calc(100vh - 220px); padding:clamp(32px,6vh,56px) clamp(18px,7vw,36px); box-sizing:border-box; background:linear-gradient(180deg,#f6feff 0%, #ffffff 90%); }
     .cgm-mode-root.sm-center-root .sentence-mode { width:min(640px, 94vw); }
     .cgm-mode-root.sm-center-root .sentence-mode-quit-wrap { width:min(640px, 94vw); }

@@ -297,13 +297,13 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       file: 'data/grammar/level1/plurals_s.json',
       aliases: ['plurals_s', 'plurals s', 'add s'],
       config: {
-        lessonModule: 'grammar_lesson',
+        lessonModule: 'grammar_lesson_plurals_s',
         lessonId: 'plurals_s',
         isPluralMode: true,
         answerChoices: ['singular', 'plural'],
         bucketLabels: { singular: 'singular', plural: 'plural' },
         ruleHint: 'Identify if the word is singular or plural.',
-        comingSoon: true
+        comingSoon: false
       }
     },
     {
@@ -313,13 +313,13 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       file: 'data/grammar/level1/plurals_es.json',
       aliases: ['plurals_es', 'plurals es', 'add es'],
       config: {
-        lessonModule: 'grammar_lesson',
+        lessonModule: 'grammar_lesson_plurals_es',
         lessonId: 'plurals_es',
         isPluralMode: true,
         answerChoices: ['singular', 'plural'],
         bucketLabels: { singular: 'singular', plural: 'plural' },
         ruleHint: 'Nouns ending in s, x, z, ch, sh add es.',
-        comingSoon: true
+        comingSoon: false
       }
     },
     {
@@ -329,13 +329,13 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       file: 'data/grammar/level1/plurals_ies.json',
       aliases: ['plurals_ies', 'plurals ies', 'y to ies'],
       config: {
-        lessonModule: 'grammar_lesson',
+        lessonModule: 'grammar_lesson_plurals_ies',
         lessonId: 'plurals_ies',
         isPluralMode: true,
         answerChoices: ['singular', 'plural'],
         bucketLabels: { singular: 'singular', plural: 'plural' },
         ruleHint: 'When a noun ends with consonant+y, change y to ies.',
-        comingSoon: true
+        comingSoon: false
       }
     },
     {
@@ -345,28 +345,28 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       file: 'data/grammar/level1/plurals_irregular.json',
       aliases: ['plurals_irregular', 'plural irregular', 'mouse mice'],
       config: {
-        lessonModule: 'grammar_lesson',
+        lessonModule: 'grammar_lesson_plurals_irregular',
         lessonId: 'plurals_irregular',
         isPluralMode: true,
         answerChoices: ['singular', 'plural'],
         bucketLabels: { singular: 'singular', plural: 'plural' },
         ruleHint: 'Some nouns have irregular plural forms.',
-        comingSoon: true
+        comingSoon: false
       }
     },
     {
       id: 'countable_vs_uncountable',
-      label: 'Countable vs Uncountable',
+      label: 'Count vs Non-Count',
       emoji: '🔢',
       file: 'data/grammar/level1/countable_uncountable.json',
-      aliases: ['countable_vs_uncountable', 'countable uncountable'],
+      aliases: ['countable_vs_uncountable', 'countable uncountable', 'count vs non-count'],
       config: {
-        lessonModule: 'grammar_lesson',
+        lessonModule: 'grammar_lesson_countable_uncountable',
         lessonId: 'countable_vs_uncountable',
         answerChoices: ['countable', 'uncountable'],
         bucketLabels: { countable: 'countable', uncountable: 'uncountable' },
         ruleHint: 'Countable nouns can be counted; uncountable nouns cannot.',
-        comingSoon: true
+        comingSoon: false
       }
     },
     // --- Existence and demonstratives ---

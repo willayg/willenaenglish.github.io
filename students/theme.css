@@ -155,10 +155,28 @@ html.dark .sentence-mode .sm-summary-btn:hover { background:#26323d !important; 
   Word Arcade Additional Dark Overrides (2025-09-30)
   Covers: Quit button, time battle UI, star overlay, spelling inputs, opening word list modal
   ============================= */
-/* Quit Game floating pill */
-html.dark #wa-quit-btn { background:#1d2730 !important; color:#67e2e6 !important; border-color:#39d5da !important; box-shadow:0 0 0 1px #102027 inset,0 4px 16px -4px rgba(0,0,0,0.65) !important; }
-html.dark #wa-quit-btn:hover { background:#22303b !important; }
-html.dark #wa-quit-btn:active { background:#18242c !important; }
+/* Quit Game floating icon */
+html.dark #wa-quit-btn,
+html.dark .wa-quit-btn,
+html.dark #grammarQuitBtn,
+html.dark #smQuitBtn {
+  background: rgba(24, 36, 44, 0.92) !important;
+  border-color: rgba(103, 226, 230, 0.75) !important;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.7) !important;
+}
+html.dark #wa-quit-btn:hover,
+html.dark .wa-quit-btn:hover,
+html.dark #grammarQuitBtn:hover,
+html.dark #smQuitBtn:hover {
+  background: rgba(28, 42, 51, 0.95) !important;
+  border-color: rgba(103, 226, 230, 0.92) !important;
+}
+html.dark #wa-quit-btn:active,
+html.dark .wa-quit-btn:active,
+html.dark #grammarQuitBtn:active,
+html.dark #smQuitBtn:active {
+  background: rgba(18, 30, 37, 0.92) !important;
+}
 
 /* Generic in-game primary word & score text that were too dark in light inline styles */
 html.dark #gameStage [style*='color:#19777e'] { color:#67e2e6 !important; }

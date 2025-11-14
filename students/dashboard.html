@@ -37,28 +37,23 @@
             <img src="/Games/english_arcade/assets/Images/icons/english-arcade.svg" alt="English Arcade" style="width: 250px; height: 100px; max-width: none; object-fit: contain;">
             <div style="text-align: center; font-size: 1.6rem; font-weight: 700; letter-spacing: .3px; color: white; text-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0,255,255,0.6);" data-i18n="Start Game Now">Start Game Now</div>
           </a>
-         
-          <!-- Challenge Zone -->
-          <a href="/playzone.html" class="wa-option-card wa-challenge" style="text-decoration: none; color: inherit; background: #343d44; border: 3px solid #ff6fb0; border-radius: 16px; padding: 18px 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease; cursor: pointer;">
-            <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: .5px; color: #ff6fb0;" data-i18n="More Games">More Games</span>
-          </a>
-          
-          <!-- My Profile -->
-          <a href="/students/profile.html" class="wa-option-card wa-profile" style="text-decoration: none; color: inherit; background: #343d44; border: 3px solid #5b7fe5; border-radius: 16px; padding: 18px 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease; cursor: pointer;">
-            <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: .5px; color: #5b7fe5;" data-i18n="My Profile">My Profile</span>
-          </a>
         </div>
       </section>
 
       <!-- Class Leaderboard -->
       <!-- Stars Leaderboard (appears above points-based class leaderboard) -->
       <!-- Stars Class Leaderboard -->
-      <section class="card" id="starsLeaderboardCard" style="display:none;">
+      <section class="card" id="starsLeaderboardCard">
         <h2 class="card-title" data-i18n="Class Leaders">Class Leaders</h2>
         <div id="starsClassNameDisplay" style="font-size:1.1rem;font-weight:500;color:#67e2e6;text-align:center;margin-top:4px;margin-bottom:12px;text-shadow:0 0 10px rgba(103,226,230,0.4);"></div>
+        <div class="lb-tabs" id="starsLeaderboardTabs" role="tablist">
+          <button id="slTabStars" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="stars" data-i18n="Stars">Stars</button>
+          <button id="slTabPoints" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="points" data-i18n="Points">Points</button>
+          <button id="slTabSuper" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="super" data-i18n="Super Score">Super Score</button>
+        </div>
         <div id="starsLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
-          <button id="slFilterAll" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="All Time">All Time</button>
-          <button id="slFilterMonth" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="This Month">This Month</button>
+          <button id="slFilterMonth" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
+          <button id="slFilterAll" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
         </div>
         <div class="card-content" id="starsLeaderboardContent" style="min-height:120px;">
           <div class="lb-loading">
@@ -76,11 +71,16 @@
       </section>
 
       <!-- Global Leaderboard -->
-      <section class="card" id="globalLeaderboardCard" style="display:none;">
+      <section class="card" id="globalLeaderboardCard">
         <h2 class="card-title" data-i18n="Willena Leaders">Willena Leaders</h2>
+        <div class="lb-tabs" id="globalLeaderboardTabs" role="tablist">
+          <button id="glTabStars" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="stars" data-i18n="Stars">Stars</button>
+          <button id="glTabPoints" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="points" data-i18n="Points">Points</button>
+          <button id="glTabSuper" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="super" data-i18n="Super Score">Super Score</button>
+        </div>
         <div id="globalLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
-          <button id="glFilterAll" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="All Time">All Time</button>
-          <button id="glFilterMonth" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="This Month">This Month</button>
+          <button id="glFilterMonth" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
+          <button id="glFilterAll" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
         </div>
         <div class="card-content" id="globalLeaderboardContent" style="min-height:120px;">
           <div class="lb-loading">
@@ -456,111 +456,163 @@
       }
 
       // Render class leaderboard
-      // Render stars leaderboard (class-only, shows total stars)
-      function renderStarsLeaderboard(containerId, cardId, data) {
+      // Render class leaderboard with metric-aware presentation
+      function renderStarsLeaderboard(containerId, cardId, data, metric) {
         const container = document.getElementById(containerId);
         const card = document.getElementById(cardId);
         const classNameEl = document.getElementById('starsClassNameDisplay');
         if (!container || !card) return;
 
-        if (!data || !data.success || !data.leaderboard || data.leaderboard.length === 0) {
+        if (!data || !data.success || !Array.isArray(data.leaderboard) || data.leaderboard.length === 0) {
           container.innerHTML = `<p style="text-align:center;color:#666;">${t('No data available')}</p>`;
-          if (classNameEl && data.class) classNameEl.textContent = data.class;
-          card.style.display = 'block';
+          if (classNameEl && data?.class) classNameEl.textContent = normalizeClassName(data.class);
           return;
         }
 
         if (classNameEl && data.class) classNameEl.textContent = normalizeClassName(data.class);
 
+        const normalized = data.leaderboard.map(entry => {
+          const stars = Number(entry.stars) || 0;
+          const points = Number(entry.points) || 0;
+          const superScore = Math.round((stars * points) / 1000);
+          return {
+            ...entry,
+            name: entry.name || 'Student',
+            stars,
+            points,
+            superScore
+          };
+        });
+
+        const compare = (a, b) => {
+          if (metric === 'points') return (b.points - a.points) || (b.stars - a.stars) || a.name.localeCompare(b.name);
+          if (metric === 'super') return (b.superScore - a.superScore) || (b.stars - a.stars) || a.name.localeCompare(b.name);
+          // default stars
+          return (b.stars - a.stars) || (b.points - a.points) || a.name.localeCompare(b.name);
+        };
+
+        const sorted = normalized.slice().sort(compare);
+
+        const metricDisplay = (entry) => {
+          if (metric === 'points') {
+            return { primary: `${entry.points.toLocaleString()} ${t('pts')}`, primaryClass: 'metric-points' };
+          }
+          if (metric === 'super') {
+            return { primary: `${entry.superScore.toLocaleString()} ⚡`, primaryClass: 'metric-super' };
+          }
+          return { primary: `${entry.stars.toLocaleString()} ⭐`, primaryClass: 'metric-stars' };
+        };
+
         let html = '<ul class="leaderboard-list">';
-        data.leaderboard.forEach(entry => {
-          const rankBadgeHtml = getRankBadge(entry.rank);
+        sorted.forEach((entry, index) => {
+          const rank = index + 1;
+          const rankBadgeHtml = getRankBadge(rank);
           const selfClass = entry.self ? ' self' : '';
-          const starsDisplay = (entry.stars || 0).toLocaleString();
-          const pointsDisplay = (entry.points || 0).toLocaleString();
           const selfBadge = entry.self ? `<span class="you-badge">${t('You')}</span>` : '';
+          const { primary, primaryClass } = metricDisplay(entry);
           html += `
-            <li class="leaderboard-item${selfClass}" data-rank="${entry.rank}">
+            <li class="leaderboard-item${selfClass}" data-rank="${rank}">
               <span class="rank-badge">${rankBadgeHtml}</span>
               <div class="player-info">
-                <span class="player-name">${entry.name || 'Student'}</span>
+                <span class="player-name">${entry.name}</span>
               </div>
               ${selfBadge}
-              <div style="text-align:right;">
-                <div class="player-points">${starsDisplay} ⭐</div>
-                <div style="color:#888;font-size:0.85rem;margin-top:2px;">${pointsDisplay} pts</div>
+              <div class="player-metric">
+                <div class="metric-primary ${primaryClass}">${primary}</div>
               </div>
             </li>
           `;
         });
         html += '</ul>';
         container.innerHTML = html;
-        card.style.display = 'block';
       }
 
-      // Render global leaderboard with class names
-      function renderGlobalLeaderboard(containerId, cardId, data) {
+      // Render global leaderboard with metric-aware presentation
+      function renderGlobalLeaderboard(containerId, cardId, data, metric) {
         const container = document.getElementById(containerId);
         const card = document.getElementById(cardId);
         if (!container || !card) return;
 
-        if (!data || !data.success || !data.leaderboard || data.leaderboard.length === 0) {
+        if (!data || !data.success || !Array.isArray(data.leaderboard) || data.leaderboard.length === 0) {
           container.innerHTML = `<p style="text-align:center;color:#666;">${t('No data available')}</p>`;
-          card.style.display = 'block';
           return;
         }
 
+        const normalized = data.leaderboard.map(entry => {
+          const stars = Number(entry.stars) || 0;
+          const points = Number(entry.points) || 0;
+          const superScore = Math.round((stars * points) / 1000);
+          return {
+            ...entry,
+            name: entry.name || 'Student',
+            class: entry.class ? normalizeClassName(entry.class) : null,
+            stars,
+            points,
+            superScore
+          };
+        });
+
+        const compare = (a, b) => {
+          if (metric === 'points') return (b.points - a.points) || (b.stars - a.stars) || a.name.localeCompare(b.name);
+          if (metric === 'super') return (b.superScore - a.superScore) || (b.stars - a.stars) || a.name.localeCompare(b.name);
+          return (b.stars - a.stars) || (b.points - a.points) || a.name.localeCompare(b.name);
+        };
+
+        const metricDisplay = (entry) => {
+          if (metric === 'points') {
+            return { primary: `${entry.points.toLocaleString()} ${t('pts')}`, primaryClass: 'metric-points' };
+          }
+          if (metric === 'super') {
+            return { primary: `${entry.superScore.toLocaleString()} ⚡`, primaryClass: 'metric-super' };
+          }
+          return { primary: `${entry.stars.toLocaleString()} ⭐`, primaryClass: 'metric-stars' };
+        };
+
+        const sorted = normalized.slice().sort(compare);
+
         let html = '<ul class="leaderboard-list">';
-        data.leaderboard.forEach(entry => {
-          const rankBadgeHtml = getRankBadge(entry.rank);
+        sorted.forEach((entry, index) => {
+          const rank = index + 1;
+          const rankBadgeHtml = getRankBadge(rank);
           const selfClass = entry.self ? ' self' : '';
-          const starsDisplay = (entry.stars || 0).toLocaleString();
-          const pointsDisplay = (entry.points || 0).toLocaleString();
           const selfBadge = entry.self ? `<span class="you-badge">${t('You')}</span>` : '';
-          const classDisplay = entry.class ? `<span class="player-class">${normalizeClassName(entry.class)}</span>` : '';
-          
+          const { primary, primaryClass } = metricDisplay(entry);
+          const classDisplay = entry.class ? `<span class="player-class">${entry.class}</span>` : '';
           html += `
-            <li class="leaderboard-item${selfClass}" data-rank="${entry.rank}">
+            <li class="leaderboard-item${selfClass}" data-rank="${rank}">
               <span class="rank-badge">${rankBadgeHtml}</span>
               <div class="player-info">
-                <span class="player-name">${entry.name || 'Student'}</span>
+                <span class="player-name">${entry.name}</span>
                 ${classDisplay}
               </div>
               ${selfBadge}
-              <div style="text-align:right;">
-                <div class="player-points">${starsDisplay} ⭐</div>
-                <div style="color:#888;font-size:0.85rem;margin-top:2px;">${pointsDisplay} pts</div>
+              <div class="player-metric">
+                <div class="metric-primary ${primaryClass}">${primary}</div>
               </div>
             </li>
           `;
         });
         html += '</ul>';
         container.innerHTML = html;
-        card.style.display = 'block';
       }
 
       // Fetch and render stars leaderboard
-      let starsLbTimeframe = 'all'; // 'all' | 'month'
+      let starsLbTimeframe = 'month'; // 'all' | 'month' - default to month
+      let starsLbMetric = 'stars'; // 'stars' | 'points' | 'super'
+      const starsLbCache = new Map(); // timeframe -> data
 
-      function showStarsLoading(){
-        const container = document.getElementById('starsLeaderboardContent');
-        if(!container) return;
-        container.innerHTML = document.querySelector('#globalLeaderboardContent .lb-loading')?.outerHTML || '<div class="lb-loading"><div class="lb-spinner"></div></div>';
-        if(window.StudentLang) StudentLang.applyTranslations();
-      }
       async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
         try {
-          showStarsLoading();
           starsLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
           const data = await r.json();
-          renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', data);
+          starsLbCache.set(timeframe, data);
+          renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', data, starsLbMetric);
         } catch (err) {
           console.error('Stars leaderboard error:', err);
           const container = document.getElementById('starsLeaderboardContent');
           if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
-          document.getElementById('starsLeaderboardCard').style.display = 'block';
         }
       }
 
@@ -568,51 +620,72 @@
         const allBtn = document.getElementById('slFilterAll');
         const monBtn = document.getElementById('slFilterMonth');
         if (!allBtn || !monBtn) return;
-        if (starsLbTimeframe === 'all') {
-          allBtn.classList.add('active');
-          allBtn.setAttribute('aria-pressed','true');
-          monBtn.classList.remove('active');
-          monBtn.setAttribute('aria-pressed','false');
-        } else {
+        if (starsLbTimeframe === 'month') {
           monBtn.classList.add('active');
           monBtn.setAttribute('aria-pressed','true');
           allBtn.classList.remove('active');
           allBtn.setAttribute('aria-pressed','false');
+        } else {
+          allBtn.classList.add('active');
+          allBtn.setAttribute('aria-pressed','true');
+          monBtn.classList.remove('active');
+          monBtn.setAttribute('aria-pressed','false');
         }
+      }
+
+      function updateStarsMetricUI() {
+        document.querySelectorAll('#starsLeaderboardTabs .lb-tab').forEach(btn => {
+          const metric = btn.getAttribute('data-metric');
+          const isActive = metric === starsLbMetric;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
       }
 
       // Wire up Class Leaders filter buttons
       document.getElementById('slFilterAll')?.addEventListener('click', async () => {
         await loadStarsLeaderboard('all');
         updateStarsLbFilterUI();
+        updateStarsMetricUI();
       });
       document.getElementById('slFilterMonth')?.addEventListener('click', async () => {
         await loadStarsLeaderboard('month');
         updateStarsLbFilterUI();
+        updateStarsMetricUI();
+      });
+
+      document.querySelectorAll('#starsLeaderboardTabs .lb-tab').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const metric = btn.getAttribute('data-metric');
+          if (!metric || metric === starsLbMetric) return;
+          starsLbMetric = metric;
+          updateStarsMetricUI();
+          const cached = starsLbCache.get(starsLbTimeframe);
+          if (cached) {
+            renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', cached, starsLbMetric);
+          } else {
+            await loadStarsLeaderboard(starsLbTimeframe);
+          }
+        });
       });
 
       // Fetch and render global leaderboard
-      let globalLbTimeframe = 'all'; // 'all' | 'month'
+      let globalLbTimeframe = 'month'; // 'all' | 'month' - default to month
+      let globalLbMetric = 'stars';
+      const globalLbCache = new Map();
 
-      function showGlobalLoading(){
-        const container = document.getElementById('globalLeaderboardContent');
-        if(!container) return;
-        container.innerHTML = document.querySelector('#globalLeaderboardContent .lb-loading')?.outerHTML || '<div class="lb-loading"><div class="lb-spinner"></div></div>';
-        if(window.StudentLang) StudentLang.applyTranslations();
-      }
       async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
         try {
-          showGlobalLoading();
           globalLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
           const data = await r.json();
-          renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', data);
+          globalLbCache.set(timeframe, data);
+          renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', data, globalLbMetric);
         } catch (err) {
           console.error('Global leaderboard error:', err);
           const container = document.getElementById('globalLeaderboardContent');
           if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
-          document.getElementById('globalLeaderboardCard').style.display = 'block';
         }
       }
 
@@ -620,41 +693,67 @@
         const allBtn = document.getElementById('glFilterAll');
         const monBtn = document.getElementById('glFilterMonth');
         if (!allBtn || !monBtn) return;
-        if (globalLbTimeframe === 'all') {
-          allBtn.classList.add('active');
-          allBtn.setAttribute('aria-pressed','true');
-          monBtn.classList.remove('active');
-          monBtn.setAttribute('aria-pressed','false');
-        } else {
+        if (globalLbTimeframe === 'month') {
           monBtn.classList.add('active');
           monBtn.setAttribute('aria-pressed','true');
           allBtn.classList.remove('active');
           allBtn.setAttribute('aria-pressed','false');
+        } else {
+          allBtn.classList.add('active');
+          allBtn.setAttribute('aria-pressed','true');
+          monBtn.classList.remove('active');
+          monBtn.setAttribute('aria-pressed','false');
         }
+      }
+
+      function updateGlobalMetricUI() {
+        document.querySelectorAll('#globalLeaderboardTabs .lb-tab').forEach(btn => {
+          const metric = btn.getAttribute('data-metric');
+          const isActive = metric === globalLbMetric;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
       }
 
       // Wire up filter buttons
       document.getElementById('glFilterAll')?.addEventListener('click', async () => {
         await loadGlobalLeaderboard('all');
         updateGlobalLbFilterUI();
+        updateGlobalMetricUI();
       });
       document.getElementById('glFilterMonth')?.addEventListener('click', async () => {
         await loadGlobalLeaderboard('month');
         updateGlobalLbFilterUI();
+        updateGlobalMetricUI();
       });
 
-    // Initial loading skeletons
-    showStarsLoading();
-    showGlobalLoading();
-    // Load both on page load
+      document.querySelectorAll('#globalLeaderboardTabs .lb-tab').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const metric = btn.getAttribute('data-metric');
+          if (!metric || metric === globalLbMetric) return;
+          globalLbMetric = metric;
+          updateGlobalMetricUI();
+          const cached = globalLbCache.get(globalLbTimeframe);
+          if (cached) {
+            renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', cached, globalLbMetric);
+          } else {
+            await loadGlobalLeaderboard(globalLbTimeframe);
+          }
+        });
+      });
+
+    // Initial load starts immediately (skeletons already visible)
     await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+    updateStarsMetricUI();
+    updateGlobalMetricUI();
 
       // Re-translate on language change
       window.addEventListener('studentlang:changed', async () => {
-        // Reapply loading text translation if still loading
-        if(document.querySelector('#starsLeaderboardContent .lb-loading')) showStarsLoading();
-        if(document.querySelector('#globalLeaderboardContent .lb-loading')) showGlobalLoading();
+        starsLbCache.clear();
+        globalLbCache.clear();
         await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+        updateStarsMetricUI();
+        updateGlobalMetricUI();
       });
     })();
   </script>
@@ -701,7 +800,53 @@
     .sl-filter-btn:hover { color: #cfe7ff; }
     .sl-filter-btn.active { color: #ffffff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
-    /* Leaderboard styles */
+    /* Leaderboard metric tabs */
+    .lb-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: #1f252d;
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+      margin: 0 auto 12px auto;
+      position: relative;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0, 0, 0, 0.25);
+      width: min(100%, 360px);
+    }
+
+    .lb-tab {
+      background: transparent;
+      border: none;
+      color: #92a8bf;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      padding: 8px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      flex: 1 1 100px;
+      text-align: center;
+    }
+
+    .lb-tab:hover {
+      color: #e6f6ff;
+      transform: translateY(-1px);
+    }
+
+    .lb-tab.active {
+      background: linear-gradient(135deg, #7ce2e6, #39b3c9);
+      color: #0b1724;
+      box-shadow: 0 4px 14px rgba(103, 226, 230, 0.35);
+    }
+
+    .lb-tab:focus-visible {
+      outline: 2px solid #67e2e6;
+      outline-offset: 2px;
+    }
+
+  /* Leaderboard styles */
     .leaderboard-list {
       list-style: none;
       padding: 0;
@@ -800,17 +945,97 @@
       flex-shrink: 0;
     }
 
-    .player-points {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 700;
-      color: white;
-      font-size: 1rem;
-      white-space: nowrap;
-      flex-shrink: 0;
+    .player-metric {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      text-align: right;
+      min-width: 110px;
     }
 
-    html.dark .player-points {
-      color: white;
+    .metric-primary {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #f8fbff;
+      white-space: nowrap;
+    }
+
+    .metric-secondary {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+      color: #8ea0b3;
+    }
+
+    .metric-stars {
+      color: #ffd86f;
+      text-shadow: 0 0 8px rgba(255, 214, 102, 0.45);
+    }
+
+    .metric-points {
+      color: #67e2e6;
+      text-shadow: 0 0 8px rgba(103, 226, 230, 0.35);
+    }
+
+    .metric-super {
+      color: #ff9df4;
+      text-shadow: 0 0 10px rgba(255, 157, 244, 0.45);
+    }
+
+    html.dark .metric-secondary {
+      color: #9fb1c6;
+    }
+
+    @media (max-width: 460px) {
+      .lb-tabs {
+        width: 100%;
+        padding: 6px;
+        gap: 6px;
+      }
+
+      .lb-tab {
+        flex: 1 1 calc(33.333% - 8px);
+        padding: 8px 10px;
+        font-size: 0.8rem;
+      }
+
+      .leaderboard-item {
+        gap: 8px;
+        padding: 12px 0;
+      }
+
+      .rank-badge {
+        font-size: 1.25rem;
+        min-width: 42px;
+      }
+
+      .rank-medal {
+        width: 34px;
+        height: 34px;
+        padding: 3px;
+      }
+
+      .player-name {
+        font-size: 1rem;
+      }
+
+      .player-info {
+        gap: 2px;
+      }
+
+      .player-metric {
+        min-width: auto;
+        align-items: flex-end;
+      }
+
+      .metric-primary {
+        font-size: 0.95rem;
+      }
+
+      .metric-secondary {
+        font-size: 0.75rem;
+      }
     }
 
     /* Dark mode adjustments */
@@ -824,6 +1049,87 @@
 
     html.dark .player-class {
       color: #888;
+    }
+
+    /* Loading skeleton styles */
+    .lb-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .lb-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(103, 226, 230, 0.1);
+      border-top-color: #67e2e6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .lb-loading-text {
+      font-size: 0.9rem;
+      color: #8ea0b3;
+      font-weight: 500;
+    }
+
+    .lb-skeleton-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0 0;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lb-skel-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 0.3; }
+    }
+
+    .lb-skel-rank {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .lb-skel-text {
+      flex: 1;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+    }
+
+    .lb-skel-score {
+      width: 80px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    html.dark .lb-skel-rank,
+    html.dark .lb-skel-text,
+    html.dark .lb-skel-score {
+      background: rgba(255, 255, 255, 0.05);
     }
   </style>
 </body>

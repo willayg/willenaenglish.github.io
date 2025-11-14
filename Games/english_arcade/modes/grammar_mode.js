@@ -215,8 +215,9 @@ export async function runGrammarMode(ctx) {
             <div style="flex:1;width:100%;"></div>
             
             <!-- Quit button -->
-            <button id="grammarQuitBtn" class="wa-quit-btn" style="margin-top:auto;margin-bottom:8px;align-self:center;background:#fff;color:#6273e4;border:2px solid #39d5da;font-weight:800;cursor:pointer;">
-              Quit Game
+            <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+              <span class="wa-sr-only">Quit Game</span>
+              <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
             </button>
           </div>
         `;
@@ -247,8 +248,9 @@ export async function runGrammarMode(ctx) {
           <div style="flex:1;width:100%;"></div>
 
           <!-- Quit button -->
-          <button id="grammarQuitBtn" class="wa-quit-btn" style="margin-top:auto;margin-bottom:8px;align-self:center;background:#fff;color:#6273e4;border:2px solid #39d5da;font-weight:800;cursor:pointer;">
-            Quit Game
+          <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+            <span class="wa-sr-only">Quit Game</span>
+            <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
           </button>
         </div>
         `;
