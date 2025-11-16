@@ -1,0 +1,17 @@
+[
+  {"en":"friendly","ko":"친절한","example":"She is very friendly.","emoji":"😊"},
+  {"en":"smart","ko":"똑똑한","example":"He is smart and quick.","emoji":"🧠"},
+  {"en":"funny","ko":"재미있는","example":"My friend is very funny.","emoji":"😂"},
+  {"en":"tall","ko":"키가 큰","example":"She is taller than her sister.","emoji":"📏"},
+  {"en":"kind","ko":"친절한","example":"He is kind to everyone.","emoji":"💖"},
+  {"en":"shy","ko":"수줍은","example":"He feels shy in new places.","emoji":"😳"},
+  {"en":"brave","ko":"용감한","example":"The firefighter is brave.","emoji":"🦸"},
+  {"en":"polite","ko":"예의 바른","example":"She is polite at school.","emoji":"🙏"},
+  {"en":"rude","ko":"무례한","example":"The man was rude to the clerk.","emoji":"😤"},
+  {"en":"creative","ko":"창의적인","example":"She is creative and draws well.","emoji":"🎨"},
+  {"en":"lazy","ko":"게으른","example":"He is lazy about cleaning his room.","emoji":"😴"},
+  {"en":"hardworking","ko":"근면한","example":"She is hardworking and studies late.","emoji":"📚"},
+  {"en":"honest","ko":"정직한","example":"He is honest and tells the truth.","emoji":"🤝"},
+  {"en":"patient","ko":"참을성 있는","example":"She is patient with young children.","emoji":"🕊️"},
+  {"en":"generous","ko":"너그러운","example":"He is generous and shares his toys.","emoji":"🎁"}
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "i_am_not_reading",
+    "word": "i_am",
+    "en": "I am not reading a book.",
+    "ko": "저는 지금 책을 읽고 있지 않아요.",
+    "exampleSentence": "I am not reading a book.",
+    "exampleSentenceKo": "저는 지금 책을 읽고 있지 않아요.",
+    "emoji": "📖🚫"
+  },
+  {
+    "id": "she_isn_t_playing_soccer",
+    "word": "she_isn_t",
+    "en": "She isn't playing soccer.",
+    "ko": "그녀는 축구를 하고 있지 않아요.",
+    "exampleSentence": "She isn't playing soccer.",
+    "exampleSentenceKo": "그녀는 축구를 하고 있지 않아요.",
+    "emoji": "⚽🚫"
+  },
+  {
+    "id": "they_aren_t_watching_tv",
+    "word": "they_aren_t",
+    "en": "They aren't watching TV.",
+    "ko": "그들은 TV를 보고 있지 않아요.",
+    "exampleSentence": "They aren't watching TV.",
+    "exampleSentenceKo": "그들은 TV를 보고 있지 않아요.",
+    "emoji": "📺🚫"
+  },
+  {
+    "id": "he_isn_t_cooking_dinner",
+    "word": "he_isn_t",
+    "en": "He isn't cooking dinner.",
+    "ko": "그는 저녁을 요리하고 있지 않아요.",
+    "exampleSentence": "He isn't cooking dinner.",
+    "exampleSentenceKo": "그는 저녁을 요리하고 있지 않아요.",
+    "emoji": "🍳🚫"
+  },
+  {
+    "id": "we_aren_t_studying_now",
+    "word": "we_aren_t",
+    "en": "We aren't studying now.",
+    "ko": "우리는 지금 공부하고 있지 않아요.",
+    "exampleSentence": "We aren't studying now.",
+    "exampleSentenceKo": "우리는 지금 공부하고 있지 않아요.",
+    "emoji": "📚🚫"
+  },
+  {
+    "id": "the_cat_isn_t_sleeping",
+    "word": "the_cat",
+    "en": "The cat isn't sleeping.",
+    "ko": "고양이는 자고 있지 않아요.",
+    "exampleSentence": "The cat isn't sleeping.",
+    "exampleSentenceKo": "고양이는 자고 있지 않아요.",
+    "emoji": "😺🚫"
+  },
+  {
+    "id": "i_am_not_eating",
+    "word": "i_am",
+    "en": "I am not eating breakfast.",
+    "ko": "저는 아침을 먹고 있지 않아요.",
+    "exampleSentence": "I am not eating breakfast.",
+    "exampleSentenceKo": "저는 아침을 먹고 있지 않아요.",
+    "emoji": "🍳🚫"
+  },
+  {
+    "id": "she_isn_t_drawing_a",
+    "word": "she_isn_t",
+    "en": "She isn't drawing a picture.",
+    "ko": "그녀는 그림을 그리고 있지 않아요.",
+    "exampleSentence": "She isn't drawing a picture.",
+    "exampleSentenceKo": "그녀는 그림을 그리고 있지 않아요.",
+    "emoji": "🎨🚫"
+  },
+  {
+    "id": "they_aren_t_playing_games",
+    "word": "they_aren_t",
+    "en": "They aren't playing games.",
+    "ko": "그들은 게임을 하고 있지 않아요.",
+    "exampleSentence": "They aren't playing games.",
+    "exampleSentenceKo": "그들은 게임을 하고 있지 않아요.",
+    "emoji": "🎮🚫"
+  },
+  {
+    "id": "he_isn_t_running_in",
+    "word": "he_isn_t",
+    "en": "He isn't running in the park.",
+    "ko": "그는 공원에서 뛰고 있지 않아요.",
+    "exampleSentence": "He isn't running in the park.",
+    "exampleSentenceKo": "그는 공원에서 뛰고 있지 않아요.",
+    "emoji": "🏃🚫"
+  },
+  {
+    "id": "we_aren_t_listening_to",
+    "word": "we_aren_t",
+    "en": "We aren't listening to music.",
+    "ko": "우리는 음악을 듣고 있지 않아요.",
+    "exampleSentence": "We aren't listening to music.",
+    "exampleSentenceKo": "우리는 음악을 듣고 있지 않아요.",
+    "emoji": "🎧🚫"
+  },
+  {
+    "id": "it_isn_t_raining_now",
+    "word": "it_isn_t",
+    "en": "It isn't raining now.",
+    "ko": "지금 비가 오고 있지 않아요.",
+    "exampleSentence": "It isn't raining now.",
+    "exampleSentenceKo": "지금 비가 오고 있지 않아요.",
+    "emoji": "🌧️🚫"
+  },
+  {
+    "id": "you_aren_t_learning_a",
+    "word": "you_aren_t",
+    "en": "You aren't learning a lot.",
+    "ko": "당신은 많이 배우고 있지 않아요.",
+    "exampleSentence": "You aren't learning a lot.",
+    "exampleSentenceKo": "당신은 많이 배우고 있지 않아요.",
+    "emoji": "📘🚫"
+  },
+  {
+    "id": "she_isn_t_cleaning_her",
+    "word": "she_isn_t",
+    "en": "She isn't cleaning her room.",
+    "ko": "그녀는 방을 청소하고 있지 않아요.",
+    "exampleSentence": "She isn't cleaning her room.",
+    "exampleSentenceKo": "그녀는 방을 청소하고 있지 않아요.",
+    "emoji": "🧹🚫"
+  },
+  {
+    "id": "they_aren_t_dancing",
+    "word": "they_aren_t",
+    "en": "They aren't dancing.",
+    "ko": "그들은 춤추고 있지 않아요.",
+    "exampleSentence": "They aren't dancing.",
+    "exampleSentenceKo": "그들은 춤추고 있지 않아요.",
+    "emoji": "💃🚫"
+  }
+]

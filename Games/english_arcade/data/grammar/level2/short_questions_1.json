@@ -1,0 +1,137 @@
+[
+  {
+    "id": "short_q_1",
+    "word": "do_like",
+    "en": "Do you like apples?",
+    "ko": "사과를 좋아해요?",
+    "exampleSentence": "Do you like apples?",
+    "exampleSentenceKo": "사과를 좋아해요?",
+    "emoji": "🍎"
+  },
+  {
+    "id": "short_q_2",
+    "word": "is_teacher",
+    "en": "Is she your teacher?",
+    "ko": "그녀는 당신의 선생님이에요?",
+    "exampleSentence": "Is she your teacher?",
+    "exampleSentenceKo": "그녀는 당신의 선생님이에요?",
+    "emoji": "👩‍🏫"
+  },
+  {
+    "id": "short_q_3",
+    "word": "are_friends",
+    "en": "Are they friends?",
+    "ko": "그들은 친구인가요?",
+    "exampleSentence": "Are they friends?",
+    "exampleSentenceKo": "그들은 친구인가요?",
+    "emoji": "🧑‍🤝‍🧑"
+  },
+  {
+    "id": "short_q_4",
+    "word": "does_play",
+    "en": "Does he play soccer?",
+    "ko": "그는 축구를 하나요?",
+    "exampleSentence": "Does he play soccer?",
+    "exampleSentenceKo": "그는 축구를 하나요?",
+    "emoji": "⚽"
+  },
+  {
+    "id": "short_q_5",
+    "word": "can_swim",
+    "en": "Can you swim?",
+    "ko": "수영할 수 있어요?",
+    "exampleSentence": "Can you swim?",
+    "exampleSentenceKo": "수영할 수 있어요?",
+    "emoji": "🏊"
+  },
+  {
+    "id": "short_q_6",
+    "word": "is_cold",
+    "en": "Is it cold today?",
+    "ko": "오늘 춥나요?",
+    "exampleSentence": "Is it cold today?",
+    "exampleSentenceKo": "오늘 춥나요?",
+    "emoji": "❄️"
+  },
+  {
+    "id": "short_q_7",
+    "word": "do_have_class",
+    "en": "Do we have class today?",
+    "ko": "오늘 수업 있어요?",
+    "exampleSentence": "Do we have class today?",
+    "exampleSentenceKo": "오늘 수업 있어요?",
+    "emoji": "🏫"
+  },
+  {
+    "id": "short_q_8",
+    "word": "does_like_music",
+    "en": "Does she like music?",
+    "ko": "그녀는 음악을 좋아하나요?",
+    "exampleSentence": "Does she like music?",
+    "exampleSentenceKo": "그녀는 음악을 좋아하나요?",
+    "emoji": "🎵"
+  },
+  {
+    "id": "short_q_9",
+    "word": "is_dog_big",
+    "en": "Is the dog big?",
+    "ko": "그 개는 큰가요?",
+    "exampleSentence": "Is the dog big?",
+    "exampleSentenceKo": "그 개는 큰가요?",
+    "emoji": "🐶"
+  },
+  {
+    "id": "short_q_10",
+    "word": "do_live_here",
+    "en": "Do they live here?",
+    "ko": "그들은 여기 살아요?",
+    "exampleSentence": "Do they live here?",
+    "exampleSentenceKo": "그들은 여기 살아요?",
+    "emoji": "🏠"
+  },
+  {
+    "id": "short_q_11",
+    "word": "do_want_candy",
+    "en": "Do you want some candy?",
+    "ko": "사탕 먹고 싶어요?",
+    "exampleSentence": "Do you want some candy?",
+    "exampleSentenceKo": "사탕 먹고 싶어요?",
+    "emoji": "🍬"
+  },
+  {
+    "id": "short_q_12",
+    "word": "is_from_korea",
+    "en": "Is he from Korea?",
+    "ko": "그는 한국 출신인가요?",
+    "exampleSentence": "Is he from Korea?",
+    "exampleSentenceKo": "그는 한국 출신인가요?",
+    "emoji": "🇰🇷"
+  },
+  {
+    "id": "short_q_13",
+    "word": "can_ride_bike",
+    "en": "Can he ride a bike?",
+    "ko": "그는 자전거를 탈 수 있어요?",
+    "exampleSentence": "Can he ride a bike?",
+    "exampleSentenceKo": "그는 자전거를 탈 수 있어요?",
+    "emoji": "🚲"
+  },
+  {
+    "id": "short_q_14",
+    "word": "do_look_okay",
+    "en": "Do I look okay?",
+    "ko": "내가 괜찮아 보여요?",
+    "exampleSentence": "Do I look okay?",
+    "exampleSentenceKo": "내가 괜찮아 보여요?",
+    "emoji": "🙂"
+  },
+  {
+    "id": "short_q_15",
+    "word": "does_bus_stop",
+    "en": "Does the bus stop here?",
+    "ko": "버스가 여기 서나요?",
+    "exampleSentence": "Does the bus stop here?",
+    "exampleSentenceKo": "버스가 여기 서나요?",
+    "emoji": "🚌"
+  }
+]

@@ -329,7 +329,12 @@ export function run(ctx){
       root.appendChild(quitBtn);
     }
 
-  try { sessionId = startSession({ mode: sessionModeId, wordList: items, listName: ctx?.listName || null }); } catch(e){ console.debug('[WordSentenceMode] startSession skipped', e?.message); }
+  const startMeta = {};
+  if (ctx?.grammarFile) startMeta.grammarFile = ctx.grammarFile;
+  if (ctx?.grammarName) startMeta.grammarName = ctx.grammarName;
+  if (Object.keys(startMeta).length) startMeta.category = 'grammar';
+
+  try { sessionId = startSession({ mode: sessionModeId, wordList: items, listName: ctx?.listName || null, meta: Object.keys(startMeta).length ? startMeta : undefined }); } catch(e){ console.debug('[WordSentenceMode] startSession skipped', e?.message); }
     renderRound();
   }
 
@@ -427,7 +432,18 @@ export function run(ctx){
   const pct = items.length ? Math.round((sentencesCorrect / items.length) * 100) : 0;
   const maxPoints = items.length * 2;
   // Persist score in the same shape other modes use so mode selector can compute %
-  try { endSession(sessionId, { mode: sessionModeId, summary: { score: totalPoints, total: maxPoints, correct: sentencesCorrect, points: totalPoints, pct } }); } catch {}
+  const endMeta = {};
+  if (ctx?.grammarFile) endMeta.grammarFile = ctx.grammarFile;
+  if (ctx?.grammarName) endMeta.grammarName = ctx.grammarName;
+  if (Object.keys(endMeta).length) endMeta.category = 'grammar';
+  
+  try { endSession(sessionId, { 
+    mode: sessionModeId, 
+    summary: { score: totalPoints, total: maxPoints, correct: sentencesCorrect, points: totalPoints, pct, grammarFile: ctx?.grammarFile, grammarName: ctx?.grammarName },
+    listName: ctx?.listName || null,
+    wordList: items,
+    meta: Object.keys(endMeta).length ? endMeta : undefined
+  }); } catch {}
     try {
       // Fire global event so stars overlay can appear like other modes
       const ev = new CustomEvent('wa:session-ended', { detail: { summary: { score: totalPoints, total: maxPoints } } });

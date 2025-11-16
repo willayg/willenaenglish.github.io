@@ -1,0 +1,137 @@
+[
+  {
+    "id": "i_don_t_like_spinach",
+    "word": "i_don_t",
+    "en": "I don't like spinach.",
+    "ko": "저는 시금치를 좋아하지 않아요.",
+    "exampleSentence": "I don't like spinach.",
+    "exampleSentenceKo": "저는 시금치를 좋아하지 않아요.",
+    "emoji": "🥬🚫"
+  },
+  {
+    "id": "he_doesn_t_like_spinach",
+    "word": "he_doesn_t",
+    "en": "He doesn't like spinach.",
+    "ko": "그는 시금치를 좋아하지 않아요.",
+    "exampleSentence": "He doesn't like spinach.",
+    "exampleSentenceKo": "그는 시금치를 좋아하지 않아요.",
+    "emoji": "🥬🚫"
+  },
+  {
+    "id": "they_don_t_play_tennis",
+    "word": "they_don_t",
+    "en": "They don't play tennis.",
+    "ko": "그들은 테니스를 치지 않아요.",
+    "exampleSentence": "They don't play tennis.",
+    "exampleSentenceKo": "그들은 테니스를 치지 않아요.",
+    "emoji": "🎾🚫"
+  },
+  {
+    "id": "she_doesn_t_have_a",
+    "word": "she_doesn_t",
+    "en": "She doesn't have a car.",
+    "ko": "그녀는 차가 없어요.",
+    "exampleSentence": "She doesn't have a car.",
+    "exampleSentenceKo": "그녀는 차가 없어요.",
+    "emoji": "🚗🚫"
+  },
+  {
+    "id": "we_don_t_watch_horror",
+    "word": "we_don_t",
+    "en": "We don't watch horror movies.",
+    "ko": "우리는 공포 영화를 안 봐요.",
+    "exampleSentence": "We don't watch horror movies.",
+    "exampleSentenceKo": "우리는 공포 영화를 안 봐요.",
+    "emoji": "🎥🚫"
+  },
+  {
+    "id": "it_doesn_t_cost_much",
+    "word": "it_doesn_t",
+    "en": "It doesn't cost much.",
+    "ko": "그것은 많이 비싸지 않아요.",
+    "exampleSentence": "It doesn't cost much.",
+    "exampleSentenceKo": "그것은 많이 비싸지 않아요.",
+    "emoji": "💲"
+  },
+  {
+    "id": "i_don_t_know_the",
+    "word": "i_don_t",
+    "en": "I don't know the answer.",
+    "ko": "저는 답을 몰라요.",
+    "exampleSentence": "I don't know the answer.",
+    "exampleSentenceKo": "저는 답을 몰라요.",
+    "emoji": "❓"
+  },
+  {
+    "id": "you_don_t_need_to",
+    "word": "you_don_t",
+    "en": "You don't need to hurry.",
+    "ko": "서둘 필요 없어요.",
+    "exampleSentence": "You don't need to hurry.",
+    "exampleSentenceKo": "서둘 필요 없어요.",
+    "emoji": "🐢"
+  },
+  {
+    "id": "he_doesn_t_eat_rice",
+    "word": "he_doesn_t",
+    "en": "He doesn't eat rice.",
+    "ko": "그는 밥을 안 먹어요.",
+    "exampleSentence": "He doesn't eat rice.",
+    "exampleSentenceKo": "그는 밥을 안 먹어요.",
+    "emoji": "🍚🚫"
+  },
+  {
+    "id": "she_doesn_t_live_here",
+    "word": "she_doesn_t",
+    "en": "She doesn't live here.",
+    "ko": "그녀는 여기 살지 않아요.",
+    "exampleSentence": "She doesn't live here.",
+    "exampleSentenceKo": "그녀는 여기 살지 않아요.",
+    "emoji": "🏠🚫"
+  },
+  {
+    "id": "they_don_t_go_to",
+    "word": "they_don_t",
+    "en": "They don't go to school on Sundays.",
+    "ko": "그들은 일요일에는 학교에 가지 않아요.",
+    "exampleSentence": "They don't go to school on Sundays.",
+    "exampleSentenceKo": "그들은 일요일에는 학교에 가지 않아요.",
+    "emoji": "📅🚫"
+  },
+  {
+    "id": "we_don_t_drink_coffee",
+    "word": "we_don_t",
+    "en": "We don't drink coffee.",
+    "ko": "우리는 커피를 마시지 않아요.",
+    "exampleSentence": "We don't drink coffee.",
+    "exampleSentenceKo": "우리는 커피를 마시지 않아요.",
+    "emoji": "☕🚫"
+  },
+  {
+    "id": "the_shop_doesn_t_open",
+    "word": "the_shop",
+    "en": "The shop doesn't open on Sundays.",
+    "ko": "가게는 일요일에 열지 않아요.",
+    "exampleSentence": "The shop doesn't open on Sundays.",
+    "exampleSentenceKo": "가게는 일요일에 열지 않아요.",
+    "emoji": "🏪🚫"
+  },
+  {
+    "id": "she_doesn_t_like_loud",
+    "word": "she_doesn_t",
+    "en": "She doesn't like loud music.",
+    "ko": "그녀는 시끄러운 음악을 좋아하지 않아요.",
+    "exampleSentence": "She doesn't like loud music.",
+    "exampleSentenceKo": "그녀는 시끄러운 음악을 좋아하지 않아요.",
+    "emoji": "🎶🚫"
+  },
+  {
+    "id": "i_don_t_want_to",
+    "word": "i_don_t",
+    "en": "I don't want to go.",
+    "ko": "가고 싶지 않아요.",
+    "exampleSentence": "I don't want to go.",
+    "exampleSentenceKo": "가고 싶지 않아요.",
+    "emoji": "🚫🏃"
+  }
+]

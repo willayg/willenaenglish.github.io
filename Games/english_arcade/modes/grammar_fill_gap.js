@@ -5,6 +5,7 @@
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { buildPrepositionScene, isInOnUnderMode } from './grammar_prepositions_data.js';
+import { renderGrammarSummary } from './grammar_summary.js';
 
 const AUDIO_ENDPOINTS = [
   '/.netlify/functions/get_audio_urls',
@@ -217,6 +218,113 @@ function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Detect present simple verb-contrast lists (e.g. I walk / He walks)
+function isPresentSimpleVerbMode(grammarFile, items) {
+  const fileHint = grammarFile && /present_simple_sentences/i.test(grammarFile);
+  const hasVerbUnderscore = Array.isArray(items) && items.some((it) => /_(walk|walks|like|likes|play|plays|study|studies|eat|eats|watch|watches|work|works|rise|rises|chase|chases)\b/i.test(String(it?.word || '')));
+  return !!(fileHint || hasVerbUnderscore);
+}
+
+// Build a clause with a blank only for the verb and return two options: base vs -s form
+function buildPresentSimpleVerbQuestion(item) {
+  const sentence = getSentenceText(item);
+  if (!sentence) return null;
+
+  const tokens = sentence.split(/\s+/);
+  if (!tokens.length) return null;
+
+  // Lowercase, strip punctuation
+  const lowerTokens = tokens.map((t) => t.toLowerCase().replace(/[.,!?;:]+$/g, ''));
+
+  // Heuristic: subject is first token; verb is first non-function-word after subject.
+  // This matches all sentences in present_simple_sentences.json.
+  let subjIndex = 0;
+  // Special-case leading "the" (e.g. "The sun rises", "The kids play")
+  if (lowerTokens[0] === 'the' && lowerTokens.length >= 2) {
+    subjIndex = 1; // treat noun after "the" as subject head
+  }
+
+  let verbIndex = subjIndex + 1;
+  const skipWords = new Set(['the','a','an','in','on','at','to','for','with','of']);
+  while (verbIndex < lowerTokens.length && skipWords.has(lowerTokens[verbIndex])) {
+    verbIndex += 1;
+  }
+
+  // If we still didn't find a verb, fall back to last token before punctuation
+  if (verbIndex >= lowerTokens.length) {
+    verbIndex = Math.max(1, lowerTokens.length - 1);
+  }
+
+  const rawVerb = lowerTokens[verbIndex];
+  const stripVerb = rawVerb.replace(/[.,!?;:]+$/g, '');
+
+  const makeForms = (v) => {
+    if (!v) return [v, v];
+    if (/^(be|am|is|are)$/.test(v)) return [v, v];
+
+    // If it already looks like a 3rd-person -s form, infer the base and keep that as base.
+    // Handles eats/play(s)/watches/studies etc.
+    if (/ies$/.test(v) && !/[aeiou]ies$/.test(v)) {
+      const base = v.replace(/ies$/, 'y');
+      return [base, v];
+    }
+    if (/(ches|shes|sses|xes|zes)$/.test(v)) {
+      const base = v.replace(/es$/, '');
+      return [base, v];
+    }
+    if (/s$/.test(v) && !/ss$/.test(v)) {
+      const base = v.replace(/s$/, '');
+      return [base, v];
+    }
+
+    // Otherwise we have a base form and need to build the 3rd-person form
+    if (/(ch|sh|s|x|z)$/.test(v)) return [v, `${v}es`];
+    if (/y$/.test(v) && !/[aeiou]y$/.test(v)) return [v, v.replace(/y$/, 'ies')];
+    return [v, `${v}s`];
+  };
+
+  const [base, sForm] = makeForms(stripVerb);
+
+  // Decide correct form from subject (3rd person singular vs others)
+  const subject = lowerTokens[subjIndex];
+
+  // Third person singular subjects that should take the -s form.
+  // Plural nouns like 'cats' and 'kids' should NOT be here.
+  const isThirdSingular = ['he','she','it','sun'].includes(subject) ||
+    (subject === 'the' && lowerTokens[subjIndex] && !/s$/.test(lowerTokens[subjIndex]));
+  const correct = (isThirdSingular ? sForm : base) || stripVerb;
+
+  // Rebuild sentence with blank at verb index
+  const punct = /[.,!?;:]+$/.exec(tokens[verbIndex])?.[0] || '';
+  tokens[verbIndex] = '_____'+ punct;
+  const statement = tokens.join(' ');
+
+  return {
+    statement,
+    options: [
+      { label: base, value: (base || '').toLowerCase() },
+      { label: sForm, value: (sForm || '').toLowerCase() },
+    ],
+    correctAnswer: String(correct || '').toLowerCase(),
+  };
+}
+
+// Helper: extract noun phrase for There is/are or Is/Are there sentences and detect plurality
+function extractThereNounPhrase(text) {
+  const t = String(text || '').trim();
+  const m = t.match(/^(?:there\s+(?:is|are|isn't|aren't)|(?:is|are)\s+there)\s+(.+?)[.?!]?$/i);
+  if (!m) return { phrase: '', plural: false };
+  let phrase = m[1].trim();
+  phrase = phrase.replace(/\b(on|in|at|to|from|of|by|with|under|over|above|below|behind|between|into|onto|around|through|near|next\s+to)\b[\s\S]*$/i, '').trim();
+  phrase = phrase.replace(/\b(today|tonight|now|here|nearby)\b[\s\S]*$/i, '').trim();
+  phrase = phrase.replace(/^(?:some|any)\s+/i, '').trim();
+  const low = phrase.toLowerCase();
+  const plural = /\b(two|three|four|five|six|seven|eight|nine|ten|many|several|a\s+lot\s+of|lots\s+of|some|any)\b/.test(low)
+    || /\b\w+es\b/.test(low)
+    || /\b\w+s\b/.test(low);
+  return { phrase, plural };
+}
+
 function buildSentenceWithBlank(item, isPluralMode = false, isCountableMode = false) {
   const sentence = (item?.exampleSentence || item?.example || '').trim();
   const article = (item?.article || '').trim();
@@ -284,6 +392,93 @@ function buildSentenceWithBlank(item, isPluralMode = false, isCountableMode = fa
     return sentence.replace(articleOnlyPattern, '___');
   }
   return `___ ${word}`.trim();
+}
+
+function buildShortQuestionsSentenceAndOptions(item) {
+  // For short questions: randomly choose positive or negative to encourage both forms
+  const positive = (item?.answer_positive || '').trim();
+  const negative = (item?.answer_negative || '').trim();
+
+  // Extract last word from each answer (remove trailing punctuation)
+  const lastWordPositive = positive.split(/\s+/).pop()?.replace(/[.,!?;:]$/g, '') || '';
+  const lastWordNegative = negative.split(/\s+/).pop()?.replace(/[.,!?;:]$/g, '') || '';
+
+  // Decide which polarity to present this round (50/50)
+  const useNegative = Math.random() < 0.5;
+  const chosenAnswer = useNegative ? negative : positive;
+  const correctAnswerLastWord = useNegative ? lastWordNegative : lastWordPositive;
+
+  // Build the statement text from the chosen polarity (remove last word)
+  const words = chosenAnswer.split(/\s+/);
+  const statementWithoutLastWord = words.slice(0, -1).join(' ');
+  const statement = statementWithoutLastWord ? `${statementWithoutLastWord} _____` : '_____';
+
+  // Generate a distractor option that isn't one of the two answer words
+  const commonDistracters = [
+    'am','is','are','was','were','be','being','been',
+    'do','does','did','will','would','can','could','may','might','must','shall','should',
+    'have','has','had',
+    "don't","doesn't","didn't","won't","wouldn't","can't","couldn't","shouldn't",
+    "wasn't","weren't","isn't","aren't","haven't","hasn't","hadn't"
+  ];
+
+  let distractor = 'do';
+  for (const w of commonDistracters) {
+    const lw = w.toLowerCase();
+    if (lw !== lastWordPositive.toLowerCase() && lw !== lastWordNegative.toLowerCase()) {
+      distractor = w;
+      break;
+    }
+  }
+
+  const options = [
+    { value: lastWordPositive.toLowerCase(), label: lastWordPositive },
+    { value: lastWordNegative.toLowerCase(), label: lastWordNegative },
+    { value: distractor.toLowerCase(), label: distractor }
+  ].filter((opt, idx, arr) => arr.findIndex(o => o.value === opt.value) === idx); // ensure uniqueness
+
+  // Shuffle the options so correct answer isn't always in same position
+  const shuffled = options.sort(() => Math.random() - 0.5);
+
+  return {
+    statement,
+    options: shuffled,
+    correctAnswerLastWord: correctAnswerLastWord.toLowerCase()
+  };
+}
+
+// Generic fallback: create a last-word blank with 3 options (correct + 2 random distractors from dataset)
+function buildGenericLastWordQuestion(item, allItems) {
+  const sentenceRaw = getSentenceText(item);
+  const sentence = String(sentenceRaw || '').trim();
+  if (!sentence) return null;
+  const tokens = sentence.split(/\s+/);
+  if (tokens.length < 2) return null;
+  let last = tokens[tokens.length - 1];
+  // Strip trailing punctuation for the word and keep for the statement
+  const punct = /[.,!?;:]+$/.exec(last)?.[0] || '';
+  const lastWord = last.replace(/[.,!?;:]+$/g, '');
+  const statement = tokens.slice(0, -1).join(' ') + ' _____' + punct;
+
+  // Build distractors from other sentence last words
+  const pool = new Set();
+  (Array.isArray(allItems) ? allItems : []).forEach((it) => {
+    const s = getSentenceText(it);
+    if (!s) return;
+    const parts = String(s).trim().split(/\s+/);
+    const w = (parts[parts.length - 1] || '').replace(/[.,!?;:]+$/g, '');
+    if (w && w.toLowerCase() !== lastWord.toLowerCase()) pool.add(w);
+  });
+  const distractors = Array.from(pool).sort(() => Math.random() - 0.5).slice(0, 2);
+  const options = [lastWord, ...distractors].map((w) => ({ label: w, value: w.toLowerCase() }));
+  const shuffled = options.sort(() => Math.random() - 0.5);
+
+  return {
+    statement,
+    options: shuffled,
+    correctAnswerLastWord: lastWord.toLowerCase(),
+    correctAnswerLower: lastWord.toLowerCase()
+  };
 }
 
 function buildContractionOptions(item, allEndings) {
@@ -410,7 +605,16 @@ export async function runGrammarFillGapMode(ctx) {
   }
 
   const usable = Array.isArray(rawData)
-    ? rawData.filter((item) => item && item.word && (item.article || item.contraction || item.ending))
+    ? rawData.filter((item) => {
+        if (!item) return false;
+        // Support traditional grammar modes (article/contraction/ending)
+        if (item.word && (item.article || item.contraction || item.ending)) return true;
+        // Support short questions mode (answer_positive/answer_negative)
+        if (item.word && (item.answer_positive || item.answer_negative)) return true;
+        // Generic sentence mode: allow items that have a usable sentence field
+        if (item.en || item.example || item.exampleSentence || item.sentence || (Array.isArray(item.sentences) && item.sentences.length)) return true;
+        return false;
+      })
     : [];
 
   if (!usable.length) {
@@ -458,6 +662,26 @@ export async function runGrammarFillGapMode(ctx) {
     && answerChoices.includes('countable')
     && answerChoices.includes('uncountable');
 
+  // Detect Some/Any mode
+  const isSomeAnyMode = Array.isArray(answerChoices)
+    && answerChoices.includes('some')
+    && answerChoices.includes('any');
+
+  // Detect There is/are statements and Are there/Is there questions via answer choices
+  const acLower = (Array.isArray(answerChoices) ? answerChoices : []).map((s) => String(s || '').toLowerCase());
+  const isThereStatementsMode = acLower.includes('there is') && acLower.includes('there are');
+  const isThereQuestionsMode = acLower.includes('is there') && acLower.includes('are there');
+
+  // Detect Present Simple: Negative list (don't vs doesn't focus)
+  const isPresentSimpleNegative = (grammarFile && /present_simple_negative\.json$/i.test(grammarFile))
+    || (grammarName && /present\s*simple[:\-\s]*negative/i.test(grammarName));
+
+  // Detect if this is Short Questions mode (items have answer_positive and answer_negative)
+  const isShortQuestionsMode = usable.length > 0 && usable[0] && usable[0].answer_positive && usable[0].answer_negative;
+  const isPresentSimpleMode = isPresentSimpleVerbMode(grammarFile, usable);
+  // Generic sentence fallback (Level 2): no predefined choices, not contractions/plurals/countable/short Q
+  const isGenericSentenceMode = !isContractionMode && !isPluralMode && !isCountableMode && !isShortQuestionsMode && !isPresentSimpleMode && Array.isArray(answerChoices) && answerChoices.length === 0;
+
   const deck = shuffle(usable).slice(0, 15);
 
   try {
@@ -465,7 +689,7 @@ export async function runGrammarFillGapMode(ctx) {
   } catch (err) {
     console.debug('[GrammarFillGap] audio hydrate failed', err?.message);
   }
-  const sessionWords = deck.map((item) => item.word);
+  const sessionWords = deck.map((item) => item.word || item.en || item.example || item.id || '');
 
   const updateProgressBar = (show, value = 0, max = 0) => {
     const bar = document.getElementById('gameProgressBar');
@@ -520,7 +744,7 @@ export async function runGrammarFillGapMode(ctx) {
 
   function renderLayout() {
     gameArea.innerHTML = `
-      <div class="fg-root">
+  <div class="fg-root">
         <div class="fg-content" role="group" aria-live="polite">
           <div class="fg-emoji" id="fgEmoji" aria-hidden="true"></div>
           <div class="fg-word" id="fgWord"></div>
@@ -560,30 +784,22 @@ export async function runGrammarFillGapMode(ctx) {
           context: 'game',
           duration_s: duration,
           grammarName: grammarName || null,
+          grammarFile: grammarFile || null,
         },
         listName: grammarName || null,
         wordList: sessionWords,
+        meta: { category: 'grammar', file: grammarFile, grammarName, grammarFile }
       });
       const ev = new CustomEvent('wa:session-ended', { detail: { summary: { score: correctCount, total: deck.length } } });
       window.dispatchEvent(ev);
     } catch (err) {
       console.debug('[GrammarFillGap] endSession error', err?.message);
     }
-
-    gameArea.innerHTML = `
-      <div class="fg-root">
-        <div class="fg-summary-card">
-          <h2>Great work!</h2>
-          <div class="fg-score">You answered <strong>${correctCount}</strong> out of <strong>${deck.length}</strong> correctly (${accuracy}%).</div>
-          <div class="fg-actions" style="justify-content:center;">
-            <button type="button" class="fg-btn primary" id="fgBackToModes">Main Menu</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('fgBackToModes')?.addEventListener('click', () => {
-      quitToMenu();
+    renderGrammarSummary({
+      gameArea,
+      score: correctCount,
+      total: deck.length,
+      ctx: { showOpeningButtons }
     });
   }
 
@@ -622,7 +838,7 @@ export async function runGrammarFillGapMode(ctx) {
 
     updateProgressBar(true, currentIndex, deck.length);
 
-    if (hasProximityMode) {
+  if (hasProximityMode) {
       emojiEl.innerHTML = buildProximityScene(item.article, item.emoji);
     } else if (inOnUnderMode) {
       emojiEl.innerHTML = buildPrepositionScene(item.article, item.emoji, item.word);
@@ -630,18 +846,89 @@ export async function runGrammarFillGapMode(ctx) {
       emojiEl.textContent = item.emoji || '🧠';
     }
     
-    // In plurals or countable mode, don't show the word separately since it's the answer
-    if (isPluralMode || isCountableMode) {
+    // Handle Short Questions mode: show question as title, statement with blank
+  let shortQuestionsData = null;
+  let presentSimpleData = null;
+    let genericSentenceData = null;
+    if (isShortQuestionsMode) {
+      shortQuestionsData = buildShortQuestionsSentenceAndOptions(item);
+      wordEl.textContent = isSomeAnyMode ? '' : (item.en || ''); // Hide in some/any
+      sentenceEl.innerHTML = shortQuestionsData.statement.replace('_____', '<strong>_____</strong>');
+      hintEl.textContent = item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '';
+      // Will handle options rendering next
+    } else if (isPresentSimpleMode) {
+      presentSimpleData = buildPresentSimpleVerbQuestion(item);
       wordEl.textContent = '';
+      if (presentSimpleData && presentSimpleData.statement) {
+        sentenceEl.innerHTML = presentSimpleData.statement.replace('_____', '<strong>_____</strong>');
+      } else {
+        sentenceEl.innerHTML = getSentenceText(item) || '';
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isPresentSimpleNegative) {
+      // Replace don't/doesn't with a blank and offer two options
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      const base = (getSentenceText(item) || item.en || '').trim();
+      let replaced = base;
+      replaced = replaced.replace(/\b(?:doesn['’]?t|don['’]?t)\b/i, '___');
+      sentenceEl.innerHTML = replaced.replace('___', '<strong>___</strong>');
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isThereStatementsMode || isThereQuestionsMode) {
+      // Fill-in-the-blank for There modes: replace target phrase with ___ and hide cyan word line
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      const base = getSentenceText(item) || item.en || '';
+      let replaced = base;
+      if (isThereStatementsMode) {
+        replaced = replaced
+          .replace(/^\s*there\s+isn't\b/i, '___')
+          .replace(/^\s*there\s+aren't\b/i, '___')
+          .replace(/^\s*there\s+is\b/i, '___')
+          .replace(/^\s*there\s+are\b/i, '___');
+      } else {
+        replaced = replaced
+          .replace(/^\s*is\s+there\b/i, '___')
+          .replace(/^\s*are\s+there\b/i, '___');
+      }
+      sentenceEl.innerHTML = replaced.replace('___', '<strong>___</strong>');
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isGenericSentenceMode) {
+      // Generic: remove last word of the sentence and present 3 options (correct last word + two distractors)
+      genericSentenceData = buildGenericLastWordQuestion(item, usable);
+      wordEl.textContent = '';
+      if (genericSentenceData && genericSentenceData.statement) {
+        sentenceEl.innerHTML = genericSentenceData.statement.replace('_____', '<strong>_____</strong>');
+      } else {
+        // Fallback to raw sentence
+        const s = getSentenceText(item);
+        sentenceEl.innerHTML = (s ? s : '_____');
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+  } else if (isPluralMode || isCountableMode) {
+      // In plurals or countable mode, don't show the word separately since it's the answer
+      wordEl.textContent = '';
+      sentenceEl.innerHTML = buildSentenceWithBlank(item, isPluralMode, isCountableMode).replace('___', '<strong>___</strong>');
+      hintEl.textContent = hasProximityMode || inOnUnderMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
     } else {
-      wordEl.textContent = item.word || '';
+      wordEl.textContent = isSomeAnyMode ? '' : (item.word || '');
+      sentenceEl.innerHTML = buildSentenceWithBlank(item, isPluralMode, isCountableMode).replace('___', '<strong>___</strong>');
+      hintEl.textContent = hasProximityMode || inOnUnderMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
     }
-    
-    sentenceEl.innerHTML = buildSentenceWithBlank(item, isPluralMode, isCountableMode).replace('___', '<strong>___</strong>');
-    hintEl.textContent = hasProximityMode || inOnUnderMode ? '' : (item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '');
+
+    // Hide the cyan word line entirely for Some/Any mode to remove extra gap
+  if (isSomeAnyMode || isThereStatementsMode || isThereQuestionsMode || isPresentSimpleNegative) {
+      wordEl.style.display = 'none';
+    } else {
+      wordEl.style.display = '';
+    }
     setReveal('');
 
-    // For contractions, plurals, or countable, dynamically populate options
+    // For contractions, plurals, countable, or short questions, dynamically populate options
     if (isContractionMode) {
       const contractionOptions = buildContractionOptions(item, answerChoices);
       optionsRow.innerHTML = contractionOptions.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
@@ -660,6 +947,54 @@ export async function runGrammarFillGapMode(ctx) {
         console.error('[GrammarFillGap] No word options rendered');
         return;
       }
+  } else if (isThereStatementsMode || isThereQuestionsMode) {
+      // Explicit options for There modes
+      const statementsAll = ['there is', 'there are', "there isn't", "there aren't"];
+      const questionPair = ['Is there', 'Are there'];
+      const opts = (isThereStatementsMode ? statementsAll : questionPair);
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.toLowerCase()}">${opt}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No there/is there options rendered');
+        return;
+      }
+    } else if (isShortQuestionsMode) {
+      // For short questions, show only the last word from each answer option
+      optionsRow.innerHTML = shortQuestionsData.options.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      // Refresh optionButtons after updating HTML
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No short questions options rendered');
+        return;
+      }
+    } else if (isPresentSimpleMode) {
+      const opts = presentSimpleData && Array.isArray(presentSimpleData.options) ? presentSimpleData.options : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present simple verb options rendered');
+        return;
+      }
+    } else if (isPresentSimpleNegative) {
+      // Explicit two options: don't / doesn't
+      const pair = ["don't", "doesn't"];
+      optionsRow.innerHTML = pair.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.toLowerCase()}">${opt}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present simple negative options rendered');
+        return;
+      }
+    } else if (isGenericSentenceMode) {
+      // For generic sentence mode, render last-word options if available
+      const opts = (genericSentenceData && Array.isArray(genericSentenceData.options)) ? genericSentenceData.options : [];
+      if (opts.length) {
+        optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+        optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      } else {
+        // If no options, keep it empty to avoid wrong defaults
+        optionsRow.innerHTML = '';
+        optionButtons = [];
+      }
     }
 
     optionButtons.forEach((btn) => {
@@ -671,6 +1006,30 @@ export async function runGrammarFillGapMode(ctx) {
       quitBtn.onclick = quitToMenu;
     }
 
+    // Pre-compute correct answer for There modes for evaluation/logging
+    let thereCorrectAnswerLabel = null;
+    if (isThereStatementsMode || isThereQuestionsMode) {
+      const base = getSentenceText(item) || item.en || '';
+      const w = String(item.word || '').toLowerCase();
+      if (isThereStatementsMode) {
+        if (w.includes('there_aren_t') || /^there\s+aren't\b/i.test(base)) thereCorrectAnswerLabel = "there aren't";
+        else if (w.includes('there_isn_t') || /^there\s+isn't\b/i.test(base)) thereCorrectAnswerLabel = "there isn't";
+        else if (w.includes('there_are') || /^there\s+are\b/i.test(base)) thereCorrectAnswerLabel = 'there are';
+        else if (w.includes('there_is') || /^there\s+is\b/i.test(base)) thereCorrectAnswerLabel = 'there is';
+        else {
+          const { plural } = extractThereNounPhrase(base);
+          thereCorrectAnswerLabel = plural ? 'there are' : 'there is';
+        }
+      } else {
+        if (w.includes('are_there') || /^are\s+there\b/i.test(base)) thereCorrectAnswerLabel = 'Are there';
+        else if (w.includes('is_there') || /^is\s+there\b/i.test(base)) thereCorrectAnswerLabel = 'Is there';
+        else {
+          const { plural } = extractThereNounPhrase(base);
+          thereCorrectAnswerLabel = plural ? 'Are there' : 'Is there';
+        }
+      }
+    }
+
     const handleSelection = (choice, btn) => {
       if (sessionEnded) return;
       if (btn.disabled) return;
@@ -678,9 +1037,11 @@ export async function runGrammarFillGapMode(ctx) {
 
       optionButtons.forEach((b) => { b.disabled = true; });
 
-      // For contractions, check against the complete contraction string
-      // For plurals or countable, check against the word
-      // Otherwise use article
+  // For contractions, check against the complete contraction string
+  // For plurals or countable, check against the word
+  // For present simple verb mode, check against the verb form (eat/eats)
+  // For short questions, randomly pick positive or negative as the correct answer
+  // Otherwise use article
       let correctAnswerSource;
       if (isPluralMode || isCountableMode) {
         // Check article first (for plurals_es, plurals_ies, plurals_irregular)
@@ -694,6 +1055,33 @@ export async function runGrammarFillGapMode(ctx) {
         }
       } else if (isContractionMode) {
         correctAnswerSource = item.contraction || item.article || '';
+      } else if (isShortQuestionsMode) {
+        // For short questions, use the pre-selected correct answer from the data
+        correctAnswerSource = shortQuestionsData.correctAnswerLastWord;
+      } else if (isPresentSimpleMode && presentSimpleData) {
+        correctAnswerSource = presentSimpleData.correctAnswer;
+      } else if (isPresentSimpleNegative) {
+        // Decide don't vs doesn't from the sentence content
+        const base = String(getSentenceText(item) || item.en || '').toLowerCase();
+        if (/(?:doesn['’]?t)\b/.test(base)) correctAnswerSource = "doesn't";
+        else if (/(?:don['’]?t)\b/.test(base)) correctAnswerSource = "don't";
+        else {
+          // Fallback by subject heuristic
+          const parts = base.split(/\s+/);
+          const first = parts[0] || '';
+          const second = parts[1] || '';
+          const thirdPron = new Set(['he','she','it']);
+          if (thirdPron.has(first)) correctAnswerSource = "doesn't";
+          else if (first === 'the') {
+            correctAnswerSource = (second && /s$/.test(second) && !/(ss|us)$/i.test(second)) ? "don't" : "doesn't";
+          } else {
+            correctAnswerSource = "don't";
+          }
+        }
+      } else if (isGenericSentenceMode && genericSentenceData) {
+        correctAnswerSource = genericSentenceData.correctAnswerLastWord || genericSentenceData.correctAnswerLower;
+      } else if (isThereStatementsMode || isThereQuestionsMode) {
+        correctAnswerSource = thereCorrectAnswerLabel || '';
       } else {
         correctAnswerSource = item.article || '';
       }
@@ -722,14 +1110,14 @@ export async function runGrammarFillGapMode(ctx) {
       attempts += 1;
       updateProgressBar(true, currentIndex + 1, deck.length);
 
-      try {
+    try {
         logAttempt({
           session_id: sessionId,
           mode: 'grammar_fill_gap',
           word: item.id || item.word,
           is_correct: correct,
           answer: guess,
-          correct_answer: correctAnswerSource,
+      correct_answer: correctAnswerSource,
           points: correct ? 1 : 0,
           attempt_index: currentIndex,
           round: currentIndex + 1,

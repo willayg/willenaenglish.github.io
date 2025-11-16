@@ -3,6 +3,7 @@
 import { FN } from '../scripts/api-base.js';
 import { historyManager } from '../history-manager.js';
 import { showGrammarL1Modal } from './level1_grammar_modal.js';
+import { showGrammarL2Modal } from './level2_grammar_modal.js';
 import { showGrammarChartModal } from './grammar_chart_modal.js';
 
 const JIGSAW_SVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" zoomAndPan="magnify" viewBox="0 0 150 149.999998" height="200" preserveAspectRatio="xMidYMid meet" version="1.0"><defs><clipPath id="jigsawClip"><path d="M 15 20.390625 L 70 20.390625 L 70 75 L 15 75 Z M 15 20.390625 " clip-rule="nonzero"/></clipPath></defs><path fill="#ff66c4" d="M 88.007812 82.257812 L 103.347656 82.257812 C 103.417969 82.589844 103.4375 82.933594 103.4375 83.242188 C 103.4375 84.648438 102.765625 85.097656 101.964844 86.125 C 101.101562 87.242188 100.664062 88.363281 100.664062 89.789062 C 100.664062 93.539062 103.175781 96.136719 106.917969 96.136719 C 110.378906 96.136719 113.167969 93.230469 113.167969 89.789062 C 113.167969 88.652344 112.960938 87.558594 112.371094 86.574219 C 111.96875 85.898438 111.492188 85.441406 110.9375 84.90625 C 110.363281 84.351562 110.207031 84.074219 110.207031 83.242188 C 110.207031 82.925781 110.230469 82.585938 110.304688 82.257812 L 125.824219 82.257812 L 125.824219 97.996094 C 125.507812 98.058594 125.179688 98.078125 124.882812 98.078125 C 123.476562 98.078125 123.027344 97.40625 122 96.605469 C 120.882812 95.742188 119.761719 95.304688 118.335938 95.304688 C 114.585938 95.304688 111.988281 97.816406 111.988281 101.558594 C 111.988281 105.019531 114.894531 107.808594 118.335938 107.808594 C 119.472656 107.808594 120.566406 107.601562 121.550781 107.011719 C 122.226562 106.609375 122.683594 106.132812 123.21875 105.578125 C 123.773438 105.003906 124.050781 104.847656 124.882812 104.847656 C 125.183594 104.847656 125.511719 104.867188 125.824219 104.933594 L 125.824219 120.855469 L 109.496094 120.855469 C 108.792969 121.648438 108.527344 122.75 108.527344 123.96875 C 108.527344 127.429688 111.300781 127.519531 111.300781 130.519531 C 111.300781 133.515625 109.335938 134.996094 106.917969 134.996094 C 104.496094 134.996094 102.53125 132.9375 102.53125 130.519531 C 102.53125 126.6875 105.496094 127.550781 105.496094 123.96875 C 105.496094 122.75 105.207031 121.648438 104.507812 120.855469 L 88.007812 120.855469 L 88.007812 104.285156 C 87.207031 103.472656 86.039062 103.167969 84.738281 103.167969 C 81.277344 103.167969 81.1875 105.941406 78.1875 105.941406 C 75.191406 105.941406 73.710938 103.976562 73.710938 101.558594 C 73.710938 99.136719 75.765625 97.171875 78.1875 97.171875 C 82.015625 97.171875 81.15625 100.136719 84.738281 100.136719 C 86.039062 100.136719 87.207031 99.804688 88.007812 99.003906 Z" fill-opacity="1" fill-rule="evenodd"/><path fill="#fcca55" d="M 48.089844 82.257812 L 63.503906 82.257812 C 63.515625 82.40625 63.519531 82.554688 63.519531 82.691406 C 63.519531 84.097656 62.847656 84.546875 62.046875 85.574219 C 61.183594 86.691406 60.746094 87.8125 60.746094 89.238281 C 60.746094 92.988281 63.257812 95.585938 66.996094 95.585938 C 70.460938 95.585938 73.25 92.679688 73.25 89.238281 C 73.25 88.101562 73.042969 87.007812 72.453125 86.023438 C 72.050781 85.347656 71.574219 84.890625 71.019531 84.355469 C 70.445312 83.800781 70.289062 83.523438 70.289062 82.691406 C 70.289062 82.550781 70.292969 82.40625 70.304688 82.257812 L 85.90625 82.257812 L 85.90625 98.015625 C 85.621094 98.0625 85.328125 98.078125 85.0625 98.078125 C 83.65625 98.078125 83.207031 97.40625 82.179688 96.605469 C 81.0625 95.742188 79.941406 95.304688 78.511719 95.304688 C 74.765625 95.304688 72.167969 97.816406 72.167969 101.558594 C 72.167969 105.019531 75.074219 107.808594 78.511719 107.808594 C 79.652344 107.808594 80.742188 107.601562 81.730469 107.011719 C 82.40625 106.609375 82.859375 106.132812 83.398438 105.578125 C 83.953125 105.003906 84.230469 104.847656 85.0625 104.847656 C 85.332031 104.847656 85.621094 104.863281 85.90625 104.914062 L 85.90625 120.855469 L 70.371094 120.855469 C 70.308594 120.550781 70.289062 120.234375 70.289062 119.941406 C 70.289062 119.109375 70.445312 118.832031 71.019531 118.277344 C 71.574219 117.738281 72.050781 117.285156 72.453125 116.609375 C 73.042969 115.621094 73.25 114.53125 73.25 113.390625 C 73.25 109.949219 70.460938 107.046875 66.996094 107.046875 C 63.257812 107.046875 60.746094 109.644531 60.746094 113.390625 C 60.746094 114.820312 61.183594 115.941406 62.046875 117.058594 C 62.847656 118.085938 63.519531 118.535156 63.519531 119.941406 C 63.519531 120.226562 63.503906 120.546875 63.441406 120.855469 L 48.089844 120.855469 L 48.089844 104.824219 C 48.089844 103.25 46.109375 102.976562 44.816406 102.976562 C 41.238281 102.976562 42.097656 105.941406 38.269531 105.941406 C 35.847656 105.941406 33.792969 103.976562 33.792969 101.558594 C 33.792969 99.136719 35.269531 97.171875 38.269531 97.171875 C 41.269531 97.171875 41.359375 99.945312 44.816406 99.945312 C 46.152344 99.945312 48.089844 99.703125 48.089844 98.089844 Z" fill-opacity="1" fill-rule="evenodd"/><path fill="#34c2d4" d="M 88.007812 41.519531 L 103.347656 41.519531 C 103.417969 41.847656 103.4375 42.195312 103.4375 42.503906 C 103.4375 43.910156 102.765625 44.355469 101.964844 45.386719 C 101.101562 46.5 100.664062 47.625 100.664062 49.050781 C 100.664062 52.800781 103.175781 55.398438 106.917969 55.398438 C 110.378906 55.398438 113.167969 52.492188 113.167969 49.050781 C 113.167969 47.914062 112.960938 46.820312 112.371094 45.835938 C 111.96875 45.160156 111.492188 44.703125 110.9375 44.167969 C 110.363281 43.613281 110.207031 43.332031 110.207031 42.503906 C 110.207031 42.1875 110.230469 41.84375 110.304688 41.519531 L 125.824219 41.519531 L 125.824219 57.257812 C 125.507812 57.320312 125.179688 57.339844 124.882812 57.339844 C 123.476562 57.339844 123.027344 56.667969 122 55.867188 C 120.882812 55.003906 119.761719 54.566406 118.335938 54.566406 C 114.585938 54.566406 111.988281 57.078125 111.988281 60.816406 C 111.988281 64.28125 114.894531 67.070312 118.335938 67.070312 C 119.472656 67.070312 120.566406 66.863281 121.550781 66.273438 C 122.226562 65.871094 122.683594 65.394531 123.21875 64.839844 C 123.773438 64.265625 124.050781 64.109375 124.882812 64.109375 C 125.183594 64.109375 125.511719 64.128906 125.824219 64.195312 L 125.824219 80.117188 L 109.496094 80.117188 C 108.792969 80.910156 108.527344 82.011719 108.527344 83.230469 C 108.527344 86.691406 111.300781 86.78125 111.300781 89.777344 C 111.300781 92.777344 109.335938 94.257812 106.917969 94.257812 C 104.496094 94.257812 102.53125 92.199219 102.53125 89.777344 C 102.53125 85.949219 105.496094 86.8125 105.496094 83.230469 C 105.496094 82.011719 105.207031 80.910156 104.507812 80.117188 L 88.007812 80.117188 L 88.007812 63.546875 C 87.207031 62.734375 86.039062 62.429688 84.738281 62.429688 C 81.277344 62.429688 81.1875 65.203125 78.1875 65.203125 C 75.191406 65.203125 73.710938 63.238281 73.710938 60.816406 C 73.710938 58.398438 75.765625 56.433594 78.1875 56.433594 C 82.015625 56.433594 81.15625 59.398438 84.738281 59.398438 C 86.039062 59.398438 87.207031 59.066406 88.007812 58.265625 Z" fill-opacity="1" fill-rule="evenodd"/><g clip-path="url(#jigsawClip)"><path fill="#6285dc" d="M 15 47.132812 L 25.84375 36.289062 C 26.128906 36.472656 26.386719 36.703125 26.605469 36.921875 C 27.597656 37.914062 27.441406 38.707031 27.601562 40 C 27.78125 41.398438 28.265625 42.503906 29.273438 43.511719 C 31.925781 46.160156 35.539062 46.222656 38.183594 43.578125 C 40.632812 41.128906 40.550781 37.101562 38.117188 34.667969 C 37.3125 33.863281 36.390625 33.238281 35.277344 32.957031 C 34.515625 32.765625 33.855469 32.78125 33.085938 32.792969 C 32.289062 32.804688 31.976562 32.722656 31.390625 32.132812 C 31.167969 31.910156 30.941406 31.652344 30.765625 31.371094 L 41.738281 20.394531 L 52.867188 31.523438 C 52.6875 31.792969 52.46875 32.039062 52.257812 32.246094 C 51.265625 33.238281 50.472656 33.082031 49.179688 33.246094 C 47.78125 33.421875 46.675781 33.90625 45.667969 34.914062 C 43.019531 37.566406 42.957031 41.179688 45.601562 43.824219 C 48.050781 46.273438 52.078125 46.191406 54.511719 43.757812 C 55.316406 42.953125 55.941406 42.03125 56.222656 40.917969 C 56.414062 40.15625 56.398438 39.496094 56.386719 38.726562 C 56.375 37.929688 56.457031 37.621094 57.046875 37.03125 C 57.257812 36.820312 57.503906 36.601562 57.773438 36.429688 L 69.03125 47.6875 L 57.484375 59.230469 C 57.550781 60.289062 58.140625 61.257812 59.003906 62.121094 C 61.449219 64.566406 63.472656 62.667969 65.59375 64.789062 C 67.714844 66.910156 67.371094 69.34375 65.660156 71.054688 C 63.949219 72.765625 61.105469 72.699219 59.394531 70.988281 C 56.6875 68.28125 59.390625 66.796875 56.859375 64.265625 C 55.996094 63.402344 55.011719 62.828125 53.957031 62.757812 L 42.292969 74.425781 L 30.574219 62.710938 C 29.433594 62.703125 28.390625 63.3125 27.46875 64.234375 C 25.023438 66.679688 26.921875 68.703125 24.800781 70.824219 C 22.679688 72.945312 20.246094 72.601562 18.535156 70.890625 C 16.824219 69.179688 16.890625 66.335938 18.601562 64.625 C 21.308594 61.917969 22.796875 64.621094 25.328125 62.089844 C 26.246094 61.167969 26.839844 60.109375 26.839844 58.972656 Z" fill-opacity="1" fill-rule="evenodd"/></g></svg>`;
@@ -15,6 +16,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const currentGrammarFile = grammarFile || 'data/grammar/level1/articles.json';
   const currentGrammarName = grammarName || 'A vs An';
   const currentGrammarConfig = grammarConfig || {};
+  const isLevel2Grammar = /\/level2\//i.test(String(currentGrammarFile));
+  const isLevel1Grammar = /\/level1\//i.test(String(currentGrammarFile));
 
   // Scroll to top when opening mode selector
   window.scrollTo(0, 0);
@@ -23,6 +26,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   // Remove any active game view clutter before rendering selector
   container.innerHTML = '';
   try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
+  try { document.getElementById('grammarQuitBtn')?.remove(); } catch {}
+  try { document.getElementById('smQuitBtn')?.remove(); } catch {}
 
   try { window.__WA_IS_GRAMMAR__ = true; window.__WA_LAST_GRAMMAR__ = { grammarFile: currentGrammarFile, grammarName: currentGrammarName, grammarConfig: currentGrammarConfig }; } catch {}
   try {
@@ -52,10 +57,62 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   // Modes (styleMode borrows Word Arcade accent colors)
   const modes = [
     { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable'] },
+    // New generic Sorting mode (for grammar lists like Short Questions 1)
+    { mode: 'sorting', title: 'Sorting', svgPath: JIGSAW_ICON_SRC, styleMode: 'meaning', sessionMode: 'grammar_sorting' },
     { mode: 'choose', title: 'Choose', svgPath: './assets/Images/icons/choose2.svg', styleMode: 'multi_choice', sessionMode: 'grammar_mode' },
     { mode: 'fill_gap', title: 'Fill the Gap', svgPath: './assets/Images/icons/fill.svg', styleMode: 'missing_letter', sessionMode: 'grammar_fill_gap' },
-    { mode: 'unscramble', title: 'Unscramble', svgPath: './assets/Images/icons/unscramble.svg', styleMode: 'sentence', sessionMode: 'grammar_sentence_unscramble' }
+    { mode: 'unscramble', title: 'Unscramble', svgPath: './assets/Images/icons/unscramble.svg', styleMode: 'sentence', sessionMode: 'grammar_sentence_unscramble' },
+    { mode: 'find_mistake', title: 'Find the Mistake', svgPath: './assets/Images/icons/x.svg', styleMode: 'multi_choice', sessionMode: 'grammar_find_mistake' },
+    { mode: 'translation', title: 'Translation', svgPath: './assets/Images/icons/translate.svg', styleMode: 'multi_choice', sessionMode: 'grammar_translation_choice' }
   ];
+
+  // For Level 2 lists, hide the Lesson card for now
+  // For Level 1 lists, hide the Sorting and Translation cards
+  let visibleModes = modes;
+  if (isLevel2Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'lesson');
+  // Level 1: hide Sorting, Translation, and Find the Mistake until L2 ready
+  if (isLevel1Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'translation' && m.mode !== 'find_mistake');
+
+  // Load grammar data to check what modes are compatible
+  let grammarData = [];
+  try {
+    const response = await fetch(currentGrammarFile);
+    if (response.ok) {
+      grammarData = await response.json();
+    }
+  } catch (err) {
+    console.debug('[GrammarModeSelector] Could not preload grammar data for mode filtering', err);
+  }
+
+  // Check data compatibility for each mode
+  const hasFillGapCompatible = Array.isArray(grammarData) && grammarData.some(item => {
+    if (!item) return false;
+    // Classic fill-gap shapes (articles/contractions/endings or short questions)
+    if (item.word && (item.article || item.contraction || item.ending)) return true;
+    if (item.word && (item.answer_positive && item.answer_negative)) return true;
+    // Generic sentence fallback: any sentence-like field present
+    if (item.exampleSentence || item.example || item.sentence) return true;
+    if (Array.isArray(item.sentences) && item.sentences.length) return true;
+    return false;
+  });
+  const hasUnscrambleCompatible = Array.isArray(grammarData) && grammarData.some(item => {
+    if (!item) return false;
+    // Accept if any reasonable sentence field exists
+    if (item.exampleSentence || item.example || item.sentence) return true;
+    // Or if upgraded structure includes sentences array
+    if (Array.isArray(item.sentences) && item.sentences.length) return true;
+    return false;
+  });
+  const hasTranslationCompatible = Array.isArray(grammarData) && grammarData.some(item =>
+    item && item.en && item.ko
+  );
+  const hasFindMistakeCompatible = Array.isArray(grammarData) && grammarData.some(item => (item && (item.en || item.exampleSentence)));
+
+  // Hide modes that don't have compatible data
+  if (!hasFillGapCompatible) visibleModes = visibleModes.filter(m => m.mode !== 'fill_gap');
+  if (!hasUnscrambleCompatible) visibleModes = visibleModes.filter(m => m.mode !== 'unscramble');
+  if (!hasTranslationCompatible) visibleModes = visibleModes.filter(m => m.mode !== 'translation');
+  if (!hasFindMistakeCompatible) visibleModes = visibleModes.filter(m => m.mode !== 'find_mistake');
 
   const BORDER_COLORS = {
     meaning: '#40D4DE',
@@ -97,7 +154,31 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   // Clear and render title ABOVE the card, then the card below
   const headerDiv = document.createElement('div');
   headerDiv.className = 'grammar-mode-selector-header';
-  headerDiv.innerHTML = `<button type="button" class="grammar-rule-btn" aria-label="${currentGrammarName}: rules and tips">${currentGrammarName}</button>`;
+  headerDiv.innerHTML = `
+  <button type="button" class="grammar-rule-btn glow-btn" aria-label="${currentGrammarName}: rules and tips" style="color: #ff66c4;">${currentGrammarName}</button>
+  <div class="grammar-help-msg" style="margin-top:8px; text-align:center; color:#888; font-size:15px; font-family:'Poppins', Arial, sans-serif; opacity:0; animation: fadeInOutMsg 4s forwards;">제목을 누르면 도움말이 나와요</div>
+      <style>
+        @keyframes pulseGlow {
+          0% { box-shadow: 0 0 0px #3ddde9ff; }
+          50% { box-shadow: 0 0 12px #3ddde9ff, 0 0 24px #3ddde988; }
+          100% { box-shadow: 0 0 0px #3ddde9ff; }
+        }
+        .glow-btn {
+          animation: pulseGlow 2s ease-in-out infinite;
+        }
+        @keyframes fadeInOutMsg {
+          0% { opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      </style>
+  `;
+  // Remove glow after 4 seconds
+  setTimeout(() => {
+    const btn = headerDiv.querySelector('.glow-btn');
+    if (btn) btn.classList.remove('glow-btn');
+  }, 4000);
   container.appendChild(headerDiv);
 
   // Title click opens grammar chart modal with rules and examples
@@ -147,7 +228,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     if (pct > 80) return 3;
     if (pct > 70) return 2;
     if (pct >= 60) return 1;
-    return 0;
+    return 0
   };
   const starSvg = (filled) => filled
     ? `<svg class="star-filled" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path fill="#ffd34d" stroke="#ffd34d" d="M12 .587l3.668 7.431L23.5 9.75l-5.667 5.527L19.335 24 12 19.897 4.665 24l1.502-8.723L.5 9.75l7.832-1.732z"/></svg>`
@@ -162,8 +243,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   };
 
   // Build mode buttons with EXACT word mode selector styling
-  modes.forEach((m) => {
-    const btn = document.createElement('button');
+  visibleModes.forEach((m) => {
+  const btn = document.createElement('button');
   btn.className = 'mode-btn mode-card';
   // Use a known data-mode so style.css applies Word selector accents
   btn.setAttribute('data-mode', m.styleMode || m.mode);
@@ -214,7 +295,11 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     }
 
     const borderKey = (m.styleMode || m.mode || '').toLowerCase();
-    const borderColor = BORDER_COLORS[borderKey] || '#40D4DE';
+    let borderColor = BORDER_COLORS[borderKey] || '#40D4DE';
+    // If this is the 5th card and mode is 'find_mistake', set border to cyan
+    if (m.mode === 'find_mistake') {
+      borderColor = '#3ddde9ff';
+    }
     btn.style.border = `3px solid ${borderColor}`;
     btn.style.boxShadow = '0 6px 14px rgba(166, 234, 246, 0.35)';
 
@@ -294,7 +379,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         }
       });
 
-      modes.forEach((modeDef) => {
+      visibleModes.forEach((modeDef) => {
         if (modeDef.showStars === false) return;
         const starEl = document.getElementById(`grammar-star-${modeDef.mode}`);
         if (!starEl) return;
@@ -351,6 +436,25 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   `;
   changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
   changeLevelBtn.addEventListener('click', () => {
+    // If current grammar is Level 2, open Level 2 grammar modal; else default to Level 1
+    const isL2 = /\/level2\//i.test(String(currentGrammarFile));
+    if (isL2) {
+      try { historyManager.navigateToModal('grammarL2Modal', 'grammar_mode_selector'); } catch {}
+      showGrammarL2Modal({
+        onChoose: (config) => {
+          if (window.WordArcade?.loadGrammarGame) {
+            window.WordArcade.loadGrammarGame(config);
+          } else {
+            import('../main.js').then(mod => { if (typeof mod.loadGrammarGame === 'function') mod.loadGrammarGame(config); }).catch(() => {});
+          }
+        },
+        onClose: () => {
+          if (window.StudentLang?.applyTranslations) window.StudentLang.applyTranslations();
+        }
+      });
+      return;
+    }
+
     try { historyManager.navigateToModal('grammarL1Modal', 'grammar_mode_selector'); } catch {}
     showGrammarL1Modal({
       onChoose: (config) => {
@@ -402,6 +506,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
       const area = document.getElementById('gameArea');
       if (area) area.innerHTML = '';
       document.getElementById('wa-quit-btn')?.remove();
+      document.getElementById('grammarQuitBtn')?.remove();
+      document.getElementById('smQuitBtn')?.remove();
     } catch {}
     if (window.WordArcade && typeof window.WordArcade.showGrammarLevelsMenu === 'function') {
       window.WordArcade.showGrammarLevelsMenu();

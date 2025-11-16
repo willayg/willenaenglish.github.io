@@ -1,0 +1,17 @@
+[
+  {"en":"When it rains, we stay inside.","ko":"비가 올 때 우리는 안에 있어요.","example":"Use 'when' for sure events.","emoji":"☔"},
+  {"en":"If it rains, we will cancel the picnic.","ko":"비가 오면 우리는 소풍을 취소할 거예요.","example":"Use 'if' for conditional events.","emoji":"⛅"},
+  {"en":"When I finish school, I will travel.","ko":"학교를 마치면 나는 여행할 거예요.","example":"Use 'when' for future certainty.","emoji":"🎓"},
+  {"en":"If I finish early, I will help you.","ko":"일찍 끝나면 도와줄게요.","example":"Use 'if' for a condition.","emoji":"⏳"},
+  {"en":"When you are older, you will understand.","ko":"나이가 들면 이해할 거예요.","example":"Use 'when' for future time.","emoji":"👴"},
+  {"en":"If you are late, call me.","ko":"늦으면 전화해요.","example":"Use 'if' for possible condition.","emoji":"📞"},
+  {"en":"When we arrive, we will call.","ko":"도착하면 전화할게요.","example":"Use 'when' for future event.","emoji":"📱"},
+  {"en":"If he studies, he will pass.","ko":"그가 공부하면 합격할 거예요.","example":"Use 'if' for condition.","emoji":"📚"},
+  {"en":"When she gets home, she'll rest.","ko":"그녀가 집에 도착하면 쉴 거예요.","example":"Use 'when' for certain future moment.","emoji":"🏡"},
+  {"en":"If it snows, the school will close.","ko":"눈이 오면 학교가 문을 닫을 거예요.","example":"Use 'if' for possible events.","emoji":"❄️"},
+  {"en":"When the bell rings, class starts.","ko":"종이 울리면 수업이 시작해요.","example":"Use 'when' for scheduled events.","emoji":"🔔"},
+  {"en":"If you see him, tell him to call me.","ko":"그를 보면 전화하라고 전해줘요.","example":"Use 'if' for an instruction.","emoji":"☎️"},
+  {"en":"When I grow up, I'll be a teacher.","ko":"나는 자라면 선생님이 될 거예요.","example":"Use 'when' for future roles.","emoji":"👩‍🏫"},
+  {"en":"If the sun sets, it's time to go.","ko":"해가 지면 갈 시간이야.","example":"Use 'if' for a conditional time.","emoji":"🌇"},
+  {"en":"When you finish, come to the office.","ko":"끝나면 사무실로 와요.","example":"Use 'when' for instruction after event.","emoji":"🏢"}
+]

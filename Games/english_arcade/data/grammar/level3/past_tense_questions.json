@@ -1,0 +1,17 @@
+[
+  {"en":"Did you play soccer?","ko":"축구했어요?","example":"Did you play soccer yesterday?","emoji":"⚽"},
+  {"en":"Did she eat breakfast?","ko":"그녀는 아침을 먹었어요?","example":"Did she eat breakfast today?","emoji":"🍳"},
+  {"en":"Did we win the game?","ko":"우리가 게임에서 이겼어요?","example":"Did we win the game last week?","emoji":"🏆"},
+  {"en":"Did he go to school?","ko":"그는 학교에 갔어요?","example":"Did he go to school on Monday?","emoji":"🏫"},
+  {"en":"Did they see the movie?","ko":"그들은 영화를 봤어요?","example":"Did they see the movie last night?","emoji":"🎬"},
+  {"en":"Did you finish your homework?","ko":"숙제 끝냈어요?","example":"Did you finish your homework on time?","emoji":"📒"},
+  {"en":"Did she come home early?","ko":"그녀는 일찍 집에 왔어요?","example":"Did she come home early yesterday?","emoji":"🏠"},
+  {"en":"Did they travel to Busan?","ko":"그들은 부산에 여행했어요?","example":"Did they travel to Busan last year?","emoji":"✈️"},
+  {"en":"Did he call you yesterday?","ko":"그가 어제 전화했어요?","example":"Did he call you yesterday evening?","emoji":"📞"},
+  {"en":"Did you buy a gift?","ko":"선물 샀어요?","example":"Did you buy a gift for her birthday?","emoji":"🎁"},
+  {"en":"Did we have class today?","ko":"오늘 수업 있었어요?","example":"Did we have a class today?","emoji":"📚"},
+  {"en":"Did she pass the test?","ko":"그녀는 시험에 합격했어요?","example":"Did she pass the test last month?","emoji":"📝"},
+  {"en":"Did they clean the room?","ko":"그들은 방을 청소했어요?","example":"Did they clean the room after the party?","emoji":"🧹"},
+  {"en":"Did you drink water?","ko":"물 마셨어요?","example":"Did you drink water this morning?","emoji":"💧"},
+  {"en":"Did he find his keys?","ko":"그는 열쇠를 찾았어요?","example":"Did he find his keys under the couch?","emoji":"🔑"}
+]

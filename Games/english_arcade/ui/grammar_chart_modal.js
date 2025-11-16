@@ -111,8 +111,433 @@ export function showGrammarChartModal({ grammarFile, grammarName, grammarData, o
 function buildGrammarChart(grammarName, grammarData, isKorean = false) {
   const name = (grammarName || '').toLowerCase();
   const hasContractions = Array.isArray(grammarData) && grammarData.some(it => it && (it.contraction || it.ending));
-  
-  // Determine chart type
+
+  // Custom chart for 'Some vs Any'
+  if (name.includes('some vs any')) {
+    return buildSomeAnyChart(grammarData, isKorean);
+  }
+    // Custom chart for 'There is / There are'
+    if (name.includes('there is') || name.includes('there are')) {
+      return buildThereIsThereAreChart(grammarData, isKorean);
+    }
+      // Custom chart for 'Are there / Is there'
+      if (name.includes('are there') || name.includes('is there')) {
+        return buildAreIsThereChart(grammarData, isKorean);
+      }
+        // Custom chart for 'Yes/No Questions'
+        if (name.includes('short questions 1') || name.includes('short questions 2') || name.includes('yes/no question') || name.includes('yes no question')) {
+          return buildYesNoQuestionsChart(grammarData, isKorean);
+        }
+          // Custom chart for Simple Present (first one)
+          if (name.includes('present simple') && !name.includes('negative')) {
+            return buildSimplePresentChart(grammarData, isKorean);
+          }
+            // Custom chart for Simple Present Negative
+            if (name.includes('negative') || name.includes('present simple negative')) {
+              return buildSimplePresentNegativeChart(grammarData, isKorean);
+            }
+// Custom chart builder for Simple Present Negative sentences
+function buildSimplePresentNegativeChart(data, isKorean = false) {
+  // Group examples
+  const doesntExamples = data.filter(ex => ex.word && (ex.word.includes("doesn_t") || ex.word.includes("he_") || ex.word.includes("she_"))).slice(0, 3);
+  const dontExamples = data.filter(ex => ex.word && (
+    ex.word.includes("don_t") || ex.word.includes("i_") || ex.word.includes("we_") || ex.word.includes("they_") || ex.word.includes("you_")
+  )).slice(0, 3);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>현재시제 부정문</strong>은 <span style="color:#ff6fb0;font-weight:700;">하지 않다</span>를 말할 때 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: I don't like spinach. He doesn't play tennis.</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>3인칭 단수(he, she, it)</strong>에는 <span style="color:#ffb84d;font-weight:700;">doesn't + 동사 원형</span>을 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: She doesn't like, He doesn't play</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>I, you, we, they</strong>에는 <span style="color:#40d4de;font-weight:700;">don't + 동사 원형</span>을 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: I don't like, You don't play, We don't study, They don't eat</span>
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">3인칭 단수 부정문 (doesn't)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${doesntExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚫'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">I/You/We/They 부정문 (don't)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${dontExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚫'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: 3인칭 단수(he, she, it)는 doesn't!<br>I/you/we/they는 don't!</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Simple present negative</strong> is used to say <span style="color:#ff6fb0;font-weight:700;">don't/doesn't</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: I don't like spinach. He doesn't play tennis.</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Third person singular (he, she, it)</strong> uses <span style="color:#ffb84d;font-weight:700;">doesn't + base verb</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: She doesn't like, He doesn't play</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>I, you, we, they</strong> use <span style="color:#40d4de;font-weight:700;">don't + base verb</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: I don't like, You don't play, We don't study, They don't eat</span>
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Third Person Singular Negative (doesn't)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${doesntExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚫'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">I/You/We/They Negative (don't)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${dontExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚫'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: Third person singular (he, she, it) uses doesn't!<br>I/you/we/they use don't!</p>
+    </div>
+  `;
+}
+// Custom chart builder for Simple Present (third person singular vs non-third person singular)
+function buildSimplePresentChart(data, isKorean = false) {
+  // Group examples
+  const thirdPersonExamples = data.filter(ex => ex.word && (ex.word.includes('he_') || ex.word.includes('she_'))).slice(0, 3);
+  const nonThirdPersonExamples = data.filter(ex => ex.word && (
+    ex.word.includes('i_') || ex.word.includes('we_') || ex.word.includes('they_') || ex.word.includes('you_')
+  )).slice(0, 3);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>현재시제</strong>는 <span style="color:#40d4de;font-weight:700;">습관</span>, <span style="color:#40d4de;font-weight:700;">사실</span>, <span style="color:#40d4de;font-weight:700;">규칙</span>을 말할 때 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: I walk to school. She plays soccer.</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>3인칭 단수(he, she, it)</strong>에는 <span style="color:#ffb84d;font-weight:700;">동사에 s</span>를 붙여요.<br>
+            <span style="color:#19777e;font-weight:700;">예: She plays, He likes, It rains</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>I, you, we, they</strong>에는 <span style="color:#40d4de;font-weight:700;">동사 원형</span>을 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: I play, You like, We walk, They study</span>
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">3인칭 단수 예시 (s 붙임)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${thirdPersonExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '⚽'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">I/You/We/They 예시 (원형)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${nonThirdPersonExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚶'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: 3인칭 단수(he, she, it)는 s 붙임!<br>I/you/we/they는 s 안 붙임!</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Simple present</strong> is used for <span style="color:#40d4de;font-weight:700;">habits</span>, <span style="color:#40d4de;font-weight:700;">facts</span>, and <span style="color:#40d4de;font-weight:700;">rules</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: I walk to school. She plays soccer.</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Third person singular (he, she, it)</strong> adds <span style="color:#ffb84d;font-weight:700;">s to the verb</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: She plays, He likes, It rains</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>I, you, we, they</strong> use the <span style="color:#40d4de;font-weight:700;">base verb</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: I play, You like, We walk, They study</span>
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Third Person Singular Examples (add s)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${thirdPersonExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '⚽'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">I/You/We/They Examples (base verb)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${nonThirdPersonExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚶'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: Third person singular (he, she, it) adds s!<br>I/you/we/they do NOT add s!</p>
+    </div>
+  `;
+}
+// Custom chart builder for 'Yes/No Questions'
+function buildYesNoQuestionsChart(data, isKorean = false) {
+  // Example: Do you like apples? Yes, I do. / Does he play soccer? Yes, he does. / Can you swim? Yes, I can.
+  const doExamples = data.filter(ex => ex.word && (ex.word.startsWith('do_') || ex.word.startsWith('does_'))).slice(0, 3);
+  const isAreExamples = data.filter(ex => ex.word && (ex.word.startsWith('is_') || ex.word.startsWith('are_'))).slice(0, 3);
+  const canExamples = data.filter(ex => ex.word && ex.word.startsWith('can_')).slice(0, 2);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>Yes/No 질문</strong>은 <span style="color:#40d4de;font-weight:700;">Do/Does/Is/Are/Can</span>로 시작해요.<br>
+            <span style="color:#19777e;font-weight:700;">예: Do you like apples? Does he play soccer? Is she your teacher? Can you swim?</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>짧은 대답</strong>은 질문의 동사를 반복해요.<br>
+            <span style="color:#19777e;font-weight:700;">예: Yes, I do. / Yes, he does. / Yes, she is. / Yes, I can.</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>예외:</strong> Are you...? → Yes, I am.
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">Do/Does Yes/No 질문 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${doExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Is/Are Yes/No 질문 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${isAreExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#27c5ca;font-weight:700;margin:0 0 10px 0;font-size:1em;">Can Yes/No 질문 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${canExamples.map(ex => `<li style="padding:8px;background:#e6fff7;border-left:3px solid #27c5ca;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🤔'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: "Do you...?" → Yes, I do.<br>"Does he...?" → Yes, he does.<br>"Is she...?" → Yes, she is.<br>"Are you...?" → Yes, I am.<br>"Can you...?" → Yes, I can.</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Yes/No questions</strong> start with <span style="color:#40d4de;font-weight:700;">Do/Does/Is/Are/Can</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: Do you like apples? Does he play soccer? Is she your teacher? Can you swim?</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Short answers</strong> repeat the verb from the question.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: Yes, I do. / Yes, he does. / Yes, she is. / Yes, I can.</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Exception:</strong> Are you...? → Yes, I am.
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">Do/Does Yes/No Question Examples</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${doExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Is/Are Yes/No Question Examples</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${isAreExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#27c5ca;font-weight:700;margin:0 0 10px 0;font-size:1em;">Can Yes/No Question Examples</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${canExamples.map(ex => `<li style="padding:8px;background:#e6fff7;border-left:3px solid #27c5ca;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🤔'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: "Do you...?" → Yes, I do.<br>"Does he...?" → Yes, he does.<br>"Is she...?" → Yes, she is.<br>"Are you...?" → Yes, I am.<br>"Can you...?" → Yes, I can.</p>
+    </div>
+  `;
+}
+// Custom chart builder for 'Are there / Is there'
+function buildAreIsThereChart(data, isKorean = false) {
+  // Split examples
+  const isThereExamples = data.filter(ex => ex.word === 'is_there').slice(0, 3);
+  const areThereExamples = data.filter(ex => ex.word === 'are_there').slice(0, 3);
+  const negativeExamples = data.filter(ex => ex.word === 'is_there_not' || ex.word === 'are_there_not').slice(0, 2);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>Is there</strong>는 <span style="color:#40d4de;font-weight:700;">한 개</span> 또는 <span style="color:#40d4de;font-weight:700;">셀 수 없는 것</span>이 있는지 물어볼 때 써요.<br><span style="color:#19777e;font-weight:700;">예: 물, 우유, 공기, 사랑</span></p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>Are there</strong>는 <span style="color:#ffb84d;font-weight:700;">여러 개</span>가 있는지 물어볼 때 써요.<br><span style="color:#19777e;font-weight:700;">예: 사과들, 책들, 학생들</span></p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">Is there 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${isThereExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍎'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Are there 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${areThereExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍏'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+        <h4 style="color:#ff6fb0;font-weight:700;margin:0 0 8px 0;">부정문 (없을 때)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${negativeExamples.map(ex => `<li style="padding:8px;background:#ffe6f5;border-left:3px solid #ff6fb0;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❌'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: "Is there" = 한 개/셀 수 없는 것 있어요?<br>"Are there" = 여러 개 있어요?<br>"Isn't/aren't there" = 없어요?</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>Is there</strong> is for <span style="color:#40d4de;font-weight:700;">one thing</span> or <span style="color:#40d4de;font-weight:700;">uncountable nouns</span> (asking if there is one or some).<br><span style="color:#19777e;font-weight:700;">Examples: water, milk, air, love</span></p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>Are there</strong> is for <span style="color:#ffb84d;font-weight:700;">more than one</span> (plural nouns, asking if there are many).<br><span style="color:#19777e;font-weight:700;">Examples: apples, books, students</span></p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">Examples with "Is there"</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${isThereExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍎'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Examples with "Are there"</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${areThereExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍏'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+      <h4 style="color:#ff6fb0;font-weight:700;margin:0 0 8px 0;">Negative (when there is nothing)</h4>
+      <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+        ${negativeExamples.map(ex => `<li style="padding:8px;background:#ffe6f5;border-left:3px solid #ff6fb0;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❌'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+      </ul>
+    </div>
+    <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: "Is there" = one/uncountable? <br>"Are there" = many? <br>"Isn't/aren't there" = nothing!</p>
+    </div>
+  `;
+}
+  // ...existing code...
+// Custom chart builder for 'There is / There are'
+function buildThereIsThereAreChart(data, isKorean = false) {
+  // Split examples
+  const singularExamples = data.filter(ex => ex.word === 'there_is').slice(0, 3);
+  const pluralExamples = data.filter(ex => ex.word === 'there_are').slice(0, 3);
+  const negativeExamples = data.filter(ex => ex.word === 'there_isn_t' || ex.word === 'there_aren_t').slice(0, 2);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>There is</strong>는 <span style="color:#40d4de;font-weight:700;">한 개</span> 또는 <span style="color:#40d4de;font-weight:700;">셀 수 없는 것</span>을 말할 때 써요.<br><span style="color:#19777e;font-weight:700;">예: 물, 우유, 공기, 사랑</span></p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>There are</strong>는 <span style="color:#ffb84d;font-weight:700;">여러 개</span>를 말할 때 써요.<br><span style="color:#19777e;font-weight:700;">예: 사과들, 책들, 학생들</span></p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">There is 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${singularExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍎'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">There are 예시</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${pluralExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍏'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+        <h4 style="color:#ff6fb0;font-weight:700;margin:0 0 8px 0;">부정문 (없을 때)</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${negativeExamples.map(ex => `<li style="padding:8px;background:#ffe6f5;border-left:3px solid #ff6fb0;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❌'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: "There is" = 한 개/셀 수 없는 것!<br>"There are" = 여러 개!<br>"There isn't/aren't" = 없어요!</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>There is</strong> is for <span style="color:#40d4de;font-weight:700;">one thing</span> or <span style="color:#40d4de;font-weight:700;">uncountable nouns</span>.<br><span style="color:#19777e;font-weight:700;">Examples: water, milk, air, love</span></p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>There are</strong> is for <span style="color:#ffb84d;font-weight:700;">more than one</span> (plural nouns).<br><span style="color:#19777e;font-weight:700;">Examples: apples, books, students</span></p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">Examples with "There is"</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${singularExamples.map(ex => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍎'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Examples with "There are"</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${pluralExamples.map(ex => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🍏'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#fff7f7;border-left:4px solid #ff6fb0;padding:12px;border-radius:4px;">
+      <h4 style="color:#ff6fb0;font-weight:700;margin:0 0 8px 0;">Negative (when there is nothing)</h4>
+      <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+        ${negativeExamples.map(ex => `<li style="padding:8px;background:#ffe6f5;border-left:3px solid #ff6fb0;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❌'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${ex.exampleSentenceKo}</div></div></li>`).join('')}
+      </ul>
+    </div>
+    <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: "There is" = one/uncountable!<br>"There are" = many!<br>"There isn't/aren't" = nothing!</p>
+    </div>
+  `;
+}
   if (hasContractions) {
     return buildBeContractionsChart(grammarData, isKorean, grammarName);
   } else if (name.includes('articles') || name.includes('a vs an')) {
@@ -137,6 +562,64 @@ function buildGrammarChart(grammarName, grammarData, isKorean = false) {
     // Default generic chart
     return buildGenericChart(grammarData, isKorean);
   }
+// Kid-friendly chart for 'Some vs Any'
+function buildSomeAnyChart(data, isKorean = false) {
+  const someExamples = data.filter(item => item.article === 'some').slice(0, 4);
+  const anyExamples = data.filter(item => item.article === 'any').slice(0, 4);
+        if (isKorean) {
+          return `
+            <div style="margin-bottom:18px;">
+              <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+                <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>some</strong>은 <span style="color:#40d4de;font-weight:700;">긍정문</span>에서 써요. 조금, 몇 개라는 뜻이에요.<br><span style="color:#19777e;font-weight:700;">무언가가 있거나 원할 때 "some"을 써요!</span></p>
+                <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>any</strong>는 <span style="color:#ffb84d;font-weight:700;">질문</span>과 <span style="color:#ff6fb0;font-weight:700;">부정문</span>에서 써요.<br><span style="color:#19777e;font-weight:700;">무언가가 없거나 물어볼 때 "any"를 써요!</span></p>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div>
+                <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">some 예시</h4>
+                <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+                  ${someExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${item.emoji || '🍎'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${item.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${item.exampleSentenceKo}</div></div></li>`).join('')}
+                </ul>
+              </div>
+              <div>
+                <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">any 예시</h4>
+                <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+                  ${anyExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${item.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${item.exampleSentence}</span><div style="font-size:0.98em;color:#555;margin-top:2px;">${item.exampleSentenceKo}</div></div></li>`).join('')}
+                </ul>
+              </div>
+            </div>
+            <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+              <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: "some" = 네, 있어요! <br> "any" = 있어요? / 아니요, 없어요!</p>
+            </div>
+          `;
+        }
+        return `
+          <div style="margin-bottom:18px;">
+            <h3 style="color:#19777e;font-weight:700;margin:0 0 12px 0;font-size:1.2em;">Easy Rule</h3>
+            <div style="background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+              <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>Some</strong> is for <span style="color:#40d4de;font-weight:700;">positive sentences</span>. It means a little or a few. <br> <span style="color:#19777e;font-weight:700;">We use "some" when we have or want something!</span></p>
+              <p style="margin:0 0 8px 0;font-size:1.05em;"><strong>Any</strong> is for <span style="color:#ffb84d;font-weight:700;">questions</span> and <span style="color:#ff6fb0;font-weight:700;">negative sentences</span>. <br> <span style="color:#19777e;font-weight:700;">We use "any" when we ask or say we don't have something!</span></p>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <h4 style="color:#40d4de;font-weight:700;margin:0 0 10px 0;font-size:1em;">Examples with "some"</h4>
+              <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+                ${someExamples.map(item => `<li style="padding:8px;background:#e6f7f8;border-left:3px solid #40d4de;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${item.emoji || '🍎'}</span><span style="font-weight:700;color:#19777e;">${item.exampleSentence}</span></li>`).join('')}
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#ffb84d;font-weight:700;margin:0 0 10px 0;font-size:1em;">Examples with "any"</h4>
+              <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+                ${anyExamples.map(item => `<li style="padding:8px;background:#fff9e6;border-left:3px solid #ffb84d;border-radius:4px;font-size:1em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${item.emoji || '❓'}</span><span style="font-weight:700;color:#19777e;">${item.exampleSentence}</span></li>`).join('')}
+              </ul>
+            </div>
+          </div>
+          <div style="margin-top:18px;background:#f6feff;border-left:4px solid #27c5ca;padding:12px;border-radius:4px;">
+            <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: "Some" = Yes, I have! <br> "Any" = Do you have? / No, I don't!</p>
+          </div>
+        `;
+}
 }
 
 function buildWantWantsChart(data, isKorean = false, grammarName = '') {
