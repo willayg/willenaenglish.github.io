@@ -1,0 +1,17 @@
+[
+  {"en":"biggest","ko":"가장 큰","example":"He has the biggest toy collection.","emoji":"🧸"},
+  {"en":"smallest","ko":"가장 작은","example":"This is the smallest room in the house.","emoji":"🚪"},
+  {"en":"fastest","ko":"가장 빠른","example":"She is the fastest runner in the class.","emoji":"🏃‍♀️"},
+  {"en":"slowest","ko":"가장 느린","example":"The turtle is the slowest animal here.","emoji":"🐢"},
+  {"en":"tallest","ko":"가장 키가 큰","example":"He is the tallest person in the team.","emoji":"📏"},
+  {"en":"shortest","ko":"가장 키가 작은","example":"This is the shortest street in the town.","emoji":"🛣️"},
+  {"en":"oldest","ko":"가장 오래된","example":"This is the oldest tree in the park.","emoji":"🌳"},
+  {"en":"youngest","ko":"가장 어린","example":"She is the youngest in the class.","emoji":"👧"},
+  {"en":"cheapest","ko":"가장 싼","example":"This is the cheapest gift.","emoji":"💸"},
+  {"en":"most expensive","ko":"가장 비싼","example":"That watch is the most expensive.","emoji":"⌚"},
+  {"en":"hottest","ko":"가장 더운","example":"This is the hottest day of the year.","emoji":"🔥"},
+  {"en":"coldest","ko":"가장 추운","example":"Yesterday was the coldest day.","emoji":"🥶"},
+  {"en":"easiest","ko":"가장 쉬운","example":"This is the easiest question.","emoji":"✅"},
+  {"en":"hardest","ko":"가장 어려운","example":"That is the hardest level in the game.","emoji":"💪"},
+  {"en":"smartest","ko":"가장 똑똑한","example":"She is the smartest student in class.","emoji":"🧠"}
+]

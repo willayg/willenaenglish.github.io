@@ -1,0 +1,17 @@
+[
+  {"en":"Let's play soccer!","ko":"축구하자!","example":"Let's play soccer after school.","emoji":"⚽"},
+  {"en":"Please sit down.","ko":"앉아 주세요.","example":"Please sit down in your seat.","emoji":"🪑"},
+  {"en":"Don't run!","ko":"뛰지 마세요!","example":"Don't run in the hallway.","emoji":"🚫🏃"},
+  {"en":"Help your friend.","ko":"친구를 도와주세요.","example":"Help your friend with the homework.","emoji":"🤝"},
+  {"en":"Try again.","ko":"다시 해 보세요.","example":"Try the puzzle again.","emoji":"🧩"},
+  {"en":"Be quiet.","ko":"조용히 하세요.","example":"Be quiet in the library.","emoji":"🤫"},
+  {"en":"Don't forget the rules.","ko":"규칙을 잊지 마세요.","example":"Don't forget the rules of the game.","emoji":"📏"},
+  {"en":"Let's go home.","ko":"집에 가자.","example":"Let's go home now.","emoji":"🏠"},
+  {"en":"Please wash your hands.","ko":"손을 씻어 주세요.","example":"Please wash your hands before dinner.","emoji":"🧼"},
+  {"en":"Don't eat in the library.","ko":"도서관에서 먹지 마세요.","example":"Don't eat in the library to keep it clean.","emoji":"🚫🍽️"},
+  {"en":"Come here.","ko":"여기로 오세요.","example":"Come here and show me your drawing.","emoji":"👉"},
+  {"en":"Wait for me.","ko":"기다려 주세요.","example":"Wait for me at the gate.","emoji":"⏳"},
+  {"en":"Stop that.","ko":"그만해.","example":"Stop that or you will get hurt.","emoji":"✋"},
+  {"en":"Take a break.","ko":"잠깐 쉬세요.","example":"Take a break during your study.","emoji":"🛌"},
+  {"en":"Read this aloud.","ko":"이거 큰 소리로 읽어 보세요.","example":"Read this aloud for practice.","emoji":"📣"}
+]

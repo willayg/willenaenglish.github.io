@@ -153,8 +153,14 @@ export async function runGrammarSentenceUnscramble(ctx) {
     return;
   }
 
+  // Accept broader shapes: use exampleSentence/example/sentence or sentences[]; word is optional
   const candidates = Array.isArray(rawData)
-    ? rawData.filter((item) => item && item.exampleSentence && item.word)
+    ? rawData.filter((item) => {
+        if (!item) return false;
+        if (item.exampleSentence || item.example || item.sentence) return true;
+        if (Array.isArray(item.sentences) && item.sentences.length) return true;
+        return false;
+      })
     : [];
 
   if (!candidates.length) {
@@ -164,11 +170,12 @@ export async function runGrammarSentenceUnscramble(ctx) {
   }
 
   const mapped = candidates.map((item, index) => {
-    const sentence = String(item.exampleSentence || '').trim();
-    const translation = String(item.exampleSentenceKo || '').trim();
-    const baseId = item.id || `${item.word || 'sentence'}_${index}`;
+    const sentence = String(item.exampleSentence || item.example || item.sentence || (Array.isArray(item.sentences) && item.sentences[0]?.text) || '').trim();
+    const translation = String(item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || (Array.isArray(item.sentences) && (item.sentences[0]?.ko || item.sentences[0]?.kor)) || '').trim();
+    // Prefer stable id if present, else derive from en/word + index
+    const baseId = item.id || `${(item.word || item.en || 'sentence')}_${index}`;
     const payload = {
-      eng: item.word,
+      eng: item.word || item.en || (sentence ? sentence.split(/\s+/).slice(0,2).join(' ') : 'Sentence'),
       sentence,
       sentence_kor: translation,
       article: item.article,
@@ -176,7 +183,7 @@ export async function runGrammarSentenceUnscramble(ctx) {
       id: baseId,
       grammarMeta: {
         article: item.article,
-        word: item.word,
+        word: item.word || item.en,
       },
     };
     if (sentence) {
@@ -213,6 +220,8 @@ export async function runGrammarSentenceUnscramble(ctx) {
     wordList: usable,
     listName: grammarName || ctx?.listName || 'Grammar Sentences',
     sessionMode: 'grammar_sentence_unscramble',
+    grammarFile,
+    grammarName,
     // Mount into the main game area so HistoryManager restores are visible
     gameArea: document.getElementById('gameArea') || ctx?.gameArea || document.getElementById('gameStage') || document.body,
     sentenceLayout: { ...(ctx?.sentenceLayout || {}), ...layoutOverrides },

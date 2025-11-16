@@ -1,0 +1,17 @@
+[
+  {"en":"It's warm today, isn't it?","ko":"오늘은 따뜻하죠, 그렇죠?","example":"Tag question - positive statement.","emoji":"☀️"},
+  {"en":"You like pizza, don't you?","ko":"너 피자 좋아하죠, 그렇죠?","example":"Tag question for present simple.","emoji":"🍕"},
+  {"en":"She's coming, isn't she?","ko":"그녀가 오죠, 그렇죠?","example":"Tag question for present continuous.","emoji":"🚶‍♀️"},
+  {"en":"We should go, shouldn't we?","ko":"우리는 가야 하죠, 그렇죠?","example":"Tag with modal verb.","emoji":"🚶"},
+  {"en":"He can't drive, can he?","ko":"그는 운전 못하죠, 그렇죠?","example":"Negative modal tag.","emoji":"🚗"},
+  {"en":"They were here, weren't they?","ko":"그들은 여기 있었죠, 그렇죠?","example":"Tag question for past continuous.","emoji":"🕰️"},
+  {"en":"You have been there, haven't you?","ko":"거기 가 본 적 있죠, 그렇죠?","example":"Present perfect tag.","emoji":"🗺️"},
+  {"en":"She doesn't like coffee, does she?","ko":"그녀는 커피를 안 좋아하죠, 그렇죠?","example":"Negative statement tag.","emoji":"☕"},
+  {"en":"Let's go, shall we?","ko":"가자, 어때요?","example":"Tag with let’s suggestion.","emoji":"🚶"},
+  {"en":"You will be there, won't you?","ko":"거기 있을 거죠, 그렇죠?","example":"Future tense tag.","emoji":"📅"},
+  {"en":"He hasn't arrived, has he?","ko":"그는 아직 도착하지 않았죠, 그렇죠?","example":"Negative present perfect tag.","emoji":"✈️"},
+  {"en":"We can start now, can't we?","ko":"지금 시작해도 되죠, 그렇죠?","example":"Modal tag example.","emoji":"🟢"},
+  {"en":"You're hungry, aren't you?","ko":"배고프죠, 그렇죠?","example":"Tag for present continuous.","emoji":"🍽️"},
+  {"en":"It won't rain, will it?","ko":"비 안 오겠죠, 그렇죠?","example":"Negative future tag.","emoji":"☔"},
+  {"en":"She was happy, wasn't she?","ko":"그녀는 행복했죠, 그렇죠?","example":"Past simple tag.","emoji":"🙂"}
+]

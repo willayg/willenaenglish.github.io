@@ -7,7 +7,8 @@ import { progressCache } from './progress-cache.js';
 const MODE_GROUPS = {
   general: ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'],
   phonics: ['listening', 'spelling', 'multi_choice', 'listen_and_spell'],
-  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_have_has', 'grammar_lesson_want_wants', 'grammar_lesson_like_likes', 'grammar_lesson_contractions_be', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable', 'grammar_fill_gap', 'grammar_sentence_unscramble'],
+  // Include all grammar modes, including new Level 2 ones
+  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_have_has', 'grammar_lesson_want_wants', 'grammar_lesson_like_likes', 'grammar_lesson_contractions_be', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable', 'grammar_fill_gap', 'grammar_sentence_unscramble', 'grammar_sorting', 'grammar_find_mistake', 'grammar_translation_choice'],
 };
 
 const CACHE_KEYS = {
@@ -17,6 +18,7 @@ const CACHE_KEYS = {
   level4: 'level4_progress',
   phonics: 'phonics_progress',
   grammarLevel1: 'grammar_level1_progress',
+  grammarLevel2: 'grammar_level2_progress',
   stars: 'level_stars',
 };
 
@@ -101,13 +103,17 @@ function extractPercent(session, summary) {
     return Math.round((sum.score / sum.max) * 100);
   }
   if (typeof sum.accuracy === 'number') {
-    return Math.round((sum.accuracy || 0) * 100);
+    // If accuracy > 1, assume it's already a percentage (0-100); otherwise treat as decimal (0-1)
+    const acc = sum.accuracy || 0;
+    return Math.round(acc > 1 ? acc : acc * 100);
   }
   if (typeof session.correct === 'number' && typeof session.total === 'number' && session.total > 0) {
     return Math.round((session.correct / session.total) * 100);
   }
   if (typeof session.accuracy === 'number') {
-    return Math.round((session.accuracy || 0) * 100);
+    // If accuracy > 1, assume it's already a percentage (0-100); otherwise treat as decimal (0-1)
+    const acc = session.accuracy || 0;
+    return Math.round(acc > 1 ? acc : acc * 100);
   }
   return null;
 }
@@ -232,6 +238,9 @@ function identifyGrammarBucket(mode) {
   if (m.includes('choose')) return 'choose';
   if (m === 'grammar_mode') return 'choose';
   if (m === 'grammar') return 'choose';
+  if (m.includes('sorting')) return 'sorting';
+  if (m.includes('find_mistake')) return 'find';
+  if (m.includes('translation')) return 'translate';
   return null;
 }
 
@@ -264,6 +273,45 @@ function computeGrammarLevelProgress(lists, sessions) {
       (best.fill ?? 0) * 0.25 +
       (best.unscramble ?? 0) * 0.25;
 
+    return Math.round(total);
+  });
+}
+
+// Level 2 grammar progress: track completion across six modes (Sorting, Choose, Fill, Unscramble, Find, Translation)
+function computeGrammarLevel2Progress(lists, sessions) {
+  const TOTAL_MODES = 6;
+  return lists.map((item) => {
+    const best = {
+      sorting: null,
+      choose: null,
+      fill: null,
+      unscramble: null,
+      find: null,
+      translate: null,
+    };
+
+    sessions.forEach((session) => {
+      if (!isGrammarSession(session)) return;
+      const names = collectSessionNames(session) || [];
+      if (!names.some((name) => matchesGrammarList(item, name))) return;
+      const bucket = identifyGrammarBucket(session.mode);
+      if (!bucket || !(bucket in best)) return;
+      const summary = parseSummary(session.summary);
+      const pct = extractPercent(session, summary);
+      if (pct == null) return;
+      if (best[bucket] == null || best[bucket] < pct) best[bucket] = pct;
+    });
+
+    // Level 1 style weighting: each mode contributes equally (1/6); unattempted modes = 0
+    let attempted = 0;
+    Object.values(best).forEach((pct) => { if (typeof pct === 'number') attempted++; });
+    const total =
+      (best.sorting ?? 0) * (1/6) +
+      (best.choose ?? 0) * (1/6) +
+      (best.fill ?? 0) * (1/6) +
+      (best.unscramble ?? 0) * (1/6) +
+      (best.find ?? 0) * (1/6) +
+      (best.translate ?? 0) * (1/6);
     return Math.round(total);
   });
 }
@@ -324,12 +372,76 @@ function computeStarCountsFromSessions(sessions) {
       const targetKey = canonicalHints[0] || hintList[0] || 'grammar_level1';
       const allHints = [...canonicalHints, ...hintList];
 
+      // Numeric level extraction (meta.level or summary.level)
+      let numericLevel = null;
+      try {
+        const rawNum = summary?.level != null ? summary.level : null;
+        if (rawNum != null && /^\d+$/.test(String(rawNum))) numericLevel = Number(rawNum);
+      } catch {}
+      try {
+        const metaRaw2 = session.meta || summary?.meta;
+        let metaObj2 = metaRaw2;
+        if (typeof metaObj2 === 'string') { try { metaObj2 = JSON.parse(metaObj2); } catch { metaObj2 = null; } }
+        const mv = metaObj2?.level;
+        if (numericLevel == null && mv != null && /^\d+$/.test(String(mv))) numericLevel = Number(mv);
+      } catch {}
+
+      // Decide which grammar level bucket to use.
+      // Priority: explicit numeric > path/name hints > explicit list-name mapping > special cases.
       let bucketKey = 'grammarLevel1';
-      if (allHints.some((h) => /level\s*4/.test(h) || h.includes('level4'))) bucketKey = 'grammarLevel4';
-      else if (allHints.some((h) => /level\s*3/.test(h) || h.includes('level3'))) bucketKey = 'grammarLevel3';
-      else if (allHints.some((h) => /level\s*2/.test(h) || h.includes('level2'))) bucketKey = 'grammarLevel2';
-      else if (allHints.some((h) => /level\s*1/.test(h) || h.includes('level1'))) bucketKey = 'grammarLevel1';
+      const isExplicitLevel = (h, n) => new RegExp(`level\s*${n}\b`).test(h) || h.includes(`level${n}`);
+      const looksLikeLevelPath = (h, n) => h.includes(`/level${n}/`) || h.includes(`\\level${n}\\`);
+      const altLevelToken = (h, n) => h.includes(`lvl${n}`) || h === `l${n}` || h.includes(`l${n}_`) || h.includes(`l${n}-`);
+
+      // Static Level 2 list name mapping (fallback when file/path hints missing)
+      // Mirrors labels defined in level2_grammar_modal.js
+      const RAW_LEVEL2_LABELS = [
+        'Some vs Any','There is vs There are','Is there vs Are there?','WH: Who & What','WH: Where, When & Time','WH: How, Why & Which',
+        'Short Questions 1','Short Questions 2','Present Simple: Sentences','Present Simple: Negative','Present Simple: Yes/No Questions','Present Simple: WH Questions',
+        'Present Progressive','Present Progressive: Negative','Present Progressive: Yes/No','Present Progressive: WH Questions','Simple vs Progressive',
+        'Prepositions: Between, Above, Below','Prepositions: Next to, Behind, In front','Prepositions: Near, Across from','Prepositions: Review',
+        'Time: In, On, At','How Many & Counting'
+      ];
+      // Build canonical forms once (lazy init) and allow override via window.__WA_GRAMMAR_L2_NAMES
+      let LEVEL2_NAME_SET = computeStarCountsFromSessions.__LEVEL2_NAME_SET;
+      if (!LEVEL2_NAME_SET) {
+        LEVEL2_NAME_SET = new Set();
+        const source = Array.isArray(window?.__WA_GRAMMAR_L2_NAMES) ? window.__WA_GRAMMAR_L2_NAMES : RAW_LEVEL2_LABELS;
+        source.forEach(lbl => {
+          const raw = norm(lbl);
+          if (raw) LEVEL2_NAME_SET.add(raw);
+          const ck = canonKey(lbl);
+          if (ck) LEVEL2_NAME_SET.add(ck);
+        });
+        computeStarCountsFromSessions.__LEVEL2_NAME_SET = LEVEL2_NAME_SET;
+      }
+
+      const hintSet = new Set(allHints);
+      // Add raw (non-canonical) lowercase hints too for direct match
+      hintList.forEach(h => hintSet.add(norm(h)));
+
+      if (numericLevel === 4 || allHints.some(h => isExplicitLevel(h,4) || looksLikeLevelPath(h,4) || altLevelToken(h,4))) bucketKey = 'grammarLevel4';
+      else if (numericLevel === 3 || allHints.some(h => isExplicitLevel(h,3) || looksLikeLevelPath(h,3) || altLevelToken(h,3))) bucketKey = 'grammarLevel3';
+      else if (numericLevel === 2 || allHints.some(h => isExplicitLevel(h,2) || looksLikeLevelPath(h,2) || altLevelToken(h,2))) bucketKey = 'grammarLevel2';
+      else if (
+        // Fallback: explicit Level 2 list names
+        [...hintSet].some(h => LEVEL2_NAME_SET.has(h))
+      ) {
+        bucketKey = 'grammarLevel2';
+      } else if (numericLevel === 1 || allHints.some(h => isExplicitLevel(h,1) || looksLikeLevelPath(h,1) || altLevelToken(h,1))) bucketKey = 'grammarLevel1';
       else if (allHints.some((h) => h === 'a vs an' || h.includes('articles') || h.includes('a_vs_an'))) bucketKey = 'grammarLevel1';
+
+      // Optional debug: show reasoning for grammar sessions defaulting to Level 1
+      if (typeof window !== 'undefined' && window.__WA_DEBUG_GRAMMAR_STARS) {
+        try {
+          if (bucketKey === 'grammarLevel1') {
+            console.debug('[GrammarStars] Defaulted to L1. numericLevel=', numericLevel, 'hints=', hintList.slice(0,8));
+          }
+          if (bucketKey === 'grammarLevel2') {
+            console.debug('[GrammarStars] Mapped session to L2 via hints:', hintList.slice(0,8));
+          }
+        } catch {}
+      }
 
       const bucket = byLevel[bucketKey];
       if (bucket) {
@@ -469,7 +581,13 @@ export async function loadGrammarLevelProgress(lists) {
   });
 }
 
-export async function loadStarCounts() {
+export async function loadGrammarLevel2Progress(lists) {
+  return progressCache.fetchWithCache(CACHE_KEYS.grammarLevel2, async () => {
+    const sessions = await fetchAllSessions();
+    const values = computeGrammarLevel2Progress(lists, sessions);
+    return ensureProgressPayload(values);
+  });
+}export async function loadStarCounts() {
   return progressCache.fetchWithCache(CACHE_KEYS.stars, async () => {
     const sessions = await fetchAllSessions();
     const counts = computeStarCountsFromSessions(sessions);

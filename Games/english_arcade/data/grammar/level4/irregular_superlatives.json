@@ -1,0 +1,17 @@
+[
+  {"en":"best","ko":"가장 좋은","example":"This is the best movie I've seen.","emoji":"🏆"},
+  {"en":"worst","ko":"가장 최악의","example":"That was the worst day of my life.","emoji":"😱"},
+  {"en":"least","ko":"가장 적은","example":"This is the least expensive option.","emoji":"💲"},
+  {"en":"most","ko":"가장 많은","example":"She has the most experience.","emoji":"🏅"},
+  {"en":"furthest","ko":"가장 먼","example":"The furthest planet is very far away.","emoji":"🪐"},
+  {"en":"best","ko":"가장 좋은","example":"He is the best player on the team.","emoji":"⚽"},
+  {"en":"worst","ko":"가장 최악의","example":"It was the worst performance tonight.","emoji":"🎭"},
+  {"en":"most","ko":"가장 많은","example":"This shop has the most toys.","emoji":"🧸"},
+  {"en":"least","ko":"가장 적은","example":"She has the least homework this week.","emoji":"📘"},
+  {"en":"furthest","ko":"가장 먼","example":"That is the furthest I've ever traveled.","emoji":"✈️"},
+  {"en":"best","ko":"가장 좋은","example":"This is the best book in the library.","emoji":"📖"},
+  {"en":"worst","ko":"가장 최악의","example":"It was the worst weather day.","emoji":"🌧️"},
+  {"en":"most","ko":"가장 많은","example":"He has the most friends here.","emoji":"👥"},
+  {"en":"least","ko":"가장 적은","example":"They had the least time to finish.","emoji":"⏳"},
+  {"en":"furthest","ko":"가장 먼","example":"The furthest city is three hours away.","emoji":"🗺️"}
+]

@@ -1,0 +1,17 @@
+[
+  {"en":"This is my book.","ko":"이것은 내 책이에요.","example":"This is my book.","emoji":"📘"},
+  {"en":"This book is mine.","ko":"이 책은 내 거예요.","example":"This book is mine.","emoji":"📗"},
+  {"en":"Is this your pencil?","ko":"이게 네 연필이야?","example":"Is this your pencil?","emoji":"✏️"},
+  {"en":"That pencil is yours.","ko":"저 연필은 네 거야.","example":"That pencil is yours.","emoji":"✏️"},
+  {"en":"His hat is red.","ko":"그의 모자는 빨간색이에요.","example":"His hat is red.","emoji":"🎩"},
+  {"en":"The red hat is his.","ko":"빨간 모자는 그의 거예요.","example":"The red hat is his.","emoji":"🎩"},
+  {"en":"Her phone is on the desk.","ko":"그녀의 전화가 책상 위에 있어요.","example":"Her phone is on the desk.","emoji":"📱"},
+  {"en":"The phone is hers.","ko":"그 전화는 그녀의 거예요.","example":"The phone is hers.","emoji":"📱"},
+  {"en":"Give it to me.","ko":"나에게 그것을 줘.","example":"Give it to me now.","emoji":"🤲"},
+  {"en":"He gave it to me.","ko":"그가 그것을 나에게 줬어요.","example":"He gave it to me yesterday.","emoji":"🎁"},
+  {"en":"They invited us.","ko":"그들은 우리를 초대했어요.","example":"They invited us to their party.","emoji":"🎉"},
+  {"en":"That cookie is theirs.","ko":"그 쿠키는 그들의 거예요.","example":"That cookie is theirs.","emoji":"🍪"},
+  {"en":"This is our house.","ko":"이것은 우리 집이에요.","example":"This is our house.","emoji":"🏠"},
+  {"en":"The house is ours.","ko":"그 집은 우리의 거예요.","example":"The house is ours.","emoji":"🏠"},
+  {"en":"Tell him to come.","ko":"그에게 오라고 말해줘.","example":"Tell him to come now.","emoji":"📣"}
+]

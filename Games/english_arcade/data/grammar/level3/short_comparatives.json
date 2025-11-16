@@ -1,0 +1,17 @@
+[
+  {"en":"bigger","ko":"더 큰","example":"My house is bigger than yours.","emoji":"🏠"},
+  {"en":"smaller","ko":"더 작은","example":"This pencil is smaller than that one.","emoji":"✏️"},
+  {"en":"faster","ko":"더 빠른","example":"A cheetah is faster than a dog.","emoji":"🐆"},
+  {"en":"slower","ko":"더 느린","example":"A snail is slower than a rabbit.","emoji":"🐌"},
+  {"en":"taller","ko":"더 키가 큰","example":"She is taller than her brother.","emoji":"📏"},
+  {"en":"shorter","ko":"더 키가 작은","example":"He is shorter than his father.","emoji":"📏"},
+  {"en":"older","ko":"더 나이가 많은","example":"My sister is older than me.","emoji":"🎂"},
+  {"en":"younger","ko":"더 나이가 어린","example":"My brother is younger than me.","emoji":"👶"},
+  {"en":"cheaper","ko":"더 싼","example":"This toy is cheaper than that one.","emoji":"💲"},
+  {"en":"more expensive","ko":"더 비싼","example":"This phone is more expensive than mine.","emoji":"📱"},
+  {"en":"hotter","ko":"더 더운","example":"July is hotter than May.","emoji":"☀️"},
+  {"en":"colder","ko":"더 추운","example":"January is colder than April.","emoji":"❄️"},
+  {"en":"easier","ko":"더 쉬운","example":"Math is easier than physics for me.","emoji":"➗"},
+  {"en":"harder","ko":"더 어려운","example":"This puzzle is harder than that one.","emoji":"🧩"},
+  {"en":"better","ko":"더 나은","example":"She sings better than before.","emoji":"🎵"}
+]

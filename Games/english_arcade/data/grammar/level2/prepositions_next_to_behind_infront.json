@@ -1,0 +1,137 @@
+[
+  {
+    "id": "the_cat_is_next",
+    "word": "the_cat",
+    "en": "The cat is next to the box.",
+    "ko": "고양이가 상자 옆에 있어요.",
+    "exampleSentence": "The cat is next to the box.",
+    "exampleSentenceKo": "고양이가 상자 옆에 있어요.",
+    "emoji": "😺⬅️"
+  },
+  {
+    "id": "the_car_is_behind",
+    "word": "the_car",
+    "en": "The car is behind the truck.",
+    "ko": "자동차가 트럭 뒤에 있어요.",
+    "exampleSentence": "The car is behind the truck.",
+    "exampleSentenceKo": "자동차가 트럭 뒤에 있어요.",
+    "emoji": "🚗⬅️🚚"
+  },
+  {
+    "id": "the_dog_is_in",
+    "word": "the_dog",
+    "en": "The dog is in front of the house.",
+    "ko": "개가 집 앞에 있어요.",
+    "exampleSentence": "The dog is in front of the house.",
+    "exampleSentenceKo": "개가 집 앞에 있어요.",
+    "emoji": "🐶🏠"
+  },
+  {
+    "id": "she_sits_next_to",
+    "word": "she_sits",
+    "en": "She sits next to me.",
+    "ko": "그녀는 내 옆에 앉아 있어요.",
+    "exampleSentence": "She sits next to me.",
+    "exampleSentenceKo": "그녀는 내 옆에 앉아 있어요.",
+    "emoji": "👧➡️👦"
+  },
+  {
+    "id": "the_ball_is_behind",
+    "word": "the_ball",
+    "en": "The ball is behind the couch.",
+    "ko": "공이 소파 뒤에 있어요.",
+    "exampleSentence": "The ball is behind the couch.",
+    "exampleSentenceKo": "공이 소파 뒤에 있어요.",
+    "emoji": "⚽️⬅️🛋️"
+  },
+  {
+    "id": "he_stands_in_front",
+    "word": "he_stands",
+    "en": "He stands in front of the board.",
+    "ko": "그는 칠판 앞에 서 있어요.",
+    "exampleSentence": "He stands in front of the board.",
+    "exampleSentenceKo": "그는 칠판 앞에 서 있어요.",
+    "emoji": "🧑‍🏫📋"
+  },
+  {
+    "id": "my_bag_is_next",
+    "word": "my_bag",
+    "en": "My bag is next to my desk.",
+    "ko": "내 가방은 책상 옆에 있어요.",
+    "exampleSentence": "My bag is next to my desk.",
+    "exampleSentenceKo": "내 가방은 책상 옆에 있어요.",
+    "emoji": "🎒🪑"
+  },
+  {
+    "id": "the_store_is_behind",
+    "word": "the_store",
+    "en": "The store is behind the school.",
+    "ko": "가게가 학교 뒤에 있어요.",
+    "exampleSentence": "The store is behind the school.",
+    "exampleSentenceKo": "가게가 학교 뒤에 있어요.",
+    "emoji": "🏫➡️🏪"
+  },
+  {
+    "id": "the_tree_is_in",
+    "word": "the_tree",
+    "en": "The tree is in front of the house.",
+    "ko": "나무가 집 앞에 있어요.",
+    "exampleSentence": "The tree is in front of the house.",
+    "exampleSentenceKo": "나무가 집 앞에 있어요.",
+    "emoji": "🌳🏠"
+  },
+  {
+    "id": "place_the_cup_next",
+    "word": "place_the",
+    "en": "Place the cup next to the plate.",
+    "ko": "컵을 접시 옆에 놓으세요.",
+    "exampleSentence": "Place the cup next to the plate.",
+    "exampleSentenceKo": "컵을 접시 옆에 놓으세요.",
+    "emoji": "☕️➡️🍽️"
+  },
+  {
+    "id": "the_student_is_behind",
+    "word": "the_student",
+    "en": "The student is behind the teacher.",
+    "ko": "학생이 선생님 뒤에 있어요.",
+    "exampleSentence": "The student is behind the teacher.",
+    "exampleSentenceKo": "학생이 선생님 뒤에 있어요.",
+    "emoji": "👦⬅️👩‍🏫"
+  },
+  {
+    "id": "the_bench_is_in",
+    "word": "the_bench",
+    "en": "The bench is in front of the museum.",
+    "ko": "벤치는 박물관 앞에 있어요.",
+    "exampleSentence": "The bench is in front of the museum.",
+    "exampleSentenceKo": "벤치는 박물관 앞에 있어요.",
+    "emoji": "🪑🏛️"
+  },
+  {
+    "id": "the_house_next_to",
+    "word": "the_house",
+    "en": "The house next to mine is red.",
+    "ko": "내 옆집은 빨간색이에요.",
+    "exampleSentence": "The house next to mine is red.",
+    "exampleSentenceKo": "내 옆집은 빨간색이에요.",
+    "emoji": "🏠🔴"
+  },
+  {
+    "id": "they_sat_behind_the",
+    "word": "they_sat",
+    "en": "They sat behind the window.",
+    "ko": "그들은 창문 뒤에 앉았어요.",
+    "exampleSentence": "They sat behind the window.",
+    "exampleSentenceKo": "그들은 창문 뒤에 앉았어요.",
+    "emoji": "🪟⬅️👥"
+  },
+  {
+    "id": "the_bus_stops_in",
+    "word": "the_bus",
+    "en": "The bus stops in front of the station.",
+    "ko": "버스가 역 앞에 서요.",
+    "exampleSentence": "The bus stops in front of the station.",
+    "exampleSentenceKo": "버스가 역 앞에 서요.",
+    "emoji": "🚌🏃‍♂️🏢"
+  }
+]
