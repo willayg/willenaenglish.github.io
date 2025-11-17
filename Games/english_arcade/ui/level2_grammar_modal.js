@@ -371,7 +371,9 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     'short_questions_1',
     'short_questions_2',
     'present_simple_sentences',
-    'present_simple_negative'
+  'present_simple_negative',
+  'present_simple_questions_yesno',
+  'present_simple_questions_wh'
   ];
   level2Lists = level2Lists.slice().sort((a, b) => {
     const aIdx = progressIds.indexOf(a.id);

@@ -302,16 +302,35 @@ function computeGrammarLevel2Progress(lists, sessions) {
       if (best[bucket] == null || best[bucket] < pct) best[bucket] = pct;
     });
 
-    // Level 1 style weighting: each mode contributes equally (1/6); unattempted modes = 0
+    // Check if this is the WH Questions list (which has no Sorting mode)
+    const isWhQuestionsList = item.id === 'present_simple_questions_wh' || item.id === 'present_progressive_questions_wh' || 
+                               (item.file && /questions_wh\.json$/i.test(item.file));
+    
+    // Weighting: for WH questions use 1/5 (5 modes), otherwise use 1/6 (6 modes)
+    const weight = isWhQuestionsList ? (1/5) : (1/6);
+    
     let attempted = 0;
     Object.values(best).forEach((pct) => { if (typeof pct === 'number') attempted++; });
-    const total =
-      (best.sorting ?? 0) * (1/6) +
-      (best.choose ?? 0) * (1/6) +
-      (best.fill ?? 0) * (1/6) +
-      (best.unscramble ?? 0) * (1/6) +
-      (best.find ?? 0) * (1/6) +
-      (best.translate ?? 0) * (1/6);
+    
+    let total;
+    if (isWhQuestionsList) {
+      // WH questions: 5 modes (no Sorting)
+      total =
+        (best.choose ?? 0) * weight +
+        (best.fill ?? 0) * weight +
+        (best.unscramble ?? 0) * weight +
+        (best.find ?? 0) * weight +
+        (best.translate ?? 0) * weight;
+    } else {
+      // Standard: 6 modes including Sorting
+      total =
+        (best.sorting ?? 0) * weight +
+        (best.choose ?? 0) * weight +
+        (best.fill ?? 0) * weight +
+        (best.unscramble ?? 0) * weight +
+        (best.find ?? 0) * weight +
+        (best.translate ?? 0) * weight;
+    }
     return Math.round(total);
   });
 }

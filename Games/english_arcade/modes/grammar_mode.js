@@ -52,6 +52,12 @@ export async function runGrammarMode(ctx) {
   const isPresentSimpleList = /present_simple_sentences\.json$/i.test(grammarFile || '');
   // Detect Present Simple Negative list for special choose-mode UI (subject + don't/doesn't)
   const isPresentSimpleNegative = /present_simple_negative\.json$/i.test(grammarFile || '') || /present\s*simple[:\-\s]*negative/i.test(grammarName || '');
+  // Detect Present Simple Yes/No Questions for DO/DOES choose mode
+  const isPresentSimpleYesNo = /present_simple_questions_yesno\.json$/i.test(grammarFile || '') || /present\s*simple.*yes\s*\/\s*no/i.test(grammarName || '');
+  // Detect Present Simple WH Questions list for WH-word choose mode
+  const isPresentSimpleWhQuestions = /present_simple_questions_wh\.json$/i.test(grammarFile || '')
+    || /present\s*simple[\s:\-]*wh/i.test(grammarName || '')
+    || /wh\s*questions?/i.test(grammarName || '');
 
     // Extract answer choices from config (e.g., ['a', 'an'] or ['it', 'they'])
     const answerChoices = (grammarConfig && grammarConfig.answerChoices && Array.isArray(grammarConfig.answerChoices))
@@ -148,11 +154,11 @@ export async function runGrammarMode(ctx) {
         return;
       }
 
-  const item = shuffled[currentIdx];
-  const isLastQuestion = currentIdx === shuffled.length - 1;
-  const rawPrompt = item?.prompt || item?.word || '';
-  const displayText = sanitizeText(extractSubjectAndBlank(rawPrompt));
-  const isSomeAnyMode = Array.isArray(answerChoices) && answerChoices.includes('some') && answerChoices.includes('any');
+      const item = shuffled[currentIdx];
+      const isLastQuestion = currentIdx === shuffled.length - 1;
+      const rawPrompt = item?.prompt || item?.word || '';
+      const displayText = sanitizeText(extractSubjectAndBlank(rawPrompt));
+      const isSomeAnyMode = Array.isArray(answerChoices) && answerChoices.includes('some') && answerChoices.includes('any');
       const isThisThatMode = Array.isArray(answerChoices)
         && answerChoices.length === 2
         && answerChoices.includes('this')
@@ -163,14 +169,14 @@ export async function runGrammarMode(ctx) {
         && answerChoices.includes('those');
       const inOnUnderMode = isInOnUnderMode(answerChoices);
       const hasProximityMode = isThisThatMode || isTheseThooseMode;
-  const promptSafe = rawPrompt ? sanitizeText(rawPrompt) : '';
+      const promptSafe = rawPrompt ? sanitizeText(rawPrompt) : '';
       const highlightedPrompt = promptSafe ? promptSafe.replace(/___/g, '<span style="color:#21b3be;font-weight:800;">___</span>') : '';
-  const promptHasBlank = String(rawPrompt || '').includes('___');
-  // Detect There is/are choose modes via answerChoices (case-insensitive)
-  const ac = Array.isArray(answerChoices) ? answerChoices : [];
-  const acLower = ac.map(s => String(s || '').toLowerCase());
-  const isThereStatementsMode = acLower.includes('there is') && acLower.includes('there are');
-  const isThereQuestionsMode = (acLower.includes('is there') || acLower.includes('is there')) && (acLower.includes('are there') || acLower.includes('are there'));
+      const promptHasBlank = String(rawPrompt || '').includes('___');
+      // Detect There is/are choose modes via answerChoices (case-insensitive)
+      const ac = Array.isArray(answerChoices) ? answerChoices : [];
+      const acLower = ac.map(s => String(s || '').toLowerCase());
+      const isThereStatementsMode = acLower.includes('there is') && acLower.includes('there are');
+      const isThereQuestionsMode = (acLower.includes('is there') || acLower.includes('is there')) && (acLower.includes('are there') || acLower.includes('are there'));
 
       // For Some/Any, show only the prefix before the word "some" or "any"
       const prefixBeforeSomeAny = (text) => {
@@ -440,6 +446,45 @@ export async function runGrammarMode(ctx) {
             </button>
           </div>
         `;
+      } else if (isPresentSimpleYesNo) {
+        // =====================================
+        // Present Simple Yes/No (DO vs DOES)
+        // Show only subject and two buttons: DO / DOES
+        // =====================================
+        const sentence = String(item.en || item.exampleSentence || item.word || '');
+        const emoji = item.emoji || '';
+        // Strip leading Do/Does to isolate subject token(s)
+        let working = sentence.replace(/^\s*(do|does)\s+/i, '').trim();
+        const parts = working.split(/\s+/);
+        let subject = '';
+        if (/^the$/i.test(parts[0]) && parts.length >= 2) {
+          subject = `${parts[0]} ${parts[1]}`;
+        } else {
+          subject = parts[0] || '';
+        }
+        subject = subject.replace(/[.,!?]$/g, '');
+
+        const opts = ['DO','DOES'].sort(() => Math.random() - 0.5);
+        const btns = opts.map(opt => `
+          <button class="grammar-choice-btn" data-answer="${opt}" style="flex:1;min-width:clamp(120px, 26vw, 200px);padding:clamp(12px, 2.5vh, 16px) clamp(16px, 3vw, 24px);font-size:clamp(1.2rem, 3.3vw, 1.6rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:none;font-family:'Poppins', Arial, sans-serif;">${opt}</button>
+        `).join('');
+
+        contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:24px;padding:24px;max-width:640px;margin:0 auto;">
+            <div style="width:100%;text-align:center;font-size:0.95rem;color:#666;font-weight:600;">Question ${currentIdx + 1} of ${shuffled.length}</div>
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:12px;">
+              ${emoji ? `<div style="font-size:4rem;line-height:1;">${emoji}</div>` : ''}
+              <div style="font-size:1.9rem;font-weight:800;color:#21b3be;max-width:80vw;line-height:1.4;">${sanitizeText(subject)}</div>
+            </div>
+            <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:420px;justify-content:center;margin-top:24px;margin-bottom:8px;flex-wrap:wrap;">
+              ${btns}
+            </div>
+            <div style="flex:1;width:100%;"></div>
+            <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+              <span class="wa-sr-only">Quit Game</span>
+              <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+            </button>
+          </div>`;
       } else if (isPresentSimpleNegative) {
         // ===============================
         // Present Simple Negative (Choose)
@@ -474,6 +519,146 @@ export async function runGrammarMode(ctx) {
               <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
             </button>
           </div>`;
+      } else if (isPresentSimpleWhQuestions) {
+        // WH choose mode: show Korean WH prompt and four WH options
+        const enQuestion = String(item.en || '').trim();
+        const koPrompt = String(item.ko || item.exampleSentenceKo || '').trim();
+
+        // Extract WH word from the English question (first token)
+        const mWh = enQuestion.match(/^(Who|What|When|Where|Why|How|Which)\b/i);
+        let whWord = (mWh ? mWh[1] : '').toLowerCase().trim();
+
+        // Normalize some variants if they ever appear
+        if (whWord === 'how') {
+          // Keep as 'how' for now; could specialize later (how often/long/many)
+          whWord = 'how';
+        }
+
+        const coreWhPool = ['who', 'what', 'when', 'where', 'why'];
+        const fullWhPool = ['who', 'what', 'when', 'where', 'why', 'how', 'which'];
+
+        // If we somehow didn't detect a WH, fall back to a frequent one
+        const validWh = (fullWhPool.includes(whWord) ? whWord : 'what');
+
+        // Build four WH options: correct + three distractors.
+        // Prefer core WH set first so options feel natural; add extras only if needed.
+        const basePool = coreWhPool.includes(validWh)
+          ? coreWhPool
+          : fullWhPool;
+
+        const distractorsSource = basePool.filter(w => w !== validWh);
+        // If the base pool is too small for 3 distractors, top up from the full pool
+        let distractors = distractorsSource;
+        if (distractors.length < 3) {
+          const backup = fullWhPool.filter(w => w !== validWh && !distractors.includes(w));
+          distractors = distractors.concat(backup);
+        }
+
+        const shuffledDistr = distractors.sort(() => Math.random() - 0.5).slice(0, 3);
+        const options = [validWh, ...shuffledDistr].sort(() => Math.random() - 0.5);
+
+        const contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:24px;padding:24px;max-width:640px;margin:0 auto;">
+            <div style="width:100%;text-align:center;font-size:0.95rem;color:#666;font-weight:600;">
+              Question ${currentIdx + 1} of ${shuffled.length}
+            </div>
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:12px;">
+              ${item.emoji ? `<div style="font-size:4rem;line-height:1;">${item.emoji}</div>` : ''}
+              <div style="font-size:1.9rem;font-weight:800;color:#21b3be;max-width:80vw;line-height:1.5;">
+                ${koPrompt || '&nbsp;'}
+              </div>
+            </div>
+            <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:420px;justify-content:center;margin-top:24px;margin-bottom:8px;flex-wrap:wrap;">
+              ${options.map(opt => `
+                <button class="grammar-choice-btn" data-answer="${opt}" style="flex:1;min-width:clamp(110px, 24vw, 180px);padding:clamp(12px, 2.5vh, 16px) clamp(18px, 3vw, 26px);font-size:clamp(1.2rem, 3.4vw, 1.7rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:none;font-family:'Poppins', Arial, sans-serif;">
+                  ${opt}
+                </button>
+              `).join('')}
+            </div>
+            <div style="flex:1;width:100%:"></div>
+            <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+              <span class="wa-sr-only">Quit Game</span>
+              <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+            </button>
+          </div>
+        `;
+
+        setView({ content: contentHTML, showProgressBar: true, progressValue: currentIdx + 1, progressMax: shuffled.length });
+
+        const buttons = Array.from(document.querySelectorAll('.grammar-choice-btn'));
+        buttons.forEach(btn => {
+          btn.onclick = async () => {
+            const userAnswer = btn.getAttribute('data-answer');
+            const correctAnswer = validWh;
+            const correct = userAnswer === correctAnswer;
+
+            btn.style.borderColor = correct ? '#00897b' : '#f44336';
+            btn.style.backgroundColor = correct ? '#b2dfdb' : '#ffebee';
+            btn.style.color = correct ? '#fff' : '#f44336';
+
+            if (correct) {
+              score++;
+              if (playSFX) playSFX('correct');
+            } else if (playSFX) {
+              playSFX('wrong');
+            }
+
+            buttons.forEach(b => { b.disabled = true; });
+            totalAnswered++;
+
+            try {
+              logAttempt({
+                session_id: sessionId,
+                mode: 'grammar_mode',
+                word: item.id || item.word || item.en,
+                is_correct: correct,
+                answer: userAnswer,
+                correct_answer: correctAnswer,
+                points: correct ? 1 : 0,
+                attempt_index: currentIdx,
+                round: currentIdx + 1,
+                extra: { category: 'grammar', type: 'present_simple_wh_choose', file: grammarFile }
+              });
+            } catch {}
+
+            clearAdvanceTimer();
+            advanceTimer = setTimeout(() => {
+              if (!sessionEnded) {
+                currentIdx++;
+                renderGrammarQuestion();
+              }
+            }, 1200);
+          };
+          btn.onmouseenter = () => {
+            if (!btn.disabled) {
+              btn.style.transform = 'scale(1.03)';
+              btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            }
+          };
+          btn.onmouseleave = () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+          };
+        });
+
+        const quitBtn = document.getElementById('grammarQuitBtn');
+        if (quitBtn) {
+          quitBtn.onclick = () => {
+            sessionEnded = true;
+            clearAdvanceTimer();
+            try {
+              if (window.WordArcade?.startGrammarModeSelector) {
+                window.WordArcade.startGrammarModeSelector();
+              } else if (window.WordArcade?.quitToOpening) {
+                window.WordArcade.quitToOpening(true);
+              } else {
+                location.hash = '#state-mode_selector';
+                location.reload();
+              }
+            } catch {}
+          };
+        }
+        return;
       } else {
         // Original grammar mode layout
         // If There is/are choose modes → show noun in pink and choices for BE/DO forms
@@ -847,6 +1032,24 @@ export async function runGrammarMode(ctx) {
             correctAnswer = autoCorrectAnswer;
           } else if (isThereStatementsMode || isThereQuestionsMode) {
             correctAnswer = modeCorrectAnswer;
+          } else if (isPresentSimpleYesNo) {
+            // Determine correct DO/DOES from subject (I/you/we/they/plurals -> DO; third singular -> DOES)
+            const sentence = String(item.en || item.exampleSentence || item.word || '').replace(/^\s*(do|does)\s+/i, '').trim();
+            const parts = sentence.split(/\s+/);
+            let subject = '';
+            if (/^the$/i.test(parts[0]) && parts.length >= 2) subject = `${parts[0]} ${parts[1]}`; else subject = parts[0] || '';
+            const subjLower = subject.toLowerCase();
+            const thirdSingular = new Set(['he','she','it']);
+            let isThirdSing = thirdSingular.has(subjLower);
+            if (/^the\s+\w+$/.test(subjLower) && !/s$/.test(subjLower.split(/\s+/)[1] || '')) {
+              // Treat "the dog" singular, but "the kids" plural
+              isThirdSing = true;
+            }
+            if (/s$/.test(subjLower) && !thirdSingular.has(subjLower)) {
+              // Plural heuristic for nouns ending with s
+              isThirdSing = false;
+            }
+            correctAnswer = isThirdSing ? 'DOES' : 'DO';
           } else if (isPresentSimpleNegative) {
             // Decide don't vs doesn't from the sentence content
             const base = String(item.en || item.exampleSentence || '').toLowerCase();

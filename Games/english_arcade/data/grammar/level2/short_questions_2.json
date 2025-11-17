@@ -1,6 +1,6 @@
 [
   {
-    "id": "short_q_1",
+    "id": "short_q_16",
     "word": "do_like_kiwi",
     "en": "Do you like kiwi?",
     "ko": "키위를 좋아해요?",
@@ -9,7 +9,7 @@
     "emoji": "🥝"
   },
   {
-    "id": "short_q_2",
+    "id": "short_q_17",
     "word": "is_coach",
     "en": "Is she your coach?",
     "ko": "그녀는 당신의 코치예요?",
@@ -18,7 +18,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_3",
+    "id": "short_q_18",
     "word": "are_classmates",
     "en": "Are they your classmates?",
     "ko": "그들은 당신의 반 친구들이에요?",
@@ -27,7 +27,7 @@
     "emoji": "👩‍🎓"
   },
   {
-    "id": "short_q_4",
+    "id": "short_q_19",
     "word": "does_play_piano",
     "en": "Does he play the piano?",
     "ko": "그는 피아노를 쳐요?",
@@ -36,7 +36,7 @@
     "emoji": "🎹"
   },
   {
-    "id": "short_q_5",
+    "id": "short_q_20",
     "word": "can_skateboard",
     "en": "Can you ride a skateboard?",
     "ko": "스케이트보드를 탈 수 있어요?",
@@ -45,7 +45,7 @@
     "emoji": "🛹"
   },
   {
-    "id": "short_q_6",
+    "id": "short_q_21",
     "word": "is_rainy",
     "en": "Is it rainy today?",
     "ko": "오늘 비가 오나요?",
@@ -54,7 +54,7 @@
     "emoji": "🌧️"
   },
   {
-    "id": "short_q_7",
+    "id": "short_q_22",
     "word": "do_have_homework",
     "en": "Do we have homework today?",
     "ko": "오늘 숙제가 있어요?",
@@ -63,7 +63,7 @@
     "emoji": "📚"
   },
   {
-    "id": "short_q_8",
+    "id": "short_q_23",
     "word": "does_like_games",
     "en": "Does she like video games?",
     "ko": "그녀는 비디오 게임을 좋아해요?",
@@ -72,7 +72,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_9",
+    "id": "short_q_24",
     "word": "is_cat_sleepy",
     "en": "Is the cat sleepy?",
     "ko": "그 고양이는 졸려요?",
@@ -81,7 +81,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_10",
+    "id": "short_q_25",
     "word": "do_live_near_school",
     "en": "Do they live near the school?",
     "ko": "그들은 학교 근처에 살아요?",
@@ -90,7 +90,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_11",
+    "id": "short_q_26",
     "word": "do_want_icecream",
     "en": "Do you want some ice cream?",
     "ko": "아이스크림 먹고 싶어요?",
@@ -99,7 +99,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_12",
+    "id": "short_q_27",
     "word": "is_from_canada",
     "en": "Is he from Canada?",
     "ko": "그는 캐나다 출신이에요?",
@@ -108,7 +108,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_13",
+    "id": "short_q_28",
     "word": "can_ride_scooter",
     "en": "Can he ride a scooter?",
     "ko": "그는 스쿠터를 탈 수 있어요?",
@@ -117,7 +117,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_14",
+    "id": "short_q_29",
     "word": "do_look_tired",
     "en": "Do I look tired?",
     "ko": "내가 피곤해 보이나요?",
@@ -126,7 +126,7 @@
     "emoji": "�"
   },
   {
-    "id": "short_q_15",
+    "id": "short_q_30",
     "word": "does_train_stop",
     "en": "Does the train stop here?",
     "ko": "기차가 여기 서나요?",

@@ -19,6 +19,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     const r = await fetch(grammarFile);
     if (!r.ok) throw new Error('load failed');
     data = await r.json();
+    console.log('DEBUG find_mistake: grammarFile=', grammarFile, 'grammarName=', grammarName, 'data[0]=', data[0]);
   } catch (e) {
     container.innerHTML = '<div style="padding:20px;text-align:center;color:#c00">Failed to load list.</div>';
     return;
@@ -33,8 +34,16 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   // Build good/bad pool & corruption helpers
   const makeSentence = (it) => (it.en || it.exampleSentence || '').trim();
   const isSomeAnyList = /some_vs_any\.json$/i.test(String(grammarFile || '')) || /some\s*vs\s*any/i.test(String(grammarName || ''));
-  const isPresentSimpleList = /present_simple_sentences\.json$/i.test(String(grammarFile || '')) || /present\s*simple/i.test(String(grammarName || ''));
+  const isPresentSimpleList = /present_simple_sentences\.json$/i.test(String(grammarFile || '')) || /present\s*simple\s*sentences/i.test(String(grammarName || ''));
   const isPresentSimpleNegativeList = /present_simple_negative\.json$/i.test(String(grammarFile || '')) || /present\s*simple[\s:\-]*negative/i.test(String(grammarName || ''));
+  const isPresentSimpleYesNoList = /present_simple_questions_yesno\.json$/i.test(String(grammarFile || ''))
+    || /present\s*simple[\s:\-]*(yes|question)/i.test(String(grammarName || ''))
+    || /yes\s*\/\s*no/i.test(String(grammarName || ''));
+  // NEW: WH list detection (present simple WH questions)
+  const isPresentSimpleWhList = /present_simple_questions_wh\.json$/i.test(String(grammarFile || ''))
+    || /present\s*simple[\s:\-]*wh/i.test(String(grammarName || ''))
+    || /wh\s*questions?/i.test(String(grammarName || ''));
+  console.log('DEBUG: isSomeAnyList=', isSomeAnyList, 'isPresentSimpleList=', isPresentSimpleList, 'isPresentSimpleNegativeList=', isPresentSimpleNegativeList, 'isPresentSimpleYesNoList=', isPresentSimpleYesNoList, 'isPresentSimpleWhList=', isPresentSimpleWhList);
 
   function corruptSomeAny(en) {
     const rxSome = /\bsome\b/i;
@@ -51,6 +60,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   }
 
   function corruptSentence(en) {
+    console.log('DEBUG corruptSentence: isPresentSimpleYesNoList=', isPresentSimpleYesNoList, 'isPresentSimpleWhList=', isPresentSimpleWhList, 'en=', en.substring(0, 50));
     if (isSomeAnyList) {
       const res = corruptSomeAny(en);
       if (res) return res;
@@ -141,6 +151,87 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
       }
     }
 
+    // Present Simple Yes/No + WH questions: create typical DO/DOES + verb mistakes
+    if (isPresentSimpleYesNoList || isPresentSimpleWhList) {
+      // Allow optional WH word before Do/Does
+      const mQ = en.match(/^(?:Who|What|When|Where|Why|How|Which)\s+(Do|Does)\s+(.+?)\s+(\w+)(.*)$/i)
+               || en.match(/^(Do|Does)\s+(.+?)\s+(\w+)(.*)$/i);
+      if (mQ) {
+        const aux = mQ[1];
+        const subj = mQ[2];
+        const verb = mQ[3];
+        const rest = mQ[4] || '';
+        const subjLower = subj.trim().toLowerCase();
+
+        // Heuristic: third-person singular subjects
+        const isThirdSingular = /\b(he|she|it)\b/.test(subjLower)
+          || /\b(?:my|your|his|her|its|our|their)\s+(friend|sister|brother|mother|father|teacher|bag|car|pet)\b/.test(subjLower)
+          || /\b(?:the|this|that)\s+\w+\b/.test(subjLower);
+
+        // Build base vs -s form of the verb
+        const bare = verb.replace(/[.,!?;:]+$/g, '');
+        let baseForm = bare;
+        let sForm = bare;
+        if (/ies$/i.test(bare) && !/[aeiou]ies$/i.test(bare)) {
+          baseForm = bare.replace(/ies$/i, 'y');
+          sForm = bare;
+        } else if (/(ches|shes|sses|xes|zes)$/i.test(bare)) {
+          baseForm = bare.replace(/es$/i, '');
+          sForm = bare;
+        } else if (/s$/i.test(bare) && !/ss$/i.test(bare)) {
+          baseForm = bare.replace(/s$/i, '');
+          sForm = bare;
+        } else {
+          baseForm = bare;
+          if (/(ch|sh|s|x|z)$/i.test(bare)) sForm = bare + 'es';
+          else if (/y$/i.test(bare) && !/[aeiou]y$/i.test(bare)) sForm = bare.replace(/y$/i, 'ies');
+          else sForm = bare + 's';
+        }
+
+        const correctAux = isThirdSingular ? 'Does' : 'Do';
+        const wrongAux = isThirdSingular ? 'Do' : 'Does';
+
+        const patterns = [];
+
+        // 1) Wrong auxiliary for subject (Does they / Do she)
+        if (wrongAux !== aux) {
+          patterns.push({
+            bad: en.replace(/\b(Do|Does)\b/i, wrongAux),
+            wrongToken: wrongAux,
+            correctToken: correctAux,
+          });
+        }
+
+        // 2) Wrong verb -s form after correct auxiliary
+        if (baseForm && sForm && baseForm.toLowerCase() !== sForm.toLowerCase()) {
+          const verbRx = new RegExp('\\b' + verb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+          const bad = en.replace(verbRx, sForm);
+          patterns.push({
+            bad,
+            wrongToken: sForm,
+            correctToken: baseForm,
+          });
+        }
+
+        // 3) Wrong auxiliary + wrong verb form
+        if (baseForm && sForm && baseForm.toLowerCase() !== sForm.toLowerCase() && wrongAux !== aux) {
+          let bad = en.replace(/\b(Do|Does)\b/i, wrongAux);
+          const verbRx = new RegExp('\\b' + verb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+          bad = bad.replace(verbRx, sForm);
+          patterns.push({
+            bad,
+            wrongToken: wrongAux,
+            correctToken: correctAux,
+          });
+        }
+
+        if (patterns.length) {
+          const choice = patterns[Math.floor(Math.random() * patterns.length)];
+          return choice;
+        }
+      }
+    }
+
     const m = en.match(/^(Do|Does|Is|Are|Can)\s+(\S+)\s+(.*)$/i);
     if (m) {
       const aux = m[1];
@@ -157,13 +248,37 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     }
 
     const parts = en.split(/\s+/);
-    if (parts.length >= 3) {
-      const verbIdx = 2;
-      const orig = parts[verbIdx];
-      const changed = /s$/i.test(orig) ? orig.replace(/s$/i, '') : `${orig}s`;
-      const bad = parts.slice();
-      bad[verbIdx] = changed;
-      return { bad: bad.join(' '), wrongToken: changed, correctToken: orig };
+    if (parts.length >= 2) {
+      // Prefer to create a subject-pronoun agreement mistake like:
+      // He likes milk. -> They likes milk.
+      const subjIdx = 0;
+      const origSubj = parts[subjIdx];
+      const lowSubj = origSubj.toLowerCase().replace(/[.,!?;:]+$/g, '');
+      const thirdSingular = ['he', 'she', 'it'];
+      if (thirdSingular.includes(lowSubj)) {
+        const replacements = ['they', 'we', 'you'];
+        const replacement = replacements[Math.floor(Math.random() * replacements.length)];
+        const bad = parts.slice();
+        bad[subjIdx] = replacement.charAt(0) === replacement.charAt(0).toLowerCase()
+          ? (/[A-Z]/.test(origSubj[0]) ? replacement.charAt(0).toUpperCase() + replacement.slice(1) : replacement)
+          : replacement;
+        return { bad: bad.join(' '), wrongToken: bad[subjIdx], correctToken: origSubj };
+      }
+
+      // Fallback: only tweak the third token if it looks verb-like (avoid adverbs like "always")
+      if (parts.length >= 3) {
+        const verbIdx = 2;
+        const orig = parts[verbIdx];
+        const low = orig.toLowerCase().replace(/[.,!?;:]+$/g, '');
+        const banned = ['always','never','often','sometimes','usually','really','very','now','today',
+          'in','on','at','to','for','with','of','a','an','the','and','but','or'];
+        if (!banned.includes(low)) {
+          const changed = /s$/i.test(orig) ? orig.replace(/s$/i, '') : `${orig}s`;
+          const bad = parts.slice();
+          bad[verbIdx] = changed;
+          return { bad: bad.join(' '), wrongToken: changed, correctToken: orig };
+        }
+      }
     }
 
     return { bad: en + '!', wrongToken: '!', correctToken: '' };
@@ -289,46 +404,35 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   }
 
   function end(){
-    endSession(sessionId, { 
-      mode: MODE, 
-      summary:{ correct, wrong, total: rounds.length, accuracy: Math.round((correct/(rounds.length||1))*100), grammarName, grammarFile }, 
-      listName: grammarName, 
-      wordList: rounds.map((r,i)=>r.src?.word||`s${i}`),
+    endSession(sessionId, {
+      mode: MODE,
+      summary: {
+        score: correct,
+        total: rounds.length,
+        correct,
+        wrong,
+        points: correct,
+        pct: Math.round((correct / (rounds.length || 1)) * 100),
+        category: 'grammar',
+        context: 'game',
+        grammarName,
+        grammarFile
+      },
+      listName: grammarName,
+      wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
       meta: { grammarFile, grammarName }
     });
-    playSFX('end');
-    // Remove exit button
-    const exitBtn = document.getElementById('grammarQuitBtn');
-    if (exitBtn) exitBtn.remove();
-    
-    // Simple summary view inside gameArea without touching global layout
-    container.innerHTML = '';
-    container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;';
-    
-    const summary = document.createElement('div');
-    summary.className = 'wa-card';
-    summary.style.cssText = 'padding:32px 24px;text-align:center;max-width:520px;width:100%;margin:40px auto;border-radius:18px;border:2px solid #40D4DE;box-shadow:0 6px 16px rgba(64,212,222,0.24);background:#fff;';
-    summary.innerHTML = `
-      <div style="font-size:52px;">🎉</div>
-      <div style="font-size:24px;font-weight:700;margin:10px 0;color:#21b5c0;">Complete!</div>
-      <div style="margin:14px 0;color:#555;font-size:18px;">Score: <b style="font-size:22px;color:#333;">${correct}</b> / ${rounds.length}</div>
-      <button id="gfBackBtn" style="${baseBtn('#21b5c0')}margin-top:12px;">Back</button>
-    `;
-    container.appendChild(summary);
 
-    const backBtn = document.getElementById('gfBackBtn');
-    if (backBtn) {
-      backBtn.onclick = () => {
-        // Prefer returning to grammar mode selector like other grammar modes
-        if (window.WordArcade && typeof window.WordArcade.startGrammarModeSelector === 'function') {
-          window.WordArcade.startGrammarModeSelector();
-        } else if (window.WordArcade && typeof window.WordArcade.quitToOpening === 'function') {
-          window.WordArcade.quitToOpening(true);
-        } else {
-          history.back();
-        }
-      };
-    }
+    playSFX('end');
+
+    // Use the shared grammar summary view so this mode matches other grammar modes
+    const gameArea = document.getElementById('gameArea');
+    renderGrammarSummary({
+      gameArea,
+      score: correct,
+      total: rounds.length,
+      ctx: { grammarFile, grammarName }
+    });
   }
 
   render();
