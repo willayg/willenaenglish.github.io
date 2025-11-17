@@ -209,6 +209,26 @@ const categoryStrategies = [
       if (key === 'dont') return "don't";
       return key;
     }
+  },
+  // Present Simple Yes/No Questions: DO vs DOES buckets, subject-only chips
+  {
+    name: 'present_simple_yesno_do_does',
+    detect(rawItems) {
+      // Expect questions like "Do you ...?", "Does she ...?"
+      return rawItems.every(r => /^(do|does)\b/i.test(String(r.en || r.example || r.word || '')));
+    },
+    classify(text) {
+      const tl = String(text || '').trim().toLowerCase();
+      if (/^does\b/.test(tl)) return 'does';
+      if (/^do\b/.test(tl)) return 'do';
+      return 'other';
+    },
+    categories() { return ['do','does']; },
+    displayLabel(key) {
+      if (key === 'do') return 'DO';
+      if (key === 'does') return 'DOES';
+      return key;
+    }
   }
 ];
 
@@ -220,6 +240,11 @@ function chooseCategoryStrategy(rawItems, hints = {}) {
   // Match filename used in your repo and flexible grammarName variants
   if (/present_simple_negative\.json$/.test(file) || /present_simple_negative_subjects\.json$/.test(file) || /present\s*simple[:\-\s]*negative(\s*subjects)?/.test(name)) {
     const s = categoryStrategies.find(s => s.name === 'present_simple_negative_subjects');
+    if (s) return s;
+  }
+  // Present Simple Yes/No Questions → DO vs DOES strategy with subject chips
+  if (/present_simple_questions_yesno\.json$/.test(file) || /present\s*simple.*yes\s*\/\s*no/.test(name)) {
+    const s = categoryStrategies.find(s => s.name === 'present_simple_yesno_do_does');
     if (s) return s;
   }
   // Short Questions 1 & 2 → BE vs DO strategy only
@@ -296,8 +321,12 @@ export async function runGrammarSortingMode(ctx = {}) {
 
     // For present simple NEGATIVE SUBJECTS strategy, store a subject-only label as subjectLabel
     let subjectLabel = '';
-    if (strategy.name === 'present_simple_negative_subjects') {
-      const text = String(q || '').trim();
+  if (strategy.name === 'present_simple_negative_subjects' || strategy.name === 'present_simple_yesno_do_does') {
+      let text = String(q || '').trim();
+      if (strategy.name === 'present_simple_yesno_do_does') {
+        // Remove leading auxiliary to isolate subject
+        text = text.replace(/^\s*(do|does)\s+/i, '');
+      }
       const words = text.split(/\s+/);
       if (words.length) {
         let first = words[0];
@@ -389,7 +418,7 @@ export async function runGrammarSortingMode(ctx = {}) {
     if (strategy.name === 'present_simple_subject_groups') {
       // Use each sentence once; chips will display verb only
       poolItems = items.map(it => ({ id: it.id, question: it.question, category: it.category, isAnswer: true, verbForm: it.verbForm }));
-    } else if (strategy.name === 'present_simple_negative_subjects') {
+  } else if (strategy.name === 'present_simple_negative_subjects' || strategy.name === 'present_simple_yesno_do_does') {
       // Use subject-only label as the chip text, but keep original sentence for logging via question
       poolItems = items.map(it => ({
         id: it.id,
@@ -456,7 +485,7 @@ export async function runGrammarSortingMode(ctx = {}) {
   ]);
   const pool = (function(){
     const body = el('div', { class: 'bucket-body' });
-    const poolTitle = (strategy.name === 'present_simple_negative_subjects') ? 'Subject Pool' : 'Sentence Pool';
+  const poolTitle = (strategy.name === 'present_simple_negative_subjects' || strategy.name === 'present_simple_yesno_do_does') ? 'Subject Pool' : 'Sentence Pool';
     return {
       wrap: el('div', { class: 'bucket pool' }, [
         el('div', { class: 'bucket-head' }, [el('span', { text: poolTitle })]),
@@ -557,9 +586,9 @@ export async function runGrammarSortingMode(ctx = {}) {
 
   function createChip(it) {
     const chip = el('div', { class: 'chip', 'data-id': it.id });
-    if (strategy.name === 'present_simple_subject_groups' && it.verbForm) {
+  if (strategy.name === 'present_simple_subject_groups' && it.verbForm) {
       chip.textContent = it.verbForm;
-    } else if (strategy.name === 'present_simple_negative_subjects' && it.subjectLabel) {
+  } else if ((strategy.name === 'present_simple_negative_subjects' || strategy.name === 'present_simple_yesno_do_does') && it.subjectLabel) {
       chip.textContent = String(it.subjectLabel);
     } else {
       chip.textContent = it.np ? String(it.question) : truncateSentenceDisplay(it.question);

@@ -325,6 +325,117 @@ function extractThereNounPhrase(text) {
   return { phrase, plural };
 }
 
+// Build fill-gap question for present simple yes/no questions: extract verb and provide 3 options
+// Options: correct verb form, wrong conjugation, wrong meaning
+function buildPresentSimpleYesNoFillGap(item) {
+  const question = String(item.en || item.word || '').trim();
+  if (!question) return null;
+
+  // Question format: "Does she ride a bike?" → extract "ride"
+  // Match: Do/Does [subject words...] [verb] followed by either space, punctuation, or end
+  // This also covers short questions like "Do they understand?"
+  const match = question.match(/^(do|does)\s+(.+?)\s+(\w+)(?:\s|[?!.]|$)/i);
+  if (!match) return null;
+
+  const auxiliary = match[1].toLowerCase(); // 'do' or 'does'
+  const subject = match[2].toLowerCase(); // could be "you", "she", "they", "cats", "the shop", etc.
+  const verb = match[3].toLowerCase(); // the main verb
+
+  // Build base and -s form of the verb
+  let baseForm = verb;
+  let sForm = verb;
+  
+  if (/(ch|sh|s|x|z)$/.test(verb)) sForm = `${verb}es`;
+  else if (/y$/.test(verb) && !/[aeiou]y$/.test(verb)) sForm = verb.replace(/y$/, 'ies');
+  else sForm = `${verb}s`;
+  
+  // For fill-gap, we hide the verb and provide three options
+  // 1. Correct form (always base form in yes/no questions)
+  // 2. Wrong conjugation (the -s form)
+  // 3. Semantically wrong verb (random different verb)
+  
+  const distractorVerbs = ['walk', 'play', 'ride', 'swim', 'read', 'write', 'eat', 'drink', 'dance', 'sing', 'jump', 'run', 'sleep', 'watch', 'like', 'love'];
+  const randomDistractor = distractorVerbs[Math.floor(Math.random() * distractorVerbs.length)];
+  
+  // Build sentence with blank: "Does she _____ a bike?"
+  const sentence = question.replace(new RegExp(`\\b${verb}\\b`, 'i'), '_____');
+
+  const optionsArray = [
+    { label: baseForm, value: baseForm.toLowerCase() },
+    { label: sForm, value: sForm.toLowerCase() },
+    { label: randomDistractor, value: randomDistractor.toLowerCase() }
+  ];
+
+  return {
+    statement: sentence,
+    correctAnswer: baseForm.toLowerCase(),
+    options: shuffle(optionsArray)
+  };
+}
+
+function buildPresentSimpleWhFillGap(item) {
+  const question = String(item.en || item.word || '').trim();
+  if (!question) return null;
+
+  // Preferred pattern: WH + do/does + subject + verb + rest
+  let match = question.match(/^(Who|What|When|Where|Why|How|Which)\s+(do|does)\s+(.+?)\s+(\w+)(.*)$/i);
+
+  if (match) {
+    const whWord = match[1].toLowerCase();
+    const auxiliary = match[2].toLowerCase();
+    const subject = match[3];
+    const verb = match[4];
+    const rest = match[5] || '';
+
+    const sentence = `_________ ${auxiliary} ${subject} ${verb}${rest}`;
+
+    const whWords = ['where', 'what', 'when', 'who', 'why', 'how', 'which'];
+    const availableDistr = whWords.filter(w => w !== whWord);
+    const distractor1 = availableDistr[Math.floor(Math.random() * availableDistr.length)];
+    const distractor2Options = availableDistr.filter(w => w !== distractor1);
+    const distractor2 = distractor2Options[Math.floor(Math.random() * distractor2Options.length)];
+
+    const optionsArray = [
+      { label: whWord, value: whWord },
+      { label: distractor1, value: distractor1 },
+      { label: distractor2, value: distractor2 }
+    ];
+
+    return {
+      statement: sentence,
+      correctAnswer: whWord,
+      options: shuffle(optionsArray)
+    };
+  }
+
+  // Fallback pattern: WH + rest (e.g., "Who is your friend?", "Who plays the piano?", "What color is your bag?")
+  const m2 = question.match(/^(Who|What|When|Where|Why|How|Which)\s+(.*)$/i);
+  if (!m2) return null;
+
+  const whWord = m2[1].toLowerCase();
+  const rest = m2[2]; // includes the rest of the question, e.g. "is your friend?"
+
+  const sentence = `_________ ${rest}`;
+
+  const whWords = ['where', 'what', 'when', 'who', 'why', 'how', 'which'];
+  const availableDistr = whWords.filter(w => w !== whWord);
+  const distractor1 = availableDistr[Math.floor(Math.random() * availableDistr.length)];
+  const distractor2Options = availableDistr.filter(w => w !== distractor1);
+  const distractor2 = distractor2Options[Math.floor(Math.random() * distractor2Options.length)];
+
+  const optionsArray = [
+    { label: whWord, value: whWord },
+    { label: distractor1, value: distractor1 },
+    { label: distractor2, value: distractor2 }
+  ];
+
+  return {
+    statement: sentence,
+    correctAnswer: whWord,
+    options: shuffle(optionsArray)
+  };
+}
+
 function buildSentenceWithBlank(item, isPluralMode = false, isCountableMode = false) {
   const sentence = (item?.exampleSentence || item?.example || '').trim();
   const article = (item?.article || '').trim();
@@ -676,6 +787,15 @@ export async function runGrammarFillGapMode(ctx) {
   const isPresentSimpleNegative = (grammarFile && /present_simple_negative\.json$/i.test(grammarFile))
     || (grammarName && /present\s*simple[:\-\s]*negative/i.test(grammarName));
 
+  // Detect Present Simple: Yes/No Questions list (fill-gap mode with verb extraction)
+  const isPresentSimpleYesNoFillGap = (grammarFile && /present_simple_questions_yesno\.json$/i.test(grammarFile))
+    || (grammarName && /present\s*simple.*yes\s*\/\s*no/i.test(grammarName));
+
+  // Detect Present Simple: WH Questions list (fill-gap mode with WH word extraction)
+  const isPresentSimpleWhFillGap = (grammarFile && /present_simple_questions_wh\.json$/i.test(grammarFile))
+    || (grammarName && /present\s*simple[\s:\-]*wh/i.test(grammarName))
+    || (grammarName && /wh\s*questions?/i.test(grammarName));
+
   // Detect if this is Short Questions mode (items have answer_positive and answer_negative)
   const isShortQuestionsMode = usable.length > 0 && usable[0] && usable[0].answer_positive && usable[0].answer_negative;
   const isPresentSimpleMode = isPresentSimpleVerbMode(grammarFile, usable);
@@ -849,6 +969,8 @@ export async function runGrammarFillGapMode(ctx) {
     // Handle Short Questions mode: show question as title, statement with blank
   let shortQuestionsData = null;
   let presentSimpleData = null;
+  let presentSimpleYesNoData = null;
+  let presentSimpleWhData = null;
     let genericSentenceData = null;
     if (isShortQuestionsMode) {
       shortQuestionsData = buildShortQuestionsSentenceAndOptions(item);
@@ -856,6 +978,28 @@ export async function runGrammarFillGapMode(ctx) {
       sentenceEl.innerHTML = shortQuestionsData.statement.replace('_____', '<strong>_____</strong>');
       hintEl.textContent = item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '';
       // Will handle options rendering next
+    } else if (isPresentSimpleWhFillGap) {
+      presentSimpleWhData = buildPresentSimpleWhFillGap(item);
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      if (presentSimpleWhData && presentSimpleWhData.statement) {
+        sentenceEl.innerHTML = presentSimpleWhData.statement.replace('_________', '<strong>_________</strong>');
+      } else {
+        sentenceEl.innerHTML = item.en || '';
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isPresentSimpleYesNoFillGap) {
+      presentSimpleYesNoData = buildPresentSimpleYesNoFillGap(item);
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      if (presentSimpleYesNoData && presentSimpleYesNoData.statement) {
+        sentenceEl.innerHTML = presentSimpleYesNoData.statement.replace('_____', '<strong>_____</strong>');
+      } else {
+        sentenceEl.innerHTML = item.en || '';
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
     } else if (isPresentSimpleMode) {
       presentSimpleData = buildPresentSimpleVerbQuestion(item);
       wordEl.textContent = '';
@@ -965,6 +1109,24 @@ export async function runGrammarFillGapMode(ctx) {
       optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
       if (!optionButtons.length) {
         console.error('[GrammarFillGap] No short questions options rendered');
+        return;
+      }
+    } else if (isPresentSimpleWhFillGap) {
+      // For WH fill-gap: show 3 WH word options (correct, and two distractors)
+      const opts = presentSimpleWhData && Array.isArray(presentSimpleWhData.options) ? presentSimpleWhData.options : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present simple WH options rendered');
+        return;
+      }
+    } else if (isPresentSimpleYesNoFillGap) {
+      // For yes/no fill-gap: show 3 verb options (correct, wrong conjugation, wrong meaning)
+      const opts = presentSimpleYesNoData && Array.isArray(presentSimpleYesNoData.options) ? presentSimpleYesNoData.options : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present simple yes/no options rendered');
         return;
       }
     } else if (isPresentSimpleMode) {
@@ -1078,6 +1240,10 @@ export async function runGrammarFillGapMode(ctx) {
             correctAnswerSource = "don't";
           }
         }
+      } else if (isPresentSimpleYesNoFillGap && presentSimpleYesNoData) {
+        correctAnswerSource = presentSimpleYesNoData.correctAnswer;
+      } else if (isPresentSimpleWhFillGap && presentSimpleWhData) {
+        correctAnswerSource = presentSimpleWhData.correctAnswer;
       } else if (isGenericSentenceMode && genericSentenceData) {
         correctAnswerSource = genericSentenceData.correctAnswerLastWord || genericSentenceData.correctAnswerLower;
       } else if (isThereStatementsMode || isThereQuestionsMode) {
