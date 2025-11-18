@@ -43,6 +43,15 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const isPresentSimpleWhList = /present_simple_questions_wh\.json$/i.test(String(grammarFile || ''))
     || /present\s*simple[\s:\-]*wh/i.test(String(grammarName || ''))
     || /wh\s*questions?/i.test(String(grammarName || ''));
+  // Present progressive list detection (BE + V-ing sentences)
+  const isPresentProgressiveList = /present_progressive\.json$/i.test(String(grammarFile || ''))
+    || /present\s*progressive(?!.*(negative|yes\s*\/\s*no|wh))/i.test(String(grammarName || ''));
+  const isPresentProgressiveNegativeList = /present_progressive_negative\.json$/i.test(String(grammarFile || ''))
+    || /present\s*progressive[\s:\-]*negative/i.test(String(grammarName || ''));
+  const isPresentProgressiveWhList = /present_progressive_questions_wh\.json$/i.test(String(grammarFile || ''))
+    || /present\s*progressive[\s:\-]*wh/i.test(String(grammarName || ''));
+  const isPresentProgressiveYesNoList = /present_progressive_questions_yesno\.json$/i.test(String(grammarFile || ''))
+    || /present\s*progressive.*yes\s*\/\s*no/i.test(String(grammarName || ''));
   console.log('DEBUG: isSomeAnyList=', isSomeAnyList, 'isPresentSimpleList=', isPresentSimpleList, 'isPresentSimpleNegativeList=', isPresentSimpleNegativeList, 'isPresentSimpleYesNoList=', isPresentSimpleYesNoList, 'isPresentSimpleWhList=', isPresentSimpleWhList);
 
   function corruptSomeAny(en) {
@@ -60,7 +69,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   }
 
   function corruptSentence(en) {
-    console.log('DEBUG corruptSentence: isPresentSimpleYesNoList=', isPresentSimpleYesNoList, 'isPresentSimpleWhList=', isPresentSimpleWhList, 'en=', en.substring(0, 50));
+    console.log('DEBUG corruptSentence: isPresentSimpleYesNoList=', isPresentSimpleYesNoList, 'isPresentSimpleWhList=', isPresentSimpleWhList, 'isPresentProgressiveList=', isPresentProgressiveList, 'isPPNeg=', isPresentProgressiveNegativeList, 'isPPWh=', isPresentProgressiveWhList, 'isPPYesNo=', isPresentProgressiveYesNoList, 'en=', en.substring(0, 50));
     if (isSomeAnyList) {
       const res = corruptSomeAny(en);
       if (res) return res;
@@ -136,6 +145,93 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
         }
       }
       // fall through to generic if anything failed
+    }
+
+    // Present Progressive NEGATIVE: swap BE to wrong form inside negative chunk
+    if (isPresentProgressiveNegativeList) {
+      const low = en.toLowerCase();
+      // Identify BE-negative chunk and subject to choose a wrong BE
+      // Patterns: "I am not", "he is not" / "he isn't", "they are not" / "they aren't"
+      // Strategy: replace only the BE/negative token(s) with an incorrect counterpart
+      const replaceOnce = (rx, replacement, wrongToken, correctToken) => {
+        const bad = en.replace(rx, replacement);
+        return { bad, wrongToken, correctToken };
+      };
+      const rxINot = /(\bI\s+)am\s+not\b/i;
+      const rxIsNot = /\b(is\s+not|isn['’]?t)\b/i;
+      const rxAreNot = /\b(are\s+not|aren['’]?t)\b/i;
+
+      if (rxINot.test(en)) {
+        // I am not -> I is not (or aren't). Prefer "is not" as clearer highlight.
+        const m = en.match(/\bI\s+am\s+not\b/i);
+        return replaceOnce(/\bI\s+am\s+not\b/i, (m && m[0][0] === 'I') ? 'I is not' : 'I is not', 'is not', 'am not');
+      }
+      if (rxIsNot.test(en)) {
+        // he isn't / is not -> he aren't
+        const m = en.match(rxIsNot);
+        const cap = m && /^[A-Z]/.test(m[0]);
+        const wrong = cap ? "Aren't" : "aren't";
+        return replaceOnce(rxIsNot, wrong, wrong.toLowerCase(), m ? m[0] : 'is not');
+      }
+      if (rxAreNot.test(en)) {
+        // they aren't / are not -> they isn't
+        const m = en.match(rxAreNot);
+        const cap = m && /^[A-Z]/.test(m[0]);
+        const wrong = cap ? "Isn't" : "isn't";
+        return replaceOnce(rxAreNot, wrong, wrong.toLowerCase(), m ? m[0] : 'are not');
+      }
+      // Fallback: if no clear negative chunk, drop to generic progressive handling
+    }
+
+    // Present Progressive list: introduce typical BE + V-ing mistakes
+    if (isPresentProgressiveList) {
+      // Match first "am/is/are + V-ing" chunk
+      const m = en.match(/\b(Am|Is|Are|am|is|are)\s+([A-Za-z]+ing)\b/);
+      if (m) {
+        const be = m[1];
+        const vIng = m[2];
+        const correctChunk = `${be} ${vIng}`;
+
+        // Build a wrong BE and/or wrong verb form
+        const beLower = be.toLowerCase();
+        let wrongBe;
+        if (beLower === 'am') wrongBe = 'is';
+        else if (beLower === 'is') wrongBe = 'are';
+        else if (beLower === 'are') wrongBe = 'is';
+
+        // Crude base form for V-ing (same logic as fill-gap): strip -ing and undouble last consonant
+        let base = vIng.replace(/ing$/i, '');
+        base = base.replace(/([b-df-hj-np-tv-z])\1$/i, '$1');
+
+        const patterns = [];
+
+        // 1) Wrong BE with same V-ing (e.g., "He are playing")
+        if (wrongBe) {
+          const wrongChunk = `${wrongBe} ${vIng}`;
+          const bad1 = en.replace(correctChunk, wrongChunk);
+          patterns.push({ bad: bad1, wrongToken: wrongBe, correctToken: be });
+        }
+
+        // 2) Correct BE + base verb (e.g., "He is play")
+        if (base && base.toLowerCase() !== vIng.toLowerCase()) {
+          const wrongChunk2 = `${be} ${base}`;
+          const bad2 = en.replace(correctChunk, wrongChunk2);
+          patterns.push({ bad: bad2, wrongToken: base, correctToken: vIng });
+        }
+
+        // 3) Wrong BE + base verb (e.g., "He are play")
+        if (wrongBe && base && base.toLowerCase() !== vIng.toLowerCase()) {
+          const wrongChunk3 = `${wrongBe} ${base}`;
+          const bad3 = en.replace(correctChunk, wrongChunk3);
+          patterns.push({ bad: bad3, wrongToken: wrongBe, correctToken: be });
+        }
+
+        if (patterns.length) {
+          const choice = patterns[Math.floor(Math.random() * patterns.length)];
+          return choice;
+        }
+      }
+      // If no BE + V-ing found, fall through to generic logic
     }
 
     const isThereIsAreList = /there_is_vs_there_are\.json$/i.test(String(grammarFile || '')) || /there\s+is\s+vs\s+there\s+are/i.test(String(grammarName || ''));
@@ -232,6 +328,54 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
       }
     }
 
+    // Present Progressive WH questions: wrong BE after WH
+    if (isPresentProgressiveWhList) {
+      // Pattern: WH + Am/Is/Are + (subject|V-ing) ...?  (allow omitted subject: "Who is singing?")
+      const mWh = en.match(/^(Who|What|When|Where|Why|How|Which)\s+(Am|Is|Are|am|is|are)\b([\s\S]*)/);
+      if (mWh) {
+        const wh = mWh[1];
+        const be = mWh[2];
+        const tail = (mWh[3] || '').trim();
+        const tokens = tail.split(/\s+/);
+        const t0 = (tokens[0] || '').replace(/[^A-Za-z]/g,'').toLowerCase();
+        const t1 = (tokens[1] || '').replace(/[^A-Za-z]/g,'').toLowerCase();
+
+        // Decide subject category
+        const isI = t0 === 'i';
+        const isPluralPron = ['you','we','they'].includes(t0);
+        const isThirdPron = ['he','she','it'].includes(t0);
+        let isThirdNoun = false;
+        let isPluralNoun = false;
+        if (t0 === 'the' && t1) {
+          // crude plural guess by -s (avoid ss/us edge minimally)
+          if (/s$/.test(t1) && !/(ss|us)$/i.test(t1)) isPluralNoun = true; else isThirdNoun = true;
+        }
+        const whAsSubject = /ing$/i.test(t0); // e.g., "Who is singing?"
+
+        const beLower = be.toLowerCase();
+        let wrongBe = null;
+        if (isI) {
+          wrongBe = 'is';
+          if (beLower === 'is') wrongBe = 'are';
+        } else if (isPluralPron || isPluralNoun) {
+          wrongBe = (beLower === 'are') ? 'is' : 'is';
+        } else if (isThirdPron || isThirdNoun || whAsSubject) {
+          wrongBe = (beLower === 'is') ? 'are' : 'are';
+        } else {
+          // default flip between is/are; for am -> is
+          if (beLower === 'is') wrongBe = 'are';
+          else if (beLower === 'are') wrongBe = 'is';
+          else wrongBe = 'is';
+        }
+
+        if (wrongBe && wrongBe.toLowerCase() !== beLower) {
+          const wrongOut = /[A-Z]/.test(be[0]) ? (wrongBe.charAt(0).toUpperCase() + wrongBe.slice(1)) : wrongBe;
+          const bad = en.replace(new RegExp(`^(${wh})\\s+(Am|Is|Are|am|is|are)`), `$1 ${wrongOut}`);
+          return { bad, wrongToken: wrongOut, correctToken: be };
+        }
+      }
+    }
+
     const m = en.match(/^(Do|Does|Is|Are|Can)\s+(\S+)\s+(.*)$/i);
     if (m) {
       const aux = m[1];
@@ -309,9 +453,8 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
       <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
     `;
     quitBtn.onclick = () => {
-      if (confirm('Exit this game?')) {
-        try { history.back(); } catch { location.reload(); }
-      }
+      // Exit immediately without confirmation per request
+      try { history.back(); } catch { location.reload(); }
     };
     document.body.appendChild(quitBtn);
   }

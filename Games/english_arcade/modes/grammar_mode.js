@@ -50,6 +50,14 @@ export async function runGrammarMode(ctx) {
 
   // Detect Present Simple Sentences list for special choose-mode UI (subject + verb choice)
   const isPresentSimpleList = /present_simple_sentences\.json$/i.test(grammarFile || '');
+  // Detect Present Progressive list for BE (am/is/are) choose mode
+  const isPresentProgressive = /present_progressive\.json$/i.test(grammarFile || '') || /present\s*progressive(?!.*(negative|yes\s*\/\s*no|wh))/i.test(grammarName || '');
+  // Detect Present Progressive Negative (am not / isn't / aren't)
+  const isPresentProgressiveNegative = /present_progressive_negative\.json$/i.test(grammarFile || '') || /present\s*progressive[\s:\-]*negative/i.test(grammarName || '');
+  // Detect Present Progressive Yes/No Questions (Am/Is/Are)
+  const isPresentProgressiveYesNo = /present_progressive_questions_yesno\.json$/i.test(grammarFile || '') || /present\s*progressive.*yes\s*\/\s*no/i.test(grammarName || '');
+  // Detect Present Progressive WH Questions (shares WH-choose UI)
+  const isPresentProgressiveWhQuestions = /present_progressive_questions_wh\.json$/i.test(grammarFile || '') || /present\s*progressive[\s:\-]*wh/i.test(grammarName || '');
   // Detect Present Simple Negative list for special choose-mode UI (subject + don't/doesn't)
   const isPresentSimpleNegative = /present_simple_negative\.json$/i.test(grammarFile || '') || /present\s*simple[:\-\s]*negative/i.test(grammarName || '');
   // Detect Present Simple Yes/No Questions for DO/DOES choose mode
@@ -485,6 +493,149 @@ export async function runGrammarMode(ctx) {
               <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
             </button>
           </div>`;
+      } else if (isPresentProgressive) {
+        // =====================================
+        // Present Progressive (am / is / are)
+        // Show full sentence with BE verb blanked and three BE choices
+        // =====================================
+
+        const sentence = String(item.en || item.exampleSentence || item.word || '').trim();
+        const emoji = item.emoji || '';
+        const lower = sentence.toLowerCase();
+
+        // Mask the BE chunk (am/is/are) in the sentence with ___
+        const maskBeChunk = (text) => {
+          let s = text;
+          s = s.replace(/\b(i\s+am)\b/i, 'I ___');
+          s = s.replace(/\b(you\s+are)\b/i, 'You ___');
+          s = s.replace(/\b(we\s+are)\b/i, 'We ___');
+          s = s.replace(/\b(they\s+are)\b/i, 'They ___');
+          s = s.replace(/\b(he\s+is)\b/i, 'He ___');
+          s = s.replace(/\b(she\s+is)\b/i, 'She ___');
+          s = s.replace(/\b(it\s+is)\b/i, 'It ___');
+          s = s.replace(/\b(the\s+cat\s+is)\b/i, 'The cat ___');
+          // Fallbacks in case a sentence shape is a bit different
+          s = s.replace(/\sam\s/i, ' ___ ');
+          s = s.replace(/\sis\s/i, ' ___ ');
+          s = s.replace(/\sare\s/i, ' ___ ');
+          return s;
+        };
+
+        const maskedSentence = sanitizeText(maskBeChunk(sentence));
+
+        // Determine correct BE form from original sentence
+        let correctBe = 'am';
+        if (/\b(i\s+am)\b/.test(lower) || /\sam\s/.test(lower)) {
+          correctBe = 'am';
+        } else if (/\bis\b/.test(lower)) {
+          correctBe = 'is';
+        } else if (/\bare\b/.test(lower)) {
+          correctBe = 'are';
+        }
+
+        const options = ['am', 'is', 'are'].sort(() => Math.random() - 0.5);
+
+        const contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:24px;padding:24px;max-width:640px;margin:0 auto;">
+            <div style="width:100%;text-align:center;font-size:0.95rem;color:#666;font-weight:600;">
+              Question ${currentIdx + 1} of ${shuffled.length}
+            </div>
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:12px;">
+              ${emoji ? `<div style="font-size:4rem;line-height:1;">${emoji}</div>` : ''}
+              <div style="font-size:1.6rem;font-weight:800;color:#21b3be;max-width:85vw;line-height:1.5;">
+                ${maskedSentence}
+              </div>
+            </div>
+            <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:420px;justify-content:center;margin-top:24px;margin-bottom:8px;flex-wrap:wrap;">
+              ${options.map(opt => `
+                <button class="grammar-choice-btn" data-answer="${opt}" style="flex:1;min-width:clamp(110px, 22vw, 160px);padding:clamp(12px, 2.5vh, 16px) clamp(16px, 3vw, 24px);font-size:clamp(1.2rem, 3.3vw, 1.6rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:none;font-family:'Poppins', Arial, sans-serif;">
+                  ${opt}
+                </button>
+              `).join('')}
+            </div>
+            <div style="flex:1;width:100%;"></div>
+            <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+              <span class="wa-sr-only">Quit Game</span>
+              <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+            </button>
+          </div>
+        `;
+
+        setView({ content: contentHTML, showProgressBar: true, progressValue: currentIdx + 1, progressMax: shuffled.length });
+
+        const buttons = Array.from(document.querySelectorAll('.grammar-choice-btn'));
+        buttons.forEach(btn => {
+          btn.onclick = async () => {
+            const userAnswer = btn.getAttribute('data-answer');
+            const correct = userAnswer === correctBe;
+
+            btn.style.borderColor = correct ? '#00897b' : '#f44336';
+            btn.style.backgroundColor = correct ? '#b2dfdb' : '#ffebee';
+            btn.style.color = correct ? '#fff' : '#f44336';
+
+            if (correct) {
+              score++;
+              if (playSFX) playSFX('correct');
+            } else if (playSFX) {
+              playSFX('wrong');
+            }
+
+            buttons.forEach(b => { b.disabled = true; });
+            totalAnswered++;
+
+            try {
+              logAttempt({
+                session_id: sessionId,
+                mode: 'grammar_mode',
+                word: item.id || item.word || item.en,
+                is_correct: correct,
+                answer: userAnswer,
+                correct_answer: correctBe,
+                points: correct ? 1 : 0,
+                attempt_index: currentIdx,
+                round: currentIdx + 1,
+                extra: { category: 'grammar', type: 'present_progressive_be_choose', file: grammarFile }
+              });
+            } catch {}
+
+            clearAdvanceTimer();
+            advanceTimer = setTimeout(() => {
+              if (!sessionEnded) {
+                currentIdx++;
+                renderGrammarQuestion();
+              }
+            }, 1200);
+          };
+          btn.onmouseenter = () => {
+            if (!btn.disabled) {
+              btn.style.transform = 'scale(1.03)';
+              btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            }
+          };
+          btn.onmouseleave = () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+          };
+        });
+
+        const quitBtn = document.getElementById('grammarQuitBtn');
+        if (quitBtn) {
+          quitBtn.onclick = () => {
+            sessionEnded = true;
+            clearAdvanceTimer();
+            try {
+              if (window.WordArcade?.startGrammarModeSelector) {
+                window.WordArcade.startGrammarModeSelector();
+              } else if (window.WordArcade?.quitToOpening) {
+                window.WordArcade.quitToOpening(true);
+              } else {
+                location.hash = '#state-mode_selector';
+                location.reload();
+              }
+            } catch {}
+          };
+        }
+        return;
       } else if (isPresentSimpleNegative) {
         // ===============================
         // Present Simple Negative (Choose)
@@ -519,7 +670,7 @@ export async function runGrammarMode(ctx) {
               <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
             </button>
           </div>`;
-      } else if (isPresentSimpleWhQuestions) {
+      } else if (isPresentSimpleWhQuestions || isPresentProgressiveWhQuestions) {
         // WH choose mode: show Korean WH prompt and four WH options
         const enQuestion = String(item.en || '').trim();
         const koPrompt = String(item.ko || item.exampleSentenceKo || '').trim();
@@ -617,7 +768,7 @@ export async function runGrammarMode(ctx) {
                 points: correct ? 1 : 0,
                 attempt_index: currentIdx,
                 round: currentIdx + 1,
-                extra: { category: 'grammar', type: 'present_simple_wh_choose', file: grammarFile }
+                extra: { category: 'grammar', type: isPresentProgressiveWhQuestions ? 'present_progressive_wh_choose' : 'present_simple_wh_choose', file: grammarFile }
               });
             } catch {}
 
@@ -659,6 +810,79 @@ export async function runGrammarMode(ctx) {
           };
         }
         return;
+      } else if (isPresentProgressiveNegative) {
+        // ===============================
+        // Present Progressive Negative (am not / isn't / aren't)
+        // Show subject only and three options
+        // ===============================
+
+        const sentence = String(item.en || item.exampleSentence || item.word || '');
+        const emoji = item.emoji || '';
+        const parts = sentence.split(/\s+/);
+        let subject = '';
+        if (/^the$/i.test(parts[0]) && parts.length >= 2) subject = `${parts[0]} ${parts[1]}`; else subject = parts[0] || '';
+        subject = subject.replace(/[.,!?]$/g, '');
+
+        const options = ['am not', "isn't", "aren't"].sort(() => Math.random() - 0.5);
+        const btns = options.map(opt => `
+          <button class="grammar-choice-btn" data-answer="${opt}" style="flex:1;min-width:clamp(110px, 24vw, 180px);padding:clamp(12px, 2.5vh, 16px) clamp(18px, 3vw, 26px);font-size:clamp(1.2rem, 3.4vw, 1.7rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:none;font-family:'Poppins', Arial, sans-serif;">${opt}</button>
+        `).join('');
+
+        contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:24px;padding:24px;max-width:640px;margin:0 auto;">
+            <div style="width:100%;text-align:center;font-size:0.95rem;color:#666;font-weight:600;">Question ${currentIdx + 1} of ${shuffled.length}</div>
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:12px;">
+              ${emoji ? `<div style="font-size:4rem;line-height:1;">${emoji}</div>` : ''}
+              <div style="font-size:1.8rem;font-weight:800;color:#21b3be;max-width:80vw;line-height:1.4;">${sanitizeText(subject)}</div>
+            </div>
+            <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:420px;justify-content:center;margin-top:24px;margin-bottom:8px;flex-wrap:wrap;">
+              ${btns}
+            </div>
+            <div style="flex:1;width:100%;"></div>
+            <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+              <span class="wa-sr-only">Quit Game</span>
+              <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+            </button>
+          </div>`;
+      } else if (isPresentProgressiveYesNo) {
+        // =====================================
+        // Present Progressive Yes/No (AM / IS / ARE)
+        // Show subject only and three BE options
+        // =====================================
+        const sentence = String(item.en || item.exampleSentence || item.word || '');
+        const emoji = item.emoji || '';
+        // Strip leading Am/Is/Are to isolate subject
+        let working = sentence.replace(/^\s*(am|is|are)\s+/i, '').trim();
+        const parts = working.split(/\s+/);
+        let subject = '';
+        if (/^the$/i.test(parts[0]) && parts.length >= 2) {
+          subject = `${parts[0]} ${parts[1]}`;
+        } else {
+          subject = parts[0] || '';
+        }
+        subject = subject.replace(/[.,!?]$/g, '');
+
+        const opts = ['AM', 'IS', 'ARE'].sort(() => Math.random() - 0.5);
+        const btns = opts.map(opt => `
+          <button class="grammar-choice-btn" data-answer="${opt}" style="flex:1;min-width:clamp(110px, 24vw, 180px);padding:clamp(12px, 2.5vh, 16px) clamp(18px, 3vw, 26px);font-size:clamp(1.2rem, 3.4vw, 1.7rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-transform:none;font-family:'Poppins', Arial, sans-serif;">${opt}</button>
+        `).join('');
+
+        contentHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;gap:24px;padding:24px;max-width:640px;margin:0 auto;">
+            <div style="width:100%;text-align:center;font-size:0.95rem;color:#666;font-weight:600;">Question ${currentIdx + 1} of ${shuffled.length}</div>
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:12px;">
+              ${emoji ? `<div style="font-size:4rem;line-height:1;">${emoji}</div>` : ''}
+              <div style="font-size:1.8rem;font-weight:800;color:#21b3be;max-width:80vw;line-height:1.4;">${sanitizeText(subject)}</div>
+            </div>
+            <div style="display:flex;gap:clamp(12px, 3vw, 20px);width:100%;max-width:420px;justify-content:center;margin-top:24px;margin-bottom:8px;flex-wrap:wrap;">
+              ${btns}
+            </div>
+            <div style="flex:1;width:100%;"></div>
+            <button id="grammarQuitBtn" class="wa-quit-btn" type="button" aria-label="Quit game">
+              <span class="wa-sr-only">Quit Game</span>
+              <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
+            </button>
+          </div>`;
       } else {
         // Original grammar mode layout
         // If There is/are choose modes → show noun in pink and choices for BE/DO forms
@@ -1119,6 +1343,29 @@ export async function runGrammarMode(ctx) {
 
             const thirdForm = buildThirdForm(baseForm);
             correctAnswer = isThirdSingular ? thirdForm : baseForm;
+          } else if (isPresentProgressiveNegative) {
+            const base = String(item.en || item.exampleSentence || '').toLowerCase();
+            if (/\bam\s+not\b/.test(base)) correctAnswer = 'am not';
+            else if (/\b(is\s+not|isn't|isnt)\b/.test(base)) correctAnswer = "isn't";
+            else if (/\b(are\s+not|aren't|arent)\b/.test(base)) correctAnswer = "aren't";
+            else {
+              const subj = base.split(/\s+/)[0] || '';
+              if (subj === 'i') correctAnswer = 'am not';
+              else if (['he','she','it'].includes(subj)) correctAnswer = "isn't";
+              else correctAnswer = "aren't";
+            }
+          } else if (isPresentProgressiveYesNo) {
+            const sentence = String(item.en || item.exampleSentence || item.word || '');
+            const m = sentence.match(/^\s*(Am|Is|Are)\b/i);
+            if (m) {
+              correctAnswer = m[1].toUpperCase();
+            } else {
+              const after = sentence.replace(/^\s*(am|is|are)\s+/i, '').trim();
+              const subj = (after.split(/\s+/)[0] || '').toLowerCase();
+              if (subj === 'i') correctAnswer = 'AM';
+              else if (['he','she','it'].includes(subj) || /^the\s+\w+$/i.test(subj)) correctAnswer = 'IS';
+              else correctAnswer = 'ARE';
+            }
           } else {
             correctAnswer = (item.article || item.ending);
           }
