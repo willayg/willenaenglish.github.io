@@ -218,6 +218,72 @@ function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Build present progressive (BE + V-ing) gap question
+function buildPresentProgressiveGapQuestion(item) {
+  const full = String(getSentenceText(item) || item.en || '').trim();
+  if (!full) return null;
+  const lower = full.toLowerCase();
+  const m = lower.match(/\b(am|is|are)\s+([a-z]+ing)\b/);
+  if (!m) return null;
+  const be = m[1];
+  const vIng = m[2];
+  const correct = `${be} ${vIng}`;
+  // Wrong BE: choose a different copula
+  const wrongBe = (be === 'is') ? (Math.random() < 0.5 ? 'am' : 'are') : (be === 'are' ? 'is' : 'is');
+  // Crude base form from -ing: strip ing and undouble last consonant
+  let base = vIng.replace(/ing$/i, '');
+  base = base.replace(/([b-df-hj-np-tv-z])\1$/i, '$1');
+  const statement = full.replace(/\b(am|is|are)\s+[a-z]+ing\b/i, '_____');
+  const options = [
+    { label: `${be} ${vIng}`, value: `${be} ${vIng}` },
+    { label: `${wrongBe} ${vIng}`, value: `${wrongBe} ${vIng}` },
+    { label: `${be} ${base}`, value: `${be} ${base}` }
+  ].sort(() => Math.random() - 0.5);
+  return { statement, options, correctAnswer: correct };
+}
+
+// Build present progressive NEGATIVE gap: blank the BE-negative chunk and offer am not / isn't / aren't
+function buildPresentProgressiveNegativeGapQuestion(item) {
+  const full = String(getSentenceText(item) || item.en || '').trim();
+  if (!full) return null;
+  const lower = full.toLowerCase();
+  let correct = '';
+  let statement = full;
+  if (/\bi\s+am\s+not\b/i.test(lower)) {
+    correct = 'am not';
+    statement = full.replace(/\bI\s+am\s+not\b/i, '___');
+  } else if (/\b(is\s+not|isn['’]?t)\b/i.test(lower)) {
+    correct = "isn't";
+    statement = full.replace(/\b(is\s+not|isn['’]?t)\b/i, '___');
+  } else if (/\b(are\s+not|aren['’]?t)\b/i.test(lower)) {
+    correct = "aren't";
+    statement = full.replace(/\b(are\s+not|aren['’]?t)\b/i, '___');
+  } else {
+    return null; // not a recognizable negative progressive sentence
+  }
+  const options = [ 'am not', "isn't", "aren't" ]
+    .map(v => ({ label: v, value: v }))
+    .sort(() => Math.random() - 0.5);
+  return { statement, options, correctAnswer: correct };
+}
+
+// Build present progressive YES/NO gap: blank the leading BE (Am/Is/Are)
+function buildPresentProgressiveYesNoGapQuestion(item) {
+  const full = String(getSentenceText(item) || item.en || '').trim();
+  if (!full) return null;
+  const lower = full.toLowerCase();
+  let correct = '';
+  let statement = full;
+  if (/^\s*am\b/i.test(lower)) { correct = 'am'; statement = full.replace(/^\s*am\b/i, '___'); }
+  else if (/^\s*is\b/i.test(lower)) { correct = 'is'; statement = full.replace(/^\s*is\b/i, '___'); }
+  else if (/^\s*are\b/i.test(lower)) { correct = 'are'; statement = full.replace(/^\s*are\b/i, '___'); }
+  else return null;
+  const options = [ 'AM', 'IS', 'ARE' ]
+    .map(v => ({ label: v, value: v.toLowerCase() }))
+    .sort(() => Math.random() - 0.5);
+  return { statement, options, correctAnswer: correct };
+}
+
 // Detect present simple verb-contrast lists (e.g. I walk / He walks)
 function isPresentSimpleVerbMode(grammarFile, items) {
   const fileHint = grammarFile && /present_simple_sentences/i.test(grammarFile);
@@ -796,6 +862,19 @@ export async function runGrammarFillGapMode(ctx) {
     || (grammarName && /present\s*simple[\s:\-]*wh/i.test(grammarName))
     || (grammarName && /wh\s*questions?/i.test(grammarName));
 
+  // Present Progressive fill-gap variants
+  const isPresentProgressiveNegativeFillGap = (grammarFile && /present_progressive_negative\.json$/i.test(grammarFile))
+    || (grammarName && /present\s*progressive[\s:\-]*negative/i.test(grammarName));
+  const isPresentProgressiveYesNoFillGap = (grammarFile && /present_progressive_questions_yesno\.json$/i.test(grammarFile))
+    || (grammarName && /present\s*progressive.*yes\s*\/\s*no/i.test(grammarName));
+  // General Present Progressive fill-gap (BE + V-ing) for affirmative/generic present_progressive lists
+  const isPresentProgressiveFillGap = (grammarFile && /present_progressive\.json$/i.test(grammarFile))
+    || (grammarName && /present\s*progressive(?!.*(negative|yes\s*\/\s*no|wh))/i.test(grammarName));
+
+  // Dedicated micro-mode: present progressive We ___ math (three options, one correct)
+  const isPresentProgressiveWeMathFillGap = (grammarConfig && grammarConfig.mode === 'present_progressive_we_math_fillgap')
+    || (grammarFile && /present_progressive_we_math_fillgap\.json$/i.test(grammarFile));
+
   // Detect if this is Short Questions mode (items have answer_positive and answer_negative)
   const isShortQuestionsMode = usable.length > 0 && usable[0] && usable[0].answer_positive && usable[0].answer_negative;
   const isPresentSimpleMode = isPresentSimpleVerbMode(grammarFile, usable);
@@ -971,6 +1050,10 @@ export async function runGrammarFillGapMode(ctx) {
   let presentSimpleData = null;
   let presentSimpleYesNoData = null;
   let presentSimpleWhData = null;
+  let presentProgressiveWeMathData = null;
+  let presentProgressiveData = null;
+  let presentProgressiveNegativeData = null;
+  let presentProgressiveYesNoData = null;
     let genericSentenceData = null;
     if (isShortQuestionsMode) {
       shortQuestionsData = buildShortQuestionsSentenceAndOptions(item);
@@ -997,6 +1080,58 @@ export async function runGrammarFillGapMode(ctx) {
         sentenceEl.innerHTML = presentSimpleYesNoData.statement.replace('_____', '<strong>_____</strong>');
       } else {
         sentenceEl.innerHTML = item.en || '';
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isPresentProgressiveWeMathFillGap) {
+      // Specific micro-mode: We ____________ math. (is studying / are study / are studying)
+      presentProgressiveWeMathData = {
+        statement: 'We _____ math.',
+        correctAnswer: 'are studying',
+        options: [
+          { label: 'is studying', value: 'is studying' },
+          { label: 'are study', value: 'are study' },
+          { label: 'are studying', value: 'are studying' }
+        ]
+      };
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      sentenceEl.innerHTML = presentProgressiveWeMathData.statement.replace('_____', '<strong>_____</strong>');
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isPresentProgressiveNegativeFillGap) {
+      // Present Progressive Negative: blank BE-negative chunk
+      presentProgressiveNegativeData = buildPresentProgressiveNegativeGapQuestion(item);
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      if (presentProgressiveNegativeData && presentProgressiveNegativeData.statement) {
+        sentenceEl.innerHTML = presentProgressiveNegativeData.statement.replace('___', '<strong>___</strong>');
+      } else {
+        sentenceEl.innerHTML = getSentenceText(item) || '';
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isPresentProgressiveYesNoFillGap) {
+      // Present Progressive Yes/No: blank leading Am/Is/Are
+      presentProgressiveYesNoData = buildPresentProgressiveYesNoGapQuestion(item);
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      if (presentProgressiveYesNoData && presentProgressiveYesNoData.statement) {
+        sentenceEl.innerHTML = presentProgressiveYesNoData.statement.replace('___', '<strong>___</strong>');
+      } else {
+        sentenceEl.innerHTML = getSentenceText(item) || '';
+      }
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isPresentProgressiveFillGap) {
+      // Present Progressive general gap-fill: mask BE + V-ing and quiz it
+      presentProgressiveData = buildPresentProgressiveGapQuestion(item);
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      if (presentProgressiveData && presentProgressiveData.statement) {
+        sentenceEl.innerHTML = presentProgressiveData.statement.replace('_____', '<strong>_____</strong>');
+      } else {
+        sentenceEl.innerHTML = getSentenceText(item) || '';
       }
       const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
       hintEl.textContent = hint ? String(hint).trim() : '';
@@ -1065,7 +1200,7 @@ export async function runGrammarFillGapMode(ctx) {
     }
 
     // Hide the cyan word line entirely for Some/Any mode to remove extra gap
-  if (isSomeAnyMode || isThereStatementsMode || isThereQuestionsMode || isPresentSimpleNegative) {
+  if (isSomeAnyMode || isThereStatementsMode || isThereQuestionsMode || isPresentSimpleNegative || isPresentProgressiveWeMathFillGap || isPresentProgressiveFillGap || isPresentProgressiveNegativeFillGap || isPresentProgressiveYesNoFillGap) {
       wordEl.style.display = 'none';
     } else {
       wordEl.style.display = '';
@@ -1118,6 +1253,42 @@ export async function runGrammarFillGapMode(ctx) {
       optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
       if (!optionButtons.length) {
         console.error('[GrammarFillGap] No present simple WH options rendered');
+        return;
+      }
+    } else if (isPresentProgressiveWeMathFillGap) {
+      // Hard-coded three options: one correct, two ungrammatical
+      const opts = presentProgressiveWeMathData && Array.isArray(presentProgressiveWeMathData.options)
+        ? presentProgressiveWeMathData.options
+        : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present progressive We math options rendered');
+        return;
+      }
+    } else if (isPresentProgressiveNegativeFillGap) {
+      const opts = presentProgressiveNegativeData && Array.isArray(presentProgressiveNegativeData.options) ? presentProgressiveNegativeData.options : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present progressive negative options rendered');
+        return;
+      }
+    } else if (isPresentProgressiveYesNoFillGap) {
+      const opts = presentProgressiveYesNoData && Array.isArray(presentProgressiveYesNoData.options) ? presentProgressiveYesNoData.options : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present progressive yes/no options rendered');
+        return;
+      }
+    } else if (isPresentProgressiveFillGap) {
+      // For present progressive fill-gap: show 3 options (correct BE+V-ing and two wrong)
+      const opts = presentProgressiveData && Array.isArray(presentProgressiveData.options) ? presentProgressiveData.options : [];
+      optionsRow.innerHTML = opts.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No present progressive options rendered');
         return;
       }
     } else if (isPresentSimpleYesNoFillGap) {
@@ -1246,6 +1417,17 @@ export async function runGrammarFillGapMode(ctx) {
         correctAnswerSource = presentSimpleWhData.correctAnswer;
       } else if (isGenericSentenceMode && genericSentenceData) {
         correctAnswerSource = genericSentenceData.correctAnswerLastWord || genericSentenceData.correctAnswerLower;
+      } else if (isPresentProgressiveFillGap && presentProgressiveData) {
+        correctAnswerSource = presentProgressiveData.correctAnswer;
+      } else if (isPresentProgressiveNegativeFillGap && presentProgressiveNegativeData) {
+        // Accept either contracted or full forms normalized to target labels
+        const ans = String(presentProgressiveNegativeData.correctAnswer || '').toLowerCase();
+        if (ans === 'is not') correctAnswerSource = "isn't"; else if (ans === 'are not') correctAnswerSource = "aren't"; else correctAnswerSource = ans;
+      } else if (isPresentProgressiveYesNoFillGap && presentProgressiveYesNoData) {
+        correctAnswerSource = String(presentProgressiveYesNoData.correctAnswer || '').toLowerCase();
+      } else if (isPresentProgressiveWeMathFillGap && presentProgressiveWeMathData) {
+        // Only one correct chunk: are studying
+        correctAnswerSource = presentProgressiveWeMathData.correctAnswer;
       } else if (isThereStatementsMode || isThereQuestionsMode) {
         correctAnswerSource = thereCorrectAnswerLabel || '';
       } else {

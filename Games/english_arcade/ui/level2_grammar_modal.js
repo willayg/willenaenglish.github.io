@@ -44,6 +44,7 @@ function ensureGrammarL2ModalStyles() {
 
 export function showGrammarL2Modal({ onChoose, onClose }) {
   ensureGrammarL2ModalStyles();
+  const SCROLL_KEY = 'grammarL2Modal_scrollTop';
 
   let level2Lists = [
     { 
@@ -305,6 +306,19 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
   const listEl = modal.querySelector('#gl2ListContainer');
   listEl.innerHTML = '';
 
+  // Restore/save scroll position like Level 1 modal
+  const restoreScroll = () => {
+    try {
+      const saved = Number(localStorage.getItem(SCROLL_KEY)) || 0;
+      const max = Math.max(0, listEl.scrollHeight - listEl.clientHeight);
+      listEl.scrollTop = Math.max(0, Math.min(saved, max));
+    } catch { /* ignore */ }
+  };
+  const saveScroll = () => {
+    try { localStorage.setItem(SCROLL_KEY, String(listEl.scrollTop)); } catch { /* ignore */ }
+  };
+  // Don't restore yet; wait until items are appended so height exists
+
   // Show Coming Soon modal for disabled games
   function showComingSoonModal() {
     let csModal = document.getElementById('comingSoonModal');
@@ -332,11 +346,22 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     const isProgressGame = progressIds.includes(g.id);
     const btn = document.createElement('button');
     btn.className = 'gl2-btn';
+    // Fetch first example sentence from grammar file (sync fallback, async update)
+    let example = g.label;
+    fetch(g.file).then(r => r.ok ? r.json() : []).then(list => {
+      if (Array.isArray(list)) {
+        const item = list.find(it => it && (it.en || it.exampleSentence));
+        if (item) {
+          example = item.en || item.exampleSentence;
+          btn.querySelector('.gl2-example').textContent = example;
+        }
+      }
+    }).catch(() => {});
     btn.innerHTML = `
       <span style="font-size:2em;flex-shrink:0;">${g.emoji || '📘'}</span>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-          <span style="font-weight:600;min-width:0;text-align:right;">${g.label}</span>
+          <span class="gl2-example" style="font-weight:600;min-width:0;text-align:right;">${example}</span>
           <span class="gl2-percent" id="gl2percent-${g.id}" style="font-size:0.95em;color:#ff66c4;font-weight:500;text-align:right;">0%</span>
         </div>
         <span class="gl2-bar"><span class="gl2-bar-fill loading" id="gl2bar-${g.id}"></span></span>
@@ -344,6 +369,7 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     `;
     if (isProgressGame) {
       btn.addEventListener('click', () => {
+        saveScroll();
         if (onChoose) onChoose({ grammarFile: g.file, grammarName: g.label, grammarConfig: g.config || {} });
         modal.style.display = 'none';
       });
@@ -373,7 +399,11 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     'present_simple_sentences',
   'present_simple_negative',
   'present_simple_questions_yesno',
-  'present_simple_questions_wh'
+    'present_simple_questions_wh',
+    'present_progressive',
+    'present_progressive_negative',
+    'present_progressive_questions_yesno',
+    'present_progressive_questions_wh'
   ];
   level2Lists = level2Lists.slice().sort((a, b) => {
     const aIdx = progressIds.indexOf(a.id);
@@ -384,8 +414,15 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     return aIdx - bIdx;
   });
   level2Lists.forEach((g) => listEl.appendChild(makeRow(g)));
-  modal.querySelector('#closeGrammarL2ModalX').onclick = () => { modal.style.display = 'none'; if (onClose) onClose(); };
-  modal.querySelector('#closeGrammarL2Modal').onclick = () => { modal.style.display = 'none'; if (onClose) onClose(); };
+  // Now that items exist, restore the saved scroll position
+  restoreScroll();
+  modal.querySelector('#closeGrammarL2ModalX').onclick = () => { saveScroll(); modal.style.display = 'none'; if (onClose) onClose(); };
+  modal.querySelector('#closeGrammarL2Modal').onclick = () => { saveScroll(); modal.style.display = 'none'; if (onClose) onClose(); };
+
+  // Optional: clicking the dim background closes and saves scroll
+  modal.onclick = (e) => {
+    if (e.target === modal) { saveScroll(); modal.style.display = 'none'; if (onClose) onClose(); }
+  };
 
   // Load progress bars and percents using exact same calculation as service
   const renderProgressBars = (percents) => {
@@ -396,6 +433,8 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
       if (bar) { bar.classList.remove('loading'); bar.style.width = pct + '%'; }
       if (pctEl) { pctEl.textContent = pct + '%'; }
     });
+    // Ensure scroll restoration after layout settles
+    requestAnimationFrame(() => restoreScroll());
   };
 
   (async () => {

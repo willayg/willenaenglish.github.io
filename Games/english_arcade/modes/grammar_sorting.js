@@ -229,6 +229,103 @@ const categoryStrategies = [
       if (key === 'does') return 'DOES';
       return key;
     }
+  },
+  // Present Progressive: bucket by BE form (am / is / are)
+  // Used for lists like present_progressive.json where the goal is to
+  // connect subject groups with the correct BE auxiliary in -ing sentences.
+  {
+    name: 'present_progressive_be_forms',
+    detect(rawItems) {
+      // Heuristic: sentences that contain "am/is/are" followed by a verb-ing
+      return rawItems.some(r => {
+        const t = String(r.en || r.example || r.word || '').toLowerCase();
+        return /(\bi\s+am\s+\w+ing\b|\b(am|is|are)\s+\w+ing\b)/.test(t);
+      });
+    },
+    classify(text) {
+      const tl = String(text || '').trim().toLowerCase();
+      if (/\bi\s+am\b/.test(tl)) return 'am';
+      if (/\bam\b/.test(tl)) return 'am';
+      if (/\bis\b/.test(tl)) return 'is';
+      if (/\bare\b/.test(tl)) return 'are';
+      return 'other';
+    },
+    categories() { return ['am','is','are']; },
+    displayLabel(key) {
+      if (key === 'am') return 'am';
+      if (key === 'is') return 'is';
+      if (key === 'are') return 'are';
+      return key;
+    }
+  },
+  // Present Progressive NEGATIVE: bucket by BE negative form
+  // Used for lists like present_progressive_negative.json
+  {
+    name: 'present_progressive_negative_be_forms',
+    detect(rawItems) {
+      const patt = /(am\s+not|is\s+not|are\s+not|isn't|aren't)\s+\w+ing\b/i;
+      return rawItems.some(r => patt.test(String(r.en || r.example || r.word || '')));
+    },
+    classify(text) {
+      const tl = String(text || '').trim().toLowerCase();
+      if (/(?:^|\b)i\s+am\s+not\b/.test(tl) || /\bam\s+not\b/.test(tl)) return 'am_not';
+      if (/(?:^|\b)(he|she|it|the\s+\w+)\s+is\s+not\b/.test(tl) || /\bisn't\b/.test(tl)) return 'isnt';
+      if (/(?:^|\b)(you|we|they)\s+are\s+not\b/.test(tl) || /\baren't\b/.test(tl)) return 'arent';
+      return 'other';
+    },
+    categories() { return ['am_not','isnt','arent']; },
+    displayLabel(key) {
+      if (key === 'am_not') return 'am not';
+      if (key === 'isnt') return "isn't";
+      if (key === 'arent') return "aren't";
+      return key;
+    }
+  },
+  // Present Progressive YES/NO QUESTIONS: bucket by BE question form
+  // Used for lists like present_progressive_questions_yesno.json
+  {
+    name: 'present_progressive_yesno_be_forms',
+    detect(rawItems) {
+      const patt = /^(am|is|are)\s+\w+\s+\w+ing\b/i; // Am I playing, Is he playing, Are they playing
+      return rawItems.some(r => patt.test(String(r.en || r.example || r.word || '')));
+    },
+    classify(text) {
+      const tl = String(text || '').trim().toLowerCase();
+      if (/^am\b/.test(tl)) return 'am_q';
+      if (/^is\b/.test(tl)) return 'is_q';
+      if (/^are\b/.test(tl)) return 'are_q';
+      return 'other';
+    },
+    categories() { return ['am_q','is_q','are_q']; },
+    displayLabel(key) {
+      if (key === 'am_q') return 'AM';
+      if (key === 'is_q') return 'IS';
+      if (key === 'are_q') return 'ARE';
+      return key;
+    }
+  },
+  // Present Progressive WH QUESTIONS: bucket by BE question form (What/Who/Where/Why/How + Am/Is/Are)
+  // Used for lists like present_progressive_questions_wh.json
+  {
+    name: 'present_progressive_wh_be_forms',
+    detect(rawItems) {
+      const patt = /^(what|who|where|why|how)\s+(am|is|are)\s+\w+/i;
+      return rawItems.some(r => patt.test(String(r.en || r.example || r.word || '')));
+    },
+    classify(text) {
+      const tl = String(text || '').trim().toLowerCase();
+      if (/^(what|who|where|why|how)\s+am\b/i.test(tl)) return 'am_wh';
+      if (/^(what|who|where|why|how)\s+is\b/i.test(tl)) return 'is_wh';
+      if (/^(what|who|where|why|how)\s+are\b/i.test(tl)) return 'are_wh';
+      return 'other';
+    },
+    categories() { return ['am_wh','is_wh','are_wh']; },
+    displayLabel(key) {
+      if (key === 'am_wh') return 'AM';
+      if (key === 'is_wh') return 'IS';
+      if (key === 'are_wh') return 'ARE';
+      return key;
+    }
   }
 ];
 
@@ -265,6 +362,26 @@ function chooseCategoryStrategy(rawItems, hints = {}) {
   }
   if (/(some.*any|some_vs_any|some-any)/.test(file) || /\bsome\b.*\bany\b/.test(name)) {
     const s = categoryStrategies.find(s => s.name === 'some_any');
+    if (s) return s;
+  }
+  // Present Progressive NEGATIVE: am not / isn't / aren't
+  if (/present_progressive_negative\.json/i.test(file) || /present\s*progressive.*negative/i.test(name)) {
+    const s = categoryStrategies.find(s => s.name === 'present_progressive_negative_be_forms');
+    if (s) return s;
+  }
+  // Present Progressive YES/NO QUESTIONS: AM / IS / ARE
+  if (/present_progressive_questions_yesno\.json/i.test(file) || /present\s*progressive.*yes\s*\/\s*no/i.test(name)) {
+    const s = categoryStrategies.find(s => s.name === 'present_progressive_yesno_be_forms');
+    if (s) return s;
+  }
+  // Present Progressive WH QUESTIONS: AM / IS / ARE (WH word first)
+  if (/present_progressive_questions_wh\.json/i.test(file) || /present\s*progressive.*wh/i.test(name)) {
+    const s = categoryStrategies.find(s => s.name === 'present_progressive_wh_be_forms');
+    if (s) return s;
+  }
+  // Present Progressive: am / is / are + verb-ing (affirmatives/general)
+  if (/present_progressive\.json/i.test(file) || (/present\s*progressive(\s*sentences)?/i.test(name) && !/negative|yes\s*\/\s*no|wh/i.test(name))) {
+    const s = categoryStrategies.find(s => s.name === 'present_progressive_be_forms');
     if (s) return s;
   }
   for (const strat of categoryStrategies) {
@@ -590,6 +707,57 @@ export async function runGrammarSortingMode(ctx = {}) {
       chip.textContent = it.verbForm;
   } else if ((strategy.name === 'present_simple_negative_subjects' || strategy.name === 'present_simple_yesno_do_does') && it.subjectLabel) {
       chip.textContent = String(it.subjectLabel);
+    } else if (
+      strategy.name === 'present_progressive_be_forms' ||
+      strategy.name === 'present_progressive_negative_be_forms'
+    ) {
+      // For present progressive affirmatives and negatives, hide the BE form
+      // Negatives also hide contracted forms (isn't/aren't) → "___ not"
+      const full = String(it.question || '').trim();
+      let masked = full;
+      // Affirmative BE
+      masked = masked
+        .replace(/\b(I\s+am)\b/i, 'I ___')
+        .replace(/\b(you\s+are)\b/i, 'You ___')
+        .replace(/\b(we\s+are)\b/i, 'We ___')
+        .replace(/\b(they\s+are)\b/i, 'They ___')
+        .replace(/\b(he\s+is)\b/i, 'He ___')
+        .replace(/\b(she\s+is)\b/i, 'She ___')
+        .replace(/\b(it\s+is)\b/i, 'It ___')
+        .replace(/\b(the\s+\w+\s+is)\b/i, (m) => m.replace(/\sis\b/i, ' ___'));
+      if (strategy.name === 'present_progressive_negative_be_forms') {
+        // Expand for negatives: am not / is not / are not; isn't / aren't
+        masked = masked
+          .replace(/\bI\s+am\s+not\b/i, 'I ___ not')
+          .replace(/\b(he|she|it|the\s+\w+)\s+is\s+not\b/gi, (m, subj) => `${subj} ___ not`)
+          .replace(/\b(you|we|they)\s+are\s+not\b/gi, (m, subj) => `${subj} ___ not`)
+          .replace(/\b(he|she|it|the\s+\w+)\s+isn't\b/gi, (m, subj) => `${subj} ___ not`)
+          .replace(/\b(you|we|they)\s+aren't\b/gi, (m, subj) => `${subj} ___ not`);
+      }
+      if (masked === full) masked = truncateSentenceDisplay(full);
+      chip.textContent = masked;
+    } else if (strategy.name === 'present_progressive_yesno_be_forms') {
+      // For yes/no questions, mask the initial BE and subject so chips look like "___ he playing ...?"
+      const full = String(it.question || '').trim();
+      let masked = full
+        .replace(/^am\s+i\b/i, '___ I')
+        .replace(/^is\s+he\b/i, '___ he')
+        .replace(/^is\s+she\b/i, '___ she')
+        .replace(/^is\s+it\b/i, '___ it')
+        .replace(/^are\s+you\b/i, '___ you')
+        .replace(/^are\s+we\b/i, '___ we')
+        .replace(/^are\s+they\b/i, '___ they');
+      if (masked === full) masked = truncateSentenceDisplay(full);
+      chip.textContent = masked;
+    } else if (strategy.name === 'present_progressive_wh_be_forms') {
+      // For WH questions, mask the BE after the WH word so chips look like "What ___ she doing...?"
+      const full = String(it.question || '').trim();
+      let masked = full
+        .replace(/^(what|who|where|why|how)\s+am\b/i, '$1 ___')
+        .replace(/^(what|who|where|why|how)\s+is\b/i, '$1 ___')
+        .replace(/^(what|who|where|why|how)\s+are\b/i, '$1 ___');
+      if (masked === full) masked = truncateSentenceDisplay(full);
+      chip.textContent = masked;
     } else {
       chip.textContent = it.np ? String(it.question) : truncateSentenceDisplay(it.question);
     }

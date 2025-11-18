@@ -66,15 +66,20 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
     }
 
     const item = items[currentIndex];
-  const correctEn = item.en.trim();
+    const correctEn = item.en.trim();
     const ko = item.ko.trim();
     const emoji = item.emoji || '📖';
 
     // Generate fixed trio: correct, grammar-wrong, meaning-wrong
-  const isSomeAny = /some\s*vs\s*any/i.test(String(grammarName||'')) || /some_vs_any\.json$/i.test(String(grammarFile||''));
-  const isThereIsAreList = /there_is_vs_there_are\.json$/i.test(String(grammarFile||'')) || /there\s+is\s+vs\s+there\s+are/i.test(String(grammarName||''));
-  const isPresentSimpleNegative = /present_simple_negative\.json$/i.test(String(grammarFile||'')) || /present\s*simple[\s:\-]*negative/i.test(String(grammarName||''));
-  const isPresentSimple = /present_simple_sentences\.json$/i.test(String(grammarFile||'')) || (/\bpresent\s*simple\b/i.test(String(grammarName||'')) && !isPresentSimpleNegative);
+    const isSomeAny = /some\s*vs\s*any/i.test(String(grammarName||'')) || /some_vs_any\.json$/i.test(String(grammarFile||''));
+    const isThereIsAreList = /there_is_vs_there_are\.json$/i.test(String(grammarFile||'')) || /there\s+is\s+vs\s+there\s+are/i.test(String(grammarName||''));
+    const isPresentSimpleNegative = /present_simple_negative\.json$/i.test(String(grammarFile||'')) || /present\s*simple[\s:\-]*negative/i.test(String(grammarName||''));
+    const isPresentSimple = /present_simple_sentences\.json$/i.test(String(grammarFile||'')) || (/\bpresent\s*simple\b/i.test(String(grammarName||'')) && !isPresentSimpleNegative);
+    // Present Progressive specific variants
+    const isPPNegative = /present_progressive_negative\.json$/i.test(String(grammarFile||'')) || /present\s*progressive[\s:\-]*negative/i.test(String(grammarName||''));
+    const isPPYesNo = /present_progressive_questions_yesno\.json$/i.test(String(grammarFile||'')) || /present\s*progressive.*yes\s*\/\s*no/i.test(String(grammarName||''));
+    const isPPWh = /present_progressive_questions_wh\.json$/i.test(String(grammarFile||'')) || /present\s*progressive[\s:\-]*wh/i.test(String(grammarName||''));
+    const isPresentProgressive = (!isPPNegative && !isPPYesNo && !isPPWh) && ( /present_progressive\.json$/i.test(String(grammarFile||'')) || /present\s*progressive/i.test(String(grammarName||'')) );
 
     const pool = validItems.filter(v => v.en && v.en !== correctEn);
 
@@ -87,6 +92,14 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
       ({ grammarWrong, meaningWrong } = buildPresentSimpleNegativeOptions(correctEn, pool));
     } else if (isPresentSimple) {
       ({ grammarWrong, meaningWrong } = buildPresentSimpleOptions(correctEn, pool));
+    } else if (isPPNegative) {
+      ({ grammarWrong, meaningWrong } = buildPresentProgressiveNegativeOptions(correctEn, pool));
+    } else if (isPPYesNo) {
+      ({ grammarWrong, meaningWrong } = buildPresentProgressiveYesNoOptions(correctEn, pool));
+    } else if (isPPWh) {
+      ({ grammarWrong, meaningWrong } = buildPresentProgressiveWhOptions(correctEn, pool));
+    } else if (isPresentProgressive) {
+      ({ grammarWrong, meaningWrong } = buildPresentProgressiveOptions(correctEn, pool));
     } else if (isSomeAny) {
       // Some/Any keeps specialized distractors but we still treat them as grammar vs meaning
       const sa = generateSomeAnyDistractors(correctEn, pool);
@@ -586,5 +599,204 @@ function buildPresentSimpleNegativeOptions(correctEn, pool){
     grammarWrong = correctEn.replace(rxDont, (m)=> (m[0]===m[0].toUpperCase()?"Doesn't":"doesn't"));
   }
   const meaningWrong = (pool && pool.length) ? (pool.find(p => p.en && p.en !== correctEn)?.en || pool[0].en) : correctEn;
+  return { grammarWrong, meaningWrong };
+}
+
+// Trio builder for Present Progressive sentences:
+// Grammar-wrong: break BE+V-ing agreement (wrong BE or base verb) while
+// keeping the rest of the verb phrase intact.
+// Meaning-wrong: keep BE+V-ing skeleton but swap in a different main verb
+// phrase from pool.
+function buildPresentProgressiveOptions(correctEn, pool){
+  const text = String(correctEn || '');
+  // Match subject + BE + V-ing, allowing optional pronouns/articles
+  const bePattern = /(\b(?:I|You|He|She|It|We|They|The\s+\w+|[A-Z][a-z]+)\b\s+)(am|is|are)\s+([^.,!?;:]*)?\b([a-zA-Z]+ing\b[^.,!?;:]*)/i;
+  const m = text.match(bePattern);
+
+  let grammarWrong = correctEn;
+  if (m) {
+    const prefix = m[1];
+    const be = m[2];
+    const mid = (m[3] || '').trim(); // any words between BE and V-ing
+    const verbIng = m[4];
+
+    const subj = prefix.trim().toLowerCase();
+    let correctBe = be.toLowerCase();
+    if (subj === 'i') correctBe = 'am';
+    else if (['he','she','it'].includes(subj)) correctBe = 'is';
+    else correctBe = 'are';
+
+    const wrongBe = correctBe === 'am' ? 'are' : (correctBe === 'is' ? 'are' : 'is');
+
+    const beLower = be.toLowerCase();
+    const beCorrectPart = prefix + correctBe; // keep original casing from prefix only
+    const beWrongPart = prefix + wrongBe;
+
+    // Keep full verb phrase (including object/adverbial) after BE
+    const afterBe = mid ? `${mid} ${verbIng}` : verbIng;
+    const baseVerb = verbIng.replace(/ing\b/, '');
+    const basePhrase = mid ? `${mid} ${baseVerb}` : baseVerb;
+
+    const patterns = [
+      beWrongPart + ' ' + afterBe,   // wrong BE + same V-ing phrase
+      beCorrectPart + ' ' + basePhrase, // correct BE + base verb phrase
+      beWrongPart + ' ' + basePhrase    // wrong BE + base verb phrase
+    ];
+
+    const pick = patterns[Math.floor(Math.random()*patterns.length)];
+    const bePart = prefix + beLower;
+    grammarWrong = text.replace(new RegExp(bePart + '\\s+' + escapeReg( (mid ? mid + ' ' : '') + verbIng )), pick);
+  }
+
+  // Meaning-wrong: keep BE, swap in a different V-ing phrase from another progressive sentence
+  let meaningWrong = null;
+  if (m) {
+    const bePart = m[1] + m[2] + ' ';
+    const others = (pool || []).map(p => String(p.en || '')).filter(s => s && s !== correctEn);
+    const otherMatch = others.map(s => ({s, match: s.match(/\b(am|is|are)\s+([a-zA-Z]+ing\b[^.,!?;:]*)/i)}))
+      .find(o => o.match);
+    if (otherMatch && otherMatch.match) {
+      const newVerbPhrase = otherMatch.match[2];
+      meaningWrong = text.replace(bePart + m[3], bePart + newVerbPhrase);
+    }
+  }
+
+  if (!meaningWrong && pool && pool.length) {
+    meaningWrong = pool[0].en;
+  }
+
+  return { grammarWrong, meaningWrong };
+}
+
+// Escape for dynamic RegExp pieces
+function escapeReg(str){
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Trio builder: Present Progressive NEGATIVE
+// Grammar-wrong: swap BE within the negative chunk (am not/isn't/aren't) to an incorrect form
+// Meaning-wrong: keep the negative chunk (subject + BE + not) but swap the V-ing phrase
+function buildPresentProgressiveNegativeOptions(correctEn, pool) {
+  const text = String(correctEn || '');
+  const rx = /(\bI\b|\bYou\b|\bHe\b|\bShe\b|\bIt\b|\bWe\b|\bThey\b|The\s+\w+|[A-Z][a-z]+)\s+(am\s+not|is\s+not|are\s+not|isn['’]?t|aren['’]?t)\s+([^?.!]+?ing(?:[^?.!]*))(?=[?.!]|$)/i;
+  const m = text.match(rx);
+  let grammarWrong = correctEn;
+  let meaningWrong = null;
+  if (m) {
+    const subj = m[1];
+    const negChunk = m[2];
+    const vIngPhrase = m[3];
+    const subjLow = subj.toLowerCase();
+    const wrongBe = (subjLow === 'i') ? 'is not' : (/^(he|she|it)$/i.test(subjLow) ? "aren't" : "isn't");
+    // Preserve contraction style: if original used contraction, keep contraction in wrong too when possible
+    const usedContraction = /n['’]?t/i.test(negChunk);
+    let wrongNeg = wrongBe;
+    if (usedContraction) {
+      if (/is\s+not/i.test(wrongBe)) wrongNeg = "isn't";
+      if (/are\s+not/i.test(wrongBe)) wrongNeg = "aren't";
+    }
+    grammarWrong = text.replace(negChunk, (m0) => {
+      // maintain capitalization if negChunk was capitalized
+      const cap = /^[A-Z]/.test(m0);
+      const out = wrongNeg;
+      return cap ? out.charAt(0).toUpperCase() + out.slice(1) : out;
+    });
+
+    // Meaning-wrong: find another progressive v-ing phrase from pool and swap only the v-ing portion
+    const other = (pool || []).map(p => p.en).find(s => /\b(am|is|are)\s+[^?.!]*?ing\b/i.test(String(s||'')));
+    if (other) {
+      const om = String(other).match(/\b(am|is|are)\s+([^?.!]*?ing\b[^?.!]*)/i);
+      if (om) {
+        const newVP = om[2];
+        meaningWrong = text.replace(vIngPhrase, newVP);
+      }
+    }
+  }
+  if (!meaningWrong && pool && pool.length) meaningWrong = pool[0].en;
+  return { grammarWrong, meaningWrong };
+}
+
+// Trio builder: Present Progressive Yes/No Questions
+// Grammar-wrong: wrong BE for subject (e.g., "Are he ...?", "Is they ...?", "Is I ...?")
+// Meaning-wrong: keep BE + subject, swap V-ing phrase from pool
+function buildPresentProgressiveYesNoOptions(correctEn, pool) {
+  const text = String(correctEn || '');
+  // Pattern: BE + subject + ...V-ing... ?
+  const rx = /^(Am|Is|Are)\s+([A-Za-z]+)(?:\s+([^?.!]*?))?\s+([A-Za-z]+ing\b[^?.!]*)([?.!])?$/i;
+  const m = text.match(rx);
+  let grammarWrong = correctEn;
+  let meaningWrong = null;
+  if (m) {
+    const be = m[1];
+    const subj = m[2];
+    const mid = (m[3] || '').trim();
+    const vIng = m[4];
+    const punct = m[5] || '?';
+    const subjLow = subj.toLowerCase();
+    let wrongBe = 'is';
+    if (subjLow === 'i') wrongBe = 'is';
+    else if (/(he|she|it)/i.test(subjLow)) wrongBe = 'are';
+    else wrongBe = 'is'; // for you/we/they → wrong is
+    const wrongOut = /[A-Z]/.test(be[0]) ? wrongBe.charAt(0).toUpperCase() + wrongBe.slice(1) : wrongBe;
+    const rest = (mid ? mid + ' ' : '') + vIng + (punct || '');
+    grammarWrong = `${wrongOut} ${subj} ${rest}`;
+
+    const other = (pool || []).map(p => p.en).find(s => /^(Am|Is|Are)\s+\S+\s+[^?.!]*ing\b/i.test(String(s||'')));
+    if (other) {
+      const om = String(other).match(/^(Am|Is|Are)\s+\S+\s+([^?.!]*ing\b[^?.!]*)/i);
+      if (om) {
+        const newVP = om[2];
+        meaningWrong = `${be} ${subj} ${mid ? mid + ' ' : ''}${newVP}${punct}`;
+      }
+    }
+  }
+  if (!meaningWrong && pool && pool.length) meaningWrong = pool[0].en;
+  return { grammarWrong, meaningWrong };
+}
+
+// Trio builder: Present Progressive WH Questions
+// Grammar-wrong: flip the BE immediately after the WH word (handles omitted subject)
+// Meaning-wrong: keep WH + BE (+ subject) and swap in a different V-ing phrase
+function buildPresentProgressiveWhOptions(correctEn, pool) {
+  const text = String(correctEn || '');
+  // WH + BE + (subject|V-ing) ...
+  const rx = /^(Who|What|When|Where|Why|How|Which)\s+(Am|Is|Are|am|is|are)\b\s*([\s\S]*)/;
+  const m = text.match(rx);
+  let grammarWrong = correctEn;
+  let meaningWrong = null;
+  if (m) {
+    const wh = m[1];
+    const be = m[2];
+    const tail = (m[3] || '').trim();
+    const tokens = tail.split(/\s+/);
+    const t0 = (tokens[0]||'').replace(/[^A-Za-z]/g,'').toLowerCase();
+    const t1 = (tokens[1]||'').replace(/[^A-Za-z]/g,'').toLowerCase();
+    const isI = t0 === 'i';
+    const isPluralPron = ['you','we','they'].includes(t0);
+    const isThirdPron = ['he','she','it'].includes(t0);
+    let isThirdNoun = false, isPluralNoun = false;
+    if (t0 === 'the' && t1) { if (/s$/.test(t1) && !/(ss|us)$/i.test(t1)) isPluralNoun = true; else isThirdNoun = true; }
+    const whAsSubject = /ing$/i.test(t0); // "Who is singing?"
+    const beLower = be.toLowerCase();
+    let wrongBe = null;
+    if (isI) wrongBe = 'is';
+    else if (isPluralPron || isPluralNoun) wrongBe = (beLower === 'are') ? 'is' : 'is';
+    else if (isThirdPron || isThirdNoun || whAsSubject) wrongBe = (beLower === 'is') ? 'are' : 'are';
+    else wrongBe = (beLower === 'is') ? 'are' : (beLower === 'are' ? 'is' : 'is');
+    const wrongOut = /[A-Z]/.test(be[0]) ? wrongBe.charAt(0).toUpperCase() + wrongBe.slice(1) : wrongBe;
+    grammarWrong = text.replace(new RegExp(`^(${wh})\\s+(Am|Is|Are|am|is|are)`), `$1 ${wrongOut}`);
+
+    // Meaning-wrong: swap the first V-ing phrase
+    const vpMatch = tail.match(/([A-Za-z]+ing\b[^?.!]*)([?.!])?/);
+    const other = (pool || []).map(p => p.en).find(s => /\b(am|is|are)\s+[^?.!]*ing\b/i.test(String(s||'')));
+    if (vpMatch && other) {
+      const om = String(other).match(/\b(am|is|are)\s+([^?.!]*ing\b[^?.!]*)/i);
+      if (om) {
+        const newVP = om[2];
+        meaningWrong = `${wh} ${be} ${tail.replace(vpMatch[1], newVP)}`;
+      }
+    }
+  }
+  if (!meaningWrong && pool && pool.length) meaningWrong = pool[0].en;
   return { grammarWrong, meaningWrong };
 }
