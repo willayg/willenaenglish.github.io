@@ -397,13 +397,18 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     'short_questions_1',
     'short_questions_2',
     'present_simple_sentences',
-  'present_simple_negative',
-  'present_simple_questions_yesno',
+    'present_simple_negative',
+    'present_simple_questions_yesno',
     'present_simple_questions_wh',
     'present_progressive',
     'present_progressive_negative',
     'present_progressive_questions_yesno',
-    'present_progressive_questions_wh'
+    'present_progressive_questions_wh',
+    // NEW: make preposition games fully active
+    'prepositions_between_above_below',
+    'prepositions_next_to_behind_infront',
+    'prepositions_between_near_acrossfrom',
+    'prepositions_review',
   ];
   level2Lists = level2Lists.slice().sort((a, b) => {
     const aIdx = progressIds.indexOf(a.id);

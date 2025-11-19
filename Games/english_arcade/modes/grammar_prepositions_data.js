@@ -56,9 +56,7 @@ export function buildPrepositionScene(preposition, emoji, word) {
 }
 
 export function isInOnUnderMode(answerChoices) {
-  return Array.isArray(answerChoices)
-    && answerChoices.length === 3
-    && answerChoices.includes('in')
-    && answerChoices.includes('on')
-    && answerChoices.includes('under');
+  if (!Array.isArray(answerChoices)) return false;
+  const lower = answerChoices.map(a => String(a || '').toLowerCase());
+  return lower.includes('in') && lower.includes('on') && lower.includes('under');
 }
