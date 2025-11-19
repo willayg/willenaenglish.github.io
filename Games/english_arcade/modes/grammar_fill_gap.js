@@ -878,8 +878,14 @@ export async function runGrammarFillGapMode(ctx) {
   // Detect if this is Short Questions mode (items have answer_positive and answer_negative)
   const isShortQuestionsMode = usable.length > 0 && usable[0] && usable[0].answer_positive && usable[0].answer_negative;
   const isPresentSimpleMode = isPresentSimpleVerbMode(grammarFile, usable);
+  
+  // Detect preposition mode: items have both 'prompt' (with ___) and 'article' (preposition)
+  const isPrepositionMode = usable.length > 0 && usable[0] && 
+    (usable[0].prompt && usable[0].prompt.includes('___')) && 
+    usable[0].article;
+  
   // Generic sentence fallback (Level 2): no predefined choices, not contractions/plurals/countable/short Q
-  const isGenericSentenceMode = !isContractionMode && !isPluralMode && !isCountableMode && !isShortQuestionsMode && !isPresentSimpleMode && Array.isArray(answerChoices) && answerChoices.length === 0;
+  const isGenericSentenceMode = !isContractionMode && !isPluralMode && !isCountableMode && !isShortQuestionsMode && !isPresentSimpleMode && !isPrepositionMode && Array.isArray(answerChoices) && answerChoices.length === 0;
 
   const deck = shuffle(usable).slice(0, 15);
 
@@ -1061,6 +1067,17 @@ export async function runGrammarFillGapMode(ctx) {
       sentenceEl.innerHTML = shortQuestionsData.statement.replace('_____', '<strong>_____</strong>');
       hintEl.textContent = item.exampleSentenceKo ? String(item.exampleSentenceKo).trim() : '';
       // Will handle options rendering next
+    } else if (isPrepositionMode) {
+      // Preposition fill-gap: use prompt directly, article as answer, ko as hint
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      if (item.prompt) {
+        sentenceEl.innerHTML = item.prompt.replace('___', '<strong>___</strong>');
+      } else {
+        sentenceEl.innerHTML = item.exampleSentence || item.en || '_____';
+      }
+      const hint = item.ko || item.exampleSentenceKo || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
     } else if (isPresentSimpleWhFillGap) {
       presentSimpleWhData = buildPresentSimpleWhFillGap(item);
       wordEl.textContent = '';
@@ -1317,6 +1334,30 @@ export async function runGrammarFillGapMode(ctx) {
         console.error('[GrammarFillGap] No present simple negative options rendered');
         return;
       }
+    } else if (isPrepositionMode) {
+      // For prepositions, generate 3 options: correct preposition + 2 random distractors from other items
+      const correctPrep = (item.article || '').trim();
+      const allPrepositions = new Set();
+      usable.forEach((it) => {
+        const art = (it.article || '').trim();
+        if (art && art.toLowerCase() !== correctPrep.toLowerCase()) {
+          allPrepositions.add(art);
+        }
+      });
+      const distractors = Array.from(allPrepositions)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2);
+      const options = [correctPrep, ...distractors].map((prep) => ({
+        label: prep,
+        value: prep.toLowerCase()
+      }));
+      const shuffled = options.sort(() => Math.random() - 0.5);
+      optionsRow.innerHTML = shuffled.map((opt) => `<button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No preposition options rendered');
+        return;
+      }
     } else if (isGenericSentenceMode) {
       // For generic sentence mode, render last-word options if available
       const opts = (genericSentenceData && Array.isArray(genericSentenceData.options)) ? genericSentenceData.options : [];
@@ -1430,6 +1471,9 @@ export async function runGrammarFillGapMode(ctx) {
         correctAnswerSource = presentProgressiveWeMathData.correctAnswer;
       } else if (isThereStatementsMode || isThereQuestionsMode) {
         correctAnswerSource = thereCorrectAnswerLabel || '';
+      } else if (isPrepositionMode) {
+        // For prepositions, the answer is in item.article
+        correctAnswerSource = item.article || '';
       } else {
         correctAnswerSource = item.article || '';
       }

@@ -1,137 +1,101 @@
 [
   {
-    "id": "the_library_is_near",
-    "word": "the_library",
-    "en": "The library is near the park.",
-    "ko": "도서관이 공원 근처에 있어요.",
-    "exampleSentence": "The library is near the park.",
-    "exampleSentenceKo": "도서관이 공원 근처에 있어요.",
-    "emoji": "📚🌳"
-  },
-  {
-    "id": "the_school_is_across",
+    "id": "the_school_is_near",
     "word": "the_school",
-    "en": "The school is across from the bank.",
-    "ko": "학교가 은행 맞은편에 있어요.",
-    "exampleSentence": "The school is across from the bank.",
-    "exampleSentenceKo": "학교가 은행 맞은편에 있어요.",
-    "emoji": "🏫🏦"
+    "prompt": "The school is ___ the park.",
+    "article": "near",
+    "en": "The school is near the park.",
+    "ko": "학교가 공원 근처에 있어요.",
+    "exampleSentence": "The school is near the park.",
+    "exampleSentenceKo": "학교가 공원 근처에 있어요.",
+    "emoji": "🏫🌳"
   },
   {
-    "id": "the_cafe_is_between",
+    "id": "the_cafe_is_across",
     "word": "the_cafe",
-    "en": "The cafe is between the bookstore and the post office.",
-    "ko": "카페는 서점과 우체국 사이에 있어요.",
-    "exampleSentence": "The cafe is between the bookstore and the post office.",
-    "exampleSentenceKo": "카페는 서점과 우체국 사이에 있어요.",
-    "emoji": "☕️📚📮"
+    "prompt": "The cafe is ___.",
+    "article": "across from",
+    "en": "The cafe is across from the library.",
+    "ko": "카페는 도서관 맞은편에 있어요.",
+    "exampleSentence": "The cafe is across from the library.",
+    "exampleSentenceKo": "카페는 도서관 맞은편에 있어요.",
+    "emoji": "☕️📚"
   },
   {
-    "id": "the_cat_sits_near",
-    "word": "the_cat",
-    "en": "The cat sits near the door.",
-    "ko": "고양이가 문 근처에 앉아 있어요.",
-    "exampleSentence": "The cat sits near the door.",
-    "exampleSentenceKo": "고양이가 문 근처에 앉아 있어요.",
-    "emoji": "😺🚪"
-  },
-  {
-    "id": "the_museum_is_across",
-    "word": "the_museum",
-    "en": "The museum is across from the park.",
-    "ko": "박물관이 공원 맞은편에 있어요.",
-    "exampleSentence": "The museum is across from the park.",
-    "exampleSentenceKo": "박물관이 공원 맞은편에 있어요.",
-    "emoji": "🏛️🌳"
-  },
-  {
-    "id": "the_playground_is_between",
-    "word": "the_playground",
-    "en": "The playground is between two trees.",
-    "ko": "놀이터가 두 그루 나무 사이에 있어요.",
-    "exampleSentence": "The playground is between two trees.",
-    "exampleSentenceKo": "놀이터가 두 그루 나무 사이에 있어요.",
-    "emoji": "🏞️🌲"
-  },
-  {
-    "id": "she_lives_near_the",
-    "word": "she_lives",
-    "en": "She lives near the station.",
-    "ko": "그녀는 역 근처에 살아요.",
-    "exampleSentence": "She lives near the station.",
-    "exampleSentenceKo": "그녀는 역 근처에 살아요.",
-    "emoji": "🚉"
-  },
-  {
-    "id": "the_hospital_is_across",
-    "word": "the_hospital",
-    "en": "The hospital is across from the library.",
-    "ko": "병원이 도서관 맞은편에 있어요.",
-    "exampleSentence": "The hospital is across from the library.",
-    "exampleSentenceKo": "병원이 도서관 맞은편에 있어요.",
-    "emoji": "🏥📚"
-  },
-  {
-    "id": "put_it_near_the",
-    "word": "put_it",
-    "en": "Put it near the window.",
-    "ko": "그것을 창문 근처에 놓으세요.",
-    "exampleSentence": "Put it near the window.",
-    "exampleSentenceKo": "그것을 창문 근처에 놓으세요.",
-    "emoji": "🪟"
-  },
-  {
-    "id": "the_bakery_is_between",
-    "word": "the_bakery",
-    "en": "The bakery is between the school and the shop.",
-    "ko": "빵집은 학교와 가게 사이에 있어요.",
-    "exampleSentence": "The bakery is between the school and the shop.",
-    "exampleSentenceKo": "빵집은 학교와 가게 사이에 있어요.",
-    "emoji": "🥖🏫🏪"
-  },
-  {
-    "id": "the_bus_stop_is",
-    "word": "the_bus",
-    "en": "The bus stop is near my house.",
-    "ko": "버스 정류장이 우리 집 근처에 있어요.",
-    "exampleSentence": "The bus stop is near my house.",
-    "exampleSentenceKo": "버스 정류장이 우리 집 근처에 있어요.",
-    "emoji": "🚌🏠"
-  },
-  {
-    "id": "the_shop_is_across",
-    "word": "the_shop",
-    "en": "The shop is across from the cinema.",
-    "ko": "가게가 영화관 맞은편에 있어요.",
-    "exampleSentence": "The shop is across from the cinema.",
-    "exampleSentenceKo": "가게가 영화관 맞은편에 있어요.",
-    "emoji": "🏪🎥"
-  },
-  {
-    "id": "sit_across_from_me",
-    "word": "sit_across",
-    "en": "Sit across from me.",
-    "ko": "나 맞은편에 앉으세요.",
-    "exampleSentence": "Sit across from me.",
-    "exampleSentenceKo": "나 맞은편에 앉으세요.",
-    "emoji": "🪑"
-  },
-  {
-    "id": "the_house_is_between",
-    "word": "the_house",
-    "en": "The house is between the shops.",
-    "ko": "그 집은 가게들 사이에 있어요.",
-    "exampleSentence": "The house is between the shops.",
-    "exampleSentenceKo": "그 집은 가게들 사이에 있어요.",
-    "emoji": "🏠🏪🏪"
-  },
-  {
-    "id": "the_bench_is_near",
+    "id": "the_bench_is_between",
     "word": "the_bench",
-    "en": "The bench is near the fountain.",
-    "ko": "벤치가 분수대 근처에 있어요.",
-    "exampleSentence": "The bench is near the fountain.",
-    "exampleSentenceKo": "벤치가 분수대 근처에 있어요.",
-    "emoji": "🪑⛲"
+    "prompt": "The bench is ___ the trees.",
+    "article": "between",
+    "en": "The bench is between the trees.",
+    "ko": "벤치가 나무들 사이에 있어요.",
+    "exampleSentence": "The bench is between the trees.",
+    "exampleSentenceKo": "벤치가 나무들 사이에 있어요.",
+    "emoji": "🪑🌲🌲"
+  },
+  {
+    "id": "the_hospital_is_near",
+    "word": "the_hospital",
+    "prompt": "The hospital is ___ the bus stop.",
+    "article": "near",
+    "en": "The hospital is near the bus stop.",
+    "ko": "병원이 버스 정류장 근처에 있어요.",
+    "exampleSentence": "The hospital is near the bus stop.",
+    "exampleSentenceKo": "병원이 버스 정류장 근처에 있어요.",
+    "emoji": "🏥🚌"
+  },
+  {
+    "id": "the_bank_is_across",
+    "word": "the_bank",
+    "prompt": "The bank is ___.",
+    "article": "across from",
+    "en": "The bank is across from the post office.",
+    "ko": "은행이 우체국 맞은편에 있어요.",
+    "exampleSentence": "The bank is across from the post office.",
+    "exampleSentenceKo": "은행이 우체국 맞은편에 있어요.",
+    "emoji": "🏦📮"
+  },
+  {
+    "id": "the_tree_is_between",
+    "word": "the_tree",
+    "prompt": "The tree is ___ the houses.",
+    "article": "between",
+    "en": "The tree is between the houses.",
+    "ko": "나무가 집들 사이에 있어요.",
+    "exampleSentence": "The tree is between the houses.",
+    "exampleSentenceKo": "나무가 집들 사이에 있어요.",
+    "emoji": "🌳🏠🏠"
+  },
+  {
+    "id": "the_playground_is_near",
+    "word": "the_playground",
+    "prompt": "The playground is ___ the school.",
+    "article": "near",
+    "en": "The playground is near the school.",
+    "ko": "놀이터가 학교 근처에 있어요.",
+    "exampleSentence": "The playground is near the school.",
+    "exampleSentenceKo": "놀이터가 학교 근처에 있어요.",
+    "emoji": "🏞️🏫"
+  },
+  {
+    "id": "the_bridge_is_across",
+    "word": "the_bridge",
+    "prompt": "The bridge is ___.",
+    "article": "across from",
+    "en": "The bridge is across from the river.",
+    "ko": "다리가 강 맞은편에 있어요.",
+    "exampleSentence": "The bridge is across from the river.",
+    "exampleSentenceKo": "다리가 강 맞은편에 있어요.",
+    "emoji": "🌉🌊"
+  },
+  {
+    "id": "the_statue_is_between",
+    "word": "the_statue",
+    "prompt": "The statue is ___ the fountains.",
+    "article": "between",
+    "en": "The statue is between the fountains.",
+    "ko": "동상이 분수대들 사이에 있어요.",
+    "exampleSentence": "The statue is between the fountains.",
+    "exampleSentenceKo": "동상이 분수대들 사이에 있어요.",
+    "emoji": "🗿⛲⛲"
   }
 ]

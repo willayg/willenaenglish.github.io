@@ -73,6 +73,10 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   // Level 1: hide Sorting, Translation, and Find the Mistake until L2 ready
   if (isLevel1Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'translation' && m.mode !== 'find_mistake');
   
+  // For preposition lists (Level 2 only), hide Sorting and Choose modes
+  const isPrepositionList = /prepositions_/i.test(String(currentGrammarFile || ''));
+  if (isLevel2Grammar && isPrepositionList) visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'choose');
+  
   // Hide Sorting mode for Present Simple WH Questions (not implemented for this list)
   const isWhQuestions = /present_simple_questions_wh\.json$/i.test(currentGrammarFile || '');
   if (isWhQuestions) visibleModes = visibleModes.filter(m => m.mode !== 'sorting');

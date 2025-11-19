@@ -34,6 +34,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   // Build good/bad pool & corruption helpers
   const makeSentence = (it) => (it.en || it.exampleSentence || '').trim();
   const isSomeAnyList = /some_vs_any\.json$/i.test(String(grammarFile || '')) || /some\s*vs\s*any/i.test(String(grammarName || ''));
+  const isPrepositionList = /prepositions_/i.test(String(grammarFile || '')) || /prepositions_/i.test(String(grammarName || ''));
   const isPresentSimpleList = /present_simple_sentences\.json$/i.test(String(grammarFile || '')) || /present\s*simple\s*sentences/i.test(String(grammarName || ''));
   const isPresentSimpleNegativeList = /present_simple_negative\.json$/i.test(String(grammarFile || '')) || /present\s*simple[\s:\-]*negative/i.test(String(grammarName || ''));
   const isPresentSimpleYesNoList = /present_simple_questions_yesno\.json$/i.test(String(grammarFile || ''))
@@ -68,10 +69,45 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     return null;
   }
 
+  function corruptPreposition(en, allItems) {
+    // For preposition lists, swap with a different preposition to create a mistake
+    // Students validate against Korean translation
+    const allPrepositions = allItems.map(item => {
+      const itemEn = (item.en || item.exampleSentence || '').trim();
+      const match = itemEn.match(/\b(in|on|under|above|below|between|next to|behind|in front of|near|across from|at|by|through|beside|over)\b/i);
+      return match ? match[1].toLowerCase() : null;
+    }).filter(p => p !== null);
+
+    if (!allPrepositions.length) return null;
+
+    // Extract the preposition from the current sentence
+    const match = en.match(/\b(in|on|under|above|below|between|next to|behind|in front of|near|across from|at|by|through|beside|over)\b/i);
+    if (!match) return null;
+
+    const correctPrep = match[1].toLowerCase();
+    const availableWrongPreps = allPrepositions.filter(p => p !== correctPrep);
+    
+    if (!availableWrongPreps.length) return null;
+
+    // Pick a random wrong preposition
+    const wrongPrep = availableWrongPreps[Math.floor(Math.random() * availableWrongPreps.length)];
+    
+    // Replace the preposition in the sentence
+    const regex = new RegExp(`\\b${correctPrep}\\b`, 'i');
+    const bad = en.replace(regex, wrongPrep);
+    
+    return { bad, wrongToken: wrongPrep, correctToken: correctPrep };
+  }
+
   function corruptSentence(en) {
     console.log('DEBUG corruptSentence: isPresentSimpleYesNoList=', isPresentSimpleYesNoList, 'isPresentSimpleWhList=', isPresentSimpleWhList, 'isPresentProgressiveList=', isPresentProgressiveList, 'isPPNeg=', isPresentProgressiveNegativeList, 'isPPWh=', isPresentProgressiveWhList, 'isPPYesNo=', isPresentProgressiveYesNoList, 'en=', en.substring(0, 50));
     if (isSomeAnyList) {
       const res = corruptSomeAny(en);
+      if (res) return res;
+    }
+
+    if (isPrepositionList) {
+      const res = corruptPreposition(en, base);
       if (res) return res;
     }
 
@@ -473,7 +509,12 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     const card = document.createElement('div');
     card.style.cssText = 'background:#fff;border:3px solid #40D4DE;border-radius:18px;padding:28px;box-shadow:0 6px 14px rgba(64,212,222,.18);margin-bottom:18px;';
     const sentence = (r.type==='good' ? r.en : r.enBad);
-    card.innerHTML = `<div style="font-size:24px;line-height:1.5;color:#333;text-align:center">${sentence}</div>`;
+    let cardHtml = `<div style="font-size:24px;line-height:1.5;color:#333;text-align:center">${sentence}</div>`;
+    // For preposition lists, add Korean translation below
+    if (isPrepositionList && r.src && r.src.ko) {
+      cardHtml += `<div style="font-size:16px;line-height:1.5;color:#999;text-align:center;margin-top:12px;">${r.src.ko}</div>`;
+    }
+    card.innerHTML = cardHtml;
     container.appendChild(card);
 
     const btnRow = document.createElement('div');

@@ -80,6 +80,8 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
     const isPPYesNo = /present_progressive_questions_yesno\.json$/i.test(String(grammarFile||'')) || /present\s*progressive.*yes\s*\/\s*no/i.test(String(grammarName||''));
     const isPPWh = /present_progressive_questions_wh\.json$/i.test(String(grammarFile||'')) || /present\s*progressive[\s:\-]*wh/i.test(String(grammarName||''));
     const isPresentProgressive = (!isPPNegative && !isPPYesNo && !isPPWh) && ( /present_progressive\.json$/i.test(String(grammarFile||'')) || /present\s*progressive/i.test(String(grammarName||'')) );
+    // Preposition lists
+    const isPrepositionList = /prepositions_/i.test(String(grammarFile||'')) || /prepositions_/i.test(String(grammarName||''));
 
     const pool = validItems.filter(v => v.en && v.en !== correctEn);
 
@@ -100,6 +102,8 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
       ({ grammarWrong, meaningWrong } = buildPresentProgressiveWhOptions(correctEn, pool));
     } else if (isPresentProgressive) {
       ({ grammarWrong, meaningWrong } = buildPresentProgressiveOptions(correctEn, pool));
+    } else if (isPrepositionList) {
+      ({ grammarWrong, meaningWrong } = buildPrepositionOptions(correctEn, pool));
     } else if (isSomeAny) {
       // Some/Any keeps specialized distractors but we still treat them as grammar vs meaning
       const sa = generateSomeAnyDistractors(correctEn, pool);
@@ -799,4 +803,54 @@ function buildPresentProgressiveWhOptions(correctEn, pool) {
   }
   if (!meaningWrong && pool && pool.length) meaningWrong = pool[0].en;
   return { grammarWrong, meaningWrong };
+}
+
+// Trio builder for Preposition lists
+// Grammar-wrong: swap the preposition with a different one (keeps same structure, changes meaning)
+// Meaning-wrong: pick a different sentence from the pool
+function buildPrepositionOptions(correctEn, pool) {
+  let grammarWrong = correctEn;
+  let meaningWrong = null;
+
+  // Try to swap the preposition with a different one from the pool
+  if (pool && pool.length > 0) {
+    const allPrepositions = pool.map(p => {
+      // Extract the preposition from the sentence - look for word patterns that are prepositions
+      // Common prepositions: in, on, under, above, below, between, next to, behind, in front of, near, across from, etc.
+      const text = String(p.en || '');
+      const prepMatch = text.match(/\b(in|on|under|above|below|between|next to|behind|in front of|near|across from|at|by|through|beside|over)\b/i);
+      return prepMatch ? prepMatch[1].toLowerCase() : null;
+    }).filter(p => p && p !== extractPreposition(correctEn));
+
+    if (allPrepositions.length > 0) {
+      const wrongPrep = allPrepositions[Math.floor(Math.random() * allPrepositions.length)];
+      const correctPrep = extractPreposition(correctEn);
+      if (wrongPrep && correctPrep) {
+        // Replace the preposition in the correct sentence
+        const regex = new RegExp(`\\b${correctPrep}\\b`, 'i');
+        grammarWrong = correctEn.replace(regex, wrongPrep);
+      }
+    }
+  }
+
+  // Meaning-wrong: pick a different sentence from pool
+  if (pool && pool.length > 0) {
+    const randomItem = pool[Math.floor(Math.random() * pool.length)];
+    meaningWrong = randomItem?.en || null;
+  }
+
+  // Fallback if something failed
+  if (!meaningWrong && pool && pool.length > 1) {
+    const other = pool.find(p => p.en !== correctEn && p.en !== grammarWrong);
+    meaningWrong = other?.en || pool[0]?.en;
+  }
+
+  return { grammarWrong, meaningWrong };
+}
+
+// Helper: extract preposition from a sentence
+function extractPreposition(sentence) {
+  const text = String(sentence || '');
+  const match = text.match(/\b(in|on|under|above|below|between|next to|behind|in front of|near|across from|at|by|through|beside|over)\b/i);
+  return match ? match[1].toLowerCase() : null;
 }
