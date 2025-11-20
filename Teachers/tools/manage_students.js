@@ -1029,7 +1029,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     IS_ADMIN = (r === 'admin');
   } catch {
     const msg = 'Not signed in. Please log in as a teacher.';
-    const listMsg = el('listMsg'); if (listMsg) listMsg.innerHTML = `${msg} <a href="/Teachers/login.html?next=${encodeURIComponent(location.pathname)}">Open login</a>`;
+    const listMsg = el('listMsg');
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    if (listMsg) listMsg.innerHTML = `${msg} <a href="/Teachers/login.html?redirect=${redirect}">Open login</a>`;
     el('rows').innerHTML = '<tr><td colspan="8">' + msg + '</td></tr>';
     // Cookie diagnostics (best effort)
     try {

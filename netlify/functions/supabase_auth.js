@@ -188,9 +188,10 @@ exports.handler = async (event) => {
       }
 
       // Cookies: in prod use SameSite=None; Secure. On localhost(http), use Lax and no Secure so browser sends them.
+      // Make both access and refresh tokens effectively last ~30 days so you rarely need to log back in.
       const dev = isLocalDev();
       const cookies = [
-        cookie('sb_access', authData.access_token, event, { maxAge: 3600, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+        cookie('sb_access', authData.access_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
         cookie('sb_refresh', authData.refresh_token || '', event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
       ];
       return respond(event, 200, { success: true, user: authData.user }, {}, cookies);
@@ -489,8 +490,8 @@ exports.handler = async (event) => {
         const session = data.session;
         const dev = isLocalDev();
         const cookies = [
-          cookie('sb_access', session.access_token, event, { maxAge: 3600, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
-          cookie('sb_refresh', session.refresh_token, event, { maxAge: 2592000, sameSite: dev ? 'Lax' : 'None', secure: !dev })
+          cookie('sb_access', session.access_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+          cookie('sb_refresh', session.refresh_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev })
         ];
         return respond(event, 200, { success: true }, {}, cookies);
       } catch {

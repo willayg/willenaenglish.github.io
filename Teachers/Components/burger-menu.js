@@ -50,7 +50,8 @@ export function insertBurgerMenu(targetSelector = 'body') {
       e.preventDefault();
       localStorage.removeItem('userId');
       localStorage.removeItem('userRole');
-      window.location.href = '/Teachers/login.html';
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      window.location.href = `/Teachers/login.html?redirect=${redirect}`;
       dropdown.style.display = 'none';
     };
   }

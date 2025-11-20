@@ -12,7 +12,12 @@
     body{ margin:0; min-height:100vh; font-family:'Poppins',system-ui,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--ink); display:flex; flex-direction:column; }
     header{ display:flex; align-items:center; gap:12px; padding:18px 24px; background:#39384a; color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.15); }
     header img{ height:46px; }
-    header h1{ margin:0; font-size:1.4rem; font-weight:600; }
+    header h1{ margin:0; font-size:1.4rem; font-weight:600; flex:1; }
+    #burger-menu-mount{ display:flex; align-items:center; min-width:48px; }
+    .nav-tabs{ display:flex; gap:0; border-bottom:1px solid #e5e7eb; background:#fff; }
+    .nav-tabs a{ padding:12px 20px; text-decoration:none; color:#6b7280; font-weight:500; border-bottom:3px solid transparent; transition:all .2s ease; cursor:pointer; }
+    .nav-tabs a:hover{ color:#19777e; }
+    .nav-tabs a.active{ color:#19777e; border-bottom-color:#19777e; background:#fafbfc; }
     main{ flex:1 1 auto; width:100%; padding:24px; }
     .layout{ width:100%; display:flex; flex-direction:column; gap:18px; }
     .card{ background:#fff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 6px 24px rgba(15,23,42,.08); }
@@ -26,6 +31,7 @@
     .status{ margin-left:auto; font-size:0.85rem; color:var(--mut); min-height:20px; }
     .status.error{ color:#d14343; }
     .grid{ display:grid; grid-template-columns:minmax(0,30%) minmax(0,1fr); gap:20px; align-items:start; padding:20px; }
+    .grid.class-tracker-grid{ grid-template-columns:minmax(0,15%) minmax(0,1fr); }
     @media (max-width: 1024px){ .grid{ grid-template-columns:1fr; padding:18px; } }
 
     table{ width:100%; border-collapse:collapse; font-size:14px; min-width:540px; }
@@ -35,6 +41,11 @@
     .rank{ width:56px; text-align:center; font-weight:600; color:#4b5563; }
     .num{ text-align:center; font-variant-numeric:tabular-nums; }
     .clickable{ color:#19777e; cursor:pointer; text-decoration:none; }
+    th.sortable{ cursor:pointer; user-select:none; position:relative; padding-right:24px; }
+    th.sortable:hover{ background:#e5e7eb; }
+    th.sortable::after{ content:''; position:absolute; right:8px; top:50%; transform:translateY(-50%); width:12px; height:12px; opacity:0.5; }
+    th.sortable.sort-asc::after{ content:'▲'; opacity:1; }
+    th.sortable.sort-desc::after{ content:'▼'; opacity:1; }
 
     .section-title{ padding:14px 18px; border-bottom:1px solid #eef2f7; font-weight:600; color:#374151; font-size:0.95rem; }
     .student-panel{ padding:16px 20px; }
@@ -88,6 +99,23 @@
   .toggle-btn:hover{ border-color:#19777e; color:#19777e; }
   .toggle-btn.active{ background:#19777e; color:#fff; border-color:#19777e; box-shadow:0 4px 8px rgba(25,119,126,0.2); }
 
+  .class-item{ padding:12px 16px; border-bottom:1px solid #eef2f7; cursor:pointer; transition:all .2s ease; color:#374151; display:flex; justify-content:space-between; align-items:center; }
+  .class-item:hover{ background:#fafbfc; color:#19777e; }
+  .class-item.active{ background:#e6f7f8; color:#19777e; border-left:4px solid #19777e; padding-left:12px; font-weight:600; }
+  .class-item.hidden{ opacity:0.6; }
+  .class-item .visibility-badge{ font-size:0.7rem; padding:2px 8px; border-radius:999px; background:#f3f4f6; color:#6b7280; font-weight:500; white-space:nowrap; }
+  .class-item.hidden .visibility-badge{ background:#ffe5e5; color:#d14343; }
+  
+  .top-students{ display:flex; flex-direction:row; gap:16px; flex-wrap:wrap; }
+  .student-rank-card{ background:linear-gradient(135deg, #f7fafc 0%, #e6f7f8 100%); border:1px solid #d1e6e8; border-radius:12px; padding:12px; position:relative; overflow:hidden; flex:1 1 calc(33.333% - 11px); min-width:200px; }
+  .student-rank-card::before{ content:attr(data-rank); position:absolute; top:-8px; right:-8px; width:60px; height:60px; background:#19777e; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; }
+  .student-rank-card .name{ font-size:1rem; font-weight:600; color:#1f2933; margin-bottom:2px; }
+  .student-rank-card .korean-name{ font-size:0.85rem; color:#6b7280; margin-bottom:8px; }
+  .student-rank-card .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px; }
+  .student-rank-card .stat-item{ display:flex; flex-direction:column; }
+  .student-rank-card .stat-label{ font-size:0.7rem; color:#6b7280; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
+  .student-rank-card .stat-value{ font-size:1.1rem; font-weight:700; color:#19777e; }
+
     @media (max-width: 640px){
       main{ padding:18px 12px; }
       .filters{ padding:14px 12px; }
@@ -99,24 +127,64 @@
 <body>
   <script>
     // Access control: require teacher login and approval
+    let userRole = null;
+    let userRoleReadyResolve;
+    const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve; });
     (async function() {
       const userId = localStorage.getItem('userId');
-      if (!userId) { location.href = '/Teachers/login.html'; return; }
+      if (!userId) {
+        const redirect = encodeURIComponent(location.pathname + location.search);
+        location.href = `/Teachers/login.html?redirect=${redirect}`;
+        return;
+      }
       try {
         const r = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
         const js = await r.json();
         if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
           location.href = '/Teachers/profile.html';
         }
-      } catch { location.href = '/Teachers/login.html'; }
+        userRole = String(js.role||'').toLowerCase();
+        if (typeof userRoleReadyResolve === 'function') {
+          userRoleReadyResolve(userRole);
+          userRoleReadyResolve = null;
+        }
+      } catch {
+        const redirect = encodeURIComponent(location.pathname + location.search);
+        location.href = `/Teachers/login.html?redirect=${redirect}`;
+      }
     })();
+  </script>
+  <script type="module">
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Fetch and inject burger menu template if not already present
+      if (!document.getElementById('burger-menu-template')) {
+        try {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        } catch(e) {
+          console.warn('Failed to load burger menu template:', e);
+        }
+      }
+      insertBurgerMenu('#burger-menu-mount');
+    });
   </script>
   <header>
     <img src="/Assets/Images/Logo.png" alt="Logo" />
     <h1>Student Tracker • English Arcade</h1>
+    <div id="burger-menu-mount"></div>
   </header>
+  <div class="nav-tabs">
+    <a href="#" class="nav-tab active" data-tab="student-tracker">Student Tracker</a>
+    <a href="#" class="nav-tab" data-tab="class-tracker">Class Tracker</a>
+    <a href="#" class="nav-tab" data-tab="homework">Homework</a>
+  </div>
   <main>
-    <div class="layout">
+    <div class="tab-content active" id="student-tracker-content">
+      <div class="layout">
       <div class="card">
         <div class="filters">
           <div class="group">
@@ -139,21 +207,22 @@
         <div class="grid">
           <!-- Leaderboard -->
           <div class="card" style="overflow:hidden;">
-            <div class="section-title">Leaderboard</div>
+            <div class="section-title" id="leaderboardTitle">Leaderboard</div>
             <div class="scroll-wrap">
               <table id="lbTable">
                 <thead>
                   <tr>
-                    <th class="rank">#</th>
-                    <th>Name</th>
-                    <th>Class</th>
-                    <th class="num">Stars</th>
-                    <th class="num">Points</th>
-                    <th class="num">Accuracy</th>
+                    <th class="rank sortable" data-sort="rank">#</th>
+                    <th class="sortable" data-sort="name">Name</th>
+                    <th class="sortable" data-sort="korean_name">Korean Name</th>
+                    <th class="num sortable" data-sort="stars">Stars</th>
+                    <th class="num sortable" data-sort="points">Points</th>
+                    <th class="num sortable" data-sort="super_score">Super Score</th>
+                    <th class="num sortable" data-sort="accuracy">Accuracy</th>
                   </tr>
                 </thead>
                 <tbody id="lbBody">
-                  <tr><td colspan="6" class="empty">Choose a class to load leaderboard…</td></tr>
+                  <tr><td colspan="7" class="empty">Choose a class to load leaderboard…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -180,6 +249,40 @@
           </div>
         </div>
       </div>
+      </div>
+    </div>
+    <div class="tab-content" id="class-tracker-content">
+      <div class="layout">
+        <div class="card">
+          <div class="grid class-tracker-grid">
+            <!-- Classes list -->
+            <div class="card" style="overflow:hidden;">
+              <div class="section-title">Classes</div>
+              <div class="scroll-wrap">
+                <div id="classList" style="display:flex; flex-direction:column;">
+                  <div style="padding:16px; color:#6b7280;">Loading classes...</div>
+                </div>
+              </div>
+            </div>
+            <!-- Top 3 students -->
+            <div class="card">
+              <div class="section-title" id="classStatsTitle">Class Stats</div>
+              <div id="classStatsContent" style="padding:16px; color:#6b7280;">
+                <p>Select a class to view top students.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" id="homework-content">
+      <div class="layout">
+        <div class="card">
+          <div style="padding:20px; color:#6b7280;">
+            <p>Homework features coming soon.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -189,6 +292,7 @@
       classes: () => fetch(FN('progress_teacher_summary') + '?action=classes_list', { credentials:'include' }).then(r=>r.json()),
       leaderboard: (cls, tf) => fetch(FN('progress_teacher_summary') + `?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
       student: (uid, tf) => fetch(FN('progress_teacher_summary') + `?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
+      toggleClassVisibility: (cls, hidden) => fetch(FN('progress_teacher_summary') + `?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`, { credentials:'include', method:'POST' }).then(r=>r.json()),
     };
 
     const $ = (s, r=document) => r.querySelector(s);
@@ -205,6 +309,9 @@
 
     let rawLeaderboard = [];
     let selectedStudent = null;
+    let sortColumn = 'rank';
+    let sortDirection = 'asc'; // 'asc' or 'desc'
+    let classTrackerSelectedClass = null;
 
     function fmtPct(n){ return (n ?? 0) + '%'; }
 
@@ -217,17 +324,69 @@
     function renderLeaderboard(list){
       const q = (searchBox.value||'').trim().toLowerCase();
       const filtered = q ? list.filter(r => (r.name||'').toLowerCase().includes(q)) : list;
-      const display = filtered.slice(0, 200);
-      if (!display.length) { lbBody.innerHTML = '<tr><td colspan="6" class="empty">No data</td></tr>'; return; }
-      lbBody.innerHTML = display.map(r => `
+      
+      // Sort the filtered list
+      const sorted = [...filtered].sort((a, b) => {
+        let aVal, bVal;
+        
+        switch(sortColumn) {
+          case 'rank':
+            aVal = a.rank || 0;
+            bVal = b.rank || 0;
+            break;
+          case 'name':
+            aVal = (a.name || '').toLowerCase();
+            bVal = (b.name || '').toLowerCase();
+            break;
+          case 'korean_name':
+            aVal = (a.korean_name || '').toLowerCase();
+            bVal = (b.korean_name || '').toLowerCase();
+            break;
+          case 'stars':
+            aVal = a.stars || 0;
+            bVal = b.stars || 0;
+            break;
+          case 'points':
+            aVal = a.points || 0;
+            bVal = b.points || 0;
+            break;
+          case 'super_score':
+            aVal = Math.round((a.points * a.stars) / 1000);
+            bVal = Math.round((b.points * b.stars) / 1000);
+            break;
+          case 'accuracy':
+            aVal = a.accuracy || 0;
+            bVal = b.accuracy || 0;
+            break;
+          default:
+            return 0;
+        }
+        
+        // Handle string vs number comparison
+        if (typeof aVal === 'string') {
+          const cmp = aVal.localeCompare(bVal);
+          return sortDirection === 'asc' ? cmp : -cmp;
+        }
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      });
+      
+      const display = sorted.slice(0, 200);
+      if (!display.length) { lbBody.innerHTML = '<tr><td colspan="7" class="empty">No data</td></tr>'; return; }
+      lbBody.innerHTML = display.map(r => {
+        const stars = r.stars || 0;
+        const points = r.points || 0;
+        const superScore = Math.round((points * stars) / 1000);
+        return `
         <tr data-uid="${r.user_id}">
           <td class="rank">${r.rank||''}</td>
           <td><a class="clickable" data-action="student" data-uid="${r.user_id}">${r.name||'Unknown'}</a></td>
-          <td>${r.class||''}</td>
-          <td class="num">${r.stars||0}</td>
-          <td class="num">${r.points||0}</td>
+          <td>${r.korean_name||'—'}</td>
+          <td class="num">${stars}</td>
+          <td class="num">${points}</td>
+          <td class="num">${superScore}</td>
           <td class="num">${fmtPct(r.accuracy||0)}</td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
     }
 
     function ensureStudentTabs(){
@@ -285,8 +444,8 @@
     }
 
     function switchTab(tabName) {
-      const tabs = $$('.tab-content');
-      const btns = $$('.tab-btn');
+      const tabs = $$('#studentPanel .tab-content');
+      const btns = $$('#studentPanel .tab-btn');
       tabs.forEach(t => t.classList.remove('active'));
       btns.forEach(b => b.classList.remove('active'));
       const activeTab = $(`#tab-${tabName}`);
@@ -761,26 +920,69 @@
       gameChartsRegistry.set(canvas.id, chart);
     }
 
+    const displayClassName = (raw) => {
+      const n = (raw||'').trim().toLowerCase();
+      if (n === 'ny') return 'New York';
+      return raw;
+    };
+    const backendClassName = (input) => {
+      const n = (input||'').trim().toLowerCase();
+      if (n === 'new york' || n === 'ny') return 'NY';
+      return input;
+    };
+
+    const normalizeClassRecord = (record) => {
+      const rawName = typeof record === 'string'
+        ? record
+        : (record && (record.name || record.class)) || record || '';
+      return {
+        name: rawName,
+        display: displayClassName(rawName),
+        hidden: !!(record && typeof record === 'object' && (record.hidden || record.visible === false))
+      };
+    };
+
+    const filterClassesForRole = (classes) => {
+      if (userRole === 'admin') return classes;
+      return classes.filter(cls => !cls.hidden);
+    };
+
+    async function requireUserRole(){
+      if (userRole !== null) return userRole;
+      if (typeof userRoleReady !== 'undefined' && userRoleReady && typeof userRoleReady.then === 'function') {
+        try {
+          return await userRoleReady;
+        } catch {
+          return userRole;
+        }
+      }
+      return userRole;
+    }
+
     async function loadClasses(){
       classSel.innerHTML = '<option value="">Loading…</option>';
       setStatus('Loading classes…');
       try{
+        await requireUserRole();
         const js = await API.classes();
-        const classes = (js && js.success && Array.isArray(js.classes)) ? js.classes : [];
-        if (!classes.length) { classSel.innerHTML = '<option value="">No classes</option>'; setStatus('No student classes found'); return; }
-        classSel.innerHTML = '<option value="">Choose class…</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
-        setStatus(`Loaded ${classes.length} class${classes.length === 1 ? '' : 'es'}`);
+        const classesRaw = (js && js.success && Array.isArray(js.classes)) ? js.classes : [];
+        const normalized = filterClassesForRole(classesRaw.map(normalizeClassRecord));
+        if (!normalized.length) { classSel.innerHTML = '<option value="">No classes</option>'; setStatus('No student classes found'); return; }
+        classSel.innerHTML = '<option value="">Choose class…</option>' + normalized.map(c => `<option value="${c.name}">${c.display}</option>`).join('');
+        setStatus(`Loaded ${normalized.length} class${normalized.length === 1 ? '' : 'es'}`);
       } catch(e){ classSel.innerHTML = '<option value="">Error loading</option>'; setStatus('Failed to load classes', 'error'); }
     }
 
     async function loadLeaderboard(){
-      const cls = classSel.value; if (!cls) { rawLeaderboard = []; renderLeaderboard([]); renderStudentEmpty(); setStatus('Select a class to view results'); return; }
+      const selected = classSel.value; if (!selected) { rawLeaderboard = []; renderLeaderboard([]); renderStudentEmpty(); setStatus('Select a class to view results'); return; }
       const tf = timeSel.value || 'month';
-      const dbClass = cls === 'New York' ? 'NY' : cls;
-      lbBody.innerHTML = '<tr><td colspan="6" class="empty">Loading…</td></tr>';
-      setStatus(`Loading ${cls} (${tf})…`);
+      const apiClass = backendClassName(selected);
+      const leaderboardTitle = document.getElementById('leaderboardTitle');
+      if (leaderboardTitle) leaderboardTitle.textContent = `${displayClassName(selected)} Leaderboard`;
+      lbBody.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
+      setStatus(`Loading ${displayClassName(selected)} (${tf})…`);
       try{
-        const js = await API.leaderboard(dbClass, tf);
+        const js = await API.leaderboard(apiClass, tf);
         rawLeaderboard = (js && js.success && Array.isArray(js.leaderboard)) ? js.leaderboard : [];
         renderLeaderboard(rawLeaderboard);
         if (!rawLeaderboard.length) setStatus('No attempts yet for this filter');
@@ -826,13 +1028,175 @@
       }
     }
 
+    // Class Tracker functions
+    async function loadClassTrackerClasses(){
+      const classList = $('#classList');
+      classList.innerHTML = '<div style="padding:16px; color:#6b7280;">Loading classes...</div>';
+      try{
+        await requireUserRole();
+        const js = await API.classes();
+        const classesRaw = (js && js.success && Array.isArray(js.classes)) ? js.classes : [];
+        const normalized = classesRaw.map(normalizeClassRecord);
+        const displayClasses = userRole === 'admin' ? normalized : normalized.filter(cls => !cls.hidden);
+        
+        if (!displayClasses.length) { classList.innerHTML = '<div style="padding:16px; color:#6b7280;">No classes found</div>'; return; }
+        classList.innerHTML = displayClasses.map(cls => {
+          const hiddenClass = cls.hidden ? 'hidden' : '';
+          const badge = cls.hidden ? '<span class="visibility-badge">Hidden</span>' : '<span class="visibility-badge">Visible</span>';
+          return `<div class="class-item ${hiddenClass}" data-class="${cls.name}" data-display="${cls.display}" data-hidden="${cls.hidden}"><span>${cls.display}</span>${userRole === 'admin' ? badge : ''}</div>`;
+        }).join('');
+        classList.querySelectorAll('.class-item').forEach(item => {
+          const badge = item.querySelector('.visibility-badge');
+          if (badge) {
+            badge.addEventListener('click', async (e) => {
+              e.stopPropagation();
+              const className = item.dataset.class;
+              const isCurrentlyHidden = item.dataset.hidden === 'true';
+              const newHiddenState = !isCurrentlyHidden;
+              try {
+                const result = await API.toggleClassVisibility(className, newHiddenState);
+                if (result && result.success) {
+                  const updatedHidden = Object.prototype.hasOwnProperty.call(result, 'hidden') ? !!result.hidden : newHiddenState;
+                  item.dataset.hidden = updatedHidden.toString();
+                  item.classList.toggle('hidden', updatedHidden);
+                  badge.textContent = updatedHidden ? 'Hidden' : 'Visible';
+                } else {
+                  alert(result && result.error ? result.error : 'Failed to update class visibility');
+                }
+              } catch (err) {
+                console.error('Error toggling visibility:', err);
+                alert('Error updating class visibility');
+              }
+            });
+          }
+          item.addEventListener('click', () => {
+            classList.querySelectorAll('.class-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            classTrackerSelectedClass = item.dataset.class;
+            loadClassStats(classTrackerSelectedClass, item.dataset.display);
+          });
+        });
+      } catch(e){ classList.innerHTML = '<div style="padding:16px; color:#6b7280;">Error loading classes</div>'; }
+    }
+
+    async function loadClassStats(classNameRaw, displayName){
+      const statsContent = $('#classStatsContent');
+      const statsTitle = $('#classStatsTitle');
+      statsTitle.textContent = `${displayName || displayClassName(classNameRaw)} • Top Students`;
+      statsContent.innerHTML = '<div style="text-align:center; padding:20px; color:#6b7280;">Loading...</div>';
+      
+      try{
+        const apiClass = backendClassName(classNameRaw);
+        const js = await API.leaderboard(apiClass, 'month');
+        const leaderboard = (js && js.success && Array.isArray(js.leaderboard)) ? js.leaderboard : [];
+        
+        if (!leaderboard.length) {
+          statsContent.innerHTML = '<div style="padding:20px; color:#6b7280;">No data for this class</div>';
+          return;
+        }
+        
+        // Get top 3 students sorted by super score (highest to lowest)
+        const top3 = leaderboard
+          .map(s => ({ ...s, superScore: Math.round((s.points * s.stars) / 1000) }))
+          .sort((a, b) => b.superScore - a.superScore)
+          .slice(0, 3);
+        const html = `
+          <div class="top-students">
+            ${top3.map((student, idx) => {
+              const rank = idx + 1;
+              const superScore = Math.round((student.points * student.stars) / 1000);
+              const sessions = student.attempts || 0;
+              return `
+                <div class="student-rank-card" data-rank="${rank}">
+                  <div class="name">${student.name || 'Unknown'}</div>
+                  <div class="korean-name">${student.korean_name || '—'}</div>
+                  <div class="stats-row">
+                    <div class="stat-item">
+                      <div class="stat-label">Super Score</div>
+                      <div class="stat-value">${superScore}</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Stars</div>
+                      <div class="stat-value">${student.stars || 0}</div>
+                    </div>
+                  </div>
+                  <div class="stats-row">
+                    <div class="stat-item">
+                      <div class="stat-label">Points</div>
+                      <div class="stat-value">${student.points || 0}</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Sessions</div>
+                      <div class="stat-value">${sessions}</div>
+                    </div>
+                  </div>
+                  <div class="stats-row">
+                    <div class="stat-item">
+                      <div class="stat-label">Accuracy</div>
+                      <div class="stat-value">${student.accuracy || 0}%</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label"></div>
+                      <div class="stat-value"></div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        statsContent.innerHTML = html;
+      } catch(e){ statsContent.innerHTML = '<div style="padding:20px; color:#6b7280;">Error loading class stats</div>'; }
+    }
+
     // Wire UI
     document.addEventListener('DOMContentLoaded', () => {
       loadClasses();
+      loadClassTrackerClasses(); // Initialize Class Tracker
       classSel.addEventListener('change', () => { selectedStudent = null; renderStudentEmpty(); loadLeaderboard(); });
       timeSel.addEventListener('change', () => { if (classSel.value) { loadLeaderboard(); if (selectedStudent) loadStudent(selectedStudent); } });
       refreshBtn.addEventListener('click', () => { loadLeaderboard(); if (selectedStudent) loadStudent(selectedStudent); });
       searchBox.addEventListener('input', () => renderLeaderboard(rawLeaderboard));
+      
+      // Navigation tab switching
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+          const tabName = tab.dataset.tab;
+          
+          // Update active tab
+          document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // Update active content
+          document.querySelectorAll('[id$="-content"]').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(tabName + '-content').classList.add('active');
+        });
+      });
+      
+      // Sortable column headers
+      document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const newColumn = th.dataset.sort;
+          if (sortColumn === newColumn) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortColumn = newColumn;
+            sortDirection = 'asc';
+          }
+          
+          // Update sort indicators
+          document.querySelectorAll('th.sortable').forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+          });
+          th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+          
+          renderLeaderboard(rawLeaderboard);
+        });
+      });
+      
       // Tab switching
       $$('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));

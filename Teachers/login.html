@@ -348,13 +348,14 @@
         
         showMessage(`Welcome back! Redirecting...`, 'success');
         
-        // Determine redirect target: honor ?redirect= param if present and same-origin
+        // Determine redirect target: honor ?redirect= param if present and same-origin.
+        // If no explicit redirect, always send back to the main Teacher dashboard.
         const params = new URLSearchParams(location.search);
         let target = params.get('redirect');
         if (target && !/^https?:/i.test(target) && target.startsWith('/')) {
           // Allow only internal paths
         } else {
-          target = (role === 'admin') ? '/Teachers/components/feedback-admin.html' : '/Teachers/index.html';
+          target = '/Teachers/index.html';
         }
         setTimeout(() => { window.location.href = target; }, 700);
         
@@ -384,6 +385,9 @@
           const redirect = params.get('redirect');
           if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
             window.location.replace(redirect);
+          } else {
+            // Already logged in and no specific redirect: go to Teacher dashboard
+            window.location.replace('/Teachers/index.html');
           }
         }
       } catch (error) {

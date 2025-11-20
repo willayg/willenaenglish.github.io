@@ -27,7 +27,7 @@ const baseHeaders = {
   'content-type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 };
 
 function json(status, body) {
@@ -86,6 +86,18 @@ function parseSummary(summary) {
   }
 }
 
+function normalizeClassDisplay(name) {
+  const raw = (name || '').trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  if (lower === 'ny') return 'New York';
+  return raw;
+}
+
+function classKey(name) {
+  return normalizeClassDisplay(name).toLowerCase();
+}
+
 // Mirrors progress_summary star thresholds so teacher and student leaderboards agree.
 function deriveStars(summary) {
   const s = summary || {};
@@ -123,8 +135,9 @@ async function fetchAllRows(createQuery, batchSize = 1000, maxBatches = 200) {
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return json(200, { ok: true });
-  if (event.httpMethod !== 'GET') return json(405, { error: 'Method Not Allowed' });
+  const method = event.httpMethod || 'GET';
+  if (method === 'OPTIONS') return json(200, { ok: true });
+  if (!['GET', 'POST'].includes(method)) return json(405, { error: 'Method Not Allowed' });
 
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.supabase_url;
   const ADMIN_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key || process.env.SUPABASE_KEY;
@@ -145,6 +158,54 @@ exports.handler = async (event) => {
   const action = qs.action || 'help';
 
   try {
+    if (action === 'toggle_class_visibility') {
+      if (method !== 'POST') return json(405, { success: false, error: 'Method Not Allowed' });
+      if (teacher.role !== 'admin') return json(403, { success: false, error: 'Admins only' });
+
+      let classParam = (qs.class || '').trim();
+      let hiddenValue = qs.hidden;
+      if ((!classParam || hiddenValue === undefined) && event.body) {
+        try {
+          const parsed = JSON.parse(event.body);
+          if (parsed && typeof parsed === 'object') {
+            if (!classParam && parsed.class) classParam = String(parsed.class).trim();
+            if (hiddenValue === undefined && parsed.hidden !== undefined) hiddenValue = parsed.hidden;
+          }
+        } catch {}
+      }
+
+      if (!classParam) return json(400, { success: false, error: 'Missing class parameter' });
+      const displayName = normalizeClassDisplay(classParam);
+      if (!displayName) return json(400, { success: false, error: 'Invalid class parameter' });
+      const key = classKey(displayName);
+      const toggleTo = (() => {
+        if (typeof hiddenValue === 'boolean') return hiddenValue;
+        if (typeof hiddenValue === 'number') return hiddenValue !== 0;
+        if (typeof hiddenValue === 'string') {
+          const lower = hiddenValue.trim().toLowerCase();
+          if (lower === '1' || lower === 'true' || lower === 'yes' || lower === 'on') return true;
+          if (lower === '0' || lower === 'false' || lower === 'no' || lower === 'off') return false;
+        }
+        return false;
+      })();
+
+      const payload = {
+        class_key: key,
+        class_name: displayName,
+        hidden: toggleTo,
+        updated_by: teacher.id,
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await admin.from('class_visibility').upsert(payload, { onConflict: 'class_key' });
+      if (error) {
+        if (error.code === '42P01') {
+          return json(400, { success: false, error: 'class_visibility table missing. Run latest Supabase migration.' });
+        }
+        return json(400, { success: false, error: error.message });
+      }
+      return json(200, { success: true, class: displayName, hidden: toggleTo });
+    }
+
     // 1) List classes for dropdown (distinct class for students)
     if (action === 'classes_list') {
       const { data, error } = await admin
@@ -156,13 +217,29 @@ exports.handler = async (event) => {
       
       // Normalize and sort: specified order first, then rest alphabetically
       const preferredOrder = ['Brown', 'Stanford', 'Manchester', 'Melbourne', 'New York', 'Hawaii', 'Boston', 'Sydney', 'Berkeley', 'Chicago', 'Cambridge', 'Yale', 'Washington', 'Oxford', 'MIT', 'Dublin', 'Harvard'];
-      const normalized = rawClasses.map(c => {
-        if (c.toUpperCase() === 'NY') return 'New York';
-        return c;
+      const normalized = [];
+      const seen = new Set();
+      rawClasses.forEach((c) => {
+        const display = normalizeClassDisplay(c);
+        if (!display) return;
+        if (seen.has(display)) return;
+        seen.add(display);
+        normalized.push(display);
       });
       const inOrder = preferredOrder.filter(p => normalized.includes(p));
       const remaining = normalized.filter(c => !inOrder.includes(c)).sort();
-      const classes = [...inOrder, ...remaining];
+      const { data: visRowsRaw, error: visErr } = await admin
+        .from('class_visibility')
+        .select('class_key, class_name, hidden');
+      if (visErr && visErr.code !== '42P01') {
+        console.warn('[progress_teacher_summary] class_visibility fetch error', visErr.message);
+      }
+      const visRows = Array.isArray(visRowsRaw) ? visRowsRaw : [];
+      const visMap = new Map(visRows.map(r => [r.class_key, !!r.hidden]));
+      const classes = [...inOrder, ...remaining].map(name => ({
+        name,
+        hidden: visMap.get(classKey(name)) || false
+      }));
       return json(200, { success: true, classes });
     }
 
@@ -175,7 +252,7 @@ exports.handler = async (event) => {
       // Get students in class
       const { data: students, error: sErr } = await admin
         .from('profiles')
-        .select('id, name, username, class')
+        .select('id, name, username, class, korean_name')
         .eq('role', 'student')
         .eq('class', className);
       if (sErr) return json(400, { success: false, error: sErr.message });
@@ -251,6 +328,7 @@ exports.handler = async (event) => {
         return {
           user_id: student.id,
           name: student.name || student.username || 'Unknown',
+          korean_name: student.korean_name || null,
           class: className,
           stars: totalStars,
           points: stats.points || 0,
