@@ -1745,7 +1745,8 @@ async function populateClassFilter() { /* no-op: left class filter removed */ }
     }
   } catch {
     msg.style.color = '#b91c1c';
-    msg.innerHTML = 'Not signed in. <a href="/Teachers/login.html" style="color:#2563eb; text-decoration:underline;">Sign in</a> and return.';
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    msg.innerHTML = `Not signed in. <a href="/Teachers/login.html?redirect=${redirect}" style="color:#2563eb; text-decoration:underline;">Sign in</a> and return.`;
     return;
   }
   await populateClassFilter();

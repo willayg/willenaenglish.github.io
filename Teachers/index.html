@@ -335,7 +335,8 @@
       (async function() {
         const userId = localStorage.getItem('userId');
         if (!userId) {
-          window.location.href = '/Teachers/login.html';
+          const redirect = encodeURIComponent(location.pathname + location.search);
+          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
           return;
         }
         try {
@@ -346,7 +347,8 @@
             return;
           }
         } catch (e) {
-          window.location.href = '/Teachers/login.html';
+          const redirect = encodeURIComponent(location.pathname + location.search);
+          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
         }
       })();
     </script>
