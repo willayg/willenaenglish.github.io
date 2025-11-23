@@ -204,7 +204,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:12px;">${current.eng}</div>
           <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:12px;max-width:100%;margin:0 auto 10px auto;padding:0 4px;">
             ${choices.map(ch => `
-              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="aspect-ratio:1;min-height:120px;padding:8px;display:flex;align-items:center;justify-content:center;">
+              <button class="choice-btn multi-pic-btn" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="aspect-ratio:1;min-height:120px;padding:8px;display:flex;align-items:center;justify-content:center;border:2px solid #e15b96;border-radius:18px;background:#fff;transition:all 0.2s ease;">
                 ${getTileHtml(ch)}
               </button>
             `).join('')}
@@ -253,7 +253,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div style="margin:8px 0 14px 0;display:flex;justify-content:center;">${getPromptTileHtml(current)}</div>
           <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:min(90vw, 520px);margin:0 auto 12px auto;justify-content:center;">
             ${choices.map(txt => `
-              <button class="multi-choice-btn choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}" ${txt === current.eng ? 'data-correct="1"' : ''}>${txt}</button>
+              <button class="multi-choice-btn choice-btn" data-eng="${String(txt).replaceAll('"','&quot;')}" ${txt === current.eng ? 'data-correct="1"' : ''} style="font-size:clamp(1.0625rem,2.75vw,1.3125rem);font-weight:600;color:#e15b96;border:2px solid #e15b96;background:#fff;border-radius:18px;padding:16px 20px;transition:all 0.2s ease;">${txt}</button>
             `).join('')}
           </div>
           <div id="multiFeedbackMixed" style="margin-top:8px;font-size:1.1em;height:24px;color:#555;"></div>
@@ -318,7 +318,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${prompt}</div>
       <div id="multiChoicesMixed" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:min(90vw, 480px);margin:0 auto 18px auto;justify-content:center;">
         ${choices.map(txt => `
-          <button class="multi-choice-btn choice-btn" data-${dataAttr}="${txt.replaceAll('"','&quot;')}" ${txt === correctText ? 'data-correct="1"' : ''}>
+          <button class="multi-choice-btn choice-btn" data-${dataAttr}="${txt.replaceAll('"','&quot;')}" ${txt === correctText ? 'data-correct="1"' : ''} style="font-size:clamp(1.0625rem,2.75vw,1.3125rem);font-weight:600;color:#e15b96;border:2px solid #e15b96;background:#fff;border-radius:18px;padding:16px 20px;transition:all 0.2s ease;">
             ${txt}
           </button>
         `).join('')}

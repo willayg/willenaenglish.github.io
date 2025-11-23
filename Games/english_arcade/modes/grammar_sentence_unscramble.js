@@ -3,6 +3,8 @@
 // and logs under a dedicated grammar mode name for progress tracking.
 
 import { run as runSentenceMode } from './word_sentence_mode.js';
+import { showUnscrambleSplash } from './unscramble_splash.js';
+import { playSFX } from '../sfx.js';
 
 const AUDIO_ENDPOINTS = [
   '/.netlify/functions/get_audio_urls',
@@ -141,7 +143,20 @@ export async function runGrammarSentenceUnscramble(ctx) {
     return;
   }
 
-  let rawData = [];
+  // Show a lightweight splash while the grammar file and audio hydrate load.
+  let splashController = null;
+  try {
+    console.log('[GrammarUnscramble] about to show splash, document.body:', document.body);
+    const splashRoot = document.body;
+    splashController = showUnscrambleSplash(splashRoot, { english: 'Unscramble the sentence', korean: '문장을 풀어보세요', duration: 2000 });
+    console.log('[GrammarUnscramble] splash controller returned:', splashController);
+    // Wait for the initial animated reveal to complete before continuing heavy work
+    if (splashController && splashController.readyPromise) await splashController.readyPromise;
+    console.log('[GrammarUnscramble] splash readyPromise resolved');
+  } catch (e) {
+    // Non-fatal: continue if splash fails
+    console.debug('[GrammarUnscramble] splash failed', e?.message);
+  }  let rawData = [];
   try {
     const res = await fetch(grammarFile);
     if (!res.ok) throw new Error(`Failed to load ${grammarFile}`);
@@ -232,9 +247,23 @@ export async function runGrammarSentenceUnscramble(ctx) {
           return;
         }
       } catch {}
-      showOpeningButtons?.(true);
+  // Hide the splash/modal only when the game mode has ended and the
+  // quit action is performed.
+  try { if (splashController && typeof splashController.hide === 'function') splashController.hide(); } catch (e) {}
+  // Play final SFX to indicate end of mode
+  try { playSFX('end'); } catch (e) {}
+  showOpeningButtons?.(true);
     },
   };
 
   runSentenceMode(forwardedCtx);
+  // Auto-hide splash shortly after the mode is started so UI isn't blocked indefinitely.
+  try {
+    if (splashController && typeof splashController.hide === 'function') {
+      // Give the mode a short moment to render before hiding the splash
+      setTimeout(() => {
+        try { splashController.hide(); console.log('[GrammarUnscramble] auto-hid splash after mode start'); } catch (e) { console.debug('[GrammarUnscramble] hide failed', e?.message); }
+      }, 700);
+    }
+  } catch (e) { console.debug('[GrammarUnscramble] auto-hide logic failed', e?.message); }
 }

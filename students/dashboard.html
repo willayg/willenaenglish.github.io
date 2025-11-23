@@ -40,6 +40,14 @@
         </div>
       </section>
 
+      <!-- Your Work -->
+      <section class="card" id="homeworkCard">
+        <h2 class="card-title" data-i18n="Homework">Homework</h2>
+        <div class="card-content homework-scroll" style="display:flex;align-items:center;justify-content:center;min-height:280px;max-height:560px;">
+          <!-- Homework cards will be rendered here -->
+        </div>
+      </section>
+
       <!-- Class Leaderboard -->
       <!-- Stars Leaderboard (appears above points-based class leaderboard) -->
       <!-- Stars Class Leaderboard -->
@@ -132,15 +140,6 @@
               <span class="settings-switch"></span>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- Your Work -->
-      <section class="card">
-        <h2 class="card-title" data-i18n="Your Work">Your Work</h2>
-        <div class="card-subtitle" id="dashboardClassName" data-i18n="Class">Class</div>
-        <div class="card-content homework-scroll" style="display:flex;align-items:center;justify-content:center;min-height:160px;">
-          <div class="coming-soon" style="font-size:1.25rem;font-weight:600;color:#666;" data-i18n="Coming soon">Coming soon</div>
         </div>
       </section>
     </div>
@@ -376,6 +375,319 @@
           el.textContent = `${cls} Class`;
         }
       } catch {}
+    })();
+  </script>
+
+  <script>
+    // Load homework into "Your Work" card
+    (async () => {
+      const container = document.querySelector('.card-content.homework-scroll');
+      if (!container) return;
+
+      const t = (k) => (window.StudentLang && StudentLang.translate(k)) || k;
+
+      function render(assignments) {
+        container.innerHTML = '';
+        const t = (k) => (window.StudentLang && StudentLang.translate(k)) || k;
+        if (!assignments || !assignments.length) {
+          const div = document.createElement('div');
+          div.style.fontSize = '1rem';
+          div.style.color = '#888';
+          div.textContent = t('No homework assigned.');
+          container.appendChild(div);
+          return;
+        }
+
+        // Host layout with centered heading and two stacked sections (Incomplete then Complete)
+        const host = document.createElement('div');
+        host.style.width = '100%';
+        host.style.display = 'flex';
+        host.style.flexDirection = 'column';
+        host.style.gap = '12px';
+
+        const heading = document.createElement('div');
+        heading.style.textAlign = 'center';
+        heading.style.fontSize = '1rem';
+        heading.style.fontWeight = '700';
+        heading.style.color = '#bfeef6';
+        heading.style.textTransform = 'lowercase';
+        host.appendChild(heading);
+
+        // Sections
+        const sectionWrap = document.createElement('div');
+        sectionWrap.style.display = 'flex';
+        sectionWrap.style.flexDirection = 'column';
+        sectionWrap.style.gap = '14px';
+
+        const incompleteSection = document.createElement('section');
+        const incTitle = document.createElement('div');
+        incTitle.textContent = '해야 할 숙제';
+        incTitle.style.fontSize = '0.95rem';
+        incTitle.style.fontWeight = '700';
+        incTitle.style.color = '#67e2e6';
+        incompleteSection.appendChild(incTitle);
+        const incList = document.createElement('div');
+        incList.style.display = 'flex';
+        incList.style.flexDirection = 'column';
+        incList.style.gap = '8px';
+        incList.style.maxHeight = '240px';
+        incList.style.overflowY = 'auto';
+        incompleteSection.appendChild(incList);
+
+        const completeSection = document.createElement('section');
+        const compTitle = document.createElement('div');
+        compTitle.textContent = '완료된 숙제';
+        compTitle.style.fontSize = '0.95rem';
+        compTitle.style.fontWeight = '700';
+        compTitle.style.color = '#67e2e6';
+        completeSection.appendChild(compTitle);
+        const compList = document.createElement('div');
+        compList.style.display = 'flex';
+        compList.style.flexDirection = 'column';
+        compList.style.gap = '8px';
+        compList.style.maxHeight = '240px';
+        compList.style.overflowY = 'auto';
+        completeSection.appendChild(compList);
+
+        sectionWrap.appendChild(incompleteSection);
+        sectionWrap.appendChild(completeSection);
+        host.appendChild(sectionWrap);
+
+        // helper to prefer teacher title and sanitize fallback
+        function displayTitle(a) {
+          // If teacher provided a friendly title use it, but ignore values that look like file paths
+          if (a && a.title && typeof a.title === 'string') {
+            if (!a.title.includes('/') && !/\.json$/i.test(a.title)) return a.title;
+          }
+          const raw = a && (a.list_title || a.list_key || '') || '';
+          let s = String(raw || '');
+          if (s.includes('/')) s = s.split('/').pop();
+          s = s.replace(/\.json$/i, '').replace(/[-_]+/g, ' ').trim();
+          return s || t('Homework');
+        }
+
+        // Create cards and append to sections based on progress
+        assignments.forEach(a => {
+          const li = document.createElement('div');
+          li.style.padding = '12px 14px';
+          li.style.borderRadius = '10px';
+          li.style.background = '#26313a'; // dark grey-blue
+          li.style.color = '#fff'; // white text
+          li.style.display = 'flex';
+          li.style.flexDirection = 'column';
+          li.style.gap = '6px';
+          li.style.cursor = 'pointer';
+          li.style.boxShadow = '0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04)';
+          li.style.border = '2px solid #22d3ee';
+          li.style.transition = 'box-shadow 0.18s, transform 0.18s, border-color 0.18s';
+          li.addEventListener('mouseenter',()=>{li.style.boxShadow='0 4px 16px rgba(34,211,238,0.18), 0 2px 8px rgba(0,0,0,.08)';li.style.borderColor='#06b6d4';});
+          li.addEventListener('mouseleave',()=>{li.style.boxShadow='0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04)';li.style.borderColor='#22d3ee';});
+
+          const title = document.createElement('div');
+          title.style.fontWeight = '600';
+          title.style.fontSize = '1rem';
+          title.style.color = '#fff';
+          title.textContent = displayTitle(a);
+
+          // Countdown calculation
+          let countdown = '';
+          if (a.due_at) {
+            const dueDate = new Date(a.due_at);
+            const now = new Date();
+            let diff = dueDate - now;
+            if (diff > 0) {
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              diff -= days * (1000 * 60 * 60 * 24);
+              const hours = Math.floor(diff / (1000 * 60 * 60));
+              diff -= hours * (1000 * 60 * 60);
+              const minutes = Math.floor(diff / (1000 * 60));
+              countdown = `${days > 0 ? days + 'd ' : ''}${hours}h ${minutes}m left`;
+            } else {
+              countdown = 'Past due';
+            }
+          }
+
+          const countdownDiv = document.createElement('div');
+          countdownDiv.style.fontSize = '0.85rem';
+          countdownDiv.style.color = '#bafcff';
+          countdownDiv.textContent = a.due_at ? `${countdown}` : t('No due date');
+
+          // Teacher name (if available)
+          const teacher = document.createElement('div');
+          teacher.style.fontSize = '0.8rem';
+          teacher.style.color = '#e0e0e0';
+          teacher.textContent = a.teacher_name ? `${t('Teacher')}: ${a.teacher_name}` : '';
+
+          // Progress bar
+          const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
+          const progressBar = document.createElement('div');
+          progressBar.style.height = '8px';
+          progressBar.style.width = '100%';
+          progressBar.style.background = '#444c53';
+          progressBar.style.borderRadius = '6px';
+          progressBar.style.margin = '6px 0 2px 0';
+          progressBar.style.overflow = 'hidden';
+          const progressFill = document.createElement('div');
+          progressFill.style.height = '100%';
+          progressFill.style.width = Math.max(6, Math.min(100, Math.round(progress))) + '%';
+          progressFill.style.background = 'linear-gradient(90deg,#22d3ee,#19777e)';
+          progressFill.style.borderRadius = '6px';
+          progressBar.appendChild(progressFill);
+          const progressLabel = document.createElement('div');
+          progressLabel.style.fontSize = '0.75rem';
+          progressLabel.style.color = '#bafcff';
+          progressLabel.style.marginBottom = '2px';
+          progressLabel.textContent = t('Progress') + ': ' + Math.round(progress) + '%';
+
+          // Card click launches homework
+          li.addEventListener('click', () => {
+            if (a.list_key) {
+              window.location.href = `/Games/english_arcade/index.html?hw=${encodeURIComponent(a.id)}&list=${encodeURIComponent(a.list_key)}&autostart=1`;
+            } else if (a.list_title) {
+              window.location.href = `/Games/english_arcade/index.html?list=${encodeURIComponent(a.list_title)}&autostart=1`;
+            } else {
+              window.location.href = '/Games/english_arcade/index.html';
+            }
+          });
+
+          li.appendChild(title);
+          if (progress >= 100) {
+            const doneMsg = document.createElement('div');
+            doneMsg.style.fontWeight = '700';
+            doneMsg.style.fontSize = '1.05rem';
+            doneMsg.style.color = '#ffd86f';
+            doneMsg.style.margin = '8px 0 4px 0';
+            doneMsg.textContent = 'Nice! Homework Done!';
+            li.appendChild(doneMsg);
+            // Dynamic stars earned display
+            const starsWrap = document.createElement('div');
+            starsWrap.style.display = 'flex';
+            starsWrap.style.alignItems = 'center';
+            starsWrap.style.gap = '6px';
+            starsWrap.style.marginBottom = '8px';
+            const starIcon = document.createElement('span');
+            starIcon.innerHTML = '&#9733;';
+            starIcon.style.color = '#ffd86f';
+            starIcon.style.fontSize = '1.4rem';
+            starIcon.style.textShadow = '0 0 8px rgba(255,216,111,0.6)';
+            starsWrap.appendChild(starIcon);
+            const starsLabel = document.createElement('span');
+            const totalStars = (typeof a.stars === 'number') ? a.stars : (a.stars || 0);
+            starsLabel.textContent = totalStars + ' Stars Earned';
+            starsLabel.style.fontSize = '0.85rem';
+            starsLabel.style.fontWeight = '600';
+            starsLabel.style.color = '#ffd86f';
+            starsWrap.appendChild(starsLabel);
+            li.appendChild(starsWrap);
+          } else {
+            li.appendChild(countdownDiv);
+            li.appendChild(progressLabel);
+            li.appendChild(progressBar);
+          }
+          if (teacher.textContent) li.appendChild(teacher);
+
+          // Append to proper section
+          if (progress >= 100) compList.appendChild(li); else incList.appendChild(li);
+        });
+
+        // Empty-section messages
+        if (!incList.children.length) {
+          const m = document.createElement('div'); m.style.color='#9aa'; m.style.padding='8px 0'; m.textContent=t('No incomplete homework.'); incList.appendChild(m);
+        }
+        if (!compList.children.length) {
+          const m2 = document.createElement('div'); m2.style.color='#9aa'; m2.style.padding='8px 0'; m2.textContent=t('No completed homework yet.'); compList.appendChild(m2);
+        }
+
+        container.appendChild(host);
+      }
+
+      // Show loading text
+      container.innerHTML = `<div style="font-size:1rem;color:#888;">${t('Loading...')}</div>`;
+
+      try {
+        // Determine current student user_id first so we can match progress rows
+        let currentUserId = null;
+        try {
+          const whoRes = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+          const whoJson = await whoRes.json().catch(()=>({}));
+          if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
+        } catch {}
+        // Fallback to get_profile_name for user id if needed (returns nothing? then skip)
+        if (!currentUserId) {
+          try {
+            const profRes = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials:'include', cache:'no-store' });
+            const profJson = await profRes.json().catch(()=>({}));
+            if (profRes.ok && profJson.success && profJson.id) currentUserId = profJson.id;
+          } catch {}
+        }
+        const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials: 'include' });
+        const text = await resp.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (e) {
+          console.error('student homework non-JSON', text);
+        }
+        if (!resp.ok || !data.success) {
+          container.innerHTML = `<div style="font-size:1rem;color:#b00020;">${(data && data.error) || t('Error loading homework.')}</div>`;
+          return;
+        }
+
+        // Fetch progress for each assignment
+        const assignmentsWithProgress = await Promise.all(
+          (data.assignments || []).map(async (assignment) => {
+            try {
+              const progressResp = await fetch(
+                `/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}`,
+                { credentials: 'include' }
+              );
+              const progressData = await progressResp.json();
+              
+              if (progressResp.ok && progressData.success && Array.isArray(progressData.progress)) {
+                // Find current student's progress row explicitly
+                let studentProgress = null;
+                if (currentUserId) {
+                  studentProgress = progressData.progress.find(p => p.user_id === currentUserId) || null;
+                }
+                // If user id missing, but only one row and names match profile name, allow fallback
+                if (!studentProgress && progressData.progress.length === 1) {
+                  studentProgress = progressData.progress[0];
+                }
+                if (studentProgress) {
+                  // Derive completion percent robustly
+                  let completionPct = 0;
+                  if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
+                  else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
+                  else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
+                    completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
+                  }
+                  // Clamp
+                  completionPct = Math.max(0, Math.min(100, completionPct));
+                  return {
+                    ...assignment,
+                    completion_pct: completionPct,
+                    stars: studentProgress.stars || 0,
+                    accuracy: studentProgress.accuracy_best || 0,
+                    teacher_name: assignment.teacher_name || data.teacher_name || null
+                  };
+                }
+              }
+            } catch (err) {
+              console.warn('Failed to fetch progress for assignment', assignment.id, err);
+            }
+            return assignment;
+          })
+        );
+
+        render(assignmentsWithProgress);
+        
+        // Show homework container only if there are assignments
+        const hwContainer = document.getElementById('homeworkCard');
+        if (hwContainer) {
+          hwContainer.style.display = (assignmentsWithProgress.length > 0) ? 'block' : 'none';
+        }
+      } catch (err) {
+        console.error('load dashboard homework error', err);
+        container.innerHTML = `<div style="font-size:1rem;color:#b00020;">${t('Error loading homework.')}</div>`;
+      }
     })();
   </script>
 
@@ -1116,7 +1428,7 @@
       height: 18px;
       background: rgba(255, 255, 255, 0.08);
       border-radius: 4px;
-    }
+             }
 
     .lb-skel-score {
       width: 80px;
@@ -1130,6 +1442,48 @@
     html.dark .lb-skel-text,
     html.dark .lb-skel-score {
       background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Homework card container style */
+    .card-content.homework-scroll {
+      background: #23272b !important;
+      border-radius: 12px;
+      padding: 16px !important;
+      /* Custom scrollbar */
+      scrollbar-color: #22d3ee #23272b;
+    }
+    .card-content.homework-scroll::-webkit-scrollbar {
+      width: 2px;
+      background: #23272b;
+      border-radius: 2px;
+    }
+    .card-content.homework-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #22d3ee 0%, #23272b 100%);
+      border-radius: 2px;
+    }
+
+    /* Hide homework container by default until assignments are loaded */
+    #homeworkCard {
+      display: none;
+    }
+
+    /* Animated glow effect for homework alert */
+    .homework-glow {
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      font-size: 1.25rem;
+      text-shadow: 0 0 4px #ff69b4, 0 0 10px #ffd6f7;
+      animation: glowPulse 1.8s infinite alternate;
+    }
+    @keyframes glowPulse {
+      0% {
+        text-shadow: 0 0 2px #ff69b4, 0 0 6px #ffd6f7;
+      }
+      100% {
+        text-shadow: 0 0 8px #ff69b4, 0 0 18px #ffd6f7;
+      }
     }
   </style>
 </body>

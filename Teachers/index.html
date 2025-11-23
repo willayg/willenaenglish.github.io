@@ -123,9 +123,8 @@
             border-radius: 0 0 8px 8px;
             padding: 10px 70px 20px 70px; /* Increase from 70px to 120px */
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 48px 48px;
-            max-height: 2 * (120px + 48px) + 50px * 2; /* 2 rows of cards + gaps + padding */
+            grid-template-columns: repeat(5, 1fr);
+            gap: 24px 24px;
             height: 72vh;
             overflow-y: auto;
             align-items: start;
@@ -146,9 +145,9 @@
             background: #f7f7f7;
             border-radius: 16px;
             border: 4px solid #b0bfc4;
-            padding: 28px 20px;
-            min-width: 220px;
-            min-height: 120px;
+            padding: 16px 12px;
+            min-width: 120px;
+            min-height: 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -186,9 +185,9 @@
         
         .tool-title {
             font-weight: 600;
-            font-size: 1.2rem;
+            font-size: 0.95rem;
             color: #4a5568;
-            margin-bottom: 0.5em;
+            margin-bottom: 0.3em;
         }
         .tool-desc {
             display: none;
@@ -246,7 +245,7 @@
         
         @media (max-width: 900px) {
             .content-area {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
             }
         }
         
@@ -435,6 +434,12 @@
           <div class="tool-title">Manage Students</div>
           <img src="tools/assets/icons/lesson.png" alt="Manage Students" style="height:8em;margin:0.7em 0 0.5em 0;">
           <div class="tool-overlay">Create, reset, or remove student accounts and approvals.</div>
+        </a>
+
+        <a class="tool-card" data-tags="all vocabulary activities on-screen" href="tools/game-builder/index.html">
+          <div class="tool-title">Word Game Builder</div>
+          <img src="tools/assets/icons/grid.png" alt="Word Game Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+          <div class="tool-overlay">Create custom word games for your students to play online.</div>
         </a>
 
             </div>

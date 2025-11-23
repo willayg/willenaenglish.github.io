@@ -550,6 +550,13 @@ async function loadSampleWordlistByFilename(filename, { force = false, listName 
     // optional filename safety - allow slashes for subfolders
     if (!/^[A-Za-z0-9._\/-]+$/.test(filename)) throw new Error('Invalid filename');
 
+    // NEW: Normalize homework-assignment style absolute keys (they include leading "Games/english_arcade/")
+    // Example incoming: "Games/english_arcade/sample-wordlists-level2/Adjectives1.json"
+    // We only need: "sample-wordlists-level2/Adjectives1.json" relative to this module's base.
+    if (/^Games\/english_arcade\//.test(filename)) {
+      filename = filename.replace(/^Games\/english_arcade\//, '');
+    }
+
     // If forcing a fresh start or we still have a previous list loaded, clear previous game state first
     if (force || (Array.isArray(wordList) && wordList.length)) {
       try { clearCurrentGameState({ keepWordList: false }); } catch {}
@@ -572,7 +579,9 @@ async function loadSampleWordlistByFilename(filename, { force = false, listName 
       if (/sorethroat/i.test(filename)) candidates.push(filename.replace(/sorethroat/i, 'sore_throat'));
     }
     let lastErr = null; let loaded = null;
-    for (const cand of Array.from(new Set(candidates))) {
+    for (const candRaw of Array.from(new Set(candidates))) {
+      // Normalize each candidate the same way (strip leading project prefix if present)
+      const cand = /^Games\/english_arcade\//.test(candRaw) ? candRaw.replace(/^Games\/english_arcade\//,'') : candRaw;
       try {
         // If path already contains a slash (subfolder), use as-is; otherwise prefix with sample-wordlists/
         const path = cand.includes('/') ? `./${cand}` : `./sample-wordlists/${cand}`;
@@ -703,13 +712,14 @@ async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
     console.log('[loadGrammarGame] Starting grammar game:', { grammarFile, grammarName });
     showOpeningButtons(false);
     gameArea.innerHTML = '';
-    currentListName = grammarName || null;
-    wordList = [];
   const baseConfig = grammarConfig || {};
+  // Use displayTitle (teacher title) for UI, keep grammarName (file base) as internal key
+  currentListName = (baseConfig.displayTitle || grammarName || null);
+    wordList = [];
     
     // Mark as grammar flow
     window.__WA_IS_GRAMMAR__ = true;
-    try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName, grammarConfig: baseConfig }; } catch {}
+  try { window.__WA_LAST_GRAMMAR__ = { grammarFile, grammarName, grammarConfig: baseConfig, displayTitle: currentListName }; } catch {}
     
     // Show grammar mode selector first
     showGrammarModeSelector({
@@ -744,7 +754,7 @@ async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
         const runGrammarMode = await modeLoader();
         
         // Remember last grammar config for restoring mode menu and back/forward
-        try { window.__WA_LAST_GRAMMAR__ = { grammarFile: fileToUse, grammarName: nameToUse, grammarConfig: configToUse }; } catch {}
+  try { window.__WA_LAST_GRAMMAR__ = { grammarFile: fileToUse, grammarName: nameToUse, grammarConfig: configToUse, displayTitle: (configToUse.displayTitle || nameToUse) }; } catch {}
         // Track entering grammar game for back/forward support
         try {
           if (!historyManager || !historyManager.isBackNavigation) {

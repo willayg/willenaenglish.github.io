@@ -165,7 +165,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, playTTSVariant, 
           <div class="listening-game" style="max-width:640px;margin:0 auto;">
             <div id="pictureChoices" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:16px;max-width:100%;margin:0 auto 18px auto;padding:0 12px;">
               ${shuffledChoices.map(ch => `
-                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;min-height:140px;">
+                <button class="choice-btn pic-choice" data-eng="${ch.eng}" ${ch.eng === current.eng ? 'data-correct="1"' : ''} style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;min-height:140px;border:2px solid #e15b96;border-radius:18px;background:#fff;padding:8px;transition:all 0.2s ease;">
                   ${tileHtml(ch)}
                 </button>
               `).join('')}
@@ -219,7 +219,7 @@ export function runListeningMode({ wordList, gameArea, playTTS, playTTSVariant, 
     gameArea.innerHTML = `<div class="listening-game" style="max-width:640px;margin:0 auto;">
       <div id="listeningChoices" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:12px;max-width:100%;margin:0 auto 18px auto;padding:0 12px;">
         ${shuffledKor.map(kor => `
-            <button class="listening-choice choice-btn" data-kor="${kor}" ${kor === current.kor ? 'data-correct="1"' : ''} style="height:auto;min-height:80px;display:flex;align-items:center;justify-content:center;">
+            <button class="listening-choice choice-btn" data-kor="${kor}" ${kor === current.kor ? 'data-correct="1"' : ''} style="height:auto;min-height:100px;display:flex;align-items:center;justify-content:center;font-size:clamp(1.0625rem,3.125vw,1.375rem);font-weight:600;color:#e15b96;border:2px solid #e15b96;background:#fff;border-radius:18px;padding:16px 20px;transition:all 0.2s ease;">
             ${kor}
           </button>
         `).join('')}

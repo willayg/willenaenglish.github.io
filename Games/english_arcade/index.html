@@ -61,7 +61,9 @@
   <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
   <img slot="actions" src="assets/Images/icons/english-arcade.svg" alt="English Arcade" style="height:4em;max-height:4.5em;display:block;" />
   <a slot="menu-item" id="tabWordArcade" class="wa-menu-btn wa-tab active" href="#" data-i18n="English Arcade">English Arcade</a>
-  <a slot="menu-item" id="tabGrammarArcade" class="wa-menu-btn wa-tab" href="#" data-i18n="Your Homework">Willena Homework</a>
+  <a slot="menu-item" id="tabGrammarArcade" class="wa-menu-btn wa-tab" href="#" data-i18n="Your Homework">your homework
+    <span id="hwTabBadge" aria-hidden="true" style="display:none;margin-left:8px;vertical-align:middle;background:#c2410c;color:#fff;border-radius:999px;padding:2px 7px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.18);min-width:20px;text-align:center;line-height:1;">0</span>
+  </a>
   </student-header>
 
   <main class="notranslate" translate="no">
@@ -115,6 +117,24 @@
         <button id="closeComingSoon" style="font-size:1em;padding:8px 22px;border-radius:8px;background:#19777e;color:#fff;border:none;box-shadow:0 2px 8px #19777e33;cursor:pointer;">OK</button>
       </div>
     </div>
+    <!-- Homework Requirement Modal (Korean explanation) -->
+    <div id="hwRequirementModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+      <div style="background:#ffffff;border-radius:22px;box-shadow:0 6px 38px rgba(25,119,126,0.35);padding:42px 34px 34px;max-width:440px;width:92%;font-family:'Poppins',Arial,sans-serif;position:relative;">
+        <h2 style="margin:0 0 18px;font-size:1.55rem;font-weight:800;color:#19777e;letter-spacing:.5px;">숙제 완료 기준</h2>
+        <p style="margin:0 0 14px;font-size:0.95rem;line-height:1.55;color:#374151;font-weight:600;">각 게임 모드에서 <span style="color:#dc2626;font-weight:700;">별 1개</span> 이상 받으면 해당 모드를 완료로 인정합니다.</p>
+        <ul style="margin:0 0 18px;padding-left:18px;font-size:0.85rem;color:#4b5563;line-height:1.4;">
+          <li>모드를 그냥 끝까지 클릭만 해서는 완료가 아닙니다.</li>
+          <li>별 1개는 기본 학습 기준입니다. 나중에 선생님이 더 높은 기준(2~5개 별)을 설정할 수 있습니다.</li>
+          <li>가능하면 정확도를 높여 더 많은 별을 얻어 보세요!</li>
+        </ul>
+        <div style="background:#f1fafc;border:2px solid #22d3ee;border-radius:14px;padding:14px 16px;margin-bottom:18px;font-size:0.8rem;color:#0d5d63;line-height:1.4;">
+          별은 정확도와 문제 풀이 결과에 따라 올라갑니다. 틀린 문제는 다시 도전해서 별을 늘려 보세요.
+        </div>
+        <button id="hwRequirementStart" style="display:inline-block;background:linear-gradient(90deg,#22d3ee,#19777e);color:#fff;font-weight:700;font-size:0.95rem;border:none;padding:12px 28px;border-radius:12px;cursor:pointer;box-shadow:0 4px 16px rgba(34,211,238,0.35);transition:transform .18s,box-shadow .18s;">숙제 시작하기</button>
+        <button id="hwRequirementClose" style="margin-left:10px;background:#ffffff;color:#19777e;font-weight:600;font-size:0.85rem;border:2px solid #19777e;padding:10px 18px;border-radius:10px;cursor:pointer;">닫기</button>
+        <div style="margin-top:16px;font-size:0.7rem;color:#6b7280;">오늘 한 번만 표시됩니다.</div>
+      </div>
+    </div>
   </main>
 
   <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
@@ -144,6 +164,13 @@
       const tabWordArcade = $('#tabWordArcade');
       const tabGrammarArcade = $('#tabGrammarArcade');
 
+      // Check if we should auto-launch homework from dashboard
+      const urlParams = new URLSearchParams(window.location.search);
+      const autostart = urlParams.get('autostart');
+      const listParam = urlParams.get('list');
+      const hwParam = urlParams.get('hw');
+  const isGrammarParam = urlParams.get('grammar'); // optional override
+
       if (tabWordArcade) {
         tabWordArcade.addEventListener('click', (e) => {
           e.preventDefault();
@@ -154,15 +181,425 @@
           if (window.WordArcade?.quitToOpening) {
             window.WordArcade.quitToOpening(true);
           }
+          // Show opening buttons & progress bar host again
+          const opening = document.getElementById('openingButtons');
+          if (opening) opening.style.display = '';
+          const gp = document.getElementById('gameProgressBar');
+          if (gp) gp.style.display = 'none'; // keep hidden until game starts
         });
       }
 
       if (tabGrammarArcade) {
-        tabGrammarArcade.addEventListener('click', (e) => {
+        tabGrammarArcade.addEventListener('click', async (e) => {
           e.preventDefault();
-          // Show coming soon modal instead of navigating
-          const modal = document.getElementById('comingSoonModal');
-          if (modal) modal.style.display = 'flex';
+          // Show requirement modal first (once per day)
+          const modal = document.getElementById('hwRequirementModal');
+          const acknowledgedKey = 'hwRequirementAckDate';
+          const today = new Date().toISOString().slice(0,10);
+          const prev = localStorage.getItem(acknowledgedKey);
+          if (modal && prev !== today) {
+            modal.style.display = 'flex';
+            const startBtn = document.getElementById('hwRequirementStart');
+            const closeBtn = document.getElementById('hwRequirementClose');
+            const closeModal = () => { modal.style.display='none'; };
+            if (startBtn && !startBtn.dataset.bound) {
+              startBtn.dataset.bound='1';
+              startBtn.addEventListener('click', () => {
+                localStorage.setItem(acknowledgedKey, today);
+                closeModal();
+                loadHomeworkTab();
+              });
+            }
+            if (closeBtn && !closeBtn.dataset.bound) {
+              closeBtn.dataset.bound='1';
+              closeBtn.addEventListener('click', () => { closeModal(); });
+            }
+            return; // wait for user to acknowledge
+          }
+          loadHomeworkTab();
+        });
+      }
+
+      // Homework badge updater: show count of incomplete homeworks on the tab
+      async function updateHomeworkBadge() {
+        const badge = document.getElementById('hwTabBadge');
+        if (!badge) return;
+        try {
+          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include' });
+          if (!resp.ok) { badge.style.display='none'; return; }
+          const data = await resp.json().catch(()=>({}));
+          if (!data || !data.success || !Array.isArray(data.assignments)) { badge.style.display='none'; return; }
+          // For each assignment, try to get student's progress row to determine completeness
+          let incomplete = 0;
+          // Fetch progress for assignments in parallel but limit concurrency to avoid spikes
+          const assignments = data.assignments || [];
+          await Promise.all(assignments.map(async (a) => {
+            try {
+              const pr = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include' });
+              const pj = await pr.json().catch(()=>({}));
+              if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
+                // find current user row if present
+                const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' }).then(r=>r.ok?r.json():{}).catch(()=>({}));
+                const uid = who && who.user_id ? who.user_id : null;
+                let myRow = null;
+                if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
+                if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
+                const completed = myRow ? (typeof myRow.completion === 'number' ? myRow.completion >= 100 : (myRow.completion_pct >= 100)) : false;
+                if (!completed) incomplete++;
+              } else {
+                // If progress unavailable, assume incomplete
+                incomplete++;
+              }
+            } catch (e) { incomplete++; }
+          }));
+          if (incomplete > 0) {
+            badge.textContent = String(incomplete);
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        } catch (e) {
+          // silent fail
+        }
+      }
+
+      // Update badge on load and when the homework tab is opened
+      updateHomeworkBadge();
+      const originalLoadHomeworkTab = window.loadHomeworkTab || null;
+      window.loadHomeworkTab = async function(){
+        if (typeof originalLoadHomeworkTab === 'function') await originalLoadHomeworkTab();
+        // refresh badge after loading
+        setTimeout(updateHomeworkBadge, 400);
+      };
+
+      async function loadHomeworkTab() {
+        // Tab visual state
+        tabGrammarArcade.classList.add('active');
+        tabWordArcade?.classList.remove('active');
+
+        // Quit current game to show homework list
+        if (window.WordArcade?.quitToOpening) {
+          window.WordArcade.quitToOpening(true);
+        }
+
+  // Hide opening buttons & progress bar while viewing homework
+  const opening = document.getElementById('openingButtons');
+  if (opening) opening.style.display = 'none';
+  const gp = document.getElementById('gameProgressBar');
+  if (gp) gp.style.display = 'none';
+
+        const gameArea = document.getElementById('gameArea');
+        if (!gameArea) return;
+
+        const t = (k) => (window.StudentLang && StudentLang.translate(k)) || k;
+        // Loading placeholder
+        gameArea.innerHTML = `<div style="padding:22px;text-align:center;font-size:1rem;color:#666;">${t('Loading homework...')}</div>`;
+
+        try {
+          // Determine current student user_id first (needed to match progress rows)
+            let currentUserId = null;
+            try {
+              const whoRes = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+              const whoJson = await whoRes.json().catch(()=>({}));
+              if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
+            } catch {}
+            if (!currentUserId) {
+              try {
+                const profRes = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials:'include', cache:'no-store' });
+                const profJson = await profRes.json().catch(()=>({}));
+                if (profRes.ok && profJson.success && profJson.id) currentUserId = profJson.id;
+              } catch {}
+            }
+
+          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include' });
+          const rawText = await resp.text();
+          let data = {};
+          try { data = rawText ? JSON.parse(rawText) : {}; } catch (e) { console.error('homework_api non-JSON', rawText); }
+          if (!resp.ok || !data.success) {
+            gameArea.innerHTML = `<div style="padding:22px;text-align:center;color:#c62828;font-weight:600;">${(data && data.error) || t('Error loading homework.')}</div>`;
+            return;
+          }
+          const assignments = data.assignments || [];
+          if (!assignments.length) {
+            gameArea.innerHTML = `<div style="padding:32px;text-align:center;color:#777;font-size:1.05rem;">${t('No homework assigned.')}</div>`;
+            return;
+          }
+
+          // Fetch progress for each assignment
+          const assignmentsWithProgress = await Promise.all(assignments.map(async (a) => {
+            try {
+              const prRes = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include' });
+              const prJson = await prRes.json().catch(()=>({}));
+              if (prRes.ok && prJson.success && Array.isArray(prJson.progress)) {
+                let studentProgress = null;
+                if (currentUserId) studentProgress = prJson.progress.find(p => p.user_id === currentUserId) || null;
+                if (!studentProgress && prJson.progress.length === 1) studentProgress = prJson.progress[0];
+                if (studentProgress) {
+                  let completionPct = 0;
+                  if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
+                  else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
+                  else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
+                    completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
+                  }
+                  completionPct = Math.max(0, Math.min(100, completionPct));
+                  return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null };
+                }
+              }
+            } catch (e) { console.warn('progress fetch failed', a.id, e); }
+            return a;
+          }));
+
+          // Build white style card list
+          const host = document.createElement('div');
+          host.style.maxWidth = '880px';
+          host.style.margin = '0 auto';
+          host.style.padding = '8px 18px 36px';
+          host.style.display = 'flex';
+          host.style.flexDirection = 'column';
+          host.style.gap = '14px';
+          host.innerHTML = `<h2 style="margin:12px 0 4px;font-size:0.95rem;font-weight:700;color:#19777e;text-transform:lowercase;">${t('Your Homework')}</h2>`;
+          const listWrap = document.createElement('div');
+          listWrap.style.display = 'flex';
+          listWrap.style.flexDirection = 'column';
+          listWrap.style.gap = '18px';
+          listWrap.style.maxHeight = '560px';
+          listWrap.style.overflow = 'visible';
+          listWrap.style.paddingRight = '4px';
+          listWrap.style.background = 'transparent';
+
+          // Build two sections: Incomplete (top) and Complete (bottom)
+          host.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:22px;padding-top:4px;">
+              <section id="hw-incomplete" style="display:flex;flex-direction:column;gap:12px;padding-bottom:6px;">
+                <h3 style="margin:0;font-size:0.95rem;color:#19777e;font-weight:700;">해야 할 숙제</h3>
+                <div class="hw-list-incomplete" style="display:flex;flex-direction:column;gap:14px;padding-top:12px;"></div>
+              </section>
+              <div style="height:1px;background:linear-gradient(90deg, rgba(34,211,238,0.25), rgba(34,211,238,0.8));margin:6px 0;border-radius:2px;"></div>
+              <section id="hw-complete" style="display:flex;flex-direction:column;gap:8px;padding-top:6px;">
+                <h3 style="margin:0;font-size:0.95rem;color:#19777e;font-weight:700;">완료된 숙제</h3>
+                <div class="hw-list-complete" style="display:flex;flex-direction:column;gap:12px;padding-top:12px;max-height:240px;overflow-y:auto;"></div>
+              </section>
+            </div>
+          `;
+
+          const incompleteList = host.querySelector('.hw-list-incomplete');
+          const completeList = host.querySelector('.hw-list-complete');
+
+          assignmentsWithProgress.forEach(a => {
+            const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
+            // Countdown time left
+            let countdown = '';
+            if (a.due_at) {
+              const due = new Date(a.due_at); const now = new Date();
+              let diff = due - now;
+              if (diff > 0) {
+                const days = Math.floor(diff / 86400000); diff -= days * 86400000;
+                const hours = Math.floor(diff / 3600000); diff -= hours * 3600000;
+                const minutes = Math.floor(diff / 60000);
+                countdown = `${days > 0 ? days + 'd ' : ''}${hours}h ${minutes}m ${t('left')}`;
+              } else countdown = t('Past due');
+            }
+            const card = document.createElement('div');
+            card.className = 'wa-hw-card';
+            card.style.background = '#ffffff';
+            card.style.border = '2px solid #22d3ee';
+            card.style.borderRadius = '16px';
+            card.style.padding = '14px 16px 16px';
+            card.style.boxShadow = '0 4px 16px rgba(25,119,126,0.12), 0 2px 6px rgba(0,0,0,0.06)';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.gap = '6px';
+            card.style.cursor = 'pointer';
+            card.style.transition = 'box-shadow .18s, transform .18s, border-color .18s';
+            card.addEventListener('mouseenter',()=>{ card.style.boxShadow='0 6px 22px rgba(34,211,238,0.22),0 3px 10px rgba(0,0,0,0.08)'; card.style.borderColor='#06b6d4'; });
+            card.addEventListener('mouseleave',()=>{ card.style.boxShadow='0 4px 16px rgba(25,119,126,0.12), 0 2px 6px rgba(0,0,0,0.06)'; card.style.borderColor='#22d3ee'; });
+
+            const title = document.createElement('div');
+            title.style.fontWeight = '600';
+            title.style.fontSize = '1.05rem';
+            title.style.color = '#123';
+            title.textContent = a.title || a.list_title || t('Homework');
+            card.appendChild(title);
+
+            if (progress >= 100) {
+              const doneMsg = document.createElement('div');
+              doneMsg.style.fontWeight = '700';
+              doneMsg.style.fontSize = '1rem';
+              doneMsg.style.color = '#d08800';
+              doneMsg.textContent = t('Nice! Homework Done!');
+              card.appendChild(doneMsg);
+              const starsWrap = document.createElement('div');
+              starsWrap.style.display = 'flex'; starsWrap.style.alignItems = 'center'; starsWrap.style.gap = '6px';
+              const starIcon = document.createElement('span'); starIcon.innerHTML='&#9733;'; starIcon.style.color='#ffd86f'; starIcon.style.fontSize='1.5rem'; starIcon.style.textShadow='0 0 6px rgba(255,216,111,0.6)';
+              starsWrap.appendChild(starIcon);
+              const starsLabel = document.createElement('span'); starsLabel.style.fontSize='0.85rem'; starsLabel.style.fontWeight='600'; starsLabel.style.color='#b06d00'; starsLabel.textContent=(typeof a.stars==='number'?a.stars:(a.stars||0)) + ' ' + t('Stars Earned');
+              starsWrap.appendChild(starsLabel); card.appendChild(starsWrap);
+            } else {
+              const countdownDiv = document.createElement('div');
+              countdownDiv.style.fontSize = '0.75rem';
+              countdownDiv.style.color = '#19777e';
+              countdownDiv.textContent = countdown || t('No due date');
+              card.appendChild(countdownDiv);
+              // Progress bar
+              const pb = document.createElement('div'); pb.style.height='8px'; pb.style.width='100%'; pb.style.background='#e5ecef'; pb.style.borderRadius='6px'; pb.style.overflow='hidden'; pb.style.margin='4px 0 2px';
+              const fill = document.createElement('div'); fill.style.height='100%'; fill.style.width=Math.max(6, Math.min(100, Math.round(progress)))+'%'; fill.style.background='linear-gradient(90deg,#59d7db,#19777e)'; fill.style.borderRadius='6px'; pb.appendChild(fill); card.appendChild(pb);
+              const plab = document.createElement('div'); plab.style.fontSize='0.7rem'; plab.style.color='#0d5d63'; plab.textContent=t('Progress') + ': ' + Math.round(progress) + '%'; card.appendChild(plab);
+            }
+            if (a.teacher_name) {
+              const teacher = document.createElement('div'); teacher.style.fontSize='0.7rem'; teacher.style.color='#555'; teacher.textContent=t('Teacher') + ': ' + a.teacher_name; card.appendChild(teacher);
+            }
+            card.addEventListener('click', async () => {
+              const listKey = a.list_key || a.list_title || '';
+              if (!listKey) return;
+              // Switch back to main arcade tab
+              tabWordArcade?.classList.add('active');
+              tabGrammarArcade.classList.remove('active');
+              const hwId = a.id;
+              // Autostart the homework and prefer the teacher-assigned title when available
+              try {
+                await autostartHomework(listKey, hwId, a.title || a.list_title || null);
+              } catch (err) {
+                console.error('autostartHomework failed', err);
+                // Fallback: navigate to autostart URL
+                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId)}&list=${encodeURIComponent(listKey)}&autostart=1`;
+                window.location.href = url;
+              }
+            });
+            // Place card into appropriate section
+            if (progress >= 100) {
+              completeList.appendChild(card);
+            } else {
+              incompleteList.appendChild(card);
+            }
+          });
+
+          // If a section is empty, show a small helper message
+          if (incompleteList.children.length === 0) {
+            const msg = document.createElement('div');
+            msg.style.color = '#777';
+            msg.style.fontSize = '0.95rem';
+            msg.style.padding = '8px 0';
+            msg.textContent = t('No incomplete homework.');
+            incompleteList.appendChild(msg);
+          }
+          if (completeList.children.length === 0) {
+            const msg2 = document.createElement('div');
+            msg2.style.color = '#777';
+            msg2.style.fontSize = '0.95rem';
+            msg2.style.padding = '8px 0';
+            msg2.textContent = t('No completed homework yet.');
+            completeList.appendChild(msg2);
+          }
+
+          host.appendChild(listWrap);
+          gameArea.replaceChildren(host);
+        } catch (err) {
+          console.error('load homework in arcade error', err);
+          gameArea.innerHTML = `<div style="padding:22px;text-align:center;color:#c62828;font-weight:600;">${t('Error loading homework.')}</div>`;
+        }
+      }
+
+      // Helper: heuristic to detect grammar list keys
+      function isGrammarListKey(key) {
+        if (!key) return false;
+        const k = key.toLowerCase();
+        // Common grammar indicators
+        return k.includes('grammar_') || k.includes('/grammar/') || k.includes('present_simple') || k.includes('questions_') || k.includes('prepositions_');
+      }
+
+  async function autostartHomework(listKey, hwId, displayName) {
+        // Normalize leading path prefix if homework stored full project path
+        // e.g. "Games/english_arcade/sample-wordlists-level2/Adjectives1.json" -> "sample-wordlists-level2/Adjectives1.json"
+        if (/^Games\/english_arcade\//.test(listKey)) {
+          listKey = listKey.replace(/^Games\/english_arcade\//, '');
+        }
+        // Decide grammar vs vocab
+        const grammarOverride = isGrammarParam === '1';
+        const treatAsGrammar = grammarOverride || isGrammarListKey(listKey);
+        // Phonics detection: treat as phonics if filename/folder contains 'phonics' or 'sound'
+        const lkLower = (listKey || '').toLowerCase();
+        const treatAsPhonics = /phonics/.test(lkLower) || /sound/.test(lkLower);
+
+        if (treatAsPhonics) {
+          try {
+            // Prefer existing phonics loader for proper audio preload & session state
+            if (window.WordArcade?.loadPhonicsGame) {
+              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey });
+              return;
+            }
+            // Fallback: treat as sample list (will not show phonics-specific modes but still playable)
+            if (window.WordArcade?.loadSampleWordlistByFilename) {
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey });
+              return;
+            }
+          } catch (e) {
+            console.warn('[autostartHomework] phonics inline load failed, falling back to vocab path', e);
+            // Fallthrough to grammar/vocab handling below
+          }
+        }
+
+        // Prefer direct loader APIs if exposed
+  if (treatAsGrammar) {
+          try {
+            const { getGrammarConfigFromListKey } = await import('./utils/grammar_config_resolver.js');
+            const resolved = getGrammarConfigFromListKey(listKey, displayName);
+            if (window.WordArcade?.loadGrammarGame) {
+              window.WordArcade.loadGrammarGame(resolved);
+              return;
+            }
+            // Fallback: open selector directly with resolved config
+            const mod = await import('./ui/grammar_mode_selector.js');
+            if (mod && typeof mod.showGrammarModeSelector === 'function') {
+              mod.showGrammarModeSelector({
+                grammarFile: resolved.grammarFile,
+                grammarName: resolved.grammarName,
+                grammarConfig: resolved.grammarConfig,
+                onModeChosen: ({ mode, grammarFile: gf, grammarName: gn, grammarConfig: gc }) => {
+                  if (window.WordArcade?.loadGrammarGame) {
+                    window.WordArcade.loadGrammarGame({
+                      grammarFile: gf || resolved.grammarFile,
+                      grammarName: gn || resolved.grammarName,
+                      grammarConfig: gc || resolved.grammarConfig
+                    });
+                  }
+                }
+              });
+              return;
+            }
+          } catch (e) {
+            console.warn('[autostartHomework] unified grammar launch failed, falling back', e);
+          }
+        } else {
+          // Vocab / word list
+          try {
+            if (window.WordArcade?.loadSampleWordlistByFilename) {
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey });
+            } else if (window.WordArcade?.loadHomeworkList) {
+              window.WordArcade.loadHomeworkList({ listKey, hwId });
+            } else {
+              // As last resort just show mode selector after storing list in session
+              sessionStorage.setItem('WA_list_name', listKey);
+              const mod = await import('./ui/mode_selector.js');
+              if (mod && typeof mod.renderModeSelector === 'function') {
+                mod.renderModeSelector({ onModeChosen: (m) => {
+                  if (window.WordArcade?.startGame) window.WordArcade.startGame(m);
+                }, onWordsClick: (f) => { if (f && window.WordArcade?.loadSampleWordlistByFilename) window.WordArcade.loadSampleWordlistByFilename(f, { force: true }); } });
+              }
+            }
+          } catch (e) { console.error('[autostartHomework] vocab load error', e); }
+        }
+      }
+
+      // If autostart provided: directly load list instead of showing homework list menu first
+      if (autostart === '1' && listParam) {
+        // Attempt direct autostart without opening homework tab menu
+        autostartHomework(listParam, hwParam).catch(err => {
+          console.error('Autostart failed', err);
+          // Friendly fallback: show opening buttons + inline notice
+          try { window.WordArcade?.quitToOpening?.(); } catch {}
+          const ga = document.getElementById('gameArea');
+          if (ga) ga.innerHTML = `<div style="padding:22px;text-align:center;color:#e53e3e;font-weight:600;">Couldn't load homework list.<br><small>${(err && err.message) || 'Unknown error'}</small><br><br><button id='retryAutostart' style='background:#19777e;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;'>Retry</button></div>`;
+          document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam); });
         });
       }
 

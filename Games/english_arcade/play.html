@@ -160,6 +160,33 @@
 			#picChoices .choice-btn.picture-choice,
 			#easyPicGrid .choice-btn.picture-choice { max-width: 46vw; }
 		}
+
+		/* --- Listening mode specific styling --- */
+		:root { --listening-pink: #f472b6; }
+		/* Apply a pink border, pink text, rounded edges and responsive type scale to listening buttons */
+		#listeningChoices .choice-btn.listening-choice,
+		#listeningChoices .choice-btn.phonics-listening-choice,
+		#listeningChoices .choice-btn.picture-choice {
+			border: 2px solid var(--listening-pink);
+			color: var(--listening-pink);
+			background: transparent;
+			border-radius: 18px !important;
+			padding: 10px 12px;
+			font-weight: 700;
+			font-family: 'Poppins', Arial, sans-serif;
+			/* Cap font-size on very large screens and remain readable on phones */
+			font-size: clamp(0.9rem, 1.8vw, 1.18rem);
+			line-height: 1.12;
+			white-space: normal;
+			overflow-wrap: break-word;
+			transition: background .12s ease, transform .08s ease;
+		}
+		#listeningChoices .choice-btn.listening-choice:hover,
+		#listeningChoices .choice-btn.phonics-listening-choice:hover,
+		#listeningChoices .choice-btn.picture-choice:hover { background: rgba(244,114,182,0.06); }
+		#listeningChoices .choice-btn.listening-choice:active,
+		#listeningChoices .choice-btn.phonics-listening-choice:active,
+		#listeningChoices .choice-btn.picture-choice:active { transform: scale(.995); }
 	</style>
 </head>
 <body class="word-arcade notranslate" translate="no">
