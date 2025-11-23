@@ -14,8 +14,24 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   if (!container) return;
 
   const currentGrammarFile = grammarFile || 'data/grammar/level1/articles.json';
-  const currentGrammarName = grammarName || 'A vs An';
+  // Prefer teacher-assigned name when provided. If grammarName looks like a file path or filename, sanitize it to a nicer label.
+  const sanitizeName = (n) => {
+    if (!n) return null;
+    let s = String(n).trim();
+    // If it looks like a path or filename, reduce to base name
+    if (s.includes('/') || s.includes('\\') || s.toLowerCase().endsWith('.json') || /[\\/]/.test(s)) {
+      s = s.split(/[/\\]/).pop();
+      s = s.replace(/\.json$/i, '').replace(/[_-]+/g, ' ');
+      s = s.replace(/([a-z])([A-Z])/g, '$1 $2');
+      s = s.replace(/\s+/g, ' ').trim();
+      s = s.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : '').join(' ');
+      return s;
+    }
+    return s;
+  };
   const currentGrammarConfig = grammarConfig || {};
+  const displayTitleRaw = currentGrammarConfig.displayTitle || grammarName;
+  const currentGrammarName = (displayTitleRaw && !/\b(grammar|level|sample-wordlists|data|\\|\/)\b/i.test(String(displayTitleRaw))) ? displayTitleRaw : (sanitizeName(displayTitleRaw) || 'Grammar List');
   const isLevel2Grammar = /\/level2\//i.test(String(currentGrammarFile));
   const isLevel1Grammar = /\/level1\//i.test(String(currentGrammarFile));
 

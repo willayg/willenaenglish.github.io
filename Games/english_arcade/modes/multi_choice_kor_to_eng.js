@@ -43,7 +43,7 @@ export function runMultiChoiceKorToEng({ wordList, gameArea, startGame, listName
       <div style="font-size:clamp(1.3em,3vw,2.2em);font-weight:700;color:#19777e;margin-bottom:18px;">${current.kor}</div>
       <div id="multiChoicesKorEng" style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:16px;max-width:400px;margin:0 auto 18px auto;">
         ${choices.map(eng => `
-          <button class="multi-choice-btn choice-btn" data-eng="${eng}" ${eng === current.eng ? 'data-correct="1"' : ''} style="height:15vh;">
+          <button class="multi-choice-btn choice-btn" data-eng="${eng}" ${eng === current.eng ? 'data-correct="1"' : ''} style="height:15vh;font-size:clamp(1.0625rem,2.75vw,1.3125rem);font-weight:600;color:#e15b96;border:2px solid #e15b96;background:#fff;border-radius:18px;padding:16px 20px;transition:all 0.2s ease;">
             ${eng}
           </button>
         `).join('')}

@@ -74,7 +74,7 @@
     "ko": "열쇠가 쿠션 사이에 있어요.",
     "exampleSentence": "The key is between the cushions.",
     "exampleSentenceKo": "열쇠가 쿠션 사이에 있어요.",
-    "emoji": "🔑🛋️"
+    "emoji": "🛋️🔑🛋️"
   },
   {
     "id": "the_birds_fly_above",
@@ -118,7 +118,7 @@
     "ko": "고양이는 두 개의 개 사이에 앉아 있어요.",
     "exampleSentence": "The cat sits between the two dogs.",
     "exampleSentenceKo": "고양이는 두 개의 개 사이에 앉아 있어요.",
-    "emoji": "🐱🐶🐶"
+    "emoji": "🐶🐱🐶"
   },
   {
     "id": "clouds_are_above_the",
@@ -162,6 +162,6 @@
     "ko": "펜을 종이 사이에 놓으세요.",
     "exampleSentence": "Put the pen between the papers.",
     "exampleSentenceKo": "펜을 종이 사이에 놓으세요.",
-    "emoji": "🖊️📄📄"
+    "emoji": "📄🖊️📄"
   }
 ]

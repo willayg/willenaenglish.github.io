@@ -5,172 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Student Tracker • English Arcade</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="homework-modal.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root { --bg:#f5f7fb; --ink:#1f2933; --mut:#6b7280; --pri:#19777e; --acc:#93cbcf; }
-    *{ box-sizing:border-box; }
-    body{ margin:0; min-height:100vh; font-family:'Poppins',system-ui,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--ink); display:flex; flex-direction:column; }
-    header{ display:flex; align-items:center; gap:12px; padding:18px 24px; background:#39384a; color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.15); }
-    header img{ height:46px; }
-    header h1{ margin:0; font-size:1.4rem; font-weight:600; flex:1; }
-    #burger-menu-mount{ display:flex; align-items:center; min-width:48px; }
-    .nav-tabs{ display:flex; gap:0; border-bottom:1px solid #e5e7eb; background:#fff; }
-    .nav-tabs a{ padding:12px 20px; text-decoration:none; color:#6b7280; font-weight:500; border-bottom:3px solid transparent; transition:all .2s ease; cursor:pointer; }
-    .nav-tabs a:hover{ color:#19777e; }
-    .nav-tabs a.active{ color:#19777e; border-bottom-color:#19777e; background:#fafbfc; }
-    main{ flex:1 1 auto; width:100%; padding:24px; }
-    .layout{ width:100%; display:flex; flex-direction:column; gap:18px; }
-    .card{ background:#fff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 6px 24px rgba(15,23,42,.08); }
-    .filters{ display:flex; gap:12px; flex-wrap:wrap; padding:16px 20px; align-items:center; border-bottom:1px solid #eef2f7; }
-    .filters .group{ display:flex; align-items:center; gap:8px; }
-    select, button, input[type="search"]{ font:inherit; padding:9px 11px; border-radius:10px; border:1px solid #cfd8e3; background:#fff; color:var(--ink); }
-    button.pri{ background:var(--pri); color:#fff; border:1px solid #15676d; cursor:pointer; transition:filter .2s ease; }
-    button.pri:hover{ filter:brightness(.95); }
-    button.ghost{ background:#fff; color:var(--pri); border:1px solid var(--pri); cursor:pointer; transition:background .2s ease,color .2s ease; }
-    button.ghost:hover{ background:rgba(25,119,126,0.08); }
-    .status{ margin-left:auto; font-size:0.85rem; color:var(--mut); min-height:20px; }
-    .status.error{ color:#d14343; }
-    .grid{ display:grid; grid-template-columns:minmax(0,30%) minmax(0,1fr); gap:20px; align-items:start; padding:20px; }
-    .grid.class-tracker-grid{ grid-template-columns:minmax(0,15%) minmax(0,1fr); }
-    @media (max-width: 1024px){ .grid{ grid-template-columns:1fr; padding:18px; } }
-
-    table{ width:100%; border-collapse:collapse; font-size:14px; min-width:540px; }
-    thead th{ text-align:left; font-weight:600; color:#374151; background:#f3f4f6; position:sticky; top:0; z-index:1; }
-    th, td{ padding:12px 14px; border-bottom:1px solid #eef2f7; }
-    tbody tr:hover{ background:#f9fafb; }
-    .rank{ width:56px; text-align:center; font-weight:600; color:#4b5563; }
-    .num{ text-align:center; font-variant-numeric:tabular-nums; }
-    .clickable{ color:#19777e; cursor:pointer; text-decoration:none; }
-    th.sortable{ cursor:pointer; user-select:none; position:relative; padding-right:24px; }
-    th.sortable:hover{ background:#e5e7eb; }
-    th.sortable::after{ content:''; position:absolute; right:8px; top:50%; transform:translateY(-50%); width:12px; height:12px; opacity:0.5; }
-    th.sortable.sort-asc::after{ content:'▲'; opacity:1; }
-    th.sortable.sort-desc::after{ content:'▼'; opacity:1; }
-
-    .section-title{ padding:14px 18px; border-bottom:1px solid #eef2f7; font-weight:600; color:#374151; font-size:0.95rem; }
-    .student-panel{ padding:16px 20px; }
-    .stats{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-    @media (max-width: 760px){ .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
-    .stat{ background:#f7fafc; border:1px solid #e5e7eb; border-radius:12px; padding:12px; text-align:center; box-shadow:inset 0 1px 0 rgba(255,255,255,0.6); }
-    .stat .val{ font-size:20px; font-weight:700; color:#111827; }
-    .mut{ color:#6b7280; font-size:12px; }
-    .bar{ height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden; }
-    .bar > span{ display:block; height:100%; background:linear-gradient(90deg, var(--acc), var(--pri)); width:0%; transition:width .3s ease; }
-
-    .lists{ margin-top:10px; }
-    .lists .row{ display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9; gap:12px; }
-    .lists .row:last-child{ border-bottom:none; }
-    .tag{ display:inline-block; padding:2px 8px; border-radius:999px; background:#e6f7f8; color:#17666c; font-size:12px; font-weight:600; }
-    .empty{ padding:16px; color:#6b7280; }
-    .scroll-wrap{ overflow:auto; max-height:520px; }
-
-    .tabs-header{ display:flex; gap:0; border-bottom:1px solid #eef2f7; background:#fafbfc; }
-    .tab-btn{ flex:1; padding:12px 16px; background:none; border:none; cursor:pointer; font-size:14px; font-weight:500; color:#6b7280; transition:all .2s ease; border-bottom:3px solid transparent; }
-    .tab-btn:hover{ color:#19777e; }
-    .tab-btn.active{ color:#19777e; border-bottom-color:#19777e; background:#fff; }
-    .tab-content{ display:none; }
-    .tab-content.active{ display:block; }
-
-  .overview-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; padding:16px 20px; }
-  .chart-container{ position:relative; height:300px; background:#fafbfc; border-radius:12px; padding:12px; border:1px solid #e5e7eb; }
-  .stat-card{ background:#f7fafc; border:1px solid #e5e7eb; border-radius:12px; padding:20px 16px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:150px; }
-  .stat-card .val{ font-size:32px; font-weight:700; color:#111827; }
-  .stat-card .label{ font-size:14px; color:#6b7280; font-weight:500; }
-  .stat-card .icon{ font-size:32px; }
-  .stat-card .icon-img{ width:48px; height:48px; object-fit:contain; }
-
-  .game-list{ display:flex; flex-direction:column; gap:14px; padding:18px; }
-  .games-toolbar{ display:flex; align-items:center; justify-content:flex-start; padding:12px 18px; border-bottom:1px solid #eef2f7; background:#fafbfc; gap:12px; }
-  .game-card{ background:#f7fafc; border:1px solid #e5e7eb; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,0.6); }
-  .game-header{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
-  .game-name{ font-size:1rem; font-weight:600; color:#1f2933; }
-  .game-meta{ font-size:0.8rem; color:#6b7280; }
-  .game-charts{ display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
-  .game-chart{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; flex:0 0 140px; }
-  .game-chart.overall canvas{ width:160px !important; height:160px !important; }
-  .game-chart.mode{ flex-basis:130px; }
-  .game-chart.mode canvas{ width:120px !important; height:120px !important; }
-  .chart-caption{ font-size:0.85rem; color:#374151; text-align:center; }
-  .mode-caption{ font-size:0.75rem; color:#6b7280; text-align:center; max-width:130px; }
-  .chart-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:12px; }
-  .chart-title{ font-size:0.9rem; font-weight:600; color:#1f2933; }
-  .chart-toggle{ display:flex; gap:6px; }
-  .toggle-btn{ padding:4px 10px; border-radius:999px; border:1px solid #d1d5db; background:#fff; color:#374151; font-size:0.75rem; cursor:pointer; transition:all .2s ease; }
-  .toggle-btn:hover{ border-color:#19777e; color:#19777e; }
-  .toggle-btn.active{ background:#19777e; color:#fff; border-color:#19777e; box-shadow:0 4px 8px rgba(25,119,126,0.2); }
-
-  .class-item{ padding:12px 16px; border-bottom:1px solid #eef2f7; cursor:pointer; transition:all .2s ease; color:#374151; display:flex; justify-content:space-between; align-items:center; }
-  .class-item:hover{ background:#fafbfc; color:#19777e; }
-  .class-item.active{ background:#e6f7f8; color:#19777e; border-left:4px solid #19777e; padding-left:12px; font-weight:600; }
-  .class-item.hidden{ opacity:0.6; }
-  .class-item .visibility-badge{ font-size:0.7rem; padding:2px 8px; border-radius:999px; background:#f3f4f6; color:#6b7280; font-weight:500; white-space:nowrap; }
-  .class-item.hidden .visibility-badge{ background:#ffe5e5; color:#d14343; }
-  
-  .top-students{ display:flex; flex-direction:row; gap:16px; flex-wrap:wrap; }
-  .student-rank-card{ background:linear-gradient(135deg, #f7fafc 0%, #e6f7f8 100%); border:1px solid #d1e6e8; border-radius:12px; padding:12px; position:relative; overflow:hidden; flex:1 1 calc(33.333% - 11px); min-width:200px; }
-  .student-rank-card::before{ content:attr(data-rank); position:absolute; top:-8px; right:-8px; width:60px; height:60px; background:#19777e; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; }
-  .student-rank-card .name{ font-size:1rem; font-weight:600; color:#1f2933; margin-bottom:2px; }
-  .student-rank-card .korean-name{ font-size:0.85rem; color:#6b7280; margin-bottom:8px; }
-  .student-rank-card .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px; }
-  .student-rank-card .stat-item{ display:flex; flex-direction:column; }
-  .student-rank-card .stat-label{ font-size:0.7rem; color:#6b7280; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
-  .student-rank-card .stat-value{ font-size:1.1rem; font-weight:700; color:#19777e; }
-
-    @media (max-width: 640px){
-      main{ padding:18px 12px; }
-      .filters{ padding:14px 12px; }
-      .grid{ padding:14px; }
-      table{ min-width:0; }
-    }
-  </style>
 </head>
 <body>
-  <script>
-    // Access control: require teacher login and approval
-    let userRole = null;
-    let userRoleReadyResolve;
-    const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve; });
-    (async function() {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        const redirect = encodeURIComponent(location.pathname + location.search);
-        location.href = `/Teachers/login.html?redirect=${redirect}`;
-        return;
-      }
-      try {
-        const r = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-        const js = await r.json();
-        if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
-          location.href = '/Teachers/profile.html';
-        }
-        userRole = String(js.role||'').toLowerCase();
-        if (typeof userRoleReadyResolve === 'function') {
-          userRoleReadyResolve(userRole);
-          userRoleReadyResolve = null;
-        }
-      } catch {
-        const redirect = encodeURIComponent(location.pathname + location.search);
-        location.href = `/Teachers/login.html?redirect=${redirect}`;
-      }
-    })();
-  </script>
   <script type="module">
     import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Fetch and inject burger menu template if not already present
-      if (!document.getElementById('burger-menu-template')) {
-        try {
-          const resp = await fetch('/Teachers/components/burger-menu.html');
-          const html = await resp.text();
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = html;
-          document.body.appendChild(tempDiv.firstElementChild);
-        } catch(e) {
-          console.warn('Failed to load burger menu template:', e);
-        }
-      }
-      insertBurgerMenu('#burger-menu-mount');
-    });
+    window.insertBurgerMenu = insertBurgerMenu;
   </script>
   <header>
     <img src="/Assets/Images/Logo.png" alt="Logo" />
@@ -276,937 +118,199 @@
       </div>
     </div>
     <div class="tab-content" id="homework-content">
+      <style>
+        #homework-content .layout { display: flex; flex-direction: row; height: calc(100vh - 200px); gap: 0; }
+        #homework-content .card { flex: 0 0 auto; display: flex; flex-direction: column; }
+        #homework-content .grid.class-tracker-grid { display: flex; flex-direction: row; gap: 0; height: 100%; }
+  #homework-content .card:first-child { width: 180px; min-width: 160px; max-width: 220px; border-right: 1px solid #e2e8f0; height: 100%; display: flex; flex-direction: column; overflow-y: auto; }
+        #homework-content #homeworkClassList { gap: 8px; }
+        #homework-content .homework-class-btn { padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s; }
+        #homework-content .homework-class-btn:hover { background: #f3f4f6; }
+        #homework-content .homework-class-btn.active { background: #19777e; color: #fff; border-color: #19777e; }
+        #homework-content .card:last-child { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        #homework-content .homework-panel { display: flex; flex-direction: row; gap: 16px; padding: 16px; height: 100%; overflow: auto; }
+        #homework-content .homework-students-block { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        #homework-content .homework-assignment-block { width: 240px; min-width: 220px; max-width: 280px; display: flex; flex-direction: column; border-left: 1px solid #e2e8f0; padding-left: 16px; }
+        #homework-content .homework-table { width: 100%; font-size: 0.85rem; }
+        #homework-content .homework-table th, #homework-content .homework-table td { padding: 8px; }
+        #homework-content .card.assignment-container { width: 320px; min-width: 220px; max-width: 480px; height: 100%; overflow-y: auto; overflow-x: hidden; border-right: 1px solid #e2e8f0; background: #f9fafb; }
+        #homework-content #assignmentList { height: 100%; overflow-y: auto; padding-right: 6px; }
+        #homework-content .card:first-child { max-width: 320px; }
+          #homework-content .hw-assignment-card {
+            border: 2px solid #22d3ee;
+            box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04);
+            transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+            cursor: pointer;
+          }
+          #homework-content .hw-assignment-card.selected {
+            background: linear-gradient(180deg,#ecfeff,#f0fdfa);
+            border-color: #06b6d4;
+            box-shadow: 0 8px 24px rgba(6,182,212,0.12);
+            transform: translateY(-2px) scale(1.02);
+          }
+          #homework-content .hw-assignment-card:hover {
+            box-shadow: 0 4px 16px rgba(34,211,238,0.18), 0 2px 8px rgba(0,0,0,.08);
+            border-color: #06b6d4;
+            transform: translateY(-2px) scale(1.03);
+          }
+          #homework-content .hw-assignment-card:active {
+            box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04);
+            border-color: #0891b2;
+            transform: scale(0.98);
+          }
+      </style>
       <div class="layout">
         <div class="card">
-          <div style="padding:20px; color:#6b7280;">
-            <p>Homework features coming soon.</p>
+          <div class="section-title">Classes</div>
+          <div class="scroll-wrap">
+            <div id="homeworkClassList" style="display:flex; flex-direction:column;">
+              <div style="padding:16px; color:#6b7280;">Select a class to view homework.</div>
+            </div>
+          </div>
+        </div>
+        <!-- Homework: Assignments list (vertical, narrow cards) -->
+  <div class="card assignment-container" style="display: flex; flex-direction: column;">
+          <div class="section-title" style="font-size: 0.95rem; margin-bottom: 0; padding: 14px 22px;">Assignments</div>
+          <div role="tablist" class="assignment-tabs">
+            <button id="assignmentTabActive" role="tab" aria-controls="assignmentList" aria-selected="true" class="assignment-filter-tab assignment-filter-tab-active">Active</button>
+            <button id="assignmentTabEnded" role="tab" aria-controls="assignmentList" aria-selected="false" class="assignment-filter-tab">Ended</button>
+          </div>
+          <div id="assignmentList" style="display: flex; flex-direction: column; gap: 10px; padding: 0 12px; flex: 1; overflow-y: auto;"></div>
+        </div>
+        <!-- Homework: per-student progress + assignment controls -->
+        <div class="card" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+          <div class="section-title" id="homeworkPanelTitle" style="display: flex; align-items: center; justify-content: space-between; padding: 0 16px;">
+            <span>Homework Tracker</span>
+            <button type="button" class="ghost" id="hwAssignBtn">Assign Homework</button>
+          </div>
+          <div class="homework-panel" style="padding: 16px; flex: 1; overflow: auto;">
+            <div class="homework-students-block" style="flex: 1; min-width: 0;">
+              <div class="homework-students-header">
+                <div class="homework-students-title">Students</div>
+                <div class="homework-students-subtitle" id="homeworkStudentsSubtitle">No class selected.</div>
+              </div>
+              <div class="scroll-wrap homework-students-scroll" style="flex: 1; overflow: auto;">
+                <table class="homework-table" id="homeworkStudentsTable">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Korean Name</th>
+                      <th>Status</th>
+                      <th class="num">Completion</th>
+                      <th class="num">Accuracy</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="5" class="empty">Choose a class on the left to see homework progress.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <script>
-    const FN = (name) => `/.netlify/functions/${name}`;
-    const API = {
-      classes: () => fetch(FN('progress_teacher_summary') + '?action=classes_list', { credentials:'include' }).then(r=>r.json()),
-      leaderboard: (cls, tf) => fetch(FN('progress_teacher_summary') + `?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
-      student: (uid, tf) => fetch(FN('progress_teacher_summary') + `?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
-      toggleClassVisibility: (cls, hidden) => fetch(FN('progress_teacher_summary') + `?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`, { credentials:'include', method:'POST' }).then(r=>r.json()),
-    };
-
-    const $ = (s, r=document) => r.querySelector(s);
-    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
-
-    const classSel = $('#classSel');
-    const timeSel = $('#timeSel');
-    const lbBody = $('#lbBody');
-    const searchBox = $('#searchBox');
-  const refreshBtn = $('#refreshBtn');
-  const statusMsg = $('#statusMsg');
-    const studentPanel = $('#studentPanel');
-    const studentTitle = $('#studentTitle');
-
-    let rawLeaderboard = [];
-    let selectedStudent = null;
-    let sortColumn = 'rank';
-    let sortDirection = 'asc'; // 'asc' or 'desc'
-    let classTrackerSelectedClass = null;
-
-    function fmtPct(n){ return (n ?? 0) + '%'; }
-
-    function setStatus(text = '', type = ''){
-      if (!statusMsg) return;
-      statusMsg.textContent = text;
-      statusMsg.classList.toggle('error', type === 'error');
-    }
-
-    function renderLeaderboard(list){
-      const q = (searchBox.value||'').trim().toLowerCase();
-      const filtered = q ? list.filter(r => (r.name||'').toLowerCase().includes(q)) : list;
-      
-      // Sort the filtered list
-      const sorted = [...filtered].sort((a, b) => {
-        let aVal, bVal;
+  <!-- Homework Assignment Modal -->
+  <div id="homeworkModalOverlay" class="homework-modal-overlay">
+    <div class="homework-modal">
+      <div class="homework-modal-header">
+        <h2 class="homework-modal-title">Assign Homework • <span id="hwModalClassLabel"></span></h2>
+        <button type="button" class="homework-modal-close" id="hwModalClose">&times;</button>
+      </div>
+      <div class="homework-modal-body">
         
-        switch(sortColumn) {
-          case 'rank':
-            aVal = a.rank || 0;
-            bVal = b.rank || 0;
-            break;
-          case 'name':
-            aVal = (a.name || '').toLowerCase();
-            bVal = (b.name || '').toLowerCase();
-            break;
-          case 'korean_name':
-            aVal = (a.korean_name || '').toLowerCase();
-            bVal = (b.korean_name || '').toLowerCase();
-            break;
-          case 'stars':
-            aVal = a.stars || 0;
-            bVal = b.stars || 0;
-            break;
-          case 'points':
-            aVal = a.points || 0;
-            bVal = b.points || 0;
-            break;
-          case 'super_score':
-            aVal = Math.round((a.points * a.stars) / 1000);
-            bVal = Math.round((b.points * b.stars) / 1000);
-            break;
-          case 'accuracy':
-            aVal = a.accuracy || 0;
-            bVal = b.accuracy || 0;
-            break;
-          default:
-            return 0;
-        }
-        
-        // Handle string vs number comparison
-        if (typeof aVal === 'string') {
-          const cmp = aVal.localeCompare(bVal);
-          return sortDirection === 'asc' ? cmp : -cmp;
-        }
-        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      });
-      
-      const display = sorted.slice(0, 200);
-      if (!display.length) { lbBody.innerHTML = '<tr><td colspan="7" class="empty">No data</td></tr>'; return; }
-      lbBody.innerHTML = display.map(r => {
-        const stars = r.stars || 0;
-        const points = r.points || 0;
-        const superScore = Math.round((points * stars) / 1000);
-        return `
-        <tr data-uid="${r.user_id}">
-          <td class="rank">${r.rank||''}</td>
-          <td><a class="clickable" data-action="student" data-uid="${r.user_id}">${r.name||'Unknown'}</a></td>
-          <td>${r.korean_name||'—'}</td>
-          <td class="num">${stars}</td>
-          <td class="num">${points}</td>
-          <td class="num">${superScore}</td>
-          <td class="num">${fmtPct(r.accuracy||0)}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    function ensureStudentTabs(){
-      if (!studentPanel) return;
-      const overview = $('#tab-overview');
-      const games = $('#tab-games');
-      const tests = $('#tab-tests');
-      if (overview && games && tests) return;
-      studentPanel.innerHTML = `
-        <div id="tab-overview" class="tab-content active"><div class="empty">Click a student name to view their stats.</div></div>
-        <div id="tab-games" class="tab-content"><div class="empty">No games played yet.</div></div>
-        <div id="tab-tests" class="tab-content"><div class="empty">Tests data coming soon.</div></div>
-      `;
-    }
-
-    function renderStudentEmpty(){
-      studentTitle.textContent = 'Student details';
-      ensureStudentTabs();
-      const tabOverview = $('#tab-overview');
-      if (tabOverview) tabOverview.innerHTML = '<div class="empty">Click a student name to view their stats.</div>';
-      const tabGames = $('#tab-games');
-      if (tabGames) tabGames.innerHTML = '<div class="empty">No games played yet.</div>';
-      const tabTests = $('#tab-tests');
-      if (tabTests) tabTests.innerHTML = '<div class="empty">Tests data coming soon.</div>';
-    }
-
-    function friendlyListName(name){
-      if (!name) return 'Unknown List';
-      let clean = String(name).replace(/\.[^/.]+$/, '');
-      clean = clean.replace(/[_-]+/g, ' ');
-      clean = clean.replace(/\s+/g, ' ').trim();
-      if (!clean) return 'Unknown List';
-      return clean.split(' ').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
-    }
-
-    function formatDateLabel(iso){
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (Number.isNaN(d.getTime())) return '—';
-      const opts = { month: 'short', day: 'numeric' };
-      if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
-      return d.toLocaleDateString(undefined, opts);
-    }
-
-    function pluralize(word, count){
-      return `${count} ${word}${count === 1 ? '' : 's'}`;
-    }
-
-    function friendlyModeName(mode){
-      if (!mode) return 'Unknown';
-      let clean = String(mode).replace(/[_-]+/g, ' ');
-      clean = clean.replace(/\s+/g, ' ').trim();
-      if (!clean) return 'Unknown';
-      return clean.split(' ').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
-    }
-
-    function switchTab(tabName) {
-      const tabs = $$('#studentPanel .tab-content');
-      const btns = $$('#studentPanel .tab-btn');
-      tabs.forEach(t => t.classList.remove('active'));
-      btns.forEach(b => b.classList.remove('active'));
-      const activeTab = $(`#tab-${tabName}`);
-      const activeBtn = $(`.tab-btn[data-tab="${tabName}"]`);
-      if (activeTab) activeTab.classList.add('active');
-      if (activeBtn) activeBtn.classList.add('active');
-    }
-
-    function renderStudentDetails(d){
-      const name = d.student?.name || 'Student';
-      const cls = d.student?.class || '';
-      studentTitle.textContent = `${name}${cls? ' • ' + cls : ''}`;
-  const t = d.totals || { attempts:0, correct:0, accuracy:0, points:0, stars:0 };
-      const sessionsCount = (d.sessions && d.sessions.count) || 0;
-      const lists = d.lists || [];
-      const modeSummaryMap = new Map();
-      (d.modes || []).forEach(m => {
-        if (!m || !m.mode) return;
-        modeSummaryMap.set(m.mode, m);
-      });
-      const recent = d.recent || [];
-
-      const sessionBuckets = { word: 0, grammar: 0 };
-      const categorizeMode = (mode = '') => {
-        const m = mode.toLowerCase();
-        if (/(word|vocab|list)/.test(m)) return 'word';
-        if (/grammar|sentence/.test(m)) return 'grammar';
-        return null;
-      };
-      lists.forEach(l => {
-        const bucket = categorizeMode(l.mode);
-        if (!bucket) return;
-        sessionBuckets[bucket] += l.count || 0;
-      });
-      if (!sessionBuckets.word && !sessionBuckets.grammar) {
-        recent.forEach(sess => {
-          const bucket = categorizeMode(sess.mode);
-          if (!bucket) return;
-          sessionBuckets[bucket] += 1;
-        });
-      }
-
-      activitySessions = recent;
-      activityViewMode = 'day';
-
-      // Overview tab
-  ensureStudentTabs();
-  gameChartsRegistry.forEach(chart => chart.destroy());
-  gameChartsRegistry.clear();
-  const tabOverview = $('#tab-overview');
-      if (tabOverview) {
-        tabOverview.innerHTML = `
-          <div class="overview-grid">
-            <div class="stat-card">
-              <img src="/Games/english_arcade/assets/Images/icons/target.svg" alt="Accuracy target" class="icon-img" />
-              <div class="val">${t.accuracy||0}%</div>
-              <div class="label">Accuracy</div>
-            </div>
-            <div class="stat-card">
-              <div class="icon">⭐</div>
-              <div class="val">${t.stars||0}</div>
-              <div class="label">Stars earned</div>
-            </div>
-            <div class="stat-card">
-              <div class="icon">🏆</div>
-              <div class="val">${t.points||0}</div>
-              <div class="label">Points</div>
-            </div>
-            <div class="chart-container">
-              <canvas id="accuracyChart"></canvas>
-            </div>
-            <div class="chart-container">
-              <canvas id="modeSessionsChart"></canvas>
-            </div>
-            <div style="grid-column:1/-1;">
-              <div class="chart-container" style="height:260px;">
-                <div class="chart-toolbar">
-                  <span class="chart-title">Sessions activity</span>
-                  <div class="chart-toggle" id="activityToggle">
-                    <button type="button" class="toggle-btn active" data-range="day">Day</button>
-                    <button type="button" class="toggle-btn" data-range="week">Week</button>
-                    <button type="button" class="toggle-btn" data-range="month">Month</button>
-                  </div>
-                </div>
-                <canvas id="dailyActivityChart"></canvas>
-              </div>
-            </div>
+        <div class="homework-modal-section homework-modal-search-section">
+          <label class="homework-modal-label">Search for a Wordlist</label>
+          <div class="homework-modal-filters" style="margin-bottom:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="homework-modal-filter-btn" data-filter="all">All</button>
+            <button type="button" class="homework-modal-filter-btn" data-filter="vocab">Vocabulary</button>
+            <button type="button" class="homework-modal-filter-btn" data-filter="grammar">Grammar</button>
+            <button type="button" class="homework-modal-filter-btn" data-filter="phonics">Phonics</button>
           </div>
-        `;
-
-        // Defer chart creation to next tick so canvas elements exist
-        setTimeout(() => {
-          renderAccuracyChart(t.accuracy || 0);
-          renderModeSessionChart(sessionBuckets.word, sessionBuckets.grammar);
-          updateActivityToggle();
-          renderDailyActivityChart();
-          bindActivityToggle();
-        }, 0);
-      }
-
-      const combinedMap = new Map();
-      lists.forEach(l => {
-        const listRaw = l.list_name || '(Unknown List)';
-        const baseName = typeof listRaw === 'string' ? listRaw.trim() : listRaw;
-        let entry = combinedMap.get(baseName);
-        if (!entry) {
-          entry = { name: baseName, totalSessions: 0, bestStars: 0, last_played: l.last_played || null, totalSize: l.list_size || null, modes: new Map() };
-          combinedMap.set(baseName, entry);
-        }
-        const attempts = l.count || 0;
-        entry.totalSessions += attempts;
-        if (l.list_size && !entry.totalSize) entry.totalSize = l.list_size;
-        if (l.last_played && (!entry.last_played || l.last_played > entry.last_played)) entry.last_played = l.last_played;
-        const stars = l.stars || 0;
-        if (stars > entry.bestStars) entry.bestStars = stars;
-  const modeRaw = l.mode || 'unknown';
-  const modeKey = typeof modeRaw === 'string' ? modeRaw.trim() : modeRaw;
-        const existing = entry.modes.get(modeKey) || { mode: modeKey, stars: 0, attempts: 0, accuracy: null };
-        existing.stars = Math.max(existing.stars, stars);
-        existing.attempts += attempts;
-        const summary = modeSummaryMap.get(modeKey);
-        if (summary && Number.isFinite(summary.accuracy)) existing.accuracy = summary.accuracy;
-        entry.modes.set(modeKey, existing);
-      });
-      console.log('[Games] Received', lists.length, 'list-mode entries, combined into', combinedMap.size, 'lists');
-
-      const combinedGames = Array.from(combinedMap.values()).sort((a,b)=> (b.bestStars - a.bestStars) || ((b.totalSessions||0) - (a.totalSessions||0)) || friendlyListName(a.name).localeCompare(friendlyListName(b.name)));
-
-      // Categorize each game
-      const categorizeList = (name, modes) => {
-        const lowerName = (name || '').toLowerCase();
-        if (lowerName.includes('phonics')) return 'phonics';
-        if (lowerName.includes('grammar')) return 'grammar';
-        if (modes && modes.some(m => (m.mode || '').toLowerCase().includes('phonics'))) return 'phonics';
-        if (modes && modes.some(m => (m.mode || '').toLowerCase().includes('grammar'))) return 'grammar';
-        return 'vocab';
-      };
-
-      combinedGames.forEach(game => {
-        game.category = categorizeList(game.name, Array.from(game.modes.values()));
-      });
-
-      let gamesFilterMode = 'all';
-
-      const tabGames = $('#tab-games');
-      if (tabGames) {
-        if (!combinedGames.length) {
-          tabGames.innerHTML = '<div class="empty">No games played yet.</div>';
-        } else {
-          const renderGameCards = (games) => {
-            return games.map((game, idx) => {
-              const bestStars = Math.min(game.bestStars || 0, 5);
-              const lastPlayed = game.last_played ? formatDateLabel(game.last_played) : '—';
-              const listSizeLabel = game.totalSize ? `${game.totalSize} words` : null;
-              const chartId = `gameChart${idx}`;
-              const modeCharts = Array.from(game.modes.values()).sort((a,b)=> (b.stars - a.stars) || ((b.attempts||0) - (a.attempts||0)));
-              const lowerListName = friendlyListName(game.name).toLowerCase();
-              const hasPhonics = lowerListName.includes('phonics') || modeCharts.some(m => (m.mode || '').toLowerCase().includes('phonics'));
-              const hasGrammar = lowerListName.includes('grammar') || modeCharts.some(m => (m.mode || '').toLowerCase().includes('grammar'));
-              let totalModesAvailable = hasPhonics || hasGrammar ? 4 : 6;
-              const modesCompleted = modeCharts.filter(m => (m.stars || 0) > 0).length;
-              if (modesCompleted > totalModesAvailable) totalModesAvailable = modesCompleted;
-              const completionPct = totalModesAvailable ? Math.round((modesCompleted / totalModesAvailable) * 100) : 0;
-              const modeChartHtml = modeCharts.map((mode, mIdx) => {
-                const percent = Math.round(Math.min(mode.stars || 0,5) / 5 * 100);
-                const modeId = `${chartId}_mode_${mIdx}`;
-                const metaBits = [ `${Math.min(mode.stars || 0,5)}/5 stars`, pluralize('session', mode.attempts || 0) ];
-                if (Number.isFinite(mode.accuracy)) metaBits.push(`${mode.accuracy}% accuracy`);
-                return `
-                  <div class="game-chart mode">
-                    <canvas id="${modeId}" width="140" height="140" data-percent="${percent}"></canvas>
-                    <div class="chart-caption">${friendlyModeName(mode.mode)}</div>
-                    <div class="mode-caption">${metaBits.join(' • ')}</div>
-                  </div>
-                `;
-              }).join('');
-              const metaLine = [pluralize('session', game.totalSessions || 0)];
-              if (listSizeLabel) metaLine.push(listSizeLabel);
-              metaLine.push(`Last played ${lastPlayed}`);
-              return `
-                <div class="game-card" data-chart-id="${chartId}" data-completion="${completionPct}" data-best-stars="${bestStars}">
-                  <div class="game-header">
-                    <div>
-                      <div class="game-name">${friendlyListName(game.name)}</div>
-                      <div class="game-meta">${metaLine.join(' • ')}</div>
-                    </div>
-                  </div>
-                  <div class="game-charts">
-                    <div class="game-chart overall">
-                      <canvas id="${chartId}" width="160" height="160" data-percent="${completionPct}"></canvas>
-                      <div class="chart-caption">${completionPct}% complete</div>
-                      <div class="mode-caption">${modesCompleted} of ${totalModesAvailable} modes</div>
-                    </div>
-                    ${modeChartHtml}
-                  </div>
-                </div>
-              `;
-            }).join('');
-          };
-
-          const filteredGames = combinedGames.filter(g => gamesFilterMode === 'all' || g.category === gamesFilterMode);
-          const cards = renderGameCards(filteredGames);
-          
-          tabGames.innerHTML = `
-            <div class="games-toolbar">
-              <div class="chart-toggle" id="gamesFilter">
-                <button type="button" class="toggle-btn active" data-filter="all">All</button>
-                <button type="button" class="toggle-btn" data-filter="vocab">Vocab</button>
-                <button type="button" class="toggle-btn" data-filter="grammar">Grammar</button>
-                <button type="button" class="toggle-btn" data-filter="phonics">Phonics</button>
-              </div>
-            </div>
-            <div class="game-list" id="gameList">${cards}</div>
-          `;
-
-          requestAnimationFrame(() => {
-            tabGames.querySelectorAll('canvas[data-percent]').forEach(canvas => {
-              const percent = Number(canvas.dataset.percent) || 0;
-              renderGameDonut(canvas, Math.max(0, Math.min(100, percent)));
-            });
-          });
-
-          const filterButtons = tabGames.querySelectorAll('#gamesFilter button');
-          filterButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-              gamesFilterMode = btn.dataset.filter;
-              filterButtons.forEach(b => b.classList.toggle('active', b.dataset.filter === gamesFilterMode));
-              
-              const gameList = $('#gameList');
-              if (!gameList) return;
-              
-              const filtered = combinedGames.filter(g => gamesFilterMode === 'all' || g.category === gamesFilterMode);
-              const newCards = renderGameCards(filtered);
-              gameList.innerHTML = newCards;
-              
-              requestAnimationFrame(() => {
-                gameList.querySelectorAll('canvas[data-percent]').forEach(canvas => {
-                  const percent = Number(canvas.dataset.percent) || 0;
-                  renderGameDonut(canvas, Math.max(0, Math.min(100, percent)));
-                });
-              });
-            });
-          });
-        }
-      }
-
-      const tabTests = $('#tab-tests');
-      if (tabTests && !tabTests.dataset.locked) {
-        tabTests.innerHTML = '<div class="empty">Tests view coming soon.</div>';
-        tabTests.dataset.locked = 'true';
-      }
-
-      switchTab('overview');
-    }
-
-  let accuracyChartInstance = null;
-  let modeSessionsChartInstance = null;
-  let dailyActivityChartInstance = null;
-  const gameChartsRegistry = new Map();
-  let activityViewMode = 'day';
-  let activitySessions = [];
-
-    function renderAccuracyChart(accuracy) {
-      const ctx = $('#accuracyChart');
-      if (!ctx) return;
-      if (accuracyChartInstance) accuracyChartInstance.destroy();
-      accuracyChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Correct', 'Incorrect'],
-          datasets: [{
-            data: [accuracy, 100 - accuracy],
-            backgroundColor: ['#19777e', '#e5e7eb'],
-            borderColor: ['#155a62', '#d1d5db'],
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: true, position: 'bottom' } }
-        }
-      });
-    }
-
-    function renderModeSessionChart(word, grammar) {
-      const ctx = $('#modeSessionsChart');
-      if (!ctx) return;
-      if (modeSessionsChartInstance) modeSessionsChartInstance.destroy();
-      const labels = ['Word games', 'Grammar games'];
-      const data = [word, grammar];
-      const maxVal = Math.max(...data, 1);
-      modeSessionsChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Sessions',
-            data,
-            backgroundColor: ['#19777e', '#93cbcf'],
-            borderColor: ['#155a62', '#6a9fa6'],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          indexAxis: 'y',
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true, max: maxVal * 1.1 }
-          }
-        }
-      });
-    }
-
-    function startOfWeek(date) {
-      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      const day = d.getDay();
-      d.setDate(d.getDate() - day);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-
-    function computeActivitySeries(sessions, mode) {
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      const dayCounts = new Map();
-      (sessions || []).forEach(sess => {
-        const iso = (sess.ended_at || sess.started_at || '').split('T')[0];
-        if (!iso) return;
-        dayCounts.set(iso, (dayCounts.get(iso) || 0) + 1);
-      });
-
-      if (mode === 'week') {
-        const weekCounts = new Map();
-        dayCounts.forEach((count, key) => {
-          const date = new Date(key + 'T00:00:00');
-          if (Number.isNaN(date.getTime())) return;
-          const start = startOfWeek(date);
-          const wkKey = start.toISOString().split('T')[0];
-          weekCounts.set(wkKey, (weekCounts.get(wkKey) || 0) + count);
-        });
-        const labels = [];
-        const data = [];
-        const current = startOfWeek(now);
-        for (let i = 11; i >= 0; i--) {
-          const week = new Date(current);
-          week.setDate(week.getDate() - i * 7);
-          const key = week.toISOString().split('T')[0];
-          labels.push(`Week of ${week.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`);
-          data.push(weekCounts.get(key) || 0);
-        }
-        return { labels, data };
-      }
-
-      if (mode === 'month') {
-        const monthCounts = new Map();
-        dayCounts.forEach((count, key) => {
-          const date = new Date(key + 'T00:00:00');
-          if (Number.isNaN(date.getTime())) return;
-          const mKey = `${date.getFullYear()}-${date.getMonth()}`;
-          monthCounts.set(mKey, (monthCounts.get(mKey) || 0) + count);
-        });
-        const labels = [];
-        const data = [];
-        const current = new Date(now.getFullYear(), now.getMonth(), 1);
-        for (let i = 11; i >= 0; i--) {
-          const month = new Date(current.getFullYear(), current.getMonth() - i, 1);
-          const key = `${month.getFullYear()}-${month.getMonth()}`;
-          labels.push(month.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }));
-          data.push(monthCounts.get(key) || 0);
-        }
-        return { labels, data };
-      }
-
-      const labels = [];
-      const data = [];
-      for (let i = 13; i >= 0; i--) {
-        const day = new Date(now);
-        day.setDate(day.getDate() - i);
-        const key = day.toISOString().split('T')[0];
-        labels.push(day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
-        data.push(dayCounts.get(key) || 0);
-      }
-      return { labels, data };
-    }
-
-    function updateActivityToggle() {
-      const toggle = $('#activityToggle');
-      if (!toggle) return;
-      toggle.querySelectorAll('button').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.range === activityViewMode);
-      });
-    }
-
-    function bindActivityToggle() {
-      const toggle = $('#activityToggle');
-      if (!toggle || toggle.dataset.bound === 'true') return;
-      toggle.dataset.bound = 'true';
-      toggle.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const mode = btn.dataset.range;
-          if (!mode || mode === activityViewMode) return;
-          activityViewMode = mode;
-          updateActivityToggle();
-          renderDailyActivityChart();
-        });
-      });
-    }
-
-    function renderDailyActivityChart() {
-      const ctx = $('#dailyActivityChart');
-      if (!ctx) return;
-      if (dailyActivityChartInstance) dailyActivityChartInstance.destroy();
-      const { labels, data } = computeActivitySeries(activitySessions, activityViewMode);
-      const datasetLabel = activityViewMode === 'week' ? 'Sessions per week' : activityViewMode === 'month' ? 'Sessions per month' : 'Sessions per day';
-      dailyActivityChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: datasetLabel,
-            data,
-            borderColor: '#19777e',
-            backgroundColor: 'rgba(25,119,126,0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.35,
-            pointRadius: 3,
-            pointBackgroundColor: '#19777e',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: true, position: 'top' } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
-      });
-    }
-
-    function renderGameDonut(canvas, percent) {
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const existing = gameChartsRegistry.get(canvas.id);
-      if (existing) existing.destroy();
-      const chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Complete', 'Remaining'],
-          datasets: [{
-            data: [percent, 100 - percent],
-            backgroundColor: ['#19777e', '#e5e7eb'],
-            borderColor: ['#155a62', '#d1d5db'],
-            borderWidth: 2,
-            cutout: '60%',
-            hoverBorderColor: ['#0f5a68', '#d1d5db']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          aspectRatio: 1,
-          animation: { animateRotate: true, animateScale: true },
-          plugins: { legend: { display: false }, tooltip: { enabled: false } }
-        }
-      });
-      gameChartsRegistry.set(canvas.id, chart);
-    }
-
-    const displayClassName = (raw) => {
-      const n = (raw||'').trim().toLowerCase();
-      if (n === 'ny') return 'New York';
-      return raw;
-    };
-    const backendClassName = (input) => {
-      const n = (input||'').trim().toLowerCase();
-      if (n === 'new york' || n === 'ny') return 'NY';
-      return input;
-    };
-
-    const normalizeClassRecord = (record) => {
-      const rawName = typeof record === 'string'
-        ? record
-        : (record && (record.name || record.class)) || record || '';
-      return {
-        name: rawName,
-        display: displayClassName(rawName),
-        hidden: !!(record && typeof record === 'object' && (record.hidden || record.visible === false))
-      };
-    };
-
-    const filterClassesForRole = (classes) => {
-      if (userRole === 'admin') return classes;
-      return classes.filter(cls => !cls.hidden);
-    };
-
-    async function requireUserRole(){
-      if (userRole !== null) return userRole;
-      if (typeof userRoleReady !== 'undefined' && userRoleReady && typeof userRoleReady.then === 'function') {
-        try {
-          return await userRoleReady;
-        } catch {
-          return userRole;
-        }
-      }
-      return userRole;
-    }
-
-    async function loadClasses(){
-      classSel.innerHTML = '<option value="">Loading…</option>';
-      setStatus('Loading classes…');
-      try{
-        await requireUserRole();
-        const js = await API.classes();
-        const classesRaw = (js && js.success && Array.isArray(js.classes)) ? js.classes : [];
-        const normalized = filterClassesForRole(classesRaw.map(normalizeClassRecord));
-        if (!normalized.length) { classSel.innerHTML = '<option value="">No classes</option>'; setStatus('No student classes found'); return; }
-        classSel.innerHTML = '<option value="">Choose class…</option>' + normalized.map(c => `<option value="${c.name}">${c.display}</option>`).join('');
-        setStatus(`Loaded ${normalized.length} class${normalized.length === 1 ? '' : 'es'}`);
-      } catch(e){ classSel.innerHTML = '<option value="">Error loading</option>'; setStatus('Failed to load classes', 'error'); }
-    }
-
-    async function loadLeaderboard(){
-      const selected = classSel.value; if (!selected) { rawLeaderboard = []; renderLeaderboard([]); renderStudentEmpty(); setStatus('Select a class to view results'); return; }
-      const tf = timeSel.value || 'month';
-      const apiClass = backendClassName(selected);
-      const leaderboardTitle = document.getElementById('leaderboardTitle');
-      if (leaderboardTitle) leaderboardTitle.textContent = `${displayClassName(selected)} Leaderboard`;
-      lbBody.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
-      setStatus(`Loading ${displayClassName(selected)} (${tf})…`);
-      try{
-        const js = await API.leaderboard(apiClass, tf);
-        rawLeaderboard = (js && js.success && Array.isArray(js.leaderboard)) ? js.leaderboard : [];
-        renderLeaderboard(rawLeaderboard);
-        if (!rawLeaderboard.length) setStatus('No attempts yet for this filter');
-        else {
-          const total = rawLeaderboard.length;
-          let msg = total > 200 ? `Showing top 200 of ${total} students` : `Showing ${total} students`;
-          if (js && js.truncated) msg += ' (partial data)';
-          setStatus(msg);
-        }
-      } catch(e){ lbBody.innerHTML = '<tr><td colspan="6" class="empty">Failed to load</td></tr>'; setStatus('Leaderboard error', 'error'); }
-    }
-
-    async function loadStudent(uid){
-      const tf = timeSel.value || 'month';
-      ensureStudentTabs();
-  const tabOverview = $('#tab-overview');
-  if (tabOverview) tabOverview.innerHTML = '<div class="empty">Loading…</div>';
-  const tabGames = $('#tab-games');
-  if (tabGames) tabGames.innerHTML = '<div class="empty">Loading games…</div>';
-      switchTab('overview');
-      setStatus('Loading student details…');
-      try{
-        const js = await API.student(uid, tf);
-        if (js && js.success) {
-          renderStudentDetails(js);
-          if (js.truncated || (js.sessions && js.sessions.truncated)) {
-            setStatus('Partial student data (too many records)');
-          } else {
-            setStatus('');
-          }
-        }
-        else {
-          ensureStudentTabs();
-          const ov = $('#tab-overview');
-          if (ov) ov.innerHTML = '<div class="empty">No data</div>';
-          setStatus('No student data', 'error');
-        }
-      } catch(e){
-        ensureStudentTabs();
-        const ov = $('#tab-overview');
-        if (ov) ov.innerHTML = '<div class="empty">Failed to load</div>';
-        setStatus('Student details error', 'error');
-      }
-    }
-
-    // Class Tracker functions
-    async function loadClassTrackerClasses(){
-      const classList = $('#classList');
-      classList.innerHTML = '<div style="padding:16px; color:#6b7280;">Loading classes...</div>';
-      try{
-        await requireUserRole();
-        const js = await API.classes();
-        const classesRaw = (js && js.success && Array.isArray(js.classes)) ? js.classes : [];
-        const normalized = classesRaw.map(normalizeClassRecord);
-        const displayClasses = userRole === 'admin' ? normalized : normalized.filter(cls => !cls.hidden);
-        
-        if (!displayClasses.length) { classList.innerHTML = '<div style="padding:16px; color:#6b7280;">No classes found</div>'; return; }
-        classList.innerHTML = displayClasses.map(cls => {
-          const hiddenClass = cls.hidden ? 'hidden' : '';
-          const badge = cls.hidden ? '<span class="visibility-badge">Hidden</span>' : '<span class="visibility-badge">Visible</span>';
-          return `<div class="class-item ${hiddenClass}" data-class="${cls.name}" data-display="${cls.display}" data-hidden="${cls.hidden}"><span>${cls.display}</span>${userRole === 'admin' ? badge : ''}</div>`;
-        }).join('');
-        classList.querySelectorAll('.class-item').forEach(item => {
-          const badge = item.querySelector('.visibility-badge');
-          if (badge) {
-            badge.addEventListener('click', async (e) => {
-              e.stopPropagation();
-              const className = item.dataset.class;
-              const isCurrentlyHidden = item.dataset.hidden === 'true';
-              const newHiddenState = !isCurrentlyHidden;
-              try {
-                const result = await API.toggleClassVisibility(className, newHiddenState);
-                if (result && result.success) {
-                  const updatedHidden = Object.prototype.hasOwnProperty.call(result, 'hidden') ? !!result.hidden : newHiddenState;
-                  item.dataset.hidden = updatedHidden.toString();
-                  item.classList.toggle('hidden', updatedHidden);
-                  badge.textContent = updatedHidden ? 'Hidden' : 'Visible';
-                } else {
-                  alert(result && result.error ? result.error : 'Failed to update class visibility');
-                }
-              } catch (err) {
-                console.error('Error toggling visibility:', err);
-                alert('Error updating class visibility');
-              }
-            });
-          }
-          item.addEventListener('click', () => {
-            classList.querySelectorAll('.class-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            classTrackerSelectedClass = item.dataset.class;
-            loadClassStats(classTrackerSelectedClass, item.dataset.display);
-          });
-        });
-      } catch(e){ classList.innerHTML = '<div style="padding:16px; color:#6b7280;">Error loading classes</div>'; }
-    }
-
-    async function loadClassStats(classNameRaw, displayName){
-      const statsContent = $('#classStatsContent');
-      const statsTitle = $('#classStatsTitle');
-      statsTitle.textContent = `${displayName || displayClassName(classNameRaw)} • Top Students`;
-      statsContent.innerHTML = '<div style="text-align:center; padding:20px; color:#6b7280;">Loading...</div>';
-      
-      try{
-        const apiClass = backendClassName(classNameRaw);
-        const js = await API.leaderboard(apiClass, 'month');
-        const leaderboard = (js && js.success && Array.isArray(js.leaderboard)) ? js.leaderboard : [];
-        
-        if (!leaderboard.length) {
-          statsContent.innerHTML = '<div style="padding:20px; color:#6b7280;">No data for this class</div>';
-          return;
-        }
-        
-        // Get top 3 students sorted by super score (highest to lowest)
-        const top3 = leaderboard
-          .map(s => ({ ...s, superScore: Math.round((s.points * s.stars) / 1000) }))
-          .sort((a, b) => b.superScore - a.superScore)
-          .slice(0, 3);
-        const html = `
-          <div class="top-students">
-            ${top3.map((student, idx) => {
-              const rank = idx + 1;
-              const superScore = Math.round((student.points * student.stars) / 1000);
-              const sessions = student.attempts || 0;
-              return `
-                <div class="student-rank-card" data-rank="${rank}">
-                  <div class="name">${student.name || 'Unknown'}</div>
-                  <div class="korean-name">${student.korean_name || '—'}</div>
-                  <div class="stats-row">
-                    <div class="stat-item">
-                      <div class="stat-label">Super Score</div>
-                      <div class="stat-value">${superScore}</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-label">Stars</div>
-                      <div class="stat-value">${student.stars || 0}</div>
-                    </div>
-                  </div>
-                  <div class="stats-row">
-                    <div class="stat-item">
-                      <div class="stat-label">Points</div>
-                      <div class="stat-value">${student.points || 0}</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-label">Sessions</div>
-                      <div class="stat-value">${sessions}</div>
-                    </div>
-                  </div>
-                  <div class="stats-row">
-                    <div class="stat-item">
-                      <div class="stat-label">Accuracy</div>
-                      <div class="stat-value">${student.accuracy || 0}%</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-label"></div>
-                      <div class="stat-value"></div>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join('')}
+          <input 
+            type="search" 
+            id="hwModalSearch" 
+            class="homework-modal-search-input" 
+            placeholder="Search by title, tags, or filename..."
+            autocomplete="off"
+          />
+          <div id="hwModalResults" class="homework-modal-results">
+            <div class="homework-modal-empty-state">Start typing to search wordlists...</div>
           </div>
-        `;
-        statsContent.innerHTML = html;
-      } catch(e){ statsContent.innerHTML = '<div style="padding:20px; color:#6b7280;">Error loading class stats</div>'; }
-    }
+        </div>
 
-    // Wire UI
-    document.addEventListener('DOMContentLoaded', () => {
-      loadClasses();
-      loadClassTrackerClasses(); // Initialize Class Tracker
-      classSel.addEventListener('change', () => { selectedStudent = null; renderStudentEmpty(); loadLeaderboard(); });
-      timeSel.addEventListener('change', () => { if (classSel.value) { loadLeaderboard(); if (selectedStudent) loadStudent(selectedStudent); } });
-      refreshBtn.addEventListener('click', () => { loadLeaderboard(); if (selectedStudent) loadStudent(selectedStudent); });
-      searchBox.addEventListener('input', () => renderLeaderboard(rawLeaderboard));
-      
-      // Navigation tab switching
-      document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-          e.preventDefault();
-          const tabName = tab.dataset.tab;
-          
-          // Update active tab
-          document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          
-          // Update active content
-          document.querySelectorAll('[id$="-content"]').forEach(content => {
-            content.classList.remove('active');
-          });
-          document.getElementById(tabName + '-content').classList.add('active');
-        });
-      });
-      
-      // Sortable column headers
-      document.querySelectorAll('th.sortable').forEach(th => {
-        th.addEventListener('click', () => {
-          const newColumn = th.dataset.sort;
-          if (sortColumn === newColumn) {
-            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-          } else {
-            sortColumn = newColumn;
-            sortDirection = 'asc';
-          }
-          
-          // Update sort indicators
-          document.querySelectorAll('th.sortable').forEach(h => {
-            h.classList.remove('sort-asc', 'sort-desc');
-          });
-          th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-          
-          renderLeaderboard(rawLeaderboard);
-        });
-      });
-      
-      // Tab switching
-      $$('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-      });
-      // delegate click on student name
-      $('#lbTable').addEventListener('click', (e) => {
-        const a = e.target.closest('a[data-action="student"]'); if (!a) return;
-        const uid = a.dataset.uid; selectedStudent = uid; loadStudent(uid);
-      });
-    });
-  </script>
+        <div id="hwModalSelectedList" class="homework-modal-selected-list" style="display: none;">
+          <div class="homework-modal-selected-title" id="hwModalSelectedTitle"></div>
+          <div class="homework-modal-selected-meta" id="hwModalSelectedMeta"></div>
+        </div>
+
+        <div class="homework-modal-section">
+          <label class="homework-modal-label" for="hwModalTitle">Assignment Title *</label>
+          <input 
+            type="text" 
+            id="hwModalTitle" 
+            class="homework-modal-input" 
+            placeholder="e.g., Week 5 Vocabulary Practice"
+            maxlength="100"
+          />
+        </div>
+
+        <div class="homework-modal-section">
+          <label class="homework-modal-label" for="hwModalDescription">Description (optional)</label>
+          <textarea 
+            id="hwModalDescription" 
+            class="homework-modal-textarea" 
+            placeholder="Add notes or instructions for students..."
+            maxlength="500"
+          ></textarea>
+        </div>
+
+        <div class="homework-modal-section">
+          <label class="homework-modal-label" for="hwModalDueDate">Due Date *</label>
+          <input 
+            type="date" 
+            id="hwModalDueDate" 
+            class="homework-modal-input"
+          />
+          <div class="homework-modal-helper">Students will see this deadline in their dashboard</div>
+        </div>
+
+      </div>
+      <div class="homework-modal-footer">
+        <button type="button" class="homework-modal-btn homework-modal-btn-cancel" id="hwModalCancel">Cancel</button>
+        <button type="button" class="homework-modal-btn homework-modal-btn-primary" id="hwModalAssign" disabled>Assign Homework</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div id="homeworkPreviewOverlay" class="homework-preview-overlay">
+    <div class="homework-preview-modal">
+      <div class="homework-preview-header">
+        <h3 class="homework-preview-title" id="hwPreviewTitle">Preview</h3>
+        <button type="button" class="homework-preview-close" id="hwPreviewClose">&times;</button>
+      </div>
+      <div class="homework-preview-body">
+        <ul id="hwPreviewList" class="homework-preview-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="homework-modal.js"></script>
+  <script src="main.js"></script>
+  <!-- Homework Student Detail Modal -->
+  <div id="hwStudentModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:24px;">
+    <div style="background:#fff;border-radius:18px;max-width:640px;width:100%;box-shadow:0 6px 32px rgba(0,0,0,.25);font-family:'Poppins',sans-serif;position:relative;padding:28px;">
+      <button id="hwStudentClose" aria-label="Close" style="position:absolute;top:10px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#19777e;">×</button>
+      <h2 id="hwStudentTitle" style="margin:0 0 10px;font-size:1.5rem;font-weight:700;color:#19777e;">Student Homework Details</h2>
+      <div id="hwStudentMeta" style="font-size:.85rem;color:#555;margin-bottom:16px;">Loading...</div>
+      <div id="hwStudentModes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;"></div>
+      <div style="margin-top:20px;font-size:.75rem;color:#888;">Stars shown are best stars per mode. Completion = distinct modes attempted / total modes (6).</div>
+    </div>
+  </div>
 </body>
 </html>

@@ -30,7 +30,7 @@
     "ko": "벤치가 나무들 사이에 있어요.",
     "exampleSentence": "The bench is between the trees.",
     "exampleSentenceKo": "벤치가 나무들 사이에 있어요.",
-    "emoji": "🪑🌲🌲"
+    "emoji": "🌲🪑🌲"
   },
   {
     "id": "the_hospital_is_near",
@@ -63,7 +63,7 @@
     "ko": "나무가 집들 사이에 있어요.",
     "exampleSentence": "The tree is between the houses.",
     "exampleSentenceKo": "나무가 집들 사이에 있어요.",
-    "emoji": "🌳🏠🏠"
+    "emoji": "🏠🌳🏠"
   },
   {
     "id": "the_playground_is_near",
@@ -96,6 +96,6 @@
     "ko": "동상이 분수대들 사이에 있어요.",
     "exampleSentence": "The statue is between the fountains.",
     "exampleSentenceKo": "동상이 분수대들 사이에 있어요.",
-    "emoji": "🗿⛲⛲"
+    "emoji": "⛲🗿⛲"
   }
 ]
