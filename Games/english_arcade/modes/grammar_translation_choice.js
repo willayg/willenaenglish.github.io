@@ -9,6 +9,7 @@
 //  Example: "The cat eats" (correct) | "The dog eats" (wrong meaning) | "The cat eat." (grammar wrong)
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 // Removed invalid import of StudentLang (file does not exist). Use global with fallback shim.
 const StudentLang = (typeof window !== 'undefined' && window.StudentLang) ? window.StudentLang : { applyTranslations(){}, translate(k){ return k; } };
 // Add SFX utility import
@@ -26,6 +27,10 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
 
   container.innerHTML = '<div style="padding:20px;text-align:center;"><p style="font-size:18px;color:#555;">Loading...</p></div>';
 
+  // Show loading splash while fetching data
+  let splashController = null;
+  try { splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') }); if (splashController && splashController.readyPromise) await splashController.readyPromise; } catch(e){ console.debug('[TranslationChoice] splash failed', e?.message); }
+
   let grammarData = [];
   try {
     const resp = await fetch(grammarFile);
@@ -34,6 +39,7 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
   } catch (err) {
     container.innerHTML = `<div style="padding:20px;text-align:center;color:#d32f2f;"><p>Error loading grammar data.</p></div>`;
     console.error(err);
+    if (splashController && typeof splashController.hide === 'function') try { splashController.hide(); } catch {}
     return;
   }
 
@@ -82,6 +88,9 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
     const isPresentProgressive = (!isPPNegative && !isPPYesNo && !isPPWh) && ( /present_progressive\.json$/i.test(String(grammarFile||'')) || /present\s*progressive/i.test(String(grammarName||'')) );
     // Preposition lists
     const isPrepositionList = /prepositions_/i.test(String(grammarFile||'')) || /prepositions_/i.test(String(grammarName||''));
+  // WH micro list (who/what) and generic WH present simple question detection
+  const isWhoWhatMicro = /wh_who_what\.json$/i.test(String(grammarFile||''));
+  const isPresentSimpleWh = /present_simple_questions_wh\.json$/i.test(String(grammarFile||'')) || /present\s*simple[\s:\-]*wh/i.test(String(grammarName||''));
 
     const pool = validItems.filter(v => v.en && v.en !== correctEn);
 
@@ -100,6 +109,8 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
       ({ grammarWrong, meaningWrong } = buildPresentProgressiveYesNoOptions(correctEn, pool));
     } else if (isPPWh) {
       ({ grammarWrong, meaningWrong } = buildPresentProgressiveWhOptions(correctEn, pool));
+    } else if (isWhoWhatMicro || isPresentSimpleWh) {
+      ({ grammarWrong, meaningWrong } = buildWhQuestionOptions(correctEn, pool));
     } else if (isPresentProgressive) {
       ({ grammarWrong, meaningWrong } = buildPresentProgressiveOptions(correctEn, pool));
     } else if (isPrepositionList) {
@@ -309,6 +320,7 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
   }
 
   renderQuestion();
+  try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 520); } catch(e){}
 }
 
 // Injects a responsive CSS block for translation mode (viewport-based clamps for small phone heights)
@@ -853,4 +865,71 @@ function extractPreposition(sentence) {
   const text = String(sentence || '');
   const match = text.match(/\b(in|on|under|above|below|between|next to|behind|in front of|near|across from|at|by|through|beside|over)\b/i);
   return match ? match[1].toLowerCase() : null;
+}
+
+// Trio builder for WH question lists (Who/What/etc.) including micro who/what list
+// Grammar-wrong: swap WH word to a different one or break verb order
+// Meaning-wrong: change the object/noun while keeping WH + verb grammar intact
+function buildWhQuestionOptions(correctEn, pool){
+  const text = String(correctEn || '').trim();
+  const whMatch = text.match(/^(Who|What|When|Where|Why|How|Which)\b(.*)$/i);
+  if (!whMatch) {
+    // Fallback to generic if pattern not matched
+    return buildGenericTranslationOptions(correctEn, pool);
+  }
+  const whWord = whMatch[1];
+  const tail = whMatch[2].trim();
+  // Attempt to identify verb and object (simple heuristic: WH + verb (+ object)?)
+  const tokens = tail.split(/\s+/).filter(t=>t);
+  // Find first verb candidate (ends with s or common verbs list)
+  const verbIdx = tokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
+  let grammarWrong = correctEn;
+  if (verbIdx >= 0) {
+    // Grammar wrong variant 1: swap WH for a different WH (choose from a pool)
+    const whPool = ['Who','What','When','Where','Why','How'];
+    const altWh = whPool.find(w => w.toLowerCase() !== whWord.toLowerCase()) || 'How';
+    grammarWrong = altWh + ' ' + tokens.join(' ');
+    // If grammarWrong equals correct (unlikely), produce wrong order variant: WH + object + verb
+    if (grammarWrong.toLowerCase() === correctEn.toLowerCase()) {
+      const verb = tokens[verbIdx];
+      const objs = tokens.filter((_,i)=>i!==verbIdx);
+      if (objs.length) {
+        grammarWrong = whWord + ' ' + objs.join(' ') + ' ' + verb;
+      }
+    }
+    if (!/\?$/.test(grammarWrong)) grammarWrong += '?';
+  }
+  // Meaning wrong: change object noun phrase
+  let meaningWrong = null;
+  if (verbIdx >= 0) {
+    const verb = tokens[verbIdx];
+    const objs = tokens.filter((_,i)=>i!==verbIdx);
+    if (objs.length) {
+      // Replace last object token with another noun sourced from pool sentences
+      const nounPool = (pool||[]).map(p => {
+        const m = String(p.en||'').match(/\b(Who|What|When|Where|Why|How|Which)\s+(.+)/i);
+        if (!m) return null;
+        const restTokens = m[2].split(/\s+/);
+        const vIdx = restTokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
+        if (vIdx >= 0) {
+          const candidateObjs = restTokens.filter((_,i)=>i!==vIdx);
+          return candidateObjs[candidateObjs.length-1] || null;
+        }
+        return null;
+      }).filter(Boolean);
+      const replacement = nounPool.find(n => !objs.includes(n));
+      if (replacement) {
+        const newObjs = objs.slice();
+        newObjs[newObjs.length-1] = replacement;
+        meaningWrong = whWord + ' ' + verb + ' ' + newObjs.join(' ');
+        if (!/\?$/.test(meaningWrong)) meaningWrong += '?';
+      }
+    }
+  }
+  if (!meaningWrong) {
+    // Fallback: pick a different WH question from pool as meaning wrong
+    const other = (pool||[]).find(p => p.en && p.en !== correctEn);
+    meaningWrong = other?.en || grammarWrong;
+  }
+  return { grammarWrong, meaningWrong };
 }

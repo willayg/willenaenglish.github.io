@@ -5,6 +5,7 @@
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { playSFX } from '../sfx.js';
 import { renderGrammarSummary } from './grammar_summary.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 
 const MODE = 'grammar_find_mistake';
 
@@ -12,6 +13,10 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const container = document.getElementById('gameArea');
   if (!container) return;
   container.innerHTML = '<div style="padding:20px;text-align:center;">Loading…</div>';
+
+  // Show loading splash while fetching
+  let splashController = null;
+  try { splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') }); if (splashController && splashController.readyPromise) await splashController.readyPromise; } catch(e){ console.debug('[FindMistake] splash failed', e?.message); }
 
   // Load list
   let data = [];
@@ -22,6 +27,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     console.log('DEBUG find_mistake: grammarFile=', grammarFile, 'grammarName=', grammarName, 'data[0]=', data[0]);
   } catch (e) {
     container.innerHTML = '<div style="padding:20px;text-align:center;color:#c00">Failed to load list.</div>';
+    if (splashController && typeof splashController.hide === 'function') try { splashController.hide(); } catch {}
     return;
   }
 
@@ -44,6 +50,8 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const isPresentSimpleWhList = /present_simple_questions_wh\.json$/i.test(String(grammarFile || ''))
     || /present\s*simple[\s:\-]*wh/i.test(String(grammarName || ''))
     || /wh\s*questions?/i.test(String(grammarName || ''));
+  // Include dedicated Who/What micro list
+  const isWhoWhatMicroList = /wh_who_what\.json$/i.test(String(grammarFile || ''));
   // Present progressive list detection (BE + V-ing sentences)
   const isPresentProgressiveList = /present_progressive\.json$/i.test(String(grammarFile || ''))
     || /present\s*progressive(?!.*(negative|yes\s*\/\s*no|wh))/i.test(String(grammarName || ''));
@@ -284,7 +292,39 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     }
 
     // Present Simple Yes/No + WH questions: create typical DO/DOES + verb mistakes
-    if (isPresentSimpleYesNoList || isPresentSimpleWhList) {
+    if (isPresentSimpleYesNoList || isPresentSimpleWhList || isWhoWhatMicroList) {
+      // Extra corruption pattern: produce a WRONG WORD ORDER version (e.g., "Who eats cake?" -> "Who cake eats?", or verb moved to end)
+      // We'll attempt this first for WH patterns, then fall back to DO/DOES logic
+      const whOrderRx = /^(Who|What|When|Where|Why|How|Which)\s+([A-Za-z]+)(?:\s+([A-Za-z]+))?\s*(.*)$/i;
+      const whOrderM = en.match(whOrderRx);
+      if (whOrderM) {
+        const wh = whOrderM[1];
+        const first = whOrderM[2];
+        const second = whOrderM[3] || '';
+        const rest = (whOrderM[4] || '').trim();
+        const tokens = [first];
+        if (second) tokens.push(second);
+        const trailing = rest ? rest.split(/\s+/).filter(t=>t) : [];
+        const verbIndex = tokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
+        if (verbIndex >= 0) {
+          const verb = tokens[verbIndex];
+          const objs = tokens.filter((_,i)=>i!==verbIndex);
+          if (objs.length) {
+            // Build wrong order variant ensuring it's different from original
+            const wrongSeqArr = [wh, ...objs, verb, ...trailing];
+            let wrongSeq = wrongSeqArr.join(' ').replace(/\s+\?/g,'?');
+            if (!wrongSeq.endsWith('?')) wrongSeq += '?';
+            if (wrongSeq.toLowerCase() === en.toLowerCase()) {
+              // Fallback: move verb to absolute end
+              const altArr = [wh, ...objs, ...trailing, verb];
+              wrongSeq = altArr.join(' ');
+              if (!/\?$/.test(wrongSeq)) wrongSeq += '?';
+            }
+            const wrongToken = verb; // highlight verb as focal grammar element
+            return { bad: wrongSeq, wrongToken, correctToken: verb };
+          }
+        }
+      }
       // Allow optional WH word before Do/Does
       const mQ = en.match(/^(?:Who|What|When|Where|Why|How|Which)\s+(Do|Does)\s+(.+?)\s+(\w+)(.*)$/i)
                || en.match(/^(Do|Does)\s+(.+?)\s+(\w+)(.*)$/i);
@@ -620,4 +660,6 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   }
 
   render();
+  // Hide the splash now that UI is rendered
+  try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 520); } catch(e){}
 }

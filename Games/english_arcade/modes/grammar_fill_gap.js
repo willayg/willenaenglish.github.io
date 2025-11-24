@@ -4,6 +4,7 @@
 // wa:session-ended event so stars/upgrades refresh automatically.
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 import { buildPrepositionScene, isInOnUnderMode } from './grammar_prepositions_data.js';
 import { renderGrammarSummary } from './grammar_summary.js';
 
@@ -770,6 +771,13 @@ export async function runGrammarFillGapMode(ctx) {
   }
 
   let rawData = [];
+  // Show a lightweight loading splash while we fetch and hydrate audio
+  let splashController = null;
+  try {
+    splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') });
+    if (splashController && splashController.readyPromise) await splashController.readyPromise;
+  } catch (e) { console.debug('[GrammarFillGap] splash failed', e?.message); }
+
   try {
     const res = await fetch(grammarFile);
     if (!res.ok) throw new Error(`Failed to load ${grammarFile}`);
@@ -778,6 +786,7 @@ export async function runGrammarFillGapMode(ctx) {
     console.error('[GrammarFillGap] Unable to load data', err);
     inlineToast?.('Could not load grammar data');
     showOpeningButtons?.(true);
+    if (splashController && typeof splashController.hide === 'function') try { splashController.hide(); } catch {}
     return;
   }
 
@@ -861,6 +870,9 @@ export async function runGrammarFillGapMode(ctx) {
   const isPresentSimpleWhFillGap = (grammarFile && /present_simple_questions_wh\.json$/i.test(grammarFile))
     || (grammarName && /present\s*simple[\s:\-]*wh/i.test(grammarName))
     || (grammarName && /wh\s*questions?/i.test(grammarName));
+
+  // Dedicated Who/What micro-mode: only offer Who vs What for wh_who_what.json
+  const isWhoWhatChoiceMode = /wh_who_what\.json$/i.test(grammarFile);
 
   // Present Progressive fill-gap variants
   const isPresentProgressiveNegativeFillGap = (grammarFile && /present_progressive_negative\.json$/i.test(grammarFile))
@@ -1078,6 +1090,18 @@ export async function runGrammarFillGapMode(ctx) {
       }
       const hint = item.ko || item.exampleSentenceKo || '';
       hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isWhoWhatChoiceMode) {
+      // Who/What choice: Blank the first token (Who/What) and give only two options
+      const q = String(item.en || item.exampleSentence || '').trim();
+      let statement = q;
+      if (/^(who|what)\b/i.test(q)) {
+        statement = q.replace(/^(who|what)\b/i, '_____');
+      }
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      sentenceEl.innerHTML = statement.replace('_____', '<strong>_____</strong>');
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
     } else if (isPresentSimpleWhFillGap) {
       presentSimpleWhData = buildPresentSimpleWhFillGap(item);
       wordEl.textContent = '';
@@ -1261,6 +1285,16 @@ export async function runGrammarFillGapMode(ctx) {
       optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
       if (!optionButtons.length) {
         console.error('[GrammarFillGap] No short questions options rendered');
+        return;
+      }
+    } else if (isWhoWhatChoiceMode) {
+      // Render only Who / What buttons
+      optionsRow.innerHTML = ['Who','What']
+        .map(w => `<button type="button" class="fg-chip" data-value="${w.toLowerCase()}">${w}</button>`)
+        .join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No who/what options rendered');
         return;
       }
     } else if (isPresentSimpleWhFillGap) {
@@ -1454,7 +1488,9 @@ export async function runGrammarFillGapMode(ctx) {
         }
       } else if (isPresentSimpleYesNoFillGap && presentSimpleYesNoData) {
         correctAnswerSource = presentSimpleYesNoData.correctAnswer;
-      } else if (isPresentSimpleWhFillGap && presentSimpleWhData) {
+    } else if (isWhoWhatChoiceMode) {
+      correctAnswerSource = (/^who\b/i.test(getSentenceText(item)) ? 'who' : /^what\b/i.test(getSentenceText(item)) ? 'what' : (item.word || '').split('_')[0]);
+    } else if (isPresentSimpleWhFillGap && presentSimpleWhData) {
         correctAnswerSource = presentSimpleWhData.correctAnswer;
       } else if (isGenericSentenceMode && genericSentenceData) {
         correctAnswerSource = genericSentenceData.correctAnswerLastWord || genericSentenceData.correctAnswerLower;
@@ -1544,4 +1580,6 @@ export async function runGrammarFillGapMode(ctx) {
 
   renderLayout();
   renderQuestion();
+  // Auto-hide the splash once the UI has rendered
+  try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 600); } catch(e){}
 }

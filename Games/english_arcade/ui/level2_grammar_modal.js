@@ -346,17 +346,8 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     const isProgressGame = progressIds.includes(g.id);
     const btn = document.createElement('button');
     btn.className = 'gl2-btn';
-    // Fetch first example sentence from grammar file (sync fallback, async update)
-    let example = g.label;
-    fetch(g.file).then(r => r.ok ? r.json() : []).then(list => {
-      if (Array.isArray(list)) {
-        const item = list.find(it => it && (it.en || it.exampleSentence));
-        if (item) {
-          example = item.en || item.exampleSentence;
-          btn.querySelector('.gl2-example').textContent = example;
-        }
-      }
-    }).catch(() => {});
+  // Use the friendly label as the primary display; do not replace with example sentences
+  const example = g.label;
     btn.innerHTML = `
       <span style="font-size:2em;flex-shrink:0;">${g.emoji || '📘'}</span>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
@@ -391,6 +382,7 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
 
   // Move games with progress to top
   const progressIds = [
+  'wh_who_what',
     'some_vs_any',
     'there_is_vs_there_are',
     'are_there_vs_is_there',

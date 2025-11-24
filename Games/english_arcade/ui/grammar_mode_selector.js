@@ -97,6 +97,13 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const isWhQuestions = /present_simple_questions_wh\.json$/i.test(currentGrammarFile || '');
   if (isWhQuestions) visibleModes = visibleModes.filter(m => m.mode !== 'sorting');
 
+  // Special micro-mode: WH Who & What list should only show Fill Gap + Unscramble (and optional lesson filtering already applied)
+  // Hide Sorting and Choose to avoid confusion (student should pick WHO or WHAT only via fill-gap micro-mode we added)
+  const isWhoWhatList = /wh_who_what\.json$/i.test(String(currentGrammarFile || ''));
+  if (isWhoWhatList) {
+    visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'choose');
+  }
+
   // Load grammar data to check what modes are compatible
   let grammarData = [];
   try {
