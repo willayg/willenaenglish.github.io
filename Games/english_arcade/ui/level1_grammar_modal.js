@@ -232,19 +232,19 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
         ruleHint: 'Use Do for I/you/we/they; Does for he/she/it.'
       }
     },
+    // Negative contractions (restored)
     {
       id: 'negative_contractions',
-      label: 'Negative Contractions',
-      emoji: '➖',
+      label: "Negative contractions",
+      emoji: '🚫',
       file: 'data/grammar/level1/negative_contractions.json',
-      aliases: ['negative_contractions', 'contractions negative'],
+      aliases: ['negative_contractions', 'negative contractions', 'contractions negative'],
       config: {
-        lessonModule: 'grammar_lesson',
+        lessonModule: 'grammar_lesson_negative_contractions',
         lessonId: 'negative_contractions',
         answerChoices: ["isn't", "aren't", "don't", "doesn't", "can't"],
         bucketLabels: { isnt: "isn't", arent: "aren't", dont: "don't", doesnt: "doesn't", cant: "can't" },
-        ruleHint: 'Learn short forms of not (isn\'t, aren\'t, don\'t, doesn\'t, can\'t).',
-        comingSoon: true
+        ruleHint: 'Match the full form to the contracted short form (e.g., is not → isn\'t).'
       }
     },
     {
@@ -370,36 +370,7 @@ export function showGrammarL1Modal({ onChoose, onClose }) {
       }
     },
     // --- Existence and demonstratives ---
-    /*
-    {
-      id: 'there_is_are',
-      label: 'There is vs There are',
-      emoji: '📍',
-      file: 'data/grammar/level1/there_is_are.json',
-      aliases: ['there_is_are', 'there is are'],
-      config: {
-        lessonModule: 'grammar_lesson',
-        lessonId: 'there_is_are',
-        answerChoices: ['is', 'are'],
-        bucketLabels: { is: 'is', are: 'are' },
-        ruleHint: 'There is for singular; There are for plural.'
-      }
-    },
-    {
-      id: 'there_are_vs_they_are',
-      label: 'There are vs They are',
-      emoji: '🔁',
-      file: 'data/grammar/level1/there_are_vs_they_are.json',
-      aliases: ['there_are_vs_they_are', 'there are vs they are'],
-      config: {
-        lessonModule: 'grammar_lesson',
-        lessonId: 'there_are_vs_they_are',
-        answerChoices: ['there_are', 'they_are'],
-        bucketLabels: { there_are: 'there are', they_are: 'they are' },
-        ruleHint: 'There are points out existence; They are describes who/what they are.'
-      }
-    }
-    */
+  // there_is_are and there_are_vs_they_are archived
   ];
 
   const encodeConfig = (config) => {

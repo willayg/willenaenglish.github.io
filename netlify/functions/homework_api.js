@@ -47,6 +47,9 @@ exports.handler = async (event) => {
     if (action === 'assignment_progress') {
       return await assignmentProgress(event);
     }
+    if (action === 'delete_assignment') {
+      return await deleteAssignment(event);
+    }
     return json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
@@ -189,6 +192,29 @@ async function endAssignment(event) {
   const { data, error } = await supabase.from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
   if (error) return json(500,{ success:false, error:'Failed to end assignment: '+(error.message||error.code)});
   return json(200,{ success:true, assignment:data });
+}
+
+async function deleteAssignment(event) {
+  // Permanently delete an assignment (only teacher/admin who created it or admin)
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) return json(401, { success:false, error:'Not signed in' });
+  let body; try { body = JSON.parse(event.body||'{}'); } catch { return json(400,{ success:false, error:'Bad JSON'}); }
+  const assignmentId = body.id || body.assignment_id || null;
+  if (!assignmentId) return json(400,{ success:false, error:'Missing assignment id'});
+  // Verify profile
+  const { data: prof, error: profErr } = await supabase.from('profiles').select('id, role').eq('id', authUserId).single();
+  if (profErr || !prof || !['teacher','admin'].includes(String(prof.role||'').toLowerCase())) {
+    return json(403,{ success:false, error:'Only teachers can delete assignments'});
+  }
+  // Fetch assignment to ensure ownership (teachers can only delete their own; admins can delete any)
+  const { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('id, created_by').eq('id', assignmentId).single();
+  if (aErr || !assignment) return json(404,{ success:false, error:'Assignment not found'});
+  if (String(prof.role||'').toLowerCase() !== 'admin' && assignment.created_by !== prof.id) {
+    return json(403,{ success:false, error:'Not allowed to delete this assignment'});
+  }
+  const { error: delErr } = await supabase.from('homework_assignments').delete().eq('id', assignmentId);
+  if (delErr) return json(500,{ success:false, error:'Failed to delete assignment: '+(delErr.message||delErr.code)});
+  return json(200,{ success:true, deleted: assignmentId });
 }
 
 async function assignmentProgress(event) {

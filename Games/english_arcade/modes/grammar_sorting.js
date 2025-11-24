@@ -3,6 +3,7 @@
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { renderGrammarSummary } from './grammar_summary.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -393,6 +394,9 @@ function chooseCategoryStrategy(rawItems, hints = {}) {
 export async function runGrammarSortingMode(ctx = {}) {
   const { grammarFile, grammarName, inlineToast, showOpeningButtons, playSFX } = ctx;
   if (!grammarFile) { inlineToast?.('Error: No grammar file selected'); return; }
+  // Show loading splash while fetching data
+  let splashController = null;
+  try { splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') }); if (splashController && splashController.readyPromise) await splashController.readyPromise; } catch(e){ console.debug('[Sorting] splash failed', e?.message); }
 
   let raw = [];
   try {
@@ -403,6 +407,7 @@ export async function runGrammarSortingMode(ctx = {}) {
     console.error('[Sorting] load failed', e);
     inlineToast?.('Could not load grammar list');
     showOpeningButtons?.(true);
+    if (splashController && typeof splashController.hide === 'function') try { splashController.hide(); } catch {}
     return;
   }
 
@@ -904,4 +909,6 @@ export async function runGrammarSortingMode(ctx = {}) {
   // Removed check button logic; evaluation handled per placement.
 
   gameArea.appendChild(wrap);
+  // Hide splash once UI is visible
+  try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 520); } catch(e){}
 }
