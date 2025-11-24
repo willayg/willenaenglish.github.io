@@ -427,8 +427,9 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
       const pct = Math.max(0, Math.min(100, percents[idx] || 0));
       const bar = document.getElementById(`gl2bar-${g.id}`);
       const pctEl = document.getElementById(`gl2percent-${g.id}`);
-      if (bar) { bar.classList.remove('loading'); bar.style.width = pct + '%'; }
-      if (pctEl) { pctEl.textContent = pct + '%'; }
+  // For all lists (including wh_who_what) use the weighted percent from the service.
+  if (bar) { bar.classList.remove('loading'); bar.style.width = pct + '%'; }
+  if (pctEl) { pctEl.textContent = pct + '%'; }
     });
     // Ensure scroll restoration after layout settles
     requestAnimationFrame(() => restoreScroll());

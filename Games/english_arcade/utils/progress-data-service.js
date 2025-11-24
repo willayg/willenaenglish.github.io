@@ -280,6 +280,12 @@ function computeGrammarLevelProgress(lists, sessions) {
 // Level 2 grammar progress: track completion across six modes (Sorting, Choose, Fill, Unscramble, Find, Translation)
 function computeGrammarLevel2Progress(lists, sessions) {
   const TOTAL_MODES = 6;
+  // Expose per-item bucket data for UI overrides (e.g., custom fraction display)
+  if (typeof window !== 'undefined') {
+    if (!window.__GRAMMAR_L2_BUCKETS || typeof window.__GRAMMAR_L2_BUCKETS !== 'object') {
+      window.__GRAMMAR_L2_BUCKETS = {};
+    }
+  }
   return lists.map((item) => {
     const best = {
       sorting: null,
@@ -306,14 +312,23 @@ function computeGrammarLevel2Progress(lists, sessions) {
     const isWhQuestionsList = item.id === 'present_simple_questions_wh' || item.id === 'present_progressive_questions_wh' || 
                                (item.file && /questions_wh\.json$/i.test(item.file));
     
-    // Weighting: for WH questions use 1/5 (5 modes), otherwise use 1/6 (6 modes)
-    const weight = isWhQuestionsList ? (1/5) : (1/6);
+  // Special case: original WH question lists have 5 modes (no Sorting)
+  // Special case: wh_who_what list currently only offers 4 modes (Sorting & Choose hidden)
+  const isWhoWhatList = item.id === 'wh_who_what';
+  const weight = isWhoWhatList ? (1/4) : (isWhQuestionsList ? (1/5) : (1/6));
     
     let attempted = 0;
     Object.values(best).forEach((pct) => { if (typeof pct === 'number') attempted++; });
     
     let total;
-    if (isWhQuestionsList) {
+    if (isWhoWhatList) {
+      // Only four active modes: fill, unscramble, find, translate
+      total =
+        (best.fill ?? 0) * weight +
+        (best.unscramble ?? 0) * weight +
+        (best.find ?? 0) * weight +
+        (best.translate ?? 0) * weight;
+    } else if (isWhQuestionsList) {
       // WH questions: 5 modes (no Sorting)
       total =
         (best.choose ?? 0) * weight +
@@ -330,6 +345,11 @@ function computeGrammarLevel2Progress(lists, sessions) {
         (best.unscramble ?? 0) * weight +
         (best.find ?? 0) * weight +
         (best.translate ?? 0) * weight;
+    }
+
+    // Persist bucket detail for UI layer (non-reactive; refreshed each fetch)
+    if (typeof window !== 'undefined') {
+      try { window.__GRAMMAR_L2_BUCKETS[item.id] = { ...best }; } catch { /* ignore */ }
     }
     return Math.round(total);
   });
