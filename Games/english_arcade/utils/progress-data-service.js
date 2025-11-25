@@ -313,15 +313,18 @@ function computeGrammarLevel2Progress(lists, sessions) {
                                (item.file && /questions_wh\.json$/i.test(item.file));
     
   // Special case: original WH question lists have 5 modes (no Sorting)
-  // Special case: wh_who_what list currently only offers 4 modes (Sorting & Choose hidden)
+  // Special case: WH micro lists (who/what, where/when/what time, how/why/which) currently only offer 4 modes (Sorting & Choose hidden)
   const isWhoWhatList = item.id === 'wh_who_what';
-  const weight = isWhoWhatList ? (1/4) : (isWhQuestionsList ? (1/5) : (1/6));
+  const isWhereWhenWhatTimeList = item.id === 'wh_where_when_whattime';
+  const isHowWhyWhichList = item.id === 'wh_how_why_which';
+  const isWhMicroList = isWhoWhatList || isWhereWhenWhatTimeList || isHowWhyWhichList;
+  const weight = isWhMicroList ? (1/4) : (isWhQuestionsList ? (1/5) : (1/6));
     
     let attempted = 0;
     Object.values(best).forEach((pct) => { if (typeof pct === 'number') attempted++; });
     
     let total;
-    if (isWhoWhatList) {
+    if (isWhMicroList) {
       // Only four active modes: fill, unscramble, find, translate
       total =
         (best.fill ?? 0) * weight +

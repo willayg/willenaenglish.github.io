@@ -97,10 +97,12 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const isWhQuestions = /present_simple_questions_wh\.json$/i.test(currentGrammarFile || '');
   if (isWhQuestions) visibleModes = visibleModes.filter(m => m.mode !== 'sorting');
 
-  // Special micro-mode: WH Who & What list should only show Fill Gap + Unscramble (and optional lesson filtering already applied)
-  // Hide Sorting and Choose to avoid confusion (student should pick WHO or WHAT only via fill-gap micro-mode we added)
+  // Special micro-modes: WH Who & What, WH Where/When/What Time, and WH How/Why/Which lists should only show Fill Gap + Unscramble (plus Find/Translation)
+  // Hide Sorting and Choose to avoid confusion (student should pick WH word via dedicated micro-modes we added)
   const isWhoWhatList = /wh_who_what\.json$/i.test(String(currentGrammarFile || ''));
-  if (isWhoWhatList) {
+  const isWhereWhenWhatTimeList = /wh_where_when_whattime\.json$/i.test(String(currentGrammarFile || ''));
+  const isHowWhyWhichList = /wh_how_why_which\.json$/i.test(String(currentGrammarFile || ''));
+  if (isWhoWhatList || isWhereWhenWhatTimeList || isHowWhyWhichList) {
     visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'choose');
   }
 

@@ -803,7 +803,17 @@ export async function startGame(mode = 'meaning') {
 
   renderGameView({
     modeName: mode,
+    // Override mode modal for homework flows: if homework flag set, skip showing criteria popup
     onShowModeModal: () => {
+      try {
+        if (window.__WA_HOMEWORK_ACTIVE__) {
+          // Directly cycle to meaning mode (or keep current) without popup
+          if (currentMode && currentMode !== mode) {
+            startGame(currentMode);
+          }
+          return; // do not show modal
+        }
+      } catch {}
       showModeModal({
         onModeChosen: (newMode) => { currentMode = newMode; startGame(newMode); },
         onClose: () => {}

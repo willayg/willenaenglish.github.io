@@ -50,8 +50,8 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const isPresentSimpleWhList = /present_simple_questions_wh\.json$/i.test(String(grammarFile || ''))
     || /present\s*simple[\s:\-]*wh/i.test(String(grammarName || ''))
     || /wh\s*questions?/i.test(String(grammarName || ''));
-  // Include dedicated Who/What micro list
-  const isWhoWhatMicroList = /wh_who_what\.json$/i.test(String(grammarFile || ''));
+  // Include dedicated WH micro lists (who/what, how/why/which, where/when/what time)
+  const isWhoWhatMicroList = /wh_(who_what|how_why_which|where_when_whattime)\.json$/i.test(String(grammarFile || ''));
   // Present progressive list detection (BE + V-ing sentences)
   const isPresentProgressiveList = /present_progressive\.json$/i.test(String(grammarFile || ''))
     || /present\s*progressive(?!.*(negative|yes\s*\/\s*no|wh))/i.test(String(grammarName || ''));
@@ -291,37 +291,36 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
       }
     }
 
-    // Present Simple Yes/No + WH questions: create typical DO/DOES + verb mistakes
+    // Present Simple Yes/No + WH questions: create typical word-order and DO/DOES + verb mistakes
     if (isPresentSimpleYesNoList || isPresentSimpleWhList || isWhoWhatMicroList) {
       // Extra corruption pattern: produce a WRONG WORD ORDER version (e.g., "Who eats cake?" -> "Who cake eats?", or verb moved to end)
+      // Also support multi-token WH like "What time" and WH+BE questions like "Where is the movie?" -> "Where the movie is?"
       // We'll attempt this first for WH patterns, then fall back to DO/DOES logic
-      const whOrderRx = /^(Who|What|When|Where|Why|How|Which)\s+([A-Za-z]+)(?:\s+([A-Za-z]+))?\s*(.*)$/i;
+      const whOrderRx = /^(Who|What\s+time|What|When|Where|Why|How|Which)\s+([^?]+?)(\?)?$/i;
       const whOrderM = en.match(whOrderRx);
       if (whOrderM) {
         const wh = whOrderM[1];
-        const first = whOrderM[2];
-        const second = whOrderM[3] || '';
-        const rest = (whOrderM[4] || '').trim();
-        const tokens = [first];
-        if (second) tokens.push(second);
-        const trailing = rest ? rest.split(/\s+/).filter(t=>t) : [];
-        const verbIndex = tokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
-        if (verbIndex >= 0) {
-          const verb = tokens[verbIndex];
-          const objs = tokens.filter((_,i)=>i!==verbIndex);
-          if (objs.length) {
-            // Build wrong order variant ensuring it's different from original
-            const wrongSeqArr = [wh, ...objs, verb, ...trailing];
-            let wrongSeq = wrongSeqArr.join(' ').replace(/\s+\?/g,'?');
-            if (!wrongSeq.endsWith('?')) wrongSeq += '?';
-            if (wrongSeq.toLowerCase() === en.toLowerCase()) {
-              // Fallback: move verb to absolute end
-              const altArr = [wh, ...objs, ...trailing, verb];
-              wrongSeq = altArr.join(' ');
-              if (!/\?$/.test(wrongSeq)) wrongSeq += '?';
+        const body = (whOrderM[2] || '').trim();
+        const bodyTokens = body.split(/\s+/).filter(Boolean);
+        if (bodyTokens.length >= 2) {
+          // Try to detect BE or main verb in the body
+          const beIdx = bodyTokens.findIndex(t => /^(am|is|are)$/i.test(t));
+          let verbIdx = beIdx;
+          if (verbIdx < 0) {
+            verbIdx = bodyTokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
+          }
+          if (verbIdx >= 0) {
+            const verb = bodyTokens[verbIdx];
+            const before = bodyTokens.slice(0, verbIdx);
+            const after = bodyTokens.slice(verbIdx + 1);
+            // Wrong order: move verb to the very end, keep WH at front
+            const wrongArr = [wh, ...before, ...after, verb];
+            let wrongSeq = wrongArr.join(' ');
+            if (!/\?$/.test(wrongSeq)) wrongSeq += '?';
+            if (wrongSeq.toLowerCase() !== en.toLowerCase()) {
+              const wrongToken = verb;
+              return { bad: wrongSeq, wrongToken, correctToken: verb };
             }
-            const wrongToken = verb; // highlight verb as focal grammar element
-            return { bad: wrongSeq, wrongToken, correctToken: verb };
           }
         }
       }

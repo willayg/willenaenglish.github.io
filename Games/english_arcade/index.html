@@ -117,24 +117,6 @@
         <button id="closeComingSoon" style="font-size:1em;padding:8px 22px;border-radius:8px;background:#19777e;color:#fff;border:none;box-shadow:0 2px 8px #19777e33;cursor:pointer;">OK</button>
       </div>
     </div>
-    <!-- Homework Requirement Modal (Korean explanation) -->
-    <div id="hwRequirementModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
-      <div style="background:#ffffff;border-radius:22px;box-shadow:0 6px 38px rgba(25,119,126,0.35);padding:42px 34px 34px;max-width:440px;width:92%;font-family:'Poppins',Arial,sans-serif;position:relative;">
-        <h2 style="margin:0 0 18px;font-size:1.55rem;font-weight:800;color:#19777e;letter-spacing:.5px;">숙제 완료 기준</h2>
-        <p style="margin:0 0 14px;font-size:0.95rem;line-height:1.55;color:#374151;font-weight:600;">각 게임 모드에서 <span style="color:#dc2626;font-weight:700;">별 1개</span> 이상 받으면 해당 모드를 완료로 인정합니다.</p>
-        <ul style="margin:0 0 18px;padding-left:18px;font-size:0.85rem;color:#4b5563;line-height:1.4;">
-          <li>모드를 그냥 끝까지 클릭만 해서는 완료가 아닙니다.</li>
-          <li>별 1개는 기본 학습 기준입니다. 나중에 선생님이 더 높은 기준(2~5개 별)을 설정할 수 있습니다.</li>
-          <li>가능하면 정확도를 높여 더 많은 별을 얻어 보세요!</li>
-        </ul>
-        <div style="background:#f1fafc;border:2px solid #22d3ee;border-radius:14px;padding:14px 16px;margin-bottom:18px;font-size:0.8rem;color:#0d5d63;line-height:1.4;">
-          별은 정확도와 문제 풀이 결과에 따라 올라갑니다. 틀린 문제는 다시 도전해서 별을 늘려 보세요.
-        </div>
-        <button id="hwRequirementStart" style="display:inline-block;background:linear-gradient(90deg,#22d3ee,#19777e);color:#fff;font-weight:700;font-size:0.95rem;border:none;padding:12px 28px;border-radius:12px;cursor:pointer;box-shadow:0 4px 16px rgba(34,211,238,0.35);transition:transform .18s,box-shadow .18s;">숙제 시작하기</button>
-        <button id="hwRequirementClose" style="margin-left:10px;background:#ffffff;color:#19777e;font-weight:600;font-size:0.85rem;border:2px solid #19777e;padding:10px 18px;border-radius:10px;cursor:pointer;">닫기</button>
-        <div style="margin-top:16px;font-size:0.7rem;color:#6b7280;">오늘 한 번만 표시됩니다.</div>
-      </div>
-    </div>
   </main>
 
   <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
@@ -192,30 +174,6 @@
       if (tabGrammarArcade) {
         tabGrammarArcade.addEventListener('click', async (e) => {
           e.preventDefault();
-          // Show requirement modal first (once per day)
-          const modal = document.getElementById('hwRequirementModal');
-          const acknowledgedKey = 'hwRequirementAckDate';
-          const today = new Date().toISOString().slice(0,10);
-          const prev = localStorage.getItem(acknowledgedKey);
-          if (modal && prev !== today) {
-            modal.style.display = 'flex';
-            const startBtn = document.getElementById('hwRequirementStart');
-            const closeBtn = document.getElementById('hwRequirementClose');
-            const closeModal = () => { modal.style.display='none'; };
-            if (startBtn && !startBtn.dataset.bound) {
-              startBtn.dataset.bound='1';
-              startBtn.addEventListener('click', () => {
-                localStorage.setItem(acknowledgedKey, today);
-                closeModal();
-                loadHomeworkTab();
-              });
-            }
-            if (closeBtn && !closeBtn.dataset.bound) {
-              closeBtn.dataset.bound='1';
-              closeBtn.addEventListener('click', () => { closeModal(); });
-            }
-            return; // wait for user to acknowledge
-          }
           loadHomeworkTab();
         });
       }
@@ -469,7 +427,144 @@
             if (progress >= 100) {
               completeList.appendChild(card);
             } else {
+              // Add the card to the incomplete list
               incompleteList.appendChild(card);
+              // If this is the first incomplete card, and we haven't shown the "tap hint" this session,
+              // append a small non-blocking Korean overlay that invites the student to tap to do homework.
+              try {
+                const shownKey = 'wa_hw_tap_hint_shown';
+                if (!sessionStorage.getItem(shownKey)) {
+                  // create overlay element
+                  // Create a full-card pulsing overlay that draws attention but allows clicks through
+                  // Build overlay using DOM APIs to avoid HTML-escaping issues
+                  const hint = document.createElement('div');
+                  hint.className = 'wa-hw-tap-hint-full';
+                  // overlay styles
+                  hint.style.position = 'absolute';
+                  hint.style.inset = '0';
+                  hint.style.borderRadius = '16px';
+                  hint.style.pointerEvents = 'none'; // allow clicks to reach the card
+                  hint.style.zIndex = '28';
+                  hint.style.opacity = '0';
+                  hint.style.display = 'flex';
+                  hint.style.alignItems = 'center';
+                  hint.style.justifyContent = 'center';
+                  hint.style.transition = 'opacity .28s ease';
+                  hint.style.boxShadow = '0 8px 30px rgba(255,111,169,0.12)';
+
+                  // inner badge element (centered, visually prominent)
+                  const badge = document.createElement('div');
+                  // subtle pulse element behind the badge
+                  const pulse = document.createElement('div');
+                  pulse.className = 'wa-hw-pulse';
+                  pulse.style.position = 'absolute';
+                  pulse.style.width = '72%';
+                  pulse.style.height = '72%';
+                  pulse.style.borderRadius = '14px';
+                  pulse.style.left = '14%';
+                  pulse.style.top = '14%';
+                  pulse.style.pointerEvents = 'none';
+                  pulse.style.zIndex = '26';
+                  pulse.style.background = 'radial-gradient(circle at 50% 40%, rgba(147,203,207,0.24), rgba(147,203,207,0.06))';
+                  pulse.style.opacity = '0.95';
+                  badge.style.pointerEvents = 'none';
+                  badge.style.position = 'relative';
+                  badge.style.fontFamily = 'Poppins, system-ui, Arial';
+                  badge.style.fontWeight = '700';
+                  badge.style.fontSize = '1.4rem';
+                  badge.style.color = '#666';
+                  badge.style.padding = '20px 28px';
+                  badge.style.borderRadius = '18px';
+                  badge.style.background = 'rgba(255, 255, 255, 0.9)';
+                  badge.style.border = '2px solid #93cbcf';
+                  badge.style.boxShadow = '0 6px 18px rgba(17,94,97,0.06)';
+                  badge.style.transform = 'translateY(-12px)';
+                  badge.textContent = '여기를 누르세요';
+                  hint.appendChild(pulse);
+                  hint.appendChild(badge);
+                  // encourage the browser to composite this element for smooth animation
+                  hint.style.willChange = 'transform, box-shadow, opacity';
+                  hint.style.transformOrigin = 'center center';
+
+                  // Add animation styles once
+                  const animName = 'waTapPulseAnim';
+                  if (!document.getElementById('waTapPulseStyles')) {
+                    const st = document.createElement('style');
+                    st.id = 'waTapPulseStyles';
+                    // Soft pulsing style: gentle scale + shadow pulse like earlier design
+                    st.textContent = `@keyframes ${animName} { 0% { box-shadow: 0 6px 18px rgba(147,203,207,0.12); transform: scale(1); } 50% { box-shadow: 0 18px 36px rgba(147,203,207,0.18); transform: scale(1.03); } 100% { box-shadow: 0 6px 18px rgba(147,203,207,0.12); transform: scale(1); } } .wa-hw-tap-hint-full { animation: ${animName} 1.6s ease-in-out infinite; transform-origin: center center; } @keyframes waPulse { 0% { transform: scale(0.98); opacity: 0.88 } 50% { transform: scale(1.06); opacity: 0.98 } 100% { transform: scale(0.98); opacity: 0.88 } } .wa-hw-pulse { animation: waPulse 1.6s ease-in-out infinite; }
+                      /* Fireworks particle animation used when removing the hint */
+                      @keyframes waFirework { 0% { transform: translate(0,0) scale(1); opacity:1 } 100% { transform: translate(var(--tx,0px), var(--ty, -60px)) scale(0.6); opacity:0 } }
+                    `;
+                    document.head.appendChild(st);
+                  }
+                  // Wrap card in a positioned container if needed
+                  const wrapper = document.createElement('div');
+                  wrapper.style.position = 'relative';
+                  wrapper.style.display = 'block';
+                  // Replace card with wrapper that contains the card + hint
+                  card.replaceWith(wrapper);
+                  wrapper.appendChild(card);
+                  wrapper.appendChild(hint);
+
+                  // Show hint briefly, then fade out. Allow clicks to pass through since pointer-events:none on overlay.
+                  requestAnimationFrame(() => { hint.style.opacity = '1'; });
+                  const createFireworks = (hostEl) => {
+                    // small set of particles that fly outward and fade
+                    const colors = ['#6fe0d9','#37c5c7','#93cbcf','#21b3be'];
+                    const frag = document.createDocumentFragment();
+                    for (let i=0;i<12;i++) {
+                      const p = document.createElement('div');
+                      p.className = 'wa-fw-particle';
+                      p.style.position = 'absolute';
+                      p.style.left = '50%'; p.style.top = '50%';
+                      p.style.width = '10px'; p.style.height = '10px';
+                      p.style.borderRadius = '50%';
+                      p.style.background = colors[i % colors.length];
+                      p.style.pointerEvents = 'none';
+                      p.style.transform = 'translate(-50%,-50%)';
+                      p.style.zIndex = '60';
+                      // random trajectory
+                      const angle = (Math.PI * 2) * (i / 12) + (Math.random()-0.5)*0.5;
+                      const dist = 40 + Math.random()*60;
+                      const tx = Math.round(Math.cos(angle) * dist) + 'px';
+                      const ty = Math.round(Math.sin(angle) * dist) + 'px';
+                      p.style.setProperty('--tx', tx);
+                      p.style.setProperty('--ty', ty);
+                      p.style.transition = 'transform 700ms cubic-bezier(.2,.8,.2,1), opacity 700ms linear';
+                      frag.appendChild(p);
+                    }
+                    hostEl.appendChild(frag);
+                    // trigger animations on next frame
+                    requestAnimationFrame(() => {
+                      const parts = hostEl.querySelectorAll('.wa-fw-particle');
+                      parts.forEach((el, idx) => {
+                        // small stagger for charm
+                        setTimeout(() => {
+                          el.style.transform = `translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.6)`;
+                          el.style.opacity = '0';
+                        }, idx * 18);
+                      });
+                      // cleanup
+                      setTimeout(() => { parts.forEach(p => p.remove()); }, 900);
+                    });
+                  };
+
+                  const removeHint = () => {
+                    try {
+                      // spawn a small cyan fireworks effect behind the badge
+                      const host = wrapper || hint.parentElement || document.body;
+                      createFireworks(host);
+                      hint.style.opacity = '0';
+                      setTimeout(() => { hint.remove(); }, 420);
+                    } catch (e) {}
+                  };
+                  // Hide after 3s
+                  const tId = setTimeout(() => { removeHint(); sessionStorage.setItem(shownKey, '1'); }, 3000);
+                  // If user taps card, mark shown and remove hint (card click still works because overlay is non-interactive)
+                  card.addEventListener('click', () => { clearTimeout(tId); removeHint(); sessionStorage.setItem(shownKey, '1'); }, { once: true });
+                }
+              } catch (e) { /* ignore sessionStorage errors */ }
             }
           });
 
@@ -601,6 +696,11 @@
           if (ga) ga.innerHTML = `<div style="padding:22px;text-align:center;color:#e53e3e;font-weight:600;">Couldn't load homework list.<br><small>${(err && err.message) || 'Unknown error'}</small><br><br><button id='retryAutostart' style='background:#19777e;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;'>Retry</button></div>`;
           document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam); });
         });
+      }
+
+      // If openHomework flag present (from dashboard mission modal), just open the homework tab list
+      if (urlParams.get('openHomework') === '1') {
+        try { loadHomeworkTab(); } catch (e) { console.warn('openHomework failed', e); }
       }
 
       const closeComingSoon = document.getElementById('closeComingSoon');
