@@ -1317,15 +1317,21 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
       GRAMMAR_CORE.forEach(m => { if (expectedSet.length < totalGuess && !expectedSet.includes(m)) expectedSet.push(m); });
     }
 
-    // Allow backend total override if present and seems reasonable
-    // Unified total modes heuristic: vocab=6, phonics=4, grammar=6.
-    let totalModes = js.total_modes || (rows[0]?.modes_total) || expectedSet.length;
-    if (category === 'grammar') {
-      totalModes = 6; // Force 6 grammar modes for consistent progress bars
-    } else if (category === 'phonics') {
-      totalModes = 4; // Phonics fixed set
-    } else if (category === 'vocab') {
-      totalModes = 6;
+    // Allow backend total override if present and seems reasonable.
+    // Prefer server-provided js.total_modes when available; fall back to
+    // row.modes_total or our expectedSet heuristic only when missing.
+    let totalModes = (Number.isFinite(js.total_modes) && js.total_modes > 0) ? Number(js.total_modes) : ((rows[0]?.modes_total) || expectedSet.length);
+    // If server didn't provide a value, apply conservative heuristics for category
+    if (!Number.isFinite(js.total_modes)) {
+      if (category === 'grammar') {
+        // Grammar: default to 6 only when advanced modes are present; else 4
+        const advancedPresent = GRAMMAR_ADV.filter(m => unionModes.has(m)).length >= 2;
+        totalModes = advancedPresent ? 6 : 4;
+      } else if (category === 'phonics') {
+        totalModes = 4;
+      } else if (category === 'vocab') {
+        totalModes = 6;
+      }
     }
 
     // Compute per-row derived metrics when missing/wrong
@@ -1351,10 +1357,12 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
         attemptedCount = r.modes_attempted;
       }
       // If backend total_modes is missing or clearly wrong (e.g., 6 for phonics), override
-  if (!js.total_modes) {
+  if (!Number.isFinite(js.total_modes)) {
     // Re-apply heuristic if backend total missing
-    if (category === 'grammar') totalModes = 6;
-    else if (category === 'phonics') totalModes = 4;
+    if (category === 'grammar') {
+      const advancedCount = GRAMMAR_ADV.filter(m=>unionModes.has(m)).length;
+      totalModes = advancedCount >= 2 ? 6 : 4;
+    } else if (category === 'phonics') totalModes = 4;
     else totalModes = 6;
   }
   // For grammar assignments, if backend gives generic 6 but our expectedSet length differs (e.g., 7), use expectedSet length.
@@ -1364,7 +1372,7 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
           totalModes = expectedSet.length;
         }
       }
-      const completionPct = totalModes ? Math.round((attemptedCount / totalModes) * 100) : (r.completion || 0);
+  const completionPct = totalModes ? Math.round((attemptedCount / totalModes) * 100) : (r.completion || 0);
       // Attach computed values for rendering and modal use
       r.__computed_modes_attempted = attemptedCount;
       r.__computed_total_modes = totalModes;
@@ -1403,10 +1411,17 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   // Prefer computed values when available (fallbacks injected earlier)
   const displayCompletion = (row.__computed_completion != null) ? row.__computed_completion : (row.completion || 0);
   const displayModesAttempted = (row.__computed_modes_attempted != null) ? row.__computed_modes_attempted : ((row.modes || []).length || 0);
-  let displayTotalModes = totalModes || (row.__computed_total_modes || (row.modes_total || 6));
-  // Normalize grammar totals to 6, phonics to 4
-  const catGuess = (assignmentId && (String(assignmentId).toLowerCase().includes('phonics'))) ? 'phonics' : (displayTotalModes === 4 ? 'phonics' : (displayTotalModes <= 4 ? 'phonics' : 'grammar'));
-  if (catGuess === 'grammar' && displayTotalModes !== 6) displayTotalModes = 6;
+  let displayTotalModes = totalModes || (row.__computed_total_modes || (row.modes_total || null));
+  // Normalize totals conservatively: prefer server/computed values; only adjust if missing or clearly invalid.
+  const catGuess = (assignmentId && (String(assignmentId).toLowerCase().includes('phonics'))) ? 'phonics' : (displayTotalModes === 4 ? 'phonics' : (displayTotalModes && displayTotalModes <= 4 ? 'phonics' : 'grammar'));
+  if (!Number.isFinite(displayTotalModes) || displayTotalModes <= 0) {
+    // Fallback defaults
+    displayTotalModes = (catGuess === 'phonics') ? 4 : 6;
+  } else {
+    // If provided value is outside expected bounds, clamp to reasonable set
+    if (catGuess === 'phonics' && displayTotalModes > 4) displayTotalModes = 4;
+    if (catGuess === 'grammar' && (displayTotalModes < 4 || displayTotalModes > 6)) displayTotalModes = 6;
+  }
   // Was the total derived by client-side heuristic?
   const totalWasComputed = (row.modes_total == null) || (Number(row.modes_total) !== Number(displayTotalModes));
   if (meta) meta.textContent = `Completion: ${displayCompletion}% • Stars: ${row.stars || 0} • Overall Accuracy: ${row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0)}% (Best: ${row.accuracy_best||0}%) • Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;

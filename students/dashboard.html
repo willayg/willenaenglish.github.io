@@ -146,8 +146,9 @@
   </div>
   <script>
     document.getElementById('logoutBig')?.addEventListener('click', async () => {
-      await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
-      location.href = '/students/login.html';
+  try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
+  await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
+  location.href = '/students/login.html';
     });
   </script>
   <script>
@@ -453,19 +454,6 @@
         sectionWrap.appendChild(completeSection);
         host.appendChild(sectionWrap);
 
-        // helper to prefer teacher title and sanitize fallback
-        function displayTitle(a) {
-          // If teacher provided a friendly title use it, but ignore values that look like file paths
-          if (a && a.title && typeof a.title === 'string') {
-            if (!a.title.includes('/') && !/\.json$/i.test(a.title)) return a.title;
-          }
-          const raw = a && (a.list_title || a.list_key || '') || '';
-          let s = String(raw || '');
-          if (s.includes('/')) s = s.split('/').pop();
-          s = s.replace(/\.json$/i, '').replace(/[-_]+/g, ' ').trim();
-          return s || t('Homework');
-        }
-
         // Create cards and append to sections based on progress
         assignments.forEach(a => {
           const li = document.createElement('div');
@@ -487,7 +475,7 @@
           title.style.fontWeight = '600';
           title.style.fontSize = '1rem';
           title.style.color = '#fff';
-          title.textContent = displayTitle(a);
+          title.textContent = a.title || a.list_title || t('Homework');
 
           // Countdown calculation
           let countdown = '';

@@ -871,8 +871,9 @@ export async function runGrammarFillGapMode(ctx) {
     || (grammarName && /present\s*simple[\s:\-]*wh/i.test(grammarName))
     || (grammarName && /wh\s*questions?/i.test(grammarName));
 
-  // Dedicated Who/What micro-mode: only offer Who vs What for wh_who_what.json
-  const isWhoWhatChoiceMode = /wh_who_what\.json$/i.test(grammarFile);
+  // Dedicated WH micro-modes: only offer WH choices for specific WH micro-lists
+  // Add wh_where_when_whattime so it uses the dedicated micro-mode chips
+  const isWhoWhatChoiceMode = /wh_(who_what|how_why_which|where_when_whattime)\.json$/i.test(grammarFile);
 
   // Present Progressive fill-gap variants
   const isPresentProgressiveNegativeFillGap = (grammarFile && /present_progressive_negative\.json$/i.test(grammarFile))
@@ -1091,17 +1092,85 @@ export async function runGrammarFillGapMode(ctx) {
       const hint = item.ko || item.exampleSentenceKo || '';
       hintEl.textContent = hint ? String(hint).trim() : '';
     } else if (isWhoWhatChoiceMode) {
-      // Who/What choice: Blank the first token (Who/What) and give only two options
+      // WH micro-mode: support both who/what (2-choice) and how/why/which (3-choice)
       const q = String(item.en || item.exampleSentence || '').trim();
       let statement = q;
-      if (/^(who|what)\b/i.test(q)) {
-        statement = q.replace(/^(who|what)\b/i, '_____');
+      // Blank leading WH token if present (support multi-token "what time")
+      const leadingMatch = q.match(/^(what\s+time|who|what|where|when|how|why|which)\b/i);
+      if (leadingMatch) {
+        // Replace the matched leading WH phrase with the blank
+        statement = q.replace(/^(what\s+time|who|what|where|when|how|why|which)\b/i, '_____');
       }
       wordEl.textContent = '';
       wordEl.style.display = 'none';
       sentenceEl.innerHTML = statement.replace('_____', '<strong>_____</strong>');
       const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
       hintEl.textContent = hint ? String(hint).trim() : '';
+
+      // Build options based on which WH micro-list we're serving
+  const isWhoWhatFile = /wh_who_what\.json$/i.test(String(grammarFile || ''));
+  const isWhereWhenWhatTimeFile = /wh_where_when_whattime\.json$/i.test(String(grammarFile || ''));
+  const isHowWhyWhichFile = /wh_how_why_which\.json$/i.test(String(grammarFile || ''));
+  let whChoices = [];
+  if (isWhoWhatFile) whChoices = ['who', 'what'];
+  else if (isWhereWhenWhatTimeFile) whChoices = ['where', 'when', 'what time'];
+  else if (isHowWhyWhichFile) whChoices = ['why', 'how', 'which'];
+  else whChoices = ['who', 'what', 'how', 'why', 'which'];
+
+      // Render chips or sentence-options for the whChoices
+      optionsRow.innerHTML = '';
+      if (isWhereWhenWhatTimeFile) {
+        // For the Where/When/What time list, build full-sentence options including mistaken patterns
+        const suffix = q.replace(/^(what\s+time|who|what|where|when|how|why|which)\b/i, '').trim();
+        const makeLabel = (whText) => {
+          const label = (whText + (suffix ? ' ' + suffix : '')).replace(/\s+/g, ' ').trim();
+          return label.charAt(0).toUpperCase() + label.slice(1);
+        };
+        const opts = [];
+        // For each base WH choice, produce one correct and 1-2 mistaken variants
+        whChoices.forEach((choice) => {
+          // correct variant
+          opts.push({ value: choice, label: makeLabel(choice) });
+
+          // mistaken variant 1: typographical / truncation of last token (e.g., 'time' -> 'tim')
+          const parts = choice.split(/\s+/);
+          const last = parts[parts.length - 1] || '';
+          if (last.length > 3) {
+            const typoLast = last.slice(0, -1);
+            const typoChoice = parts.slice(0, -1).concat([typoLast]).join(' ');
+            opts.push({ value: typoChoice, label: makeLabel(typoChoice) });
+          }
+
+          // mistaken variant 2: reorder suffix words (make the pattern 'out of order')
+          if (suffix) {
+            const words = suffix.split(/\s+/).filter(Boolean);
+            if (words.length > 1) {
+              const rev = words.slice().reverse().join(' ');
+              opts.push({ value: choice + '_rev', label: (choice.charAt(0).toUpperCase() + choice.slice(1)) + ' ' + rev });
+            }
+          }
+        });
+
+        // Shuffle options so mistaken patterns aren't predictable
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [opts[i], opts[j]] = [opts[j], opts[i]];
+        }
+
+        // Render as buttons; data-value holds the variant token (used for correctness check)
+        optionsRow.innerHTML = opts.map((opt) => `\n          <button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
+        optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      } else {
+        whChoices.forEach((choice) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'fg-chip';
+          btn.dataset.value = choice;
+          btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
+          optionsRow.appendChild(btn);
+        });
+        optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      }
     } else if (isPresentSimpleWhFillGap) {
       presentSimpleWhData = buildPresentSimpleWhFillGap(item);
       wordEl.textContent = '';
@@ -1288,13 +1357,21 @@ export async function runGrammarFillGapMode(ctx) {
         return;
       }
     } else if (isWhoWhatChoiceMode) {
-      // Render only Who / What buttons
-      optionsRow.innerHTML = ['Who','What']
+      // Render WH micro-mode buttons depending on which WH file we're serving
+  const isWhoWhatFile2 = /wh_who_what\.json$/i.test(String(grammarFile || ''));
+  const isHowWhyWhichFile2 = /wh_how_why_which\.json$/i.test(String(grammarFile || ''));
+  const isWhereWhenWhatTimeFile2 = /wh_where_when_whattime\.json$/i.test(String(grammarFile || ''));
+  let buttons = [];
+  if (isWhoWhatFile2) buttons = ['Who','What'];
+  else if (isWhereWhenWhatTimeFile2) buttons = ['Where','When','What time'];
+  else if (isHowWhyWhichFile2) buttons = ['Why','How','Which'];
+  else buttons = ['Who','What','Where','When','Why','How','Which'];
+      optionsRow.innerHTML = buttons
         .map(w => `<button type="button" class="fg-chip" data-value="${w.toLowerCase()}">${w}</button>`)
         .join('');
       optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
       if (!optionButtons.length) {
-        console.error('[GrammarFillGap] No who/what options rendered');
+        console.error('[GrammarFillGap] No WH micro-mode options rendered');
         return;
       }
     } else if (isPresentSimpleWhFillGap) {
@@ -1489,7 +1566,17 @@ export async function runGrammarFillGapMode(ctx) {
       } else if (isPresentSimpleYesNoFillGap && presentSimpleYesNoData) {
         correctAnswerSource = presentSimpleYesNoData.correctAnswer;
     } else if (isWhoWhatChoiceMode) {
-      correctAnswerSource = (/^who\b/i.test(getSentenceText(item)) ? 'who' : /^what\b/i.test(getSentenceText(item)) ? 'what' : (item.word || '').split('_')[0]);
+      // Map the leading WH token (including multi-token "what time") to the expected answer
+      const baseText = String(getSentenceText(item) || item.en || '').trim();
+      if (/^what\s+time\b/i.test(baseText)) correctAnswerSource = 'what time';
+      else if (/^where\b/i.test(baseText)) correctAnswerSource = 'where';
+      else if (/^when\b/i.test(baseText)) correctAnswerSource = 'when';
+      else if (/^who\b/i.test(baseText)) correctAnswerSource = 'who';
+      else if (/^what\b/i.test(baseText)) correctAnswerSource = 'what';
+      else if (/^how\b/i.test(baseText)) correctAnswerSource = 'how';
+      else if (/^why\b/i.test(baseText)) correctAnswerSource = 'why';
+      else if (/^which\b/i.test(baseText)) correctAnswerSource = 'which';
+      else correctAnswerSource = (item.word || '').split('_')[0];
     } else if (isPresentSimpleWhFillGap && presentSimpleWhData) {
         correctAnswerSource = presentSimpleWhData.correctAnswer;
       } else if (isGenericSentenceMode && genericSentenceData) {

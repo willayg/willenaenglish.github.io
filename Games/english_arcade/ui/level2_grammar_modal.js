@@ -383,6 +383,8 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
   // Move games with progress to top
   const progressIds = [
   'wh_who_what',
+  'wh_where_when_whattime',
+  'wh_how_why_which',
     'some_vs_any',
     'there_is_vs_there_are',
     'are_there_vs_is_there',

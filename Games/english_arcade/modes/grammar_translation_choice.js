@@ -87,9 +87,9 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
     const isPPWh = /present_progressive_questions_wh\.json$/i.test(String(grammarFile||'')) || /present\s*progressive[\s:\-]*wh/i.test(String(grammarName||''));
     const isPresentProgressive = (!isPPNegative && !isPPYesNo && !isPPWh) && ( /present_progressive\.json$/i.test(String(grammarFile||'')) || /present\s*progressive/i.test(String(grammarName||'')) );
     // Preposition lists
-    const isPrepositionList = /prepositions_/i.test(String(grammarFile||'')) || /prepositions_/i.test(String(grammarName||''));
-  // WH micro list (who/what) and generic WH present simple question detection
-  const isWhoWhatMicro = /wh_who_what\.json$/i.test(String(grammarFile||''));
+  const isPrepositionList = /prepositions_/i.test(String(grammarFile||'')) || /prepositions_/i.test(String(grammarName||''));
+  // WH micro lists (who/what, how/why/which, where/when/what time) and generic WH present simple question detection
+  const isWhoWhatMicro = /wh_(who_what|how_why_which|where_when_whattime)\.json$/i.test(String(grammarFile||''));
   const isPresentSimpleWh = /present_simple_questions_wh\.json$/i.test(String(grammarFile||'')) || /present\s*simple[\s:\-]*wh/i.test(String(grammarName||''));
 
     const pool = validItems.filter(v => v.en && v.en !== correctEn);
@@ -867,69 +867,56 @@ function extractPreposition(sentence) {
   return match ? match[1].toLowerCase() : null;
 }
 
-// Trio builder for WH question lists (Who/What/etc.) including micro who/what list
-// Grammar-wrong: swap WH word to a different one or break verb order
-// Meaning-wrong: change the object/noun while keeping WH + verb grammar intact
+// Trio builder for WH question lists (Who/What/etc.) including micro lists
+// Target pattern for BE questions (your example):
+//  - Correct:   Where is the school?
+//  - Grammar:   Where are the school?   (wrong BE agreement)
+//  - Meaning:   Where is the park?      (wrong noun, correct grammar)
 function buildWhQuestionOptions(correctEn, pool){
   const text = String(correctEn || '').trim();
-  const whMatch = text.match(/^(Who|What|When|Where|Why|How|Which)\b(.*)$/i);
+  const whMatch = text.match(/^(Who|What\s+time|What|When|Where|Why|How|Which)\b(.*)$/i);
   if (!whMatch) {
     // Fallback to generic if pattern not matched
     return buildGenericTranslationOptions(correctEn, pool);
   }
   const whWord = whMatch[1];
   const tail = whMatch[2].trim();
-  // Attempt to identify verb and object (simple heuristic: WH + verb (+ object)?)
-  const tokens = tail.split(/\s+/).filter(t=>t);
-  // Find first verb candidate (ends with s or common verbs list)
-  const verbIdx = tokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
+  // Focus on WH + BE + noun pattern (e.g., "Where is the school?")
+  const beMatch = tail.match(/^(?:\s*)(am|is|are)\b\s+(.+?)(\?)?$/i);
   let grammarWrong = correctEn;
-  if (verbIdx >= 0) {
-    // Grammar wrong variant 1: swap WH for a different WH (choose from a pool)
-    const whPool = ['Who','What','When','Where','Why','How'];
-    const altWh = whPool.find(w => w.toLowerCase() !== whWord.toLowerCase()) || 'How';
-    grammarWrong = altWh + ' ' + tokens.join(' ');
-    // If grammarWrong equals correct (unlikely), produce wrong order variant: WH + object + verb
-    if (grammarWrong.toLowerCase() === correctEn.toLowerCase()) {
-      const verb = tokens[verbIdx];
-      const objs = tokens.filter((_,i)=>i!==verbIdx);
-      if (objs.length) {
-        grammarWrong = whWord + ' ' + objs.join(' ') + ' ' + verb;
-      }
-    }
-    if (!/\?$/.test(grammarWrong)) grammarWrong += '?';
-  }
-  // Meaning wrong: change object noun phrase
   let meaningWrong = null;
-  if (verbIdx >= 0) {
-    const verb = tokens[verbIdx];
-    const objs = tokens.filter((_,i)=>i!==verbIdx);
-    if (objs.length) {
-      // Replace last object token with another noun sourced from pool sentences
-      const nounPool = (pool||[]).map(p => {
-        const m = String(p.en||'').match(/\b(Who|What|When|Where|Why|How|Which)\s+(.+)/i);
-        if (!m) return null;
-        const restTokens = m[2].split(/\s+/);
-        const vIdx = restTokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
-        if (vIdx >= 0) {
-          const candidateObjs = restTokens.filter((_,i)=>i!==vIdx);
-          return candidateObjs[candidateObjs.length-1] || null;
-        }
-        return null;
-      }).filter(Boolean);
-      const replacement = nounPool.find(n => !objs.includes(n));
-      if (replacement) {
-        const newObjs = objs.slice();
-        newObjs[newObjs.length-1] = replacement;
-        meaningWrong = whWord + ' ' + verb + ' ' + newObjs.join(' ');
+
+  if (beMatch) {
+    const be = beMatch[1];
+    const rest = (beMatch[2] || '').trim();
+    const lowBe = be.toLowerCase();
+
+    // Grammar-wrong: flip singular/plural BE while keeping noun phrase
+    let wrongBe = be;
+    if (lowBe === 'is') wrongBe = 'are';
+    else if (lowBe === 'are') wrongBe = 'is';
+    // keep "am" as-is if it appears
+    grammarWrong = `${whWord} ${wrongBe} ${rest}`;
+    if (!/\?$/.test(grammarWrong)) grammarWrong += '?';
+
+    // Meaning-wrong: same WH + BE, different noun phrase from pool
+    const candidates = (pool || []).map(p => String(p.en || '')).filter(Boolean);
+    const alt = candidates.find(s => s.toLowerCase() !== text.toLowerCase());
+    if (alt) {
+      const altM = alt.match(/^(Who|What\s+time|What|When|Where|Why|How|Which)\s+(am|is|are)\b\s+(.+?)(\?)?$/i);
+      if (altM) {
+        const altRest = (altM[3] || '').trim();
+        meaningWrong = `${whWord} ${be} ${altRest}`;
         if (!/\?$/.test(meaningWrong)) meaningWrong += '?';
       }
     }
   }
+
   if (!meaningWrong) {
-    // Fallback: pick a different WH question from pool as meaning wrong
-    const other = (pool||[]).find(p => p.en && p.en !== correctEn);
+    // Fallback: pick a different WH question from pool as meaning-wrong
+    const other = (pool || []).find(p => p.en && p.en !== correctEn);
     meaningWrong = other?.en || grammarWrong;
   }
+
   return { grammarWrong, meaningWrong };
 }
