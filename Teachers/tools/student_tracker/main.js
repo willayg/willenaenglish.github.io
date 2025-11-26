@@ -55,6 +55,29 @@ const API = {
   toggleClassVisibility: (cls, hidden) => fetch(FN('progress_teacher_summary') + `?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`, { credentials:'include', method:'POST' }).then(r=>r.json()),
 };
 
+// Helper to request a run token for an assignment and cache it in `window.currentHomeworkRunTokens`
+async function createRunTokenForAssignment(assignmentId) {
+  if (!assignmentId) return null;
+  try {
+    window.currentHomeworkRunTokens = window.currentHomeworkRunTokens || {};
+    // If we already have a token for this assignment, reuse it
+    if (window.currentHomeworkRunTokens[assignmentId]) return window.currentHomeworkRunTokens[assignmentId];
+    const resp = await fetch(`/.netlify/functions/homework_api?action=create_run&assignment_id=${encodeURIComponent(assignmentId)}`, { credentials: 'include' });
+    const js = await resp.json().catch(()=>({}));
+    if (!resp.ok || !js.success) {
+      console.warn('createRunTokenForAssignment: failed to create run token', js.error || resp.status);
+      return null;
+    }
+    const tok = js.run_token || null;
+    if (tok) window.currentHomeworkRunTokens[assignmentId] = tok;
+    console.log('createRunTokenForAssignment: stored run token for', assignmentId, tok);
+    return tok;
+  } catch (err) {
+    console.warn('createRunTokenForAssignment error:', err && err.message ? err.message : err);
+    return null;
+  }
+}
+
 // DOM utilities
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
@@ -568,7 +591,25 @@ function renderStudentDetails(d){
   });
   console.log('[Games] Received', lists.length, 'list-mode entries, combined into', combinedMap.size, 'lists');
 
-  const combinedGames = Array.from(combinedMap.values()).sort((a,b)=> (b.bestStars - a.bestStars) || ((b.totalSessions||0) - (a.totalSessions||0)) || friendlyListName(a.name).localeCompare(friendlyListName(b.name)));
+  // Sort combined games so the most recently-played lists appear first.
+  // This helps teachers quickly verify recent activity. Fallback to stars/sessions/name.
+  const parseDateForSort = (iso) => {
+    if (!iso) return 0;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+  };
+
+  const combinedGames = Array.from(combinedMap.values()).sort((a, b) => {
+    const aTime = parseDateForSort(a.last_played);
+    const bTime = parseDateForSort(b.last_played);
+    if (bTime !== aTime) return bTime - aTime; // newest first
+    // fallback: prefer higher stars, then more sessions, then alphabetical
+    const starDiff = (b.bestStars || 0) - (a.bestStars || 0);
+    if (starDiff !== 0) return starDiff;
+    const sessDiff = (b.totalSessions || 0) - (a.totalSessions || 0);
+    if (sessDiff !== 0) return sessDiff;
+    return friendlyListName(a.name).localeCompare(friendlyListName(b.name));
+  });
 
   // Categorize each game
   const categorizeList = (name, modes) => {
@@ -998,7 +1039,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
 
   // Card click triggers view progress
   assignmentList.querySelectorAll('.hw-assignment-card').forEach(card => {
-    card.addEventListener('click', (e) => {
+    card.addEventListener('click', async (e) => {
       console.log('Assignment card clicked, target:', e.target.className, 'id:', card.getAttribute('data-assignment-id'));
       if (e.target.classList.contains('hw-end-btn')) return;
       const id = card.getAttribute('data-assignment-id');
@@ -1010,7 +1051,15 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
       card.classList.add('selected');
       console.log('Added selected class, card classes:', card.className);
       try { window.currentHomeworkAssignment = id; } catch(e){}
-      if (id) loadHomeworkStudentProgress(className, id);
+      if (id) {
+        // Create a run token for this assignment (best-effort). If token is created
+        // the server and the game should use it to link sessions. Failure to
+        // create a token is non-fatal and we fall back to name-based matching.
+        try {
+          await createRunTokenForAssignment(id);
+        } catch (err) { /* non-fatal */ }
+        loadHomeworkStudentProgress(className, id);
+      }
     });
   });
   
