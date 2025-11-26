@@ -35,6 +35,12 @@ exports.handler = async (event) => {
     if (action === 'create_assignment') {
       return await createAssignment(event);
     }
+    if (action === 'create_run') {
+      return await createAssignmentRun(event);
+    }
+    if (action === 'get_run_token') {
+      return await getRunTokenForStudent(event);
+    }
     if (action === 'list_assignments') {
       if (mode === 'student') {
         return await listAssignmentsForStudent(event);
@@ -47,15 +53,57 @@ exports.handler = async (event) => {
     if (action === 'assignment_progress') {
       return await assignmentProgress(event);
     }
-    if (action === 'delete_assignment') {
-      return await deleteAssignment(event);
-    }
     return json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
     return json(500, { success: false, error: err.message || 'Server error' });
   }
 };
+
+function generateRunToken(assignmentId) {
+  const t = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `run_${assignmentId}_${t}_${rand}`;
+}
+
+async function createAssignmentRun(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) {
+    return json(401, { success: false, error: 'Not signed in' });
+  }
+  const { data: prof, error: profErr } = await supabase
+    .from('profiles')
+    .select('id, role, approved')
+    .eq('id', authUserId)
+    .single();
+  if (profErr || !prof) {
+    return json(403, { success: false, error: 'Profile not found' });
+  }
+  if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return json(403, { success: false, error: 'Only teachers can create run tokens' });
+  }
+  const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
+  if (!assignmentId) return json(400, { success: false, error: 'Missing assignment_id' });
+  const token = generateRunToken(assignmentId);
+  // Persist inside list_meta.run_tokens array
+  const { data: current, error: getErr } = await supabase
+    .from('homework_assignments')
+    .select('id, list_meta')
+    .eq('id', assignmentId)
+    .single();
+  if (getErr || !current) return json(404, { success: false, error: 'Assignment not found' });
+  const list_meta = current.list_meta || {};
+  const prev = Array.isArray(list_meta.run_tokens) ? list_meta.run_tokens : [];
+  const updated = { ...list_meta, run_tokens: [...prev, { token, created_at: new Date().toISOString() }] };
+  const { data: upd, error: updErr } = await supabase
+    .from('homework_assignments')
+    .update({ list_meta: updated })
+    .eq('id', assignmentId)
+    .select('id, list_meta')
+    .single();
+  if (updErr) return json(500, { success: false, error: 'Failed to persist run token: ' + (updErr.message || updErr.code) });
+  return json(200, { success: true, assignment_id: assignmentId, run_token: token });
+}
 
 async function getUserIdFromCookie(event) {
   const hdrs = event.headers || {};
@@ -194,27 +242,13 @@ async function endAssignment(event) {
   return json(200,{ success:true, assignment:data });
 }
 
-async function deleteAssignment(event) {
-  // Permanently delete an assignment (only teacher/admin who created it or admin)
-  const authUserId = await getUserIdFromCookie(event);
-  if (!authUserId) return json(401, { success:false, error:'Not signed in' });
-  let body; try { body = JSON.parse(event.body||'{}'); } catch { return json(400,{ success:false, error:'Bad JSON'}); }
-  const assignmentId = body.id || body.assignment_id || null;
-  if (!assignmentId) return json(400,{ success:false, error:'Missing assignment id'});
-  // Verify profile
-  const { data: prof, error: profErr } = await supabase.from('profiles').select('id, role').eq('id', authUserId).single();
-  if (profErr || !prof || !['teacher','admin'].includes(String(prof.role||'').toLowerCase())) {
-    return json(403,{ success:false, error:'Only teachers can delete assignments'});
-  }
-  // Fetch assignment to ensure ownership (teachers can only delete their own; admins can delete any)
-  const { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('id, created_by').eq('id', assignmentId).single();
-  if (aErr || !assignment) return json(404,{ success:false, error:'Assignment not found'});
-  if (String(prof.role||'').toLowerCase() !== 'admin' && assignment.created_by !== prof.id) {
-    return json(403,{ success:false, error:'Not allowed to delete this assignment'});
-  }
-  const { error: delErr } = await supabase.from('homework_assignments').delete().eq('id', assignmentId);
-  if (delErr) return json(500,{ success:false, error:'Failed to delete assignment: '+(delErr.message||delErr.code)});
-  return json(200,{ success:true, deleted: assignmentId });
+function normalizeListIdentifier(value) {
+  if (!value) return '';
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
 }
 
 async function assignmentProgress(event) {
@@ -238,6 +272,10 @@ async function assignmentProgress(event) {
   // New logic: derive stars_earned (sum of best stars per mode) and list_completion_percent (distinct words attempted / list_size)
   const listKeyLast = assignment.list_key.split('/').pop();
   let sessions = [];
+  const requestRunToken = event.queryStringParameters?.run_token || null;
+  const assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
+    ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean)
+    : [];
   // Build tighter matching candidates to avoid cross-list overcounting
   const eq1 = listKeyLast;                   // exact filename
   const like1 = `%/${listKeyLast}`;          // path-anchored filename
@@ -246,36 +284,130 @@ async function assignmentProgress(event) {
   const coreName = listKeyLast.replace(/\.json$/,'');
   const fuzzy1 = `%${coreName}%`;
   const fuzzy2 = assignment.list_title ? `%${assignment.list_title.toLowerCase().replace(/\s+/g,'_')}%` : null;
-  try {
-    let orFilters = [`list_name.eq.${eq1}`, `list_name.ilike.${like1}`, `list_name.ilike.${like2}`, `list_name.ilike.${fuzzy1}`];
-    if (fuzzy2) orFilters.push(`list_name.ilike.${fuzzy2}`);
-    const { data: sessData, error: sessErr } = await supabase
-      .from('progress_sessions')
-      .select('user_id, list_name, mode, summary, list_size')
-      .in('user_id', students.map(s=>s.id))
-      // Broader matching set to catch phonics/grammar variant naming
-      .or(orFilters.join(','))
-      .not('ended_at', 'is', null);
-    if (!sessErr && Array.isArray(sessData)) sessions = sessData;
-    // If still empty, attempt a last-resort fuzzy search using the assignment title words
-    if ((!sessions || sessions.length === 0) && assignment.title) {
-      const titleCore = assignment.title.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-      if (titleCore) {
-        const fallbackLike = `%${titleCore}%`;
-        const { data: fallbackSess, error: fbErr } = await supabase
+  const normalizedFilename = normalizeListIdentifier(coreName);
+  const normalizedListKey = normalizeListIdentifier(assignment.list_key);
+  const normalizedTitle = normalizeListIdentifier(`${assignment.title||''} ${assignment.list_title||''}`);
+  const normalizedTokens = Array.from(new Set([normalizedFilename, normalizedListKey, normalizedTitle].filter(Boolean))).filter(token => token.length >= 3);
+    try {
+      // 1) Primary attempt: tighten matching by filename/path variants
+      let orFilters = [`list_name.eq.${eq1}`, `list_name.ilike.${like1}`, `list_name.ilike.${like2}`, `list_name.ilike.${fuzzy1}`];
+      if (fuzzy2) orFilters.push(`list_name.ilike.${fuzzy2}`);
+      normalizedTokens.forEach(token => {
+        const safeToken = token.replace(/\s+/g, '%');
+        orFilters.push(`list_name.ilike.%${safeToken}%`);
+      });
+      const { data: sessData, error: sessErr } = await supabase
+        .from('progress_sessions')
+        .select('user_id, list_name, mode, summary, list_size')
+        .in('user_id', students.map(s=>s.id))
+        // Broader matching set to catch phonics/grammar variant naming
+        .or(orFilters.join(','))
+        .not('ended_at', 'is', null);
+      if (!sessErr && Array.isArray(sessData)) {
+          console.log('assignmentProgress primary candidate list_name samples', sessData.slice(0,10).map(s => s.list_name));
+        const all = sessData;
+        const runTokens = [requestRunToken, ...assignmentRunTokens].filter(Boolean);
+        if (runTokens.length) {
+          const withToken = all.filter(s => {
+            try {
+              const sum = typeof s.summary === 'string' ? JSON.parse(s.summary) : s.summary;
+              const tok = sum && sum.assignment_run;
+              return tok && runTokens.includes(tok);
+            } catch { return false; }
+          });
+          if (withToken.length) {
+            sessions = withToken;
+            console.log(`assignmentProgress: prefer ${withToken.length} run-linked sessions for assignment ${assignment.id}`);
+          } else {
+            sessions = all;
+            console.log(`assignmentProgress: matched sessions via primary orFilters (${sessions.length}) for assignment ${assignment.id}`);
+          }
+        } else {
+          sessions = all;
+          console.log(`assignmentProgress: matched sessions via primary orFilters (${sessions.length}) for assignment ${assignment.id}`);
+        }
+      }
+
+      // 2) Conservative fallback: look for the assignment list key anywhere in list_name
+      if ((!sessions || sessions.length === 0) && assignment.list_key) {
+        const broadLike = `%${assignment.list_key}%`;
+        const { data: broadSess, error: broadErr } = await supabase
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
-          .ilike('list_name', fallbackLike)
+          .ilike('list_name', broadLike)
           .not('ended_at', 'is', null);
-        if (!fbErr && Array.isArray(fallbackSess) && fallbackSess.length) {
-          sessions = fallbackSess;
+        if (!broadErr && Array.isArray(broadSess) && broadSess.length) {
+          console.log('assignmentProgress fallback candidate list_name samples', broadSess.slice(0,10).map(s => s.list_name));
+          const all = broadSess;
+          const runTokens = [requestRunToken, ...assignmentRunTokens].filter(Boolean);
+          if (runTokens.length) {
+            const withToken = all.filter(s => {
+              try {
+                const sum = typeof s.summary === 'string' ? JSON.parse(s.summary) : s.summary;
+                const tok = sum && sum.assignment_run;
+                return tok && runTokens.includes(tok);
+              } catch { return false; }
+            });
+            if (withToken.length) {
+              sessions = withToken;
+              console.log(`assignmentProgress: prefer ${withToken.length} run-linked sessions (broad) for assignment ${assignment.id}`);
+            } else {
+              sessions = all;
+              console.log(`assignmentProgress: matched sessions via broad ilike(list_key) (${sessions.length}) for assignment ${assignment.id}`);
+            }
+          } else {
+            sessions = all;
+            console.log(`assignmentProgress: matched sessions via broad ilike(list_key) (${sessions.length}) for assignment ${assignment.id}`);
+          }
         }
       }
+
+      // 3) Normalized fallback: try matching on a normalized core name (strip .json and folder prefixes)
+      if ((!sessions || sessions.length === 0) && coreName) {
+        const normalized = coreName.replace(/[^a-z0-9]+/g, '%');
+        const normLike = `%${normalized}%`;
+        const { data: normSess, error: normErr } = await supabase
+          .from('progress_sessions')
+          .select('user_id, list_name, mode, summary, list_size')
+          .in('user_id', students.map(s=>s.id))
+          .ilike('list_name', normLike)
+          .not('ended_at', 'is', null);
+        if (!normErr && Array.isArray(normSess) && normSess.length) {
+          sessions = normSess;
+          console.log(`assignmentProgress: matched sessions via normalized coreName (${sessions.length}) for assignment ${assignment.id}`);
+        }
+      }
+
+      // 4) Last-resort fuzzy by assignment title (previous behavior)
+      if ((!sessions || sessions.length === 0) && assignment.title) {
+        const titleCore = assignment.title.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+        if (titleCore) {
+          const fallbackLike = `%${titleCore}%`;
+          const { data: fallbackSess, error: fbErr } = await supabase
+            .from('progress_sessions')
+            .select('user_id, list_name, mode, summary, list_size')
+            .in('user_id', students.map(s=>s.id))
+            .ilike('list_name', fallbackLike)
+            .not('ended_at', 'is', null);
+          if (!fbErr && Array.isArray(fallbackSess) && fallbackSess.length) {
+            sessions = fallbackSess;
+            console.log(`assignmentProgress: matched sessions via title fallback (${sessions.length}) for assignment ${assignment.id}`);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('assignmentProgress progress_sessions fetch error (non-fatal):', e.message);
     }
-  } catch (e) {
-    console.warn('assignmentProgress progress_sessions fetch error (non-fatal):', e.message);
-  }
+    // Temporary logging: report detail per-session to help tune matching (can be removed after verification)
+    try {
+      if (sessions && sessions.length) {
+        const sample = sessions.slice(0,20).map(s => ({ user_id: s.user_id, list_name: s.list_name }));
+        console.log(`assignmentProgress: sample matched sessions for assignment ${assignment.id}:`, sample);
+      } else {
+        console.log(`assignmentProgress: no sessions matched for assignment ${assignment.id} (class ${targetClass})`);
+      }
+    } catch (e) { /* non-fatal */ }
   // Map attempts for word coverage from progress_attempts table (distinct words attempted) referencing sessions list_name
   let attempts = [];
   try {
@@ -440,4 +572,47 @@ async function listAssignmentsForStudent(event) {
     student_name: prof.name || prof.korean_name || null,
     assignments
   });
+}
+
+// Return run tokens for a given assignment (by id or list_key) only if the
+// requesting student belongs to the assignment's class and the assignment is active.
+async function getRunTokenForStudent(event) {
+  const prof = await getProfileForEvent(event);
+  if (!prof) return json(401, { success: false, error: 'Not signed in' });
+
+  const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
+  const listKey = event.queryStringParameters?.list_key || event.queryStringParameters?.listName || event.queryStringParameters?.list_name || null;
+
+  if (!assignmentId && !listKey) return json(400, { success: false, error: 'Missing assignment_id or list_key' });
+
+  let assignment = null;
+  try {
+    if (assignmentId) {
+      const { data, error } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
+      if (error || !data) return json(404, { success: false, error: 'Assignment not found' });
+      assignment = data;
+    } else if (listKey) {
+      // Try to find an active assignment for this student's class matching the list_key
+      const { data, error } = await supabase.from('homework_assignments')
+        .select('*')
+        .eq('class', prof.class)
+        .eq('active', true)
+        .ilike('list_key', `%${listKey}%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error || !data || !data.length) return json(404, { success: false, error: 'Assignment not found' });
+      assignment = data[0];
+    }
+  } catch (e) {
+    console.error('getRunTokenForStudent fetch error:', e.message);
+    return json(500, { success: false, error: 'Server error' });
+  }
+
+  // Verify student belongs to the assignment class
+  if (!assignment || String(assignment.class || '') !== String(prof.class || '')) {
+    return json(403, { success: false, error: 'Not assigned to this class' });
+  }
+
+  const tokens = Array.isArray(assignment.list_meta?.run_tokens) ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean) : [];
+  return json(200, { success: true, assignment_id: assignment.id, tokens });
 }

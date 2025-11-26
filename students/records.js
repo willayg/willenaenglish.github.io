@@ -9,7 +9,9 @@ import { scheduleRefresh } from './scripts/points-client.js';
 const ENDPOINT = FN('log_word_attempt');
 
 // Auth: derive user id from secure HTTP-only cookies via whoami endpoint.
-// We do NOT read tokens from localStorage or sessionStorage.
+// NOTE: we may receive an `assignment_run` token when a teacher launches
+// a run. Read it from the URL or sessionStorage and attach it to session
+// payloads so server-side assignment matching can prefer token-linked sessions.
 let __userId = null;
 let __whoamiPromise = null;
 let __authResolved = false; // becomes true after first successful authenticated write
@@ -50,6 +52,60 @@ function genId(prefix = 'wa') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// --- Assignment run token helpers ---------------------------------------
+function readAssignmentRunFromURL() {
+  try {
+    const p = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+    if (!p) return null;
+    return p.get('assignment_run') || p.get('assignmentRun') || null;
+  } catch (e) { return null; }
+}
+
+function getStoredAssignmentRun() {
+  try {
+    // prefer in-memory global if teacher UI set it
+    if (typeof window !== 'undefined' && window.currentHomeworkRunTokens) {
+      // If an exact token was placed here (string) use it
+      if (typeof window.currentHomeworkRunTokens === 'string') return window.currentHomeworkRunTokens;
+      // If it's an object (assignmentId -> token), try to pick a sensible token.
+      // Common teacher UI stores tokens keyed by assignmentId. In many cases
+      // there will only be one active token in the object; pick the first
+      // token value found so student pages can pick it up even when the
+      // teacher UI didn't propagate a plain string global.
+      if (typeof window.currentHomeworkRunTokens === 'object' && window.currentHomeworkRunTokens !== null) {
+        try {
+          for (const k of Object.keys(window.currentHomeworkRunTokens)) {
+            const v = window.currentHomeworkRunTokens[k];
+            if (typeof v === 'string' && v) return v;
+          }
+        } catch (e) {}
+      }
+    }
+    if (typeof sessionStorage !== 'undefined') return sessionStorage.getItem('wa_assignment_run');
+  } catch (e) {}
+  return null;
+}
+
+function persistAssignmentRun(token) {
+  try { if (!token) return; if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('wa_assignment_run', token); } catch (e) {}
+}
+
+function getAssignmentRun() {
+  const fromURL = readAssignmentRunFromURL();
+  if (fromURL) { persistAssignmentRun(fromURL); return fromURL; }
+  const stored = getStoredAssignmentRun();
+  return stored || null;
+}
+
+// On module load, capture any token in the URL so subsequent navigations keep it
+try {
+  const _ar = readAssignmentRunFromURL();
+  if (_ar) {
+    persistAssignmentRun(_ar);
+    try { console.debug('[records] assignment_run token captured:', _ar); } catch (e) {}
+  }
+} catch (e) {}
+
 // Synchronous getter used by logging; returns cached id (may be null on first call).
 export function getUserId() { return __userId; }
 
@@ -68,7 +124,11 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
     list_name: listName,
     list_size: Array.isArray(wordList) ? wordList.length : null,
   user_id: getUserId(),
-    extra: meta || {}
+    extra: (function() {
+      const ar = getAssignmentRun();
+      if (ar) return { ...(meta || {}), assignment_run: ar };
+      return (meta || {});
+    })()
   };
   // Fire and forget; do not block UI
   fetch(ENDPOINT, {
@@ -92,6 +152,40 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
     __pendingSessionStarts.set(sessionId, { payload, tries: 0 });
     scheduleAuthFlush();
   });
+
+  // Background: if we don't have an assignment_run token yet, attempt to fetch
+  // one for this list from the homework API and re-upsert the session to attach it.
+  (async () => {
+    try {
+      if (!getAssignmentRun() && listName) {
+        const api = FN('homework_api') + `?action=get_run_token&list_key=${encodeURIComponent(listName)}`;
+        const res = await fetch(api, { credentials: 'include', cache: 'no-store' });
+        if (res.ok) {
+          const js = await res.json().catch(() => null);
+          const token = js && Array.isArray(js.tokens) && js.tokens.length ? js.tokens[0] : (js && js.run_token) || null;
+          if (token) {
+            persistAssignmentRun(token);
+            try { console.debug('[records] fetched assignment_run token for', listName, token); } catch (e) {}
+            // If we have a pending session_start queued due to auth, attach token there
+            const pending = __pendingSessionStarts.get(sessionId);
+            if (pending && pending.payload) {
+              pending.payload = { ...pending.payload, extra: { ...(pending.payload.extra || {}), assignment_run: token } };
+              __pendingSessionStarts.set(sessionId, pending);
+            }
+            // Also attempt an immediate upsert to attach token to this session row
+            try {
+              const payload2 = { ...payload, extra: { ...(payload.extra || {}), assignment_run: token } };
+              await fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload2) });
+            } catch (e) { /* non-fatal */ }
+          } else {
+            try { console.debug('[records] no run token returned for', listName); } catch (e) {}
+          }
+        }
+      }
+    } catch (e) {
+      try { console.debug('[records] run token fetch failed:', e?.message); } catch (e) {}
+    }
+  })();
   return sessionId;
 }
 
@@ -100,7 +194,12 @@ export async function endSession(sessionId, { mode, summary = {}, listName = nul
   // Fire a local in-page event immediately so game UIs can react (e.g., show stars)
   try {
     const list_size = Array.isArray(wordList) ? wordList.length : null;
-    try { window.dispatchEvent(new CustomEvent('wa:session-ended', { detail: { session_id: sessionId, mode: mode || 'unknown', summary, list_name: listName, list_size } })); } catch {}
+    try {
+      // Ensure assignment_run token is present in summary for session_end
+      const _ar = getAssignmentRun();
+      if (_ar) summary = { ...(summary || {}), assignment_run: _ar };
+      window.dispatchEvent(new CustomEvent('wa:session-ended', { detail: { session_id: sessionId, mode: mode || 'unknown', summary, list_name: listName, list_size } }));
+    } catch {}
   } catch {}
   try {
     kickOffWhoAmI();
@@ -112,6 +211,9 @@ export async function endSession(sessionId, { mode, summary = {}, listName = nul
       return;
     }
   const list_size = Array.isArray(wordList) ? wordList.length : null;
+  try {
+    try { console.debug('[records] session_end payload assignment_run:', summary && summary.assignment_run); } catch (e) {}
+  } catch (e) {}
   await sendSessionEnd({ session_id: sessionId, mode: mode || 'unknown', extra: summary, user_id: uid, list_name: listName, list_size });
   } catch (e) {
     console.debug('session_end log skipped:', e?.message);
@@ -151,6 +253,12 @@ export async function logAttempt({
       }
     }
   } catch (e) { /* swallow enrichment errors */ }
+  try {
+    // Attach assignment_run token to every attempt if present so attempts can be
+    // associated with a teacher run as well as session events.
+    const _ar = getAssignmentRun();
+    if (_ar) extra = { ...(extra || {}), assignment_run: _ar };
+  } catch (e) {}
   try {
     // Ensure cookies are sent; also kick whoami if not yet done
     kickOffWhoAmI();

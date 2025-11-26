@@ -239,7 +239,8 @@ class StudentHeader extends HTMLElement {
       document.body.appendChild(overlay);
 
       const finish = () => { try { overlay.remove(); } catch {} sessionStorage.setItem('missionModalShown','1'); };
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(); });
+      // Do NOT close modal when clicking the backdrop; require explicit button action
+      // overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(); });
       panel.querySelector('#missionDismissBtn')?.addEventListener('click', finish);
       panel.querySelector('#missionDoNowBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
