@@ -62,6 +62,7 @@
         <div id="starsLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="slFilterMonth" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
           <button id="slFilterAll" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
+          <span id="starsSmallSpinner" class="mini-lb-spinner hidden" aria-hidden="true" title="Loading"></span>
         </div>
         <div class="card-content" id="starsLeaderboardContent" style="min-height:120px;">
           <div class="lb-loading">
@@ -89,6 +90,7 @@
         <div id="globalLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="glFilterMonth" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
           <button id="glFilterAll" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
+          <span id="globalSmallSpinner" class="mini-lb-spinner hidden" aria-hidden="true" title="Loading"></span>
         </div>
         <div class="card-content" id="globalLeaderboardContent" style="min-height:120px;">
           <div class="lb-loading">
@@ -902,7 +904,9 @@
       const starsLbCache = new Map(); // timeframe -> data
 
       async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
+        const spinner = document.getElementById('starsSmallSpinner');
         try {
+          spinner?.classList.remove('hidden');
           starsLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
@@ -913,6 +917,8 @@
           console.error('Stars leaderboard error:', err);
           const container = document.getElementById('starsLeaderboardContent');
           if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+        } finally {
+          spinner?.classList.add('hidden');
         }
       }
 
@@ -975,7 +981,9 @@
       const globalLbCache = new Map();
 
       async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
+        const spinner = document.getElementById('globalSmallSpinner');
         try {
+          spinner?.classList.remove('hidden');
           globalLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
@@ -986,6 +994,8 @@
           console.error('Global leaderboard error:', err);
           const container = document.getElementById('globalLeaderboardContent');
           if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+        } finally {
+          spinner?.classList.add('hidden');
         }
       }
 
@@ -1359,6 +1369,20 @@
       gap: 16px;
       padding: 20px;
     }
+
+    /* Small inline spinner used next to month/all filters */
+    .mini-lb-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(103, 226, 230, 0.12);
+      border-top-color: #67e2e6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .mini-lb-spinner.hidden { display: none; }
 
     .lb-spinner {
       width: 40px;
