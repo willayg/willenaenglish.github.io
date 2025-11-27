@@ -104,6 +104,7 @@ let selectedStudent = null;
 let sortColumn = 'rank';
 let sortDirection = 'asc'; // 'asc' or 'desc'
 let classTrackerSelectedClass = null;
+let classesWithActiveHomework = new Set();
 
 // Chart instances
 let accuracyChartInstance = null;
@@ -757,15 +758,21 @@ function renderStudentDetails(d){
 }
 
 // Class name formatting
+// Display: title-case the raw class name for nicer UI labels.
 const displayClassName = (raw) => {
-  const n = (raw||'').trim().toLowerCase();
-  if (n === 'ny') return 'New York';
-  return raw;
+  if (!raw) return '';
+  const s = String(raw).trim();
+  return s.split(/\s+/).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
 };
+// Backend class name: do not normalize or map values (stop legacy 'new york' -> 'NY' parsing).
+// Return the input as-is (trimmed) so the server receives the exact class identifier.
 const backendClassName = (input) => {
-  const n = (input||'').trim().toLowerCase();
-  if (n === 'new york' || n === 'ny') return 'NY';
-  return input;
+  if (input == null) return input;
+  return String(input).trim();
+};
+const canonicalClassKey = (value) => {
+  if (value == null) return '';
+  return String(value).trim().toLowerCase().replace(/\s+/g, ' ');
 };
 
 const normalizeClassRecord = (record) => {
@@ -923,6 +930,7 @@ async function loadClassTrackerClasses(){
     });
     // Also populate Homework classes from the same data
     renderHomeworkClasses(displayClasses);
+    refreshHomeworkActiveStates();
   } catch(e){ classList.innerHTML = '<div style="padding:1rem; color:#6b7280;">Error loading classes</div>'; }
 }
 
@@ -934,8 +942,10 @@ function renderHomeworkClasses(displayClasses) {
     return;
   }
   hwClassList.innerHTML = displayClasses.map(cls => {
-    return `<div class="class-item" data-class="${cls.name}" data-display="${cls.display}"><span>${cls.display}</span></div>`;
+    const key = canonicalClassKey(cls.name);
+    return `<div class="class-item" data-class="${cls.name}" data-display="${cls.display}" data-class-key="${key}"><span>${cls.display}</span></div>`;
   }).join('');
+  applyHomeworkClassHighlights(hwClassList);
   hwClassList.querySelectorAll('.class-item').forEach(item => {
     const clsName = item.dataset.class;
     const displayName = item.dataset.display;
@@ -961,6 +971,41 @@ function renderHomeworkClasses(displayClasses) {
       // loadHomeworkStudentProgress(clsName, displayName);
     });
   });
+}
+
+function applyHomeworkClassHighlights(listRoot) {
+  if (!listRoot) return;
+  listRoot.querySelectorAll('.class-item').forEach(item => {
+    const key = item.dataset.classKey || canonicalClassKey(item.dataset.class);
+    if (key && classesWithActiveHomework.has(key)) {
+      item.classList.add('homework-active');
+    } else {
+      item.classList.remove('homework-active');
+    }
+  });
+}
+
+async function refreshHomeworkActiveStates() {
+  try {
+    const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments', {
+      credentials: 'include'
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (!data || data.success !== true) throw new Error(data?.error || 'Unexpected response');
+    const newSet = new Set();
+    (Array.isArray(data.assignments) ? data.assignments : []).forEach(assign => {
+      if (assign && assign.active) {
+        const key = canonicalClassKey(assign.class || assign.class_name || assign.className);
+        if (key) newSet.add(key);
+      }
+    });
+    classesWithActiveHomework = newSet;
+    const hwClassList = document.getElementById('homeworkClassList');
+    if (hwClassList) applyHomeworkClassHighlights(hwClassList);
+  } catch (err) {
+    console.warn('Failed to refresh active homework highlights:', err && err.message ? err.message : err);
+  }
 }
 
 async function loadHomeworkForClass(className, displayName) {
@@ -989,6 +1034,7 @@ async function loadHomeworkForClass(className, displayName) {
     const activeTab = document.querySelector('.assignment-filter-tab-active');
     const showEnded = activeTab && activeTab.id === 'assignmentTabEnded';
     renderAssignmentsList(assignments, showEnded, className, displayName);
+    refreshHomeworkActiveStates();
   } catch (err) {
     console.error('loadHomeworkForClass error:', err);
     assignmentList.innerHTML = `<div class="empty" style="padding:16px; text-align:center; color:#dc2626;">Error: ${err.message}</div>`;
