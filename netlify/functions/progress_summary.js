@@ -394,8 +394,25 @@ exports.handler = async (event) => {
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
         const cachedResult = getCachedLeaderboard('stars_global', timeframe, userId);
         if (cachedResult) {
-          console.log(`[progress_summary] Cache hit for leaderboard_stars_global (${timeframe})`);
+          console.log(`[progress_summary] In-memory cache hit for leaderboard_stars_global (${timeframe})`);
           return json(200, cachedResult);
+        }
+
+        // Try DB-backed cache first (very fast in production). If present, return it.
+        try {
+          const { data: dbCache, error: dbErr } = await adminClient
+            .from('leaderboard_cache')
+            .select('payload, updated_at')
+            .eq('section', 'leaderboard_stars_global')
+            .eq('timeframe', timeframe)
+            .single();
+          if (!dbErr && dbCache && dbCache.payload) {
+            console.log('[progress_summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', dbCache.updated_at);
+            // ensure shape matches previous responses
+            return json(200, dbCache.payload);
+          }
+        } catch (e) {
+          console.warn('[progress_summary] DB cache read failed (continuing to compute):', e && e.message);
         }
 
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
@@ -495,6 +512,21 @@ exports.handler = async (event) => {
     // ---------- GLOBAL LEADERBOARD ----------
     if (section === 'leaderboard_global') {
       try {
+        // Prefer DB cache for global leaderboard points (fast path in production)
+        try {
+          const { data: dbCache, error: dbErr } = await adminClient
+            .from('leaderboard_cache')
+            .select('payload, updated_at')
+            .eq('section', 'leaderboard_global')
+            .eq('timeframe', 'all')
+            .single();
+          if (!dbErr && dbCache && dbCache.payload) {
+            console.log('[progress_summary] DB cache hit for leaderboard_global (all) updated_at=', dbCache.updated_at);
+            return json(200, dbCache.payload);
+          }
+        } catch (e) {
+          console.warn('[progress_summary] DB cache read failed for leaderboard_global (continuing):', e && e.message);
+        }
         let students = [];
         let studentOffset = 0;
         const studentBatchSize = 500;
