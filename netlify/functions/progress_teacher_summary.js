@@ -45,26 +45,55 @@ function monthStartISO(now = new Date()) {
   return d.toISOString();
 }
 
-async function getAuthedTeacher(event, admin) {
+async function getAuthedTeacher(event, admin, debug = {}) {
   try {
     const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
     const cookies = parseCookies(cookieHeader);
     const access = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
-    if (!access) return null;
+    const cookieDebug = {
+      keys: Object.keys(cookies),
+      hasAccess: Boolean(access),
+      hasRefresh: Boolean(cookies['sb_refresh'])
+    };
+    if (typeof debug === 'object' && debug !== null) debug.cookieDebug = cookieDebug;
+    if (!access) {
+      console.warn('[progress_teacher_summary] getAuthedTeacher missing access token', cookieDebug);
+      return null;
+    }
     const { data: udata, error: uerr } = await admin.auth.getUser(access);
-    if (uerr || !udata || !udata.user) return null;
+    if (uerr || !udata || !udata.user) {
+      console.warn('[progress_teacher_summary] auth.getUser failed', { error: uerr && uerr.message, cookieDebug });
+      return null;
+    }
     const uid = udata.user.id;
     const { data: prof, error: perr } = await admin
       .from('profiles')
       .select('id, role, approved, class, name, username')
       .eq('id', uid)
       .single();
-    if (perr || !prof) return null;
+    if (perr || !prof) {
+      console.warn('[progress_teacher_summary] profile lookup failed', { error: perr && perr.message, cookieDebug });
+      return null;
+    }
     const role = String(prof.role || '').toLowerCase();
-    if (!['teacher','admin'].includes(role)) return null;
-    if (prof.approved === false) return null;
+    if (!['teacher','admin'].includes(role)) {
+      console.warn('[progress_teacher_summary] unauthorized role', { role, cookieDebug });
+      return null;
+    }
+    if (prof.approved === false) {
+      console.warn('[progress_teacher_summary] teacher not approved', { cookieDebug });
+      return null;
+    }
+    if (typeof debug === 'object' && debug !== null) {
+      debug.userId = uid;
+      debug.userRole = role;
+    }
+    console.log('[progress_teacher_summary] authenticated teacher', { id: uid, role, cookieDebug });
     return { id: uid, role, name: prof.name || prof.username || 'Teacher', class: prof.class || null };
-  } catch { return null; }
+  } catch (err) {
+    console.warn('[progress_teacher_summary] getAuthedTeacher exception', err && err.message ? err.message : err);
+    return null;
+  }
 }
 
 // Utility: timeframe where clause for created_at
@@ -151,12 +180,19 @@ exports.handler = async (event) => {
   const admin = createClient(SUPABASE_URL, ADMIN_KEY);
 
   // Authz
-  const teacher = await getAuthedTeacher(event, admin);
+  const authDebug = {};
+  const teacher = await getAuthedTeacher(event, admin, authDebug);
   if (!teacher) return json(401, { error: 'Unauthorized' });
 
   const qs = event.queryStringParameters || {};
   const action = qs.action || 'help';
 
+  console.log('[progress_teacher_summary] request', {
+    action,
+    method,
+    teacher: teacher ? { id: teacher.id, role: teacher.role } : null,
+    debug: authDebug
+  });
   try {
     if (action === 'toggle_class_visibility') {
       if (method !== 'POST') return json(405, { success: false, error: 'Method Not Allowed' });

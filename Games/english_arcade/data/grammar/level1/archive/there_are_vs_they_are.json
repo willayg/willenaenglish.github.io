@@ -1,6 +1,0 @@
-[
-  { "id": "there_are_apples", "word": "There are", "article": "there_are", "emoji": "🍎🍎", "exampleSentence": "There are apples in the basket.", "exampleSentenceKo": "바구니에 사과들이 있어요.", "explanation": "Use 'There are' to say something exists in a place.", "explanationKo": "장소에 무엇이 있다는 것을 말할 때 'There are'를 써요." },
-  { "id": "they_are_my_friends", "word": "They are", "article": "they_are", "emoji": "👥", "exampleSentence": "They are my friends.", "exampleSentenceKo": "그들은 제 친구들이에요.", "explanation": "They are describes who they are.", "explanationKo": "사람들이 어떤지 설명할 때 'They are'를 써요." },
-  { "id": "there_are_cats_garden", "word": "There are", "article": "there_are", "emoji": "🐱🐱", "exampleSentence": "There are cats in the garden.", "exampleSentenceKo": "정원에 고양이들이 있어요.", "explanation": "There are for plural existence.", "explanationKo": "복수 존재에 'There are'를 사용해요." },
-  { "id": "they_are_playing", "word": "They are", "article": "they_are", "emoji": "⚽", "exampleSentence": "They are playing soccer.", "exampleSentenceKo": "그들은 축구를 하고 있어요.", "explanation": "They are + verb (ongoing action).", "explanationKo": "They are 뒤에 동사로 행동을 표현해요." }
-]

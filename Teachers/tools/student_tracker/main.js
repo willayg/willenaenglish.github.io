@@ -48,11 +48,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // API functions
 const FN = (name) => `/.netlify/functions/${name}`;
+
+async function fetchJsonWithLog(url, label, options = {}) {
+  const init = { credentials: 'include', ...options };
+  try {
+    const resp = await fetch(url, init);
+    let data = null;
+    try {
+      data = await resp.json();
+    } catch (err) {
+      console.warn(`[student_tracker] ${label} invalid JSON`, err);
+    }
+    const meta = { url, label, status: resp.status, ok: resp.ok };
+    if (!resp.ok || (data && data.success === false)) {
+      console.warn(`[student_tracker] ${label} response warning`, meta, data);
+    } else {
+      console.debug(`[student_tracker] ${label} response ok`, meta);
+    }
+    return data;
+  } catch (err) {
+    console.warn(`[student_tracker] ${label} request error`, err);
+    throw err;
+  }
+}
+
 const API = {
-  classes: () => fetch(FN('progress_teacher_summary') + '?action=classes_list', { credentials:'include' }).then(r=>r.json()),
-  leaderboard: (cls, tf) => fetch(FN('progress_teacher_summary') + `?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
-  student: (uid, tf) => fetch(FN('progress_teacher_summary') + `?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
-  toggleClassVisibility: (cls, hidden) => fetch(FN('progress_teacher_summary') + `?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`, { credentials:'include', method:'POST' }).then(r=>r.json()),
+  classes: () => fetchJsonWithLog(`${FN('progress_teacher_summary')}?action=classes_list`, 'classes_list'),
+  leaderboard: (cls, tf) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+    `leaderboard (${cls} • ${tf})`
+  ),
+  student: (uid, tf) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`,
+    `student_details (${uid} • ${tf})`
+  ),
+  toggleClassVisibility: (cls, hidden) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`,
+    `toggle_class_visibility (${cls})`,
+    { method: 'POST' }
+  ),
 };
 
 // Helper to request a run token for an assignment and cache it in `window.currentHomeworkRunTokens`
