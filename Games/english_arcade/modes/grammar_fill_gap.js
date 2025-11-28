@@ -1117,60 +1117,17 @@ export async function runGrammarFillGapMode(ctx) {
   else if (isHowWhyWhichFile) whChoices = ['why', 'how', 'which'];
   else whChoices = ['who', 'what', 'how', 'why', 'which'];
 
-      // Render chips or sentence-options for the whChoices
+      // Render chips for the whChoices
       optionsRow.innerHTML = '';
-      if (isWhereWhenWhatTimeFile) {
-        // For the Where/When/What time list, build full-sentence options including mistaken patterns
-        const suffix = q.replace(/^(what\s+time|who|what|where|when|how|why|which)\b/i, '').trim();
-        const makeLabel = (whText) => {
-          const label = (whText + (suffix ? ' ' + suffix : '')).replace(/\s+/g, ' ').trim();
-          return label.charAt(0).toUpperCase() + label.slice(1);
-        };
-        const opts = [];
-        // For each base WH choice, produce one correct and 1-2 mistaken variants
-        whChoices.forEach((choice) => {
-          // correct variant
-          opts.push({ value: choice, label: makeLabel(choice) });
-
-          // mistaken variant 1: typographical / truncation of last token (e.g., 'time' -> 'tim')
-          const parts = choice.split(/\s+/);
-          const last = parts[parts.length - 1] || '';
-          if (last.length > 3) {
-            const typoLast = last.slice(0, -1);
-            const typoChoice = parts.slice(0, -1).concat([typoLast]).join(' ');
-            opts.push({ value: typoChoice, label: makeLabel(typoChoice) });
-          }
-
-          // mistaken variant 2: reorder suffix words (make the pattern 'out of order')
-          if (suffix) {
-            const words = suffix.split(/\s+/).filter(Boolean);
-            if (words.length > 1) {
-              const rev = words.slice().reverse().join(' ');
-              opts.push({ value: choice + '_rev', label: (choice.charAt(0).toUpperCase() + choice.slice(1)) + ' ' + rev });
-            }
-          }
-        });
-
-        // Shuffle options so mistaken patterns aren't predictable
-        for (let i = opts.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [opts[i], opts[j]] = [opts[j], opts[i]];
-        }
-
-        // Render as buttons; data-value holds the variant token (used for correctness check)
-        optionsRow.innerHTML = opts.map((opt) => `\n          <button type="button" class="fg-chip" data-value="${opt.value}">${opt.label}</button>`).join('');
-        optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
-      } else {
-        whChoices.forEach((choice) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'fg-chip';
-          btn.dataset.value = choice;
-          btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
-          optionsRow.appendChild(btn);
-        });
-        optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
-      }
+      whChoices.forEach((choice) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'fg-chip';
+        btn.dataset.value = choice;
+        btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
+        optionsRow.appendChild(btn);
+      });
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
     } else if (isPresentSimpleWhFillGap) {
       presentSimpleWhData = buildPresentSimpleWhFillGap(item);
       wordEl.textContent = '';

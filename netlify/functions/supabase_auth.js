@@ -484,17 +484,53 @@ exports.handler = async (event) => {
 
       const refreshToken = decodeURIComponent(m[1]);
       try {
-        const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
-        if (error || !data.session) return respond(event, 200, { success: false, message: 'Refresh failed' });
+        // First try SDK helper (may vary between supabase-js versions)
+        try {
+          const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+          if (data && data.session && data.session.access_token) {
+            const session = data.session;
+            const dev = isLocalDev();
+            const cookies = [
+              cookie('sb_access', session.access_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+              cookie('sb_refresh', session.refresh_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev })
+            ];
+            return respond(event, 200, { success: true }, {}, cookies);
+          }
+        } catch (sdkErr) {
+          // fallthrough to REST exchange below
+          console.error('[supabase_auth] sdk refreshSession failed:', sdkErr && sdkErr.message ? sdkErr.message : sdkErr);
+        }
 
-        const session = data.session;
-        const dev = isLocalDev();
-        const cookies = [
-          cookie('sb_access', session.access_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
-          cookie('sb_refresh', session.refresh_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev })
-        ];
-        return respond(event, 200, { success: true }, {}, cookies);
-      } catch {
+        // Fallback: use direct REST token exchange (works regardless of SDK version)
+        try {
+          const tokenUrl = `${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/token?grant_type=refresh_token`;
+          const authResp = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+            body: JSON.stringify({ refresh_token: refreshToken })
+          });
+          const authData = await authResp.json().catch(() => ({}));
+          if (!authResp.ok || !authData.access_token) {
+            console.error('[supabase_auth] REST refresh failed', { status: authResp.status, body: authData });
+            return respond(event, 200, { success: false, message: 'Refresh failed' });
+          }
+
+          const session = {
+            access_token: authData.access_token,
+            refresh_token: authData.refresh_token || refreshToken
+          };
+          const dev = isLocalDev();
+          const cookies = [
+            cookie('sb_access', session.access_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev }),
+            cookie('sb_refresh', session.refresh_token, event, { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev })
+          ];
+          return respond(event, 200, { success: true }, {}, cookies);
+        } catch (restErr) {
+          console.error('[supabase_auth] REST exchange error:', restErr && restErr.message ? restErr.message : restErr);
+          return respond(event, 200, { success: false, message: 'Refresh failed' });
+        }
+      } catch (e) {
+        console.error('[supabase_auth] unexpected refresh error:', e && e.message ? e.message : e);
         return respond(event, 200, { success: false, message: 'Refresh failed' });
       }
     }

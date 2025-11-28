@@ -11,9 +11,11 @@ async function callRefresh() {
     try {
       const resp = await fetch(REFRESH_ENDPOINT, { credentials: 'include' });
       const json = await resp.json().catch(() => ({}));
-      if (!resp.ok && json && !json.success) {
-        console.debug('[auth-refresh] refresh request failed', json.error);
-      }
+        if (!resp.ok || !(json && json.success)) {
+          console.debug('[auth-refresh] refresh request failed', { status: resp.status, body: json });
+        } else {
+          console.debug('[auth-refresh] refresh ok', { status: resp.status, body: json });
+        }
       lastRefreshAt = Date.now();
       return json;
     } catch (error) {
