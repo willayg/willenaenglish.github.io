@@ -255,6 +255,40 @@ function rowTpl(s) {
   </tr>`;
 }
 
+// Simple sessionStorage class cache helpers (client-side only)
+function cacheKeyForClass(cls) { return `ms:class:${String(cls||'').toLowerCase()}`; }
+function cacheSetClassData(cls, students) {
+  try {
+    const payload = { ts: Date.now(), students };
+    sessionStorage.setItem(cacheKeyForClass(cls), JSON.stringify(payload));
+  } catch (e) {}
+}
+function cacheGetClassData(cls, maxAgeMs = 30000) {
+  try {
+    const raw = sessionStorage.getItem(cacheKeyForClass(cls));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.ts) return null;
+    if ((Date.now() - obj.ts) > maxAgeMs) { sessionStorage.removeItem(cacheKeyForClass(cls)); return null; }
+    return obj.students || null;
+  } catch (e) { return null; }
+}
+
+// Prefetch class student lists (background warming). Limits to a few classes to avoid burst.
+async function prefetchClassList(cls) {
+  if (!cls) return null;
+  // if already cached and fresh, skip
+  if (cacheGetClassData(cls, 60000)) return null;
+  const url = `${API}?action=list_students&class=${encodeURIComponent(cls)}`;
+  try {
+    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    const data = await res.json().catch(()=>({}));
+    if (res.ok && data && Array.isArray(data.students)) {
+      cacheSetClassData(cls, data.students);
+    }
+  } catch (e) { /* ignore prefetch failures */ }
+}
+
 // Edit Student Modal logic
 const editModalBg = document.getElementById('editModalBg');
 const editName = document.getElementById('editName');
@@ -315,6 +349,14 @@ async function refresh() {
   let url = `${API}?action=list_students&search=${encodeURIComponent(q)}`;
   if (classVal) url += `&class=${encodeURIComponent(classVal)}`;
   let data;
+  // Render cached data immediately if available (optimistic / instant feel)
+  try {
+    const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
+    if (cached && Array.isArray(cached)) {
+      const rows = cached.map(rowTpl).join('');
+      el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
+    }
+  } catch (e) { }
   try {
     const res = await fetch(url, { credentials:'include', cache:'no-store' });
     data = await res.json().catch(() => ({}));
@@ -330,6 +372,8 @@ async function refresh() {
   const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = '';
   let students = data.students || [];
   if (classVal) students = students.filter(s => s.class === classVal);
+  // update client cache for this class
+  try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
   const rows = students.map(rowTpl).join('');
   el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
 }
@@ -734,6 +778,18 @@ async function populateClassFilter() {
         const selected = new URL(location.href).searchParams.get('class') || '';
         classFilter.innerHTML = '<option value="">All Classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
         if (selected) classFilter.value = selected;
+        // Prefetch a few likely classes to warm server/edge cache and improve perceived speed
+        // Prefetch order: currently selected, then first 2 visible classes
+        (async function(){
+          try {
+            const toPrefetch = [];
+            if (selected) toPrefetch.push(selected);
+            for (let i=0;i<classes.length && toPrefetch.length<3;i++) {
+              const c = classes[i]; if (!toPrefetch.includes(c)) toPrefetch.push(c);
+            }
+            for (const p of toPrefetch) await prefetchClassList(p);
+          } catch(e){}
+        })();
       }
     }
   } catch {}
