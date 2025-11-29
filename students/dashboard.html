@@ -55,9 +55,9 @@
         <h2 class="card-title" data-i18n="Class Leaders">Class Leaders</h2>
         <div id="starsClassNameDisplay" style="font-size:1.1rem;font-weight:500;color:#67e2e6;text-align:center;margin-top:4px;margin-bottom:12px;text-shadow:0 0 10px rgba(103,226,230,0.4);"></div>
         <div class="lb-tabs" id="starsLeaderboardTabs" role="tablist">
-          <button id="slTabStars" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="stars" data-i18n="Stars">Stars</button>
+          <button id="slTabSuper" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="super" data-i18n="Super Score">Super Score</button>
+          <button id="slTabStars" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="stars" data-i18n="Stars">Stars</button>
           <button id="slTabPoints" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="points" data-i18n="Points">Points</button>
-          <button id="slTabSuper" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="super" data-i18n="Super Score">Super Score</button>
         </div>
         <div id="starsLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="slFilterMonth" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
@@ -83,9 +83,9 @@
       <section class="card" id="globalLeaderboardCard">
         <h2 class="card-title" data-i18n="Willena Leaders">Willena Leaders</h2>
         <div class="lb-tabs" id="globalLeaderboardTabs" role="tablist">
-          <button id="glTabStars" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="stars" data-i18n="Stars">Stars</button>
+          <button id="glTabSuper" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="super" data-i18n="Super Score">Super Score</button>
+          <button id="glTabStars" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="stars" data-i18n="Stars">Stars</button>
           <button id="glTabPoints" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="points" data-i18n="Points">Points</button>
-          <button id="glTabSuper" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="super" data-i18n="Super Score">Super Score</button>
         </div>
         <div id="globalLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="glFilterMonth" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
@@ -900,7 +900,7 @@
 
       // Fetch and render stars leaderboard
       let starsLbTimeframe = 'month'; // 'all' | 'month' - default to month
-      let starsLbMetric = 'stars'; // 'stars' | 'points' | 'super'
+      let starsLbMetric = 'super'; // default to 'super' (Super Score)
       const starsLbCache = new Map(); // timeframe -> data
 
       async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
@@ -977,7 +977,7 @@
 
       // Fetch and render global leaderboard
       let globalLbTimeframe = 'month'; // 'all' | 'month' - default to month
-      let globalLbMetric = 'stars';
+      let globalLbMetric = 'super';
       const globalLbCache = new Map();
 
       async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
