@@ -309,21 +309,38 @@ exports.handler = async (event) => {
       const className = (qs.class || '').trim();
       const timeframe = (qs.timeframe || 'all').toLowerCase();
       if (!className) return json(200, { success: true, leaderboard: [], class: null });
+      const timingStart = Date.now();
       const cacheKey = leaderboardCacheKey(className, timeframe);
       const cached = await redisCache.getJson(cacheKey);
       if (cached && Array.isArray(cached.leaderboard)) {
+        console.log('[progress_teacher_summary] leaderboard cache hit', {
+          className,
+          timeframe,
+          rows: cached.leaderboard.length,
+          totalMs: Date.now() - timingStart
+        });
         return json(200, { success: true, ...cached });
       }
 
       // Get students in class
+      const studentsStart = Date.now();
       const { data: students, error: sErr } = await admin
         .from('profiles')
         .select('id, name, username, class, korean_name')
         .eq('role', 'student')
         .eq('class', className);
+      const studentsMs = Date.now() - studentsStart;
       if (sErr) return json(400, { success: false, error: sErr.message });
       const ids = (students || []).map(s => s.id);
-      if (!ids.length) return json(200, { success: true, class: className, leaderboard: [] });
+      if (!ids.length) {
+        console.log('[progress_teacher_summary] leaderboard empty class', {
+          className,
+          timeframe,
+          studentsMs,
+          totalMs: Date.now() - timingStart
+        });
+        return json(200, { success: true, class: className, leaderboard: [] });
+      }
 
       // Aggregate attempts in timeframe for those users
       const attemptsQuery = () => timeframeFilter(
@@ -335,7 +352,9 @@ exports.handler = async (event) => {
         timeframe,
         'created_at'
       );
+    const attemptsStart = Date.now();
     const { data: attempts, error: aErr, truncated: attemptsTruncated } = await fetchAllRows(attemptsQuery, 1000, 400);
+    const attemptsMs = Date.now() - attemptsStart;
     if (aErr) return json(400, { success: false, error: aErr.message });
 
       const attemptStats = new Map(); // user_id -> { points, total, correct }
@@ -362,7 +381,9 @@ exports.handler = async (event) => {
         timeframe,
         'ended_at'
       );
+    const sessionsStart = Date.now();
     const { data: sessions, error: sessErr, truncated: sessionsTruncated } = await fetchAllRows(sessionsQuery, 500, 400);
+    const sessionsMs = Date.now() - sessionsStart;
     if (sessErr) return json(400, { success: false, error: sessErr.message });
 
       const starsByUser = new Map(); // user_id -> Map<list||mode, stars>
@@ -408,6 +429,16 @@ exports.handler = async (event) => {
       const truncated = Boolean(attemptsTruncated || sessionsTruncated);
       const payload = { class: className, timeframe, leaderboard: rows, truncated, cached_at: new Date().toISOString() };
       await redisCache.setJson(cacheKey, payload, LEADERBOARD_TTL_SECONDS);
+      console.log('[progress_teacher_summary] leaderboard fresh', {
+        className,
+        timeframe,
+        rows: rows.length,
+        studentsMs,
+        attemptsMs,
+        sessionsMs,
+        totalMs: Date.now() - timingStart,
+        truncated
+      });
       return json(200, { success: true, ...payload });
     }
 
@@ -416,18 +447,26 @@ exports.handler = async (event) => {
       const userId = qs.user_id || '';
       const timeframe = (qs.timeframe || 'all').toLowerCase();
       if (!userId) return json(400, { success: false, error: 'Missing user_id' });
+      const timingStart = Date.now();
       const cacheKey = studentDetailsCacheKey(userId, timeframe);
       const cached = await redisCache.getJson(cacheKey);
       if (cached && cached.student && cached.totals) {
+        console.log('[progress_teacher_summary] student_details cache hit', {
+          userId,
+          timeframe,
+          totalMs: Date.now() - timingStart
+        });
         return json(200, { success: true, ...cached });
       }
 
       // Profile basics
+      const profileStart = Date.now();
       const { data: prof, error: pErr } = await admin
         .from('profiles')
         .select('id, name, username, class')
         .eq('id', userId)
         .single();
+      const profileMs = Date.now() - profileStart;
       if (pErr || !prof) return json(404, { success: false, error: 'Student not found' });
 
       // Attempts aggregate
@@ -440,7 +479,9 @@ exports.handler = async (event) => {
         timeframe,
         'created_at'
       );
+    const attemptsStart = Date.now();
     const { data: attempts, error: aErr, truncated: studentAttemptsTruncated } = await fetchAllRows(studentAttemptsQuery, 1000, 400);
+    const attemptsMs = Date.now() - attemptsStart;
     if (aErr) return json(400, { success: false, error: aErr.message });
 
       let total = 0, correct = 0, points = 0;
@@ -465,7 +506,9 @@ exports.handler = async (event) => {
         timeframe,
         'started_at'
       );
+    const sessionsStart = Date.now();
     const { data: sessions, error: sErr, truncated: sessionsTruncated } = await fetchAllRows(sessionsQuery, 1000, 500);
+    const sessionsMs = Date.now() - sessionsStart;
     if (sErr) return json(400, { success: false, error: sErr.message });
     console.log(`[student_details] Fetched ${sessions?.length || 0} sessions for user ${userId}, truncated: ${sessionsTruncated}`);
 
@@ -517,6 +560,17 @@ exports.handler = async (event) => {
         cached_at: new Date().toISOString()
       };
       await redisCache.setJson(cacheKey, payload, STUDENT_DETAILS_TTL_SECONDS);
+      console.log('[progress_teacher_summary] student_details fresh', {
+        userId,
+        timeframe,
+        attemptsCount: attempts?.length || 0,
+        sessionsCount,
+        profileMs,
+        attemptsMs,
+        sessionsMs,
+        totalMs: Date.now() - timingStart,
+        truncated: Boolean(studentAttemptsTruncated || sessionsTruncated)
+      });
       return json(200, { success: true, ...payload });
     }
 

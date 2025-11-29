@@ -152,6 +152,16 @@ if (langToggleBtn) {
 document.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
 });
+
+async function registerTeacherServiceWorker() {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw-teacher.js', { scope: '/' });
+    console.log('[manage_students] service worker ready', reg.scope);
+  } catch (err) {
+    console.warn('[manage_students] service worker registration failed', err);
+  }
+}
 const API = '/.netlify/functions/teacher_admin';
 let IS_ADMIN = false; // set after role check
 
@@ -1073,6 +1083,7 @@ if (rosterPreviewBtn) rosterPreviewBtn.onclick = previewRosterSingle;
 if (rosterUploadSubmit) rosterUploadSubmit.onclick = uploadRosterSingle;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  registerTeacherServiceWorker();
   wire();
   // auth guard: ensure teacher role
   try {

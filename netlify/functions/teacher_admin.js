@@ -171,10 +171,20 @@ exports.handler = async (event) => {
       const classFilter = (qs.class || '').trim();
   const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
       const offset = parseInt(qs.offset || '0', 10) || 0;
+      const timingStart = Date.now();
       const version = await getListCacheVersion();
       const cacheKey = buildListCacheKey(version, { search, classFilter, limit, offset });
       const cached = await redisCache.getJson(cacheKey);
       if (cached && Array.isArray(cached.students)) {
+        console.log('[teacher_admin] list_students cache hit', {
+          search: search ? '[set]' : '',
+          classFilter: classFilter || '',
+          limit,
+          offset,
+          rows: cached.students.length,
+          version,
+          totalMs: Date.now() - timingStart
+        });
         return respond(event, 200, { success:true, students: cached.students, limit: cached.limit, offset: cached.offset, cached_at: cached.cached_at || null });
       }
       let q = db
@@ -189,7 +199,9 @@ exports.handler = async (event) => {
         // Search username, name, korean_name
         q = q.or(`username.ilike.${pat},name.ilike.${pat},korean_name.ilike.${pat}`);
       }
+      const queryStart = Date.now();
       const { data, error } = await q.order('username', { ascending: true }).range(offset, offset + limit - 1);
+      const queryMs = Date.now() - queryStart;
       if (error) return respond(event, 400, { success:false, error: error.message });
       const students = (data || []).map(d => ({
         id: d.id,
@@ -207,6 +219,16 @@ exports.handler = async (event) => {
       }));
       const payload = { students, limit, offset, cached_at: new Date().toISOString() };
       await redisCache.setJson(cacheKey, payload, LIST_CACHE_TTL_SECONDS);
+      console.log('[teacher_admin] list_students fresh fetch', {
+        search: search ? '[set]' : '',
+        classFilter: classFilter || '',
+        limit,
+        offset,
+        rows: students.length,
+        version,
+        queryMs,
+        totalMs: Date.now() - timingStart
+      });
       return respond(event, 200, { success:true, ...payload });
     }
 
