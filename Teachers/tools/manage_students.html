@@ -10,7 +10,8 @@
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="stylesheet" href="/Teachers/tools/student_tracker/style.css" />
   <style>
-    :root { --manage-table-height: 65vh; }
+    /* increased by 7.56% to add more vertical space */
+    :root { --manage-table-height: calc(65vh * 1.0756); }
     body { background: var(--bg, #f5f7fb); }
     .manage-layout .card { overflow: hidden; }
     .manage-actions-card .section-title { border-bottom: 1px solid #eef2f7; }
@@ -85,9 +86,12 @@
       border-color:#19777e;
       box-shadow:0 0 0 2px rgba(25,119,126,0.15);
     }
+    /* Scale wrapper for visual shrinking (applies only to this page) */
+    #ms-scale-wrapper { transform: scale(0.93); transform-origin: top left; width: calc(100% / 0.93); display:block; }
   </style>
 </head>
 <body>
+  <div id="ms-scale-wrapper">
   <header>
     <img src="/Assets/Images/Logo.png" alt="Logo" />
     <h1>Manage Students • Teacher Tools</h1>
@@ -96,7 +100,6 @@
   <main>
     <div class="layout manage-layout">
       <section class="card manage-actions-card">
-        <div class="section-title">Quick Actions</div>
         <div class="manage-actions">
           <button type="button" id="openBulkModal" class="chip-action">Add Full Class</button>
           <button type="button" id="openAddAllModal" class="chip-action">Add All</button>
@@ -138,8 +141,10 @@
                   <col style="width:110px;">
                   <col style="width:90px;">
                   <col style="width:150px;">
-                  <col style="width:130px;">
-                  <col style="width:90px;">
+                  <!-- Phone column increased ~30%: 130 -> 170 -->
+                  <col style="width:170px;">
+                  <!-- Approved column increased ~10%: 90 -> 99 -->
+                  <col style="width:99px;">
                   <col style="width:auto;">
                 </colgroup>
                 <thead>
@@ -304,6 +309,7 @@
       </div>
       <div id="renameClassMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
     </div>
+  </div>
   </div>
 
   <!-- Burger menu insertion (same pattern used across tools) -->
