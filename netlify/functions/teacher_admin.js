@@ -6,6 +6,33 @@
 // - delete_student { user_id|username }
 // - set_approved { user_id|username, approved }
 
+const redisCache = require('../../lib/redis_cache');
+
+const LIST_CACHE_VERSION_KEY = 'teacher_admin:list_students_version';
+const LIST_CACHE_TTL_SECONDS = 60; // manage students table updates often but benefits from short cache
+
+async function getListCacheVersion() {
+  try {
+    const raw = await redisCache.getJson(LIST_CACHE_VERSION_KEY);
+    if (raw && typeof raw.version !== 'undefined') return String(raw.version);
+  } catch {}
+  return 'v0';
+}
+
+async function bumpListCacheVersion() {
+  const payload = { version: Date.now().toString() };
+  await redisCache.setJson(LIST_CACHE_VERSION_KEY, payload);
+  return payload.version;
+}
+
+function buildListCacheKey(version, params) {
+  const search = (params.search || '').toLowerCase();
+  const classFilter = (params.classFilter || '').toLowerCase();
+  const limit = Number(params.limit) || 0;
+  const offset = Number(params.offset) || 0;
+  return `teacher_admin:list_students:${version}:${classFilter}:${search}:${limit}:${offset}`;
+}
+
 function makeCorsHeaders(event, extra = {}) {
   const ALLOWLIST = new Set([
     'https://www.willenaenglish.com',
@@ -87,6 +114,7 @@ exports.handler = async (event) => {
       if (!old_class || !new_class) return respond(event, 400, { success:false, error:'Both class names required' });
       const { error } = await db.from('profiles').update({ class: new_class }).eq('role', 'student').eq('class', old_class);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
 
@@ -119,6 +147,7 @@ exports.handler = async (event) => {
       if (Object.keys(updateFields).length === 0) return respond(event, 400, { success:false, error:'No fields to update' });
       const { error } = await db.from('profiles').update(updateFields).eq('id', user_id);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
   } catch {
@@ -142,6 +171,12 @@ exports.handler = async (event) => {
       const classFilter = (qs.class || '').trim();
   const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
       const offset = parseInt(qs.offset || '0', 10) || 0;
+      const version = await getListCacheVersion();
+      const cacheKey = buildListCacheKey(version, { search, classFilter, limit, offset });
+      const cached = await redisCache.getJson(cacheKey);
+      if (cached && Array.isArray(cached.students)) {
+        return respond(event, 200, { success:true, students: cached.students, limit: cached.limit, offset: cached.offset, cached_at: cached.cached_at || null });
+      }
       let q = db
         .from('profiles')
         .select('id, name, username, email, avatar, approved, role, class, korean_name, grade, school, phone')
@@ -170,7 +205,9 @@ exports.handler = async (event) => {
         school: d.school || null,
         phone: d.phone || null,
       }));
-      return respond(event, 200, { success:true, students, limit, offset });
+      const payload = { students, limit, offset, cached_at: new Date().toISOString() };
+      await redisCache.setJson(cacheKey, payload, LIST_CACHE_TTL_SECONDS);
+      return respond(event, 200, { success:true, ...payload });
     }
 
     // Bulk upsert students
@@ -310,6 +347,7 @@ exports.handler = async (event) => {
         }
       }
 
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true, created, updated, skipped, total: norm.length });
     }
 
@@ -337,6 +375,7 @@ exports.handler = async (event) => {
         try { await admin.auth.admin.deleteUser(uid); } catch {}
         return respond(event, 400, { success:false, error: iErr.message });
       }
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true, user_id: uid });
     }
 
@@ -374,6 +413,7 @@ exports.handler = async (event) => {
       await db.from('profiles').delete().eq('id', uid);
       const { error } = await admin.auth.admin.deleteUser(uid);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
 
@@ -392,6 +432,7 @@ exports.handler = async (event) => {
       if (String(prof.role).toLowerCase() !== 'student') return respond(event, 403, { success:false, error:'Only students are manageable' });
       const { error } = await db.from('profiles').update({ approved }).eq('id', uid);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
 

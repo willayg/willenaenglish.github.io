@@ -1,6 +1,8 @@
 // Teacher analytics for English Arcade: class leaderboards, timeframe filters, and per-student stats
 // Secure: requires teacher/admin cookie session; verifies role from profiles
 
+const redisCache = require('../../lib/redis_cache');
+
 let createClientFn = null;
 
 async function ensureCreateClient() {
@@ -127,6 +129,22 @@ function classKey(name) {
   return normalizeClassDisplay(name).toLowerCase();
 }
 
+const CACHE_PREFIX = 'teacher_summary';
+const CLASSES_LIST_CACHE_KEY = `${CACHE_PREFIX}:classes_v1`;
+const CLASSES_LIST_TTL_SECONDS = 5 * 60; // class dropdown rarely changes
+const LEADERBOARD_TTL_SECONDS = 2 * 60; // per-class leaderboard caching
+const STUDENT_DETAILS_TTL_SECONDS = 90; // student drilldowns change frequently
+
+function leaderboardCacheKey(name, timeframe = 'all') {
+  const tf = (timeframe || 'all').toLowerCase();
+  return `${CACHE_PREFIX}:leaderboard:${classKey(name) || 'unknown'}:${tf}`;
+}
+
+function studentDetailsCacheKey(userId, timeframe = 'all') {
+  const tf = (timeframe || 'all').toLowerCase();
+  return `${CACHE_PREFIX}:student:${userId || 'unknown'}:${tf}`;
+}
+
 // Mirrors progress_summary star thresholds so teacher and student leaderboards agree.
 function deriveStars(summary) {
   const s = summary || {};
@@ -239,11 +257,16 @@ exports.handler = async (event) => {
         }
         return json(400, { success: false, error: error.message });
       }
+      await redisCache.del(CLASSES_LIST_CACHE_KEY);
       return json(200, { success: true, class: displayName, hidden: toggleTo });
     }
 
     // 1) List classes for dropdown (distinct class for students)
     if (action === 'classes_list') {
+      const cached = await redisCache.getJson(CLASSES_LIST_CACHE_KEY);
+      if (cached && Array.isArray(cached.classes)) {
+        return json(200, { success: true, classes: cached.classes, cached_at: cached.cached_at || null });
+      }
       const { data, error } = await admin
         .from('profiles')
         .select('class')
@@ -276,7 +299,9 @@ exports.handler = async (event) => {
         name,
         hidden: visMap.get(classKey(name)) || false
       }));
-      return json(200, { success: true, classes });
+      const payload = { classes, cached_at: new Date().toISOString() };
+      await redisCache.setJson(CLASSES_LIST_CACHE_KEY, payload, CLASSES_LIST_TTL_SECONDS);
+      return json(200, { success: true, ...payload });
     }
 
     // 2) Class leaderboard (stars + points + accuracy) with timeframe
@@ -284,6 +309,11 @@ exports.handler = async (event) => {
       const className = (qs.class || '').trim();
       const timeframe = (qs.timeframe || 'all').toLowerCase();
       if (!className) return json(200, { success: true, leaderboard: [], class: null });
+      const cacheKey = leaderboardCacheKey(className, timeframe);
+      const cached = await redisCache.getJson(cacheKey);
+      if (cached && Array.isArray(cached.leaderboard)) {
+        return json(200, { success: true, ...cached });
+      }
 
       // Get students in class
       const { data: students, error: sErr } = await admin
@@ -375,8 +405,10 @@ exports.handler = async (event) => {
 
       rows.sort((a,b)=> (b.stars - a.stars) || (b.points - a.points) || a.name.localeCompare(b.name));
       rows.forEach((r,i)=> r.rank = i+1);
-    const truncated = Boolean(attemptsTruncated || sessionsTruncated);
-    return json(200, { success: true, class: className, timeframe, leaderboard: rows, truncated });
+      const truncated = Boolean(attemptsTruncated || sessionsTruncated);
+      const payload = { class: className, timeframe, leaderboard: rows, truncated, cached_at: new Date().toISOString() };
+      await redisCache.setJson(cacheKey, payload, LEADERBOARD_TTL_SECONDS);
+      return json(200, { success: true, ...payload });
     }
 
     // 3) Per-student details with timeframe
@@ -384,6 +416,11 @@ exports.handler = async (event) => {
       const userId = qs.user_id || '';
       const timeframe = (qs.timeframe || 'all').toLowerCase();
       if (!userId) return json(400, { success: false, error: 'Missing user_id' });
+      const cacheKey = studentDetailsCacheKey(userId, timeframe);
+      const cached = await redisCache.getJson(cacheKey);
+      if (cached && cached.student && cached.totals) {
+        return json(200, { success: true, ...cached });
+      }
 
       // Profile basics
       const { data: prof, error: pErr } = await admin
@@ -468,17 +505,19 @@ exports.handler = async (event) => {
         .map(s => ({ mode: s.mode || 'unknown', list_name: s.list_name || null, started_at: s.started_at, ended_at: s.ended_at, list_size: s.list_size || null }))
         .sort((a,b)=> ((b.ended_at||b.started_at||'').localeCompare(a.ended_at||a.started_at||'')));
 
-      return json(200, {
-        success: true,
+      const payload = {
         student: { id: prof.id, name: prof.name || prof.username, class: prof.class },
-        timeframe,
-  totals: { attempts: total, correct, accuracy, points, stars: totalStars },
+          timeframe,
+          totals: { attempts: total, correct, accuracy, points, stars: totalStars },
         sessions: { count: sessionsCount, truncated: sessionsTruncated },
         modes: modeBreakdown,
         lists: listsPlayed,
         recent: recentSessions,
-        truncated: studentAttemptsTruncated
-      });
+        truncated: studentAttemptsTruncated,
+        cached_at: new Date().toISOString()
+      };
+      await redisCache.setJson(cacheKey, payload, STUDENT_DETAILS_TTL_SECONDS);
+      return json(200, { success: true, ...payload });
     }
 
     // Default help
