@@ -4,6 +4,12 @@
 [[plugins]]
 package = "@netlify/plugin-functions-install-core"
 
+# netlify.toml — production actually builds now
+
+# Install core plugin for functions (fine to keep)
+[[plugins]]
+package = "@netlify/plugin-functions-install-core"
+
 [build]
   # Force dependency install and a clean node_modules for prod builds
   command = "npm ci"
@@ -15,7 +21,7 @@ package = "@netlify/plugin-functions-install-core"
   node_bundler = "esbuild"
   external_node_modules = ["@supabase/supabase-js", "@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"]
 
-# Use Node 20 in prod and dev. Yes, 18 “works,” but 20 is safer for ESM.
+# Use Node 20 in prod and dev. Yes, 18 "works," but 20 is safer for ESM.
 [context.production.environment]
   NODE_VERSION = "20"
 
