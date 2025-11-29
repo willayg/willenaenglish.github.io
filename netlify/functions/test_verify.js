@@ -98,7 +98,8 @@ exports.handler = async (event) => {
         providedAuthCode: normalizedAuthCode,
         found: !!matched,
         error: matchError ? matchError.message : null,
-        match: matched || null
+        match: matched || null,
+        candidates: rows
       };
     }
 

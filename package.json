@@ -32,6 +32,7 @@
   "homepage": "https://github.com/willayg/willenaenglish.github.io#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
+  "@upstash/redis": "^1.19.0",
     "@aws-sdk/client-s3": "^3.637.0",
     "@aws-sdk/s3-request-presigner": "^3.637.0",
     "backblaze-b2": "^1.7.1",

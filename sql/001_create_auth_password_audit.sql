@@ -10,10 +10,8 @@ CREATE TABLE IF NOT EXISTS auth_password_audit (
   action TEXT NOT NULL,
   success BOOLEAN NOT NULL DEFAULT false,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
-  note TEXT NULL,
-  user_key TEXT NULL
+  note TEXT NULL
 );
 
 CREATE INDEX IF NOT EXISTS auth_password_audit_user_id_idx ON auth_password_audit(user_id);
 CREATE INDEX IF NOT EXISTS auth_password_audit_timestamp_idx ON auth_password_audit(timestamp);
-CREATE INDEX IF NOT EXISTS auth_password_audit_user_key_idx ON auth_password_audit(user_key);
