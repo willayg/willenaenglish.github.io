@@ -197,13 +197,23 @@ exports.handler = async (event) => {
   }
   const admin = createClient(SUPABASE_URL, ADMIN_KEY);
 
-  // Authz
-  const authDebug = {};
-  const teacher = await getAuthedTeacher(event, admin, authDebug);
-  if (!teacher) return json(401, { error: 'Unauthorized' });
-
   const qs = event.queryStringParameters || {};
   const action = qs.action || 'help';
+
+  const INTERNAL_WARM_KEY = process.env.INTERNAL_WARM_KEY || process.env.internal_warm_key || null;
+  const isInternalWarmRequest = Boolean(INTERNAL_WARM_KEY && qs.internal_warm_key && qs.internal_warm_key === INTERNAL_WARM_KEY);
+  const internalAllowedActions = new Set(['classes_list', 'leaderboard', 'student_details']);
+
+  // Authz
+  const authDebug = {};
+  let teacher = null;
+  if (isInternalWarmRequest && internalAllowedActions.has(action)) {
+    teacher = { id: 'internal-warm', role: 'admin', name: 'Internal Warm', class: null };
+    authDebug.internalWarm = true;
+  } else {
+    teacher = await getAuthedTeacher(event, admin, authDebug);
+    if (!teacher) return json(401, { error: 'Unauthorized' });
+  }
 
   console.log('[progress_teacher_summary] request', {
     action,

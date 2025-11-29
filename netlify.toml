@@ -25,3 +25,7 @@ package = "@netlify/plugin-functions-install-core"
 [dev]
   framework = "#static"
   port = 9000
+
+[[functions]]
+  name = "warm_teacher_cache"
+  schedule = "*/5 * * * *"

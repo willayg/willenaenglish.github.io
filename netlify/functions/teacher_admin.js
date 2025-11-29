@@ -74,6 +74,10 @@ exports.handler = async (event) => {
   // Parse query params early so `action` is available everywhere
   const qs = event.queryStringParameters || {};
   const action = qs.action;
+  const INTERNAL_WARM_KEY = process.env.INTERNAL_WARM_KEY || process.env.internal_warm_key || null;
+  const isInternalWarmRequest = Boolean(INTERNAL_WARM_KEY && qs.internal_warm_key && qs.internal_warm_key === INTERNAL_WARM_KEY);
+  const internalAllowedActions = new Set(['list_students']);
+  const skipAuth = isInternalWarmRequest && internalAllowedActions.has(action);
 
   // Lazy import supabase-js (CJS require fallback)
   let createClient;
@@ -92,23 +96,32 @@ exports.handler = async (event) => {
   let isAdmin = false;
   let isTeacher = false;
 
-  // AuthZ: require teacher/admin role
-  const access = cookieToken(event);
-  if (!access) return respond(event, 401, { success:false, error:'Not signed in' });
-  try {
-    const { data, error } = await admin.auth.getUser(access);
-    if (error || !data?.user) return respond(event, 401, { success:false, error:'Not signed in' });
-    const userId = data.user.id;
-  const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', userId).single();
-  if (perr || !prof) return respond(event, 403, { success:false, error:'Profile missing' });
-  actorRole = String(prof.role || '').toLowerCase();
-  isAdmin = actorRole === 'admin';
-  isTeacher = actorRole === 'teacher';
-    if (!isAdmin && !isTeacher) return respond(event, 403, { success:false, error:'Forbidden' });
-
+  // AuthZ: require teacher/admin role unless this is an internal warm ping limited to list_students
+  if (!skipAuth) {
+    const access = cookieToken(event);
+    if (!access) return respond(event, 401, { success:false, error:'Not signed in' });
+    try {
+      const { data, error } = await admin.auth.getUser(access);
+      if (error || !data?.user) return respond(event, 401, { success:false, error:'Not signed in' });
+      const userId = data.user.id;
+      const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', userId).single();
+      if (perr || !prof) return respond(event, 403, { success:false, error:'Profile missing' });
+      actorRole = String(prof.role || '').toLowerCase();
+      isAdmin = actorRole === 'admin';
+      isTeacher = actorRole === 'teacher';
+      if (!isAdmin && !isTeacher) return respond(event, 403, { success:false, error:'Forbidden' });
+    } catch {
+      return respond(event, 401, { success:false, error:'Not signed in' });
+    }
+  } else {
+    actorRole = 'admin';
+    isAdmin = true;
+    isTeacher = true;
+  }
+  if (!skipAuth) {
     // Admin-only: rename_class
     if (action === 'rename_class' && event.httpMethod === 'POST') {
-  if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const { old_class, new_class } = body;
       if (!old_class || !new_class) return respond(event, 400, { success:false, error:'Both class names required' });
@@ -120,7 +133,7 @@ exports.handler = async (event) => {
 
     // Admin-only: update_student
     if (action === 'update_student' && event.httpMethod === 'POST') {
-  if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const { user_id, name, username, korean_name, class: className, grade, school, phone } = body;
       if (!user_id) return respond(event, 400, { success:false, error:'Missing user_id' });
@@ -150,14 +163,12 @@ exports.handler = async (event) => {
       await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
-  } catch {
-    return respond(event, 401, { success:false, error:'Not signed in' });
   }
 
 
   // Helper: lookup user by username
   async function getUserIdByUsername(username) {
-  const { data, error } = await db.from('profiles').select('id').eq('username', username).single();
+    const { data, error } = await db.from('profiles').select('id').eq('username', username).single();
     if (error || !data) return null;
     return data.id;
   }
@@ -169,7 +180,7 @@ exports.handler = async (event) => {
     if (action === 'list_students') {
       const search = (qs.search || '').trim();
       const classFilter = (qs.class || '').trim();
-  const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
+      const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
       const offset = parseInt(qs.offset || '0', 10) || 0;
       const timingStart = Date.now();
       const version = await getListCacheVersion();
@@ -375,7 +386,7 @@ exports.handler = async (event) => {
 
     if (action === 'create_student' && event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-  let { username, password, name, class: className, approved, grade, school, phone } = body;
+      let { username, password, name, class: className, approved, grade, school, phone } = body;
       username = (username || '').trim();
       if (!username || !password) return respond(event, 400, { success:false, error:'username and password required' });
       // Check existing username
@@ -387,7 +398,7 @@ exports.handler = async (event) => {
       const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, email_confirm: true, password, user_metadata: { role: 'student', username } });
       if (cErr || !created?.user) return respond(event, 400, { success:false, error: cErr?.message || 'Failed to create auth user' });
       const uid = created.user.id;
-  // Insert profile
+      // Insert profile
   const cleanGrade = typeof grade === 'string' && grade.trim() ? grade.trim() : null;
   const cleanSchool = typeof school === 'string' && school.trim() ? school.trim() : null;
   const cleanPhone = typeof phone === 'string' && phone.trim() ? phone.trim() : null;
