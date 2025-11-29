@@ -94,6 +94,7 @@ const LEADERBOARD_PREFETCH_COUNT = 2;
 const STUDENT_PREFETCH_COUNT = 2;
 const SW_PREFETCH_MESSAGE = 'teacher-prefetch';
 const swPrefetchQueue = new Set();
+const ST_CACHE_DEFAULT_TTL = 45000; // ~45s client cache to mask function latency
 
 const teacherPrefetchEndpoints = {
   classes: () => `${FN('progress_teacher_summary')}?action=classes_list`,
@@ -147,6 +148,60 @@ function scheduleStudentPrefetch(entries, timeframe = DEFAULT_TIMEFRAME) {
     .filter(Boolean);
   const urls = ids.map(uid => teacherPrefetchEndpoints.student(uid, timeframe));
   queuePrefetchUrls(urls);
+}
+
+// Lightweight sessionStorage cache helpers (never store tokens/secrets).
+function trackerCacheKey(prefix, parts = []) {
+  return `st-cache:${prefix}:${parts.map(p => encodeURIComponent(String(p || ''))).join('|')}`;
+}
+
+function trackerCacheSet(prefix, parts, payload) {
+  try {
+    const key = trackerCacheKey(prefix, parts);
+    const value = JSON.stringify({ ts: Date.now(), payload });
+    sessionStorage.setItem(key, value);
+  } catch (_) {}
+}
+
+function trackerCacheGet(prefix, parts, maxAgeMs = ST_CACHE_DEFAULT_TTL) {
+  try {
+    const key = trackerCacheKey(prefix, parts);
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.ts) return null;
+    if (Date.now() - parsed.ts > maxAgeMs) {
+      sessionStorage.removeItem(key);
+      return null;
+    }
+    return parsed.payload;
+  } catch (_) {
+    return null;
+  }
+}
+
+const cacheLeaderKey = (cls, tf) => ['leaderboard', cls || '', tf || DEFAULT_TIMEFRAME];
+const cacheStudentKey = (uid, tf) => ['student', uid || '', tf || DEFAULT_TIMEFRAME];
+
+function cacheSetLeaderboard(cls, tf, rows) {
+  if (!cls || !Array.isArray(rows)) return;
+  trackerCacheSet('leaderboard', [cls, tf], rows);
+}
+
+function cacheGetLeaderboard(cls, tf) {
+  if (!cls) return null;
+  const rows = trackerCacheGet('leaderboard', [cls, tf]);
+  return Array.isArray(rows) ? rows : null;
+}
+
+function cacheSetStudentDetails(uid, tf, data) {
+  if (!uid || !data) return;
+  trackerCacheSet('student', [uid, tf], data);
+}
+
+function cacheGetStudentDetails(uid, tf) {
+  if (!uid) return null;
+  return trackerCacheGet('student', [uid, tf]);
 }
 
 // Helper to request a run token for an assignment and cache it in `window.currentHomeworkRunTokens`
@@ -928,9 +983,16 @@ async function loadLeaderboard(){
   if (leaderboardTitle) leaderboardTitle.textContent = `${displayClassName(selected)} Leaderboard`;
   lbBody.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
   setStatus(`Loading ${displayClassName(selected)} (${tf})…`);
+  const cached = cacheGetLeaderboard(apiClass, tf);
+  if (cached) {
+    rawLeaderboard = cached;
+    renderLeaderboard(rawLeaderboard);
+    setStatus('Showing cached leaderboard… updating');
+  }
   try{
     const js = await API.leaderboard(apiClass, tf);
     rawLeaderboard = (js && js.success && Array.isArray(js.leaderboard)) ? js.leaderboard : [];
+    cacheSetLeaderboard(apiClass, tf, rawLeaderboard);
     renderLeaderboard(rawLeaderboard);
     if (!rawLeaderboard.length) setStatus('No attempts yet for this filter');
     else {
@@ -952,9 +1014,15 @@ async function loadStudent(uid){
   if (tabGames) tabGames.innerHTML = '<div class="empty">Loading games…</div>';
   switchTab('overview');
   setStatus('Loading student details…');
+  const cached = cacheGetStudentDetails(uid, tf);
+  if (cached && cached.success) {
+    renderStudentDetails(cached);
+    setStatus('Showing cached student details… updating');
+  }
   try{
     const js = await API.student(uid, tf);
     if (js && js.success) {
+      cacheSetStudentDetails(uid, tf, js);
       renderStudentDetails(js);
       if (js.truncated || (js.sessions && js.sessions.truncated)) {
         setStatus('Partial student data (too many records)');
