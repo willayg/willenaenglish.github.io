@@ -2,6 +2,10 @@
 // Secure version: NO ?user_id. Uses Supabase Auth token + RLS.
 // Requires env: SUPABASE_URL, SUPABASE_ANON_KEY
 const { createClient } = require('@supabase/supabase-js');
+const redisCache = require('../../lib/redis_cache');
+
+const CLASS_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
+const GLOBAL_CACHE_TTL_SECONDS = 10 * 60; // 10 minutes
 
 // Cookie helpers (same as supabase_proxy_fixed.js)
 function parseCookies(header) {
@@ -38,52 +42,33 @@ function json(status, body) {
   };
 }
 
-// ========== LEADERBOARD CACHE (2-5 min TTL) ==========
-// Simple in-memory cache for leaderboard results
-// Cache key: leaderboard_{section}:{timeframe}:{userId}
-const leaderboardCache = new Map(); // key -> { data, timestamp }
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
-
-function getCacheKey(section, timeframe, userId) {
-  return `leaderboard_${section}:${timeframe}:${userId}`;
-}
-
-function getCachedLeaderboard(section, timeframe, userId) {
-  const key = getCacheKey(section, timeframe, userId);
-  const cached = leaderboardCache.get(key);
-  if (!cached) return null;
-  
-  const age = Date.now() - cached.timestamp;
-  if (age > CACHE_TTL_MS) {
-    leaderboardCache.delete(key);
-    return null;
-  }
-  
-  return cached.data;
-}
-
-function setCachedLeaderboard(section, timeframe, userId, data) {
-  const key = getCacheKey(section, timeframe, userId);
-  leaderboardCache.set(key, {
-    data,
-    timestamp: Date.now()
-  });
-  
-  // Optional: clean up very old entries if cache grows too large
-  if (leaderboardCache.size > 1000) {
-    const now = Date.now();
-    for (const [k, v] of leaderboardCache.entries()) {
-      if (now - v.timestamp > CACHE_TTL_MS * 2) {
-        leaderboardCache.delete(k);
-      }
-    }
-  }
-}
-
 function getMonthStartIso() {
   const now = new Date();
   const firstUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
   return firstUtc.toISOString();
+}
+
+function safeParseSummary(input) {
+  try {
+    if (!input) return null;
+    if (typeof input === 'string') return JSON.parse(input);
+    return input;
+  } catch {
+    return null;
+  }
+}
+
+function safeParseJson(value) {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 function deriveStars(summary) {
@@ -181,6 +166,148 @@ function finalizeLeaderboard(entries) {
   return entries;
 }
 
+function buildStarsByUserMap(sessions) {
+  const bestKey = new Map();
+  (sessions || []).forEach(sess => {
+    if (!sess || !sess.user_id) return;
+    const list = (sess.list_name || '').trim();
+    const mode = (sess.mode || '').trim();
+    if (!list || !mode) return;
+    const parsed = safeParseSummary(sess.summary);
+    if (parsed && parsed.completed === false) return;
+    const stars = deriveStars(parsed);
+    if (stars <= 0) return;
+    const composite = `${sess.user_id}||${list}||${mode}`;
+    const prev = bestKey.get(composite) || 0;
+    if (stars > prev) bestKey.set(composite, stars);
+  });
+
+  const totals = new Map();
+  bestKey.forEach((value, composite) => {
+    const [uid] = composite.split('||');
+    totals.set(uid, (totals.get(uid) || 0) + value);
+  });
+  return totals;
+}
+
+async function computeStarsForUser(adminClient, userId, firstOfMonthIso) {
+  if (!userId) return 0;
+  const sessions = await fetchSessionsForUsers(adminClient, [userId], firstOfMonthIso);
+  const starsMap = buildStarsByUserMap(sessions);
+  return starsMap.get(userId) || 0;
+}
+
+function classLeaderboardCacheKey(className, timeframe) {
+  return `lb:class:${(className || 'unknown').toLowerCase()}:${timeframe}`;
+}
+
+function globalLeaderboardCacheKey(timeframe) {
+  return `lb:global:${timeframe}`;
+}
+
+function normalizeGlobalCachePayload(payload) {
+  if (!payload) return null;
+  const source = typeof payload === 'string' ? safeParseJson(payload) : payload;
+  if (!source || typeof source !== 'object') return null;
+
+  if (Array.isArray(source.topEntries)) {
+    return {
+      timeframe: source.timeframe || 'all',
+      cached_at: source.cached_at || source.updated_at || null,
+      topEntries: source.topEntries,
+      userPoints: source.userPoints && typeof source.userPoints === 'object' ? source.userPoints : {}
+    };
+  }
+
+  if (Array.isArray(source.leaderboard)) {
+    const leaderboard = source.leaderboard.map(entry => {
+      if (!entry) return entry;
+      const stars = Number(entry.stars) || 0;
+      const points = Number(entry.points) || 0;
+      const existingRank = typeof entry.rank === 'number' ? entry.rank : null;
+      return {
+        ...entry,
+        stars,
+        points,
+        superScore: typeof entry.superScore === 'number' ? entry.superScore : Math.round((stars * points) / 1000),
+        rank: existingRank
+      };
+    });
+
+    const userPoints = {};
+    leaderboard.forEach((entry, idx) => {
+      if (!entry || !entry.user_id) return;
+      userPoints[entry.user_id] = {
+        name: entry.name,
+        class: entry.class,
+        avatar: entry.avatar,
+        points: entry.points,
+        rank: entry.rank || idx + 1
+      };
+    });
+
+    return {
+      timeframe: source.timeframe || 'all',
+      cached_at: source.cached_at || source.updated_at || null,
+      topEntries: leaderboard,
+      userPoints
+    };
+  }
+
+  return null;
+}
+
+function formatClassLeaderboardResponse(payload, userId) {
+  const leaderboard = Array.isArray(payload?.leaderboard) ? payload.leaderboard : [];
+  const condensed = leaderboard.slice(0, 5).map(entry => ({ ...entry, self: entry.user_id === userId }));
+  const me = leaderboard.find(entry => entry.user_id === userId);
+  if (me && !condensed.some(e => e.user_id === me.user_id)) {
+    condensed.push({ ...me, self: true });
+  }
+  return {
+    success: true,
+    class: payload?.class || null,
+    timeframe: payload?.timeframe || 'all',
+    cached_at: payload?.cached_at,
+    leaderboard: condensed
+  };
+}
+
+async function formatGlobalLeaderboardResponse(payload, userId, adminClient, firstOfMonthIso) {
+  const baseTop = Array.isArray(payload?.topEntries) ? payload.topEntries : [];
+  const formatted = baseTop.map(entry => ({ ...entry, self: entry.user_id === userId }));
+  let hasUser = formatted.some(entry => entry.user_id === userId);
+
+  if (!hasUser && userId) {
+    const userInfoMap = payload?.userPoints || {};
+    const info = userInfoMap[userId];
+    if (info) {
+      const stars = await computeStarsForUser(adminClient, userId, firstOfMonthIso);
+      const points = Number(info.points) || 0;
+      const userEntry = {
+        user_id: userId,
+        name: info.name || 'You',
+        class: info.class || null,
+        avatar: info.avatar || null,
+        points,
+        stars,
+        superScore: Math.round((stars * points) / 1000),
+        rank: info.rank || null,
+        self: true
+      };
+      formatted.push(userEntry);
+      hasUser = true;
+    }
+  }
+
+  return {
+    success: true,
+    timeframe: payload?.timeframe || 'all',
+    cached_at: payload?.cached_at,
+    leaderboard: formatted
+  };
+}
+
 // ========== END CACHE ==========
 
 exports.handler = async (event) => {
@@ -214,12 +341,6 @@ exports.handler = async (event) => {
   const scope = (query) => query.eq('user_id', userId);
 
   const section = ((event.queryStringParameters && event.queryStringParameters.section) || 'kpi').toLowerCase();
-
-    // Helper to parse summary blobs safely
-    const parseSummary = (s) => {
-      try { if (!s) return null; if (typeof s === 'string') return JSON.parse(s); return s; }
-      catch { return null; }
-    };
 
     // ---------- CLASS LEADERBOARD ----------
     if (section === 'leaderboard_class') {
@@ -269,15 +390,22 @@ exports.handler = async (event) => {
         const totals = new Map();
         allAttempts.forEach(a => { if (a.user_id) totals.set(a.user_id, (totals.get(a.user_id) || 0) + (Number(a.points) || 0)); });
 
-  const entries = filteredClassmates.map(p => ({ user_id: p.id, name: p.name || p.username || 'Player', avatar: p.avatar || null, class: className, points: totals.get(p.id) || 0, self: p.id === userId }));
-  entries.sort((a,b) => b.points - a.points || a.name.localeCompare(b.name));
-  entries.forEach((e,i) => e.rank = i + 1);
+        const entries = filteredClassmates.map(p => ({
+          user_id: p.id,
+          name: p.name || p.username || 'Player',
+          avatar: p.avatar || null,
+          class: className,
+          points: totals.get(p.id) || 0,
+          self: p.id === userId
+        }));
+        entries.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+        entries.forEach((e, i) => e.rank = i + 1);
 
-  let top = entries.slice(0, 5);
-  const me = entries.find(e => e.self);
-  if (me && !top.some(e => e.user_id === me.user_id)) top = [...top, me];
+        let top = entries.slice(0, 5);
+        const me = entries.find(e => e.self);
+        if (me && !top.some(e => e.user_id === me.user_id)) top = [...top, me];
 
-  return json(200, { success: true, class: className, leaderboard: top });
+        return json(200, { success: true, class: className, leaderboard: top });
       } catch (e) {
         console.error('[progress_summary] leaderboard_class error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });
@@ -290,12 +418,6 @@ exports.handler = async (event) => {
     if (section === 'leaderboard_stars_class') {
       try {
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
-        const cachedResult = getCachedLeaderboard('stars_class', timeframe, userId);
-        if (cachedResult) {
-          console.log(`[progress_summary] Cache hit for leaderboard_stars_class (${timeframe})`);
-          return json(200, cachedResult);
-        }
-
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
         const { data: meProf, error: meErr } = await adminClient.from('profiles').select('class').eq('id', userId).single();
@@ -303,6 +425,13 @@ exports.handler = async (event) => {
         const className = meProf.class || null;
         if (!className) return json(200, { success: true, leaderboard: [], class: null });
         if (className.length === 1) return json(200, { success: true, leaderboard: [], class: null });
+
+        const cacheKey = classLeaderboardCacheKey(className, timeframe);
+        const cachedPayload = await redisCache.getJson(cacheKey);
+        if (cachedPayload) {
+          console.log(`[progress_summary] Redis cache hit for leaderboard_stars_class ${className} (${timeframe})`);
+          return json(200, formatClassLeaderboardResponse(cachedPayload, userId));
+        }
 
         const { data: classmates, error: clsErr } = await adminClient
           .from('profiles')
@@ -318,69 +447,34 @@ exports.handler = async (event) => {
         if (!filteredClassmates.length) return json(200, { success: true, leaderboard: [], class: className });
 
         const ids = filteredClassmates.map(p => p.id).filter(Boolean);
-        const profileMap = new Map(filteredClassmates.map(p => [p.id, p]));
-
         const pointTotals = await aggregatePointsForIds(adminClient, ids, firstOfMonthIso);
         const pointsMap = new Map(pointTotals.map(row => [row.user_id, row.points]));
+        const sessions = await fetchSessionsForUsers(adminClient, ids, firstOfMonthIso);
+        const starsByUser = buildStarsByUserMap(sessions);
+
         const sortedEntries = filteredClassmates.map(profile => ({
           user_id: profile.id,
           name: profile.name || profile.username || 'Student',
           avatar: profile.avatar || null,
           class: className,
           points: Math.round(pointsMap.get(profile.id) || 0),
-          self: profile.id === userId
+          stars: starsByUser.get(profile.id) || 0
         }));
-        sortedEntries.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
 
-        const topEntries = sortedEntries.slice(0, 5);
-        const userAggregate = sortedEntries.find(e => e.user_id === userId);
-        if (userId && !topEntries.some(e => e.user_id === userId)) {
-          const meProfile = profileMap.get(userId);
-          if (meProfile) {
-            topEntries.push({
-              user_id: userId,
-              name: meProfile.name || meProfile.username || 'You',
-              avatar: meProfile.avatar || null,
-              class: className,
-              points: userAggregate ? userAggregate.points : 0,
-              self: true
-            });
-          }
+        const finalized = finalizeLeaderboard(sortedEntries);
+        const payload = {
+          success: true,
+          class: className,
+          timeframe,
+          cached_at: new Date().toISOString(),
+          leaderboard: finalized
+        };
+
+        if (redisCache.isEnabled()) {
+          await redisCache.setJson(cacheKey, payload, CLASS_CACHE_TTL_SECONDS);
         }
 
-        const relevantUserIds = Array.from(new Set(topEntries.map(e => e.user_id))).filter(Boolean);
-        const sessions = await fetchSessionsForUsers(adminClient, relevantUserIds, firstOfMonthIso);
-
-        const starsLookup = new Map();
-        sessions.forEach(sess => {
-          if (!sess || !sess.user_id) return;
-          const list = (sess.list_name || '').trim();
-          const mode = (sess.mode || '').trim();
-          if (!list || !mode) return;
-          const parsed = parseSummary(sess.summary);
-          if (parsed && parsed.completed === false) return;
-          const stars = deriveStars(parsed);
-          if (stars <= 0) return;
-          const key = `${sess.user_id}||${list}||${mode}`;
-          const prev = starsLookup.get(key) || 0;
-          if (stars > prev) starsLookup.set(key, stars);
-        });
-
-        const starsByUser = new Map();
-        starsLookup.forEach((value, composite) => {
-          const [uid] = composite.split('||');
-          const current = starsByUser.get(uid) || 0;
-          starsByUser.set(uid, current + value);
-        });
-
-        topEntries.forEach(entry => {
-          entry.stars = starsByUser.get(entry.user_id) || 0;
-        });
-
-        const resultEntries = finalizeLeaderboard(topEntries);
-        const result = { success: true, class: className, leaderboard: resultEntries };
-        setCachedLeaderboard('stars_class', timeframe, userId, result);
-        return json(200, result);
+        return json(200, formatClassLeaderboardResponse(payload, userId));
       } catch (e) {
         console.error('[progress_summary] leaderboard_stars_class error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });
@@ -392,13 +486,18 @@ exports.handler = async (event) => {
     if (section === 'leaderboard_stars_global') {
       try {
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
-        const cachedResult = getCachedLeaderboard('stars_global', timeframe, userId);
-        if (cachedResult) {
-          console.log(`[progress_summary] In-memory cache hit for leaderboard_stars_global (${timeframe})`);
-          return json(200, cachedResult);
+        const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
+        const cacheKey = globalLeaderboardCacheKey(timeframe);
+
+        const redisPayloadRaw = await redisCache.getJson(cacheKey);
+        const redisPayload = normalizeGlobalCachePayload(redisPayloadRaw);
+        if (redisPayload) {
+          console.log(`[progress_summary] Redis cache hit for leaderboard_stars_global (${timeframe})`);
+          const response = await formatGlobalLeaderboardResponse(redisPayload, userId, adminClient, firstOfMonthIso);
+          return json(200, response);
         }
 
-        // Try DB-backed cache first (very fast in production). If present, return it.
+        let normalizedDbPayload = null;
         try {
           const { data: dbCache, error: dbErr } = await adminClient
             .from('leaderboard_cache')
@@ -407,15 +506,21 @@ exports.handler = async (event) => {
             .eq('timeframe', timeframe)
             .single();
           if (!dbErr && dbCache && dbCache.payload) {
+            normalizedDbPayload = normalizeGlobalCachePayload(dbCache.payload);
             console.log('[progress_summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', dbCache.updated_at);
-            // ensure shape matches previous responses
-            return json(200, dbCache.payload);
           }
         } catch (e) {
           console.warn('[progress_summary] DB cache read failed (continuing to compute):', e && e.message);
         }
 
-        const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
+        if (normalizedDbPayload) {
+          if (redisCache.isEnabled()) {
+            await redisCache.setJson(cacheKey, normalizedDbPayload, GLOBAL_CACHE_TTL_SECONDS);
+          }
+          const response = await formatGlobalLeaderboardResponse(normalizedDbPayload, userId, adminClient, firstOfMonthIso);
+          return json(200, response);
+        }
+
         let students = [];
         let studentOffset = 0;
         const studentBatchSize = 500;
@@ -440,8 +545,6 @@ exports.handler = async (event) => {
         if (!filteredStudents.length) return json(200, { success: true, leaderboard: [] });
 
         const ids = filteredStudents.map(p => p.id).filter(Boolean);
-        const profileMap = new Map(filteredStudents.map(p => [p.id, p]));
-
         const pointTotals = await aggregatePointsForIds(adminClient, ids, firstOfMonthIso);
         const pointsMap = new Map(pointTotals.map(row => [row.user_id, row.points]));
         const sortedEntries = filteredStudents.map(profile => ({
@@ -449,60 +552,58 @@ exports.handler = async (event) => {
           name: profile.name || profile.username || 'Student',
           avatar: profile.avatar || null,
           class: profile.class || null,
-          points: Math.round(pointsMap.get(profile.id) || 0),
-          self: profile.id === userId
+          points: Math.round(pointsMap.get(profile.id) || 0)
         }));
         sortedEntries.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
 
-        const topEntries = sortedEntries.slice(0, 10);
-        const userAggregate = sortedEntries.find(e => e.user_id === userId);
-        if (userId && !topEntries.some(e => e.user_id === userId)) {
-          const meProfile = profileMap.get(userId);
-          if (meProfile) {
-            topEntries.push({
-              user_id: userId,
-              name: meProfile.name || meProfile.username || 'You',
-              avatar: meProfile.avatar || null,
-              class: meProfile.class || null,
-              points: userAggregate ? userAggregate.points : 0,
-              self: true
-            });
-          }
-        }
-
+        const topLimit = 10;
+        const topEntries = sortedEntries.slice(0, topLimit);
         const relevantUserIds = Array.from(new Set(topEntries.map(e => e.user_id))).filter(Boolean);
         const sessions = await fetchSessionsForUsers(adminClient, relevantUserIds, firstOfMonthIso);
-
-        const starsLookup = new Map();
-        sessions.forEach(sess => {
-          if (!sess || !sess.user_id) return;
-          const list = (sess.list_name || '').trim();
-          const mode = (sess.mode || '').trim();
-          if (!list || !mode) return;
-          const parsed = parseSummary(sess.summary);
-          if (parsed && parsed.completed === false) return;
-          const stars = deriveStars(parsed);
-          if (stars <= 0) return;
-          const key = `${sess.user_id}||${list}||${mode}`;
-          const prev = starsLookup.get(key) || 0;
-          if (stars > prev) starsLookup.set(key, stars);
-        });
-
-        const starsByUser = new Map();
-        starsLookup.forEach((value, composite) => {
-          const [uid] = composite.split('||');
-          const current = starsByUser.get(uid) || 0;
-          starsByUser.set(uid, current + value);
-        });
+        const starsByUser = buildStarsByUserMap(sessions);
 
         topEntries.forEach(entry => {
           entry.stars = starsByUser.get(entry.user_id) || 0;
         });
 
-        const resultEntries = finalizeLeaderboard(topEntries);
-        const result = { success: true, leaderboard: resultEntries };
-        setCachedLeaderboard('stars_global', timeframe, userId, result);
-        return json(200, result);
+        const finalizedTopEntries = finalizeLeaderboard(topEntries.map(entry => ({ ...entry }))); // avoid mutating base array
+
+        const userPoints = {};
+        sortedEntries.forEach((entry, idx) => {
+          userPoints[entry.user_id] = {
+            name: entry.name,
+            class: entry.class,
+            avatar: entry.avatar,
+            points: entry.points,
+            rank: idx + 1
+          };
+        });
+
+        const payload = {
+          success: true,
+          timeframe,
+          cached_at: new Date().toISOString(),
+          topEntries: finalizedTopEntries,
+          userPoints
+        };
+
+        if (redisCache.isEnabled()) {
+          await redisCache.setJson(cacheKey, payload, GLOBAL_CACHE_TTL_SECONDS);
+        }
+
+        try {
+          await adminClient.from('leaderboard_cache').upsert({
+            section: 'leaderboard_stars_global',
+            timeframe,
+            payload,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'section,timeframe' });
+        } catch (err) {
+          console.warn('[progress_summary] Failed to update leaderboard_cache table:', err && err.message);
+        }
+
+        const response = await formatGlobalLeaderboardResponse(payload, userId, adminClient, firstOfMonthIso);
+        return json(200, response);
       } catch (e) {
         console.error('[progress_summary] leaderboard_stars_global error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });
@@ -761,7 +862,7 @@ exports.handler = async (event) => {
         let perfectionistAwarded = false;
         (sessions || []).forEach(s => {
           if (perfectionistAwarded) return;
-          const sum = parseSummary(s.summary);
+          const sum = safeParseSummary(s.summary);
           if (!sum) return;
           const acc =
             typeof sum.accuracy === 'number' ? sum.accuracy
@@ -862,7 +963,7 @@ exports.handler = async (event) => {
       }
 
       const isPerfect = (sumRaw) => {
-        const s = parseSummary(sumRaw) || {};
+        const s = safeParseSummary(sumRaw) || {};
         if (s.completed === false) return false;
         if (s.accuracy === 1 || s.perfect === true) return true;
         if (typeof s.score === 'number' && typeof s.total === 'number') return s.score >= s.total;
@@ -916,7 +1017,7 @@ exports.handler = async (event) => {
         const list = s.list_name || '';
         const mode = s.mode || '';
         const key = `${list}||${mode}`;
-        const parsed = parseSummary(s.summary);
+        const parsed = safeParseSummary(s.summary);
         // Ignore incomplete sessions for stars
         if (parsed && parsed.completed === false) return;
         const stars = deriveStars(parsed);
@@ -962,7 +1063,7 @@ exports.handler = async (event) => {
         if (totalCorrect >= 1) badges.push('first_correct');
         if (localBest >= 5) badges.push('streak_5');
         (sessions || []).forEach(s => {
-          const sum = parseSummary(s.summary);
+          const sum = safeParseSummary(s.summary);
           if (!sum) return;
           const acc =
             typeof sum.accuracy === 'number' ? sum.accuracy
