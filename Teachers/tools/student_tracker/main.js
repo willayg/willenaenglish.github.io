@@ -89,6 +89,66 @@ const API = {
   ),
 };
 
+const DEFAULT_TIMEFRAME = 'month';
+const LEADERBOARD_PREFETCH_COUNT = 2;
+const STUDENT_PREFETCH_COUNT = 2;
+const SW_PREFETCH_MESSAGE = 'teacher-prefetch';
+const swPrefetchQueue = new Set();
+
+const teacherPrefetchEndpoints = {
+  classes: () => `${FN('progress_teacher_summary')}?action=classes_list`,
+  leaderboard: (cls, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+  student: (uid, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`
+};
+
+function queuePrefetchUrls(urls) {
+  if (!urls || !urls.length || typeof navigator === 'undefined') return;
+  urls.forEach(url => {
+    if (typeof url === 'string' && url.trim()) swPrefetchQueue.add(url);
+  });
+  flushPrefetchQueue();
+}
+
+function flushPrefetchQueue() {
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker || !navigator.serviceWorker.controller || !swPrefetchQueue.size) return;
+  navigator.serviceWorker.controller.postMessage({ type: SW_PREFETCH_MESSAGE, urls: Array.from(swPrefetchQueue) });
+  swPrefetchQueue.clear();
+}
+
+async function registerTeacherServiceWorker() {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw-teacher.js', { scope: '/' });
+    navigator.serviceWorker.controller && flushPrefetchQueue();
+    navigator.serviceWorker.ready.then(() => flushPrefetchQueue());
+    navigator.serviceWorker.addEventListener?.('controllerchange', flushPrefetchQueue);
+    queuePrefetchUrls([teacherPrefetchEndpoints.classes()]);
+    console.log('[student_tracker] service worker registered', reg.scope);
+    return reg;
+  } catch (err) {
+    console.warn('[student_tracker] service worker registration failed', err);
+    return null;
+  }
+}
+
+function scheduleLeaderboardPrefetch(classes, timeframe = DEFAULT_TIMEFRAME) {
+  const targets = (classes || []).slice(0, LEADERBOARD_PREFETCH_COUNT);
+  const urls = targets
+    .map(cls => typeof cls === 'string' ? cls : cls.name)
+    .filter(name => !!name)
+    .map(name => teacherPrefetchEndpoints.leaderboard(name, timeframe));
+  queuePrefetchUrls(urls);
+}
+
+function scheduleStudentPrefetch(entries, timeframe = DEFAULT_TIMEFRAME) {
+  const ids = (entries || [])
+    .slice(0, STUDENT_PREFETCH_COUNT)
+    .map(entry => entry && entry.user_id)
+    .filter(Boolean);
+  const urls = ids.map(uid => teacherPrefetchEndpoints.student(uid, timeframe));
+  queuePrefetchUrls(urls);
+}
+
 // Helper to request a run token for an assignment and cache it in `window.currentHomeworkRunTokens`
 async function createRunTokenForAssignment(assignmentId) {
   if (!assignmentId) return null;
@@ -856,6 +916,7 @@ async function loadClasses(){
     if (!normalized.length) { classSel.innerHTML = '<option value="">No classes</option>'; setStatus('No student classes found'); return; }
     classSel.innerHTML = '<option value="">Choose class…</option>' + normalized.map(c => `<option value="${c.name}">${c.display}</option>`).join('');
     setStatus(`Loaded ${normalized.length} class${normalized.length === 1 ? '' : 'es'}`);
+    scheduleLeaderboardPrefetch(normalized);
   } catch(e){ classSel.innerHTML = '<option value="">Error loading</option>'; setStatus('Failed to load classes', 'error'); }
 }
 
@@ -878,6 +939,7 @@ async function loadLeaderboard(){
       if (js && js.truncated) msg += ' (partial data)';
       setStatus(msg);
     }
+      scheduleStudentPrefetch(rawLeaderboard, tf);
   } catch(e){ lbBody.innerHTML = '<tr><td colspan="6" class="empty">Failed to load</td></tr>'; setStatus('Leaderboard error', 'error'); }
 }
 
@@ -1577,6 +1639,7 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
 
 // Initialize UI on document ready
 document.addEventListener('DOMContentLoaded', () => {
+  registerTeacherServiceWorker();
   // Load classes asynchronously without blocking UI
   loadClasses().catch(e => console.error('loadClasses error:', e));
   loadClassTrackerClasses().catch(e => console.error('loadClassTrackerClasses error:', e));
