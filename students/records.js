@@ -18,6 +18,14 @@ let __authResolved = false; // becomes true after first successful authenticated
 const __pendingAttempts = [];
 let __flushScheduled = false;
 const __pendingSessionEnd = new Map(); // sessionId -> payload for retry
+
+// ---- BATCHING CONFIGURATION ----
+// When true, attempts are queued and sent in batches to reduce invocations
+const BATCH_MODE = true;
+const BATCH_FLUSH_DELAY_MS = 3000; // Time to wait before flushing batch
+const BATCH_MAX_SIZE = 50; // Flush immediately if this many attempts queued
+let __batchFlushTimer = null;
+const __batchQueue = []; // Holds attempts ready to batch (after auth resolved)
 // New: store session_start payloads that failed (likely 401) so we can retry once auth resolves
 const __pendingSessionStarts = new Map(); // sessionId -> { payload, tries }
 // Throttle: avoid hammering the auth refresh endpoint if user id not yet resolved.
@@ -191,6 +199,16 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
 
 export async function endSession(sessionId, { mode, summary = {}, listName = null, wordList = null } = {}) {
   if (!sessionId) return;
+  
+  // BATCH: Flush all pending attempts for this session before ending
+  if (BATCH_MODE && __batchQueue.length > 0) {
+    try {
+      await flushBatchQueue();
+    } catch (e) {
+      console.debug('[records] batch flush on endSession failed:', e?.message);
+    }
+  }
+  
   // Fire a local in-page event immediately so game UIs can react (e.g., show stars)
   try {
     const list_size = Array.isArray(wordList) ? wordList.length : null;
@@ -284,6 +302,135 @@ export function logBatch(attempts = []) {
 
 // Scoreless build: no points refresh
 
+// ---- BATCH QUEUE HELPERS ----
+function scheduleBatchFlush() {
+  if (__batchFlushTimer) return; // Already scheduled
+  __batchFlushTimer = setTimeout(async () => {
+    __batchFlushTimer = null;
+    await flushBatchQueue();
+  }, BATCH_FLUSH_DELAY_MS);
+}
+
+async function flushBatchQueue() {
+  if (__batchQueue.length === 0) return;
+  
+  // Clear any pending timer
+  if (__batchFlushTimer) {
+    clearTimeout(__batchFlushTimer);
+    __batchFlushTimer = null;
+  }
+  
+  // Snapshot and clear the queue
+  const toSend = __batchQueue.splice(0, __batchQueue.length);
+  if (toSend.length === 0) return;
+  
+  // Group by session_id for the batch payload
+  const bySession = {};
+  for (const a of toSend) {
+    const sid = a.session_id || '__nosession';
+    if (!bySession[sid]) bySession[sid] = { mode: a.mode, attempts: [] };
+    bySession[sid].attempts.push({
+      word: a.word,
+      is_correct: a.is_correct,
+      answer: a.answer,
+      correct_answer: a.correct_answer,
+      points: a.points,
+      attempt_index: a.attempt_index,
+      duration_ms: a.duration_ms,
+      round: a.round,
+      extra: a.extra
+    });
+  }
+  
+  // Send each session's batch
+  for (const [sessionId, data] of Object.entries(bySession)) {
+    if (sessionId === '__nosession') continue; // Skip orphan attempts
+    
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          event_type: 'attempts_batch',
+          session_id: sessionId,
+          mode: data.mode,
+          attempts: data.attempts
+        })
+      });
+      
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        console.error('❌ BATCH LOG FAILED:', res.status, txt);
+        if (res.status === 401) {
+          // Re-queue for retry after auth
+          for (const a of data.attempts) {
+            __pendingAttempts.push({ session_id: sessionId, mode: data.mode, ...a, _ts: Date.now() });
+          }
+          scheduleAuthFlush();
+        }
+      } else {
+        console.debug(`[records] ✅ Batch sent: ${data.attempts.length} attempts for session ${sessionId.slice(0,12)}...`);
+        __authResolved = true;
+        // Note: scheduleRefresh removed here - points refresh happens once at session end
+      }
+    } catch (e) {
+      console.error('[records] batch send error:', e?.message);
+      // Re-queue on network error
+      for (const a of data.attempts) {
+        __pendingAttempts.push({ session_id: sessionId, mode: data.mode, ...a, _ts: Date.now() });
+      }
+      scheduleAuthFlush();
+    }
+  }
+}
+
+// Export flush for game-end scenarios
+export async function flushAttempts() {
+  // First ensure pending (unauthenticated) attempts are flushed
+  await flushPendingAttempts();
+  // Then flush the batch queue
+  await flushBatchQueue();
+}
+
+// Flush on page unload (best effort with sendBeacon)
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (__batchQueue.length === 0) return;
+    
+    // Group by session for beacon
+    const bySession = {};
+    for (const a of __batchQueue) {
+      const sid = a.session_id || '__nosession';
+      if (!bySession[sid]) bySession[sid] = { mode: a.mode, attempts: [] };
+      bySession[sid].attempts.push(a);
+    }
+    
+    for (const [sessionId, data] of Object.entries(bySession)) {
+      if (sessionId === '__nosession') continue;
+      const payload = JSON.stringify({
+        event_type: 'attempts_batch',
+        session_id: sessionId,
+        mode: data.mode,
+        attempts: data.attempts.map(a => ({
+          word: a.word,
+          is_correct: a.is_correct,
+          answer: a.answer,
+          correct_answer: a.correct_answer,
+          points: a.points,
+          attempt_index: a.attempt_index,
+          duration_ms: a.duration_ms,
+          round: a.round,
+          extra: a.extra
+        }))
+      });
+      navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: 'application/json' }));
+      console.debug(`[records] 📡 Beacon sent: ${data.attempts.length} attempts`);
+    }
+    __batchQueue.length = 0; // Clear after beacon
+  });
+}
+
 // ---- Internal helpers for deferred auth & queued attempts -----------------
 
 function scheduleAuthFlush() {
@@ -315,6 +462,10 @@ async function flushPendingAttempts() {
   const toSend = __pendingAttempts.splice(0, __pendingAttempts.length);
   for (const a of toSend) {
     await sendAttempt({ user_id: uid, ...a });
+  }
+  // Flush batch queue after processing pending attempts (batch mode queues them)
+  if (BATCH_MODE && __batchQueue.length > 0) {
+    await flushBatchQueue();
   }
   // Also flush any pending session_end payloads
   if (__pendingSessionEnd.size) {
@@ -353,6 +504,35 @@ async function flushPendingAttempts() {
 
 async function sendAttempt({ user_id, session_id, mode, word, is_correct, answer, correct_answer, points, attempt_index, duration_ms, round, extra }) {
   if (!word) return; // safeguard
+  
+  // BATCH MODE: Queue the attempt instead of sending immediately
+  if (BATCH_MODE) {
+    __batchQueue.push({
+      user_id,
+      session_id,
+      mode,
+      word,
+      is_correct,
+      answer,
+      correct_answer,
+      points,
+      attempt_index,
+      duration_ms,
+      round,
+      extra: extra || {}
+    });
+    
+    // If we hit max size, flush immediately
+    if (__batchQueue.length >= BATCH_MAX_SIZE) {
+      await flushBatchQueue();
+    } else {
+      // Schedule a delayed flush
+      scheduleBatchFlush();
+    }
+    return;
+  }
+  
+  // LEGACY: Individual attempt send (when BATCH_MODE = false)
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -394,12 +574,11 @@ async function sendAttempt({ user_id, session_id, mode, word, is_correct, answer
     const js = await res.json().catch(() => null);
     if (js && typeof js.points_total === 'number') {
       try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: js.points_total } })); } catch {}
-      scheduleRefresh();
+      // Note: scheduleRefresh removed - will happen at session end to reduce invocations
       return;
     }
   } catch {}
-  // If server didn’t send total, only request a refresh when correct to keep noise low
-  if (is_correct) scheduleRefresh(0);
+  // Note: per-attempt scheduleRefresh removed - points update happens at session end
 }
 
 async function sendSessionEnd({ session_id, mode, extra, user_id, list_name = null, list_size = null }) {
