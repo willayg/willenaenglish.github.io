@@ -26,6 +26,8 @@ const BATCH_FLUSH_DELAY_MS = 3000; // Time to wait before flushing batch
 const BATCH_MAX_SIZE = 50; // Flush immediately if this many attempts queued
 let __batchFlushTimer = null;
 const __batchQueue = []; // Holds attempts ready to batch (after auth resolved)
+
+console.debug('[records] BATCH_MODE =', BATCH_MODE);
 // New: store session_start payloads that failed (likely 401) so we can retry once auth resolves
 const __pendingSessionStarts = new Map(); // sessionId -> { payload, tries }
 // Throttle: avoid hammering the auth refresh endpoint if user id not yet resolved.
@@ -505,8 +507,11 @@ async function flushPendingAttempts() {
 async function sendAttempt({ user_id, session_id, mode, word, is_correct, answer, correct_answer, points, attempt_index, duration_ms, round, extra }) {
   if (!word) return; // safeguard
   
+  console.debug('[records] sendAttempt called, BATCH_MODE=', BATCH_MODE, 'word=', word);
+  
   // BATCH MODE: Queue the attempt instead of sending immediately
   if (BATCH_MODE) {
+    console.debug('[records] Queueing attempt in batch, queue size:', __batchQueue.length + 1);
     __batchQueue.push({
       user_id,
       session_id,
@@ -521,6 +526,15 @@ async function sendAttempt({ user_id, session_id, mode, word, is_correct, answer
       round,
       extra: extra || {}
     });
+    
+    // Optimistic UI update: bump points display immediately for correct answers
+    if (is_correct) {
+      const delta = (typeof points === 'number' && points > 0) ? points : 1;
+      try { 
+        // Dispatch points:optimistic-bump - student-header listens for this
+        window.dispatchEvent(new CustomEvent('points:optimistic-bump', { detail: { delta } }));
+      } catch {}
+    }
     
     // If we hit max size, flush immediately
     if (__batchQueue.length >= BATCH_MAX_SIZE) {
