@@ -22,12 +22,12 @@ const __pendingSessionEnd = new Map(); // sessionId -> payload for retry
 // ---- BATCHING CONFIGURATION ----
 // When true, attempts are queued and sent in batches to reduce invocations
 const BATCH_MODE = true;
-const BATCH_FLUSH_DELAY_MS = 3000; // Time to wait before flushing batch
-const BATCH_MAX_SIZE = 50; // Flush immediately if this many attempts queued
+const BATCH_FLUSH_DELAY_MS = 60000; // 60 seconds - long enough that games finish before flush
+const BATCH_MAX_SIZE = 20; // Flush immediately if this many attempts queued
 let __batchFlushTimer = null;
 const __batchQueue = []; // Holds attempts ready to batch (after auth resolved)
 
-console.debug('[records] BATCH_MODE =', BATCH_MODE);
+console.debug('[records] BATCH_MODE =', BATCH_MODE, 'flush delay =', BATCH_FLUSH_DELAY_MS/1000, 's, max size =', BATCH_MAX_SIZE);
 // New: store session_start payloads that failed (likely 401) so we can retry once auth resolves
 const __pendingSessionStarts = new Map(); // sessionId -> { payload, tries }
 // Throttle: avoid hammering the auth refresh endpoint if user id not yet resolved.
@@ -283,8 +283,10 @@ export async function logAttempt({
     // Ensure cookies are sent; also kick whoami if not yet done
     kickOffWhoAmI();
     let user_id = getUserId();
+    console.debug('[records] logAttempt: user_id=', user_id ? 'present' : 'null', 'word=', word);
     // If we do not yet have a user id, enqueue the attempt for a deferred flush.
     if (!user_id) {
+      console.debug('[records] No user_id, queuing in __pendingAttempts');
       __pendingAttempts.push({ session_id, mode, word, is_correct, answer, correct_answer, points, attempt_index, duration_ms, round, extra, _ts: Date.now() });
       // Prevent unbounded growth (keep last 50)
       while (__pendingAttempts.length > 50) __pendingAttempts.shift();
@@ -314,6 +316,7 @@ function scheduleBatchFlush() {
 }
 
 async function flushBatchQueue() {
+  console.debug('[records] flushBatchQueue called, queue size:', __batchQueue.length);
   if (__batchQueue.length === 0) return;
   
   // Clear any pending timer
