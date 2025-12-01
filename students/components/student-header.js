@@ -25,6 +25,15 @@ class StudentHeader extends HTMLElement {
       }
     } catch {}
   };
+  this._onOptimisticBump = (e) => {
+    try {
+      const delta = e?.detail?.delta || 1;
+      if (typeof this._points === 'number') {
+        this._points += delta;
+        this.refresh();
+      }
+    } catch {}
+  };
   this._points = null;
   this._stars = null;
   this._fetchingOverview = false;
@@ -42,6 +51,7 @@ class StudentHeader extends HTMLElement {
     // Update if user data changes in this or other tabs
     window.addEventListener("storage", this._onStorage);
   window.addEventListener('points:update', this._onPointsUpdate);
+  window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
@@ -56,6 +66,7 @@ class StudentHeader extends HTMLElement {
   disconnectedCallback() {
     window.removeEventListener("storage", this._onStorage);
   window.removeEventListener('points:update', this._onPointsUpdate);
+  window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.removeEventListener('focus', this._onFocus);
   }
 

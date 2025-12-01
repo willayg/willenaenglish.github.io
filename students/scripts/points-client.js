@@ -12,7 +12,19 @@ const REFRESH_THROTTLE_MS = 10000;
 let lastRefreshTime = 0;
 
 export function initPointsClient() {
-	// noop for now; hook for future
+	// Listen for optimistic bump events from batch mode
+	window.addEventListener('points:optimistic-bump', (e) => {
+		const delta = e.detail?.delta || 1;
+		optimisticBump(delta);
+	});
+}
+
+// Auto-init: register listener immediately so games don't need to call initPointsClient
+if (typeof window !== 'undefined') {
+	window.addEventListener('points:optimistic-bump', (e) => {
+		const delta = e.detail?.delta || 1;
+		optimisticBump(delta);
+	});
 }
 
 export function optimisticBump(delta = 1) {
