@@ -229,6 +229,18 @@ exports.handler = async (event) => {
       const { error } = await supabase.from('progress_attempts').insert(row);
       if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
       
+      // Optional: skip the expensive server-side points total calculation.
+      // Setting env `SKIP_POINTS_TOTAL_CALC=1` (or 'true') will return early
+      // to reduce latency and external DB work. Frontend can fetch totals on-demand.
+      const skipPoints = (process.env.SKIP_POINTS_TOTAL_CALC === '1' || process.env.SKIP_POINTS_TOTAL_CALC === 'true');
+      if (skipPoints) {
+        return {
+          statusCode: 200,
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+          body: JSON.stringify({ ok: true })
+        };
+      }
+
       // Server-authoritative total: sum of points for this user
       let points_total = 0;
       try {
@@ -263,6 +275,64 @@ exports.handler = async (event) => {
         body: JSON.stringify({ ok: true, points_total: Number(points_total) })
       };
     }
+
+    // ========== BATCH ATTEMPTS (reduces invocation count) ==========
+    // Accept event_type: 'attempts_batch' with { attempts: [...] }
+    // Each item in attempts array has same shape as single 'attempt' event.
+    if (event_type === 'attempts_batch') {
+      if (!userIdFromCookie) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in.' }) };
+      }
+      const { attempts, session_id, mode } = body;
+      if (!Array.isArray(attempts) || !attempts.length) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Missing or empty attempts array' }) };
+      }
+      // Ensure session exists once (if provided)
+      if (session_id) {
+        const stub = { session_id, user_id: userIdFromCookie, mode: mode || null };
+        const { error: sessErr } = await supabase.from('progress_sessions').upsert(stub, { onConflict: 'session_id' });
+        if (sessErr) {
+          return { statusCode: 400, body: JSON.stringify({ error: sessErr.message }) };
+        }
+      }
+      // Build rows for batch insert
+      const rows = attempts.map(a => {
+        let safePoints = 0;
+        if (a.points === 0 || a.points === null || a.points === undefined) {
+          safePoints = a.is_correct ? 1 : 0;
+        } else {
+          const n = Number(a.points);
+          safePoints = Number.isFinite(n) ? n : (a.is_correct ? 1 : 0);
+        }
+        return {
+          user_id: userIdFromCookie,
+          session_id: session_id || a.session_id || null,
+          mode: mode || a.mode || null,
+          word: a.word || null,
+          is_correct: !!a.is_correct,
+          answer: a.answer ?? null,
+          correct_answer: a.correct_answer ?? null,
+          points: safePoints,
+          attempt_index: a.attempt_index ?? null,
+          duration_ms: a.duration_ms ?? null,
+          round: a.round ?? null,
+          extra: a.extra || null
+        };
+      }).filter(r => r.word); // skip items missing word
+      if (!rows.length) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'No valid attempts in batch' }) };
+      }
+      const { error: batchErr } = await supabase.from('progress_attempts').insert(rows);
+      if (batchErr) {
+        return { statusCode: 400, body: JSON.stringify({ error: batchErr.message }) };
+      }
+      return {
+        statusCode: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ ok: true, inserted: rows.length })
+      };
+    }
+    // ========== END BATCH ==========
 
     return { statusCode: 400, body: JSON.stringify({ error: 'Unknown event_type' }) };
   } catch (err) {

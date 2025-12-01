@@ -34,10 +34,35 @@ const ASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY |
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_service_role_key;
 const ADMIN_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 
-function json(status, body) {
+// Feature flag: opt-in to SQL-based leaderboard aggregation (faster)
+const USE_SQL_LEADERBOARD = process.env.USE_SQL_LEADERBOARD === '1' || process.env.USE_SQL_LEADERBOARD === 'true';
+
+// Cache TTL for CDN/browser caching (seconds). Reduces invocation count.
+const CACHE_CONTROL_MAX_AGE = Number(process.env.PROGRESS_CACHE_MAX_AGE) || 60;
+
+// Timing helper for before/after comparison
+function timedJson(status, body, startMs) {
+  const duration_ms = Date.now() - startMs;
   return {
     statusCode: status,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'x-timing-ms': String(duration_ms),
+      'cache-control': `public, max-age=${CACHE_CONTROL_MAX_AGE}, s-maxage=${CACHE_CONTROL_MAX_AGE}`
+    },
+    body: JSON.stringify({ ...body, _timing_ms: duration_ms, _sql_mode: USE_SQL_LEADERBOARD })
+  };
+}
+
+function json(status, body, cacheSeconds) {
+  const headers = { 'content-type': 'application/json; charset=utf-8' };
+  // Add cache header for successful GET responses when cacheSeconds provided
+  if (cacheSeconds && status >= 200 && status < 300) {
+    headers['cache-control'] = `public, max-age=${cacheSeconds}, s-maxage=${cacheSeconds}`;
+  }
+  return {
+    statusCode: status,
+    headers,
     body: JSON.stringify(body)
   };
 }
@@ -321,20 +346,31 @@ exports.handler = async (event) => {
       return json(500, { error: 'Server is misconfigured: missing Supabase env vars' });
     }
 
-    // Try to get user from cookie
+    // Try to get user from cookie (or allow a local dev bypass)
     const accessToken = getAccessTokenFromCookie(event);
-    if (!accessToken) {
-      return json(401, { error: 'Not signed in (cookie missing or invalid)' });
-    }
 
-  // Resolve the user id using admin client to be resilient
-  const adminClient = createClient(SUPABASE_URL, ADMIN_KEY);
-    const { data: userData, error: userErr } = await adminClient.auth.getUser(accessToken);
-    if (userErr || !userData || !userData.user) {
-      console.error('[progress_summary] getUser failed', userErr);
-      return json(401, { error: 'Invalid or expired session' });
+    // If running under Netlify dev, allow a query-param dev bypass for quick local testing.
+    // Use `?dev_user_id=<uuid>` to skip auth and `?dev_sql=1` to force SQL path locally.
+    const isLocalDev = (process.env.NETLIFY_DEV === 'true');
+    const devUserId = (event.queryStringParameters && event.queryStringParameters.dev_user_id) || null;
+
+    // Resolve the user id using admin client to be resilient (unless dev bypass is used)
+    const adminClient = createClient(SUPABASE_URL, ADMIN_KEY);
+    let userId = null;
+    if (isLocalDev && devUserId) {
+      console.log('[progress_summary] Using dev_user_id bypass for local testing:', devUserId);
+      userId = devUserId;
+    } else {
+      if (!accessToken) {
+        return json(401, { error: 'Not signed in (cookie missing or invalid)' });
+      }
+      const { data: userData, error: userErr } = await adminClient.auth.getUser(accessToken);
+      if (userErr || !userData || !userData.user) {
+        console.error('[progress_summary] getUser failed', userErr);
+        return json(401, { error: 'Invalid or expired session' });
+      }
+      userId = userData.user.id;
     }
-    const userId = userData.user.id;
 
   // For consistency with the insert function (which uses service role), use admin client + explicit scoping.
   const supabase = adminClient;
@@ -416,22 +452,65 @@ exports.handler = async (event) => {
     // Computes total stars per student in the current class based on completed sessions.
     // Star logic mirrors the 'overview' section: best stars per (list_name, mode) pair.
     if (section === 'leaderboard_stars_class') {
+      const startMs = Date.now();
       try {
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
         const { data: meProf, error: meErr } = await adminClient.from('profiles').select('class').eq('id', userId).single();
-        if (meErr || !meProf) return json(400, { success: false, error: 'Profile missing' });
+        if (meErr || !meProf) return timedJson(400, { success: false, error: 'Profile missing' }, startMs);
         const className = meProf.class || null;
-        if (!className) return json(200, { success: true, leaderboard: [], class: null });
-        if (className.length === 1) return json(200, { success: true, leaderboard: [], class: null });
+        if (!className) return timedJson(200, { success: true, leaderboard: [], class: null }, startMs);
+        if (className.length === 1) return timedJson(200, { success: true, leaderboard: [], class: null }, startMs);
 
         const cacheKey = classLeaderboardCacheKey(className, timeframe);
         const cachedPayload = await redisCache.getJson(cacheKey);
         if (cachedPayload) {
           console.log(`[progress_summary] Redis cache hit for leaderboard_stars_class ${className} (${timeframe})`);
-          return json(200, formatClassLeaderboardResponse(cachedPayload, userId));
+          return timedJson(200, formatClassLeaderboardResponse(cachedPayload, userId), startMs);
         }
+
+        // ========== SQL-OPTIMIZED PATH (opt-in via USE_SQL_LEADERBOARD=1 or local ?dev_sql=1) ==========
+        const devSql = (isLocalDev && event.queryStringParameters && event.queryStringParameters.dev_sql === '1');
+        const useSqlRuntime = USE_SQL_LEADERBOARD || !!devSql;
+        if (useSqlRuntime) {
+          try {
+            const { data: sqlResult, error: sqlErr } = await adminClient.rpc('get_class_leaderboard_stars', {
+              p_class_name: className,
+              p_timeframe: timeframe,
+              p_user_id: userId
+            });
+            if (sqlErr) {
+              console.warn('[progress_summary] SQL leaderboard RPC failed, falling back to JS:', sqlErr.message);
+            } else if (sqlResult && Array.isArray(sqlResult)) {
+              const leaderboard = sqlResult.map(row => ({
+                user_id: row.user_id,
+                name: row.name || 'Student',
+                avatar: row.avatar || null,
+                class: row.class_name || className,
+                points: Number(row.total_points) || 0,
+                stars: Number(row.total_stars) || 0,
+                superScore: Number(row.super_score) || 0,
+                rank: row.rank || null,
+                self: row.user_id === userId
+              }));
+              const payload = {
+                success: true,
+                class: className,
+                timeframe,
+                cached_at: new Date().toISOString(),
+                leaderboard
+              };
+              if (redisCache.isEnabled()) {
+                await redisCache.setJson(cacheKey, payload, CLASS_CACHE_TTL_SECONDS);
+              }
+              return timedJson(200, formatClassLeaderboardResponse(payload, userId), startMs);
+            }
+          } catch (sqlEx) {
+            console.warn('[progress_summary] SQL leaderboard exception, falling back to JS:', sqlEx.message);
+          }
+        }
+        // ========== END SQL PATH ==========
 
         const { data: classmates, error: clsErr } = await adminClient
           .from('profiles')
@@ -440,11 +519,11 @@ exports.handler = async (event) => {
           .eq('class', className)
           .eq('approved', true)
           .limit(400);
-        if (clsErr) return json(400, { success: false, error: clsErr.message });
-        if (!classmates || !classmates.length) return json(200, { success: true, leaderboard: [], class: className });
+        if (clsErr) return timedJson(400, { success: false, error: clsErr.message }, startMs);
+        if (!classmates || !classmates.length) return timedJson(200, { success: true, leaderboard: [], class: className }, startMs);
 
         const filteredClassmates = classmates.filter(p => !p.username || p.username.length > 1);
-        if (!filteredClassmates.length) return json(200, { success: true, leaderboard: [], class: className });
+        if (!filteredClassmates.length) return timedJson(200, { success: true, leaderboard: [], class: className }, startMs);
 
         const ids = filteredClassmates.map(p => p.id).filter(Boolean);
         const pointTotals = await aggregatePointsForIds(adminClient, ids, firstOfMonthIso);
@@ -474,7 +553,7 @@ exports.handler = async (event) => {
           await redisCache.setJson(cacheKey, payload, CLASS_CACHE_TTL_SECONDS);
         }
 
-        return json(200, formatClassLeaderboardResponse(payload, userId));
+        return timedJson(200, formatClassLeaderboardResponse(payload, userId), startMs);
       } catch (e) {
         console.error('[progress_summary] leaderboard_stars_class error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });

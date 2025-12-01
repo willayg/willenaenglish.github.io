@@ -538,7 +538,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     if (idx >= rounds.length) return end();
     const r = rounds[idx];
     container.innerHTML = '';
-    container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;';
+    container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;min-height:100dvh;display:flex;flex-direction:column;';
 
     const head = document.createElement('div');
     head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#666';
@@ -566,6 +566,12 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     xBtn.style.cssText = baseBtn('#ff6b6b');
     btnRow.appendChild(okBtn); btnRow.appendChild(xBtn);
     container.appendChild(btnRow);
+
+    // Sticky footer to keep Next/Finish button visible on small screens
+    const footer = document.createElement('div');
+    footer.id = 'gm-footer';
+    footer.style.cssText = 'position:sticky;bottom:0;left:0;right:0;padding:12px 12px calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top, rgba(251,255,255,0.98), rgba(251,255,255,0.82), rgba(251,255,255,0));display:flex;justify-content:center;z-index:1;';
+    container.appendChild(footer);
 
     const decide = (choice) => {
       const isCorrect = (r.type==='good' && choice==='O') || (r.type==='bad' && choice==='X');
@@ -611,16 +617,18 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
 
     container.appendChild(revealBox);
 
-    // Even larger spacer to push next button further down and avoid overlap
+    // Small spacer before sticky footer
     const spacer = document.createElement('div');
-    spacer.style.cssText = 'height:120px;';
+    spacer.style.cssText = 'height:16px;';
     container.appendChild(spacer);
 
     const next = document.createElement('button');
     next.textContent = (idx < rounds.length-1 ? 'Next' : 'Finish');
-    next.style.cssText = baseBtn('#21b5c0') + 'display:block;margin:0 auto;';
+    next.style.cssText = baseBtn('#21b5c0') + 'display:block;margin:0 auto;max-width:360px;width:min(92vw,360px);';
     next.onclick = () => { idx++; render(); };
-    container.appendChild(next);
+    const footerHost = container.querySelector('#gm-footer');
+    if (footerHost) { footerHost.replaceChildren(); footerHost.appendChild(next); }
+    else { container.appendChild(next); }
 
     // Add exit button bottom-right (like other modes)
     addExitButton();
