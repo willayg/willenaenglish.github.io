@@ -16,6 +16,7 @@ import { showLevel3Modal } from './ui/level3_modal.js';
 import { showLevel4Modal } from './ui/level4_modal.js';
 import { showGrammarL1Modal } from './ui/level1_grammar_modal.js';
 import { showGrammarL2Modal } from './ui/level2_grammar_modal.js';
+import { showGrammarL3Modal } from './ui/level3_grammar_modal.js';
 // Ensure star overlay script is loaded once; it attaches window.showRoundStars
 import './ui/star_overlay.js';
 import { FN } from './scripts/api-base.js';
@@ -677,6 +678,68 @@ const modeLoaders = {
   grammar_sorting: () => import('./modes/grammar_sorting.js').then(m => m.runGrammarSortingMode),
   grammar_translation_choice: () => import('./modes/grammar_translation_choice.js').then(m => m.runGrammarTranslationChoiceMode),
   grammar_find_mistake: () => import('./modes/grammar_find_mistake.js').then(m => m.runGrammarFindMistakeMode),
+  grammar_choose_l3: () => import('./modes/level_3_grammar/grammar_mode_choose_l3.js').then((mod) => {
+    const startFn = mod.startGrammarChooseL3 || mod.default?.start;
+    const stopFn = mod.stopGrammarChooseL3 || mod.default?.stop;
+    return (ctx) => {
+      try {
+        if (typeof startFn === 'function') {
+          startFn({
+            containerId: 'gameArea',
+            grammarFile: ctx.grammarFile,
+            grammarName: ctx.grammarName,
+            grammarConfig: ctx.grammarConfig,
+            playSFX: ctx.playSFX,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to start Level-3 choose mode', err);
+      }
+      return () => { if (typeof stopFn === 'function') stopFn(); };
+    };
+  }),
+  grammar_fill_gap_l3: () => import('./modes/level_3_grammar/grammar_fill_gap_l3.js').then((mod) => {
+    const startFn = mod.startGrammarFillGapL3 || mod.default?.start;
+    const stopFn = mod.stopGrammarFillGapL3 || mod.default?.stop;
+    return (ctx) => {
+      try {
+        if (typeof startFn === 'function') {
+          startFn({
+            containerId: 'gameArea',
+            grammarFile: ctx.grammarFile,
+            grammarName: ctx.grammarName,
+            grammarConfig: ctx.grammarConfig,
+            playSFX: ctx.playSFX,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to start Level-3 fill-gap mode', err);
+      }
+      return () => { if (typeof stopFn === 'function') stopFn(); };
+    };
+  }),
+  grammar_find_mistake_l3: () => import('./modes/level_3_grammar/grammar_find_mistake_l3.js').then((mod) => mod.runGrammarFindMistakeL3Mode),
+  grammar_translation_choice_l3: () => import('./modes/level_3_grammar/grammar_translation_choice_l3.js').then(mod => mod.runGrammarTranslationChoiceL3Mode),
+  grammar_sentence_order_l3: () => import('./modes/level_3_grammar/grammar_sentence_order_l3.js').then((mod) => {
+    const startFn = mod.startGrammarSentenceOrderL3 || mod.default?.start;
+    const stopFn = mod.stopGrammarSentenceOrderL3 || mod.default?.stop;
+    return (ctx) => {
+      try {
+        if (typeof startFn === 'function') {
+          startFn({
+            containerId: 'gameArea',
+            grammarFile: ctx.grammarFile,
+            grammarName: ctx.grammarName,
+            grammarConfig: ctx.grammarConfig,
+            playSFX: ctx.playSFX,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to start Level-3 sentence order mode', err);
+      }
+      return () => { if (typeof stopFn === 'function') stopFn(); };
+    };
+  }),
 };
 
 // Load and start a phonics game
@@ -743,9 +806,25 @@ async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
           unscramble: 'grammar_sentence_unscramble',
           sorting: 'grammar_sorting',
           find_mistake: 'grammar_find_mistake',
-          translation: 'grammar_translation_choice', // keep existing
+          translation: 'grammar_translation_choice',
+          sentence_order: 'grammar_sentence_order',
         };
         let loaderKey = loaderMap[mode] || 'grammar_choose';
+        if (mode === 'choose' && /\/level3\//i.test(String(fileToUse || ''))) {
+          loaderKey = 'grammar_choose_l3';
+        }
+        if (mode === 'fill_gap' && /\/level3\//i.test(String(fileToUse || ''))) {
+          loaderKey = 'grammar_fill_gap_l3';
+        }
+        if (mode === 'find_mistake' && /\/level3\//i.test(String(fileToUse || ''))) {
+          loaderKey = 'grammar_find_mistake_l3';
+        }
+        if (mode === 'translation' && /\/level3\//i.test(String(fileToUse || ''))) {
+          loaderKey = 'grammar_translation_choice_l3';
+        }
+        if (mode === 'sentence_order' && /\/level3\//i.test(String(fileToUse || ''))) {
+          loaderKey = 'grammar_sentence_order_l3';
+        }
         if (mode === 'lesson') {
           loaderKey = (selectedConfig && selectedConfig.lessonModule) || memo.lessonModule || baseConfig.lessonModule || 'grammar_lesson';
         }
@@ -1235,6 +1314,7 @@ function showGrammarLevelsMenu() {
   const backColor = levelColors[0]; // pink
   const level1Color = levelColors[1]; // cyan
   const level2Color = levelColors[2]; // orange
+  const level3Color = levelColors[3]; // yellow/orange
 
   // Clear and build DOM programmatically (avoid large template literals)
   openingButtons.innerHTML = '';
@@ -1246,7 +1326,11 @@ function showGrammarLevelsMenu() {
     btn.className = `wa-option wa-option-card ${id === 'grammarLevel1Btn' ? 'wa-level-1' : (id === 'grammarLevel2Btn' ? 'wa-level-2' : '')}`.trim();
     btn.style.borderColor = color;
     // Use different icons for each grammar level
-    const iconSrc = id === 'grammarLevel2Btn' ? './assets/Images/icons/moon_and_clouds.svg' : './assets/Images/icons/rainbow.svg';
+    const iconSrc = id === 'grammarLevel2Btn'
+      ? './assets/Images/icons/moon_and_clouds.svg'
+      : id === 'grammarLevel3Btn'
+        ? './assets/Images/icons/rocket.svg'
+        : './assets/Images/icons/rainbow.svg';
     btn.innerHTML = `
       <img src="${iconSrc}" alt="${label}" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
       <span style="color:${color};">${label}</span>
@@ -1257,6 +1341,7 @@ function showGrammarLevelsMenu() {
 
   const level1Btn = mkLevelBtn('grammarLevel1Btn', level1Color, 'Level 1', 'wa-stars-grammar-level1');
   const level2Btn = mkLevelBtn('grammarLevel2Btn', level2Color, 'Level 2', 'wa-stars-grammar-level2');
+  const level3Btn = mkLevelBtn('grammarLevel3Btn', level3Color, 'Level 3', 'wa-stars-grammar-level3');
 
   const backBtn = document.createElement('button');
   backBtn.id = 'grammarLevelBackBtn';
@@ -1275,6 +1360,7 @@ function showGrammarLevelsMenu() {
 
   openingButtons.appendChild(level1Btn);
   openingButtons.appendChild(level2Btn);
+  openingButtons.appendChild(level3Btn);
   openingButtons.appendChild(backBtn);
   
   // Apply translations
@@ -1293,12 +1379,14 @@ function showGrammarLevelsMenu() {
 
     applyStars('wa-stars-grammar-level1', 0);
     applyStars('wa-stars-grammar-level2', 0);
+    applyStars('wa-stars-grammar-level3', 0);
 
     try {
       const { data, fromCache } = await loadStarCounts();
       if (data?.ready) {
         applyStars('wa-stars-grammar-level1', data.counts?.grammarLevel1 || 0);
         applyStars('wa-stars-grammar-level2', data.counts?.grammarLevel2 || 0);
+        applyStars('wa-stars-grammar-level3', data.counts?.grammarLevel3 || 0);
       }
 
       if (fromCache) {
@@ -1306,6 +1394,7 @@ function showGrammarLevelsMenu() {
           if (fresh?.ready) {
             applyStars('wa-stars-grammar-level1', fresh.counts?.grammarLevel1 || 0);
             applyStars('wa-stars-grammar-level2', fresh.counts?.grammarLevel2 || 0);
+            applyStars('wa-stars-grammar-level3', fresh.counts?.grammarLevel3 || 0);
           }
           unsubscribe();
         });
@@ -1320,7 +1409,7 @@ function showGrammarLevelsMenu() {
   backBtn.replaceWith(newBackBtn);
   newBackBtn.addEventListener('click', () => { renderOpeningMenu(); });
   
-  // Level 1 button - show grammar level 1 modal
+    // Level 1 button - show grammar level 1 modal
   const newLevel1Btn = level1Btn.cloneNode(true);
   level1Btn.replaceWith(newLevel1Btn);
   newLevel1Btn.addEventListener('click', () => {
@@ -1337,6 +1426,17 @@ function showGrammarLevelsMenu() {
   newLevel2Btn.addEventListener('click', () => {
     historyManager.navigateToModal('grammarL2Modal', 'grammar_levels_menu');
     showGrammarL2Modal({
+      onChoose: (config) => { loadGrammarGame(config); },
+      onClose: () => {}
+    });
+  });
+
+  // Level 3 button - show grammar level 3 modal
+  const newLevel3Btn = level3Btn.cloneNode(true);
+  level3Btn.replaceWith(newLevel3Btn);
+  newLevel3Btn.addEventListener('click', () => {
+    try { historyManager.navigateToModal('grammarL3Modal', 'grammar_levels_menu'); } catch {}
+    showGrammarL3Modal({
       onChoose: (config) => { loadGrammarGame(config); },
       onClose: () => {}
     });
@@ -1463,6 +1563,7 @@ window.addEventListener('DOMContentLoaded', () => {
           'phonics_progress',
           'grammar_level1_progress',
           'grammar_level2_progress',
+          'grammar_level3_progress',
           'level_stars'
         ]);
         console.log('[WordArcade] Progress cache invalidated after session completion');
@@ -1498,7 +1599,16 @@ window.WordArcade = {
               find_mistake: 'grammar_find_mistake',
               translation: 'grammar_translation_choice',
             };
-            const targetKey = mapping[config?.mode] || 'grammar_choose';
+            let targetKey = mapping[config?.mode] || 'grammar_choose';
+            try {
+              const f = String(config?.grammarFile || '');
+              if (/\/level3\//i.test(f)) {
+                if (config?.mode === 'choose') targetKey = 'grammar_choose_l3';
+                if (config?.mode === 'fill_gap') targetKey = 'grammar_fill_gap_l3';
+                if (config?.mode === 'find_mistake') targetKey = 'grammar_find_mistake_l3';
+                if (config?.mode === 'translation') targetKey = 'grammar_translation_choice_l3';
+              }
+            } catch {}
             const loader = modeLoaders[targetKey];
             if (!loader) throw new Error(`Grammar mode loader missing for ${targetKey}`);
             const runGrammarMode = await loader();

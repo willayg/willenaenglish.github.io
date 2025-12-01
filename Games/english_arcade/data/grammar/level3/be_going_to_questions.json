@@ -1,17 +1,137 @@
 [
-  {"en":"Are you going to eat pizza?","ko":"피자 먹을 거예요?","example":"Are you going to eat pizza for lunch?","emoji":"🍕"},
-  {"en":"Is she going to study?","ko":"그녀는 공부할 거예요?","example":"Is she going to study tonight?","emoji":"📚"},
-  {"en":"Are we going to play games?","ko":"우리는 게임할 거예요?","example":"Are we going to play games after school?","emoji":"🎮"},
-  {"en":"Is he going to travel?","ko":"그는 여행할 거예요?","example":"Is he going to travel next week?","emoji":"✈️"},
-  {"en":"Are they going to sing?","ko":"그들은 노래할 거예요?","example":"Are they going to sing at the party?","emoji":"🎤"},
-  {"en":"Are you going to learn English?","ko":"너는 영어 배울 거예요?","example":"Are you going to learn English soon?","emoji":"🇬🇧"},
-  {"en":"Are we going to meet him?","ko":"우리는 그를 만날 거예요?","example":"Are we going to meet him at the station?","emoji":"🚉"},
-  {"en":"Is she going to buy a new phone?","ko":"그녀는 새 휴대폰을 살 거예요?","example":"Is she going to buy a new phone this month?","emoji":"📱"},
-  {"en":"Are they going to move?","ko":"그들은 이사할 거예요?","example":"Are they going to move next month?","emoji":"🏠"},
-  {"en":"Are you going to watch the show?","ko":"공연 볼 거예요?","example":"Are you going to watch the show this weekend?","emoji":"🎭"},
-  {"en":"Is he going to cook dinner?","ko":"그는 저녁을 요리할 거예요?","example":"Is he going to cook dinner tonight?","emoji":"🍽️"},
-  {"en":"Are we going to study together?","ko":"우리는 함께 공부할 거예요?","example":"Are we going to study together after class?","emoji":"📘"},
-  {"en":"Is she going to take the test?","ko":"그녀는 시험을 볼 거예요?","example":"Is she going to take the test tomorrow?","emoji":"📝"},
-  {"en":"Are they going to bring gifts?","ko":"그들은 선물을 가져올 거예요?","example":"Are they going to bring gifts to the party?","emoji":"🎁"},
-  {"en":"Are you going to go shopping?","ko":"쇼핑하러 갈 거예요?","example":"Are you going to go shopping this afternoon?","emoji":"🛍️"}
+  {
+    "id": "be_going_to_questions_1",
+    "word": "are_you_going_to_eat_pizza",
+    "en": "Are you going to eat pizza?",
+    "ko": "피자 먹을 거예요?",
+    "exampleSentence": "Are you going to eat pizza for lunch?",
+    "exampleSentenceKo": "피자 먹을 거예요?",
+    "emoji": "🍕"
+  },
+  {
+    "id": "be_going_to_questions_2",
+    "word": "is_she_going_to_study",
+    "en": "Is she going to study?",
+    "ko": "그녀는 공부할 거예요?",
+    "exampleSentence": "Is she going to study tonight?",
+    "exampleSentenceKo": "그녀는 공부할 거예요?",
+    "emoji": "📚"
+  },
+  {
+    "id": "be_going_to_questions_3",
+    "word": "are_we_going_to_play_games",
+    "en": "Are we going to play games?",
+    "ko": "우리는 게임할 거예요?",
+    "exampleSentence": "Are we going to play games after school?",
+    "exampleSentenceKo": "우리는 게임할 거예요?",
+    "emoji": "🎮"
+  },
+  {
+    "id": "be_going_to_questions_4",
+    "word": "is_he_going_to_travel",
+    "en": "Is he going to travel?",
+    "ko": "그는 여행할 거예요?",
+    "exampleSentence": "Is he going to travel next week?",
+    "exampleSentenceKo": "그는 여행할 거예요?",
+    "emoji": "✈️"
+  },
+  {
+    "id": "be_going_to_questions_5",
+    "word": "are_they_going_to_sing",
+    "en": "Are they going to sing?",
+    "ko": "그들은 노래할 거예요?",
+    "exampleSentence": "Are they going to sing at the party?",
+    "exampleSentenceKo": "그들은 노래할 거예요?",
+    "emoji": "🎤"
+  },
+  {
+    "id": "be_going_to_questions_6",
+    "word": "are_you_going_to_learn_english",
+    "en": "Are you going to learn English?",
+    "ko": "너는 영어 배울 거예요?",
+    "exampleSentence": "Are you going to learn English soon?",
+    "exampleSentenceKo": "너는 영어 배울 거예요?",
+    "emoji": "🇬🇧"
+  },
+  {
+    "id": "be_going_to_questions_7",
+    "word": "are_we_going_to_meet_him",
+    "en": "Are we going to meet him?",
+    "ko": "우리는 그를 만날 거예요?",
+    "exampleSentence": "Are we going to meet him at the station?",
+    "exampleSentenceKo": "우리는 그를 만날 거예요?",
+    "emoji": "🚉"
+  },
+  {
+    "id": "be_going_to_questions_8",
+    "word": "is_she_going_to_buy_new_phone",
+    "en": "Is she going to buy a new phone?",
+    "ko": "그녀는 새 휴대폰을 살 거예요?",
+    "exampleSentence": "Is she going to buy a new phone this month?",
+    "exampleSentenceKo": "그녀는 새 휴대폰을 살 거예요?",
+    "emoji": "📱"
+  },
+  {
+    "id": "be_going_to_questions_9",
+    "word": "are_they_going_to_move",
+    "en": "Are they going to move?",
+    "ko": "그들은 이사할 거예요?",
+    "exampleSentence": "Are they going to move next month?",
+    "exampleSentenceKo": "그들은 이사할 거예요?",
+    "emoji": "🏠"
+  },
+  {
+    "id": "be_going_to_questions_10",
+    "word": "are_you_going_to_watch_show",
+    "en": "Are you going to watch the show?",
+    "ko": "공연 볼 거예요?",
+    "exampleSentence": "Are you going to watch the show this weekend?",
+    "exampleSentenceKo": "공연 볼 거예요?",
+    "emoji": "🎭"
+  },
+  {
+    "id": "be_going_to_questions_11",
+    "word": "is_he_going_to_cook_dinner",
+    "en": "Is he going to cook dinner?",
+    "ko": "그는 저녁을 요리할 거예요?",
+    "exampleSentence": "Is he going to cook dinner tonight?",
+    "exampleSentenceKo": "그는 저녁을 요리할 거예요?",
+    "emoji": "🍽️"
+  },
+  {
+    "id": "be_going_to_questions_12",
+    "word": "are_we_going_to_study_together",
+    "en": "Are we going to study together?",
+    "ko": "우리는 함께 공부할 거예요?",
+    "exampleSentence": "Are we going to study together after class?",
+    "exampleSentenceKo": "우리는 함께 공부할 거예요?",
+    "emoji": "📘"
+  },
+  {
+    "id": "be_going_to_questions_13",
+    "word": "is_she_going_to_take_test",
+    "en": "Is she going to take the test?",
+    "ko": "그녀는 시험을 볼 거예요?",
+    "exampleSentence": "Is she going to take the test tomorrow?",
+    "exampleSentenceKo": "그녀는 시험을 볼 거예요?",
+    "emoji": "📝"
+  },
+  {
+    "id": "be_going_to_questions_14",
+    "word": "are_they_going_to_bring_gifts",
+    "en": "Are they going to bring gifts?",
+    "ko": "그들은 선물을 가져올 거예요?",
+    "exampleSentence": "Are they going to bring gifts to the party?",
+    "exampleSentenceKo": "그들은 선물을 가져올 거예요?",
+    "emoji": "🎁"
+  },
+  {
+    "id": "be_going_to_questions_15",
+    "word": "are_you_going_to_go_shopping",
+    "en": "Are you going to go shopping?",
+    "ko": "쇼핑하러 갈 거예요?",
+    "exampleSentence": "Are you going to go shopping this afternoon?",
+    "exampleSentenceKo": "쇼핑하러 갈 거예요?",
+    "emoji": "🛍️"
+  }
 ]

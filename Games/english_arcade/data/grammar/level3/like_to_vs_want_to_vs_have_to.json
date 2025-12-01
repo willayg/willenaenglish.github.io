@@ -1,17 +1,137 @@
 [
-  {"en":"I like to play games, but I have to study.","ko":"나는 게임하는 것을 좋아하지만 공부해야 해요.","example":"I like to play, but I have to study.","emoji":"🎮📚"},
-  {"en":"She wants to eat cake, but she has to wait.","ko":"그녀는 케이크를 먹고 싶지만 기다려야 해요.","example":"She wants cake, but she must wait.","emoji":"🍰⏳"},
-  {"en":"We like to travel, but we have to save money.","ko":"우리는 여행을 좋아하지만 돈을 저축해야 해요.","example":"We like to travel, but we have to save money.","emoji":"✈️💰"},
-  {"en":"He wants to sleep, but he has to finish work.","ko":"그는 자고 싶지만 일을 끝내야 해요.","example":"He wants to sleep, but he has to finish his work.","emoji":"😴💼"},
-  {"en":"They like to sing, but they have to practice first.","ko":"그들은 노래하는 것을 좋아하지만 먼저 연습해야 해요.","example":"They like to sing, but they need to practice.","emoji":"🎤🎵"},
-  {"en":"I want to play, but I have to clean my room.","ko":"놀고 싶지만 방을 청소해야 해요.","example":"I want to play, but I have to clean my room.","emoji":"🧹🎲"},
-  {"en":"She likes to draw, but she has to do homework.","ko":"그녀는 그림 그리는 것을 좋아하지만 숙제를 해야 해요.","example":"She likes to draw, but has to do homework.","emoji":"🎨📝"},
-  {"en":"You want to go, but you have to ask permission.","ko":"가고 싶지만 허락을 받아야 해요.","example":"You want to go, but you need permission.","emoji":"🙋📝"},
-  {"en":"We like to swim, but we have to wear life jackets.","ko":"수영하는 걸 좋아하지만 구명조끼를 착용해야 해요.","example":"We like to swim, but we must wear life jackets.","emoji":"🏊🦺"},
-  {"en":"He wants to watch TV, but he has to finish chores.","ko":"그는 TV 보고 싶지만 집안일을 끝내야 해요.","example":"He wants to watch TV, but must finish chores.","emoji":"📺🧺"},
-  {"en":"They like to relax, but they have to study.","ko":"그들은 쉬는 것을 좋아하지만 공부해야 해요.","example":"They want to relax, but study first.","emoji":"😌📚"},
-  {"en":"I want to eat cookies, but I have to wait until dinner.","ko":"쿠키 먹고 싶지만 저녁까지 기다려야 해요.","example":"I want cookies, but I must wait.","emoji":"🍪⏳"},
-  {"en":"She likes to dance, but she has to practice more.","ko":"그녀는 춤추는 것을 좋아하지만 더 연습해야 해요.","example":"She likes to dance, but has to practice.","emoji":"💃🩰"},
-  {"en":"We want to go outside, but we have to finish work.","ko":"밖에 가고 싶지만 일을 끝내야 해요.","example":"We want to go out, but must finish work.","emoji":"🌤️💼"},
-  {"en":"You want to sleep late, but you have to wake up early.","ko":"늦게 자고 싶지만 일찍 일어나야 해요.","example":"You want to sleep late, but need to wake early.","emoji":"😴⏰"}
+  {
+    "id": "like_to_vs_want_to_vs_have_to_1",
+    "word": "i_like_to_play",
+    "en": "I like to play games, but I have to study.",
+    "ko": "나는 게임하는 것을 좋아하지만 공부해야 해요.",
+    "exampleSentence": "I like to play, but I have to study.",
+    "exampleSentenceKo": "나는 게임하는 것을 좋아하지만 공부해야 해요.",
+    "emoji": "🎮📚"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_2",
+    "word": "she_wants_to_eat",
+    "en": "She wants to eat cake, but she has to wait.",
+    "ko": "그녀는 케이크를 먹고 싶지만 기다려야 해요.",
+    "exampleSentence": "She wants cake, but she must wait.",
+    "exampleSentenceKo": "그녀는 케이크를 먹고 싶지만 기다려야 해요.",
+    "emoji": "🍰⏳"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_3",
+    "word": "we_like_to_travel",
+    "en": "We like to travel, but we have to save money.",
+    "ko": "우리는 여행을 좋아하지만 돈을 저축해야 해요.",
+    "exampleSentence": "We like to travel, but we have to save money.",
+    "exampleSentenceKo": "우리는 여행을 좋아하지만 돈을 저축해야 해요.",
+    "emoji": "✈️💰"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_4",
+    "word": "he_wants_to_sleep",
+    "en": "He wants to sleep, but he has to finish work.",
+    "ko": "그는 자고 싶지만 일을 끝내야 해요.",
+    "exampleSentence": "He wants to sleep, but he has to finish his work.",
+    "exampleSentenceKo": "그는 자고 싶지만 일을 끝내야 해요.",
+    "emoji": "😴💼"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_5",
+    "word": "they_like_to_sing",
+    "en": "They like to sing, but they have to practice first.",
+    "ko": "그들은 노래하는 것을 좋아하지만 먼저 연습해야 해요.",
+    "exampleSentence": "They like to sing, but they need to practice.",
+    "exampleSentenceKo": "그들은 노래하는 것을 좋아하지만 먼저 연습해야 해요.",
+    "emoji": "🎤🎵"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_6",
+    "word": "i_want_to_play",
+    "en": "I want to play, but I have to clean my room.",
+    "ko": "놀고 싶지만 방을 청소해야 해요.",
+    "exampleSentence": "I want to play, but I have to clean my room.",
+    "exampleSentenceKo": "놀고 싶지만 방을 청소해야 해요.",
+    "emoji": "🧹🎲"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_7",
+    "word": "she_likes_to_draw",
+    "en": "She likes to draw, but she has to do homework.",
+    "ko": "그녀는 그림 그리는 것을 좋아하지만 숙제를 해야 해요.",
+    "exampleSentence": "She likes to draw, but has to do homework.",
+    "exampleSentenceKo": "그녀는 그림 그리는 것을 좋아하지만 숙제를 해야 해요.",
+    "emoji": "🎨📝"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_8",
+    "word": "you_want_to_go",
+    "en": "You want to go, but you have to ask permission.",
+    "ko": "가고 싶지만 허락을 받아야 해요.",
+    "exampleSentence": "You want to go, but you need permission.",
+    "exampleSentenceKo": "가고 싶지만 허락을 받아야 해요.",
+    "emoji": "🙋📝"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_9",
+    "word": "we_like_to_swim",
+    "en": "We like to swim, but we have to wear life jackets.",
+    "ko": "수영하는 걸 좋아하지만 구명조끼를 착용해야 해요.",
+    "exampleSentence": "We like to swim, but we must wear life jackets.",
+    "exampleSentenceKo": "수영하는 걸 좋아하지만 구명조끼를 착용해야 해요.",
+    "emoji": "🏊🦺"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_10",
+    "word": "he_wants_to_watch",
+    "en": "He wants to watch TV, but he has to finish chores.",
+    "ko": "그는 TV 보고 싶지만 집안일을 끝내야 해요.",
+    "exampleSentence": "He wants to watch TV, but must finish chores.",
+    "exampleSentenceKo": "그는 TV 보고 싶지만 집안일을 끝내야 해요.",
+    "emoji": "📺🧺"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_11",
+    "word": "they_like_to_relax",
+    "en": "They like to relax, but they have to study.",
+    "ko": "그들은 쉬는 것을 좋아하지만 공부해야 해요.",
+    "exampleSentence": "They want to relax, but study first.",
+    "exampleSentenceKo": "그들은 쉬는 것을 좋아하지만 공부해야 해요.",
+    "emoji": "😌📚"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_12",
+    "word": "i_want_to_eat_cookies",
+    "en": "I want to eat cookies, but I have to wait until dinner.",
+    "ko": "쿠키 먹고 싶지만 저녁까지 기다려야 해요.",
+    "exampleSentence": "I want cookies, but I must wait.",
+    "exampleSentenceKo": "쿠키 먹고 싶지만 저녁까지 기다려야 해요.",
+    "emoji": "🍪⏳"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_13",
+    "word": "she_likes_to_dance",
+    "en": "She likes to dance, but she has to practice more.",
+    "ko": "그녀는 춤추는 것을 좋아하지만 더 연습해야 해요.",
+    "exampleSentence": "She likes to dance, but has to practice.",
+    "exampleSentenceKo": "그녀는 춤추는 것을 좋아하지만 더 연습해야 해요.",
+    "emoji": "💃🩰"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_14",
+    "word": "we_want_to_go_outside",
+    "en": "We want to go outside, but we have to finish work.",
+    "ko": "밖에 가고 싶지만 일을 끝내야 해요.",
+    "exampleSentence": "We want to go out, but must finish work.",
+    "exampleSentenceKo": "밖에 가고 싶지만 일을 끝내야 해요.",
+    "emoji": "🌤️💼"
+  },
+  {
+    "id": "like_to_vs_want_to_vs_have_to_15",
+    "word": "you_want_to_sleep_late",
+    "en": "You want to sleep late, but you have to wake up early.",
+    "ko": "늦게 자고 싶지만 일찍 일어나야 해요.",
+    "exampleSentence": "You want to sleep late, but need to wake early.",
+    "exampleSentenceKo": "늦게 자고 싶지만 일찍 일어나야 해요.",
+    "emoji": "😴⏰"
+  }
 ]

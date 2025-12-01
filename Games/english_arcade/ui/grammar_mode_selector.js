@@ -34,6 +34,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const currentGrammarName = (displayTitleRaw && !/\b(grammar|level|sample-wordlists|data|\\|\/)\b/i.test(String(displayTitleRaw))) ? displayTitleRaw : (sanitizeName(displayTitleRaw) || 'Grammar List');
   const isLevel2Grammar = /\/level2\//i.test(String(currentGrammarFile));
   const isLevel1Grammar = /\/level1\//i.test(String(currentGrammarFile));
+  const isLevel3Grammar = /\/level3\//i.test(String(currentGrammarFile));
 
   // Scroll to top when opening mode selector
   window.scrollTo(0, 0);
@@ -75,9 +76,11 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     { mode: 'lesson', title: 'How To Win', svgPath: './assets/Images/icons/win.svg', styleMode: 'meaning', sessionMode: ['grammar_lesson', 'lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable'] },
     // New generic Sorting mode (for grammar lists like Short Questions 1)
     { mode: 'sorting', title: 'Sorting', svgPath: JIGSAW_ICON_SRC, styleMode: 'meaning', sessionMode: 'grammar_sorting' },
-    { mode: 'choose', title: 'Choose', svgPath: './assets/Images/icons/choose2.svg', styleMode: 'multi_choice', sessionMode: 'grammar_mode' },
+    // Include both legacy 'grammar_mode' and new Level 3 'grammar_choose' so stars aggregate across versions
+    { mode: 'choose', title: 'Choose', svgPath: './assets/Images/icons/choose2.svg', styleMode: 'multi_choice', sessionMode: ['grammar_mode', 'grammar_choose'] },
     { mode: 'fill_gap', title: 'Fill the Gap', svgPath: './assets/Images/icons/fill.svg', styleMode: 'missing_letter', sessionMode: 'grammar_fill_gap' },
     { mode: 'unscramble', title: 'Unscramble', svgPath: './assets/Images/icons/unscramble.svg', styleMode: 'sentence', sessionMode: 'grammar_sentence_unscramble' },
+    { mode: 'sentence_order', title: 'Sentence Order', svgPath: './assets/Images/icons/round-maze.svg', styleMode: 'meaning', sessionMode: 'grammar_sentence_order', level3Only: true },
     { mode: 'find_mistake', title: 'Find the Mistake', svgPath: './assets/Images/icons/x.svg', styleMode: 'multi_choice', sessionMode: 'grammar_find_mistake' },
     { mode: 'translation', title: 'Translation', svgPath: './assets/Images/icons/translate.svg', styleMode: 'multi_choice', sessionMode: 'grammar_translation_choice' }
   ];
@@ -85,9 +88,11 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   // For Level 2 lists, hide the Lesson card for now
   // For Level 1 lists, hide the Sorting and Translation cards
   let visibleModes = modes;
-  if (isLevel2Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'lesson');
-  // Level 1: hide Sorting, Translation, and Find the Mistake until L2 ready
-  if (isLevel1Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'translation' && m.mode !== 'find_mistake');
+  if (isLevel2Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'lesson' && !m.level3Only);
+  // For Level 3 lists, hide Lesson and Sorting modes (not applicable)
+  if (isLevel3Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'lesson');
+  // Level 1: hide Sorting, Translation, Find the Mistake, and Level 3-only modes
+  if (isLevel1Grammar) visibleModes = visibleModes.filter(m => m.mode !== 'sorting' && m.mode !== 'translation' && m.mode !== 'find_mistake' && !m.level3Only);
   
   // For preposition lists (Level 2 only), hide Sorting and Choose modes
   const isPrepositionList = /prepositions_/i.test(String(currentGrammarFile || ''));
@@ -294,12 +299,20 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     iconDiv.className = 'mode-icon';
 
     const img = document.createElement('img');
-  img.src = m.svgPath;
+    img.src = m.svgPath;
     img.alt = m.title;
-    img.style.width = '96px';
-    img.style.height = '96px';
+    // Make the Sentence Order icon larger — the provided SVO svg can be small inside its viewBox
+    if (m.mode === 'sentence_order') {
+      img.style.width = '140px';
+      img.style.height = '140px';
+      img.style.padding = '6px';
+    } else {
+      img.style.width = '96px';
+      img.style.height = '96px';
+    }
     img.style.objectFit = 'contain';
     img.style.display = 'block';
+    img.style.margin = '0 auto';
 
     iconDiv.appendChild(img);
 
@@ -369,8 +382,18 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
       if (!Array.isArray(sessions) || !sessions.length) return;
 
       const canon = (s) => (s || '').toString().trim().toLowerCase();
+      // Create a canonical key by normalizing to letters/digits and underscores
+      const canonKey = (s) => canon(s).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const target = canon(currentGrammarName);
+      const targetKey = canonKey(currentGrammarName);
+      // Also extract just the file basename if grammarFile is available
+      const fileBasename = currentGrammarFile ? canonKey(currentGrammarFile.split('/').pop().replace(/\.json$/i, '')) : '';
       const bestByMode = {};
+
+      // Debug: log target matching info for Level 3
+      if (isLevel3Grammar) {
+        console.debug('[GrammarModeSelector L3] Matching sessions for:', { target, targetKey, fileBasename, sessionCount: sessions.length });
+      }
 
       (sessions || []).forEach((session) => {
         if (!session) return;
@@ -379,18 +402,38 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           try { summary = JSON.parse(summary); } catch { summary = null; }
         }
 
-        let listCanon = canon(session.list_name) || canon(summary?.list_name || summary?.list || summary?.name || summary?.grammarName);
-        if (!listCanon) {
-          let meta = session.meta || summary?.meta;
-          if (typeof meta === 'string') {
-            try { meta = JSON.parse(meta); } catch { meta = null; }
-          }
-          if (meta && typeof meta === 'object') {
-            listCanon = canon(meta.grammarName || meta.listName || meta.list || meta.name);
-          }
+        // Collect all possible list name sources
+        const listCandidates = [];
+        if (session.list_name) listCandidates.push(session.list_name);
+        if (summary?.list_name) listCandidates.push(summary.list_name);
+        if (summary?.list) listCandidates.push(summary.list);
+        if (summary?.name) listCandidates.push(summary.name);
+        if (summary?.grammarName) listCandidates.push(summary.grammarName);
+        if (summary?.grammarFile) listCandidates.push(summary.grammarFile);
+
+        let meta = session.meta || summary?.meta;
+        if (typeof meta === 'string') {
+          try { meta = JSON.parse(meta); } catch { meta = null; }
+        }
+        if (meta && typeof meta === 'object') {
+          if (meta.grammarName) listCandidates.push(meta.grammarName);
+          if (meta.listName) listCandidates.push(meta.listName);
+          if (meta.list) listCandidates.push(meta.list);
+          if (meta.name) listCandidates.push(meta.name);
+          if (meta.grammarFile) listCandidates.push(meta.grammarFile);
         }
 
-        if (target && listCanon && listCanon !== target) return;
+        // Check if any candidate matches target (using both exact and canonical key matching)
+        const matchesTarget = listCandidates.some(candidate => {
+          const c = canon(candidate);
+          const ck = canonKey(candidate);
+          // Also extract file basename from paths
+          const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
+          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename));
+        });
+
+        // If we have a target and no match, skip this session
+        if (target && !matchesTarget && listCandidates.length > 0) return;
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);
@@ -469,8 +512,31 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   `;
   changeLevelBtn.innerHTML = `<span data-i18n="Change Level">Change Level</span>`;
   changeLevelBtn.addEventListener('click', () => {
-    // If current grammar is Level 2, open Level 2 grammar modal; else default to Level 1
+    // If current grammar is Level 3, open Level 3 modal; if Level 2, open Level 2; else default to Level 1
     const isL2 = /\/level2\//i.test(String(currentGrammarFile));
+    const isL3 = /\/level3\//i.test(String(currentGrammarFile)) || !!isLevel3Grammar;
+
+    if (isL3) {
+      try { historyManager.navigateToModal('grammarL3Modal', 'grammar_mode_selector'); } catch {}
+      import('./level3_grammar_modal.js').then(mod => {
+        if (typeof mod.showGrammarL3Modal === 'function') {
+          mod.showGrammarL3Modal({
+            onChoose: (config) => {
+              if (window.WordArcade?.loadGrammarGame) {
+                window.WordArcade.loadGrammarGame(config);
+              } else {
+                import('../main.js').then(m => { if (typeof m.loadGrammarGame === 'function') m.loadGrammarGame(config); }).catch(() => {});
+              }
+            },
+            onClose: () => {
+              if (window.StudentLang?.applyTranslations) window.StudentLang.applyTranslations();
+            }
+          });
+        }
+      }).catch(() => {});
+      return;
+    }
+
     if (isL2) {
       try { historyManager.navigateToModal('grammarL2Modal', 'grammar_mode_selector'); } catch {}
       showGrammarL2Modal({
