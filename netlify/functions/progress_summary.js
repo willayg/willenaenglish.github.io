@@ -608,11 +608,53 @@ exports.handler = async (event) => {
         }
 
         if (normalizedDbPayload) {
-          if (redisCache.isEnabled()) {
-            await redisCache.setJson(cacheKey, normalizedDbPayload, GLOBAL_CACHE_TTL_SECONDS);
+          // If timeframe is 'month', ensure DB cache isn't stale relative to recent activity
+          if (firstOfMonthIso) {
+            try {
+              // Get latest attempt and session timestamps since month start
+              const [{ data: latestAtt }, { data: latestSess }] = await Promise.all([
+                adminClient
+                  .from('progress_attempts')
+                  .select('created_at')
+                  .gte('created_at', firstOfMonthIso)
+                  .order('created_at', { ascending: false })
+                  .limit(1),
+                adminClient
+                  .from('progress_sessions')
+                  .select('ended_at')
+                  .gte('ended_at', firstOfMonthIso)
+                  .not('ended_at', 'is', null)
+                  .order('ended_at', { ascending: false })
+                  .limit(1)
+              ]);
+
+              let latestActivityTs = null;
+              try { if (latestAtt && Array.isArray(latestAtt) && latestAtt[0] && latestAtt[0].created_at) latestActivityTs = new Date(latestAtt[0].created_at).toISOString(); } catch {}
+              try { if (latestSess && Array.isArray(latestSess) && latestSess[0] && latestSess[0].ended_at) {
+                const sTs = new Date(latestSess[0].ended_at).toISOString();
+                if (!latestActivityTs || sTs > latestActivityTs) latestActivityTs = sTs;
+              } } catch {}
+
+              if (latestActivityTs && normalizedDbPayload && normalizedDbPayload.cached_at) {
+                // If there has been activity after the DB cache was updated, ignore DB cache so we recompute
+                const cacheUpdated = new Date(normalizedDbPayload.cached_at || normalizedDbPayload.updated_at || null);
+                if (cacheUpdated && new Date(latestActivityTs) > cacheUpdated) {
+                  console.log('[progress_summary] DB cache for leaderboard_stars_global is stale relative to recent activity; recomputing');
+                  normalizedDbPayload = null; // force recompute
+                }
+              }
+            } catch (e) {
+              console.warn('[progress_summary] Failed to validate DB cache freshness (continuing):', e && e.message);
+            }
           }
-          const response = await formatGlobalLeaderboardResponse(normalizedDbPayload, userId, adminClient, firstOfMonthIso);
-          return json(200, response);
+
+          if (normalizedDbPayload) {
+            if (redisCache.isEnabled()) {
+              await redisCache.setJson(cacheKey, normalizedDbPayload, GLOBAL_CACHE_TTL_SECONDS);
+            }
+            const response = await formatGlobalLeaderboardResponse(normalizedDbPayload, userId, adminClient, firstOfMonthIso);
+            return json(200, response);
+          }
         }
 
         let students = [];

@@ -17,7 +17,7 @@
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+        const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
         const w = await who.json();
         if (!w.success) location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
       } catch {}
@@ -600,7 +600,7 @@
         // Determine current student user_id first so we can match progress rows
         let currentUserId = null;
         try {
-          const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
           const whoJson = await whoRes.json().catch(()=>({}));
           if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
         } catch {}
@@ -612,7 +612,7 @@
             if (profRes.ok && profJson.success && profJson.id) currentUserId = profJson.id;
           } catch {}
         }
-        const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student');
+        const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
         const text = await resp.text();
         let data = {};
         try { data = text ? JSON.parse(text) : {}; } catch (e) {
@@ -628,7 +628,7 @@
           (data.assignments || []).map(async (assignment) => {
             try {
               const progressResp = await WillenaAPI.fetch(
-                `/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}`
+                `/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}&_=${Date.now()}`
               );
               const progressData = await progressResp.json();
               
@@ -909,7 +909,7 @@
         try {
           spinner?.classList.remove('hidden');
           starsLbTimeframe = timeframe;
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}`;
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}&_=${Date.now()}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
           starsLbCache.set(timeframe, data);
@@ -986,7 +986,7 @@
         try {
           spinner?.classList.remove('hidden');
           globalLbTimeframe = timeframe;
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}`;
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}&_=${Date.now()}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
           globalLbCache.set(timeframe, data);
@@ -1065,6 +1065,26 @@
         await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
         updateStarsMetricUI();
         updateGlobalMetricUI();
+      });
+      // If auth changes in another tab or via explicit event, reload data to reflect new account
+      window.addEventListener('auth:changed', () => {
+        try {
+          starsLbCache.clear();
+          globalLbCache.clear();
+        } catch {}
+        // Simple full reload ensures all components (header, homework, leaderboards) reinitialize
+        try { location.reload(); } catch { /* ignore */ }
+      });
+
+      // Also listen for storage updates (login/logout in other tabs) and reload when identity keys change
+      window.addEventListener('storage', (e) => {
+        try {
+          if (!e || !e.key) return;
+          if (["user_name","user_id","selectedEmojiAvatar"].includes(e.key)) {
+            // Reload to pick up new auth/profile and refresh leaderboards/homework
+            try { location.reload(); } catch {}
+          }
+        } catch {}
       });
     })();
   </script>

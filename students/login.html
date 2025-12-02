@@ -324,6 +324,8 @@
   if (!username || !password) return show(t('Please enter both username and password.'));
       try {
         await loginWithUsernamePassword(username, password);
+        // Signal other tabs/components that auth changed
+        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
         location.href = getNextDest();
       } catch (e) {
         show(t(e.message) || t('Login failed'));
@@ -363,6 +365,7 @@
         localStorage.setItem('guest_name', guest.name);
         // Also set the generic user_name used by the student header UI
         try { localStorage.setItem('user_name', guest.name); } catch {}
+        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
         location.href = getNextDest();
       } catch(e){
         show(t(e.message) || t('Guest login failed'));
@@ -676,6 +679,7 @@
 
         modalTitle.textContent = mt('success');
         modalBody.innerHTML = '<p>✅</p>';
+        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
         setTimeout(() => {
           location.href = getNextDest();
         }, 1200);
