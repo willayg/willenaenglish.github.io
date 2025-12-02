@@ -39,7 +39,7 @@ let __lastAuthRefresh = 0;
 
 async function fetchWhoAmI() {
   try {
-  const res = await fetch('/.netlify/functions/supabase_auth?action=whoami', {
+  const res = await fetch(FN('supabase_auth') + '?action=whoami', {
       credentials: 'include',
       cache: 'no-store'
     });

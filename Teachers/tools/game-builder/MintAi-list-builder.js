@@ -107,7 +107,7 @@ export function initMintAiListBuilder({
       ? `From this passage, extract ${n} English-Korean word pairs (level: ${diff}). Format 'english, korean' per line. Passage:\n\n${passage}`
       : `Generate ${n} English-Korean word pairs (level: ${diff}) about the topic "${topic || 'everyday objects'}". Format 'english, korean' per line.`;
     try {
-      const res = await fetch('/.netlify/functions/openai_proxy', {
+      const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt })
       });
       const js = await res.json();
@@ -124,7 +124,7 @@ export function initMintAiListBuilder({
       } else {
         titlePrompt = `Invent a short, catchy title (2-3 words only) for a vocabulary box about everyday objects.`;
       }
-      const titleRes = await fetch('/.netlify/functions/openai_proxy', {
+      const titleRes = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: titlePrompt })
       });
       const titleJs = await titleRes.json();

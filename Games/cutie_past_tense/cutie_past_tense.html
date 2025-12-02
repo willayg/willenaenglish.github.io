@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>🐶🐰 Past Tense Cuteness</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/js/api-config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     html, body {
@@ -416,7 +417,7 @@ async function submitScore(forcedName, forcedUserId) {
   if (submitBtn) {
     submitBtn.disabled = true;
   }
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "cutie_past_tense", user_id })
@@ -427,7 +428,7 @@ async function submitScore(forcedName, forcedUserId) {
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
+  const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
   if (!response.ok) {
     highscoresList.innerHTML = '<li>Failed to load scores</li>';
     return;

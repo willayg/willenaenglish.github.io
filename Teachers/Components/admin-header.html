@@ -59,7 +59,7 @@
         menu.classList.remove('open');
       } else if(a.dataset.action === 'logout'){
         e.preventDefault();
-        fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST',credentials:'include'}).finally(()=> location.href='/Teachers/login.html');
+        WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST'}).finally(()=> location.href='/Teachers/login.html');
       }
     });
   }

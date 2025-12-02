@@ -4,6 +4,7 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>Word Arcade - Live Mode</title>
+	<script src="/js/api-config.js"></script>
 	<link rel="stylesheet" href="mini.css" />
 	<link rel="stylesheet" href="/students/theme.css" />
 	<script src="/students/language.js"></script>
@@ -19,11 +20,11 @@
 	    const hasA = /(?:^|;\s*)sb_access=/.test(c);
 	    const hasR = /(?:^|;\s*)sb_refresh=/.test(c);
 	    if(!hasA && hasR){
-	      try { await fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});}catch{}
+	      try { await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh');}catch{}
 	    }
 	    if (hasGuest) { window.__AUTH_OK = true; show(); return; }
 	    try {
-	      const r = await fetch('/.netlify/functions/supabase_auth?action=whoami',{credentials:'include',cache:'no-store'});
+	      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
 	      if(r.ok){ const d=await r.json().catch(()=>null); if(d&&d.success){ window.__AUTH_OK=true; show(); return; } }
 	    } catch {}
 	    const next = encodeURIComponent(location.pathname + location.search);
@@ -180,7 +181,7 @@
 	import { initPointsClient } from '/students/scripts/points-client.js';
 	async function ensureHeaderProfile(){
 	  try {
-		const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
+		const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
 		if (!res.ok) return;
 		const data = await res.json().catch(() => null);
 		if (!data || !data.success) return;

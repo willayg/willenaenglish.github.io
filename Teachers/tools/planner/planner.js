@@ -215,7 +215,7 @@ Keep it practical and action-oriented. Focus on what actually happens in the cla
 Generate creative, specific activities that teachers can actually implement. Avoid formal lesson plan language - keep it conversational and practical.`;
 
   try {
-    const response = await fetch('/.netlify/functions/openai_proxy', {
+    const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -276,7 +276,7 @@
 }
 */
   </style> 
-
+  <script src="/js/api-config.js"></script>
 </head>
 <body>
   <a href="../../playzone.html">
@@ -619,7 +619,7 @@ function endGame() {
 
 // New submitScore function
 async function submitScore(name, user_id) {
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "cutie_past_tense", user_id })
@@ -659,7 +659,7 @@ function toggleHighScores() {
 
 // Optional: updateChampion using Supabase
 async function updateChampion() {
-  const response = await fetch('/.netlify/functions/get_champion?game=' + encodeURIComponent(window.game));
+  const response = await WillenaAPI.fetch('/.netlify/functions/get_champion?game=' + encodeURIComponent(window.game));
   const data = await response.json();
   document.getElementById("championName").textContent = (data && data[0]) ? data[0].name : "-";
 }
@@ -667,7 +667,7 @@ async function updateChampion() {
 // Display high scores
 async function displayHighScores() {
   const highscoresList = document.getElementById('highscores');
-  const response = await fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
+  const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=cutie_past_tense');
   const data = await response.json();
   if (response.ok) {
     highscoresList.innerHTML = '';

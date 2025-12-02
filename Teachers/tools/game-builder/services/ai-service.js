@@ -13,7 +13,7 @@ export async function generateExample(targetWord) {
   const prompt = `Write one short simple English sentence for beginner ESL students using the word "${target}". Keep it positive, concrete, and 5-12 words. Avoid quotes, explanations, or extra text. Output only the sentence.`;
   
   try {
-    const res = await fetch('/.netlify/functions/openai_proxy', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
@@ -50,7 +50,7 @@ export async function generateDefinition(targetWord, koreanHint = '') {
   const prompt = `Write a concise, kid-friendly definition that does NOT include or repeat the word "${target}". Consider the Korean meaning "${koreanHint}" as context. Keep it simple for young learners, one short sentence.`;
   
   try {
-    const res = await fetch('/.netlify/functions/openai_proxy', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })

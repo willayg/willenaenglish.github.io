@@ -1,6 +1,7 @@
 
     <!-- html2pdf.js for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/js/api-config.js"></script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -153,7 +154,7 @@
         return;
       }
       try {
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -223,7 +224,7 @@
           const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
           
           try {
-            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -268,7 +269,7 @@
       };
       
       try {
-        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -571,7 +572,7 @@
             aiBtn.disabled = true;
             aiBtn.textContent = 'Thinking...';
             try {
-              const res = await fetch('/.netlify/functions/openai_proxy', {
+              const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt, type: 'grammar' })
@@ -634,7 +635,7 @@
                 if (titleBox && !titleBox.value.trim()) {
                   try {
                     const titlePrompt = `Suggest a short, catchy worksheet title (max 5 words) based on this prompt and these questions. Only reply with the title, no extra text.\nPrompt: ${aiInput.value.trim()}\nQuestions: ${questions}`;
-                    const titleRes = await fetch('/.netlify/functions/openai_proxy', {
+                    const titleRes = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({

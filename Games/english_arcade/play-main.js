@@ -74,7 +74,7 @@ function isFromBuilder() {
 
 async function fetchGame(id) {
 	try {
-		const resp = await fetch('/.netlify/functions/live_game?id=' + encodeURIComponent(id), { cache: 'no-store' });
+		const resp = await WillenaAPI.fetch('/.netlify/functions/live_game?id=' + encodeURIComponent(id));
 		const js = await resp.json().catch(()=>null);
 		if (!resp.ok || !js || !js.success) throw new Error(js && js.error || 'Fetch failed');
 		return js;

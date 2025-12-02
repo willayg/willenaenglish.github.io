@@ -145,7 +145,7 @@ let loadingImages; // from image system
     // Skip if already present
     const existing = localStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('user_id');
     if(existing && existing.trim()) return;
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami', { credentials:'include' });
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami');
     if(!res.ok) return; // silent fail
     const js = await res.json().catch(()=>null);
     if(js && js.success && js.user_id){
@@ -847,7 +847,7 @@ function performPendingDelete(idSet){
         removeCardsImmediately(new Set([id]));
         paintFileList(fileListRows, { cached:true, initial:false, uniqueCount:fileListUniqueCount });
         try {
-          const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
+          const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
           const js = await res.json(); if(!js?.success){ console.warn('Delete failed', id, js); }
         } catch(e){ console.warn('Delete error', id, e); }
         toast('Deleted');
@@ -874,7 +874,7 @@ function performPendingDelete(idSet){
     paintFileList(fileListRows, { cached:true, initial:false, uniqueCount:fileListUniqueCount });
     for(const id of ids){
       try {
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
         const js = await res.json(); if(!js?.success){ console.warn('Delete failed', id, js); }
       } catch(e){ console.warn('Delete error', id, e); }
     }
@@ -1065,7 +1065,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
     const overlay = ensureLoadingOverlay();
     overlay.show('Loading game…');
     try {
-      const res = await fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(id));
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(id));
       if(!res.ok){
         console.error('[game-builder] openGameData fetch failed', res.status, id);
         toast('Open failed ('+res.status+')');
@@ -1138,7 +1138,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
       // We reuse current filter function by directly calling paintFileList again.
       paintFileList(fileListRows, { cached: true, initial: false, uniqueCount: fileListUniqueCount });
 
-      const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
       const js = await res.json();
       if(js?.success){ toast('Deleted'); }
       else {
@@ -1296,7 +1296,7 @@ if(!window.__gbPrefetchScheduled){
   window.__gbPrefetchScheduled = true;
   window.addEventListener('load', () => {
     // Warm-up HEAD-style (head=1) quickly
-    setTimeout(()=>{ try { fetch('/.netlify/functions/list_game_data_unique?limit=1&offset=0&head=1&unique=1&page_pull=1', { cache:'no-store' }); } catch{} }, 1200);
+    setTimeout(()=>{ try { WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?limit=1&offset=0&head=1&unique=1&page_pull=1', { cache:'no-store' }); } catch{} }, 1200);
     // Full prefetch if no fresh session cache exists
     setTimeout(()=>{
       try {

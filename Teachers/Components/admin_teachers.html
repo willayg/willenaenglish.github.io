@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin - Manage Teachers</title>
+  <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/Teachers/components/style.css">
   <style>
     body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
@@ -52,7 +53,7 @@
       const menu = bar.querySelector('.admin-menu');
       btn.addEventListener('click', ()=>{ const open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
       document.addEventListener('click', (e)=>{ if(!menu.contains(e.target) && !btn.contains(e.target) && menu.classList.contains('open')){ menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } }, true);
-      menu.addEventListener('click', (e)=>{ const a = e.target.closest('a'); if(!a) return; if(a.dataset.action==='bugs'){ e.preventDefault(); if(window.showFeedbackModal) window.showFeedbackModal(); else alert('Feedback modal not available.'); menu.classList.remove('open'); } else if(a.dataset.action==='logout'){ e.preventDefault(); fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST',credentials:'include'}).finally(()=> location.href='/Teachers/login.html'); } });
+      menu.addEventListener('click', (e)=>{ const a = e.target.closest('a'); if(!a) return; if(a.dataset.action==='bugs'){ e.preventDefault(); if(window.showFeedbackModal) window.showFeedbackModal(); else alert('Feedback modal not available.'); menu.classList.remove('open'); } else if(a.dataset.action==='logout'){ e.preventDefault(); WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST'}).finally(()=> location.href='/Teachers/login.html'); } });
     })();
   </script>
   <div class="admin-container">
@@ -76,7 +77,7 @@
   </div>
   <script>
     async function fetchTeachers() {
-      const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_teachers');
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_teachers');
       const teachers = await res.json();
       const tbody = document.querySelector('#teacherTable tbody');
       tbody.innerHTML = '';
@@ -98,7 +99,7 @@
 
     async function toggleApprove(id, currentStatus) {
       const newStatus = !currentStatus;
-      await fetch('/.netlify/functions/supabase_proxy_fixed?action=update_teacher_approval', {
+      await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=update_teacher_approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, approved: newStatus })

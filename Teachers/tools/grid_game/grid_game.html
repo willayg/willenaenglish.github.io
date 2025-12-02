@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Willena Grid Game</title>
+    <script src="/js/api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Load shared burger menu component -->
@@ -499,7 +500,7 @@
         return;
       }
       try {
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -986,7 +987,7 @@ document.addEventListener('DOMContentLoaded', attachDragLogic);
             aiBtn.querySelector('.button-text').textContent = 'Generating...';
             aiBtn.querySelector('.loading-spinner').classList.remove('hidden');
             try {
-              const response = await fetch('/.netlify/functions/openai_proxy', {
+              const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1108,7 +1109,7 @@ window.showFeedbackModal = function() {
         username: localStorage.getItem('username') || localStorage.getItem('name') || ''
       };
       try {
-        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

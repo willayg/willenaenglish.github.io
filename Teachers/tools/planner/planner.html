@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Willena Lesson Planner</title>
+    <script src="/js/api-config.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
@@ -293,7 +294,7 @@
         return;
       }
       try {
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -357,7 +358,7 @@
           const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
           
           try {
-            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

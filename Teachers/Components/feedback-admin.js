@@ -5,17 +5,16 @@ const STATUS_OPTIONS = [
 ];
 
 async function fetchFeedback() {
-  const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback_list', { method: 'GET', credentials: 'include' });
+  const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback_list', { method: 'GET' });
   const data = await resp.json();
   if (!Array.isArray(data)) return [];
   return data;
 }
 
 async function updateStatus(id, newStatus) {
-  const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback_update', {
+  const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback_update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ id, status: newStatus })
   });
   return await resp.json();

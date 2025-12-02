@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wordsearch Generator</title>
+  <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="../tests/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
 
@@ -115,7 +116,7 @@
       const userId = localStorage.getItem('userId');
       if (!userId) { location.href = '/Teachers/login.html'; return; }
       try {
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) { location.href = '/Teachers/components/access-denied.html'; }
       } catch { location.href = '/Teachers/login.html'; }
@@ -315,7 +316,7 @@
             username: localStorage.getItem('username') || localStorage.getItem('name') || ''
           };
           try {
-            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'insert_feedback', data: payload })
             });

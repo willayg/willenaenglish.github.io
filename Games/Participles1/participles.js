@@ -188,7 +188,7 @@ function playFeedbackAudio(type) {
 async function displayHighScores() {
   highscoresList.innerHTML = '<li>Loading...</li>';
   try {
-    const response = await fetch('/.netlify/functions/submit_score?game=ParticiplesGame');
+    const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=ParticiplesGame');
     if (!response.ok) {
       highscoresList.innerHTML = '<li>Failed to load scores</li>';
       return;
@@ -309,7 +309,7 @@ async function submitScore(forcedName, forcedUserId) {
   }
   const user_id = forcedUserId || null;
   submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "ParticiplesGame", user_id })

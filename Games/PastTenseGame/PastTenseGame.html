@@ -61,6 +61,7 @@
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="/js/api-config.js"></script>
 </head>
 <body>
   <a href="../../playzone.html">
@@ -327,7 +328,7 @@
       const user_id = forcedUserId || null;
       const submitBtn = document.getElementById('submitScoreBtn');
       if (submitBtn) submitBtn.disabled = true;
-      await fetch('/.netlify/functions/submit_score', {
+      await WillenaAPI.fetch('/.netlify/functions/submit_score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, score, game: "PastTenseGame", user_id }) // <-- set your game name here
@@ -348,7 +349,7 @@
 
     async function displayHighScores() {
       const highscoresList = document.getElementById('highScores');
-      const response = await fetch('/.netlify/functions/submit_score?game=PastTenseGame');
+      const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=PastTenseGame');
       const data = await response.json();
       highscoresList.innerHTML = '';
       if (response.ok && Array.isArray(data)) {

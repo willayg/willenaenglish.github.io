@@ -103,6 +103,7 @@ body {
 }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="/js/api-config.js"></script>
 </head>
 <body translate="no">
 <a href="../../playzone.html">
@@ -330,7 +331,7 @@ async function submitScore(forcedName, forcedUserId) {
   const user_id = forcedUserId || null;
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "SchoolStuffGame", user_id })
@@ -407,7 +408,7 @@ function playEndingAudio(score) {
 }
 
 function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=SchoolStuffGame')
+  WillenaAPI.fetch('/.netlify/functions/submit_score?game=SchoolStuffGame')
     .then(response => response.json())
     .then(data => {
       highscoresList.innerHTML = '';
@@ -440,7 +441,7 @@ window.displayHighScores = async function() {
   const highscoresList = document.getElementById('highscores');
   highscoresList.innerHTML = '<li>Loading...</li>';
   try {
-    const response = await fetch('/.netlify/functions/submit_score?game=SchoolStuffGame');
+    const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=SchoolStuffGame');
     if (!response.ok) {
       highscoresList.innerHTML = '<li>Failed to load scores</li>';
       return;

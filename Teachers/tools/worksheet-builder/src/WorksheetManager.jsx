@@ -18,7 +18,7 @@ export default function WorksheetManager({ mode = 'load', openerData = {}, onClo
   useEffect(() => {
     if (mode === 'load') {
       setLoading(true);
-      fetch('/.netlify/functions/supabase_proxy/list_worksheets')
+      WillenaAPI.fetch('/.netlify/functions/supabase_proxy/list_worksheets')
         .then(res => res.json())
         .then(result => {
           if (result.success && Array.isArray(result.data)) {
@@ -58,7 +58,7 @@ export default function WorksheetManager({ mode = 'load', openerData = {}, onClo
       : [];
     // Save worksheet
     try {
-      const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(worksheet)

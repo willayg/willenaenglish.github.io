@@ -103,7 +103,7 @@ export async function ensureSentenceIdsBuilder(wordObjs) {
       sentences: Array.from(map.values())
     };
     
-    const res = await fetch('/.netlify/functions/upsert_sentences_batch', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -232,7 +232,7 @@ export async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {})
         cover: coverNeeds ? { source: payload.gameImage } : undefined,
         force: !!opts.force
       };
-      const res = await fetch('/.netlify/functions/upload-images', {
+      const res = await WillenaAPI.fetch('/.netlify/functions/upload-images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -316,7 +316,7 @@ export async function saveGameData(payload, existingId = null) {
  */
 export async function loadGameData(id) {
   try {
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(id));
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(id));
     if (!res.ok) {
       return { success: false, error: `Open failed (${res.status})` };
     }
@@ -432,7 +432,7 @@ export async function listGameData(opts = {}) {
       params.set('created_by', created_by);
     }
     
-    const res = await fetch('/.netlify/functions/list_game_data_unique?' + params.toString());
+    const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + params.toString());
     if (!res.ok) {
       return { success: false, error: `List failed (${res.status})` };
     }

@@ -1735,11 +1735,11 @@ async function populateClassFilter() { /* no-op: left class filter removed */ }
 (async function init(){
   try {
     // Try whoami, then attempt a refresh if needed, then retry whoami
-    let whoResp = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+    let whoResp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
     let who = await whoResp.json().catch(()=>({}));
     if (!whoResp.ok || !who?.success) {
-      await fetch('/.netlify/functions/supabase_auth?action=refresh', { credentials:'include', cache:'no-store' }).catch(()=>{});
-      whoResp = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+      await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh').catch(()=>{});
+      whoResp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
       who = await whoResp.json().catch(()=>({}));
       if (!whoResp.ok || !who?.success) throw new Error('not signed in');
     }

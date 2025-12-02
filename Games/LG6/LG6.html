@@ -285,7 +285,7 @@
       highscoreOverlay.style.display = "flex";
       overlayHighscores.innerHTML = "<li>Loading...</li>";
       try {
-        const response = await fetch('/.netlify/functions/submit_score?game=LG6');
+        const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=LG6');
         if (!response.ok) {
           overlayHighscores.innerHTML = "<li>Failed to load scores</li>";
           return;

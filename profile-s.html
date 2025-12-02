@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>프로필 이모지 아바타 피커</title>
+  <script src="/js/api-config.js"></script>
   <style>
     :root { --header-height: 64px; }
     html, body {
@@ -1018,7 +1019,7 @@ document.querySelectorAll('.activity-filter-text').forEach(span => {
   }
 
   try {
-    const res = await fetch('/.netlify/functions/save_profile', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/save_profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(profile)
@@ -1050,7 +1051,7 @@ async function loadUserScores() {
   if (!user_id) return;
 
   // Fetch all scores for this user
-  const response = await fetch('/.netlify/functions/submit_score?user_id=' + encodeURIComponent(user_id));
+  const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?user_id=' + encodeURIComponent(user_id));
   const data = await response.json();
 
   const tbody = document.querySelector('#activityListTable tbody');

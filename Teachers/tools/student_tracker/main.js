@@ -10,7 +10,7 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
     return;
   }
   try {
-    const r = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+    const r = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
     const js = await r.json();
     if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
       location.href = '/Teachers/profile.html';
@@ -211,7 +211,7 @@ async function createRunTokenForAssignment(assignmentId) {
     window.currentHomeworkRunTokens = window.currentHomeworkRunTokens || {};
     // If we already have a token for this assignment, reuse it
     if (window.currentHomeworkRunTokens[assignmentId]) return window.currentHomeworkRunTokens[assignmentId];
-    const resp = await fetch(`/.netlify/functions/homework_api?action=create_run&assignment_id=${encodeURIComponent(assignmentId)}`, { credentials: 'include' });
+    const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=create_run&assignment_id=${encodeURIComponent(assignmentId)}`);
     const js = await resp.json().catch(()=>({}));
     if (!resp.ok || !js.success) {
       console.warn('createRunTokenForAssignment: failed to create run token', js.error || resp.status);
@@ -1151,9 +1151,7 @@ function applyHomeworkClassHighlights(listRoot) {
 
 async function refreshHomeworkActiveStates() {
   try {
-    const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments', {
-      credentials: 'include'
-    });
+    const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if (!data || data.success !== true) throw new Error(data?.error || 'Unexpected response');
@@ -1179,9 +1177,7 @@ async function loadHomeworkForClass(className, displayName) {
   assignmentList.innerHTML = '<div class="empty" style="padding:16px; text-align:center; color:#6b7280;">Loading assignments...</div>';
 
   try {
-    const resp = await fetch(`/.netlify/functions/homework_api?action=list_assignments&class=${encodeURIComponent(className)}`, {
-      credentials: 'include'
-    });
+    const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&class=${encodeURIComponent(className)}`);
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.error || `HTTP ${resp.status}`);
 
@@ -1313,8 +1309,8 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
           // Execute end assignment
           (async () => {
             try {
-              const resp = await fetch('/.netlify/functions/homework_api?action=end_assignment', {
-                method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })
+              const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=end_assignment', {
+                method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })
               });
               const js = await resp.json().catch(()=>({}));
               if (!resp.ok || !js.success) throw new Error(js.error || 'Failed');
@@ -1345,8 +1341,8 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
       if (!confirm('Delete this assignment permanently? This cannot be undone.')) return;
       
       try {
-        const resp = await fetch('/.netlify/functions/homework_api?action=delete_assignment', {
-          method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })
+        const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=delete_assignment', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })
         });
         const js = await resp.json().catch(()=>({}));
         if (!resp.ok || !js.success) throw new Error(js.error || 'Failed to delete');
@@ -1509,7 +1505,7 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
   const tbody = table.querySelector('tbody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading progress…</td></tr>';
   try {
-    const resp = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&class=${encodeURIComponent(className)}&assignment_id=${encodeURIComponent(assignmentId)}`, { credentials:'include' });
+    const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&class=${encodeURIComponent(className)}&assignment_id=${encodeURIComponent(assignmentId)}`);
     const js = await resp.json();
     if (!resp.ok || !js.success) throw new Error(js.error || `HTTP ${resp.status}`);
     const rows = js.progress || [];

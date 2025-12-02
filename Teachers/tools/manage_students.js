@@ -744,7 +744,7 @@ async function showRenameClassModal() {
   newClassName.value = '';
   // Populate dropdown with classes
   try {
-    const res = await fetch('/.netlify/functions/teacher_admin?action=list_students', { credentials:'include', cache:'no-store' });
+    const res = await WillenaAPI.fetch('/.netlify/functions/teacher_admin?action=list_students');
     const data = await res.json();
     if (res.ok && data.success && Array.isArray(data.students)) {
       const classes = sortClassesCustom(Array.from(new Set(data.students.map(s => s.class).filter(Boolean))));
@@ -829,7 +829,7 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
 // Populate class filter after auth
 async function populateClassFilter() {
   try {
-    const res = await fetch('/.netlify/functions/teacher_admin?action=list_students', { credentials:'include', cache:'no-store' });
+    const res = await WillenaAPI.fetch('/.netlify/functions/teacher_admin?action=list_students');
     const data = await res.json();
     if (res.ok && data.success && Array.isArray(data.students)) {
       const classes = sortClassesCustom(Array.from(new Set(data.students.map(s => s.class).filter(Boolean))));
@@ -962,7 +962,7 @@ async function previewRosterSingle() {
 
   let data = { students: [] };
   try {
-    const res = await fetch('/.netlify/functions/teacher_admin?action=list_students', { credentials:'include', cache:'no-store' });
+    const res = await WillenaAPI.fetch('/.netlify/functions/teacher_admin?action=list_students');
     data = await res.json();
   } catch {}
   const all = Array.isArray(data.students) ? data.students : [];
@@ -1148,9 +1148,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   wire();
   // auth guard: ensure teacher role
   try {
-    const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' }).then(r=>r.json());
+    const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami').then(r=>r.json());
     if (!who?.success) throw new Error('not signed in');
-    const roleRes = await fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(who.user_id)}`, { credentials:'include', cache:'no-store' });
+    const roleRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(who.user_id)}`);
     const role = await roleRes.json();
     const r = String(role?.role || '').toLowerCase();
     if (!['teacher','admin'].includes(r)) throw new Error('forbidden');
@@ -1163,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     el('rows').innerHTML = '<tr><td colspan="8">' + msg + '</td></tr>';
     // Cookie diagnostics (best effort)
     try {
-      const echo = await fetch('/.netlify/functions/supabase_auth?action=cookie_echo', { credentials:'include', cache:'no-store' }).then(r=>r.json());
+      const echo = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=cookie_echo').then(r=>r.json());
       if (echo && listMsg) {
         const details = ` (host: ${echo.host || 'n/a'}, origin: ${echo.origin || 'n/a'}, hasAccess: ${echo.hasAccess})`;
         listMsg.textContent += details;

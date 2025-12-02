@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Correct Attempts and Points</title>
+    <script src="/js/api-config.js"></script>
     <style>
       body { font-family: system-ui, Segoe UI, Arial, sans-serif; padding: 24px; }
       .card { max-width: 420px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; }
@@ -26,7 +27,7 @@
   const ptsEl = document.getElementById('pts');
         const statusEl = document.getElementById('status');
         try {
-          const res = await fetch('/.netlify/functions/count_true_attempts', { credentials: 'include', cache: 'no-store' });
+          const res = await WillenaAPI.fetch('/.netlify/functions/count_true_attempts');
           if (!res.ok) {
             const t = await res.text().catch(() => '');
             numEl.textContent = '—';

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Text Capture</title>
+  <script src="/js/api-config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -168,7 +169,7 @@
       status.textContent = "⏳ Saving...";
       titlePrompt.style.display = "none";
       try {
-        const response = await fetch("/.netlify/functions/supabase_proxy_fixed/save_worksheet", {
+        const response = await WillenaAPI.fetch("/.netlify/functions/supabase_proxy_fixed/save_worksheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -197,7 +198,7 @@
         const base64Image = reader.result.split(',')[1];
         status.textContent = "⏳ Sending to Vision API...";
         try {
-          const response = await fetch("/.netlify/functions/google_vision_proxy", {
+          const response = await WillenaAPI.fetch("/.netlify/functions/google_vision_proxy", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
