@@ -1,16 +1,21 @@
 const { createClient } = require('@supabase/supabase-js');
+const { getCorsHeaders, handleCorsPreflightIfNeeded } = require('./lib/cors');
 
-function json(statusCode, obj) {
+function json(statusCode, obj, event) {
   return {
     statusCode,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      ...getCorsHeaders(event || {}),
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(obj)
   };
+}
+
+// Store event reference for json helper
+let currentEvent = null;
+function _json(statusCode, obj) {
+  return json(statusCode, obj, currentEvent);
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
@@ -20,12 +25,15 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUP
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return json(200, {});
-  }
+  // Handle CORS preflight
+  const preflightResponse = handleCorsPreflightIfNeeded(event);
+  if (preflightResponse) return preflightResponse;
+  
+  // Store event for CORS headers in helper functions
+  currentEvent = event;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    return json(500, { success: false, error: 'Supabase environment variables missing (SUPABASE_URL / SERVICE KEY).' });
+    return _json(500, { success: false, error: 'Supabase environment variables missing (SUPABASE_URL / SERVICE KEY).' });
   }
 
     const action = event.queryStringParameters?.action || 'list_assignments';
@@ -53,10 +61,13 @@ exports.handler = async (event) => {
     if (action === 'assignment_progress') {
       return await assignmentProgress(event);
     }
-    return json(400, { success: false, error: 'Invalid action' });
+    if (action === 'delete_assignment') {
+      return await deleteAssignment(event);
+    }
+    return _json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
-    return json(500, { success: false, error: err.message || 'Server error' });
+    return _json(500, { success: false, error: err.message || 'Server error' });
   }
 };
 
@@ -69,7 +80,7 @@ function generateRunToken(assignmentId) {
 async function createAssignmentRun(event) {
   const authUserId = await getUserIdFromCookie(event);
   if (!authUserId) {
-    return json(401, { success: false, error: 'Not signed in' });
+    return _json(401, { success: false, error: 'Not signed in' });
   }
   const { data: prof, error: profErr } = await supabase
     .from('profiles')
@@ -77,13 +88,13 @@ async function createAssignmentRun(event) {
     .eq('id', authUserId)
     .single();
   if (profErr || !prof) {
-    return json(403, { success: false, error: 'Profile not found' });
+    return _json(403, { success: false, error: 'Profile not found' });
   }
   if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
-    return json(403, { success: false, error: 'Only teachers can create run tokens' });
+    return _json(403, { success: false, error: 'Only teachers can create run tokens' });
   }
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
-  if (!assignmentId) return json(400, { success: false, error: 'Missing assignment_id' });
+  if (!assignmentId) return _json(400, { success: false, error: 'Missing assignment_id' });
   const token = generateRunToken(assignmentId);
   // Persist inside list_meta.run_tokens array
   const { data: current, error: getErr } = await supabase
@@ -91,7 +102,7 @@ async function createAssignmentRun(event) {
     .select('id, list_meta')
     .eq('id', assignmentId)
     .single();
-  if (getErr || !current) return json(404, { success: false, error: 'Assignment not found' });
+  if (getErr || !current) return _json(404, { success: false, error: 'Assignment not found' });
   const list_meta = current.list_meta || {};
   const prev = Array.isArray(list_meta.run_tokens) ? list_meta.run_tokens : [];
   const updated = { ...list_meta, run_tokens: [...prev, { token, created_at: new Date().toISOString() }] };
@@ -101,8 +112,8 @@ async function createAssignmentRun(event) {
     .eq('id', assignmentId)
     .select('id, list_meta')
     .single();
-  if (updErr) return json(500, { success: false, error: 'Failed to persist run token: ' + (updErr.message || updErr.code) });
-  return json(200, { success: true, assignment_id: assignmentId, run_token: token });
+  if (updErr) return _json(500, { success: false, error: 'Failed to persist run token: ' + (updErr.message || updErr.code) });
+  return _json(200, { success: true, assignment_id: assignmentId, run_token: token });
 }
 
 async function getUserIdFromCookie(event) {
@@ -120,7 +131,7 @@ async function createAssignment(event) {
   // Get auth user id from cookie and ensure they have a profile
   const authUserId = await getUserIdFromCookie(event);
   if (!authUserId) {
-    return json(401, { success: false, error: 'Not signed in' });
+    return _json(401, { success: false, error: 'Not signed in' });
   }
 
   const { data: prof, error: profErr } = await supabase
@@ -130,13 +141,13 @@ async function createAssignment(event) {
     .single();
 
   if (profErr || !prof) {
-    return json(403, { success: false, error: 'Profile not found' });
+    return _json(403, { success: false, error: 'Profile not found' });
   }
   if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
-    return json(403, { success: false, error: 'Only teachers can create assignments' });
+    return _json(403, { success: false, error: 'Only teachers can create assignments' });
   }
   if (prof.approved === false) {
-    return json(403, { success: false, error: 'Teacher not approved' });
+    return _json(403, { success: false, error: 'Teacher not approved' });
   }
 
   let body;
@@ -147,7 +158,7 @@ async function createAssignment(event) {
       rawBody: event.body,
       message: err.message
     });
-    return json(400, { success: false, error: 'Invalid JSON body' });
+    return _json(400, { success: false, error: 'Invalid JSON body' });
   }
 
   const {
@@ -164,7 +175,7 @@ async function createAssignment(event) {
   } = body;
 
   if (!className || !title || !list_key || !due_at) {
-    return json(400, { success: false, error: 'Missing required fields: class, title, list_key, due_at' });
+    return _json(400, { success: false, error: 'Missing required fields: class, title, list_key, due_at' });
   }
 
   const { data, error } = await supabase
@@ -193,10 +204,10 @@ async function createAssignment(event) {
       hint: error.hint,
       code: error.code
     });
-    return json(500, { success: false, error: `Failed to create assignment: ${error.message || error.code || 'unknown error'}` });
+    return _json(500, { success: false, error: `Failed to create assignment: ${error.message || error.code || 'unknown error'}` });
   }
 
-  return json(200, { success: true, assignment: data });
+  return _json(200, { success: true, assignment: data });
 }
 
 async function listAssignments(event) {
@@ -220,26 +231,26 @@ async function listAssignments(event) {
       hint: error.hint,
       code: error.code
     });
-    return json(500, { success: false, error: `Failed to fetch assignments: ${error.message || error.code || 'unknown error'}` });
+    return _json(500, { success: false, error: `Failed to fetch assignments: ${error.message || error.code || 'unknown error'}` });
   }
 
-  return json(200, { success: true, assignments: data || [] });
+  return _json(200, { success: true, assignments: data || [] });
 }
 
 async function endAssignment(event) {
   const authUserId = await getUserIdFromCookie(event);
-  if (!authUserId) return json(401, { success:false, error:'Not signed in' });
-  let body; try { body = JSON.parse(event.body||'{}'); } catch { return json(400,{ success:false, error:'Bad JSON'}); }
+  if (!authUserId) return _json(401, { success:false, error:'Not signed in' });
+  let body; try { body = JSON.parse(event.body||'{}'); } catch { return _json(400,{ success:false, error:'Bad JSON'}); }
   const assignmentId = body.id || body.assignment_id || null;
-  if (!assignmentId) return json(400,{ success:false, error:'Missing assignment id'});
+  if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment id'});
   // Verify teacher role
   const { data: prof, error: profErr } = await supabase.from('profiles').select('id, role').eq('id', authUserId).single();
   if (profErr || !prof || !['teacher','admin'].includes(String(prof.role||'').toLowerCase())) {
-    return json(403,{ success:false, error:'Only teachers can end assignments'});
+    return _json(403,{ success:false, error:'Only teachers can end assignments'});
   }
   const { data, error } = await supabase.from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
-  if (error) return json(500,{ success:false, error:'Failed to end assignment: '+(error.message||error.code)});
-  return json(200,{ success:true, assignment:data });
+  if (error) return _json(500,{ success:false, error:'Failed to end assignment: '+(error.message||error.code)});
+  return _json(200,{ success:true, assignment:data });
 }
 
 function normalizeListIdentifier(value) {
@@ -255,10 +266,10 @@ async function assignmentProgress(event) {
   // Returns per-student progress for a given assignment id
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
   const className = event.queryStringParameters?.class || null;
-  if (!assignmentId) return json(400,{ success:false, error:'Missing assignment_id' });
+  if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment_id' });
   // Fetch assignment
   const { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
-  if (aErr || !assignment) return json(404,{ success:false, error:'Assignment not found' });
+  if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
   const targetClass = className || assignment.class;
   // Determine category heuristically for expected mode counts
   const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
@@ -267,7 +278,7 @@ async function assignmentProgress(event) {
   else if (assignLower.includes('grammar')) category = 'grammar';
   // Load students in class
   const { data: students, error: sErr } = await supabase.from('profiles').select('id, name, korean_name').eq('class', targetClass);
-  if (sErr) return json(500,{ success:false, error:'Failed to load students: '+(sErr.message||sErr.code)});
+  if (sErr) return _json(500,{ success:false, error:'Failed to load students: '+(sErr.message||sErr.code)});
   // Load progress_sessions for these students matching this assignment list
   // New logic: derive stars_earned (sum of best stars per mode) and list_completion_percent (distinct words attempted / list_size)
   const listKeyLast = assignment.list_key.split('/').pop();
@@ -519,7 +530,7 @@ async function assignmentProgress(event) {
       category
     };
   });
-  return json(200,{ success:true, assignment_id: assignment.id, class: targetClass, total_modes: totalModes, category, progress });
+  return _json(200,{ success:true, assignment_id: assignment.id, class: targetClass, total_modes: totalModes, category, progress });
 }
 
 async function getProfileForEvent(event) {
@@ -539,10 +550,10 @@ async function getProfileForEvent(event) {
 async function listAssignmentsForStudent(event) {
   const prof = await getProfileForEvent(event);
   if (!prof) {
-    return json(401, { success: false, error: 'Not signed in' });
+    return _json(401, { success: false, error: 'Not signed in' });
   }
   if (!prof.class) {
-    return json(400, { success: false, error: 'No class set for this profile' });
+    return _json(400, { success: false, error: 'No class set for this profile' });
   }
 
   const nowIso = new Date().toISOString();
@@ -557,7 +568,7 @@ async function listAssignmentsForStudent(event) {
 
   if (error) {
     console.error('listAssignmentsForStudent error:', error);
-    return json(500, { success: false, error: 'Failed to fetch student homework' });
+    return _json(500, { success: false, error: 'Failed to fetch student homework' });
   }
 
   // Map teacher name for convenience on each assignment
@@ -566,7 +577,7 @@ async function listAssignmentsForStudent(event) {
     teacher_name: a.profiles?.name || null
   }));
 
-  return json(200, {
+  return _json(200, {
     success: true,
     class: prof.class,
     student_name: prof.name || prof.korean_name || null,
@@ -578,18 +589,18 @@ async function listAssignmentsForStudent(event) {
 // requesting student belongs to the assignment's class and the assignment is active.
 async function getRunTokenForStudent(event) {
   const prof = await getProfileForEvent(event);
-  if (!prof) return json(401, { success: false, error: 'Not signed in' });
+  if (!prof) return _json(401, { success: false, error: 'Not signed in' });
 
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
   const listKey = event.queryStringParameters?.list_key || event.queryStringParameters?.listName || event.queryStringParameters?.list_name || null;
 
-  if (!assignmentId && !listKey) return json(400, { success: false, error: 'Missing assignment_id or list_key' });
+  if (!assignmentId && !listKey) return _json(400, { success: false, error: 'Missing assignment_id or list_key' });
 
   let assignment = null;
   try {
     if (assignmentId) {
       const { data, error } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
-      if (error || !data) return json(404, { success: false, error: 'Assignment not found' });
+      if (error || !data) return _json(404, { success: false, error: 'Assignment not found' });
       assignment = data;
     } else if (listKey) {
       // Try to find an active assignment for this student's class matching the list_key
@@ -600,19 +611,19 @@ async function getRunTokenForStudent(event) {
         .ilike('list_key', `%${listKey}%`)
         .order('created_at', { ascending: false })
         .limit(1);
-      if (error || !data || !data.length) return json(404, { success: false, error: 'Assignment not found' });
+      if (error || !data || !data.length) return _json(404, { success: false, error: 'Assignment not found' });
       assignment = data[0];
     }
   } catch (e) {
     console.error('getRunTokenForStudent fetch error:', e.message);
-    return json(500, { success: false, error: 'Server error' });
+    return _json(500, { success: false, error: 'Server error' });
   }
 
   // Verify student belongs to the assignment class
   if (!assignment || String(assignment.class || '') !== String(prof.class || '')) {
-    return json(403, { success: false, error: 'Not assigned to this class' });
+    return _json(403, { success: false, error: 'Not assigned to this class' });
   }
 
   const tokens = Array.isArray(assignment.list_meta?.run_tokens) ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean) : [];
-  return json(200, { success: true, assignment_id: assignment.id, tokens });
+  return _json(200, { success: true, assignment_id: assignment.id, tokens });
 }

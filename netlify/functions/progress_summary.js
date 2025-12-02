@@ -3,6 +3,7 @@
 // Requires env: SUPABASE_URL, SUPABASE_ANON_KEY
 const { createClient } = require('@supabase/supabase-js');
 const redisCache = require('../../lib/redis_cache');
+const { getCorsHeaders, handleCorsPreflightIfNeeded } = require('./lib/cors');
 
 const CLASS_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
 const GLOBAL_CACHE_TTL_SECONDS = 10 * 60; // 10 minutes
@@ -40,12 +41,16 @@ const USE_SQL_LEADERBOARD = process.env.USE_SQL_LEADERBOARD === '1' || process.e
 // Cache TTL for CDN/browser caching (seconds). Reduces invocation count.
 const CACHE_CONTROL_MAX_AGE = Number(process.env.PROGRESS_CACHE_MAX_AGE) || 60;
 
+// Store event reference for CORS
+let currentEvent = null;
+
 // Timing helper for before/after comparison
 function timedJson(status, body, startMs) {
   const duration_ms = Date.now() - startMs;
   return {
     statusCode: status,
     headers: {
+      ...getCorsHeaders(currentEvent || {}),
       'content-type': 'application/json; charset=utf-8',
       'x-timing-ms': String(duration_ms),
       'cache-control': `public, max-age=${CACHE_CONTROL_MAX_AGE}, s-maxage=${CACHE_CONTROL_MAX_AGE}`
@@ -55,7 +60,10 @@ function timedJson(status, body, startMs) {
 }
 
 function json(status, body, cacheSeconds) {
-  const headers = { 'content-type': 'application/json; charset=utf-8' };
+  const headers = { 
+    ...getCorsHeaders(currentEvent || {}),
+    'content-type': 'application/json; charset=utf-8' 
+  };
   // Add cache header for successful GET responses when cacheSeconds provided
   if (cacheSeconds && status >= 200 && status < 300) {
     headers['cache-control'] = `public, max-age=${cacheSeconds}, s-maxage=${cacheSeconds}`;
@@ -336,6 +344,13 @@ async function formatGlobalLeaderboardResponse(payload, userId, adminClient, fir
 // ========== END CACHE ==========
 
 exports.handler = async (event) => {
+  // Handle CORS preflight
+  const preflightResponse = handleCorsPreflightIfNeeded(event);
+  if (preflightResponse) return preflightResponse;
+
+  // Store event for CORS headers in helper functions
+  currentEvent = event;
+
   try {
     if (event.httpMethod !== 'GET') {
       return json(405, { error: 'Method Not Allowed' });
