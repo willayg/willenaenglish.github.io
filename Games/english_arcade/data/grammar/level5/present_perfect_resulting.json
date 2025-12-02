@@ -1,0 +1,17 @@
+[
+  {"en":"The car has broken down.","ko":"차가 고장났어요.","example":"The car has broken down; we can't drive.","emoji":"🚗"},
+  {"en":"I have lost my keys.","ko":"나는 열쇠를 잃어버렸어요.","example":"I have lost my keys; I can't open the door.","emoji":"🔑"},
+  {"en":"He has forgotten her name.","ko":"그는 그녀의 이름을 잊었어요.","example":"He has forgotten her name; he can't remember.","emoji":"❓"},
+  {"en":"We have moved to a new house.","ko":"우리는 새 집으로 이사했어요.","example":"We have moved; our new address is ...", "emoji":"🏠"},
+  {"en":"The window has broken.","ko":"창문이 깨졌어요.","example":"The window has broken; it's dangerous.","emoji":"🪟"},
+  {"en":"She has finished the assignment.","ko":"그녀는 과제를 끝냈어요.","example":"She has finished the assignment so she is free.","emoji":"📘"},
+  {"en":"They have arrived at the airport.","ko":"그들은 공항에 도착했어요.","example":"They have arrived at the airport, so call them.","emoji":"🛬"},
+  {"en":"I have cut my finger.","ko":"손가락을 베었어요.","example":"I have cut my finger; I need a bandage.","emoji":"🤕"},
+  {"en":"The project has been completed.","ko":"프로젝트가 완료되었어요.","example":"The project has been completed and submitted.","emoji":"✅"},
+  {"en":"She has sold her car.","ko":"그녀는 차를 팔았어요.","example":"She has sold her car so she can't drive now.","emoji":"🚗"},
+  {"en":"We have cleaned the house.","ko":"우리는 집을 청소했어요.","example":"We have cleaned the house; it's tidy now.","emoji":"🧹"},
+  {"en":"He has broken his arm.","ko":"그는 팔이 부러졌어요.","example":"He has broken his arm; he can't use it.","emoji":"🦴"},
+  {"en":"They have lost the map.","ko":"그들은 지도를 잃어버렸어요.","example":"They have lost the map; they are lost.","emoji":"🗺️"},
+  {"en":"I have recovered from the cold.","ko":"나는 감기에서 회복했어요.","example":"I have recovered from the cold; I feel better.","emoji":"💪"},
+  {"en":"She has finished her meal.","ko":"그녀는 식사를 마쳤어요.","example":"She has finished her meal; she is full.","emoji":"🍽️"}
+]

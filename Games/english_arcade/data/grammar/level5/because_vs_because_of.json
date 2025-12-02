@@ -1,0 +1,17 @@
+[
+  {"en":"I stayed home because I was sick.","ko":"나는 아파서 집에 있었어요.","example":"'because' + clause.","emoji":"🤒"},
+  {"en":"I stayed home because of the rain.","ko":"비 때문에 집에 있었어요.","example":"'because of' + noun.","emoji":"☔"},
+  {"en":"She cried because she was sad.","ko":"그녀는 슬퍼서 울었어요.","example":"Use 'because' for reason.","emoji":"😢"},
+  {"en":"She left early because of traffic.","ko":"교통 때문에 일찍 떠났어요.","example":"'because of' + noun.","emoji":"🚗"},
+  {"en":"We canceled the trip because it rained.","ko":"비가 와서 여행을 취소했어요.","example":"'because' with clause.","emoji":"🌧️"},
+  {"en":"We canceled the trip because of the weather.","ko":"날씨 때문에 여행을 취소했어요.","example":"'because of' with noun.","emoji":"☀️"},
+  {"en":"I can't come because I have an appointment.","ko":"약속이 있어서 못 가요.","example":"Use 'because' for explanation.","emoji":"📅"},
+  {"en":"I missed the bus because of the delay.","ko":"지연 때문에 버스를 놓쳤어요.","example":"Use 'because of' with a noun.","emoji":"🚌"},
+  {"en":"He left because he was tired.","ko":"그는 피곤해서 떠났어요.","example":"'because' + clause.","emoji":"😴"},
+  {"en":"He was late because of the accident.","ko":"사고 때문에 늦었어요.","example":"'because of' + noun.","emoji":"🚑"},
+  {"en":"They stayed home because they were ill.","ko":"그들은 아파서 집에 있었어요.","example":"'because' + clause.","emoji":"🤒"},
+  {"en":"They stayed home because of the cold.","ko":"감기 때문에 집에 있었어요.","example":"'because of' + noun.","emoji":"🥶"},
+  {"en":"I missed the show because I was late.","ko":"늦어서 공연을 놓쳤어요.","example":"'because' for reason.","emoji":"⏰"},
+  {"en":"I missed the show because of traffic.","ko":"교통 때문에 공연을 놓쳤어요.","example":"'because of' for reason.","emoji":"🚦"},
+  {"en":"She didn't go to the party because she was tired.","ko":"그녀는 피곤해서 파티에 가지 않았어요.","example":"'because' + clause.","emoji":"😴"}
+]

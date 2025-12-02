@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>미국 국기 퀴즈</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    .question {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .question h3 {
+      margin: 0 0 10px 0;
+    }
+    .feedback {
+      margin-top: 8px;
+      font-weight: bold;
+    }
+    .correct {
+      color: green;
+    }
+    .incorrect {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>🇺🇸 미국 국기 퀴즈</h1>
+  <div id="quiz"></div>
+  <script>
+    const quizData = [
+      // 1–5: Comprehension
+      { question: "Why did the U.S. government decide to create a new flag in 1777?", options: ["To celebrate July 4", "Because they declared independence from Great Britain", "To follow British traditions", "Because Betsy Ross requested it"], answer: 1 },
+      { question: "What do the 13 stripes on the American flag represent?", options: ["The first 13 presidents", "13 American holidays", "The 13 original colonies", "13 battles"], answer: 2 },
+      { question: "What happened to the flag each time a new state joined the U.S.?", options: ["A stripe was removed", "A star was added", "The shape changed", "The flag was retired"], answer: 1 },
+      { question: "When were the last two stars added?", options: ["1818", "1945", "1960", "1777"], answer: 2 },
+      { question: "What is the popular story about Betsy Ross?", options: ["She led the army", "She made the first flag", "She discovered fireworks", "She was a president’s wife"], answer: 1 },
+
+      // 6–10: Vocabulary
+      { question: "What does the word 'declared' most likely mean?", options: ["Hid", "Announced", "Copied", "Fought"], answer: 1 },
+      { question: "What does 'alternating' mean?", options: ["All the same", "Changing back and forth", "Mixed randomly", "Red only"], answer: 1 },
+      { question: "What does 'keep an eye out' mean?", options: ["Look at your watch", "Be careful", "Try to find or notice", "Close your eyes"], answer: 2 },
+      { question: "What does 'came up with' mean?", options: ["Created or thought of", "Went upstairs", "Threw away", "Found by accident"], answer: 0 },
+      { question: "What does 'seamstress' mean?", options: ["A soldier", "A teacher", "A woman who sews", "A leader"], answer: 2 },
+
+      // 11–15: Korean (original)
+      { question: "미국 정부가 1777년에 새 국기를 만들기로 한 이유는 무엇인가요?", options: ["7월 4일을 기념하기 위해", "독립을 선언했기 때문에", "영국 국기를 따라 만들기 위해", "베시 로스가 요청했기 때문에"], answer: 1 },
+      { question: "현재 미국 국기에서 별의 개수는 왜 50개인가요?", options: ["미국에 50개의 도시가 있어서", "미국에 50개의 주(state)가 있어서", "50개의 전쟁이 있었기 때문에", "50개의 공휴일을 위해"], answer: 1 },
+      { question: "13개의 줄무늬는 무엇을 상징하나요?", options: ["13명의 전쟁 영웅", "13번의 전투", "미국 초기의 13개 식민지", "13개의 국기"], answer: 2 },
+      { question: "본문에 따르면, 베시 로스에 대한 이야기는 어떤 이야기인가요?", options: ["사실로 증명된 이야기", "널리 알려졌지만 확실하지 않은 이야기", "영국에서 전해 내려온 이야기", "법률에 기록된 이야기"], answer: 1 },
+      { question: "‘keep an eye out’의 의미는 무엇인가요?", options: ["잠자기", "눈 감기", "조심하기", "주의 깊게 보기"], answer: 3 },
+
+      // 16–20: NOT True
+      { question: "Which of the following is NOT true about Betsy Ross?", options: ["She was a seamstress.", "She definitely made the first American flag.", "A popular story says she created the flag.", "She is connected to a flag design with 5-pointed stars."], answer: 1 },
+      { question: "Which of the following is NOT mentioned in the original flag design?", options: ["13 white stars", "13 red and white stripes", "50 stars for future states", "Alternating colors"], answer: 2 },
+      { question: "Which is NOT true about flag changes?", options: ["A star is added per new state", "The flag has never changed", "It reached 50 stars in 1960", "Alaska and Hawaii were last"], answer: 1 },
+      { question: "Which is NOT true about July 4?", options: ["People have fireworks", "People gather in Washington, D.C.", "People display flags", "It celebrates independence"], answer: 1 },
+      { question: "Which is NOT true about the U.S. government’s role?", options: ["Declared the flag’s rules", "Added stars per state", "Banned changes after 1818", "Created a new flag"], answer: 2 }
+    ];
+
+    const quizContainer = document.getElementById('quiz');
+
+    quizData.forEach((q, index) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question';
+      const qTitle = document.createElement('h3');
+      qTitle.textContent = `${index + 1}. ${q.question}`;
+      qDiv.appendChild(qTitle);
+
+      q.options.forEach((opt, i) => {
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = `q${index}`;
+        input.value = i;
+        label.appendChild(input);
+        label.append(` ${opt}`);
+        qDiv.appendChild(label);
+        qDiv.appendChild(document.createElement('br'));
+      });
+
+      const feedback = document.createElement('div');
+      feedback.className = 'feedback';
+      qDiv.appendChild(feedback);
+
+      quizContainer.appendChild(qDiv);
+    });
+
+    quizContainer.addEventListener('change', (e) => {
+      if (e.target.tagName === 'INPUT') {
+        const qIndex = parseInt(e.target.name.slice(1));
+        const selected = parseInt(e.target.value);
+        const feedback = quizContainer.children[qIndex].querySelector('.feedback');
+        if (selected === quizData[qIndex].answer) {
+          feedback.textContent = '정답입니다!';
+          feedback.className = 'feedback correct';
+        } else {
+          feedback.textContent = '틀렸어요. 다시 시도해보세요!';
+          feedback.className = 'feedback incorrect';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

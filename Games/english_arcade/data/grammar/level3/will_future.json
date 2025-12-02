@@ -1,0 +1,137 @@
+[
+  {
+    "id": "will_future_1",
+    "word": "i_will_call",
+    "en": "I will call you tomorrow.",
+    "ko": "내일 전화할게요.",
+    "exampleSentence": "I will call you tomorrow after lunch.",
+    "exampleSentenceKo": "내일 전화할게요.",
+    "emoji": "📞"
+  },
+  {
+    "id": "will_future_2",
+    "word": "she_will_help",
+    "en": "She will help us with the homework.",
+    "ko": "그녀가 숙제를 도와줄 거예요.",
+    "exampleSentence": "She will help us with our homework.",
+    "exampleSentenceKo": "그녀가 숙제를 도와줄 거예요.",
+    "emoji": "🤝"
+  },
+  {
+    "id": "will_future_3",
+    "word": "we_will_visit",
+    "en": "We will visit the museum next week.",
+    "ko": "우리는 다음 주에 박물관을 방문할 거예요.",
+    "exampleSentence": "We will visit the museum next week.",
+    "exampleSentenceKo": "우리는 다음 주에 박물관을 방문할 거예요.",
+    "emoji": "🏛️"
+  },
+  {
+    "id": "will_future_4",
+    "word": "he_will_be",
+    "en": "He will be a doctor someday.",
+    "ko": "그는 언젠가 의사가 될 거예요.",
+    "exampleSentence": "He will be a doctor one day.",
+    "exampleSentenceKo": "그는 언젠가 의사가 될 거예요.",
+    "emoji": "🩺"
+  },
+  {
+    "id": "will_future_5",
+    "word": "they_will_buy",
+    "en": "They will buy a new house.",
+    "ko": "그들은 새 집을 살 거예요.",
+    "exampleSentence": "They will buy a new house next year.",
+    "exampleSentenceKo": "그들은 새 집을 살 거예요.",
+    "emoji": "🏠"
+  },
+  {
+    "id": "will_future_6",
+    "word": "i_will_be_there",
+    "en": "I will be there at six.",
+    "ko": "나는 6시에 거기 있을 거예요.",
+    "exampleSentence": "I will be there at six o'clock.",
+    "exampleSentenceKo": "나는 6시에 거기 있을 거예요.",
+    "emoji": "🕕"
+  },
+  {
+    "id": "will_future_7",
+    "word": "she_will_learn",
+    "en": "She will learn to drive next year.",
+    "ko": "그녀는 내년에 운전하는 법을 배울 거예요.",
+    "exampleSentence": "She will learn driving next year.",
+    "exampleSentenceKo": "그녀는 내년에 운전하는 법을 배울 거예요.",
+    "emoji": "🚗"
+  },
+  {
+    "id": "will_future_8",
+    "word": "we_will_watch",
+    "en": "We will watch a movie tonight.",
+    "ko": "우리는 오늘 밤 영화를 볼 거예요.",
+    "exampleSentence": "We will watch a movie tonight together.",
+    "exampleSentenceKo": "우리는 오늘 밤 영화를 볼 거예요.",
+    "emoji": "🎬"
+  },
+  {
+    "id": "will_future_9",
+    "word": "he_will_start",
+    "en": "He will start a new job.",
+    "ko": "그는 새 직장을 시작할 거예요.",
+    "exampleSentence": "He will start a new job next month.",
+    "exampleSentenceKo": "그는 새 직장을 시작할 거예요.",
+    "emoji": "💼"
+  },
+  {
+    "id": "will_future_10",
+    "word": "they_will_return",
+    "en": "They will return the books.",
+    "ko": "그들은 책을 반납할 거예요.",
+    "exampleSentence": "They will return the books to the library.",
+    "exampleSentenceKo": "그들은 책을 반납할 거예요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "will_future_11",
+    "word": "i_will_answer",
+    "en": "I will answer your question later.",
+    "ko": "나중에 질문에 답할게요.",
+    "exampleSentence": "I will answer your question after class.",
+    "exampleSentenceKo": "나중에 질문에 답할게요.",
+    "emoji": "❓"
+  },
+  {
+    "id": "will_future_12",
+    "word": "she_will_travel",
+    "en": "She will travel to Japan.",
+    "ko": "그녀는 일본으로 여행할 거예요.",
+    "exampleSentence": "She will travel to Japan next spring.",
+    "exampleSentenceKo": "그녀는 일본으로 여행할 거예요.",
+    "emoji": "✈️"
+  },
+  {
+    "id": "will_future_13",
+    "word": "we_will_celebrate",
+    "en": "We will celebrate his birthday.",
+    "ko": "우리는 그의 생일을 축하할 거예요.",
+    "exampleSentence": "We will celebrate his birthday this weekend.",
+    "exampleSentenceKo": "우리는 그의 생일을 축하할 거예요.",
+    "emoji": "🎉"
+  },
+  {
+    "id": "will_future_14",
+    "word": "he_will_pass",
+    "en": "He will pass the test.",
+    "ko": "그는 시험에 합격할 거예요.",
+    "exampleSentence": "He will pass the test if he studies.",
+    "exampleSentenceKo": "그는 시험에 합격할 거예요.",
+    "emoji": "✅"
+  },
+  {
+    "id": "will_future_15",
+    "word": "they_will_bring",
+    "en": "They will bring the cake.",
+    "ko": "그들은 케이크를 가져올 거예요.",
+    "exampleSentence": "They will bring the cake to the party.",
+    "exampleSentenceKo": "그들은 케이크를 가져올 거예요.",
+    "emoji": "🍰"
+  }
+]

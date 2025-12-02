@@ -1,0 +1,148 @@
+Wordtest Tool TODO List (Detailed)
+
+
+1. Title input does not update preview  ✅ DONE (July 8, 2025)
+   - [x] Editing the title input now updates the preview area live by triggering a full preview refresh.
+   - Event listener updated to call updatePreview().
+
+2. Logo missing on printed paper  ✅ DONE (July 9, 2025)
+   - [x] Fixed issue where logo image path became invalid in print window context.
+   - [x] Used absolute URL path resolution to ensure logo appears in printed worksheets.
+   - Logo now appears correctly on all printed worksheets.
+
+2.2 Printer table dont match preview tables  ✅ DONE (July 9, 2025)
+   - [x] Fixed inconsistency between preview table styling and print table styling.
+   - [x] Updated print styles in JavaScript to match preview styles (border-bottom only, correct padding).
+   - [x] Added print-specific CSS rules to ensure table consistency.
+   - Print tables now exactly match preview tables.
+
+3. Image shrinks on left-click  ✅ DONE (July 9, 2025)
+   - [x] Fixed issue where clicking on images triggered full preview update that reset image sizes.
+   - [x] Modified cycleImage function to update only the clicked image without affecting its size.
+   - [x] Added size preservation logic to prevent unwanted resizing when cycling through images.
+   - Images now maintain their size when clicked and only resize when the size slider is used.
+
+3.1 Double didget numbers are stacking vertically on print in 2 list layout.  ✅ DONE (July 9, 2025)
+   - [x] Fixed column width allocation - increased number columns from 5% to 8% width.
+   - [x] Added white-space:nowrap style to number cells to prevent digit wrapping.
+   - [x] Added print-specific CSS to override word-wrap for number columns.
+   - Double-digit numbers now display properly on one line in print mode.
+
+4. Drag and drop not working after left-click  ✅ DONE (July 9, 2025)
+   - [x] Fixed by modifying cycleImage function to not trigger full preview updates.
+   - [x] Since images no longer reset on click, drag-and-drop functionality is preserved.
+   - [x] Click events no longer interfere with drag-and-drop logic.
+   - Drag-and-drop now works consistently after image clicks.
+
+5. Picture card mode: improper page breaks  ✅ DONE (July 9, 2025)
+   - [x] Removed artificial 12-image limit that was preventing all images from showing.
+   - [x] Added page break logic to group cards into pages (updated to 9 cards per page for optimal print layout).
+   - [x] Implemented page-break-before: always for new pages after the first.
+   - [x] Added CSS support for proper page breaks in print mode.
+   - [x] Adjusted card dimensions and layout for 9 cards per page (3x3 grid).
+   - Picture cards now show all images and break pages correctly for clean printing.
+
+6. Print preview opens in new tab (annoying)  ✅ DONE (July 9, 2025)
+   - [x] Current print preview opens a new browser tab/window.
+   - [x] Changed to print only the worksheet preview content in a new window.
+   - [x] Added proper page breaks for picture cards and quiz layouts.
+   - [x] Removed interactive elements and drag instructions from print output.
+   - [x] Added A4 page sizing and proper margins for clean printing.
+   - [x] Auto-closes print window after printing for better user experience.
+
+7. Picture quiz: spacing too large  ✅ DONE (July 9, 2025)
+   - [x] Reduced margin-top from 15px to 8px between image and writing line for tighter spacing.
+   - [x] Changed justify-content from space-between to flex-start for better content alignment.
+   - [x] Increased max-height for image container from 160px to 170px to utilize space better.
+   - [x] Removed 12-card limit to show all images in picture quiz mode.
+   - [x] Added page break logic for 9 items per page (3x3 grid) for optimal printing.
+   - [x] Added CSS support for picture quiz page breaks.
+   - Picture quiz now has tighter spacing and shows all images with proper page breaks.
+
+8. Images missing on first print preview  ✅ DONE (July 9, 2025)
+   - [x] Images do not appear the first time print preview is opened; they show up after closing and printing again.
+   - [x] Investigated image loading and rendering timing.
+   - [x] Ensured all images are fully loaded before triggering print preview.
+   - [x] Fixed refactored print logic to use window.print() in same tab instead of new window.
+
+8.1 Picture Cards layout images too small  ✅ DONE (July 9, 2025)
+   - [x] Fixed issue where Picture Cards (6col-images) layout showed very small images (50px) in large containers (180px max-height).
+   - [x] Updated 6col-images layout to use 150px image size for better visibility.
+   - [x] Updated 5col-images layout to use 110px image size for appropriate scaling.
+   - [x] Images now display properly sized within Picture Cards layout containers.
+
+9. Add 5-in-a-row layouts for picture card and quiz  ✅ DONE (July 9, 2025)
+   - [x] Added new "Picture Cards (5 per row)" layout option with 5 images per row instead of 3.
+   - [x] Added new "Picture Quiz (5 per row)" layout option with 5 images per row instead of 3.
+   - [x] Updated UI dropdown to include both new layout options.
+   - [x] Implemented 15 items per page (3 rows of 5) for optimal print layout.
+   - [x] Added proper CSS support for both new layouts including print styles.
+   - [x] Ensured responsive design and proper page breaks for printing.
+   - [x] Reduced card sizes appropriately to fit 5 cards per row while maintaining readability.
+   - Teachers can now choose between 3-per-row (standard) and 5-per-row (compact) layouts for both picture cards and picture quiz modes.
+   - Old 3 in a row picture cards has been replaced by a usless list
+   - Need smart page preaks on all picture quiz and picture card layouts for print
+
+10. Have a full-screen view for the 5 card layout in a new tab.
+
+11. ✅In the 5 card layout for the landscape print it only prints one row per page after the first page
+
+17. Landscape mode suggestion for 5-in-a-row layouts  ✅ DONE (December 16, 2024)
+   - [x] Added automatic landscape mode for 5col-images and picture-quiz-5col layouts.
+   - [x] Added CSS @page landscape orientation for these layouts in print window.
+   - [x] Removed user prompts - system automatically applies landscape mode without asking.
+   - [x] 5-in-a-row layouts automatically use landscape orientation for optimal printing.
+   - System now silently applies landscape mode for 5-in-a-row layouts without user intervention.
+
+18. Pic List 2 col doesn't work  ✅ DONE (December 16, 2024)
+   - [x] Fixed issue where picture-list-2col layout was returning undefined variable (gridHtml instead of tableHtml).
+   - [x] Updated return statement to properly display the generated table HTML.
+   - [x] Added missing printStyle variable to ensure consistent print formatting.
+   - Picture List 2 Column layout now displays correctly with images and proper table structure.
+
+19. Picture matching doesn't work  ✅ DONE (December 16, 2024)
+   - [x] Fixed issue where picture-matching layout was listed in HTML dropdown but had no implementation.
+   - [x] Created complete picture-matching layout with images and Korean words on opposite sides.
+   - [x] Added connection circles and "Draw lines to connect" instruction.
+   - [x] Limited to 10 items for optimal worksheet layout.
+   - [x] Implemented proper image loading and display with English word labels.
+   - [x] Added shuffled Korean words on the right side for matching exercise.
+   - Picture Matching layout now works correctly with images, English words, and Korean matching options.
+
+   20. The print is breaking the page at the title leaving a long blank first page on long word lists and long picture lists.  ✅ DONE (July 10, 2025)
+   - [x] Implemented smart page break logic that allows content to flow naturally from the header.
+   - [x] Changed tables from page-break-inside:avoid to page-break-inside:auto to allow breaking.
+   - [x] Added logic to keep first few table rows with header using page-break-before:avoid.
+   - [x] Implemented table chunking for long word lists (20 rows per chunk for default, 15 for 4-column, 12 for picture lists).
+   - [x] Multiple smaller tables instead of one large table prevents forced page breaks.
+   - [x] Added proper spacing between table chunks for clean layout.
+   - [x] Maintained proper numbering across table chunks.
+   - [x] Applied improvements to Default Table, Two Lists (Side by Side), and Picture List layouts.
+   - Print now flows naturally from header to content without leaving blank first pages on long lists.
+   21. Images all messed up in 5 row modes  ✅ DONE (July 10, 2025)
+   - [x] Fixed Picture Quiz (5 per row) layout that was missing printStyle variable.
+   - [x] Significantly reduced vertical gaps between images for landscape layout optimization.
+   - [x] Changed row-gap from full imageGap to imageGap/3 (minimum 3px) for tighter spacing.
+   - [x] Reduced item heights from 200px to 150px for better fit in landscape mode.
+   - [x] Optimized padding and margins for 5-column layout (10px padding, 8px column gap).
+   - [x] Added specific print CSS for quiz-item-5col with width 130px, height 140px.
+   - [x] Improved image container max-height to 100px for print optimization.
+   - [x] Enhanced grid layout to use full width (max-width: 100%) for landscape printing.
+   - [x] ULTRA-COMPACT VERSION: Further optimized to fit 20 images per page (4 rows of 5).
+   - [x] Reduced vertical gap to imageGap/5 (minimum 2px) for maximum density.
+   - [x] Decreased item dimensions to 130px width, 120px height for ultra-compact layout.
+   - [x] Print optimizations: 120px width, 110px height, 4px gaps, 80px image containers.
+   - [x] Reduced writing line width to 90px and height to 15px for space efficiency.
+   - [x] ULTRA-COMPACT HEADER: Implemented compact header with 30px logo, 18px title, 11px labels.
+   - [x] Integrated ultra-compact header into Picture Quiz (5 per row) layout for maximum space efficiency.
+   - [x] Added print styles for ultra-compact header and word box (25px logo, 16px title, 10px labels).
+   - [x] Word box also made ultra-compact with smaller padding, gaps, and 0.75em font size.
+   - Picture Quiz (5 per row) now fits 20 images per page with ultra-compact spacing optimized for landscape orientation. 
+   22. Images need to include names on Picture cards  ✅ DONE (July 10, 2025)
+   - [x] Fixed Picture Cards (5 per row) print layout with proper page break logic.
+   - [x] Removed artificial page chunking that was causing inefficient space usage (only 5 cards per page after first page).
+   - [x] Changed to single continuous grid layout that allows browser to break pages naturally.
+   - [x] Fixed image centering and text stacking in picture cards with proper flex layout.
+   - [x] Images now horizontally and vertically centered in each card with text below.
+   - [x] Removed restrictive page-break-inside:avoid CSS that prevented natural grid flow.
+   - Picture Cards (5 per row) now efficiently fills each page with maximum cards and proper layout.

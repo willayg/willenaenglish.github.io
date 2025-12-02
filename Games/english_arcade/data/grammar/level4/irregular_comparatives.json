@@ -1,0 +1,17 @@
+[
+  {"en":"better","ko":"더 나은","example":"This cake is better than the last one.","emoji":"🍰"},
+  {"en":"worse","ko":"더 나쁜","example":"The weather today is worse than yesterday.","emoji":"🌧️"},
+  {"en":"less","ko":"더 적은","example":"I have less sugar than you.","emoji":"🍬"},
+  {"en":"more","ko":"더 많은","example":"She has more books than me.","emoji":"📚"},
+  {"en":"farther/further","ko":"더 멀리","example":"Her house is further than mine.","emoji":"🏡"},
+  {"en":"better","ko":"더 나은","example":"He is better at math now.","emoji":"➗"},
+  {"en":"worse","ko":"더 나쁜","example":"This one tastes worse than the other.","emoji":"🤢"},
+  {"en":"more","ko":"더 많은","example":"There is more water in this bottle.","emoji":"💧"},
+  {"en":"less","ko":"더 적은","example":"I want less salt in my food.","emoji":"🧂"},
+  {"en":"further","ko":"더 멀리","example":"We need to walk further to reach the store.","emoji":"🚶"},
+  {"en":"farther","ko":"더 멀리","example":"The farther we go, the colder it gets.","emoji":"❄️"},
+  {"en":"better","ko":"더 나은","example":"Her English is better now.","emoji":"🇬🇧"},
+  {"en":"worse","ko":"더 나쁜","example":"His health is worse today.","emoji":"🤒"},
+  {"en":"more","ko":"더 많은","example":"You can add more sugar if you like.","emoji":"🍰"},
+  {"en":"less","ko":"더 적은","example":"They have less money than before.","emoji":"💵"}
+]

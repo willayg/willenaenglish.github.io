@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0%" stop-color="#ff8a00"/>
+      <stop offset="100%" stop-color="#ff4fd8"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#g)" rx="24"/>
+
+  <g transform="translate(60,80)">
+    <rect x="0" y="0" width="680" height="560" rx="20" fill="#ffffff22"/>
+
+    <text x="340" y="160" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="92" fill="#fff">EB4</text>
+
+    <g transform="translate(140,220)">
+      <rect width="400" height="220" rx="16" fill="#ffffff12"/>
+      <text x="200" y="70" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="700" font-size="28" fill="#fff">Unscramble</text>
+      <text x="200" y="120" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="20" fill="#fff">Sentences • Practice & Game</text>
+      <g transform="translate(30,150)" fill="#fff">
+        <rect x="0" y="0" width="28" height="4" rx="2"/>
+        <rect x="44" y="0" width="120" height="4" rx="2"/>
+        <rect x="180" y="0" width="220" height="4" rx="2"/>
+      </g>
+    </g>
+
+  </g>
+</svg>

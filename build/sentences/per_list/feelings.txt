@@ -1,0 +1,28 @@
+# List: Feelings
+# Words
+happy
+sad
+angry
+excited
+scared
+bored
+tired
+surprised
+nervous
+proud
+shy
+confused
+
+# Sentences
+I feel happy.
+She feels sad.
+He feels angry.
+We feel excited.
+I feel scared.
+They feel bored.
+I feel tired.
+She feels surprised.
+I feel nervous.
+He feels proud.
+The boy feels shy.
+I feel confused.

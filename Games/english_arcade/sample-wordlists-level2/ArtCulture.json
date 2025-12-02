@@ -1,0 +1,12 @@
+[
+  {"eng":"painting","kor":"그림","def":"a picture made with paint","ex":"I see a painting on the wall.","ex_kor":"나는 벽에 걸린 그림을 봐요.","emoji":"🎨"},
+  {"eng":"sculpture","kor":"조각상","def":"a figure made from stone or clay","ex":"The sculpture is in the museum.","ex_kor":"조각상은 박물관에 있어요.","emoji":"🗿"},
+  {"eng":"museum","kor":"박물관","def":"a building with art and old things","ex":"We visit the art museum.","ex_kor":"우리는 미술관을 방문해요.","emoji":"🏛️"},
+  {"eng":"gallery","kor":"갤러리","def":"a room or building for displaying art","ex":"The gallery shows new paintings.","ex_kor":"갤러리에는 새 그림이 전시돼요."},
+  {"eng":"portrait","kor":"초상화","def":"a picture of a person","ex":"She paints a portrait.","ex_kor":"그녀는 초상화를 그려요."},
+  {"eng":"landscape","kor":"풍경화","def":"a picture of nature and land","ex":"This landscape shows mountains.","ex_kor":"이 풍경화에는 산이 나와요.","emoji":"🏔️"},
+  {"eng":"brush","kor":"붓","def":"a tool for painting","ex":"I clean my brush.","ex_kor":"나는 붓을 닦아요."},
+  {"eng":"canvas","kor":"캔버스","def":"cloth to paint on","ex":"The artist paints on canvas.","ex_kor":"화가는 캔버스에 그림을 그려요."},
+  {"eng":"statue","kor":"동상","def":"a figure made of stone, metal, or clay","ex":"There is a statue in the park.","ex_kor":"공원에 동상이 있어요."},
+  {"eng":"exhibition","kor":"전시회","def":"a show of art or things","ex":"The art exhibition opens today.","ex_kor":"오늘 미술 전시회가 열려요."}
+]

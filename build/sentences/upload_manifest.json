@@ -1,0 +1,2011 @@
+[
+  {
+    "type": "sentence",
+    "id": "choreskids__s001__f53d08",
+    "text": "Sweep the floor, please.",
+    "list": "choreskids",
+    "word": "sweep the floor"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s002__f30f7c",
+    "text": "Wipe the table after lunch.",
+    "list": "choreskids",
+    "word": "wipe the table"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s003__909a18",
+    "text": "Fold the clothes neatly.",
+    "list": "choreskids",
+    "word": "fold the clothes"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s004__5fc92f",
+    "text": "Take out the trash on Tuesday.",
+    "list": "choreskids",
+    "word": "take out the trash"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s005__76f927",
+    "text": "Wash the dishes after dinner.",
+    "list": "choreskids",
+    "word": "wash the dishes"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s006__e9f5bf",
+    "text": "Make the bed in the morning.",
+    "list": "choreskids",
+    "word": "make the bed"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s007__bf01cb",
+    "text": "Put away the toys now.",
+    "list": "choreskids",
+    "word": "put away the toys"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s008__c0ba27",
+    "text": "Vacuum the rug, please.",
+    "list": "choreskids",
+    "word": "vacuum the rug"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s009__aa46d6",
+    "text": "Sort the laundry by color.",
+    "list": "choreskids",
+    "word": "sort the laundry"
+  },
+  {
+    "type": "sentence",
+    "id": "choreskids__s010__0065e1",
+    "text": "Dust the shelf on Saturday.",
+    "list": "choreskids",
+    "word": "dust the shelf"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s001__244aa2",
+    "text": "Raise your hand to answer.",
+    "list": "classroomphraseskids",
+    "word": "raise your hand"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s002__e6c5b2",
+    "text": "Open your book to page five.",
+    "list": "classroomphraseskids",
+    "word": "open your book"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s003__2071fe",
+    "text": "Read the story aloud.",
+    "list": "classroomphraseskids",
+    "word": "read aloud"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s004__bccbf9",
+    "text": "Repeat after me, please.",
+    "list": "classroomphraseskids",
+    "word": "repeat after me"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s005__7b3bdb",
+    "text": "Listen carefully to the instructions.",
+    "list": "classroomphraseskids",
+    "word": "listen carefully"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s006__aa7d31",
+    "text": "Write your name at the top.",
+    "list": "classroomphraseskids",
+    "word": "write your name"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s007__944a73",
+    "text": "Circle the correct answer.",
+    "list": "classroomphraseskids",
+    "word": "circle the answer"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s008__3ce5b0",
+    "text": "Underline the new word.",
+    "list": "classroomphraseskids",
+    "word": "underline the word"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s009__e2b698",
+    "text": "Work in pairs for this activity.",
+    "list": "classroomphraseskids",
+    "word": "work in pairs"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s010__9c156f",
+    "text": "Share your ideas with your group.",
+    "list": "classroomphraseskids",
+    "word": "share your ideas"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s011__c4faef",
+    "text": "Check your answers before you finish.",
+    "list": "classroomphraseskids",
+    "word": "check your answers"
+  },
+  {
+    "type": "sentence",
+    "id": "classroomphraseskids__s012__fdbb6e",
+    "text": "Clean the board after class.",
+    "list": "classroomphraseskids",
+    "word": "clean the board"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s001__5f84d6",
+    "text": "The firefighter saves people.",
+    "list": "communityhelpersjobs",
+    "word": "firefighter"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s002__007781",
+    "text": "The nurse gives medicine.",
+    "list": "communityhelpersjobs",
+    "word": "nurse"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s003__76f4f5",
+    "text": "The librarian helps you find books.",
+    "list": "communityhelpersjobs",
+    "word": "librarian"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s004__f03e83",
+    "text": "The mail carrier delivers letters.",
+    "list": "communityhelpersjobs",
+    "word": "mail carrier"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s005__7c9e04",
+    "text": "The bus driver stops at every corner.",
+    "list": "communityhelpersjobs",
+    "word": "bus driver"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s006__11b2da",
+    "text": "The coach teaches soccer.",
+    "list": "communityhelpersjobs",
+    "word": "coach"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s007__e3a660",
+    "text": "The dentist checks your teeth.",
+    "list": "communityhelpersjobs",
+    "word": "dentist"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s008__83adb7",
+    "text": "The scientist does experiments.",
+    "list": "communityhelpersjobs",
+    "word": "scientist"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s009__0d00e5",
+    "text": "The artist paints pictures.",
+    "list": "communityhelpersjobs",
+    "word": "artist"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s010__4561f7",
+    "text": "The engineer builds bridges.",
+    "list": "communityhelpersjobs",
+    "word": "engineer"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s011__611ba2",
+    "text": "The police officer helps people.",
+    "list": "communityhelpersjobs",
+    "word": "police officer"
+  },
+  {
+    "type": "sentence",
+    "id": "communityhelpersjobs__s012__282749",
+    "text": "The chef makes delicious meals.",
+    "list": "communityhelpersjobs",
+    "word": "chef"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s001__58a148",
+    "text": "I get dressed after breakfast.",
+    "list": "dailyroutines2",
+    "word": "get dressed"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s002__6abdcb",
+    "text": "I pack my bag for school.",
+    "list": "dailyroutines2",
+    "word": "pack my bag"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s003__831761",
+    "text": "I catch the bus at eight.",
+    "list": "dailyroutines2",
+    "word": "catch the bus"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s004__56f4b5",
+    "text": "We have a snack after school.",
+    "list": "dailyroutines2",
+    "word": "have a snack"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s005__55b6ac",
+    "text": "I do a project with my friend.",
+    "list": "dailyroutines2",
+    "word": "do a project"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s006__6ad22b",
+    "text": "I practice piano every day.",
+    "list": "dailyroutines2",
+    "word": "practice piano"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s007__cbfc09",
+    "text": "I feed the cat in the morning.",
+    "list": "dailyroutines2",
+    "word": "feed the cat"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s008__249ec1",
+    "text": "I water the plants on Sunday.",
+    "list": "dailyroutines2",
+    "word": "water the plants"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s009__03f736",
+    "text": "I set the table for dinner.",
+    "list": "dailyroutines2",
+    "word": "set the table"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s010__7eac77",
+    "text": "I brush my hair before school.",
+    "list": "dailyroutines2",
+    "word": "brush my hair"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s011__38d632",
+    "text": "We do stretches in P.E. class.",
+    "list": "dailyroutines2",
+    "word": "do stretches"
+  },
+  {
+    "type": "sentence",
+    "id": "dailyroutines2__s012__6d3e19",
+    "text": "I charge my tablet at night.",
+    "list": "dailyroutines2",
+    "word": "charge my tablet"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s001__4da2f8",
+    "text": "She was surprised by the gift.",
+    "list": "emotionsinstories",
+    "word": "surprised"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s002__bfabc0",
+    "text": "He felt worried about the test.",
+    "list": "emotionsinstories",
+    "word": "worried"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s003__f2913a",
+    "text": "I was relieved when the rain stopped.",
+    "list": "emotionsinstories",
+    "word": "relieved"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s004__9d6155",
+    "text": "The children are excited for the trip.",
+    "list": "emotionsinstories",
+    "word": "excited"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s005__05dcd1",
+    "text": "He was embarrassed to sing on stage.",
+    "list": "emotionsinstories",
+    "word": "embarrassed"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s006__c61f5d",
+    "text": "She is determined to win the game.",
+    "list": "emotionsinstories",
+    "word": "determined"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s007__253795",
+    "text": "He looked confused by the story.",
+    "list": "emotionsinstories",
+    "word": "confused"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s008__cae379",
+    "text": "I am grateful for your help.",
+    "list": "emotionsinstories",
+    "word": "grateful"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s009__2af96b",
+    "text": "She is hopeful about the future.",
+    "list": "emotionsinstories",
+    "word": "hopeful"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s010__b34114",
+    "text": "He was bored during the long movie.",
+    "list": "emotionsinstories",
+    "word": "bored"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s011__e279d7",
+    "text": "She felt proud of her drawing.",
+    "list": "emotionsinstories",
+    "word": "proud"
+  },
+  {
+    "type": "sentence",
+    "id": "emotionsinstories__s012__1f2148",
+    "text": "He was jealous of his friend’s new bike.",
+    "list": "emotionsinstories",
+    "word": "jealous"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s001__506fe0",
+    "text": "Recycle paper and plastic.",
+    "list": "environmentalactions",
+    "word": "recycle"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s002__e60807",
+    "text": "Reuse your water bottle.",
+    "list": "environmentalactions",
+    "word": "reuse"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s003__d98fd7",
+    "text": "Reduce the amount of trash.",
+    "list": "environmentalactions",
+    "word": "reduce"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s004__5bd64a",
+    "text": "Compost fruit peels.",
+    "list": "environmentalactions",
+    "word": "compost"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s005__7d5596",
+    "text": "Don’t litter in the park.",
+    "list": "environmentalactions",
+    "word": "litter"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s006__8e112a",
+    "text": "Pollution is bad for animals.",
+    "list": "environmentalactions",
+    "word": "pollution"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s007__f078c3",
+    "text": "Conserve water every day.",
+    "list": "environmentalactions",
+    "word": "conserve"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s008__36e059",
+    "text": "Protect the forest.",
+    "list": "environmentalactions",
+    "word": "protect"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s009__97d1bf",
+    "text": "Clean up after the picnic.",
+    "list": "environmentalactions",
+    "word": "clean up"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s010__f59dc2",
+    "text": "Plant a tree on Earth Day.",
+    "list": "environmentalactions",
+    "word": "plant"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s011__9f4344",
+    "text": "Save electricity by turning off lights.",
+    "list": "environmentalactions",
+    "word": "save"
+  },
+  {
+    "type": "sentence",
+    "id": "environmentalactions__s012__c0d4c3",
+    "text": "Wildlife needs clean water.",
+    "list": "environmentalactions",
+    "word": "wildlife"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s001__b21315",
+    "text": "It is chilly this morning.",
+    "list": "feelingsaboutweather",
+    "word": "chilly"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s002__b9ca2f",
+    "text": "He feels sweaty after running.",
+    "list": "feelingsaboutweather",
+    "word": "sweaty"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s003__dc6eb7",
+    "text": "She got soaked in the rain.",
+    "list": "feelingsaboutweather",
+    "word": "soaked"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s004__9dd89d",
+    "text": "The boy is shivering in the wind.",
+    "list": "feelingsaboutweather",
+    "word": "shivering"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s005__933aa2",
+    "text": "He got sunburned at the beach.",
+    "list": "feelingsaboutweather",
+    "word": "sunburned"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s006__983380",
+    "text": "A cool breeze makes me feel refreshed.",
+    "list": "feelingsaboutweather",
+    "word": "refreshed"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s007__9e1ee1",
+    "text": "It is gloomy on rainy days.",
+    "list": "feelingsaboutweather",
+    "word": "gloomy"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s008__b6e16f",
+    "text": "The sunny weather makes me cheerful.",
+    "list": "feelingsaboutweather",
+    "word": "cheerful"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s009__753196",
+    "text": "Rainy days make me sleepy.",
+    "list": "feelingsaboutweather",
+    "word": "sleepy"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s010__5466d5",
+    "text": "He feels energetic on cool mornings.",
+    "list": "feelingsaboutweather",
+    "word": "energetic"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s011__7e9d7f",
+    "text": "She is scared of thunder.",
+    "list": "feelingsaboutweather",
+    "word": "scared"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsaboutweather__s012__abfbb7",
+    "text": "I am amazed by the rainbow.",
+    "list": "feelingsaboutweather",
+    "word": "amazed"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s001__615d55",
+    "text": "He is nervous before the test.",
+    "list": "feelingsinschool",
+    "word": "nervous"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s002__441f74",
+    "text": "She is excited for the field trip.",
+    "list": "feelingsinschool",
+    "word": "excited"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s003__0eff6b",
+    "text": "He is proud of his drawing.",
+    "list": "feelingsinschool",
+    "word": "proud"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s004__fa9db9",
+    "text": "She is worried about her homework.",
+    "list": "feelingsinschool",
+    "word": "worried"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s005__d66a82",
+    "text": "He is bored in class.",
+    "list": "feelingsinschool",
+    "word": "bored"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s006__90d638",
+    "text": "She is focused on the lesson.",
+    "list": "feelingsinschool",
+    "word": "focused"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s007__214b01",
+    "text": "He is distracted by noise.",
+    "list": "feelingsinschool",
+    "word": "distracted"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s008__8168e9",
+    "text": "She feels confident before the test.",
+    "list": "feelingsinschool",
+    "word": "confident"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s009__69ac0f",
+    "text": "He is shy in front of the class.",
+    "list": "feelingsinschool",
+    "word": "shy"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s010__739d7d",
+    "text": "Be patient when waiting in line.",
+    "list": "feelingsinschool",
+    "word": "patient"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s011__d8fc43",
+    "text": "She was surprised by the result.",
+    "list": "feelingsinschool",
+    "word": "surprised"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingsinschool__s012__a0baca",
+    "text": "He was disappointed with his score.",
+    "list": "feelingsinschool",
+    "word": "disappointed"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s001__8168e9",
+    "text": "She feels confident before the test.",
+    "list": "feelingssocialskills",
+    "word": "confident"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s002__cc6bce",
+    "text": "He is nervous on stage.",
+    "list": "feelingssocialskills",
+    "word": "nervous"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s003__c3e5fc",
+    "text": "Be respectful to your teacher.",
+    "list": "feelingssocialskills",
+    "word": "respectful"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s004__e1d421",
+    "text": "It is good to be honest.",
+    "list": "feelingssocialskills",
+    "word": "honest"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s005__739d7d",
+    "text": "Be patient when waiting in line.",
+    "list": "feelingssocialskills",
+    "word": "patient"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s006__539e2e",
+    "text": "She was disappointed with her score.",
+    "list": "feelingssocialskills",
+    "word": "disappointed"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s007__0eff6b",
+    "text": "He is proud of his drawing.",
+    "list": "feelingssocialskills",
+    "word": "proud"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s008__aac57b",
+    "text": "Be responsible for your homework.",
+    "list": "feelingssocialskills",
+    "word": "responsible"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s009__b11ad6",
+    "text": "Say thank you to be polite.",
+    "list": "feelingssocialskills",
+    "word": "polite"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s010__ca2a54",
+    "text": "The child is curious about space.",
+    "list": "feelingssocialskills",
+    "word": "curious"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s011__2711fc",
+    "text": "He is friendly to new students.",
+    "list": "feelingssocialskills",
+    "word": "friendly"
+  },
+  {
+    "type": "sentence",
+    "id": "feelingssocialskills__s012__309ab1",
+    "text": "She is helpful in class.",
+    "list": "feelingssocialskills",
+    "word": "helpful"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s001__9feeeb",
+    "text": "Chop the carrots for the soup.",
+    "list": "foodcookingactions",
+    "word": "chop"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s002__b6a87b",
+    "text": "Stir the soup gently.",
+    "list": "foodcookingactions",
+    "word": "stir"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s003__66df85",
+    "text": "Boil the water for pasta.",
+    "list": "foodcookingactions",
+    "word": "boil"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s004__f59bb6",
+    "text": "Bake the bread in the oven.",
+    "list": "foodcookingactions",
+    "word": "bake"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s005__4dd074",
+    "text": "Grill the meat on the barbecue.",
+    "list": "foodcookingactions",
+    "word": "grill"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s006__0e23d3",
+    "text": "Taste the soup before serving.",
+    "list": "foodcookingactions",
+    "word": "taste"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s007__cbc87d",
+    "text": "Pour milk into the glass.",
+    "list": "foodcookingactions",
+    "word": "pour"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s008__0b69ae",
+    "text": "Peel the banana before eating.",
+    "list": "foodcookingactions",
+    "word": "peel"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s009__72415a",
+    "text": "Mix the flour and eggs.",
+    "list": "foodcookingactions",
+    "word": "mix"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s010__0cce1b",
+    "text": "Serve the food to your family.",
+    "list": "foodcookingactions",
+    "word": "serve"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s011__8d157c",
+    "text": "Slice the bread for sandwiches.",
+    "list": "foodcookingactions",
+    "word": "slice"
+  },
+  {
+    "type": "sentence",
+    "id": "foodcookingactions__s012__e9ee2a",
+    "text": "Spread butter on the toast.",
+    "list": "foodcookingactions",
+    "word": "spread"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s001__96e413",
+    "text": "Roll the dice to start the game.",
+    "list": "gamesboardgames",
+    "word": "dice"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s002__6539d9",
+    "text": "Put the pieces on the board.",
+    "list": "gamesboardgames",
+    "word": "board"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s003__4f99f3",
+    "text": "Shuffle the cards before playing.",
+    "list": "gamesboardgames",
+    "word": "card"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s004__b27df6",
+    "text": "Move your piece forward.",
+    "list": "gamesboardgames",
+    "word": "piece"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s005__c1e9eb",
+    "text": "It’s your move now.",
+    "list": "gamesboardgames",
+    "word": "move"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s006__4c688a",
+    "text": "Wait for your turn.",
+    "list": "gamesboardgames",
+    "word": "turn"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s007__8a7ef2",
+    "text": "Try your best to win.",
+    "list": "gamesboardgames",
+    "word": "win"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s008__138e8d",
+    "text": "Don’t be sad if you lose.",
+    "list": "gamesboardgames",
+    "word": "lose"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s009__a57460",
+    "text": "The game ended in a draw.",
+    "list": "gamesboardgames",
+    "word": "draw"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s010__faf21a",
+    "text": "Shuffle the cards well.",
+    "list": "gamesboardgames",
+    "word": "shuffle"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s011__823ea1",
+    "text": "Deal five cards to each player.",
+    "list": "gamesboardgames",
+    "word": "deal"
+  },
+  {
+    "type": "sentence",
+    "id": "gamesboardgames__s012__f10e21",
+    "text": "Add up your score at the end.",
+    "list": "gamesboardgames",
+    "word": "score"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s001__b80fd3",
+    "text": "Hit the nail with a hammer.",
+    "list": "householdtoolsfixes",
+    "word": "hammer"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s002__5d9a54",
+    "text": "Tighten the screw with a screwdriver.",
+    "list": "householdtoolsfixes",
+    "word": "screwdriver"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s003__04b44e",
+    "text": "Use a wrench to fix the pipe.",
+    "list": "householdtoolsfixes",
+    "word": "wrench"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s004__2d786c",
+    "text": "Use tape to wrap the box.",
+    "list": "householdtoolsfixes",
+    "word": "tape"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s005__9e7828",
+    "text": "Stick the paper with glue.",
+    "list": "householdtoolsfixes",
+    "word": "glue"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s006__0222d8",
+    "text": "Sweep the floor with a broom.",
+    "list": "householdtoolsfixes",
+    "word": "broom"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s007__fb916e",
+    "text": "Clean the floor with a mop.",
+    "list": "householdtoolsfixes",
+    "word": "mop"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s008__9c6b7f",
+    "text": "Use pliers to pull out the nail.",
+    "list": "householdtoolsfixes",
+    "word": "pliers"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s009__a42a66",
+    "text": "Make a hole with a drill.",
+    "list": "householdtoolsfixes",
+    "word": "drill"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s010__b14636",
+    "text": "Climb up the ladder carefully.",
+    "list": "householdtoolsfixes",
+    "word": "ladder"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s011__1e97b2",
+    "text": "Hammer the nail into the wall.",
+    "list": "householdtoolsfixes",
+    "word": "nail"
+  },
+  {
+    "type": "sentence",
+    "id": "householdtoolsfixes__s012__6df1ba",
+    "text": "Turn the screw with a screwdriver.",
+    "list": "householdtoolsfixes",
+    "word": "screw"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s001__4d381d",
+    "text": "We sleep in a tent.",
+    "list": "outdooradventurecamping",
+    "word": "tent"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s002__60fbb6",
+    "text": "Pack your backpack for the trip.",
+    "list": "outdooradventurecamping",
+    "word": "backpack"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s003__eb3ee5",
+    "text": "Use a compass to find north.",
+    "list": "outdooradventurecamping",
+    "word": "compass"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s004__5b8f81",
+    "text": "Turn on your flashlight at night.",
+    "list": "outdooradventurecamping",
+    "word": "flashlight"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s005__6a44d8",
+    "text": "We sit around the campfire.",
+    "list": "outdooradventurecamping",
+    "word": "campfire"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s006__4540a0",
+    "text": "Let’s hike up the mountain.",
+    "list": "outdooradventurecamping",
+    "word": "hike"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s007__5ed023",
+    "text": "Follow the trail through the woods.",
+    "list": "outdooradventurecamping",
+    "word": "trail"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s008__5812b2",
+    "text": "Check the map for our campsite.",
+    "list": "outdooradventurecamping",
+    "word": "map"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s009__89be19",
+    "text": "Use bug spray to stop mosquito bites.",
+    "list": "outdooradventurecamping",
+    "word": "bug spray"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s010__2ab0a8",
+    "text": "Unroll your sleeping bag.",
+    "list": "outdooradventurecamping",
+    "word": "sleeping bag"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s011__f1c4ce",
+    "text": "Look at birds with binoculars.",
+    "list": "outdooradventurecamping",
+    "word": "binoculars"
+  },
+  {
+    "type": "sentence",
+    "id": "outdooradventurecamping__s012__17946a",
+    "text": "We ride a canoe on the lake.",
+    "list": "outdooradventurecamping",
+    "word": "canoe"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s001__108a4c",
+    "text": "Put on your hat.",
+    "list": "phrasalverbskids1",
+    "word": "put on"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s002__28c63b",
+    "text": "Take off your shoes.",
+    "list": "phrasalverbskids1",
+    "word": "take off"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s003__67f14a",
+    "text": "Turn on the light.",
+    "list": "phrasalverbskids1",
+    "word": "turn on"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s004__01bec6",
+    "text": "Turn off the TV.",
+    "list": "phrasalverbskids1",
+    "word": "turn off"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s005__4a7bca",
+    "text": "Pick up the pencil.",
+    "list": "phrasalverbskids1",
+    "word": "pick up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s006__5c2c6c",
+    "text": "Put down the book.",
+    "list": "phrasalverbskids1",
+    "word": "put down"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s007__a7b0ce",
+    "text": "Sit down, please.",
+    "list": "phrasalverbskids1",
+    "word": "sit down"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s008__17b2ce",
+    "text": "Stand up, please.",
+    "list": "phrasalverbskids1",
+    "word": "stand up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s009__b7709c",
+    "text": "I wake up at seven.",
+    "list": "phrasalverbskids1",
+    "word": "wake up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s010__bbcb70",
+    "text": "Get up now.",
+    "list": "phrasalverbskids1",
+    "word": "get up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s011__e41412",
+    "text": "Put away your toys.",
+    "list": "phrasalverbskids1",
+    "word": "put away"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s012__1fe305",
+    "text": "Clean up the table.",
+    "list": "phrasalverbskids1",
+    "word": "clean up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s013__e0f644",
+    "text": "Look for your bag.",
+    "list": "phrasalverbskids1",
+    "word": "look for"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s014__426d5c",
+    "text": "Take out the trash.",
+    "list": "phrasalverbskids1",
+    "word": "take out"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s015__102ea2",
+    "text": "Put it back on the shelf.",
+    "list": "phrasalverbskids1",
+    "word": "put back"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s016__9e9893",
+    "text": "Come in, please.",
+    "list": "phrasalverbskids1",
+    "word": "come in"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids1__s017__a28827",
+    "text": "Go out and play.",
+    "list": "phrasalverbskids1",
+    "word": "go out"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s001__c4ae14",
+    "text": "Come back soon.",
+    "list": "phrasalverbskids2",
+    "word": "come back"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s002__2957b9",
+    "text": "Go back to your seat.",
+    "list": "phrasalverbskids2",
+    "word": "go back"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s003__0d0ca8",
+    "text": "Hurry up, please.",
+    "list": "phrasalverbskids2",
+    "word": "hurry up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s004__92a008",
+    "text": "Slow down when you read.",
+    "list": "phrasalverbskids2",
+    "word": "slow down"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s005__fe7b0e",
+    "text": "Calm down and take a breath.",
+    "list": "phrasalverbskids2",
+    "word": "calm down"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s006__3ef4ff",
+    "text": "Line up at the door.",
+    "list": "phrasalverbskids2",
+    "word": "line up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s007__dd0c50",
+    "text": "Share your crayons with a friend.",
+    "list": "phrasalverbskids2",
+    "word": "share with"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s008__06412a",
+    "text": "Play with your little brother.",
+    "list": "phrasalverbskids2",
+    "word": "play with"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s009__230fa1",
+    "text": "Wait for the bus.",
+    "list": "phrasalverbskids2",
+    "word": "wait for"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s010__dfc3e7",
+    "text": "Look after your sister.",
+    "list": "phrasalverbskids2",
+    "word": "look after"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s011__e976c6",
+    "text": "Take care of the plants.",
+    "list": "phrasalverbskids2",
+    "word": "take care of"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s012__8c5245",
+    "text": "Help out with the dishes.",
+    "list": "phrasalverbskids2",
+    "word": "help out"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s013__8fd543",
+    "text": "Tidy up your room.",
+    "list": "phrasalverbskids2",
+    "word": "tidy up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s014__449871",
+    "text": "Wash up before dinner.",
+    "list": "phrasalverbskids2",
+    "word": "wash up"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s015__cfa07f",
+    "text": "Try on the shoes.",
+    "list": "phrasalverbskids2",
+    "word": "try on"
+  },
+  {
+    "type": "sentence",
+    "id": "phrasalverbskids2__s016__a10f85",
+    "text": "Hand in your homework.",
+    "list": "phrasalverbskids2",
+    "word": "hand in"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s001__5ba628",
+    "text": "Slide down the slide safely.",
+    "list": "playgroundactions",
+    "word": "slide down"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s002__b14636",
+    "text": "Climb up the ladder carefully.",
+    "list": "playgroundactions",
+    "word": "climb up"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s003__8f1585",
+    "text": "I swing high at the park.",
+    "list": "playgroundactions",
+    "word": "swing high"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s004__9f470a",
+    "text": "We jump rope at recess.",
+    "list": "playgroundactions",
+    "word": "jump rope"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s005__97cb3f",
+    "text": "Kick the ball to your teammate.",
+    "list": "playgroundactions",
+    "word": "kick the ball"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s006__175768",
+    "text": "Throw the ball softly.",
+    "list": "playgroundactions",
+    "word": "throw the ball"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s007__b95c65",
+    "text": "Catch the ball with two hands.",
+    "list": "playgroundactions",
+    "word": "catch the ball"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s008__81f2f5",
+    "text": "Tag a friend and run.",
+    "list": "playgroundactions",
+    "word": "tag a friend"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s009__4693d2",
+    "text": "Balance on the beam for five seconds.",
+    "list": "playgroundactions",
+    "word": "balance on the beam"
+  },
+  {
+    "type": "sentence",
+    "id": "playgroundactions__s010__42791a",
+    "text": "Let’s race to the tree.",
+    "list": "playgroundactions",
+    "word": "race to the tree"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s001__29314c",
+    "text": "He joined the chess club.",
+    "list": "schoolclubshobbies",
+    "word": "chess club"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s002__3002ec",
+    "text": "She practices drama after school.",
+    "list": "schoolclubshobbies",
+    "word": "drama"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s003__31f676",
+    "text": "Robotics is fun for many students.",
+    "list": "schoolclubshobbies",
+    "word": "robotics"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s004__16740c",
+    "text": "Debate helps you speak clearly.",
+    "list": "schoolclubshobbies",
+    "word": "debate"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s005__48d781",
+    "text": "She takes photos in photography club.",
+    "list": "schoolclubshobbies",
+    "word": "photography"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s006__7fdd05",
+    "text": "Gardening is relaxing.",
+    "list": "schoolclubshobbies",
+    "word": "gardening"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s007__a3b453",
+    "text": "He learns coding at school.",
+    "list": "schoolclubshobbies",
+    "word": "coding"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s008__e6ce4e",
+    "text": "Painting is her favorite hobby.",
+    "list": "schoolclubshobbies",
+    "word": "painting"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s009__927a5f",
+    "text": "He plays drums in the music band.",
+    "list": "schoolclubshobbies",
+    "word": "music band"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s010__ebcf43",
+    "text": "She is on the school sports team.",
+    "list": "schoolclubshobbies",
+    "word": "sports team"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s011__878df5",
+    "text": "Reading club meets every Friday.",
+    "list": "schoolclubshobbies",
+    "word": "reading club"
+  },
+  {
+    "type": "sentence",
+    "id": "schoolclubshobbies__s012__c66edf",
+    "text": "Science club does fun experiments.",
+    "list": "schoolclubshobbies",
+    "word": "science club"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s001__4687a4",
+    "text": "Pour water into the beaker.",
+    "list": "sciencelabtools",
+    "word": "beaker"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s002__e86632",
+    "text": "Look at the leaf with a microscope.",
+    "list": "sciencelabtools",
+    "word": "microscope"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s003__e670f6",
+    "text": "We do an experiment in science class.",
+    "list": "sciencelabtools",
+    "word": "experiment"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s004__2fd835",
+    "text": "Measure the water carefully.",
+    "list": "sciencelabtools",
+    "word": "measure"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s005__ea0b56",
+    "text": "Observe the color change.",
+    "list": "sciencelabtools",
+    "word": "observe"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s006__4e07f4",
+    "text": "Wear goggles for safety.",
+    "list": "sciencelabtools",
+    "word": "goggles"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s007__acf8e7",
+    "text": "The magnet sticks to the fridge.",
+    "list": "sciencelabtools",
+    "word": "magnet"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s008__08ba14",
+    "text": "Sugar dissolves in water.",
+    "list": "sciencelabtools",
+    "word": "dissolve"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s009__b664da",
+    "text": "A reaction makes bubbles.",
+    "list": "sciencelabtools",
+    "word": "reaction"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s010__f8c99a",
+    "text": "Put the liquid in the test tube.",
+    "list": "sciencelabtools",
+    "word": "test tube"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s011__52b4eb",
+    "text": "Use a dropper to add water.",
+    "list": "sciencelabtools",
+    "word": "dropper"
+  },
+  {
+    "type": "sentence",
+    "id": "sciencelabtools__s012__575397",
+    "text": "Wear a lab coat during experiments.",
+    "list": "sciencelabtools",
+    "word": "lab coat"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s001__b6f673",
+    "text": "Put your money in your wallet.",
+    "list": "shoppingmoney",
+    "word": "wallet"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s002__2dea50",
+    "text": "Keep your receipt after shopping.",
+    "list": "shoppingmoney",
+    "word": "receipt"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s003__3e5031",
+    "text": "Check the price before you buy.",
+    "list": "shoppingmoney",
+    "word": "price"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s004__75f03d",
+    "text": "Get your change from the cashier.",
+    "list": "shoppingmoney",
+    "word": "change"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s005__6e30ff",
+    "text": "The cashier gives you a receipt.",
+    "list": "shoppingmoney",
+    "word": "cashier"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s006__6992f8",
+    "text": "Buy clothes during a sale.",
+    "list": "shoppingmoney",
+    "word": "sale"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s007__e9720e",
+    "text": "Ask for a student discount.",
+    "list": "shoppingmoney",
+    "word": "discount"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s008__3ad3a0",
+    "text": "Put a coin in the vending machine.",
+    "list": "shoppingmoney",
+    "word": "coin"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s009__1289de",
+    "text": "Pay with a bill or a coin.",
+    "list": "shoppingmoney",
+    "word": "bill"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s010__c972ac",
+    "text": "Swipe your credit card to pay.",
+    "list": "shoppingmoney",
+    "word": "credit card"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s011__31bec7",
+    "text": "Go to the checkout to pay.",
+    "list": "shoppingmoney",
+    "word": "checkout"
+  },
+  {
+    "type": "sentence",
+    "id": "shoppingmoney__s012__c3c353",
+    "text": "Return the shirt if it doesn’t fit.",
+    "list": "shoppingmoney",
+    "word": "return"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s001__1e7305",
+    "text": "Mix the flour and water.",
+    "list": "simplescienceactions",
+    "word": "mix"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s002__665acc",
+    "text": "Pour juice into the glass.",
+    "list": "simplescienceactions",
+    "word": "pour"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s003__4b5af8",
+    "text": "Leaves float on the pond.",
+    "list": "simplescienceactions",
+    "word": "float"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s004__f8aadc",
+    "text": "Rocks sink in water.",
+    "list": "simplescienceactions",
+    "word": "sink"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s005__226008",
+    "text": "Water will freeze in winter.",
+    "list": "simplescienceactions",
+    "word": "freeze"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s006__1f11cc",
+    "text": "Ice cream melts in the sun.",
+    "list": "simplescienceactions",
+    "word": "melt"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s007__6edea7",
+    "text": "Weigh the apple on the scale.",
+    "list": "simplescienceactions",
+    "word": "weigh"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s008__2c4246",
+    "text": "Heat the soup on the stove.",
+    "list": "simplescienceactions",
+    "word": "heat"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s009__cb1c94",
+    "text": "Let the cookies cool.",
+    "list": "simplescienceactions",
+    "word": "cool"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s010__2fd835",
+    "text": "Measure the water carefully.",
+    "list": "simplescienceactions",
+    "word": "measure"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s011__ea0b56",
+    "text": "Observe the color change.",
+    "list": "simplescienceactions",
+    "word": "observe"
+  },
+  {
+    "type": "sentence",
+    "id": "simplescienceactions__s012__065a52",
+    "text": "Record your results in a notebook.",
+    "list": "simplescienceactions",
+    "word": "record"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s001__20ed28",
+    "text": "I like skateboarding at the park.",
+    "list": "sportshobbieskids2",
+    "word": "skateboarding"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s002__b40cb6",
+    "text": "We go rollerblading after school.",
+    "list": "sportshobbieskids2",
+    "word": "rollerblading"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s003__1325f2",
+    "text": "I ride a scooter to the playground.",
+    "list": "sportshobbieskids2",
+    "word": "ride a scooter"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s004__a78bd9",
+    "text": "They jump on the trampoline safely.",
+    "list": "sportshobbieskids2",
+    "word": "jump on the trampoline"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s005__962eeb",
+    "text": "We do kids’ yoga on Fridays.",
+    "list": "sportshobbieskids2",
+    "word": "yoga"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s006__320590",
+    "text": "My brother does taekwondo after school.",
+    "list": "sportshobbieskids2",
+    "word": "taekwondo"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s007__b0541a",
+    "text": "I joined the chess club at school.",
+    "list": "sportshobbieskids2",
+    "word": "chess club"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s008__293c71",
+    "text": "She makes animals with origami.",
+    "list": "sportshobbieskids2",
+    "word": "origami"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s009__a25ba1",
+    "text": "We build with LEGO on rainy days.",
+    "list": "sportshobbieskids2",
+    "word": "build with LEGO"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s010__f1fb95",
+    "text": "He paints miniatures carefully.",
+    "list": "sportshobbieskids2",
+    "word": "paint miniatures"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s011__b1c1cd",
+    "text": "We bake cookies on weekends.",
+    "list": "sportshobbieskids2",
+    "word": "bake cookies"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s012__9ba1b0",
+    "text": "We go birdwatching in spring.",
+    "list": "sportshobbieskids2",
+    "word": "birdwatching"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s013__6ea557",
+    "text": "Let’s fly a kite at the field.",
+    "list": "sportshobbieskids2",
+    "word": "fly a kite"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s014__eea941",
+    "text": "Our family goes hiking on a hill.",
+    "list": "sportshobbieskids2",
+    "word": "hiking"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s015__987c79",
+    "text": "We go camping in the summer.",
+    "list": "sportshobbieskids2",
+    "word": "camping"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s016__4e99e2",
+    "text": "I go fishing with my dad.",
+    "list": "sportshobbieskids2",
+    "word": "fishing"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s017__6b81da",
+    "text": "She likes photography after school.",
+    "list": "sportshobbieskids2",
+    "word": "photography"
+  },
+  {
+    "type": "sentence",
+    "id": "sportshobbieskids2__s018__d94572",
+    "text": "I joined the robotics club this year.",
+    "list": "sportshobbieskids2",
+    "word": "robotics club"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s001__ac71cd",
+    "text": "I read books on my tablet.",
+    "list": "technologygadgets",
+    "word": "tablet"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s002__74d0e6",
+    "text": "Type your name on the keyboard.",
+    "list": "technologygadgets",
+    "word": "keyboard"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s003__e61458",
+    "text": "Plug in your charger at night.",
+    "list": "technologygadgets",
+    "word": "charger"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s004__114349",
+    "text": "Wear headphones to listen to music.",
+    "list": "technologygadgets",
+    "word": "headphones"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s005__51acd8",
+    "text": "Download a new app.",
+    "list": "technologygadgets",
+    "word": "app"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s006__70e7f2",
+    "text": "Download the file to your computer.",
+    "list": "technologygadgets",
+    "word": "download"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s007__fcf9e5",
+    "text": "Upload your photo to the website.",
+    "list": "technologygadgets",
+    "word": "upload"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s008__d4d34e",
+    "text": "Don’t share your password.",
+    "list": "technologygadgets",
+    "word": "password"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s009__faf9ea",
+    "text": "The screen is bright.",
+    "list": "technologygadgets",
+    "word": "screen"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s010__0b5b79",
+    "text": "Update your app for new features.",
+    "list": "technologygadgets",
+    "word": "update"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s011__c4746a",
+    "text": "Click with the mouse.",
+    "list": "technologygadgets",
+    "word": "mouse"
+  },
+  {
+    "type": "sentence",
+    "id": "technologygadgets__s012__7c71ef",
+    "text": "Connect to wifi at school.",
+    "list": "technologygadgets",
+    "word": "wifi"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s001__be986a",
+    "text": "Take the subway to school.",
+    "list": "traveltransportation",
+    "word": "subway"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s002__e5f32c",
+    "text": "Buy a ticket at the station.",
+    "list": "traveltransportation",
+    "word": "ticket"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s003__855390",
+    "text": "Wait on the platform for the train.",
+    "list": "traveltransportation",
+    "word": "platform"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s004__f68ec5",
+    "text": "Pack your clothes in a suitcase.",
+    "list": "traveltransportation",
+    "word": "suitcase"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s005__b8689e",
+    "text": "Don’t forget your passport.",
+    "list": "traveltransportation",
+    "word": "passport"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s006__55e0de",
+    "text": "The journey takes two hours.",
+    "list": "traveltransportation",
+    "word": "journey"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s007__d2301b",
+    "text": "Check the schedule for the bus.",
+    "list": "traveltransportation",
+    "word": "schedule"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s008__c630d0",
+    "text": "The train has a delay.",
+    "list": "traveltransportation",
+    "word": "delay"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s009__72fdea",
+    "text": "Board the plane at gate 5.",
+    "list": "traveltransportation",
+    "word": "board"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s010__cf8a8e",
+    "text": "Our arrival is at 3 p.m.",
+    "list": "traveltransportation",
+    "word": "arrival"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s011__ea8842",
+    "text": "Carry your luggage carefully.",
+    "list": "traveltransportation",
+    "word": "luggage"
+  },
+  {
+    "type": "sentence",
+    "id": "traveltransportation__s012__5bb1b1",
+    "text": "Meet me at the station.",
+    "list": "traveltransportation",
+    "word": "station"
+  }
+]

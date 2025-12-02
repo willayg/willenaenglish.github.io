@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="google" content="notranslate">
+  <title>Goblin Tag Question Battle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: #f5f5dc;
+      font-family: 'Pirata One', cursive;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #e0c060;
+      font-size: 48px;
+      text-shadow: 2px 2px #000;
+    }
+    .question {
+      font-size: 32px;
+      margin: 20px;
+      font-family: 'Roboto Slab', serif;
+    }
+    .btn {
+      font-size: 24px;
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: #e0c060;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #startBtn {
+      font-size: 60px;
+      padding: 25px 50px;
+    }
+    #result {
+      font-size: 28px;
+      margin-top: 20px;
+    }
+    #score, #timer {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    #highScores {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+    .noselect {
+      user-select: none;
+    }
+    .logo-bar {
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 18px;
+      margin-bottom: 10px;
+    }
+    #logo {
+      width: 110px;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body translate="no">
+  <div class="logo-bar">
+    <a href="../../challengezone.html">
+      <img src="../../assets/images/logo.png" alt="Willena Logo" id="logo" />
+    </a>
+  </div>
+  <h1>Goblin Tag Question Battle! 👹</h1>
+  <button id="startBtn" class="btn" onclick="startGame()">Start</button>
+  <div id="timer" style="display:none;">Time: 45s</div>
+  <div id="score" style="display:none;">Score: 0</div>
+  <div id="question" class="question" style="display:none;">Loading...</div>
+  <div id="buttons"></div>
+  <div id="result"></div>
+  <div id="endScreen" style="display:none;">
+    <p>Your final score: <span id="finalScore"></span></p>
+    <div id="nameEntry">
+      <input type="text" id="nameInput" placeholder="Enter your name" class="btn">
+      <button id="submitBtn" class="btn">Submit Score</button>
+    </div>
+    <div id="highScores"></div>
+  </div>
+  <audio id="bgm" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+let questions = [
+  { stem: "You're coming to the party,", correct: "aren't you?", options: ["are you?", "aren't you?", "won't you?", "isn't it?"] },
+  { stem: "She doesn't eat meat,", correct: "does she?", options: ["does she?", "doesn't she?", "is she?", "isn't she?"] },
+  { stem: "It’s a beautiful day,", correct: "isn't it?", options: ["is it?", "isn't it?", "was it?", "won’t it?"] },
+  { stem: "We should go now,", correct: "shouldn't we?", options: ["should we?", "shouldn't we?", "can we?", "shall we?"] },
+  { stem: "They haven’t finished yet,", correct: "have they?", options: ["haven’t they?", "hasn’t they?", "have they?", "did they?"] },
+  { stem: "You like pizza,", correct: "don't you?", options: ["do you?", "don't you?", "aren't you?", "won't you?"] },
+  { stem: "He can swim,", correct: "can't he?", options: ["can he?", "can't he?", "does he?", "isn't he?"] },
+  { stem: "We’re late,", correct: "aren't we?", options: ["are we?", "aren't we?", "weren't we?", "will we?"] },
+  { stem: "She’s coming with us,", correct: "isn't she?", options: ["is she?", "isn't she?", "doesn't she?", "wasn't she?"] },
+  { stem: "You’ve seen this movie,", correct: "haven't you?", options: ["have you?", "haven't you?", "did you?", "won't you?"] },
+  { stem: "He won the race,", correct: "didn't he?", options: ["did he?", "didn't he?", "wasn't he?", "doesn't he?"] },
+  { stem: "They will help us,", correct: "won't they?", options: ["will they?", "won't they?", "don't they?", "can't they?"] },
+  { stem: "It rained yesterday,", correct: "didn't it?", options: ["did it?", "didn't it?", "was it?", "isn't it?"] },
+  { stem: "Let’s go to the park,", correct: "shall we?", options: ["shall we?", "will we?", "can we?", "should we?"] },
+  { stem: "Close the door,", correct: "will you?", options: ["will you?", "won't you?", "can you?", "shall you?"] },
+  { stem: "Nobody called you,", correct: "did they?", options: ["did they?", "didn't they?", "do they?", "does they?"] },
+  { stem: "I’m early,", correct: "aren't I?", options: ["am I?", "aren't I?", "isn't I?", "wasn't I?"] },
+  { stem: "She has finished her work,", correct: "hasn't she?", options: ["has she?", "hasn't she?", "didn't she?", "isn't she?"] },
+  { stem: "You won’t be late,", correct: "will you?", options: ["will you?", "won't you?", "can you?", "shall you?"] },
+  { stem: "Let’s start the meeting,", correct: "shall we?", options: ["shall we?", "will we?", "can we?", "should we?"] },
+  { stem: "He never eats vegetables,", correct: "does he?", options: ["does he?", "doesn't he?", "did he?", "is he?"] },
+  { stem: "You’d like some tea,", correct: "wouldn't you?", options: ["would you?", "wouldn't you?", "won't you?", "will you?"] },
+  { stem: "She used to live here,", correct: "didn't she?", options: ["did she?", "didn't she?", "doesn't she?", "wasn't she?"] },
+  { stem: "They can’t swim,", correct: "can they?", options: ["can they?", "can't they?", "do they?", "will they?"] },
+  { stem: "You have a pen,", correct: "don't you?", options: ["do you?", "don't you?", "haven't you?", "didn't you?"] },
+  { stem: "He’s your brother,", correct: "isn't he?", options: ["is he?", "isn't he?", "wasn't he?", "doesn't he?"] },
+  { stem: "We’ve met before,", correct: "haven't we?", options: ["have we?", "haven't we?", "didn't we?", "aren't we?"] },
+  { stem: "She won’t mind if I go,", correct: "will she?", options: ["will she?", "won't she?", "does she?", "is she?"] },
+  { stem: "You didn’t see him,", correct: "did you?", options: ["did you?", "didn't you?", "do you?", "does you?"] },
+  { stem: "He’s never been to Paris,", correct: "has he?", options: ["has he?", "hasn't he?", "is he?", "was he?"] },
+  { stem: "Let’s not be late,", correct: "shall we?", options: ["shall we?", "will we?", "can we?", "should we?"] },
+  { stem: "She’d rather stay home,", correct: "wouldn't she?", options: ["would she?", "wouldn't she?", "won't she?", "will she?"] },
+  { stem: "You can drive a car,", correct: "can't you?", options: ["can you?", "can't you?", "do you?", "won't you?"] },
+  { stem: "He should apologize,", correct: "shouldn't he?", options: ["should he?", "shouldn't he?", "will he?", "can he?"] },
+  { stem: "They weren’t at the party,", correct: "were they?", options: ["were they?", "weren't they?", "are they?", "will they?"] },
+  { stem: "You don’t like coffee,", correct: "do you?", options: ["do you?", "don't you?", "did you?", "will you?"] },
+  { stem: "She can’t speak French,", correct: "can she?", options: ["can she?", "can't she?", "does she?", "is she?"] },
+  { stem: "We must hurry,", correct: "mustn't we?", options: ["must we?", "mustn't we?", "shouldn't we?", "can we?"] },
+  { stem: "He’d never lie to you,", correct: "would he?", options: ["would he?", "wouldn't he?", "will he?", "won't he?"] },
+  { stem: "You haven’t finished yet,", correct: "have you?", options: ["have you?", "haven't you?", "did you?", "do you?"] },
+  { stem: "She was at home yesterday,", correct: "wasn't she?", options: ["was she?", "wasn't she?", "isn't she?", "didn't she?"] },
+  { stem: "They don’t know the answer,", correct: "do they?", options: ["do they?", "don't they?", "did they?", "will they?"] },
+  { stem: "He won’t forget to call,", correct: "will he?", options: ["will he?", "won't he?", "does he?", "is he?"] },
+  { stem: "You’d like to come,", correct: "wouldn't you?", options: ["would you?", "wouldn't you?", "won't you?", "will you?"] },
+  { stem: "She’s never late,", correct: "is she?", options: ["is she?", "isn't she?", "was she?", "will she?"] },
+  { stem: "We could try again,", correct: "couldn't we?", options: ["could we?", "couldn't we?", "shouldn't we?", "can we?"] },
+  { stem: "He doesn’t play football,", correct: "does he?", options: ["does he?", "doesn't he?", "did he?", "is he?"] },
+  { stem: "You weren’t listening,", correct: "were you?", options: ["were you?", "weren't you?", "are you?", "will you?"] },
+  { stem: "She hasn’t called yet,", correct: "has she?", options: ["has she?", "hasn't she?", "did she?", "is she?"] },
+  { stem: "They should be here soon,", correct: "shouldn't they?", options: ["should they?", "shouldn't they?", "will they?", "can they?"] },
+  { stem: "He’s your teacher,", correct: "isn't he?", options: ["is he?", "isn't he?", "wasn't he?", "doesn't he?"] }
+];
+
+let current = 0;
+let score = 0;
+let timeLeft = 45;
+let timer;
+let locked = false;
+
+const scoreDisplay = document.getElementById("score");
+const timerDisplay = document.getElementById("timer");
+const bgm = document.getElementById("bgm");
+bgm.volume = 0.1;
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+function showQuestion() {
+  locked = false;
+  const q = questions[current % questions.length];
+  document.getElementById("question").textContent = `${q.stem}`;
+  const buttons = document.getElementById("buttons");
+  buttons.innerHTML = "";
+  shuffle([...q.options]).forEach(option => {
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = option;
+    btn.onclick = () => checkAnswer(option);
+    buttons.appendChild(btn);
+  });
+}
+
+function checkAnswer(choice) {
+  if (locked) return;
+  locked = true;
+  const correct = questions[current % questions.length].correct;
+
+  if (choice === correct) {
+    score += 300;
+    document.getElementById("result").style.color = "#4CAF50";
+    document.getElementById("result").textContent = `⚔️ Correct! The goblins retreat...`;
+  } else {
+    score -= 100;
+    document.getElementById("result").style.color = "#f44336";
+    document.getElementById("result").textContent = `👹 Wrong! The goblins laugh... Correct: ${correct}`;
+  }
+
+  scoreDisplay.textContent = `Score: ${score}`;
+
+  setTimeout(() => {
+    current++;
+    document.getElementById("result").textContent = "";
+    showQuestion();
+  }, 1000);
+}
+
+function startTimer() {
+  timer = setInterval(() => {
+    timeLeft--;
+    timerDisplay.textContent = `Time: ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      document.getElementById("score").style.display = "none";
+      document.getElementById("timer").style.display = "none";
+      document.getElementById("question").style.display = "none";
+      document.getElementById("buttons").style.display = "none";
+      document.getElementById("result").style.display = "none";
+      document.getElementById("endScreen").style.display = "block";
+      document.getElementById("finalScore").textContent = score;
+    }
+  }, 1000);
+}
+
+async function saveScore() {
+  const name = document.getElementById("playerName").value || "Anonymous";
+  // Submit score
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "goblin_tag" })
+  });
+
+  displayHighScores();
+  document.getElementById("nameEntry").innerHTML = '<button class="btn" onclick="location.reload()">Replay</button>';
+}
+
+async function displayHighScores() {
+  const response = await fetch('/.netlify/functions/submit_score?game=goblin_tag');
+  const data = await response.json();
+  const highScoresDiv = document.getElementById("highScores");
+  if (response.ok) {
+    // Keep only the highest score per player
+    const bestScores = {};
+    (Array.isArray(data) ? data : []).forEach(entry => {
+      if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+        bestScores[entry.name] = entry;
+      }
+    });
+    // Convert to array and sort by score descending, then take top 10
+    const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+    let list = "<h3>High Scores</h3>";
+    sorted.forEach((entry, i) => {
+      list += `<p>${i + 1}. ${entry.name}: ${entry.score}</p>`;
+    });
+    if (sorted.length === 0) list += "<p>No scores yet</p>";
+    highScoresDiv.innerHTML = list;
+  } else {
+    highScoresDiv.innerHTML = '<h3>High Scores</h3><p>Failed to load scores.</p>';
+    console.error(data.error);
+  }
+}
+
+function startGame() {
+  questions = shuffle(questions);
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("timer").style.display = "block";
+  document.getElementById("score").style.display = "block";
+  document.getElementById("question").style.display = "block";
+  document.getElementById("buttons").style.display = "block";
+  document.getElementById("result").style.display = "block";
+  bgm.play();
+  showQuestion();
+  startTimer();
+}
+
+function endGame() {
+  // Hide game UI, show end screen, play sounds, etc.
+  // ...your end game logic...
+
+  displayHighScores();
+
+  // Check if user is logged in
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  const nameInput = document.getElementById('nameInput');
+  if (user_id && user_name) {
+    // Autosubmit for logged-in user
+    if (nameInput) {
+      nameInput.value = user_name;
+      nameInput.style.display = 'none';
+    }
+    if (submitBtn) submitBtn.style.display = 'none';
+    submitScore(user_name, user_id);
+  } else {
+    // Show input and button for guests
+    if (nameInput) {
+      nameInput.value = '';
+      nameInput.style.display = 'block';
+      nameInput.focus();
+    }
+    if (submitBtn) submitBtn.style.display = 'inline-block';
+  }
+}
+
+async function submitScore(forcedName, forcedUserId) {
+  const nameInput = document.getElementById('nameInput');
+  let name = forcedName || (nameInput ? nameInput.value.trim() : '') || 'Anonymous';
+  const user_id = forcedUserId || null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.disabled = true;
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "goblin_tag", user_id })
+  });
+  if (submitBtn) submitBtn.style.display = 'none';
+  if (nameInput) nameInput.style.display = 'none';
+  displayHighScores();
+}
+
+// Attach handler on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.onclick = () => submitScore();
+  }
+});
+  </script>
+</body>
+</html>

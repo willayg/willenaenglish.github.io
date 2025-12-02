@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Netlify Functions deps",
+			"type": "shell",
+			"command": "npm install",
+			"problemMatcher": [
+				"$npm-script"
+			],
+			"group": "build"
+		}
+	]
+}

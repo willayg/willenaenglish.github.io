@@ -1,0 +1,12 @@
+[
+  {"eng":"library","kor":"도서관","def":"a place to read and borrow books","ex":"I go to the library.","ex_kor":"나는 도서관에 가요.","emoji":"📚"},
+  {"eng":"museum","kor":"박물관","def":"a place that shows old or special things","ex":"We visit the museum.","ex_kor":"우리는 박물관을 방문해요.","emoji":"🏛️"},
+  {"eng":"bakery","kor":"빵집","def":"a shop that makes and sells bread","ex":"She works at a bakery.","ex_kor":"그녀는 빵집에서 일해요.","emoji":"🥐"},
+  {"eng":"pharmacy","kor":"약국","def":"a shop that sells medicine","ex":"He goes to the pharmacy.","ex_kor":"그는 약국에 가요.","emoji":"💊"},
+  {"eng":"hospital","kor":"병원","def":"a place where sick people get help","ex":"She goes to the hospital.","ex_kor":"그녀는 병원에 가요.","emoji":"🏥"},
+  {"eng":"post office","kor":"우체국","def":"a place to send letters and packages","ex":"I go to the post office.","ex_kor":"나는 우체국에 가요.","emoji":"📮"},
+  {"eng":"police station","kor":"경찰서","def":"a building for the police","ex":"We pass the police station.","ex_kor":"우리는 경찰서를 지나가요.","emoji":"🚔"},
+  {"eng":"fire station","kor":"소방서","def":"a building for firefighters and fire trucks","ex":"The fire station is near.","ex_kor":"소방서는 가까워요.","emoji":"🚒"},
+  {"eng":"supermarket","kor":"슈퍼마켓","def":"a large store for food and goods","ex":"We shop at the supermarket.","ex_kor":"우리는 슈퍼마켓에서 장을 봐요.","emoji":"🛒"},
+  {"eng":"playground","kor":"놀이터","def":"an outdoor place for children to play","ex":"The kids run at the playground.","ex_kor":"아이들이 놀이터에서 뛰어요.","emoji":"🏀"}
+]

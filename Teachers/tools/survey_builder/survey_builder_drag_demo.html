@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESL Survey Builder</title>
+    <link rel="stylesheet" href="../tests/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="designs.css">
+    <style>
+        body {
+          background: #f6f6fa;
+          font-family: 'Poppins', Arial, sans-serif;
+          margin: 0;
+          min-height: 100vh;
+        }
+        .container {
+          max-width: 1100px;
+          margin: 40px auto 0 auto;
+          padding: 0 16px;
+        }
+        .app-card {
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+          padding: 0 0 32px 0;
+        }
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 24px 32px 0 32px;
+        }
+        .header img {
+          height: 56px;
+        }
+        .header-title {
+          font-size: 2.2em;
+          font-weight: 700;
+          color: #2e2b3f;
+          margin-left: 16px;
+        }
+        .floating-toolbar {
+          background: #e6b0f3;
+          border: 1.5px solid #735e81;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+          padding: 12px 18px;
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          margin: 24px 32px 24px 32px;
+          position: relative;
+          z-index: 20;
+        }
+        .floating-toolbar button {
+          background: #735e81;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          padding: 8px 18px;
+          font-size: 1em;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .floating-toolbar button:hover {
+          background: #a16fc1;
+        }
+        .main-content {
+          padding: 0 32px;
+        }
+        #pagesContainer {
+          position: relative;
+        }
+        .a4-page {
+          position: relative;
+          width: 210mm;
+          height: 297mm;
+          background: white;
+          box-shadow: 0 0 10px rgba(0,0,0,0.13);
+          margin: 0 auto 40px;
+          overflow: hidden;
+          border-radius: 12px;
+        }
+        .draggable-box {
+          position: absolute;
+          background: #fff8dc;
+          border: 2px dashed #666;
+          resize: both;
+          overflow: auto;
+          padding: 10px;
+          box-sizing: border-box;
+          cursor: move;
+          z-index: 10;
+          border-radius: 8px;
+          min-width: 120px;
+          min-height: 40px;
+        }
+        .draggable-box:focus {
+          outline: none;
+        }
+        @media print {
+          .floating-toolbar { display: none !important; }
+          #dragControls { display: none !important; }
+          #pagesContainer { background: none; }
+          .a4-page { box-shadow: none; page-break-after: always; margin: 0 auto; }
+          body { background: #fff; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+      <div class="app-card">
+        <!-- Header -->
+        <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+          <img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:72px;max-width:96px;">
+          <span class="header-title" style="font-size:2.2em;font-weight:700;color:#2e2b3f;margin-left:16px;">ESL Survey Builder</span>
+        </div>
+        <!-- Top Action Bar -->
+        <div class="top-actions" style="display:flex;align-items:center;gap:18px;padding:18px 32px 0 32px;">
+          <button id="newBtn" style="background:#eee;color:#735e81;border:none;border-radius:6px;padding:8px 18px;font-size:1em;">New</button>
+          <button id="saveBtn" style="background:#735e81;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:1em;">Save</button>
+          <button id="loadBtn" style="background:#735e81;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:1em;">Load</button>
+          <button id="printBtn" style="background:#735e81;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:1em;">Print</button>
+          <button id="moreBtn" style="background:#eee;color:#735e81;border:none;border-radius:6px;padding:8px 18px;font-size:1em;">More</button>
+        </div>
+        <!-- Floating Toolbar -->
+        <div class="floating-toolbar" id="dragControls">
+          <button onclick="addPage()">Add Page</button>
+          <button onclick="addBox()">Add Question Box</button>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content" style="display:flex;gap:24px;align-items:flex-start;">
+          <div style="flex:1;min-width:320px;max-width:420px;">
+            <!-- Survey Controls -->
+            <div class="input-group" style="margin-bottom:18px;">
+              <label for="surveyTitle" style="font-weight:500;color:#735e81;">Survey Title</label>
+              <input id="surveyTitle" type="text" class="input-field" placeholder="Enter survey title..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+            </div>
+            <div class="input-group" style="margin-bottom:18px;">
+              <label for="surveyInstructions" style="font-weight:500;color:#735e81;">Instructions</label>
+              <textarea id="surveyInstructions" class="textarea-field" placeholder="Enter instructions..." rows="2" style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:1em;"></textarea>
+            </div>
+            <div class="input-group" style="margin-bottom:18px;display:flex;gap:10px;align-items:center;">
+              <label for="fontSelect" style="font-weight:500;color:#735e81;">Font</label>
+              <select id="fontSelect" style="padding:4px 8px;border-radius:6px;border:1px solid #ccc;">
+                <option value="Poppins">Poppins</option>
+                <option value="Arial">Arial</option>
+                <option value="Caveat">Caveat</option>
+              </select>
+              <label for="fontSizeInput" style="font-weight:500;color:#735e81;margin-left:10px;">Font Size</label>
+              <input id="fontSizeInput" type="number" min="8" max="18" value="12" style="width:48px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;">
+              <button id="increaseFontBtn" style="background:#eee;color:#735e81;border:none;border-radius:6px;padding:4px 10px;font-size:1.1em;">+</button>
+              <button id="decreaseFontBtn" style="background:#eee;color:#735e81;border:none;border-radius:6px;padding:4px 10px;font-size:1.1em;">-</button>
+              <label for="templateSelect" style="font-weight:500;color:#735e81;margin-left:10px;">Template</label>
+              <select id="templateSelect" style="padding:4px 8px;border-radius:6px;border:1px solid #ccc;">
+                <option value="2">Design 2</option>
+                <option value="4">Design 4</option>
+                <option value="7">Design 7</option>
+                <option value="9">Design 9</option>
+                <option value="10">Design 10</option>
+              </select>
+            </div>
+            <!-- AI Tools Section -->
+            <div style="margin: 0 0 18px 0; padding: 18px 24px; background: #f8f3ff; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 12px;">
+              <label for="aiPromptInput" style="font-weight: 500; color: #735e81;">AI Question Generator</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input id="aiPromptInput" type="text" placeholder="Enter a topic or prompt for the AI..." style="flex:1; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em;">
+                <button id="sendAIPromptBtn" style="background: #735e81; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-size: 1em; cursor: pointer;">Send Prompt to AI</button>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Questions</label>
+              <textarea class="textarea-field" id="surveyQuestions" placeholder="Generated questions will appear here, or type your own..." rows="8" style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:1em;"></textarea>
+            </div>
+          </div>
+          <!-- Preview Area -->
+          <div class="preview-area" id="surveyPreviewArea" style="min-width:500px;width:100%;min-height:600px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.07);margin:0 0 0 24px;padding:32px 32px 32px 32px;overflow:auto;display:flex;align-items:flex-start;">
+            <div class="preview-placeholder" id="surveyPreviewPlaceholder" style="color:#aaa;text-align:center;margin-top:100px;">
+              <p>Preview will appear here</p>
+            </div>
+            <div id="pagesContainer" style="width:100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    // --- AI Tools Logic (using showSurveySectionModal) ---
+    document.addEventListener('DOMContentLoaded', function() {
+      const sendBtn = document.getElementById('sendAIPromptBtn');
+      const promptInput = document.getElementById('aiPromptInput');
+      if (!sendBtn || !promptInput) return;
+      sendBtn.onclick = async function() {
+        let promptText = promptInput.value.trim();
+        if (!promptText) {
+          alert('Please enter your prompt.');
+          return;
+        }
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending...';
+        try {
+          const response = await fetch('/.netlify/functions/openai_proxy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              endpoint: 'chat/completions',
+              payload: {
+                model: 'gpt-3.5-turbo',
+                messages: [ { role: 'user', content: promptText } ],
+                max_tokens: 600,
+                temperature: 0.7
+              }
+            })
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const result = await response.json();
+          const data = result.data;
+          if (data.error) throw new Error(data.error.message || 'OpenAI API error');
+          const content = data.choices[0].message.content.trim();
+          // Use the modal from survey-section-modal.js
+          if (typeof window.showSurveySectionModal === 'function') {
+            window.showSurveySectionModal(content, function(title, questions) {
+              // Split questions by double newlines or numbered questions
+              const questionBlocks = questions.split(/\n\s*\n|(?=\d+\.)/).map(q => q.trim()).filter(Boolean);
+              questionBlocks.forEach(qBlock => {
+                if (qBlock) {
+                  addBoxWithContent(`<b>${title ? title + ': ' : ''}</b>` + qBlock);
+                }
+              });
+            });
+          } else {
+            // fallback: just add as one box
+            addBoxWithContent(content);
+          }
+        } catch (err) {
+          alert('AI prompt failed: ' + err.message);
+        }
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send Prompt to AI';
+      };
+    });
+
+    function addBoxWithContent(content) {
+      if (pages.length === 0) addPage();
+      const page = pages[currentPage];
+      const box = document.createElement('div');
+      box.className = 'draggable-box';
+      box.contentEditable = true;
+      box.style.left = '40px';
+      box.style.top = '40px';
+      box.style.width = '300px';
+      box.style.height = '80px';
+      box.innerHTML = content;
+      makeDraggable(box);
+      page.appendChild(box);
+    }
+    // --- Draggable/Resizable Survey Builder JS ---
+    let currentPage = 0;
+    let pages = [];
+
+    function addPage() {
+      const pagesContainer = document.getElementById('pagesContainer');
+      const page = document.createElement('div');
+      page.className = 'a4-page';
+      page.style.position = 'relative';
+      page.innerHTML = '';
+      pagesContainer.appendChild(page);
+      pages.push(page);
+      currentPage = pages.length - 1;
+    }
+
+    function addBox() {
+      if (pages.length === 0) addPage();
+      const page = pages[currentPage];
+      const box = document.createElement('div');
+      box.className = 'draggable-box';
+      box.contentEditable = true;
+      box.style.left = '40px';
+      box.style.top = '40px';
+      box.style.width = '300px';
+      box.style.height = '80px';
+      box.innerText = 'Edit question...';
+      makeDraggable(box);
+      page.appendChild(box);
+    }
+
+    function makeDraggable(el) {
+      let offsetX, offsetY, isDragging = false;
+      el.addEventListener('mousedown', function(e) {
+        if (e.target !== el) return;
+        isDragging = true;
+        offsetX = e.clientX - el.offsetLeft;
+        offsetY = e.clientY - el.offsetTop;
+        el.style.zIndex = 1000;
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        el.style.left = (e.clientX - offsetX) + 'px';
+        el.style.top = (e.clientY - offsetY) + 'px';
+      });
+      document.addEventListener('mouseup', function(e) {
+        if (isDragging) {
+          isDragging = false;
+          el.style.zIndex = 10;
+          document.body.style.userSelect = '';
+        }
+      });
+    }
+
+    // Save/load layout (to be implemented)
+    function saveLayout() {
+      // Gather all pages and boxes
+      const layout = pages.map((page, pageIdx) => {
+        const boxes = Array.from(page.querySelectorAll('.draggable-box')).map(box => ({
+          left: box.style.left,
+          top: box.style.top,
+          width: box.style.width,
+          height: box.style.height,
+          content: box.innerHTML
+        }));
+        return { boxes };
+      });
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(layout, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute('href', dataStr);
+      dlAnchor.setAttribute('download', 'survey_layout.json');
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      document.body.removeChild(dlAnchor);
+    }
+
+    function loadLayout() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,application/json';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          try {
+            const layout = JSON.parse(evt.target.result);
+            // Clear existing pages
+            const pagesContainer = document.getElementById('pagesContainer');
+            pagesContainer.innerHTML = '';
+            pages.length = 0;
+            layout.forEach((pageData, pageIdx) => {
+              const page = document.createElement('div');
+              page.className = 'a4-page';
+              page.style.position = 'relative';
+              page.innerHTML = '';
+              pagesContainer.appendChild(page);
+              pages.push(page);
+              if (Array.isArray(pageData.boxes)) {
+                pageData.boxes.forEach(boxData => {
+                  const box = document.createElement('div');
+                  box.className = 'draggable-box';
+                  box.contentEditable = true;
+                  box.style.left = boxData.left || '40px';
+                  box.style.top = boxData.top || '40px';
+                  box.style.width = boxData.width || '300px';
+                  box.style.height = boxData.height || '80px';
+                  box.innerHTML = boxData.content || 'Edit question...';
+                  makeDraggable(box);
+                  page.appendChild(box);
+                });
+              }
+            });
+            currentPage = pages.length - 1;
+          } catch (err) {
+            alert('Failed to load layout: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    // Print function: hides controls, prints only the pages
+    function printSurvey() {
+      const controls = document.getElementById('dragControls');
+      controls.style.display = 'none';
+      window.print();
+      setTimeout(() => { controls.style.display = ''; }, 500);
+    }
+
+    // Add initial page on load
+    document.addEventListener('DOMContentLoaded', function() {
+      addPage();
+    });
+    </script>
+</body>
+</html>
+    <script>
+        // Save and Load functionality using worksheet manager
+        document.addEventListener('DOMContentLoaded', function() {
+            const saveBtn = document.getElementById('saveBtn');
+            const loadBtn = document.getElementById('loadBtn');
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    openWorksheetManager('save');
+                });
+            }
+
+            if (loadBtn) {
+                loadBtn.addEventListener('click', function() {
+                    openWorksheetManager('load');
+                });
+            }
+        });
+
+        // Function to open worksheet manager
+        function openWorksheetManager(mode) {
+            const url = `/Teachers/worksheet_manager.html?mode=${mode}&type=survey`;
+            const features = 'width=800,height=600,scrollbars=yes,resizable=yes';
+            window.open(url, 'WorksheetManager', features);
+        }
+
+        // Function to get current worksheet data for saving
+        function getCurrentWorksheetData() {
+            const titleInput = document.getElementById('surveyTitle');
+            const questionsInput = document.getElementById('surveyQuestions');
+            const fontSelect = document.getElementById('fontSelect');
+            const fontSizeInput = document.getElementById('fontSizeInput');
+            const templateSelect = document.getElementById('templateSelect');
+
+            // Compose all survey-related data into settings (JSON string)
+            const settings = {
+                font: fontSelect?.value || 'Poppins',
+                fontSize: parseInt(fontSizeInput?.value) || 12,
+                template: templateSelect?.value || '1'
+            };
+
+            // Save sections if they exist, otherwise save textarea content
+            let questions = '';
+            if (window.surveySections && Array.isArray(window.surveySections) && window.surveySections.length > 0) {
+                try {
+                    questions = JSON.stringify(window.surveySections);
+                } catch (e) {
+                    questions = questionsInput?.value || '';
+                }
+            } else {
+                questions = questionsInput?.value || '';
+            }
+
+            return {
+                title: titleInput?.value?.trim() || 'Untitled Survey',
+                worksheet_type: 'survey',
+                words: [], // Survey doesn't use words array
+                settings: JSON.stringify(settings),
+                questions: questions,
+                created_at: new Date().toISOString()
+            };
+        }
+
+        // Function to load worksheet data
+        function loadWorksheet(worksheet) {
+            if (!worksheet || worksheet.worksheet_type !== 'survey') {
+                alert('Invalid survey worksheet data.');
+                return;
+            }
+            try {
+                const titleInput = document.getElementById('surveyTitle');
+                const questionsInput = document.getElementById('surveyQuestions');
+                const fontSelect = document.getElementById('fontSelect');
+                const fontSizeInput = document.getElementById('fontSizeInput');
+                const templateSelect = document.getElementById('templateSelect');
+                const instructionsInput = document.getElementById('surveyInstructions');
+                // Section-based logic (like grammar)
+                window.surveySections = [];
+                let loadedSections = [];
+                let isSectionJson = false;
+                if (worksheet.questions && worksheet.questions.trim().startsWith('[')) {
+                    try {
+                        loadedSections = JSON.parse(worksheet.questions);
+                        if (Array.isArray(loadedSections)) {
+                            window.surveySections = loadedSections;
+                            isSectionJson = true;
+                        }
+                    } catch (e) {
+                        window.surveySections = [];
+                    }
+                }
+                if (!isSectionJson) {
+                    window.surveySections = [];
+                    if (questionsInput) questionsInput.value = worksheet.questions || '';
+                } else {
+                    if (questionsInput) questionsInput.value = '';
+                }
+                if (titleInput) titleInput.value = worksheet.title || '';
+                if (instructionsInput && worksheet.instructions) instructionsInput.value = worksheet.instructions;
+                // Load settings (parse from JSON string if needed)
+                if (worksheet.settings) {
+                    let settings;
+                    if (typeof worksheet.settings === 'string') {
+                        settings = JSON.parse(worksheet.settings);
+                    } else {
+                        settings = worksheet.settings;
+                    }
+                    if (settings.font && fontSelect) fontSelect.value = settings.font;
+                    if (settings.fontSize && fontSizeInput) fontSizeInput.value = settings.fontSize;
+                    if (settings.template && templateSelect) templateSelect.value = settings.template;
+                }
+                setTimeout(() => {
+                    if (typeof window.updateSurveyPreview === 'function') {
+                        window.updateSurveyPreview();
+                    }
+                }, 100);
+                alert('Survey loaded successfully!');
+            } catch (error) {
+                console.error('Error loading worksheet:', error);
+                alert('Error loading survey: ' + error.message);
+            }
+        }
+
+        // Make functions available globally for worksheet manager
+        window.getCurrentWorksheetData = getCurrentWorksheetData;
+        window.loadWorksheet = loadWorksheet;
+    </script>
+    <script>
+// Section-based survey logic
+window.surveySections = window.surveySections || [];
+
+// Function to render a single survey section into HTML
+function addSurveySection(section, index) {
+  if (!section) return '';
+  // Generate Part A, Part B, ...
+  const partLabel = `Part ${String.fromCharCode(65 + (index % 26))}`;
+  const titleHtml = `<h3 class="section-title">${partLabel}${section.title ? ': ' + section.title : ''}</h3>`;
+  // Detect if this section is MC or open (try to auto-detect by looking for MC pattern)
+  const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
+  const lines = section.questions.split('\n').map(q => q.trim());
+  let questionsHtml = '';
+  if (surveyType === 'mc' || lines.some(l => /^[0-9]+\.\s*/.test(l) && lines.slice(1).some(opt => /^[A-E]\.\s*/.test(opt)))) {
+    // MC parsing logic (copied from main preview)
+    let qNum = 1;
+    let i = 0;
+    while (i < lines.length) {
+      let qMatch = lines[i].match(/^(\d+)\.\s*(.*)$/);
+      if (qMatch) {
+        let qText = qMatch[2] || '';
+        let options = [];
+        let j = i + 1;
+        while (j < lines.length) {
+          let optMatch = lines[j].match(/^([A-Z])\.[ )]?\s*(.+)$/);
+          if (optMatch) {
+            options.push(optMatch[2]);
+            j++;
+          } else {
+            break;
+          }
+        }
+        if (options.length > 0) {
+          questionsHtml += `<div style="margin-bottom:18px;"><span style="font-weight:500;">${qNum}. ${qText}</span><div style='margin:6px 0 0 0;display:inline-block;width:100%;'>`;
+          let hasOther = options.some(opt => opt.trim().toLowerCase().startsWith('other'));
+          if (!hasOther) {
+            options.push('Other: ____________');
+          }
+          questionsHtml += options.map((opt, k) =>
+            `<label style='display:inline-block;vertical-align:middle;margin-right:24px;font-size:1em;white-space:nowrap;'><input type='radio' name='section${index}_q${qNum}' style='margin-right:6px;'>${opt}</label>`
+          ).join(' ');
+          questionsHtml += `</div></div>`;
+          i = j;
+          qNum++;
+        } else {
+          questionsHtml += `<div style="margin-bottom:18px;">${qNum}. ${qText}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+          i++;
+          qNum++;
+        }
+      } else if (lines[i]) {
+        questionsHtml += `<div style="margin-bottom:18px;">${lines[i]}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`;
+        i++;
+      } else {
+        i++;
+      }
+    }
+  } else {
+    // Open question mode
+    questionsHtml = lines.filter(q => q).map((q, i) => `<div style="margin-bottom:18px;">${q}<br><div style="border-bottom:1px solid #bbb;height:18px;margin:6px 0 0 0;"></div></div>`).join('');
+  }
+  return `
+    <div class="survey-section-box" data-section-idx="${index}" style="border:1px solid #eee; padding:15px; margin-bottom:15px; border-radius:8px;">
+      ${titleHtml}
+      <div class="survey-questions">
+        ${questionsHtml}
+      </div>
+    </div>
+  `;
+}
+window.addSurveySection = addSurveySection;
+
+// Patch AI button to insert as new section
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const sendBtn = document.getElementById('sendAIPromptBtn');
+    const promptInput = document.getElementById('aiPromptInput');
+    const questionsInput = document.getElementById('surveyQuestions');
+    if (!sendBtn || !promptInput) return;
+    
+    sendBtn.onclick = async function() {
+      let promptText = promptInput.value.trim();
+      const surveyType = document.getElementById('surveyTypeSelect')?.value || 'open';
+      if (!promptText) {
+        alert('Please enter your prompt.');
+        return;
+      }
+      // Add MC instructions if needed
+      if (surveyType === 'mc') {
+        promptText = `Create a set of ONLY multiple choice survey questions for ESL students. Each question MUST have exactly 5 answer options (A, B, C, D, E). The last option (E) must always be: Other: ____________. Do not include answer keys. Format each question and its options clearly, for example:\n1. Question text\nA. Option1\nB. Option2\nC. Option3\nD. Option4\nE. Other: ____________. Only output multiple choice questions with 5 options, no open/freestyle questions.` + (promptText ? ` Topic: ${promptText}` : '');
+      }
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+      try {
+        const response = await fetch('/.netlify/functions/openai_proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: 'chat/completions',
+            payload: {
+              model: 'gpt-3.5-turbo',
+              messages: [
+                { role: 'user', content: promptText }
+              ],
+              max_tokens: 600,
+              temperature: 0.7
+            }
+          })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const result = await response.json();
+        const data = result.data;
+        if (data.error) throw new Error(data.error.message || 'OpenAI API error');
+        const content = data.choices[0].message.content.trim();
+        
+        // Always use the modal since survey-section-modal.js should be loaded
+        console.log('Modal function available:', typeof window.showSurveySectionModal);
+        window.showSurveySectionModal(content, function(title, questions) {
+          window.surveySections.push({ title, questions });
+          // Always clear textarea when using sections
+          if (questionsInput) questionsInput.value = '';
+          if (typeof window.updateSurveyPreview === 'function') window.updateSurveyPreview();
+        });
+      } catch (err) {
+        alert('AI prompt failed: ' + err.message);
+      }
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send Prompt to AI';
+    };
+  });
+})();
+
+// Patch preview to use sections and keep textarea in sync
+const origUpdateSurveyPreview = window.updateSurveyPreview;
+window.updateSurveyPreview = function() {
+  // Use the createSurveyPreview function which has the proper structure
+  if (typeof window.createSurveyPreview === 'function') {
+    window.createSurveyPreview();
+  } else if (typeof origUpdateSurveyPreview === 'function') {
+    origUpdateSurveyPreview();
+  }
+};
+
+// Add right-click deletion of survey sections in preview (like grammar tool)
+document.addEventListener('DOMContentLoaded', function() {
+  // Section deletion is already handled in the main preview event listener above
+  // No need for duplicate handler
+});
+</script>
+<script>
+// Add New and More button logic for Survey Builder
+  document.addEventListener('DOMContentLoaded', function() {
+    // New button logic
+    const newBtn = document.getElementById('newBtn');
+    if (newBtn) {
+      newBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to start a new survey?\n\nAll unsaved changes will be lost.')) {
+          window.location.reload();
+        }
+      });
+    }
+    // More button logic
+    const moreBtn = document.getElementById('moreBtn');
+    if (moreBtn) {
+      moreBtn.addEventListener('click', async function() {
+        if (!document.getElementById('moreToolsOverlay')) {
+          try {
+            const resp = await fetch('/Teachers/components/more-tools.html');
+            const html = await resp.text();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const overlay = tempDiv.querySelector('#moreToolsOverlay');
+            if (overlay) document.body.appendChild(overlay);
+            tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+            tempDiv.querySelectorAll('script').forEach(script => {
+              const s = document.createElement('script');
+              if (script.textContent) s.textContent = script.textContent;
+              document.body.appendChild(s);
+            });
+            setTimeout(function() {
+              var closeBtn = document.getElementById('closeMoreToolsBtn');
+              var overlayDiv = document.getElementById('moreToolsOverlay');
+              if (closeBtn && overlayDiv) {
+                closeBtn.onclick = function() {
+                  overlayDiv.style.display = 'none';
+                  document.body.style.overflow = '';
+                };
+              }
+            }, 100);
+          } catch (e) { alert('Could not load More Tools.'); return; }
+        }
+        if (typeof showMoreToolsModal === 'function') {
+          showMoreToolsModal();
+        } else {
+          const overlay = document.getElementById('moreToolsOverlay');
+          if (overlay) {
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            var closeBtn = document.getElementById('closeMoreToolsBtn');
+            if (closeBtn) {
+              closeBtn.onclick = function() {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+              };
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>

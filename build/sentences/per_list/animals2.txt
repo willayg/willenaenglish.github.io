@@ -1,0 +1,24 @@
+# List: Animals2
+# Words
+lion
+tiger
+elephant
+giraffe
+zebra
+monkey
+bear
+wolf
+fox
+kangaroo
+
+# Sentences
+The lion rests.
+The tiger walks.
+The elephant drinks.
+The giraffe eats leaves.
+The zebra runs.
+The monkey climbs.
+The bear sleeps.
+The wolf howls.
+The fox hides.
+The kangaroo jumps.

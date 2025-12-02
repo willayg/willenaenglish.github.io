@@ -1,0 +1,38 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Netlify functions quick env check",
+			"type": "shell",
+			"command": "curl -sS \"http://localhost:8888/.netlify/functions/log_word_attempt?env=1\" | jq -r .env.hasServiceKey",
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Reload browser cache-busting",
+			"type": "shell",
+			"command": "echo Cache-bust ready. Please hard refresh browser (Ctrl+F5) and re-test Library Parse.",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Reload browser cache-busting",
+			"type": "shell",
+			"command": "echo Cache-bust ready. Please hard refresh browser (Ctrl+F5) and re-test Library Parse.",
+			"group": "build"
+		},
+		{
+			"label": "Netlify functions quick env check (9000, PS)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"(Invoke-RestMethod 'http://localhost:9000/.netlify/functions/log_word_attempt?env=1').env.hasServiceKey"
+			],
+			"group": "build"
+		}
+	]
+}

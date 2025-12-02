@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordsearch Generator</title>
+  <link rel="stylesheet" href="../tests/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
+
+  <!-- Shared burger menu component -->
+  <script type="module">
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+    async function ensureBurgerMenuTemplate() {
+      if (!document.getElementById('burger-menu-template')) {
+        const resp = await fetch('/Teachers/components/burger-menu.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', async () => {
+      await ensureBurgerMenuTemplate();
+      insertBurgerMenu('#burger-menu-mount');
+    });
+  </script>
+
+  <style>
+    /* --- Layout tweaks --- */
+    .preview-area {
+      flex: 1;
+      background: #fff;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-width: 900px;
+      max-width: 1200px;
+      overflow-y: auto;
+    }
+    .preview-area > * { width: 100%; max-width: 800px; margin: 0 auto 20px; }
+
+    .floating-toolbar { background: #fff9c4 !important; }
+    .toolbar-slider-group { display: flex; align-items: center; gap: 8px; margin: 0 8px; }
+    .toolbar-slider { width: 80px; height: 4px; background: #ddd; border-radius: 2px; outline: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+    .toolbar-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #4299e1; border-radius: 50%; cursor: pointer; }
+    .toolbar-slider::-moz-range-thumb { width: 14px; height: 14px; background: #4299e1; border-radius: 50%; cursor: pointer; border: none; }
+
+    /* --- Wordsearch visuals --- */
+  /* Base font classes */
+  .wordsearch-font-sans { font-family: Arial, Helvetica, sans-serif !important; }
+  .wordsearch-font-poppins { font-family: 'Poppins', Arial, sans-serif !important; }
+  .wordsearch-font-verdana { font-family: Verdana, Geneva, sans-serif !important; }
+  .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace !important; }
+  .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif !important; }
+  .wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive !important; }
+  .wordsearch-font-caveat { font-family: 'Caveat', cursive !important; }
+  .wordsearch-font-dancing { font-family: 'Dancing Script', cursive !important; }
+  .wordsearch-font-pacifico { font-family: 'Pacifico', cursive !important; }
+
+    .wordsearch-container { background: #fafaff; border: 2px solid #b6aee0; border-radius: 8px; padding: 20px; margin: 20px auto; box-shadow: 0 2px 8px rgba(46,43,63,0.06); max-width: max-content; }
+
+    .wordsearch-table { margin: 20px auto; border-collapse: collapse; }
+    .wordsearch-table td {
+      width: 2.5em; height: 2.5em; aspect-ratio: 1/1;
+      text-align: center; vertical-align: middle; border: 1px solid #333;
+      font-size: 1.1em; font-weight: bold; padding: 0; line-height: 1; box-sizing: border-box;
+    }
+
+    .worksheet-preview { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 20px 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .worksheet-preview > * { width: 100%; max-width: 800px; margin: 0 auto; }
+
+    .preview-placeholder { text-align: center; color: #666; font-style: italic; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+    /* --- Answer highlighting rules ---
+       We don't know which marker your generator uses, so we support many:
+       - data-answer="true" | "1"
+       - class .ws-answer / .answer / .hit
+       Toggle by adding .answers-on to the preview root. */
+    .answers-on .wordsearch-table td[data-answer="true"],
+    .answers-on .wordsearch-table td[data-answer="1"],
+    .answers-on .wordsearch-table td.ws-answer,
+    .answers-on .wordsearch-table td.answer,
+    .answers-on .wordsearch-table td.hit {
+      background: #ffe08a !important; /* soft yellow */
+      position: relative;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .answers-on .wordsearch-table td[data-answer]::after,
+    .answers-on .wordsearch-table td.ws-answer::after,
+    .answers-on .wordsearch-table td.answer::after,
+    .answers-on .wordsearch-table td.hit::after {
+      /* optional subtle border for print clarity */
+      content: '';
+      position: absolute; inset: -1px; border: 2px solid #f1b400; pointer-events: none;
+    }
+
+    /* Ensure print keeps colors and trims chrome */
+    @media print {
+      html, body { background: #fff !important; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .floating-toolbar, .top-actions, .sidebar, #burger-menu-mount { display: none !important; }
+      .preview-area { min-width: auto; max-width: none; padding: 0; }
+      .worksheet-preview { box-shadow: none; margin: 0; }
+      .wordsearch-container { border: none; box-shadow: none; margin: 0; padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Soft-gate: redirect if no user id or not approved -->
+  <script>
+    (async function () {
+      const userId = localStorage.getItem('userId');
+      if (!userId) { location.href = '/Teachers/login.html'; return; }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) { location.href = '/Teachers/components/access-denied.html'; }
+      } catch { location.href = '/Teachers/login.html'; }
+    })();
+  </script>
+
+  <div class="container">
+    <div class="app-card">
+      <!-- Header -->
+      <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+        <div class="logo"><img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img" /></div>
+        <h1 style="flex:1; text-align:center; margin:0;">Wordsearch Generator</h1>
+        <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+      </div>
+
+      <!-- Top Action Bar -->
+      <div class="top-actions">
+        <span class="action-link" id="newBtn">New</span>
+        <span class="action-link" id="loadBtn">Load</span>
+        <span class="action-link" id="saveBtn">Save</span>
+        <span class="action-link" id="printBtn">Print</span>
+        <span class="action-link" id="pdfBtn">PDF</span>
+        <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
+      </div>
+
+      <!-- Floating Toolbar -->
+      <div class="floating-toolbar" id="floatingToolbar">
+        <select class="toolbar-select" id="wordsearchFont">
+          <option value="poppins" selected>Poppins (Default)</option>
+          <option value="sans">Arial</option>
+          <option value="verdana">Verdana</option>
+          <option value="mono">Courier New</option>
+          <option value="comic">Comic Sans MS</option>
+          <option value="nanum">Nanum Pen Script</option>
+          <option value="caveat">Caveat</option>
+          <option value="dancing">Dancing Script</option>
+          <option value="pacifico">Pacifico</option>
+        </select>
+        <select class="toolbar-select" id="wordsearchTemplate">
+          <option value="0">Design 1</option>
+          <option value="1">Design 2</option>
+          <option value="2">Design 3</option>
+        </select>
+        <select class="toolbar-select" id="wordsearchCase">
+          <option value="upper">UPPERCASE</option>
+          <option value="lower">lowercase</option>
+        </select>
+        <select class="toolbar-select" id="wordsearchGridSize">
+          <option value="6">6x6</option>
+          <option value="8">8x8</option>
+          <option value="10">10x10</option>
+          <option value="12" selected>12x12</option>
+          <option value="15">15x15</option>
+          <option value="20">20x20</option>
+        </select>
+        <div class="toolbar-slider-group">
+          <label style="font-size:12px;color:#666;white-space:nowrap;">Size:</label>
+          <input type="range" class="toolbar-slider" id="wordsearchSizeSlider" min="0.5" max="1.25" step="0.1" value="1" />
+          <span id="wordsearchSizeValue" style="font-size:12px;color:#666;min-width:35px;">1.0x</span>
+        </div>
+        <div class="toolbar-slider-group">
+          <label style="font-size:12px;color:#666;white-space:nowrap;">Position:</label>
+          <input type="range" class="toolbar-slider" id="wordsearchPositionSlider" min="-50" max="50" step="5" value="0" />
+          <span id="wordsearchPositionValue" style="font-size:12px;color:#666;min-width:35px;">0px</span>
+        </div>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+        <button class="layout-btn" id="highlightAnswers">Show Answers</button>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="input-group">
+            <label>Title</label>
+            <input type="text" class="input-field" id="wordsearchTitle" placeholder="Enter worksheet title" />
+          </div>
+          <div class="input-group">
+            <label>AI Word Generation</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="text" class="input-field" id="categoryPrompt" placeholder="e.g., animals, food, colors" style="flex:1;" />
+              <button class="extract-btn" id="generateCategoryWordsBtn" style="white-space:nowrap;">Generate</button>
+            </div>
+            <small style="color:#666;font-size:12px;display:block;">Enter a category to generate words automatically</small>
+          </div>
+          <div class="input-group">
+            <span id="toggleExtractWordsDropdown" style="display:block;width:100%;text-align:left;margin-bottom:6px;cursor:pointer;color:#3b3b8f;font-weight:500;font-size:15px;padding:4px 0;user-select:none;">▸ Extract Words from Text</span>
+            <div id="extractWordsDropdown" style="display:none;margin-top:0;">
+              <label style="margin-bottom:4px;">Extract Words from Text</label>
+              <textarea class="textarea-field" id="passageInput" placeholder="Paste text here to extract difficult words..." rows="4"></textarea>
+              <div class="button-group" style="margin-top:8px;">
+                <button class="layout-btn" id="extractDifficultWordsBtn">Extract Words</button>
+              </div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Instructions</label>
+            <input type="text" class="input-field" id="wordsearchInstructions" placeholder="Find the hidden words in the grid below" />
+          </div>
+          <div class="input-group">
+            <label>Words to Find</label>
+            <textarea class="textarea-field" id="wordsearchWords" placeholder="Enter words, one per line..." rows="8"></textarea>
+          </div>
+          <div class="input-group">
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="wordsearchAllowDiagonals" />Allow diagonal words</label>
+          </div>
+          <div class="input-group">
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="wordsearchAllowBackwards" />Allow backwards words</label>
+          </div>
+          <div class="button-group"><button class="extract-btn" id="generateWordsearch">Generate Wordsearch</button></div>
+        </div>
+
+        <!-- Preview Area -->
+        <div class="preview-area" id="worksheetPreviewArea-wordsearch" data-answers-on="false">
+          <div class="preview-placeholder"><p>Preview will appear here</p><p>Enter some words and click "Generate Wordsearch"</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wordsearch logic (your existing generator) -->
+  <script src="wordsearch-standalone.js"></script>
+
+  <!-- Small helpers & wiring -->
+  <script>
+    // Extract words dropdown effect
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggleBtn = document.getElementById('toggleExtractWordsDropdown');
+      const dropdown = document.getElementById('extractWordsDropdown');
+      if (toggleBtn && dropdown) {
+        toggleBtn.addEventListener('click', function () {
+          const isOpen = dropdown.style.display === 'block';
+          dropdown.style.display = isOpen ? 'none' : 'block';
+          toggleBtn.innerHTML = (isOpen ? '▸' : '▾') + ' Extract Words from Text';
+        });
+        toggleBtn.addEventListener('mouseover', () => (toggleBtn.style.textDecoration = 'underline'));
+        toggleBtn.addEventListener('mouseout', () => (toggleBtn.style.textDecoration = 'none'));
+      }
+    });
+  </script>
+
+  <!-- Feedback modal loader (unchanged) -->
+  <script>
+    window.showFeedbackModal = function () {
+      if (document.getElementById('feedback-modal-bg')) return;
+      let template = document.getElementById('feedback-modal-template');
+      if (!template) {
+        fetch('/Teachers/components/feedback-modal.html')
+          .then((resp) => resp.text())
+          .then((html) => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            document.body.appendChild(tempDiv.firstElementChild);
+            showFeedbackModal();
+          });
+        return;
+      }
+      const modalNode = template.content.cloneNode(true);
+      document.body.appendChild(modalNode);
+      const bg = document.getElementById('feedbackModalBg');
+      if (!bg) return;
+      const closeBtn = bg.querySelector('#feedbackModalCloseBtn');
+      const cancelBtn = bg.querySelector('#feedbackCancelBtn');
+      function closeModal() { bg.remove(); }
+      if (closeBtn) closeBtn.onclick = closeModal;
+      if (cancelBtn) cancelBtn.onclick = closeModal;
+      const textarea = bg.querySelector('textarea');
+      if (textarea) textarea.focus();
+      const submitBtn = bg.querySelector('#feedbackSubmitBtn');
+      if (submitBtn) {
+        submitBtn.onclick = async function () {
+          const feedbackText = textarea.value.trim();
+          if (!feedbackText) { alert('Please enter your feedback.'); textarea.focus(); return; }
+          submitBtn.disabled = true; submitBtn.textContent = 'Sending...';
+          let toolState = {};
+          try {
+            toolState = {
+              title: document.getElementById('wordsearchTitle')?.value || '',
+              instructions: document.getElementById('wordsearchInstructions')?.value || '',
+              words: document.getElementById('wordsearchWords')?.value || '',
+              gridSize: document.getElementById('wordsearchGridSize')?.value || '',
+              font: document.getElementById('wordsearchFont')?.value || '',
+              template: document.getElementById('wordsearchTemplate')?.value || '',
+              case: document.getElementById('wordsearchCase')?.value || '',
+              allowDiagonals: document.getElementById('wordsearchAllowDiagonals')?.checked,
+              allowBackwards: document.getElementById('wordsearchAllowBackwards')?.checked,
+              size: document.getElementById('wordsearchSizeSlider')?.value || '',
+              position: document.getElementById('wordsearchPositionSlider')?.value || ''
+            };
+          } catch (e) { toolState = {}; }
+          const payload = {
+            feedback: feedbackText,
+            module: 'wordsearch',
+            page_url: window.location.pathname,
+            tool_state: toolState,
+            user_id: localStorage.getItem('userId') || '',
+            username: localStorage.getItem('username') || localStorage.getItem('name') || ''
+          };
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'insert_feedback', data: payload })
+            });
+            const result = await resp.json();
+            if (resp.ok && result.success) { submitBtn.textContent = 'Sent!'; setTimeout(closeModal, 900); }
+            else { submitBtn.disabled = false; submitBtn.textContent = 'Send'; alert('Error sending feedback: ' + (result.error || 'Unknown error')); }
+          } catch (err) { submitBtn.disabled = false; submitBtn.textContent = 'Send'; alert('Network error: ' + err.message); }
+        };
+      }
+    };
+  </script>
+
+  <!-- Wiring: answers toggle, sliders, print that respects answers -->
+  <script>
+    let ANSWERS_ON = false;
+
+    function getPreviewRoot() {
+      return document.getElementById('worksheetPreviewArea-wordsearch');
+    }
+
+    function setAnswersState(on) {
+      ANSWERS_ON = !!on;
+      const root = getPreviewRoot();
+      if (root) {
+        root.classList.toggle('answers-on', ANSWERS_ON);
+        root.setAttribute('data-answers-on', String(ANSWERS_ON));
+        // Force clear/set highlighting with inline styles to override any CSS
+        try {
+          const answerCells = root.querySelectorAll('td[data-answer="true"], td[data-answer="1"], td.ws-answer, td.answer, td.hit');
+          console.log('Found answer cells:', answerCells.length); // Debug log
+          if (ANSWERS_ON) {
+            answerCells.forEach(td => {
+              // Preserve original background only once
+              if (!td.hasAttribute('data-orig-bg')) td.setAttribute('data-orig-bg', td.style.backgroundColor || '');
+              td.style.backgroundColor = '#ffeb3b'; // bright yellow
+              td.style.fontWeight = '700';
+              console.log('Highlighted cell:', td.textContent); // Debug log
+            });
+          } else {
+            answerCells.forEach(td => {
+              // Force clear all highlighting - override any CSS
+              td.style.backgroundColor = '#fff'; // white background
+              td.style.fontWeight = 'bold'; // normal weight for grid
+            });
+          }
+        } catch(e) { 
+          console.error('Highlighting error:', e); 
+        }
+      }
+      const btn = document.getElementById('highlightAnswers');
+      if (btn) btn.textContent = ANSWERS_ON ? 'Hide Answers' : 'Show Answers';
+      // Don't trigger preview update when toggling answers - just highlight existing puzzle
+    }
+
+    function printWordsearch() {
+      const preview = getPreviewRoot();
+      if (!preview || !preview.innerHTML.trim()) { alert('Please generate a wordsearch first.'); return; }
+
+      const printWindow = window.open('', '_blank');
+      const answersOnAttr = preview.getAttribute('data-answers-on') === 'true' || preview.classList.contains('answers-on');
+
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Wordsearch Worksheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Poppins', sans-serif; margin: 20px; background: #fff; }
+    .wordsearch-font-sans { font-family: 'Poppins', Arial, sans-serif !important; }
+    .wordsearch-font-mono { font-family: 'Courier New', Courier, monospace !important; }
+    .wordsearch-font-comic { font-family: 'Comic Sans MS', Comic Sans, cursive, sans-serif !important; }
+    .wordsearch-font-nanum { font-family: 'Nanum Pen Script', cursive !important; }
+    .wordsearch-font-poppins { font-family: 'Poppins', Arial, sans-serif !important; }
+    .wordsearch-font-verdana { font-family: Verdana, Geneva, sans-serif !important; }
+    .wordsearch-font-caveat { font-family: 'Caveat', cursive !important; }
+    .wordsearch-font-dancing { font-family: 'Dancing Script', cursive !important; }
+    .wordsearch-font-pacifico { font-family: 'Pacifico', cursive !important; }
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Verdana:wght@400;700&family=Caveat:wght@400;500;600;700&family=Nanum+Pen+Script&family=Dancing+Script:wght@400;700&family=Pacifico&display=swap" rel="stylesheet" />
+    .wordsearch-table { margin: 20px auto; border-collapse: collapse; }
+    .wordsearch-table td { width: 2.5em; height: 2.5em; aspect-ratio: 1/1; text-align: center; vertical-align: middle; border: 1px solid #333; font-size: 1.1em; font-weight: bold; padding: 0; line-height: 1; box-sizing: border-box; }
+    .wordsearch-container { background: #fff; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: max-content; }
+    /* Same answer rules as main page */
+    .answers-on .wordsearch-table td[data-answer="true"],
+    .answers-on .wordsearch-table td[data-answer="1"],
+    .answers-on .wordsearch-table td.ws-answer,
+    .answers-on .wordsearch-table td.answer,
+    .answers-on .wordsearch-table td.hit { background: #ffe08a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; position: relative; }
+    .answers-on .wordsearch-table td[data-answer]::after,
+    .answers-on .wordsearch-table td.ws-answer::after,
+    .answers-on .wordsearch-table td.answer::after,
+    .answers-on .wordsearch-table td.hit::after { content: ''; position: absolute; inset: -1px; border: 2px solid #f1b400; pointer-events: none; }
+    @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { margin: 0; } .wordsearch-container { box-shadow: none; margin: 0; padding: 10px; } }
+  </style>
+</head>
+<body class="${answersOnAttr ? 'answers-on' : ''}">
+  ${preview.innerHTML}
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`;
+
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
+
+    // Wire up controls on load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Top bar
+      const newBtn = document.getElementById('newBtn');
+      if (newBtn) newBtn.addEventListener('click', () => { if (confirm('Start a new wordsearch? Unsaved changes will be lost.')) location.reload(); });
+
+      const moreBtn = document.getElementById('moreBtn');
+      if (moreBtn) {
+        moreBtn.addEventListener('click', async function () {
+          if (!document.getElementById('moreToolsOverlay')) {
+            try {
+              const resp = await fetch('/Teachers/components/more-tools.html');
+              const html = await resp.text();
+              const tempDiv = document.createElement('div'); tempDiv.innerHTML = html;
+              const overlay = tempDiv.querySelector('#moreToolsOverlay'); if (overlay) document.body.appendChild(overlay);
+              tempDiv.querySelectorAll('style').forEach((style) => document.head.appendChild(style));
+              tempDiv.querySelectorAll('script').forEach((script) => { const s = document.createElement('script'); if (script.textContent) s.textContent = script.textContent; document.body.appendChild(s); });
+              setTimeout(() => {
+                const closeBtn = document.getElementById('closeMoreToolsBtn');
+                const overlayDiv = document.getElementById('moreToolsOverlay');
+                if (closeBtn && overlayDiv) closeBtn.onclick = () => { overlayDiv.style.display = 'none'; document.body.style.overflow = ''; };
+              }, 100);
+            } catch { alert('Could not load More Tools.'); return; }
+          }
+          if (typeof showMoreToolsModal === 'function') showMoreToolsModal();
+          else { const overlay = document.getElementById('moreToolsOverlay'); if (overlay) { overlay.style.display = 'flex'; document.body.style.overflow = 'hidden'; const closeBtn = document.getElementById('closeMoreToolsBtn'); if (closeBtn) closeBtn.onclick = () => { overlay.style.display = 'none'; document.body.style.overflow = ''; }; } }
+        });
+      }
+
+      const pdfBtn = document.getElementById('pdfBtn');
+      if (pdfBtn) pdfBtn.addEventListener('click', () => alert('PDF export feature coming soon!'));
+
+      const saveBtn = document.getElementById('saveBtn');
+      if (saveBtn) saveBtn.addEventListener('click', () => { try { saveWordsearch(); } catch { alert('Save not available.'); } });
+
+      const loadBtn = document.getElementById('loadBtn');
+      if (loadBtn) loadBtn.addEventListener('click', () => { try { loadWordsearch(); } catch { alert('Load not available.'); } });
+
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) refreshBtn.addEventListener('click', () => { if (window.updateWordsearchPreview) window.updateWordsearchPreview({ answersOn: ANSWERS_ON }); });
+
+      const highlightBtn = document.getElementById('highlightAnswers');
+      if (highlightBtn) highlightBtn.addEventListener('click', () => setAnswersState(!ANSWERS_ON));
+
+      const printBtn = document.getElementById('printBtn');
+      if (printBtn) printBtn.addEventListener('click', printWordsearch);
+
+      // Sliders => trigger preview refresh
+      const sizeSlider = document.getElementById('wordsearchSizeSlider');
+      const positionSlider = document.getElementById('wordsearchPositionSlider');
+      const sizeValue = document.getElementById('wordsearchSizeValue');
+      const positionValue = document.getElementById('wordsearchPositionValue');
+      if (sizeSlider && sizeValue) sizeSlider.addEventListener('input', () => { const v = parseFloat(sizeSlider.value); sizeValue.textContent = `${v.toFixed(1)}x`; if (window.updateWordsearchPreview) window.updateWordsearchPreview({ answersOn: ANSWERS_ON }); });
+      if (positionSlider && positionValue) positionSlider.addEventListener('input', () => { const v = parseInt(positionSlider.value); positionValue.textContent = `${v}px`; if (window.updateWordsearchPreview) window.updateWordsearchPreview({ answersOn: ANSWERS_ON }); });
+
+      // Seed sample words once
+      const wordsTextarea = document.getElementById('wordsearchWords');
+      if (wordsTextarea && !wordsTextarea.value.trim()) {
+        wordsTextarea.value = 'CAT\nDOG\nBIRD\nFISH\nRABBIT\nHORSE\nELEPHANT\nLION';
+      }
+
+      // First render
+      setTimeout(() => {
+        const generateBtn = document.getElementById('generateWordsearch');
+        if (generateBtn) generateBtn.click();
+        setAnswersState(false); // default to hidden on load
+      }, 400);
+    });
+  </script>
+</body>
+</html>

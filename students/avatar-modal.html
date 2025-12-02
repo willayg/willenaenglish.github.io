@@ -1,0 +1,17 @@
+<!-- Avatar Modal: scrollable, styled like profile cards -->
+<div id="avatarModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal card avatar-modal" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
+    <header>
+      <h3 id="avatarModalTitle">Choose your avatar</h3>
+      <div class="spacer"></div>
+      <button id="avatarClose" class="btn-ghost" aria-label="Close">✕</button>
+    </header>
+    <div class="content" style="max-height:340px;overflow-y:auto;overflow-x:hidden;">
+      <div id="emojiGrid" class="emoji-grid" style="overflow-x:hidden;"></div>
+    </div>
+    <div class="actions">
+      <button id="avatarCancel" class="btn-ghost">Cancel</button>
+      <button id="avatarSave" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>

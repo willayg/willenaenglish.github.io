@@ -1,0 +1,62 @@
+<!-- Mint AI-style Vocab Box Modal: AI inputs left, preview right -->
+<div id="vocab-box-modal" class="mint-modal" style="display:flex;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:30000;">
+  <div class="modal-panel" style="background:#f8fdff;border-radius:16px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:0;min-width:720px;max-width:98vw;min-height:420px;max-height:90vh;overflow:auto;display:flex;flex-direction:row;align-items:stretch;">
+    <!-- Left: AI Inputs -->
+    <div style="flex:1 1 340px;min-width:320px;max-width:420px;padding:32px 24px 24px 32px;display:flex;flex-direction:column;gap:18px;border-right:1.5px solid #e1e8ed;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <h2 style="font-family:Poppins,sans-serif;font-size:1.3em;margin:0;">MINT AI Vocab Box</h2>
+        <button id="close-vocab-modal" style="background:none;border:none;font-size:1.8em;line-height:1;color:#888;cursor:pointer;">&times;</button>
+      </div>
+      <label style="font-weight:600;font-size:1em;">Title
+        <input id="vocab-title" type="text" placeholder="Enter title" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:1em;">
+      </label>
+      <label style="font-weight:600;font-size:1em;">Passage Text
+        <textarea id="vocab-passage" placeholder="Insert passage here..." style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:1em;min-height:64px;"></textarea>
+      </label>
+      <button id="vocab-import-btn" style="margin-bottom:0;padding:8px 0;border-radius:8px;background:#3d3752;color:#fff;border:none;font-size:1em;">Import Text</button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <label style="font-weight:600;">Difficulty
+          <select id="vocab-difficulty" style="margin-left:8px;padding:6px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:1em;">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+            <option value="related">Related</option>
+            <option value="phrases">Phrases</option>
+          </select>
+        </label>
+        <label style="font-weight:600;"># Words
+          <input id="vocab-numwords" type="number" min="2" max="30" value="10" style="width:56px;margin-left:8px;padding:6px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:1em;">
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:0;">
+        <button id="vocab-extract-btn" style="flex:1;padding:8px 0;border-radius:8px;background:#38b2ac;color:#fff;border:none;font-size:1em;">Extract Words</button>
+        <button id="vocab-clear-btn" style="flex:1;padding:8px 0;border-radius:8px;background:#e53e3e;color:#fff;border:none;font-size:1em;">Clear All</button>
+      </div>
+      <label style="font-weight:600;font-size:1em;">Word List
+        <textarea id="vocab-wordlist" placeholder="Words will appear here after extraction, or you can type them manually in format: english, korean" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:1em;min-height:80px;"></textarea>
+      </label>
+      <label style="font-weight:600;font-size:1em;">List Format
+        <select id="vocab-list-format" style="margin-left:8px;padding:6px 10px;border-radius:8px;border:1px solid #cbd5e0;font-size:1em;">
+          <option value="basic">Basic Word List</option>
+          <option value="sidebyside">2 Lists (Side by Side)</option>
+          <option value="picturecards">Picture Cards (5 per row)</option>
+          <option value="picturelist">Picture List</option>
+          <option value="picturelist2">Picture List (2 Columns)</option>
+          <option value="picturequiz">Picture Quiz</option>
+          <option value="picturequiz5">Picture Quiz (5 per row)</option>
+          <option value="picturematching">Picture Matching</option>
+          <option value="engkormatch">English-Korean Matching</option>
+        </select>
+      </label>
+      <div style="margin-top:8px;display:flex;gap:12px;justify-content:flex-end;">
+        <button id="vocab-insert-btn" style="padding:8px 24px;font-size:1.1em;border-radius:8px;background:#4fd1c5;color:#fff;border:none;cursor:pointer;">Insert</button>
+        <button id="vocab-cancel-btn" style="padding:8px 24px;font-size:1.1em;border-radius:8px;background:#eee;color:#444;border:none;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+    <!-- Right: Live Preview -->
+    <div style="flex:1 1 420px;min-width:320px;max-width:600px;padding:32px 32px 24px 24px;display:flex;flex-direction:column;align-items:stretch;">
+      <h3 style="font-family:Poppins,sans-serif;font-size:1.1em;margin:0 0 8px 0;color:#319795;">Preview</h3>
+      <div id="vocab-preview-area" style="flex:1;min-height:220px;background:#fff;border-radius:12px;border:1.5px solid #e1e8ed;padding:18px;overflow:auto;"></div>
+    </div>
+  </div>
+</div>

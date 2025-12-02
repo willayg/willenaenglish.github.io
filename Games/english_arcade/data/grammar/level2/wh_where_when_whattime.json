@@ -1,0 +1,137 @@
+[
+  {
+    "id": "where_is_the_library",
+    "word": "where_is",
+    "en": "Where is the library?",
+    "ko": "도서관이 어디에 있어요?",
+    "exampleSentence": "Where is the library?",
+    "exampleSentenceKo": "도서관이 어디에 있어요?",
+    "emoji": "📚"
+  },
+  {
+    "id": "when_is_your_birthday",
+    "word": "when_is",
+    "en": "When is your birthday?",
+    "ko": "생일이 언제예요?",
+    "exampleSentence": "When is your birthday?",
+    "exampleSentenceKo": "생일이 언제예요?",
+    "emoji": "🎂"
+  },
+  {
+    "id": "what_time_is_the",
+    "word": "what_time",
+    "en": "What time is the movie?",
+    "ko": "영화가 몇 시에 시작해요?",
+    "exampleSentence": "What time is the movie?",
+    "exampleSentenceKo": "영화가 몇 시에 시작해요?",
+    "emoji": "🎬"
+  },
+  {
+    "id": "where_do_you_live",
+    "word": "where_do",
+    "en": "Where do you live?",
+    "ko": "어디에 살아요?",
+    "exampleSentence": "Where do you live?",
+    "exampleSentenceKo": "어디에 살아요?",
+    "emoji": "🏠"
+  },
+  {
+    "id": "when_do_you_go",
+    "word": "when_do",
+    "en": "When do you go to school?",
+    "ko": "언제 학교에 가요?",
+    "exampleSentence": "When do you go to school?",
+    "exampleSentenceKo": "언제 학교에 가요?",
+    "emoji": "🏫"
+  },
+  {
+    "id": "what_time_does_class",
+    "word": "what_time",
+    "en": "What time does class start?",
+    "ko": "수업은 몇 시에 시작하나요?",
+    "exampleSentence": "What time does class start?",
+    "exampleSentenceKo": "수업은 몇 시에 시작하나요?",
+    "emoji": "⏰"
+  },
+  {
+    "id": "where_are_the_keys",
+    "word": "where_are",
+    "en": "Where are the keys?",
+    "ko": "열쇠가 어디에 있어요?",
+    "exampleSentence": "Where are the keys?",
+    "exampleSentenceKo": "열쇠가 어디에 있어요?",
+    "emoji": "🔑"
+  },
+  {
+    "id": "when_is_the_party",
+    "word": "when_is",
+    "en": "When is the party?",
+    "ko": "파티가 언제예요?",
+    "exampleSentence": "When is the party?",
+    "exampleSentenceKo": "파티가 언제예요?",
+    "emoji": "🥳"
+  },
+  {
+    "id": "what_time_is_dinner",
+    "word": "what_time",
+    "en": "What time is dinner?",
+    "ko": "저녁이 몇 시에요?",
+    "exampleSentence": "What time is dinner?",
+    "exampleSentenceKo": "저녁이 몇 시에요?",
+    "emoji": "🍽️"
+  },
+  {
+    "id": "where_is_the_bus",
+    "word": "where_is",
+    "en": "Where is the bus stop?",
+    "ko": "버스 정류장이 어디에 있어요?",
+    "exampleSentence": "Where is the bus stop?",
+    "exampleSentenceKo": "버스 정류장이 어디에 있어요?",
+    "emoji": "🚌"
+  },
+  {
+    "id": "when_do_we_meet",
+    "word": "when_do",
+    "en": "When do we meet?",
+    "ko": "언제 만나요?",
+    "exampleSentence": "When do we meet?",
+    "exampleSentenceKo": "언제 만나요?",
+    "emoji": "📅"
+  },
+  {
+    "id": "what_time_does_the",
+    "word": "what_time",
+    "en": "What time does the train leave?",
+    "ko": "기차는 몇 시에 출발해요?",
+    "exampleSentence": "What time does the train leave?",
+    "exampleSentenceKo": "기차는 몇 시에 출발해요?",
+    "emoji": "🚆"
+  },
+  {
+    "id": "where_is_my_hat",
+    "word": "where_is",
+    "en": "Where is my hat?",
+    "ko": "내 모자는 어디에 있나요?",
+    "exampleSentence": "Where is my hat?",
+    "exampleSentenceKo": "내 모자는 어디에 있나요?",
+    "emoji": "🧢"
+  },
+  {
+    "id": "when_does_he_arrive",
+    "word": "when_does",
+    "en": "When does he arrive?",
+    "ko": "그는 언제 도착해요?",
+    "exampleSentence": "When does he arrive?",
+    "exampleSentenceKo": "그는 언제 도착해요?",
+    "emoji": "🕒"
+  },
+  {
+    "id": "what_time_is_the_2",
+    "word": "what_time",
+    "en": "What time is the show?",
+    "ko": "공연이 몇 시에 시작하나요?",
+    "exampleSentence": "What time is the show?",
+    "exampleSentenceKo": "공연이 몇 시에 시작하나요?",
+    "emoji": "🎭"
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {"eng":"subway","kor":"지하철","def":"an underground train","ex":"Take the subway to school.","ex_kor":"학교에 갈 때 지하철을 타세요."},
+  {"eng":"ticket","kor":"표","def":"a paper or card to ride or enter","ex":"Buy a ticket at the station.","ex_kor":"역에서 표를 사세요."},
+  {"eng":"platform","kor":"승강장","def":"the place where you wait for a train","ex":"Wait on the platform for the train.","ex_kor":"기차를 기다리려면 승강장에서 기다리세요."},
+  {"eng":"suitcase","kor":"여행가방","def":"a large bag for travel","ex":"Pack your clothes in a suitcase.","ex_kor":"여행가방에 옷을 넣으세요."},
+  {"eng":"passport","kor":"여권","def":"a book that shows who you are when you travel","ex":"Don’t forget your passport.","ex_kor":"여권을 잊지 마세요."},
+  {"eng":"journey","kor":"여행","def":"a trip from one place to another","ex":"The journey takes two hours.","ex_kor":"여행은 두 시간이 걸려요."},
+  {"eng":"schedule","kor":"일정","def":"a plan for when things happen","ex":"Check the schedule for the bus.","ex_kor":"버스 일정을 확인하세요."},
+  {"eng":"delay","kor":"지연","def":"when something is late","ex":"The train has a delay.","ex_kor":"기차가 지연되고 있어요."},
+  {"eng":"board","kor":"탑승하다","def":"to get on a vehicle","ex":"Board the plane at gate 5.","ex_kor":"5번 게이트에서 비행기에 탑승하세요."},
+  {"eng":"arrival","kor":"도착","def":"when you reach a place","ex":"Our arrival is at 3 p.m.","ex_kor":"우리는 오후 3시에 도착해요."},
+  {"eng":"luggage","kor":"짐","def":"bags and suitcases for travel","ex":"Carry your luggage carefully.","ex_kor":"짐을 조심히 들고 가세요."},
+  {"eng":"station","kor":"역","def":"a place where trains or buses stop","ex":"Meet me at the station.","ex_kor":"역에서 만나세요."}
+]

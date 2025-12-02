@@ -1,0 +1,20 @@
+[
+  {"eng":"skateboarding","kor":"스케이트보드를 타다","def":"to ride a skateboard","ex":"I like skateboarding at the park.","ex_kor":"나는 공원에서 스케이트보드를 타는 것을 좋아해요."},
+  {"eng":"rollerblading","kor":"인라인스케이트를 타다","def":"to skate with inline skates","ex":"We go rollerblading after school.","ex_kor":"우리는 방과 후 인라인스케이트를 타요."},
+  {"eng":"ride a scooter","kor":"스쿠터를 타다","def":"to ride a kick scooter","ex":"I ride a scooter to the playground.","ex_kor":"나는 놀이터까지 스쿠터를 타고 가요."},
+  {"eng":"jump on the trampoline","kor":"트램폴린에서 뛰다","def":"to jump on a trampoline","ex":"They jump on the trampoline safely.","ex_kor":"그들은 트램폴린에서 안전하게 뛰어요."},
+  {"eng":"yoga","kor":"요가를 하다","def":"to do easy yoga poses","ex":"We do kids’ yoga on Fridays.","ex_kor":"우리는 금요일마다 어린이 요가를 해요."},
+  {"eng":"taekwondo","kor":"태권도를 하다","def":"to practice taekwondo","ex":"My brother does taekwondo after school.","ex_kor":"내 남동생은 방과 후 태권도를 해요."},
+  {"eng":"chess club","kor":"체스 동아리를 하다","def":"to play chess with a club","ex":"I joined the chess club at school.","ex_kor":"나는 학교 체스 동아리에 가입했어요."},
+  {"eng":"origami","kor":"종이접기를 하다","def":"to fold paper into shapes","ex":"She makes animals with origami.","ex_kor":"그녀는 종이접기로 동물을 만들어요."},
+  {"eng":"build with LEGO","kor":"레고를 만들다","def":"to build models with LEGO bricks","ex":"We build with LEGO on rainy days.","ex_kor":"우리는 비 오는 날 레고를 만들어요."},
+  {"eng":"paint miniatures","kor":"미니어처를 칠하다","def":"to paint small figures or models","ex":"He paints miniatures carefully.","ex_kor":"그는 미니어처를 조심스럽게 칠해요."},
+  {"eng":"bake cookies","kor":"쿠키를 굽다","def":"to make cookies in the oven","ex":"We bake cookies on weekends.","ex_kor":"우리는 주말에 쿠키를 구워요."},
+  {"eng":"birdwatching","kor":"새를 관찰하다","def":"to watch and learn about birds","ex":"We go birdwatching in spring.","ex_kor":"우리는 봄에 새를 관찰하러 가요."},
+  {"eng":"fly a kite","kor":"연을 날리다","def":"to fly a kite in the wind","ex":"Let’s fly a kite at the field.","ex_kor":"운동장에서 연을 날려요."},
+  {"eng":"hiking","kor":"하이킹을 하다","def":"to walk on trails outdoors","ex":"Our family goes hiking on a hill.","ex_kor":"우리 가족은 언덕에서 하이킹을 해요."},
+  {"eng":"camping","kor":"캠핑을 하다","def":"to sleep outside in a tent","ex":"We go camping in the summer.","ex_kor":"우리는 여름에 캠핑을 가요."},
+  {"eng":"fishing","kor":"낚시를 하다","def":"to catch fish with a rod","ex":"I go fishing with my dad.","ex_kor":"나는 아빠와 낚시를 가요."},
+  {"eng":"photography","kor":"사진 찍기","def":"to take pictures with a camera","ex":"She likes photography after school.","ex_kor":"그녀는 방과 후 사진 찍기를 좋아해요."},
+  {"eng":"robotics club","kor":"로봇 동아리를 하다","def":"to build and code simple robots","ex":"I joined the robotics club this year.","ex_kor":"나는 올해 로봇 동아리에 가입했어요."}
+]

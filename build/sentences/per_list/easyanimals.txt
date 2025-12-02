@@ -1,0 +1,44 @@
+# List: EasyAnimals
+# Words
+dog
+cat
+rabbit
+horse
+cow
+pig
+sheep
+goat
+chicken
+duck
+mouse
+bear
+tiger
+lion
+elephant
+monkey
+fox
+wolf
+deer
+squirrel
+
+# Sentences
+The dog runs.
+The cat sleeps.
+The rabbit hops.
+The horse trots.
+The cow eats grass.
+The pig rolls.
+The sheep grazes.
+The goat climbs.
+The chicken pecks.
+The duck swims.
+The mouse hides.
+The bear sleeps.
+The tiger walks.
+The lion rests.
+The elephant drinks.
+The monkey climbs.
+The fox hides.
+The wolf howls.
+The deer runs.
+The squirrel jumps.

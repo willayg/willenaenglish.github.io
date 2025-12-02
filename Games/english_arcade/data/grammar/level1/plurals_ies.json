@@ -1,0 +1,28 @@
+[
+  { "id": "fly_singular", "word": "fly", "article": "singular", "emoji": "🪰", "exampleSentence": "One fly is on the table.", "exampleSentenceKo": "파리 한 마리가 탁자 위에 있어요.", "explanation": "Singular: one fly.", "explanationKo": "단수: 파리 한 마리" },
+  { "id": "fly_plural", "word": "flies", "article": "plural", "emoji": "🪰🪰", "exampleSentence": "Many flies are on the table.", "exampleSentenceKo": "파리들이 탁자 위에 있어요.", "explanation": "Plural: many flies (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "baby_singular", "word": "baby", "article": "singular", "emoji": "👶", "exampleSentence": "One baby is sleeping.", "exampleSentenceKo": "아기 한 명이 자고 있어요.", "explanation": "Singular: one baby.", "explanationKo": "단수: 아기 한 명" },
+  { "id": "baby_plural", "word": "babies", "article": "plural", "emoji": "👶👶", "exampleSentence": "Many babies are sleeping.", "exampleSentenceKo": "아기들이 자고 있어요.", "explanation": "Plural: many babies (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "city_singular", "word": "city", "article": "singular", "emoji": "🏙️", "exampleSentence": "One city is large.", "exampleSentenceKo": "도시 하나가 커요.", "explanation": "Singular: one city.", "explanationKo": "단수: 도시 하나" },
+  { "id": "city_plural", "word": "cities", "article": "plural", "emoji": "🏙️🏙️", "exampleSentence": "Many cities are large.", "exampleSentenceKo": "많은 도시들이 커요.", "explanation": "Plural: many cities (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "story_singular", "word": "story", "article": "singular", "emoji": "📖", "exampleSentence": "She tells one story.", "exampleSentenceKo": "그녀는 이야기 하나를 들려줘요.", "explanation": "Singular: one story.", "explanationKo": "단수: 이야기 하나" },
+  { "id": "story_plural", "word": "stories", "article": "plural", "emoji": "📖📖", "exampleSentence": "She tells stories.", "exampleSentenceKo": "그녀는 이야기들을 들려줘요.", "explanation": "Plural: many stories (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "party_singular", "word": "party", "article": "singular", "emoji": "🎉", "exampleSentence": "One party is fun.", "exampleSentenceKo": "파티 하나가 재미있어요.", "explanation": "Singular: one party.", "explanationKo": "단수: 파티 하나" },
+  { "id": "party_plural", "word": "parties", "article": "plural", "emoji": "🎉🎉", "exampleSentence": "Many parties are fun.", "exampleSentenceKo": "파티들은 재미있어요.", "explanation": "Plural: many parties (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "lady_singular", "word": "lady", "article": "singular", "emoji": "👗", "exampleSentence": "One lady wears a dress.", "exampleSentenceKo": "여성 한 명이 드레스를 입어요.", "explanation": "Singular: one lady.", "explanationKo": "단수: 여성 한 명" },
+  { "id": "lady_plural", "word": "ladies", "article": "plural", "emoji": "👗👗", "exampleSentence": "Ladies wear dresses.", "exampleSentenceKo": "여성들은 드레스를 입어요.", "explanation": "Plural: many ladies (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "puppy_singular", "word": "puppy", "article": "singular", "emoji": "🐶", "exampleSentence": "One puppy is cute.", "exampleSentenceKo": "강아지 한 마리가 귀여워요.", "explanation": "Singular: one puppy.", "explanationKo": "단수: 강아지 한 마리" },
+  { "id": "puppy_plural", "word": "puppies", "article": "plural", "emoji": "🐶🐶", "exampleSentence": "Many puppies are cute.", "exampleSentenceKo": "강아지들이 귀여워요.", "explanation": "Plural: many puppies (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "sky_singular", "word": "sky", "article": "singular", "emoji": "☁️", "exampleSentence": "The sky is blue.", "exampleSentenceKo": "하늘이 파란색이에요.", "explanation": "Singular: one sky.", "explanationKo": "단수: 하늘 하나" },
+  { "id": "sky_plural", "word": "skies", "article": "plural", "emoji": "☁️☁️", "exampleSentence": "Blue skies are beautiful.", "exampleSentenceKo": "푸른 하늘들은 아름다워요.", "explanation": "Plural: many skies (y→ies).", "explanationKo": "복수: y→ies로 변해요" },
+  
+  { "id": "berry_singular", "word": "berry", "article": "singular", "emoji": "🍓", "exampleSentence": "One berry is sweet.", "exampleSentenceKo": "베리 하나가 달아요.", "explanation": "Singular: one berry.", "explanationKo": "단수: 베리 하나" },
+  { "id": "berry_plural", "word": "berries", "article": "plural", "emoji": "🍓🍓", "exampleSentence": "She picks berries.", "exampleSentenceKo": "그녀는 베리들을 따요.", "explanation": "Plural: many berries (y→ies).", "explanationKo": "복수: y→ies로 변해요" }
+]

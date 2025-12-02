@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tropical Fruit in Korea - Reading Passage with Questions</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #container {
+      display: flex;
+      height: 100vh;
+    }
+    #reading-column {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    #quiz-column {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .question-box {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .question {
+      font-weight: bold;
+    }
+    .page-label {
+      font-size: 0.9em;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .options label {
+      display: block;
+      margin: 8px 0;
+      padding: 5px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .correct {
+      background-color: #c8f7c5;
+    }
+    .incorrect {
+      background-color: #f7c5c5;
+    }
+    #result {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    #reading-passage {
+      max-width: 840px;
+      width: 100%;
+      background: #f9f7f3;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #0001;
+      font-size: 1.1em;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      margin: 32px auto;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="reading-column">
+      <pre id="reading-passage"></pre>
+    </div>
+    <div id="quiz-column">
+      <div id="quiz-container"></div>
+      <div id="result"></div>
+    </div>
+  </div>
+  <script>
+    const questions = [
+      {
+        q: "1. What type of climate is Korea known for?",
+        options: [
+          "Tropical",
+          "Temperate",
+          "Arid",
+          "Polar"
+        ],
+        answer: 1
+      },
+      {
+        q: "2. Why do tropical fruits not usually grow in Korea?",
+        options: [
+          "The soil is too dry.",
+          "The temperature range is not suitable.",
+          "There is too much rainfall.",
+          "There are too many pests."
+        ],
+        answer: 1
+      },
+      {
+        q: "3. Which region in Korea recently harvested apple mangoes?",
+        options: [
+          "North Gyeongsang Province",
+          "Seoul",
+          "Wando County in South Jeolla Province",
+          "Busan"
+        ],
+        answer: 2
+      },
+      {
+        q: "4. When did farmers in Wando County start growing apple mangoes?",
+        options: [
+          "2010",
+          "2015",
+          "2018",
+          "2020"
+        ],
+        answer: 2
+      },
+      {
+        q: "5. What did the farmers build to help grow apple mangoes?",
+        options: [
+          "Irrigation systems",
+          "Greenhouses",
+          "Wind turbines",
+          "Dams"
+        ],
+        answer: 1
+      },
+      {
+        q: "6. Which of the following is NOT mentioned as a tropical fruit now grown in Korea?",
+        options: [
+          "Bananas",
+          "Papayas",
+          "Guavas",
+          "Oranges"
+        ],
+        answer: 3
+      },
+      {
+        q: "7. What is the main reason for the new agricultural developments in southern Korea?",
+        options: [
+          "Government subsidies",
+          "Global warming",
+          "New farming technology",
+          "Increased rainfall"
+        ],
+        answer: 1
+      },
+      {
+        q: "8. What is North Gyeongsang Province doing in response to climate change?",
+        options: [
+          "Planting more apple trees",
+          "Growing new varieties of apples",
+          "Switching to rice farming",
+          "Importing apples"
+        ],
+        answer: 1
+      },
+      {
+        q: "9. Which organization reported the rise in Korea’s average yearly temperatures?",
+        options: [
+          "World Health Organization",
+          "Korea Meteorological Administration",
+          "Agricultural Technology Center",
+          "United Nations"
+        ],
+        answer: 1
+      },
+      {
+        q: "10. Coffee beans are traditionally produced in which type of countries?",
+        options: [
+          "Countries near the equator",
+          "Countries with cold climates",
+          "Island nations",
+          "Desert countries"
+        ],
+        answer: 0
+      }
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result');
+
+    function loadQuestion() {
+      if (current >= questions.length) {
+        quizContainer.innerHTML = '';
+        resultContainer.textContent = `Quiz complete! Your score: ${score} / ${questions.length}`;
+        return;
+      }
+      const q = questions[current];
+      quizContainer.innerHTML = `
+        <div class="question-box">
+          <div class="question">${q.q}</div>
+          <div class="options">
+            ${q.options.map((opt, i) => `
+              <label>
+                <input type="radio" name="option" value="${i}">
+                ${opt}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="submitAnswer()">Submit</button>
+          <button onclick="skipQuestion()" style="margin-left:10px;">Skip</button>
+        </div>
+      `;
+      resultContainer.textContent = '';
+    }
+
+    window.submitAnswer = function() {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (!selected) {
+        resultContainer.textContent = "Please select an answer.";
+        return;
+      }
+      const answer = parseInt(selected.value, 10);
+      if (answer === questions[current].answer) {
+        score++;
+        resultContainer.textContent = "Correct!";
+      } else {
+        resultContainer.textContent = "Incorrect.";
+      }
+      current++;
+      setTimeout(loadQuestion, 1000);
+    };
+
+    window.skipQuestion = function() {
+      current++;
+      loadQuestion();
+    };
+
+    loadQuestion();
+  </script>
+  <script type="module">
+    import { readingPassage } from './tropical_fruit.js';
+    document.getElementById('reading-passage').textContent = readingPassage;
+  </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixabay Test</title>
+</head>
+<body>
+  <h2>Pixabay Image Test</h2>
+  <input type="text" id="wordInput" placeholder="Enter a word" />
+  <button id="fetchBtn">Get Image</button>
+  <div id="result" style="margin-top: 20px;"></div>
+
+  <script>
+    document.getElementById('fetchBtn').onclick = async function() {
+      const word = document.getElementById('wordInput').value.trim();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = 'Loading...';
+      if (!word) {
+        resultDiv.innerHTML = 'Please enter a word.';
+        return;
+      }
+      try {
+        const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word)}`);
+        const data = await res.json();
+        if (data.image) {
+          resultDiv.innerHTML = `<img src="${data.image}" alt="Pixabay image for ${word}" style="max-width:150px;max-height:150px;"><br><small>${data.image}</small>`;
+        } else {
+          resultDiv.innerHTML = 'No image found.';
+        }
+      } catch (e) {
+        resultDiv.innerHTML = 'Error fetching image.';
+      }
+    };
+  </script>
+</body>
+</html>

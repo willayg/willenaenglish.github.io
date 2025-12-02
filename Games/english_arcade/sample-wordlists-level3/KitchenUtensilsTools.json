@@ -1,0 +1,14 @@
+[
+  {"eng":"spoon","kor":"숟가락","def":"a tool for eating or stirring food","ex":"Eat soup with a spoon.","ex_kor":"숟가락으로 수프를 먹으세요."},
+  {"eng":"fork","kor":"포크","def":"a tool for picking up food","ex":"Use a fork for salad.","ex_kor":"샐러드를 먹을 때 포크를 사용하세요."},
+  {"eng":"knife","kor":"칼","def":"a tool for cutting food","ex":"Cut the apple with a knife.","ex_kor":"칼로 사과를 자르세요."},
+  {"eng":"plate","kor":"접시","def":"a flat dish for holding food","ex":"Put your food on a plate.","ex_kor":"음식을 접시에 놓으세요."},
+  {"eng":"bowl","kor":"그릇","def":"a round dish for soup or cereal","ex":"Pour cereal into the bowl.","ex_kor":"그릇에 시리얼을 부으세요."},
+  {"eng":"cup","kor":"컵","def":"a small container for drinks","ex":"Drink milk from a cup.","ex_kor":"컵으로 우유를 마시세요."},
+  {"eng":"pan","kor":"팬","def":"a flat tool for frying food","ex":"Fry eggs in a pan.","ex_kor":"팬에 계란을 볶으세요."},
+  {"eng":"pot","kor":"냄비","def":"a deep tool for boiling food","ex":"Boil water in a pot.","ex_kor":"냄비에 물을 끓이세요."},
+  {"eng":"spatula","kor":"주걱","def":"a tool for flipping or mixing food","ex":"Flip pancakes with a spatula.","ex_kor":"주걱으로 팬케이크를 뒤집으세요."},
+  {"eng":"whisk","kor":"거품기","def":"a tool for mixing quickly","ex":"Whisk eggs for the cake.","ex_kor":"케이크를 위해 계란을 거품기로 저으세요."},
+  {"eng":"grater","kor":"강판","def":"a tool for shredding food","ex":"Grate cheese with a grater.","ex_kor":"강판으로 치즈를 갈으세요."},
+  {"eng":"tongs","kor":"집게","def":"a tool for picking up hot food","ex":"Pick up meat with tongs.","ex_kor":"집게로 고기를 집으세요."}
+]

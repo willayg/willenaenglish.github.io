@@ -1,0 +1,14 @@
+[
+  {"eng":"toothbrush","kor":"칫솔","def":"a brush for cleaning teeth","ex":"Brush your teeth with a toothbrush.","ex_kor":"칫솔로 이를 닦으세요."},
+  {"eng":"toothpaste","kor":"치약","def":"a paste for cleaning teeth","ex":"Put toothpaste on your toothbrush.","ex_kor":"칫솔에 치약을 짜세요."},
+  {"eng":"soap","kor":"비누","def":"a bar or liquid for washing","ex":"Wash your hands with soap.","ex_kor":"비누로 손을 씻으세요."},
+  {"eng":"towel","kor":"수건","def":"a cloth for drying","ex":"Dry your face with a towel.","ex_kor":"수건으로 얼굴을 닦으세요."},
+  {"eng":"shampoo","kor":"샴푸","def":"a liquid for washing hair","ex":"Wash your hair with shampoo.","ex_kor":"샴푸로 머리를 감으세요."},
+  {"eng":"conditioner","kor":"린스","def":"a cream for softening hair","ex":"Use conditioner after shampoo.","ex_kor":"샴푸 후에 린스를 사용하세요."},
+  {"eng":"toilet","kor":"변기","def":"a seat for going to the bathroom","ex":"Flush the toilet after use.","ex_kor":"사용 후 변기를 내리세요."},
+  {"eng":"sink","kor":"세면대","def":"a bowl for washing hands or face","ex":"Wash your hands in the sink.","ex_kor":"세면대에서 손을 씻으세요."},
+  {"eng":"mirror","kor":"거울","def":"a glass for seeing yourself","ex":"Look in the mirror to brush your hair.","ex_kor":"거울을 보며 머리를 빗으세요."},
+  {"eng":"brush","kor":"빗","def":"a tool for making hair neat","ex":"Brush your hair every morning.","ex_kor":"매일 아침 머리를 빗으세요."},
+  {"eng":"comb","kor":"빗","def":"a tool for untangling hair","ex":"Comb your hair after a shower.","ex_kor":"샤워 후에 머리를 빗으세요."},
+  {"eng":"shower","kor":"샤워","def":"a place to wash your body with water","ex":"Take a shower before bed.","ex_kor":"자기 전에 샤워하세요."}
+]

@@ -1,0 +1,17 @@
+[
+  {"en":"There are many books on the shelf.","ko":"선반에 많은 책이 있어요.","example":"There are many books on the shelf.","emoji":"📚"},
+  {"en":"There is much water in the bottle.","ko":"병 안에 많은 물이 있어요.","example":"There is much water in the bottle.","emoji":"💧"},
+  {"en":"I have a few friends.","ko":"나는 친구가 몇 명 있어요.","example":"I have a few friends.","emoji":"👥"},
+  {"en":"I have few friends.","ko":"나는 친구가 거의 없어요.","example":"I have few friends.","emoji":"😕"},
+  {"en":"She has little time for hobbies.","ko":"그녀는 취미에 쓸 시간이 거의 없어요.","example":"She has little time for hobbies.","emoji":"⏳"},
+  {"en":"She has a little time for hobbies.","ko":"그녀는 취미에 쓸 시간이 조금 있어요.","example":"She has a little time for hobbies.","emoji":"🕰️"},
+  {"en":"We have a lot of tasks to finish.","ko":"우리는 끝낼 일이 많아요.","example":"We have a lot of tasks to finish.","emoji":"📁"},
+  {"en":"Do you have any questions?","ko":"질문 있나요?","example":"Do you have any questions?","emoji":"❓"},
+  {"en":"I don't have any money.","ko":"나는 돈이 없어요.","example":"I don't have any money.","emoji":"💸"},
+  {"en":"Some people enjoy spicy food.","ko":"어떤 사람들은 매운 음식을 즐겨요.","example":"Some people enjoy spicy food.","emoji":"🌶️"},
+  {"en":"None of the answers is correct.","ko":"답은 하나도 맞지 않아요.","example":"None of the answers is correct.","emoji":"❌"},
+  {"en":"Several students volunteered.","ko":"몇몇 학생들이 자원봉사했어요.","example":"Several students volunteered.","emoji":"✋"},
+  {"en":"Most students passed the exam.","ko":"대부분의 학생들이 시험을 통과했어요.","example":"Most students passed the exam.","emoji":"🎓"},
+  {"en":"All of the cookies were eaten.","ko":"모든 쿠키가 먹혔어요.","example":"All of the cookies were eaten.","emoji":"🍪"},
+  {"en":"Plenty of water is available.","ko":"충분한 물이 준비되어 있어요.","example":"Plenty of water is available.","emoji":"🚰"}
+]

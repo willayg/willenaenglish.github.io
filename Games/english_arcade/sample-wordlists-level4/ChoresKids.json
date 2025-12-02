@@ -1,0 +1,12 @@
+[
+  {"eng":"sweep the floor","kor":"바닥을 쓸다","def":"to clean the floor with a broom","ex":"Sweep the floor, please.","ex_kor":"바닥을 쓸어 주세요."},
+  {"eng":"wipe the table","kor":"식탁을 닦다","def":"to clean the table with a cloth","ex":"Wipe the table after lunch.","ex_kor":"점심 후에 식탁을 닦아요."},
+  {"eng":"fold the clothes","kor":"옷을 개다","def":"to fold clean clothes neatly","ex":"Fold the clothes neatly.","ex_kor":"옷을 가지런히 개요."},
+  {"eng":"take out the trash","kor":"쓰레기를 버리다","def":"to carry trash outside","ex":"Take out the trash on Tuesday.","ex_kor":"화요일에 쓰레기를 버려요."},
+  {"eng":"wash the dishes","kor":"설거지를 하다","def":"to clean plates and cups","ex":"Wash the dishes after dinner.","ex_kor":"저녁 식사 후 설거지를 해요."},
+  {"eng":"make the bed","kor":"침대를 정리하다","def":"to make your bed neat","ex":"Make the bed in the morning.","ex_kor":"아침에 침대를 정리해요."},
+  {"eng":"put away the toys","kor":"장난감을 정리하다","def":"to return toys to their place","ex":"Put away the toys now.","ex_kor":"지금 장난감을 정리해요."},
+  {"eng":"vacuum the rug","kor":"카펫을 청소기로 청소하다","def":"to clean the rug with a vacuum","ex":"Vacuum the rug, please.","ex_kor":"카펫을 청소기로 청소해요."},
+  {"eng":"sort the laundry","kor":"빨래를 분류하다","def":"to separate clothes by color or type","ex":"Sort the laundry by color.","ex_kor":"빨래를 색깔별로 분류해요."},
+  {"eng":"dust the shelf","kor":"선반의 먼지를 털다","def":"to remove dust from a shelf","ex":"Dust the shelf on Saturday.","ex_kor":"토요일에 선반의 먼지를 털어요."}
+]

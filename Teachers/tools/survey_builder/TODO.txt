@@ -1,0 +1,69 @@
+TODO List for Survey Builder Improvements
+
+1. Open Question Mode (current): Each question is open-ended with a single answer line.
+2. Add 3 Choice Mode: Each question has three selectable options (e.g., Agree / Neither / Disagree).
+3. Add 5 Choice Mode: Each question has five selectable options (e.g., Strongly Agree / Agree / Neutral / Disagree / Strongly Disagree).
+4. Add Grid Mode: Each question is a row in a table with columns for multiple students (like the class survey image). Optionally, allow an image in the first column of each row.
+5. Add Survey Type Dropdown: Dropdown menu labeled "Survey Type" just below the prompt, changing the layout and preview as in grammar2.html.
+6. Add Image Support in Grid Mode: Allow user to add an image for each question row in grid mode.
+7. Make the font resizer not resize the header, name, and date (only resize questions/instructions).
+
+
+🚨 High-Pain / Must-Fix
+
+Preview vs. Textarea sync is unreliable
+
+Teachers won’t know whether to trust what they see or what they typed.
+
+Worst-case: they save, reload, and half the survey is gone.
+👉 Fix: pick one source of truth (probably surveySections) and force all edits through it.
+
+Survey type (Open vs. MC) flips content
+
+Switching types nukes formatting or produces nonsense.
+👉 Fix: warn “Switching type may reset formatting” or lock type once questions exist.
+
+AI prompt fragile parsing
+
+Teachers expect “magic,” but if AI doesn’t output exact format, the whole preview breaks.
+👉 Fix: add input sanitization (normalize spacing, enforce 1. and A. before rendering).
+
+⚠️ Medium-Pain / Annoying but Workable
+
+Right-click delete sections (hidden, destructive)
+
+Teachers may delete by accident, not realize undo exists.
+👉 Fix: replace with explicit “🗑 Delete Section” button.
+
+Print/PDF mismatch
+
+What you see is not what you get. Teachers print a messy survey → looks unprofessional.
+👉 Fix: unify preview + print CSS, test with long surveys.
+
+Save/Load dual format (JSON vs. plain text)
+
+Some saves reload fine, others don’t.
+👉 Fix: auto-convert everything to JSON surveySections on save.
+
+🐜 Low-Pain / Polishing
+
+Refresh button wipes edits unexpectedly
+👉 Fix: disable refresh unless changes are saved.
+
+Placeholder ghosting
+
+Placeholder sometimes stays visible even with data.
+👉 Quick fix: hide it whenever preview builds.
+
+Inline editing in preview messy
+
+Teachers think they can “just edit there,” but it saves badly.
+👉 Fix: either disable editing in preview or make it cleanly update the data model.
+
+💡 Priorities
+
+First: 1 (sync), 2 (survey type), 3 (AI parsing). These destroy trust.
+
+Next: 5 (print), 6 (save/load). These affect classroom usability.
+
+Last: polish the small stuff.

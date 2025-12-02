@@ -1,0 +1,181 @@
+/* designs.css - 10 unique, print-friendly worksheet designs (no block color or gradients)
+
+/* Design 1: Classic Exam */
+.design-1 {
+  background: #fff;
+  border: 2px solid #222;
+  box-shadow: none;
+  padding: 32px;
+}
+.design-1 .worksheet-header {
+  border-bottom: 2px solid #222;
+  margin-bottom: 18px;
+}
+.design-1 .survey-questions > div {
+  border-bottom: 1px solid #222;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+/* Design 2: Modern Minimal */
+.design-2 {
+  background: #fff;
+  border: 1.5px solid #444;
+  box-shadow: none;
+  padding: 32px 40px;
+}
+.design-2 .worksheet-header {
+  border-bottom: 1.5px dashed #444;
+  margin-bottom: 16px;
+}
+.design-2 .survey-questions > div {
+  border-bottom: 1.5px dashed #444;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+}
+
+/* Design 3: Playful Hand-Drawn */
+.design-3 {
+  background: #fff;
+  border: 2px solid #735e81;
+  box-shadow: none;
+  padding: 32px;
+}
+.design-3 .worksheet-header {
+  border-bottom: 2px dotted #b67ff5;
+  margin-bottom: 18px;
+}
+.design-3 .survey-questions > div {
+  border-bottom: 2px dotted #b67ff5;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  font-family: 'Caveat', cursive;
+  font-size: 1.1em;
+}
+
+/* Design 4: Notebook Paper */
+.design-4 {
+  background: #fff;
+  border: 2px solid #a3d1ff;
+  box-shadow: none;
+  padding: 32px;
+  position: relative;
+}
+.design-4 .worksheet-header {
+  border-bottom: 2px solid #a3d1ff;
+  margin-bottom: 18px;
+}
+.design-4 .survey-questions > div {
+  border-bottom: 1px solid #a3d1ff;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+/* Design 5: Elegant Double Lines */
+.design-5 {
+  background: #fff;
+  border: 3px double #c7bfff;
+  box-shadow: none;
+  padding: 32px;
+}
+.design-5 .worksheet-header {
+  border-bottom: 3px double #c7bfff;
+  margin-bottom: 18px;
+}
+.design-5 .survey-questions > div {
+  border-bottom: 2px double #c7bfff;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+/* Design 6: Business Professional */
+.design-6 {
+  background: #fff;
+  border: 2px solid #444;
+  box-shadow: none;
+  padding: 32px 48px;
+}
+.design-6 .worksheet-header {
+  border-bottom: 2px solid #444;
+  margin-bottom: 18px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+.design-6 .survey-questions > div {
+  border-bottom: 2px solid #444;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+}
+
+/* Design 7: Fun Dotted Notebook */
+.design-7 {
+  background: #fff;
+  border: 2px dotted #ffe08a;
+  box-shadow: none;
+  padding: 32px;
+}
+.design-7 .worksheet-header {
+  border-bottom: 2px dotted #ffe08a;
+  margin-bottom: 18px;
+}
+.design-7 .survey-questions > div {
+  border-bottom: 2px dotted #ffe08a;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+/* Design 8: Left Accent Bar */
+.design-8 {
+  background: #fff;
+  border-left: 8px solid #38bdf8;
+  border-top: 2px solid #38bdf8;
+  border-bottom: 2px solid #38bdf8;
+  box-shadow: none;
+  padding: 32px 32px 32px 48px;
+}
+.design-8 .worksheet-header {
+  border-bottom: 2px solid #38bdf8;
+  margin-bottom: 18px;
+}
+.design-8 .survey-questions > div {
+  border-bottom: 1px solid #38bdf8;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+/* Design 9: Comic Book */
+.design-9 {
+  background: #fff;
+  border: 3px solid #222;
+  box-shadow: none;
+  padding: 32px;
+}
+.design-9 .worksheet-header {
+  border-bottom: 3px solid #222;
+  margin-bottom: 18px;
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 1.3em;
+}
+.design-9 .survey-questions > div {
+  border-bottom: 3px solid #222;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  font-family: 'Comic Sans MS', cursive;
+}
+
+/* Design 10: Subtle Gray Lines */
+.design-10 {
+  background: #fff;
+  border: 1.5px solid #aaa;
+  box-shadow: none;
+  padding: 32px;
+}
+.design-10 .worksheet-header {
+  border-bottom: 1.5px solid #aaa;
+  margin-bottom: 16px;
+}
+.design-10 .survey-questions > div {
+  border-bottom: 1.5px solid #aaa;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+}

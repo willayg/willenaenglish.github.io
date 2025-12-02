@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn English - Willena</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2e2b3f;
+      --accent: #edf0f9;
+      --text: #222;
+      --background: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      padding-bottom: 40px;
+    }
+
+    header {
+      background-color: var(--primary);
+      padding: 20px 6%;
+      display: flex;
+      align-items: center;
+    }
+
+    header img {
+      height: 80px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin: 40px 0 20px;
+      color: var(--primary);
+    }
+
+    .accordion {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .accordion-section {
+      margin-bottom: 10px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .accordion-header {
+      background-color: var(--accent);
+      color: var(--primary);
+      padding: 15px 20px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .accordion-content {
+      display: none;
+      background-color: #fff;
+      padding: 15px 20px;
+      border-top: 1px solid var(--accent);
+    }
+
+    .accordion-content a {
+      display: block;
+      color: var(--primary);
+      text-decoration: none;
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .accordion-content a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="Logo.png" alt="Willena Logo">
+  </header>
+
+  <h1>What Would You Like to Learn?</h1>
+
+  <div class="accordion">
+
+    <div class="accordion-section">
+      <div class="accordion-header">Words & Building Blocks</div>
+      <div class="accordion-content">
+        <a href="#">Verbs</a>
+        <a href="#">Nouns</a>
+        <a href="#">Adjectives & Adverbs</a>
+        <a href="#">Articles & Determiners</a>
+        <a href="#">Prepositions</a>
+      </div>
+    </div>
+
+    <div class="accordion-section">
+      <div class="accordion-header">Putting Words Together</div>
+      <div class="accordion-content">
+        <a href="#">Basic Sentence Patterns</a>
+        <a href="#">Word Order</a>
+        <a href="#">Questions & Negatives</a>
+        <a href="#">Subject-Verb Agreement</a>
+      </div>
+    </div>
+
+    <div class="accordion-section">
+      <div class="accordion-header">Tenses & Time</div>
+      <div class="accordion-content">
+        <a href="#">Present Simple</a>
+        <a href="#">Past Simple</a>
+        <a href="#">Future Tenses</a>
+        <a href="#">Present Perfect</a>
+        <a href="#">Conditionals</a>
+      </div>
+    </div>
+
+    <div class="accordion-section">
+      <div class="accordion-header">Speaking with Purpose</div>
+      <div class="accordion-content">
+        <a href="#">Making Requests</a>
+        <a href="#">Giving Opinions</a>
+        <a href="#">Describing People</a>
+        <a href="#">Making Comparisons</a>
+        <a href="#">Agreeing/Disagreeing</a>
+      </div>
+    </div>
+
+    <div class="accordion-section">
+      <div class="accordion-header">Tricky Stuff & Common Mistakes</div>
+      <div class="accordion-content">
+        <a href="#">Konglish Alerts</a>
+        <a href="#">False Friends</a>
+        <a href="#">Confusing Word Pairs</a>
+        <a href="#">Overused Words</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+      });
+    });
+  </script>
+</body>
+</html>

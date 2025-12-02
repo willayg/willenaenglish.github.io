@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="google" content="notranslate">
+  <title>Easy Picture Word Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Fredoka One', cursive;
+      background: url('../../assets/images/backgrounds/tolken.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
+      min-height: 100vh;
+      /* Remove flex styles */
+    }
+
+    .logo-bar {
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+    #logo {
+      width: 100px;
+      display: block;
+      margin: 0 auto;
+    }
+    .container {
+      width: 100vw;
+      max-width: 100vw;
+      margin: 0 auto;
+      padding: 8px 0 16px 0;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(0, 0, 0, 0.65);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    @media (min-width: 601px) {
+      .container {
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 30px 20px 20px 20px;
+      }
+    }
+    h1 {
+      font-size: 2.5em;
+      margin: 0.5em 0 0.2em 0;
+      color: #ffeb3b;
+      text-shadow: 2px 2px #222;
+    }
+    #icon {
+      font-size: 7em;
+      margin: 20px 0 10px 0;
+      display: none;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 98vw;
+    }
+    .option {
+      min-width: 0;
+      font-size: 1.3em;
+      padding: 18px 0;
+      border-radius: 16px;
+      background: #fff;
+      color: #222;
+      cursor: pointer;
+      text-align: center;
+      border: 2px solid #ffeb3b;
+      word-break: break-word;
+    }
+    .option:hover {
+      transform: scale(1.05);
+      background: #ffeb3b;
+      color: #222;
+    }
+    .scoreboard {
+      margin-top: 10px;
+      font-size: 1.3em;
+      display: none;
+      color: #fff;
+      padding: 10px 0;
+    }
+    .timer {
+      font-size: 1.3em;
+      color: #222;
+      background: #ffeb3b;
+      padding: 10px 24px;
+      border-radius: 20px;
+      margin: 14px auto 10px auto;
+      display: none;
+      width: fit-content;
+      padding: 10px 0;
+    }
+    #startBtn, #endBtn {
+      margin: 10px 8px 0 8px;
+      padding: 15px 30px;
+      font-size: 1.3em;
+      background: #388e3c;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #startBtn:hover, #endBtn:hover {
+      background: #2e7031;
+    }
+    #highscores {
+      margin-top: 20px;
+      font-size: 1em;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      color: #fff;
+    }
+    @media (max-width: 600px) {
+      .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 8px 1vw 16px 1vw;
+        border-width: 2px;
+      }
+      #logo {
+        width: 18vw;
+        min-width: 60px;
+        max-width: 100px;
+      }
+      .option {
+        font-size: 1.2em;
+        padding: 18px 0;
+        min-height: 48px;
+      }
+      h1 {
+        font-size: 1.5em;
+      }
+    }
+    .bonus-float {
+      position: absolute;
+      left: 50%;
+      top: 60%;
+      transform: translate(-50%, 0);
+      font-size: 3em; /* Made bigger */
+      color: #ffeb3b;
+      text-shadow: 2px 2px 8px #222;
+      pointer-events: none;
+      animation: bonus-float 1s ease-out forwards;
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      z-index: 1000;
+    }
+    @keyframes bonus-float {
+      0% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -60px); }
+    }
+    .noselect {
+      user-select: none;
+    }
+    #playerName {
+      font-size: 1.2em;
+      padding: 12px 10px;
+      border-radius: 10px;
+      width: 220px;
+      max-width: 90vw;
+      margin-bottom: 10px;
+    }
+    #submitName {
+      font-size: 1.2em;
+      padding: 12px 20px;
+      border-radius: 10px;
+      min-width: 100px;
+      min-height: 44px;
+    }
+  </style>
+</head>
+<body translate="no">
+  <div class="center-wrapper">
+    <div class="logo-bar">
+      <a href="../../playzone.html">
+        <img src="../../assets/images/logo.png" alt="Willena Logo" id="logo"/>
+      </a>
+    </div>
+    <div class="container">
+      <h1>Easy Picture Word Game</h1>
+      <div id="icon">🍎</div>
+      <div class="options">
+        <div class="option">Apple</div>
+        <div class="option">Ball</div>
+        <div class="option">Cat</div>
+        <div class="option">Dog</div>
+      </div>
+      <div class="scoreboard">Score: <span id="score">0</span></div>
+      <div class="timer">Time Left: <span id="time">10</span>s</div>
+      <button id="startBtn">Start Game</button>
+      <button id="endBtn" style="display:none;">End Game</button>
+      <div id="nameEntry" style="display: none; margin-top: 20px;">
+        <div id="namePrompt" style="font-size: 1.5em; margin-bottom: 10px; color: #ff3e00;">You got a top 5 score! What’s your name?</div>
+        <input id="playerName" type="text" placeholder="Enter your name"
+          style="font-family: 'Fredoka One', cursive; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; border: none; max-width: 300px; text-align: center;">
+        <button id="submitName"
+          style="margin-left: 10px; font-size: 1.5em; padding: 10px 20px; border-radius: 10px; background: #333; color: white; border: none; cursor: pointer;">
+          Submit
+        </button>
+      </div>
+      <div id="highscores">
+        <h3>🏆 High Scores 🏆</h3>
+        <ol id="scoreList"></ol>
+      </div>
+      <div id="endMessage" style="display:none; font-size:2em; color:#ffeb3b; margin:20px 0;"></div>
+    </div>
+  </div>
+
+  <script>
+    const words = [
+      { word: "Apple", icon: "🍎" }, { word: "Ball", icon: "⚽" }, { word: "Cat", icon: "🐱" },
+      { word: "Dog", icon: "🐶" }, { word: "Book", icon: "📖" }, { word: "Car", icon: "🚗" },
+      { word: "Sun", icon: "☀️" }, { word: "Moon", icon: "🌙" }, { word: "Star", icon: "⭐" },
+      { word: "Tree", icon: "🌳" }, { word: "Flower", icon: "🌸" }, { word: "Bird", icon: "🐦" },
+      { word: "Fish", icon: "🐟" }, { word: "Chair", icon: "🪑" }, { word: "Table", icon: "🛋️" },
+      { word: "Hat", icon: "🎩" }, { word: "Shoe", icon: "👟" }, { word: "House", icon: "🏠" },
+      { word: "Bed", icon: "🛏️" }, { word: "Water", icon: "💧" }, { word: "Fire", icon: "🔥" },
+      { word: "Ice", icon: "🧊" }, { word: "Banana", icon: "🍌" }, { word: "Milk", icon: "🥛" },
+      { word: "Clock", icon: "🕒" }, { word: "Pencil", icon: "✏️" }, { word: "Phone", icon: "📱" },
+      { word: "Bag", icon: "🎒" }, { word: "Door", icon: "🚪" }, { word: "Key", icon: "🔑" }
+    ];
+
+    const iconDiv = document.getElementById("icon");
+    const optionDivs = document.querySelectorAll(".option");
+    const optionsContainer = document.querySelector(".options");
+    const scoreSpan = document.getElementById("score");
+    const timeSpan = document.getElementById("time");
+    const startBtn = document.getElementById("startBtn");
+    const endBtn = document.getElementById("endBtn");
+    const scoreboard = document.querySelector(".scoreboard");
+    const timerBox = document.querySelector(".timer");
+    const highScoresDiv = document.getElementById("highscores");
+    const scoreList = document.getElementById("scoreList");
+    const nameEntry = document.getElementById("nameEntry");
+    const playerName = document.getElementById("playerName");
+    const submitName = document.getElementById("submitName");
+    const endMessage = document.getElementById("endMessage");
+
+    // Update sound paths
+    const rightSound = new Audio('../../assets/audio/right.mp3');
+    const wrongSound = new Audio('../../assets/audio/wrong.mp3');
+    const music = new Audio('../../assets/audio/pianopoly.mp3');
+    music.loop = true;
+    music.volume = 0.5;
+    // Start music when the page loads (user interaction may be required in some browsers)
+    window.addEventListener('DOMContentLoaded', () => {
+      // Try to play after first user interaction
+      const startMusic = () => {
+        music.play();
+        window.removeEventListener('click', startMusic);
+        window.removeEventListener('keydown', startMusic);
+      };
+      window.addEventListener('click', startMusic);
+      window.addEventListener('keydown', startMusic);
+    });
+
+    let score = 0;
+    let timeLeft = 30;
+    let timer;
+    let unusedWords = [];
+    let currentAnswer = "";
+    let highScores = JSON.parse(localStorage.getItem("iconHighScores") || "[]");
+
+    function startGame() {
+      nameEntry.style.display = "none";
+      playerName.value = "";
+      submitName.onclick = null;
+      score = 0;
+      timeLeft = 30; // Reset timer to 30 seconds
+      scoreSpan.textContent = score;
+      timeSpan.textContent = timeLeft;
+      startBtn.style.display = "none";
+      endBtn.style.display = "inline-block";
+      highScoresDiv.style.display = "none";
+      iconDiv.style.display = "block";
+      optionsContainer.style.display = "grid";
+      scoreboard.style.display = "block";
+      timerBox.style.display = "block";
+      unusedWords = [...words]; // Reset unused words
+      nextQuestion();
+      timer = setInterval(() => {
+        timeLeft--;
+        timeSpan.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    // Add a function to show the start screen
+    function showStartScreen() {
+      nameEntry.style.display = "none";
+      playerName.value = "";
+      submitName.onclick = null;
+      iconDiv.style.display = "none";
+      optionsContainer.style.display = "none";
+      scoreboard.style.display = "none";
+      timerBox.style.display = "none";
+      endBtn.style.display = "none";
+      highScoresDiv.style.display = "none";
+      endMessage.style.display = "none";
+      startBtn.textContent = "Start Game";
+      startBtn.style.display = "inline-block";
+    }
+
+    // Call showStartScreen on page load
+    window.addEventListener('DOMContentLoaded', showStartScreen);
+
+    function endGame() {
+      clearInterval(timer);
+      startBtn.textContent = "Replay";
+      startBtn.style.display = "inline-block";
+      iconDiv.style.display = "none";
+      optionsContainer.style.display = "none";
+      scoreboard.style.display = "none";
+      timerBox.style.display = "none";
+      endBtn.style.display = "none";
+      endMessage.style.display = "block";
+      endMessage.textContent = `Game Over! Your final score is: ${score}`;
+
+      // Always show name entry for top scores
+      nameEntry.style.display = "block";
+      submitName.onclick = submitScore;
+      displayHighScores();
+    }
+
+    function nextQuestion() {
+      // If less than 4 unused words left, refill from all words
+      if (unusedWords.length < 4) {
+        unusedWords = [...words];
+      }
+      // Pick 4 random words from unusedWords
+      const choices = [];
+      while (choices.length < 4) {
+        const idx = Math.floor(Math.random() * unusedWords.length);
+        choices.push(unusedWords.splice(idx, 1)[0]);
+      }
+      const answer = choices[Math.floor(Math.random() * 4)];
+      currentAnswer = answer.word;
+      iconDiv.textContent = answer.icon;
+      optionDivs.forEach((option, i) => {
+        option.textContent = choices[i].word;
+        option.classList.remove("noselect");
+        option.onclick = () => {
+          const elapsed = (performance.now() - questionTime) / 1000;
+          let earned = 0;
+          if (option.textContent === currentAnswer) {
+            rightSound.currentTime = 0;
+            rightSound.play();
+            if (elapsed <= 0.7) {
+              earned = 300;
+              showBonus("🚀 Super Fast! +300");
+            } else if (elapsed <= 1.2) {
+              earned = 200;
+              showBonus("⚡ Lightning! +200");
+            } else if (elapsed <= 2) {
+              earned = 100;
+              showBonus("⏱️ Fast! +100");
+            } else {
+              earned = 50;
+              showBonus("+50");
+            }
+            score += earned;
+          } else {
+            wrongSound.currentTime = 0;
+            wrongSound.play();
+            if (elapsed <= 1) {
+              score -= 150;
+              showBonus("❌ -150");
+            }
+            // No minus points after 1 second
+          }
+          scoreSpan.textContent = score;
+          nextQuestion();
+        };
+      });
+      questionTime = performance.now();
+    }
+
+    startBtn.addEventListener("click", function() {
+      if (startBtn.textContent === "Start Game" || startBtn.textContent === "Replay") {
+        startGame();
+      }
+    });
+
+    endBtn.addEventListener("click", endGame);
+
+    function showBonus(text) {
+      const bonus = document.createElement("div");
+      bonus.className = "bonus-float";
+      bonus.textContent = text;
+      document.body.appendChild(bonus);
+      setTimeout(() => {
+        bonus.remove();
+      }, 1000);
+    }
+
+    async function submitScore() {
+      const name = playerName.value.trim() || "Anonymous";
+      const response = await fetch('/.netlify/functions/submit_score_easyword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, score, game: "EasyWordGame" })
+      });
+      const result = await response.json();
+      if (response.ok) {
+        displayHighScores();
+        nameEntry.style.display = "none";
+        playerName.value = "";
+        startBtn.style.display = "inline-block";
+        endMessage.style.display = "none";
+      } else {
+        alert('Failed to submit score.');
+        console.error(result.error);
+      }
+    }
+
+    async function displayHighScores() {
+      const response = await fetch('/.netlify/functions/submit_score_easyword?game=EasyWordGame');
+      const data = await response.json();
+      scoreList.innerHTML = '';
+      if (response.ok) {
+        data.forEach(entry => {
+          const li = document.createElement('li');
+          li.textContent = `${entry.name}: ${entry.score}`;
+          scoreList.appendChild(li);
+        });
+        highScoresDiv.style.display = "block";
+      } else {
+        scoreList.innerHTML = '<li>Failed to load scores.</li>';
+        highScoresDiv.style.display = "block";
+        console.error(data.error);
+      }
+    }
+  </script>
+</body>
+</html>

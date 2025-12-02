@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Word Arcade - Live Mode</title>
+	<link rel="stylesheet" href="mini.css" />
+	<link rel="stylesheet" href="/students/theme.css" />
+	<script src="/students/language.js"></script>
+	<script src="/students/theme.js"></script>
+	<script>
+	// Auth gate: allow Supabase auth OR guest cookie; else redirect to students login with next param
+	(function(){
+	  const doc = document; doc.documentElement.style.visibility='hidden';
+	  function show(){ doc.documentElement.style.visibility=''; }
+	  async function check(){
+	    const c = document.cookie||'';
+	    const hasGuest = /(?:^|;\s*)wa_guest_id=/.test(c);
+	    const hasA = /(?:^|;\s*)sb_access=/.test(c);
+	    const hasR = /(?:^|;\s*)sb_refresh=/.test(c);
+	    if(!hasA && hasR){
+	      try { await fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});}catch{}
+	    }
+	    if (hasGuest) { window.__AUTH_OK = true; show(); return; }
+	    try {
+	      const r = await fetch('/.netlify/functions/supabase_auth?action=whoami',{credentials:'include',cache:'no-store'});
+	      if(r.ok){ const d=await r.json().catch(()=>null); if(d&&d.success){ window.__AUTH_OK=true; show(); return; } }
+	    } catch {}
+	    const next = encodeURIComponent(location.pathname + location.search);
+	    location.replace('/students/login.html?next='+next);
+	  }
+	  check();
+	})();
+	</script>
+	<script>
+	// Early scroll lock before content loads
+	(function(){
+		const html = document.documentElement; const body = document.body;
+		html.style.overflow = 'hidden';
+		if (body) { body.classList.add('play-lock'); }
+		window.addEventListener('load', () => { html.style.overflow='hidden'; });
+	})();
+	</script>
+	<!-- Minimal inline fallback style if mini.css missing -->
+	<style>
+		body { margin:0; font-family: system-ui, sans-serif; background:#f1f5f9; color:#1f2937; }
+		html, body { height:100%; overscroll-behavior:none; }
+		body.play-lock { overflow:hidden !important; position:fixed; inset:0; width:100%; touch-action:none; }
+		:root { --vh: 1vh; }
+		#gameRoot { width:100%; height:calc(var(--vh, 1vh) * 100 - var(--headerH, 0px)); display:flex; align-items:stretch; justify-content:flex-start; padding:0; box-sizing:border-box; position:fixed; left:0; top:var(--headerH,0px); overflow:hidden; }
+		#gameStage { width:100%; height:100%; display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; transform-origin:top center; overflow:hidden; padding:12px 12px 20px; }
+		/* Normalize any mode root container spacing */
+		#gameStage > div:first-child { margin-top:0 !important; }
+		/* Ensure choice buttons shrink properly inside viewport */
+		/* Global choice buttons (multiple choice etc). Exclude letter tiles */
+		.choice-btn:not(.tile-btn) { max-height:17vh; }
+
+		@media (max-width: 700px) {
+			.choice-btn:not(.tile-btn) { min-height: 14vh; max-height: 22vh; }
+		}
+		@media (min-width: 701px) {
+			.choice-btn:not(.tile-btn) {
+				min-width: 320px;
+				max-width: 520px;
+				font-size: clamp(0.6em, 2vw, 1.5em);
+				margin-bottom: 48px;
+			}
+			/* Remove last margin for last button in grid */
+			[id*="Choices"] .choice-btn:last-child { margin-bottom: 0; }
+			/* Tap-spell tiles: keep perfect squares independent of generic choice sizing */
+			#letterTiles .tile-btn { width:62px !important; height:62px !important; padding:0; box-sizing:border-box; }
+			@media (max-width:520px){ #letterTiles .tile-btn{ width:52px !important; height:52px !important; } }
+		}
+		/* Adaptive square buttons on wider screens */
+		@media (min-width: 680px) {
+			.picture-choice, .listening-choice, .multi-choice-btn { aspect-ratio:1/1; height:auto !important; }
+		}
+		/* Image containment inside buttons */
+		.choice-btn img { width:100%; height:100%; object-fit:cover; display:block; }
+		.choice-btn { overflow:hidden; position:relative; }
+		/* Provide subtle inner crop mask */
+		.choice-btn::after { content:''; position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.15); border-radius:inherit; }
+		/* Center all game grids horizontally */
+		#gameStage [id*="Choices"],
+		#gameStage .grid,
+		#gameStage #easyPicGrid,
+		#gameStage #picChoices,
+		#gameStage #multiChoicesMixed,
+		#gameStage #multiChoicesEngKor,
+		#gameStage #multiChoicesKorEng,
+		#gameStage #lvlUpChoices,
+		#gameStage #pictureChoices,
+		#gameStage #listeningChoices {
+			justify-content:center !important;
+			place-content:center !important;
+		}
+		/* Non-scroll adjustments for spelling & meaning modes */
+		.tap-spell, .meaning-mode-root { max-height:100%; display:flex; flex-direction:column; }
+		#letterTiles { max-width:100% !important; }
+		#letterTiles .tile-btn { flex:0 0 auto; }
+		/* Allow tile rows to wrap and shrink on small screens */
+		@media (max-width:520px){ #letterTiles { gap:6px !important; } #letterTiles .tile-btn{ width:48px !important; height:48px !important; font-size:1.05em !important; } }
+		/* Clamp definition box to avoid pushing layout */
+		#defBox { max-height:28vh; overflow:auto; }
+		/* Auto scale container wrapper (applied dynamically) */
+		.scalable-root { transform-origin:top center; }
+		/* Avoid accidental extra scrolling via selection */
+		#gameStage { -webkit-overflow-scrolling:auto; }
+		#gameStage img, #gameStage canvas { max-width:100%; height:auto; }
+		@media (orientation:landscape) and (max-height:480px) { #gameStage { justify-content:flex-start; } }
+
+		/* --- Multi-choice live layout overrides to prevent overlap on wide screens --- */
+		/* The generic large-screen rule sets .choice-btn min-width:320px which causes
+		   two columns (2 * 320px + gap/padding) to overflow their grid container and visually overlap.
+		   Constrain buttons inside explicit multi-choice grids and allow them to size via grid. */
+		#multiChoicesEngKor .choice-btn,
+		#multiChoicesKorEng .choice-btn,
+		#multiChoicesMixed .choice-btn,
+		#listeningChoices .choice-btn,
+		#pictureChoices .choice-btn,
+		#lvlUpChoices .choice-btn {
+			min-width: unset !important; /* allow grid to dictate width */
+			width: 100%;
+			margin-bottom: 0; /* grid gap handles spacing */
+		}
+		/* Reduce internal grid gap slightly for better fit on mid widths */
+		#multiChoicesEngKor, #multiChoicesKorEng, #multiChoicesMixed { gap: 18px !important; }
+		/* Ensure grid columns share width evenly without overflow */
+		#multiChoicesEngKor, #multiChoicesKorEng, #multiChoicesMixed { grid-auto-rows: 1fr; }
+		@media (min-width:701px){
+			#multiChoicesEngKor .choice-btn,
+			#multiChoicesKorEng .choice-btn,
+			#multiChoicesMixed .choice-btn { font-size: clamp(.75em, 1.6vw, 1.35em) !important; }
+		}
+
+		/* --- Picture & listening choice layout refinement --- */
+		/* Center picture grids with a max width matching two nicely spaced squares */
+		#pictureChoices, #picChoices, #listeningChoices, #easyPicGrid { 
+			max-width: 860px; /* allows four squares in 2x2 with gaps */
+			margin-left:auto; margin-right:auto; width:100%;
+		}
+		/* Make image-based choice buttons square and consistent */
+		#pictureChoices .choice-btn.picture-choice,
+		#picChoices .choice-btn.picture-choice,
+		#easyPicGrid .choice-btn.picture-choice,
+		#listeningChoices .choice-btn.listening-choice {
+			aspect-ratio: 1 / 1 !important;
+			width: 100%;
+			max-width: 360px; /* prevent overly wide rectangles on huge screens */
+			height: auto !important;
+			display: flex; align-items:center; justify-content:center;
+		}
+		/* On very wide screens shrink gap slightly so layout remains visually tight */
+		@media (min-width:1000px){
+			#pictureChoices, #picChoices, #easyPicGrid, #listeningChoices { gap: 26px !important; }
+		}
+		/* On narrow phones allow slight rectangle but keep min visual balance */
+		@media (max-width:520px){
+			#pictureChoices .choice-btn.picture-choice,
+			#picChoices .choice-btn.picture-choice,
+			#easyPicGrid .choice-btn.picture-choice { max-width: 46vw; }
+		}
+	</style>
+</head>
+<body class="word-arcade notranslate" translate="no">
+	<!-- Word Arcade style header (reuse student-header with slots like index.html) -->
+	<student-header title="" show-home="false" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
+		<img slot="actions" src="assets/Images/icons/word-arcade.svg" alt="Word Arcade" style="height:4em;max-height:4.5em;display:block;" />
+	</student-header>
+	<!-- Game container used by play-main.js -->
+	<div id="gameRoot" class="notranslate" translate="no">
+		<div id="gameStage" class="notranslate" translate="no">
+			<div style="text-align:center;color:#19777e;font-weight:700;" data-i18n="Loading game…">Loading game…</div>
+		</div>
+	</div>
+	<script type="module" src="/students/components/student-header.js"></script>
+	<script type="module" src="/students/scripts/points-client.js"></script>
+	<script type="module" src="play-main.js"></script>
+	<script type="module">
+	import { initPointsClient } from '/students/scripts/points-client.js';
+	async function ensureHeaderProfile(){
+	  try {
+		const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
+		if (!res.ok) return;
+		const data = await res.json().catch(() => null);
+		if (!data || !data.success) return;
+		if ((data.username || data.name) && typeof (data.username || data.name) === 'string') {
+		  localStorage.setItem('user_name', (data.username || data.name).slice(0,40));
+		}
+		if (data.avatar && typeof data.avatar === 'string' && data.avatar.length <= 16) {
+		  localStorage.setItem('selectedEmojiAvatar', data.avatar);
+		}
+	  } catch {}
+	}
+	document.addEventListener('DOMContentLoaded', () => { try { initPointsClient(); } catch {}; ensureHeaderProfile(); });
+	</script>
+	<script>
+	(function setupDynamicVh(){
+		function setVh(){
+			const vh = window.innerHeight * 0.01;
+			document.documentElement.style.setProperty('--vh', vh + 'px');
+			// header height measurement
+			const header = document.querySelector('student-header');
+			if (header) {
+				const rect = header.getBoundingClientRect();
+				document.documentElement.style.setProperty('--headerH', rect.height + 'px');
+			}
+		}
+		setVh();
+		window.addEventListener('resize', setVh);
+		window.addEventListener('orientationchange', () => setTimeout(setVh, 120));
+		document.body.classList.add('play-lock');
+		// Hard scroll prevention (iOS Safari edge cases)
+		['touchmove','wheel'].forEach(ev => {
+			document.addEventListener(ev, (e) => {
+				// Allow scrollable modals / elements explicitly marked
+				if (e.target && e.target.closest && e.target.closest('.fa-scroll-allow')) return;
+				const stage = document.getElementById('gameStage');
+				if (!stage) return;
+				if (!stage.contains(e.target)) { e.preventDefault(); return; }
+				if (stage && stage.scrollHeight <= stage.clientHeight) { e.preventDefault(); }
+			}, { passive:false });
+		});
+		// Key scroll prevention (desktop fallback)
+		window.addEventListener('keydown', (e) => {
+			const keys = ['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '];
+			if (keys.includes(e.key)) { e.preventDefault(); }
+		}, { passive:false });
+		window.addEventListener('scroll', () => { if (window.scrollY !== 0) window.scrollTo(0,0); }, { passive:true });
+		// Delay a pass to recalc after header web component upgrades
+		setTimeout(setVh, 400);
+	})();
+	</script>
+	<script>
+	// Auto-fit scaling to eliminate residual scroll by shrinking oversize mode content
+	(function(){
+		function fitStage(){
+			const stage = document.getElementById('gameStage');
+			if(!stage) return;
+			// Find the largest child block (game root for current mode)
+			const child = Array.from(stage.children).find(el => el.classList && el.classList.contains('tap-spell'))
+				|| stage.querySelector('.meaning-mode-root')
+				|| Array.from(stage.children).find(el => el.tagName !== 'SCRIPT' && el.id !== 'audioPrepMsg');
+			if(!child) return;
+			child.classList.add('scalable-root');
+			child.style.removeProperty('transform');
+			const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--headerH')) || 0;
+			const availH = window.innerHeight - headerH - 6; // a little buffer
+			const rect = child.getBoundingClientRect();
+			if(rect.height > availH){
+				const scale = Math.max(0.55, availH / rect.height);
+				child.style.transform = 'scale(' + scale.toFixed(3) + ')';
+				// Center horizontally after scale
+				child.style.marginLeft = 'auto';
+				child.style.marginRight = 'auto';
+			}
+		}
+		// Observe mutations to re-fit when mode changes
+		const stage = document.getElementById('gameStage');
+		if(stage){
+			new MutationObserver(() => { requestAnimationFrame(fitStage); }).observe(stage, { childList:true, subtree:true });
+			window.addEventListener('resize', () => { requestAnimationFrame(fitStage); });
+			window.addEventListener('orientationchange', () => setTimeout(fitStage, 150));
+			window.addEventListener('load', fitStage);
+			setTimeout(fitStage, 500);
+		}
+	})();
+	</script>
+</body>
+</html>

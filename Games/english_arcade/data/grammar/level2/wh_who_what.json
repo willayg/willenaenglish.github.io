@@ -1,0 +1,137 @@
+[
+  {
+    "id": "who_is_your_teacher",
+    "word": "who_is",
+    "en": "Who is your teacher?",
+    "ko": "당신의 선생님은 누구예요?",
+    "exampleSentence": "Who is your teacher?",
+    "exampleSentenceKo": "당신의 선생님은 누구예요?",
+    "emoji": "👩‍🏫"
+  },
+  {
+    "id": "what_is_your_name",
+    "word": "what_is",
+    "en": "What is your name?",
+    "ko": "이름이 뭐예요?",
+    "exampleSentence": "What is your name?",
+    "exampleSentenceKo": "이름이 뭐예요?",
+    "emoji": "📛"
+  },
+  {
+    "id": "who_sings_this_song",
+    "word": "who_sings",
+    "en": "Who sings this song?",
+    "ko": "이 노래를 누가 부르나요?",
+    "exampleSentence": "Who sings this song?",
+    "exampleSentenceKo": "이 노래를 누가 부르나요?",
+    "emoji": "🎤"
+  },
+  {
+    "id": "what_is_that",
+    "word": "what_is",
+    "en": "What is that?",
+    "ko": "저것은 뭐예요?",
+    "exampleSentence": "What is that?",
+    "exampleSentenceKo": "저것은 뭐예요?",
+    "emoji": "❓"
+  },
+  {
+    "id": "who_wrote_this_book",
+    "word": "who_wrote",
+    "en": "Who wrote this book?",
+    "ko": "이 책을 누가 썼나요?",
+    "exampleSentence": "Who wrote this book?",
+    "exampleSentenceKo": "이 책을 누가 썼나요?",
+    "emoji": "✍️"
+  },
+  {
+    "id": "what_do_you_want",
+    "word": "what_do",
+    "en": "What do you want?",
+    "ko": "무엇을 원하나요?",
+    "exampleSentence": "What do you want?",
+    "exampleSentenceKo": "무엇을 원하나요?",
+    "emoji": "🎁"
+  },
+  {
+    "id": "who_called_me",
+    "word": "who_called",
+    "en": "Who called me?",
+    "ko": "누가 저에게 전화했나요?",
+    "exampleSentence": "Who called me?",
+    "exampleSentenceKo": "누가 저에게 전화했나요?",
+    "emoji": "📞"
+  },
+  {
+    "id": "what_is_in_the",
+    "word": "what_is",
+    "en": "What is in the box?",
+    "ko": "상자 안에 무엇이 있나요?",
+    "exampleSentence": "What is in the box?",
+    "exampleSentenceKo": "상자 안에 무엇이 있나요?",
+    "emoji": "📦"
+  },
+  {
+    "id": "who_eats_cake",
+    "word": "who_eats",
+    "en": "Who eats cake?",
+    "ko": "누가 케이크를 먹나요?",
+    "exampleSentence": "Who eats cake?",
+    "exampleSentenceKo": "누가 케이크를 먹나요?",
+    "emoji": "🍰"
+  },
+  {
+    "id": "what_color_is_your",
+    "word": "what_color",
+    "en": "What color is your bag?",
+    "ko": "가방 색깔이 무엇인가요?",
+    "exampleSentence": "What color is your bag?",
+    "exampleSentenceKo": "가방 색깔이 무엇인가요?",
+    "emoji": "🎒"
+  },
+  {
+    "id": "who_helps_you",
+    "word": "who_helps",
+    "en": "Who helps you?",
+    "ko": "누가 당신을 도와주나요?",
+    "exampleSentence": "Who helps you?",
+    "exampleSentenceKo": "누가 당신을 도와주나요?",
+    "emoji": "🤝"
+  },
+  {
+    "id": "what_subject_do_you",
+    "word": "what_subject",
+    "en": "What subject do you like?",
+    "ko": "어떤 과목을 좋아하나요?",
+    "exampleSentence": "What subject do you like?",
+    "exampleSentenceKo": "어떤 과목을 좋아하나요?",
+    "emoji": "📚"
+  },
+  {
+    "id": "who_found_the_ball",
+    "word": "who_found",
+    "en": "Who found the ball?",
+    "ko": "누가 공을 찾았나요?",
+    "exampleSentence": "Who found the ball?",
+    "exampleSentenceKo": "누가 공을 찾았나요?",
+    "emoji": "⚽"
+  },
+  {
+    "id": "what_is_your_favorite",
+    "word": "what_is",
+    "en": "What is your favorite food?",
+    "ko": "가장 좋아하는 음식이 무엇인가요?",
+    "exampleSentence": "What is your favorite food?",
+    "exampleSentenceKo": "가장 좋아하는 음식이 무엇인가요?",
+    "emoji": "🍜"
+  },
+  {
+    "id": "who_is_at_the",
+    "word": "who_is",
+    "en": "Who is at the door?",
+    "ko": "누가 문 앞에 있나요?",
+    "exampleSentence": "Who is at the door?",
+    "exampleSentenceKo": "누가 문 앞에 있나요?",
+    "emoji": "🚪"
+  }
+]

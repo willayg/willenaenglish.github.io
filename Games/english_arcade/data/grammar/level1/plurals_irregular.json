@@ -1,0 +1,28 @@
+[
+  { "id": "mouse_singular", "word": "mouse", "article": "singular", "emoji": "🐭", "exampleSentence": "One mouse is in the house.", "exampleSentenceKo": "쥐 한 마리가 집에 있어요.", "explanation": "Singular: one mouse.", "explanationKo": "단수: 쥐 한 마리" },
+  { "id": "mouse_plural", "word": "mice", "article": "plural", "emoji": "🐭🐭", "exampleSentence": "Many mice are in the house.", "exampleSentenceKo": "쥐들이 집에 있어요.", "explanation": "Plural: many mice (irregular).", "explanationKo": "복수: 불규칙하게 mice로 변해요" },
+  
+  { "id": "child_singular", "word": "child", "article": "singular", "emoji": "👧", "exampleSentence": "One child is playing.", "exampleSentenceKo": "아이 한 명이 놀고 있어요.", "explanation": "Singular: one child.", "explanationKo": "단수: 아이 한 명" },
+  { "id": "child_plural", "word": "children", "article": "plural", "emoji": "👧👦", "exampleSentence": "Many children are playing.", "exampleSentenceKo": "아이들이 놀고 있어요.", "explanation": "Plural: many children (irregular).", "explanationKo": "복수: 불규칙하게 children으로 변해요" },
+  
+  { "id": "man_singular", "word": "man", "article": "singular", "emoji": "👨", "exampleSentence": "One man is working.", "exampleSentenceKo": "남자 한 명이 일하고 있어요.", "explanation": "Singular: one man.", "explanationKo": "단수: 남자 한 명" },
+  { "id": "man_plural", "word": "men", "article": "plural", "emoji": "👨👨", "exampleSentence": "Many men are working.", "exampleSentenceKo": "남자들이 일하고 있어요.", "explanation": "Plural: many men (irregular).", "explanationKo": "복수: 불규칙하게 men으로 변해요" },
+  
+  { "id": "woman_singular", "word": "woman", "article": "singular", "emoji": "👩", "exampleSentence": "One woman is reading.", "exampleSentenceKo": "여자 한 명이 읽고 있어요.", "explanation": "Singular: one woman.", "explanationKo": "단수: 여자 한 명" },
+  { "id": "woman_plural", "word": "women", "article": "plural", "emoji": "👩👩", "exampleSentence": "Many women are reading.", "exampleSentenceKo": "여자들이 읽고 있어요.", "explanation": "Plural: many women (irregular).", "explanationKo": "복수: 불규칙하게 women으로 변해요" },
+  
+  { "id": "tooth_singular", "word": "tooth", "article": "singular", "emoji": "🦷", "exampleSentence": "One tooth is white.", "exampleSentenceKo": "이 하나가 하얘요.", "explanation": "Singular: one tooth.", "explanationKo": "단수: 이 하나" },
+  { "id": "tooth_plural", "word": "teeth", "article": "plural", "emoji": "🦷🦷", "exampleSentence": "Many teeth are white.", "exampleSentenceKo": "이들이 하얘요.", "explanation": "Plural: many teeth (irregular).", "explanationKo": "복수: 불규칙하게 teeth로 변해요" },
+  
+  { "id": "foot_singular", "word": "foot", "article": "singular", "emoji": "👣", "exampleSentence": "One foot is cold.", "exampleSentenceKo": "발 하나가 차가워요.", "explanation": "Singular: one foot.", "explanationKo": "단수: 발 하나" },
+  { "id": "foot_plural", "word": "feet", "article": "plural", "emoji": "👣👣", "exampleSentence": "Many feet are cold.", "exampleSentenceKo": "발들이 차가워요.", "explanation": "Plural: many feet (irregular).", "explanationKo": "복수: 불규칙하게 feet으로 변해요" },
+  
+  { "id": "goose_singular", "word": "goose", "article": "singular", "emoji": "🪿", "exampleSentence": "One goose is flying.", "exampleSentenceKo": "거위 한 마리가 날고 있어요.", "explanation": "Singular: one goose.", "explanationKo": "단수: 거위 한 마리" },
+  { "id": "goose_plural", "word": "geese", "article": "plural", "emoji": "🪿🪿", "exampleSentence": "Many geese are flying.", "exampleSentenceKo": "거위들이 날고 있어요.", "explanation": "Plural: many geese (irregular).", "explanationKo": "복수: 불규칙하게 geese로 변해요" },
+  
+  { "id": "person_singular", "word": "person", "article": "singular", "emoji": "👥", "exampleSentence": "One person is here.", "exampleSentenceKo": "사람 한 명이 여기 있어요.", "explanation": "Singular: one person.", "explanationKo": "단수: 사람 한 명" },
+  { "id": "person_plural", "word": "people", "article": "plural", "emoji": "👥👥", "exampleSentence": "Many people are here.", "exampleSentenceKo": "사람들이 여기 있어요.", "explanation": "Plural: many people (irregular).", "explanationKo": "복수: 불규칙하게 people으로 변해요" },
+  
+  { "id": "knife_singular", "word": "knife", "article": "singular", "emoji": "🔪", "exampleSentence": "One knife is sharp.", "exampleSentenceKo": "칼 하나가 날카로워요.", "explanation": "Singular: one knife.", "explanationKo": "단수: 칼 하나" },
+  { "id": "knife_plural", "word": "knives", "article": "plural", "emoji": "🔪🔪", "exampleSentence": "Many knives are sharp.", "exampleSentenceKo": "칼들이 날카로워요.", "explanation": "Plural: many knives (f→ves).", "explanationKo": "복수: f→ves로 변해요" }
+]

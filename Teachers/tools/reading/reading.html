@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Worksheet Generator</title>
+    <link rel="stylesheet" href="../tests/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            /* Ensure consistent base size for reading worksheet preview */
+            .worksheet-preview-wrapper { position:relative; width:100%; }
+            .worksheet-preview { width:794px; background:#fff; }
+            /* Prevent tiny appearance when little content: maintain min height of an A4 page */
+            .worksheet-preview .worksheet-page { min-height:1123px; }
+        </style>
+</head>
+<body>
+  <script>
+    // Access control: only allow approved users
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <script>
+    // Feedback modal loader for Reading Worksheet Generator
+    window.showFeedbackModal = async function() {
+
+
+
+        // Feedback modal functionality (copied from grammar/flashcard module for consistency)
+        // Prevent multiple modals
+        if (document.getElementById('feedback-modal-bg')) return;
+        // Modal HTML
+        const modalBg = document.createElement('div');
+        modalBg.id = 'feedback-modal-bg';
+        modalBg.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        modalBg.innerHTML = `
+            <div id="feedback-modal" style="background:#fff;padding:28px 24px 18px 24px;border-radius:10px;max-width:420px;width:95vw;box-shadow:0 4px 32px #0002;position:relative;">
+                <button id="feedback-modal-close" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>
+                <h2 style="margin-top:0;font-size:1.3em;">Send Feedback</h2>
+                <div style="font-size:15px;margin-bottom:10px;">Help us improve the Reading Worksheet tool!</div>
+                <textarea id="feedback-modal-text" placeholder="Enter your feedback..." style="width:100%;height:90px;padding:10px;border:1px solid #ccc;border-radius:5px;resize:vertical;font-size:15px;"></textarea>
+                <div id="feedback-modal-user" style="font-size:13px;color:#666;margin:8px 0 0 2px;"></div>
+                <div style="text-align:right;margin-top:16px;">
+                    <button id="feedback-modal-cancel" style="margin-right:10px;padding:7px 18px;border:1px solid #bbb;background:#fff;border-radius:4px;cursor:pointer;">Cancel</button>
+                    <button id="feedback-modal-submit" style="padding:7px 18px;background:#007cba;color:#fff;border:none;border-radius:4px;cursor:pointer;">Submit</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalBg);
+        const closeModal = () => { if (modalBg && modalBg.parentNode) modalBg.parentNode.removeChild(modalBg); };
+        document.getElementById('feedback-modal-close').onclick = closeModal;
+        document.getElementById('feedback-modal-cancel').onclick = closeModal;
+        document.getElementById('feedback-modal-text').focus();
+
+        // Show user info
+        let user_id = localStorage.getItem('userId') || '';
+        let username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+        const userDiv = document.getElementById('feedback-modal-user');
+        if (!user_id) {
+            userDiv.textContent = 'Not logged in';
+        } else if (username) {
+            userDiv.textContent = `From: ${username}`;
+        } else {
+            userDiv.textContent = '';
+        }
+
+        document.getElementById('feedback-modal-submit').onclick = async function() {
+            const feedbackText = document.getElementById('feedback-modal-text').value.trim();
+            if (!feedbackText) {
+                alert('Please enter some feedback.');
+                document.getElementById('feedback-modal-text').focus();
+                return;
+            }
+            // If not logged in, block submission
+            if (!user_id) {
+                alert('Please log in to submit feedback.');
+                return;
+            }
+            // If no username, try to fetch it from profile
+            if (!username) {
+                try {
+                    const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+                    const result = await res.json();
+                    if (result.success && result.username) {
+                        username = result.username;
+                        localStorage.setItem('username', username);
+                    } else if (result.success && result.name) {
+                        username = result.name;
+                        localStorage.setItem('name', username);
+                    } else {
+                        username = 'Anonymous User';
+                    }
+                } catch (e) {
+                    username = 'Anonymous User';
+                }
+            }
+            // Collect tool state
+            const toolState = {
+                title: document.getElementById('readingTitle')?.value || '',
+                passage: document.getElementById('readingPassage')?.value || '',
+                questions: document.getElementById('readingQuestions')?.value || '',
+                answers: document.getElementById('readingAnswers')?.value || '',
+                includePassage: document.getElementById('includePassage')?.checked,
+                font: document.getElementById('fontSelect')?.value || '',
+                fontSize: document.getElementById('fontSizeInput')?.value || '',
+                template: document.getElementById('templateSelect')?.value || '',
+                layout: document.getElementById('layoutSelect')?.value || '',
+                testMode: document.getElementById('testModeSelect')?.value || ''
+            };
+            const payload = {
+                feedback: feedbackText,
+                module: 'reading',
+                user_id,
+                username,
+                tool_state: JSON.stringify(toolState),
+                page_url: window.location.href
+            };
+            try {
+                const response = await fetch('/.netlify/functions/submit_feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'insert_feedback', data: payload })
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    closeModal();
+                    alert('Thank you for your feedback!');
+                } else {
+                    alert('Error submitting feedback: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        };
+    };
+    
+    // Create global feedback submission function for reading
+    window.feedbackSubmitToSupabase = async function(data) {
+      const user_id = localStorage.getItem('userId') || '';
+      const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+      
+      const payload = {
+        feedback: data.feedback,
+        module: data.module || 'reading',
+        user_id,
+        username,
+        tool_state: data.state || data.tool_state,
+        page_url: window.location.href
+      };
+      
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          throw new Error(result.error || 'Failed to submit feedback');
+        }
+        return result;
+      } catch (err) {
+        console.error('Feedback submission error:', err);
+        throw err;
+      }
+    };
+    </script>
+    <div class="container">
+        <div class="app-card">
+            <!-- Header -->
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+                <div class="logo">
+                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                </div>
+                <h1 style="flex:1; text-align:center; margin:0;">Reading Worksheet Generator</h1>
+                <!-- Burger Menu Component (vertically centered in header, inside container) -->
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+            </div>
+
+            <!-- Top Action Bar -->
+            <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
+                <span class="action-link" id="loadBtn">Load</span>
+                <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="printBtn">Print</span>
+                <span class="action-link" id="pdfBtn">PDF</span>
+                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
+                <script>
+                // Attach More button to show the More Tools modal overlay
+                document.addEventListener('DOMContentLoaded', function() {
+                  const moreBtn = document.getElementById('moreBtn');
+                  if (!moreBtn) return;
+                  moreBtn.addEventListener('click', async function() {
+                    // If modal not present, fetch and inject it
+                    if (!document.getElementById('moreToolsOverlay')) {
+                      try {
+                        const resp = await fetch('/Teachers/components/more-tools.html');
+                        const html = await resp.text();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        // Only append the overlay div, not the whole HTML
+                        const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                        if (overlay) document.body.appendChild(overlay);
+                        // Also append any <style> tags (for modal styling)
+                        tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                        // Also append any <script> tags (for modal logic)
+                        tempDiv.querySelectorAll('script').forEach(script => {
+                          const s = document.createElement('script');
+                          if (script.textContent) s.textContent = script.textContent;
+                          document.body.appendChild(s);
+                        });
+                        // Attach close button handler immediately after injection
+                        setTimeout(function() {
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          var overlayDiv = document.getElementById('moreToolsOverlay');
+                          if (closeBtn && overlayDiv) {
+                            closeBtn.onclick = function() {
+                              overlayDiv.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }, 100);
+                      } catch (e) { alert('Could not load More Tools.'); return; }
+                    }
+                    if (typeof showMoreToolsModal === 'function') {
+                      showMoreToolsModal();
+                    } else {
+                      // fallback: try to show overlay directly
+                      const overlay = document.getElementById('moreToolsOverlay');
+                      if (overlay) {
+                        overlay.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        // Attach close button handler if not already
+                        var closeBtn = document.getElementById('closeMoreToolsBtn');
+                        if (closeBtn) {
+                          closeBtn.onclick = function() {
+                            overlay.style.display = 'none';
+                            document.body.style.overflow = '';
+                          };
+                        }
+                      }
+                    }
+                  });
+                });
+                </script>
+            </div>
+
+            <!-- Floating Toolbar -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+
+                <div class="font-size-controls">
+                    <button class="size-btn" id="decreaseFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInput" value="12" min="8" max="18" step="1">
+                    <button class="size-btn" id="increaseFontBtn">+</button>
+                </div>
+
+                <select class="toolbar-select" id="templateSelect">
+                    <option value="0">Design 1</option>
+                    <option value="1">Design 2</option>
+                    <option value="2" selected>Design 3</option>
+                </select>
+
+                <div class="layout-group">
+                    <select class="layout-select" id="layoutSelect">
+                        <option value="default">Standard Layout</option>
+                        <option value="two-column">Two Column</option>
+                        <option value="large-text">Large Text</option>
+                    </select>
+                </div>
+
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+                
+                <select class="test-mode-select" id="testModeSelect">
+                    <option value="none">Test Mode Off</option>
+                    <option value="cloze">Cloze Test (Blank test)</option>
+                </select>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="readingTitle" placeholder="Enter worksheet title">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Reading Passage</label>
+                        <textarea class="textarea-field" id="readingPassage" placeholder="Enter reading passage here..." rows="8"></textarea>
+                        <div id="advancedPromptToggle" style="margin-top:8px; cursor:pointer; color:#2e2b3f; font-weight:500; font-size:14px; display:inline-block;">
+                          + Advanced Prompt Options (Demo)
+                        </div>
+                        <div id="advancedPromptBox" style="display:none; margin-top:8px;">
+                          <label for="advancedPromptInput" style="font-size:13px; color:#444; font-weight:500;">Advanced AI Prompt (optional)</label>
+                          <textarea id="advancedPromptInput" class="textarea-field" rows="3" placeholder="Add extra instructions for AI question generation..."></textarea>
+                          <button id="sendAdvancedPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
+                        </div>
+                        <script>
+                          document.addEventListener('DOMContentLoaded', function() {
+                            const toggle = document.getElementById('advancedPromptToggle');
+                            const box = document.getElementById('advancedPromptBox');
+                            if (toggle && box) {
+                              toggle.onclick = function() {
+                                if (box.style.display === 'none') {
+                                  box.style.display = 'block';
+                                  toggle.textContent = '- Hide Advanced Prompt Options';
+                                } else {
+                                  box.style.display = 'none';
+                                  toggle.textContent = '+ Advanced Prompt Options';
+                                }
+                              };
+                            }
+
+                            // Advanced Prompt Send Button
+                            const sendBtn = document.getElementById('sendAdvancedPromptBtn');
+                            if (sendBtn) {
+                              sendBtn.onclick = async function() {
+                                const passage = document.getElementById('readingPassage').value.trim();
+                                const promptText = document.getElementById('advancedPromptInput').value.trim();
+                                if (!passage) {
+                                  alert('Please enter a reading passage first.');
+                                  return;
+                                }
+                                if (!promptText) {
+                                  alert('Please enter your advanced prompt.');
+                                  return;
+                                }
+                                sendBtn.disabled = true;
+                                sendBtn.textContent = 'Sending...';
+                                try {
+                                  // ESL-focused prompt
+                                  const eslPrompt = `Create ESL-based questions and exercises for young ESL learners based on the following passage. Questions should be clear, simple, and engaging for kids.\n\n${promptText}`;
+                                  const response = await fetch('/.netlify/functions/openai_proxy', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      endpoint: 'chat/completions',
+                                      payload: {
+                                        model: 'gpt-3.5-turbo',
+                                        messages: [
+                                          { role: 'user', content: `Passage:\n${passage}\n\n${eslPrompt}` }
+                                        ],
+                                        max_tokens: 1000,
+                                        temperature: 0.7
+                                      }
+                                    })
+                                  });
+                                  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                  const result = await response.json();
+                                  const data = result.data;
+                                  if (data.error) throw new Error(data.error.message || 'OpenAI API error');
+                                  const content = data.choices[0].message.content.trim();
+                                  // Insert questions into textarea and update preview
+                                  const questionsTextarea = document.getElementById('readingQuestions');
+                                  const existingQuestions = questionsTextarea.value.trim();
+                                  const updatedQuestions = existingQuestions ? `${existingQuestions}\n\n${content}` : content;
+                                  questionsTextarea.value = updatedQuestions;
+                                  if (window.updateReadingPreview) window.updateReadingPreview();
+                                } catch (err) {
+                                  alert('AI prompt failed: ' + err.message);
+                                }
+                                sendBtn.disabled = false;
+                                sendBtn.textContent = 'Send Prompt to AI';
+                              };
+                            }
+                          });
+                        </script>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="includePassage" checked>
+                            Include passage in worksheet
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Question Type</label>
+                        <select class="select-field" id="categorySelect">
+    <option value="comprehension-mc">Comprehension (Multiple Choice)</option>
+    <option value="comprehension-choose-word-mc">Comprehension (Choose the Word)</option>
+    <option value="comprehension-sa">Comprehension (Short Answer)</option>
+    <option value="vocabulary-mc">Vocabulary (Multiple Choice)</option>
+    <option value="vocabulary-context-mc">Vocab in Context (Multiple Choice)</option>
+    <option value="grammar-mc">Grammar (Multiple Choice)</option>
+    <option value="grammar-correction">Grammar (Correction)</option>
+    <option value="inference-mc">Inference (Multiple Choice)</option>
+    <option value="inference-sa">Inference (Short Answer)</option>
+                        </select>
+                        <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">Select the type of questions to generate</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Number of Questions</label>
+                        <input type="number" class="number-input" id="numQuestions" value="5" min="1" max="20">
+                    </div>
+
+                    <div class="input-group">
+                        <!-- Removed Question Format selector, now handled by category -->
+                    </div>
+
+                    <div class="button-group">
+                        <button class="extract-btn" id="generateQuestionsBtn">Generate Questions</button>
+                        <button class="clear-btn" id="clearBtn">Clear All</button>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Questions</label>
+                        <textarea class="textarea-field" id="readingQuestions" placeholder="Generated questions will appear here, or type your own..." rows="8"></textarea>
+                        <div class="button-group" style="margin-top: 8px;">
+                            <button class="extract-btn" id="addSectionBreakBtn">Add New Part</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Answer Key</label>
+                        <textarea class="textarea-field" id="readingAnswers" placeholder="Answer key will appear here..." rows="4"></textarea>
+                        <div class="button-group" style="margin-top: 8px;">
+                            <button class="extract-btn" id="printAnswerKeyBtn" type="button">Print Answer Key</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="preview-area" id="worksheetPreviewArea-reading">
+                    <div class="preview-placeholder">
+                        <p>Preview will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="reading.js"></script>
+    <script type="module" src="ai.js"></script>
+    <script>
+        // Enhanced functionality for reading module
+        document.addEventListener('DOMContentLoaded', () => {
+            // Font size controls
+            const fontSizeInput = document.getElementById('fontSizeInput');
+            const decreaseFontBtn = document.getElementById('decreaseFontBtn');
+            const increaseFontBtn = document.getElementById('increaseFontBtn');
+            
+            if (decreaseFontBtn) {
+                decreaseFontBtn.addEventListener('click', () => {
+                    const currentSize = parseInt(fontSizeInput.value);
+                    if (currentSize > 8) {
+                        fontSizeInput.value = currentSize - 1;
+                        fontSizeInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+            
+            if (increaseFontBtn) {
+                increaseFontBtn.addEventListener('click', () => {
+                    const currentSize = parseInt(fontSizeInput.value);
+                    if (currentSize < 24) {
+                        fontSizeInput.value = currentSize + 1;
+                        fontSizeInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+
+            // Add section break functionality
+            const addSectionBreakBtn = document.getElementById('addSectionBreakBtn');
+            const questionsTextarea = document.getElementById('readingQuestions');
+            
+            if (addSectionBreakBtn) {
+                addSectionBreakBtn.addEventListener('click', () => {
+                    const currentText = questionsTextarea.value;
+                    const sectionBreak = '\n--- Section Break ---\n';
+                    questionsTextarea.value = currentText + sectionBreak;
+                    questionsTextarea.dispatchEvent(new Event('input'));
+                });
+            }
+
+            // Clear All button functionality
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    const questionsTextarea = document.getElementById('readingQuestions');
+                    if (questionsTextarea) {
+                        questionsTextarea.value = '';
+                        questionsTextarea.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+            // Right-click to remove questions in preview
+            const previewArea = document.getElementById('worksheetPreviewArea-reading');
+            if (previewArea) {
+                previewArea.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    // SECTION DELETE: right-click on section header
+                    let sectionHeader = e.target;
+                    while (sectionHeader && !sectionHeader.classList.contains('section-header')) {
+                        sectionHeader = sectionHeader.parentElement;
+                    }
+                    if (sectionHeader) {
+                        const sectionTitle = sectionHeader.textContent.trim();
+                        if (confirm(`Delete entire section "${sectionTitle}" and all its questions?`)) {
+                            const questionsTextarea = document.getElementById('readingQuestions');
+                            const lines = questionsTextarea.value.split('\n');
+                            let start = -1, end = lines.length;
+                            for (let i = 0; i < lines.length; i++) {
+                                if (lines[i].trim() === sectionTitle) {
+                                    start = i;
+                                    // Find next section or end
+                                    for (let j = i + 1; j < lines.length; j++) {
+                                        if (/^Part [A-Z]:/i.test(lines[j].trim())) {
+                                            end = j;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            if (start !== -1) {
+                                lines.splice(start, end - start);
+                                questionsTextarea.value = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+                                questionsTextarea.dispatchEvent(new Event('input'));
+                            }
+                        }
+                        return;
+                    }
+                    // QUESTION DELETE: right-click on question
+                    let questionElement = e.target;
+                    while (questionElement && !questionElement.classList.contains('question-item')) {
+                        questionElement = questionElement.parentElement;
+                    }
+                    if (questionElement) {
+                        const questionNumber = questionElement.dataset.questionNumber;
+                        if (questionNumber) {
+                            removeQuestionFromList(parseInt(questionNumber));
+                        }
+                    }
+                });
+            }
+
+            // Action buttons
+            const newBtn = document.getElementById('newBtn');
+            const printBtn = document.getElementById('printBtn');
+            const pdfBtn = document.getElementById('pdfBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const loadBtn = document.getElementById('loadBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const generateQuestionsBtn = document.getElementById('generateQuestionsBtn');
+
+            if (newBtn) {
+                newBtn.addEventListener('click', () => {
+                    // Clear all fields to start a new worksheet
+                    document.getElementById('readingTitle').value = '';
+                    document.getElementById('readingPassage').value = '';
+                    document.getElementById('readingQuestions').value = '';
+                    document.getElementById('readingAnswers').value = '';
+                    document.getElementById('includePassage').checked = true;
+                    document.getElementById('fontSelect').value = 'Poppins';
+                    document.getElementById('fontSizeInput').value = '12';
+                    document.getElementById('templateSelect').value = '2';
+                    document.getElementById('layoutSelect').value = 'default';
+                    document.getElementById('testModeSelect').value = 'none';
+                    document.getElementById('categorySelect').selectedIndex = 0;
+                    document.getElementById('numQuestions').value = '5';
+                    // Clear worksheet id so next save creates a new worksheet
+                    window._currentWorksheetId = null;
+                    // Clear any worksheet sections if used
+                    if (window.readingWorksheetSections) window.readingWorksheetSections.length = 0;
+                    if (window.updateReadingPreview) window.updateReadingPreview();
+                });
+            }
+
+            if (printBtn) {
+                printBtn.addEventListener('click', () => {
+                    printReadingWorksheet();
+                });
+            }
+
+            if (pdfBtn) {
+                pdfBtn.addEventListener('click', () => {
+                    // This would need to be implemented with a PDF library
+                    alert('PDF export feature coming soon!');
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Save button clicked'); // Debug log
+                    try {
+                        const popup = window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=600,scrollbars=yes,resizable=yes');
+                        if (!popup) {
+                            alert('Please allow popups for this site to use the worksheet manager.');
+                        } else {
+                            console.log('Save popup opened successfully');
+                        }
+                    } catch (error) {
+                        console.error('Error opening save popup:', error);
+                        alert('Error opening worksheet manager: ' + error.message);
+                    }
+                });
+            }
+
+            if (loadBtn) {
+                loadBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Load button clicked'); // Debug log
+                    try {
+                        const popup = window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=600,scrollbars=yes,resizable=yes');
+                        if (!popup) {
+                            alert('Please allow popups for this site to use the worksheet manager.');
+                        } else {
+                            console.log('Load popup opened successfully');
+                        }
+                    } catch (error) {
+                        console.error('Error opening load popup:', error);
+                        alert('Error opening worksheet manager: ' + error.message);
+                    }
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    if (window.updateReadingPreview) window.updateReadingPreview();
+                });
+            }
+
+            if (generateQuestionsBtn) {
+                generateQuestionsBtn.addEventListener('click', async () => {
+                    const passage = document.getElementById('readingPassage').value.trim();
+                    if (!passage) {
+                        alert('Please enter a reading passage first.');
+                        return;
+                    }
+
+                    const numQuestions = parseInt(document.getElementById('numQuestions').value) || 5;
+                    const selectedCategory = document.getElementById('categorySelect').value;
+
+                    // Load AI module if not already loaded
+                    let extractQuestionsWithAI = window.extractQuestionsWithAI;
+                    if (!extractQuestionsWithAI) {
+                        try {
+                            const mod = await import('./ai.js');
+                            extractQuestionsWithAI = mod.extractQuestionsWithAI;
+                            window.extractQuestionsWithAI = extractQuestionsWithAI;
+                        } catch (e) {
+                            alert('AI question generation is not available.');
+                            return;
+                        }
+                    }
+                    generateQuestionsBtn.disabled = true;
+                    generateQuestionsBtn.textContent = 'Generating...';
+                    try {
+                        const result = await extractQuestionsWithAI(
+                            passage,
+                            numQuestions,
+                            [selectedCategory]
+                        );
+                        const questionsTextarea = document.getElementById('readingQuestions');
+                        const answersTextarea = document.getElementById('readingAnswers');
+                        // --- Add Section Title Above Questions ---
+                        const sectionTitles = {
+                            'grammar-unscramble': 'Grammar: Unscramble to make sentences',
+                            'grammar-correction': 'Grammar: Correct the mistakes',
+                            'vocabulary-context-mc': 'Vocabulary in Context (Multiple Choice)',
+                            'vocabulary-mc': 'Vocabulary (Multiple Choice)',
+                            'comprehension-mc': 'Comprehension (Multiple Choice)',
+                            'comprehension-choose-word-mc': 'Comprehension (Choose the Word)',
+                            'comprehension-sa': 'Comprehension (Short Answer)',
+                            'grammar-mc': 'Grammar (Multiple Choice)',
+                            'inference-mc': 'Inference (Multiple Choice)',
+                            'inference-sa': 'Inference (Short Answer)',
+                            'main-idea-mc': 'Main Idea (Multiple Choice)'
+                        };
+                        const sectionTitle = sectionTitles[selectedCategory] || '';
+                        let sectionHeader = `\nPart ${String.fromCharCode(65 + (questionsTextarea.value.match(/Part [A-Z]:/g)?.length || 0))}: ${sectionTitle}\n`;
+                        // Append new questions and answers with section header
+                        if (result.questions) {
+                            if (questionsTextarea.value.trim()) {
+                                questionsTextarea.value += sectionHeader + result.questions;
+                            } else {
+                                questionsTextarea.value = sectionHeader + result.questions;
+                            }
+                        }
+                        if (result.answers) {
+                            if (answersTextarea.value.trim()) {
+                                answersTextarea.value += '\n' + result.answers;
+                            } else {
+                                answersTextarea.value = result.answers;
+                            }
+                        }
+                        // Update preview if available
+                        if (window.updateReadingPreview) {
+                            window.updateReadingPreview();
+                        }
+                    } catch (err) {
+                        alert('Error generating questions: ' + err.message);
+                    }
+                    generateQuestionsBtn.disabled = false;
+                    generateQuestionsBtn.textContent = 'Generate Questions';
+                });
+            }
+        });
+
+        // Helper functions
+        function removeQuestionFromList(questionNumber) {
+            const questionsTextarea = document.getElementById('readingQuestions');
+            const questions = questionsTextarea.value.split('\n');
+            
+            // Find and remove the question
+            let currentQuestionNum = 0;
+            let startIndex = -1;
+            let endIndex = -1;
+            
+            for (let i = 0; i < questions.length; i++) {
+                if (questions[i].match(/^\d+\./)) {
+                    currentQuestionNum++;
+                    if (currentQuestionNum === questionNumber) {
+                        startIndex = i;
+                        // Find the end of this question (next numbered question or end of array)
+                        for (let j = i + 1; j < questions.length; j++) {
+                            if (questions[j].match(/^\d+\./)) {
+                                endIndex = j;
+                                break;
+                            }
+                        }
+                        if (endIndex === -1) endIndex = questions.length;
+                        break;
+                    }
+                }
+            }
+            
+            if (startIndex !== -1) {
+                questions.splice(startIndex, endIndex - startIndex);
+                questionsTextarea.value = questions.join('\n');
+                
+                // Also remove corresponding answer from answer key
+                removeAnswerFromKey(questionNumber);
+                
+                questionsTextarea.dispatchEvent(new Event('input'));
+            }
+        }
+
+        // Function to remove answer from answer key when question is deleted
+        function removeAnswerFromKey(questionNumber) {
+            const answersTextarea = document.getElementById('readingAnswers');
+            if (!answersTextarea) return;
+            
+            const answerLines = answersTextarea.value.split('\n');
+            let currentQuestionNum = 0;
+            let answerIndex = -1;
+            
+            // Find the answer line to remove
+            for (let i = 0; i < answerLines.length; i++) {
+                const line = answerLines[i].trim();
+                if (line.match(/^\d+\./)) {
+                    currentQuestionNum++;
+                    if (currentQuestionNum === questionNumber) {
+                        answerIndex = i;
+                        break;
+                    }
+                } else if (line.match(/^Part [A-Z]:/)) {
+                    // Reset question numbering for new sections
+                    currentQuestionNum = 0;
+                }
+            }
+            
+            // Remove the answer line if found
+            if (answerIndex !== -1) {
+                answerLines.splice(answerIndex, 1);
+                answersTextarea.value = answerLines.join('\n');
+            }
+        }
+
+        function saveWorksheet() {
+            const data = {
+                title: document.getElementById('readingTitle').value,
+                passage: document.getElementById('readingPassage').value,
+                questions: document.getElementById('readingQuestions').value,
+                answers: document.getElementById('readingAnswers').value,
+                includePassage: document.getElementById('includePassage').checked,
+                font: document.getElementById('fontSelect').value,
+                fontSize: document.getElementById('fontSizeInput').value,
+                template: document.getElementById('templateSelect').value,
+                layout: document.getElementById('layoutSelect').value,
+                testMode: document.getElementById('testModeSelect').value
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'reading_worksheet.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadWorksheet() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        document.getElementById('readingTitle').value = data.title || '';
+                        document.getElementById('readingPassage').value = data.passage || '';
+                        document.getElementById('readingQuestions').value = data.questions || '';
+                        document.getElementById('readingAnswers').value = data.answers || '';
+                        document.getElementById('includePassage').checked = data.includePassage !== false;
+                        if (data.font) document.getElementById('fontSelect').value = data.font;
+                        if (data.fontSize) document.getElementById('fontSizeInput').value = data.fontSize;
+                        if (data.template) document.getElementById('templateSelect').value = data.template;
+                        if (data.layout) document.getElementById('layoutSelect').value = data.layout;
+                        if (data.testMode) document.getElementById('testModeSelect').value = data.testMode;
+                        
+                        // Update preview
+                        if (window.updateReadingPreview) window.updateReadingPreview();
+                    } catch (error) {
+                        alert('Failed to load worksheet: Invalid file format.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function printReadingWorksheet() {
+            const preview = document.getElementById('worksheetPreviewArea-reading');
+            if (!preview || !preview.innerHTML.trim()) {
+                alert('Nothing to print. Please generate a worksheet first.');
+                return;
+            }
+
+            const title = document.getElementById('readingTitle')?.value || "Reading Worksheet";
+            const font = document.getElementById('fontSelect')?.value || "'Poppins', sans-serif";
+            const fontSize = document.getElementById('fontSizeInput')?.value || "12";
+
+            const printWindow = window.open('', '', 'width=800,height=1000');
+            printWindow.document.write(`
+                <html>
+                  <head>
+                    <title>${title}</title>
+                    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap' rel='stylesheet'>
+                    <style>
+                      body {
+                        font-family: ${font};
+                        margin: 0.5in;
+                        background: #fff;
+                        font-size: ${fontSize}px;
+                        line-height: 1.5;
+                      }
+                      .worksheet-preview {
+                        width: 100% !important;
+                        max-width: none !important;
+                        transform: none !important;
+                      }
+                      @media print {
+                        body {
+                          margin: 0.5in;
+                        }
+                        .worksheet-preview {
+                          page-break-inside: avoid;
+                        }
+                      }
+                    </style>
+                  </head>
+                  <body onload='window.print(); window.close();'>
+                    ${preview.innerHTML}
+                  </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    </script>
+</body>
+</html>

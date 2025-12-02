@@ -1,0 +1,137 @@
+[
+  {
+    "id": "where_do_you_live",
+    "word": "where_do",
+    "en": "Where do you live?",
+    "ko": "어디에 살아요?",
+    "exampleSentence": "Where do you live?",
+    "exampleSentenceKo": "어디에 살아요?",
+    "emoji": "🏘️"
+  },
+  {
+    "id": "what_do_you_do",
+    "word": "what_do",
+    "en": "What do you do?",
+    "ko": "무슨 일을 해요?",
+    "exampleSentence": "What do you do?",
+    "exampleSentenceKo": "무슨 일을 해요?",
+    "emoji": "💼"
+  },
+  {
+    "id": "who_is_your_friend",
+    "word": "who_is",
+    "en": "Who is your friend?",
+    "ko": "누가 너의 친구예요?",
+    "exampleSentence": "Who is your friend?",
+    "exampleSentenceKo": "누가 너의 친구예요?",
+    "emoji": "🧑‍🤝‍🧑"
+  },
+  {
+    "id": "when_do_you_go",
+    "word": "when_do",
+    "en": "When do you go to school?",
+    "ko": "언제 학교 가요?",
+    "exampleSentence": "When do you go to school?",
+    "exampleSentenceKo": "언제 학교 가요?",
+    "emoji": "⏰"
+  },
+  {
+    "id": "why_do_you_study",
+    "word": "why_do",
+    "en": "Why do you study English?",
+    "ko": "왜 영어 공부를 해요?",
+    "exampleSentence": "Why do you study English?",
+    "exampleSentenceKo": "왜 영어 공부를 해요?",
+    "emoji": "📚"
+  },
+  {
+    "id": "how_do_you_get",
+    "word": "how_do",
+    "en": "How do you get to school?",
+    "ko": "어떻게 학교에 가요?",
+    "exampleSentence": "How do you get to school?",
+    "exampleSentenceKo": "어떻게 학교에 가요?",
+    "emoji": "🚌"
+  },
+  {
+    "id": "which_street_does_she",
+    "word": "which_street",
+    "en": "Which street does she live on?",
+    "ko": "그녀는 어느 거리에서 살아요?",
+    "exampleSentence": "Which street does she live on?",
+    "exampleSentenceKo": "그녀는 어느 거리에서 살아요?",
+    "emoji": "📍"
+  },
+  {
+    "id": "what_time_do_you",
+    "word": "what_time",
+    "en": "What time do you get up?",
+    "ko": "몇 시에 일어나요?",
+    "exampleSentence": "What time do you get up?",
+    "exampleSentenceKo": "몇 시에 일어나요?",
+    "emoji": "⏰"
+  },
+  {
+    "id": "who_plays_the_piano",
+    "word": "who_plays",
+    "en": "Who plays the piano?",
+    "ko": "누가 피아노를 쳐요?",
+    "exampleSentence": "Who plays the piano?",
+    "exampleSentenceKo": "누가 피아노를 쳐요?",
+    "emoji": "🎹"
+  },
+  {
+    "id": "where_do_they_work",
+    "word": "where_do",
+    "en": "Where do they work?",
+    "ko": "그들은 어디에서 일해요?",
+    "exampleSentence": "Where do they work?",
+    "exampleSentenceKo": "그들은 어디에서 일해요?",
+    "emoji": "🏢"
+  },
+  {
+    "id": "what_color_is_your",
+    "word": "what_color",
+    "en": "What color is your bag?",
+    "ko": "네 가방 색깔이 뭐예요?",
+    "exampleSentence": "What color is your bag?",
+    "exampleSentenceKo": "네 가방 색깔이 뭐예요?",
+    "emoji": "👜"
+  },
+  {
+    "id": "why_does_he_laugh",
+    "word": "why_does",
+    "en": "Why does he laugh?",
+    "ko": "그는 왜 웃어요?",
+    "exampleSentence": "Why does he laugh?",
+    "exampleSentenceKo": "그는 왜 웃어요?",
+    "emoji": "😂"
+  },
+  {
+    "id": "how_much_do_these",
+    "word": "how_much",
+    "en": "How much do these cost?",
+    "ko": "이거들 얼마예요?",
+    "exampleSentence": "How much do these cost?",
+    "exampleSentenceKo": "이거들 얼마예요?",
+    "emoji": "💲"
+  },
+  {
+    "id": "where_do_we_meet",
+    "word": "where_do",
+    "en": "Where do we meet?",
+    "ko": "어디서 만나요?",
+    "exampleSentence": "Where do we meet?",
+    "exampleSentenceKo": "어디서 만나요?",
+    "emoji": "📍"
+  },
+  {
+    "id": "what_do_you_want",
+    "word": "what_do",
+    "en": "What do you want for lunch?",
+    "ko": "점심으로 뭐 먹고 싶어요?",
+    "exampleSentence": "What do you want for lunch?",
+    "exampleSentenceKo": "점심으로 뭐 먹고 싶어요?",
+    "emoji": "🍱"
+  }
+]

@@ -1,0 +1,28 @@
+# List: Sports
+# Words
+soccer
+basketball
+baseball
+tennis
+volleyball
+swimming
+running
+cycling
+skiing
+skating
+golf
+badminton
+
+# Sentences
+We play soccer.
+They play basketball.
+He plays baseball.
+She plays tennis.
+We play volleyball.
+I enjoy swimming.
+He likes running.
+She likes cycling.
+We go skiing.
+She enjoys skating.
+He plays golf.
+They play badminton.

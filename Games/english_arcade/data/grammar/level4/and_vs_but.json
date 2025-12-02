@@ -1,0 +1,17 @@
+[
+  {"en":"I like apples and oranges.","ko":"나는 사과와 오렌지를 좋아해요.","example":"I like apples and oranges.","emoji":"🍎🍊"},
+  {"en":"I like apples but I don't like oranges.","ko":"나는 사과를 좋아하지만 오렌지는 좋아하지 않아요.","example":"I like apples but I don't like oranges.","emoji":"🍎❌🍊"},
+  {"en":"She is kind and helpful.","ko":"그녀는 친절하고 도움이 돼요.","example":"She is kind and helpful.","emoji":"🙂"},
+  {"en":"He is smart but lazy.","ko":"그는 똑똑하지만 게으릅니다.","example":"He is smart but lazy.","emoji":"🧠😴"},
+  {"en":"We will study and then rest.","ko":"우리는 공부한 다음에 쉬어요.","example":"We will study and then rest.","emoji":"📚🛌"},
+  {"en":"I wanted to go but I couldn't.","ko":"가고 싶었지만 못 갔어요.","example":"I wanted to go but I couldn't.","emoji":"🚫"},
+  {"en":"They sang and danced.","ko":"그들은 노래하고 춤췄어요.","example":"They sang and danced at the party.","emoji":"🎤💃"},
+  {"en":"She is young but very mature.","ko":"그녀는 어리지만 매우 성숙해요.","example":"She is young but very mature.","emoji":"🌱🎓"},
+  {"en":"We like music and sports.","ko":"우리는 음악과 스포츠를 좋아해요.","example":"We like music and sports.","emoji":"🎵🏀"},
+  {"en":"He likes games but not homework.","ko":"그는 게임은 좋아하지만 숙제는 싫어해요.","example":"He likes games but not homework.","emoji":"🎮📚"},
+  {"en":"I will call you and tell you the plan.","ko":"나는 너에게 전화해서 계획을 말해 줄게.","example":"I will call you and tell you the plan.","emoji":"📞"},
+  {"en":"She tried to help but she was late.","ko":"그녀는 도우려고 했지만 늦었어요.","example":"She tried to help but she was late.","emoji":"⏰"},
+  {"en":"We can go to the park and have a picnic.","ko":"우리는 공원에 가서 피크닉을 할 수 있어요.","example":"We can go to the park and have a picnic.","emoji":"🌳🥪"},
+  {"en":"He studied hard but didn’t pass the test.","ko":"그는 열심히 공부했지만 시험에 못 합격했어요.","example":"He studied hard but didn't pass the test.","emoji":"📖❌"},
+  {"en":"She cooked dinner and cleaned the kitchen.","ko":"그녀는 저녁을 요리하고 부엌을 청소했어요.","example":"She cooked dinner and cleaned the kitchen.","emoji":"🍳🧼"}
+]

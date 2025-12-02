@@ -1,0 +1,137 @@
+[
+  {
+    "id": "i_walk_to_school",
+    "word": "i_walk",
+    "en": "I walk to school every day.",
+    "ko": "나는 매일 학교에 걸어서 가요.",
+    "exampleSentence": "I walk to school every day.",
+    "exampleSentenceKo": "나는 매일 학교에 걸어서 가요.",
+    "emoji": "🚶"
+  },
+  {
+    "id": "he_walks_to_school",
+    "word": "he_walks",
+    "en": "He walks to school every day.",
+    "ko": "그는 매일 학교에 걸어서 가요.",
+    "exampleSentence": "He walks to school every day.",
+    "exampleSentenceKo": "그는 매일 학교에 걸어서 가요.",
+    "emoji": "🚶‍♂️"
+  },
+  {
+    "id": "she_likes_apples",
+    "word": "she_likes",
+    "en": "She likes apples.",
+    "ko": "그녀는 사과를 좋아해요.",
+    "exampleSentence": "She likes apples.",
+    "exampleSentenceKo": "그녀는 사과를 좋아해요.",
+    "emoji": "🍎"
+  },
+  {
+    "id": "we_like_apples",
+    "word": "we_like",
+    "en": "We like apples.",
+    "ko": "우리는 사과를 좋아해요.",
+    "exampleSentence": "We like apples.",
+    "exampleSentenceKo": "우리는 사과를 좋아해요.",
+    "emoji": "🍎"
+  },
+  {
+    "id": "he_plays_soccer",
+    "word": "he_plays",
+    "en": "He plays soccer.",
+    "ko": "그는 축구를 해요.",
+    "exampleSentence": "He plays soccer.",
+    "exampleSentenceKo": "그는 축구를 해요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "they_play_soccer",
+    "word": "they_play",
+    "en": "They play soccer.",
+    "ko": "그들은 축구를 해요.",
+    "exampleSentence": "They play soccer.",
+    "exampleSentenceKo": "그들은 축구를 해요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "i_study_english",
+    "word": "i_study",
+    "en": "I study English.",
+    "ko": "나는 영어를 공부해요.",
+    "exampleSentence": "I study English.",
+    "exampleSentenceKo": "나는 영어를 공부해요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "she_studies_english",
+    "word": "she_studies",
+    "en": "She studies English.",
+    "ko": "그녀는 영어를 공부해요.",
+    "exampleSentence": "She studies English.",
+    "exampleSentenceKo": "그녀는 영어를 공부해요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "the_sun_rises_in",
+    "word": "the_sun",
+    "en": "The sun rises in the east.",
+    "ko": "태양은 동쪽에서 떠요.",
+    "exampleSentence": "The sun rises in the east.",
+    "exampleSentenceKo": "태양은 동쪽에서 떠요.",
+    "emoji": "🌅"
+  },
+  {
+    "id": "cats_chase_mice",
+    "word": "cats_chase",
+    "en": "Cats chase mice.",
+    "ko": "고양이는 쥐를 쫓아요.",
+    "exampleSentence": "Cats chase mice.",
+    "exampleSentenceKo": "고양이는 쥐를 쫓아요.",
+    "emoji": "🐱"
+  },
+  {
+    "id": "he_eats_breakfast_at",
+    "word": "he_eats",
+    "en": "He eats breakfast at 7.",
+    "ko": "그는 7시에 아침을 먹어요.",
+    "exampleSentence": "He eats breakfast at 7.",
+    "exampleSentenceKo": "그는 7시에 아침을 먹어요.",
+    "emoji": "🍳"
+  },
+  {
+    "id": "she_watches_tv_in",
+    "word": "she_watches",
+    "en": "She watches TV in the evening.",
+    "ko": "그녀는 저녁에 TV를 봐요.",
+    "exampleSentence": "She watches TV in the evening.",
+    "exampleSentenceKo": "그녀는 저녁에 TV를 봐요.",
+    "emoji": "📺"
+  },
+  {
+    "id": "i_like_music",
+    "word": "i_like",
+    "en": "I like music.",
+    "ko": "나는 음악을 좋아해요.",
+    "exampleSentence": "I like music.",
+    "exampleSentenceKo": "나는 음악을 좋아해요.",
+    "emoji": "🎶"
+  },
+  {
+    "id": "he_works_at_a",
+    "word": "he_works",
+    "en": "He works at a bank.",
+    "ko": "그는 은행에서 일해요.",
+    "exampleSentence": "He works at a bank.",
+    "exampleSentenceKo": "그는 은행에서 일해요.",
+    "emoji": "🏦"
+  },
+  {
+    "id": "the_kids_play_in",
+    "word": "the_kids",
+    "en": "The kids play in the park.",
+    "ko": "아이들은 공원에서 놀아요.",
+    "exampleSentence": "The kids play in the park.",
+    "exampleSentenceKo": "아이들은 공원에서 놀아요.",
+    "emoji": "🏞️"
+  }
+]

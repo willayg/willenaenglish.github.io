@@ -1,0 +1,137 @@
+[
+  {
+    "id": "how_are_you",
+    "word": "how_are",
+    "en": "How are you?",
+    "ko": "어떻게 지내요?",
+    "exampleSentence": "How are you?",
+    "exampleSentenceKo": "어떻게 지내요?",
+    "emoji": "🙂"
+  },
+  {
+    "id": "why_are_you_late",
+    "word": "why_are",
+    "en": "Why are you late?",
+    "ko": "왜 늦었어요?",
+    "exampleSentence": "Why are you late?",
+    "exampleSentenceKo": "왜 늦었어요?",
+    "emoji": "🕗"
+  },
+  {
+    "id": "which_bag_is_yours",
+    "word": "which_bag",
+    "en": "Which bag is yours?",
+    "ko": "어떤 가방이 당신 것이에요?",
+    "exampleSentence": "Which bag is yours?",
+    "exampleSentenceKo": "어떤 가방이 당신 것이에요?",
+    "emoji": "👜"
+  },
+  {
+    "id": "how_do_you_go",
+    "word": "how_do",
+    "en": "How do you go to school?",
+    "ko": "학교에 어떻게 가요?",
+    "exampleSentence": "How do you go to school?",
+    "exampleSentenceKo": "학교에 어떻게 가요?",
+    "emoji": "🚌"
+  },
+  {
+    "id": "why_do_you_like",
+    "word": "why_do",
+    "en": "Why do you like it?",
+    "ko": "왜 그것을 좋아하나요?",
+    "exampleSentence": "Why do you like it?",
+    "exampleSentenceKo": "왜 그것을 좋아하나요?",
+    "emoji": "❤️"
+  },
+  {
+    "id": "which_one_is_better",
+    "word": "which_one",
+    "en": "Which one is better?",
+    "ko": "어떤 것이 더 좋아요?",
+    "exampleSentence": "Which one is better?",
+    "exampleSentenceKo": "어떤 것이 더 좋아요?",
+    "emoji": "👍"
+  },
+  {
+    "id": "how_does_he_solve",
+    "word": "how_does",
+    "en": "How does he solve math?",
+    "ko": "그는 수학 문제를 어떻게 풀어요?",
+    "exampleSentence": "How does he solve math?",
+    "exampleSentenceKo": "그는 수학 문제를 어떻게 풀어요?",
+    "emoji": "➗"
+  },
+  {
+    "id": "why_is_the_cat",
+    "word": "why_is",
+    "en": "Why is the cat sleeping?",
+    "ko": "왜 고양이가 자고 있나요?",
+    "exampleSentence": "Why is the cat sleeping?",
+    "exampleSentenceKo": "왜 고양이가 자고 있나요?",
+    "emoji": "😴"
+  },
+  {
+    "id": "which_movie_do_you",
+    "word": "which_movie",
+    "en": "Which movie do you want?",
+    "ko": "어떤 영화를 보고 싶어요?",
+    "exampleSentence": "Which movie do you want?",
+    "exampleSentenceKo": "어떤 영화를 보고 싶어요?",
+    "emoji": "🎥"
+  },
+  {
+    "id": "how_much_is_it",
+    "word": "how_much",
+    "en": "How much is it?",
+    "ko": "이거 얼마예요?",
+    "exampleSentence": "How much is it?",
+    "exampleSentenceKo": "이거 얼마예요?",
+    "emoji": "💲"
+  },
+  {
+    "id": "why_did_you_cry",
+    "word": "why_did",
+    "en": "Why did you cry?",
+    "ko": "왜 울었어요?",
+    "exampleSentence": "Why did you cry?",
+    "exampleSentenceKo": "왜 울었어요?",
+    "emoji": "😢"
+  },
+  {
+    "id": "which_dress_do_you",
+    "word": "which_dress",
+    "en": "Which dress do you choose?",
+    "ko": "어떤 드레스를 선택해요?",
+    "exampleSentence": "Which dress do you choose?",
+    "exampleSentenceKo": "어떤 드레스를 선택해요?",
+    "emoji": "👗"
+  },
+  {
+    "id": "how_do_you_make",
+    "word": "how_do",
+    "en": "How do you make rice?",
+    "ko": "밥은 어떻게 해요?",
+    "exampleSentence": "How do you make rice?",
+    "exampleSentenceKo": "밥은 어떻게 해요?",
+    "emoji": "🍚"
+  },
+  {
+    "id": "why_is_the_sky",
+    "word": "why_is",
+    "en": "Why is the sky blue?",
+    "ko": "왜 하늘이 파란가요?",
+    "exampleSentence": "Why is the sky blue?",
+    "exampleSentenceKo": "왜 하늘이 파란가요?",
+    "emoji": "🌤️"
+  },
+  {
+    "id": "which_color_do_you",
+    "word": "which_color",
+    "en": "Which color do you prefer?",
+    "ko": "어떤 색을 더 좋아하나요?",
+    "exampleSentence": "Which color do you prefer?",
+    "exampleSentenceKo": "어떤 색을 더 좋아하나요?",
+    "emoji": "🎨"
+  }
+]

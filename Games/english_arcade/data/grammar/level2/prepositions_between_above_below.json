@@ -1,0 +1,167 @@
+[
+  {
+    "id": "the_ball_is_between",
+    "word": "the_ball",
+    "prompt": "The ball is ___ the shoes.",
+    "article": "between",
+    "en": "The ball is between the shoes.",
+    "ko": "공이 신발들 사이에 있어요.",
+    "exampleSentence": "The ball is between the shoes.",
+    "exampleSentenceKo": "공이 신발들 사이에 있어요.",
+    "emoji": "👟⚽️👟"
+  },
+  {
+    "id": "the_lamp_is_above",
+    "word": "the_lamp",
+    "prompt": "The lamp is ___ the table.",
+    "article": "above",
+    "en": "The lamp is above the table.",
+    "ko": "램프가 탁자 위에 있어요.",
+    "exampleSentence": "The lamp is above the table.",
+    "exampleSentenceKo": "램프가 탁자 위에 있어요.",
+    "emoji": "💡⬆️"
+  },
+  {
+    "id": "the_cat_is_below",
+    "word": "the_cat",
+    "prompt": "The cat is ___ the chair.",
+    "article": "below",
+    "en": "The cat is below the chair.",
+    "ko": "고양이가 의자 아래에 있어요.",
+    "exampleSentence": "The cat is below the chair.",
+    "exampleSentenceKo": "고양이가 의자 아래에 있어요.",
+    "emoji": "😺⬇️"
+  },
+  {
+    "id": "put_the_book_between",
+    "word": "put_the",
+    "prompt": "Put the book ___ the boxes.",
+    "article": "between",
+    "en": "Put the book between the boxes.",
+    "ko": "책을 상자 사이에 넣으세요.",
+    "exampleSentence": "Put the book between the boxes.",
+    "exampleSentenceKo": "책을 상자 사이에 넣으세요.",
+    "emoji": "📦📘📦"
+  },
+  {
+    "id": "the_picture_is_above",
+    "word": "the_picture",
+    "prompt": "The picture is ___ the bed.",
+    "article": "above",
+    "en": "The picture is above the bed.",
+    "ko": "그림이 침대 위에 걸려 있어요.",
+    "exampleSentence": "The picture is above the bed.",
+    "exampleSentenceKo": "그림이 침대 위에 걸려 있어요.",
+    "emoji": "🖼️⬆️"
+  },
+  {
+    "id": "the_fish_is_below",
+    "word": "the_fish",
+    "prompt": "The fish is ___ the surface.",
+    "article": "below",
+    "en": "The fish is below the surface.",
+    "ko": "물고기가 표면 아래에 있어요.",
+    "exampleSentence": "The fish is below the surface.",
+    "exampleSentenceKo": "물고기가 표면 아래에 있어요.",
+    "emoji": "🐟⬇️"
+  },
+  {
+    "id": "the_key_is_between",
+    "word": "the_key",
+    "prompt": "The key is ___ the cushions.",
+    "article": "between",
+    "en": "The key is between the cushions.",
+    "ko": "열쇠가 쿠션 사이에 있어요.",
+    "exampleSentence": "The key is between the cushions.",
+    "exampleSentenceKo": "열쇠가 쿠션 사이에 있어요.",
+    "emoji": "🛋️🔑🛋️"
+  },
+  {
+    "id": "the_birds_fly_above",
+    "word": "the_birds",
+    "prompt": "The birds fly ___ the trees.",
+    "article": "above",
+    "en": "The birds fly above the trees.",
+    "ko": "새들이 나무 위를 날아요.",
+    "exampleSentence": "The birds fly above the trees.",
+    "exampleSentenceKo": "새들이 나무 위를 날아요.",
+    "emoji": "🐦🌲"
+  },
+  {
+    "id": "the_rabbit_hides_below",
+    "word": "the_rabbit",
+    "prompt": "The rabbit hides ___ the bushes.",
+    "article": "below",
+    "en": "The rabbit hides below the bushes.",
+    "ko": "토끼가 덤불 아래에 숨어요.",
+    "exampleSentence": "The rabbit hides below the bushes.",
+    "exampleSentenceKo": "토끼가 덤불 아래에 숨어요.",
+    "emoji": "🐰🌿"
+  },
+  {
+    "id": "the_clock_is_above",
+    "word": "the_clock",
+    "prompt": "The clock is ___ the door.",
+    "article": "above",
+    "en": "The clock is above the door.",
+    "ko": "시계가 문 위에 있어요.",
+    "exampleSentence": "The clock is above the door.",
+    "exampleSentenceKo": "시계가 문 위에 있어요.",
+    "emoji": "🕰️🚪"
+  },
+  {
+    "id": "the_cat_sits_between",
+    "word": "the_cat",
+    "prompt": "The cat sits ___ the two dogs.",
+    "article": "between",
+    "en": "The cat sits between the two dogs.",
+    "ko": "고양이는 두 개의 개 사이에 앉아 있어요.",
+    "exampleSentence": "The cat sits between the two dogs.",
+    "exampleSentenceKo": "고양이는 두 개의 개 사이에 앉아 있어요.",
+    "emoji": "🐶🐱🐶"
+  },
+  {
+    "id": "clouds_are_above_the",
+    "word": "clouds_are",
+    "prompt": "Clouds are ___ the mountain.",
+    "article": "above",
+    "en": "Clouds are above the mountain.",
+    "ko": "구름이 산 위에 있어요.",
+    "exampleSentence": "Clouds are above the mountain.",
+    "exampleSentenceKo": "구름이 산 위에 있어요.",
+    "emoji": "☁️🏔️"
+  },
+  {
+    "id": "the_treasure_is_below",
+    "word": "the_treasure",
+    "prompt": "The treasure is ___ the floor.",
+    "article": "below",
+    "en": "The treasure is below the floor.",
+    "ko": "보물이 바닥 아래에 있어요.",
+    "exampleSentence": "The treasure is below the floor.",
+    "exampleSentenceKo": "보물이 바닥 아래에 있어요.",
+    "emoji": "💎⬇️"
+  },
+  {
+    "id": "the_sun_is_above",
+    "word": "the_sun",
+    "prompt": "The sun is ___ the clouds.",
+    "article": "above",
+    "en": "The sun is above the clouds.",
+    "ko": "태양이 구름 위에 있어요.",
+    "exampleSentence": "The sun is above the clouds.",
+    "exampleSentenceKo": "태양이 구름 위에 있어요.",
+    "emoji": "☀️☁️"
+  },
+  {
+    "id": "put_the_pen_between",
+    "word": "put_the",
+    "prompt": "Put the pen ___ the papers.",
+    "article": "between",
+    "en": "Put the pen between the papers.",
+    "ko": "펜을 종이 사이에 놓으세요.",
+    "exampleSentence": "Put the pen between the papers.",
+    "exampleSentenceKo": "펜을 종이 사이에 놓으세요.",
+    "emoji": "📄🖊️📄"
+  }
+]

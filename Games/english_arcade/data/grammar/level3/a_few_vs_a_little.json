@@ -1,0 +1,47 @@
+[
+  {
+    "id": "a_few_apples",
+    "word": "a_few",
+    "en": "I have a few apples.",
+    "ko": "저는 사과가 몇 개 있어요.",
+    "exampleSentence": "I have a few apples in my bag.",
+    "exampleSentenceKo": "제 가방에 사과가 몇 개 있어요.",
+    "emoji": "🍎"
+  },
+  {
+    "id": "a_little_milk",
+    "word": "a_little",
+    "en": "I have a little milk.",
+    "ko": "저는 우유가 조금 있어요.",
+    "exampleSentence": "There is a little milk left in the bottle.",
+    "exampleSentenceKo": "병에 우유가 조금 남아 있어요.",
+    "emoji": "🥛"
+  },
+  {
+    "id": "how_many_vs_how_much",
+    "word": "a_few_a_little",
+    "en": "How many apples do you have? How much milk is left?",
+    "ko": "사과가 몇 개 있어요? 우유는 얼마나 남았나요?",
+    "exampleSentence": "How many cookies do you want? I only have a few.",
+    "exampleSentenceKo": "쿠키를 몇 개 원해요? 저는 몇 개만 있어요.",
+    "emoji": "❓"
+  },
+  {
+    "id": "a_few_students",
+    "word": "a_few",
+    "en": "A few students came to class.",
+    "ko": "몇몇 학생들이 수업에 왔어요.",
+    "exampleSentence": "A few students stayed after class to ask questions.",
+    "exampleSentenceKo": "몇몇 학생들이 질문하려고 수업 후에 남았어요.",
+    "emoji": "👩‍🎓"
+  },
+  {
+    "id": "a_little_sugar",
+    "word": "a_little",
+    "en": "Add a little sugar to the tea.",
+    "ko": "차에 설탕을 조금 넣으세요.",
+    "exampleSentence": "She put a little sugar in her tea.",
+    "exampleSentenceKo": "그녀는 차에 설탕을 조금 넣었어요.",
+    "emoji": "🍯"
+  }
+]

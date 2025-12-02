@@ -1,0 +1,61 @@
+  function renderStep3Vowels(stage, prog, stepEl, nav) {
+    prog.textContent = displayStep(2);
+    stepEl.innerHTML = '';
+
+    // Phase flow: first AN (left), then A (right)
+    if (nav) nav.style.display = 'none';
+
+    const sentence = document.createElement('div');
+    sentence.className = 'lesson-body';
+    sentence.style.cssText = 'font-size:1.15rem;line-height:1.8;margin-bottom:8px;';
+
+    const grid = document.createElement('div');
+    grid.className = 'lesson-examples';
+    const leftCol = document.createElement('div');
+    const rightCol = document.createElement('div');
+    grid.appendChild(leftCol);
+    grid.appendChild(rightCol);
+
+    stepEl.appendChild(sentence);
+    stepEl.appendChild(grid);
+
+    let phase = 0; // 0 = an on left, 1 = a on right
+
+    const tap = document.createElement('button');
+    tap.className = 'next-line-tap';
+    tap.style.marginTop = '4px';
+    tap.textContent = (lang === 'ko') ? '알겠어요' : 'Got it';
+
+    function renderExamples(col, list, article) {
+      col.innerHTML = '';
+      list.slice(0,5).forEach(w => {
+        const card = document.createElement('div');
+        card.className = 'lesson-example';
+        card.innerHTML = `<div><strong>${article}</strong> ${escapeHtml(w.word)}</div>`;
+        col.appendChild(card);
+      });
+    }
+
+    function setPhase(p) {
+      phase = p;
+      if (phase === 0) {
+        sentence.innerHTML = (lang === 'ko')
+          ? `모음 소리(<b>a, e, i, o, u</b>) 앞에서는 <b>an</b>을 써요.`
+          : `We use <b>an</b> before a vowel sound like <b>a, e, i, o, u</b>.`;
+        renderExamples(leftCol, sampleAn, 'an');
+        rightCol.innerHTML = '';
+        if (!tap.isConnected) stepEl.insertBefore(tap, grid); // tap near top
+        if (nav) nav.style.display = 'none';
+      } else {
+        sentence.innerHTML = (lang === 'ko')
+          ? `자음 소리(<b>b, t, f, p</b> 등) 앞에서는 <b>a</b>를 써요.`
+          : `We use <b>a</b> before consonant sounds like <b>b, t, f, p</b>.`;
+        renderExamples(rightCol, sampleA, 'a');
+        if (tap.parentNode) tap.remove();
+        if (nav) nav.style.display = 'flex';
+      }
+    }
+
+    tap.onclick = () => setPhase(1);
+    setPhase(0);
+  }

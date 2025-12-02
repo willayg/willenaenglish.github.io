@@ -1,0 +1,32 @@
+<!-- Template Modal (UI only, no logic yet) -->
+<div id="template-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,40,60,0.18);z-index:30000;display:flex;align-items:center;justify-content:center;font-family:'Poppins',Arial,sans-serif;">
+  <div class="modal-panel" style="background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);border-radius:24px;border:2px solid #e5e7eb;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);width:min(600px,95vw);max-width:95vw;max-height:90vh;padding:32px;position:relative;overflow-y:auto;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="font-family:'Poppins',Arial,sans-serif;font-size:2em;font-weight:800;color:#4f46e5;margin:0 0 8px 0;letter-spacing:-1px;">Choose a Template</h2>
+      <p style="color:#6b7280;font-size:1.1em;margin:0;">(Coming soon) Select a worksheet template to get started</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;">
+      <div style="background:#f3f4f6;border-radius:12px;padding:18px;text-align:center;opacity:0.7;">
+        <div style="font-size:2em;margin-bottom:8px;">📚</div>
+        <div style="font-weight:600;color:#374151;">Vocab Worksheet</div>
+      </div>
+      <div style="background:#f3f4f6;border-radius:12px;padding:18px;text-align:center;opacity:0.7;">
+        <div style="font-size:2em;margin-bottom:8px;">🖼️</div>
+        <div style="font-weight:600;color:#374151;">Picture Match</div>
+      </div>
+      <div style="background:#f3f4f6;border-radius:12px;padding:18px;text-align:center;opacity:0.7;">
+        <div style="font-size:2em;margin-bottom:8px;">📖</div>
+        <div style="font-weight:600;color:#374151;">Reading Comprehension</div>
+      </div>
+      <div style="background:#f3f4f6;border-radius:12px;padding:18px;text-align:center;opacity:0.7;">
+        <div style="font-size:2em;margin-bottom:8px;">🧩</div>
+        <div style="font-weight:600;color:#374151;">Puzzle Mix</div>
+      </div>
+      <div style="background:#f3f4f6;border-radius:12px;padding:18px;text-align:center;opacity:0.7;">
+        <div style="font-size:2em;margin-bottom:8px;">✨</div>
+        <div style="font-weight:600;color:#374151;">Custom Template</div>
+      </div>
+    </div>
+    <button id="close-template-modal" style="position:absolute;top:16px;right:20px;background:none;border:none;font-size:1.8em;color:#9ca3af;cursor:pointer;font-family:'Poppins',Arial,sans-serif;z-index:1;">&times;</button>
+  </div>
+</div>

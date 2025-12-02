@@ -1,0 +1,48 @@
+{
+  "title": { "en": "A vs. An", "ko": "A 와 An" },
+  "languageDefault": "en",
+  "cta": { "en": "Practice This", "ko": "연습하기" },
+  "steps": [
+    {
+      "type": "intro",
+      "emoji": "📘",
+      "body": {
+        "en": "Welcome! In this lesson you will learn when to use <b>a</b> and <b>an</b>.",
+        "ko": "환영합니다! 이 수업에서는 <b>a</b> 와 <b>an</b> 을 언제 쓰는지 배워요."
+      }
+    },
+    {
+      "type": "rule",
+      "emoji": "🔊",
+      "body": {
+        "en": "Use <b>an</b> before vowel sounds (a, e, i, o, u). Use <b>a</b> before consonant sounds.",
+        "ko": "모음 소리(a, e, i, o, u) 앞에는 <b>an</b>을, 자음 소리 앞에는 <b>a</b>를 사용해요."
+      }
+    },
+    {
+      "type": "examples",
+      "emoji": "✨",
+      "pairs": [
+        { "en": "an apple", "ko": "사과 하나" },
+        { "en": "a dog", "ko": "개 한 마리" },
+        { "en": "an umbrella", "ko": "우산 하나" },
+        { "en": "a cat", "ko": "고양이 한 마리" }
+      ]
+    },
+    {
+      "type": "tip",
+      "emoji": "💡",
+      "body": {
+        "en": "Focus on the sound, not just the letter. We say <b>an hour</b> (silent h).",
+        "ko": "철자보다 소리에 집중하세요. <b>hour</b>는 h가 묵음이라 <b>an hour</b>라고 해요."
+      }
+    },
+    {
+      "type": "check",
+      "emoji": "🧠",
+      "question": { "en": "Choose the correct article:", "ko": "올바른 관사를 고르세요:" },
+      "word": "elephant",
+      "correct": "an"
+    }
+  ]
+}

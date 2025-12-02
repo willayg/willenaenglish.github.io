@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Correct Attempts and Points</title>
+    <style>
+      body { font-family: system-ui, Segoe UI, Arial, sans-serif; padding: 24px; }
+      .card { max-width: 420px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; }
+      .num { font-size: 48px; font-weight: 800; color: #19777e; }
+      .err { color: #b91c1c; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div>Number of correct attempts (progress_attempts.is_correct = true):</div>
+      <div id="num" class="num">…</div>
+      <hr/>
+      <div>Total points (sum of progress_attempts.points):</div>
+      <div id="pts" class="num">…</div>
+      <div id="status" class="mut"></div>
+    </div>
+    <script>
+      (async () => {
+  const numEl = document.getElementById('num');
+  const ptsEl = document.getElementById('pts');
+        const statusEl = document.getElementById('status');
+        try {
+          const res = await fetch('/.netlify/functions/count_true_attempts', { credentials: 'include', cache: 'no-store' });
+          if (!res.ok) {
+            const t = await res.text().catch(() => '');
+            numEl.textContent = '—';
+            statusEl.innerHTML = '<span class="err">' + res.status + ' ' + (t || 'Error') + '</span>';
+            return;
+          }
+          const js = await res.json();
+          numEl.textContent = (js && typeof js.correct === 'number') ? js.correct : 0;
+          ptsEl.textContent = (js && typeof js.points === 'number') ? js.points : 0;
+          statusEl.textContent = 'ok';
+        } catch (e) {
+          numEl.textContent = '—';
+          statusEl.innerHTML = '<span class="err">' + (e && e.message || e) + '</span>';
+        }
+      })();
+    </script>
+  </body>
+  </html>

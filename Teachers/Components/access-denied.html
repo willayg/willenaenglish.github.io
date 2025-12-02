@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Denied</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #f7f9fb;
+      font-family: 'Poppins', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .denied-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 48px 32px;
+      text-align: center;
+      max-width: 400px;
+    }
+    h1 {
+      color: #d32f2f;
+      font-size: 2rem;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+    p {
+      color: #444;
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+    .dashboard-btn {
+      background: #5a4ad1;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(30,41,59,0.10);
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .dashboard-btn:hover {
+      background: #3d3752;
+    }
+  </style>
+</head>
+<body>
+  <div class="denied-container">
+    <h1>Access Denied</h1>
+    <p>You do not have permission to view this page.<br>Please contact your administrator if you believe this is an error.</p>
+    <button class="dashboard-btn" onclick="window.location.href='/Teachers/index.html'">Return to Dashboard</button>
+  </div>
+</body>
+</html>

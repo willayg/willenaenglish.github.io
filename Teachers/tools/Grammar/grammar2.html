@@ -1,0 +1,1288 @@
+
+    <!-- html2pdf.js for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Worksheet Generator</title>
+    <link rel="stylesheet" href="../tests/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .floating-toolbar {
+          background: #f8c080 !important;
+          border-color: #d8973c !important;
+        }
+        /* Make preview area larger and more readable */
+        .preview-area {
+          min-width: 500px;
+          width: 100%;
+          min-height: 600px;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+          margin: 0 0 0 24px;
+          padding: 32px 32px 32px 32px;
+          overflow: auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        /* A4 worksheet sizing for preview and print */
+        .a4-sheet {
+          width: 794px; /* A4 width at 96dpi */
+          min-height: 1123px; /* A4 height at 96dpi */
+          max-width: 100%;
+          margin: 0 auto;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        /* Print styles removed - now handled by print.js */
+        /* Two-column worksheet layout */
+        .two-column {
+          column-count: 2;
+          column-gap: 40px;
+          column-fill: balance;
+          height: auto;
+        }
+        /* Prevent header and answer key from being split by columns */
+        .worksheet-header, .answer-key-section {
+          column-span: all;
+          break-inside: avoid;
+        }
+        /* Make sure section boxes don't break across columns */
+        .section-box, .grammar-questions {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          margin-bottom: 15px;
+        }
+        .preview-area .preview-placeholder {
+          color: #aaa;
+          text-align: center;
+          margin-top: 100px;
+        }
+        /* Worksheet section box styles */
+        .section-box.design-0 {
+          background: #ffffff;
+          border: 2px solid #ffe08a;
+          box-shadow: 0 2px 8px rgba(255, 224, 138, 0.12);
+        }
+        .section-box.design-1 {
+          background: #ffffff;
+          border: 2px solid #a3d1ff;
+          box-shadow: 0 2px 8px rgba(163, 209, 255, 0.12);
+        }
+        .section-box.design-2 {
+          background: #ffffff;
+          border: 2px solid #c7bfff;
+          box-shadow: 0 2px 8px rgba(199, 191, 255, 0.12);
+        }
+        .section-box {
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: 8px;
+          margin-bottom: 24px;
+          padding: 24px 20px 20px 20px;
+          display: block;
+        }
+        /* New: line between sections for design-4 */
+        .line-section {
+          border-bottom: 2px solid #bdbdbd;
+          margin-bottom: 24px;
+          padding-bottom: 18px;
+        }
+        .grammar-questions {
+          white-space: pre-line;
+          margin-bottom: 16px;
+          line-height: 1.6;
+          font-size: 1em;
+          word-spacing: 0.5em;
+        }
+        /* All worksheet headers have a simple line */
+        /* Only designs 3 and 4 have a horizontal line under the header */
+        .design-3 .worksheet-header,
+        .design-4 .worksheet-header {
+          border-bottom: 2px solid #d3d3d3;
+          padding-bottom: 12px;
+          margin-bottom: 30px !important;
+        }
+        
+        /* Increase spacing between header and content for all designs */
+        .worksheet-header {
+          margin-bottom: 30px;
+        }
+        /* Header box for boxed designs: white center, border only, no colored background */
+        .header-box {
+          background: #fff;
+          border: 2px solid #ffe08a;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(255, 224, 138, 0.10);
+          padding: 18px 18px 10px 18px;
+          margin-bottom: 24px;
+        }
+        .design-1 .header-box {
+          border: 2px solid #a3d1ff;
+          box-shadow: 0 2px 8px rgba(163, 209, 255, 0.10);
+        }
+        .design-2 .header-box {
+          border: 2px solid #c7bfff;
+          box-shadow: 0 2px 8px rgba(199, 191, 255, 0.10);
+        }
+        .design-3 {
+          background: #fff;
+          border: none;
+          box-shadow: none;
+        }
+        /* Design-4: no box, just lines between sections */
+        .design-4 {
+          background: #fff;
+          border: none;
+          box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+  <script>
+    // Access control: only allow approved users
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+  <script>
+    // Feedback modal loader for Grammar Worksheet Generator (GLOBAL for burger menu)
+    window.showFeedbackModal = async function() {
+      if (!document.getElementById('feedbackModalBg')) {
+        const resp = await fetch('/Teachers/components/feedback-modal.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const template = tempDiv.querySelector('#feedback-modal-template');
+        if (template) {
+          const modalContent = template.content.cloneNode(true);
+          document.body.appendChild(modalContent);
+        }
+      }
+      const modal = document.getElementById('feedbackModalBg');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      
+      const closeBtn = document.getElementById('feedbackModalCloseBtn');
+      const cancelBtn = document.getElementById('feedbackCancelBtn');
+      const submitBtn = document.getElementById('feedbackSubmitBtn');
+      
+      function closeModal() {
+        modal.style.display = 'none';
+      }
+      
+      if (closeBtn) {
+        closeBtn.onclick = closeModal;
+      }
+      if (cancelBtn) {
+        cancelBtn.onclick = closeModal;
+      }
+      
+      // Close on background click
+      modal.onclick = function(event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+      
+      if (submitBtn) {
+        submitBtn.onclick = async function() {
+          const feedbackText = document.getElementById('feedbackText').value;
+          // Collect grammar worksheet state
+          const state = {
+            title: document.getElementById('grammarTitle')?.value || '',
+            questions: document.getElementById('grammarQuestions')?.value || '',
+            answers: document.getElementById('grammarAnswers')?.value || '',
+            font: document.getElementById('fontSelect')?.value || '',
+            fontSize: document.getElementById('fontSizeInput')?.value || '',
+            template: document.getElementById('templateSelect')?.value || '',
+            layout: document.getElementById('layoutSelect')?.value || ''
+          };
+          
+          // Get user_id and username from localStorage
+          const user_id = localStorage.getItem('userId') || '';
+          const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+          
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'insert_feedback',
+                data: {
+                  feedback: feedbackText,
+                  module: 'grammar',
+                  user_id,
+                  username,
+                  tool_state: state,
+                  page_url: window.location.href
+                }
+              })
+            });
+            const result = await resp.json();
+            if (resp.ok && result.success) {
+              closeModal();
+              document.getElementById('feedbackText').value = '';
+              alert('Thank you for your feedback!');
+            } else {
+              alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+            }
+          } catch (err) {
+            alert('Network error: ' + err.message);
+          }
+        };
+      }
+    };
+    
+    // Create global feedback submission function for grammar
+    window.feedbackSubmitToSupabase = async function(data) {
+      const user_id = localStorage.getItem('userId') || '';
+      const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+      
+      const payload = {
+        feedback: data.feedback,
+        module: data.module || 'grammar',
+        user_id,
+        username,
+        tool_state: data.state || data.tool_state,
+        page_url: window.location.href
+      };
+      
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (!resp.ok || !result.success) {
+          throw new Error(result.error || 'Failed to submit feedback');
+        }
+        return result;
+      } catch (err) {
+        console.error('Feedback submission error:', err);
+        throw err;
+      }
+    };
+  </script>
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <div class="container">
+        <div class="app-card">
+            <!-- Header -->
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+                <div class="logo">
+                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                </div>
+                <h1 style="flex:1; text-align:center; margin:0;">Grammar Builder</h1>
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+            </div>
+            <!-- Top Action Bar -->
+            <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
+                <span class="action-link" id="loadBtn">Load</span>
+                <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="printBtn">Print</span>
+                <span class="action-link" id="pdfBtn">PDF</span>
+                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
+                <script>
+                // Attach More button to show the More Tools modal overlay
+                document.addEventListener('DOMContentLoaded', function() {
+                  // New button logic
+                  const newBtn = document.getElementById('newBtn');
+                  if (newBtn) {
+                    newBtn.addEventListener('click', function() {
+                      if (confirm('Are you sure you want to start a new worksheet? This will clear all current content.')) {
+                        // Reset all worksheet fields and state
+                        const title = document.getElementById('grammarTitle');
+                        if (title) title.value = '';
+                        const aiPrompt = document.getElementById('aiPromptInput');
+                        if (aiPrompt) aiPrompt.value = '';
+                        const questionType = document.getElementById('questionTypeSelect');
+                        if (questionType) questionType.value = 'free';
+                        const manualQuestions = document.getElementById('grammarQuestions');
+                        if (manualQuestions) manualQuestions.value = '';
+                        const answers = document.getElementById('grammarAnswers');
+                        if (answers) answers.value = '';
+                        const fontSelect = document.getElementById('fontSelect');
+                        if (fontSelect) fontSelect.value = 'Poppins';
+                        const fontSizeInput = document.getElementById('fontSizeInput');
+                        if (fontSizeInput) fontSizeInput.value = '12';
+                        const templateSelect = document.getElementById('templateSelect');
+                        if (templateSelect) templateSelect.value = '2';
+                        const layoutSelect = document.getElementById('layoutSelect');
+                        if (layoutSelect) layoutSelect.value = 'default';
+                        // Clear worksheet sections if used
+                        if (window.grammarSections) window.grammarSections.length = 0;
+                        // Update preview if function exists
+                        if (typeof window.updateGrammarPreview === 'function') window.updateGrammarPreview();
+                      }
+                    });
+                  }
+                  // More button logic
+                  const moreBtn = document.getElementById('moreBtn');
+                  if (!moreBtn) return;
+                  moreBtn.addEventListener('click', async function() {
+                    // If modal not present, fetch and inject it
+                    if (!document.getElementById('moreToolsOverlay')) {
+                      try {
+                        const resp = await fetch('/Teachers/components/more-tools.html');
+                        const html = await resp.text();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        // Only append the overlay div, not the whole HTML
+                        const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                        if (overlay) document.body.appendChild(overlay);
+                        // Also append any <style> tags (for modal styling)
+                        tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                        // Also append any <script> tags (for modal logic)
+                        tempDiv.querySelectorAll('script').forEach(script => {
+                          const s = document.createElement('script');
+                          if (script.textContent) s.textContent = script.textContent;
+                          document.body.appendChild(s);
+                        });
+                        // Attach close button handler immediately after injection
+                        setTimeout(function() {
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          var overlayDiv = document.getElementById('moreToolsOverlay');
+                          if (closeBtn && overlayDiv) {
+                            closeBtn.onclick = function() {
+                              overlayDiv.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }, 100);
+                      } catch (e) { alert('Could not load More Tools.'); return; }
+                    }
+                    if (typeof showMoreToolsModal === 'function') {
+                      showMoreToolsModal();
+                    } else {
+                      // fallback: try to show overlay directly
+                      const overlay = document.getElementById('moreToolsOverlay');
+                      if (overlay) {
+                        overlay.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        // Attach close button handler if not already
+                        var closeBtn = document.getElementById('closeMoreToolsBtn');
+                        if (closeBtn) {
+                          closeBtn.onclick = function() {
+                            overlay.style.display = 'none';
+                            document.body.style.overflow = '';
+                          };
+                        }
+                      }
+                    }
+                  });
+                });
+                </script>
+            </div>
+            <!-- Floating Toolbar -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+                <div class="font-size-controls">
+                    <button class="size-btn" id="decreaseFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInput" value="12" min="8" max="18" step="1">
+                    <button class="size-btn" id="increaseFontBtn">+</button>
+                </div>
+                <select class="toolbar-select" id="templateSelect">
+                    <option value="0">Design 1 (Yellow Box)</option>
+                    <option value="1">Design 2 (Blue Box)</option>
+                    <option value="2">Design 3 (Purple Box)</option>
+                    <option value="3">Design 4 (Simple Line)</option>
+                    <option value="4">Design 5 (Lines Between Parts)</option>
+                </select>
+                <div class="layout-group">
+                    <select class="layout-select" id="layoutSelect">
+                        <option value="default">Standard Layout</option>
+                        <option value="two-column">Two Column</option>
+                        <option value="large-text">Large Text</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+            </div>
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <!-- Title at the top of the toolbar -->
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" class="input-field" id="grammarTitle" placeholder="Enter worksheet title">
+                    </div>
+                    <!-- Flexible AI Prompt for Grammar Worksheet Generation -->
+                    <div class="input-group" id="aiPromptGroup">
+                        <label for="aiPromptInput" style="font-size:13px; color:#444; font-weight:500;">What are you teaching today?</label>
+                        <textarea id="aiPromptInput" class="textarea-field" rows="3" placeholder="e.g. Make 10 questions using the present perfect. Or: Give me 5 error correction sentences about articles."></textarea>
+                        <!-- New: Question Type Dropdown -->
+                        <div style="margin: 8px 0 0 0;">
+                          <label for="questionTypeSelect" style="font-size:13px; color:#444; font-weight:500; margin-bottom:2px;display:block;">Prompt Type</label>
+                          <select id="questionTypeSelect" class="toolbar-select" style="width:100%;max-width:260px;">
+                            <option value="free">Free Form</option>
+                            <option value="mc">Multiple Choice</option>
+                            <option value="fill">Fill in the Blanks</option>
+                            <option value="unscramble">Unscramble (Sentence Reordering)</option>
+                          </select>
+                        </div>
+                        <button id="sendAIPromptBtn" class="extract-btn" style="margin-top:8px;">Send Prompt to AI</button>
+                    </div>
+                    
+                    <!-- Manual Questions Input -->
+                    <div class="input-group">
+                        <label>Manual Questions (Optional)</label>
+                        <textarea class="textarea-field" id="grammarQuestions" placeholder="Or type questions manually here..." rows="4"></textarea>
+                    </div>
+    <!-- AI prompt handler for grammar worksheet (moved out of sidebar for valid HTML) -->
+    <script type="module">
+      import { showGrammarSectionModal, addGrammarSection } from './grammar-section-modal.js';
+      window.grammarSections = [];
+      
+      // Flag to prevent multiple event listener attachments
+      let eventListenerAttached = false;
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        const aiBtn = document.getElementById('sendAIPromptBtn');
+        const aiInput = document.getElementById('aiPromptInput');
+        const questionTypeSelect = document.getElementById('questionTypeSelect');
+        if (aiBtn && aiInput && !eventListenerAttached) {
+          eventListenerAttached = true;
+          aiBtn.addEventListener('click', async function() {
+
+            let prompt = aiInput.value.trim();
+            if (!prompt) {
+              aiInput.focus();
+              return;
+            }
+
+            // Add question type instruction to prompt
+            let sectionTitle = '';
+            if (questionTypeSelect) {
+              const type = questionTypeSelect.value;
+              // Try to infer a topic from the prompt
+              let topic = '';
+              const lowerPrompt = prompt.toLowerCase();
+              if (lowerPrompt.includes('present perfect')) topic = 'present perfect';
+              else if (lowerPrompt.includes('present tense')) topic = 'present tense';
+              else if (lowerPrompt.includes('past tense')) topic = 'past tense';
+              else if (lowerPrompt.includes('future tense')) topic = 'future tense';
+              else if (lowerPrompt.includes('adjectives')) topic = 'adjectives';
+              else if (lowerPrompt.includes('articles')) topic = 'articles';
+              else if (lowerPrompt.includes('error correction')) topic = 'error correction';
+              else if (lowerPrompt.includes('modal verbs')) topic = 'modal verbs';
+              else if (lowerPrompt.includes('prepositions')) topic = 'prepositions';
+              else if (lowerPrompt.includes('comparative')) topic = 'comparatives';
+              else if (lowerPrompt.includes('superlative')) topic = 'superlatives';
+              else if (lowerPrompt.includes('questions')) topic = 'questions';
+              else if (lowerPrompt.includes('vocabulary')) topic = 'vocabulary';
+              else if (lowerPrompt.includes('conditionals')) topic = 'conditionals';
+              else if (lowerPrompt.includes('passive voice')) topic = 'passive voice';
+              else if (lowerPrompt.includes('reported speech')) topic = 'reported speech';
+              else if (lowerPrompt.includes('relative clauses')) topic = 'relative clauses';
+              else if (lowerPrompt.includes('phrasal verbs')) topic = 'phrasal verbs';
+              else if (lowerPrompt.includes('pronouns')) topic = 'pronouns';
+              else if (lowerPrompt.includes('possessive adjectives')) topic = 'possessive adjectives';
+              else if (lowerPrompt.includes('possessive pronouns')) topic = 'possessive pronouns';
+              else if (lowerPrompt.includes('object pronouns')) topic = 'object pronouns';
+              else if (lowerPrompt.includes('subject pronouns')) topic = 'subject pronouns';
+              else if (lowerPrompt.includes('gerunds vs infinitives') || lowerPrompt.includes('gerunds v infinitives')) topic = 'gerunds vs infinitives';
+              else if (lowerPrompt.includes('gerunds')) topic = 'gerunds';
+              else if (lowerPrompt.includes('infinitives')) topic = 'infinitives';
+              else if (lowerPrompt.includes('conjunctions')) topic = 'conjunctions';
+              else if (lowerPrompt.includes('determiners')) topic = 'determiners';
+              else if (lowerPrompt.includes('interjections')) topic = 'interjections';
+              else if (lowerPrompt.includes('adverbs')) topic = 'adverbs';
+              else if (lowerPrompt.includes('countable and uncountable')) topic = 'countable and uncountable nouns';
+              else if (lowerPrompt.includes('uncountable nouns')) topic = 'uncountable nouns';
+              else if (lowerPrompt.includes('countable nouns')) topic = 'countable nouns';
+              else if (lowerPrompt.includes('subject verb agreement')) topic = 'subject-verb agreement';
+              else if (lowerPrompt.includes('direct speech')) topic = 'direct speech';
+              else if (lowerPrompt.includes('indirect speech')) topic = 'indirect speech';
+              else if (lowerPrompt.includes('reflexive pronouns')) topic = 'reflexive pronouns';
+              else if (lowerPrompt.includes('demonstrative pronouns')) topic = 'demonstrative pronouns';
+              else if (lowerPrompt.includes('relative pronouns')) topic = 'relative pronouns';
+              // fallback: use the prompt itself if no topic found
+              if (!topic && prompt.length < 40) topic = prompt;
+
+              if (type === 'mc') {
+                prompt = `Create multiple choice grammar questions for ESL students about: ${prompt}. Format each question like this example (but don't use labels like \"Question:\" or \"Answer:\"):\n\nShe gave the pen to _____.\na) he  b) him  c) his  d) himself\n\nJust write questions and answer choices clearly.`;
+                sectionTitle = `Choose the correct ${topic ? topic + ' word' : 'answer'}.`;
+              } else if (type === 'fill') {
+                prompt = `Create a gap-fill sentence to test ${prompt} for ESL students. Provide the base verb in parentheses.\nExample format:\nYesterday, I ________________ (go) to the zoo.\nAgain follow only formatting for this prompt, content is based on user prompt.`;
+                sectionTitle = `Fill in the gaps with the correct ${topic ? topic : 'word'}.`;
+              } else if (type === 'unscramble') {
+                prompt = `Create a sentence reordering task for ${prompt}.\nExample format:\nate / she / ? / did / my sandwich.\nThe answer should be the correct sentence order, but do not show the answer in the question area.`;
+                sectionTitle = `Unscramble the words to make a correct sentence${topic ? ' (' + topic + ')' : ''}.`;
+              } else {
+                sectionTitle = topic ? `Questions about ${topic}` : 'Questions';
+              }
+            }
+
+            // Title will be generated by AI after getting the questions
+
+            // Always request answer key from AI
+            if (!/answer key|answers/i.test(prompt)) {
+              prompt += '\n\nAfter the questions, provide an answer key labeled as Answer Key:';
+            }
+            aiBtn.disabled = true;
+            aiBtn.textContent = 'Thinking...';
+            try {
+              const res = await fetch('/.netlify/functions/openai_proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, type: 'grammar' })
+              });
+              const data = await res.json();
+              if (data && data.result) {
+                // Auto-split questions and answers
+                let result = data.result.trim();
+                let questions = result;
+                let answers = '';
+
+                console.log('Raw AI result:', result);
+
+                // Try to find answer section markers
+                let answerMarkers = [
+                  /\n\s*(Answer Key:?)\s*\n/i,
+                  /\n\s*(Answers?:?)\s*\n/i,
+                  /\n\s*(ANSWERS?:?)\s*\n/i,
+                  /\n\s*(Answer Sheet:?)\s*\n/i
+                ];
+
+                let splitFound = false;
+                for (let marker of answerMarkers) {
+                  let splitIndex = result.search(marker);
+                  if (splitIndex !== -1) {
+                    questions = result.substring(0, splitIndex).trim();
+                    answers = result.substring(splitIndex).replace(marker, '').trim();
+                    splitFound = true;
+                    console.log('Split found with marker:', marker);
+                    break;
+                  }
+                }
+
+                // If no explicit marker, try to detect answer patterns
+                if (!splitFound) {
+                  // Look for a section that starts with numbered or lettered answers
+                  let answerPattern = /\n(\d+\.\s+.*(?:\n\d+\.\s+.*)*)\s*$/i;
+                  let match = result.match(answerPattern);
+                  if (match) {
+                    let answerStart = result.lastIndexOf(match[1]);
+                    questions = result.substring(0, answerStart).trim();
+                    answers = match[1].trim();
+                    splitFound = true;
+                    console.log('Split found with numbered pattern');
+                  }
+                }
+
+                if (splitFound) {
+                  console.log('Split successful - Questions:', questions);
+                  console.log('Split successful - Answers:', answers);
+                } else {
+                  // Fallback: Assume the entire response is questions if no split is found
+                  questions = result;
+                  answers = ''; // No answers provided
+                  console.log('No split found, treating all as questions');
+                }
+
+                // Generate AI title if title box is empty
+                const titleBox = document.getElementById('grammarTitle');
+                if (titleBox && !titleBox.value.trim()) {
+                  try {
+                    const titlePrompt = `Suggest a short, catchy worksheet title (max 5 words) based on this prompt and these questions. Only reply with the title, no extra text.\nPrompt: ${aiInput.value.trim()}\nQuestions: ${questions}`;
+                    const titleRes = await fetch('/.netlify/functions/openai_proxy', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        endpoint: 'chat/completions',
+                        payload: {
+                          model: 'gpt-3.5-turbo',
+                          messages: [
+                            { role: 'system', content: 'You are a helpful ESL worksheet generator.' },
+                            { role: 'user', content: titlePrompt }
+                          ],
+                          max_tokens: 16,
+                          temperature: 0.6
+                        }
+                      })
+                    });
+                    if (titleRes.ok) {
+                      const titleResult = await titleRes.json();
+                      if (titleResult.data && titleResult.data.choices && titleResult.data.choices[0] && titleResult.data.choices[0].message) {
+                        const aiTitle = titleResult.data.choices[0].message.content.trim();
+                        if (aiTitle) titleBox.value = aiTitle;
+                      }
+                    }
+                  } catch (e) {
+                    console.log('Title generation failed:', e);
+                  }
+                }
+
+                // Populate the modal with questions and answers
+                // Pass sectionTitle as header
+                showGrammarSectionModal({ questions, answers, sectionTitle }, function(editedSection) {
+                  // Ensure sectionTitle is preserved if not edited
+                  if (!editedSection.sectionTitle && sectionTitle) {
+                    editedSection.sectionTitle = sectionTitle;
+                  }
+                  if (!window.grammarSections) window.grammarSections = [];
+                  window.grammarSections.push(editedSection);
+
+                  // Update the sidebar's "Answer Key" textarea
+                  const answerKeyTextarea = document.getElementById('grammarAnswers');
+                  if (answerKeyTextarea) {
+                    const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                    answerKeyTextarea.value = allAnswers.join('\n\n');
+                  }
+
+                  // Update the worksheet preview
+                  if (typeof window.updateGrammarPreview === 'function') {
+                    window.updateGrammarPreview();
+                  }
+                });
+              } else {
+                alert('AI did not return any questions.');
+              }
+            } catch (e) {
+              alert('Error contacting AI: ' + (e.message || e));
+            } finally {
+              aiBtn.disabled = false;
+              aiBtn.textContent = 'Send Prompt to AI';
+            }
+          });
+        }
+      });
+      // Expose for preview update script
+      window.addGrammarSection = addGrammarSection;                    </script>
+                    <div class="input-group">
+                        <label>Answer Key</label>
+                        <textarea class="textarea-field" id="grammarAnswers" placeholder="Answer key will appear here..." rows="4"></textarea>
+                        <div class="button-group" style="margin-top: 8px;">
+                            <button class="extract-btn" id="printAnswerKeyBtn" type="button">Print Answer Key</button>
+                        </div>
+                    </div>
+                    
+
+<script>
+// Print only the answer key section
+document.addEventListener('DOMContentLoaded', function() {
+  const printAnswerKeyBtn = document.getElementById('printAnswerKeyBtn');
+  if (printAnswerKeyBtn) {
+    printAnswerKeyBtn.addEventListener('click', function() {
+      // Find the answer key section in the preview
+      const preview = document.getElementById('worksheetPreviewArea-grammar');
+      if (!preview) return;
+      const answerKey = preview.querySelector('.answer-key-section');
+      if (!answerKey) {
+        alert('No answer key found!');
+        return;
+      }
+      // Create a new window for printing
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write('<html><head><title>Print Answer Key</title>');
+      // Copy stylesheets
+      document.querySelectorAll('link[rel="stylesheet"], style').forEach(style => {
+        printWindow.document.write(style.outerHTML);
+      });
+      printWindow.document.write('</head><body>');
+      printWindow.document.write('<div style="padding:32px;max-width:700px;margin:auto;font-family:Poppins,sans-serif;">');
+      printWindow.document.write('<h2 style="margin-bottom:24px;">Answer Key</h2>');
+      printWindow.document.write(answerKey.innerHTML);
+      printWindow.document.write('</div>');
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 200);
+    });
+  }
+});
+</script>
+                </div>
+                <!-- Preview Area -->
+                <div class="preview-area" id="worksheetPreviewArea-grammar">
+                    <div class="preview-placeholder" id="grammarPreviewPlaceholder">
+                        <p>Preview will appear here</p>
+                    </div>
+                </div>
+                <script>
+                // Make preview content editable on left click and allow right-click to delete a section
+                document.addEventListener('DOMContentLoaded', function() {
+                  const preview = document.getElementById('worksheetPreviewArea-grammar');
+        if (preview) {
+          // Enable editing on click
+          preview.addEventListener('click', function(e) {
+            if (!preview.isContentEditable) {
+              preview.contentEditable = 'true';
+              preview.focus();
+            }
+          });
+
+          // Save edits to grammarSections or questions textarea on blur or input
+          function persistPreviewEdits() {
+            // If using grammarSections, update their questions/answers from the preview
+            if (window.grammarSections && window.grammarSections.length > 0) {
+              // Find all section-boxes in the preview
+              const sectionDivs = preview.querySelectorAll('.section-box, .grammar-section');
+              sectionDivs.forEach((div, idx) => {
+                // Find the questions and answers inside each section
+                const questionsDiv = div.querySelector('.grammar-questions');
+                if (questionsDiv && window.grammarSections[idx]) {
+                  // Save the edited HTML/text back to the section
+                  // Remove any HTML tags for storage, keep line breaks
+                  let html = questionsDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+                  html = html.replace(/<[^>]+>/g, '');
+                  window.grammarSections[idx].questions = html;
+                }
+              });
+              // Also update the answer key textarea
+              const answerKeyTextarea = document.getElementById('grammarAnswers');
+              if (answerKeyTextarea) {
+                const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                answerKeyTextarea.value = allAnswers.join('\n\n');
+              }
+            } else {
+              // Fallback: update the manual questions textarea
+              const questionsTextarea = document.getElementById('grammarQuestions');
+              if (questionsTextarea) {
+                // Get the first .grammar-questions div
+                const qDiv = preview.querySelector('.grammar-questions');
+                if (qDiv) {
+                  let html = qDiv.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+                  html = html.replace(/<[^>]+>/g, '');
+                  questionsTextarea.value = html;
+                }
+              }
+            }
+          }
+          preview.addEventListener('blur', persistPreviewEdits, true);
+          preview.addEventListener('input', persistPreviewEdits, true);
+
+          // Right-click to delete a section
+          // Undo stack for deleted sections
+          window.grammarSectionUndoStack = window.grammarSectionUndoStack || [];
+          preview.addEventListener('contextmenu', function(e) {
+            let section = e.target.closest('.section-box, .grammar-section');
+            if (section && preview.contains(section) && section.hasAttribute('data-section-idx')) {
+              e.preventDefault();
+              // Confirmation before deleting entire section
+              const confirmed = confirm('Are you sure you want to delete this section?');
+              if (!confirmed) return;
+              let idx = parseInt(section.getAttribute('data-section-idx'), 10);
+              if (window.grammarSections && idx >= 0 && idx < window.grammarSections.length) {
+                // Save a copy of the deleted section and its index
+                window.grammarSectionUndoStack.push({
+                  section: window.grammarSections[idx],
+                  index: idx
+                });
+                window.grammarSections.splice(idx, 1);
+                const answerKeyTextarea = document.getElementById('grammarAnswers');
+                if (answerKeyTextarea) {
+                  const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                  answerKeyTextarea.value = allAnswers.join('\n\n');
+                }
+                if (typeof window.updateGrammarPreview === 'function') {
+                  window.updateGrammarPreview();
+                }
+              }
+            } else {
+              let section = e.target.closest('.grammar-questions');
+              if (section && preview.contains(section)) {
+                e.preventDefault();
+                const questionsTextarea = document.getElementById('grammarQuestions');
+                if (questionsTextarea) {
+                  questionsTextarea.value = '';
+                  if (typeof window.updateGrammarPreview === 'function') {
+                    window.updateGrammarPreview();
+                  }
+                }
+              }
+            }
+          });
+
+          // Undo (Ctrl+Z) for section deletion
+          document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+              if (window.grammarSectionUndoStack && window.grammarSectionUndoStack.length > 0) {
+                const last = window.grammarSectionUndoStack.pop();
+                if (last && last.section) {
+                  if (!window.grammarSections) window.grammarSections = [];
+                  // Insert back at the original index
+                  window.grammarSections.splice(last.index, 0, last.section);
+                  const answerKeyTextarea = document.getElementById('grammarAnswers');
+                  if (answerKeyTextarea) {
+                    const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+                    answerKeyTextarea.value = allAnswers.join('\n\n');
+                  }
+                  if (typeof window.updateGrammarPreview === 'function') window.updateGrammarPreview();
+                }
+                e.preventDefault();
+              }
+            }
+          });
+        }
+                });
+                </script>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Grammar worksheet logic -->
+    <script type="module" src="./grammar.js"></script>
+    <!-- AI prompt logic for grammar worksheet generation -->
+    <script type="module" src="./ai.js"></script>
+    <!-- Section modal logic for grammar worksheet generation -->
+    <script type="module" src="./grammar-section-modal.js"></script>
+    <!-- Print logic for clean worksheet printing -->
+    <script src="./print.js"></script>
+    <script>
+    // Grammar worksheet preview function has been replaced with createGrammarPreview
+
+    // Create a simple preview update function to create a two-column layout
+    function createGrammarPreview() {
+      try {
+        // Get all values
+        const title = document.getElementById('grammarTitle')?.value || '';
+        const answers = document.getElementById('grammarAnswers')?.value || '';
+        const font = document.getElementById('fontSelect')?.value || 'Poppins';
+        const fontSize = document.getElementById('fontSizeInput')?.value || '12';
+        const template = document.getElementById('templateSelect')?.value || '0';
+        const layout = document.getElementById('layoutSelect')?.value || 'default';
+      
+      // Get design classes
+      let designClass = 'design-0';
+      if (template === '1') designClass = 'design-1';
+      else if (template === '2') designClass = 'design-2';
+      else if (template === '3') designClass = 'design-3';
+      else if (template === '4') designClass = 'design-4';
+      
+      // Get layout class
+      let layoutClass = '';
+      if (layout === 'two-column') layoutClass = 'two-column';
+      
+      // Build sections HTML and answer key HTML
+      let sectionsHtml = '';
+      let answerKeyHtml = '';
+      let grammarSections = window.grammarSections || [];
+      let addGrammarSection = window.addGrammarSection;
+      // Helper to detect question type for custom spacing
+      function getSectionType(section) {
+        if (section && section.type) return section.type;
+        // Try to infer from sectionTitle
+        if (section && section.sectionTitle) {
+          const t = section.sectionTitle.toLowerCase();
+          if (t.includes('unscramble')) return 'unscramble';
+          if (t.includes('fill in the gaps') || t.includes('fill in the blanks')) return 'fill';
+        }
+        return '';
+      }
+      if (grammarSections.length > 0 && typeof addGrammarSection === 'function') {
+        grammarSections.forEach(function(section, idx) {
+          let html = addGrammarSection(section, idx);
+          const type = getSectionType(section);
+          // Add custom line spacing and answer line for each question
+          if (type === 'fill' || type === 'unscramble') {
+            const lineHeight = type === 'fill' ? '2.0' : '1.5';
+            html = html.replace('<div class="grammar-questions"', `<div class="grammar-questions" style="line-height:${lineHeight}"`);
+            // Add space (and line for unscramble) under each question
+            html = html.replace(/(<div class="grammar-questions"[^>]*>)([\s\S]*?)(<\/div>)/g, function(match, open, content, close) {
+              // Process content to add answer lines after each sentence
+              let processedContent = content;
+              if (type === 'unscramble') {
+                // Split by newlines and add answer line after each non-empty line
+                const lines = processedContent.split(/\n+/);
+                processedContent = lines.map(line => {
+                  if (line.trim()) {
+                    return line + '<br><br><span style="display:inline-block;border-bottom:2px solid #333;width:85%;height:10px;margin:4px 0 12px 0;"></span>';
+                  }
+                  return line;
+                }).join('<br>');
+              } else if (type === 'fill') {
+                // Split by newlines and add extra space after each question
+                const lines = processedContent.split(/\n+/);
+                processedContent = lines.map(line => {
+                  if (line.trim()) {
+                    return line + '<span style="display:inline-block;height:12px;margin:7px 0 10px 0;"></span>';
+                  }
+                  return line;
+                }).join('<br>');
+              }
+              return open + processedContent + close;
+            });
+          }
+          sectionsHtml += html;
+          // Add to answer key if answers exist
+          let ans = (typeof section === 'object' && section !== null) ? section.answers : '';
+          if (ans && ans.trim()) {
+            answerKeyHtml += `<div style="margin-bottom:10px;"><b>Part ${String.fromCharCode(65+idx)}:</b><br><span style='white-space:pre-line;'>${ans}</span></div>`;
+          }
+        });
+      } else {
+        // fallback to single questions textarea
+        const questions = document.getElementById('grammarQuestions')?.value || '';
+        // Detect type from dropdown
+        let type = '';
+        const questionTypeSelect = document.getElementById('questionTypeSelect');
+        if (questionTypeSelect) type = questionTypeSelect.value;
+        let style = '';
+        if (type === 'fill') style = 'line-height:2.0';
+        if (type === 'unscramble') style = 'line-height:1.5';
+        let content = questions || '<i>No questions yet.</i>';
+        if ((type === 'fill' || type === 'unscramble') && questions) {
+          content = content.split(/\n+/).map(line => {
+            if (line.trim()) {
+              let extra = '';
+              if (type === 'unscramble') {
+                extra = '<br><br><span style="display:inline-block;border-bottom:2px solid #333;width:85%;height:10px;margin:4px 0 12px 0;"></span>';
+              } else if (type === 'fill') {
+                extra = '<span style="display:inline-block;height:12px;margin:7px 0 10px 0;"></span>';
+              }
+              return line + extra;
+            }
+            return line;
+          }).join('<br>');
+        }
+        sectionsHtml = `<div class="grammar-questions"${style ? ' style="'+style+'"' : ''}>${content}</div>`;
+        // fallback to manual answer key
+        if (answers && answers.trim()) {
+          answerKeyHtml = `<div style='white-space:pre-line;'>${answers}</div>`;
+        }
+      }
+
+      // Create HTML
+
+      let html = '<div class="' + designClass + ' a4-sheet" style="width:100%;padding:24px;box-sizing:border-box;font-family:' + font + ',sans-serif;font-size:' + fontSize + 'px;">';
+
+      // Add header, wrapped in a box for boxed designs
+      let headerHtml = '';
+      if (designClass === 'design-0' || designClass === 'design-1' || designClass === 'design-2') {
+        headerHtml += '<div class="header-box">';
+      }
+      headerHtml += '<div class="worksheet-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">';
+      headerHtml += '<img src="../../../Assets/Images/color-logo1.png" alt="Willena Logo" style="width:60px;max-width:80px;">';
+      headerHtml += '<div style="flex:1;text-align:center;">';
+      headerHtml += '<h1 style="font-size:2.4em;margin:0 0 5px 0;color:#2e2b3f;font-family:' + font + ',sans-serif;">' + (title || 'Grammar Worksheet') + '</h1>';
+      headerHtml += '<div style="display:flex;justify-content:space-between;margin:0 30px 0 30px;font-size:1em;">';
+      headerHtml += '<span>Name: ________________</span>';
+      headerHtml += '<span>Date: ________________</span>';
+      headerHtml += '</div></div></div>';
+      if (designClass === 'design-0' || designClass === 'design-1' || designClass === 'design-2') {
+        headerHtml += '</div>';
+      }
+      html += headerHtml;
+
+      // Add content section with two-column if selected
+      if (layout === 'two-column') {
+        html += '<div class="' + layoutClass + '" style="width:100%;">' + sectionsHtml + '</div>';
+      } else {
+        html += '<div>' + sectionsHtml + '</div>';
+      }
+
+      // Add visual divider and answer key with page break
+      html += '<hr class="answer-divider page-break">';
+      html += '<div class="answer-key-section" style="margin-top:0;"><b>Answer Key:</b>';
+      html += answerKeyHtml || '<div style="white-space:pre-line;"><i>No answer key yet.</i></div>';
+      html += '</div>';
+
+      // Close container
+      html += '</div>';
+
+      // Update preview
+      const preview = document.getElementById('worksheetPreviewArea-grammar');
+      if (preview) {
+        preview.innerHTML = html;
+        // Ensure multiple choice options always appear under the question, but on a single line
+        const questionDivs = preview.querySelectorAll('.grammar-questions');
+        questionDivs.forEach(div => {
+          // For each line, if it looks like a question with options (e.g., "Question text\na) ... b) ... c) ..."),
+          // move the options to a single line below the question.
+          div.innerHTML = div.innerHTML.replace(/([^\n]*)(\n|<br\s*\/?>)?\s*([a-h]\)[^<\n]*)/gi, function(match, question, br, options) {
+            // Keep all options on one line, separated by spaces
+            return question + '<br><span style="margin-left:18px;display:inline-block;">' + options.replace(/\s+/g, ' ') + '</span>';
+          });
+        });
+      }
+      
+      // Return the HTML for use by print function
+      return html;
+    } catch (error) {
+      console.error('Error in createGrammarPreview:', error);
+      return '<div class="a4-sheet" style="padding:24px;"><h1>Error generating preview</h1><p>' + error.message + '</p></div>';
+    }
+    }
+
+    // Hook up preview updates to all relevant fields and font size buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set default font to Poppins on load
+      document.addEventListener('DOMContentLoaded', function() {
+        const fontSelect = document.getElementById('fontSelect');
+        if (fontSelect) {
+          fontSelect.value = 'Poppins';
+        }
+      });
+      const ids = [
+        'grammarTitle',
+        'grammarQuestions',
+        'grammarAnswers',
+        'fontSelect',
+        'fontSizeInput',
+        'templateSelect',
+        'layoutSelect'
+      ];
+      ids.forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', createGrammarPreview);
+          el.addEventListener('change', createGrammarPreview);
+        }
+      });
+
+      // Font size + and - buttons
+      const fontSizeInput = document.getElementById('fontSizeInput');
+      const increaseBtn = document.getElementById('increaseFontBtn');
+      const decreaseBtn = document.getElementById('decreaseFontBtn');
+      if (increaseBtn && fontSizeInput) {
+        increaseBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value, 10) || 12;
+          if (val < parseInt(fontSizeInput.max || '18', 10)) {
+            fontSizeInput.value = val + 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+      if (decreaseBtn && fontSizeInput) {
+        decreaseBtn.addEventListener('click', function() {
+          let val = parseInt(fontSizeInput.value, 10) || 12;
+          if (val > parseInt(fontSizeInput.min || '8', 10)) {
+            fontSizeInput.value = val - 1;
+            fontSizeInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+
+      createGrammarPreview();
+      window.updateGrammarPreview = createGrammarPreview;
+      window.createGrammarPreview = createGrammarPreview; // Expose for print function
+      
+      // Print button functionality
+      const printBtn = document.getElementById('printBtn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function() {
+          if (window.printWorksheet) {
+            window.printWorksheet();
+          } else {
+            window.print(); // fallback
+          }
+        });
+      }
+
+      // PDF button functionality
+      const pdfBtn = document.getElementById('pdfBtn');
+      if (pdfBtn) {
+        pdfBtn.addEventListener('click', function() {
+          // Ensure preview is up to date
+          if (typeof window.updateGrammarPreview === 'function') window.updateGrammarPreview();
+          const preview = document.getElementById('worksheetPreviewArea-grammar');
+          if (!preview) {
+            alert('Preview not found!');
+            return;
+          }
+          // Use html2pdf to save the preview as PDF
+          const opt = {
+            margin:       0.2,
+            filename:     (document.getElementById('grammarTitle')?.value || 'worksheet') + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+          };
+          // Only export the .a4-sheet inside the preview
+          const a4sheet = preview.querySelector('.a4-sheet');
+          if (a4sheet) {
+            html2pdf().set(opt).from(a4sheet).save();
+          } else {
+            html2pdf().set(opt).from(preview).save();
+          }
+        });
+      }
+    });
+    </script>
+<script>
+// --- Save/Load integration for worksheet_manager.html ---
+window.getCurrentWorksheetData = function() {
+  // Compose worksheet data for saving (match wordtest2.html style)
+  const title = document.getElementById('grammarTitle')?.value || '';
+  let questions = '';
+  // If grammarSections exist and have content, save as JSON
+  if (window.grammarSections && Array.isArray(window.grammarSections) && window.grammarSections.length > 0) {
+    try {
+      questions = JSON.stringify(window.grammarSections);
+    } catch (e) {
+      // fallback to textarea if serialization fails
+      questions = document.getElementById('grammarQuestions')?.value || '';
+    }
+  } else {
+    const questionsEl = document.getElementById('grammarQuestions');
+    questions = questionsEl ? questionsEl.value || '' : '';
+  }
+  const answers = document.getElementById('grammarAnswers')?.value || '';
+  const font = document.getElementById('fontSelect')?.value || 'Poppins';
+  const fontSize = document.getElementById('fontSizeInput')?.value || '12';
+  const template = document.getElementById('templateSelect')?.value || '0';
+  const layout = document.getElementById('layoutSelect')?.value || 'default';
+  // Compose settings as JSON string for future-proofing
+  const settings = JSON.stringify({ font, fontSize, template, layout });
+  return {
+    title,
+    worksheet_type: 'grammar',
+    questions,
+    answers,
+    settings
+  };
+};
+
+window.loadWorksheet = function(worksheet) {
+  if (!worksheet || worksheet.worksheet_type !== 'grammar') return;
+  
+  console.log('Loading worksheet:', worksheet); // Debug
+  
+  document.getElementById('grammarTitle').value = worksheet.title || '';
+  
+  // Initialize grammarSections if not exists
+  if (!window.grammarSections) {
+    window.grammarSections = [];
+  }
+  
+  // Try to load as JSON array (sections) if possible, else as plain text
+  let loadedSections = [];
+  let isSectionJson = false;
+  if (worksheet.questions && worksheet.questions.trim().startsWith('[')) {
+    try {
+      loadedSections = JSON.parse(worksheet.questions);
+      if (Array.isArray(loadedSections)) {
+        window.grammarSections = loadedSections;
+        isSectionJson = true;
+        console.log('Loaded sections:', loadedSections); // Debug
+      }
+    } catch (e) { 
+      console.log('Error parsing sections:', e);
+      window.grammarSections = []; 
+    }
+  }
+  
+  if (!isSectionJson) {
+    window.grammarSections = [];
+    const questionsEl = document.getElementById('grammarQuestions');
+    if (questionsEl) {
+      questionsEl.value = worksheet.questions || '';
+    }
+  } else {
+    // If using sections, clear the textarea (preview will show sections)
+    const questionsEl = document.getElementById('grammarQuestions');
+    if (questionsEl) {
+      questionsEl.value = '';
+    }
+  }
+  
+  // Restore settings if present
+  if (worksheet.settings) {
+    try {
+      const settings = JSON.parse(worksheet.settings);
+      if (settings.font) document.getElementById('fontSelect').value = settings.font;
+      if (settings.fontSize) document.getElementById('fontSizeInput').value = settings.fontSize;
+      if (settings.template) document.getElementById('templateSelect').value = settings.template;
+      if (settings.layout) document.getElementById('layoutSelect').value = settings.layout;
+    } catch (e) {}
+  }
+  
+  // Update answer key textarea - do this BEFORE updating preview
+  if (window.grammarSections && window.grammarSections.length > 0) {
+    const answerKeyTextarea = document.getElementById('grammarAnswers');
+    if (answerKeyTextarea) {
+      const allAnswers = window.grammarSections.map(section => section.answers).filter(Boolean);
+      answerKeyTextarea.value = allAnswers.join('\n\n');
+    }
+  } else {
+    document.getElementById('grammarAnswers').value = worksheet.answers || '';
+  }
+  
+  // Update preview - try multiple approaches
+  setTimeout(() => {
+    if (typeof window.updateGrammarPreview === 'function') {
+      window.updateGrammarPreview();
+    } else if (typeof window.createGrammarPreview === 'function') {
+      window.createGrammarPreview();
+    } else if (typeof createGrammarPreview === 'function') {
+      createGrammarPreview();
+    }
+  }, 100);
+  
+  alert('Worksheet loaded!');
+};
+
+// --- Save/Load button handlers to open worksheet manager ---
+document.addEventListener('DOMContentLoaded', function() {
+  const saveBtn = document.getElementById('saveBtn');
+  const loadBtn = document.getElementById('loadBtn');
+  function openWorksheetManager(mode) {
+    const url = `/Teachers/worksheet_manager.html?mode=${mode}&type=grammar`;
+    window.open(url, 'worksheetManager', 'width=1200,height=550');
+    const features = 'width=800,height=600,scrollbars=yes,resizable=yes';
+    window.open(url, 'WorksheetManager', features);
+  }
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function() {
+      openWorksheetManager('save');
+    });
+  }
+  if (loadBtn) {
+    loadBtn.addEventListener('click', function() {
+      openWorksheetManager('load');
+    });
+  }
+});
+</script>
+</body>
+</html>

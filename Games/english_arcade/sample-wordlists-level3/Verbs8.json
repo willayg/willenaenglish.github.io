@@ -1,0 +1,14 @@
+[
+  {"eng":"lose","kor":"지다","def":"to fail or not win","ex":"We lost the game.","ex_kor":"우리는 경기에서 졌다."},
+  {"eng":"pay","kor":"지불하다","def":"to give money for something","ex":"He paid for lunch.","ex_kor":"그는 점심값을 냈다."},
+  {"eng":"answer","kor":"대답하다","def":"to reply to a question","ex":"He answered quickly.","ex_kor":"그는 빨리 대답했다."},
+  {"eng":"cook","kor":"요리하다","def":"to prepare food for eating","ex":"Mom cooks dinner.","ex_kor":"엄마는 저녁을 요리한다."},
+  {"eng":"clean","kor":"청소하다","def":"to remove dirt","ex":"Clean your desk.","ex_kor":"책상을 깨끗이 치워라."},
+  {"eng":"wash","kor":"씻다","def":"to make something clean with water","ex":"Wash your hands.","ex_kor":"손을 씻어라."},
+  {"eng":"swim","kor":"수영하다","def":"to move through water","ex":"We swim in the pool.","ex_kor":"우리는 수영장에서 수영한다."},
+  {"eng":"plan","kor":"계획하다","def":"to decide what to do","ex":"Let’s plan our trip.","ex_kor":"우리 여행을 계획하자."},
+  {"eng":"decide","kor":"결정하다","def":"to choose what to do","ex":"She decides to stay.","ex_kor":"그녀는 머물기로 결정한다."},
+  {"eng":"try (2)","kor":"시험하다","def":"to test or experiment with something","ex":"Try this new flavor.","ex_kor":"이 새로운 맛을 한번 맛봐라."},
+  {"eng":"fix","kor":"고치다","def":"to repair or make something work again","ex":"He fixes the chair.","ex_kor":"그는 의자를 고친다."},
+  {"eng":"open (2)","kor":"열리다","def":"to become not closed by itself","ex":"The door opens slowly.","ex_kor":"문이 천천히 열린다."}
+]

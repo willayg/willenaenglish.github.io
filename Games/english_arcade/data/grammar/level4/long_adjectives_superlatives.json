@@ -1,0 +1,17 @@
+[
+  {"en":"the most interesting","ko":"가장 흥미로운","example":"This is the most interesting book I have read.","emoji":"📚"},
+  {"en":"the most beautiful","ko":"가장 아름다운","example":"That is the most beautiful painting in the gallery.","emoji":"🖼️"},
+  {"en":"the most expensive","ko":"가장 비싼","example":"This is the most expensive restaurant in town.","emoji":"🍽️"},
+  {"en":"the most comfortable","ko":"가장 편안한","example":"This chair is the most comfortable here.","emoji":"🪑"},
+  {"en":"the most difficult","ko":"가장 어려운","example":"This is the most difficult puzzle I've seen.","emoji":"🧩"},
+  {"en":"the most exciting","ko":"가장 흥미진진한","example":"That was the most exciting moment of the match.","emoji":"🏆"},
+  {"en":"the most delicious","ko":"가장 맛있는","example":"This is the most delicious cake I've tasted.","emoji":"🍰"},
+  {"en":"the most useful","ko":"가장 유용한","example":"This tool is the most useful for the job.","emoji":"🛠️"},
+  {"en":"the most expensive","ko":"가장 비싼","example":"That watch is the most expensive in the store.","emoji":"⌚"},
+  {"en":"the most beautiful","ko":"가장 아름다운","example":"That view is the most beautiful I've seen.","emoji":"🌅"},
+  {"en":"the most difficult","ko":"가장 어려운","example":"This task is the most difficult in the project.","emoji":"🧠"},
+  {"en":"the most exciting","ko":"가장 흥미진진한","example":"This is the most exciting part of the show.","emoji":"🎭"},
+  {"en":"the most comfortable","ko":"가장 편안한","example":"This bed is the most comfortable in the hotel.","emoji":"🛏️"},
+  {"en":"the most interesting","ko":"가장 흥미로운","example":"It was the most interesting lecture today.","emoji":"🎓"},
+  {"en":"the most popular","ko":"가장 인기 있는","example":"This is the most popular game in the class.","emoji":"🎮"}
+]

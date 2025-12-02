@@ -1,0 +1,137 @@
+[
+  {
+    "id": "what_are_you_doing",
+    "word": "what_are",
+    "en": "What are you doing?",
+    "ko": "무엇을 하고 있어요?",
+    "exampleSentence": "What are you doing?",
+    "exampleSentenceKo": "무엇을 하고 있어요?",
+    "emoji": "❓"
+  },
+  {
+    "id": "who_is_singing",
+    "word": "who_is",
+    "en": "Who is singing?",
+    "ko": "누가 노래하고 있어요?",
+    "exampleSentence": "Who is singing?",
+    "exampleSentenceKo": "누가 노래하고 있어요?",
+    "emoji": "🎤"
+  },
+  {
+    "id": "where_are_they_going",
+    "word": "where_are",
+    "en": "Where are they going?",
+    "ko": "그들은 어디로 가고 있어요?",
+    "exampleSentence": "Where are they going?",
+    "exampleSentenceKo": "그들은 어디로 가고 있어요?",
+    "emoji": "📍"
+  },
+  {
+    "id": "why_is_he_crying",
+    "word": "why_is",
+    "en": "Why is he crying?",
+    "ko": "그는 왜 울고 있어요?",
+    "exampleSentence": "Why is he crying?",
+    "exampleSentenceKo": "그는 왜 울고 있어요?",
+    "emoji": "😢"
+  },
+  {
+    "id": "how_are_you_feeling",
+    "word": "how_are",
+    "en": "How are you feeling?",
+    "ko": "기분이 어때요?",
+    "exampleSentence": "How are you feeling?",
+    "exampleSentenceKo": "기분이 어때요?",
+    "emoji": "🙂"
+  },
+  {
+    "id": "what_is_she_drawing",
+    "word": "what_is",
+    "en": "What is she drawing?",
+    "ko": "그녀는 무엇을 그리고 있어요?",
+    "exampleSentence": "What is she drawing?",
+    "exampleSentenceKo": "그녀는 무엇을 그리고 있어요?",
+    "emoji": "🎨"
+  },
+  {
+    "id": "who_are_you_talking",
+    "word": "who_are",
+    "en": "Who are you talking to?",
+    "ko": "누구랑 이야기하고 있어요?",
+    "exampleSentence": "Who are you talking to?",
+    "exampleSentenceKo": "누구랑 이야기하고 있어요?",
+    "emoji": "🗣️"
+  },
+  {
+    "id": "where_are_we_meeting",
+    "word": "where_are",
+    "en": "Where are we meeting?",
+    "ko": "어디서 만나고 있어요?",
+    "exampleSentence": "Where are we meeting?",
+    "exampleSentenceKo": "어디서 만나고 있어요?",
+    "emoji": "📅"
+  },
+  {
+    "id": "why_are_they_laughing",
+    "word": "why_are",
+    "en": "Why are they laughing?",
+    "ko": "그들은 왜 웃고 있어요?",
+    "exampleSentence": "Why are they laughing?",
+    "exampleSentenceKo": "그들은 왜 웃고 있어요?",
+    "emoji": "😂"
+  },
+  {
+    "id": "how_are_you_doing",
+    "word": "how_are",
+    "en": "How are you doing that?",
+    "ko": "그걸 어떻게 하고 있어요?",
+    "exampleSentence": "How are you doing that?",
+    "exampleSentenceKo": "그걸 어떻게 하고 있어요?",
+    "emoji": "🤔"
+  },
+  {
+    "id": "what_is_he_cooking",
+    "word": "what_is",
+    "en": "What is he cooking?",
+    "ko": "그는 무엇을 요리하고 있어요?",
+    "exampleSentence": "What is he cooking?",
+    "exampleSentenceKo": "그는 무엇을 요리하고 있어요?",
+    "emoji": "🍳"
+  },
+  {
+    "id": "who_is_waiting_outside",
+    "word": "who_is",
+    "en": "Who is waiting outside?",
+    "ko": "밖에서 누가 기다리고 있어요?",
+    "exampleSentence": "Who is waiting outside?",
+    "exampleSentenceKo": "밖에서 누가 기다리고 있어요?",
+    "emoji": "🚪"
+  },
+  {
+    "id": "where_is_she_sitting",
+    "word": "where_is",
+    "en": "Where is she sitting?",
+    "ko": "그녀는 어디에 앉아 있어요?",
+    "exampleSentence": "Where is she sitting?",
+    "exampleSentenceKo": "그녀는 어디에 앉아 있어요?",
+    "emoji": "🪑"
+  },
+  {
+    "id": "why_are_you_shouting",
+    "word": "why_are",
+    "en": "Why are you shouting?",
+    "ko": "왜 소리 지르고 있어요?",
+    "exampleSentence": "Why are you shouting?",
+    "exampleSentenceKo": "왜 소리 지르고 있어요?",
+    "emoji": "📢"
+  },
+  {
+    "id": "how_are_they_studying",
+    "word": "how_are",
+    "en": "How are they studying together?",
+    "ko": "그들은 어떻게 함께 공부하고 있어요?",
+    "exampleSentence": "How are they studying together?",
+    "exampleSentenceKo": "그들은 어떻게 함께 공부하고 있어요?",
+    "emoji": "👩‍🏫"
+  }
+]

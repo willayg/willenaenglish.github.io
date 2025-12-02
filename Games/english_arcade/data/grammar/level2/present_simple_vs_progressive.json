@@ -1,0 +1,137 @@
+[
+  {
+    "id": "i_eat_breakfast_every",
+    "word": "i_eat",
+    "en": "I eat breakfast every day. I am eating breakfast now.",
+    "ko": "저는 매일 아침을 먹어요. 저는 지금 아침을 먹고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "저는 매일 아침을 먹어요. 저는 지금 아침을 먹고 있어요.",
+    "emoji": "🍳"
+  },
+  {
+    "id": "he_plays_soccer_on",
+    "word": "he_plays",
+    "en": "He plays soccer on Sundays. He is playing soccer now.",
+    "ko": "그는 일요일마다 축구를 해요. 그는 지금 축구를 하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그는 일요일마다 축구를 해요. 그는 지금 축구를 하고 있어요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "she_works_at_a",
+    "word": "she_works",
+    "en": "She works at a bank. She is working late today.",
+    "ko": "그녀는 은행에서 일해요. 그녀는 오늘 늦게 일하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그녀는 은행에서 일해요. 그녀는 오늘 늦게 일하고 있어요.",
+    "emoji": "🏦"
+  },
+  {
+    "id": "we_visit_grandma_every",
+    "word": "we_visit",
+    "en": "We visit grandma every week. We are visiting her this afternoon.",
+    "ko": "우리는 매주 할머니를 방문해요. 우리는 오늘 오후에 방문하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "우리는 매주 할머니를 방문해요. 우리는 오늘 오후에 방문하고 있어요.",
+    "emoji": "👵"
+  },
+  {
+    "id": "i_read_books_before",
+    "word": "i_read",
+    "en": "I read books before bed. I am reading a book now.",
+    "ko": "저는 자기 전에 책을 읽어요. 저는 지금 책을 읽고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "저는 자기 전에 책을 읽어요. 저는 지금 책을 읽고 있어요.",
+    "emoji": "📖"
+  },
+  {
+    "id": "they_study_english_at",
+    "word": "they_study",
+    "en": "They study English at school. They are studying English at home now.",
+    "ko": "그들은 학교에서 영어를 공부해요. 그들은 지금 집에서 영어를 공부하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그들은 학교에서 영어를 공부해요. 그들은 지금 집에서 영어를 공부하고 있어요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "she_usually_walks_to",
+    "word": "she_usually",
+    "en": "She usually walks to school. She is walking today because the bus is broken.",
+    "ko": "그녀는 보통 학교에 걸어서 가요. 오늘은 버스가 고장 나서 걸어서 가고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그녀는 보통 학교에 걸어서 가요. 오늘은 버스가 고장 나서 걸어서 가고 있어요.",
+    "emoji": "🚶"
+  },
+  {
+    "id": "he_wakes_up_early",
+    "word": "he_wakes",
+    "en": "He wakes up early. He is sleeping now.",
+    "ko": "그는 일찍 일어나요. 그는 지금 자고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그는 일찍 일어나요. 그는 지금 자고 있어요.",
+    "emoji": "😴"
+  },
+  {
+    "id": "we_play_games_on",
+    "word": "we_play",
+    "en": "We play games on weekends. We are playing a game now.",
+    "ko": "우리는 주말에 게임을 해요. 우리는 지금 게임을 하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "우리는 주말에 게임을 해요. 우리는 지금 게임을 하고 있어요.",
+    "emoji": "🎮"
+  },
+  {
+    "id": "you_practice_piano_every",
+    "word": "you_practice",
+    "en": "You practice piano every day. You are practicing now.",
+    "ko": "너는 매일 피아노를 연습해요. 너는 지금 연습하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "너는 매일 피아노를 연습해요. 너는 지금 연습하고 있어요.",
+    "emoji": "🎹"
+  },
+  {
+    "id": "i_like_pizza_i",
+    "word": "i_like",
+    "en": "I like pizza. I am eating pizza now.",
+    "ko": "나는 피자를 좋아해요. 나는 지금 피자를 먹고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "나는 피자를 좋아해요. 나는 지금 피자를 먹고 있어요.",
+    "emoji": "🍕"
+  },
+  {
+    "id": "she_loves_animals_she",
+    "word": "she_loves",
+    "en": "She loves animals. She is feeding the cat now.",
+    "ko": "그녀는 동물을 좋아해요. 그녀는 지금 고양이에게 밥을 주고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그녀는 동물을 좋아해요. 그녀는 지금 고양이에게 밥을 주고 있어요.",
+    "emoji": "🐱"
+  },
+  {
+    "id": "they_always_fight_they",
+    "word": "they_always",
+    "en": "They always fight. They are getting along today.",
+    "ko": "그들은 항상 싸워요. 오늘은 화해하고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그들은 항상 싸워요. 오늘은 화해하고 있어요.",
+    "emoji": "🤝"
+  },
+  {
+    "id": "he_usually_drives_to",
+    "word": "he_usually",
+    "en": "He usually drives to work. He is taking the bus today.",
+    "ko": "그는 보통 차로 출근해요. 오늘은 버스를 타고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "그는 보통 차로 출근해요. 오늘은 버스를 타고 있어요.",
+    "emoji": "🚌"
+  },
+  {
+    "id": "we_often_eat_lunch",
+    "word": "we_often",
+    "en": "We often eat lunch together. We are eating lunch together now.",
+    "ko": "우리는 자주 함께 점심을 먹어요. 우리는 지금 같이 점심을 먹고 있어요.",
+    "exampleSentence": "Present Simple vs Present Progressive.",
+    "exampleSentenceKo": "우리는 자주 함께 점심을 먹어요. 우리는 지금 같이 점심을 먹고 있어요.",
+    "emoji": "🍱"
+  }
+]

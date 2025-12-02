@@ -1,0 +1,24 @@
+<!-- page_settings_modal.html: Reusable Page Settings modal for worksheet tools -->
+<div id="page-settings-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(40,40,60,0.25); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:14px; box-shadow:0 8px 32px 0 rgba(60,60,80,0.18); padding:32px 28px 24px 28px; min-width:320px; max-width:90vw; font-family:'Poppins',sans-serif; position:relative;">
+    <button id="close-page-settings" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5em; color:#888; cursor:pointer;">&times;</button>
+    <h2 style="font-family:'Poppins',sans-serif; font-size:1.3em; margin-bottom:18px; color:#3d3752;">Page Settings</h2>
+    <div style="margin-bottom:18px;">
+      <label style="font-family:'Poppins',sans-serif; font-size:1em; color:#3d3752;">Orientation:</label><br>
+      <label style="margin-right:18px; font-family:'Poppins',sans-serif;">
+        <input type="radio" name="page-orientation" value="portrait" checked style="margin-right:6px;"> Portrait
+      </label>
+      <label style="font-family:'Poppins',sans-serif;">
+        <input type="radio" name="page-orientation" value="landscape" style="margin-right:6px;"> Landscape
+      </label>
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="font-family:'Poppins',sans-serif; font-size:1em; color:#3d3752;">
+        <input type="checkbox" id="snap-center-guides-toggle" checked style="margin-right:8px;"> Snap to Center Guides
+      </label>
+      <span title="Show and snap to center alignment guides when dragging objects (like Canva/PPT)" style="color:#aaa; font-size:0.95em; margin-left:6px; cursor:help;">&#9432;</span>
+    </div>
+    <button id="save-page-settings" style="background:#6c63ff; color:#fff; border:none; border-radius:6px; padding:10px 24px; font-family:'Poppins',sans-serif; font-size:1em; cursor:pointer;">Save</button>
+  </div>
+</div>
+<!-- No script or style tags: logic and style handled in main page for DRYness -->

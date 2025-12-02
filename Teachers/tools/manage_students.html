@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Students</title>
+  <!-- Use the same font and style stack as Word Builder -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="stylesheet" href="/Teachers/tools/student_tracker/style.css" />
+  <style>
+    /* increased by 7.56% to add more vertical space */
+    :root { --manage-table-height: calc(65vh * 1.0756); }
+    body { background: var(--bg, #f5f7fb); }
+    .manage-layout .card { overflow: hidden; }
+    .manage-actions-card .section-title { border-bottom: 1px solid #eef2f7; }
+    .manage-actions { display:flex; flex-wrap:wrap; gap:0.65rem; padding:1rem 1.25rem; align-items:center; }
+    .chip-action {
+      border-radius:999px;
+      border:1px solid #cfd8e3;
+      background:#fff;
+      color:#19777e;
+      font-weight:600;
+      padding:0.45rem 0.95rem;
+      font-size:0.9rem;
+      cursor:pointer;
+      transition:all .2s ease;
+    }
+    .chip-action:hover{ background:#19777e; color:#fff; border-color:#19777e; }
+    #langToggleBtn { margin-left:auto; }
+    .manage-filters-card .filters { border-bottom:none; padding:1rem 1.25rem; }
+    .manage-filters-card .mut { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; }
+    .manage-status { margin-left:auto; color:#d14343; font-weight:600; min-width:180px; text-align:right; }
+    .manage-table-wrap { max-height: var(--manage-table-height); }
+    @media (max-width: 1024px) { .manage-table-wrap { max-height:none; } }
+    .worksheet-preview thead th { background:#f8f9fb; }
+    .worksheet-preview td:nth-child(2), .worksheet-preview th:nth-child(2) { font-weight:600; color:#1f2933; }
+    .pill { padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
+    .pill.yes { background:#e8fff5; color:#185281; border:1px solid #b9edef; }
+    .pill.no { background:#fff5f5; color:#a11; border:1px solid #f1c5c5; }
+    .tools { display:flex; flex-wrap:wrap; gap:0.35rem; }
+    .layout-btn {
+      border:1px solid #d1d5db;
+      background:#f8fafc;
+      padding:0.35rem 0.65rem;
+      border-radius:0.5rem;
+      font-size:0.78rem;
+      color:#1f2937;
+      cursor:pointer;
+      transition:background .15s ease, color .15s ease;
+    }
+    .layout-btn:hover { background:#e5f2f3; color:#0f5a68; }
+    .layout-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .input-field, .textarea-field, .select-field {
+      width:100%;
+      border:1px solid #d1d5db;
+      border-radius:0.75rem;
+      padding:0.6rem 0.75rem;
+      font:inherit;
+      background:#fff;
+      color:#1f2933;
+    }
+    .textarea-field { min-height:140px; resize:vertical; }
+    .clear-btn {
+      border:1px solid #cbd5f5;
+      background:#fff;
+      color:#1f2933;
+      border-radius:0.75rem;
+      padding:0.5rem 1.1rem;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .extract-btn {
+      border:none;
+      background:#19777e;
+      color:#fff;
+      border-radius:0.75rem;
+      padding:0.55rem 1.3rem;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(25,119,126,0.25);
+    }
+    .textarea-field:focus, .input-field:focus, .select-field:focus, .chip-action:focus, .layout-btn:focus {
+      outline:none;
+      border-color:#19777e;
+      box-shadow:0 0 0 2px rgba(25,119,126,0.15);
+    }
+    /* Scale wrapper for visual shrinking (applies only to this page) */
+    #ms-scale-wrapper { transform: scale(0.93); transform-origin: top left; width: calc(100% / 0.93); display:block; }
+  </style>
+</head>
+<body>
+  <div id="ms-scale-wrapper">
+  <header>
+    <img src="/Assets/Images/Logo.png" alt="Logo" />
+    <h1>Manage Students • Teacher Tools</h1>
+    <div id="burger-menu-mount"></div>
+  </header>
+  <main>
+    <div class="layout manage-layout">
+      <section class="card manage-actions-card">
+        <div class="manage-actions">
+          <button type="button" id="openBulkModal" class="chip-action">Add Full Class</button>
+          <button type="button" id="openAddAllModal" class="chip-action">Add All</button>
+          <button type="button" id="openRosterUploadModal" class="chip-action">Upload Class Rosters</button>
+          <button type="button" id="openSingleAddModal" class="chip-action">Add Student</button>
+          <button type="button" id="openRenameClassModal" class="chip-action">Move Class Up</button>
+          <button type="button" id="openTestInput" class="chip-action">Test Input</button>
+          <button type="button" id="langToggleBtn" class="chip-action">한국어 | English</button>
+        </div>
+      </section>
+
+      <section class="card manage-filters-card">
+        <div class="filters">
+          <div class="group">
+            <label for="search" class="mut">Search</label>
+            <input id="search" type="search" placeholder="Search by username or name" />
+          </div>
+          <div class="group">
+            <label for="classFilter" class="mut">Class</label>
+            <select id="classFilter">
+              <option value="">All Classes</option>
+            </select>
+          </div>
+          <button id="refreshBtn" class="ghost" type="button">Refresh</button>
+          <div id="listMsg" class="manage-status"></div>
+        </div>
+      </section>
+
+      <section class="card manage-table-card">
+        <div class="section-title">Students</div>
+        <div class="scroll-wrap manage-table-wrap">
+          <div class="word-list-container" style="width:100%;">
+            <div class="worksheet-preview">
+              <table style="table-layout:fixed; width:100%;">
+                <colgroup>
+                  <col style="width:120px;">
+                  <col style="width:140px;">
+                  <col style="width:140px;">
+                  <col style="width:110px;">
+                  <col style="width:90px;">
+                  <col style="width:150px;">
+                  <!-- Phone column increased ~30%: 130 -> 170 -->
+                  <col style="width:170px;">
+                  <!-- Approved column increased ~10%: 90 -> 99 -->
+                  <col style="width:99px;">
+                  <col style="width:auto;">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Korean Name</th>
+                    <th>Class</th>
+                    <th>Grade</th>
+                    <th>School</th>
+                    <th>Phone</th>
+                    <th>Approved</th>
+                    <th style="min-width:240px;">Tools</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Upload Class Rosters Modal (tabular single-class parser) -->
+  <div id="rosterUploadModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="rosterUploadModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:920px; width:96vw; margin:auto; padding:24px; display:flex; flex-direction:column; gap:14px;">
+      <h2 style="margin:0; color:#19777e; font-size:1.18em; font-weight:800;">Upload Class Rosters</h2>
+      <p style="margin:0; font-size:0.95em; color:#334155;">Paste your tab-delimited export for a single class. The first non-empty line should contain the class header (e.g., "9.4 MIT" or "Brown 왕기초1"). Columns like Korean Name and Phone should be in the first two columns as in your export.</p>
+      <textarea id="rosterUploadText" rows="12" class="textarea-field" style="width:100%;" placeholder="9.4 MIT\n강규원\t010-3646-1347\t...\tHenry\t은계초\t초5\t...\tWashington\t9.4 MIT\t재원생\n..."></textarea>
+      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+        <div id="rosterPreviewStats" style="font-size:12px; color:#475569;"></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <label style="font-size:12px; color:#334155; display:flex; gap:6px; align-items:center;"><input id="optUpdatePhoneIfMissing" type="checkbox" checked /> Update phone if missing</label>
+          <label style="font-size:12px; color:#334155; display:flex; gap:6px; align-items:center;"><input id="optOnlyChangeDifferentClass" type="checkbox" checked /> Only change when class differs</label>
+          <button id="rosterCancel" class="clear-btn" type="button">Cancel</button>
+          <button id="rosterPreviewBtn" class="layout-btn" type="button">Preview</button>
+          <button id="rosterUploadSubmit" class="extract-btn" type="button" disabled>Upload & Update</button>
+        </div>
+      </div>
+      <div id="rosterUploadMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+      <div id="rosterPreviewDetails" style="max-height:42vh; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; padding:8px; display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Add Student Modal -->
+  <div id="singleAddModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="singleAddModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:480px; width:96vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:14px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Add Student</h2>
+      <div class="input-group">
+        <label for="singleUsername">Username</label>
+        <input id="singleUsername" class="input-field" placeholder="e.g. ellie2282" autocomplete="off" />
+      </div>
+      <div class="input-group">
+        <label for="singlePassword">Password</label>
+        <input id="singlePassword" class="input-field" type="password" placeholder="Set password" autocomplete="new-password" />
+      </div>
+      <div class="input-group">
+        <label for="singleName">Name (optional)</label>
+        <input id="singleName" class="input-field" placeholder="Ellie" />
+      </div>
+      <div class="input-group">
+        <label for="singleKoreanName">Korean Name</label>
+        <input id="singleKoreanName" class="input-field" placeholder="엘리" />
+      </div>
+      <div class="input-group">
+        <label for="singleSchool">School</label>
+        <input id="singleSchool" class="input-field" placeholder="e.g. 은계초" />
+      </div>
+      <div class="input-group">
+        <label for="singlePhone">Phone</label>
+        <input id="singlePhone" class="input-field" placeholder="e.g. 010-1234-5678" />
+      </div>
+      <div class="input-group">
+        <label for="singleClass">Class (optional)</label>
+        <input id="singleClass" class="input-field" placeholder="Brown" />
+      </div>
+      <div class="input-group" style="display:flex; align-items:center; gap:10px;">
+        <label for="singleApproved" style="margin:0;">Approve</label>
+        <input type="checkbox" id="singleApproved" checked />
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button id="singleAddCancel" class="clear-btn" type="button">Cancel</button>
+        <button id="singleAddSubmit" class="extract-btn" type="button">Add Student</button>
+      </div>
+      <div id="singleAddMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Add All Modal (paste entire multi-class roster) -->
+  <div id="addAllModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="addAllModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:720px; width:96vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:16px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Add All Students</h2>
+      <p style="margin:0; font-size:0.95em; color:#334155;">Paste the full list including class headers (e.g., "NewYork 기초2 ...") and the table rows. I'll parse School, Grade, Korean Name, English Name, and Phone, and assign the class from each header.</p>
+      <label for="addAllText">Paste roster text</label>
+      <textarea id="addAllText" rows="14" class="textarea-field" style="width:100%;" placeholder="Brown 왕기초1 (월~금) 2:00~3:10\nNo.\tSchool\tGrade\tName\t영어이름\tPhone\n1\t은계초\t1\t송서희\tLily\t010-3129-1248\n..."></textarea>
+      <div style="display:flex; gap:10px; justify-content:space-between; align-items:center;">
+        <div id="addAllStats" style="font-size:12px; color:#475569;"></div>
+        <div style="display:flex; gap:10px;">
+          <button id="addAllCancel" class="clear-btn" type="button">Cancel</button>
+          <button id="addAllParse" class="layout-btn" type="button">Preview Count</button>
+          <button id="addAllSubmit" class="extract-btn" type="button">Upload</button>
+        </div>
+      </div>
+      <div id="addAllMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Bulk Insert Modal -->
+  <div id="bulkModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="bulkModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:420px; width:96vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:16px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Add Full Class</h2>
+      <label for="bulkClass">Class</label>
+      <input id="bulkClass" class="input-field" placeholder="e.g. 3-1" style="margin-bottom:10px;" />
+      <label for="bulkList">Paste Korean name and English name (one per line, tab/comma separated)</label>
+      <textarea id="bulkList" rows="8" class="textarea-field" style="width:100%;" placeholder="송서희\tLily\n손하준\tChris\n..." ></textarea>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button id="bulkCancel" class="clear-btn" type="button">Cancel</button>
+        <button id="bulkSubmit" class="extract-btn" type="button">Add Students</button>
+      </div>
+      <div id="bulkMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Edit Student Modal -->
+  <div id="editModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="editModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); width:50vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:16px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Edit Student</h2>
+      <div class="row stack" style="gap:0;">
+        <div class="input-group">
+          <label for="editName">Name</label>
+          <input id="editName" class="input-field" placeholder="Student's English Name" />
+        </div>
+        <div class="input-group">
+          <label for="editUsername">Username</label>
+          <input id="editUsername" class="input-field" placeholder="Username" />
+        </div>
+        <div class="input-group">
+          <label for="editKoreanName">Korean Name</label>
+          <input id="editKoreanName" class="input-field" placeholder="학생의 한국 이름" />
+        </div>
+        <div class="input-group">
+          <label for="editClass">Class</label>
+          <input id="editClass" class="input-field" placeholder="Class (e.g. 3-1)" />
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button id="editCancel" class="clear-btn" type="button">Cancel</button>
+        <button id="editSubmit" class="extract-btn" type="button">Update</button>
+      </div>
+      <div id="editMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Move Class Up Modal -->
+  <div id="renameClassModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
+    <div id="renameClassModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:420px; width:96vw; margin:auto; padding:28px 18px 18px 18px; display:flex; flex-direction:column; gap:16px;">
+      <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Move Class Up</h2>
+      <div class="input-group">
+        <label for="oldClassName">Select Current Class</label>
+        <select id="oldClassName" class="select-field"><option value="">Select class...</option></select>
+      </div>
+      <div class="input-group">
+        <label for="newClassName">New Class Name</label>
+        <input id="newClassName" class="input-field" placeholder="e.g. 3-A" />
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button id="renameClassCancel" class="clear-btn" type="button">Cancel</button>
+        <button id="renameClassSubmit" class="extract-btn" type="button">Move</button>
+      </div>
+      <div id="renameClassMsg" style="color:#a11; font-size:0.98em; margin-top:6px;"></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Burger menu insertion (same pattern used across tools) -->
+  <script type="module">
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+    async function ensureBurgerMenuTemplate() {
+      if (!document.getElementById('burger-menu-template')) {
+        const resp = await fetch('/Teachers/components/burger-menu.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', async function() {
+      await ensureBurgerMenuTemplate();
+      insertBurgerMenu('#burger-menu-mount');
+    });
+  </script>
+  <script type="module" src="./manage_students.js"></script>
+</body>
+</html>

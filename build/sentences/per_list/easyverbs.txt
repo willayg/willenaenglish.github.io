@@ -1,0 +1,44 @@
+# List: EasyVerbs
+# Words
+run
+eat
+drink
+sleep
+read
+write
+sing
+dance
+swim
+jump
+walk
+talk
+listen
+see
+buy
+sell
+make
+give
+take
+open
+
+# Sentences
+I run home.
+I eat rice.
+I drink water.
+I sleep well.
+I read a book.
+I write a note.
+I sing a song.
+We dance together.
+I swim laps.
+I jump high.
+We walk home.
+We talk softly.
+I listen carefully.
+I see a bird.
+I buy bread.
+They sell fruit.
+I make a cake.
+I give a gift.
+I take a pen.
+I open a box.

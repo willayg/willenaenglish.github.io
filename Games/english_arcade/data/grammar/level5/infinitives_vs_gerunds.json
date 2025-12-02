@@ -1,0 +1,17 @@
+[
+  {"en":"I like to swim.","ko":"나는 수영하는 것을 좋아해요.","example":"Infinitive example.","emoji":"🏊"},
+  {"en":"I like swimming.","ko":"나는 수영하기를 좋아해요.","example":"Gerund example.","emoji":"🏊"},
+  {"en":"He decided to study.","ko":"그는 공부하기로 결정했어요.","example":"Infinitive after 'decide'.", "emoji":"📘"},
+  {"en":"She enjoys studying.","ko":"그녀는 공부하는 것을 즐겨요.","example":"Gerund after 'enjoy'.", "emoji":"📚"},
+  {"en":"They plan to travel next year.","ko":"그들은 내년에 여행할 계획이에요.","example":"Infinitive for future plans.", "emoji":"✈️"},
+  {"en":"He kept studying all night.","ko":"그는 밤새 공부를 계속했어요.","example":"Gerund after 'keep'.", "emoji":"🌙"},
+  {"en":"I hope to visit soon.","ko":"나는 곧 방문하기를 희망해요.","example":"Infinitive after 'hope'.", "emoji":"🗺️"},
+  {"en":"She avoids eating late.","ko":"그녀는 늦게 먹는 것을 피해요.","example":"Gerund after 'avoid'.", "emoji":"🍽️"},
+  {"en":"He promised to help.","ko":"그는 도와주겠다고 약속했어요.","example":"Infinitive after 'promise'.", "emoji":"🤝"},
+  {"en":"We stopped talking.","ko":"우리는 말하기를 멈췄어요.","example":"Gerund after 'stop'.", "emoji":"🤫"},
+  {"en":"You need to rest.","ko":"당신은 쉬어야 해요.","example":"Infinitive after 'need'.", "emoji":"🛌"},
+  {"en":"She dislikes waiting.","ko":"그녀는 기다리는 것을 싫어해요.","example":"Gerund after 'dislike'.", "emoji":"⏳"},
+  {"en":"They want to learn more.","ko":"그들은 더 배우고 싶어해요.","example":"Infinitive after 'want'.", "emoji":"📘"},
+  {"en":"We enjoy traveling.","ko":"우리는 여행하는 것을 즐겨요.","example":"Gerund after 'enjoy'.", "emoji":"🚗"},
+  {"en":"I prefer to walk rather than drive.","ko":"나는 운전보다 걷는 것을 선호해요.","example":"Infinitive after 'prefer'.", "emoji":"🚶"}
+]

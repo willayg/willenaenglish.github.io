@@ -1,0 +1,157 @@
+/* print.css - High-fidelity A4 printing styles */
+
+@media print {
+  /* Define exact A4 page settings with no margins */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Portrait pages - exact A4 dimensions */
+  @page :first {
+    size: A4 portrait;
+    margin: 0;
+  }
+  
+  /* Landscape pages when needed */
+  @page landscape {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  /* Reset all box sizing */
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+  }
+
+  /* Reset body for printing */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    font-family: 'Poppins', Arial, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Don't hide everything - let the inline styles handle specific hiding */
+  /* Keep the container structure visible for printing */
+  .container,
+  .app-card {
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Configure the page preview area for printing */
+  #page-preview-area {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Each page wrapper should break to a new printed page */
+  .page-preview-wrapper {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+  }
+
+  /* Last page shouldn't force a page break */
+  .page-preview-wrapper:last-child {
+    page-break-after: auto !important;
+  }
+
+  /* A4 pages - exact dimensions for printing */
+  .page-preview-a4 {
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    /* Fill the entire print page */
+    width: 210mm !important; /* Exact A4 width */
+    height: 297mm !important; /* Exact A4 height */
+    min-width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: 210mm !important;
+    max-height: 297mm !important;
+    position: relative !important; /* CRUCIAL: anchor absolutely positioned children */
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    transform: none !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Landscape A4 pages */
+  .page-preview-a4.landscape {
+    width: 297mm !important; /* Exact A4 landscape width */
+    height: 210mm !important; /* Exact A4 landscape height */
+    min-width: 297mm !important;
+    min-height: 210mm !important;
+    max-width: 297mm !important;
+    max-height: 210mm !important;
+    page: landscape !important;
+  }
+
+  /* Hide page controls (+ and - buttons) when printing */
+  .page-controls {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Ensure text boxes print correctly */
+  .worksheet-textbox {
+    /* background: white !important; - REMOVED to preserve fill colors */
+    /* border removed here so [data-border-on] can control it */
+    color: #000 !important; /* Ensure text is black for printing */
+    page-break-inside: avoid !important;
+    position: absolute !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+  /* Borders for worksheet textboxes are set via inline styles for WYSIWYG and print fidelity. */
+
+  /* Handle empty text boxes (show as visible empty box, but use inline border for WYSIWYG) */
+  .worksheet-textbox.empty {
+    /* background: white !important; - REMOVED to preserve fill colors */
+    min-height: 40px !important;
+    display: block !important;
+    visibility: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Hide placeholder text during printing but keep the box */
+  .worksheet-textbox.empty::before {
+    content: "" !important;
+    display: none !important;
+  }
+
+  /* Remove any transforms or effects that might interfere */
+  .worksheet-textbox:hover,
+  .worksheet-textbox:focus {
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}

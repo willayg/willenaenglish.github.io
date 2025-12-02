@@ -1,0 +1,14 @@
+create table public.game_data (
+  id uuid not null default gen_random_uuid (),
+  title text not null,
+  words jsonb not null,
+  created_by uuid null,
+  created_at timestamp with time zone null default now(),
+  tags text[] null,
+  visibility text null default 'teacher-only'::text,
+  class text null,
+  book text null,
+  unit text null,
+  constraint game_data_pkey primary key (id),
+  constraint game_data_created_by_fkey foreign KEY (created_by) references auth.users (id)
+) TABLESPACE pg_default;

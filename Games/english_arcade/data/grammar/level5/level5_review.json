@@ -1,0 +1,17 @@
+[
+  {"en":"If it rains, we will cancel the picnic. (First conditional)","ko":"비가 오면 소풍을 취소할 거예요. (첫 번째 조건문)","example":"Use first conditional for real future conditions.","emoji":"☔"},
+  {"en":"If I had more time, I would travel more. (Second conditional)","ko":"시간이 더 있다면 여행을 더 했을 거예요. (두 번째 조건문)","example":"Use second conditional for hypothetical situations.","emoji":"✈️"},
+  {"en":"Have you ever been to Japan? (Present perfect experiential)","ko":"일본에 가 본 적 있나요? (현재완료 경험)","example":"Use have you ever for life experiences.","emoji":"🗾"},
+  {"en":"How long have you lived here? I have lived here for three years. (Present perfect duration)","ko":"여기 산 지 얼마나 되었나요? 저는 여기 3년 동안 살았어요. (현재완료 기간)","example":"Use present perfect for actions that continue to now.","emoji":"🏡"},
+  {"en":"The project has been completed. (Present perfect resulting)","ko":"프로젝트가 완료되었어요. (현재완료 결과)","example":"Shows result of a past action.","emoji":"✅"},
+  {"en":"He said he was tired. (Reported speech)","ko":"그는 피곤하다고 말했어요. (간접화법)","example":"Change tense and pronoun in reported speech.","emoji":"💬"},
+  {"en":"The cake was made by my mother. (Passive voice past)","ko":"케이크는 어머니에 의해 만들어졌어요. (수동태 과거)","example":"Use was/were + past participle for past passive.","emoji":"🍰"},
+  {"en":"She used to play piano. (Used to)","ko":"그녀는 예전에 피아노를 치곤 했어요. (used to)","example":"Used to for past habits.","emoji":"🎹"},
+  {"en":"Although it was cold, we went out. (Although)","ko":"춥긴 했지만 우리는 밖에 나갔어요. (although)","example":"Use although for contrast.","emoji":"❄️"},
+  {"en":"You should study more. (Advice - should)","ko":"더 공부해야 해요. (should)","example":"Use should for advice.","emoji":"📚"},
+  {"en":"You may take the test. (Permission - may)","ko":"시험을 치를 수 있어요. (may)","example":"Use may for permission.","emoji":"📝"},
+  {"en":"She is the most intelligent student. (Superlative)","ko":"그녀는 가장 지적인 학생이에요. (최상급)","example":"Use most + adjective for superlatives.","emoji":"🎓"},
+  {"en":"This building is taller than the other one. (Comparative)","ko":"이 건물은 저 건물보다 더 높아요. (비교급)","example":"Use -er or more for comparatives.","emoji":"🏢"},
+  {"en":"It's time to go; isn't it? (Question tags)","ko":"이제 갈 시간이에요, 그렇죠? (부가 의문사)","example":"Use question tags for confirmation.","emoji":"🕒"},
+  {"en":"The event is scheduled for next month. (Passive voice future)","ko":"행사는 다음 달로 예정되어 있어요. (미래 수동태)","example":"Use will be + past participle for future passive.","emoji":"📅"}
+]

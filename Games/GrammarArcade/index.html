@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grammar Arcade | 문법 오락실</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Your header web component -->
+  <script defer src="/students/components/student-header.js"></script>
+  <link rel="stylesheet" href="../english_arcade/style.css?v=20251019d" />
+  <link rel="stylesheet" href="./style.css?v=20251101d" />
+  <link rel="stylesheet" href="./modes/choose_mode.css?v=20251101a" />
+  <link rel="stylesheet" href="/students/theme.css" />
+</head>
+<body class="word-arcade grammar-arcade">
+  <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home" style="--header-bg: #2a3842; --header-border: #3a4a56;">
+  <div slot="actions" class="logo-crop">
+    <img class="logo-img" src="assets/Images/icons/grammar-arcade.svg" alt="Grammar Arcade" />
+  </div>
+  <a slot="menu-item" id="tabWordArcade" class="wa-menu-btn wa-tab" href="#" data-i18n="English Arcade">English Arcade</a>
+  <a slot="menu-item" id="tabGrammarArcade" class="wa-menu-btn wa-tab active" href="#" data-i18n="Grammar Arcade">Grammar Arcade</a>
+  </student-header>
+
+  <main class="notranslate" translate="no">
+    <div id="openingButtons" class="wa-card notranslate" translate="no">
+      <button id="grammarGamesBtn" class="wa-option wa-option-card wa-basic" type="button">
+        <img src="../Word Arcade/assets/Images/icons/target.svg" alt="Grammar Games" class="wa-icon" loading="lazy" decoding="async" draggable="false"/>
+        <span data-i18n="Grammar Games">Grammar Games</span>
+      </button>
+      <button id="grammarReviewBtn" class="wa-option wa-option-card wa-review" type="button">
+        <img src="../Word Arcade/assets/Images/icons/rainbow.svg" alt="Review" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Review">Review</span>
+      </button>
+      <button id="grammarAssignmentsBtn" class="wa-option wa-option-card wa-for-you" type="button">
+        <img src="../Word Arcade/assets/Images/icons/questions.svg" alt="Your Homework" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Your Homework">Your Homework</span>
+      </button>
+      <button id="grammarBrowseBtn" class="wa-option wa-option-card wa-browse" type="button">
+        <img src="../Word Arcade/assets/Images/icons/review.png" alt="Discover" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Discover">Discover</span>
+      </button>
+    </div>
+
+    <section id="gameArea" class="notranslate" translate="no"></section>
+
+    <!-- Generic Coming Soon Modal -->
+    <div id="comingSoonModal" class="ga-modal">
+      <div class="ga-modal-content coming-soon">
+        <img src="../english_arcade/assets/Images/icons/for you.png?v=20250910a" alt="Coming Soon" class="ga-modal-icon" />
+        <div class="ga-modal-title">Coming Soon</div>
+        <div class="ga-modal-description">This feature is not yet available.<br>Check back soon!</div>
+        <button id="closeComingSoon" class="ga-modal-btn">OK</button>
+      </div>
+    </div>
+
+    <!-- Grammar Games Placeholder Modal -->
+    <div id="grammarGamesModal" class="ga-modal">
+      <div class="ga-modal-content grammar-games">
+        <div class="ga-modal-title">Grammar Games</div>
+        <div class="ga-modal-description">Skeleton is ready. We'll add games here soon.</div>
+        <button id="closeGrammarModal" class="ga-modal-btn">Close</button>
+      </div>
+    </div>
+
+    <!-- Level 1 Quiz Selection Modal -->
+    <div id="level1QuizModal" class="ga-modal">
+      <div class="ga-modal-content ga-quiz-modal">
+        <button id="closeQuizModalX" class="ga-modal-close-x" title="Close">&times;</button>
+        <div class="ga-modal-title">Level 1 Quizzes</div>
+        <div class="ga-modal-description">Choose a quiz to begin</div>
+        <div id="quizList" class="ga-quiz-list">
+          <!-- Quiz buttons will be inserted here -->
+        </div>
+        <button id="closeQuizModal" class="ga-modal-btn">Cancel</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Load Choose Mode Engine -->
+  <script src="./modes/choose_mode.js?v=20251101a"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $ = (sel) => document.querySelector(sel);
+      const tabWordArcade = $('#tabWordArcade');
+      const tabGrammarArcade = $('#tabGrammarArcade');
+      if (tabWordArcade) tabWordArcade.addEventListener('click', (e) => { e.preventDefault(); window.location.href = '/Games/english_arcade/index.html'; });
+      if (tabGrammarArcade) tabGrammarArcade.addEventListener('click', (e) => { e.preventDefault(); });
+
+      // Patch student-header Shadow DOM to use bluish grey header with persistence
+      const patchHeader = () => {
+        const hdr = $('student-header');
+        if (hdr && hdr.shadowRoot) {
+          let styleEl = hdr.shadowRoot.querySelector('style[data-grammar-arcade]');
+          if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.setAttribute('data-grammar-arcade', 'true');
+            styleEl.textContent = `
+              header { background: #2a3842 !important; border-bottom-color: #3a4a56 !important; }
+              ::slotted(.menu-item) { color: #e6fdff !important; }
+              ::slotted(.menu-item.active) { color: #93cbcf !important; }
+              ::slotted(.menu-item:hover) { background: #334454 !important; }
+            `;
+            hdr.shadowRoot.appendChild(styleEl);
+          }
+          // Also force the header element's inline style
+          const headerEl = hdr.shadowRoot.querySelector('header');
+          if (headerEl) {
+            headerEl.style.background = '#2a3842';
+            headerEl.style.borderBottomColor = '#3a4a56';
+          }
+        }
+      };
+      // Patch immediately and then again after render
+      patchHeader();
+      setTimeout(patchHeader, 100);
+      setTimeout(patchHeader, 300);
+
+      // Watch for re-renders and re-patch if needed
+      const hdr = $('student-header');
+      if (hdr && hdr.shadowRoot) {
+        const observer = new MutationObserver(() => {
+          patchHeader();
+        });
+        observer.observe(hdr.shadowRoot, { childList: true, subtree: true, attributes: true });
+      }
+
+      // Coming soon modal for other cards
+      const showSoon = () => { const m = $('#comingSoonModal'); if (m) m.classList.add('open'); };
+      const closeSoon = () => { const m = $('#comingSoonModal'); if (m) m.classList.remove('open'); };
+      const csClose = document.getElementById('closeComingSoon');
+      if (csClose) csClose.addEventListener('click', closeSoon);
+
+      const openingButtons = document.getElementById('openingButtons');
+      const originalOpeningButtonsHTML = openingButtons ? openingButtons.innerHTML : '';
+
+      // Available quizzes for Level 1
+      const level1Quizzes = [
+        {
+          id: 'articles-a-an',
+          title: 'Articles: A vs An',
+          description: 'Practice choosing between "a" and "an" before different words',
+          file: './level1_quizzes/articles-a-an.json'
+        }
+        // Add more quizzes here as they are created
+      ];
+
+      // Show Level 1 Quiz Selection Modal
+      function showLevel1QuizModal() {
+        const modal = $('#level1QuizModal');
+        const quizList = $('#quizList');
+        if (!modal || !quizList) return;
+
+        // Clear and populate quiz list
+        quizList.innerHTML = '';
+        level1Quizzes.forEach(quiz => {
+          const btn = document.createElement('button');
+          btn.className = 'ga-quiz-btn';
+          btn.innerHTML = `
+            <div class="ga-quiz-title">${quiz.title}</div>
+            <div class="ga-quiz-desc">${quiz.description}</div>
+          `;
+          btn.addEventListener('click', () => {
+            modal.classList.remove('open');
+            launchQuiz(quiz);
+          });
+          quizList.appendChild(btn);
+        });
+
+        modal.classList.add('open');
+      }
+
+      // Launch a quiz with Choose Mode engine
+      async function launchQuiz(quiz) {
+        try {
+          const response = await fetch(`${quiz.file}?v=20251101a`);
+          if (!response.ok) throw new Error(`Failed to load quiz: ${response.status}`);
+          const quizData = await response.json();
+          const gameArea = $('#gameArea');
+          if (gameArea && quizData) {
+            gameArea.innerHTML = '';
+            const mode = new ChooseMode();
+            mode.onBack = () => showGrammarLevelsPage();
+            mode.start(quizData, gameArea);
+          }
+        } catch (err) {
+          console.error('Failed to load quiz:', err);
+          alert('Failed to load quiz. Please try again.');
+        }
+      }
+
+      // Close quiz modal handlers
+      const closeQuizModal = () => {
+        const modal = $('#level1QuizModal');
+        if (modal) modal.classList.remove('open');
+      };
+      const closeQuizModalBtn = $('#closeQuizModal');
+      const closeQuizModalX = $('#closeQuizModalX');
+      if (closeQuizModalBtn) closeQuizModalBtn.addEventListener('click', closeQuizModal);
+      if (closeQuizModalX) closeQuizModalX.addEventListener('click', closeQuizModal);
+      // Close on background click
+      const quizModal = $('#level1QuizModal');
+      if (quizModal) {
+        quizModal.addEventListener('click', (e) => {
+          if (e.target === quizModal) closeQuizModal();
+        });
+      }
+
+      function renderOpeningMenu() {
+        if (!openingButtons) return;
+        openingButtons.innerHTML = originalOpeningButtonsHTML;
+        wireOpeningButtons();
+      }
+
+      function showGrammarLevelsPage() {
+        if (!openingButtons) return;
+        const pink = '#ff6fb0';
+        const brightCyan = '#39cfe0';
+        const orange = '#d9923b';
+        const blue = '#5b7fe5';
+        openingButtons.innerHTML = `
+          <button class="wa-option wa-option-card wa-level-1 wa-level-inactive" type="button" style="border-color:${pink}; height: 250px;">
+            <span style="color:${pink}; font-size: 1.5rem;">Level 1</span>
+          </button>
+          <button class="wa-option wa-option-card wa-level-2 wa-level-inactive" type="button" style="border-color:${brightCyan}; height: 250px;">
+            <span style="color:${brightCyan}; font-size: 1.5rem;">Level 2</span>
+          </button>
+          <button class="wa-option wa-option-card wa-level-3 wa-level-inactive" type="button" style="border-color:${orange}; height: 250px;">
+            <span style="color:${orange}; font-size: 1.5rem;">Level 3</span>
+          </button>
+          <button class="wa-option wa-option-card wa-level-4 wa-level-inactive" type="button" style="border-color:${blue}; height: 250px;">
+            <span style="color:${blue}; font-size: 1.5rem;">Level 4</span>
+          </button>
+          <button class="wa-option wa-option-card wa-level-5 wa-level-inactive" type="button" style="border-color:${pink}; height: 250px;">
+            <span style="color:${pink}; font-size: 1.5rem;">Level 5</span>
+          </button>
+          <button id="gaLevelsBackBtn" class="wa-option wa-option-card wa-back" type="button" style="border-color:${pink}; height:auto; min-height:auto; padding:8px 8px 10px;">
+            <span style="color:${pink}; font-size:0.8rem;">← Back</span>
+          </button>
+        `;
+        // Wire Level 1 to show quiz selection modal
+        const level1Btn = document.querySelector('.wa-level-1');
+        if (level1Btn) {
+          level1Btn.classList.remove('wa-level-inactive');
+          level1Btn.style.cursor = 'pointer';
+          level1Btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLevel1QuizModal();
+          });
+        }
+        // Back restores opening
+        document.getElementById('gaLevelsBackBtn')?.addEventListener('click', (e) => { e.preventDefault(); renderOpeningMenu(); });
+      }
+
+      function wireOpeningButtons() {
+        const gCard = document.getElementById('grammarGamesBtn');
+        const rCard = document.getElementById('grammarReviewBtn');
+        const aCard = document.getElementById('grammarAssignmentsBtn');
+        const bCard = document.getElementById('grammarBrowseBtn');
+        if (gCard) gCard.addEventListener('click', showGrammarLevelsPage);
+        if (rCard) rCard.addEventListener('click', showSoon);
+        if (aCard) aCard.addEventListener('click', showSoon);
+        if (bCard) bCard.addEventListener('click', showSoon);
+      }
+
+      // Initial wiring
+      wireOpeningButtons();
+    });
+  </script>
+</body>
+</html>

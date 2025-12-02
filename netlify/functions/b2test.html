@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B2 Cloud File Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      background: #34495e;
+      color: white;
+      margin: 0;
+      padding: 16px 0;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 32px;
+      gap: 40px;
+    }
+
+    .panel {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      border-radius: 8px;
+      width: 320px;
+      min-height: 340px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 18px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 8px;
+    }
+
+    #deviceFiles, #b2Files {
+      margin-top: 12px;
+      flex: 1;
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      background: #fafbfc;
+      padding: 8px;
+    }
+
+    .file-item {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .file-item.selected {
+      background: #e1ecf4;
+      border-left: 3px solid #34495e;
+    }
+
+    input[type="file"] {
+      margin-top: 8px;
+    }
+
+    .arrow-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 40px;
+      gap: 16px;
+      min-width: 70px;
+    }
+
+    .arrow-btn {
+      background: #34495e;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin: 0 0 8px 0;
+    }
+    .arrow-btn:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .arrow-label {
+      font-size: 13px;
+      color: #34495e;
+      text-align: center;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>B2 Cloud File Manager</h1>
+
+  <div class="container">
+    <div class="panel" id="devicePanel">
+      <h2>Your Device</h2>
+      <input type="file" id="deviceInput" multiple />
+      <div id="deviceFiles"></div>
+    </div>
+
+    <div class="arrow-panel">
+      <button class="arrow-btn" id="uploadBtn" title="Upload selected files to B2" disabled>
+        &#8674;
+      </button>
+      <div class="arrow-label">Upload<br>to Cloud</div>
+      <div id="uploadStatus" style="font-size:13px;color:#34495e"></div>
+    </div>
+
+    <div class="panel" id="b2Panel">
+      <h2>B2 Cloud</h2>
+      <div id="b2Files">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const deviceInput = document.getElementById('deviceInput');
+    const deviceFiles = document.getElementById('deviceFiles');
+    const b2Files = document.getElementById('b2Files');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    let deviceFileList = [];
+    let selectedFilesIdx = new Set();
+
+    // Render device files
+    function renderDeviceFiles() {
+      deviceFiles.innerHTML = '';
+      deviceFileList.forEach((file, idx) => {
+        const item = document.createElement('div');
+        item.className = 'file-item' + (selectedFilesIdx.has(idx) ? ' selected' : '');
+        item.textContent = file.name;
+        item.title = 'Click to select for upload';
+        item.onclick = () => {
+          // Toggle selection
+          if (selectedFilesIdx.has(idx)) {
+            selectedFilesIdx.delete(idx);
+          } else {
+            selectedFilesIdx.add(idx);
+          }
+          renderDeviceFiles();
+          checkUploadBtnState();
+        };
+        deviceFiles.appendChild(item);
+      });
+    }
+
+    // Check if upload button should be enabled
+    function checkUploadBtnState() {
+      uploadBtn.disabled = selectedFilesIdx.size === 0;
+    }
+
+    deviceInput.addEventListener('change', () => {
+      deviceFileList = Array.from(deviceInput.files);
+      selectedFilesIdx.clear();
+      renderDeviceFiles();
+      checkUploadBtnState();
+    });
+
+    // Fetch B2 files
+    async function fetchB2Files() {
+      try {
+        const response = await fetch('/.netlify/functions/b2_proxy');
+        const data = await response.json();
+        b2Files.innerHTML = '';
+
+        if (!data.files || data.files.length === 0) {
+          b2Files.textContent = 'No files found in B2 bucket.';
+          return;
+        }
+
+        data.files.forEach(file => {
+          const name = typeof file === 'string' ? file : file.fileName || JSON.stringify(file);
+          const item = document.createElement('div');
+          item.className = 'file-item';
+          item.textContent = name;
+          b2Files.appendChild(item);
+        });
+      } catch (error) {
+        b2Files.innerHTML = 'Error loading B2 files.';
+        console.error('Failed to fetch B2 files:', error);
+      }
+    }
+
+    fetchB2Files();
+
+    // Upload selected files
+    uploadBtn.addEventListener('click', async () => {
+      if (selectedFilesIdx.size === 0) return;
+      uploadStatus.textContent = 'Uploading...';
+
+      // Prepare FormData with selected files
+      const formData = new FormData();
+      Array.from(selectedFilesIdx).forEach(idx => {
+        formData.append('files', deviceFileList[idx], deviceFileList[idx].name);
+      });
+
+      try {
+        // POST to Netlify function, replace with your correct endpoint
+        const response = await fetch('/.netlify/functions/b2_proxy', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        uploadStatus.textContent = 'Upload successful!';
+        // Refresh B2 file list
+        fetchB2Files();
+        // Clear selection
+        selectedFilesIdx.clear();
+        renderDeviceFiles();
+        checkUploadBtnState();
+      } catch (e) {
+        uploadStatus.textContent = 'Upload failed!';
+        console.error(e);
+      }
+
+      setTimeout(() => uploadStatus.textContent = '', 3500);
+    });
+  </script>
+</body>
+</html>

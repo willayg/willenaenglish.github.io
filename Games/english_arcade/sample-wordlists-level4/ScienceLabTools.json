@@ -1,0 +1,14 @@
+[
+  {"eng":"beaker","kor":"비커","def":"a glass container for mixing liquids","ex":"Pour water into the beaker.","ex_kor":"비커에 물을 부으세요."},
+  {"eng":"microscope","kor":"현미경","def":"a tool to see tiny things","ex":"Look at the leaf with a microscope.","ex_kor":"현미경으로 잎을 보세요."},
+  {"eng":"experiment","kor":"실험","def":"a test to learn something new","ex":"We do an experiment in science class.","ex_kor":"과학 수업에서 실험을 합니다."},
+  {"eng":"measure","kor":"측정하다","def":"to find the size or amount of something","ex":"Measure the water carefully.","ex_kor":"물을 조심스럽게 측정하세요."},
+  {"eng":"observe","kor":"관찰하다","def":"to watch something closely","ex":"Observe the color change.","ex_kor":"색이 변하는 것을 관찰하세요."},
+  {"eng":"goggles","kor":"보안경","def":"glasses that protect your eyes","ex":"Wear goggles for safety.","ex_kor":"안전을 위해 보안경을 착용하세요."},
+  {"eng":"magnet","kor":"자석","def":"an object that attracts metal","ex":"The magnet sticks to the fridge.","ex_kor":"자석이 냉장고에 붙어요."},
+  {"eng":"dissolve","kor":"녹이다","def":"to mix into a liquid and disappear","ex":"Sugar dissolves in water.","ex_kor":"설탕이 물에 녹아요."},
+  {"eng":"reaction","kor":"반응","def":"what happens when things mix","ex":"A reaction makes bubbles.","ex_kor":"반응이 거품을 만듭니다."},
+  {"eng":"test tube","kor":"시험관","def":"a small glass tube for experiments","ex":"Put the liquid in the test tube.","ex_kor":"액체를 시험관에 넣으세요."},
+  {"eng":"dropper","kor":"스포이드","def":"a tool to move small drops of liquid","ex":"Use a dropper to add water.","ex_kor":"스포이드로 물을 추가하세요."},
+  {"eng":"lab coat","kor":"실험실 가운","def":"a coat to protect your clothes in the lab","ex":"Wear a lab coat during experiments.","ex_kor":"실험할 때 실험실 가운을 입으세요."}
+]

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steff's Vocab Practice</title>
+  <style>
+    body {
+      font-family: Calibri, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      text-align: center;
+      max-width: 900px;
+      width: 100%;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+    }
+    .level-buttons button,
+    .mode-buttons button,
+    .option,
+    #studySection button {
+      margin: 10px;
+      padding: 16px 32px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #4285f4;
+      color: white;
+      width: 90%;
+      max-width: 300px;
+    }
+    .option.correct {
+      background-color: #4caf50 !important;
+    }
+    .option.incorrect {
+      background-color: #f44336 !important;
+    }
+    .card {
+      margin: 20px auto;
+      padding: 40px;
+      font-size: 24px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      background-color: #f0f8ff;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Steff's Vocab Practice</h1>
+    <div id="home">
+      <h2>Select a Set</h2>
+      <div class="level-buttons" id="levelButtons"></div>
+      <!-- Add buttons to enter the game -->
+      <div style="margin-top: 24px;">
+        <button onclick="showStudy()" style="font-size:1.1em;">Study</button>
+        <button onclick="startPractice()" style="font-size:1.1em;">Practice</button>
+        <button onclick="startSpellingTest()" style="font-size:1.1em;">Spelling Test</button>
+      </div>
+    </div>
+
+    <div id="modeSelect" class="hidden">
+      <h2 id="selectedLevelTitle"></h2>
+      <div class="mode-buttons">
+        <button onclick="showStudy()">Study</button>
+        <button onclick="startPractice()">Practice</button>
+        <button onclick="startSpellingTest()">Spelling Test</button>
+      </div>
+    </div>
+
+    <div id="studySection" class="hidden">
+      <h3>Word List</h3>
+      <ul id="wordList"></ul>
+      <button onclick="startPractice()">Practice</button>
+      <button onclick="goHome()">Back</button>
+    </div>
+
+    <div id="practiceSection" class="hidden">
+      <div class="card" id="questionCard"></div>
+      <div class="options" id="options"></div>
+      <div id="result"></div>
+    </div>
+
+    <div id="scoreSection" class="hidden">
+      <h3>Your Score: <span id="score"></span></h3>
+      <button onclick="retryWrong()">Practice Wrong Answers</button>
+      <button onclick="goHome()">Home</button>
+    </div>
+  </div>
+<script>
+const data = {
+  "📘 Vocabulary 1 (General Themes)": [
+    { en: "anger", ko: "화, 화나게 하다" },
+    { en: "Britain", ko: "영국" },
+    { en: "British", ko: "영국의, 영국 사람" },
+    { en: "century", ko: "세기, 100년" },
+    { en: "civilization", ko: "문명" },
+    { en: "contact", ko: "접촉" },
+    { en: "creation", ko: "창조, 창작" },
+    { en: "Czech", ko: "체코의, 체코인" },
+    { en: "experience", ko: "경험, 경험하다" },
+    { en: "explorer", ko: "탐험가" },
+    { en: "flood", ko: "홍수" },
+    { en: "Germany", ko: "독일" },
+    { en: "German", ko: "독일의, 독일인" },
+    { en: "Hindi", ko: "힌디어" },
+    { en: "hurricane", ko: "허리케인" },
+    { en: "law", ko: "법" },
+    { en: "massage", ko: "마사지" },
+    { en: "Mayan", ko: "마야의" },
+    { en: "origin", ko: "기원, 유래" },
+    { en: "originally", ko: "원래" },
+    { en: "originate", ko: "~에서 유래되다" },
+    { en: "pass through", ko: "지나가다" },
+    { en: "pick up", ko: "줍다, 익히다" },
+    { en: "present", ko: "현재의, 제공하다" },
+    { en: "press", ko: "누르다" },
+    { en: "shampoo", ko: "샴푸" },
+    { en: "shortly", ko: "곧, 짧게" },
+    { en: "slave", ko: "노예" },
+    { en: "Spain", ko: "스페인" },
+    { en: "Spanish", ko: "스페인의, 스페인 사람" },
+    { en: "suggest", ko: "제안하다" },
+    { en: "trader", ko: "상인, 무역업자" },
+    { en: "universe", ko: "우주" }
+  ],
+  "💰 Vocabulary 2 (Be a Smart Spender)": [
+    { en: "allowance", ko: "용돈" },
+    { en: "although", ko: "비록 ~일지라도" },
+    { en: "balance", ko: "균형, 잔액(잔고)" },
+    { en: "budget", ko: "예산, 비용" },
+    { en: "carry around", ko: "가지고 다니다" },
+    { en: "charity", ko: "자선단체" },
+    { en: "divide A into B", ko: "A를 B로 나누다" },
+    { en: "donate", ko: "기부하다" },
+    { en: "effort", ko: "노력" },
+    { en: "even if~", ko: "비록 ~라고 할지라도" },
+    { en: "exchange", ko: "교환하다" },
+    { en: "have difficulty ~ing", ko: "~하는 데 어려움을 겪다" },
+    { en: "majority", ko: "대다수" },
+    { en: "manage", ko: "관리하다, 다루다" },
+    { en: "on sale", ko: "할인 중인" },
+    { en: "on the spot", ko: "즉시, 현장에서" },
+    { en: "receipt", ko: "영수증" },
+    { en: "receive", ko: "받다" },
+    { en: "refund", ko: "환불" },
+    { en: "remaining", ko: "남아있는" },
+    { en: "result", ko: "결과" },
+    { en: "return", ko: "되돌리다" },
+    { en: "save", ko: "저축하다, 모으다" },
+    { en: "solve", ko: "해결하다" },
+    { en: "spend time/money on", ko: "~에 시간/돈을 쓰다" },
+    { en: "survey", ko: "설문조사" },
+    { en: "tight", ko: "꽉 끼는, 빠듯한" },
+    { en: "use up", ko: "다 써버리다" },
+    { en: "weekly", ko: "매주 1회의" },
+    { en: "while", ko: "~하는 동안에" }
+  ]
+};
+
+const levelButtons = document.getElementById('levelButtons');
+Object.keys(data).forEach(level => {
+  const btn = document.createElement('button');
+  btn.textContent = level;
+  btn.onclick = () => selectLevel(level);
+  levelButtons.appendChild(btn);
+});
+
+const home = document.getElementById('home');
+const modeSelect = document.getElementById('modeSelect');
+const studySection = document.getElementById('studySection');
+const practiceSection = document.getElementById('practiceSection');
+const scoreSection = document.getElementById('scoreSection');
+
+let currentLevel = '';
+let currentData = [];
+let currentQuestion = 0;
+let correct = 0;
+let wrongList = [];
+
+function selectLevel(level) {
+  currentLevel = level;
+  document.getElementById('selectedLevelTitle').textContent = level;
+  modeSelect.classList.remove('hidden');
+  home.classList.add('hidden');
+}
+
+function showStudy() {
+  studySection.classList.remove('hidden');
+  modeSelect.classList.add('hidden');
+  const list = document.getElementById('wordList');
+  list.innerHTML = '';
+  (data[currentLevel] || []).forEach(({ en, ko }) => {
+    const li = document.createElement('li');
+    li.textContent = `${en} — ${ko}`;
+    list.appendChild(li);
+  });
+}
+
+function startPractice() {
+  modeSelect.classList.add('hidden');
+  studySection.classList.add('hidden');
+  practiceSection.classList.remove('hidden');
+  currentData = [...(data[currentLevel] || [])];
+  currentQuestion = 0;
+  correct = 0;
+  wrongList = [];
+  showQuestion();
+}
+function startSpellingTest() {
+  modeSelect.classList.add('hidden');
+  studySection.classList.add('hidden');
+  practiceSection.classList.remove('hidden');
+  currentData = [...(data[currentLevel] || [])];
+  currentQuestion = 0;
+  correct = 0;
+  wrongList = [];
+  showSpellingQuestion();
+}
+
+function showSpellingQuestion() {
+  if (currentQuestion >= currentData.length) {
+    practiceSection.classList.add('hidden');
+    scoreSection.classList.remove('hidden');
+    document.getElementById('score').textContent = `${correct}/${currentData.length}`;
+    return;
+  }
+
+  const question = currentData[currentQuestion];
+  const card = document.getElementById('questionCard');
+  const options = document.getElementById('options');
+
+  card.textContent = question.ko;
+  options.innerHTML = `
+    <input type="text" id="spellingInput" placeholder="Type English word..." style="padding: 10px; font-size: 18px; width: 80%;" />
+    <button onclick="checkSpellingAnswer('${question.en}')">Submit</button>
+  `;
+}
+
+function checkSpellingAnswer(correctAnswer) {
+  const input = document.getElementById('spellingInput');
+  const userAnswer = input.value.trim().toLowerCase();
+  if (userAnswer === correctAnswer.toLowerCase()) {
+    correct++;
+  } else {
+    wrongList.push(currentData[currentQuestion]);
+  }
+  currentQuestion++;
+  showSpellingQuestion();
+}
+
+function showQuestion() {
+  if (currentQuestion >= currentData.length) {
+    practiceSection.classList.add('hidden');
+    scoreSection.classList.remove('hidden');
+    document.getElementById('score').textContent = `${correct}/${currentData.length}`;
+    return;
+  }
+
+  const question = currentData[currentQuestion];
+  document.getElementById('questionCard').textContent = question.en;
+
+  const options = [question.ko];
+  const allKOs = Object.values(data).flat().map(w => w.ko);
+  while (options.length < 4) {
+    const choice = allKOs[Math.floor(Math.random() * allKOs.length)];
+    if (!options.includes(choice)) options.push(choice);
+  }
+  options.sort(() => Math.random() - 0.5);
+
+  const optionsContainer = document.getElementById('options');
+  optionsContainer.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      const buttons = document.querySelectorAll('.option');
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === question.ko) {
+          b.classList.add('correct');
+        } else if (b.textContent === opt) {
+          b.classList.add('incorrect');
+        }
+      });
+      if (opt === question.ko) {
+        correct++;
+      } else {
+        wrongList.push(question);
+      }
+      setTimeout(() => {
+        currentQuestion++;
+        showQuestion();
+      }, 1000);
+    };
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function retryWrong() {
+  currentData = wrongList;
+  currentQuestion = 0;
+  correct = 0;
+  document.getElementById('score').textContent = '';
+  scoreSection.classList.add('hidden');
+  practiceSection.classList.remove('hidden');
+  showQuestion();
+}
+
+function goHome() {
+  location.reload();
+}
+</script>
+</body>
+</html>

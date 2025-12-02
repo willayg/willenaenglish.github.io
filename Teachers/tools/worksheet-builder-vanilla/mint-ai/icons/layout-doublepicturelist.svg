@@ -1,0 +1,59 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Left grid lines -->
+  <g opacity="0.8">
+    <line x1="1" y1="3" x2="11" y2="3" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="1" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="1" y1="12" x2="11" y2="12" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="1" y1="15" x2="11" y2="15" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="1" y1="18" x2="11" y2="18" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="1" y1="21" x2="11" y2="21" stroke="currentColor" stroke-width="0.5"/>
+  </g>
+
+  <!-- Right grid lines -->
+  <g opacity="0.8">
+    <line x1="13" y1="3" x2="23" y2="3" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="13" y1="6" x2="23" y2="6" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="13" y1="9" x2="23" y2="9" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="13" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="13" y1="15" x2="23" y2="15" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="13" y1="18" x2="23" y2="18" stroke="currentColor" stroke-width="0.5"/>
+    <line x1="13" y1="21" x2="23" y2="21" stroke="currentColor" stroke-width="0.5"/>
+  </g>
+
+  <!-- Left image icons -->
+  <rect x="3.5" y="4" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+  <rect x="3.5" y="7" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+  <rect x="3.5" y="10" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+  <rect x="3.5" y="13" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+
+  <!-- Right image icons -->
+  <rect x="15.5" y="4" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+  <rect x="15.5" y="7" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+  <rect x="15.5" y="10" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+  <rect x="15.5" y="13" width="2" height="1.5" fill="currentColor" opacity="0.6" rx="0.2"/>
+
+  <!-- Left text indicators -->
+  <line x1="6.5" y1="4.5" x2="10.5" y2="4.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+  <line x1="6.5" y1="7.5" x2="10.5" y2="7.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+  <line x1="6.5" y1="10.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+  <line x1="6.5" y1="13.5" x2="10.5" y2="13.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+
+  <!-- Right text indicators -->
+  <line x1="18.5" y1="4.5" x2="22.5" y2="4.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+  <line x1="18.5" y1="7.5" x2="22.5" y2="7.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+  <line x1="18.5" y1="10.5" x2="22.5" y2="10.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+  <line x1="18.5" y1="13.5" x2="22.5" y2="13.5" stroke="currentColor" stroke-width="0.4" opacity="0.7"/>
+
+  <!-- Number indicators (left column) -->
+  <circle cx="2" cy="4.5" r="0.6" fill="currentColor" opacity="0.7"/>
+  <circle cx="2" cy="7.5" r="0.6" fill="currentColor" opacity="0.7"/>
+  <circle cx="2" cy="10.5" r="0.6" fill="currentColor" opacity="0.7"/>
+  <circle cx="2" cy="13.5" r="0.6" fill="currentColor" opacity="0.7"/>
+
+  <!-- Number indicators (right column) -->
+  <circle cx="14" cy="4.5" r="0.6" fill="currentColor" opacity="0.7"/>
+  <circle cx="14" cy="7.5" r="0.6" fill="currentColor" opacity="0.7"/>
+  <circle cx="14" cy="10.5" r="0.6" fill="currentColor" opacity="0.7"/>
+  <circle cx="14" cy="13.5" r="0.6" fill="currentColor" opacity="0.7"/>
+</svg>

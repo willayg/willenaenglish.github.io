@@ -1,0 +1,17 @@
+[
+  {"en":"slow -> slowly","ko":"느리게 -> 천천히","example":"She walks slowly.","emoji":"🐢"},
+  {"en":"quick -> quickly","ko":"빠르게 -> 빠르게","example":"He runs quickly.","emoji":"🏃"},
+  {"en":"careful -> carefully","ko":"조심스럽게 -> 조심스럽게","example":"Drive carefully.","emoji":"🚗"},
+  {"en":"easy -> easily","ko":"쉽게 -> 쉽게","example":"She solved the problem easily.","emoji":"✅"},
+  {"en":"beautiful -> beautifully","ko":"아름답게 -> 아름답게","example":"She sings beautifully.","emoji":"🎤"},
+  {"en":"well (irregular)","ko":"잘(불규칙)","example":"He plays the piano well.","emoji":"🎹"},
+  {"en":"hard (irregular meaning 'with effort')","ko":"열심히(불규칙)","example":"She worked hard.","emoji":"💪"},
+  {"en":"fast (irregular)","ko":"빠르게(불규칙)","example":"The car goes fast.","emoji":"🏎️"},
+  {"en":"high (irregular/adverb 'high')","ko":"높게(불규칙)","example":"The kite flies high.","emoji":"🪁"},
+  {"en":"late (adverb) -> later/not 'latly'","ko":"늦게(부사)","example":"She arrived late.","emoji":"🕒"},
+  {"en":"wrong (adverb) -> wrongly (less common)","ko":"틀리게(부사)","example":"He answered wrongly.","emoji":"❌"},
+  {"en":"happy -> happily","ko":"행복하게 -> 행복하게","example":"They lived happily ever after.","emoji":"😊"},
+  {"en":"angry -> angrily","ko":"화난 상태로 -> 화나게","example":"He spoke angrily.","emoji":"😡"},
+  {"en":"noisy -> noisily","ko":"시끄럽게 -> 시끄럽게","example":"The children played noisily.","emoji":"🔊"},
+  {"en":"quiet -> quietly","ko":"조용히 -> 조용히","example":"Please sit quietly.","emoji":"🤫"}
+]

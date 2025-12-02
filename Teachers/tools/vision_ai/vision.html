@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Capture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f7f8fa;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .app-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px #0001;
+      max-width: 420px;
+      width: 96vw;
+      margin: 32px auto;
+      padding: 24px 18px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    h1 {
+      font-size: 1.5em;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 18px;
+      color: #2a2a2a;
+    }
+    .input-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-size: 1em;
+      margin-bottom: 6px;
+      color: #444;
+    }
+    input[type="file"] {
+      padding: 10px 0;
+      border: none;
+      background: none;
+      font-size: 1em;
+    }
+    #status {
+      margin: 10px 0 0 0;
+      font-weight: 500;
+      color: #0077cc;
+      min-height: 24px;
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-top: 8px;
+      resize: vertical;
+      background: #f9f9fc;
+      box-sizing: border-box;
+    }
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      justify-content: center;
+    }
+    button {
+      background: #0077cc;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 1em;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:active {
+      background: #005fa3;
+    }
+    @media (max-width: 600px) {
+      .app-card {
+        max-width: 99vw;
+        padding: 12px 6px 12px 6px;
+      }
+      h1 {
+        font-size: 1.1em;
+      }
+      textarea {
+        font-size: 0.95em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-card">
+    <h1>Text Capture</h1>
+    <div class="input-group">
+      <label for="imageInput" style="display:none;">Capture Text</label>
+      <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none;" />
+      <button id="captureBtn" type="button" style="width:100%;font-size:1.1em;padding:14px 0;margin-bottom:10px;background:#0077cc;color:#fff;border:none;border-radius:8px;font-weight:600;">Capture Text</button>
+      <div id="status">Waiting for image...</div>
+    </div>
+    <div class="input-group">
+      <label for="ocrOutput">Extracted Text</label>
+      <textarea id="ocrOutput" placeholder="Extracted text will appear here..."></textarea>
+    </div>
+    <div class="button-group">
+      <button id="copyBtn">Copy Text</button>
+      <button id="saveBtn">Save</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+    <div id="titlePrompt" style="display:none;flex-direction:column;align-items:center;margin-top:18px;">
+      <label for="worksheetTitleInput" style="margin-bottom:6px;">Worksheet Title</label>
+      <input type="text" id="worksheetTitleInput" placeholder="Enter worksheet title..." style="width:90%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:1em;" />
+      <button id="titleSubmitBtn" style="margin-top:10px;background:#0077cc;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:1em;font-family:inherit;cursor:pointer;">Save Worksheet</button>
+    </div>
+    </div>
+  </div>
+  <script>
+    const status = document.getElementById("status");
+    const output = document.getElementById("ocrOutput");
+    const imageInput = document.getElementById("imageInput");
+    const captureBtn = document.getElementById("captureBtn");
+    // Custom capture button triggers file input
+    captureBtn.addEventListener("click", () => {
+      imageInput.click();
+    });
+    const copyBtn = document.getElementById("copyBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    // Save to Supabase worksheet table with title prompt
+    const titlePrompt = document.getElementById("titlePrompt");
+    const worksheetTitleInput = document.getElementById("worksheetTitleInput");
+    const titleSubmitBtn = document.getElementById("titleSubmitBtn");
+
+    saveBtn.addEventListener("click", () => {
+      const passageText = output.value.trim();
+      if (!passageText) {
+        status.textContent = "❌ No text to save.";
+        return;
+      }
+      titlePrompt.style.display = "flex";
+      worksheetTitleInput.value = "";
+      worksheetTitleInput.focus();
+    });
+
+    titleSubmitBtn.addEventListener("click", async () => {
+      const passageText = output.value.trim();
+      const worksheetTitle = worksheetTitleInput.value.trim();
+      if (!worksheetTitle) {
+        status.textContent = "❌ Please enter a worksheet title.";
+        worksheetTitleInput.focus();
+        return;
+      }
+      status.textContent = "⏳ Saving...";
+      titlePrompt.style.display = "none";
+      try {
+        const response = await fetch("/.netlify/functions/supabase_proxy_fixed/save_worksheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: worksheetTitle,
+            passage_text: passageText,
+            worksheet_type: "Text"
+          })
+        });
+        const data = await response.json();
+        if (data.success) {
+          status.textContent = "✅ Saved!";
+        } else {
+          status.textContent = "❌ Save failed: " + (data.error || "Unknown error");
+        }
+      } catch (err) {
+        status.textContent = "❌ Save failed: " + (err.message || "Unknown error");
+      }
+    });
+
+    imageInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      status.textContent = "⏳ Converting image to base64...";
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const base64Image = reader.result.split(',')[1];
+        status.textContent = "⏳ Sending to Vision API...";
+        try {
+          const response = await fetch("/.netlify/functions/google_vision_proxy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              requests: [
+                {
+                  image: { content: base64Image },
+                  features: [ { type: "DOCUMENT_TEXT_DETECTION" } ]
+                }
+              ]
+            })
+          });
+          const data = await response.json();
+          const text = data.responses?.[0]?.fullTextAnnotation?.text || "";
+          if (text) {
+            output.value = text;
+            status.textContent = "✅ OCR complete!";
+          } else {
+            status.textContent = "❌ No text found.";
+            output.value = "";
+          }
+        } catch (err) {
+          status.textContent = "❌ OCR failed: " + (err.message || "Unknown error");
+          output.value = "";
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(output.value).then(() => {
+        status.textContent = "✅ Text copied!";
+        setTimeout(() => { status.textContent = ""; }, 1200);
+      });
+    });
+
+    clearBtn.addEventListener("click", () => {
+      output.value = "";
+      status.textContent = "📁 Waiting for image...";
+      imageInput.value = "";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Vision OCR Preview</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, textarea, button { width: 100%; margin-top: 15px; }
+    textarea { height: 200px; font-size: 16px; }
+    #status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>📸 Google Vision OCR</h2>
+
+  <input type="file" id="imageInput" accept="image/*" capture="environment" />
+  <div id="status">📁 Waiting for image...</div>
+
+  <textarea id="ocrOutput" placeholder="Extracted text will appear here..."></textarea>
+  <button onclick="copyText()">📋 Copy to Clipboard</button>
+
+  <script>
+    const status = document.getElementById("status");
+    const output = document.getElementById("ocrOutput");
+
+    document.getElementById("imageInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      status.textContent = "⏳ Converting image to base64...";
+
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const base64Image = reader.result.split(',')[1];
+
+        status.textContent = "⏳ Sending to Google Vision API...";
+        const response = await fetch("/.netlify/functions/google_vision_proxy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requests: [
+              {
+                image: { content: base64Image },
+                features: [ { type: "DOCUMENT_TEXT_DETECTION" } ]
+              }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        try {
+          const text = data.responses[0].fullTextAnnotation.text;
+          output.value = text;
+          status.textContent = "✅ OCR complete!";
+        } catch (err) {
+          console.error(data);
+          status.textContent = "❌ OCR failed: " + (data.error?.message || "Unknown error");
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function copyText() {
+      navigator.clipboard.writeText(output.value).then(() => {
+        alert("Text copied!");
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "there_is_a_cat",
+    "word": "there_is",
+    "en": "There is a cat on the sofa.",
+    "ko": "소파 위에 고양이가 있어요.",
+    "exampleSentence": "There is a cat on the sofa.",
+    "exampleSentenceKo": "소파 위에 고양이가 있어요.",
+    "emoji": "😺"
+  },
+  {
+    "id": "there_are_two_cats",
+    "word": "there_are",
+    "en": "There are two cats in the garden.",
+    "ko": "정원에 고양이 두 마리가 있어요.",
+    "exampleSentence": "There are two cats in the garden.",
+    "exampleSentenceKo": "정원에 고양이 두 마리가 있어요.",
+    "emoji": "🐱🐱"
+  },
+  {
+    "id": "there_is_a_book",
+    "word": "there_is",
+    "en": "There is a book on the table.",
+    "ko": "탁자 위에 책이 있어요.",
+    "exampleSentence": "There is a book on the table.",
+    "exampleSentenceKo": "탁자 위에 책이 있어요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "there_are_many_students",
+    "word": "there_are",
+    "en": "There are many students in the class.",
+    "ko": "교실에 학생이 많아요.",
+    "exampleSentence": "There are many students in the class.",
+    "exampleSentenceKo": "교실에 학생이 많아요.",
+    "emoji": "👩‍🏫👨‍🏫"
+  },
+  {
+    "id": "there_isn_t_a_dog",
+    "word": "there_isn_t",
+    "en": "There isn't a dog here.",
+    "ko": "여기에는 개가 없어요.",
+    "exampleSentence": "There isn't a dog here.",
+    "exampleSentenceKo": "여기에는 개가 없어요.",
+    "emoji": "🚫🐶"
+  },
+  {
+    "id": "there_aren_t_any_apples",
+    "word": "there_aren_t",
+    "en": "There aren't any apples.",
+    "ko": "사과가 하나도 없어요.",
+    "exampleSentence": "There aren't any apples.",
+    "exampleSentenceKo": "사과가 하나도 없어요.",
+    "emoji": "🚫🍎🍎"
+  },
+  {
+    "id": "is_there_a_bank",
+    "word": "there_is",
+    "en": "There is a bank near here.",
+    "ko": "여기 근처에 은행이 있어요.",
+    "exampleSentence": "There is a bank near here.",
+    "exampleSentenceKo": "여기 근처에 은행이 있어요.",
+    "emoji": "🏦"
+  },
+  {
+    "id": "are_there_any_shops",
+    "word": "there_are",
+    "en": "There are some shops nearby.",
+    "ko": "근처에 가게가 있어요.",
+    "exampleSentence": "There are some shops nearby.",
+    "exampleSentenceKo": "근처에 가게가 있어요.",
+    "emoji": "🏪🏪🏪"
+  },
+  {
+    "id": "there_is_a_problem",
+    "word": "there_is",
+    "en": "There is a problem with the computer.",
+    "ko": "컴퓨터에 문제가 있어요.",
+    "exampleSentence": "There is a problem with the computer.",
+    "exampleSentenceKo": "컴퓨터에 문제가 있어요.",
+    "emoji": "💻⚠️"
+  },
+  {
+    "id": "there_are_two_chairs",
+    "word": "there_are",
+    "en": "There are two chairs in the room.",
+    "ko": "방에 의자 두 개가 있어요.",
+    "exampleSentence": "There are two chairs in the room.",
+    "exampleSentenceKo": "방에 의자 두 개가 있어요.",
+    "emoji": "🪑🪑"
+  },
+  {
+    "id": "there_is_a_bird",
+    "word": "there_is",
+    "en": "There is a bird outside.",
+    "ko": "밖에 새가 있어요.",
+    "exampleSentence": "There is a bird outside.",
+    "exampleSentenceKo": "밖에 새가 있어요.",
+    "emoji": "🐦"
+  },
+  {
+    "id": "there_are_five_books",
+    "word": "there_are",
+    "en": "There are five books on the shelf.",
+    "ko": "선반에 책 다섯 권이 있어요.",
+    "exampleSentence": "There are five books on the shelf.",
+    "exampleSentenceKo": "선반에 책 다섯 권이 있어요.",
+    "emoji": "📚📚📚📚📚"
+  },
+  {
+    "id": "there_isn_t_any_milk",
+    "word": "there_isn_t",
+    "en": "There isn't any milk left.",
+    "ko": "우유가 남아 있지 않아요.",
+    "exampleSentence": "There isn't any milk left.",
+    "exampleSentenceKo": "우유가 남아 있지 않아요.",
+    "emoji": "🥛🚫"
+  },
+  {
+    "id": "there_are_many_stars",
+    "word": "there_are",
+    "en": "There are many stars tonight.",
+    "ko": "오늘 밤에는 별이 많아요.",
+    "exampleSentence": "There are many stars tonight.",
+    "exampleSentenceKo": "오늘 밤에는 별이 많아요.",
+    "emoji": "✨✨"
+  },
+  {
+    "id": "is_there_a_restroom",
+    "word": "there_is",
+    "en": "There is a restroom nearby.",
+    "ko": "근처에 화장실이 있어요.",
+    "exampleSentence": "There is a restroom nearby.",
+    "exampleSentenceKo": "근처에 화장실이 있어요.",
+    "emoji": "🚽"
+  }
+]

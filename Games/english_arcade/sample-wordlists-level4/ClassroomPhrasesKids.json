@@ -1,0 +1,14 @@
+[
+  {"eng":"raise your hand","kor":"손을 들다","def":"to lift your hand to speak or answer","ex":"Raise your hand to answer.","ex_kor":"대답하려면 손을 들어요."},
+  {"eng":"open your book","kor":"책을 펴다","def":"to open a book to a page","ex":"Open your book to page five.","ex_kor":"책을 5쪽으로 펴요."},
+  {"eng":"read aloud","kor":"소리 내어 읽다","def":"to read with your voice","ex":"Read the story aloud.","ex_kor":"이야기를 소리 내어 읽어요."},
+  {"eng":"repeat after me","kor":"따라 하다","def":"to say the same words as the speaker","ex":"Repeat after me, please.","ex_kor":"따라 하세요."},
+  {"eng":"listen carefully","kor":"주의 깊게 듣다","def":"to pay close attention while listening","ex":"Listen carefully to the instructions.","ex_kor":"안내를 주의 깊게 들어요."},
+  {"eng":"write your name","kor":"이름을 쓰다","def":"to put your name on your paper","ex":"Write your name at the top.","ex_kor":"맨 위에 이름을 써요."},
+  {"eng":"circle the answer","kor":"정답에 동그라미 치다","def":"to draw a circle around the correct answer","ex":"Circle the correct answer.","ex_kor":"맞는 답에 동그라미를 쳐요."},
+  {"eng":"underline the word","kor":"단어에 밑줄을 긋다","def":"to draw a line under the word","ex":"Underline the new word.","ex_kor":"새로운 단어에 밑줄을 그어요."},
+  {"eng":"work in pairs","kor":"짝을 지어 하다","def":"to do an activity with one partner","ex":"Work in pairs for this activity.","ex_kor":"이 활동은 짝을 지어 해요."},
+  {"eng":"share your ideas","kor":"생각을 나누다","def":"to tell your thoughts to others","ex":"Share your ideas with your group.","ex_kor":"모둠과 생각을 나눠요."},
+  {"eng":"check your answers","kor":"답을 확인하다","def":"to look again to see if your answers are correct","ex":"Check your answers before you finish.","ex_kor":"끝내기 전에 답을 확인해요."},
+  {"eng":"clean the board","kor":"칠판을 지우다","def":"to erase or wipe the board","ex":"Clean the board after class.","ex_kor":"수업 후 칠판을 지워요."}
+]
