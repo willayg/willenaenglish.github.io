@@ -33,10 +33,9 @@ export async function showModeModal({ onModeChosen, onClose }) {
   let bestByMode = {};
   if (listName) {
     try {
-      const url = new URL(FN('progress_summary'), window.location.origin);
-      url.searchParams.set('section', 'sessions');
-      if (listName) url.searchParams.set('list_name', listName);
-      const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
+      let url = FN('progress_summary') + '?section=sessions';
+      if (listName) url += '&list_name=' + encodeURIComponent(listName);
+      const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
       if (res.ok) {
         const sessions = await res.json();
         (Array.isArray(sessions) ? sessions : []).forEach(s => {
