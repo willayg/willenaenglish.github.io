@@ -8,9 +8,34 @@ const ELEVEN_LABS_VOICE_ID = process.env.ELEVEN_LABS_VOICE_ID || process.env.ELE
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Helper to get CORS headers with dynamic origin
+function getCorsHeaders(event) {
+  const origin = event.headers?.origin || event.headers?.Origin || '*';
+  const allowedOrigins = [
+    'https://willenaenglish.com',
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.netlify.app',
+    'http://localhost:8888',
+    'http://localhost:9000'
+  ];
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true'
+  };
+}
+
 exports.handler = async (event) => {
+  const corsHeaders = getCorsHeaders(event);
+  
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: corsHeaders, body: '' };
+  }
+  
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers: corsHeaders, body: 'Method Not Allowed' };
   }
 
   let phrase, type;
@@ -20,7 +45,7 @@ exports.handler = async (event) => {
     type = body.type || 'feedback';
     if (!phrase) throw new Error('Missing phrase');
   } catch (e) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
   // Create a safe filename
@@ -35,16 +60,16 @@ exports.handler = async (event) => {
       .list(`feedback/${type}`, { search: filename });
 
     if (error) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'Supabase list error', details: error.message }) };
+      return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Supabase list error', details: error.message }) };
     }
 
     if (data && data.find(f => f.name === filename)) {
       // File exists, return public URL
       const url = `${SUPABASE_URL}/storage/v1/object/public/tts-audio/${path}`;
-      return { statusCode: 200, body: JSON.stringify({ url }) };
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ url }) };
     }
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Supabase check error', details: err.message }) };
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Supabase check error', details: err.message }) };
   }
 
   // 2. Generate audio with Eleven Labs
@@ -61,11 +86,11 @@ exports.handler = async (event) => {
     });
 
     if (!ttsRes.ok) {
-      return { statusCode: ttsRes.status, body: JSON.stringify({ error: 'Failed to fetch from Eleven Labs' }) };
+      return { statusCode: ttsRes.status, headers: corsHeaders, body: JSON.stringify({ error: 'Failed to fetch from Eleven Labs' }) };
     }
     audioBuffer = Buffer.from(await ttsRes.arrayBuffer());
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Eleven Labs error', details: err.message }) };
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Eleven Labs error', details: err.message }) };
   }
 
   // 3. Upload to Supabase
@@ -79,13 +104,13 @@ exports.handler = async (event) => {
       });
 
     if (uploadError) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'Supabase upload error', details: uploadError.message }) };
+      return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Supabase upload error', details: uploadError.message }) };
     }
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Supabase upload error', details: err.message }) };
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Supabase upload error', details: err.message }) };
   }
 
   // 4. Return public URL
   const url = `${SUPABASE_URL}/storage/v1/object/public/tts-audio/${path}`;
-  return { statusCode: 200, body: JSON.stringify({ url }) };
+  return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ url }) };
 };
