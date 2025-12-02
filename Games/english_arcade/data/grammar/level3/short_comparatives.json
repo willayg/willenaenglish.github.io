@@ -1,17 +1,137 @@
 [
-  {"en":"bigger","ko":"더 큰","example":"My house is bigger than yours.","emoji":"🏠"},
-  {"en":"smaller","ko":"더 작은","example":"This pencil is smaller than that one.","emoji":"✏️"},
-  {"en":"faster","ko":"더 빠른","example":"A cheetah is faster than a dog.","emoji":"🐆"},
-  {"en":"slower","ko":"더 느린","example":"A snail is slower than a rabbit.","emoji":"🐌"},
-  {"en":"taller","ko":"더 키가 큰","example":"She is taller than her brother.","emoji":"📏"},
-  {"en":"shorter","ko":"더 키가 작은","example":"He is shorter than his father.","emoji":"📏"},
-  {"en":"older","ko":"더 나이가 많은","example":"My sister is older than me.","emoji":"🎂"},
-  {"en":"younger","ko":"더 나이가 어린","example":"My brother is younger than me.","emoji":"👶"},
-  {"en":"cheaper","ko":"더 싼","example":"This toy is cheaper than that one.","emoji":"💲"},
-  {"en":"more expensive","ko":"더 비싼","example":"This phone is more expensive than mine.","emoji":"📱"},
-  {"en":"hotter","ko":"더 더운","example":"July is hotter than May.","emoji":"☀️"},
-  {"en":"colder","ko":"더 추운","example":"January is colder than April.","emoji":"❄️"},
-  {"en":"easier","ko":"더 쉬운","example":"Math is easier than physics for me.","emoji":"➗"},
-  {"en":"harder","ko":"더 어려운","example":"This puzzle is harder than that one.","emoji":"🧩"},
-  {"en":"better","ko":"더 나은","example":"She sings better than before.","emoji":"🎵"}
+  {
+    "id": "short_comparatives_1",
+    "word": "bigger",
+    "en": "bigger",
+    "ko": "더 큰",
+    "exampleSentence": "My house is bigger than yours.",
+    "exampleSentenceKo": "더 큰",
+    "emoji": "🏠"
+  },
+  {
+    "id": "short_comparatives_2",
+    "word": "smaller",
+    "en": "smaller",
+    "ko": "더 작은",
+    "exampleSentence": "This pencil is smaller than that one.",
+    "exampleSentenceKo": "더 작은",
+    "emoji": "✏️"
+  },
+  {
+    "id": "short_comparatives_3",
+    "word": "faster",
+    "en": "faster",
+    "ko": "더 빠른",
+    "exampleSentence": "A cheetah is faster than a dog.",
+    "exampleSentenceKo": "더 빠른",
+    "emoji": "🐆"
+  },
+  {
+    "id": "short_comparatives_4",
+    "word": "slower",
+    "en": "slower",
+    "ko": "더 느린",
+    "exampleSentence": "A snail is slower than a rabbit.",
+    "exampleSentenceKo": "더 느린",
+    "emoji": "🐌"
+  },
+  {
+    "id": "short_comparatives_5",
+    "word": "taller",
+    "en": "taller",
+    "ko": "더 키가 큰",
+    "exampleSentence": "She is taller than her brother.",
+    "exampleSentenceKo": "더 키가 큰",
+    "emoji": "📏"
+  },
+  {
+    "id": "short_comparatives_6",
+    "word": "shorter",
+    "en": "shorter",
+    "ko": "더 키가 작은",
+    "exampleSentence": "He is shorter than his father.",
+    "exampleSentenceKo": "더 키가 작은",
+    "emoji": "📏"
+  },
+  {
+    "id": "short_comparatives_7",
+    "word": "older",
+    "en": "older",
+    "ko": "더 나이가 많은",
+    "exampleSentence": "My sister is older than me.",
+    "exampleSentenceKo": "더 나이가 많은",
+    "emoji": "🎂"
+  },
+  {
+    "id": "short_comparatives_8",
+    "word": "younger",
+    "en": "younger",
+    "ko": "더 나이가 어린",
+    "exampleSentence": "My brother is younger than me.",
+    "exampleSentenceKo": "더 나이가 어린",
+    "emoji": "👶"
+  },
+  {
+    "id": "short_comparatives_9",
+    "word": "cheaper",
+    "en": "cheaper",
+    "ko": "더 싼",
+    "exampleSentence": "This toy is cheaper than that one.",
+    "exampleSentenceKo": "더 싼",
+    "emoji": "💲"
+  },
+  {
+    "id": "short_comparatives_10",
+    "word": "more_expensive",
+    "en": "more expensive",
+    "ko": "더 비싼",
+    "exampleSentence": "This phone is more expensive than mine.",
+    "exampleSentenceKo": "더 비싼",
+    "emoji": "📱"
+  },
+  {
+    "id": "short_comparatives_11",
+    "word": "hotter",
+    "en": "hotter",
+    "ko": "더 더운",
+    "exampleSentence": "July is hotter than May.",
+    "exampleSentenceKo": "더 더운",
+    "emoji": "☀️"
+  },
+  {
+    "id": "short_comparatives_12",
+    "word": "colder",
+    "en": "colder",
+    "ko": "더 추운",
+    "exampleSentence": "January is colder than April.",
+    "exampleSentenceKo": "더 추운",
+    "emoji": "❄️"
+  },
+  {
+    "id": "short_comparatives_13",
+    "word": "easier",
+    "en": "easier",
+    "ko": "더 쉬운",
+    "exampleSentence": "Math is easier than physics for me.",
+    "exampleSentenceKo": "더 쉬운",
+    "emoji": "➗"
+  },
+  {
+    "id": "short_comparatives_14",
+    "word": "harder",
+    "en": "harder",
+    "ko": "더 어려운",
+    "exampleSentence": "This puzzle is harder than that one.",
+    "exampleSentenceKo": "더 어려운",
+    "emoji": "🧩"
+  },
+  {
+    "id": "short_comparatives_15",
+    "word": "better",
+    "en": "better",
+    "ko": "더 나은",
+    "exampleSentence": "She sings better than before.",
+    "exampleSentenceKo": "더 나은",
+    "emoji": "🎵"
+  }
 ]

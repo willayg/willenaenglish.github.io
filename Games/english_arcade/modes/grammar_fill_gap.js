@@ -4,6 +4,7 @@
 // wa:session-ended event so stars/upgrades refresh automatically.
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 import { buildPrepositionScene, isInOnUnderMode } from './grammar_prepositions_data.js';
 import { renderGrammarSummary } from './grammar_summary.js';
 
@@ -770,6 +771,13 @@ export async function runGrammarFillGapMode(ctx) {
   }
 
   let rawData = [];
+  // Show a lightweight loading splash while we fetch and hydrate audio
+  let splashController = null;
+  try {
+    splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') });
+    if (splashController && splashController.readyPromise) await splashController.readyPromise;
+  } catch (e) { console.debug('[GrammarFillGap] splash failed', e?.message); }
+
   try {
     const res = await fetch(grammarFile);
     if (!res.ok) throw new Error(`Failed to load ${grammarFile}`);
@@ -778,6 +786,7 @@ export async function runGrammarFillGapMode(ctx) {
     console.error('[GrammarFillGap] Unable to load data', err);
     inlineToast?.('Could not load grammar data');
     showOpeningButtons?.(true);
+    if (splashController && typeof splashController.hide === 'function') try { splashController.hide(); } catch {}
     return;
   }
 
@@ -861,6 +870,10 @@ export async function runGrammarFillGapMode(ctx) {
   const isPresentSimpleWhFillGap = (grammarFile && /present_simple_questions_wh\.json$/i.test(grammarFile))
     || (grammarName && /present\s*simple[\s:\-]*wh/i.test(grammarName))
     || (grammarName && /wh\s*questions?/i.test(grammarName));
+
+  // Dedicated WH micro-modes: only offer WH choices for specific WH micro-lists
+  // Add wh_where_when_whattime so it uses the dedicated micro-mode chips
+  const isWhoWhatChoiceMode = /wh_(who_what|how_why_which|where_when_whattime)\.json$/i.test(grammarFile);
 
   // Present Progressive fill-gap variants
   const isPresentProgressiveNegativeFillGap = (grammarFile && /present_progressive_negative\.json$/i.test(grammarFile))
@@ -1078,6 +1091,43 @@ export async function runGrammarFillGapMode(ctx) {
       }
       const hint = item.ko || item.exampleSentenceKo || '';
       hintEl.textContent = hint ? String(hint).trim() : '';
+    } else if (isWhoWhatChoiceMode) {
+      // WH micro-mode: support both who/what (2-choice) and how/why/which (3-choice)
+      const q = String(item.en || item.exampleSentence || '').trim();
+      let statement = q;
+      // Blank leading WH token if present (support multi-token "what time")
+      const leadingMatch = q.match(/^(what\s+time|who|what|where|when|how|why|which)\b/i);
+      if (leadingMatch) {
+        // Replace the matched leading WH phrase with the blank
+        statement = q.replace(/^(what\s+time|who|what|where|when|how|why|which)\b/i, '_____');
+      }
+      wordEl.textContent = '';
+      wordEl.style.display = 'none';
+      sentenceEl.innerHTML = statement.replace('_____', '<strong>_____</strong>');
+      const hint = item.exampleSentenceKo || item.sentence_kor || item.kor || item.ko || '';
+      hintEl.textContent = hint ? String(hint).trim() : '';
+
+      // Build options based on which WH micro-list we're serving
+  const isWhoWhatFile = /wh_who_what\.json$/i.test(String(grammarFile || ''));
+  const isWhereWhenWhatTimeFile = /wh_where_when_whattime\.json$/i.test(String(grammarFile || ''));
+  const isHowWhyWhichFile = /wh_how_why_which\.json$/i.test(String(grammarFile || ''));
+  let whChoices = [];
+  if (isWhoWhatFile) whChoices = ['who', 'what'];
+  else if (isWhereWhenWhatTimeFile) whChoices = ['where', 'when', 'what time'];
+  else if (isHowWhyWhichFile) whChoices = ['why', 'how', 'which'];
+  else whChoices = ['who', 'what', 'how', 'why', 'which'];
+
+      // Render chips for the whChoices
+      optionsRow.innerHTML = '';
+      whChoices.forEach((choice) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'fg-chip';
+        btn.dataset.value = choice;
+        btn.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
+        optionsRow.appendChild(btn);
+      });
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
     } else if (isPresentSimpleWhFillGap) {
       presentSimpleWhData = buildPresentSimpleWhFillGap(item);
       wordEl.textContent = '';
@@ -1261,6 +1311,24 @@ export async function runGrammarFillGapMode(ctx) {
       optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
       if (!optionButtons.length) {
         console.error('[GrammarFillGap] No short questions options rendered');
+        return;
+      }
+    } else if (isWhoWhatChoiceMode) {
+      // Render WH micro-mode buttons depending on which WH file we're serving
+  const isWhoWhatFile2 = /wh_who_what\.json$/i.test(String(grammarFile || ''));
+  const isHowWhyWhichFile2 = /wh_how_why_which\.json$/i.test(String(grammarFile || ''));
+  const isWhereWhenWhatTimeFile2 = /wh_where_when_whattime\.json$/i.test(String(grammarFile || ''));
+  let buttons = [];
+  if (isWhoWhatFile2) buttons = ['Who','What'];
+  else if (isWhereWhenWhatTimeFile2) buttons = ['Where','When','What time'];
+  else if (isHowWhyWhichFile2) buttons = ['Why','How','Which'];
+  else buttons = ['Who','What','Where','When','Why','How','Which'];
+      optionsRow.innerHTML = buttons
+        .map(w => `<button type="button" class="fg-chip" data-value="${w.toLowerCase()}">${w}</button>`)
+        .join('');
+      optionButtons = Array.from(optionsRow.querySelectorAll('.fg-chip'));
+      if (!optionButtons.length) {
+        console.error('[GrammarFillGap] No WH micro-mode options rendered');
         return;
       }
     } else if (isPresentSimpleWhFillGap) {
@@ -1454,7 +1522,19 @@ export async function runGrammarFillGapMode(ctx) {
         }
       } else if (isPresentSimpleYesNoFillGap && presentSimpleYesNoData) {
         correctAnswerSource = presentSimpleYesNoData.correctAnswer;
-      } else if (isPresentSimpleWhFillGap && presentSimpleWhData) {
+    } else if (isWhoWhatChoiceMode) {
+      // Map the leading WH token (including multi-token "what time") to the expected answer
+      const baseText = String(getSentenceText(item) || item.en || '').trim();
+      if (/^what\s+time\b/i.test(baseText)) correctAnswerSource = 'what time';
+      else if (/^where\b/i.test(baseText)) correctAnswerSource = 'where';
+      else if (/^when\b/i.test(baseText)) correctAnswerSource = 'when';
+      else if (/^who\b/i.test(baseText)) correctAnswerSource = 'who';
+      else if (/^what\b/i.test(baseText)) correctAnswerSource = 'what';
+      else if (/^how\b/i.test(baseText)) correctAnswerSource = 'how';
+      else if (/^why\b/i.test(baseText)) correctAnswerSource = 'why';
+      else if (/^which\b/i.test(baseText)) correctAnswerSource = 'which';
+      else correctAnswerSource = (item.word || '').split('_')[0];
+    } else if (isPresentSimpleWhFillGap && presentSimpleWhData) {
         correctAnswerSource = presentSimpleWhData.correctAnswer;
       } else if (isGenericSentenceMode && genericSentenceData) {
         correctAnswerSource = genericSentenceData.correctAnswerLastWord || genericSentenceData.correctAnswerLower;
@@ -1544,4 +1624,6 @@ export async function runGrammarFillGapMode(ctx) {
 
   renderLayout();
   renderQuestion();
+  // Auto-hide the splash once the UI has rendered
+  try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 600); } catch(e){}
 }

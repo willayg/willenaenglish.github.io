@@ -1,17 +1,137 @@
 [
-  {"en":"I played soccer yesterday. I will play again tomorrow.","ko":"나는 어제 축구를 했어요. 나는 내일 다시 할 거예요.","example":"Past: played, Future: will play.","emoji":"⚽"},
-  {"en":"She studied last week. She will study next week.","ko":"그녀는 지난주에 공부했어요. 그녀는 다음 주에 공부할 거예요.","example":"Past vs Future.","emoji":"📚"},
-  {"en":"We visited the museum last month. We will visit again soon.","ko":"우리는 지난달에 박물관을 방문했어요. 우리는 곧 다시 방문할 거예요.","example":"Past vs Future.","emoji":"🏛️"},
-  {"en":"He ate pizza yesterday. He will eat pizza tomorrow.","ko":"그는 어제 피자를 먹었어요. 그는 내일 피자를 먹을 거예요.","example":"Past vs Future.","emoji":"🍕"},
-  {"en":"They traveled last year. They will travel next year.","ko":"그들은 작년에 여행했어요. 그들은 내년에 여행할 거예요.","example":"Past vs Future.","emoji":"✈️"},
-  {"en":"I worked late last night. I will finish work earlier tomorrow.","ko":"나는 어젯밤에 늦게까지 일했어요. 나는 내일 더 일찍 일을 끝낼 거예요.","example":"Past vs Future.","emoji":"💼"},
-  {"en":"She cleaned the room yesterday. She will clean it again on Saturday.","ko":"그녀는 어제 방을 청소했어요. 그녀는 토요일에 다시 청소할 거예요.","example":"Past vs Future.","emoji":"🧼"},
-  {"en":"We had a picnic last month. We will have another one next month.","ko":"우리는 지난달에 소풍을 했어요. 우리는 다음 달에 또 하나 할 거예요.","example":"Past vs Future.","emoji":"🥪"},
-  {"en":"He watched TV last night. He will watch a movie tomorrow.","ko":"그는 어젯밤에 TV를 봤어요. 그는 내일 영화를 볼 거예요.","example":"Past vs Future.","emoji":"📺"},
-  {"en":"They played games yesterday. They will play more games tomorrow.","ko":"그들은 어제 게임을 했어요. 그들은 내일 더 많은 게임을 할 거예요.","example":"Past vs Future.","emoji":"🎮"},
-  {"en":"I learned new words last week. I will learn more this week.","ko":"나는 지난주에 새로운 단어들을 배웠어요. 나는 이번 주에 더 배울 거예요.","example":"Past vs Future.","emoji":"📝"},
-  {"en":"She found a new book last month. She will buy another book soon.","ko":"그녀는 지난달에 새 책을 찾았어요. 그녀는 곧 다른 책을 살 거예요.","example":"Past vs Future.","emoji":"📕"},
-  {"en":"We traveled to Seoul last summer. We will travel to Busan next summer.","ko":"우리는 지난 여름에 서울로 여행했어요. 우리는 다음 여름에 부산으로 여행할 거예요.","example":"Past vs Future.","emoji":"🗺️"},
-  {"en":"He saw the show yesterday. He will watch another show next week.","ko":"그는 어제 공연을 봤어요. 그는 다음 주에 다른 공연을 볼 거예요.","example":"Past vs Future.","emoji":"🎭"},
-  {"en":"They finished the project last month. They will start a new project soon.","ko":"그들은 지난달에 프로젝트를 끝냈어요. 그들은 곧 새 프로젝트를 시작할 거예요.","example":"Past vs Future.","emoji":"📁"}
+  {
+    "id": "past_vs_future_1",
+    "word": "i_played_soccer",
+    "en": "I played soccer yesterday. I will play again tomorrow.",
+    "ko": "나는 어제 축구를 했어요. 나는 내일 다시 할 거예요.",
+    "exampleSentence": "Past: played, Future: will play.",
+    "exampleSentenceKo": "나는 어제 축구를 했어요. 나는 내일 다시 할 거예요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "past_vs_future_2",
+    "word": "she_studied_last",
+    "en": "She studied last week. She will study next week.",
+    "ko": "그녀는 지난주에 공부했어요. 그녀는 다음 주에 공부할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그녀는 지난주에 공부했어요. 그녀는 다음 주에 공부할 거예요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "past_vs_future_3",
+    "word": "we_visited_the",
+    "en": "We visited the museum last month. We will visit again soon.",
+    "ko": "우리는 지난달에 박물관을 방문했어요. 우리는 곧 다시 방문할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "우리는 지난달에 박물관을 방문했어요. 우리는 곧 다시 방문할 거예요.",
+    "emoji": "🏛️"
+  },
+  {
+    "id": "past_vs_future_4",
+    "word": "he_ate_pizza",
+    "en": "He ate pizza yesterday. He will eat pizza tomorrow.",
+    "ko": "그는 어제 피자를 먹었어요. 그는 내일 피자를 먹을 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그는 어제 피자를 먹었어요. 그는 내일 피자를 먹을 거예요.",
+    "emoji": "🍕"
+  },
+  {
+    "id": "past_vs_future_5",
+    "word": "they_traveled_last",
+    "en": "They traveled last year. They will travel next year.",
+    "ko": "그들은 작년에 여행했어요. 그들은 내년에 여행할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그들은 작년에 여행했어요. 그들은 내년에 여행할 거예요.",
+    "emoji": "✈️"
+  },
+  {
+    "id": "past_vs_future_6",
+    "word": "i_worked_late",
+    "en": "I worked late last night. I will finish work earlier tomorrow.",
+    "ko": "나는 어젯밤에 늦게까지 일했어요. 나는 내일 더 일찍 일을 끝낼 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "나는 어젯밤에 늦게까지 일했어요. 나는 내일 더 일찍 일을 끝낼 거예요.",
+    "emoji": "💼"
+  },
+  {
+    "id": "past_vs_future_7",
+    "word": "she_cleaned_the",
+    "en": "She cleaned the room yesterday. She will clean it again on Saturday.",
+    "ko": "그녀는 어제 방을 청소했어요. 그녀는 토요일에 다시 청소할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그녀는 어제 방을 청소했어요. 그녀는 토요일에 다시 청소할 거예요.",
+    "emoji": "🧼"
+  },
+  {
+    "id": "past_vs_future_8",
+    "word": "we_had_a_picnic",
+    "en": "We had a picnic last month. We will have another one next month.",
+    "ko": "우리는 지난달에 소풍을 했어요. 우리는 다음 달에 또 하나 할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "우리는 지난달에 소풍을 했어요. 우리는 다음 달에 또 하나 할 거예요.",
+    "emoji": "🥪"
+  },
+  {
+    "id": "past_vs_future_9",
+    "word": "he_watched_tv",
+    "en": "He watched TV last night. He will watch a movie tomorrow.",
+    "ko": "그는 어젯밤에 TV를 봤어요. 그는 내일 영화를 볼 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그는 어젯밤에 TV를 봤어요. 그는 내일 영화를 볼 거예요.",
+    "emoji": "📺"
+  },
+  {
+    "id": "past_vs_future_10",
+    "word": "they_played_games",
+    "en": "They played games yesterday. They will play more games tomorrow.",
+    "ko": "그들은 어제 게임을 했어요. 그들은 내일 더 많은 게임을 할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그들은 어제 게임을 했어요. 그들은 내일 더 많은 게임을 할 거예요.",
+    "emoji": "🎮"
+  },
+  {
+    "id": "past_vs_future_11",
+    "word": "i_learned_new",
+    "en": "I learned new words last week. I will learn more this week.",
+    "ko": "나는 지난주에 새로운 단어들을 배웠어요. 나는 이번 주에 더 배울 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "나는 지난주에 새로운 단어들을 배웠어요. 나는 이번 주에 더 배울 거예요.",
+    "emoji": "📝"
+  },
+  {
+    "id": "past_vs_future_12",
+    "word": "she_found_a",
+    "en": "She found a new book last month. She will buy another book soon.",
+    "ko": "그녀는 지난달에 새 책을 찾았어요. 그녀는 곧 다른 책을 살 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그녀는 지난달에 새 책을 찾았어요. 그녀는 곧 다른 책을 살 거예요.",
+    "emoji": "📕"
+  },
+  {
+    "id": "past_vs_future_13",
+    "word": "we_traveled_to",
+    "en": "We traveled to Seoul last summer. We will travel to Busan next summer.",
+    "ko": "우리는 지난 여름에 서울로 여행했어요. 우리는 다음 여름에 부산으로 여행할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "우리는 지난 여름에 서울로 여행했어요. 우리는 다음 여름에 부산으로 여행할 거예요.",
+    "emoji": "🗺️"
+  },
+  {
+    "id": "past_vs_future_14",
+    "word": "he_saw_the",
+    "en": "He saw the show yesterday. He will watch another show next week.",
+    "ko": "그는 어제 공연을 봤어요. 그는 다음 주에 다른 공연을 볼 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그는 어제 공연을 봤어요. 그는 다음 주에 다른 공연을 볼 거예요.",
+    "emoji": "🎭"
+  },
+  {
+    "id": "past_vs_future_15",
+    "word": "they_finished_the",
+    "en": "They finished the project last month. They will start a new project soon.",
+    "ko": "그들은 지난달에 프로젝트를 끝냈어요. 그들은 곧 새 프로젝트를 시작할 거예요.",
+    "exampleSentence": "Past vs Future.",
+    "exampleSentenceKo": "그들은 지난달에 프로젝트를 끝냈어요. 그들은 곧 새 프로젝트를 시작할 거예요.",
+    "emoji": "📁"
+  }
 ]

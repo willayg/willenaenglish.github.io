@@ -6,6 +6,33 @@
 // - delete_student { user_id|username }
 // - set_approved { user_id|username, approved }
 
+const redisCache = require('../../lib/redis_cache');
+
+const LIST_CACHE_VERSION_KEY = 'teacher_admin:list_students_version';
+const LIST_CACHE_TTL_SECONDS = 60; // manage students table updates often but benefits from short cache
+
+async function getListCacheVersion() {
+  try {
+    const raw = await redisCache.getJson(LIST_CACHE_VERSION_KEY);
+    if (raw && typeof raw.version !== 'undefined') return String(raw.version);
+  } catch {}
+  return 'v0';
+}
+
+async function bumpListCacheVersion() {
+  const payload = { version: Date.now().toString() };
+  await redisCache.setJson(LIST_CACHE_VERSION_KEY, payload);
+  return payload.version;
+}
+
+function buildListCacheKey(version, params) {
+  const search = (params.search || '').toLowerCase();
+  const classFilter = (params.classFilter || '').toLowerCase();
+  const limit = Number(params.limit) || 0;
+  const offset = Number(params.offset) || 0;
+  return `teacher_admin:list_students:${version}:${classFilter}:${search}:${limit}:${offset}`;
+}
+
 function makeCorsHeaders(event, extra = {}) {
   const ALLOWLIST = new Set([
     'https://www.willenaenglish.com',
@@ -47,6 +74,10 @@ exports.handler = async (event) => {
   // Parse query params early so `action` is available everywhere
   const qs = event.queryStringParameters || {};
   const action = qs.action;
+  const INTERNAL_WARM_KEY = process.env.INTERNAL_WARM_KEY || process.env.internal_warm_key || null;
+  const isInternalWarmRequest = Boolean(INTERNAL_WARM_KEY && qs.internal_warm_key && qs.internal_warm_key === INTERNAL_WARM_KEY);
+  const internalAllowedActions = new Set(['list_students']);
+  const skipAuth = isInternalWarmRequest && internalAllowedActions.has(action);
 
   // Lazy import supabase-js (CJS require fallback)
   let createClient;
@@ -65,34 +96,44 @@ exports.handler = async (event) => {
   let isAdmin = false;
   let isTeacher = false;
 
-  // AuthZ: require teacher/admin role
-  const access = cookieToken(event);
-  if (!access) return respond(event, 401, { success:false, error:'Not signed in' });
-  try {
-    const { data, error } = await admin.auth.getUser(access);
-    if (error || !data?.user) return respond(event, 401, { success:false, error:'Not signed in' });
-    const userId = data.user.id;
-  const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', userId).single();
-  if (perr || !prof) return respond(event, 403, { success:false, error:'Profile missing' });
-  actorRole = String(prof.role || '').toLowerCase();
-  isAdmin = actorRole === 'admin';
-  isTeacher = actorRole === 'teacher';
-    if (!isAdmin && !isTeacher) return respond(event, 403, { success:false, error:'Forbidden' });
-
+  // AuthZ: require teacher/admin role unless this is an internal warm ping limited to list_students
+  if (!skipAuth) {
+    const access = cookieToken(event);
+    if (!access) return respond(event, 401, { success:false, error:'Not signed in' });
+    try {
+      const { data, error } = await admin.auth.getUser(access);
+      if (error || !data?.user) return respond(event, 401, { success:false, error:'Not signed in' });
+      const userId = data.user.id;
+      const { data: prof, error: perr } = await db.from('profiles').select('role').eq('id', userId).single();
+      if (perr || !prof) return respond(event, 403, { success:false, error:'Profile missing' });
+      actorRole = String(prof.role || '').toLowerCase();
+      isAdmin = actorRole === 'admin';
+      isTeacher = actorRole === 'teacher';
+      if (!isAdmin && !isTeacher) return respond(event, 403, { success:false, error:'Forbidden' });
+    } catch {
+      return respond(event, 401, { success:false, error:'Not signed in' });
+    }
+  } else {
+    actorRole = 'admin';
+    isAdmin = true;
+    isTeacher = true;
+  }
+  if (!skipAuth) {
     // Admin-only: rename_class
     if (action === 'rename_class' && event.httpMethod === 'POST') {
-  if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const { old_class, new_class } = body;
       if (!old_class || !new_class) return respond(event, 400, { success:false, error:'Both class names required' });
       const { error } = await db.from('profiles').update({ class: new_class }).eq('role', 'student').eq('class', old_class);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
 
     // Admin-only: update_student
     if (action === 'update_student' && event.httpMethod === 'POST') {
-  if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
+      if (!isAdmin) return respond(event, 403, { success:false, error:'Admins only' });
       const body = JSON.parse(event.body || '{}');
       const { user_id, name, username, korean_name, class: className, grade, school, phone } = body;
       if (!user_id) return respond(event, 400, { success:false, error:'Missing user_id' });
@@ -119,16 +160,15 @@ exports.handler = async (event) => {
       if (Object.keys(updateFields).length === 0) return respond(event, 400, { success:false, error:'No fields to update' });
       const { error } = await db.from('profiles').update(updateFields).eq('id', user_id);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
-  } catch {
-    return respond(event, 401, { success:false, error:'Not signed in' });
   }
 
 
   // Helper: lookup user by username
   async function getUserIdByUsername(username) {
-  const { data, error } = await db.from('profiles').select('id').eq('username', username).single();
+    const { data, error } = await db.from('profiles').select('id').eq('username', username).single();
     if (error || !data) return null;
     return data.id;
   }
@@ -140,8 +180,24 @@ exports.handler = async (event) => {
     if (action === 'list_students') {
       const search = (qs.search || '').trim();
       const classFilter = (qs.class || '').trim();
-  const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
+      const limit = Math.min(parseInt(qs.limit || '1000', 10) || 1000, 1000);
       const offset = parseInt(qs.offset || '0', 10) || 0;
+      const timingStart = Date.now();
+      const version = await getListCacheVersion();
+      const cacheKey = buildListCacheKey(version, { search, classFilter, limit, offset });
+      const cached = await redisCache.getJson(cacheKey);
+      if (cached && Array.isArray(cached.students)) {
+        console.log('[teacher_admin] list_students cache hit', {
+          search: search ? '[set]' : '',
+          classFilter: classFilter || '',
+          limit,
+          offset,
+          rows: cached.students.length,
+          version,
+          totalMs: Date.now() - timingStart
+        });
+        return respond(event, 200, { success:true, students: cached.students, limit: cached.limit, offset: cached.offset, cached_at: cached.cached_at || null });
+      }
       let q = db
         .from('profiles')
         .select('id, name, username, email, avatar, approved, role, class, korean_name, grade, school, phone')
@@ -154,7 +210,9 @@ exports.handler = async (event) => {
         // Search username, name, korean_name
         q = q.or(`username.ilike.${pat},name.ilike.${pat},korean_name.ilike.${pat}`);
       }
+      const queryStart = Date.now();
       const { data, error } = await q.order('username', { ascending: true }).range(offset, offset + limit - 1);
+      const queryMs = Date.now() - queryStart;
       if (error) return respond(event, 400, { success:false, error: error.message });
       const students = (data || []).map(d => ({
         id: d.id,
@@ -170,7 +228,19 @@ exports.handler = async (event) => {
         school: d.school || null,
         phone: d.phone || null,
       }));
-      return respond(event, 200, { success:true, students, limit, offset });
+      const payload = { students, limit, offset, cached_at: new Date().toISOString() };
+      await redisCache.setJson(cacheKey, payload, LIST_CACHE_TTL_SECONDS);
+      console.log('[teacher_admin] list_students fresh fetch', {
+        search: search ? '[set]' : '',
+        classFilter: classFilter || '',
+        limit,
+        offset,
+        rows: students.length,
+        version,
+        queryMs,
+        totalMs: Date.now() - timingStart
+      });
+      return respond(event, 200, { success:true, ...payload });
     }
 
     // Bulk upsert students
@@ -310,12 +380,13 @@ exports.handler = async (event) => {
         }
       }
 
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true, created, updated, skipped, total: norm.length });
     }
 
     if (action === 'create_student' && event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-  let { username, password, name, class: className, approved, grade, school, phone } = body;
+      let { username, password, name, class: className, approved, grade, school, phone } = body;
       username = (username || '').trim();
       if (!username || !password) return respond(event, 400, { success:false, error:'username and password required' });
       // Check existing username
@@ -327,7 +398,7 @@ exports.handler = async (event) => {
       const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, email_confirm: true, password, user_metadata: { role: 'student', username } });
       if (cErr || !created?.user) return respond(event, 400, { success:false, error: cErr?.message || 'Failed to create auth user' });
       const uid = created.user.id;
-  // Insert profile
+      // Insert profile
   const cleanGrade = typeof grade === 'string' && grade.trim() ? grade.trim() : null;
   const cleanSchool = typeof school === 'string' && school.trim() ? school.trim() : null;
   const cleanPhone = typeof phone === 'string' && phone.trim() ? phone.trim() : null;
@@ -337,6 +408,7 @@ exports.handler = async (event) => {
         try { await admin.auth.admin.deleteUser(uid); } catch {}
         return respond(event, 400, { success:false, error: iErr.message });
       }
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true, user_id: uid });
     }
 
@@ -374,6 +446,7 @@ exports.handler = async (event) => {
       await db.from('profiles').delete().eq('id', uid);
       const { error } = await admin.auth.admin.deleteUser(uid);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
 
@@ -392,6 +465,7 @@ exports.handler = async (event) => {
       if (String(prof.role).toLowerCase() !== 'student') return respond(event, 403, { success:false, error:'Only students are manageable' });
       const { error } = await db.from('profiles').update({ approved }).eq('id', uid);
       if (error) return respond(event, 400, { success:false, error: error.message });
+      await bumpListCacheVersion();
       return respond(event, 200, { success:true });
     }
 

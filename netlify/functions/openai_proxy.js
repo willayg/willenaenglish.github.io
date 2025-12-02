@@ -1,5 +1,8 @@
 const fetch = require('node-fetch');
+const crypto = require('crypto');
+const redisCache = require('../../lib/redis_cache');
 const OPENAI_API = process.env.OPENAI_API;
+const OPENAI_CACHE_TTL = Number(process.env.OPENAI_CACHE_TTL_SECONDS || 3600); // default 1 hour
 
 exports.handler = async (event) => {
   const body = event.body ? JSON.parse(event.body) : {};
@@ -17,6 +20,22 @@ exports.handler = async (event) => {
       max_tokens: 512,
       temperature: 0.7
     };
+    // Cache key derived from endpoint + payload hash
+    try {
+      if (redisCache.isEnabled()) {
+        const keyRaw = `${endpoint}:${JSON.stringify(payload)}`;
+        const key = 'openai:' + crypto.createHash('sha256').update(keyRaw).digest('hex');
+        const cached = await redisCache.getJson(key);
+        if (cached) {
+          return {
+            statusCode: 200,
+            body: JSON.stringify({ result: cached.result, cached: true }),
+          };
+        }
+      }
+    } catch (e) {
+      console.debug('[openai_proxy] cache check failed', e && e.message);
+    }
     const fetchOptions = {
       method: 'POST',
       headers: {
@@ -30,6 +49,16 @@ exports.handler = async (event) => {
     let result = '';
     if (data.choices && data.choices[0] && data.choices[0].message) {
       result = data.choices[0].message.content;
+    }
+    // Store in cache if available
+    try {
+      if (redisCache.isEnabled()) {
+        const keyRaw = `${endpoint}:${JSON.stringify(payload)}`;
+        const key = 'openai:' + crypto.createHash('sha256').update(keyRaw).digest('hex');
+        await redisCache.setJson(key, { result }, OPENAI_CACHE_TTL);
+      }
+    } catch (e) {
+      console.debug('[openai_proxy] cache store failed', e && e.message);
     }
     return {
       statusCode: response.status,
@@ -71,6 +100,17 @@ exports.handler = async (event) => {
   } else {
     const buffer = await response.arrayBuffer();
     data = Buffer.from(buffer).toString('base64');
+  }
+
+  // Generic cache store for other payloads
+  try {
+    if (redisCache.isEnabled() && body.payload) {
+      const keyRaw = `${endpoint}:${JSON.stringify(body.payload)}`;
+      const key = 'openai:' + crypto.createHash('sha256').update(keyRaw).digest('hex');
+      await redisCache.setJson(key, { data }, OPENAI_CACHE_TTL);
+    }
+  } catch (e) {
+    console.debug('[openai_proxy] generic cache store failed', e && e.message);
   }
 
   return {

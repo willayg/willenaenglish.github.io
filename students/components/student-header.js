@@ -25,9 +25,20 @@ class StudentHeader extends HTMLElement {
       }
     } catch {}
   };
+  this._onOptimisticBump = (e) => {
+    try {
+      const delta = e?.detail?.delta || 1;
+      if (typeof this._points === 'number') {
+        this._points += delta;
+        this.refresh();
+      }
+    } catch {}
+  };
   this._points = null;
   this._stars = null;
   this._fetchingOverview = false;
+  // Mission modal guard so we attempt only once per component lifecycle
+  this._missionChecked = false;
   }
 
   attributeChangedCallback() {
@@ -40,6 +51,7 @@ class StudentHeader extends HTMLElement {
     // Update if user data changes in this or other tabs
     window.addEventListener("storage", this._onStorage);
   window.addEventListener('points:update', this._onPointsUpdate);
+  window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
@@ -47,11 +59,14 @@ class StudentHeader extends HTMLElement {
     if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
       this._fetchOverview();
     }
+  // Defer mission modal check a tick to avoid blocking initial paint
+  try { setTimeout(() => this._maybeShowMissionModal(), 0); } catch {}
   }
 
   disconnectedCallback() {
     window.removeEventListener("storage", this._onStorage);
   window.removeEventListener('points:update', this._onPointsUpdate);
+  window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.removeEventListener('focus', this._onFocus);
   }
 
@@ -97,6 +112,154 @@ class StudentHeader extends HTMLElement {
   }
 
   _onFocus() { this._hydrateProfile(); this._fetchOverview(); }
+
+  // --- Mission Modal (homework alert) ---
+  _shouldSuppressGameInterrupt() {
+    try {
+      // Never interrupt active gameplay. Heuristics for the English Arcade page.
+      const isArcade = /\/Games\/english_arcade\//i.test(location.pathname);
+      if (!isArcade) return false;
+      const qs = new URLSearchParams(location.search);
+      // Don't suppress if just landing via openHomework (that's intended entry point)
+      if (qs.get('openHomework') === '1') return false;
+      // If autostart is active, allow modal first (it won't re-show once dismissed)
+      if (qs.get('autostart') === '1') return false;
+      // Known game runtime flags if exposed
+      if (window.WordArcade) {
+        try {
+          if (typeof window.WordArcade.isInGame === 'function' && window.WordArcade.isInGame()) return true;
+          if (window.WordArcade.isPlaying === true) return true;
+        } catch {}
+      }
+      // DOM heuristic: if opening menu is hidden and gameArea populated, assume a game is active
+      const opening = document.getElementById('openingButtons');
+      const gameArea = document.getElementById('gameArea');
+      const openingHidden = opening ? (getComputedStyle(opening).display === 'none') : false;
+      const gameBusy = gameArea ? gameArea.childElementCount > 0 : false;
+      return openingHidden && gameBusy;
+    } catch { return false; }
+  }
+
+  async _maybeShowMissionModal() {
+    try {
+      if (this._missionChecked) return; this._missionChecked = true;
+      // Once per session
+      if (sessionStorage.getItem('missionModalShown') === '1') return;
+      // Skip login page entirely
+      if (/\/students\/login\.html$/i.test(location.pathname)) return;
+      // If another aria-modal is present, delay briefly and try once more
+      const existingModal = document.querySelector('[aria-modal="true"], .modal[role="dialog"]');
+      if (existingModal) {
+        // Wait briefly for other modals to dismiss, then give up for this session if still present
+        setTimeout(() => {
+          if (!document.querySelector('[aria-modal="true"], .modal[role="dialog"]') && !document.getElementById('missionModalGlobal')) {
+            this._missionChecked = false; // allow retry
+            this._maybeShowMissionModal();
+          }
+        }, 1000);
+        return;
+      }
+      // Never interrupt games (but allow on opening screen even if on Arcade page)
+      if (this._shouldSuppressGameInterrupt()) return;
+
+      // Small shared cache to avoid duplicate fetches across pages
+      const cacheKey = '__HAS_HW_CACHE';
+      let hasHw = null;
+      const now = Date.now();
+      try {
+        const c = window[cacheKey];
+        if (c && (now - c.t) < 120000) { hasHw = !!c.v; }
+      } catch {}
+      if (hasHw == null) {
+        // Defer to idle if available to minimize main thread contention
+        await new Promise((res) => {
+          try { (window.requestIdleCallback || window.requestAnimationFrame)(() => res()); }
+          catch { setTimeout(res, 0); }
+        });
+          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include', cache:'no-store' });
+          if (!resp.ok) return;
+          const data = await resp.json().catch(() => ({}));
+          // If assignments exist, check per-assignment progress for this user to determine incompletes.
+          if (data && data.success && Array.isArray(data.assignments) && data.assignments.length) {
+            const assignments = data.assignments || [];
+            // Ensure we have a user id to match progress rows. Try hydrated uid then whoami fallback.
+            let uid = this._uid || null;
+            if (!uid) {
+              try {
+                const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+                if (who.ok) {
+                  const wj = await who.json().catch(() => ({}));
+                  if (wj && wj.success && wj.user_id) uid = wj.user_id;
+                }
+              } catch {}
+            }
+            // Check progress for each assignment. Conservative approach: if any assignment appears incomplete, treat as hasHw.
+            let incomplete = 0;
+            try {
+              await Promise.all(assignments.map(async (a) => {
+                try {
+                  const pr = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include', cache:'no-store' });
+                  if (!pr.ok) { incomplete++; return; }
+                  const pj = await pr.json().catch(() => ({}));
+                  if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
+                    let studentProgress = null;
+                    if (uid) studentProgress = pj.progress.find(p => String(p.user_id) === String(uid)) || null;
+                    if (!studentProgress && pj.progress.length === 1) studentProgress = pj.progress[0];
+                    if (studentProgress) {
+                      let completionPct = 0;
+                      if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
+                      else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
+                      else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
+                        completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
+                      }
+                      completionPct = Math.max(0, Math.min(100, completionPct));
+                      if (completionPct < 100) incomplete++;
+                    } else {
+                      // No student row => treat as incomplete
+                      incomplete++;
+                    }
+                  } else {
+                    incomplete++;
+                  }
+                } catch (e) { incomplete++; }
+              }));
+            } catch (e) { incomplete = assignments.length; }
+            hasHw = incomplete > 0;
+          } else {
+            hasHw = false;
+          }
+          try { window[cacheKey] = { t: now, v: hasHw }; } catch {}
+      }
+      if (!hasHw) return;
+
+      // Build fullscreen modal
+      if (document.getElementById('missionModalGlobal')) return; // already present
+      const overlay = document.createElement('div');
+      overlay.id = 'missionModalGlobal';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:26px;';
+      const panel = document.createElement('div');
+      panel.style.cssText = 'background:#fff;border-radius:24px;max-width:520px;width:100%;padding:36px 32px 28px;border:2px solid #93cbcf;box-shadow:0 16px 60px rgba(0,0,0,.18);text-align:center;font-family:"Poppins",system-ui,Arial,sans-serif;';
+      panel.innerHTML = `
+        <h2 style="margin:0 0 12px;font-size:2.2rem;font-weight:800;color:#ff6fa9;letter-spacing:.4px;font-family:'Poppins',system-ui,Arial,sans-serif;">You Have A Mission</h2>
+        <img src="/Games/english_arcade/assets/Images/icons/rocket.svg" alt="rocket" style="width:72px;height:72px;margin:0 auto 14px;display:block;" />
+        <div style="display:flex;gap:18px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+          <a id="missionDoNowBtn" href="#" style="display:inline-block;font-size:1.05rem;font-weight:800;color:#555;background:#fff;border:2px solid #ff6fa9;padding:14px 26px;border-radius:16px;text-decoration:none;min-width:260px;font-family:'Poppins',system-ui,Arial,sans-serif;box-shadow:0 6px 16px rgba(255,111,169,0.12);transition:transform .16s ease, box-shadow .16s ease;">숙제 시작하기</a>
+          <button id="missionDismissBtn" type="button" style="background:#fff;border:2px solid #e2e8f0;color:#334155;font-weight:700;padding:10px 16px;border-radius:12px;cursor:pointer;font-family:'Poppins',system-ui,Arial,sans-serif;margin-top:18px;">Not Now</button>
+        </div>`;
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+
+      const finish = () => { try { overlay.remove(); } catch {} sessionStorage.setItem('missionModalShown','1'); };
+      // Do NOT close modal when clicking the backdrop; require explicit button action
+      // overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(); });
+      panel.querySelector('#missionDismissBtn')?.addEventListener('click', finish);
+      panel.querySelector('#missionDoNowBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        sessionStorage.setItem('missionModalShown','1');
+        window.location.href = '/Games/english_arcade/index.html?openHomework=1';
+      });
+    } catch {}
+  }
 
   _fetchOverview() {
     if (this._fetchingOverview) return;
@@ -497,6 +660,8 @@ class StudentHeader extends HTMLElement {
           document.cookie = 'wa_guest_name=; Domain=.willenaenglish.com; ' + opts;
         }
       } catch {}
+  // Ensure mission modal will show again after logout
+  try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
       try { await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' }); } catch {}
       const next = encodeURIComponent(location.pathname);
       window.location.href = `/students/login.html?next=${next}`;

@@ -3,7 +3,7 @@
 // and logs under a dedicated grammar mode name for progress tracking.
 
 import { run as runSentenceMode } from './word_sentence_mode.js';
-import { showUnscrambleSplash } from './unscramble_splash.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 import { playSFX } from '../sfx.js';
 
 const AUDIO_ENDPOINTS = [
@@ -146,17 +146,14 @@ export async function runGrammarSentenceUnscramble(ctx) {
   // Show a lightweight splash while the grammar file and audio hydrate load.
   let splashController = null;
   try {
-    console.log('[GrammarUnscramble] about to show splash, document.body:', document.body);
     const splashRoot = document.body;
-    splashController = showUnscrambleSplash(splashRoot, { english: 'Unscramble the sentence', korean: '문장을 풀어보세요', duration: 2000 });
-    console.log('[GrammarUnscramble] splash controller returned:', splashController);
-    // Wait for the initial animated reveal to complete before continuing heavy work
+    splashController = openNowLoadingSplash(splashRoot, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') });
     if (splashController && splashController.readyPromise) await splashController.readyPromise;
-    console.log('[GrammarUnscramble] splash readyPromise resolved');
   } catch (e) {
     // Non-fatal: continue if splash fails
     console.debug('[GrammarUnscramble] splash failed', e?.message);
-  }  let rawData = [];
+  }
+  let rawData = [];
   try {
     const res = await fetch(grammarFile);
     if (!res.ok) throw new Error(`Failed to load ${grammarFile}`);

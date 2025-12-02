@@ -45,6 +45,9 @@ const langMap = {
     addAllPaste: 'Paste roster text',
     addAllPreview: 'Preview Count',
     addAllUpload: 'Upload'
+    ,
+    school: 'School',
+    phone: 'Phone'
   },
   ko: {
     toolNames: {
@@ -89,6 +92,9 @@ const langMap = {
     addAllPaste: '명단 텍스트 붙여넣기',
     addAllPreview: '미리보기',
     addAllUpload: '업로드'
+    ,
+    school: '학교',
+    phone: '전화번호'
   }
 };
 
@@ -102,6 +108,8 @@ function setLanguage(lang) {
   const l4 = document.querySelector('label[for="newKoreanName"]'); if (l4) l4.textContent = langMap[lang].koreanName;
   const l5 = document.querySelector('label[for="newClass"]'); if (l5) l5.textContent = langMap[lang].class;
   const l6 = document.querySelector('label[for="newApproved"]'); if (l6) l6.textContent = langMap[lang].approved;
+  const sl = document.querySelector('label[for="singleSchool"]'); if (sl) sl.textContent = langMap[lang].school;
+  const pl = document.querySelector('label[for="singlePhone"]'); if (pl) pl.textContent = langMap[lang].phone;
   document.getElementById('search').placeholder = langMap[lang].search;
   document.getElementById('refreshBtn').textContent = langMap[lang].refresh;
   document.querySelector('label[for="classFilter"]').textContent = langMap[lang].classLabel;
@@ -152,6 +160,16 @@ if (langToggleBtn) {
 document.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
 });
+
+async function registerTeacherServiceWorker() {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw-teacher.js', { scope: '/' });
+    console.log('[manage_students] service worker ready', reg.scope);
+  } catch (err) {
+    console.warn('[manage_students] service worker registration failed', err);
+  }
+}
 const API = '/.netlify/functions/teacher_admin';
 let IS_ADMIN = false; // set after role check
 
@@ -255,6 +273,58 @@ function rowTpl(s) {
   </tr>`;
 }
 
+// Simple sessionStorage class cache helpers (client-side only)
+function cacheKeyForClass(cls) { return `ms:class:${String(cls||'').toLowerCase()}`; }
+function cacheSetClassData(cls, students) {
+  try {
+    const payload = { ts: Date.now(), students };
+    sessionStorage.setItem(cacheKeyForClass(cls), JSON.stringify(payload));
+  } catch (e) {}
+}
+function cacheGetClassData(cls, maxAgeMs = 30000) {
+  try {
+    const raw = sessionStorage.getItem(cacheKeyForClass(cls));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.ts) return null;
+    if ((Date.now() - obj.ts) > maxAgeMs) { sessionStorage.removeItem(cacheKeyForClass(cls)); return null; }
+    return obj.students || null;
+  } catch (e) { return null; }
+}
+
+// SessionStorage helpers for full-list cache
+function cacheKeyAll() { return 'ms:all'; }
+function cacheSetAll(students) {
+  try { sessionStorage.setItem(cacheKeyAll(), JSON.stringify({ ts: Date.now(), students })); } catch(e) {}
+}
+function cacheGetAll(maxAgeMs = 60000) {
+  try {
+    const raw = sessionStorage.getItem(cacheKeyAll()); if (!raw) return null;
+    const obj = JSON.parse(raw); if (!obj || !obj.ts) return null;
+    if ((Date.now() - obj.ts) > maxAgeMs) { sessionStorage.removeItem(cacheKeyAll()); return null; }
+    return obj.students || null;
+  } catch(e) { return null; }
+}
+
+// In-memory copy for fast filtering during the session
+let ALL_STUDENTS = null;
+const MAX_ALL_CACHE_SIZE = 3000; // only use full-client cache if dataset isn't enormous
+
+// Prefetch class student lists (background warming). Limits to a few classes to avoid burst.
+async function prefetchClassList(cls) {
+  if (!cls) return null;
+  // if already cached and fresh, skip
+  if (cacheGetClassData(cls, 60000)) return null;
+  const url = `${API}?action=list_students&class=${encodeURIComponent(cls)}`;
+  try {
+    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    const data = await res.json().catch(()=>({}));
+    if (res.ok && data && Array.isArray(data.students)) {
+      cacheSetClassData(cls, data.students);
+    }
+  } catch (e) { /* ignore prefetch failures */ }
+}
+
 // Edit Student Modal logic
 const editModalBg = document.getElementById('editModalBg');
 const editName = document.getElementById('editName');
@@ -292,8 +362,8 @@ if (editSubmit) editSubmit.onclick = async function() {
   try {
     await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className } });
     hideEditModal();
-  await populateClassFilter();
-  await refresh();
+    await populateClassFilter();
+  await refresh(true);
   } catch (e) {
     editMsg.textContent = e.message || 'Update failed.';
   }
@@ -305,7 +375,7 @@ async function load() {
   // list_students ignores body; use query via URL param instead
 }
 
-async function refresh() {
+async function refresh(force = false) {
   const q = el('search').value.trim();
   const classVal = el('classFilter')?.value || '';
   const u = new URL(location.href);
@@ -315,6 +385,38 @@ async function refresh() {
   let url = `${API}?action=list_students&search=${encodeURIComponent(q)}`;
   if (classVal) url += `&class=${encodeURIComponent(classVal)}`;
   let data;
+  // Render cached data immediately if available (optimistic / instant feel)
+  try {
+    const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
+    if (cached && Array.isArray(cached)) {
+      const rows = cached.map(rowTpl).join('');
+      el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
+    }
+  } catch (e) { }
+  // If we have the full list cached in-memory or sessionStorage and dataset is reasonable,
+  // do local filtering and avoid a network fetch for instant response.
+  try {
+    const cachedAll = ALL_STUDENTS || cacheGetAll();
+    if (cachedAll && Array.isArray(cachedAll) && cachedAll.length <= MAX_ALL_CACHE_SIZE) {
+      ALL_STUDENTS = cachedAll;
+    }
+    if (ALL_STUDENTS && Array.isArray(ALL_STUDENTS) && ALL_STUDENTS.length <= MAX_ALL_CACHE_SIZE) {
+      // local filter
+      const ql = q.toLowerCase();
+      let students = ALL_STUDENTS.filter(s => {
+        if (classVal && String(s.class || '') !== String(classVal)) return false;
+        if (!ql) return true;
+        const uname = String(s.username || '').toLowerCase();
+        const name = String(s.name || '').toLowerCase();
+        return uname.includes(ql) || name.includes(ql);
+      });
+      try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
+      el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="8">No students found</td></tr>';
+      // We have the full student list locally — use client-side filtering only.
+      // Do not perform per-class or background network fetches unless caller explicitly forces a server refresh.
+      if (!force) return;
+    }
+  } catch(e) {}
   try {
     const res = await fetch(url, { credentials:'include', cache:'no-store' });
     data = await res.json().catch(() => ({}));
@@ -330,6 +432,8 @@ async function refresh() {
   const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = '';
   let students = data.students || [];
   if (classVal) students = students.filter(s => s.class === classVal);
+  // update client cache for this class
+  try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
   const rows = students.map(rowTpl).join('');
   el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
 }
@@ -347,7 +451,7 @@ async function createStudentLegacy() {
   try {
     await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved } });
     if (msg) msg.textContent = 'Created.';
-    await refresh();
+    await refresh(true);
   } catch (e) {
     if (msg) msg.textContent = e.message || 'Failed to create';
   }
@@ -392,7 +496,7 @@ function attachRowHandlers() {
       } else if (act === 'delete') {
         if (confirm(`Delete ${username}? This cannot be undone.`)) await api('delete_student', { method:'POST', body:{ user_id: uid } });
       }
-      await refresh();
+      await refresh(true);
     } catch (err) {
       alert(err.message || 'Action failed');
     }
@@ -400,7 +504,7 @@ function attachRowHandlers() {
 }
 
 function wire() {
-  el('refreshBtn').addEventListener('click', refresh);
+  el('refreshBtn').addEventListener('click', ()=>refresh(true));
   el('search').addEventListener('input', () => { clearTimeout(wire._t); wire._t = setTimeout(refresh, 300); });
   const classFilter = el('classFilter');
   if (classFilter) classFilter.addEventListener('change', refresh);
@@ -618,7 +722,7 @@ if (addAllSubmit) addAllSubmit.onclick = async function() {
     addAllMsg.style.color = '#065f46';
     addAllMsg.textContent = `Done. Created: ${created}, Updated: ${updated}${skipped?`, Skipped: ${skipped}`:''}`;
     // Close after short delay
-    setTimeout(() => { hideAddAllModal(); refresh(); }, 900);
+    setTimeout(() => { hideAddAllModal(); refresh(true); }, 900);
   } catch (e) {
     addAllMsg.style.color = '#a11';
     addAllMsg.textContent = e.message || 'Upload failed.';
@@ -664,7 +768,7 @@ if (renameClassSubmit) renameClassSubmit.onclick = async function() {
   try {
     await api('rename_class', { method:'POST', body: { old_class: oldName, new_class: newName } });
     hideRenameClassModal();
-    await refresh();
+    await refresh(true);
   } catch (e) {
     renameClassMsg.textContent = e.message || 'Move failed.';
   }
@@ -719,7 +823,7 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
   bulkSubmit.disabled = false;
   if (errors) bulkMsg.textContent = `${errors} failed (likely duplicate usernames)`;
   else hideBulkModal();
-  await refresh();
+  await refresh(true);
 }
 
 // Populate class filter after auth
@@ -734,6 +838,22 @@ async function populateClassFilter() {
         const selected = new URL(location.href).searchParams.get('class') || '';
         classFilter.innerHTML = '<option value="">All Classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
         if (selected) classFilter.value = selected;
+        // Seed the full-list cache/in-memory copy so client-side filtering can be used
+        try { if (Array.isArray(data.students)) { ALL_STUDENTS = data.students; cacheSetAll(data.students); } } catch(e) {}
+        // If we have the full list locally, skip per-class prefetches — client-side filtering will be used.
+        // Prefetch only when server did not return a full student list.
+        if (!Array.isArray(data.students) || data.students.length === 0) {
+          (async function(){
+            try {
+              const toPrefetch = [];
+              if (selected) toPrefetch.push(selected);
+              for (let i=0;i<classes.length && toPrefetch.length<3;i++) {
+                const c = classes[i]; if (!toPrefetch.includes(c)) toPrefetch.push(c);
+              }
+              for (const p of toPrefetch) await prefetchClassList(p);
+            } catch(e){}
+          })();
+        }
       }
     }
   } catch {}
@@ -748,6 +868,8 @@ const singleUsername = document.getElementById('singleUsername');
 const singlePassword = document.getElementById('singlePassword');
 const singleName = document.getElementById('singleName');
 const singleKoreanName = document.getElementById('singleKoreanName');
+const singleSchool = document.getElementById('singleSchool');
+const singlePhone = document.getElementById('singlePhone');
 const singleClass = document.getElementById('singleClass');
 const singleApproved = document.getElementById('singleApproved');
 const singleAddMsg = document.getElementById('singleAddMsg');
@@ -758,6 +880,8 @@ function showSingleAddModal() {
   singlePassword.value = '';
   singleName.value = '';
   singleKoreanName.value = '';
+  if (singleSchool) singleSchool.value = '';
+  if (singlePhone) singlePhone.value = '';
   singleClass.value = '';
   if (singleAddModalBg) singleAddModalBg.style.display = 'flex';
 }
@@ -774,14 +898,17 @@ async function createStudentSingle() {
   const name = singleName.value.trim();
   const koreanName = singleKoreanName.value.trim();
   const klass = singleClass.value.trim();
+  const school = singleSchool ? singleSchool.value.trim() : '';
+  const phoneRaw = singlePhone ? singlePhone.value.trim() : '';
+  const phone = formatPhoneForStorage(phoneRaw);
   const approved = singleApproved.checked;
   singleAddMsg.textContent = '';
   if (!username || !password) { singleAddMsg.textContent = 'Username and password are required.'; return; }
   try {
-    await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved } });
+    await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved, school: school || null, phone: phone || null } });
     hideSingleAddModal();
     await populateClassFilter();
-    await refresh();
+    await refresh(true);
   } catch (e) {
     singleAddMsg.textContent = e.message || 'Failed to create';
   }
@@ -1007,7 +1134,7 @@ async function uploadRosterSingle() {
 
   try {
     await populateClassFilter();
-    await refresh();
+    await refresh(true);
   } catch {}
 
   rosterUploadSubmit.disabled = false;
@@ -1017,6 +1144,7 @@ if (rosterPreviewBtn) rosterPreviewBtn.onclick = previewRosterSingle;
 if (rosterUploadSubmit) rosterUploadSubmit.onclick = uploadRosterSingle;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  registerTeacherServiceWorker();
   wire();
   // auth guard: ensure teacher role
   try {

@@ -330,6 +330,18 @@
       }
     });
 
+    // Allow Enter to submit login when focused on username or password
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    function trySubmitLoginOnEnter(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('loginBtn').click();
+      }
+    }
+    if (usernameInput) usernameInput.addEventListener('keydown', trySubmitLoginOnEnter);
+    if (passwordInput) passwordInput.addEventListener('keydown', trySubmitLoginOnEnter);
+
     // Guest login flow
     async function startGuestSession(name){
       const r = await fetch('/.netlify/functions/guest_session', {
@@ -435,12 +447,29 @@
     function showModal() {
       modalOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
+      // Attach Enter key handler while modal is open to trigger primary action
+      try { document.addEventListener('keydown', modalEnterHandler); } catch {}
     }
 
     function hideModal() {
       modalOverlay.classList.remove('active');
       document.body.style.overflow = '';
       studentData = {};
+      try { document.removeEventListener('keydown', modalEnterHandler); } catch {}
+    }
+
+    // When modal open, pressing Enter should activate the visible primary action button
+    function modalEnterHandler(e) {
+      if (e.key !== 'Enter') return;
+      // Ignore if focus is inside a button to avoid double-activation
+      const t = document.activeElement;
+      if (t && (t.tagName === 'BUTTON' || t.tagName === 'A')) return;
+      // Find the primary action button inside the modal actions
+      const primary = modalActions.querySelector('.modal-btn.modal-btn-primary:not([disabled])');
+      if (primary) {
+        e.preventDefault();
+        primary.click();
+      }
     }
 
     modalClose.addEventListener('click', hideModal);
@@ -485,7 +514,16 @@
       });
 
       const koreanInput = document.getElementById('koreanNameInput');
-      if (koreanInput) koreanInput.focus();
+      if (koreanInput) {
+        koreanInput.focus();
+        // Submit next on Enter
+        const kHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nextBtn').click(); } };
+        koreanInput.addEventListener('keydown', kHandler);
+        // remove listener when modal hidden to avoid leaks
+        const cleanupK = () => { try { koreanInput.removeEventListener('keydown', kHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupK); };
+        // best-effort cleanup after step changes
+        modalOverlay.addEventListener('transitionend', cleanupK);
+      }
     }
 
     // Step 3: English name
@@ -510,7 +548,13 @@
       });
 
       const englishInput = document.getElementById('englishNameInput');
-      if (englishInput) englishInput.focus();
+      if (englishInput) {
+        englishInput.focus();
+        const eHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nextBtn').click(); } };
+        englishInput.addEventListener('keydown', eHandler);
+        const cleanupE = () => { try { englishInput.removeEventListener('keydown', eHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupE); };
+        modalOverlay.addEventListener('transitionend', cleanupE);
+      }
     }
 
     // Step 4: 인증번호 (mom's phone last four digits)
@@ -540,7 +584,13 @@
       });
 
       const authInput = document.getElementById('authCodeInput');
-      if (authInput) authInput.focus();
+      if (authInput) {
+        authInput.focus();
+        const aHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('verifyBtn').click(); } };
+        authInput.addEventListener('keydown', aHandler);
+        const cleanupA = () => { try { authInput.removeEventListener('keydown', aHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupA); };
+        modalOverlay.addEventListener('transitionend', cleanupA);
+      }
     }
 
     function generateTemporaryPassword() {

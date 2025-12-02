@@ -1,0 +1,129 @@
+[
+  {
+    "id": "modal_verbs_1",
+    "word": "i_can_swim",
+    "en": "I can swim.",
+    "ko": "나는 수영할 수 있어요.",
+    "exampleSentence": "I can swim in the pool.",
+    "exampleSentenceKo": "나는 수영할 수 있어요.",
+    "emoji": "🏊"
+  },
+  {
+    "id": "modal_verbs_2",
+    "word": "she_cant_ride_a_bike",
+    "en": "She can't ride a bike.",
+    "ko": "그녀는 자전거를 탈 수 없어요.",
+    "exampleSentence": "She can't ride a bike yet.",
+    "exampleSentenceKo": "그녀는 자전거를 탈 수 없어요.",
+    "emoji": "🚫🚲"
+  },
+  {
+    "id": "modal_verbs_3",
+    "word": "we_can_speak_english",
+    "en": "We can speak English.",
+    "ko": "우리는 영어를 말할 수 있어요.",
+    "exampleSentence": "We can speak English well.",
+    "exampleSentenceKo": "우리는 영어를 말할 수 있어요.",
+    "emoji": "🇬🇧"
+  },
+  {
+    "id": "modal_verbs_4",
+    "word": "he_cant_play_piano",
+    "en": "He can't play the piano.",
+    "ko": "그는 피아노를 칠 수 없어요.",
+    "exampleSentence": "He can't play the piano now.",
+    "exampleSentenceKo": "그는 피아노를 칠 수 없어요.",
+    "emoji": "🎹"
+  },
+  {
+    "id": "modal_verbs_5",
+    "word": "they_can_dance",
+    "en": "They can dance.",
+    "ko": "그들은 춤출 수 있어요.",
+    "exampleSentence": "They can dance at the party.",
+    "exampleSentenceKo": "그들은 춤출 수 있어요.",
+    "emoji": "💃"
+  },
+  {
+    "id": "modal_verbs_6",
+    "word": "you_cant_eat_here",
+    "en": "You can't eat here.",
+    "ko": "여기서 먹을 수 없어요.",
+    "exampleSentence": "You can't eat here in the library.",
+    "exampleSentenceKo": "여기서 먹을 수 없어요.",
+    "emoji": "🚫🍽️"
+  },
+  {
+    "id": "modal_verbs_7",
+    "word": "i_can_read_this_book",
+    "en": "I can read this book.",
+    "ko": "나는 이 책을 읽을 수 있어요.",
+    "exampleSentence": "I can read this book by myself.",
+    "exampleSentenceKo": "나는 이 책을 읽을 수 있어요.",
+    "emoji": "📖"
+  },
+  {
+    "id": "modal_verbs_8",
+    "word": "she_can_play_violin",
+    "en": "She can play the violin.",
+    "ko": "그녀는 바이올린을 연주할 수 있어요.",
+    "exampleSentence": "She can play the violin beautifully.",
+    "exampleSentenceKo": "그녀는 바이올린을 연주할 수 있어요.",
+    "emoji": "🎻"
+  },
+  {
+    "id": "modal_verbs_9",
+    "word": "we_cant_go_out_now",
+    "en": "We can't go out now.",
+    "ko": "우리는 지금 밖에 나갈 수 없어요.",
+    "exampleSentence": "We can't go out because it's raining.",
+    "exampleSentenceKo": "우리는 지금 밖에 나갈 수 없어요.",
+    "emoji": "🌧️"
+  },
+  {
+    "id": "modal_verbs_10",
+    "word": "he_can_run_fast",
+    "en": "He can run fast.",
+    "ko": "그는 빨리 달릴 수 있어요.",
+    "exampleSentence": "He can run very fast.",
+    "exampleSentenceKo": "그는 빨리 달릴 수 있어요.",
+    "emoji": "🏃"
+  }
+  ,
+  {
+    "id": "modal_verbs_11",
+    "word": "you_should_study",
+    "en": "You should study for the exam.",
+    "ko": "시험 공부를 해야 해요.",
+    "exampleSentence": "You should study for the exam if you want to pass.",
+    "exampleSentenceKo": "합격하려면 시험 공부를 해야 해요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "modal_verbs_12",
+    "word": "you_shouldnt_smoke_here",
+    "en": "You shouldn't smoke here.",
+    "ko": "여기에서 담배 피우면 안 돼요.",
+    "exampleSentence": "You shouldn't smoke in public places.",
+    "exampleSentenceKo": "공공장소에서는 담배를 피우면 안 돼요.",
+    "emoji": "🚭"
+  },
+  {
+    "id": "modal_verbs_13",
+    "word": "i_could_help_you",
+    "en": "I could help you.",
+    "ko": "내가 도와줄 수 있어요.",
+    "exampleSentence": "I could help you with your homework.",
+    "exampleSentenceKo": "숙제를 도와줄 수 있어요.",
+    "emoji": "🤝"
+  },
+  {
+    "id": "modal_verbs_14",
+    "word": "he_couldnt_finish_race",
+    "en": "He couldn't finish the race.",
+    "ko": "그는 경주를 끝내지 못했어요.",
+    "exampleSentence": "He couldn't finish the race because he was injured.",
+    "exampleSentenceKo": "그는 다쳐서 경주를 끝내지 못했어요.",
+    "emoji": "🏃‍♂️"
+  }
+]

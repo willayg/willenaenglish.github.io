@@ -1,5 +1,9 @@
+import { ensureAuthRefresh } from '../auth-refresh.js';
+
 // Burger menu component loader
 // Usage: import this file and call insertBurgerMenu() after DOMContentLoaded
+
+ensureAuthRefresh();
 
 export function insertBurgerMenu(targetSelector = 'body') {
   // Prevent duplicate insertion

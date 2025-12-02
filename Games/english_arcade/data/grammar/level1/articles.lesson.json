@@ -41,29 +41,8 @@
       "type": "check",
       "emoji": "🧠",
       "question": { "en": "Choose the correct article:", "ko": "올바른 관사를 고르세요:" },
-      "word": { "en": "elephant", "ko": "코끼리" },
-      "options": [
-        { "value": "a", "label": { "en": "a", "ko": "a" } },
-        { "value": "an", "label": { "en": "an", "ko": "an" } }
-      ],
+      "word": "elephant",
       "correct": "an"
-    },
-    {
-      "type": "check",
-      "emoji": "🧠",
-      "question": { "en": "Which article fits?", "ko": "어떤 관사가 맞을까요?" },
-      "word": { "en": "book", "ko": "책" },
-      "options": [
-        { "value": "a", "label": { "en": "a", "ko": "a" } },
-        { "value": "an", "label": { "en": "an", "ko": "an" } }
-      ],
-      "correct": "a"
     }
-  ],
-  "finish": {
-    "emoji": "🎉",
-    "title": { "en": "You did it!", "ko": "잘했어요!" },
-    "body": { "en": "You can now choose <b>a</b> and <b>an</b> like a pro.", "ko": "이제 <b>a</b> 와 <b>an</b> 을 멋지게 고를 수 있어요." },
-    "cta": { "en": "Back to grammar modes", "ko": "문법 모드로 돌아가기" }
-  }
+  ]
 }

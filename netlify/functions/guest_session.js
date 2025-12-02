@@ -1,9 +1,19 @@
 // Guest session: create and read a simple guest identity
 // - GET: returns current guest { id, name } if cookies exist
 // - POST: body { name } -> sets wa_guest_id and wa_guest_name cookies for 30 days
+const { getCorsHeaders, handleCorsPreflightIfNeeded } = require('./lib/cors');
 
-function json(status, body, headers = {}, cookies /* string[] */) {
-  const res = { statusCode: status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers }, body: JSON.stringify(body) };
+function json(status, body, event, extraHeaders = {}, cookies /* string[] */) {
+  const res = { 
+    statusCode: status, 
+    headers: { 
+      ...getCorsHeaders(event || {}),
+      'content-type': 'application/json; charset=utf-8', 
+      'cache-control': 'no-store', 
+      ...extraHeaders 
+    }, 
+    body: JSON.stringify(body) 
+  };
   if (cookies && cookies.length) res.multiValueHeaders = { 'Set-Cookie': cookies };
   return res;
 }
@@ -42,9 +52,9 @@ function sanitizeName(raw) {
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type' }, body: '' };
-  }
+  // Handle CORS preflight
+  const preflightResponse = handleCorsPreflightIfNeeded(event);
+  if (preflightResponse) return preflightResponse;
 
   const dev = isLocalDev(event);
   const cookieFlags = { maxAge: 60 * 60 * 24 * 30, sameSite: dev ? 'Lax' : 'None', secure: !dev, httpOnly: false };
@@ -53,7 +63,7 @@ exports.handler = async (event) => {
     const hdrs = event.headers || {}; const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
     const c = parseCookies(cookieHeader);
     const id = c['wa_guest_id'] || null; const name = c['wa_guest_name'] || null;
-    return json(200, { success: true, guest: id ? { id, name: name || 'Guest' } : null });
+    return json(200, { success: true, guest: id ? { id, name: name || 'Guest' } : null }, event);
   }
 
   if (event.httpMethod === 'POST') {
@@ -74,8 +84,8 @@ exports.handler = async (event) => {
       cookie('wa_guest_id', guestId, event, cookieFlags),
       cookie('wa_guest_name', desiredName, event, cookieFlags),
     ];
-    return json(200, { success: true, guest: { id: guestId, name: desiredName } }, {}, cookies);
+    return json(200, { success: true, guest: { id: guestId, name: desiredName } }, event, {}, cookies);
   }
 
-  return json(405, { success: false, error: 'Method not allowed' });
+  return json(405, { success: false, error: 'Method not allowed' }, event);
 };
