@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="Profile">Profile</title>
+  <script src="/js/api-config.js"></script>
   <script>
     // Cookie-based identity fetch
     async function getProfileInfo() {
       try {
         // Get user id from cookie session
-        const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials: 'include' });
+        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
         const whoRes = await who.json();
         if (!whoRes.success || !whoRes.user_id) {
           // Redirect to login with return URL
@@ -18,7 +19,7 @@
           return { error: 'Sign in required. No valid session.' };
         }
         // Get profile info
-        const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials: 'include' });
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile');
         const profile = await res.json();
         if (!profile.success) {
           return { error: 'Could not fetch profile information.' };

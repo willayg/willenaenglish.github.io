@@ -33,7 +33,7 @@ function setupAIChatBox() {
     // Call Netlify OpenAI proxy (same as reading)
     let aiReply = '';
     try {
-      const response = await fetch('/.netlify/functions/openai_proxy', {
+      const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -108,7 +108,7 @@ function setupAIPrompt() {
     sendBtn.disabled = true;
     sendBtn.textContent = 'Sending...';
     try {
-      const response = await fetch('/.netlify/functions/openai_proxy', {
+      const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

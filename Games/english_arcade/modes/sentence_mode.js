@@ -145,7 +145,7 @@ async function enrichSentenceAudioIDAware(items){
   if (stillMissing.length){
     try {
       const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));
-      const r = await fetch('/.netlify/functions/get_sentence_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sentence_ids: uniqueIds }) });
+      const r = await WillenaAPI.fetch('/.netlify/functions/get_sentence_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sentence_ids: uniqueIds }) });
       if (r.ok){
         const data = await r.json().catch(()=>null);
         if(data && data.success && data.results){
@@ -176,7 +176,7 @@ async function enrichSentenceAudioIDAware(items){
       const lowerSnake = `${normWord(i.eng)}_sentence`;
       return [upper, lowerSnake];
     })));
-    const r = await fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
+    const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
     if (r.ok){
       const data = await r.json();
       if (data && data.results){

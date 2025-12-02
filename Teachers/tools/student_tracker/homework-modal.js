@@ -438,10 +438,9 @@ const HomeworkModal = (() => {
     console.log('Assignment payload:', assignment);
 
     try {
-      const resp = await fetch('/.netlify/functions/homework_api?action=create_assignment', {
+      const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=create_assignment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(assignment)
       });
 

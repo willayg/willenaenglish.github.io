@@ -8,6 +8,7 @@
   <meta name="naver" content="notranslate">
   <meta name="robots" content="noindex,nofollow">
   <title>Fruti</title>
+  <script src="/js/api-config.js"></script>
   <style>
     
 body {
@@ -348,7 +349,7 @@ async function submitScore(forcedName, forcedUserId) {
   if (submitBtn) {
     submitBtn.disabled = true;
   }
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "Fruti", user_id })
@@ -362,7 +363,7 @@ async function submitScore(forcedName, forcedUserId) {
 window.startGame = startGame;
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score?game=Fruti');
+  const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=Fruti');
   if (!response.ok) {
     highscoresList.innerHTML = '<li>Failed to load scores</li>';
     return;

@@ -234,7 +234,7 @@ Make it practical and beginner-teacher friendly.${activities ? `\n\nTeacher pref
       systemMessage = 'You are a helpful ESL teacher mentor. Create clear, well-structured lesson plans with practical activities that new teachers can easily follow.';
     }
 
-    const response = await fetch('/.netlify/functions/openai_proxy', {
+    const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -318,7 +318,7 @@ Make the activities engaging, age-appropriate, and easy to implement. Focus on s
       systemMessage = 'You are a creative ESL activity designer. Create fun, practical activities that work well with children and beginners. Focus on engagement and speaking practice.';
     }
 
-    const response = await fetch('/.netlify/functions/openai_proxy', {
+    const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -845,7 +845,7 @@ window.showFeedbackModal = function() {
         user_id: null // Optionally set if you have auth
       };
       try {
-        const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

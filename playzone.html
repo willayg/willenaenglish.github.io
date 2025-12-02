@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title data-i18n="Challenge Zone">Challenge Zone | Willena English Academy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/js/api-config.js"></script>
   <!-- Google Fonts for Cyberpunk/Sleek Look -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
@@ -296,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (!userId) return;
 
   try {
-    const res = await fetch('/.netlify/functions/supabase_proxy', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
