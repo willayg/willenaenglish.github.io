@@ -2,10 +2,26 @@ const { S3Client, HeadObjectCommand, GetObjectCommand } = require('@aws-sdk/clie
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 exports.handler = async (event) => {
+  // Get the origin from the request headers
+  const origin = event.headers?.origin || event.headers?.Origin || '*';
+  
+  // Allowed origins for CORS with credentials
+  const allowedOrigins = [
+    'https://willenaenglish.com',
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.netlify.app',
+    'http://localhost:8888',
+    'http://localhost:9000'
+  ];
+  
+  // Use the request origin if it's in allowed list, otherwise use first allowed origin
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': corsOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true'
   };
 
   if (event.httpMethod === 'OPTIONS') {
