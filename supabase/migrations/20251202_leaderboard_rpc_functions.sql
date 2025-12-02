@@ -28,7 +28,8 @@ DECLARE
 BEGIN
   -- Determine time filter
   IF p_timeframe = 'month' THEN
-    v_month_start := date_trunc('month', now());
+    -- Use explicit UTC month-start to match JS path (getMonthStartIso uses UTC)
+    v_month_start := timezone('utc', date_trunc('month', now()));
   ELSE
     v_month_start := NULL;
   END IF;
@@ -122,7 +123,8 @@ DECLARE
   v_month_start TIMESTAMPTZ;
 BEGIN
   IF p_timeframe = 'month' THEN
-    v_month_start := date_trunc('month', now());
+    -- Use explicit UTC month-start to match JS path (getMonthStartIso uses UTC)
+    v_month_start := timezone('utc', date_trunc('month', now()));
   ELSE
     v_month_start := NULL;
   END IF;
