@@ -61,7 +61,7 @@ export async function extractWords() {
     const ta = document.getElementById('wordListTextarea');
 
     async function runAIExtraction(promptContent) {
-        const response = await fetch('/.netlify/functions/openai_proxy', {
+        const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ endpoint: 'chat/completions', payload: { model: 'gpt-4o-mini', messages: [ { role: 'system', content: 'You are a helpful ESL assistant. When translating idioms to Korean, use natural, culturally appropriate equivalents or clear paraphrases, not literal word-for-word translations.' }, { role: 'user', content: promptContent } ], max_tokens: 1500, temperature: 0.4 } })
         });

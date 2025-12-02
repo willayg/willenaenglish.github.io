@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>로그인 / 회원가입</title>
+  <script src="/js/api-config.js"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -111,10 +112,9 @@
         }
 
         // 2) Perform login; cookies are set via multiValueHeaders (sb_access / sb_refresh)
-        const loginRes = await fetch('/.netlify/functions/supabase_auth?action=login', {
+        const loginRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ email: emailData.email, password })
         });
         const loginData = await loginRes.json().catch(() => ({}));
@@ -125,7 +125,7 @@
 
         // Optional: cache display name/avatar for header UI (non-auth)
         try {
-          const who = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include', cache: 'no-store' });
+          const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
           if (who.ok) {
             const w = await who.json();
             if (w && w.success) {

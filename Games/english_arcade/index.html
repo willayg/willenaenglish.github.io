@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="/js/api-config.js"></script>
   <base href="/Games/english_arcade/" />
   <title data-i18n="English Arcade">English Arcade</title>
 
@@ -41,7 +42,7 @@
       // Skip gate if already on login (defensive) or if a special flag present
       if (/\/students\/login\.html$/i.test(window.location.pathname)) return;
       // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
-      fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' })
+      WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
         .then(r => r.ok ? r.json() : null)
         .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
         .catch(() => goLogin());
@@ -127,7 +128,7 @@
     async function ensureHeaderProfile(){
       try {
         // Get profile info (name + avatar) from cookie session
-        const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
         if (!res.ok) return;
         const data = await res.json().catch(() => null);
         if (!data || !data.success) return;
@@ -183,7 +184,7 @@
         const badge = document.getElementById('hwTabBadge');
         if (!badge) return;
         try {
-          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include' });
+          const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student');
           if (!resp.ok) { badge.style.display='none'; return; }
           const data = await resp.json().catch(()=>({}));
           if (!data || !data.success || !Array.isArray(data.assignments)) { badge.style.display='none'; return; }
@@ -193,11 +194,11 @@
           const assignments = data.assignments || [];
           await Promise.all(assignments.map(async (a) => {
             try {
-              const pr = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include' });
+              const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`);
               const pj = await pr.json().catch(()=>({}));
               if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
                 // find current user row if present
-                const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' }).then(r=>r.ok?r.json():{}).catch(()=>({}));
+                const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami').then(r=>r.ok?r.json():{}).catch(()=>({}));
                 const uid = who && who.user_id ? who.user_id : null;
                 let myRow = null;
                 if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
@@ -257,19 +258,19 @@
           // Determine current student user_id first (needed to match progress rows)
             let currentUserId = null;
             try {
-              const whoRes = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+              const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
               const whoJson = await whoRes.json().catch(()=>({}));
               if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
             } catch {}
             if (!currentUserId) {
               try {
-                const profRes = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials:'include', cache:'no-store' });
+                const profRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile');
                 const profJson = await profRes.json().catch(()=>({}));
                 if (profRes.ok && profJson.success && profJson.id) currentUserId = profJson.id;
               } catch {}
             }
 
-          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include' });
+          const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student');
           const rawText = await resp.text();
           let data = {};
           try { data = rawText ? JSON.parse(rawText) : {}; } catch (e) { console.error('homework_api non-JSON', rawText); }
@@ -719,9 +720,7 @@
     (function(){
       async function refreshOnce(){
         try {
-          await fetch('/.netlify/functions/supabase_auth?action=refresh', {
-            method: 'GET', credentials: 'include', cache: 'no-store'
-          });
+          await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh');
         } catch {}
       }
       window.addEventListener('DOMContentLoaded', () => {

@@ -6,6 +6,7 @@
   <meta name="google" content="notranslate">
   <title>Goblin Tag Question Battle</title>
   <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+  <script src="/js/api-config.js"></script>
   <style>
     body {
       background-color: #1a1a1a;
@@ -221,7 +222,7 @@ function startTimer() {
 async function saveScore() {
   const name = document.getElementById("playerName").value || "Anonymous";
   // Submit score
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "goblin_tag" })
@@ -232,7 +233,7 @@ async function saveScore() {
 }
 
 async function displayHighScores() {
-  const response = await fetch('/.netlify/functions/submit_score?game=goblin_tag');
+  const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=goblin_tag');
   const data = await response.json();
   const highScoresDiv = document.getElementById("highScores");
   if (response.ok) {
@@ -307,7 +308,7 @@ async function submitScore(forcedName, forcedUserId) {
   const user_id = forcedUserId || null;
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "goblin_tag", user_id })

@@ -81,13 +81,13 @@ class StudentHeader extends HTMLElement {
 
   async _hydrateProfile() {
     try {
-      const whoRes = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials: 'include', cache: 'no-store' });
+      const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
       const who = await whoRes.json();
       if (!who || !who.success || !who.user_id) return;
       this._uid = who.user_id;
   // Stash simple role for later gating (teacher/admin)
   try { if (who.role) { localStorage.setItem('user_role', who.role); } } catch {}
-      const profRes = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include', cache: 'no-store' });
+      const profRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
       const prof = await profRes.json();
       if (prof && prof.success) {
         this._name = prof.name || prof.username || null;
@@ -176,7 +176,7 @@ class StudentHeader extends HTMLElement {
           try { (window.requestIdleCallback || window.requestAnimationFrame)(() => res()); }
           catch { setTimeout(res, 0); }
         });
-          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include', cache:'no-store' });
+          const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student');
           if (!resp.ok) return;
           const data = await resp.json().catch(() => ({}));
           // If assignments exist, check per-assignment progress for this user to determine incompletes.
@@ -186,7 +186,7 @@ class StudentHeader extends HTMLElement {
             let uid = this._uid || null;
             if (!uid) {
               try {
-                const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+                const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
                 if (who.ok) {
                   const wj = await who.json().catch(() => ({}));
                   if (wj && wj.success && wj.user_id) uid = wj.user_id;
@@ -198,7 +198,7 @@ class StudentHeader extends HTMLElement {
             try {
               await Promise.all(assignments.map(async (a) => {
                 try {
-                  const pr = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include', cache:'no-store' });
+                  const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`);
                   if (!pr.ok) { incomplete++; return; }
                   const pj = await pr.json().catch(() => ({}));
                   if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
@@ -264,7 +264,7 @@ class StudentHeader extends HTMLElement {
   _fetchOverview() {
     if (this._fetchingOverview) return;
     this._fetchingOverview = true;
-    fetch('/.netlify/functions/progress_summary?section=overview', { credentials: 'include', cache: 'no-store' })
+    WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview')
       .then(r => r.ok ? r.json() : null)
       .then(ov => {
         let changed = false;
@@ -662,7 +662,7 @@ class StudentHeader extends HTMLElement {
       } catch {}
   // Ensure mission modal will show again after logout
   try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
-      try { await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' }); } catch {}
+      try { await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' }); } catch {}
       const next = encodeURIComponent(location.pathname);
       window.location.href = `/students/login.html?next=${next}`;
     };
@@ -708,7 +708,7 @@ class StudentHeader extends HTMLElement {
           sendBtn.disabled = true; sendBtn.textContent='Sending...'; statusEl.textContent='';
           const payload = { feedback: txt, module: 'general', page_url: location.pathname };
           try {
-            const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_feedback', data: payload }) });
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy?feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_feedback', data: payload }) });
             const js = await resp.json().catch(()=>({}));
             if (resp.ok && js.success) { sendBtn.textContent='Sent!'; statusEl.textContent='Thank you.'; setTimeout(close, 900); }
             else { sendBtn.disabled=false; sendBtn.textContent='Send'; statusEl.textContent='Error: ' + (js.error||'unknown'); }

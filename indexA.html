@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Willena 원어민 영어학원</title>
+  <script src="/js/api-config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
   <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
@@ -1180,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   if (userId) {
     try {
-      const res = await fetch('/.netlify/functions/supabase_proxy', {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

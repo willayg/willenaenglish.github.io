@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Feedback Test</title>
+  <script src="/js/api-config.js"></script>
   <style>
     body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
     .container { max-width: 400px; margin: 60px auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); padding: 32px 24px; }
@@ -49,7 +50,7 @@
       this.disabled = true;
       this.textContent = 'Sending...';
       try {
-        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'insert_feedback', data: { feedback, username } })

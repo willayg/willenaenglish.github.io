@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Feedback Admin - Willena Tools</title>
+  <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/Teachers/components/style.css">
   <style>
     body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
@@ -52,7 +53,7 @@
     (async function() {
       try {
         // Try cookie-based whoami + get_profile
-        const who = await fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami', { credentials: 'include' });
+        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami');
         const whoRes = await who.json();
         let userId = whoRes && whoRes.success ? whoRes.user_id : null;
         if (!userId) {
@@ -63,7 +64,7 @@
           window.location.href = '/Teachers/login.html';
           return;
         }
-        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile${userId ? `&user_id=${encodeURIComponent(userId)}` : ''}`, { credentials: 'include' });
+        const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile${userId ? `&user_id=${encodeURIComponent(userId)}` : ''}`);
         const result = await res.json();
         const role = (result && result.role) ? String(result.role).toLowerCase() : '';
         if (!result.success || role !== 'admin') {

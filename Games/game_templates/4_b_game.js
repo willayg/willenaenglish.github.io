@@ -203,7 +203,7 @@ async function submitScore(forcedName, forcedUserId) {
   const user_id = forcedUserId || null;
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "EmojiGame", user_id }) // <-- set your game name here
@@ -215,7 +215,7 @@ async function submitScore(forcedName, forcedUserId) {
 
 // Highscore functions
 function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=EmojiGame')
+  WillenaAPI.fetch('/.netlify/functions/submit_score?game=EmojiGame')
     .then(res => res.json())
     .then(data => {
       highscoresList.innerHTML = '';
@@ -245,7 +245,7 @@ function displayHighScores() {
 submitBtn.onclick = function() {
   const name = nameInput.value.trim();
   if (!name) return;
-  fetch('/.netlify/functions/submit_score', {
+  WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
