@@ -18,7 +18,7 @@ function hasCookie(name) {
 async function requireLogin() {
   // Call a protected endpoint to verify cookie (no need to parse body)
   try {
-    const res = await fetch('/.netlify/functions/progress_summary?section=kpi', { credentials: 'include', cache: 'no-store' });
+    const res = await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=kpi');
     return res.ok;
   } catch { return false; }
 }
@@ -97,10 +97,9 @@ async function fetchLeaderboard(sessionId, round) {
 }
 
 async function submitScore(sessionId, round, score) {
-  const res = await fetch('/.netlify/functions/timer_score', {
+  const res = await WillenaAPI.fetch('/.netlify/functions/timer_score', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ session_id: sessionId, round, score })
   });
   try { return await res.json(); } catch { return { success: false, error: 'bad_json' }; }

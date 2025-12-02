@@ -119,7 +119,7 @@ async function ensureSentenceIds(wordObjs){
         if(needAudio.length){
           // Background trigger (no await) to generate audio later without blocking UI
           const triggerPayload = { action:'upsert_sentences_batch', sentences: needAudio.map(w=> ({ text: w.legacy_sentence || w.example || '' })), skip_audio:false };
-          fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(triggerPayload) }).catch(()=>{});
+          WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(triggerPayload) }).catch(()=>{});
         }
       } catch{}
     }
@@ -624,7 +624,7 @@ export function initCreateGameModal(buildPayload) {
       } catch {}
       try {
         setStatus('Saving assignment...');
-        const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_game_data', data }) });
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_game_data', data }) });
         const js = await res.json();
         if (js?.success) { setStatus('Saved.'); alert('Homework assignment saved.'); closeModal(); }
         else { setStatus('Save failed'); alert('Save failed: ' + (js?.error || 'Unknown error')); }
@@ -1003,7 +1003,7 @@ async function launchLiveMode() {
   showLoading('Creating live game...');
   let id = null;
   try {
-    const resp = await fetch('/.netlify/functions/live_game', {
+    const resp = await WillenaAPI.fetch('/.netlify/functions/live_game', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

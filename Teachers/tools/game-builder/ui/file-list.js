@@ -41,7 +41,7 @@ async function populateFileList({ fileListEl, titleEl, toast, render }) {
 async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent }) {
   try {
     const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'0', page_pull:'40' });
-    const res = await fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
+    const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
     if(!res.ok) throw new Error('list status '+res.status);
     const js = await res.json();
     fileListRows = Array.isArray(js.data)? js.data: [];
@@ -126,7 +126,7 @@ function ownedGuard(el, fn){ if(el.hasAttribute('disabled')) return; fn(); }
 async function openGame(idListKey, listSnapshot, { titleEl, render }) {
   const overlay = ensureLoadingOverlay(); overlay.show('Loading game…');
   try {
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(idListKey));
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(idListKey));
     if(!res.ok) throw new Error('open status '+res.status);
     const js = await res.json();
     const row = js && js.data ? js.data : js;
@@ -162,7 +162,7 @@ async function openGame(idListKey, listSnapshot, { titleEl, render }) {
 async function deleteGame(id, { toast, render }) {
   try {
     const ok = confirm('Delete this game?'); if(!ok) return;
-    const res = await fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
     const js = await res.json();
     if(js?.success){
       fileListRows = fileListRows.filter(r=> r.id !== id);

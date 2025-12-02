@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Vision OCR Preview</title>
+  <script src="/js/api-config.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     input, textarea, button { width: 100%; margin-top: 15px; }
@@ -35,7 +36,7 @@
         const base64Image = reader.result.split(',')[1];
 
         status.textContent = "⏳ Sending to Google Vision API...";
-        const response = await fetch("/.netlify/functions/google_vision_proxy", {
+        const response = await WillenaAPI.fetch("/.netlify/functions/google_vision_proxy", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

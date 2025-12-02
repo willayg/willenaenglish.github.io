@@ -213,7 +213,7 @@ async function displayHighScores() {
   if (!highscoresList) return;
   highscoresList.innerHTML = '<li>Loading...</li>';
   try {
-    const response = await fetch('/.netlify/functions/submit_score?game=ES6');
+    const response = await WillenaAPI.fetch('/.netlify/functions/submit_score?game=ES6');
     if (!response.ok) {
       highscoresList.innerHTML = '<li>Failed to load scores</li>';
       return;
@@ -242,7 +242,7 @@ async function displayHighScores() {
 async function submitScore() {
   const name = nameInput.value || 'Anonymous';
   submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "ES6" })

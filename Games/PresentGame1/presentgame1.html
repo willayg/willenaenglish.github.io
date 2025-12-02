@@ -104,6 +104,7 @@ body {
 }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="/js/api-config.js"></script>
   
 </head>
 <body translate="no">
@@ -523,7 +524,7 @@ async function submitScore(forcedName, forcedUserId) {
   const user_id = forcedUserId || null;
   const submitBtn = document.getElementById('submitBtn');
   if (submitBtn) submitBtn.disabled = true;
-  await fetch('/.netlify/functions/submit_score', {
+  await WillenaAPI.fetch('/.netlify/functions/submit_score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, score, game: "PresentGame1", user_id }) // <-- set your game name here
@@ -553,7 +554,7 @@ function resetGame() {
 }
 
 function displayHighScores() {
-  fetch('/.netlify/functions/submit_score?game=PresentGame1')
+  WillenaAPI.fetch('/.netlify/functions/submit_score?game=PresentGame1')
     .then(response => response.json())
     .then(data => {
       highscoresList.innerHTML = '';

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard Generator</title>
+    <script src="/js/api-config.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
     /* Ensure the preview area fills the viewport for 1x2-portrait */
@@ -1132,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     page_url: window.location.href
                 };
                 try {
-                    const response = await fetch('/.netlify/functions/submit_feedback', {
+                    const response = await WillenaAPI.fetch('/.netlify/functions/submit_feedback', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'insert_feedback', data: payload })

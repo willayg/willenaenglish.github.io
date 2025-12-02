@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
+    <script src="/js/api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -339,7 +340,7 @@
           return;
         }
         try {
-          const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
           const result = await res.json();
           if (!result.success || result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
@@ -454,7 +455,7 @@
         let userId = localStorage.getItem('userId');
         if (userId) {
           try {
-            const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+            const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
             const result = await res.json();
             if (result.success) {
               if (result.username) {
@@ -583,7 +584,7 @@
               user_id: null // Optionally set if you have auth
             };
             try {
-              const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+              const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy?feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -89,7 +89,7 @@
     }
     
     try {
-      const resp = await fetch('/.netlify/functions/openai_proxy', {
+      const resp = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +148,7 @@
     }
     
     try {
-      const resp = await fetch('/.netlify/functions/openai_proxy', {
+      const resp = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -208,7 +208,7 @@
   // Auto-title generation function
   async function generateTitle(userInput, mode) {
     try {
-      const resp = await fetch('/.netlify/functions/openai_proxy', {
+      const resp = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

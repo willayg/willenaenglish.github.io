@@ -176,7 +176,7 @@ ${passage}
   }
 
   try {
-    const response = await fetch('/.netlify/functions/openai_proxy', {
+    const response = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -104,7 +104,7 @@ window.showFeedbackModal = function() {
         user_id: null // Optionally set if you have auth
       };
       try {
-        const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
