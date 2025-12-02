@@ -14,10 +14,19 @@ const IS_LOCAL = (typeof window !== 'undefined' && window.location)
 const IS_NETLIFY = (typeof window !== 'undefined' && window.location)
   ? /netlify\.app$/i.test(window.location.hostname)
   : false;
-const FUNCTIONS_BASE = '';
 
-// Always use same-origin functions so auth cookies are scoped to the site domain
-const AUTH_URL = `/.netlify/functions/supabase_auth`;
+// Detect custom domain and route to Netlify
+const getApiBase = () => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+    return 'https://willenaenglish.netlify.app';
+  }
+  return '';
+};
+const FUNCTIONS_BASE = getApiBase();
+
+// Use the correct API base so auth works on all domains
+const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
 
 /**
  * Internal helper for making authenticated API calls
