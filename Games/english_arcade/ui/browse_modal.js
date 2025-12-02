@@ -1,7 +1,7 @@
 // Browse Saved Games modal (extracted from main)
 // Renders a list of saved game_data rows with thumbnails and emits open(id)
 
-import { FN } from '../scripts/api-base.js';
+import { FN } from '../scripts/api-base.js?v=20251231a';
 
 let cachedGames = null;
 let cacheTime = 0;

@@ -1,7 +1,7 @@
 // Mode Modal UI
 import { renderModeButtons, ensureModeButtonStyles } from './buttons.js';
 import { getUserId } from '../../../students/records.js';
-import { FN } from '../scripts/api-base.js';
+import { FN } from '../scripts/api-base.js?v=20251231a';
 
 export async function showModeModal({ onModeChosen, onClose }) {
   let modal = document.getElementById('modeModal');

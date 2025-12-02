@@ -1,7 +1,7 @@
 import { renderModeButtons, ensureModeButtonStyles } from './buttons.js';
 import { getUserId } from '../../../students/records.js';
 import { showSampleWordlistModal } from './sample_wordlist_modal.js';
-import { FN } from '../scripts/api-base.js';
+import { FN } from '../scripts/api-base.js?v=20251231a';
 
 // Mode Selector UI
 export async function renderModeSelector({ onModeChosen, onWordsClick }) {
