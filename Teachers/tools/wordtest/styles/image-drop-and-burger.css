@@ -1,0 +1,61 @@
+/* Enhanced drag and drop styles */
+.image-drop-zone {
+  position: relative;
+  transition: all 0.3s ease;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.image-drop-zone:hover {
+  border: 2px dashed #cbd5e0;
+  background: #f7fafc;
+}
+
+.image-drop-zone.dragover {
+  border: 2px dashed #4299e1 !important;
+  background: #e6f0fa !important;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(66, 153, 225, 0.3);
+  transform: scale(1.02);
+}
+
+.image-drop-zone::before {
+  content: '📁 Click, drag and drop image here';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.image-drop-zone:hover::before,
+.image-drop-zone.dragover::before { opacity: 1; }
+.image-drop-zone.dragover::before { content: '📁 Drop to replace image'; background: rgba(66, 153, 225, 0.9); }
+
+/* Optional: make icon inherit color from parent */
+.burger-menu-dark .burger-btn { color: #374151 !important; }
+
+/* Force burger icon bars (SVG) to dark gray, overriding inline fill="#fff" */
+.burger-menu-dark .burger-btn svg path,
+.burger-menu-dark .burger-btn svg line,
+.burger-menu-dark .burger-btn svg rect {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* If the burger uses span bars instead of SVG */
+.burger-menu-dark .burger-btn .bar { background-color: currentColor !important; }
+
+/* When burger is placed in the top action bar, don't absolutely position it */
+.top-actions { display: flex; align-items: center; }
+.top-actions #burger-menu-mount { position: static; top: auto; right: auto; transform: none; }

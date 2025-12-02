@@ -1,0 +1,137 @@
+[
+  {
+    "id": "imperatives_suggestions_1",
+    "word": "lets_play_soccer",
+    "en": "Let's play soccer!",
+    "ko": "축구하자!",
+    "exampleSentence": "Let's play soccer after school.",
+    "exampleSentenceKo": "축구하자!",
+    "emoji": "⚽"
+  },
+  {
+    "id": "imperatives_suggestions_2",
+    "word": "please_sit_down",
+    "en": "Please sit down.",
+    "ko": "앉아 주세요.",
+    "exampleSentence": "Please sit down in your seat.",
+    "exampleSentenceKo": "앉아 주세요.",
+    "emoji": "🪑"
+  },
+  {
+    "id": "imperatives_suggestions_3",
+    "word": "dont_run",
+    "en": "Don't run!",
+    "ko": "뛰지 마세요!",
+    "exampleSentence": "Don't run in the hallway.",
+    "exampleSentenceKo": "뛰지 마세요!",
+    "emoji": "🚫🏃"
+  },
+  {
+    "id": "imperatives_suggestions_4",
+    "word": "help_your_friend",
+    "en": "Help your friend.",
+    "ko": "친구를 도와주세요.",
+    "exampleSentence": "Help your friend with the homework.",
+    "exampleSentenceKo": "친구를 도와주세요.",
+    "emoji": "🤝"
+  },
+  {
+    "id": "imperatives_suggestions_5",
+    "word": "try_again",
+    "en": "Try again.",
+    "ko": "다시 해 보세요.",
+    "exampleSentence": "Try the puzzle again.",
+    "exampleSentenceKo": "다시 해 보세요.",
+    "emoji": "🧩"
+  },
+  {
+    "id": "imperatives_suggestions_6",
+    "word": "be_quiet",
+    "en": "Be quiet.",
+    "ko": "조용히 하세요.",
+    "exampleSentence": "Be quiet in the library.",
+    "exampleSentenceKo": "조용히 하세요.",
+    "emoji": "🤫"
+  },
+  {
+    "id": "imperatives_suggestions_7",
+    "word": "dont_forget_rules",
+    "en": "Don't forget the rules.",
+    "ko": "규칙을 잊지 마세요.",
+    "exampleSentence": "Don't forget the rules of the game.",
+    "exampleSentenceKo": "규칙을 잊지 마세요.",
+    "emoji": "📏"
+  },
+  {
+    "id": "imperatives_suggestions_8",
+    "word": "lets_go_home",
+    "en": "Let's go home.",
+    "ko": "집에 가자.",
+    "exampleSentence": "Let's go home now.",
+    "exampleSentenceKo": "집에 가자.",
+    "emoji": "🏠"
+  },
+  {
+    "id": "imperatives_suggestions_9",
+    "word": "please_wash_hands",
+    "en": "Please wash your hands.",
+    "ko": "손을 씻어 주세요.",
+    "exampleSentence": "Please wash your hands before dinner.",
+    "exampleSentenceKo": "손을 씻어 주세요.",
+    "emoji": "🧼"
+  },
+  {
+    "id": "imperatives_suggestions_10",
+    "word": "dont_eat_in_library",
+    "en": "Don't eat in the library.",
+    "ko": "도서관에서 먹지 마세요.",
+    "exampleSentence": "Don't eat in the library to keep it clean.",
+    "exampleSentenceKo": "도서관에서 먹지 마세요.",
+    "emoji": "🚫🍽️"
+  },
+  {
+    "id": "imperatives_suggestions_11",
+    "word": "come_here",
+    "en": "Come here.",
+    "ko": "여기로 오세요.",
+    "exampleSentence": "Come here and show me your drawing.",
+    "exampleSentenceKo": "여기로 오세요.",
+    "emoji": "👉"
+  },
+  {
+    "id": "imperatives_suggestions_12",
+    "word": "wait_for_me",
+    "en": "Wait for me.",
+    "ko": "기다려 주세요.",
+    "exampleSentence": "Wait for me at the gate.",
+    "exampleSentenceKo": "기다려 주세요.",
+    "emoji": "⏳"
+  },
+  {
+    "id": "imperatives_suggestions_13",
+    "word": "stop_that",
+    "en": "Stop that.",
+    "ko": "그만해.",
+    "exampleSentence": "Stop that or you will get hurt.",
+    "exampleSentenceKo": "그만해.",
+    "emoji": "✋"
+  },
+  {
+    "id": "imperatives_suggestions_14",
+    "word": "take_a_break",
+    "en": "Take a break.",
+    "ko": "잠깐 쉬세요.",
+    "exampleSentence": "Take a break during your study.",
+    "exampleSentenceKo": "잠깐 쉬세요.",
+    "emoji": "🛌"
+  },
+  {
+    "id": "imperatives_suggestions_15",
+    "word": "read_this_aloud",
+    "en": "Read this aloud.",
+    "ko": "이거 큰 소리로 읽어 보세요.",
+    "exampleSentence": "Read this aloud for practice.",
+    "exampleSentenceKo": "이거 큰 소리로 읽어 보세요.",
+    "emoji": "📣"
+  }
+]

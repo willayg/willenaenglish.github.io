@@ -1,0 +1,137 @@
+[
+  {
+    "id": "want_to_1",
+    "word": "i_want_to_eat",
+    "en": "I want to eat ice cream.",
+    "ko": "나는 아이스크림을 먹고 싶어요.",
+    "exampleSentence": "I want to eat ice cream now.",
+    "exampleSentenceKo": "나는 아이스크림을 먹고 싶어요.",
+    "emoji": "🍦"
+  },
+  {
+    "id": "want_to_2",
+    "word": "she_wants_to_go",
+    "en": "She wants to go home.",
+    "ko": "그녀는 집에 가고 싶어요.",
+    "exampleSentence": "She wants to go home early.",
+    "exampleSentenceKo": "그녀는 집에 가고 싶어요.",
+    "emoji": "🏠"
+  },
+  {
+    "id": "want_to_3",
+    "word": "we_want_to_watch",
+    "en": "We want to watch a movie.",
+    "ko": "우리는 영화를 보고 싶어요.",
+    "exampleSentence": "We want to watch a movie tonight.",
+    "exampleSentenceKo": "우리는 영화를 보고 싶어요.",
+    "emoji": "🎬"
+  },
+  {
+    "id": "want_to_4",
+    "word": "he_wants_to_buy",
+    "en": "He wants to buy a toy.",
+    "ko": "그는 장난감을 사고 싶어요.",
+    "exampleSentence": "He wants to buy a toy at the store.",
+    "exampleSentenceKo": "그는 장난감을 사고 싶어요.",
+    "emoji": "🧸"
+  },
+  {
+    "id": "want_to_5",
+    "word": "they_want_to_travel",
+    "en": "They want to travel.",
+    "ko": "그들은 여행하고 싶어요.",
+    "exampleSentence": "They want to travel next summer.",
+    "exampleSentenceKo": "그들은 여행하고 싶어요.",
+    "emoji": "✈️"
+  },
+  {
+    "id": "want_to_6",
+    "word": "you_want_to_learn",
+    "en": "You want to learn English.",
+    "ko": "당신은 영어 배우고 싶어요.",
+    "exampleSentence": "You want to learn English well.",
+    "exampleSentenceKo": "당신은 영어 배우고 싶어요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "want_to_7",
+    "word": "i_want_to_play",
+    "en": "I want to play outside.",
+    "ko": "나는 밖에서 놀고 싶어요.",
+    "exampleSentence": "I want to play outside now.",
+    "exampleSentenceKo": "나는 밖에서 놀고 싶어요.",
+    "emoji": "🌞"
+  },
+  {
+    "id": "want_to_8",
+    "word": "she_wants_to_eat",
+    "en": "She wants to eat cake.",
+    "ko": "그녀는 케이크를 먹고 싶어요.",
+    "exampleSentence": "She wants to eat cake after school.",
+    "exampleSentenceKo": "그녀는 케이크를 먹고 싶어요.",
+    "emoji": "🍰"
+  },
+  {
+    "id": "want_to_9",
+    "word": "we_want_to_buy",
+    "en": "We want to buy new books.",
+    "ko": "우리는 새 책을 사고 싶어요.",
+    "exampleSentence": "We want to buy new books at the store.",
+    "exampleSentenceKo": "우리는 새 책을 사고 싶어요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "want_to_10",
+    "word": "he_wants_to_learn",
+    "en": "He wants to learn to drive.",
+    "ko": "그는 운전하는 것을 배우고 싶어요.",
+    "exampleSentence": "He wants to learn to drive next year.",
+    "exampleSentenceKo": "그는 운전하는 것을 배우고 싶어요.",
+    "emoji": "🚗"
+  },
+  {
+    "id": "want_to_11",
+    "word": "they_want_to_play",
+    "en": "They want to play together.",
+    "ko": "그들은 같이 놀고 싶어요.",
+    "exampleSentence": "They want to play together after school.",
+    "exampleSentenceKo": "그들은 같이 놀고 싶어요.",
+    "emoji": "👫"
+  },
+  {
+    "id": "want_to_12",
+    "word": "you_want_to_visit",
+    "en": "You want to visit your friend.",
+    "ko": "당신은 친구를 방문하고 싶어요.",
+    "exampleSentence": "You want to visit your friend this weekend.",
+    "exampleSentenceKo": "당신은 친구를 방문하고 싶어요.",
+    "emoji": "🏠"
+  },
+  {
+    "id": "want_to_13",
+    "word": "i_want_to_try",
+    "en": "I want to try the new game.",
+    "ko": "나는 새 게임을 해보고 싶어요.",
+    "exampleSentence": "I want to try the new game tonight.",
+    "exampleSentenceKo": "나는 새 게임을 해보고 싶어요.",
+    "emoji": "🎮"
+  },
+  {
+    "id": "want_to_14",
+    "word": "she_wants_to_study_abroad",
+    "en": "She wants to study abroad.",
+    "ko": "그녀는 해외에서 공부하고 싶어요.",
+    "exampleSentence": "She wants to study abroad next year.",
+    "exampleSentenceKo": "그녀는 해외에서 공부하고 싶어요.",
+    "emoji": "🌍"
+  },
+  {
+    "id": "want_to_15",
+    "word": "we_want_to_help",
+    "en": "We want to help the animals.",
+    "ko": "우리는 동물을 돕고 싶어요.",
+    "exampleSentence": "We want to help the animals at the shelter.",
+    "exampleSentenceKo": "우리는 동물을 돕고 싶어요.",
+    "emoji": "🐶"
+  }
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "have_to_1",
+    "word": "i_have_to_do_homework",
+    "en": "I have to do my homework.",
+    "ko": "나는 숙제를 해야 해요.",
+    "exampleSentence": "I have to do my homework after school.",
+    "exampleSentenceKo": "나는 숙제를 해야 해요.",
+    "emoji": "📒"
+  },
+  {
+    "id": "have_to_2",
+    "word": "she_has_to_clean_room",
+    "en": "She has to clean her room.",
+    "ko": "그녀는 방을 청소해야 해요.",
+    "exampleSentence": "She has to clean her room before dinner.",
+    "exampleSentenceKo": "그녀는 방을 청소해야 해요.",
+    "emoji": "🧹"
+  },
+  {
+    "id": "have_to_3",
+    "word": "we_have_to_go_to_school",
+    "en": "We have to go to school.",
+    "ko": "우리는 학교에 가야 해요.",
+    "exampleSentence": "We have to go to school on weekdays.",
+    "exampleSentenceKo": "우리는 학교에 가야 해요.",
+    "emoji": "🏫"
+  },
+  {
+    "id": "have_to_4",
+    "word": "he_has_to_wake_up_early",
+    "en": "He has to wake up early.",
+    "ko": "그는 일찍 일어나야 해요.",
+    "exampleSentence": "He has to wake up early for practice.",
+    "exampleSentenceKo": "그는 일찍 일어나야 해요.",
+    "emoji": "⏰"
+  },
+  {
+    "id": "have_to_5",
+    "word": "they_have_to_study_for_test",
+    "en": "They have to study for the test.",
+    "ko": "그들은 시험 공부를 해야 해요.",
+    "exampleSentence": "They have to study for the test tomorrow.",
+    "exampleSentenceKo": "그들은 시험 공부를 해야 해요.",
+    "emoji": "📝"
+  },
+  {
+    "id": "have_to_6",
+    "word": "you_have_to_wear_uniform",
+    "en": "You have to wear a uniform.",
+    "ko": "너는 교복을 입어야 해요.",
+    "exampleSentence": "You have to wear a uniform at school.",
+    "exampleSentenceKo": "너는 교복을 입어야 해요.",
+    "emoji": "🎒"
+  },
+  {
+    "id": "have_to_7",
+    "word": "i_have_to_feed_cat",
+    "en": "I have to feed the cat.",
+    "ko": "나는 고양이에게 밥을 줘야 해요.",
+    "exampleSentence": "I have to feed the cat every morning.",
+    "exampleSentenceKo": "나는 고양이에게 밥을 줘야 해요.",
+    "emoji": "🐱"
+  },
+  {
+    "id": "have_to_8",
+    "word": "she_has_to_finish_project",
+    "en": "She has to finish her project.",
+    "ko": "그녀는 프로젝트를 끝내야 해요.",
+    "exampleSentence": "She has to finish her project by Friday.",
+    "exampleSentenceKo": "그녀는 프로젝트를 끝내야 해요.",
+    "emoji": "📁"
+  },
+  {
+    "id": "have_to_9",
+    "word": "we_have_to_be_on_time",
+    "en": "We have to be on time.",
+    "ko": "우리는 제시간에 도착해야 해요.",
+    "exampleSentence": "We have to be on time for the show.",
+    "exampleSentenceKo": "우리는 제시간에 도착해야 해요.",
+    "emoji": "⏳"
+  },
+  {
+    "id": "have_to_10",
+    "word": "he_has_to_take_medicine",
+    "en": "He has to take the medicine.",
+    "ko": "그는 약을 먹어야 해요.",
+    "exampleSentence": "He has to take the medicine three times a day.",
+    "exampleSentenceKo": "그는 약을 먹어야 해요.",
+    "emoji": "💊"
+  },
+  {
+    "id": "have_to_11",
+    "word": "they_have_to_clean_after_party",
+    "en": "They have to clean up after the party.",
+    "ko": "그들은 파티 후에 청소해야 해요.",
+    "exampleSentence": "They have to clean up after the party.",
+    "exampleSentenceKo": "그들은 파티 후에 청소해야 해요.",
+    "emoji": "🧹"
+  },
+  {
+    "id": "have_to_12",
+    "word": "you_have_to_finish_test",
+    "en": "You have to finish the test.",
+    "ko": "너는 시험을 끝내야 해요.",
+    "exampleSentence": "You have to finish the test in time.",
+    "exampleSentenceKo": "너는 시험을 끝내야 해요.",
+    "emoji": "📝"
+  },
+  {
+    "id": "have_to_13",
+    "word": "i_have_to_call_parents",
+    "en": "I have to call my parents.",
+    "ko": "나는 부모님께 전화해야 해요.",
+    "exampleSentence": "I have to call my parents tonight.",
+    "exampleSentenceKo": "나는 부모님께 전화해야 해요.",
+    "emoji": "📞"
+  },
+  {
+    "id": "have_to_14",
+    "word": "she_has_to_study_hard",
+    "en": "She has to study hard.",
+    "ko": "그녀는 열심히 공부해야 해요.",
+    "exampleSentence": "She has to study hard for the exam.",
+    "exampleSentenceKo": "그녀는 열심히 공부해야 해요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "have_to_15",
+    "word": "we_have_to_follow_rules",
+    "en": "We have to follow the rules.",
+    "ko": "우리는 규칙을 따라야 해요.",
+    "exampleSentence": "We have to follow the rules at school.",
+    "exampleSentenceKo": "우리는 규칙을 따라야 해요.",
+    "emoji": "📏"
+  }
+]

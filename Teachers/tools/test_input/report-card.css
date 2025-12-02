@@ -1,0 +1,272 @@
+/* Report Card A4 Portrait Styles */
+@page { size: A4; margin: 0; }
+
+:root {
+  --rc-navy: #064569;           /* header bg */
+  --rc-navy-2: #4e5472;         /* alt navy */
+  --rc-accent: #41b7cd;         /* bars */
+  --rc-accent-2: #bfe7ee;       /* light background elements */
+  --rc-line: #cfe1ea;           /* underlines and grid */
+  --rc-muted: #6b7280;          /* muted text */
+  --rc-text: #1f2937;           /* body text */
+  --rc-title: #334155;          /* headings */
+  --rc-bg: #ffffff;             /* page */
+}
+
+/* Global typography and print color fidelity */
+html, body { font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+@media print { html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* Keep modal-only printing */
+@media print {
+  /* Only apply this hide-everything trick when explicitly enabled on the host page */
+  body.print-rc-only *:not(#rcModalBg):not(#rcModal):not(#rcModal *) { visibility: hidden !important; }
+  body.print-rc-only #rcModalBg { visibility: visible !important; position: static !important; background: transparent !important; display: block !important; }
+  body.print-rc-only #rcModal, body.print-rc-only #rcModal * { visibility: visible !important; }
+  body.print-rc-only #rcModal {
+    position: static !important;
+    width: auto !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+  body.print-rc-only #rcModal > div:first-child { display: none !important; } /* hide sticky toolbar */
+  body.print-rc-only #rcCardsWrap { padding: 0 !important; margin: 0 !important; }
+  .rc-page { margin: 0 !important; border: none !important; box-shadow: none !important; }
+}
+
+/* Page container sized to A4 */
+.rc-page {
+  width: 210mm;
+  min-height: 297mm;
+  box-sizing: border-box;
+  background: var(--rc-bg);
+  color: var(--rc-text);
+  padding: 12mm 14mm 14mm 14mm;
+  margin: 0 auto 8mm;
+  page-break-after: always;
+  page-break-inside: avoid;
+  border: 1px solid #e5e7eb;
+}
+
+/* Header */
+.rc-header {
+  height: 22mm;
+  background: var(--rc-navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 14mm;
+}
+.rc-header .rc-logo { height: 30mm; width: auto; }
+
+/* Info fields (two columns) */
+.rc-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5mm 16mm;
+  margin: 8mm 0 6mm;
+}
+.rc-field { display: flex; flex-direction: column; }
+.rc-field .rc-label {
+  font-size: 8.8pt;
+  font-weight: 800;
+  color: var(--rc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.6mm;
+}
+.rc-field .rc-line {
+  position: relative; height: 7mm;
+  border-bottom: 1.6px solid var(--rc-line);
+}
+.rc-field .rc-value { position: absolute; bottom: 1.4mm; left: 0; font-size: 10.5pt; color: var(--rc-text); }
+
+/* Section titles */
+.rc-titlebar {
+  background: var(--rc-navy);
+  color: #fff;
+  font-weight: 900;
+  font-size: 9pt;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  padding: 2.6mm 5mm;
+  border-radius: 0;
+  margin: 4mm 0 2.5mm;
+  display: inline-block;
+}
+.rc-titlebar.rc-skills { width: 100mm; }
+.rc-titlebar.rc-library { width: 50mm; }
+
+/* Two-column body: skills left, library right */
+.rc-columns {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  row-gap: 2.5mm; /* tighter space between titles and data */
+  column-gap: 10mm;
+  align-items: start;
+  grid-auto-rows: min-content;
+}
+.rc-col-title { grid-column: span 1; margin: 1.5mm 0 1.5mm; }
+.rc-span { grid-column: 1 / -1; }
+
+/* Skill rows */
+.rc-skill { display: grid; grid-template-columns: 18mm 1fr 18mm; gap: 4mm; align-items: center; margin: 3mm 0; }
+.rc-skill .rc-skill-label { text-align: left; font-weight: 800; color: var(--rc-text); font-size: 10pt; }
+.rc-skill .rc-bar { height: 7mm; border-radius: 0; background: #ffffff; overflow: hidden; position: relative; border-right: 1.6px solid var(--rc-line); }
+.rc-skill .rc-bar > span { position: absolute; inset: 0; width: 0%; background: var(--rc-accent); display: flex; align-items: center; justify-content: center; }
+.rc-skill .rc-bar .rc-pct { position: static; display: inline-block; font-weight: 800; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.08); font-size: 10pt; pointer-events: none; line-height: 1; }
+.rc-skill .rc-score { text-align: right; font-weight: 800; color: #4b5563; font-size: 9.5pt; }
+
+.rc-total-wrap {
+  display: grid;
+  grid-template-columns: max-content 1fr auto;
+  column-gap: 4mm;
+  align-items: baseline;
+  margin-top: 4mm;
+}
+.rc-total-label {
+  text-align: left;
+  font-weight: 900;
+  font-size: 24pt;
+  color: #4b5563;
+  margin-right: 10px;
+}
+.rc-total { font-size: 32pt; font-weight: 900; color: var(--rc-text); letter-spacing: 0.2px; color: #4b5563; }
+.rc-total-sum { font-size: 16pt; font-weight: 800; color: #4b5563; }
+
+/* Library gauges */
+.rc-library { display: grid; gap: 9mm; justify-items: center; }
+/* Each item stacked: gauge on top, label below; centered */
+.rc-lib-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3mm;
+  text-align: center;
+}
+
+/* Gauge container (semi-circle) */
+.rc-gauge {
+  position: relative;
+  width: 28mm;
+  height: 24mm; /* include label area below the arc */
+}
+.rc-gauge svg { width: 100%; height: 100%; display: block; }
+.rc-gauge .arc-track { stroke: var(--rc-accent-2); stroke-width: 12; fill: none; stroke-linecap: round; opacity: 1; }
+.rc-gauge .arc-fill  { stroke: var(--rc-accent);   stroke-width: 12; fill: none; stroke-linecap: round; transform-origin: 50% 100%; }
+/* Center grade */
+.rc-gauge .grade-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none !important;
+  text-align: center;
+  font-weight: 900;
+  color:#1f2937;
+  font-size: 20pt;
+  color: var(--rc-text);
+}
+
+/* Label stack to the right */
+.rc-lib-text { text-align: center; }
+.rc-lib-text .rc-g-label { font-weight: 900; color: var(--rc-text); font-size: 11pt; letter-spacing: 0.2px; }
+.rc-lib-text .rc-g-sub { color: var(--rc-muted); font-size: 9pt; margin-top: 1mm; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Comments */
+.rc-comments-head { background: var(--rc-navy); color: #fff; width: 170mm; font-weight: 900; font-size: 9.5pt; letter-spacing: 0.6px; text-transform: uppercase; padding: 3mm 5mm; margin-top: 6mm; border-radius: 0; }
+.rc-comments { width: 180mm; margin-top: 3mm; line-height: 1.6; color: #4b5563; font-size: 10pt; text-align: justify; }
+
+/* Modal preview spacing */
+#rcCardsContainer { display: grid; gap: 8mm; }
+
+/* Print-specific adjustments for long comments (Option 4) */
+@media print {
+  /* Reduce padding for print to maximize content space */
+  .rc-page {
+    padding: 10mm 12mm 12mm 12mm;
+  }
+
+  /* Tighten column gaps when printing */
+  .rc-columns {
+    row-gap: 2mm;
+    column-gap: 8mm;
+  }
+
+  /* Reduce section title margins */
+  .rc-titlebar {
+    margin: 3mm 0 2mm;
+    padding: 2mm 4mm;
+    font-size: 8.5pt;
+  }
+
+  /* Reduce skill row spacing */
+  .rc-skill {
+    margin: 2mm 0;
+  }
+
+  /* Tighter comment section */
+  .rc-comments-head {
+    margin-top: 4mm;
+    padding: 2.5mm 4mm;
+  }
+
+  .rc-comments {
+    margin-top: 2mm;
+    line-height: 1.5;
+    font-size: 9.5pt;
+  }
+
+  /* Reduce total wrap margins */
+  .rc-total-wrap {
+    margin-top: 2mm;
+  }
+
+  /* Reduce info section margins */
+  .rc-info {
+    margin: 6mm 0 5mm;
+    gap: 4mm 14mm;
+  }
+
+  /* Reduce library gauge spacing */
+  .rc-library {
+    gap: 7mm;
+  }
+}
+
+/* Emulate print rules during PDF export (applied when a parent has .rc-pdf) */
+.rc-pdf .rc-page {
+  padding: 10mm 12mm 12mm 12mm;
+  border: none;
+  margin: 0 auto 0;
+}
+.rc-pdf #rcCardsContainer { gap: 0; }
+.rc-pdf .rc-columns {
+  row-gap: 2mm;
+  column-gap: 8mm;
+}
+.rc-pdf .rc-titlebar {
+  margin: 3mm 0 2mm;
+  padding: 2mm 4mm;
+  font-size: 8.5pt;
+}
+.rc-pdf .rc-skill { margin: 2mm 0; }
+.rc-pdf .rc-comments-head {
+  margin-top: 4mm;
+  padding: 2.5mm 4mm;
+}
+.rc-pdf .rc-comments {
+  margin-top: 2mm;
+  line-height: 1.5;
+  font-size: 9.5pt;
+}
+.rc-pdf .rc-total-wrap { margin-top: 2mm; }
+.rc-pdf .rc-info {
+  margin: 6mm 0 5mm;
+  gap: 4mm 14mm;
+}
+.rc-pdf .rc-library { gap: 7mm; }

@@ -1,0 +1,22 @@
+[
+  {"eng":"walk the dog","kor":"개를 산책시키다","def":"to take a dog outside for exercise","ex":"He walks the dog every evening.","ex_kor":"그는 매일 저녁 개를 산책시킨다."},
+  {"eng":"play soccer","kor":"축구를 하다","def":"to kick and pass a ball in a game","ex":"We play soccer after school.","ex_kor":"우리는 방과 후 축구를 한다."},
+  {"eng":"play in the playground","kor":"놀이터에서 놀다","def":"to have fun with swings or slides","ex":"Children play in the playground.","ex_kor":"아이들은 놀이터에서 논다."},
+  {"eng":"go camping","kor":"캠핑을 가다","def":"to sleep and cook outside in nature","ex":"We go camping in summer.","ex_kor":"우리는 여름에 캠핑을 간다."},
+  {"eng":"ride a bike","kor":"자전거를 타다","def":"to move on a bicycle","ex":"He rides his bike to school.","ex_kor":"그는 자전거를 타고 학교에 간다."},
+  {"eng":"climb a tree","kor":"나무를 오르다","def":"to go up a tree using hands and feet","ex":"The boy climbs a tree easily.","ex_kor":"그 소년은 쉽게 나무를 오른다."},
+  {"eng":"take a walk","kor":"산책하다","def":"to go walking for fun or exercise","ex":"We take a walk after dinner.","ex_kor":"우리는 저녁 식사 후 산책한다."},
+  {"eng":"fly a kite","kor":"연을 날리다","def":"to make a kite move in the sky","ex":"They fly kites in the park.","ex_kor":"그들은 공원에서 연을 날린다."},
+  {"eng":"skate","kor":"스케이트를 타다","def":"to move on ice or wheels","ex":"I skate in the winter.","ex_kor":"나는 겨울에 스케이트를 탄다."},
+  {"eng":"have a picnic","kor":"소풍을 가다","def":"to eat outdoors for fun","ex":"We have a picnic in the park.","ex_kor":"우리는 공원에서 소풍을 한다."},
+  {"eng":"play badminton","kor":"배드민턴을 하다","def":"to hit a shuttlecock with rackets","ex":"They play badminton together.","ex_kor":"그들은 함께 배드민턴을 한다."},
+  {"eng":"go shopping","kor":"쇼핑하러 가다","def":"to visit stores to buy things","ex":"Mom goes shopping on weekends.","ex_kor":"엄마는 주말에 쇼핑하러 간다."},
+  {"eng":"build sandcastles","kor":"모래성을 쌓다","def":"to make shapes with sand","ex":"Kids build sandcastles at the beach.","ex_kor":"아이들은 해변에서 모래성을 쌓는다."},
+  {"eng":"fish at the lake","kor":"호수에서 낚시하다","def":"to catch fish using a rod","ex":"He fishes at the lake on weekends.","ex_kor":"그는 주말에 호수에서 낚시한다."},
+  {"eng":"play basketball","kor":"농구를 하다","def":"to throw a ball into a hoop","ex":"They play basketball after class.","ex_kor":"그들은 수업 후 농구를 한다."},
+  {"eng":"run in the park","kor":"공원에서 달리다","def":"to move fast with your legs outdoors","ex":"He runs in the park every day.","ex_kor":"그는 매일 공원에서 달린다."},
+  {"eng":"ride a bus","kor":"버스를 타다","def":"to travel on a bus","ex":"She rides a bus to the city.","ex_kor":"그녀는 버스를 타고 도시에 간다."},
+  {"eng":"play baseball","kor":"야구를 하다","def":"to hit and catch a ball in a team sport","ex":"We play baseball after lunch.","ex_kor":"우리는 점심 후 야구를 한다."},
+  {"eng":"take pictures","kor":"사진을 찍다","def":"to capture images with a camera","ex":"She takes pictures of flowers.","ex_kor":"그녀는 꽃을 찍는다."},
+  {"eng":"go swimming","kor":"수영하러 가다","def":"to move through water","ex":"We go swimming in summer.","ex_kor":"우리는 여름에 수영하러 간다."}
+]

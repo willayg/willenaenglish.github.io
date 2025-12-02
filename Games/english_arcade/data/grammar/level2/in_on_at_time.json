@@ -1,0 +1,137 @@
+[
+  {
+    "id": "my_birthday_is_in",
+    "word": "my_birthday",
+    "en": "My birthday is in July.",
+    "ko": "내 생일은 7월이에요.",
+    "exampleSentence": "My birthday is in July.",
+    "exampleSentenceKo": "내 생일은 7월이에요.",
+    "emoji": "🎂"
+  },
+  {
+    "id": "i_go_to_school",
+    "word": "i_go",
+    "en": "I go to school on Monday.",
+    "ko": "나는 월요일에 학교에 가요.",
+    "exampleSentence": "I go to school on Monday.",
+    "exampleSentenceKo": "나는 월요일에 학교에 가요.",
+    "emoji": "🏫"
+  },
+  {
+    "id": "the_class_starts_at",
+    "word": "the_class",
+    "en": "The class starts at 9 o'clock.",
+    "ko": "수업은 9시에 시작해요.",
+    "exampleSentence": "The class starts at 9 o'clock.",
+    "exampleSentenceKo": "수업은 9시에 시작해요.",
+    "emoji": "⏰"
+  },
+  {
+    "id": "she_studies_in_the",
+    "word": "she_studies",
+    "en": "She studies in the morning.",
+    "ko": "그녀는 아침에 공부해요.",
+    "exampleSentence": "She studies in the morning.",
+    "exampleSentenceKo": "그녀는 아침에 공부해요.",
+    "emoji": "🌅"
+  },
+  {
+    "id": "we_meet_on_saturdays",
+    "word": "we_meet",
+    "en": "We meet on Saturdays.",
+    "ko": "우리는 토요일에 만나요.",
+    "exampleSentence": "We meet on Saturdays.",
+    "exampleSentenceKo": "우리는 토요일에 만나요.",
+    "emoji": "📅"
+  },
+  {
+    "id": "the_train_arrives_at",
+    "word": "the_train",
+    "en": "The train arrives at noon.",
+    "ko": "기차는 정오에 도착해요.",
+    "exampleSentence": "The train arrives at noon.",
+    "exampleSentenceKo": "기차는 정오에 도착해요.",
+    "emoji": "🚆"
+  },
+  {
+    "id": "i_usually_read_in",
+    "word": "i_usually",
+    "en": "I usually read in the evening.",
+    "ko": "나는 보통 저녁에 책을 읽어요.",
+    "exampleSentence": "I usually read in the evening.",
+    "exampleSentenceKo": "나는 보통 저녁에 책을 읽어요.",
+    "emoji": "🌙"
+  },
+  {
+    "id": "her_birthday_is_on",
+    "word": "her_birthday",
+    "en": "Her birthday is on December 3rd.",
+    "ko": "그녀의 생일은 12월 3일이에요.",
+    "exampleSentence": "Her birthday is on December 3rd.",
+    "exampleSentenceKo": "그녀의 생일은 12월 3일이에요.",
+    "emoji": "🎉"
+  },
+  {
+    "id": "the_store_opens_at",
+    "word": "the_store",
+    "en": "The store opens at 10 am.",
+    "ko": "가게는 오전 10시에 열어요.",
+    "exampleSentence": "The store opens at 10 am.",
+    "exampleSentenceKo": "가게는 오전 10시에 열어요.",
+    "emoji": "🏪"
+  },
+  {
+    "id": "it_snows_in_winter",
+    "word": "it_snows",
+    "en": "It snows in winter.",
+    "ko": "겨울에는 눈이 와요.",
+    "exampleSentence": "It snows in winter.",
+    "exampleSentenceKo": "겨울에는 눈이 와요.",
+    "emoji": "❄️"
+  },
+  {
+    "id": "we_have_class_on",
+    "word": "we_have",
+    "en": "We have class on Fridays.",
+    "ko": "우리는 금요일에 수업이 있어요.",
+    "exampleSentence": "We have class on Fridays.",
+    "exampleSentenceKo": "우리는 금요일에 수업이 있어요.",
+    "emoji": "📘"
+  },
+  {
+    "id": "at_midnight_it_is",
+    "word": "at_midnight",
+    "en": "At midnight it is quiet.",
+    "ko": "자정에는 조용해요.",
+    "exampleSentence": "At midnight it is quiet.",
+    "exampleSentenceKo": "자정에는 조용해요.",
+    "emoji": "🌃"
+  },
+  {
+    "id": "i_like_to_exercise",
+    "word": "i_like",
+    "en": "I like to exercise in the morning.",
+    "ko": "나는 아침에 운동하는 것을 좋아해요.",
+    "exampleSentence": "I like to exercise in the morning.",
+    "exampleSentenceKo": "나는 아침에 운동하는 것을 좋아해요.",
+    "emoji": "🏃"
+  },
+  {
+    "id": "they_arrive_on_sunday",
+    "word": "they_arrive",
+    "en": "They arrive on Sunday.",
+    "ko": "그들은 일요일에 도착해요.",
+    "exampleSentence": "They arrive on Sunday.",
+    "exampleSentenceKo": "그들은 일요일에 도착해요.",
+    "emoji": "🛬"
+  },
+  {
+    "id": "we_eat_breakfast_at",
+    "word": "we_eat",
+    "en": "We eat breakfast at 7 every day.",
+    "ko": "우리는 매일 7시에 아침을 먹어요.",
+    "exampleSentence": "We eat breakfast at 7 every day.",
+    "exampleSentenceKo": "우리는 매일 7시에 아침을 먹어요.",
+    "emoji": "🍳"
+  }
+]

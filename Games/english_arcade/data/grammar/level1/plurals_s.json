@@ -1,0 +1,61 @@
+[
+  { "id": "dog_singular", "word": "dog", "article": "singular", "emoji": "🐶", "exampleSentence": "One dog is playing.", "exampleSentenceKo": "개 한 마리가 놀고 있어요.", "explanation": "Singular: one dog.", "explanationKo": "단수: 개 한 마리" },
+  { "id": "dog_plural", "word": "dogs", "article": "plural", "emoji": "🐶🐶", "exampleSentence": "Two dogs are playing.", "exampleSentenceKo": "개 두 마리가 놀고 있어요.", "explanation": "Plural: many dogs.", "explanationKo": "복수: 개 여러 마리" },
+  
+  { "id": "cat_singular", "word": "cat", "article": "singular", "emoji": "🐱", "exampleSentence": "One cat is sleeping.", "exampleSentenceKo": "고양이 한 마리가 자고 있어요.", "explanation": "Singular: one cat.", "explanationKo": "단수: 고양이 한 마리" },
+  { "id": "cat_plural", "word": "cats", "article": "plural", "emoji": "🐱🐱", "exampleSentence": "Many cats are sleeping.", "exampleSentenceKo": "고양이들이 자고 있어요.", "explanation": "Plural: many cats.", "explanationKo": "복수: 여러 마리의 고양이" },
+  
+  { "id": "apple_singular", "word": "apple", "article": "singular", "emoji": "🍎", "exampleSentence": "One apple is red.", "exampleSentenceKo": "사과 하나가 빨강색이에요.", "explanation": "Singular: one apple.", "explanationKo": "단수: 사과 하나" },
+  { "id": "apple_plural", "word": "apples", "article": "plural", "emoji": "🍎🍎", "exampleSentence": "Two apples are red.", "exampleSentenceKo": "사과 둘이 빨강색이에요.", "explanation": "Plural: many apples.", "explanationKo": "복수: 여러 개의 사과" },
+  
+  { "id": "book_singular", "word": "book", "article": "singular", "emoji": "📘", "exampleSentence": "I read one book.", "exampleSentenceKo": "나는 책 한 권을 읽었어요.", "explanation": "Singular: one book.", "explanationKo": "단수: 책 한 권" },
+  { "id": "book_plural", "word": "books", "article": "plural", "emoji": "📚", "exampleSentence": "I read many books.", "exampleSentenceKo": "나는 많은 책을 읽었어요.", "explanation": "Plural: many books.", "explanationKo": "복수: 여러 권의 책" },
+  
+  { "id": "shoe_singular", "word": "shoe", "article": "singular", "emoji": "👟", "exampleSentence": "One shoe is new.", "exampleSentenceKo": "신발 한 짝이 새것이에요.", "explanation": "Singular: one shoe.", "explanationKo": "단수: 신발 한 짝" },
+  { "id": "shoe_plural", "word": "shoes", "article": "plural", "emoji": "👟👟", "exampleSentence": "Two shoes are new.", "exampleSentenceKo": "신발 둘이 새것이에요.", "explanation": "Plural: many shoes.", "explanationKo": "복수: 여러 신발" },
+  
+  { "id": "pen_singular", "word": "pen", "article": "singular", "emoji": "🖊️", "exampleSentence": "One pen is blue.", "exampleSentenceKo": "펜 하나가 파란색이에요.", "explanation": "Singular: one pen.", "explanationKo": "단수: 펜 하나" },
+  { "id": "pen_plural", "word": "pens", "article": "plural", "emoji": "🖊️🖊️", "exampleSentence": "Three pens are blue.", "exampleSentenceKo": "펜 셋이 파란색이에요.", "explanation": "Plural: many pens.", "explanationKo": "복수: 여러 개의 펜" },
+  
+  { "id": "chair_singular", "word": "chair", "article": "singular", "emoji": "🪑", "exampleSentence": "One chair is here.", "exampleSentenceKo": "의자 하나가 여기 있어요.", "explanation": "Singular: one chair.", "explanationKo": "단수: 의자 하나" },
+  { "id": "chair_plural", "word": "chairs", "article": "plural", "emoji": "🪑🪑", "exampleSentence": "Four chairs are here.", "exampleSentenceKo": "의자 넷이 여기 있어요.", "explanation": "Plural: many chairs.", "explanationKo": "복수: 여러 개의 의자" },
+  
+  { "id": "ball_singular", "word": "ball", "article": "singular", "emoji": "⚽", "exampleSentence": "One ball is round.", "exampleSentenceKo": "공 하나가 둥글어요.", "explanation": "Singular: one ball.", "explanationKo": "단수: 공 하나" },
+  { "id": "ball_plural", "word": "balls", "article": "plural", "emoji": "⚽⚽", "exampleSentence": "Many balls are round.", "exampleSentenceKo": "공들이 둥글어요.", "explanation": "Plural: many balls.", "explanationKo": "복수: 여러 개의 공" },
+  
+  { "id": "cup_singular", "word": "cup", "article": "singular", "emoji": "☕", "exampleSentence": "One cup is hot.", "exampleSentenceKo": "컵 하나가 뜨거워요.", "explanation": "Singular: one cup.", "explanationKo": "단수: 컵 하나" },
+  { "id": "cup_plural", "word": "cups", "article": "plural", "emoji": "☕☕", "exampleSentence": "Two cups are hot.", "exampleSentenceKo": "컵 둘이 뜨거워요.", "explanation": "Plural: many cups.", "explanationKo": "복수: 여러 개의 컵" },
+  
+  { "id": "flower_singular", "word": "flower", "article": "singular", "emoji": "🌸", "exampleSentence": "One flower is pretty.", "exampleSentenceKo": "꽃 하나가 예뻐요.", "explanation": "Singular: one flower.", "explanationKo": "단수: 꽃 하나" },
+  { "id": "flower_plural", "word": "flowers", "article": "plural", "emoji": "🌸🌸", "exampleSentence": "Many flowers are pretty.", "exampleSentenceKo": "꽃들이 예뻐요.", "explanation": "Plural: many flowers.", "explanationKo": "복수: 여러 개의 꽃" },
+  
+  { "id": "star_singular", "word": "star", "article": "singular", "emoji": "⭐", "exampleSentence": "One star is bright.", "exampleSentenceKo": "별 하나가 밝아요.", "explanation": "Singular: one star.", "explanationKo": "단수: 별 하나" },
+  { "id": "star_plural", "word": "stars", "article": "plural", "emoji": "⭐⭐", "exampleSentence": "Many stars are bright.", "exampleSentenceKo": "별들이 밝아요.", "explanation": "Plural: many stars.", "explanationKo": "복수: 여러 개의 별" },
+  
+  { "id": "tree_singular", "word": "tree", "article": "singular", "emoji": "🌳", "exampleSentence": "One tree is tall.", "exampleSentenceKo": "나무 하나가 커요.", "explanation": "Singular: one tree.", "explanationKo": "단수: 나무 하나" },
+  { "id": "tree_plural", "word": "trees", "article": "plural", "emoji": "🌳🌳", "exampleSentence": "Many trees are tall.", "exampleSentenceKo": "나무들이 커요.", "explanation": "Plural: many trees.", "explanationKo": "복수: 여러 개의 나무" },
+  
+  { "id": "bird_singular", "word": "bird", "article": "singular", "emoji": "🐦", "exampleSentence": "One bird is singing.", "exampleSentenceKo": "새 한 마리가 노래하고 있어요.", "explanation": "Singular: one bird.", "explanationKo": "단수: 새 한 마리" },
+  { "id": "bird_plural", "word": "birds", "article": "plural", "emoji": "🐦🐦", "exampleSentence": "Many birds are singing.", "exampleSentenceKo": "새들이 노래하고 있어요.", "explanation": "Plural: many birds.", "explanationKo": "복수: 여러 마리의 새" },
+
+  { "id": "butterfly_singular", "word": "butterfly", "article": "singular", "emoji": "🦋", "exampleSentence": "One butterfly is flying.", "exampleSentenceKo": "나비 한 마리가 날고 있어요.", "explanation": "Singular: one butterfly.", "explanationKo": "단수: 나비 한 마리" },
+  { "id": "butterfly_plural", "word": "butterflies", "article": "plural", "emoji": "🦋🦋", "exampleSentence": "Many butterflies are flying.", "exampleSentenceKo": "나비들이 날고 있어요.", "explanation": "Plural: many butterflies.", "explanationKo": "복수: 여러 마리의 나비" },
+
+  { "id": "pencil_singular", "word": "pencil", "article": "singular", "emoji": "✏️", "exampleSentence": "One pencil is yellow.", "exampleSentenceKo": "연필 하나가 노란색이에요.", "explanation": "Singular: one pencil.", "explanationKo": "단수: 연필 하나" },
+  { "id": "pencil_plural", "word": "pencils", "article": "plural", "emoji": "✏️✏️", "exampleSentence": "Many pencils are yellow.", "exampleSentenceKo": "연필들이 노란색이에요.", "explanation": "Plural: many pencils.", "explanationKo": "복수: 여러 개의 연필" },
+  
+  { "id": "notebook_singular", "word": "notebook", "article": "singular", "emoji": "📓", "exampleSentence": "One notebook is open.", "exampleSentenceKo": "공책 하나가 열려있어요.", "explanation": "Singular: one notebook.", "explanationKo": "단수: 공책 하나" },
+  { "id": "notebook_plural", "word": "notebooks", "article": "plural", "emoji": "📓📓", "exampleSentence": "Many notebooks are open.", "exampleSentenceKo": "공책들이 열려있어요.", "explanation": "Plural: many notebooks.", "explanationKo": "복수: 여러 개의 공책" },
+  
+  { "id": "window_singular", "word": "window", "article": "singular", "emoji": "🪟", "exampleSentence": "One window is open.", "exampleSentenceKo": "창 하나가 열려있어요.", "explanation": "Singular: one window.", "explanationKo": "단수: 창 하나" },
+  { "id": "window_plural", "word": "windows", "article": "plural", "emoji": "🪟🪟", "exampleSentence": "Many windows are open.", "exampleSentenceKo": "창들이 열려있어요.", "explanation": "Plural: many windows.", "explanationKo": "복수: 여러 개의 창" },
+  
+  { "id": "student_singular", "word": "student", "article": "singular", "emoji": "👨‍🎓", "exampleSentence": "One student is reading.", "exampleSentenceKo": "학생 한 명이 읽고 있어요.", "explanation": "Singular: one student.", "explanationKo": "단수: 학생 한 명" },
+  { "id": "student_plural", "word": "students", "article": "plural", "emoji": "👨‍🎓👩‍🎓", "exampleSentence": "Many students are reading.", "exampleSentenceKo": "학생들이 읽고 있어요.", "explanation": "Plural: many students.", "explanationKo": "복수: 여러 명의 학생" },
+  
+  { "id": "rabbit_singular", "word": "rabbit", "article": "singular", "emoji": "🐰", "exampleSentence": "One rabbit is cute.", "exampleSentenceKo": "토끼 한 마리가 귀여워요.", "explanation": "Singular: one rabbit.", "explanationKo": "단수: 토끼 한 마리" },
+  { "id": "rabbit_plural", "word": "rabbits", "article": "plural", "emoji": "🐰🐰", "exampleSentence": "Many rabbits are cute.", "exampleSentenceKo": "토끼들이 귀여워요.", "explanation": "Plural: many rabbits.", "explanationKo": "복수: 여러 마리의 토끼" },
+  
+  { "id": "door_singular", "word": "door", "article": "singular", "emoji": "🚪", "exampleSentence": "One door is closed.", "exampleSentenceKo": "문 하나가 닫혀있어요.", "explanation": "Singular: one door.", "explanationKo": "단수: 문 하나" },
+  { "id": "door_plural", "word": "doors", "article": "plural", "emoji": "🚪🚪", "exampleSentence": "Many doors are closed.", "exampleSentenceKo": "문들이 닫혀있어요.", "explanation": "Plural: many doors.", "explanationKo": "복수: 여러 개의 문" }
+]

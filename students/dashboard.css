@@ -1,0 +1,179 @@
+/* =====================
+   Base Styles & Layout
+   ===================== */
+body {
+   background: #202020;
+   font-family: 'Poppins', Arial, Helvetica, sans-serif;
+   margin: 0;
+   overflow-x: hidden;
+}
+html { overflow-x:hidden; }
+.wrap { max-width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing:border-box; width:100%; overflow-x:hidden; }
+
+/* =====================
+   Card Styles
+   ===================== */
+.cards {
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 24px 20px; /* reduce horizontal gap to avoid overflow */
+   max-width: 100%;
+   width: 100%;
+   margin: 0 auto;
+   box-sizing: border-box;
+   padding-left: 4px;
+   padding-right: 4px;
+   overflow:hidden;
+   grid-auto-flow: row dense; /* pack items to reduce vertical gaps */
+}
+@media (min-width: 900px) {
+   .cards {
+      grid-template-columns: 1fr 1fr;
+         /* Let rows auto-size to their own content instead of equal height */
+         grid-template-rows: auto;
+         align-items: start; /* prevent stretch to tallest card */
+      grid-auto-flow: row dense;
+      gap: 40px 40px; /* tightened gaps */
+      max-width: 900px;
+      margin: 0 auto;
+      padding-left: 0;
+      padding-right: 0;
+   }
+  .card { min-width: 0; align-self: start; }
+}
+/* 3-column layout on wider screens */
+@media (min-width: 1240px) {
+  .cards {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px 32px;
+    max-width: 1200px;
+  }
+}
+
+/* =====================
+    Masonry-style packing (denser vertical flow)
+    Switch to CSS columns at larger breakpoints for natural stacking.
+    ===================== */
+@media (min-width: 900px) {
+  .cards.masonry, .cards.masonry-2col { display: block; column-count: 2; column-gap: 48px; max-width: none; width: 100%; }
+  .cards.masonry .card, .cards.masonry-2col .card { break-inside: avoid; margin-bottom: 32px; width: 100%; }
+}
+@media (min-width: 1240px) {
+  .cards.masonry, .cards.masonry-3col { display: block; column-count: 3; column-gap: 48px; max-width: none; width: 100%; }
+  .cards.masonry .card, .cards.masonry-3col .card { break-inside: avoid; margin-bottom: 32px; width: 100%; }
+}
+@media (min-width: 1600px) {
+  .cards.masonry { column-count: 4; column-gap: 40px; }
+}
+@media (min-width: 1920px) {
+  .cards.masonry { column-count: 5; column-gap: 36px; }
+}
+.card {
+  background: #232729;
+  border: 4px solid #229690;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+.card-title { text-align: center; color: rgb(64, 167, 185); font-size: 24px; margin: 8px 0 16px; font-weight: 800; }
+.card-subtitle { font-size: 0.92em; color: #6b7a8f; font-weight: 500; text-align: center; margin-top: 2px; margin-bottom: 12px; }
+.card-content { border: 2px solid #67e2e6; height: auto; border-radius: 12px; padding: 12px; background: #fff; }
+/* Do not force the first card to a huge fixed height; let content define it */
+.card:first-child .card-content { height: auto; }
+.card-content.homework-scroll { max-height: 50vh; overflow-y: auto; }
+.card-content.homework-scroll::-webkit-scrollbar { width: 0px; }
+
+/* Dark background for Account, Settings, Your Work containers */
+.card:has(> h2[data-i18n="Account"]) .card-content,
+.card:has(> h2[data-i18n="Settings"]) .card-content,
+.card:has(> h2[data-i18n="Your Work"]) .card-content {
+  background: #232729;
+  border-color: #229690;
+}
+
+/* =====================
+   Word Arcade Card Hover Effects
+   ===================== */
+.wa-option-card { transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease !important; }
+.wa-option-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 12px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.1) !important; }
+.wa-option-card:active { transform: translateY(-2px) scale(.98); box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important; }
+
+/* Challenge Zone and Profile - white text with cyan glow */
+.wa-challenge span, .wa-profile span { color: #ffffff !important; }
+.wa-challenge { box-shadow: 0 0 20px rgba(89, 215, 219, 0.6), 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08) !important; }
+.wa-profile { box-shadow: 0 0 20px rgba(89, 215, 219, 0.6), 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08) !important; }
+
+/* English Arcade - cyan glow */
+.wa-word-arcade { box-shadow: 0 0 20px rgba(89, 215, 219, 0.6), 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08) !important; }
+
+/* =====================
+   Homework Table
+   ===================== */
+.homework-table { width:100%; border-collapse:collapse; }
+.homework-table th, .homework-table td { padding:10px 8px; border-bottom:1px solid #e6eaef; text-align:left; font-size:0.95rem; }
+.homework-table th { color:#5b7fe5; font-weight:800; font-size:1rem; }
+.homework-table tr:last-child td { border-bottom: none; }
+
+/* =====================
+   Learning List
+   ===================== */
+.learning-list { display:flex; flex-direction:column; gap:0; }
+.learning-item { display:flex; align-items:center; padding:16px 8px; text-decoration:none; font-weight:800; font-size:1.4rem; border-bottom:1px solid #e6eaef; }
+.learning-item:last-child { border-bottom: none; }
+.learning-item.word-arcade { color:#5b7fe5; }
+.learning-item.grammar-arcade { color:#ff61ba; justify-content: flex-end; }
+.learning-item.challenge-zone { color:#ffbf00; }
+.learning-item.my-profile { color:#38a1af; justify-content: flex-end; }
+
+/* =====================
+   Settings List
+   ===================== */
+.settings-list { display:flex; flex-direction:column; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:16px 8px; border-bottom:1px solid #e6eaef; }
+.settings-row:last-child { border-bottom:none; }
+.settings-label { font-weight:800; color:#748dd3; font-size:1.1rem; padding: 20px; }
+.settings-muted { color:#6b7a8f; font-size:1rem; margin:0 8px; }
+.settings-switch { width:48px; height:24px; background:#e6eaef; border-radius:999px; display:inline-block; position:relative; margin:0 8px; transition:background .25s ease; }
+.settings-switch::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#ffffff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .28s ease; }
+/* When English active (aria-checked=true) push knob to right */
+[role="switch"][aria-checked="true"].settings-switch::after { transform: translateX(24px); }
+[role="switch"][aria-checked="true"].settings-switch { background:#67e2e6; }
+.lang-label { font-weight:600; color:#19777e; padding:2px 4px; user-select:none; }
+.lang-label.active { text-decoration:underline; }
+
+/* =====================
+   Account List
+   ===================== */
+.account-list { display:flex; flex-direction:column; }
+.account-link { display:block; padding:30px 8px; font-weight:700; color:#748dd3; font-size:1.15rem; text-decoration:none; border-bottom:1px solid #e6eaef; }
+.account-link:last-child { border-bottom:none; }
+
+/* =====================
+   Status Colors
+   ===================== */
+.status-pink { color: #333333 !important; text-align: right; font-weight: 700; }
+.status-blue { color: #9da6a7 !important; text-align: right; font-weight: 700; }
+
+/* Dark theme overrides moved to students/theme.css */
+
+/* =====================
+   Leaderboard Loading Skeletons / Spinners
+   ===================== */
+.lb-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:16px; color:#6b7a8f; }
+.lb-spinner { width:28px; height:28px; border:3px solid rgba(103,226,230,0.25); border-top-color:#67e2e6; border-radius:50%; animation: lb-spin 0.9s linear infinite; }
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+.lb-skeleton-list { list-style:none; padding:0; margin:8px 0 0; width:100%; }
+.lb-skel-item { display:flex; align-items:center; gap:12px; padding:12px 0; }
+.lb-skel-rank { width:50px; height:24px; border-radius:6px; background: linear-gradient(90deg,#e8eef4 0%, #f3f7fa 50%, #e8eef4 100%); background-size:200% 100%; animation: lb-shimmer 1.2s ease-in-out infinite; }
+.lb-skel-text { flex:1; height:18px; border-radius:6px; background: linear-gradient(90deg,#e8eef4 0%, #f3f7fa 50%, #e8eef4 100%); background-size:200% 100%; animation: lb-shimmer 1.2s ease-in-out infinite; }
+.lb-skel-score { width:80px; height:18px; border-radius:6px; background: linear-gradient(90deg,#e8eef4 0%, #f3f7fa 50%, #e8eef4 100%); background-size:200% 100%; animation: lb-shimmer 1.2s ease-in-out infinite; }
+@keyframes lb-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Dark mode tweaks for skeletons */
+html.dark .lb-skel-rank,
+html.dark .lb-skel-text,
+html.dark .lb-skel-score { background: linear-gradient(90deg,#24313b 0%, #2c3a44 50%, #24313b 100%); }
+html.dark .lb-loading { color:#9fb2c6; }

@@ -1,0 +1,17 @@
+# netlify.toml — production actually builds now
+
+# Install core plugin for functions (fine to keep)
+[[plugins]]
+package = "@netlify/plugin-functions-install-core"
+
+# Minimal temporary netlify.toml to validate Netlify parsing
+[build]
+  command = "npm ci"
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+[dev]
+  framework = "#static"
+  port = 9000

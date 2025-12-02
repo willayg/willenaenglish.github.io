@@ -1,0 +1,259 @@
+<!-- Border Style Modal Component -->
+<div id="border-style-modal" style="display:none;position:fixed;z-index:5000;left:0;top:0;width:100vw;height:100vh;background:rgba(60,60,80,0.18);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg, rgba(165, 180, 179, 0.18) 0%, rgba(134, 201, 206, 0.18) 100%);padding:2px 10px 18px 10px;border-radius:16px;box-shadow:0 8px 32px 0 rgba(60,60,80,0.18);min-width:245px;max-width:68vw;position:relative;backdrop-filter: blur(16px) saturate(180%);-webkit-backdrop-filter: blur(16px) saturate(180%);">
+  <!-- Close button -->
+  <button id="close-border-modal" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:20px;color:#666;cursor:pointer;padding:4px;line-height:1;" title="Close">&times;</button>
+    <h3 style="font-family:Poppins,sans-serif;font-size:1.08em;color:#3d3752;margin-bottom:14px;">Border Style</h3>
+    <div style="display:flex;flex-direction:column;gap:14px;background:#ffffff;border:2px solid #b9f1f5;border-radius:12px;padding:12px 10px;box-sizing:border-box;max-height:56vh;overflow-y:auto;">
+      <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+        <span>Border:</span>
+        <span style="display:inline-block;width:40px;">
+          <input type="checkbox" id="modal-border-toggle" style="display:none;">
+          <label for="modal-border-toggle" style="display:inline-block;width:40px;height:21px;background:#e1e8ed;border-radius:10px;position:relative;cursor:pointer;vertical-align:middle;">
+            <span id="modal-border-switch" style="position:absolute;left:2px;top:2px;width:17px;height:17px;background:white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.08);transition:left 0.2s;"></span>
+          </label>
+        </span>
+        <span id="modal-border-status" style="font-size:1em;margin-left:8px;">On</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+        <span>Color:</span>
+        <div style="position:relative;">
+          <div id="modal-border-color-preview" style="width:28px;height:28px;border:1px solid #cbd5e0;border-radius:7px;background:#e1e8ed;cursor:pointer;" title="Border Color"></div>
+        </div>
+      </label>
+      <!-- Fill controls moved to bottom -->
+      <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+        <span>Thickness:</span>
+        <input id="modal-borderweight" type="range" min="0" max="8" step="0.5" value="1.5" style="width:80px;" aria-label="Border Weight" />
+        <span id="modal-borderweight-value" style="min-width:24px;text-align:center;font-size:13px;color:#4a5568;">1.5px</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+        <span>Rounded:</span>
+        <input id="modal-border-radius" type="range" min="0" max="32" step="1" value="4" style="width:80px;" aria-label="Border Radius" />
+        <span id="modal-border-radius-value" style="min-width:24px;text-align:center;font-size:13px;color:#4a5568;">4px</span>
+      </label>
+      <!-- Fill controls at bottom -->
+      <hr style="border:none;border-top:1.5px solid #e1e8ed;margin:10px 0 6px 0;">
+      <h4 style="font-family:Poppins,sans-serif;font-size:1.02em;color:#3d3752;margin-bottom:8px;margin-top:0;font-weight:600;">Fill Style</h4>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:0;">
+        <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+          <span>Fill:</span>
+          <span style="display:inline-block;width:40px;">
+            <input type="checkbox" id="modal-fill-toggle" style="display:none;">
+            <label for="modal-fill-toggle" style="display:inline-block;width:40px;height:21px;background:#e1e8ed;border-radius:10px;position:relative;cursor:pointer;vertical-align:middle;">
+              <span id="modal-fill-switch" style="position:absolute;left:2px;top:2px;width:17px;height:17px;background:white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.08);transition:left 0.2s;"></span>
+            </label>
+          </span>
+          <span id="modal-fill-status" style="font-size:0.9em;margin-left:8px;">On</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+          <span>Color:</span>
+          <div style="position:relative;">
+            <div id="modal-fill-color-preview" style="width:28px;height:28px;border:1px solid #cbd5e0;border-radius:7px;background:#ffffff;cursor:pointer;" title="Fill Color"></div>
+          </div>
+        </label>
+        <!-- Move color pickers outside modal inner container for floating behavior -->
+        <div id="modal-border-color-picker" style="display:none;position:absolute;z-index:10001;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;">
+          <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;" id="modal-border-color-swatches">
+            <!-- Tailwind color swatches will be added here -->
+          </div>
+          <div id="modal-border-color-iro" style="margin-top:8px;"></div>
+        </div>
+        <div id="modal-fill-color-picker" style="display:none;position:absolute;z-index:10001;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;">
+          <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;" id="modal-fill-color-swatches">
+            <!-- Tailwind color swatches will be added here -->
+          </div>
+          <div id="modal-fill-color-iro" style="margin-top:8px;"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;font-size:0.9em;font-family:Poppins,sans-serif;">
+          <span>Opacity:</span>
+          <input id="modal-fill-opacity" type="range" min="0" max="1" step="0.01" value="1" style="width:80px;" aria-label="Fill Opacity" />
+          <span id="modal-fill-opacity-value" style="min-width:24px;text-align:center;font-size:13px;color:#4a5568;">100%</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// Border Style Modal logic
+const borderModal = document.getElementById('border-style-modal');
+const openBorderModalBtn = document.getElementById('open-border-modal');
+
+// Function to check selection and close modal if nothing selected
+function checkSelectionAndCloseModal() {
+  const selectedElement = getSelectedElement();
+  if (!selectedElement && borderModal.style.display === 'flex') {
+    borderModal.style.display = 'none';
+  }
+}
+
+if (openBorderModalBtn && borderModal) {
+  openBorderModalBtn.onclick = () => {
+    borderModal.style.display = 'flex';
+    // Check selection after a brief delay to allow for UI updates
+    setTimeout(checkSelectionAndCloseModal, 10);
+  };
+}
+if (borderModal) {
+  borderModal.addEventListener('click', (e) => {
+    if (e.target === borderModal) borderModal.style.display = 'none';
+  });
+  
+  // Monitor when modal becomes visible and check if anything is selected
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        if (borderModal.style.display === 'flex') {
+          checkSelectionAndCloseModal();
+        }
+      }
+    });
+  });
+  observer.observe(borderModal, { attributes: true, attributeFilter: ['style'] });
+}
+
+// Close button handler
+const closeBorderModalBtn = document.getElementById('close-border-modal');
+if (closeBorderModalBtn && borderModal) {
+  closeBorderModalBtn.addEventListener('click', function() {
+    borderModal.style.display = 'none';
+  });
+}
+
+// Get current selected element (textbox or header)
+function getSelectedElement() {
+  const selectedTextbox = window.worksheetState?.getLastTextbox?.();
+  const selectedHeader = document.querySelector('.worksheet-header.selected');
+  return selectedTextbox || selectedHeader;
+}
+
+// Apply border changes to selected element
+function applyBorderChanges() {
+  const selectedElement = getSelectedElement();
+  if (!selectedElement) return;
+  
+  const borderToggle = document.getElementById('modal-border-toggle');
+  const borderColorPreview = document.getElementById('modal-border-color-preview');
+  const borderWeight = document.getElementById('modal-borderweight');
+  const borderRadius = document.getElementById('modal-border-radius');
+  
+  if (borderToggle && borderColorPreview && borderWeight && borderRadius) {
+    const borderOn = borderToggle.checked;
+    const borderColor = borderColorPreview.style.backgroundColor || '#e1e8ed';
+    const borderWeightValue = borderWeight.value;
+    const borderRadiusValue = borderRadius.value;
+    
+    // Update data attributes
+    selectedElement.setAttribute('data-border-on', borderOn.toString());
+    selectedElement.setAttribute('data-border-color', borderColor);
+    selectedElement.setAttribute('data-border-width', borderWeightValue);
+    selectedElement.setAttribute('data-border-radius', borderRadiusValue);
+    
+    // Apply visual styles
+    if (borderOn) {
+      selectedElement.style.border = `${borderWeightValue}px solid ${borderColor}`;
+      selectedElement.style.borderRadius = `${borderRadiusValue}px`;
+    } else {
+      selectedElement.style.border = 'none';
+    }
+    
+    // Update data model for persistence
+    if (selectedElement.classList.contains('worksheet-header')) {
+      // Update header data model
+      const pageIdx = Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(selectedElement));
+      if (pageIdx >= 0 && window.worksheetState.getPages()[pageIdx] && window.worksheetState.getPages()[pageIdx].header) {
+        window.worksheetState.getPages()[pageIdx].header.borderOn = borderOn;
+        window.worksheetState.getPages()[pageIdx].header.borderColor = borderColor;
+        window.worksheetState.getPages()[pageIdx].header.borderWeight = borderWeightValue;
+        window.worksheetState.getPages()[pageIdx].header.borderRadius = borderRadiusValue;
+      }
+    } else if (selectedElement.classList.contains('worksheet-textbox')) {
+      // Update textbox data model (existing functionality)
+      const pageIdx = Array.from(document.querySelectorAll('.page-preview-a4')).findIndex(p => p.contains(selectedElement));
+      const boxIdx = Array.from(document.querySelectorAll('.worksheet-textbox')).indexOf(selectedElement);
+      if (pageIdx >= 0 && boxIdx >= 0 && window.worksheetState.getPages()[pageIdx] && window.worksheetState.getPages()[pageIdx].boxes[boxIdx]) {
+        window.worksheetState.getPages()[pageIdx].boxes[boxIdx].borderOn = borderOn;
+        window.worksheetState.getPages()[pageIdx].boxes[boxIdx].borderColor = borderColor;
+        window.worksheetState.getPages()[pageIdx].boxes[boxIdx].borderWeight = borderWeightValue;
+        window.worksheetState.getPages()[pageIdx].boxes[boxIdx].borderRadius = borderRadiusValue;
+      }
+    }
+    
+    // Save to history
+    if (window.worksheetHistory && window.worksheetHistory.saveToHistory) {
+      window.worksheetHistory.saveToHistory('change border style');
+    }
+  }
+}
+// Border toggle switch logic
+const borderToggle = document.getElementById('modal-border-toggle');
+const borderSwitch = document.getElementById('modal-border-switch');
+const borderStatus = document.getElementById('modal-border-status');
+if (borderToggle && borderSwitch && borderStatus) {
+  borderToggle.addEventListener('change', function() {
+    if (this.checked) {
+      borderSwitch.style.left = '22px';
+      borderStatus.textContent = 'On';
+    } else {
+      borderSwitch.style.left = '2px';
+      borderStatus.textContent = 'Off';
+    }
+    applyBorderChanges(); // Apply changes in real-time
+  });
+  // Set initial state
+  borderSwitch.style.left = borderToggle.checked ? '22px' : '2px';
+  borderStatus.textContent = borderToggle.checked ? 'On' : 'Off';
+}
+
+// Fill toggle switch logic
+const fillToggle = document.getElementById('modal-fill-toggle');
+const fillSwitch = document.getElementById('modal-fill-switch');
+const fillStatus = document.getElementById('modal-fill-status');
+const fillColor = document.getElementById('modal-fill-color');
+const fillOpacity = document.getElementById('modal-fill-opacity');
+const fillOpacityValue = document.getElementById('modal-fill-opacity-value');
+if (fillToggle && fillSwitch && fillStatus && fillColor && fillOpacity && fillOpacityValue) {
+  function updateFillUI() {
+    if (fillToggle.checked) {
+      fillSwitch.style.left = '22px';
+      fillStatus.textContent = 'On';
+      fillColor.disabled = false;
+      fillColor.style.opacity = '1';
+      fillOpacity.disabled = false;
+      fillOpacity.style.opacity = '1';
+    } else {
+      fillSwitch.style.left = '2px';
+      fillStatus.textContent = 'Off';
+      fillColor.disabled = true;
+      fillColor.style.opacity = '0.5';
+      fillOpacity.disabled = true;
+      fillOpacity.style.opacity = '0.5';
+    }
+  }
+  fillToggle.addEventListener('change', updateFillUI);
+  // Set initial state
+  updateFillUI();
+  // Opacity value display
+  fillOpacity.addEventListener('input', function() {
+    fillOpacityValue.textContent = Math.round(fillOpacity.value * 100) + '%';
+  });
+  fillOpacityValue.textContent = Math.round(fillOpacity.value * 100) + '%';
+}
+// Border weight and radius value display
+const borderWeight = document.getElementById('modal-borderweight');
+const borderWeightValue = document.getElementById('modal-borderweight-value');
+if (borderWeight && borderWeightValue) {
+  borderWeight.addEventListener('input', function() {
+    borderWeightValue.textContent = this.value + 'px';
+    applyBorderChanges(); // Apply changes in real-time
+  });
+}
+const borderRadius = document.getElementById('modal-border-radius');
+const borderRadiusValue = document.getElementById('modal-border-radius-value');
+if (borderRadius && borderRadiusValue) {
+  borderRadius.addEventListener('input', function() {
+    borderRadiusValue.textContent = this.value + 'px';
+    applyBorderChanges(); // Apply changes in real-time
+  });
+}
+</script>

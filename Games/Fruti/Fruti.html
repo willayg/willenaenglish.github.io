@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <meta http-equiv="Content-Language" content="en">
+  <meta name="naver" content="notranslate">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Fruti</title>
+  <style>
+    
+body {
+  font-family: 'Poppins', sans-serif;
+  background: url('../../Assets/Images/backgrounds/korean_market.jpg') no-repeat center center fixed;
+  background-size: cover;
+  background-color: rgb(95, 49, 6);
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+
+    .container {
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 20px;
+      border: 4px solid white;
+      border-radius: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    #quizScreen, #endScreen {
+      display: none;
+    }
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      background-color: #ffeb3b; /* yellow */
+      color: #000; /* black text */
+      border: none;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding-top: 16px;
+      padding-bottom: 16px;
+      font-size: 1.4em;
+      background-color: #ffeb3b; /* yellow */
+      color: #000; /* black text */
+    }
+    #logo {
+      width: 100px;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    #emoji {
+      font-size: 6em;
+      flex: 0 0 auto;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .status-bar {
+      display: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .status-item {
+      font-size: 2em;
+      font-weight: bold;
+      width: 80px;
+      text-align: center;
+    }
+#nameInput {
+  display: block;
+  margin: 20px auto;
+  text-align: center;
+}
+
+.noselect {
+  user-select: none;
+}
+#soundToggle {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  transform: none;
+  z-index: 20;
+  font-size: 1em;      /* Half the original 2em */
+  background: none;
+  border: none;
+  color: #388e3c;
+  cursor: pointer;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+</head>
+<body translate="no">
+<a href="../../playzone.html" class="notranslate">
+  <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo">
+</a>
+<button id="soundToggle" title="Toggle Sound">🔊</button>
+  <div class="container">
+    <div id="startScreen">
+      <h1>Fruti</h1>
+      <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="quizScreen">
+      <div class="status-bar">
+        <div class="status-item"><span id="timer">20</span>s</div>
+        <div id="emoji"></div>
+        <div class="status-item"><span id="score">0</span></div>
+      </div>
+      <div class="options" id="options"></div> <button id="restartButton" onclick="resetGame()" style="display: none; margin-top: 10px;">Restart</button>
+    </div>
+
+    <div id="endScreen">
+      <h2>Game Over!</h2>
+      <p>Your score: <span id="finalScore"></span></p>
+      <p>Top Scores:</p>
+      <ol id="highscores"></ol>
+      <input type="text" id="nameInput" style="padding-top: 16px; padding-bottom: 16px;" placeholder="Enter your name">
+      <button id="submitBtn">Submit Score</button>
+      <button onclick="resetGame()">Play Again</button>
+    </div>
+  </div>
+  
+
+  <script>
+const questions = [
+  { icon: '🍎', answer: 'Apple', choices: ['Apple', 'Tomato', 'Cherry', 'Radish'] },
+  { icon: '🍌', answer: 'Banana', choices: ['Banana', 'Corn', 'Carrot', 'Pepper'] },
+  { icon: '🍓', answer: 'Strawberry', choices: ['Strawberry', 'Raspberry', 'Cherry', 'Apple'] },
+  { icon: '🍉', answer: 'Watermelon', choices: ['Melon', 'Watermelon', 'Pumpkin', 'Cucumber'] },
+  { icon: '🍇', answer: 'Grapes', choices: ['Grapes', 'Blueberry', 'Olive', 'Plum'] },
+  { icon: '🍊', answer: 'Orange', choices: ['Orange', 'Lemon', 'Peach', 'Pumpkin'] },
+  { icon: '🍋', answer: 'Lemon', choices: ['Lemon', 'Banana', 'Orange', 'Pear'] },
+  { icon: '🍑', answer: 'Peach', choices: ['Peach', 'Apple', 'Plum', 'Apricot'] },
+  { icon: '🍍', answer: 'Pineapple', choices: ['Pineapple', 'Banana', 'Mango', 'Papaya'] },
+  { icon: '🥝', answer: 'Kiwi', choices: ['Kiwi', 'Lime', 'Avocado', 'Pear'] },
+  { icon: '🍒', answer: 'Cherry', choices: ['Cherry', 'Apple', 'Grape', 'Strawberry'] },
+  { icon: '🍐', answer: 'Pear', choices: ['Pear', 'Apple', 'Peach', 'Plum'] },
+  { icon: '🍈', answer: 'Melon', choices: ['Melon', 'Watermelon', 'Pumpkin', 'Cucumber'] },
+  { icon: '🍏', answer: 'Green Apple', choices: ['Green Apple', 'Pear', 'Lime', 'Kiwi'] },
+  { icon: '🥭', answer: 'Mango', choices: ['Mango', 'Papaya', 'Peach', 'Banana'] },
+  { icon: '🍅', answer: 'Tomato', choices: ['Tomato', 'Apple', 'Radish', 'Cherry'] },
+  { icon: '🥥', answer: 'Coconut', choices: ['Coconut', 'Melon', 'Walnut', 'Kiwi'] },
+  { icon: '🥑', answer: 'Avocado', choices: ['Avocado', 'Pear', 'Kiwi', 'Lime'] },
+  { icon: '🍆', answer: 'Eggplant', choices: ['Eggplant', 'Plum', 'Grape', 'Pepper'] },
+  { icon: '🥕', answer: 'Carrot', choices: ['Carrot', 'Radish', 'Pepper', 'Corn'] },
+  { icon: '🌽', answer: 'Corn', choices: ['Corn', 'Banana', 'Carrot', 'Pepper'] },
+  { icon: '🥔', answer: 'Potato', choices: ['Potato', 'Onion', 'Garlic', 'Turnip'] },
+  { icon: '🥦', answer: 'Broccoli', choices: ['Broccoli', 'Cauliflower', 'Lettuce', 'Spinach'] },
+  { icon: '🥬', answer: 'Lettuce', choices: ['Lettuce', 'Cabbage', 'Spinach', 'Broccoli'] },
+  { icon: '🥒', answer: 'Cucumber', choices: ['Cucumber', 'Zucchini', 'Pickle', 'Celery'] },
+  { icon: '🌶️', answer: 'Pepper', choices: ['Pepper', 'Tomato', 'Carrot', 'Radish'] },
+  { icon: '🧅', answer: 'Onion', choices: ['Onion', 'Garlic', 'Potato', 'Turnip'] },
+  { icon: '🧄', answer: 'Garlic', choices: ['Garlic', 'Onion', 'Potato', 'Radish'] },
+  { icon: '🥜', answer: 'Peanut', choices: ['Peanut', 'Almond', 'Hazelnut', 'Walnut'] },
+  { icon: '🥒', answer: 'Cucumber', choices: ['Cucumber', 'Zucchini', 'Pickle', 'Celery'] },
+  { icon: '🥭', answer: 'Mango', choices: ['Mango', 'Papaya', 'Peach', 'Banana'] },
+  { icon: '🍠', answer: 'Sweet Potato', choices: ['Sweet Potato', 'Potato', 'Carrot', 'Turnip'] },
+  { icon: '🥦', answer: 'Broccoli', choices: ['Broccoli', 'Cauliflower', 'Lettuce', 'Spinach'] },
+  { icon: '🥒', answer: 'Cucumber', choices: ['Cucumber', 'Zucchini', 'Pickle', 'Celery'] },
+  { icon: '🥝', answer: 'Kiwi', choices: ['Kiwi', 'Lime', 'Avocado', 'Pear'] },
+  { icon: '🍋', answer: 'Lemon', choices: ['Lemon', 'Banana', 'Orange', 'Pear'] },
+  { icon: '🍑', answer: 'Peach', choices: ['Peach', 'Apple', 'Plum', 'Apricot'] },
+  { icon: '🍉', answer: 'Watermelon', choices: ['Melon', 'Watermelon', 'Pumpkin', 'Cucumber'] },
+  { icon: '🍇', answer: 'Grapes', choices: ['Grapes', 'Blueberry', 'Olive', 'Plum'] }
+];
+
+let score = 0;
+let timer;
+let timeLeft = 30;
+let currentQuestion;
+let usedQuestions = [];
+let streak = 0; // Track correct answers in a row
+const startScreen = document.getElementById('startScreen');
+const quizScreen = document.getElementById('quizScreen');
+const endScreen = document.getElementById('endScreen');
+const emoji = document.getElementById('emoji');
+const options = document.getElementById('options');
+const timerDisplay = document.getElementById('timer');
+const scoreDisplay = document.getElementById('score');
+const finalScore = document.getElementById('finalScore');
+const highscoresList = document.getElementById('highscores'); // Make sure this matches your HTML
+const nameInput = document.getElementById('nameInput');
+
+// Sound setup
+const correctSound = new Audio('../../Assets/Audio/right.mp3');
+const wrongSound = new Audio('../../Assets/Audio/wrong.mp3');
+const endGameSound = new Audio('../../Assets/Audio/endgame.mp3');
+const music = new Audio('../../Assets/Audio/sneakingout.mp3'); // Renamed from jungleMusic to music
+music.loop = true;
+music.volume = 0.5;
+let soundOn = true;
+const soundToggle = document.getElementById('soundToggle');
+soundToggle.onclick = function() {
+  soundOn = !soundOn;
+  correctSound.muted = !soundOn;
+  wrongSound.muted = !soundOn;
+  endGameSound.muted = !soundOn;
+  music.muted = !soundOn;
+  soundToggle.textContent = soundOn ? '🔊' : '🔇';
+};
+// Ensure all sounds respect the toggle at start
+correctSound.muted = !soundOn;
+wrongSound.muted = !soundOn;
+endGameSound.muted = !soundOn;
+music.muted = !soundOn;
+
+
+function startGame() {
+  score = 0;
+  timeLeft = 25;
+  endScreen.style.display = 'none';
+  startScreen.style.display = 'none';
+  // Start background music if not already playing
+  if (music.paused) {
+    music.currentTime = 0;
+    music.play();
+  }
+  // Clear any existing timer before starting a new one
+  if (timer) clearInterval(timer);
+  usedQuestions = [];
+  quizScreen.style.display = 'block';
+  document.getElementById('restartButton').style.display = 'inline-block';
+  document.querySelector('.status-bar').style.display = 'flex';
+  scoreDisplay.textContent = score;
+  timerDisplay.textContent = timeLeft;
+  nextQuestion();
+  timer = setInterval(() => {
+    timeLeft--;
+    timerDisplay.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+function nextQuestion() {
+  if (usedQuestions.length === questions.length) {
+    endGame();
+    return;
+  }
+  let index;
+  do {
+    index = Math.floor(Math.random() * questions.length);
+  } while (usedQuestions.includes(index));
+  usedQuestions.push(index);
+  currentQuestion = questions[index];
+  emoji.textContent = currentQuestion.icon;
+  options.innerHTML = '';
+  const shuffledChoices = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
+  shuffledChoices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.textContent = choice;
+    btn.onclick = () => checkAnswer(choice);
+    options.appendChild(btn);
+  });
+}
+
+function checkAnswer(choice) {
+  const buttons = document.querySelectorAll('#options button');
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === currentQuestion.answer) {
+      btn.style.backgroundColor = '#4caf50'; // green for correct answer
+      btn.style.color = '#000'; // black text
+    } else if (btn.textContent === choice) {
+      btn.style.backgroundColor = '#e53935'; // red
+    }
+  });
+  if (choice === currentQuestion.answer) {
+    streak++; // Increment streak
+    if (streak % 3 === 0) {
+      timeLeft += 1;
+      timerDisplay.textContent = timeLeft;
+      // Optional: Visual feedback for bonus time
+      timerDisplay.style.color = "#4caf50";
+      setTimeout(() => { timerDisplay.style.color = ""; }, 600);
+    }
+    correctSound.currentTime = 0;
+    correctSound.play();
+    playFeedbackAudio("correct");
+    score += 200;
+    scoreDisplay.textContent = score;
+    setTimeout(nextQuestion, 500);
+  } else {
+    streak = 0; // Reset streak on wrong answer
+    wrongSound.currentTime = 0;
+    wrongSound.play();
+    playFeedbackAudio("wrong");
+    score -= 100;
+    scoreDisplay.textContent = score;
+    setTimeout(nextQuestion, 500);
+  }
+}
+
+function endGame() {
+  document.getElementById('restartButton').style.display = 'none';
+  clearInterval(timer);
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+  finalScore.textContent = score;
+  endGameSound.currentTime = 0;
+  endGameSound.play();
+  playEndingAudio(score); // <-- Add this line
+  displayHighScores();
+
+  // Check if user is logged in
+  const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || null;
+  const user_name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name') || '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  if (user_id && user_name) {
+    // Autosubmit for logged-in user
+    nameInput.value = user_name;
+    nameInput.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'none';
+    submitScore(user_name, user_id);
+  } else {
+    // Show input and button for guests
+    nameInput.value = '';
+    nameInput.style.display = 'block';
+    nameInput.focus();
+    if (submitBtn) submitBtn.style.display = 'inline-block';
+  }
+}
+
+async function submitScore(forcedName, forcedUserId) {
+  const name = forcedName || nameInput.value || 'Anonymous';
+  const user_id = forcedUserId || null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+  }
+  await fetch('/.netlify/functions/submit_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, score, game: "Fruti", user_id })
+  });
+  if (submitBtn) submitBtn.style.display = 'none';
+  nameInput.style.display = 'none';
+  displayHighScores();
+}
+
+// Make startGame globally accessible
+window.startGame = startGame;
+
+async function displayHighScores() {
+  const response = await fetch('/.netlify/functions/submit_score?game=Fruti');
+  if (!response.ok) {
+    highscoresList.innerHTML = '<li>Failed to load scores</li>';
+    return;
+  }
+  const data = await response.json();
+  highscoresList.innerHTML = '';
+  // Keep only the highest score per player
+  const bestScores = {};
+  data.forEach(entry => {
+    if (!bestScores[entry.name] || entry.score > bestScores[entry.name].score) {
+      bestScores[entry.name] = entry;
+    }
+  });
+  // Convert to array and sort by score descending, then take top 10
+  const sorted = Object.values(bestScores).sort((a, b) => b.score - a.score).slice(0, 10);
+  sorted.forEach(entry => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.name}: ${entry.score}`;
+    highscoresList.appendChild(li);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  startScreen.style.display = 'block';
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  emoji.textContent = '';
+  options.innerHTML = '';
+  scoreDisplay.textContent = '0';
+  timerDisplay.textContent = '30';
+  nameInput.style.display = 'none';
+  highscoresList.innerHTML = '';
+
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.onclick = () => submitScore();
+  }
+});
+
+function resetGame() {
+  document.getElementById('restartButton').style.display = 'none';
+  nameInput.value = '';
+  scoreDisplay.textContent = '0';
+  timerDisplay.textContent = '30';
+  startScreen.style.display = 'block';
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  nameInput.style.display = 'none';
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.style.display = 'none';
+  highscoresList.innerHTML = '';
+}
+
+function playFeedbackAudio(type) {
+  // Arrays of local audio file names
+  const correctFiles = [
+    "good_job.mp3",
+    "great_work.mp3",
+    "nice_job.mp3",
+    "youre_good.mp3",
+    "well_done.mp3"
+  ];
+  const wrongFiles = [
+    "close_one.mp3",
+    "huge_mistake.mp3",
+    "not_the_answer.mp3",
+    "oh_man.mp3",
+    "wrong.mp3"
+  ];
+  const bonusFiles = [
+    "bonus1.mp3",
+    "bonus2.mp3",
+    "bonus3.mp3"
+  ];
+
+  // Pick a random file based on type
+  let fileList;
+  if (type === "correct") {
+    fileList = correctFiles;
+  } else if (type === "wrong") {
+    fileList = wrongFiles;
+  } else if (type === "bonus") {
+    fileList = bonusFiles;
+  }
+
+  let file = fileList[Math.floor(Math.random() * fileList.length)];
+  let url = "../../Assets/Audio/voices/rabbit/" + file; // Adjust path if needed
+
+  const audio = new Audio(url);
+  audio.play().catch(e => {
+    // Optionally log or ignore errors if file not found
+    // console.warn("Audio not found:", url);
+  });
+}
+
+function playEndingAudio(score) {
+  let file = "";
+  if (score < 0) {
+    file = "button_smash.mp3";
+  } else if (score <= 1000) {
+    file = "nicetry.mp3";
+  } else if (score <= 2000) {
+    file = "prettygood.mp3";
+  } else if (score <= 3000) {
+    file = "great.mp3";
+  } else if (score <= 4500) {
+    file = "Amazing.mp3";
+  } else {
+    file = "Best.mp3";
+  }
+  let url = "../../Assets/Audio/voices/rabbit/" + file;
+  const audio = new Audio(url);
+  audio.play().catch(e => {});
+}
+  </script>
+</body>
+</html>
+

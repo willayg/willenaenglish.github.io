@@ -1,0 +1,17 @@
+[
+  {"en":"I've finished my homework.","ko":"나는 숙제를 끝냈어요.","example":"I've finished my homework for today.","emoji":"✅"},
+  {"en":"She has completed the course.","ko":"그녀는 과정을 완료했어요.","example":"She has completed the course this week.","emoji":"🎓"},
+  {"en":"They have already eaten.","ko":"그들은 이미 먹었어요.","example":"They have already eaten lunch.","emoji":"🍱"},
+  {"en":"We have finished the project.","ko":"우리는 프로젝트를 끝냈어요.","example":"We have finished the project on time.","emoji":"📁"},
+  {"en":"I have written the report.","ko":"나는 보고서를 썼어요.","example":"I have written the report and sent it.","emoji":"📝"},
+  {"en":"She has just returned from the trip.","ko":"그녀는 방금 여행에서 돌아왔어요.","example":"She has just returned from the trip.","emoji":"✈️"},
+  {"en":"We have closed the shop.","ko":"우리는 가게 문을 닫았어요.","example":"We have closed the shop for the day.","emoji":"🏪"},
+  {"en":"He has completed the test.","ko":"그는 시험을 완료했어요.","example":"He has completed the test early.","emoji":"📝"},
+  {"en":"They have moved to a new city.","ko":"그들은 새 도시로 이사했어요.","example":"They have moved this month.","emoji":"🏙️"},
+  {"en":"I have packed my bag.","ko":"나는 가방을 다 쌌어요.","example":"I have packed my bag for the trip.","emoji":"🧳"},
+  {"en":"She has paid the bill.","ko":"그녀는 계산서를 지불했어요.","example":"She has paid the bill online.","emoji":"💳"},
+  {"en":"We have sold our old car.","ko":"우리는 오래된 차를 팔았어요.","example":"We have sold our old car to a neighbor.","emoji":"🚗"},
+  {"en":"He has returned the library books.","ko":"그는 도서관 책을 반납했어요.","example":"He has returned the library books today.","emoji":"📚"},
+  {"en":"They have found a new home.","ko":"그들은 새 집을 찾았어요.","example":"They have found a new home in town.","emoji":"🏡"},
+  {"en":"I have fixed the computer.","ko":"나는 컴퓨터를 고쳤어요.","example":"I have fixed the computer; it works now.","emoji":"💻"}
+]

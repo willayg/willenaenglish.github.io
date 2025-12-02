@@ -1,0 +1,167 @@
+[
+  {
+    "id": "the_cat_is_on",
+    "word": "the_cat",
+    "prompt": "The cat is ___ the table.",
+    "article": "on",
+    "en": "The cat is on the table.",
+    "ko": "고양이가 탁자 위에 있어요.",
+    "exampleSentence": "The cat is on the table.",
+    "exampleSentenceKo": "고양이가 탁자 위에 있어요.",
+    "emoji": "🐱📚"
+  },
+  {
+    "id": "the_book_is_in",
+    "word": "the_book",
+    "prompt": "The book is ___ the bag.",
+    "article": "in",
+    "en": "The book is in the bag.",
+    "ko": "책이 가방 안에 있어요.",
+    "exampleSentence": "The book is in the bag.",
+    "exampleSentenceKo": "책이 가방 안에 있어요.",
+    "emoji": "📘🎒"
+  },
+  {
+    "id": "he_is_at_the",
+    "word": "he_is",
+    "prompt": "He is ___ the bus stop.",
+    "article": "at",
+    "en": "He is at the bus stop.",
+    "ko": "그는 버스 정류장에 있어요.",
+    "exampleSentence": "He is at the bus stop.",
+    "exampleSentenceKo": "그는 버스 정류장에 있어요.",
+    "emoji": "🚌"
+  },
+  {
+    "id": "the_shop_is_near",
+    "word": "the_shop",
+    "prompt": "The shop is ___ the school.",
+    "article": "near",
+    "en": "The shop is near the school.",
+    "ko": "가게가 학교 근처에 있어요.",
+    "exampleSentence": "The shop is near the school.",
+    "exampleSentenceKo": "가게가 학교 근처에 있어요.",
+    "emoji": "🏪🏫"
+  },
+  {
+    "id": "the_statue_is_across",
+    "word": "the_statue",
+    "prompt": "The statue is ___.",
+    "article": "across from",
+    "en": "The statue is across from the library.",
+    "ko": "동상이 도서관 맞은편에 있어요.",
+    "exampleSentence": "The statue is across from the library.",
+    "exampleSentenceKo": "동상이 도서관 맞은편에 있어요.",
+    "emoji": "🗽📚"
+  },
+  {
+    "id": "the_ball_is_under",
+    "word": "the_ball",
+    "prompt": "The ball is ___ the table.",
+    "article": "under",
+    "en": "The ball is under the table.",
+    "ko": "공이 탁자 아래에 있어요.",
+    "exampleSentence": "The ball is under the table.",
+    "exampleSentenceKo": "공이 탁자 아래에 있어요.",
+    "emoji": "⚽️⬇️"
+  },
+  {
+    "id": "the_plane_is_over",
+    "word": "the_plane",
+    "prompt": "The plane is ___ the city.",
+    "article": "over",
+    "en": "The plane is over the city.",
+    "ko": "비행기가 도시 위를 날아요.",
+    "exampleSentence": "The plane is over the city.",
+    "exampleSentenceKo": "비행기가 도시 위를 날아요.",
+    "emoji": "✈️🏙️"
+  },
+  {
+    "id": "walk_through_the_tunnel",
+    "word": "walk_through",
+    "prompt": "Walk ___ the tunnel.",
+    "article": "through",
+    "en": "Walk through the tunnel.",
+    "ko": "터널을 통해 걸으세요.",
+    "exampleSentence": "Walk through the tunnel.",
+    "exampleSentenceKo": "터널을 통해 걸으세요.",
+    "emoji": "🚶‍♂️🕳️"
+  },
+  {
+    "id": "sit_beside_me",
+    "word": "sit_beside",
+    "prompt": "Sit ___ me.",
+    "article": "beside",
+    "en": "Sit beside me.",
+    "ko": "제 옆에 앉으세요.",
+    "exampleSentence": "Sit beside me.",
+    "exampleSentenceKo": "제 옆에 앉으세요.",
+    "emoji": "🪑"
+  },
+  {
+    "id": "the_restaurant_is_by",
+    "word": "the_restaurant",
+    "prompt": "The restaurant is ___ the river.",
+    "article": "by",
+    "en": "The restaurant is by the river.",
+    "ko": "식당은 강 옆에 있어요.",
+    "exampleSentence": "The restaurant is by the river.",
+    "exampleSentenceKo": "식당은 강 옆에 있어요.",
+    "emoji": "🍽️🏞️"
+  },
+  {
+    "id": "the_cat_is_next",
+    "word": "the_cat",
+    "prompt": "The cat is ___ the box.",
+    "article": "next to",
+    "en": "The cat is next to the box.",
+    "ko": "고양이가 상자 옆에 있어요.",
+    "exampleSentence": "The cat is next to the box.",
+    "exampleSentenceKo": "고양이가 상자 옆에 있어요.",
+    "emoji": "😺"
+  },
+  {
+    "id": "the_car_is_behind",
+    "word": "the_car",
+    "prompt": "The car is ___ the truck.",
+    "article": "behind",
+    "en": "The car is behind the truck.",
+    "ko": "자동차가 트럭 뒤에 있어요.",
+    "exampleSentence": "The car is behind the truck.",
+    "exampleSentenceKo": "자동차가 트럭 뒤에 있어요.",
+    "emoji": "🚗🛻"
+  },
+  {
+    "id": "the_bird_is_above",
+    "word": "the_bird",
+    "prompt": "The bird is ___ the tree.",
+    "article": "above",
+    "en": "The bird is above the tree.",
+    "ko": "새가 나무 위를 날아요.",
+    "exampleSentence": "The bird is above the tree.",
+    "exampleSentenceKo": "새가 나무 위를 날아요.",
+    "emoji": "🐦🌳"
+  },
+  {
+    "id": "the_fish_is_below",
+    "word": "the_fish",
+    "prompt": "The fish is ___ the water.",
+    "article": "below",
+    "en": "The fish is below the water.",
+    "ko": "물고기가 물 아래에 있어요.",
+    "exampleSentence": "The fish is below the water.",
+    "exampleSentenceKo": "물고기가 물 아래에 있어요.",
+    "emoji": "🐟🌊"
+  },
+  {
+    "id": "the_keys_are_on",
+    "word": "the_keys",
+    "prompt": "The keys are ___ the shelf.",
+    "article": "on",
+    "en": "The keys are on the shelf.",
+    "ko": "열쇠가 선반 위에 있어요.",
+    "exampleSentence": "The keys are on the shelf.",
+    "exampleSentenceKo": "열쇠가 선반 위에 있어요.",
+    "emoji": "🔑📚"
+  }
+]

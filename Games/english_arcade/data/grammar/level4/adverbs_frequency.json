@@ -1,0 +1,17 @@
+[
+  {"en":"always","ko":"항상","example":"I always brush my teeth in the morning.","emoji":"🪥"},
+  {"en":"usually","ko":"보통","example":"She usually goes to school by bus.","emoji":"🚌"},
+  {"en":"often","ko":"자주","example":"We often eat pizza on Fridays.","emoji":"🍕"},
+  {"en":"sometimes","ko":"때때로","example":"They sometimes play outside.","emoji":"🌤️"},
+  {"en":"rarely","ko":"드물게","example":"I rarely eat fast food.","emoji":"🍔"},
+  {"en":"never","ko":"전혀 ~하지 않다","example":"He never smokes.","emoji":"🚭"},
+  {"en":"frequently","ko":"자주, 빈번히","example":"She frequently visits the library.","emoji":"📚"},
+  {"en":"occasionally","ko":"가끔","example":"We occasionally go hiking.","emoji":"🥾"},
+  {"en":"regularly","ko":"정기적으로","example":"I check my email regularly.","emoji":"📧"},
+  {"en":"often","ko":"자주","example":"They often watch movies.","emoji":"🎬"},
+  {"en":"seldom","ko":"좀처럼 ~하지 않다","example":"He seldom watches TV.","emoji":"📺"},
+  {"en":"frequently","ko":"빈번하게","example":"This area is frequently busy.","emoji":"🚦"},
+  {"en":"typically","ko":"전형적으로","example":"She typically arrives early.","emoji":"⏰"},
+  {"en":"commonly","ko":"일반적으로","example":"This is commonly used in tests.","emoji":"✅"},
+  {"en":"always","ko":"항상","example":"She always helps her friends.","emoji":"🤝"}
+]

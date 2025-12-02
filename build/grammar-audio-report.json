@@ -1,0 +1,133 @@
+{
+  "generatedAt": "2025-11-17T14:57:29.082Z",
+  "summary": {
+    "considered": 15,
+    "generated": 15,
+    "skippedExisting": 0,
+    "errors": 0,
+    "dryRun": false,
+    "force": true
+  },
+  "items": [
+    {
+      "key": "short_q_16_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "do_like_kiwi",
+      "entryId": "short_q_16",
+      "article": "",
+      "text": "Do you like kiwi?"
+    },
+    {
+      "key": "short_q_17_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "is_coach",
+      "entryId": "short_q_17",
+      "article": "",
+      "text": "Is she your coach?"
+    },
+    {
+      "key": "short_q_18_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "are_classmates",
+      "entryId": "short_q_18",
+      "article": "",
+      "text": "Are they your classmates?"
+    },
+    {
+      "key": "short_q_19_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "does_play_piano",
+      "entryId": "short_q_19",
+      "article": "",
+      "text": "Does he play the piano?"
+    },
+    {
+      "key": "short_q_20_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "can_skateboard",
+      "entryId": "short_q_20",
+      "article": "",
+      "text": "Can you ride a skateboard?"
+    },
+    {
+      "key": "short_q_21_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "is_rainy",
+      "entryId": "short_q_21",
+      "article": "",
+      "text": "Is it rainy today?"
+    },
+    {
+      "key": "short_q_22_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "do_have_homework",
+      "entryId": "short_q_22",
+      "article": "",
+      "text": "Do we have homework today?"
+    },
+    {
+      "key": "short_q_23_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "does_like_games",
+      "entryId": "short_q_23",
+      "article": "",
+      "text": "Does she like video games?"
+    },
+    {
+      "key": "short_q_24_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "is_cat_sleepy",
+      "entryId": "short_q_24",
+      "article": "",
+      "text": "Is the cat sleepy?"
+    },
+    {
+      "key": "short_q_25_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "do_live_near_school",
+      "entryId": "short_q_25",
+      "article": "",
+      "text": "Do they live near the school?"
+    },
+    {
+      "key": "short_q_26_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "do_want_icecream",
+      "entryId": "short_q_26",
+      "article": "",
+      "text": "Do you want some ice cream?"
+    },
+    {
+      "key": "short_q_27_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "is_from_canada",
+      "entryId": "short_q_27",
+      "article": "",
+      "text": "Is he from Canada?"
+    },
+    {
+      "key": "short_q_28_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "can_ride_scooter",
+      "entryId": "short_q_28",
+      "article": "",
+      "text": "Can he ride a scooter?"
+    },
+    {
+      "key": "short_q_29_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "do_look_tired",
+      "entryId": "short_q_29",
+      "article": "",
+      "text": "Do I look tired?"
+    },
+    {
+      "key": "short_q_30_grammar",
+      "file": "level2\\short_questions_2.json",
+      "word": "does_train_stop",
+      "entryId": "short_q_30",
+      "article": "",
+      "text": "Does the train stop here?"
+    }
+  ]
+}

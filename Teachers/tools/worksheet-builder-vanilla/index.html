@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worksheet Builder (Vanilla)</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="resize-handles.css">
+  <link rel="stylesheet" href="left-toolbar.css">
+  <link rel="stylesheet" href="print.css" media="print">
+  <link rel="icon" href="../../../../Assets/Images/Logo.png">
+  <!-- Google Fonts: Poppins, Nanum Pen Script, Caveat, Roboto, Lato, Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nanum+Pen+Script&family=Caveat:wght@400;700&family=Roboto:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <!-- iro.js color picker library -->
+  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="app-card">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo">
+          <img src="../../../../Assets/Images/Logo.png" alt="Willena" class="logo-img" />
+        </div>
+        <h1>MINT Sheet</h1>
+        <!-- Simple Burger Menu -->
+        <button id="burger-toggle" style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:24px; cursor:pointer;">☰</button>
+        <ul id="burger-menu" style="display:none; position:absolute; top:48px; right:20px; background:#eaebf0; list-style:none; padding:8px 0; margin:0; box-shadow:0 2px 8px rgba(241, 237, 237, 0.15); border-radius:4px; z-index:10000;">
+          <li><a href="/index.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Home</a></li>
+          <li><a href="/Teachers/index.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Dashboard</a></li>
+          <li><a href="/Teachers/profile.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Profile</a></li>
+          <li><a href="#" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Feedback</a></li>
+          <li><a href="/Teachers/components/feedback-admin.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Admin</a></li>
+          <li><a href="/Teachers/login.html" style="display:block; padding:8px 16px; color:#3d3752; text-decoration:none;">Logout</a></li>
+        </ul>
+      </div>
+      <!-- File Menu Dropdown (loaded via JS) -->
+      <div class="top-actions" id="file-menu-mount" style="position:sticky;top:0;z-index:100;opacity:0.9;">
+        <!-- File menu will be loaded here by main.js -->
+      </div>
+      <!-- Pastel Toolbar with font controls -->
+      <div class="pastel-toolbar" id="pastel-toolbar" style="position:sticky;top:38px;z-index:99;opacity:0.98;display:flex;align-items:center;gap:16px;padding:12px 24px;background:#e8f4f8;border-bottom:1px solid #5f8f9b;min-height:48px;">
+        <label style="font-size:0.98em;font-family:Poppins,sans-serif;color:#3d3752;display:flex;align-items:center;gap:6px;">
+          <span title="Font" style="display:inline-flex;align-items:center;">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 22L14 6L22 22" stroke="#4a5568" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M9.5 16H18.5" stroke="#4a5568" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <select id="pt-font" style="margin-left:6px;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e0;font-size:14px;color:#4a5568;min-width:100px;background:white;" aria-label="Font">
+            <option value="Poppins">Poppins</option>
+            <option value="Roboto">Roboto</option>
+            <option value="Lato">Lato</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Arial">Arial</option>
+            <option value="Helvetica Neue">Helvetica Neue</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Garamond">Garamond</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Comic Sans MS">Comic Sans</option>
+            <option value="Nanum Pen Script">Nanum Pen</option>
+            <option value="Caveat">Caveat</option>
+          </select>
+        </label>
+        <div style="display:flex;align-items:center;gap:0;background:white;border:1px solid #cbd5e0;border-radius:8px;overflow:hidden;">
+          <button id="pt-fontsize-dec" style="background:white;border:none;font-size:16px;font-weight:600;color:#4a5568;padding:8px 12px;cursor:pointer;transition:background 0.2s;">-</button>
+          <input id="pt-fontsize" type="number" min="8" max="72" value="13" style="border:none;padding:8px 12px;width:50px;text-align:center;font-size:14px;color:#4a5568;border-left:1px solid #cbd5e0;border-right:1px solid #cbd5e0;" />
+          <button id="pt-fontsize-inc" style="background:white;border:none;font-size:16px;font-weight:600;color:#4a5568;padding:8px 12px;cursor:pointer;transition:background 0.2s;">+</button>
+        </div>
+
+        <style>
+        /* Hide number input spinners for font size input */
+        #pt-fontsize::-webkit-outer-spin-button,
+        #pt-fontsize::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        #pt-fontsize[type=number] {
+          -moz-appearance: textfield;
+        }
+        </style>
+        <label style="font-size:0.98em;font-family:Poppins,sans-serif;color:#3d3752;display:flex;align-items:center;margin-left:8px;">
+          <div id="pt-fontcolor-container" style="position:relative;">
+            <div id="pt-fontcolor-preview" style="width:32px;height:32px;border:1px solid #cbd5e0;border-radius:8px;background:#000000;cursor:pointer;" title="Font Color"></div>
+            <div id="pt-fontcolor-picker" style="display:none;position:absolute;top:40px;left:0;z-index:15000;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(60,60,80,0.18);padding:16px;min-width:200px;">
+              <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:12px;">
+                <!-- Tailwind color swatches will be added here -->
+              </div>
+              <div id="pt-fontcolor-iro" style="margin-top:8px;"></div>
+            </div>
+          </div>
+        </label>
+        <!-- Text Formatting Controls -->
+        <div style="display:flex;align-items:center;gap:6px;background:transparent;">
+          <button id="pt-bold" class="toolbar-btn toolbar-btn-bold" title="Bold" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;font-weight:700;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">B</button>
+          <button id="pt-italic" class="toolbar-btn toolbar-btn-italic" title="Italic" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;font-style:italic;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">I</button>
+          <button id="pt-underline" class="toolbar-btn toolbar-btn-underline" title="Underline" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;text-decoration:underline;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">U</button>
+          <button id="pt-strike" class="toolbar-btn toolbar-btn-strike" title="Strikethrough" style="width:36px;height:36px;border:1.5px solid #cbd5e0;border-radius:8px;background:white;text-decoration:line-through;font-size:18px;color:#4a5568;outline:none;box-shadow:none;transition:background 0.15s,box-shadow 0.15s;">S</button>
+        </div>
+        <!-- Alignment Icon Dropdowns -->
+        <div style="position:relative;display:inline-block;margin-left:8px;">
+          <button id="pt-halign-btn" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;">
+            <span id="pt-halign-icon"> <!-- default left align -->
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </span>
+          </button>
+          <div id="pt-halign-menu" style="display:none;position:absolute;top:110%;left:0;background:white;border:1.5px solid #cbd5e0;border-radius:8px;box-shadow:0 4px 16px 0 rgba(60,60,80,0.10);padding:4px 0;z-index:2000;min-width:38px;">
+            <button class="halign-option" data-value="left" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+            <button class="halign-option" data-value="center" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="6" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="5" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+            <button class="halign-option" data-value="right" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="9" y="9.5" width="10" height="2.5" rx="1.2" fill="#4a5568"/><rect x="6" y="14" width="13" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+            <button class="halign-option" data-value="justify" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="9.5" width="16" height="2.5" rx="1.2" fill="#4a5568"/><rect x="3" y="14" width="16" height="2.5" rx="1.2" fill="#4a5568"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="position:relative;display:inline-block;margin-left:2px;">
+          <button id="pt-valign-btn" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;">
+            <span id="pt-valign-icon"> <!-- default top align: top line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+              </svg>
+            </span>
+          </button>
+          <div id="pt-valign-menu" style="display:none;position:absolute;top:110%;left:0;background:white;border:1.5px solid #cbd5e0;border-radius:8px;box-shadow:0 4px 16px 0 rgba(60,60,80,0.10);padding:4px 0;z-index:2000;min-width:38px;">
+            <button class="valign-option" data-value="top" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <!-- Top align: top line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+              </svg>
+            </button>
+            <button class="valign-option" data-value="middle" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <!-- Middle align: middle line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+              </svg>
+            </button>
+            <button class="valign-option" data-value="bottom" style="background:none;border:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <!-- Bottom align: bottom line dark, others grey -->
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="4" y="5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="9.5" width="14" height="2.5" rx="1.2" fill="#bbb"/>
+                <rect x="4" y="14" width="14" height="2.5" rx="1.2" fill="#4a5568"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <!-- Toolbar setup logic -->
+        <script src="js/toolbar-setup.js"></script>
+        <!-- Page Orientation Toggle -->
+        <div style="margin-left:8px;">
+          <button id="pt-orientation-btn" title="Toggle Page Orientation" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;transition:background 0.15s,box-shadow 0.15s;">
+            <span id="pt-orientation-icon">
+              <!-- Portrait icon by default -->
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="2" width="10" height="16" rx="1.5" stroke="#4a5568" stroke-width="2" fill="none"/>
+                <circle cx="10" cy="15" r="1" fill="#4a5568"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+        <label style="font-size:0.98em;font-family:Poppins,sans-serif;color:#3d3752;display:flex;align-items:center;gap:6px;">
+          <span title="Line Spacing" style="display:inline-flex;align-items:center;">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="6" y1="5" x2="6" y2="23" stroke="#222" stroke-width="2.2"/>
+              <polygon points="6,3 2,7 10,7" fill="#222"/>
+              <polygon points="6,25 2,21 10,21" fill="#222"/>
+              <rect x="12" y="7" width="10" height="2.5" rx="1.2" fill="#222"/>
+              <rect x="12" y="12.5" width="10" height="2.5" rx="1.2" fill="#222"/>
+              <rect x="12" y="18" width="10" height="2.5" rx="1.2" fill="#222"/>
+            </svg>
+          </span>
+          <input id="pt-linespacing" type="number" min="1" max="3" step="0.1" value="1.8" style="width:80px;text-align:center;font-size:14px;border:1px solid #cbd5e0;border-radius:8px;padding:8px 12px;background:white;color:#4a5568;" aria-label="Line Spacing" />
+          <!-- Border Style Dropdown Button removed; modal will open on textbox click -->
+        </label>
+        <!-- Page Zoom Controls -->
+        <div style="display:flex;align-items:center;gap:6px;margin-left:16px;">
+          <button id="pt-zoom-fit" title="Fit to Page" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;font-family:Poppins,sans-serif;color:#4a5568;transition:background 0.15s,box-shadow 0.15s;">Full Page View</button>
+          <button id="pt-zoom-actual" title="Actual Size" style="background:white;border:1.5px solid #cbd5e0;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;font-family:Poppins,sans-serif;color:#4a5568;transition:background 0.15s,box-shadow 0.15s;">Actual Size</button>
+        </div>
+        <!-- Border weight slider removed -->
+      </div>
+      <!-- Main workspace row: left toolbar + main content -->
+      <!-- Workspace row: left toolbar + main content, under pastel toolbar -->
+      <div style="display:flex;flex-direction:row;align-items:stretch;min-height:0;width:100%;">
+        <!-- Left Toolbar (sticky in workspace) -->
+        <div class="left-toolbar" style="width:100px;min-width:100px;max-width:100px;background:#f7f7fa;border-right:1px solid #e1e8ed;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 0 0;z-index:10;height:calc(100vh - 96px);overflow-y:hidden;position:sticky;top:96px;">
+  <style>
+    .left-toolbar {
+      transition: box-shadow 0.2s;
+    }
+    .left-toolbar:hover {
+      overflow-y: auto !important;
+      box-shadow: 2px 0 12px 0 rgba(60,60,80,0.07);
+    }
+  </style>
+          <!-- Toolbar buttons will be injected by left-toolbar.js -->
+        </div>
+        <!-- Main Content -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+          <!-- Page Preview Area (A4 aspect ratio) -->
+          <div id="page-preview-area"></div>
+          <div class="add-page-text" id="add-page-text">+ Add New Page</div>
+          <!-- Page Settings Modal (loaded via JS) -->
+          <div id="page-settings-modal-mount"></div>
+        </div>
+        <style>
+          .worksheet-textbox {
+            resize: both !important;
+            overflow: auto !important;
+            min-width: 60px;
+            min-height: 32px;
+            max-width: 100%;
+            max-height: 100%;
+            box-sizing: border-box;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            line-height: 1.8 !important;
+          }
+          
+          /* Clean textbox styling - no blue highlighting on hover/focus/selected since we use external selection frame */
+          .worksheet-textbox:hover,
+          .worksheet-textbox:focus,
+          .worksheet-textbox.selected {
+            box-shadow: none !important;
+            /* Allow border colors to work normally - just no blue override */
+            outline: none !important;
+          }
+          
+          /* Hide resize handle by default, show only on focus/selected */
+          .worksheet-textbox::-webkit-resizer {
+            display: none;
+          }
+          .worksheet-textbox:focus::-webkit-resizer,
+          .worksheet-textbox.selected::-webkit-resizer {
+            display: block;
+          }
+          /* For Firefox, hide the resize handle by default using pointer-events */
+          .worksheet-textbox {
+            pointer-events: auto;
+          }
+          .worksheet-textbox:not(:focus):not(.selected) {
+            resize: none !important;
+          }
+          /* Ensure fill color persists on focus and hover */
+          .worksheet-textbox:focus,
+          .worksheet-textbox:hover {
+            background-color: inherit !important;
+          }
+          
+          /* Header selection styles */
+          .worksheet-header.selected {
+            box-shadow: 0 0 12px rgba(66, 153, 225, 0.5) !important;
+            outline: 2px solid #4299e1 !important;
+            outline-offset: 2px;
+          }
+          
+          .worksheet-header:hover {
+            box-shadow: 0 0 8px rgba(66, 153, 225, 0.3) !important;
+          }
+        </style>
+      </div>
+      <!-- ...existing code... -->
+    </div>
+  </div>
+  <script src="../components/burger-menu.js"></script>
+  <script src="left-toolbar.js"></script>
+  <!-- Border modal logic -->
+  <script src="js/border-modal.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/textbox.js"></script>
+  <script src="header-templates.js"></script>
+  <script src="js/modules/header/header-render.js"></script>
+  <!-- Load textbox modules in dependency order -->
+  <script src="js/modules/textbox/textbox-core.js"></script>
+  <script src="js/modules/textbox/textbox-drag.js"></script>
+  <script src="js/modules/textbox/textbox-resize.js"></script>
+  <script src="js/modules/textbox/textbox-events.js"></script>
+  <script src="js/modules/textbox/textbox-main.js"></script>
+  <!-- Main orchestrator -->
+  <script src="js/modules/render/render-main.js"></script>
+  <script src="js/toolbar.js"></script>
+  <script src="js/contextmenu.js"></script>
+  <script src="js/events.js"></script>
+  <script src="main.js"></script>
+  <script src="insert-text-tool.js"></script>
+  <script src="insert-header-tool.js"></script>
+  <link rel="stylesheet" href="mint-ai/mint-ai-modal.css">
+  <!-- AI integration -->
+  <script src="js/ai-integration.js"></script>
+  <script src="mint-ai/ai-modal.js"></script>
+  <script src="inline_toolbar.js"></script>
+  <script src="print-worksheet.js"></script>
+  <script src="mint-ai/mint-ai-vocab-layouts.js"></script>
+  <script src="mint-ai/mint-ai-vocab-modal-fixed.js"></script>
+  <!-- Utility functions -->
+  <script src="js/utility-functions.js"></script>
+  <!-- Print functionality -->
+  <script src="js/print-functionality.js"></script>
+  <style>
+    /* Additional inline print styles for consistency */
+    @media print {
+      .inline-toolbar, #inline-toolbar, #text-toolbar,
+      #border-style-modal, .border-style-modal {
+        display: none !important;
+      }
+      /* Hide specific elements but keep the structure */
+      .header,
+      .top-actions,
+      .pastel-toolbar,
+      #pastel-toolbar,
+      .left-toolbar,
+      .add-page-text,
+      #page-settings-modal-mount,
+      #burger-menu {
+        display: none !important;
+      }
+
+      /* Ensure the container structure remains visible */
+      .container,
+      .app-card,
+      #page-preview-area {
+        display: block !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      /* Make sure the main content area takes full width */
+      .app-card > div[style*="display:flex"] {
+        display: block !important;
+      }
+      
+      /* Remove any screen-only styling */
+      .page-preview-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+    #burger-menu-mount {
+      z-index: 100;
+    }
+    .header {
+      position: relative;
+    }
+    .file-menu-item {
+      display: block;
+      padding: 12px 18px;
+      color: #3d3752;
+      text-decoration: none;
+      font-size: 1em;
+      font-family: 'Poppins', sans-serif;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .file-menu-item:hover {
+      background: #f0f0f0;
+    }
+    .file-menu-btn {
+      font-family: 'Poppins', sans-serif;
+    }
+    .top-actions .file-menu-btn {
+      font-family: 'Poppins', sans-serif;
+    }
+    .file-menu-dropdown {
+      font-family: 'Poppins', sans-serif;
+      box-shadow: 0 8px 32px 0 rgba(60,60,80,0.18);
+      border: 1px solid #e1e8ed;
+      margin-top: 8px;
+    }
+  </style>
+  <!-- Menus are loaded and hooked up by main.js -->
+  
+  <!-- Color picker integration -->
+  <script src="js/colorpicker.js"></script>
+  
+  <!-- Orientation toggle logic -->
+  <script src="js/orientation-toggle.js"></script>
+  <style>
+    @media print {
+      .worksheet-textbox:focus,
+      .worksheet-textbox.selected,
+      .worksheet-header.selected {
+        border-color: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+  <script src="template-modal.js"></script>
+</body>
+</html>

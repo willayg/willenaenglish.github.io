@@ -1,0 +1,14 @@
+[
+  {"eng": "happy", "kor": "행복한", "def": "feeling good and glad", "ex": "I feel happy.", "ex_kor": "나는 행복하다.", "emoji": "😊"},
+  {"eng": "sad", "kor": "슬픈", "def": "feeling unhappy", "ex": "She feels sad.", "ex_kor": "그녀는 슬프다.", "emoji": "😢"},
+  {"eng": "angry", "kor": "화난", "def": "feeling mad", "ex": "He feels angry.", "ex_kor": "그는 화났다.", "emoji": "😠"},
+  {"eng": "excited", "kor": "신난", "def": "feeling very eager and glad", "ex": "We feel excited.", "ex_kor": "우리는 신난다.", "emoji": "🤩"},
+  {"eng": "scared", "kor": "무서운", "def": "feeling afraid", "ex": "I feel scared.", "ex_kor": "나는 무섭다.", "emoji": "😨"},
+  {"eng": "bored", "kor": "지루한", "def": "not interested", "ex": "They feel bored.", "ex_kor": "그들은 지루해한다.", "emoji": "😑"},
+  {"eng": "tired", "kor": "피곤한", "def": "needing rest", "ex": "I feel tired.", "ex_kor": "나는 피곤하다.", "emoji": "😴"},
+  {"eng": "surprised", "kor": "놀란", "def": "feeling sudden wonder", "ex": "She feels surprised.", "ex_kor": "그녀는 놀란다.", "emoji": "😲"},
+  {"eng": "nervous", "kor": "긴장한", "def": "worried about something", "ex": "I feel nervous.", "ex_kor": "나는 긴장한다.", "emoji": "😰"},
+  {"eng": "proud", "kor": "자랑스러운", "def": "feeling good about something done", "ex": "He feels proud.", "ex_kor": "그는 자랑스럽다.", "emoji": "🥳"},
+  {"eng": "shy", "kor": "수줍은", "def": "not wanting to be looked at", "ex": "The boy feels shy.", "ex_kor": "소년은 수줍다.", "emoji": "🙈"},
+  {"eng": "confused", "kor": "혼란스러운", "def": "not sure what is happening", "ex": "I feel confused.", "ex_kor": "나는 혼란스럽다.", "emoji": "😕"}
+]

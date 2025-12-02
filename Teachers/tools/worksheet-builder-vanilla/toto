@@ -1,0 +1,35 @@
+Vanilla Worksheet Builder: Todo List
+
+1. HTML
+   - Create index.html with:
+     - Header (logo, title, burger menu)
+     - Top action bar (New, Load, Save, Print, PDF, More)
+     - Pastel toolbar (empty)
+     - Page preview area (A4 aspect ratio, supports multiple pages)
+     - "+ Add New Page" text/button
+     - (Optional) Modal for worksheet manager
+
+2. CSS
+   - Copy all relevant styles from React App.css into a new style.css
+   - Link style.css in index.html
+
+3. JavaScript
+   - Add page management:
+     - Store pages in an array
+     - Render all pages in the preview area
+     - Implement "+ Add New Page" to add a new page and re-render
+   - Top action bar:
+     - Hook up "Load" and "Save" to open worksheet manager (modal or new window)
+   - Modal logic (optional):
+     - Show/hide modal for worksheet manager
+     - Pass mode (save/load) to modal
+   - Burger menu dropdown logic (optional)
+     - Integrate shared burger menu component by invoking insertBurgerMenu('#burger-menu-mount') in main.js
+     - Ensure toggle button appears and toggles menu visibility correctly with proper CSS positioning and z-index
+
+4. Worksheet Manager
+   - Reuse/adapt your existing worksheet manager HTML/JS for modal or new window
+
+5. Testing
+   - Ensure adding pages, opening modals, and all UI elements work as expected
+   - Check responsiveness and print preview

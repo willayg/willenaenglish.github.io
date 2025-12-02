@@ -1,0 +1,137 @@
+[
+  {
+    "id": "is_there_a_bus",
+    "word": "is_there",
+    "en": "Is there a bus stop near here?",
+    "ko": "여기 근처에 버스 정류장이 있나요?",
+    "exampleSentence": "Is there a bus stop near here?",
+    "exampleSentenceKo": "여기 근처에 버스 정류장이 있나요?",
+    "emoji": "🚌"
+  },
+  {
+    "id": "are_there_any_parks",
+    "word": "are_there",
+    "en": "Are there any parks in the city?",
+    "ko": "도시에 공원이 있나요?",
+    "exampleSentence": "Are there any parks in the city?",
+    "exampleSentenceKo": "도시에 공원이 있나요?",
+    "emoji": "🏞️"
+  },
+  {
+    "id": "is_there_a_supermarket",
+    "word": "is_there",
+    "en": "Is there a supermarket close by?",
+    "ko": "근처에 슈퍼마켓이 있나요?",
+    "exampleSentence": "Is there a supermarket close by?",
+    "exampleSentenceKo": "근처에 슈퍼마켓이 있나요?",
+    "emoji": "🏪"
+  },
+  {
+    "id": "are_there_many_trees",
+    "word": "are_there",
+    "en": "Are there many trees in the park?",
+    "ko": "공원에 나무가 많나요?",
+    "exampleSentence": "Are there many trees in the park?",
+    "exampleSentenceKo": "공원에 나무가 많나요?",
+    "emoji": "🌳"
+  },
+  {
+    "id": "is_there_snow_on",
+    "word": "is_there",
+    "en": "Is there snow on the ground?",
+    "ko": "땅에 눈이 있나요?",
+    "exampleSentence": "Is there snow on the ground?",
+    "exampleSentenceKo": "땅에 눈이 있나요?",
+    "emoji": "❄️"
+  },
+  {
+    "id": "are_there_two_chairs",
+    "word": "are_there",
+    "en": "Are there two chairs in the room?",
+    "ko": "방에 의자 두 개 있나요?",
+    "exampleSentence": "Are there two chairs in the room?",
+    "exampleSentenceKo": "방에 의자 두 개 있나요?",
+    "emoji": "🪑🪑"
+  },
+  {
+    "id": "is_there_a_hospital",
+    "word": "is_there",
+    "en": "Is there a hospital nearby?",
+    "ko": "근처에 병원이 있나요?",
+    "exampleSentence": "Is there a hospital nearby?",
+    "exampleSentenceKo": "근처에 병원이 있나요?",
+    "emoji": "🏥"
+  },
+  {
+    "id": "are_there_any_pens",
+    "word": "are_there",
+    "en": "Are there any pens on the desk?",
+    "ko": "책상 위에 펜이 있나요?",
+    "exampleSentence": "Are there any pens on the desk?",
+    "exampleSentenceKo": "책상 위에 펜이 있나요?",
+    "emoji": "✏️"
+  },
+  {
+    "id": "is_there_a_restroom",
+    "word": "is_there",
+    "en": "Is there a restroom upstairs?",
+    "ko": "위층에 화장실이 있나요?",
+    "exampleSentence": "Is there a restroom upstairs?",
+    "exampleSentenceKo": "위층에 화장실이 있나요?",
+    "emoji": "🚽"
+  },
+  {
+    "id": "are_there_any_students",
+    "word": "are_there",
+    "en": "Are there any students absent?",
+    "ko": "결석한 학생이 있나요?",
+    "exampleSentence": "Are there any students absent?",
+    "exampleSentenceKo": "결석한 학생이 있나요?",
+    "emoji": "👩‍🎓🚫"
+  },
+  {
+    "id": "is_there_a_post",
+    "word": "is_there",
+    "en": "Is there a post office here?",
+    "ko": "여기 우체국 있나요?",
+    "exampleSentence": "Is there a post office here?",
+    "exampleSentenceKo": "여기 우체국 있나요?",
+    "emoji": "📮"
+  },
+  {
+    "id": "are_there_any_cookies",
+    "word": "are_there",
+    "en": "Are there any cookies left?",
+    "ko": "쿠키가 남아 있나요?",
+    "exampleSentence": "Are there any cookies left?",
+    "exampleSentenceKo": "쿠키가 남아 있나요?",
+    "emoji": "🍪"
+  },
+  {
+    "id": "is_there_a_map",
+    "word": "is_there",
+    "en": "Is there a map in the guidebook?",
+    "ko": "가이드북에 지도가 있나요?",
+    "exampleSentence": "Is there a map in the guidebook?",
+    "exampleSentenceKo": "가이드북에 지도가 있나요?",
+    "emoji": "🗺️"
+  },
+  {
+    "id": "are_there_many_birds",
+    "word": "are_there",
+    "en": "Are there many birds in the sky?",
+    "ko": "하늘에 새가 많나요?",
+    "exampleSentence": "Are there many birds in the sky?",
+    "exampleSentenceKo": "하늘에 새가 많나요?",
+    "emoji": "🐦"
+  },
+  {
+    "id": "is_there_any_homework",
+    "word": "is_there",
+    "en": "Is there any homework tonight?",
+    "ko": "오늘 밤 숙제가 있나요?",
+    "exampleSentence": "Is there any homework tonight?",
+    "exampleSentenceKo": "오늘 밤 숙제가 있나요?",
+    "emoji": "📝"
+  }
+]

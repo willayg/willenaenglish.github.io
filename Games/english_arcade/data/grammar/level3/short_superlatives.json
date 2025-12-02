@@ -1,0 +1,137 @@
+[
+  {
+    "id": "short_superlatives_1",
+    "word": "biggest",
+    "en": "biggest",
+    "ko": "가장 큰",
+    "exampleSentence": "He has the biggest toy collection.",
+    "exampleSentenceKo": "가장 큰",
+    "emoji": "🧸"
+  },
+  {
+    "id": "short_superlatives_2",
+    "word": "smallest",
+    "en": "smallest",
+    "ko": "가장 작은",
+    "exampleSentence": "This is the smallest room in the house.",
+    "exampleSentenceKo": "가장 작은",
+    "emoji": "🚪"
+  },
+  {
+    "id": "short_superlatives_3",
+    "word": "fastest",
+    "en": "fastest",
+    "ko": "가장 빠른",
+    "exampleSentence": "She is the fastest runner in the class.",
+    "exampleSentenceKo": "가장 빠른",
+    "emoji": "🏃‍♀️"
+  },
+  {
+    "id": "short_superlatives_4",
+    "word": "slowest",
+    "en": "slowest",
+    "ko": "가장 느린",
+    "exampleSentence": "The turtle is the slowest animal here.",
+    "exampleSentenceKo": "가장 느린",
+    "emoji": "🐢"
+  },
+  {
+    "id": "short_superlatives_5",
+    "word": "tallest",
+    "en": "tallest",
+    "ko": "가장 키가 큰",
+    "exampleSentence": "He is the tallest person in the team.",
+    "exampleSentenceKo": "가장 키가 큰",
+    "emoji": "📏"
+  },
+  {
+    "id": "short_superlatives_6",
+    "word": "shortest",
+    "en": "shortest",
+    "ko": "가장 키가 작은",
+    "exampleSentence": "This is the shortest street in the town.",
+    "exampleSentenceKo": "가장 키가 작은",
+    "emoji": "🛣️"
+  },
+  {
+    "id": "short_superlatives_7",
+    "word": "oldest",
+    "en": "oldest",
+    "ko": "가장 오래된",
+    "exampleSentence": "This is the oldest tree in the park.",
+    "exampleSentenceKo": "가장 오래된",
+    "emoji": "🌳"
+  },
+  {
+    "id": "short_superlatives_8",
+    "word": "youngest",
+    "en": "youngest",
+    "ko": "가장 어린",
+    "exampleSentence": "She is the youngest in the class.",
+    "exampleSentenceKo": "가장 어린",
+    "emoji": "👧"
+  },
+  {
+    "id": "short_superlatives_9",
+    "word": "cheapest",
+    "en": "cheapest",
+    "ko": "가장 싼",
+    "exampleSentence": "This is the cheapest gift.",
+    "exampleSentenceKo": "가장 싼",
+    "emoji": "💸"
+  },
+  {
+    "id": "short_superlatives_10",
+    "word": "most_expensive",
+    "en": "most expensive",
+    "ko": "가장 비싼",
+    "exampleSentence": "That watch is the most expensive.",
+    "exampleSentenceKo": "가장 비싼",
+    "emoji": "⌚"
+  },
+  {
+    "id": "short_superlatives_11",
+    "word": "hottest",
+    "en": "hottest",
+    "ko": "가장 더운",
+    "exampleSentence": "This is the hottest day of the year.",
+    "exampleSentenceKo": "가장 더운",
+    "emoji": "🔥"
+  },
+  {
+    "id": "short_superlatives_12",
+    "word": "coldest",
+    "en": "coldest",
+    "ko": "가장 추운",
+    "exampleSentence": "Yesterday was the coldest day.",
+    "exampleSentenceKo": "가장 추운",
+    "emoji": "🥶"
+  },
+  {
+    "id": "short_superlatives_13",
+    "word": "easiest",
+    "en": "easiest",
+    "ko": "가장 쉬운",
+    "exampleSentence": "This is the easiest question.",
+    "exampleSentenceKo": "가장 쉬운",
+    "emoji": "✅"
+  },
+  {
+    "id": "short_superlatives_14",
+    "word": "hardest",
+    "en": "hardest",
+    "ko": "가장 어려운",
+    "exampleSentence": "That is the hardest level in the game.",
+    "exampleSentenceKo": "가장 어려운",
+    "emoji": "💪"
+  },
+  {
+    "id": "short_superlatives_15",
+    "word": "smartest",
+    "en": "smartest",
+    "ko": "가장 똑똑한",
+    "exampleSentence": "She is the smartest student in class.",
+    "exampleSentenceKo": "가장 똑똑한",
+    "emoji": "🧠"
+  }
+]

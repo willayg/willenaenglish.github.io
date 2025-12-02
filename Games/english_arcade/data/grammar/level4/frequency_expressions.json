@@ -1,0 +1,17 @@
+[
+  {"en":"once a week","ko":"주 1회","example":"I go to the library once a week.","emoji":"📚"},
+  {"en":"twice a day","ko":"하루 두 번","example":"I brush my teeth twice a day.","emoji":"🪥"},
+  {"en":"three times a year","ko":"연 3회","example":"We travel three times a year.","emoji":"✈️"},
+  {"en":"every day","ko":"매일","example":"I exercise every day.","emoji":"🏃"},
+  {"en":"every other week","ko":"격주로","example":"We meet every other week.","emoji":"📅"},
+  {"en":"once a month","ko":"월 1회","example":"We clean the house once a month.","emoji":"🧼"},
+  {"en":"every weekend","ko":"매주말","example":"We visit relatives every weekend.","emoji":"👪"},
+  {"en":"once in a while","ko":"가끔","example":"I go to the cinema once in a while.","emoji":"🎥"},
+  {"en":"twice a week","ko":"주 2회","example":"I take lessons twice a week.","emoji":"🎻"},
+  {"en":"every morning","ko":"매일 아침","example":"I read the news every morning.","emoji":"🌅"},
+  {"en":"every night","ko":"매일 밤","example":"I read before bed every night.","emoji":"📖"},
+  {"en":"three times a day","ko":"하루 세 번","example":"Take the medicine three times a day.","emoji":"💊"},
+  {"en":"once in a lifetime","ko":"평생에 한 번","example":"Visiting the glacier is once in a lifetime.","emoji":"🏔️"},
+  {"en":"every month","ko":"매달","example":"I pay bills every month.","emoji":"💳"},
+  {"en":"every year","ko":"매년","example":"We celebrate our anniversary every year.","emoji":"🎊"}
+]

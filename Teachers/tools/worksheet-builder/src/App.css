@@ -1,0 +1,254 @@
+.page-preview-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 8px 0 12px 0;
+  background: transparent;
+}
+
+.page-preview-a4 {
+  background: white;
+  border: 1.5px solid #e1e8ed;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px 0 rgba(60,60,80,0.18), 0 1.5px 6px 0 rgba(60,60,80,0.10);
+  width: 794px;
+  height: 1123px;
+  aspect-ratio: 1/1.414;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  margin: 0 0 10px 0;
+}
+
+.page-preview-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-style: italic;
+  font-size: 1.2em;
+  letter-spacing: 0.2px;
+  background: none;
+}
+
+.add-page-btn {
+  display: block;
+  margin: 0 auto 32px auto;
+  padding: 12px 32px;
+  background: #4a5568;
+  color: white;
+  font-size: 1.1em;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(60,60,80,0.10);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.add-page-btn:hover {
+  background: #2d3748;
+  box-shadow: 0 4px 16px rgba(60,60,80,0.18);
+}
+
+.add-page-text {
+  text-align: center;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 1.1em;
+  cursor: pointer;
+  margin: 0 0 8px 0;
+  user-select: none;
+  transition: color 0.2s;
+}
+.add-page-text:hover {
+  color: #2d3748;
+}
+
+/* EXACT copy from style.css */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #646568 0%, #3e3a42 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 98vw;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.app-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+  width: 98vw;
+}
+
+.header {
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  color: white;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+#burger-menu-mount {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.top-actions {
+  background: #4a5568;
+  padding: 12px 32px;
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.action-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-link:hover {
+  opacity: 0.8;
+}
+
+.floating-toolbar {
+  background: #ffd1e6;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e1e8ed;
+  position: relative;
+  cursor: default;
+}
+
+.toolbar-select {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #4a5568;
+  min-width: 100px;
+}
+
+.main-content {
+  display: flex;
+  min-height: 600px;
+}
+
+.sidebar {
+  width: 320px;
+  background: #f8f9fa;
+  padding: 24px;
+  border-right: 1px solid #e1e8ed;
+}
+
+.preview-area {
+  flex: 1;
+  background: white;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 900px;
+  max-width: 1200px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.input-field, .textarea-field {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #4a5568;
+  background: white;
+  box-sizing: border-box;
+}
+
+.textarea-field {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.extract-btn {
+  background: #4a5568;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.extract-btn:hover {
+  background: #2d3748;
+}
+
+.pastel-toolbar {
+  background: #ffe6fa;
+  padding: 16px 32px;
+  border-bottom: 1px solid #e1e8ed;
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  align-items: center;
+}

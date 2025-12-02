@@ -1,0 +1,13 @@
+[
+  {"eng":"get","kor":"얻다","def":"to receive or obtain something","ex":"I get a new book.","ex_kor":"나는 새 책을 얻는다."},
+  {"eng":"make","kor":"만들다","def":"to create or produce something","ex":"She makes a cake.","ex_kor":"그녀는 케이크를 만든다.","emoji":"🛠️"},
+  {"eng":"go","kor":"가다","def":"to move from one place to another","ex":"We go to school every day.","ex_kor":"우리는 매일 학교에 간다.","emoji":"🚶"},
+  {"eng":"come","kor":"오다","def":"to move toward a place","ex":"He came home late.","ex_kor":"그는 늦게 집에 온다."},
+  {"eng":"look","kor":"보다","def":"to direct your eyes toward something","ex":"Look at the stars.","ex_kor":"별을 봐라.","emoji":"👀"},
+  {"eng":"take","kor":"가져가다","def":"to carry or remove something","ex":"Take your bag with you.","ex_kor":"너의 가방을 가져가라."},
+  {"eng":"find","kor":"찾다","def":"to discover something","ex":"I find my keys.","ex_kor":"나는 내 열쇠를 찾는다.","emoji":"🔍"},
+  {"eng":"give","kor":"주다","def":"to hand something to someone","ex":"She gives me a pen.","ex_kor": "그녀는 나에게 펜을 준다.","emoji":"🤲"},
+  {"eng":"tell","kor":"말하다","def":"to say something to someone","ex":"He tells me a story.","ex_kor":"그는 나에게 이야기를 말한다.","emoji":"🗣️"},
+  {"eng":"ask","kor":"묻다","def":"to request information","ex":"Ask your teacher for help.","ex_kor":"너의 선생님에게 도움을 청해라.","emoji":"❓"},
+  {"eng":"use","kor":"사용하다","def":"to do something with a tool or object","ex":"I use my phone every day.","ex_kor":"나는 매일 내 휴대폰을 사용한다."}
+]

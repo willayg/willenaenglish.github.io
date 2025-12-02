@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Verification Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #1aafb9; }
+    .section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    button {
+      background: #1aafb9;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover { background: #19777e; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    pre {
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Student Verification Test Tool</h1>
+    
+    <div class="section">
+      <h2>Step 1: Check Sample Students</h2>
+      <p>Click to see what students exist in the database:</p>
+      <button onclick="checkSamples()">Get Sample Students</button>
+      <div id="samplesResult"></div>
+    </div>
+
+    <div class="section">
+      <h2>Step 2: Check Specific Student by Username</h2>
+      <input type="text" id="usernameInput" placeholder="Enter username (e.g., student123)" />
+      <button onclick="checkUsername()">Check Username</button>
+      <div id="usernameResult"></div>
+    </div>
+
+    <div class="section">
+      <h2>Step 3: Test Full Verification</h2>
+      <p>Enter the Korean name, English name, and 인증번호 (last four digits of mom's phone).</p>
+      <input type="text" id="koreanName" placeholder="Korean Name (한국어 이름)" />
+      <input type="text" id="englishName" placeholder="English Name" />
+      <input type="text" id="authCode" placeholder="인증번호 (엄마 전화번호 뒤 4자리)" />
+      <button onclick="testVerification()">Test Verification</button>
+      <div id="verifyResult"></div>
+    </div>
+
+    <div class="section">
+      <h2>Step 4: Test with Test Endpoint</h2>
+      <p>This uses the diagnostic endpoint with the same 인증번호 flow.</p>
+      <button onclick="testWithTestEndpoint()">Run Test Verification</button>
+      <div id="testResult"></div>
+    </div>
+  </div>
+
+  <script>
+    async function checkSamples() {
+      const result = document.getElementById('samplesResult');
+      result.innerHTML = '<p>Loading...</p>';
+      
+      try {
+        const res = await fetch('/.netlify/functions/debug_student_data');
+        const data = await res.json();
+        
+        if (data.success) {
+          result.innerHTML = `
+            <p class="success">✅ Found ${data.total_students} students</p>
+            <p><strong>Has grade column:</strong> ${data.has_grade_column}</p>
+            <p><strong>Has phone column:</strong> ${data.has_phone_column}</p>
+            <pre>${JSON.stringify(data.students, null, 2)}</pre>
+          `;
+        } else {
+          result.innerHTML = `
+            <p class="error">❌ Error: ${data.error}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (err) {
+        result.innerHTML = `<p class="error">❌ Error: ${err.message}</p>`;
+      }
+    }
+
+    async function checkUsername() {
+      const username = document.getElementById('usernameInput').value.trim();
+      const result = document.getElementById('usernameResult');
+      
+      if (!username) {
+        result.innerHTML = '<p class="error">Please enter a username</p>';
+        return;
+      }
+      
+      result.innerHTML = '<p>Loading...</p>';
+      
+      try {
+        const res = await fetch(`/.netlify/functions/debug_student_data?username=${encodeURIComponent(username)}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          result.innerHTML = `
+            <p class="success">✅ Found student!</p>
+            <pre>${JSON.stringify(data.student, null, 2)}</pre>
+          `;
+        } else {
+          result.innerHTML = `
+            <p class="error">❌ ${data.error}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (err) {
+        result.innerHTML = `<p class="error">❌ Error: ${err.message}</p>`;
+      }
+    }
+
+    async function testVerification() {
+      const korean_name = document.getElementById('koreanName').value.trim();
+      const name = document.getElementById('englishName').value.trim();
+      const authCodeRaw = document.getElementById('authCode').value.trim();
+      const result = document.getElementById('verifyResult');
+
+      const auth_code = authCodeRaw.replace(/\D/g, '').slice(-4);
+      
+      if (!korean_name || !name || auth_code.length !== 4) {
+        result.innerHTML = '<p class="error">Please enter both names and a 4-digit 인증번호.</p>';
+        return;
+      }
+      
+      result.innerHTML = '<p>Verifying...</p>';
+      
+      try {
+        const res = await fetch('/.netlify/functions/verify_student', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ korean_name, name, auth_code })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          result.innerHTML = `
+            <p class="success">✅ Student verified!</p>
+            <pre>${JSON.stringify(data.student, null, 2)}</pre>
+          `;
+        } else {
+          result.innerHTML = `
+            <p class="error">❌ Verification failed</p>
+            <p>${data.error}</p>
+            <p><strong>Sent data:</strong></p>
+            <pre>${JSON.stringify({ korean_name, name, auth_code }, null, 2)}</pre>
+          `;
+        }
+      } catch (err) {
+        result.innerHTML = `<p class="error">❌ Error: ${err.message}</p>`;
+      }
+    }
+
+    async function testWithTestEndpoint() {
+      const korean_name = document.getElementById('koreanName').value.trim();
+      const name = document.getElementById('englishName').value.trim();
+      const authCodeRaw = document.getElementById('authCode').value.trim();
+      const auth_code = authCodeRaw.replace(/\D/g, '').slice(-4);
+      const result = document.getElementById('testResult');
+      
+      result.innerHTML = '<p>Testing...</p>';
+      
+      try {
+        const body = (korean_name && name && auth_code.length === 4)
+          ? { korean_name, name, auth_code }
+          : {};
+          
+        const res = await fetch('/.netlify/functions/test_verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          result.innerHTML = `
+            <p class="success">✅ Test successful!</p>
+            <p><strong>Has phone column:</strong> ${data.hasPhoneColumn}</p>
+            <p><strong>Sample students found:</strong> ${data.totalSampleStudents}</p>
+            ${data.matchResult ? `<p><strong>Match found:</strong> ${data.matchResult.found}</p>` : ''}
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          result.innerHTML = `
+            <p class="error">❌ Test failed</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (err) {
+        result.innerHTML = `<p class="error">❌ Error: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

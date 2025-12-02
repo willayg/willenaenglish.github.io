@@ -1,0 +1,17 @@
+[
+  {"en":"She asked if I had finished my homework.","ko":"그녀는 내가 숙제를 끝냈는지 물었어요.","example":"She asked 'Have you finished your homework?' -> She asked if I had finished my homework.","emoji":"❓"},
+  {"en":"He asked where I had bought it.","ko":"그는 내가 어디서 그것을 샀는지 물었어요.","example":"He asked 'Where did you buy it?' -> He asked where I had bought it.","emoji":"🛍️"},
+  {"en":"She asked when the show would start.","ko":"그녀는 쇼가 언제 시작할지 물었어요.","example":"She asked 'When will the show start?' -> She asked when the show would start.","emoji":"🎭"},
+  {"en":"He asked how I was feeling.","ko":"그는 내가 어떻게 지내는지 물었어요.","example":"He asked 'How are you?' -> He asked how I was.","emoji":"🙂"},
+  {"en":"They asked if we could join them.","ko":"그들은 우리가 그들과 함께할 수 있는지 물었어요.","example":"They asked 'Can we join you?' -> They asked if we could join them.","emoji":"👫"},
+  {"en":"She asked why he was late.","ko":"그녀는 그가 왜 늦었는지 물었어요.","example":"She asked 'Why are you late?' -> She asked why he was late.","emoji":"🕒"},
+  {"en":"He asked what time I would arrive.","ko":"그는 내가 몇 시에 도착할지 물었어요.","example":"He asked 'What time will you arrive?' -> He asked what time I would arrive.","emoji":"🕔"},
+  {"en":"She asked if I knew the answer.","ko":"그녀는 내가 답을 아는지 물었어요.","example":"She asked 'Do you know the answer?' -> She asked if I knew the answer.","emoji":"❓"},
+  {"en":"He asked whether we had booked the tickets.","ko":"그는 우리가 표를 예매했는지 물었어요.","example":"He asked 'Have you booked the tickets?' -> He asked whether we had booked the tickets.","emoji":"🎫"},
+  {"en":"She asked who had called me.","ko":"그녀는 누가 나에게 전화했는지 물었어요.","example":"She asked 'Who called you?' -> She asked who had called me.","emoji":"📞"},
+  {"en":"They asked if we could speak English.","ko":"그들은 우리가 영어로 말할 수 있는지 물었어요.","example":"They asked 'Can you speak English?' -> They asked if we could speak English.","emoji":"🇬🇧"},
+  {"en":"He asked how much the ticket cost.","ko":"그는 표 값이 얼마인지 물었어요.","example":"He asked 'How much does the ticket cost?' -> He asked how much the ticket cost.","emoji":"💲"},
+  {"en":"She asked if it had rained the day before.","ko":"그녀는 그 전날 비가 왔는지 물었어요.","example":"She asked 'Did it rain yesterday?' -> She asked if it had rained the day before.","emoji":"☔"},
+  {"en":"He asked if you would join the meeting.","ko":"그는 당신이 회의에 참석할지 물었어요.","example":"He asked 'Will you join the meeting?' -> He asked if you would join the meeting.","emoji":"📅"},
+  {"en":"She asked why they were late.","ko":"그녀는 그들이 왜 늦었는지 물었어요.","example":"She asked 'Why are they late?' -> She asked why they were late.","emoji":"⌛"}
+]

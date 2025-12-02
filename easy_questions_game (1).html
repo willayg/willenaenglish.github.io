@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Easy Questions – Audio Matching Game</title>
+    <!-- Playful font from Google Fonts; if unavailable the browser falls back to cursive fonts. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #ffbf69;
+        --secondary: #6c5b7b;
+      }
+      body {
+        margin: 0;
+        font-family: 'Baloo 2', cursive, sans-serif;
+        background: #fffaf3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        color: #2d3436;
+      }
+      h1 {
+        margin-top: 20px;
+        font-size: 2.2rem;
+      }
+      #instructions {
+        margin: 10px auto 20px;
+        text-align: center;
+        max-width: 600px;
+        line-height: 1.4;
+      }
+      #grid {
+        display: grid;
+        /* Force a 4×4 layout regardless of screen width. Each column flexes to
+           fill available space evenly. */
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        width: 90%;
+        max-width: 500px;
+        margin-bottom: 20px;
+      }
+      .card {
+        position: relative;
+        padding-top: 100%;
+        border-radius: 12px;
+        background: #f1f2f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+        font-size: 2rem;
+        user-select: none;
+      }
+      .card.correct {
+        background-color: #00b894;
+        color: #fff;
+        pointer-events: none;
+      }
+      .card.incorrect {
+        animation: shake 0.3s;
+      }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+      }
+      #play-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 25px;
+        background-color: var(--secondary);
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-bottom: 15px;
+      }
+      #play-btn:hover {
+        background-color: #594672;
+      }
+      #status {
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+        min-height: 1.4em;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Easy Questions</h1>
+    <div id="instructions">
+      Listen to the audio and click the matching picture. Each card shows an
+      emoji representing a word. When you hear a word, tap the correct emoji!
+    </div>
+    <button id="play-btn">Play Sound</button>
+    <div id="status"></div>
+    <div id="grid"></div>
+
+    <script>
+      /**
+       * Configuration for the game. Each item corresponds to a single MP3 file.
+       * The `name` should match the filename (without extension) of the MP3 in
+       * Assets/audio/voices/rabbit/Easy questions/. The `emoji` property is the
+       * visual representation shown on the card. Feel free to replace these
+       * defaults with your actual file names and matching emojis. For example,
+       * if you have a file called `apple.mp3` you might set the name to
+       * 'apple' and the emoji to '🍎'. Ensure you include exactly 16 entries
+       * to fill the 4×4 grid.
+       */
+      const items = [
+        { name: 'apple', emoji: '🍎' },
+        { name: 'banana', emoji: '🍌' },
+        { name: 'cat', emoji: '🐱' },
+        { name: 'dog', emoji: '🐶' },
+        { name: 'car', emoji: '🚗' },
+        { name: 'house', emoji: '🏠' },
+        { name: 'book', emoji: '📖' },
+        { name: 'ball', emoji: '⚽' },
+        { name: 'bird', emoji: '🐦' },
+        { name: 'fish', emoji: '🐟' },
+        { name: 'tree', emoji: '🌳' },
+        { name: 'shoe', emoji: '👟' },
+        { name: 'cup', emoji: '☕' },
+        { name: 'sun', emoji: '☀️' },
+        { name: 'moon', emoji: '🌙' },
+        { name: 'star', emoji: '⭐' }
+      ];
+      // Base path where your MP3 files live. If you move your audio folder
+      // elsewhere, update this string accordingly. The trailing slash is
+      // important so file paths concatenate correctly.
+      const AUDIO_BASE = 'Assets/audio/voices/rabbit/Easy questions/';
+
+      // Preload audio objects. This creates a dictionary mapping each item
+      // name to an HTMLAudioElement so we can play sounds quickly without
+      // fetching them repeatedly.
+      const audioMap = {};
+      items.forEach((item) => {
+        audioMap[item.name] = new Audio(`${AUDIO_BASE}${item.name}.mp3`);
+      });
+
+      const gridEl = document.getElementById('grid');
+      const statusEl = document.getElementById('status');
+      const playBtn = document.getElementById('play-btn');
+
+      let remainingItems = [];
+      let currentTarget = null;
+      let playing = false;
+
+      function shuffle(array) {
+        const arr = array.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      // Render the grid of cards. Each card knows which item it represents.
+      function renderGrid() {
+        gridEl.innerHTML = '';
+        remainingItems = shuffle(items.slice());
+        remainingItems.forEach((item) => {
+          const card = document.createElement('div');
+          card.classList.add('card');
+          card.textContent = item.emoji;
+          card.dataset.name = item.name;
+          card.addEventListener('click', () => onCardClick(item, card));
+          gridEl.appendChild(card);
+        });
+      }
+
+      // Start a new round by picking the next item and playing its audio.
+      function nextRound() {
+        if (remainingItems.length === 0) {
+          statusEl.textContent = 'Great job! You found them all!';
+          currentTarget = null;
+          playBtn.disabled = true;
+          return;
+        }
+        currentTarget = remainingItems.pop();
+        statusEl.textContent = '';
+        playSound();
+      }
+
+      // Play the current target's audio. If no target is set, do nothing.
+      function playSound() {
+        if (!currentTarget) return;
+        const audio = audioMap[currentTarget.name];
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play();
+        }
+      }
+
+      // Handle clicks on cards. Check if the clicked card matches the current
+      // target. If it does, mark as correct and move on. If not, briefly
+      // animate and keep waiting.
+      function onCardClick(item, card) {
+        if (!currentTarget || playing || card.classList.contains('correct')) return;
+        if (item.name === currentTarget.name) {
+          card.classList.add('correct');
+          nextRound();
+        } else {
+          // Mark incorrect briefly
+          card.classList.add('incorrect');
+          setTimeout(() => {
+            card.classList.remove('incorrect');
+          }, 400);
+        }
+      }
+
+      // Initial setup: render grid and set up event handlers.
+      renderGrid();
+      playBtn.addEventListener('click', () => {
+        playSound();
+      });
+      // Automatically start the first round once audio is ready
+      window.addEventListener('load', nextRound);
+    </script>
+  </body>
+</html>

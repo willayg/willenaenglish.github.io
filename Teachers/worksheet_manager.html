@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Worksheet Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-6">
+  <h2 id="managerTitle" class="text-xl font-bold mb-4">Worksheet Manager</h2>
+  <div id="loadingSpinner" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="border:4px solid #eee; border-top:4px solid #3498db; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
+  </div>
+  <style>
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+  <div id="managerContent">
+    <!-- Dynamically show save/search/load UI here -->
+    <div id="saveUI" style="display:none;">
+      <form id="saveWorksheetForm" class="space-y-2">
+        <input type="text" id="worksheetTitle" placeholder="Worksheet Title" class="border p-1 w-full" required>
+        <input type="text" id="worksheetBook" placeholder="Book" class="border p-1 w-full">
+        <input type="text" id="worksheetUnit" placeholder="Unit" class="border p-1 w-full">
+        <input type="text" id="worksheetLanguagePoint" placeholder="Language Point" class="border p-1 w-full">
+        <textarea id="worksheetNotes" placeholder="Notes (optional)" class="border p-1 w-full"></textarea>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Save</button>
+      </form>
+    </div>
+    <div id="loadUI" style="display:none;">
+      <div class="flex flex-wrap gap-2 mb-2 items-center">
+        <!-- Teacher filter (populated dynamically) -->
+        <select id="teacherFilter" class="border p-1 flex-1 min-w-[140px]" style="max-width:180px;">
+          <option value="" selected>My Worksheets</option>
+        </select>
+        <label class="flex items-center select-none mr-3" for="showAllVocabToggle">
+          <span class="font-medium text-sm mr-2">Show All Vocabulary Files</span>
+          <input type="checkbox" id="showAllVocabToggle" class="hidden">
+          <span id="toggleSwitch" class="relative w-7 h-4 flex items-center rounded-full border border-blue-900 transition-colors duration-200" style="background:#fff;">
+            <span class="absolute left-0 top-0 w-7 h-4 rounded-full border border-blue-900 transition-colors duration-200" id="toggleBg"></span>
+            <span id="toggleKnob" class="absolute" style="top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #25324b; border-radius: 9999px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: all 0.2s;"></span>
+          </span>
+        </label>
+        <div class="relative flex-1 min-w-[180px]">
+          <input type="text" id="masterSearch" placeholder="Search worksheets..." class="border p-1 w-full pr-8" autocomplete="off">
+          <span class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+              <circle cx="9" cy="9" r="7"/>
+              <line x1="15" y1="15" x2="19" y2="19"/>
+            </svg>
+          </span>
+        </div>
+        <input type="text" id="unitQuickSearch" placeholder="Unit..." class="border p-1 flex-1 min-w-[100px]" autocomplete="off">
+        <select id="layoutQuickSearch" class="border p-1 flex-1 min-w-[120px]" style="max-width:180px;">
+          <option value="" selected>All Layouts</option>
+          <option value="wordlist">Word List</option>
+          <option value="6col-images">Picture Cards</option>
+          <option value="5col-images">Picture Cards (5 per row)</option>
+          <option value="picturelist">Picture List</option>
+          <option value="picture-quiz">Picture Quiz</option>
+          <option value="picture-quiz-5col">Picture Quiz (5 per row)</option>
+          <option value="picture-matching">Picture Matching</option>
+          <option value="eng-kor-matching">English-Korean Matching</option>
+        </select>
+        <!-- Book filter (populated dynamically) -->
+        <select id="bookFilter" class="border p-1 flex-1 min-w-[140px]" style="max-width:180px;">
+          <option value="" selected>All Books</option>
+        </select>
+        <button id="toggleAdvancedSearch" type="button" class="px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">Advanced Search</button>
+      </div>
+      <!-- Pagination Controls -->
+      <div class="flex items-center gap-2 mb-2" id="paginationControls" style="display:none;">
+        <button id="prevPageBtn" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-xs">Previous</button>
+        <span id="pageIndicator" class="text-sm"></span>
+        <button id="nextPageBtn" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-xs">Next</button>
+      </div>
+      <div id="advancedSearch" style="display:none;" class="flex flex-wrap gap-2 mb-2 border p-2 rounded bg-gray-50">
+        <input type="text" id="searchQuery" placeholder="Title..." class="border p-1 flex-1 min-w-[120px]">
+        <input type="text" id="searchBook" placeholder="Book..." class="border p-1 flex-1 min-w-[100px]">
+        <input type="text" id="searchUnit" placeholder="Unit..." class="border p-1 flex-1 min-w-[80px]">
+        <select id="searchType" class="border p-1 flex-1 min-w-[120px]">
+          <option value="">All Types</option>
+          <option value="text">Text</option>
+          <option value="grammar">Grammar</option>
+          <option value="survey">Survey</option>
+          <option value="reading">Reading</option>
+          <option value="wordsearch">Wordsearch</option>
+          <option value="wordtest">Word Test</option>
+          <option value="grid_game">Grid Game</option>
+          <option value="flashcard">Flashcard</option>
+          <!-- Add more types as needed -->
+        </select>
+        <input type="date" id="searchDateFrom" class="border p-1">
+        <input type="date" id="searchDateTo" class="border p-1">
+        <input type="text" id="searchLanguagePoint" placeholder="Language Point..." class="border p-1 flex-1 min-w-[100px]">
+        <input type="text" id="searchCreatedBy" placeholder="Created By..." class="border p-1 flex-1 min-w-[120px]" style="flex-basis: 120px; min-width: 120px;">
+        <input type="text" id="searchTags" placeholder="Tags..." class="border p-1 flex-1 min-w-[100px]">
+        <!-- Layout dropdown removed from advanced search -->
+      </div>
+      <div id="worksheetList" style="max-height:400px;overflow-y:auto;border: 2px solid #b2ebf2; border-radius: 0.5rem; padding: 0.5rem;"></div>
+    </div>
+  </div>
+  <!-- Save and Load buttons removed -->
+  <script>
+    function showSpinner() {
+      document.getElementById('loadingSpinner').style.display = 'flex';
+    }
+    function hideSpinner() {
+      document.getElementById('loadingSpinner').style.display = 'none';
+    }
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode'); // 'save' or 'load'
+  const urlType = params.get('type'); // e.g., 'text', 'wordtest'
+  const vocabOnlyParam = params.get('vocab_only');
+  const requireWordsParam = params.get('require_words');
+
+    document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
+    document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
+
+    document.getElementById('saveWorksheetForm').onsubmit = async function(e) {
+  e.preventDefault();
+  showSpinner();
+  try {
+    const worksheet = window.opener.getCurrentWorksheetData();
+    worksheet.title = document.getElementById('worksheetTitle').value;
+    worksheet.notes = document.getElementById('worksheetNotes').value;
+    worksheet.book = document.getElementById('worksheetBook').value;
+    worksheet.unit = document.getElementById('worksheetUnit').value;
+    worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
+
+    // Set username from localStorage (match dashboard logic)
+    let username = localStorage.getItem('username') || '';
+    if (!username) {
+      const email = localStorage.getItem('userEmail');
+      if (email) {
+        username = email.split('@')[0];
+      }
+    }
+    if (username) {
+      worksheet.username = username;
+    }
+
+    // --- PATCH: For grammar worksheets, always save latest grammarSections as JSON if present ---
+    if (worksheet.worksheet_type === 'grammar' && window.opener) {
+      try {
+        const openerSections = window.opener.grammarSections;
+        if (Array.isArray(openerSections) && openerSections.length > 0) {
+          worksheet.questions = JSON.stringify(openerSections);
+        } else {
+          // fallback to textarea
+          const qEl = window.opener.document.getElementById('grammarQuestions');
+          worksheet.questions = qEl ? qEl.value || '' : '';
+        }
+      } catch (e) {
+        // fallback to textarea
+        const qEl = window.opener.document.getElementById('grammarQuestions');
+        worksheet.questions = qEl ? qEl.value || '' : '';
+      }
+    }
+
+    // Defensive: convert to array if it's a string
+    if (typeof worksheet.words === "string") {
+      worksheet.words = worksheet.words.split('\n').filter(w => w.trim() !== "");
+    }
+    worksheet.words = Array.isArray(worksheet.words)
+      ? worksheet.words.map(w => w.trim()).filter(w => w !== "")
+      : (typeof worksheet.words === "string"
+          ? worksheet.words.split('\n').map(w => w.trim()).filter(w => w !== "")
+          : []);
+
+    // Uniqueness: check for existing worksheet with same title and SAME teacher (username)
+    let existingId = null;
+    let duplicateFound = false;
+    if (worksheet.username && worksheet.title) {
+      try {
+        const checkRes = await fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username');
+        const checkData = await checkRes.json();
+        if (checkData.success && Array.isArray(checkData.data)) {
+          const found = checkData.data.find(ws => ws.title === worksheet.title && ws.username === worksheet.username);
+          if (found) {
+            existingId = found.user_id;
+            duplicateFound = true;
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    if (duplicateFound) {
+      hideSpinner();
+      const proceed = confirm('You already have a worksheet with this title. Overwrite it?');
+      if (!proceed) return; else showSpinner();
+    }
+    if (existingId) worksheet.user_id = existingId;
+
+    // Save (will update if id is present)
+    const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(worksheet)
+    });
+    const result = await res.json();
+    if (result.success) {
+      alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
+      window.close();
+    } else {
+      alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
+    }
+  } finally {
+    hideSpinner();
+  }
+};
+
+    // Helper to map type to display name
+    function getTypeDisplay(type) {
+      const typeDisplayNames = {
+        'wordtest': 'Word Builder',
+        'wordsearch': 'Wordsearch',
+        'grammar': 'Grammar',
+        'survey': 'Survey',
+        'reading': 'Reading',
+        'grid_game': 'Grid Game',
+        'flashcard': 'Flashcard'
+      };
+      if (type && /pic|picture/i.test(type)) return 'Picture Quiz';
+      return typeDisplayNames[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : '');
+    }
+
+    if (mode === 'load') {
+  const searchBox = document.getElementById('searchQuery');
+  const listDiv = document.getElementById('worksheetList');
+
+  // Function to render worksheet buttons
+  function renderList(data) {
+    const listDiv = document.getElementById('worksheetList');
+    listDiv.innerHTML = '';
+    if (!data.length) {
+      listDiv.innerHTML = '<div class="text-gray-400 p-2">No worksheets found.</div>';
+      return;
+    }
+
+    // Deduplicate only identical (title + worksheet_type + creator). Allow same title for different creators.
+    const deduped = [];
+    const seen = {};
+    data.forEach(ws => {
+      const key = `${ws.title}|${ws.worksheet_type}|${ws.username || ''}`;
+      if (!seen[key] || (ws.updated_at && ws.updated_at > seen[key].updated_at)) {
+        seen[key] = ws;
+      }
+    });
+    for (const key in seen) deduped.push(seen[key]);
+
+    // Sorting state
+    if (!renderList.sortState) {
+      renderList.sortState = { col: null, dir: 1 };
+    }
+    const sortState = renderList.sortState;
+
+    // Get current user and role for permission checks
+    let currentUser = localStorage.getItem('username') || '';
+    let userRole = localStorage.getItem('role') || localStorage.getItem('userRole') || '';
+    if (!currentUser) {
+      const email = localStorage.getItem('userEmail');
+      if (email) currentUser = email.split('@')[0];
+    }
+    const isAdmin = userRole && (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'administrator');
+
+    // Table header with sort arrows
+    const columns = [
+      { key: '', label: '' },
+      { key: 'title', label: 'Title' },
+      { key: 'username', label: 'Creator' },
+      { key: 'created_at', label: 'Created' },
+      { key: 'worksheet_type', label: 'Type' },
+      { key: 'layout', label: 'Layout' },
+      { key: 'book', label: 'Book' },
+      { key: 'unit', label: 'Unit' }
+    ];
+
+    // Sort deduped array if a column is selected
+    if (sortState.col) {
+      deduped.sort((a, b) => {
+        let v1 = a[sortState.col] || '';
+        let v2 = b[sortState.col] || '';
+        // For created_at, sort as date
+        if (sortState.col === 'created_at') {
+          v1 = v1 ? new Date(v1) : new Date(0);
+          v2 = v2 ? new Date(v2) : new Date(0);
+        } else {
+          v1 = v1.toString().toLowerCase();
+          v2 = v2.toString().toLowerCase();
+        }
+        if (v1 < v2) return -1 * sortState.dir;
+        if (v1 > v2) return 1 * sortState.dir;
+        return 0;
+      });
+    }
+
+    const table = document.createElement('table');
+    table.className = 'min-w-full text-sm border';
+    const thead = document.createElement('thead');
+    const trHead = document.createElement('tr');
+    trHead.className = 'bg-gray-100';
+    columns.forEach(col => {
+      const th = document.createElement('th');
+      th.className = 'px-2 py-1 border select-none';
+      if (col.key) {
+        th.style.cursor = 'pointer';
+        th.onclick = () => {
+          if (sortState.col === col.key) {
+            sortState.dir = -sortState.dir;
+          } else {
+            sortState.col = col.key;
+            sortState.dir = 1;
+          }
+          renderList(data);
+        };
+        let arrow = '';
+        if (sortState.col === col.key) {
+          arrow = sortState.dir === 1 ? ' ▲' : ' ▼';
+        } else {
+          arrow = ' <span style="color:#bbb;">⇅</span>';
+        }
+        th.innerHTML = col.label + arrow;
+      } else {
+        th.innerHTML = col.label;
+      }
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+
+    // Track selected worksheet ids
+    const selectedIds = new Set();
+
+    // Table rows
+    deduped.forEach(ws => {
+      // Map worksheet_type to descriptive names
+      const typeDisplayNames = {
+        'wordtest': 'Word Builder',
+        'wordsearch': 'Wordsearch',
+        'grammar': 'Grammar',
+        'survey': 'Survey',
+        'reading': 'Reading',
+        'grid_game': 'Grid Game',
+        'flashcard': 'Flashcard'
+      };
+      let typeDisplay = typeDisplayNames[ws.worksheet_type] || (ws.worksheet_type ? ws.worksheet_type.charAt(0).toUpperCase() + ws.worksheet_type.slice(1) : '');
+      if (ws.worksheet_type && /pic|picture/i.test(ws.worksheet_type)) {
+        typeDisplay = 'Picture Quiz';
+      }
+
+      // Map layout display to user-friendly names
+      let layoutDisplay = ws.layout || '';
+      const layoutKey = layoutDisplay.toLowerCase().replace(/\s+/g, '');
+      if (layoutKey === 'default' || layoutKey === '' || !layoutKey || layoutKey === '4col') {
+        layoutDisplay = 'Word List';
+      } else if (layoutKey === '6col-images' || layoutKey === '6colimages') {
+        layoutDisplay = 'Picture Cards';
+      } else if (layoutKey === '5col-images' || layoutKey === '5colimages') {
+        layoutDisplay = 'Picture Cards (5 per row)';
+      } else if (layoutKey === 'picture-list') {
+        layoutDisplay = 'Picture List';
+      } else if (layoutKey === 'picture-list-2col') {
+        layoutDisplay = 'Picture List (Double)';
+      } else if (layoutKey === 'picture-quiz') {
+        layoutDisplay = 'Picture Quiz';
+      } else if (layoutKey === 'picture-quiz-5col') {
+        layoutDisplay = 'Picture Quiz (5 per row)';
+      } else if (layoutKey === 'picture-matching') {
+        layoutDisplay = 'Picture Matching';
+      } else if (layoutKey === 'eng-kor-matching' || layoutKey === 'koreanenglishmatching' || layoutKey === 'engkormatching') {
+        layoutDisplay
+      } else {
+        layoutDisplay = layoutDisplay.charAt(0).toUpperCase() + layoutDisplay.slice(1);
+      }
+
+      // Permission: Only allow selection if admin or creator
+      const canDelete = isAdmin || (ws.username && ws.username === currentUser);
+
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-blue-50 cursor-pointer';
+      tr.onclick = async () => {
+        // Show loading while fetching full worksheet data
+        showSpinner();
+        try {
+          // Fetch the complete worksheet data using list_worksheets with ID filter
+          const fullRes = await fetch(`/.netlify/functions/supabase_proxy/list_worksheets?id=${ws.user_id}`);
+          const fullResult = await fullRes.json();
+          
+          if (fullResult.success && fullResult.data && fullResult.data.length > 0) {
+            const fullWorksheet = fullResult.data[0];
+            
+            // If worksheet type matches, load full worksheet
+            if (filterType && fullWorksheet.worksheet_type === filterType) {
+              window.opener.loadWorksheet(fullWorksheet);
+            } else if (filterType && ['wordtest','grid_game','flashcard','wordsearch'].includes(fullWorksheet.worksheet_type) && ['wordtest','grid_game','flashcard','wordsearch'].includes(filterType)) {
+              // If both are vocabulary types but not the same, import only word data
+              const mainWin = window.opener;
+              if (mainWin) {
+                // Prepare words for wordsearch: always use line breaks
+                let wordsText = '';
+                if (fullWorksheet.words && Array.isArray(fullWorksheet.words)) {
+                  wordsText = fullWorksheet.words.join('\n');
+                } else if (typeof fullWorksheet.words === 'string') {
+                  // If comma separated, convert to line breaks
+                  if (filterType === 'wordsearch') {
+                    wordsText = fullWorksheet.words.replace(/,\s*/g, '\n');
+                  } else {
+                    wordsText = fullWorksheet.words;
+                  }
+                }
+                // Load words into AI passage textarea
+                const aiPassage = mainWin.document.getElementById('aiPassage');
+                if (aiPassage) {
+                  aiPassage.value = wordsText;
+                }
+                // Set difficulty to topic input
+                const topicInput = mainWin.document.getElementById('topic');
+                if (topicInput) {
+                  topicInput.value = fullWorksheet.difficulty || '';
+                }
+                // Load default list 'Basic word list' if available
+                if (fullWorksheet.defaultlist && fullWorksheet.defaultlist === 'Basic word list') {
+                  // If there's a special handling for Basic word list, set it
+                  const defaultListInput = mainWin.document.getElementById('defaultList');
+                  if (defaultListInput) {
+                    defaultListInput.value = 'Basic word list';
+                  }
+                }
+                // Also call loadWorksheet with minimal data for compatibility
+                const minimal = {
+                  words: (wordsText ? wordsText.split('\n').map(w => w.trim()).filter(w => w) : []),
+                  worksheet_type: filterType,
+                  difficulty: fullWorksheet.difficulty || '',
+                  defaultlist: fullWorksheet.defaultlist || ''
+                };
+                mainWin.loadWorksheet(minimal);
+              }
+            } else {
+              // Otherwise, load full worksheet (default)
+              window.opener.loadWorksheet(fullWorksheet);
+            }
+            window.close();
+          } else {
+            alert('Error loading worksheet: Worksheet not found');
+          }
+        } catch (error) {
+          alert('Error loading worksheet: ' + error.message);
+        } finally {
+          hideSpinner();
+        }
+      };
+
+      tr.innerHTML = `
+        <td class="px-2 py-1 border">${canDelete ? `<input type="checkbox" class="ws-checkbox" data-id="${ws.user_id}">` : ''}</td>
+        <td class="px-2 py-1 border">${ws.title || ''}</td>
+        <td class="px-2 py-1 border">${ws.username || ''}</td>
+        <td class="px-2 py-1 border">${ws.created_at ? ws.created_at.split('T')[0] : ''}</td>
+        <td class="px-2 py-1 border">${typeDisplay}</td>
+        <td class="px-2 py-1 border">${layoutDisplay}</td>
+        <td class="px-2 py-1 border">${ws.book || ''}</td>
+        <td class="px-2 py-1 border">${ws.unit || ''}</td>
+      `;
+
+      // Prevent row click when clicking checkbox
+      const cb = tr.querySelector('.ws-checkbox');
+      if (cb) {
+        cb.onclick = e => {
+          e.stopPropagation();
+          if (cb.checked) {
+            selectedIds.add(cb.getAttribute('data-id'));
+          } else {
+            selectedIds.delete(cb.getAttribute('data-id'));
+          }
+        };
+      }
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+
+    // Add Delete Selected trash can button if user can delete at least one worksheet
+    const canDeleteAny = deduped.some(ws => isAdmin || (ws.username && ws.username === currentUser));
+    if (canDeleteAny) {
+      const deleteBtn = document.createElement('button');
+      // Plain text 'Delete Selected' in Poppins font, no button style
+      deleteBtn.textContent = 'Delete Selected';
+      deleteBtn.title = 'Delete Selected';
+      deleteBtn.className = 'mb-2 ml-2 focus:outline-none';
+      deleteBtn.style.background = 'none';
+      deleteBtn.style.border = 'none';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.style.fontFamily = "'Poppins', sans-serif";
+      deleteBtn.style.fontWeight = '500';
+      deleteBtn.style.fontSize = '0.7rem';
+      deleteBtn.style.color = '#222';
+      deleteBtn.onmouseover = function() { deleteBtn.style.textDecoration = 'underline'; };
+      deleteBtn.onmouseout = function() { deleteBtn.style.textDecoration = 'none'; };
+      deleteBtn.onclick = async function() {
+        if (selectedIds.size === 0) {
+          alert('No worksheets selected.');
+          return;
+        }
+        if (!confirm('Are you sure you want to delete the selected worksheets? This cannot be undone.')) return;
+        let deletedCount = 0;
+        for (const id of selectedIds) {
+          try {
+            const res = await fetch('/.netlify/functions/supabase_proxy/delete_worksheet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id })
+            });
+            const result = await res.json();
+            if (result.success) {
+              deletedCount++;
+            }
+          } catch (err) {
+            // Ignore individual errors
+          }
+        }
+        alert(`Deleted ${deletedCount} worksheet(s).`);
+        // Refresh list
+        renderList(deduped.filter(ws => !selectedIds.has(ws.user_id)));
+      };
+      listDiv.appendChild(deleteBtn);
+    }
+
+    listDiv.appendChild(table);
+  }
+
+  // Fetch and show all worksheets on load
+  let allWorksheets = [];
+  let currentPage = 1;
+  const pageSize = 50; // Number of worksheets per page
+  let totalWorksheets = 0;
+  let totalPages = 1;
+
+  function updatePaginationControls() {
+    const controls = document.getElementById('paginationControls');
+    const indicator = document.getElementById('pageIndicator');
+    controls.style.display = totalPages > 1 ? 'flex' : 'none';
+    indicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prevPageBtn').disabled = currentPage === 1;
+    document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+  }
+
+  document.getElementById('prevPageBtn').onclick = function() {
+    if (currentPage > 1) {
+      currentPage--;
+      fetchAndRenderWorksheets();
+    }
+  };
+  document.getElementById('nextPageBtn').onclick = function() {
+    if (currentPage < totalPages) {
+      currentPage++;
+      fetchAndRenderWorksheets();
+    }
+  };
+  
+  // For import, use URL param 'type' when provided (text or vocab types)
+  let filterType = null;
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('type') === 'text') {
+    filterType = 'text';
+  } else if (urlParams.get('type') && ['wordtest','grid_game','flashcard','wordsearch'].includes(urlParams.get('type'))) {
+    filterType = urlParams.get('type');
+  } else if (window.opener) {
+    // Check the opener window for specific elements to determine worksheet type
+    const openerDoc = window.opener.document;
+    if (openerDoc.getElementById('readingTitle') && openerDoc.getElementById('readingPassage')) {
+      filterType = 'reading';
+    } else if (openerDoc.getElementById('grammarTitle') && openerDoc.getElementById('grammarQuestions')) {
+      filterType = 'grammar';
+    } else if (openerDoc.getElementById('surveyTitle') && openerDoc.getElementById('surveyQuestions')) {
+      filterType = 'survey';
+    } else if (openerDoc.getElementById('wordListTextarea') || openerDoc.getElementById('wordTestWords')) {
+      filterType = 'wordtest';
+    } else if (openerDoc.getElementById('wordsearchWords')) {
+      filterType = 'wordsearch';
+    } else if (openerDoc.getElementById('gridSize') && openerDoc.getElementById('vocabInput')) {
+      filterType = 'grid_game';
+    } else if (openerDoc.getElementById('flashcardGrid') && openerDoc.getElementById('titleInput') && openerDoc.getElementById('wordListInput')) {
+      filterType = 'flashcard';
+    }
+  }
+
+  // Update the title for load mode
+  if (mode === 'load') {
+    const titleEl = document.getElementById('managerTitle');
+    if (filterType === 'text') {
+      titleEl.textContent = 'Worksheet Manager: Text Files';
+    } else if (filterType) {
+      titleEl.textContent = `Worksheet Manager: ${getTypeDisplay(filterType)}`;
+    } else {
+      // If vocab_only, hint vocabulary scope
+      if (vocabOnlyParam === '1' || vocabOnlyParam === 'true') {
+        titleEl.textContent = 'Worksheet Manager: Vocabulary Files';
+      } else {
+        titleEl.textContent = 'Worksheet Manager: All Types';
+      }
+    }
+  }
+  
+  function fetchAndRenderWorksheets() {
+    showSpinner();
+    // Build query string for pagination
+    const offset = (currentPage - 1) * pageSize;
+    // Always fetch words when require_words flag present for client-side filtering
+    let fields = 'user_id,title,username,created_at,updated_at,worksheet_type,layout,book,unit,language_point' + (requireWordsParam ? ',words,images' : '');
+    let queryParams = `fields=${fields}&limit=${pageSize}&offset=${offset}`;    // Add filter for type if specified
+    if (filterType) {
+      queryParams += `&type=${filterType}`;
+    }
+
+  // Teacher filtering logic (created_by param expected by backend)
+    const teacherSelect = document.getElementById('teacherFilter');
+    let teacherValue = teacherSelect ? teacherSelect.value : '';
+    // Blank value => restrict to current user. __ALL__ => no teacher filter.
+    if (teacherValue === '') {
+      let currentUser = localStorage.getItem('username') || '';
+      if (!currentUser) {
+        const email = localStorage.getItem('userEmail');
+        if (email) currentUser = email.split('@')[0];
+      }
+      if (currentUser) queryParams += `&created_by=${encodeURIComponent(currentUser)}`;
+    } else if (teacherValue !== '__ALL__') {
+      queryParams += `&created_by=${encodeURIComponent(teacherValue)}`;
+    }
+
+    // Book filter
+    const bookFilter = document.getElementById('bookFilter');
+    const bookVal = bookFilter ? bookFilter.value : '';
+    if (bookVal) {
+      queryParams += `&book=${encodeURIComponent(bookVal)}`;
+    }
+    
+    // Add search parameters
+    // If vocab_only=1 in URL, force showing vocab types; also reflect toggle UI
+    const vocabOnly = vocabOnlyParam === '1' || vocabOnlyParam === 'true';
+    const toggleEl = document.getElementById('showAllVocabToggle');
+    if (toggleEl && vocabOnly) {
+      toggleEl.checked = true;
+    }
+    const showAllVocab = document.getElementById('showAllVocabToggle')?.checked;
+    if (showAllVocab) {
+      queryParams += `&vocab_types=wordtest,grid_game,flashcard,wordsearch`;
+    }
+    
+    // Add master search parameters
+    const masterSearchValue = document.getElementById('masterSearch')?.value?.trim();
+    if (masterSearchValue) {
+      queryParams += `&search=${encodeURIComponent(masterSearchValue)}`;
+    }
+    
+    const unitSearch = document.getElementById('unitQuickSearch')?.value?.trim();
+    if (unitSearch) {
+      queryParams += `&unit=${encodeURIComponent(unitSearch)}`;
+    }
+    
+    const layoutSearch = document.getElementById('layoutQuickSearch')?.value;
+    if (layoutSearch) {
+      queryParams += `&layout=${encodeURIComponent(layoutSearch)}`;
+    }
+    
+    // Add advanced search parameters
+    const advancedVisible = document.getElementById('advancedSearch')?.style?.display !== 'none';
+    if (advancedVisible) {
+      const advancedParams = {
+        title: document.getElementById('searchQuery')?.value?.trim(),
+        book: document.getElementById('searchBook')?.value?.trim(),
+        unit_adv: document.getElementById('searchUnit')?.value?.trim(),
+        type_adv: document.getElementById('searchType')?.value,
+        date_from: document.getElementById('searchDateFrom')?.value,
+        date_to: document.getElementById('searchDateTo')?.value,
+        language_point: document.getElementById('searchLanguagePoint')?.value?.trim(),
+        created_by: document.getElementById('searchCreatedBy')?.value?.trim()
+      };
+      
+      Object.entries(advancedParams).forEach(([key, value]) => {
+        if (value) {
+          queryParams += `&${key}=${encodeURIComponent(value)}`;
+        }
+      });
+    }
+    
+    fetch(`/.netlify/functions/supabase_proxy/list_worksheets?${queryParams}`)
+      .then(res => res.json())
+      .then(result => {
+        console.log('Loaded worksheets:', result);
+        if (result.success) {
+          // Optionally filter client-side to only rows with words when requested
+          let data = result.data || [];
+          if (requireWordsParam) {
+            const hasWordsColumn = data.some(ws => 'words' in ws);
+            if (hasWordsColumn) {
+              data = data.filter(ws => {
+                if (Array.isArray(ws.words)) return ws.words.length > 0;
+                if (typeof ws.words === 'string') {
+                  const str = ws.words.trim();
+                  if (!str) return false;
+                  // Try JSON parse first
+                  try {
+                    const parsed = JSON.parse(str);
+                    if (Array.isArray(parsed)) return parsed.length > 0;
+                  } catch (_) { /* not JSON */ }
+                  // Fallback: contains at least one non-empty token
+                  const tokens = str.includes('\n') ? str.split('\n') : str.split(',');
+                  return tokens.some(t => (t || '').trim().length > 0);
+                }
+                return false;
+              });
+            }
+            // If no words column present, skip filtering to avoid empty results; backend likely ignored fields
+          }
+          window.allRawWorksheets = data;
+          if (requireWordsParam) {
+            totalWorksheets = data.length;
+          } else {
+            totalWorksheets = result.total || result.data.length;
+          }
+          totalPages = Math.max(1, Math.ceil(totalWorksheets / pageSize));
+          updatePaginationControls();
+          updateWorksheetList();
+        } else {
+          console.error('Failed to load worksheets:', result.error);
+          alert('Failed to load worksheets: ' + (result.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching worksheets:', error);
+        alert('Error loading worksheets: ' + error.message);
+      })
+      .finally(() => { hideSpinner(); });
+  }
+  
+  // Fetch and load worksheets
+  if (mode === 'load') {
+    fetchAndRenderWorksheets();
+  }
+
+  function updateWorksheetList() {
+    // Since data is now filtered server-side, just use what we received
+    allWorksheets = window.allRawWorksheets || [];
+    renderList(allWorksheets);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Toggle switch setup
+    const toggle = document.getElementById('showAllVocabToggle');
+    const toggleSwitch = document.getElementById('toggleSwitch');
+    const toggleKnob = document.getElementById('toggleKnob');
+    const toggleBg = document.getElementById('toggleBg');
+    function updateToggleVisuals() {
+      const darkGrayBlue = '#25324b'; // darker, grayer blue
+      if (toggle.checked) {
+        toggleSwitch.style.background = darkGrayBlue;
+        toggleBg.style.background = darkGrayBlue;
+        toggleKnob.style.left = '11px'; // for w-7 (28px) and knob 12px
+        toggleKnob.style.background = '#fff';
+        toggleKnob.style.border = `1px solid ${darkGrayBlue}`;
+      } else {
+        toggleSwitch.style.background = '#fff';
+        toggleBg.style.background = '#fff';
+        toggleKnob.style.left = '1px';
+        toggleKnob.style.background = darkGrayBlue;
+        toggleKnob.style.border = `1px solid ${darkGrayBlue}`;
+      }
+    }
+    if (toggle) {
+      updateToggleVisuals();
+      toggle.addEventListener('change', function() {
+        updateToggleVisuals();
+        currentPage = 1; // Reset to page 1 when toggling
+        fetchAndRenderWorksheets();
+      });
+    }
+
+    // Populate teacher & book dropdowns
+    (async function populateFilters() {
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=username,book&limit=10000');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          const teacherSet = new Set();
+          const bookSet = new Set();
+          data.data.forEach(ws => {
+            if (ws.username) teacherSet.add(ws.username.trim());
+            if (ws.book) bookSet.add(ws.book.trim());
+          });
+          const currentUserName = (localStorage.getItem('username') || (localStorage.getItem('userEmail') ? localStorage.getItem('userEmail').split('@')[0] : '') || '').trim();
+          const teacherArr = Array.from(teacherSet).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+          const teacherSelectEl = document.getElementById('teacherFilter');
+          if (teacherSelectEl) {
+            // Preserve first option (My Worksheets)
+            // Add All Teachers option
+            const allOpt = document.createElement('option');
+            allOpt.value='__ALL__'; allOpt.textContent='All Teachers';
+            teacherSelectEl.appendChild(allOpt);
+            teacherArr.forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t; opt.textContent = t === currentUserName ? `${t} (You)` : t;
+              teacherSelectEl.appendChild(opt);
+            });
+            // Ensure dropdown default remains My Worksheets (blank) if current user present
+          }
+          const bookArr = Array.from(bookSet).filter(Boolean).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+          const bookSelectEl = document.getElementById('bookFilter');
+            if (bookSelectEl) {
+              bookArr.forEach(bk => {
+                const opt = document.createElement('option');
+                opt.value = bk; opt.textContent = bk;
+                bookSelectEl.appendChild(opt);
+              });
+            }
+        }
+      } catch (e) {
+        console.warn('Failed to populate teacher/book filters', e);
+      }
+    })();
+
+    // Change listeners
+    document.getElementById('teacherFilter')?.addEventListener('change', () => { currentPage=1; fetchAndRenderWorksheets(); });
+    document.getElementById('bookFilter')?.addEventListener('change', () => { currentPage=1; fetchAndRenderWorksheets(); });
+  });
+
+  // Master search + unit quick search function
+  function masterSearchFunc() {
+    // Reset to page 1 when searching
+    currentPage = 1;
+    fetchAndRenderWorksheets();
+  }
+
+  // Advanced search function
+  function advancedSearchFunc() {
+    // Reset to page 1 when searching
+    currentPage = 1;
+    fetchAndRenderWorksheets();
+  }
+
+  // Master search and unit quick search triggers
+  const masterSearch = document.getElementById('masterSearch');
+  const unitQuickSearch = document.getElementById('unitQuickSearch');
+  const layoutQuickSearch = document.getElementById('layoutQuickSearch');
+  masterSearch.addEventListener('input', masterSearchFunc);
+  masterSearch.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      masterSearchFunc();
+    }
+  });
+  unitQuickSearch.addEventListener('input', masterSearchFunc);
+  unitQuickSearch.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      masterSearchFunc();
+    }
+  });
+  layoutQuickSearch.addEventListener('input', masterSearchFunc);
+  layoutQuickSearch.addEventListener('change', masterSearchFunc);
+
+  // Advanced search triggers
+  ['searchQuery','searchBook','searchUnit','searchType','searchDateFrom','searchDateTo','searchLanguagePoint','searchCreatedBy','searchTags'].forEach(id => {
+    document.getElementById(id).addEventListener('input', advancedSearchFunc);
+    document.getElementById(id).addEventListener('change', advancedSearchFunc);
+  });
+
+  // Toggle advanced search
+  document.getElementById('toggleAdvancedSearch').onclick = function() {
+    const adv = document.getElementById('advancedSearch');
+    adv.style.display = adv.style.display === 'none' ? 'flex' : 'none';
+  };
+
+}
+
+    // Auto-fill save form fields (title/book/unit/language_point/notes) from opener
+    if (mode === 'save' && window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
+      try {
+        // Prefer last loaded worksheet metadata if present
+        const meta = window.opener._loadedWorksheetMeta || {};
+        const worksheet = window.opener.getCurrentWorksheetData();
+        if (worksheet && worksheet.title) {
+          document.getElementById('worksheetTitle').value = worksheet.title;
+        } else if (meta.title) {
+          document.getElementById('worksheetTitle').value = meta.title;
+        }
+        if (meta.book) document.getElementById('worksheetBook').value = meta.book;
+        if (meta.unit) document.getElementById('worksheetUnit').value = meta.unit;
+        if (meta.language_point) document.getElementById('worksheetLanguagePoint').value = meta.language_point;
+        if (meta.notes) document.getElementById('worksheetNotes').value = meta.notes;
+      } catch (e) {
+        console.warn('Failed to get worksheet data for auto-fill:', e);
+      }
+    }
+
+    function getCurrentWorksheetData() {
+      // This should get data from the actual wordtest.js window
+      // The elements we need are: titleInput, passageInput, wordListTextarea
+      return {};  // Return empty - we'll let the main window handle this
+    }
+    window.getCurrentWorksheetData = getCurrentWorksheetData;
+
+async function saveWorksheet() {
+  if (window.opener && typeof window.opener.getCurrentWorksheetData === 'function') {
+    const worksheet = window.opener.getCurrentWorksheetData();
+    console.log('Saving worksheet:', worksheet); // Debug: See what is being sent
+
+    const res = await fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(worksheet)
+    });
+    const result = await res.json();
+    if (result.error) {
+      alert('Error saving worksheet: ' + result.error);
+    } else {
+      alert('Worksheet saved!');
+      window.close();
+    }
+  } else {
+    alert('Cannot access worksheet data from the main window.');
+  }
+}
+
+async function loadWorksheet() {
+  try {
+    const res = await fetch('/.netlify/functions/supabase_proxy/list_worksheets');
+    const result = await res.json();
+    
+    if (result.success && result.data && result.data.length > 0) {
+      // For now, just load the first worksheet (you can enhance this with a selection UI)
+      const worksheet = result.data[0];
+      
+      if (window.opener && typeof window.opener.loadWorksheet === 'function') {
+        window.opener.loadWorksheet(worksheet);
+        window.close();
+      } else {
+        alert('Cannot access the main window to load worksheet.');
+      }
+    } else {
+      alert('No worksheets found or error loading worksheets.');
+    }
+  } catch (error) {
+    alert('Error loading worksheets: ' + error.message);
+  }
+    }
+
+  </script>
+</body>
+</html>

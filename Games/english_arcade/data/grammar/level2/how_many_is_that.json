@@ -1,0 +1,137 @@
+[
+  {
+    "id": "how_many_apples_are",
+    "word": "how_many",
+    "en": "How many apples are there? There are three apples.",
+    "ko": "사과가 몇 개 있어요? 사과가 세 개 있어요.",
+    "exampleSentence": "How many apples are there? There are three apples.",
+    "exampleSentenceKo": "사과가 몇 개 있어요? 사과가 세 개 있어요.",
+    "emoji": "🍎🍎🍎"
+  },
+  {
+    "id": "how_many_people_are",
+    "word": "how_many",
+    "en": "How many people are in the room? There are five people.",
+    "ko": "방에 몇 명 있어요? 다섯 명 있어요.",
+    "exampleSentence": "How many people are in the room? There are five people.",
+    "exampleSentenceKo": "방에 몇 명 있어요? 다섯 명 있어요.",
+    "emoji": "👥👥👥👥👥"
+  },
+  {
+    "id": "how_many_books_do",
+    "word": "how_many",
+    "en": "How many books do you have? I have ten books.",
+    "ko": "책이 몇 권 있어요? 열 권 있어요.",
+    "exampleSentence": "How many books do you have? I have ten books.",
+    "exampleSentenceKo": "책이 몇 권 있어요? 열 권 있어요.",
+    "emoji": "📚📚📚📚📚📚📚📚📚📚"
+  },
+  {
+    "id": "how_many_chairs_are",
+    "word": "how_many",
+    "en": "How many chairs are in the classroom? There are twenty chairs.",
+    "ko": "교실에 의자가 몇 개 있어요? 스무 개 있어요.",
+    "exampleSentence": "How many chairs are in the classroom? There are twenty chairs.",
+    "exampleSentenceKo": "교실에 의자가 몇 개 있어요? 스무 개 있어요.",
+    "emoji": "🪑"
+  },
+  {
+    "id": "how_many_cookies_are",
+    "word": "how_many",
+    "en": "How many cookies are on the plate? There are four cookies.",
+    "ko": "접시에 쿠키가 몇 개 있어요? 네 개 있어요.",
+    "exampleSentence": "How many cookies are on the plate? There are four cookies.",
+    "exampleSentenceKo": "접시에 쿠키가 몇 개 있어요? 네 개 있어요.",
+    "emoji": "🍪"
+  },
+  {
+    "id": "how_many_students_are",
+    "word": "how_many",
+    "en": "How many students are absent? Two students are absent.",
+    "ko": "결석한 학생이 몇 명 있어요? 두 명이에요.",
+    "exampleSentence": "How many students are absent? Two students are absent.",
+    "exampleSentenceKo": "결석한 학생이 몇 명 있어요? 두 명이에요.",
+    "emoji": "👩‍🎓🚫"
+  },
+  {
+    "id": "how_many_pens_do",
+    "word": "how_many",
+    "en": "How many pens do you have? I have three pens.",
+    "ko": "펜이 몇 개 있어요? 세 개 있어요.",
+    "exampleSentence": "How many pens do you have? I have three pens.",
+    "exampleSentenceKo": "펜이 몇 개 있어요? 세 개 있어요.",
+    "emoji": "✏️✏️✏️"
+  },
+  {
+    "id": "how_many_cars_are",
+    "word": "how_many",
+    "en": "How many cars are in the parking lot? There are six cars.",
+    "ko": "주차장에 차가 몇 대 있나요? 여섯 대 있어요.",
+    "exampleSentence": "How many cars are in the parking lot? There are six cars.",
+    "exampleSentenceKo": "주차장에 차가 몇 대 있나요? 여섯 대 있어요.",
+    "emoji": "🚗"
+  },
+  {
+    "id": "how_many_days_are",
+    "word": "how_many",
+    "en": "How many days are in a week? There are seven days.",
+    "ko": "일주일은 며칠이에요? 일곱 날이에요.",
+    "exampleSentence": "How many days are in a week? There are seven days.",
+    "exampleSentenceKo": "일주일은 며칠이에요? 일곱 날이에요.",
+    "emoji": "📅"
+  },
+  {
+    "id": "how_many_sisters_do",
+    "word": "how_many",
+    "en": "How many sisters do you have? I have two sisters.",
+    "ko": "자매가 몇 명 있어요? 두 명 있어요.",
+    "exampleSentence": "How many sisters do you have? I have two sisters.",
+    "exampleSentenceKo": "자매가 몇 명 있어요? 두 명 있어요.",
+    "emoji": "👧👧"
+  },
+  {
+    "id": "how_many_hours_do",
+    "word": "how_many",
+    "en": "How many hours do you sleep? I sleep eight hours.",
+    "ko": "몇 시간 자요? 여덟 시간 자요.",
+    "exampleSentence": "How many hours do you sleep? I sleep eight hours.",
+    "exampleSentenceKo": "몇 시간 자요? 여덟 시간 자요.",
+    "emoji": "🛌"
+  },
+  {
+    "id": "how_many_pencils_are",
+    "word": "how_many",
+    "en": "How many pencils are in the box? Ten pencils.",
+    "ko": "상자 안에 연필이 몇 개 있어요? 열 개 있어요.",
+    "exampleSentence": "How many pencils are in the box? Ten pencils.",
+    "exampleSentenceKo": "상자 안에 연필이 몇 개 있어요? 열 개 있어요.",
+    "emoji": "✏️"
+  },
+  {
+    "id": "how_many_students_are_2",
+    "word": "how_many",
+    "en": "How many students are in your class? There are twenty-eight students.",
+    "ko": "너의 반에 학생이 몇 명 있어요? 28명 있어요.",
+    "exampleSentence": "How many students are in your class? There are twenty-eight students.",
+    "exampleSentenceKo": "너의 반에 학생이 몇 명 있어요? 28명 있어요.",
+    "emoji": "👩‍🏫👨‍🏫"
+  },
+  {
+    "id": "how_many_apples_did",
+    "word": "how_many",
+    "en": "How many apples did you eat? I ate two apples.",
+    "ko": "사과를 몇 개 먹었어요? 두 개 먹었어요.",
+    "exampleSentence": "How many apples did you eat? I ate two apples.",
+    "exampleSentenceKo": "사과를 몇 개 먹었어요? 두 개 먹었어요.",
+    "emoji": "🍎🍎"
+  },
+  {
+    "id": "how_many_cookies_do",
+    "word": "how_many",
+    "en": "How many cookies do you want? I want one cookie.",
+    "ko": "쿠키 몇 개 원해요? 한 개 원해요.",
+    "exampleSentence": "How many cookies do you want? I want one cookie.",
+    "exampleSentenceKo": "쿠키 몇 개 원해요? 한 개 원해요.",
+    "emoji": "🍪"
+  }
+]

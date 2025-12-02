@@ -1,0 +1,137 @@
+[
+  {
+    "id": "i_am_reading_a",
+    "word": "i_am",
+    "en": "I am reading a book now.",
+    "ko": "저는 지금 책을 읽고 있어요.",
+    "exampleSentence": "I am reading a book now.",
+    "exampleSentenceKo": "저는 지금 책을 읽고 있어요.",
+    "emoji": "📖"
+  },
+  {
+    "id": "she_is_playing_soccer",
+    "word": "she_is",
+    "en": "She is playing soccer.",
+    "ko": "그녀는 축구를 하고 있어요.",
+    "exampleSentence": "She is playing soccer.",
+    "exampleSentenceKo": "그녀는 축구를 하고 있어요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "they_are_watching_tv",
+    "word": "they_are",
+    "en": "They are watching TV.",
+    "ko": "그들은 TV를 보고 있어요.",
+    "exampleSentence": "They are watching TV.",
+    "exampleSentenceKo": "그들은 TV를 보고 있어요.",
+    "emoji": "📺"
+  },
+  {
+    "id": "he_is_cooking_dinner",
+    "word": "he_is",
+    "en": "He is cooking dinner.",
+    "ko": "그는 저녁을 요리하고 있어요.",
+    "exampleSentence": "He is cooking dinner.",
+    "exampleSentenceKo": "그는 저녁을 요리하고 있어요.",
+    "emoji": "🍳"
+  },
+  {
+    "id": "we_are_studying_english",
+    "word": "we_are",
+    "en": "We are studying English.",
+    "ko": "우리는 영어를 공부하고 있어요.",
+    "exampleSentence": "We are studying English.",
+    "exampleSentenceKo": "우리는 영어를 공부하고 있어요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "the_cat_is_sleeping",
+    "word": "the_cat",
+    "en": "The cat is sleeping.",
+    "ko": "고양이는 자고 있어요.",
+    "exampleSentence": "The cat is sleeping.",
+    "exampleSentenceKo": "고양이는 자고 있어요.",
+    "emoji": "😴"
+  },
+  {
+    "id": "i_am_eating_breakfast",
+    "word": "i_am",
+    "en": "I am eating breakfast.",
+    "ko": "저는 아침을 먹고 있어요.",
+    "exampleSentence": "I am eating breakfast.",
+    "exampleSentenceKo": "저는 아침을 먹고 있어요.",
+    "emoji": "🍳"
+  },
+  {
+    "id": "she_is_drawing_a",
+    "word": "she_is",
+    "en": "She is drawing a picture.",
+    "ko": "그녀는 그림을 그리고 있어요.",
+    "exampleSentence": "She is drawing a picture.",
+    "exampleSentenceKo": "그녀는 그림을 그리고 있어요.",
+    "emoji": "🎨"
+  },
+  {
+    "id": "they_are_playing_games",
+    "word": "they_are",
+    "en": "They are playing games.",
+    "ko": "그들은 게임을 하고 있어요.",
+    "exampleSentence": "They are playing games.",
+    "exampleSentenceKo": "그들은 게임을 하고 있어요.",
+    "emoji": "🎮"
+  },
+  {
+    "id": "he_is_running_in",
+    "word": "he_is",
+    "en": "He is running in the park.",
+    "ko": "그는 공원에서 뛰고 있어요.",
+    "exampleSentence": "He is running in the park.",
+    "exampleSentenceKo": "그는 공원에서 뛰고 있어요.",
+    "emoji": "🏃"
+  },
+  {
+    "id": "we_are_listening_to",
+    "word": "we_are",
+    "en": "We are listening to music.",
+    "ko": "우리는 음악을 듣고 있어요.",
+    "exampleSentence": "We are listening to music.",
+    "exampleSentenceKo": "우리는 음악을 듣고 있어요.",
+    "emoji": "🎧"
+  },
+  {
+    "id": "it_is_raining_now",
+    "word": "it_is",
+    "en": "It is raining now.",
+    "ko": "지금 비가 오고 있어요.",
+    "exampleSentence": "It is raining now.",
+    "exampleSentenceKo": "지금 비가 오고 있어요.",
+    "emoji": "🌧️"
+  },
+  {
+    "id": "you_are_learning_a",
+    "word": "you_are",
+    "en": "You are learning a lot.",
+    "ko": "당신은 많은 것을 배우고 있어요.",
+    "exampleSentence": "You are learning a lot.",
+    "exampleSentenceKo": "당신은 많은 것을 배우고 있어요.",
+    "emoji": "📘"
+  },
+  {
+    "id": "she_is_cleaning_her",
+    "word": "she_is",
+    "en": "She is cleaning her room.",
+    "ko": "그녀는 방을 청소하고 있어요.",
+    "exampleSentence": "She is cleaning her room.",
+    "exampleSentenceKo": "그녀는 방을 청소하고 있어요.",
+    "emoji": "🧹"
+  },
+  {
+    "id": "they_are_dancing",
+    "word": "they_are",
+    "en": "They are dancing.",
+    "ko": "그들은 춤추고 있어요.",
+    "exampleSentence": "They are dancing.",
+    "exampleSentenceKo": "그들은 춤추고 있어요.",
+    "emoji": "💃"
+  }
+]

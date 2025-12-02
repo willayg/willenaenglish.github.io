@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willena Grid Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <style>
+        #dragHandle {
+            transition: background 0.2s;
+        }
+        #dragHandle:hover {
+            cursor: grab;
+            background: #e0fcff;
+        }
+        #dragIcon svg {
+            transition: filter 0.2s;
+        }
+        #dragHandle:hover #dragIcon svg {
+            filter: drop-shadow(0 0 4px #38bdf8);
+        }
+        #dragHandle {
+            transition: background 0.2s;
+        }
+        #dragHandle:hover {
+            cursor: grab;
+            background: #e0fcff;
+        }
+        #dragIcon {
+            transition: color 0.2s;
+        }
+        #dragHandle:hover #dragIcon {
+            color: #38bdf8;
+        }
+        .floating-toolbar {
+          background: linear-gradient(135deg, #b2f7ef 0%, #5eead4 40%, #38bdf8 80%, #0ea5e9 100%) !important;
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          padding: 12px 24px;
+          border-radius: 14px;
+          margin-bottom: 18px;
+          box-shadow: 0 2px 1px 2px #0ea5e9, 0 0 2px 2px #38bdf8 inset, 0 1.5px 0 0 #b2f7ef inset;
+          border: 3px solid #dbe6eb;
+          background-clip: padding-box;
+          position: relative;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .floating-toolbar::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 14px;
+          pointer-events: none;
+          z-index: 0;
+          background: linear-gradient(120deg, #e0fcff 0%, #b2f7ef 30%, #38bdf8 60%, #0ea5e9 100%);
+          opacity: 0.55;
+        }
+        .floating-toolbar {
+          /* Extra metallic shine */
+          box-shadow: 0 2px 12px 2px #0ea5e9, 0 0 18px 2px #38bdf8 inset, 0 1.5px 0 0 #b2f7ef inset;
+        }
+        .floating-toolbar > * {
+          position: relative;
+          z-index: 1;
+        }
+        .toolbar-select {
+          font-size: 1em;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid #5e6add;
+          margin-right: 8px;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .font-size-controls {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .size-btn {
+          background: #b5bde05b;
+          border: 1px solid #3c59d8;
+          border-radius: 4px;
+          font-size: 1.1em;
+          width: 28px;
+          height: 28px;
+          cursor: pointer;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        .font-size-input {
+          width: 40px;
+          text-align: center;
+          font-size: 1em;
+          border-radius: 4px;
+          border: 1px solid #2e2d2d;
+          font-family: 'Poppins', Arial, sans-serif !important;
+        }
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .grid-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            padding: 32px;
+            border-right: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+        
+        .preview-area {
+            flex: 1;
+            padding: 32px;
+            background: white;
+            position: relative;
+        }
+        /* Sticky grid container */
+        .sticky-grid {
+            position: fixed;
+            top: 280px;
+            left: 620px;
+            z-index: 1000;
+            box-shadow: 0 4px 24px rgba(46,43,63,0.10);
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            width: 650px;
+            max-width: 90vw;
+
+        }
+
+        /* For very wide screens, move sticky grid further right */
+        @media (min-width: 1800px) {
+          .sticky-grid {
+            left: 650px;
+          }
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.81rem;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.81rem;
+            transition: border-color 0.2s;
+        }
+
+        /* Make color inputs visually distinct */
+        .form-input[type="color"] {
+            width: 25px;
+            height: 25px;
+            padding: 0;
+            border-radius: 50%;
+            border: 1.5px solid #e5e7eb;
+            box-shadow: 0 1px 4px rgba(46,43,63,0.08);
+            cursor: pointer;
+            vertical-align: middle;
+            margin-right: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input[type="color"]:hover, .form-input[type="color"]:focus {
+            border-color: #4a4458;
+            box-shadow: 0 2px 8px rgba(46,43,63,0.15);
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 8px 0;
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.86rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 43, 63, 0.25);
+            filter: brightness(1.08);
+        }
+        
+        .generate-btn:disabled {
+            background: linear-gradient(135deg, #6b6a74, #a3a1b2);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            color: #e5e7eb;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 7px 10px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.83rem;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            filter: brightness(1.08);
+            box-shadow: 0 4px 12px rgba(46, 43, 63, 0.18);
+        }
+        
+        .action-btn:disabled {
+            background: linear-gradient(135deg, #6b6a74, #a3a1b2);
+            color: #e5e7eb;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .team-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            font-size: 0.77rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .team-color-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        /* Game Grid Styles */
+        .game-grid {
+            display: grid;
+            gap: 10px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .game-grid.grid-3x3 {
+            grid-template-columns: repeat(3, 150px);
+            grid-template-rows: repeat(3, 100px);
+            width: 490px;
+        }
+        
+        .game-grid.grid-4x4 {
+            grid-template-columns: repeat(4, 150px);
+            grid-template-rows: repeat(4, 100px);
+            width: 520px;
+        }
+        
+        .grid-square {
+            background-color: white;
+            border: 3px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            /* font-size removed to allow fullscreen scaling */
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .grid-square:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .grid-square.showing-word {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            color: #1976d2;
+        }
+        
+        .grid-square.showing-question {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+            color: #f57c00;
+            /* font-size removed to allow fullscreen scaling */
+        }
+        
+        .grid-square.team-color {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-top: 100px;
+            padding: 40px;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none !important; }
+        
+        /* MASSIVE FULLSCREEN STYLES FOR CLASSROOM */
+        /* Removed inline fullscreen styles. Refer to grid_game.css for fullscreen layout. */
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                display: block;
+            }
+            .preview-area {
+                padding: 0;
+            }
+        }
+        /* On smaller PC screens, make sticky grid static so it doesn't cover menus */
+        @media (max-width: 1400px) {
+          .sticky-grid {
+            position: static !important;
+            top: auto !important;
+            right: 580px;
+            margin: 0 auto 24px auto;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 0 2px 8px rgba(46,43,63,0.10);
+            border-radius: 16px;
+            padding: 16px;
+          }
+        }
+
+        /* Toolbar-style action button for Reset/Fullscreen */
+        .toolbar-action-btn {
+          background: linear-gradient(135deg, #b2f7ef 0%, #5eead4 40%, #38bdf8 80%, #0ea5e9 100%) !important;
+          color: #1e293b !important;
+          border: 3px solid #dbe6eb !important;
+          border-radius: 14px !important;
+          box-shadow: 0 2px 12px 2px #0ea5e9, 0 0 18px 2px #38bdf8 inset, 0 1.5px 0 0 #b2f7ef inset;
+          font-family: 'Poppins', Arial, sans-serif !important;
+          font-weight: 600;
+          font-size: 1rem;
+          padding: 10px 28px;
+          margin: 8px 0;
+          cursor: pointer;
+          transition: filter 0.18s, box-shadow 0.18s;
+        }
+        .toolbar-action-btn:hover {
+          filter: brightness(1.08);
+          box-shadow: 0 6px 24px 2px #0ea5e9, 0 0 24px 2px #38bdf8 inset;
+        }
+    </style>
+</head>
+<body>
+  <script>
+  // Sticky grid scroll adjustment: smoothly move sticky grid from 230px to 70px from top as user scrolls down
+  document.addEventListener('DOMContentLoaded', function() {
+    const stickyGrid = document.querySelector('.sticky-grid');
+    if (!stickyGrid) return;
+    const minTop = 20; // px
+    const maxTop = 280; // px
+    const scrollStart = 0; // px
+    const scrollEnd = 300; // px (after this, top stays at minTop)
+    function updateStickyGridPosition() {
+      const scrollY = window.scrollY || window.pageYOffset;
+      let newTop;
+      if (scrollY <= scrollStart) {
+        newTop = maxTop;
+      } else if (scrollY >= scrollEnd) {
+        newTop = minTop;
+      } else {
+        // Linear interpolate between maxTop and minTop
+        const t = (scrollY - scrollStart) / (scrollEnd - scrollStart);
+        newTop = maxTop + (minTop - maxTop) * t;
+      }
+      stickyGrid.style.top = newTop + 'px';
+    }
+    window.addEventListener('scroll', updateStickyGridPosition);
+    // Initial position
+    updateStickyGridPosition();
+  });
+  </script>
+  <script>
+    // Access control: only allow approved users
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+    <div class="container">
+        <div class="grid-card">
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+                <h1 style="flex:1; text-align:center; margin:0;">Willena Grid Game</h1>
+                <!-- Top Action Bar: Load/Save -->
+                <div class="top-actions" style="position:absolute; left:0; right:0; bottom:12px; margin:auto; width:auto; z-index:9999; display:flex; gap:32px; align-items:flex-end;">
+                  <span class="action-link" id="newBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18); margin:2px 5px 0px 20px;">New</span>
+                  <span class="action-link" id="loadBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18); margin:2px 5px;">Load</span>
+                  <span class="action-link" id="saveBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18); margin:2px 5px;">Save</span>
+                  <span class="action-link" id="moreBtn" style="cursor:pointer; color:#fff; font-weight:600; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,0.18); margin:2px 80px; margin-left:auto;">More</span>
+<script>
+// New and More button logic for Grid Game
+document.addEventListener('DOMContentLoaded', function() {
+  // New button logic
+  const newBtn = document.getElementById('newBtn');
+  if (newBtn) {
+    newBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to start a new grid game?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+        // Clear all main fields (adjust IDs as needed for grid game)
+        const idsToClear = [
+          'titleInput',
+          'questionInput',
+          'answerInput',
+          'qFontSizeInput',
+          'aFontSizeInput'
+        ];
+        idsToClear.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+          }
+        });
+        // Reset selects (if any)
+        // Optionally clear preview area
+        const preview = document.getElementById('previewArea');
+        if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+        if (window.updateGridGamePreview) window.updateGridGamePreview();
+      }
+    });
+  }
+  // Print and PDF button logic
+  const printBtn = document.getElementById('printBtn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function() {
+      window.print();
+    });
+  }
+  const pdfBtn = document.getElementById('pdfBtn');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', function() {
+      alert('PDF export coming soon!');
+    });
+  }
+  // More button logic
+  const moreBtn = document.getElementById('moreBtn');
+  if (moreBtn) {
+    moreBtn.addEventListener('click', async function() {
+      if (!document.getElementById('moreToolsOverlay')) {
+        try {
+          const resp = await fetch('/Teachers/components/more-tools.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          const overlay = tempDiv.querySelector('#moreToolsOverlay');
+          if (overlay) document.body.appendChild(overlay);
+          tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+          tempDiv.querySelectorAll('script').forEach(script => {
+            const s = document.createElement('script');
+            if (script.textContent) s.textContent = script.textContent;
+            document.body.appendChild(s);
+          });
+          setTimeout(function() {
+            var closeBtn = document.getElementById('closeMoreToolsBtn');
+            var overlayDiv = document.getElementById('moreToolsOverlay');
+            if (closeBtn && overlayDiv) {
+              closeBtn.onclick = function() {
+                overlayDiv.style.display = 'none';
+                document.body.style.overflow = '';
+              };
+            }
+          }, 100);
+        } catch (e) { alert('Could not load More Tools.'); return; }
+      }
+      if (typeof showMoreToolsModal === 'function') {
+        showMoreToolsModal();
+      } else {
+        const overlay = document.getElementById('moreToolsOverlay');
+        if (overlay) {
+          overlay.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          var closeBtn = document.getElementById('closeMoreToolsBtn');
+          if (closeBtn) {
+            closeBtn.onclick = function() {
+              overlay.style.display = 'none';
+              document.body.style.overflow = '';
+            };
+          }
+        }
+      }
+    });
+  }
+});
+</script>
+                </div>
+                <!-- Burger Menu Component (vertically centered in header, inside container) -->
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+            </div>
+            
+            <!-- Floating Toolbar: now below header/title and above main-content -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+                <div class="font-size-controls">
+                    <label style="margin-right:4px;">Question Font</label>
+                    <button class="size-btn" id="decreaseQFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="qFontSizeInput" value="16" min="10" max="32" step="1">
+                    <button class="size-btn" id="increaseQFontBtn">+</button>
+                </div>
+                <div class="font-size-controls">
+                    <label style="margin-right:4px;">Answer Font</label>
+                    <button class="size-btn" id="decreaseAFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="aFontSizeInput" value="16" min="10" max="32" step="1">
+                    <button class="size-btn" id="increaseAFontBtn">+</button>
+                </div>
+                <!-- Color scheme removed -->
+    <!-- Color scheme logic removed -->
+                <button class="refresh-btn" id="refreshPreviewBtn" title="Refresh Preview" style="margin-left:12px;">↻</button>
+            </div>
+            <div class="main-content">
+                <!-- Sidebar Controls -->
+                <div class="sidebar">
+                    <!-- Title Input Box -->
+                    <div class="form-group" style="margin-bottom: 18px;">
+                        <label class="form-label" for="titleInput">Game Title</label>
+                        <input type="text" id="titleInput" class="form-input" placeholder="Enter grid game title here" style="font-size:1.1em;font-weight:500;">
+                    </div>
+                    <h2 class="font-bold text-lg mb-4" style="color: #2e2b3f;">Grid Game Setup</h2>
+
+                    <!-- Grid Size Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Grid Size</label>
+                        <select id="gridSize" class="form-select">
+                            <option value="3x3">3x3 (9 squares)</option>
+                            <option value="4x4">4x4 (16 squares)</option>
+                        </select>
+                    </div>
+
+                    <!-- AI Passage Extraction -->
+                    <div class="form-group">
+                        <label class="form-label">Reading Passage (for AI extraction)</label>
+                        <textarea id="passageInput" class="form-textarea" rows="4" placeholder="Paste your reading passage here for AI to extract words and questions"></textarea>
+                        <button id="extractBtn" class="generate-btn">
+                            <span class="button-text">Extract Words and Questions</span>
+                            <span class="loading-spinner hidden"></span>
+                        </button>
+                    </div>
+
+                    <!-- AI Grid Generator (moved just below extract) -->
+                    <div class="form-group">
+                        <label class="form-label">AI Quiz Maker</label>
+                        <textarea id="aiGridPrompt" class="form-textarea" rows="2" placeholder="Describe the type of questions and answers you want (e.g. grammar, vocabulary, topic, etc)"></textarea>
+                        <button id="generateGridAI" class="generate-btn" style="margin-top:8px;">
+                            <span class="button-text">Generate Quiz</span>
+                            <span class="loading-spinner hidden"></span>
+                        </button>
+                    </div>
+
+                    <!-- Manual Input -->
+                    <div class="form-group">
+                        <label class="form-label">Vocabulary Words</label>
+                        <textarea id="vocabInput" class="form-textarea" rows="3" placeholder="Enter vocabulary words (one per line)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Questions</label>
+                        <textarea id="questionsInput" class="form-textarea" rows="3" placeholder="Enter questions (one per line)"></textarea>
+                    </div>
+
+                    <!-- Team Setup -->
+                    <div class="form-group">
+                        <label class="form-label">Team Setup (Optional)</label>
+                        <input type="text" id="teamNameInput" class="form-input" placeholder="Enter team name" style="margin-bottom: 8px;">
+                        <input type="color" id="teamColorInput" class="form-input" value="#ff0000" style="margin-bottom: 8px;">
+                        <button id="addTeamBtn" class="action-btn" style="width: 100%; margin-bottom: 8px;">Add Team</button>
+                        <div id="teamList"></div>
+                    </div>
+
+                    <!-- Customization -->
+                    <div class="form-group">
+                        <label class="form-label">Card Layout</label>
+                        <select id="cardLayoutPicker" class="form-select">
+                            <option value="word-top">Word Top / Question Bottom</option>
+                            <option value="question-top">Question Top / Word Bottom</option>
+                        </select>
+                    </div>
+
+                    <!-- Generate Game Button -->
+                    <button id="generateGameBtn" class="generate-btn">
+                        <span class="button-text">Generate Game</span>
+                        <span class="loading-spinner hidden"></span>
+                    </button>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="saveSetupBtn" class="action-btn">Save</button>
+                        <button id="loadSetupBtn" class="action-btn">Load</button>
+                    </div>
+                </div>
+                
+                <!-- Preview Area -->
+                <div class="preview-area">
+                    <div id="gamePreviewArea" class="sticky-grid">
+                        <div id="gridGameTitleDisplay" style="font-size:1.5em;font-weight:700;text-align:center;margin-bottom:12px;color:#2e2b3f;"></div>
+                        <div id="dragHandle" style="padding:6px 12px;border-radius:8px 8px 0 0;font-weight:600;color:#222;user-select:none;position:absolute;top:-38px;left:0;width:48px;height:48px;z-index:1001;display:flex;align-items:center;justify-content:center;">
+                          <span id="dragIcon" style="font-size:2em;display:inline-block;width:32px;height:32px;">
+                            <!-- 4-way arrow SVG icon -->
+                            <svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <g>
+                                <polygon points="16,2 19,7 17,7 17,15 15,15 15,7 13,7" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>
+                                <polygon points="30,16 25,13 25,15 17,15 17,17 25,17 25,19" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>
+                                <polygon points="16,30 13,25 15,25 15,17 17,17 17,25 19,25" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>
+                                <polygon points="2,16 7,19 7,17 15,17 15,15 7,15 7,13" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>
+                                <circle cx="16" cy="16" r="3" fill="#2e2b3f"/>
+                              </g>
+                            </svg>
+                          </span>
+                        </div>
+                        <div class="empty-state">
+                            <div class="icon">🎯</div>
+                            <h3>Ready to Create Your Grid Game</h3>
+                            <p>Enter vocabulary words and questions, then click "Generate Game" to start playing.</p>
+                            <p style="font-size: 0.9rem; margin-top: 16px; opacity: 0.7;">
+                                <strong>How to play:</strong><br>
+                                • Click squares to reveal questions<br>
+                                • Right-click to assign team colors<br>
+                                • Use fullscreen mode for classroom projection
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="grid_game_fixed.js"></script>
+    <script>
+    // Show the title above the sticky grid and update dynamically, and keep it after grid is generated
+    document.addEventListener('DOMContentLoaded', function() {
+      var titleInput = document.getElementById('titleInput');
+      var titleDisplay = document.getElementById('gridGameTitleDisplay');
+      function updateTitleDisplay() {
+        if (titleInput && titleDisplay) {
+          var val = titleInput.value.trim();
+          titleDisplay.textContent = val ? val : '';
+        }
+      }
+      if (titleInput && titleDisplay) {
+        titleInput.addEventListener('input', updateTitleDisplay);
+        updateTitleDisplay();
+      }
+      // MutationObserver to keep title visible after grid is generated
+      var previewArea = document.getElementById('gamePreviewArea');
+      if (previewArea && titleDisplay) {
+        var observer = new MutationObserver(function() {
+          // Always move titleDisplay to top of previewArea if it's not there
+          if (previewArea.firstElementChild !== titleDisplay) {
+            previewArea.insertBefore(titleDisplay, previewArea.firstChild);
+          }
+        });
+        observer.observe(previewArea, { childList: true });
+      }
+    });
+    </script>
+    <script>
+    // Draggable sticky grid logic
+// Helper: Ensure drag handle and title display are present at top of grid
+function ensureGridHeader() {
+  const stickyGrid = document.getElementById('gamePreviewArea');
+  if (!stickyGrid) return;
+  // Remove any existing drag handle and title display ONLY if they are direct children
+  Array.from(stickyGrid.children).forEach(child => {
+    if (child.id === 'dragHandle' || child.id === 'gridGameTitleDisplay') stickyGrid.removeChild(child);
+  });
+  // Create title display
+  const titleDisplay = document.createElement('div');
+  titleDisplay.id = 'gridGameTitleDisplay';
+  titleDisplay.style.cssText = 'font-size:1.5em;font-weight:700;text-align:center;margin-bottom:12px;color:#2e2b3f;';
+  var titleInput = document.getElementById('titleInput');
+  titleDisplay.textContent = titleInput ? titleInput.value.trim() : '';
+  stickyGrid.insertBefore(titleDisplay, stickyGrid.firstChild);
+  // Create drag handle
+  const dragHandle = document.createElement('div');
+  dragHandle.id = 'dragHandle';
+  dragHandle.style.cssText = 'padding:6px 12px;border-radius:8px 8px 0 0;font-weight:600;color:#222;user-select:none;position:absolute;top:-38px;left:0;width:48px;height:48px;z-index:1001;display:flex;align-items:center;justify-content:center;';
+  dragHandle.innerHTML = '<span id="dragIcon" style="font-size:2em;display:inline-block;width:32px;height:32px;">' +
+    '<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<g>' +
+    '<polygon points="16,2 19,7 17,7 17,15 15,15 15,7 13,7" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
+    '<polygon points="30,16 25,13 25,15 17,15 17,17 25,17 25,19" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
+    '<polygon points="16,30 13,25 15,25 15,17 17,17 17,25 19,25" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
+    '<polygon points="2,16 7,19 7,17 15,17 15,15 7,15 7,13" fill="#38bdf8" stroke="#2e2b3f" stroke-width="1"/>' +
+    '<circle cx="16" cy="16" r="3" fill="#2e2b3f"/>' +
+    '</g></svg></span>';
+  stickyGrid.insertBefore(dragHandle, stickyGrid.children[1] || stickyGrid.firstChild.nextSibling);
+}
+function attachDragLogic() {
+  const stickyGrid = document.getElementById('gamePreviewArea');
+  if (!stickyGrid) return;
+  // Only attach drag logic if drag handle exists and is a direct child
+  const dragHandle = stickyGrid.querySelector('#dragHandle');
+  if (!dragHandle) return;
+  let isDragging = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+  function isSticky() {
+    return window.getComputedStyle(stickyGrid).position === 'fixed';
+  }
+  // Remove previous listeners
+  dragHandle.onmousedown = null;
+  dragHandle.ontouchstart = null;
+  window._dragMove && document.removeEventListener('mousemove', window._dragMove);
+  window._dragUp && document.removeEventListener('mouseup', window._dragUp);
+  window._dragTouchMove && document.removeEventListener('touchmove', window._dragTouchMove);
+  window._dragTouchEnd && document.removeEventListener('touchend', window._dragTouchEnd);
+  dragHandle.addEventListener('mousedown', function(e) {
+    if (!isSticky()) return;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = parseInt(stickyGrid.style.left || 620);
+    origTop = parseInt(stickyGrid.style.top || 280);
+    document.body.style.userSelect = 'none';
+  });
+  window._dragMove = function(e) {
+    if (!isDragging) return;
+    let dx = e.clientX - startX;
+    let dy = e.clientY - startY;
+    stickyGrid.style.left = (origLeft + dx) + 'px';
+    stickyGrid.style.top = (origTop + dy) + 'px';
+  };
+  window._dragUp = function() {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    }
+  };
+  document.addEventListener('mousemove', window._dragMove);
+  document.addEventListener('mouseup', window._dragUp);
+  // Touch support
+  dragHandle.addEventListener('touchstart', function(e) {
+    if (!isSticky()) return;
+    isDragging = true;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    origLeft = parseInt(stickyGrid.style.left || 620);
+    origTop = parseInt(stickyGrid.style.top || 280);
+    document.body.style.userSelect = 'none';
+  });
+  window._dragTouchMove = function(e) {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    let dx = touch.clientX - startX;
+    let dy = touch.clientY - startY;
+    stickyGrid.style.left = (origLeft + dx) + 'px';
+    stickyGrid.style.top = (origTop + dy) + 'px';
+  };
+  window._dragTouchEnd = function() {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    }
+  };
+  document.addEventListener('touchmove', window._dragTouchMove, {passive:false});
+  document.addEventListener('touchend', window._dragTouchEnd);
+  // Reset grid position if window resized below 1400px (static mode)
+  window.addEventListener('resize', function() {
+    if (!isSticky()) {
+      stickyGrid.style.left = '';
+      stickyGrid.style.top = '';
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', attachDragLogic);
+// Title and drag handle are now preserved during grid generation
+    // Font and font size controls for grid game preview
+    function updateGridPreviewFont() {
+      const font = document.getElementById('fontSelect')?.value || 'Poppins';
+      const qSize = document.getElementById('qFontSizeInput')?.value || '16';
+      const aSize = document.getElementById('aFontSizeInput')?.value || '16';
+      // Apply font and font size to questions and answers in preview
+      const preview = document.getElementById('gamePreviewArea');
+      if (preview) {
+        // Questions
+        preview.querySelectorAll('.grid-square.showing-question').forEach(el => {
+          el.style.fontFamily = font + ',sans-serif';
+          el.style.fontSize = qSize + 'px';
+        });
+        // Answers
+        preview.querySelectorAll('.grid-square.showing-word').forEach(el => {
+          el.style.fontFamily = font + ',sans-serif';
+          el.style.fontSize = aSize + 'px';
+        });
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      // Font selector
+      const fontSelect = document.getElementById('fontSelect');
+      if (fontSelect) {
+        fontSelect.addEventListener('change', updateGridPreviewFont);
+      }
+      // Q font size controls
+      const qFontInput = document.getElementById('qFontSizeInput');
+      const decQBtn = document.getElementById('decreaseQFontBtn');
+      const incQBtn = document.getElementById('increaseQFontBtn');
+      if (decQBtn && qFontInput) decQBtn.onclick = function() { qFontInput.value = Math.max(10, parseInt(qFontInput.value)-1); qFontInput.dispatchEvent(new Event('input')); };
+      if (incQBtn && qFontInput) incQBtn.onclick = function() { qFontInput.value = Math.min(32, parseInt(qFontInput.value)+1); qFontInput.dispatchEvent(new Event('input')); };
+      if (qFontInput) qFontInput.addEventListener('input', updateGridPreviewFont);
+      // A font size controls
+      const aFontInput = document.getElementById('aFontSizeInput');
+      const decABtn = document.getElementById('decreaseAFontBtn');
+      const incABtn = document.getElementById('increaseAFontBtn');
+      if (decABtn && aFontInput) decABtn.onclick = function() { aFontInput.value = Math.max(10, parseInt(aFontInput.value)-1); aFontInput.dispatchEvent(new Event('input')); };
+      if (incABtn && aFontInput) incABtn.onclick = function() { aFontInput.value = Math.min(32, parseInt(aFontInput.value)+1); aFontInput.dispatchEvent(new Event('input')); };
+      if (aFontInput) aFontInput.addEventListener('input', updateGridPreviewFont);
+      // Manual refresh button
+      const refreshBtn = document.getElementById('refreshPreviewBtn');
+      if (refreshBtn) refreshBtn.onclick = updateGridPreviewFont;
+      // Initial font update
+      updateGridPreviewFont();
+      // Also update font after game is generated
+      const observer = new MutationObserver(updateGridPreviewFont);
+      const preview = document.getElementById('gamePreviewArea');
+      if (preview) observer.observe(preview, { childList: true, subtree: true });
+    });
+    </script>
+    <script>
+      // Card layout picker integration
+      document.addEventListener('DOMContentLoaded', function() {
+        var cardLayoutPicker = document.getElementById('cardLayoutPicker');
+        if (cardLayoutPicker) {
+          // Save selection to localStorage for persistence (optional)
+          cardLayoutPicker.addEventListener('change', function() {
+            localStorage.setItem('gridGameCardLayout', cardLayoutPicker.value);
+          });
+          // Load previous selection
+          var savedLayout = localStorage.getItem('gridGameCardLayout');
+          if (savedLayout) cardLayoutPicker.value = savedLayout;
+        }
+      });
+      // AI Grid Generator logic
+      document.addEventListener('DOMContentLoaded', function() {
+        var aiBtn = document.getElementById('generateGridAI');
+        var aiPrompt = document.getElementById('aiGridPrompt');
+        var gridSizeSelect = document.getElementById('gridSize');
+        var vocabInput = document.getElementById('vocabInput');
+        var questionsInput = document.getElementById('questionsInput');
+        if (aiBtn) {
+          aiBtn.onclick = async function() {
+            var prompt = aiPrompt.value.trim();
+            var gridSize = gridSizeSelect.value === '4x4' ? 16 : 9;
+            if (!prompt) {
+              alert('Please describe the type of questions and answers you want.');
+              aiPrompt.focus();
+              return;
+            }
+            aiBtn.disabled = true;
+            aiBtn.querySelector('.button-text').textContent = 'Generating...';
+            aiBtn.querySelector('.loading-spinner').classList.remove('hidden');
+            try {
+              const response = await fetch('/.netlify/functions/openai_proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  endpoint: 'chat/completions',
+                  payload: {
+                    model: 'gpt-3.5-turbo',
+                    messages: [
+                      {
+                        role: 'user',
+                        content:
+                          `You are an ESL teacher assistant. Based on the following description, generate exactly ${gridSize} question and answer pairs suitable for a classroom grid game.\n\nDescription: ${prompt}\n\nFormat your response exactly like this:\n\nQUESTIONS:\nquestion1\nquestion2\n...\nANSWERS:\nanswer1\nanswer2\n...`
+                      }
+                    ],
+                    max_tokens: 800,
+                    temperature: 0.7
+                  }
+                })
+              });
+              const result = await response.json();
+              const aiText = result.data?.choices?.[0]?.message?.content || result.choices?.[0]?.message?.content || result.data?.content || result.content;
+              if (!aiText) throw new Error('No response from AI');
+              // Parse AI response
+              const qMatch = aiText.match(/QUESTIONS:\s*([\s\S]*?)(?=ANSWERS:|$)/i);
+              const aMatch = aiText.match(/ANSWERS:\s*([\s\S]*?)$/i);
+              if (qMatch && aMatch) {
+                const questions = qMatch[1].trim().split(/\n+/).map(q => q.trim()).filter(q => q);
+                const answers = aMatch[1].trim().split(/\n+/).map(a => a.trim()).filter(a => a);
+                if (questions.length === gridSize && answers.length === gridSize) {
+                  questionsInput.value = questions.join('\n');
+                  vocabInput.value = answers.join('\n');
+                } else {
+                  alert('AI did not return the correct number of questions/answers.');
+                }
+              } else {
+                alert('Could not parse AI response.');
+              }
+            } catch (err) {
+              alert('AI error: ' + err.message);
+            } finally {
+              aiBtn.disabled = false;
+              aiBtn.querySelector('.button-text').textContent = 'Generate Grid';
+              aiBtn.querySelector('.loading-spinner').classList.add('hidden');
+            }
+          };
+        }
+      });
+    </script>
+    <script>
+      // Connect all Load/Save buttons (top and sidebar) to worksheet manager
+      // Save/load functionality is now handled in grid_game_fixed.js
+    </script>
+    <link rel="stylesheet" href="grid_game.css">
+    
+    <script>
+// Feedback modal loader for burger menu integration
+window.showFeedbackModal = function() {
+  // Prevent multiple modals
+  if (document.getElementById('feedback-modal-bg')) return;
+  // Try to find the template in DOM first
+  let template = document.getElementById('feedback-modal-template');
+  if (!template) {
+    // If not found, fetch and inject it
+    fetch('/Teachers/components/feedback-modal.html')
+      .then(resp => resp.text())
+      .then(html => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+        showFeedbackModal(); // Call again now that template is present
+      });
+    return;
+  }
+  // Clone and show modal
+  const modalNode = template.content.cloneNode(true);
+  document.body.appendChild(modalNode);
+  // Add close/cancel handlers
+  const bg = document.getElementById('feedbackModalBg');
+  if (!bg) return;
+  const closeBtn = bg.querySelector('#feedbackModalCloseBtn');
+  const cancelBtn = bg.querySelector('#feedbackCancelBtn');
+  function closeModal() { bg.remove(); }
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  // Optional: focus textarea
+  const textarea = bg.querySelector('textarea');
+  if (textarea) textarea.focus();
+
+  // Feedback submit handler
+  const submitBtn = bg.querySelector('#feedbackSubmitBtn');
+  if (submitBtn) {
+    submitBtn.onclick = async function() {
+      const feedbackText = textarea.value.trim();
+      if (!feedbackText) {
+        alert('Please enter your feedback.');
+        textarea.focus();
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      // Prepare feedback payload
+      // Gather tool state (settings)
+      let toolState = {};
+      try {
+        toolState = {
+          gridSize: document.getElementById('gridSize')?.value,
+          passage: document.getElementById('passageInput')?.value,
+          vocab: document.getElementById('vocabInput')?.value,
+          questions: document.getElementById('questionsInput')?.value,
+          gridColor: document.getElementById('gridColorPicker')?.value,
+          font: document.getElementById('fontPicker')?.value,
+        };
+      } catch (e) { toolState = {}; }
+      const payload = {
+        feedback: feedbackText,
+        module: 'grid_game',
+        page_url: window.location.pathname,
+        tool_state: toolState,
+        user_id: localStorage.getItem('userId') || '',
+        username: localStorage.getItem('username') || localStorage.getItem('name') || ''
+      };
+      try {
+        const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'insert_feedback',
+            data: payload
+          })
+        });
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+          submitBtn.textContent = 'Sent!';
+          setTimeout(closeModal, 900);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send';
+          alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send';
+        alert('Network error: ' + err.message);
+      }
+    };
+  }
+};
+    </script>
+</body>
+</html>

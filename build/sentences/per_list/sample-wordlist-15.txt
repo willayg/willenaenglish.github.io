@@ -1,0 +1,34 @@
+# List: sample-wordlist-15
+# Words
+apple
+banana
+cat
+dog
+water
+school
+book
+car
+tree
+sun
+moon
+star
+milk
+bread
+house
+
+# Sentences
+I eat an apple.
+He eats a banana.
+The cat sleeps.
+The dog runs.
+I drink water.
+I go to school.
+I read a book.
+The car stops.
+The tree grows.
+The sun shines.
+The moon rises.
+A star sparkles.
+I drink milk.
+I cut bread.
+We clean the house.

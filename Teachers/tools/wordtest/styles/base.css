@@ -1,0 +1,46 @@
+.worksheet-preview .worksheet-header span {
+  /* Only layout/overflow properties here; all font/color handled by .title-style-* classes */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Worksheet Title Styles (1-10) */
+/* Worksheet Title Styles (0-10) */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Layout variables for sticky bars */
+:root {
+  --header-height: 45px;
+  --actions-height: 30px;
+  --menubar-height: 40px;
+}
+
+.container {
+  max-width: 97vw;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.planner-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.app-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+}

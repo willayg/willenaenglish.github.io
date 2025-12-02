@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/Games/english_arcade/" />
+  <title data-i18n="English Arcade">English Arcade</title>
+
+  <!-- Performance: preconnect for fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Supabase client config (safe to expose). PUT YOUR REAL VALUES HERE. -->
+  <meta name="supabase-url" content="https://YOURPROJECT.supabase.co" />
+  <meta name="supabase-anon-key" content="YOUR_PUBLIC_ANON_KEY" />
+
+  <!-- CSP: allow audio, remote ESM (supabase-js), fonts, and API calls -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 img-src 'self' data: blob: https:;
+                 media-src 'self' data: blob: https:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com;
+                 script-src 'self' 'unsafe-inline' https:;
+                 connect-src 'self' https:;" />
+  <meta name="color-scheme" content="light dark" />
+
+  <style>
+    :root { --pri:#19777e; --acc:#93cbcf; --ink:#222; --mut:#666; }
+    body { font: 14px/1.4 system-ui, Segoe UI, Arial, sans-serif; background:#f5f7fa; color:var(--ink); }
+    /* Force consistent header height to prevent jumpiness */
+    student-header::part(name) { font-size: 16px; line-height: 1.2; }
+  </style>
+  <script>
+    // Early auth gate: redirect to student login if no valid whoami
+    (function(){
+      const loginUrl = '/students/login.html';
+      const here = window.location.pathname + window.location.search + window.location.hash;
+      function goLogin(){ try { window.location.replace(loginUrl + '?next=' + encodeURIComponent(here)); } catch { window.location.href = loginUrl; } }
+      // Skip gate if already on login (defensive) or if a special flag present
+      if (/\/students\/login\.html$/i.test(window.location.pathname)) return;
+      // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
+      fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
+        .catch(() => goLogin());
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=20251115a" />
+  <link rel="stylesheet" href="/students/theme.css" />
+
+  <!-- Your header web component -->
+  <script defer src="/students/components/student-header.js"></script>
+  <script src="/students/language.js"></script>
+  <script src="/students/theme.js"></script>
+  <!-- Game app -->
+  <script type="module" src="main.js?v=20251130b"></script>
+</head>
+<body class="word-arcade">
+  <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
+  <img slot="actions" src="assets/Images/icons/english-arcade.svg" alt="English Arcade" style="height:4em;max-height:4.5em;display:block;" />
+  <a slot="menu-item" id="tabWordArcade" class="wa-menu-btn wa-tab active" href="#" data-i18n="English Arcade">English Arcade</a>
+  <a slot="menu-item" id="tabGrammarArcade" class="wa-menu-btn wa-tab" href="#" data-i18n="Your Homework">your homework
+    <span id="hwTabBadge" aria-hidden="true" style="display:none;margin-left:8px;vertical-align:middle;background:#c2410c;color:#fff;border-radius:999px;padding:2px 7px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.18);min-width:20px;text-align:center;line-height:1;">0</span>
+  </a>
+  </student-header>
+
+  <main class="notranslate" translate="no">
+    <!-- In-game progress bar -->
+    <div id="gameProgressBar" style="display:none; margin: 4px auto 8px; max-width: 820px; padding: 0 20px;">
+      <div style="height:8px;background:#ffffff;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);">
+        <div id="gameProgressFill" style="height:100%;width:0%;background:linear-gradient(90deg,#93cbcf,#19777e);transition:width .3s ease;"></div>
+      </div>
+      <div id="gameProgressText" style="text-align:right;font-size:12px;color:#666;margin-top:4px;" aria-live="polite">0/0</div>
+    </div>
+
+    <!-- Opening page: options card -->
+  <div id="openingButtons" class="wa-card notranslate" translate="no">
+      <button id="basicWordsBtn" class="wa-option wa-option-card wa-basic" type="button">
+        <img src="./assets/Images/icons/cutie.svg" alt="Word Games" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <div class="card-text-group">
+          <span class="card-title" data-i18n="Word Games">Word Games</span>
+          <span class="card-subtitle" data-i18n="Word Games Subtitle">Learn words and level up!</span>
+        </div>
+      </button>
+      <button id="grammarGamesBtn" class="wa-option wa-option-card wa-grammar" type="button" style="border-color: #21b3be; color: #21b3be;">
+        <img src="./assets/Images/icons/grammar.svg" alt="Grammar Games" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <div class="card-text-group">
+          <span class="card-title" data-i18n="Grammar Games" style="color: #21b3be;">Grammar Games</span>
+          <span class="card-subtitle" data-i18n="Grammar Games Subtitle">Build perfect sentences!</span>
+        </div>
+      </button>
+      <button id="reviewBtn" class="wa-option wa-option-card wa-review" type="button">
+        <img src="./assets/Images/icons/fire-fist.svg" alt="X3 Point Challenge" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <div class="card-text-group">
+          <span class="card-title" data-i18n="X3 Point Challenge">X3 Point Challenge</span>
+          <span class="card-subtitle" data-i18n="X3 Point Challenge Subtitle">Master tough words for 3x rewards!</span>
+        </div>
+      </button>
+      <button id="browseBtn" class="wa-option wa-option-card wa-browse" type="button">
+        <img src="./assets/Images/icons/browse.png?v=20250910a" alt="Discover" class="wa-icon" loading="lazy" decoding="async" draggable="false" />
+        <span data-i18n="Discover">Discover</span>
+      </button>
+    </div>
+
+  <section id="gameArea" class="notranslate" translate="no"></section>
+
+    <!-- Modal overlay for mode selection -->
+    <div id="modalOverlay" style="display: none;"></div>
+    <!-- Coming Soon Modal -->
+    <div id="comingSoonModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:18px;box-shadow:0 4px 32px #19777e55;padding:38px 32px 32px 32px;max-width:340px;text-align:center;margin:auto;">
+        <img src="./assets/Images/icons/for you.png?v=20250910a" alt="Coming Soon" style="width:80px;height:80px;margin-bottom:18px;filter:drop-shadow(0 0 8px #19777e);">
+        <div style="font-size:2.1em;font-weight:700;color:#19777e;margin-bottom:12px;">Coming Soon</div>
+        <div style="font-size:1.1em;color:#444;margin-bottom:18px;">This feature is not yet available.<br>Check back soon!</div>
+        <button id="closeComingSoon" style="font-size:1em;padding:8px 22px;border-radius:8px;background:#19777e;color:#fff;border:none;box-shadow:0 2px 8px #19777e33;cursor:pointer;">OK</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
+  <script type="module">
+  import { initPointsClient } from '/students/scripts/points-client.js';
+    const $ = (sel) => document.querySelector(sel);
+
+    async function ensureHeaderProfile(){
+      try {
+        // Get profile info (name + avatar) from cookie session
+        const res = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (!data || !data.success) return;
+        if ((data.username || data.name) && typeof (data.username || data.name) === 'string') {
+          localStorage.setItem('user_name', (data.username || data.name).slice(0,40));
+        }
+        if (data.avatar && typeof data.avatar === 'string' && data.avatar.length <= 16) {
+          localStorage.setItem('selectedEmojiAvatar', data.avatar);
+        }
+  // Scoreless build: no overview refresh needed
+      } catch {}
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab switching logic
+      const tabWordArcade = $('#tabWordArcade');
+      const tabGrammarArcade = $('#tabGrammarArcade');
+
+      // Check if we should auto-launch homework from dashboard
+      const urlParams = new URLSearchParams(window.location.search);
+      const autostart = urlParams.get('autostart');
+      const listParam = urlParams.get('list');
+      const hwParam = urlParams.get('hw');
+  const isGrammarParam = urlParams.get('grammar'); // optional override
+
+      if (tabWordArcade) {
+        tabWordArcade.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Mark Word Arcade as active
+          tabWordArcade.classList.add('active');
+          tabGrammarArcade.classList.remove('active');
+          // Reset to opening menu
+          if (window.WordArcade?.quitToOpening) {
+            window.WordArcade.quitToOpening(true);
+          }
+          // Show opening buttons & progress bar host again
+          const opening = document.getElementById('openingButtons');
+          if (opening) opening.style.display = '';
+          const gp = document.getElementById('gameProgressBar');
+          if (gp) gp.style.display = 'none'; // keep hidden until game starts
+        });
+      }
+
+      if (tabGrammarArcade) {
+        tabGrammarArcade.addEventListener('click', async (e) => {
+          e.preventDefault();
+          loadHomeworkTab();
+        });
+      }
+
+      // Homework badge updater: show count of incomplete homeworks on the tab
+      async function updateHomeworkBadge() {
+        const badge = document.getElementById('hwTabBadge');
+        if (!badge) return;
+        try {
+          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include' });
+          if (!resp.ok) { badge.style.display='none'; return; }
+          const data = await resp.json().catch(()=>({}));
+          if (!data || !data.success || !Array.isArray(data.assignments)) { badge.style.display='none'; return; }
+          // For each assignment, try to get student's progress row to determine completeness
+          let incomplete = 0;
+          // Fetch progress for assignments in parallel but limit concurrency to avoid spikes
+          const assignments = data.assignments || [];
+          await Promise.all(assignments.map(async (a) => {
+            try {
+              const pr = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include' });
+              const pj = await pr.json().catch(()=>({}));
+              if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
+                // find current user row if present
+                const who = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' }).then(r=>r.ok?r.json():{}).catch(()=>({}));
+                const uid = who && who.user_id ? who.user_id : null;
+                let myRow = null;
+                if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
+                if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
+                const completed = myRow ? (typeof myRow.completion === 'number' ? myRow.completion >= 100 : (myRow.completion_pct >= 100)) : false;
+                if (!completed) incomplete++;
+              } else {
+                // If progress unavailable, assume incomplete
+                incomplete++;
+              }
+            } catch (e) { incomplete++; }
+          }));
+          if (incomplete > 0) {
+            badge.textContent = String(incomplete);
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        } catch (e) {
+          // silent fail
+        }
+      }
+
+      // Update badge on load and when the homework tab is opened
+      updateHomeworkBadge();
+      const originalLoadHomeworkTab = window.loadHomeworkTab || null;
+      window.loadHomeworkTab = async function(){
+        if (typeof originalLoadHomeworkTab === 'function') await originalLoadHomeworkTab();
+        // refresh badge after loading
+        setTimeout(updateHomeworkBadge, 400);
+      };
+
+      async function loadHomeworkTab() {
+        // Tab visual state
+        tabGrammarArcade.classList.add('active');
+        tabWordArcade?.classList.remove('active');
+
+        // Quit current game to show homework list
+        if (window.WordArcade?.quitToOpening) {
+          window.WordArcade.quitToOpening(true);
+        }
+
+  // Hide opening buttons & progress bar while viewing homework
+  const opening = document.getElementById('openingButtons');
+  if (opening) opening.style.display = 'none';
+  const gp = document.getElementById('gameProgressBar');
+  if (gp) gp.style.display = 'none';
+
+        const gameArea = document.getElementById('gameArea');
+        if (!gameArea) return;
+
+        const t = (k) => (window.StudentLang && StudentLang.translate(k)) || k;
+        // Loading placeholder
+        gameArea.innerHTML = `<div style="padding:22px;text-align:center;font-size:1rem;color:#666;">${t('Loading homework...')}</div>`;
+
+        try {
+          // Determine current student user_id first (needed to match progress rows)
+            let currentUserId = null;
+            try {
+              const whoRes = await fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials:'include', cache:'no-store' });
+              const whoJson = await whoRes.json().catch(()=>({}));
+              if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
+            } catch {}
+            if (!currentUserId) {
+              try {
+                const profRes = await fetch('/.netlify/functions/supabase_auth?action=get_profile', { credentials:'include', cache:'no-store' });
+                const profJson = await profRes.json().catch(()=>({}));
+                if (profRes.ok && profJson.success && profJson.id) currentUserId = profJson.id;
+              } catch {}
+            }
+
+          const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student', { credentials:'include' });
+          const rawText = await resp.text();
+          let data = {};
+          try { data = rawText ? JSON.parse(rawText) : {}; } catch (e) { console.error('homework_api non-JSON', rawText); }
+          if (!resp.ok || !data.success) {
+            gameArea.innerHTML = `<div style="padding:22px;text-align:center;color:#c62828;font-weight:600;">${(data && data.error) || t('Error loading homework.')}</div>`;
+            return;
+          }
+          const assignments = data.assignments || [];
+          if (!assignments.length) {
+            gameArea.innerHTML = `<div style="padding:32px;text-align:center;color:#777;font-size:1.05rem;">${t('No homework assigned.')}</div>`;
+            return;
+          }
+
+          // Fetch progress for each assignment
+          const assignmentsWithProgress = await Promise.all(assignments.map(async (a) => {
+            try {
+              const prRes = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include' });
+              const prJson = await prRes.json().catch(()=>({}));
+              if (prRes.ok && prJson.success && Array.isArray(prJson.progress)) {
+                let studentProgress = null;
+                if (currentUserId) studentProgress = prJson.progress.find(p => p.user_id === currentUserId) || null;
+                if (!studentProgress && prJson.progress.length === 1) studentProgress = prJson.progress[0];
+                if (studentProgress) {
+                  let completionPct = 0;
+                  if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
+                  else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
+                  else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
+                    completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
+                  }
+                  completionPct = Math.max(0, Math.min(100, completionPct));
+                  return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null };
+                }
+              }
+            } catch (e) { console.warn('progress fetch failed', a.id, e); }
+            return a;
+          }));
+
+          // Build white style card list
+          const host = document.createElement('div');
+          host.style.maxWidth = '880px';
+          host.style.margin = '0 auto';
+          host.style.padding = '8px 18px 36px';
+          host.style.display = 'flex';
+          host.style.flexDirection = 'column';
+          host.style.gap = '14px';
+          host.innerHTML = `<h2 style="margin:12px 0 4px;font-size:0.95rem;font-weight:700;color:#19777e;text-transform:lowercase;">${t('Your Homework')}</h2>`;
+          const listWrap = document.createElement('div');
+          listWrap.style.display = 'flex';
+          listWrap.style.flexDirection = 'column';
+          listWrap.style.gap = '18px';
+          listWrap.style.maxHeight = '560px';
+          listWrap.style.overflow = 'visible';
+          listWrap.style.paddingRight = '4px';
+          listWrap.style.background = 'transparent';
+
+          // Build two sections: Incomplete (top) and Complete (bottom)
+          host.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:22px;padding-top:4px;">
+              <section id="hw-incomplete" style="display:flex;flex-direction:column;gap:12px;padding-bottom:6px;">
+                <h3 style="margin:0;font-size:0.95rem;color:#19777e;font-weight:700;">해야 할 숙제</h3>
+                <div class="hw-list-incomplete" style="display:flex;flex-direction:column;gap:14px;padding-top:12px;"></div>
+              </section>
+              <div style="height:1px;background:linear-gradient(90deg, rgba(34,211,238,0.25), rgba(34,211,238,0.8));margin:6px 0;border-radius:2px;"></div>
+              <section id="hw-complete" style="display:flex;flex-direction:column;gap:8px;padding-top:6px;">
+                <h3 style="margin:0;font-size:0.95rem;color:#19777e;font-weight:700;">완료된 숙제</h3>
+                <div class="hw-list-complete" style="display:flex;flex-direction:column;gap:12px;padding-top:12px;max-height:240px;overflow-y:auto;"></div>
+              </section>
+            </div>
+          `;
+
+          const incompleteList = host.querySelector('.hw-list-incomplete');
+          const completeList = host.querySelector('.hw-list-complete');
+
+          assignmentsWithProgress.forEach(a => {
+            const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
+            // Countdown time left
+            let countdown = '';
+            if (a.due_at) {
+              const due = new Date(a.due_at); const now = new Date();
+              let diff = due - now;
+              if (diff > 0) {
+                const days = Math.floor(diff / 86400000); diff -= days * 86400000;
+                const hours = Math.floor(diff / 3600000); diff -= hours * 3600000;
+                const minutes = Math.floor(diff / 60000);
+                countdown = `${days > 0 ? days + 'd ' : ''}${hours}h ${minutes}m ${t('left')}`;
+              } else countdown = t('Past due');
+            }
+            const card = document.createElement('div');
+            card.className = 'wa-hw-card';
+            card.style.background = '#ffffff';
+            card.style.border = '2px solid #22d3ee';
+            card.style.borderRadius = '16px';
+            card.style.padding = '14px 16px 16px';
+            card.style.boxShadow = '0 4px 16px rgba(25,119,126,0.12), 0 2px 6px rgba(0,0,0,0.06)';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.gap = '6px';
+            card.style.cursor = 'pointer';
+            card.style.transition = 'box-shadow .18s, transform .18s, border-color .18s';
+            card.addEventListener('mouseenter',()=>{ card.style.boxShadow='0 6px 22px rgba(34,211,238,0.22),0 3px 10px rgba(0,0,0,0.08)'; card.style.borderColor='#06b6d4'; });
+            card.addEventListener('mouseleave',()=>{ card.style.boxShadow='0 4px 16px rgba(25,119,126,0.12), 0 2px 6px rgba(0,0,0,0.06)'; card.style.borderColor='#22d3ee'; });
+
+            const title = document.createElement('div');
+            title.style.fontWeight = '600';
+            title.style.fontSize = '1.05rem';
+            title.style.color = '#123';
+            title.textContent = a.title || a.list_title || t('Homework');
+            card.appendChild(title);
+
+            if (progress >= 100) {
+              const doneMsg = document.createElement('div');
+              doneMsg.style.fontWeight = '700';
+              doneMsg.style.fontSize = '1rem';
+              doneMsg.style.color = '#d08800';
+              doneMsg.textContent = t('Nice! Homework Done!');
+              card.appendChild(doneMsg);
+              const starsWrap = document.createElement('div');
+              starsWrap.style.display = 'flex'; starsWrap.style.alignItems = 'center'; starsWrap.style.gap = '6px';
+              const starIcon = document.createElement('span'); starIcon.innerHTML='&#9733;'; starIcon.style.color='#ffd86f'; starIcon.style.fontSize='1.5rem'; starIcon.style.textShadow='0 0 6px rgba(255,216,111,0.6)';
+              starsWrap.appendChild(starIcon);
+              const starsLabel = document.createElement('span'); starsLabel.style.fontSize='0.85rem'; starsLabel.style.fontWeight='600'; starsLabel.style.color='#b06d00'; starsLabel.textContent=(typeof a.stars==='number'?a.stars:(a.stars||0)) + ' ' + t('Stars Earned');
+              starsWrap.appendChild(starsLabel); card.appendChild(starsWrap);
+            } else {
+              const countdownDiv = document.createElement('div');
+              countdownDiv.style.fontSize = '0.75rem';
+              countdownDiv.style.color = '#19777e';
+              countdownDiv.textContent = countdown || t('No due date');
+              card.appendChild(countdownDiv);
+              // Progress bar
+              const pb = document.createElement('div'); pb.style.height='8px'; pb.style.width='100%'; pb.style.background='#e5ecef'; pb.style.borderRadius='6px'; pb.style.overflow='hidden'; pb.style.margin='4px 0 2px';
+              const fill = document.createElement('div'); fill.style.height='100%'; fill.style.width=Math.max(6, Math.min(100, Math.round(progress)))+'%'; fill.style.background='linear-gradient(90deg,#59d7db,#19777e)'; fill.style.borderRadius='6px'; pb.appendChild(fill); card.appendChild(pb);
+              const plab = document.createElement('div'); plab.style.fontSize='0.7rem'; plab.style.color='#0d5d63'; plab.textContent=t('Progress') + ': ' + Math.round(progress) + '%'; card.appendChild(plab);
+            }
+            if (a.teacher_name) {
+              const teacher = document.createElement('div'); teacher.style.fontSize='0.7rem'; teacher.style.color='#555'; teacher.textContent=t('Teacher') + ': ' + a.teacher_name; card.appendChild(teacher);
+            }
+            card.addEventListener('click', async () => {
+              const listKey = a.list_key || a.list_title || '';
+              if (!listKey) return;
+              // Switch back to main arcade tab
+              tabWordArcade?.classList.add('active');
+              tabGrammarArcade.classList.remove('active');
+              const hwId = a.id;
+              // Autostart the homework and prefer the teacher-assigned title when available
+              try {
+                await autostartHomework(listKey, hwId, a.title || a.list_title || null);
+              } catch (err) {
+                console.error('autostartHomework failed', err);
+                // Fallback: navigate to autostart URL
+                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId)}&list=${encodeURIComponent(listKey)}&autostart=1`;
+                window.location.href = url;
+              }
+            });
+            // Place card into appropriate section
+            if (progress >= 100) {
+              completeList.appendChild(card);
+            } else {
+              // Add the card to the incomplete list
+              incompleteList.appendChild(card);
+              // If this is the first incomplete card, and we haven't shown the "tap hint" this session,
+              // append a small non-blocking Korean overlay that invites the student to tap to do homework.
+              try {
+                const shownKey = 'wa_hw_tap_hint_shown';
+                if (!sessionStorage.getItem(shownKey)) {
+                  // create overlay element
+                  // Create a full-card pulsing overlay that draws attention but allows clicks through
+                  // Build overlay using DOM APIs to avoid HTML-escaping issues
+                  const hint = document.createElement('div');
+                  hint.className = 'wa-hw-tap-hint-full';
+                  // overlay styles
+                  hint.style.position = 'absolute';
+                  hint.style.inset = '0';
+                  hint.style.borderRadius = '16px';
+                  hint.style.pointerEvents = 'none'; // allow clicks to reach the card
+                  hint.style.zIndex = '28';
+                  hint.style.opacity = '0';
+                  hint.style.display = 'flex';
+                  hint.style.alignItems = 'center';
+                  hint.style.justifyContent = 'center';
+                  hint.style.transition = 'opacity .28s ease';
+                  hint.style.boxShadow = '0 8px 30px rgba(255,111,169,0.12)';
+
+                  // inner badge element (centered, visually prominent)
+                  const badge = document.createElement('div');
+                  // subtle pulse element behind the badge
+                  const pulse = document.createElement('div');
+                  pulse.className = 'wa-hw-pulse';
+                  pulse.style.position = 'absolute';
+                  pulse.style.width = '72%';
+                  pulse.style.height = '72%';
+                  pulse.style.borderRadius = '14px';
+                  pulse.style.left = '14%';
+                  pulse.style.top = '14%';
+                  pulse.style.pointerEvents = 'none';
+                  pulse.style.zIndex = '26';
+                  pulse.style.background = 'radial-gradient(circle at 50% 40%, rgba(147,203,207,0.24), rgba(147,203,207,0.06))';
+                  pulse.style.opacity = '0.95';
+                  badge.style.pointerEvents = 'none';
+                  badge.style.position = 'relative';
+                  badge.style.fontFamily = 'Poppins, system-ui, Arial';
+                  badge.style.fontWeight = '700';
+                  badge.style.fontSize = '1.4rem';
+                  badge.style.color = '#666';
+                  badge.style.padding = '20px 28px';
+                  badge.style.borderRadius = '18px';
+                  badge.style.background = 'rgba(255, 255, 255, 0.9)';
+                  badge.style.border = '2px solid #93cbcf';
+                  badge.style.boxShadow = '0 6px 18px rgba(17,94,97,0.06)';
+                  badge.style.transform = 'translateY(-12px)';
+                  badge.textContent = '여기를 누르세요';
+                  hint.appendChild(pulse);
+                  hint.appendChild(badge);
+                  // encourage the browser to composite this element for smooth animation
+                  hint.style.willChange = 'transform, box-shadow, opacity';
+                  hint.style.transformOrigin = 'center center';
+
+                  // Add animation styles once
+                  const animName = 'waTapPulseAnim';
+                  if (!document.getElementById('waTapPulseStyles')) {
+                    const st = document.createElement('style');
+                    st.id = 'waTapPulseStyles';
+                    // Soft pulsing style: gentle scale + shadow pulse like earlier design
+                    st.textContent = `@keyframes ${animName} { 0% { box-shadow: 0 6px 18px rgba(147,203,207,0.12); transform: scale(1); } 50% { box-shadow: 0 18px 36px rgba(147,203,207,0.18); transform: scale(1.03); } 100% { box-shadow: 0 6px 18px rgba(147,203,207,0.12); transform: scale(1); } } .wa-hw-tap-hint-full { animation: ${animName} 1.6s ease-in-out infinite; transform-origin: center center; } @keyframes waPulse { 0% { transform: scale(0.98); opacity: 0.88 } 50% { transform: scale(1.06); opacity: 0.98 } 100% { transform: scale(0.98); opacity: 0.88 } } .wa-hw-pulse { animation: waPulse 1.6s ease-in-out infinite; }
+                      /* Fireworks particle animation used when removing the hint */
+                      @keyframes waFirework { 0% { transform: translate(0,0) scale(1); opacity:1 } 100% { transform: translate(var(--tx,0px), var(--ty, -60px)) scale(0.6); opacity:0 } }
+                    `;
+                    document.head.appendChild(st);
+                  }
+                  // Wrap card in a positioned container if needed
+                  const wrapper = document.createElement('div');
+                  wrapper.style.position = 'relative';
+                  wrapper.style.display = 'block';
+                  // Replace card with wrapper that contains the card + hint
+                  card.replaceWith(wrapper);
+                  wrapper.appendChild(card);
+                  wrapper.appendChild(hint);
+
+                  // Show hint briefly, then fade out. Allow clicks to pass through since pointer-events:none on overlay.
+                  requestAnimationFrame(() => { hint.style.opacity = '1'; });
+                  const createFireworks = (hostEl) => {
+                    // small set of particles that fly outward and fade
+                    const colors = ['#6fe0d9','#37c5c7','#93cbcf','#21b3be'];
+                    const frag = document.createDocumentFragment();
+                    for (let i=0;i<12;i++) {
+                      const p = document.createElement('div');
+                      p.className = 'wa-fw-particle';
+                      p.style.position = 'absolute';
+                      p.style.left = '50%'; p.style.top = '50%';
+                      p.style.width = '10px'; p.style.height = '10px';
+                      p.style.borderRadius = '50%';
+                      p.style.background = colors[i % colors.length];
+                      p.style.pointerEvents = 'none';
+                      p.style.transform = 'translate(-50%,-50%)';
+                      p.style.zIndex = '60';
+                      // random trajectory
+                      const angle = (Math.PI * 2) * (i / 12) + (Math.random()-0.5)*0.5;
+                      const dist = 40 + Math.random()*60;
+                      const tx = Math.round(Math.cos(angle) * dist) + 'px';
+                      const ty = Math.round(Math.sin(angle) * dist) + 'px';
+                      p.style.setProperty('--tx', tx);
+                      p.style.setProperty('--ty', ty);
+                      p.style.transition = 'transform 700ms cubic-bezier(.2,.8,.2,1), opacity 700ms linear';
+                      frag.appendChild(p);
+                    }
+                    hostEl.appendChild(frag);
+                    // trigger animations on next frame
+                    requestAnimationFrame(() => {
+                      const parts = hostEl.querySelectorAll('.wa-fw-particle');
+                      parts.forEach((el, idx) => {
+                        // small stagger for charm
+                        setTimeout(() => {
+                          el.style.transform = `translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.6)`;
+                          el.style.opacity = '0';
+                        }, idx * 18);
+                      });
+                      // cleanup
+                      setTimeout(() => { parts.forEach(p => p.remove()); }, 900);
+                    });
+                  };
+
+                  const removeHint = () => {
+                    try {
+                      // spawn a small cyan fireworks effect behind the badge
+                      const host = wrapper || hint.parentElement || document.body;
+                      createFireworks(host);
+                      hint.style.opacity = '0';
+                      setTimeout(() => { hint.remove(); }, 420);
+                    } catch (e) {}
+                  };
+                  // Hide after 3s
+                  const tId = setTimeout(() => { removeHint(); sessionStorage.setItem(shownKey, '1'); }, 3000);
+                  // If user taps card, mark shown and remove hint (card click still works because overlay is non-interactive)
+                  card.addEventListener('click', () => { clearTimeout(tId); removeHint(); sessionStorage.setItem(shownKey, '1'); }, { once: true });
+                }
+              } catch (e) { /* ignore sessionStorage errors */ }
+            }
+          });
+
+          // If a section is empty, show a small helper message
+          if (incompleteList.children.length === 0) {
+            const msg = document.createElement('div');
+            msg.style.color = '#777';
+            msg.style.fontSize = '0.95rem';
+            msg.style.padding = '8px 0';
+            msg.textContent = t('No incomplete homework.');
+            incompleteList.appendChild(msg);
+          }
+          if (completeList.children.length === 0) {
+            const msg2 = document.createElement('div');
+            msg2.style.color = '#777';
+            msg2.style.fontSize = '0.95rem';
+            msg2.style.padding = '8px 0';
+            msg2.textContent = t('No completed homework yet.');
+            completeList.appendChild(msg2);
+          }
+
+          host.appendChild(listWrap);
+          gameArea.replaceChildren(host);
+        } catch (err) {
+          console.error('load homework in arcade error', err);
+          gameArea.innerHTML = `<div style="padding:22px;text-align:center;color:#c62828;font-weight:600;">${t('Error loading homework.')}</div>`;
+        }
+      }
+
+      // Helper: heuristic to detect grammar list keys
+      function isGrammarListKey(key) {
+        if (!key) return false;
+        const k = key.toLowerCase();
+        // Common grammar indicators
+        return k.includes('grammar_') || k.includes('/grammar/') || k.includes('present_simple') || k.includes('questions_') || k.includes('prepositions_');
+      }
+
+  async function autostartHomework(listKey, hwId, displayName) {
+        // Normalize leading path prefix if homework stored full project path
+        // e.g. "Games/english_arcade/sample-wordlists-level2/Adjectives1.json" -> "sample-wordlists-level2/Adjectives1.json"
+        if (/^Games\/english_arcade\//.test(listKey)) {
+          listKey = listKey.replace(/^Games\/english_arcade\//, '');
+        }
+        // Decide grammar vs vocab
+        const grammarOverride = isGrammarParam === '1';
+        const treatAsGrammar = grammarOverride || isGrammarListKey(listKey);
+        // Phonics detection: treat as phonics if filename/folder contains 'phonics' or 'sound'
+        const lkLower = (listKey || '').toLowerCase();
+        const treatAsPhonics = /phonics/.test(lkLower) || /sound/.test(lkLower);
+
+        if (treatAsPhonics) {
+          try {
+            // Prefer existing phonics loader for proper audio preload & session state
+            if (window.WordArcade?.loadPhonicsGame) {
+              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey });
+              return;
+            }
+            // Fallback: treat as sample list (will not show phonics-specific modes but still playable)
+            if (window.WordArcade?.loadSampleWordlistByFilename) {
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey });
+              return;
+            }
+          } catch (e) {
+            console.warn('[autostartHomework] phonics inline load failed, falling back to vocab path', e);
+            // Fallthrough to grammar/vocab handling below
+          }
+        }
+
+        // Prefer direct loader APIs if exposed
+  if (treatAsGrammar) {
+          try {
+            const { getGrammarConfigFromListKey } = await import('./utils/grammar_config_resolver.js');
+            const resolved = getGrammarConfigFromListKey(listKey, displayName);
+            if (window.WordArcade?.loadGrammarGame) {
+              window.WordArcade.loadGrammarGame(resolved);
+              return;
+            }
+            // Fallback: open selector directly with resolved config
+            const mod = await import('./ui/grammar_mode_selector.js');
+            if (mod && typeof mod.showGrammarModeSelector === 'function') {
+              mod.showGrammarModeSelector({
+                grammarFile: resolved.grammarFile,
+                grammarName: resolved.grammarName,
+                grammarConfig: resolved.grammarConfig,
+                onModeChosen: ({ mode, grammarFile: gf, grammarName: gn, grammarConfig: gc }) => {
+                  if (window.WordArcade?.loadGrammarGame) {
+                    window.WordArcade.loadGrammarGame({
+                      grammarFile: gf || resolved.grammarFile,
+                      grammarName: gn || resolved.grammarName,
+                      grammarConfig: gc || resolved.grammarConfig
+                    });
+                  }
+                }
+              });
+              return;
+            }
+          } catch (e) {
+            console.warn('[autostartHomework] unified grammar launch failed, falling back', e);
+          }
+        } else {
+          // Vocab / word list
+          try {
+            if (window.WordArcade?.loadSampleWordlistByFilename) {
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey });
+            } else if (window.WordArcade?.loadHomeworkList) {
+              window.WordArcade.loadHomeworkList({ listKey, hwId });
+            } else {
+              // As last resort just show mode selector after storing list in session
+              sessionStorage.setItem('WA_list_name', listKey);
+              const mod = await import('./ui/mode_selector.js');
+              if (mod && typeof mod.renderModeSelector === 'function') {
+                mod.renderModeSelector({ onModeChosen: (m) => {
+                  if (window.WordArcade?.startGame) window.WordArcade.startGame(m);
+                }, onWordsClick: (f) => { if (f && window.WordArcade?.loadSampleWordlistByFilename) window.WordArcade.loadSampleWordlistByFilename(f, { force: true }); } });
+              }
+            }
+          } catch (e) { console.error('[autostartHomework] vocab load error', e); }
+        }
+      }
+
+      // If autostart provided: directly load list instead of showing homework list menu first
+      if (autostart === '1' && listParam) {
+        // Attempt direct autostart without opening homework tab menu
+        autostartHomework(listParam, hwParam).catch(err => {
+          console.error('Autostart failed', err);
+          // Friendly fallback: show opening buttons + inline notice
+          try { window.WordArcade?.quitToOpening?.(); } catch {}
+          const ga = document.getElementById('gameArea');
+          if (ga) ga.innerHTML = `<div style="padding:22px;text-align:center;color:#e53e3e;font-weight:600;">Couldn't load homework list.<br><small>${(err && err.message) || 'Unknown error'}</small><br><br><button id='retryAutostart' style='background:#19777e;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;'>Retry</button></div>`;
+          document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam); });
+        });
+      }
+
+      // If openHomework flag present (from dashboard mission modal), just open the homework tab list
+      if (urlParams.get('openHomework') === '1') {
+        try { loadHomeworkTab(); } catch (e) { console.warn('openHomework failed', e); }
+      }
+
+      const closeComingSoon = document.getElementById('closeComingSoon');
+      if (closeComingSoon) closeComingSoon.addEventListener('click', () => {
+        const modal = document.getElementById('comingSoonModal');
+        if (modal) modal.style.display = 'none';
+      });
+
+      try { initPointsClient(); } catch {}
+      ensureHeaderProfile();
+    });
+  </script>
+
+  <!-- Session refresher: rotate access cookie via secure refresh endpoint -->
+  <script>
+    (function(){
+      async function refreshOnce(){
+        try {
+          await fetch('/.netlify/functions/supabase_auth?action=refresh', {
+            method: 'GET', credentials: 'include', cache: 'no-store'
+          });
+        } catch {}
+      }
+      window.addEventListener('DOMContentLoaded', () => {
+        refreshOnce();
+        // Refresh roughly every 45 minutes
+        setInterval(refreshOnce, 2700000);
+      });
+    })();
+  </script>
+</body>
+</html>

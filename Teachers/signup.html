@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { background: #f6f7fb; font-family: 'Poppins', sans-serif; }
+    .signup-container {
+      max-width: 400px; margin: 60px auto; background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(60,60,90,0.08); padding: 32px 28px;
+    }
+    .signup-container h2 { text-align: center; margin-bottom: 24px; }
+    .signup-container label { font-weight: 600; margin-top: 12px; display: block; }
+    .signup-container input {
+      width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 16px;
+      border: 1px solid #ccc; border-radius: 5px; font-size: 16px;
+    }
+    .signup-container button {
+      width: 100%; padding: 12px; background: #5a4ad1; color: #fff;
+      border: none; border-radius: 5px; font-size: 18px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    .signup-container .error { color: #d32f2f; margin-bottom: 10px; text-align: center; }
+    .signup-container .success { color: #388e3c; margin-bottom: 10px; text-align: center; }
+    .signup-container .or { text-align: center; margin: 18px 0; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <h2>Sign Up</h2>
+    <div id="signupError" class="error" style="display:none;"></div>
+    <form id="signupForm">
+      <label for="name">Name</label>
+      <input type="text" id="name" required>
+      <label for="username">Username</label>
+      <input type="text" id="username" required autocomplete="username">
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="email">
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="new-password">
+      <button type="submit">Sign Up</button>
+    </form>
+    <div class="or">or</div>
+    <div class="success" id="signupSuccess" style="display:none;"></div>
+  </div>
+  <script>
+    const signupForm = document.getElementById('signupForm');
+    const signupError = document.getElementById('signupError');
+    const signupSuccess = document.getElementById('signupSuccess');
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      signupError.style.display = 'none';
+      signupSuccess.style.display = 'none';
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const username = document.getElementById('username').value.trim();
+      // Use correct Netlify function path for local dev vs production
+      let functionPath = '/.netlify/functions/supabase_proxy_fixed?action=signup';
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        functionPath = '/.netlify/functions/supabase_proxy_fixed?action=signup';
+      }
+      try {
+        const response = await fetch(functionPath, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, username })
+        });
+        let result;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+        } else {
+          const text = await response.text();
+          try {
+            result = JSON.parse(text);
+          } catch {
+            throw new Error(text);
+          }
+        }
+        // If result is a string (e.g. "{success:true,...}"), parse it
+        if (typeof result === 'string') {
+          try {
+            result = JSON.parse(result);
+          } catch {}
+        }
+        if (result && result.success) {
+          // Store userId in localStorage for profile page use
+          if (result.user && result.user.id) {
+            localStorage.setItem('userId', result.user.id);
+          }
+          signupSuccess.textContent = 'Sign up successful! Redirecting to your profile...';
+          signupSuccess.style.display = 'block';
+          signupForm.reset();
+          setTimeout(() => {
+            window.location.href = '/Teachers/profile.html';
+          }, 1200);
+        } else if (result && result.error) {
+          signupError.textContent = result.error;
+          signupError.style.display = 'block';
+        } else {
+          signupError.textContent = 'Sign up failed.';
+          signupError.style.display = 'block';
+        }
+      } catch (err) {
+        signupError.textContent = 'Network error: ' + err.message;
+        signupError.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

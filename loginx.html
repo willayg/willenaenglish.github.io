@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 / 회원가입</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #2e2a3c; /* Dark blue like header */
+      color: #2e2a3c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #f8f5ef; /* Off white color like background */
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 1.1em;
+    }
+    button {
+      background: white;
+      color: #2e2a3c;
+      font-weight: bold;
+      border: 3px solid #2e2a3c;
+      cursor: pointer;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 5px 0 10px 0;
+    }
+    .checkbox-row input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+    .checkbox-row label {
+      font-size: 0.95em;
+      color: #2e2a3c;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .logo {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>로그인 또는 회원가입</h2>
+  <input type="text" id="username" placeholder="이름 입력 (Username)" />
+  <input type="password" id="password" placeholder="비밀번호 (Password)" />
+    <div class="checkbox-row">
+      <input type="checkbox" id="stayLoggedIn" checked />
+      <label for="stayLoggedIn">로그인 상태 유지</label>
+    </div>
+    <button onclick="handleAuth()">시작하기</button>
+  </div>
+  <a href="index.html">
+    <img src="Logo.png" alt="Willena Logo" class="logo" />
+  </a>
+
+  <script>
+    async function handleAuth() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const stayLoggedIn = document.getElementById('stayLoggedIn').checked;
+
+      if (!username) {
+        alert('이름(Username)을 입력하세요.');
+        return;
+      }
+      if (!password) {
+        alert('비밀번호를 입력하세요.');
+        document.getElementById('password').focus();
+        return;
+      }
+
+      try {
+        // 1) Resolve email from username (and ensure account is approved)
+        const emailRes = await fetch(`/.netlify/functions/supabase_auth?action=get_email_by_username&username=${encodeURIComponent(username)}`, {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        const emailData = await emailRes.json().catch(() => ({}));
+        if (!emailRes.ok || !emailData.success || !emailData.email) {
+          alert(emailData.error || '사용자를 찾을 수 없습니다.');
+          return;
+        }
+
+        // 2) Perform login; cookies are set via multiValueHeaders (sb_access / sb_refresh)
+        const loginRes = await fetch('/.netlify/functions/supabase_auth?action=login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email: emailData.email, password })
+        });
+        const loginData = await loginRes.json().catch(() => ({}));
+        if (!loginRes.ok || !loginData.success) {
+          alert(loginData.error || '로그인에 실패했습니다.');
+          return;
+        }
+
+        // Optional: cache display name/avatar for header UI (non-auth)
+        try {
+          const who = await fetch('/.netlify/functions/supabase_auth?action=get_profile_name', { credentials: 'include', cache: 'no-store' });
+          if (who.ok) {
+            const w = await who.json();
+            if (w && w.success) {
+              if (w.username || w.name) localStorage.setItem('user_name', (w.username || w.name).slice(0, 40));
+              if (w.avatar) localStorage.setItem('selectedEmojiAvatar', w.avatar);
+            }
+          }
+        } catch {}
+
+        // Redirect to student profile
+        window.location.href = '/students/profile.html';
+      } catch (err) {
+        alert('네트워크 오류 또는 서버 오류입니다.');
+      }
+    }
+  </script>
+</body>
+</html>

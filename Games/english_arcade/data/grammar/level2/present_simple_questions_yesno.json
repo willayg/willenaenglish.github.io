@@ -1,0 +1,137 @@
+[
+  {
+    "id": "do_you_like_apples",
+    "word": "do_you",
+    "en": "Do you like apples?",
+    "ko": "사과 좋아해요?",
+    "exampleSentence": "Do you like apples?",
+    "exampleSentenceKo": "사과 좋아해요?",
+    "emoji": "🍎"
+  },
+  {
+    "id": "does_she_go_to",
+    "word": "does_she",
+    "en": "Does she go to school?",
+    "ko": "그녀는 학교에 가요?",
+    "exampleSentence": "Does she go to school?",
+    "exampleSentenceKo": "그녀는 학교에 가요?",
+    "emoji": "🏫"
+  },
+  {
+    "id": "do_they_play_soccer",
+    "word": "do_they",
+    "en": "Do they play soccer?",
+    "ko": "그들은 축구하나요?",
+    "exampleSentence": "Do they play soccer?",
+    "exampleSentenceKo": "그들은 축구하나요?",
+    "emoji": "⚽"
+  },
+  {
+    "id": "does_he_work_here",
+    "word": "does_he",
+    "en": "Does he work here?",
+    "ko": "그는 여기서 일하나요?",
+    "exampleSentence": "Does he work here?",
+    "exampleSentenceKo": "그는 여기서 일하나요?",
+    "emoji": "💼"
+  },
+  {
+    "id": "do_we_need_a",
+    "word": "do_we",
+    "en": "Do we need a ticket?",
+    "ko": "표가 필요해요?",
+    "exampleSentence": "Do we need a ticket?",
+    "exampleSentenceKo": "표가 필요해요?",
+    "emoji": "🎫"
+  },
+  {
+    "id": "does_it_rain_a",
+    "word": "does_it",
+    "en": "Does it rain a lot here?",
+    "ko": "여기는 비가 많이 와요?",
+    "exampleSentence": "Does it rain a lot here?",
+    "exampleSentenceKo": "여기는 비가 많이 와요?",
+    "emoji": "☔"
+  },
+  {
+    "id": "do_you_speak_english",
+    "word": "do_you",
+    "en": "Do you speak English?",
+    "ko": "영어 말해요?",
+    "exampleSentence": "Do you speak English?",
+    "exampleSentenceKo": "영어 말해요?",
+    "emoji": "🇬🇧"
+  },
+  {
+    "id": "does_she_speak_japanese",
+    "word": "does_she",
+    "en": "Does she speak Japanese?",
+    "ko": "그녀는 일본어 말해요?",
+    "exampleSentence": "Does she speak Japanese?",
+    "exampleSentenceKo": "그녀는 일본어 말해요?",
+    "emoji": "🗾"
+  },
+  {
+    "id": "do_they_understand",
+    "word": "do_they",
+    "en": "Do they understand?",
+    "ko": "그들은 이해하나요?",
+    "exampleSentence": "Do they understand?",
+    "exampleSentenceKo": "그들은 이해하나요?",
+    "emoji": "🤔"
+  },
+  {
+    "id": "does_he_eat_meat",
+    "word": "does_he",
+    "en": "Does he eat meat?",
+    "ko": "그는 고기를 먹나요?",
+    "exampleSentence": "Does he eat meat?",
+    "exampleSentenceKo": "그는 고기를 먹나요?",
+    "emoji": "🍖"
+  },
+  {
+    "id": "do_cats_like_milk",
+    "word": "do_cats",
+    "en": "Do cats like milk?",
+    "ko": "고양이는 우유 좋아해요?",
+    "exampleSentence": "Do cats like milk?",
+    "exampleSentenceKo": "고양이는 우유 좋아해요?",
+    "emoji": "🐱🥛"
+  },
+  {
+    "id": "does_the_shop_open",
+    "word": "does_the",
+    "en": "Does the shop open now?",
+    "ko": "가게 지금 열려요?",
+    "exampleSentence": "Does the shop open now?",
+    "exampleSentenceKo": "가게 지금 열려요?",
+    "emoji": "🏪"
+  },
+  {
+    "id": "do_you_have_a",
+    "word": "do_you",
+    "en": "Do you have a bicycle?",
+    "ko": "자전거 있어요?",
+    "exampleSentence": "Do you have a bicycle?",
+    "exampleSentenceKo": "자전거 있어요?",
+    "emoji": "🚲"
+  },
+  {
+    "id": "does_she_cook_dinner",
+    "word": "does_she",
+    "en": "Does she cook dinner?",
+    "ko": "그녀는 저녁을 요리하나요?",
+    "exampleSentence": "Does she cook dinner?",
+    "exampleSentenceKo": "그녀는 저녁을 요리하나요?",
+    "emoji": "🍽️"
+  },
+  {
+    "id": "do_kids_like_candy",
+    "word": "do_kids",
+    "en": "Do kids like candy?",
+    "ko": "아이들은 사탕 좋아해요?",
+    "exampleSentence": "Do kids like candy?",
+    "exampleSentenceKo": "아이들은 사탕 좋아해요?",
+    "emoji": "🍬"
+  }
+]

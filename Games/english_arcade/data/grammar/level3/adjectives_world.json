@@ -1,0 +1,17 @@
+[
+  {"en":"beautiful","ko":"아름다운","example":"This city is beautiful.","emoji":"🌆"},
+  {"en":"noisy","ko":"시끄러운","example":"The street is noisy at night.","emoji":"🔊"},
+  {"en":"quiet","ko":"조용한","example":"The library is quiet.","emoji":"🤫"},
+  {"en":"clean","ko":"깨끗한","example":"The kitchen is clean.","emoji":"🧼"},
+  {"en":"dirty","ko":"더러운","example":"The room is dirty.","emoji":"🗑️"},
+  {"en":"crowded","ko":"붐비는","example":"The market is crowded on weekends.","emoji":"🛍️"},
+  {"en":"spacious","ko":"넓은","example":"The hall is very spacious.","emoji":"🏟️"},
+  {"en":"modern","ko":"현대적인","example":"The museum looks modern.","emoji":"🏛️"},
+  {"en":"ancient","ko":"오래된","example":"The temple is ancient.","emoji":"🕍"},
+  {"en":"colorful","ko":"다채로운","example":"The garden is colorful in spring.","emoji":"🌸"},
+  {"en":"bright","ko":"밝은","example":"The room is bright in the morning.","emoji":"☀️"},
+  {"en":"dark","ko":"어두운","example":"The cave is very dark.","emoji":"🌑"},
+  {"en":"dangerous","ko":"위험한","example":"The road can be dangerous.","emoji":"⚠️"},
+  {"en":"peaceful","ko":"평화로운","example":"The village is peaceful.","emoji":"🌿"},
+  {"en":"cold","ko":"차가운","example":"The water there is very cold.","emoji":"🥶"}
+]

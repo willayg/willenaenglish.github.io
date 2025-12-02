@@ -1,0 +1,137 @@
+[
+  {
+    "id": "be_going_to_future_1",
+    "word": "i_am_going_to_visit",
+    "en": "I am going to visit my aunt.",
+    "ko": "나는 이모를 방문할 예정이에요.",
+    "exampleSentence": "I am going to visit my aunt this weekend.",
+    "exampleSentenceKo": "나는 이모를 방문할 예정이에요.",
+    "emoji": "👵"
+  },
+  {
+    "id": "be_going_to_future_2",
+    "word": "she_is_going_to_study",
+    "en": "She is going to study tonight.",
+    "ko": "그녀는 오늘 밤 공부할 거예요.",
+    "exampleSentence": "She is going to study for her exam tonight.",
+    "exampleSentenceKo": "그녀는 오늘 밤 공부할 거예요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "be_going_to_future_3",
+    "word": "we_are_going_to_buy",
+    "en": "We are going to buy tickets.",
+    "ko": "우리는 표를 살 거예요.",
+    "exampleSentence": "We are going to buy tickets for the concert.",
+    "exampleSentenceKo": "우리는 표를 살 거예요.",
+    "emoji": "🎫"
+  },
+  {
+    "id": "be_going_to_future_4",
+    "word": "he_is_going_to_play",
+    "en": "He is going to play soccer tomorrow.",
+    "ko": "그는 내일 축구를 할 거예요.",
+    "exampleSentence": "He is going to play soccer with friends tomorrow.",
+    "exampleSentenceKo": "그는 내일 축구를 할 거예요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "be_going_to_future_5",
+    "word": "they_are_going_to_move",
+    "en": "They are going to move to a new house.",
+    "ko": "그들은 새 집으로 이사할 거예요.",
+    "exampleSentence": "They are going to move next month.",
+    "exampleSentenceKo": "그들은 새 집으로 이사할 거예요.",
+    "emoji": "🏠"
+  },
+  {
+    "id": "be_going_to_future_6",
+    "word": "i_am_going_to_make",
+    "en": "I am going to make dinner soon.",
+    "ko": "나는 곧 저녁을 만들 거예요.",
+    "exampleSentence": "I am going to make dinner in an hour.",
+    "exampleSentenceKo": "나는 곧 저녁을 만들 거예요.",
+    "emoji": "🍽️"
+  },
+  {
+    "id": "be_going_to_future_7",
+    "word": "she_is_going_to_watch",
+    "en": "She is going to watch the concert.",
+    "ko": "그녀는 콘서트를 볼 예정이에요.",
+    "exampleSentence": "She is going to the concert tonight.",
+    "exampleSentenceKo": "그녀는 콘서트를 볼 예정이에요.",
+    "emoji": "🎶"
+  },
+  {
+    "id": "be_going_to_future_8",
+    "word": "we_are_going_to_practice",
+    "en": "We are going to practice English.",
+    "ko": "우리는 영어를 연습할 거예요.",
+    "exampleSentence": "We are going to practice English after school.",
+    "exampleSentenceKo": "우리는 영어를 연습할 거예요.",
+    "emoji": "🗣️"
+  },
+  {
+    "id": "be_going_to_future_9",
+    "word": "he_is_going_to_fix",
+    "en": "He is going to fix the bike.",
+    "ko": "그는 자전거를 고칠 거예요.",
+    "exampleSentence": "He is going to fix the bike this afternoon.",
+    "exampleSentenceKo": "그는 자전거를 고칠 거예요.",
+    "emoji": "🔧"
+  },
+  {
+    "id": "be_going_to_future_10",
+    "word": "they_are_going_to_clean",
+    "en": "They are going to clean the park.",
+    "ko": "그들은 공원을 청소할 거예요.",
+    "exampleSentence": "They are going to clean the park this Saturday.",
+    "exampleSentenceKo": "그들은 공원을 청소할 거예요.",
+    "emoji": "🧹"
+  },
+  {
+    "id": "be_going_to_future_11",
+    "word": "i_am_going_to_learn",
+    "en": "I am going to learn a new song.",
+    "ko": "나는 새 노래를 배울 거예요.",
+    "exampleSentence": "I am going to learn a new song for the show.",
+    "exampleSentenceKo": "나는 새 노래를 배울 거예요.",
+    "emoji": "🎵"
+  },
+  {
+    "id": "be_going_to_future_12",
+    "word": "she_is_going_to_start",
+    "en": "She is going to start a new book.",
+    "ko": "그녀는 새 책을 시작할 거예요.",
+    "exampleSentence": "She is going to start a new book tonight.",
+    "exampleSentenceKo": "그녀는 새 책을 시작할 거예요.",
+    "emoji": "📖"
+  },
+  {
+    "id": "be_going_to_future_13",
+    "word": "we_are_going_to_visit",
+    "en": "We are going to visit the zoo.",
+    "ko": "우리는 동물원에 갈 거예요.",
+    "exampleSentence": "We are going to visit the zoo next week.",
+    "exampleSentenceKo": "우리는 동물원에 갈 거예요.",
+    "emoji": "🦁"
+  },
+  {
+    "id": "be_going_to_future_14",
+    "word": "he_is_going_to_learn",
+    "en": "He is going to learn to swim.",
+    "ko": "그는 수영 배우러 갈 거예요.",
+    "exampleSentence": "He is going to take swimming lessons.",
+    "exampleSentenceKo": "그는 수영 배우러 갈 거예요.",
+    "emoji": "🏊"
+  },
+  {
+    "id": "be_going_to_future_15",
+    "word": "they_are_going_to_adopt",
+    "en": "They are going to adopt a puppy.",
+    "ko": "그들은 강아지를 입양할 거예요.",
+    "exampleSentence": "They are going to adopt a puppy this weekend.",
+    "exampleSentenceKo": "그들은 강아지를 입양할 거예요.",
+    "emoji": "🐶"
+  }
+]

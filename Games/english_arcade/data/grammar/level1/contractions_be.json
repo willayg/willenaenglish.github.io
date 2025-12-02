@@ -1,0 +1,79 @@
+[
+  {
+    "id": "i_am",
+    "word": "I",
+    "pronoun": "I",
+    "fullForm": "am",
+    "contraction": "I'm",
+    "ending": "'m",
+    "exampleSentence": "I'm ready to go!",
+    "exampleSentenceKo": "난 출발할 준비가 됐어요!",
+    "explanation": "I am becomes I'm."
+  },
+  {
+    "id": "you_are",
+    "word": "You",
+    "pronoun": "You",
+    "fullForm": "are",
+    "contraction": "You're",
+    "ending": "'re",
+    "exampleSentence": "You're a great friend.",
+    "exampleSentenceKo": "넌 정말 좋은 친구야.",
+    "explanation": "You are becomes You're."
+  },
+  {
+    "id": "she_is",
+    "word": "She",
+    "pronoun": "She",
+    "fullForm": "is",
+    "contraction": "She's",
+    "ending": "'s",
+    "exampleSentence": "She's playing piano.",
+    "exampleSentenceKo": "그녀는 피아노를 치고 있어요.",
+    "explanation": "She is becomes She's."
+  },
+  {
+    "id": "he_is",
+    "word": "He",
+    "pronoun": "He",
+    "fullForm": "is",
+    "contraction": "He's",
+    "ending": "'s",
+    "exampleSentence": "He's my teacher.",
+    "exampleSentenceKo": "그는 내 선생님이에요.",
+    "explanation": "He is becomes He's."
+  },
+  {
+    "id": "it_is",
+    "word": "It",
+    "pronoun": "It",
+    "fullForm": "is",
+    "contraction": "It's",
+    "ending": "'s",
+    "exampleSentence": "It's sunny outside.",
+    "exampleSentenceKo": "밖에는 해가 나요.",
+    "explanation": "It is becomes It's."
+  },
+  {
+    "id": "we_are",
+    "word": "We",
+    "pronoun": "We",
+    "fullForm": "are",
+    "contraction": "We're",
+    "ending": "'re",
+    "exampleSentence": "We're ready to learn.",
+    "exampleSentenceKo": "우리는 배울 준비가 됐어요.",
+    "explanation": "We are becomes We're."
+  },
+  {
+    "id": "they_are",
+    "word": "They",
+    "pronoun": "They",
+    "fullForm": "are",
+    "contraction": "They're",
+    "ending": "'re",
+    "exampleSentence": "They're playing soccer.",
+    "exampleSentenceKo": "그들은 축구를 하고 있어요.",
+    "explanation": "They are becomes They're."
+  }
+]

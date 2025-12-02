@@ -1,0 +1,48 @@
+/* Table styles for worksheet preview */
+.worksheet-preview table {
+  width: 100% !important;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: inherit;
+  margin: 0 auto;
+  min-width: 800px; /* Ensure minimum width for tables */
+}
+
+/* Image-based layout table styles */
+.worksheet-preview table[style*="width:100%"] {
+  min-width: 850px; /* Wider for image layouts */
+}
+
+/* Column width overrides for image layouts */
+.worksheet-preview table colgroup col { min-width: 80px; }
+
+.worksheet-preview table th,
+.worksheet-preview table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  word-wrap: break-word;
+  vertical-align: middle;
+}
+
+.worksheet-preview table th {
+  border-bottom: 2px solid #333;
+  font-weight: bold;
+  background: #f8f9fa;
+}
+
+/* Specific styles for picture columns to prevent squashing */
+.worksheet-preview table td[style*="text-align:center"] { min-width: 100px; }
+
+/* Matching layout styles */
+.worksheet-preview .matching-container { width: 100%; max-width: 1000px; margin: 0 auto; }
+.worksheet-preview .matching-section { min-width: 450px; }
+.worksheet-preview .matching-item { min-width: 200px; padding: 10px; }
+
+/* English-Korean matching specific styles */
+.worksheet-preview .eng-kor-matching { width: 100%; max-width: 1000px; }
+.worksheet-preview .eng-kor-matching .column { min-width: 300px; }
+
+/* Picture test and with images layout styles */
+.worksheet-preview .image-grid { width: 100%; max-width: 1000px; margin: 0 auto; }
+.worksheet-preview .image-grid .grid-item { min-width: 180px; padding: 15px; }

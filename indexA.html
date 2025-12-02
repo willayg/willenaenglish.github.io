@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Willena 원어민 영어학원</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #2e2b3f;
+      --background: #ffffff;
+      --accent: #edf0f9;
+      --text: #222;
+      --light-beige: #f9f5ec;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+    }
+
+header {
+  background-color: rgba(46, 43, 63, 0.92);   /* same blue as #2e2b3f, now 70% opaque */
+  backdrop-filter: blur(10px);              /* the blur behind */
+  -webkit-backdrop-filter: blur(10px);      /* Safari support */
+  padding: 20px 6%;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+    header img {
+      height: 80px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 80px 20px 40px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    .swiper {
+      width: 100%;
+      height: 50vh; /* was 70vh */
+      margin-top: 2px;
+      position: relative;
+      background-color: white;
+      border-top: 2px solid var(--primary);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .swiper-slide {
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+   .slide-moon {
+     height: 100%;
+     width: auto;
+     object-position: center;
+     object-fit: contain;
+     display: block;
+   }
+
+   .slide-girls {
+     max-width: 100%;
+     height: 120%;
+     object-fit: contain;
+   }
+
+
+    .swiper-pagination {
+      position: absolute;
+      top: 8px;
+      text-align: center;
+      width: 100%;
+    }
+.activity-swiper .activity-image {
+  margin: 0;
+  padding: 0;
+  min-height: 800px;
+}
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      background-color: #f0f0f0;
+      font-size: 0.9rem;
+      color: #777;
+    }
+
+    .slider-bar {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      width: 100%;
+      height: 48px;
+      background: #827e9b;
+      margin-top: 2px; /* 2px gap below the slider */
+      border-bottom: 2px solid #2e2b3f; /* 2px border below the bar */
+      gap: 2px; /* 1px gap between boxes */
+    }
+
+    .slider-box {
+      flex: 1 1 0;
+      background: #2e2b3f;
+      min-width: 0;
+      min-height: 0;
+      border-radius: 0; /* No rounded edges */
+      margin: 2;
+      /* No border here! */
+    }
+
+    .play-extras {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .play-extra-item {
+      position: absolute;
+      font-size: 1.1rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: auto;
+      color: var(--primary);
+    }
+
+    .item1 {
+      top: 20%;
+      left: 20%;
+    }
+    .item2 {
+      bottom: 15%;
+      right: 25%;
+    }
+    .item3 {
+      top: 60%;
+      left: 20%;
+    }
+
+    @keyframes fadeInItem {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* New styles for program section */
+    /* Program Section Styles */
+.container {
+  width: 540px;
+  max-width: 100vw;
+  margin: 0 auto;
+  position: relative;
+  padding: 0 16px;
+}
+h1 {
+  font-family: 'Poppins', 'Century Gothic', Arial, sans-serif;
+  font-size: 2.2em;
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: #444;
+  letter-spacing: 1px;
+  text-align: left;
+  margin-left: 0;
+  text-shadow: 0 6px 32px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.22);
+  z-index: 10;
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.7s 0.05s forwards;
+}
+.program-stack {
+  width: 100%;
+}
+.bubble {
+  background: #fff;
+  border-radius: 50%;
+  width: 310px;
+  height: 310px;
+  box-shadow: 0 6px 18px rgba(100, 100, 100, 0.26);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0;
+  margin: 40px auto;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+  position: static;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.bubble.animate {
+  animation: fadeInUp 0.8s forwards;
+}
+/* Animation delays for each bubble */
+
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.bubble-title {
+  font-family: 'Poppins', 'Century Gothic', Arial, sans-serif;
+  font-size: 1.35em;
+  margin-bottom: 12px;
+  color: #555;
+  font-weight: bold;
+  margin-top: 0;
+}
+.bubble-content {
+  font-size: 1em;
+  color: #222;
+  line-height: 1.6;
+  padding: 0 24px;
+  word-break: keep-all;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+/* Zig-zag on desktop if you want */
+@media (min-width: 601px) {
+  .program-stack {
+    min-height: 950px;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 48px;
+  }
+  .bubble, .bubble.library, .bubble.special, .bubble.how {
+    position: static !important;
+    margin: 0 !important;
+  }
+}
+/* Zig-zag stack for mobile */
+@media (max-width: 600px) {
+  .container { width: 100vw; padding: 0 4vw; }
+  h1 { margin-left: 0; font-size: 2em; }
+  .program-stack { min-height: 0; position: static; }
+  .bubble, .bubble.library, .bubble.special, .bubble.how {
+    position: static !important;
+    width: 90vw !important;
+    height: 90vw !important;
+    max-width: 340px !important;
+    max-height: 340px !important;
+    min-width: 180px !important;
+    min-height: 180px !important;
+    margin-top: 24px !important;
+    margin-bottom: 24px !important;
+    @media (min-width: 601px) and (max-width: 1024px) {
+  .slide-dosomething {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  .bubble {
+    width: clamp(200px, 50vw, 340px) !important;
+    height: clamp(200px, 50vw, 340px) !important    
+}
+}
+
+  }
+  /* Zig-zag: adjust margin-left/right for each bubble */
+  .bubble.library  { margin-left: 0 !important; margin-right: auto !important; }
+  .bubble.special  { margin-left: auto !important; margin-right: 0 !important; }
+  .bubble.how      { margin-left: 0vw !important; margin-right: auto !important; }
+  .slide-dosomething {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block;
+}
+
+}
+
+.program-section h1 {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  
+}/* Fixes for Galaxy Fold and medium-width screens */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .slide-dosomething {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  .program-stack {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .bubble {
+    width: clamp(200px, 50vw, 340px) !important;
+    height: clamp(200px, 50vw, 340px) !important;
+  }
+}
+
+.activity-swiper {
+  max-width: 1100px;
+  min-height: 600px;
+  width: 100%;
+  margin: 28px auto 40px auto;
+  padding-bottom: 32px;
+  box-sizing: border-box;
+  background: transparent;
+}
+.activity-swiper .swiper-slide {
+  height: auto !important;
+  min-height: 0 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: transparent !important;
+}
+.activity-swiper .swiper-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0px;
+  background: #f6f6f6;
+}
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+/* Overlay styles for card-stack */
+.card-stack {
+  position: relative;
+  overflow: hidden;
+}
+.card-stack:hover .card-overlay,
+.card-stack:focus-within .card-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.overlay-text {
+  max-width: 90%;
+  line-height: 1.5;
+}
+
+.card-stack img {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0px;
+  background: #fff;
+  box-shadow: 0 0px 0px rgba(100, 100, 100, 0.10);
+}
+
+.card-caption {
+  opacity: 0;
+  font-size: 2rem;         /* Bigger text */
+  font-weight: 800;
+  color: #2e2b3f;
+  text-align: center;
+  margin-top: 12px;
+  margin-bottom: 0;
+  letter-spacing: 1px;
+  transition: opacity 0.7s, transform 0.7s;
+  transform: translateY(30px);
+  width: 100%;
+}
+
+.card-caption.animated {
+  opacity: 1;
+  transform: translateY(0);
+/* Tablet */
+@media (max-width: 1024px) {
+  .activity-swiper {
+    max-width: 100vw;
+  }
+  .activity-swiper .swiper-slide {
+    width: 65vw;   /* Slightly wider than phone, but not too wide */
+    max-width: 90vw;
+    min-width: 220px;
+    min-height: 250px;
+  }
+}
+/* Mobile */
+@media (max-width: 600px) {
+  .activity-swiper .swiper-slide {
+    width: 75vw !important;
+    max-width: 95vw;
+    min-width: 160px !important;
+    min-height: 120px !important;
+  }
+}
+@media (min-width: 601px) and (max-width: 1024px) {
+  .card-caption {
+    font-size: 1.8rem !important; /* 3x bigger than 2rem */
+  }
+}
+  /* Add this to your <style> section to customize the Swiper navigation arrows */
+.activity-swiper .swiper-button-prev,
+.activity-swiper .swiper-button-next {
+  color: #2e2b3f !important;         /* Change arrow color (e.g. dark blue) */
+  background: #f9f5ec !important;    /* Soft beige background */
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 2px 8px rgba(46,43,63,0.10);
+  border: 1.5px solid #bbb;
+  top: 45%;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  opacity: 0.92;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.activity-swiper .swiper-button-prev:hover,
+.activity-swiper .swiper-button-next:hover {
+  background: #2e2b3f !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(46,43,63,0.18);
+}
+
+/* Optional: Make the arrow icons a little larger and use a custom icon */
+.activity-swiper .swiper-button-prev::after,
+.activity-swiper .swiper-button-next::after {
+  font-size: 1.8rem;
+  font-weight: bold;
+  content: '';
+  display: block;
+  width: 1em;
+  height: 1em;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60% 60%;
+}
+
+.activity-swiper .swiper-button-prev::after {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%232e2b3f" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="15 18 9 12 15 6" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+
+.activity-swiper .swiper-button-next::after {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%232e2b3f" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+  <style>
+  /* Your other styles... */
+
+  .card {
+    display: inline-block;
+    border: 2px solid black;
+    border-radius: 0px;
+    overflow: hidden;
+    padding: 0;
+    margin: 10px;
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .card-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Top Swiper (main-swiper)
+    window.mainSwiper = new Swiper('.main-swiper', {
+      loop: true,
+      pagination: {
+        el: '.main-swiper .swiper-pagination',
+        clickable: true,
+      },
+      autoplay: {
+        delay: 3000,
+      },
+    });
+
+    // Activity Swiper (activity-swiper)
+    new Swiper('.activity-swiper', {
+      loop: false,
+      initialSlide: 0,
+      navigation: {
+        nextEl: '.activity-swiper .swiper-button-next',
+        prevEl: '.activity-swiper .swiper-button-prev',
+      },
+      effect: 'slide',
+      breakpoints: {
+        // Mobile: beautiful carousel
+        0: {
+          slidesPerView: 1.25,
+          centeredSlides: true,
+          spaceBetween: 24,
+          slidesOffsetAfter: 30,
+        },
+        // Tablet: same logic, just a bit wider
+        600: {
+          slidesPerView: 1.5, // Show 1.5 cards for a "peek"
+          centeredSlides: true,
+          spaceBetween: 24,
+          slidesOffsetAfter: 40, // Only after, not before
+        },
+        // Desktop: show all cards, no scroll
+        1024: {
+          slidesPerView: 4,
+          centeredSlides: false,
+          spaceBetween: 24,
+          allowTouchMove: false,
+          slidesOffsetAfter: 0,
+        }
+      }
+    });
+
+    AOS.init();
+  });
+  </script>
+</head>
+<body>
+  <!-- Move this block ABOVE the header -->
+  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:2000;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.95);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #0002;">
+    <a id="userProfileLink" href="login.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+      <span id="userAvatar" style="font-size:1.5rem; margin-right:6px;">🙂</span>
+      <span id="userName" style="font-weight:600;color:#2e2b3f;font-size:1.1em;">로그인 / 가입</span>
+    </a>
+  </div>
+
+  <header style="position:relative;">
+    <img src="Assets/Images/Logo.png" alt="Willena Logo">
+  </header>
+
+  <!-- Top Swiper -->
+  <div class="swiper main-swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+      <a href="#aboutWillenaSection" id="moonScrollLink" style="display:block;">
+        <img src="Assets/Images/moon.jpg" class="slide-moon" alt="Moon" style="cursor:pointer;">
+      </a>
+      </div>
+      <div class="swiper-slide">
+        <a href="#programSection" id="girlsScrollLink" style="display:block;">
+        <img src="Assets/Images/Girls.jpg" class="slide-girls" alt="Girls">
+      </a>
+      </div>
+      <div class="swiper-slide">
+        <a href="#playEnglishSection" id="doSomethingScrollLink" style="display:block;">
+        <img src="Assets/Images/dosomething.jpg" class="slide-dosomething" alt="Do Something" style="cursor:pointer;">
+      </a>
+      </div>
+    </div>
+    <div class="swiper-pagination"></div>
+  </div>
+
+  <!-- Add this to your <head> for a stylish Korean font (Pretendard is a popular modern choice) -->
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+
+<style>
+body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
+  font-family: 'Pretendard', 'Nanum Myeongjo', 'Poppins', 'Inter', 'sans-serif';
+}
+
+#chooseRoleSection {
+  background: #ffffff;
+  padding: 38px 0 32px 0;
+  text-align: center;
+  border-top: 3px solid #2e2b3f;
+}
+
+.choose-role-options {
+  display: flex;
+  justify-content: center;
+  gap: 0px;
+  max-width: 500px;
+  margin: 25px auto 0 auto; /* Add top margin here */
+}
+
+@media (max-width: 600px) {
+  .choose-role-options {
+    margin: 80px auto 0 auto; /* More space on mobile if you want */
+  }
+}
+
+.role-link {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #2e2b3f;
+  padding: 18px 44px;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: 
+    background 0.18s, 
+    color 0.18s, 
+    box-shadow 0.18s,
+    transform 0.18s;
+  text-decoration: none;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  font-family: 'Pretendard', 'Nanum Myeongjo', 'Poppins', 'Inter', 'sans-serif';
+  text-shadow: 0 4px 5px rgba(122, 92, 250, 0.18), 0 2px 8px rgba(46,43,63,0.12);
+}
+.role-link:hover, .role-link:focus {
+  background: none;
+  color: #2e2b3f;
+  transform: scale(1.12);
+  text-shadow: 0 4px 18px rgba(46,43,63,0.18), 0 2px 8px rgba(46,43,63,0.12);
+  box-shadow: none;
+  outline: none;
+}
+</style>
+
+  <!-- New Section: Two Options (학생 / 학부모) -->
+  <section id="chooseRoleSection">
+    <div class="choose-role-options">
+      <a href="#playEnglishSection" class="role-link" id="studentRole">학생존</a>
+    </div>
+  </section>
+
+  <!-- New Section Below Main Swiper -->
+  <section id="welcomeSection" style="background:#ffffff; color:#2e2b3f; padding:40px 0; text-align:center;">
+    <h2 style="font-size:2rem; font-weight:700; margin-bottom:16px;"></h2>
+    <p style="font-size:1.15rem; max-width:600px; margin:0 auto;">
+     
+    </p>
+  </section>
+
+  <!-- Move Play English section here -->
+  <!-- Add a 2px grey line to the top of the activity section -->
+  <div id="playEnglishSection" 
+     style="background: var(--light-beige); color: var(--primary); height: 150px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border-top: 2px solid #bbb; margin-top:50px;" 
+     data-aos="fade-up">
+    <a id="playEnglish" 
+     href="choose-levels.html" 
+     style="font-size: 3.6rem; font-weight: 700; color: var(--primary); text-decoration: none; z-index: 2; transition: opacity 0.7s, transform 0.7s;">
+    Activity Zone
+  </a>
+  <div class="play-extras">
+    <div class="play-extra-item item2" style="font-size:0.7rem; top:87%; left:60%; color:#c0b8a1;">플레이 존</div>
+    <div class="play-extra-item item3" style="font-size:1.1rem; top:15%; left:6%; color:#dfd6bd;">Quizzes & Tests</div>
+    <div class="play-extra-item item4" style="font-size:1.1rem; top:10%; left:60%; color:#dbd1b3;">Puzzles</div>
+    <div class="play-extra-item item5" style="font-size:0.9rem; top:70%; left:80%; color:#c9bfad;">Fun</div>
+    <div class="play-extra-item item6" style="font-size:1.2rem; top:30%; left:10%; color:#ddd2b5;">연습</div>
+    <div class="play-extra-item item7" style="font-size:0.8rem; top:80%; left:20%; color:#cac2ab;">Practice</div>
+    <div class="play-extra-item item8" style="font-size:1.1rem; top:15%; left:75%; color:#e6dfcc;">학습</div>
+    <div class="play-extra-item item9" style="font-size:0.95rem; top:60%; left:55%; color:#ccc5b0;">Learn</div>
+    <div class="play-extra-item item10" style="font-size:0.85rem; top:40%; left:85%; color:#e9e3d3;">퀴즈</div>
+    <div class="play-extra-item item11" style="font-size:1.05rem; top:25%; left:35%; color:#e6ddc6;">도전</div>
+    <div class="play-extra-item item12" style="font-size:0.8rem; top:25%; left:50%; color:#e4ddca;">Games</div>
+    <div class="play-extra-item item13" style="font-size:1.15rem; top:90%; left:12%; color:#d4cdb9;">게임</div>
+  </div>
+  </div>
+
+<div class="card-container">
+  <div class="activity-grid" data-aos="fade-up" style="margin: 100px auto 130px auto;">
+  <a class="activity-card" href="playzone.html">
+    <img src="Assets/Images/Play.png" alt="Play">
+    <div class="card-caption">Play Zone</div>
+  </a>
+  <a class="activity-card" href="challengezone.html">
+    <img src="Assets/Images/CHALLENGE.jpg" alt="Challenge">
+    <div class="card-caption">Challenge Zone</div>
+  </a>
+  <a class="activity-card" href="coming_soon.html">
+    <img src="Assets/Images/QUIZ.jpg" alt="Quiz">
+    <div class="card-caption">Study Zone</div>
+  </a>
+  <a class="activity-card" href="quizzone.html">
+    <img src="Assets/Images/THINK.jpg" alt="Think">
+    <div class="card-caption">Quiz Zone</div>
+  </a>
+</div>
+  <!-- Main Sections -->
+  <div id="aboutWillenaSection" style="background: var(--primary); color: white; width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 40px 0;" data-aos="fade-up">
+    <div style="max-width: 700px; width: 90%; padding: 0 16px; text-align: left;">
+      <div style="font-size: 2rem; font-weight: 700; margin-bottom: 40px;">What is Willena?</div>
+      <div style="font-size: 1.15rem; line-height: 2;">
+        윌레나 영어에서는 단순히 단어를 암기하는 것을 넘어, 무한한 가능성의 문을 여는 학습을 믿습니다. 저희의 목표는 창의적인 탐구와 흥미로운 수업을 통해 영어에 대한 평생의 사랑을 심어주는 것입니다.<br><br>
+        모든 아이는 특별하며, 각 학생이 자신감을 찾고 자신의 목소리를 발견할 수 있도록 돕는 수업 방식을 제공합니다.<br><br>
+        호기심을 자극하고 실생활에서 사용할 수 있는 소통 능력을 기르는 과정을 통해 영어 학습이 즐거운 모험이 되도록 합니다.<br><br>
+        윌레나의 열정적인 선생님들은 실수를 성공으로 나아가는 디딤돌로 삼을 수 있도록 지지해주는 수업 분위기를 만들어줍니다.<br><br>
+        윌레나에서 학생들은 단순히 언어를 배우는 것이 아니라, 세상과 연결될 새로운 방법을 발견하게 될 것입니다.<br><br>
+        윌레나와 함께 자녀의 미래를 위한 첫걸음을 시작해 보세요. 그 여정은 지금 시작됩니다!
+      </div>
+    </div>
+  </div>
+
+  <div style="background: white; color: var(--primary); height: 600px; display: flex; align-items: center; justify-content: center;" data-aos="fade-up">
+    <div style="font-size: 1.6rem; font-weight: 600; text-align: center; max-width: 600px;">
+      <span style="font-family: 'Nanum Myeongjo', 'serif', cursive; font-style: italic;">
+        “모든 아이는 예술가입니다. 문제는 어른이 되어서도 예술가로 남는 것입니다.”
+      </span><br>
+      <span style="display:block; margin-top: 18px; font-size: 1.1rem; font-weight: 400;">– 파블로 피카소</span>
+    </div>
+  </div>
+
+  <div class="container program-section" id="programSection" data-aos="fade-up" style="background: var(--light-beige); width: 100vw; max-width: 100vw; margin-left: calc(50% - 50vw); padding: 60px 0 80px 0;">
+    <h1 style="text-align:center;">Program</h1>
+    <div class="program-stack">
+      <div class="bubble library">
+        <div class="bubble-title">Library</div>
+        <div class="bubble-content">
+          독서는 영어의 자연스러운 습득으로<br>
+          읽기, 쓰기, 듣기, 말하기 능력을<br>
+          향상시키기에 중요합니다!<br><br>
+          윌레에서는 원서독서로,<br>
+          엘레에서는 온라인독서로<br>
+          아이의 목표를 경험할 수 있고,<br>
+          자신감도 키워주세요!
+        </div>
+      </div>
+      <div class="bubble special">
+        <div class="bubble-title">Special</div>
+        <div class="bubble-content">
+          모든반 영어로 수업<br>
+          영어 일기<br>
+          국제 공인 자격증반<br>
+          Event Days<br>
+          영어마을<br>
+          해외 영어 캠프
+        </div>
+      </div>
+      <div class="bubble how">
+        <div class="bubble-title">How?</div>
+        <div class="bubble-content">
+          주5회 원어민-한국인 매일 교차<br>
+          수업 학생이 주인공인 수업<br>
+          액티비티 중심 수업<br>
+          (말하기, 읽기, 듣기, 쓰기, 문법)<br>
+          프로젝트
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slideshow Section: Place before your .container.program-section -->
+
+<div class="photo-slideshow" id="photoSlideshow" style="position:relative; left:50%; transform:translateX(-50%); width:100vw; max-width:100vw; overflow:hidden; height:65vh; min-height:260px; max-height:600px; opacity:0; transition:opacity 1.2s, transform 1.2s;">
+  <div class="swiper photo-swiper" style="height:100%;">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <img src="Assets/Images/lobby.jpg" alt="Lobby" class="autopan-img">
+      </div>
+      <div class="swiper-slide">
+        <img src="Assets/Images/LibraryMap.jpg" alt="Library Map" class="autopan-img">
+      </div>
+      <div class="swiper-slide">
+        <img src="Assets/Images/libraryinner.jpg" alt="Library Inner" class="autopan-img">
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.photo-slideshow {
+  background: #222;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0;
+  min-height: 260px;
+  max-height: 600px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(40px);
+  left: 50%;
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  transition: opacity 1.2s, transform 1.2s;
+}
+.photo-slideshow.visible {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+.photo-slideshow.hidden {
+  opacity: 0 !important;
+  transform: translateX(-50%) translateY(40px) !important;
+}
+.photo-swiper .swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  height: 65vh;
+}
+.autopan-img {
+  width: 100vw;
+  height: 65vh;
+  object-fit: cover;
+  object-position: left center;
+  border-radius: 0 !important;
+  position: relative;
+  left: 0;
+  top: 0;
+  transition: object-position 7s linear;
+}
+@media (min-width: 900px) {
+  .photo-slideshow {
+    max-width: 1100px;
+    width: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 60px 0 40px 0;
+  }
+  .autopan-img {
+    width: 100%;
+    height: 65vh;
+    border-radius: 0 !important;
+  }
+}
+  @media (max-width: 600px) {
+  .slide-moon {
+    width: 100% 
+    height: 100%
+    object-position: center;
+    object-fit: cover
+    object-position: center !important;
+  }
+}
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Swiper setup (slower: delay and speed doubled)
+  const swiper = new Swiper('.photo-swiper', {
+    loop: true,
+    autoplay: {
+      delay: 8400, // was 4200
+      disableOnInteraction: false,
+    },
+    effect: 'slide',
+    allowTouchMove: false,
+    navigation: false,
+    pagination: false,
+    speed: 2400, // was 1200
+  });
+
+  // Auto-panning effect for each slide (slower: transition doubled)
+  function panImage(img) {
+    img.style.transition = 'object-position 7s linear';
+    img.style.objectPosition = 'right center';
+  }
+  function resetPan(img) {
+    img.style.transition = 'object-position 1s linear';
+    img.style.objectPosition = 'left center';
+  }
+
+  function doPan() {
+    // Reset all images
+    document.querySelectorAll('.autopan-img').forEach(resetPan);
+    // Pan the current image
+    const slides = document.querySelectorAll('.photo-swiper .swiper-slide');
+    const realIndex = swiper.realIndex;
+    const img = slides[realIndex].querySelector('.autopan-img');
+    if (img) {
+      setTimeout(() => panImage(img), 100);
+    }
+  }
+
+  swiper.on('slideChangeTransitionEnd', doPan);
+
+  // Initial pan on load
+  setTimeout(doPan, 600);
+
+  // Animate in/out on scroll
+  const slideshow = document.getElementById('photoSlideshow');
+  function handleSlideshowVisibility() {
+    const rect = slideshow.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.85 && rect.bottom > window.innerHeight * 0.15) {
+      slideshow.classList.add('visible');
+      slideshow.classList.remove('hidden');
+    } else {
+      slideshow.classList.remove('visible');
+      slideshow.classList.add('hidden');
+    }
+  }
+  window.addEventListener('scroll', handleSlideshowVisibility);
+  handleSlideshowVisibility();
+});
+</script>
+  <div class="footer" id="footerContact">
+    <p style="margin-top: 12px; font-size: 0.9rem;">
+      Phone: 031-8041-2203<br>
+      © 2025 Willena 원어민 영어학원. All rights reserved.
+    </p>
+  </div>
+  <script>
+  // Language translations
+  const translations = {
+    en: {
+      joy: "✨ The Joy Of Learning",
+      playEnglish: "Play English",
+      learnEnglish: "Learn English",
+      aboutLearning: "About Learning",
+      aboutWillena: "About Willena",
+      footer: `Phone: 031 8042 2203<br>© 2025 Willena English Academy. All rights reserved.`,
+      langBtn: "한국어"
+    },
+    ko: {
+      joy: "✨ 배우는 기쁨",
+      playEnglish: "프레이",
+      learnEnglish: "영어 배우기",
+      aboutLearning: "학습 소개",
+      aboutWillena: "윌레나 소개",
+      footer: `전화: 010-1234-5678<br>© 2025 윌레나 원어민 영어학원. All rights reserved.`,
+      langBtn: "Eng"
+    }
+  };
+
+  function setLanguage(lang) {
+    document.getElementById('slideJoy').textContent = translations[lang].joy;
+    document.getElementById('playEnglish').textContent = translations[lang].playEnglish;
+    document.getElementById('learnEnglish').textContent = translations[lang].learnEnglish;
+    document.getElementById('aboutLearning').textContent = translations[lang].aboutLearning;
+    document.getElementById('aboutWillena').textContent = translations[lang].aboutWillena;
+    document.getElementById('footerContact').innerHTML = `<p style="margin-top: 12px; font-size: 0.9rem;">${translations[lang].footer}</p>`;
+    document.getElementById('langToggle').textContent = translations[lang].langBtn;
+    localStorage.setItem('site_lang', lang);
+  }
+
+  // Detect browser language or use saved preference
+  function detectLanguage() {
+    const saved = localStorage.getItem('site_lang');
+    if (saved) return saved;
+    const lang = navigator.language || navigator.userLanguage;
+    return lang.startsWith('ko') ? 'ko' : 'en';
+  }
+
+  document.getElementById('langToggle').onclick = function() {
+    const current = localStorage.getItem('site_lang') || detectLanguage();
+    setLanguage(current === 'en' ? 'ko' : 'en');
+  };
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  const section = document.getElementById('playEnglishSection');
+  const items = section.querySelectorAll('.play-extra-item');
+  let triggered = false;
+
+  function onScroll() {
+    const rect = section.getBoundingClientRect();
+    // Animate in when in view
+    if (!triggered && rect.top < window.innerHeight * 0.7 && rect.bottom > 0) {
+      triggered = true;
+      items.forEach((item, i) => {
+        item.style.animation = "fadeInItem 1s ease forwards";
+        item.style.animationDelay = (0.2 + i * 0.08) + "s";
+      });
+      section.classList.remove('animate-out');
+    }
+    // Animate out when scrolled away
+    if (triggered && (rect.bottom < 0 || rect.top > window.innerHeight)) {
+      section.classList.add('animate-out');
+      triggered = false;
+      // Reset animations for next scroll-in
+      items.forEach(item => {
+        item.style.animation = "";
+        item.style.opacity = 0;
+      });
+    }
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const bubbles = document.querySelectorAll('.program-section .bubble');
+  const options = {
+    threshold: 0.3
+  };
+
+  let animated = false;
+
+  function animateBubbles(entries, observer) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !animated) {
+        animated = true;
+        bubbles.forEach((bubble, i) => {
+          setTimeout(() => {
+            bubble.classList.add('animate');
+          }, i * 100); // 400ms delay between each bubble
+        });
+        observer.disconnect();
+      }
+    });
+  }
+
+  const observer = new IntersectionObserver(animateBubbles, options);
+  const programSection = document.querySelector('.program-section');
+  if (programSection) {
+    observer.observe(programSection);
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const captions = document.querySelectorAll('.activity-swiper .card-caption');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animated');
+      } else {
+        entry.target.classList.remove('animated');
+      }
+    });
+  }, { threshold: 0.5 });
+
+  captions.forEach(caption => observer.observe(caption));
+});
+</script>
+<style>
+.swiper,
+.activity-swiper {
+  border: none !important;
+}
+#playEnglishSection {
+  transition: opacity 0.7s, transform 0.7s;
+}
+#playEnglishSection.animate-out {
+  opacity: 0;
+  transform: translateY(-70px) scale(0.95);
+  pointer-events: none;
+}
+#playEnglishSection #playEnglish {
+  font-size: 3.6rem !important;
+  color: #2e2b3f !important; /* Blue like header */
+  text-shadow: 0 4px 24px rgba(46,43,63,0.18), 0 1px 2px #fff, 0 2px 8px rgba(46,43,63,0.22);
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s 0.2s forwards;
+}
+.play-extras .play-extra-item {
+  opacity: 0;
+  transition: opacity 0.7s, transform 0.7s;
+}
+.play-extras .play-extra-item[style*="font-size:0.8rem"],
+.play-extras .play-extra-item[style*="font-size:0.85rem"],
+.play-extras .play-extra-item[style*="font-size:0.9rem"],
+.play-extras .play-extra-item[style*="font-size:0.95rem"],
+.play-extras .play-extra-item[style*="font-size:1.05rem"] {
+  color: #a49e8e !important; /* Warm grey for small fonts */
+}
+
+/* Hide the activity-swiper navigation buttons */
+.activity-swiper .swiper-button-prev,
+.activity-swiper .swiper-button-next {
+  display: none !important;
+}
+
+/* Add this to your CSS */
+.card-stack.show-overlay .card-overlay {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#playEnglishSection,
+#aboutWillenaSection {
+  scroll-margin-top: 75px;
+}
+
+/* New Activity Grid Section */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 600px; /* Increase this for larger images */
+  margin: 0 auto;
+  padding: 0 8px;
+}
+.activity-card {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: 0 2px 10px rgba(46,43,63,0.08);
+  overflow: hidden;
+  text-decoration: none;
+  color: #2e2b3f;
+  transition: box-shadow 0.18s, transform 0.18s;
+  cursor: pointer;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  display: block;
+}
+.activity-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Show full image, no cropping */
+  display: block;
+  background: #fff;
+}
+.card-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.85);
+  color: #2e2b3f;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.activity-grid .card-caption {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* On desktop: show in a row, bigger cards */
+@media (min-width: 901px) {
+  .activity-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    max-width: 1100px;
+    padding: 0 32px;
+  }
+}
+/* On very small screens, reduce gap */
+@media (max-width: 500px) {
+  .activity-grid {
+    gap: 8px;
+    padding: 0 2vw;
+  }
+}
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  const name = localStorage.getItem('user_name') || sessionStorage.getItem('user_name');
+  const avatar = localStorage.getItem('user_avatar') || '🙂';
+  const userAvatarSpan = document.getElementById('userAvatar');
+  const userNameSpan = document.getElementById('userName');
+  const userProfileLink = document.getElementById('userProfileLink');
+
+  if (userId) {
+    try {
+      const res = await fetch('/.netlify/functions/supabase_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: 'users',
+          action: 'get_avatar',
+          user_id: userId
+        })
+      });
+      const result = await res.json();
+      if (result && result.data && result.data.length > 0) {
+        const user = result.data[0];
+        userNameSpan.textContent = user.name;
+        userAvatarSpan.textContent = user.avatar;
+        userProfileLink.href = "profile-s.html";
+        return;
+      }
+    } catch (e) {
+      // fallback to below
+    }
+  }
+  // Not logged in or fetch failed
+  userAvatarSpan.textContent = avatar;
+  userNameSpan.textContent = name || "로그인 / 가입";
+  userProfileLink.href = "login.html";
+});
+</script>
+
+<!-- Login Prompt Overlay -->
+<div id="loginPromptOverlay" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(46,43,63,0.38); backdrop-filter:blur(2px); align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:18px; max-width:340px; width:90vw; margin:auto; padding:32px 18px 24px 18px; box-shadow:0 8px 32px rgba(46,43,63,0.18); text-align:center; position:relative;">
+    <button id="closeLoginPrompt" style="position:absolute; top:10px; right:16px; background:none; border:none; font-size:1.6rem; color:#2e2b3f; cursor:pointer;">&times;</button>
+    <div style="font-size:1.25rem; font-weight:700; margin-bottom:18px;">로그인 또는 회원가입</div>
+    <div style="font-size:1rem; margin-bottom:22px; color:#444;">계정이 있으면 로그인하거나, 새 계정을 만들어주세요.<br>계정 없이도 계속 이용할 수 있습니다.</div>
+    <a href="login.html" style="display:inline-block; background:#7a5cfa; color:#fff; font-weight:600; border-radius:12px; padding:10px 32px; text-decoration:none; font-size:1.1rem; margin-bottom:10px;">로그인/회원가입</a>
+    <br>
+    <button id="continueWithoutLogin" style="margin-top:10px; background:none; border:none; color:#7a5cfa; font-size:1rem; cursor:pointer;">계속 이용하기</button>
+  </div>
+</div>
+<script>
+document.getElementById('studentRole').addEventListener('click', function(e) {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!userId) {
+    e.preventDefault();
+    document.getElementById('loginPromptOverlay').style.display = 'flex';
+  }
+});
+document.getElementById('closeLoginPrompt').onclick = function() {
+  document.getElementById('loginPromptOverlay').style.display = 'none';
+};
+document.getElementById('continueWithoutLogin').onclick = function() {
+  document.getElementById('loginPromptOverlay').style.display = 'none';
+  // Optionally, scroll to 학생존 or continue
+  document.getElementById('playEnglishSection').scrollIntoView({ behavior: 'smooth' });
+};
+</script>
+</body>
+</html>

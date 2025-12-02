@@ -1,0 +1,144 @@
+[
+  {
+    "id": "will_questions_1",
+    "word": "will_you_come",
+    "en": "Will you come to my party?",
+    "ko": "내 파티에 올 거예요?",
+    "exampleSentence": "Will you come to my party on Friday?",
+    "exampleSentenceKo": "내 파티에 올 거예요?",
+    "emoji": "🎉"
+  },
+  {
+    "id": "will_questions_2",
+    "word": "will_she_help",
+    "en": "Will she help me?",
+    "ko": "그녀가 도와줄 거예요?",
+    "exampleSentence": "Will she help me with the homework?",
+    "exampleSentenceKo": "그녀가 도와줄 거예요?",
+    "emoji": "🤝"
+  },
+  {
+    "id": "will_questions_3",
+    "word": "will_they_play",
+    "en": "Will they play soccer?",
+    "ko": "그들이 축구를 할 거예요?",
+    "exampleSentence": "Will they play soccer tomorrow?",
+    "exampleSentenceKo": "그들이 축구를 할 거예요?",
+    "emoji": "⚽"
+  },
+  {
+    "id": "will_questions_4",
+    "word": "will_he_eat",
+    "en": "Will he eat lunch?",
+    "ko": "그가 점심을 먹을 거예요?",
+    "exampleSentence": "Will he eat lunch at school?",
+    "exampleSentenceKo": "그가 점심을 먹을 거예요?",
+    "emoji": "🍱"
+  },
+  {
+    "id": "will_questions_5",
+    "word": "will_we_win",
+    "en": "Will we win the game?",
+    "ko": "우리가 게임을 이길 거예요?",
+    "exampleSentence": "Will we win the game today?",
+    "exampleSentenceKo": "우리가 게임을 이길 거예요?",
+    "emoji": "🏆"
+  },
+  {
+    "id": "will_questions_6",
+    "word": "will_you_study",
+    "en": "Will you study English?",
+    "ko": "영어 공부할 거예요?",
+    "exampleSentence": "Will you study English this year?",
+    "exampleSentenceKo": "영어 공부할 거예요?",
+    "emoji": "🇬🇧"
+  },
+  {
+    "id": "will_questions_7",
+    "word": "will_it_rain",
+    "en": "Will it rain tomorrow?",
+    "ko": "내일 비가 올까요?",
+    "exampleSentence": "Will it rain tomorrow or will it be sunny?",
+    "exampleSentenceKo": "내일 비가 올까요?",
+    "emoji": "☔"
+  },
+  {
+    "id": "will_questions_8",
+    "word": "will_she_pass",
+    "en": "Will she pass the exam?",
+    "ko": "그녀는 시험에 합격할 거예요?",
+    "exampleSentence": "Will she pass the exam if she studies?",
+    "exampleSentenceKo": "그녀는 시험에 합격할 거예요?",
+    "emoji": "📝"
+  },
+  {
+    "id": "will_questions_9",
+    "word": "will_you_help",
+    "en": "Will you help me move?",
+    "ko": "이사하는 것을 도와주실래요?",
+    "exampleSentence": "Will you help me move next week?",
+    "exampleSentenceKo": "이사하는 것을 도와주실래요?",
+    "emoji": "📦"
+  },
+  {
+    "id": "will_questions_10",
+    "word": "will_they_be_late",
+    "en": "Will they be late?",
+    "ko": "그들은 늦을까요?",
+    "exampleSentence": "Will they be late for the meeting?",
+    "exampleSentenceKo": "그들은 늦을까요?",
+    "emoji": "🕒"
+  },
+  {
+    "id": "will_questions_11",
+    "word": "will_he_call",
+    "en": "Will he call you?",
+    "ko": "그가 너에게 전화할까요?",
+    "exampleSentence": "Will he call you after work?",
+    "exampleSentenceKo": "그가 너에게 전화할까요?",
+    "emoji": "📞"
+  },
+  {
+    "id": "will_questions_12",
+    "word": "will_we_have_time",
+    "en": "Will we have time?",
+    "ko": "시간이 있을까요?",
+    "exampleSentence": "Will we have time to finish this?",
+    "exampleSentenceKo": "시간이 있을까요?",
+    "emoji": "⏳"
+  },
+  {
+    "id": "will_questions_13",
+    "word": "will_you_bring",
+    "en": "Will you bring dessert?",
+    "ko": "디저트를 가져올 거예요?",
+    "exampleSentence": "Will you bring dessert to the party?",
+    "exampleSentenceKo": "디저트를 가져올 거예요?",
+    "emoji": "🍰"
+  },
+  {
+    "id": "will_questions_14",
+    "word": "will_she_come",
+    "en": "Will she come with us?",
+    "ko": "그녀가 우리와 함께 올까요?",
+    "exampleSentence": "Will she come with us to the museum?",
+    "exampleSentenceKo": "그녀가 우리와 함께 올까요?",
+    "emoji": "🏛️"
+  },
+  {
+    "id": "will_questions_15",
+    "word": "will_they_attend",
+    "en": "Will they attend the meeting?",
+    "ko": "그들이 회의에 참석할까요?",
+    "exampleSentence": "Will they attend the meeting tomorrow?",
+    "exampleSentenceKo": "그들이 회의에 참석할까요?",
+    "emoji": "📅"
+  }
+]
+
+
+
+
+
+
+

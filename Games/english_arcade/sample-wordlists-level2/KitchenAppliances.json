@@ -1,0 +1,12 @@
+[
+  {"eng":"refrigerator","kor":"냉장고","def":"a machine that keeps food cold","ex":"I put milk in the refrigerator.","ex_kor":"나는 냉장고에 우유를 넣어요."},
+  {"eng":"microwave","kor":"전자레인지","def":"a machine that heats food quickly","ex":"She uses the microwave.","ex_kor":"그녀는 전자레인지를 사용해요."},
+  {"eng":"blender","kor":"블렌더","def":"a machine that mixes food","ex":"I use a blender for smoothies.","ex_kor":"나는 스무디를 만들 때 블렌더를 사용해요."},
+  {"eng":"toaster","kor":"토스터","def":"a machine that makes bread golden brown","ex":"He puts bread in the toaster.","ex_kor":"그는 토스터에 빵을 넣어요."},
+  {"eng":"dishwasher","kor":"식기세척기","def":"a machine that washes dishes","ex":"We load the dishwasher.","ex_kor":"우리는 식기세척기에 그릇을 넣어요."},
+  {"eng":"oven","kor":"오븐","def":"a hot machine for baking food","ex":"She bakes cake in the oven.","ex_kor":"그녀는 오븐에서 케이크를 구워요."},
+  {"eng":"stove","kor":"가스 레인지","def":"a machine with heat for cooking","ex":"I cook on the stove.","ex_kor":"나는 가스레인지에서 요리해요."},
+  {"eng":"sink","kor":"싱크대","def":"a basin with water for washing","ex":"I wash dishes in the sink.","ex_kor":"나는 싱크대에서 설거지해요."},
+  {"eng":"cabinet","kor":"찬장","def":"a box with doors to store things","ex":"Plates are in the cabinet.","ex_kor":"찬장에 접시가 있어요."},
+  {"eng":"counter","kor":"아일랜드 식탁","def":"a flat table in the kitchen","ex":"I cut vegetables on the counter.","ex_kor":"나는 아일랜드 식탁에서 야채를 잘라요."}
+]

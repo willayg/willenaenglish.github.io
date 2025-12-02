@@ -1,0 +1,44 @@
+{
+  "name": "willenaenglish.github.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "process:wordlists": "node scripts/process_wordlists.js"
+  ,"generate:sentences": "node scripts/generate_sentences.js"
+  ,"process:sentences": "node scripts/process_sentence_audio.js"
+  ,"sentences:upsert": "node scripts/upsert_sentences_for_lists.js --dirs \"Games/english_arcade/sample-wordlists,Games/english_arcade/sample-wordlists-level2,Games/english_arcade/sample-wordlists-level3\" --generate-audio true --concurrency 3"
+  ,"audio:verbs-l2": "node scripts/process_wordlists.js --dir \"Games/english_arcade/sample-wordlists-level2\" --files \"Verbs1.json,Verbs2.json,Verbs3.json,Verbs4.json\" --concurrency 4 --also-itself"
+  ,"audio:l2-adjectives": "node scripts/process_wordlists.js --dir \"Games/english_arcade/sample-wordlists-level2\" --files \"Adjectives1.json,Adjectives2.json,Adjectives3.json,Adjectives4.json,Adjectives5.json,Adjectives6.json\" --concurrency 4 --also-itself"
+  ,"audio:l3-verbs": "node scripts/process_wordlists.js --dir \"Games/english_arcade/sample-wordlists-level3\" --files \"Verbs5.json,Verbs6.json,Verbs7.json,Verbs8.json\" --concurrency 4 --also-itself"
+  ,"audio:l3-adjectives": "node scripts/process_wordlists.js --dir \"Games/english_arcade/sample-wordlists-level3\" --files \"Adjectives4.json,Adjectives5.json,Adjectives6.json\" --concurrency 4 --also-itself"
+  ,"sentences:gen:l2l3": "node scripts/generate_sentences.js --dir \"Games/english_arcade/sample-wordlists,Games/english_arcade/sample-wordlists-level3\""
+  ,"sentences:audio:l3": "node scripts/process_sentence_audio.js --concurrency 4 --list verbs5,verbs6,verbs7,verbs8,adjectives4,adjectives5,adjectives6"
+  ,"sentences:translate": "node scripts/add_sentence_korean.js --dirs \"Games/english_arcade/sample-wordlists,Games/english_arcade/sample-wordlists-level2,Games/english_arcade/sample-wordlists-level3\" --endpoint http://localhost:8888 --write"
+  ,"sentences:translate:l2l4": "node scripts/add_sentence_korean.js --dirs \"Games/english_arcade/sample-wordlists-level2,Games/english_arcade/sample-wordlists-level4\" --endpoint http://localhost:8888 --write"
+  ,"sentences:translate:all": "node scripts/add_sentence_korean.js --dirs \"Games/english_arcade/sample-wordlists,Games/english_arcade/sample-wordlists-level2,Games/english_arcade/sample-wordlists-level3,Games/english_arcade/sample-wordlists-level4\" --endpoint http://localhost:8888 --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willayg/willenaenglish.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/willayg/willenaenglish.github.io/issues"
+  },
+  "homepage": "https://github.com/willayg/willenaenglish.github.io#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
+  "@upstash/redis": "^1.19.0",
+    "@aws-sdk/client-s3": "^3.637.0",
+    "@aws-sdk/s3-request-presigner": "^3.637.0",
+    "backblaze-b2": "^1.7.1",
+    "bcryptjs": "^3.0.2",
+    "form-data": "^4.0.3",
+    "jose": "^6.1.0",
+    "node-fetch": "^2.7.0"
+  }
+}

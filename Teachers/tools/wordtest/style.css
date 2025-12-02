@@ -1,0 +1,85 @@
+@import url('./styles/base.css');
+@import url('./styles/header-toolbar.css');
+@import url('./styles/preview-table.css');
+@import url('./styles/image-drop-and-burger.css');
+@import url('./styles/print.css');
+@import url('./styles/responsive.css');
+
+/* Aggregated base and header/toolbar styles are now imported above */
+
+/* Table styles for worksheet preview */
+/* moved to styles/preview-table.css */
+
+/* Layout group and dropdown styles */
+.layout-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layout-group label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.layout-select {
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 120px;
+}
+
+.layout-select:hover {
+  background: #f7fafc;
+}
+
+.layout-select:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+/* moved to styles/image-drop-and-burger.css */
+
+/* Test mode controls styles */
+.test-mode-select, #numLettersToHide {
+  padding: 3px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: #222;
+  outline: none;
+  margin-left: 8px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.test-mode-select:focus, #numLettersToHide:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px #bee3f8;
+}
+
+#numLettersToHide {
+  width: 36px;
+  min-width: 0;
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 13px;
+  padding: 3px 6px;
+}
+
+/* moved to styles/image-drop-and-burger.css */
+
+/* Print-specific styles */
+/* moved to styles/print.css */
+
+/* Responsive adjustments for smaller screens */
+/* moved to styles/responsive.css */

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title data-i18n="Challenge Zone">Challenge Zone | Willena English Academy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts for Cyberpunk/Sleek Look -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #181c29 0%, #232946 100%);
+      font-family: 'Share Tech Mono', 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #e0e6ff;
+      min-height: 100vh;
+    }
+    .header-cyber {
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-size: 3.2rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #00ffe7;
+      text-shadow:
+        0 0 8px #00ffe7,
+        0 0 24px #0ff,
+        0 2px 12px #232946;
+      text-align: center;
+      padding: 48px 0 24px 0;
+      background: transparent;
+      margin-bottom: 0;
+      user-select: none;
+    }
+    .games-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px 10vw 60px 10vw;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(30, 34, 56, 0.98);
+      border-radius: 18px;
+      box-shadow: 0 4px 32px #00ffe733, 0 2px 16px #181c29;
+      width: 340px;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 18px 22px 18px;
+      transition: transform 0.18s, box-shadow 0.18s;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      color: #e0e6ff;
+      border: 1.5px solid #00ffe7;
+      backdrop-filter: blur(2px);
+    }
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 8px 48px #00ffe799, 0 8px 32px #181c29;
+      border-color: #ff00c8;
+    }
+    .game-card img {
+      width: 320px;
+      height: 320px;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      margin-bottom: 18px;
+      border-radius: 16px;
+      background: #232946;
+      display: block;
+      border: 2px solid #ff00c8;
+      box-shadow: 0 0 24px #ff00c855;
+    }
+    .game-title {
+      font-size: 1.5rem;
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-weight: 700;
+      color: #ff00c8;
+      letter-spacing: 0.08em;
+      margin-bottom: 0;
+      text-shadow: 0 0 8px #ff00c8;
+      line-height: 1.3;
+    }
+    .game-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.25s;
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: #fff;
+      text-shadow:
+        0 0 16px #00ffe7,
+        0 2px 8px #181c29;
+      padding: 24px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 2;
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      background: rgba(0, 0, 32, 0.92);
+      border-radius: 18px;
+      border: 2px solid #00ffe7;
+      box-shadow: 0 0 32px #00ffe7cc;
+    }
+    .game-card:hover .game-overlay,
+    .game-card:focus .game-overlay,
+    .game-card.show-overlay .game-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .overlay-blue  { background: rgba(70, 120, 200, 0.85); border-color: #00ffe7; }
+    .overlay-pink  { background: rgba(220, 120, 180, 0.85); border-color: #ff00c8; }
+
+    @media (max-width: 700px) {
+      .header-cyber {
+        font-size: 2.1rem;
+        padding: 32px 0 16px 0;
+      }
+      .games-container {
+        gap: 18px;
+        padding: 24px 2vw 40px 2vw;
+      }
+      .game-card {
+        width: 98vw;
+        min-height: 220px;
+        padding: 18px 8px 16px 8px;
+      }
+      .game-card img {
+        width: 90vw;
+        height: 90vw;
+        max-width: 340px;
+        max-height: 340px;
+        aspect-ratio: 1 / 1;
+      }
+      .game-overlay {
+        font-size: 2.4rem !important;
+        padding: 10vw 4vw;
+      }
+    }
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      background-color: #181c29;
+      font-size: 0.9rem;
+      color: #00ffe7;
+      border-top: 1.5px solid #232946;
+      margin-top: 60px;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" style="display:block;width:100%;text-align:center;margin:32px 0 0 0;">
+    <img src="Assets/Images/Logo.png" alt="Willena English Logo" style="height:90px;max-width:320px;width:auto;display:inline-block;filter:drop-shadow(0 0 16px #00ffe7);border-radius:18px;">
+  </a>
+  <div style="width:100%;height:20vh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#181c29;">
+    <img src="Assets/Images/challenge-zone-wide.jpg" alt="Challenge Zone"
+      style="height:100%;width:auto;display:block;object-fit:contain;">
+  </div>
+  <div style="width:100vw;max-width:100%;height:0;border-bottom:2px solid #00ffe7;margin:0 0 24px 0;"></div>
+
+  <script src="/students/language.js"></script>
+  <div class="games-container">
+    <!-- Word Arcade (added to the top) -->
+    <a class="game-card" href="Games/english_arcade/index.html" target="_blank" rel="noopener">
+      <img src="Games/english_arcade/assets/Images/icons/word-arcade.svg" style="width:90%;height:auto;max-width:320px;max-height:320px;object-fit:contain;margin-bottom:18px;border-radius:16px;background:#232946;display:block;border:2px solid #ff00c8;box-shadow:0 0 24px #ff00c855;" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Word Arcade">
+      <div class="game-title">Word Arcade</div>
+      <div class="game-overlay overlay-pink">Wordlist Trainer</div>
+    </a>
+
+    <a class="game-card" href="Games/PastTenseGame/PastTenseGame.html">
+      <img src="Games/PastTenseGame/pasttensegame.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Past Tense Game">
+  <div class="game-title" data-i18n="Past Tense Game">Past Tense Game</div>
+  <div class="game-overlay overlay-blue" data-i18n="Past Tense Quiz!">Past Tense Quiz!</div>
+    </a>
+    <a class="game-card" href="Games/cutie_past_tense/cutie_past_tense.html">
+      <img src="Games/cutie_past_tense/cutie_past_tense.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Cutie Past Tense">
+  <div class="game-title" data-i18n="Cutie Past Tense">Cutie Past Tense</div>
+  <div class="game-overlay overlay-pink" data-i18n="Eat or ate?">Eat or ate?</div>
+    </a>
+    <a class="game-card" href="Games/Fruti/Fruti.html">
+      <img src="Games/Fruti/fruti.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Fruti Game">
+  <div class="game-title" data-i18n="Fruti">Fruti</div>
+  <div class="game-overlay overlay-blue" data-i18n="Fruit & Veg Quiz!">Fruit & Veg Quiz!</div>
+    </a>
+    <a class="game-card" href="Games/game_templates/4_b_game.html">
+      <img src="Games/Easy_word_game/Easy_word_game.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Easy Word Game">
+  <div class="game-title" data-i18n="Easy Word Game">Easy Word Game</div>
+  <div class="game-overlay overlay-pink" data-i18n="Random Words">Random Words</div>
+    </a>
+    <a class="game-card" href="Games/JungleAnimalGame/JungleAnimalGame.html">
+      <img src="Games/JungleAnimalGame/JungleAnimalGame.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Jungle Animal Game">
+  <div class="game-title" data-i18n="Jungle Animal Game">Jungle Animal Game</div>
+  <div class="game-overlay overlay-blue" data-i18n="Guess The Animals!">Guess The Animals!</div>
+    </a>
+    <a class="game-card" href="Games/PresentGame1/presentgame1.html">
+      <img src="Games/PresentGame1/presentgame1.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Go Goes">
+  <div class="game-title" data-i18n="Go Goes">Go Goes</div>
+  <div class="game-overlay overlay-pink" data-i18n="Is it \"Go or Goes?\"">Is it "Go or Goes?"</div>
+    </a>
+    <a class="game-card" href="Games/SchoolStuffGame/SchoolStuffGame.html">
+      <img src="Games/SchoolStuffGame/SchoolStuffGame.jpg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="School Stuff Game">
+  <div class="game-title" data-i18n="School Stuff Game">School Stuff Game</div>
+  <div class="game-overlay overlay-blue" data-i18n="Guess School Stuff">Guess School Stuff</div>
+    </a>
+
+    <!-- Added games -->
+    <a class="game-card" href="Games/EB4/EB4.html">
+      <img src="Games/EB4/eb4.svg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="EB4 Unscramble">
+  <div class="game-title" data-i18n="EB4 Unscramble">EB4 Unscramble</div>
+  <div class="game-overlay overlay-pink" data-i18n="Unscramble Sentences!">Unscramble Sentences!</div>
+    </a>
+
+    <a class="game-card" href="Games/ES6/ES6.html">
+      <img src="Games/ES6/es6.svg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="ES6 Unscramble">
+  <div class="game-title" data-i18n="ES6 Unscramble">ES6 Unscramble</div>
+  <div class="game-overlay overlay-blue" data-i18n="Dramady Music">Dramady Music</div>
+    </a>
+
+    <a class="game-card" href="Games/Participles1/participles.html">
+      <img src="Games/Participles1/participles.svg" onerror="this.onerror=null;this.src='Assets/Images/Play.jpg'" alt="Past Participle Basher">
+  <div class="game-title" data-i18n="Past Participle Basher">Past Participle Basher</div>
+  <div class="game-overlay overlay-pink" data-i18n="Past Participles!">Past Participles!</div>
+    </a>
+  </div>
+
+  <div class="footer" >
+    <span data-i18n="Phone">Phone</span>: 031-8041-2203<br>
+    © 2025 Willena 원어민 영어학원. <span data-i18n="All rights reserved.">All rights reserved.</span>
+  </div>
+
+  <div id="userProfile" style="position:fixed;top:18px;right:18px;z-index:100;display:none;align-items:center;gap:10px;background:rgba(24,28,41,0.97);border-radius:18px;padding:8px 16px;box-shadow:0 2px 8px #00ffe733;">
+    <span id="userAvatar" style="font-size:2rem; margin-right:6px;"></span>
+    <span id="userName" style="font-weight:600;color:#00ffe7;font-size:1.1em;"></span>
+  </div>
+
+  <script>
+  // Enable overlays on tap/click for mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.game-card').forEach(function(card) {
+      card.addEventListener('touchstart', function(e) {
+        // Remove overlay from others
+        document.querySelectorAll('.game-card.show-overlay').forEach(function(other) {
+          if (other !== card) other.classList.remove('show-overlay');
+        });
+        card.classList.toggle('show-overlay');
+        // Prevent click-through
+        e.stopPropagation();
+      });
+    });
+    // Hide overlay when tapping outside
+    document.body.addEventListener('touchstart', function(e) {
+      document.querySelectorAll('.game-card.show-overlay').forEach(function(card) {
+        if (!card.contains(e.target)) card.classList.remove('show-overlay');
+      });
+    });
+  });
+  </script>
+
+  <script>
+  // Only run on mobile
+  if (window.innerWidth <= 700) {
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.game-card');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('show-overlay');
+          } else {
+            entry.target.classList.remove('show-overlay');
+          }
+        });
+      }, {
+        root: null,
+        rootMargin: "-35% 0px -35% 0px",
+        threshold: 0.5
+      });
+
+      cards.forEach(card => observer.observe(card));
+    });
+  }
+  </script>
+
+  <script>
+document.addEventListener('DOMContentLoaded', async function() {
+  const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+  if (!userId) return;
+
+  try {
+    const res = await fetch('/.netlify/functions/supabase_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'users',
+        action: 'get_avatar',
+        user_id: userId
+      })
+    });
+    const result = await res.json();
+    if (result && result.data && result.data.length > 0) {
+      const user = result.data[0];
+      document.getElementById('userName').textContent = user.name;
+      const avatarEl = document.getElementById('userAvatar');
+      const avatar = user.avatar;
+      if (avatar && (avatar.startsWith('http') || avatar.startsWith('data:'))) {
+        avatarEl.innerHTML = `<img src="${avatar}" alt="avatar" style="width:2.2em;height:2.2em;border-radius:50%;vertical-align:middle;">`;
+      } else {
+        avatarEl.textContent = avatar || '🙂';
+      }
+      document.getElementById('userProfile').style.display = 'flex';
+    }
+  } catch (e) {
+    document.getElementById('userProfile').style.display = 'none';
+  }
+});
+</script>
+
+  <script>
+  // Load top scorers for each game and display them on the buttons
+  document.addEventListener('DOMContentLoaded', async function() {
+    // Map game cards to their game identifiers
+    const gameMapping = {
+      'Games/PastTenseGame/PastTenseGame.html': 'PastTenseGame',
+      'Games/cutie_past_tense/cutie_past_tense.html': 'cutie_past_tense',
+      'Games/Fruti/Fruti.html': 'Fruti',
+      'Games/game_templates/4_b_game.html': 'EmojiGame',
+      'Games/JungleAnimalGame/JungleAnimalGame.html': 'JungleAnimalGame',
+      'Games/PresentGame1/presentgame1.html': 'PresentGame1',
+      'Games/SchoolStuffGame/SchoolStuffGame.html': 'SchoolStuffGame',
+      'Games/EB4/EB4.html': 'EB4',
+      'Games/ES6/ES6.html': 'ES6',
+      'Games/Participles1/participles.html': 'ParticiplesGame',
+      'Games/english_arcade/index.html': 'WordArcade'
+    };
+
+    // Get all game cards
+    const gameCards = document.querySelectorAll('.game-card');
+    
+    // Load top scorer for each game
+    for (const card of gameCards) {
+      const href = card.getAttribute('href');
+      const gameId = gameMapping[href];
+      
+      if (gameId) {
+        try {
+          const response = await fetch(`/.netlify/functions/submit_score?game=${encodeURIComponent(gameId)}`);
+          if (response.ok) {
+            const scores = await response.json();
+            if (scores && scores.length > 0) {
+              const topScorer = scores.reduce((prev, current) => 
+                (prev.score > current.score) ? prev : current
+              );
+              
+              // Find the game title element and add top scorer info
+              const gameTitle = card.querySelector('.game-title');
+              if (gameTitle && topScorer.name) {
+                const topScorerDiv = document.createElement('div');
+                topScorerDiv.style.cssText = `
+                  font-size: 0.8em;
+                  color: #e0e6ff;
+                  margin-top: 6px;
+                  font-weight: 600;
+                  opacity: 0.95;
+                `;
+                topScorerDiv.textContent = `🏆 ${topScorer.name}: ${topScorer.score}`;
+                gameTitle.appendChild(topScorerDiv);
+              }
+            }
+          }
+        } catch (error) {
+          console.log(`Could not load top scorer for ${gameId}:`, error);
+        }
+      }
+    }
+  });
+  </script>
+</body>
+</html>

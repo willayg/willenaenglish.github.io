@@ -1,0 +1,14 @@
+[
+  {"eng":"mix","kor":"섞다","def":"to combine things together","ex":"Mix the flour and water.","ex_kor":"밀가루와 물을 섞으세요."},
+  {"eng":"pour","kor":"붓다","def":"to make a liquid flow from one place to another","ex":"Pour juice into the glass.","ex_kor":"잔에 주스를 부으세요."},
+  {"eng":"float","kor":"뜨다","def":"to stay on top of water","ex":"Leaves float on the pond.","ex_kor":"잎이 연못에 떠 있어요."},
+  {"eng":"sink","kor":"가라앉다","def":"to go down below the surface","ex":"Rocks sink in water.","ex_kor":"돌은 물에 가라앉아요."},
+  {"eng":"freeze","kor":"얼다","def":"to become solid from cold","ex":"Water will freeze in winter.","ex_kor":"겨울에는 물이 얼어요."},
+  {"eng":"melt","kor":"녹다","def":"to become liquid from heat","ex":"Ice cream melts in the sun.","ex_kor":"아이스크림은 햇볕에 녹아요."},
+  {"eng":"weigh","kor":"무게를 재다","def":"to find out how heavy something is","ex":"Weigh the apple on the scale.","ex_kor":"저울에 사과의 무게를 재세요."},
+  {"eng":"heat","kor":"데우다","def":"to make something warm or hot","ex":"Heat the soup on the stove.","ex_kor":"스토브에서 수프를 데우세요."},
+  {"eng":"cool","kor":"식히다","def":"to make something less hot","ex":"Let the cookies cool.","ex_kor":"쿠키를 식히세요."},
+  {"eng":"measure","kor":"측정하다","def":"to find the size or amount of something","ex":"Measure the water carefully.","ex_kor":"물을 조심스럽게 측정하세요."},
+  {"eng":"observe","kor":"관찰하다","def":"to watch something closely","ex":"Observe the color change.","ex_kor":"색이 변하는 것을 관찰하세요."},
+  {"eng":"record","kor":"기록하다","def":"to write down what you see or find","ex":"Record your results in a notebook.","ex_kor":"노트에 결과를 기록하세요."}
+]

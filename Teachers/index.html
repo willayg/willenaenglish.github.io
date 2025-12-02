@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #fff;
+            font-family: 'Poppins', Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .dashboard-outer-container {
+            background: #39384a;
+            border-radius: 32px;
+            border: 2px solid #b0bfc4;
+            margin: 20px auto;
+            max-width: 100vw;
+            width: 100vw;
+            height: 93vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            box-shadow: 0 4px 32px 0 rgba(30,41,59,0.13);
+            overflow-x: hidden;
+        }
+        
+        .dashboard-container {
+            max-width: 96vw;
+            width: 100%;
+            margin: 10px auto;
+            padding: 0px 0px 20px 0px;
+            max-height: 90vh;
+            box-sizing: border-box;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-img {
+            height: 60px;
+            width: auto;
+        }
+        
+        .dashboard-header h1 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+        }
+        
+        .menu-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+        }
+        
+        .menu-icon span {
+            width: 24px;
+            height: 3px;
+            background: rgb(255, 255, 255);
+            border-radius: 5px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background-color: #e8f4f8;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .nav-tab {
+            flex: 1 1 0;
+            text-align: center;
+            padding: 12px 0; /* Reduced padding */
+            color: #587b80;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-size: 1rem; /* Reduced font size */
+            background: #e8f4f8;
+            border: none;
+            outline: none;
+        }
+        .nav-tab.active {
+            color: #3b4a4e;
+            background: #e8f4f8;
+            border-bottom: none;
+            box-shadow: 0 2px 8px 0 rgba(30,41,59,0.06);
+        }
+        .nav-tab.disabled {
+            color: #b0bfc4;
+            cursor: not-allowed;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .nav-tab:hover {
+            background: #d1e9f5;
+            color: #2d3748;
+        }
+        
+        .content-area {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            padding: 10px 70px 20px 70px; /* Increase from 70px to 120px */
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 24px 24px;
+            height: 72vh;
+            overflow-y: auto;
+            align-items: start;
+            grid-auto-rows: min-content;
+        }
+        /* Optional: style the scrollbar for a modern look */
+        .content-area::-webkit-scrollbar {
+            width: 12px;
+        }
+        .content-area::-webkit-scrollbar-thumb {
+            background: #e8f4f8;
+            border-radius: 8px;
+        }
+        .content-area::-webkit-scrollbar-track {
+            background: #fff;
+        }
+        .tool-card {
+            background: #f7f7f7;
+            border-radius: 16px;
+            border: 4px solid #b0bfc4;
+            padding: 16px 12px;
+            min-width: 120px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 8px 0 rgba(30,41,59,0.06);
+            text-decoration: none;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        .tool-card:visited, .tool-card:active, .tool-card:focus {
+            text-decoration: none;
+            color: inherit;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .content-area .tool-card {
+            /* Stagger animation for each card */
+            animation-delay: calc(var(--card-index, 0) * 0.12s);
+        }
+        
+        .tool-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #4a5568;
+            margin-bottom: 0.3em;
+        }
+        .tool-desc {
+            display: none;
+        }
+        .tool-overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(57, 56, 74, 0.8);
+        .tool-card img {
+            box-shadow: 0 8px 24px 0 rgba(30,41,59,0.22);
+        }
+        .tool-card img[alt="Flashcard Builder"] {
+            outline: 4px solid #011013;
+            outline-offset: 4px;
+            border-radius: 12px;
+        }
+            color: #fff;
+            font-size: 1.18rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 16px;
+            border: 4px solid #b0bfc4;
+            box-sizing: border-box;
+            transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 2;
+            padding: 0 18px;
+        }
+        .tool-card {
+            position: relative;
+        }
+        /* Mobile-only tool card visibility */
+        .tool-card.mobile-only {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .tool-card.mobile-only {
+                display: flex !important;
+                width: 96vw;
+                margin: 0 auto;
+            }
+        }
+        @media (min-width: 601px) {
+            .tool-card.mobile-only {
+                display: none !important;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .content-area {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .dashboard-outer-container {
+                max-width: 99vw;
+                width: 99vw;
+            }
+            .nav-tabs {
+                display: none !important;
+            }
+            .dashboard-header {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 8px 8px 0 8px;
+                margin-bottom: 6px;
+            }
+            .logo-img {
+                height: 38px;
+                max-width: 80px;
+                width: auto;
+            }
+            .dashboard-header h1 {
+                font-size: 1.1rem;
+                margin: 0 4px;
+                flex-grow: 1;
+                text-align: center;
+                word-break: break-word;
+                white-space: normal;
+            }
+            #username-display {
+                font-size: 0.95rem !important;
+                max-width: 90px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #burger-menu-mount {
+                min-width: 32px !important;
+                max-width: 40px;
+                position: relative;
+                left: -15px;
+            }
+            .content-area {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                align-items: center;
+                width: 100vw;
+                overflow-x: hidden;
+                padding: 4px 0 8px 0;
+                box-sizing: border-box;
+            }
+            .tool-card {
+                min-width: 0;
+                width: 96vw;
+                margin: 0 auto;
+                padding: 12px 0;
+                font-size: 1em;
+                border-radius: 10px;
+                border-width: 2px;
+                box-shadow: 0 2px 8px 0 rgba(30,41,59,0.06);
+                border-left: none;
+                border-right: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            body {
+                overflow-x: hidden;
+            }
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script src="tool-card-overlay.js"></script>
+    <script>
+      // Access control: redirect if not logged in or not approved
+      (async function() {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          const redirect = encodeURIComponent(location.pathname + location.search);
+          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+          return;
+        }
+        try {
+          const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+          const result = await res.json();
+          if (!result.success || result.approved !== true) {
+            window.location.href = '/Teachers/profile.html';
+            return;
+          }
+        } catch (e) {
+          const redirect = encodeURIComponent(location.pathname + location.search);
+          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+        }
+      })();
+    </script>
+    <div class="dashboard-outer-container">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div class="logo">
+                    <img src="../Assets/Images/Logo.png" alt="Willena Logo" class="logo-img">
+                </div>
+                <h1>Teacher Dashboard</h1>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span id="username-display" style="color:white; font-size:1.1rem; font-weight:500;"></span>
+                    <div id="burger-menu-mount" style="position:relative; min-width:48px;"></div>
+                </div>
+            </div>
+            
+            <div class="nav-tabs">
+                <div class="nav-tab active">All</div>
+                <div class="nav-tab">Reading</div>
+                <div class="nav-tab">Vocabulary</div>
+                <div class="nav-tab">Grammar</div>
+                <div class="nav-tab">Listening</div>
+                <div class="nav-tab">Speaking</div>
+                <div class="nav-tab">Writing</div>
+                <div class="nav-tab">On-Screen</div>
+                <div class="nav-tab">Activities</div>
+            </div>
+            
+            <div class="content-area">
+                <!-- Mobile-only Text Capture tool card -->
+                <a class="tool-card mobile-only" data-tags="all mobile" href="tools/vision_ai/vision.html">
+                    <div class="tool-title">Text Capture</div>
+                    <div class="tool-overlay">Capture text from images using your mobile device.</div>
+                </a>
+                <a class="tool-card" data-tags="all reading vocabulary" href="tools/wordtest/wordtest2.html">
+                    <div class="tool-title">Word Builder</div>
+                    <img src="tools/assets/icons/wordtest.png" alt="Word Worksheet" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Create custom vocabulary worksheets with images and more.</div>
+                </a>
+                <a class="tool-card" data-tags="all vocabulary activities" href="tools/flashcard/flashcard.html">
+                    <div class="tool-title">Flashcard Builder</div>
+                    <img src="tools/assets/icons/flashcard.png" alt="Flashcard Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Design and print flashcards for any word list.</div>
+                </a>
+                <a class="tool-card" data-tags="all planning" href="tools/planner/planner.html">
+                    <div class="tool-title">Lesson Planner</div>
+                    <img src="tools/assets/icons/lesson.png" alt="Lesson Planner" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Plan and organize your ESL lessons with AI help.</div>
+                </a>
+                <a class="tool-card" data-tags="all grammar" href="tools/Grammar/grammar2.html">
+                    <div class="tool-title">Grammar Tool</div>
+                    <img src="tools/assets/icons/grammar.png" alt="Grammar Tool" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Create and print custom grammar worksheets.</div>
+                </a>
+<a class="tool-card" data-tags="all activities speaking writing" href="tools/survey_builder/survey_builder.html">
+                    <div class="tool-title">Survey Builder</div>
+                    <img src="tools/assets/icons/survey.png" alt="Survey Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Create printable and customizable classroom surveys with grids, checklists, and more.</div>
+                </a>
+                <a class="tool-card" data-tags="all reading" href="tools/reading/reading.html">
+                    <div class="tool-title">Reading Builder</div>
+                    <img src="tools/assets/icons/reading.png" alt="Reading Passage" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Generate and customize reading passages and questions.</div>
+                </a>
+                <a class="tool-card" data-tags="all activities vocabulary" href="tools/puzzles/wordsearch.html">
+                    <div class="tool-title">Wordsearch Builder</div>
+                    <img src="tools/assets/icons/wordsearch.png" alt="Wordsearch Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Create printable wordsearch puzzles for your students.</div>
+                </a>
+                <a class="tool-card" data-tags="all on-screen activities" href="tools/grid_game/grid_game.html">
+                    <div class="tool-title">Grid Game</div>
+                    <img src="tools/assets/icons/grid.png" alt="Grid Game" style="height:8em;margin:0.7em 0 0.5em 0;">
+                    <div class="tool-overlay">Interactive classroom grid game for vocabulary and review.</div>
+                </a>
+
+        <!-- Student Tracker Tool Card (English Arcade stats) -->
+        <a class="tool-card" data-tags="all activities planning" href="tools/student_tracker/student_tracker.html">
+          <div class="tool-title">Student Tracker</div>
+          <img src="tools/assets/icons/lesson.png" alt="Student Tracker" style="height:8em;margin:0.7em 0 0.5em 0;">
+          <div class="tool-overlay">View class leaderboards, monthly filters, and per-student English Arcade stats.</div>
+        </a>
+
+        <a class="tool-card" data-tags="all planning" href="tools/manage_students.html">
+          <div class="tool-title">Manage Students</div>
+          <img src="tools/assets/icons/lesson.png" alt="Manage Students" style="height:8em;margin:0.7em 0 0.5em 0;">
+          <div class="tool-overlay">Create, reset, or remove student accounts and approvals.</div>
+        </a>
+
+        <a class="tool-card" data-tags="all vocabulary activities on-screen" href="tools/game-builder/index.html">
+          <div class="tool-title">Word Game Builder</div>
+          <img src="tools/assets/icons/grid.png" alt="Word Game Builder" style="height:8em;margin:0.7em 0 0.5em 0;">
+          <div class="tool-overlay">Create custom word games for your students to play online.</div>
+        </a>
+
+            </div>
+        </div>
+    </div>
+    <script type="module">
+      // Show username from localStorage (set at login)
+      document.addEventListener('DOMContentLoaded', async function() {
+        const usernameSpan = document.getElementById('username-display');
+        let username = '';
+        let name = '';
+        let userId = localStorage.getItem('userId');
+        if (userId) {
+          try {
+            const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+            const result = await res.json();
+            if (result.success) {
+              if (result.username) {
+                username = result.username;
+                localStorage.setItem('username', username);
+              }
+              if (result.name) {
+                name = result.name;
+                localStorage.setItem('name', name);
+              }
+              if (result.email) {
+                localStorage.setItem('userEmail', result.email);
+              }
+              if (result.role) {
+                localStorage.setItem('userRole', result.role);
+              }
+              // Always set userId in case it changes
+              if (result.id) {
+                userId = result.id;
+                localStorage.setItem('userId', userId);
+              }
+            }
+          } catch (e) {
+            // fallback below
+          }
+        }
+        if (!username) {
+          // fallback to localStorage/email
+          username = localStorage.getItem('username') || '';
+          if (!username) {
+            const email = localStorage.getItem('userEmail');
+            if (email) {
+              username = email.split('@')[0];
+            }
+          }
+        }
+        if (username) {
+          usernameSpan.textContent = username;
+        }
+      });
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+        // Update burger menu teacher login link if present
+        setTimeout(() => {
+          const burger = document.querySelector('burger-menu');
+          if (burger && burger.shadowRoot) {
+            const teacherLogin = burger.shadowRoot.querySelector('a[href*="Teachers/index.html"], a[href*="teachers/index.html"]');
+            if (teacherLogin) {
+              teacherLogin.setAttribute('href', '/Teachers/login.html');
+              teacherLogin.textContent = 'Teacher Login';
+            }
+          }
+        }, 500);
+      });
+    </script>
+    <script>
+      // Feedback modal loader for burger menu integration (grid_game style)
+      window.showFeedbackModal = function() {
+        // Prevent multiple modals
+        if (document.getElementById('feedback-modal-bg')) return;
+        // Try to find the template in DOM first
+        let template = document.getElementById('feedback-modal-template');
+        if (!template) {
+          // If not found, fetch and inject it
+          fetch('/Teachers/components/feedback-modal.html')
+            .then(resp => resp.text())
+            .then(html => {
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = html;
+              document.body.appendChild(tempDiv.firstElementChild);
+              showFeedbackModal(); // Call again now that template is present
+            });
+          return;
+        }
+        // Clone and show modal
+        const modalNode = template.content.cloneNode(true);
+        document.body.appendChild(modalNode);
+        // Add close/cancel handlers
+        const bg = document.getElementById('feedbackModalBg');
+        if (!bg) return;
+        const closeBtn = bg.querySelector('#feedbackModalCloseBtn');
+        const cancelBtn = bg.querySelector('#feedbackCancelBtn');
+        function closeModal() { bg.remove(); }
+        if (closeBtn) closeBtn.onclick = closeModal;
+        if (cancelBtn) cancelBtn.onclick = closeModal;
+        // Optional: focus textarea
+        const textarea = bg.querySelector('textarea');
+        if (textarea) textarea.focus();
+
+        // Feedback submit handler
+        const submitBtn = bg.querySelector('#feedbackSubmitBtn');
+        if (submitBtn) {
+          submitBtn.onclick = async function() {
+            const feedbackText = textarea.value.trim();
+            if (!feedbackText) {
+              alert('Please enter your feedback.');
+              textarea.focus();
+              return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            // Prepare feedback payload
+            // Gather tool state (settings)
+            let toolState = {};
+            try {
+              toolState = {
+                // No tool state for dashboard, but you can add info here if needed
+              };
+            } catch (e) { toolState = {}; }
+            const payload = {
+              feedback: feedbackText,
+              module: 'dashboard',
+              page_url: window.location.pathname,
+              tool_state: toolState,
+              user_id: null // Optionally set if you have auth
+            };
+            try {
+              const resp = await fetch('/.netlify/functions/supabase_proxy?feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'insert_feedback',
+                  data: payload
+                })
+              });
+              const result = await resp.json();
+              if (resp.ok && result.success) {
+                submitBtn.textContent = 'Sent!';
+                setTimeout(closeModal, 900);
+              } else {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send';
+                alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+              }
+            } catch (err) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Send';
+              alert('Network error: ' + err.message);
+            }
+          };
+        }
+      };
+      // Attach feedback modal to burger menu
+      document.addEventListener('DOMContentLoaded', function() {
+        function tryAttachFeedback(attempts = 0) {
+          const burger = document.querySelector('burger-menu');
+          if (!burger) return setTimeout(() => tryAttachFeedback(attempts+1), 100);
+          const shadow = burger.shadowRoot;
+          if (!shadow) return setTimeout(() => tryAttachFeedback(attempts+1), 100);
+          const feedbackBtn = shadow.getElementById('feedbackMenuBtn');
+          if (feedbackBtn) {
+            feedbackBtn.onclick = function(e) {
+              e.preventDefault();
+              window.showFeedbackModal();
+            };
+          } else if (attempts < 30) {
+            setTimeout(() => tryAttachFeedback(attempts+1), 100);
+          }
+        }
+        tryAttachFeedback();
+      });
+    </script>
+    <script>
+        // Animate tool cards with staggered delay
+        window.addEventListener('DOMContentLoaded', function() {
+            var cards = document.querySelectorAll('.content-area .tool-card');
+            cards.forEach(function(card, i) {
+                card.style.setProperty('--card-index', i);
+            });
+
+            // Filtering logic for nav tabs
+            var tabs = document.querySelectorAll('.nav-tab');
+            var allCards = document.querySelectorAll('.content-area .tool-card');
+            function filterCards(tag) {
+                var found = false;
+                allCards.forEach(function(card) {
+                    var tags = (card.getAttribute('data-tags') || '').split(/\s+/);
+                    if (tag === 'all' || tags.includes(tag)) {
+                        card.style.display = '';
+                        found = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                // If no cards are found, show the coming soon card if it exists for this tab
+                if (!found) {
+                    allCards.forEach(function(card) {
+                        if (card.classList.contains('coming-soon')) {
+                            var tags = (card.getAttribute('data-tags') || '').split(/\s+/);
+                            if (tags.includes(tag)) {
+                                card.style.display = '';
+                            }
+                        }
+                    });
+                }
+            }
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(function(t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    var tag = tab.textContent.trim().toLowerCase().replace(/[^a-z-]/g, '');
+                    filterCards(tag);
+                });
+            });
+            // Default to 'all'
+            filterCards('all');
+        });
+    </script>
+</body>
+</html>

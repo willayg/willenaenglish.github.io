@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willena Lesson Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .planner-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            padding: 32px;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .preview-area {
+            flex: 1;
+            padding: 32px;
+            background: white;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .toggle-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .toggle-btn.active {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .toggle-btn.inactive {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .action-btn {
+            padding: 10px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            color: #374151;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        /* Lesson Plan Styles */
+        .lesson-header {
+            background: linear-gradient(135deg, #2e2b3f, #4a4458);
+            color: white;
+            padding: 24px;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .lesson-header h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .lesson-info {
+            background: #f8f9fa;
+            padding: 24px;
+            border: 1px solid #e9ecef;
+            border-radius: 0 0 12px 12px;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .lesson-info p {
+            margin: 8px 0;
+        }
+        
+        .activity-box {
+            display: flex;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .time-box {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 24px;
+            width: 140px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .content-box {
+            padding: 24px;
+            flex: 1;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            color: #2e2b3f;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .activity-item {
+            margin: 24px 0;
+            padding: 24px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .activity-item h3 {
+            color: #2e2b3f;
+            margin-bottom: 16px;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .activity-item p {
+            margin: 12px 0;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-top: 100px;
+            padding: 40px;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                display: block;
+            }
+            .preview-area {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+  <script>
+    // Access control: only allow approved users
+    (async function() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        window.location.href = '/Teachers/login.html';
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const result = await res.json();
+        if (!result.success || result.approved !== true) {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+  <script>
+    // Feedback modal loader for Planner (GLOBAL for burger menu)
+    window.showFeedbackModal = async function() {
+      if (!document.getElementById('feedbackModalBg')) {
+        const resp = await fetch('/Teachers/components/feedback-modal.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const template = tempDiv.querySelector('#feedback-modal-template');
+        if (template) {
+          const modalContent = template.content.cloneNode(true);
+          document.body.appendChild(modalContent);
+        }
+      }
+      const modal = document.getElementById('feedbackModalBg');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      
+      const closeBtn = document.getElementById('feedbackModalCloseBtn');
+      const cancelBtn = document.getElementById('feedbackCancelBtn');
+      const submitBtn = document.getElementById('feedbackSubmitBtn');
+      
+      function closeModal() {
+        modal.style.display = 'none';
+      }
+      
+      if (closeBtn) {
+        closeBtn.onclick = closeModal;
+      }
+      if (cancelBtn) {
+        cancelBtn.onclick = closeModal;
+      }
+      
+      // Close on background click
+      modal.onclick = function(event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+      
+      if (submitBtn) {
+        submitBtn.onclick = async function() {
+          const feedbackText = document.getElementById('feedbackText').value;
+          // Collect planner state
+          const state = {
+            currentPlanner: window.currentPlannerData || {}
+          };
+          
+          // Get user_id and username from localStorage
+          const user_id = localStorage.getItem('userId') || '';
+          const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+          
+          try {
+            const resp = await fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'insert_feedback',
+                data: {
+                  feedback: feedbackText,
+                  module: 'planner',
+                  user_id,
+                  username,
+                  tool_state: state,
+                  page_url: window.location.href
+                }
+              })
+            });
+            const result = await resp.json();
+            if (resp.ok && result.success) {
+              closeModal();
+              document.getElementById('feedbackText').value = '';
+              alert('Thank you for your feedback!');
+            } else {
+              alert('Error sending feedback: ' + (result.error || 'Unknown error'));
+            }
+          } catch (err) {
+            alert('Network error: ' + err.message);
+          }
+        };
+      }
+    };
+  </script>
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <div class="container">
+        <div class="planner-card">
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+                <div style="flex:1;">
+                  <h1 style="margin:0;">Willena Lesson Planner</h1>
+                  <p style="margin:0;">Create professional ESL lesson plans with AI assistance</p>
+                </div>
+                <!-- Top Action Bar (text links, like wordsearch.html) -->
+                <div class="top-actions" style="position:absolute; left:32px; bottom:12px; z-index:9999; display:flex; gap:20px; align-items:flex-end;">
+                    <span class="action-link" id="newBtn" style="font-size:1rem; cursor:pointer;">New</span>
+                    <span class="action-link" id="editLessonPlanLink" style="font-size:1rem; cursor:pointer;">Edit</span>
+                    <span class="action-link" id="printLessonPlanLink" style="font-size:1rem; cursor:pointer;">Print</span>
+                    <span class="action-link" id="saveLessonPlanLink" style="font-size:1rem; cursor:pointer;">Save</span>
+                    <span class="action-link" id="loadLessonPlanLink" style="font-size:1rem; cursor:pointer;">Load</span>
+                    <span class="action-link" id="pdfLessonPlanLink" style="font-size:1rem; cursor:pointer;">PDF</span>
+                    <span class="action-link" id="moreBtn" style="font-size:1rem; cursor:pointer; margin-left:auto;">More</span>
+                </div>
+                <script>
+                // New button logic for Planner
+                document.addEventListener('DOMContentLoaded', function() {
+                  const newBtn = document.getElementById('newBtn');
+                  if (newBtn) {
+                    newBtn.addEventListener('click', function() {
+                      if (confirm('Are you sure you want to start a new lesson plan?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+                        // Clear all main fields (adjust IDs as needed for planner)
+                        const idsToClear = [
+                          'classNameInput',
+                          'objectivesInput',
+                          'materialsInput',
+                          'proceduresInput',
+                          'assessmentInput',
+                          'notesInput'
+                        ];
+                        idsToClear.forEach(id => {
+                          const el = document.getElementById(id);
+                          if (el) {
+                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+                          }
+                        });
+                        // Reset selects (if any)
+                        // Optionally clear preview area
+                        const preview = document.getElementById('previewArea');
+                        if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+                        if (window.updatePlannerPreview) window.updatePlannerPreview();
+                      }
+                    });
+                  }
+                  
+                  // More button logic
+                  const moreBtn = document.getElementById('moreBtn');
+                  if (moreBtn) {
+                    moreBtn.addEventListener('click', async function() {
+                      if (!document.getElementById('moreToolsOverlay')) {
+                        try {
+                          const resp = await fetch('/Teachers/components/more-tools.html');
+                          const html = await resp.text();
+                          const tempDiv = document.createElement('div');
+                          tempDiv.innerHTML = html;
+                          const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                          if (overlay) document.body.appendChild(overlay);
+                          tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                          tempDiv.querySelectorAll('script').forEach(script => {
+                            const s = document.createElement('script');
+                            if (script.textContent) s.textContent = script.textContent;
+                            document.body.appendChild(s);
+                          });
+                          setTimeout(function() {
+                            var closeBtn = document.getElementById('closeMoreToolsBtn');
+                            var overlayDiv = document.getElementById('moreToolsOverlay');
+                            if (closeBtn && overlayDiv) {
+                              closeBtn.onclick = function() {
+                                overlayDiv.style.display = 'none';
+                                document.body.style.overflow = '';
+                              };
+                            }
+                          }, 100);
+                        } catch (e) { alert('Could not load More Tools.'); return; }
+                      }
+                      if (typeof showMoreToolsModal === 'function') {
+                        showMoreToolsModal();
+                      } else {
+                        const overlay = document.getElementById('moreToolsOverlay');
+                        if (overlay) {
+                          overlay.style.display = 'flex';
+                          document.body.style.overflow = 'hidden';
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          if (closeBtn) {
+                            closeBtn.onclick = function() {
+                              overlay.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }
+                      }
+                    });
+                  }
+                });
+                </script>
+                <!-- Burger Menu Component (vertically centered in header, inside container) -->
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+            </div>
+            
+            <div class="main-content">
+                <!-- Sidebar Controls -->
+                <div class="sidebar">
+                    <!-- Language Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Language</label>
+                        <div class="toggle-buttons">
+                            <button id="englishMode" class="toggle-btn active">English</button>
+                            <button id="koreanMode" class="toggle-btn inactive">한국어</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Mode Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Planning Mode</label>
+                        <div class="toggle-buttons">
+                            <button id="fullPlanMode" class="toggle-btn active">Full Lesson Plan</button>
+                            <button id="activityMode" class="toggle-btn inactive">Activity Ideas</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Full Plan Controls -->
+                    <div id="fullPlanControls">
+                        <div class="form-group">
+                            <label class="form-label">Class Name</label>
+                            <input type="text" id="plannerClassName" class="form-input" placeholder="e.g. Brown Class">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" id="plannerDate" class="form-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Lesson Duration</label>
+                            <select id="plannerDuration" class="form-select">
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="50" selected>50 minutes (Standard)</option>
+                                <option value="60">60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="custom">Custom Duration</option>
+                            </select>
+                        </div>
+                        
+                        <div id="customDuration" style="display: none;">
+                            <div class="form-group">
+                                <input type="number" id="customDurationInput" class="form-input" placeholder="Enter minutes" min="10" max="180">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Lesson Topic *</label>
+                            <input type="text" id="plannerTopic" class="form-input" placeholder="e.g. Learning the long a sound">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Teaching Preferences (Optional)</label>
+                            <textarea id="plannerActivities" class="form-textarea" rows="3" placeholder="e.g. I want to teach them with chants"></textarea>
+                        </div>
+                        
+                        <button id="generateLessonPlan" class="generate-btn">Generate Full Lesson Plan</button>
+                    </div>
+                      <!-- Activity Ideas Controls -->
+                    <div id="activityControls" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">What are you teaching today?</label>
+                            <textarea id="currentActivity" class="form-textarea" rows="4" placeholder="Describe what you want activity ideas for..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Number of Activity Ideas</label>
+                            <select id="activityCount" class="form-select">
+                                <option value="1">1 Activity Idea</option>
+                                <option value="2">2 Activity Ideas</option>
+                                <option value="3">3 Activity Ideas</option>
+                                <option value="4" selected>4 Activity Ideas</option>
+                                <option value="5">5 Activity Ideas</option>
+                            </select>
+                        </div>
+                        
+                        <button id="generateActivities" class="generate-btn">Get Activity Ideas</button>
+                    </div>
+                    
+                    <!-- Action Buttons (moved to header, so remove here) -->
+                    <!-- ...existing code... -->
+                </div>
+                
+                <!-- Preview Area -->
+                <div class="preview-area">
+                    <div id="lessonPlanOutput">
+                        <div class="empty-state">
+                            <div class="icon">📝</div>
+                            <h3>Ready to Create Your Lesson Plan</h3>
+                            <p>Fill in the details on the left and click generate to create a professional lesson plan with AI assistance.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="planner-standalone.js"></script>
+    <script>
+    // Open Worksheet Manager for Save/Load
+    function openWorksheetManager(mode) {
+        const url = "/Teachers/worksheet_manager.html?mode=" + mode;
+        window.open(url, 'worksheetManager', 'width=1200,height=550');
+        window.open(url, "worksheetManager", "width=800,height=600");
+    }
+    document.getElementById("saveLessonPlanLink").onclick = function(e) {
+        e.preventDefault();
+        openWorksheetManager("save");
+    };
+    document.getElementById("loadLessonPlanLink").onclick = function(e) {
+        e.preventDefault();
+        openWorksheetManager("load");
+    };
+    // Provide worksheet data for manager
+    window.getCurrentWorksheetData = function() {
+        // Gather lesson plan data from form fields
+        const title = document.getElementById("plannerTopic")?.value || "";
+        const className = document.getElementById("plannerClassName")?.value || "";
+        const date = document.getElementById("plannerDate")?.value || "";
+        let duration = document.getElementById("plannerDuration")?.value || "";
+        const customDuration = document.getElementById("customDurationInput")?.value || "";
+        if (duration === "custom") duration = customDuration;
+        const activities = document.getElementById("plannerActivities")?.value || "";
+        // Save only activities in passage_text
+        const settings = JSON.stringify({
+            class_name: className,
+            date,
+            duration
+        });
+        return {
+            title,
+            passage_text: activities,
+            worksheet_type: "lessonplan",
+            settings
+        };
+    };
+    window.loadWorksheet = function(ws) {
+        // Load worksheet data into planner fields
+        document.getElementById("plannerTopic").value = ws.title || "";
+        // Load settings if present
+        if (ws.settings) {
+            try {
+                const settingsObj = JSON.parse(ws.settings);
+                document.getElementById("plannerClassName").value = settingsObj.class_name || "";
+                document.getElementById("plannerDate").value = settingsObj.date || "";
+                if (settingsObj.duration) {
+                    const durationSelect = document.getElementById("plannerDuration");
+                    if (["30","45","50","60","90"].includes(settingsObj.duration)) {
+                        durationSelect.value = settingsObj.duration;
+                        document.getElementById("customDuration").style.display = "none";
+                    } else {
+                        durationSelect.value = "custom";
+                        document.getElementById("customDuration").style.display = "block";
+                        document.getElementById("customDurationInput").value = settingsObj.duration;
+                    }
+                }
+            } catch (e) {}
+        } else {
+            document.getElementById("plannerClassName").value = ws.class_name || "";
+            document.getElementById("plannerDate").value = ws.date || "";
+            if (ws.duration) {
+                const durationSelect = document.getElementById("plannerDuration");
+                if (["30","45","50","60","90"].includes(ws.duration)) {
+                    durationSelect.value = ws.duration;
+                    document.getElementById("customDuration").style.display = "none";
+                } else {
+                    durationSelect.value = "custom";
+                    document.getElementById("customDuration").style.display = "block";
+                    document.getElementById("customDurationInput").value = ws.duration;
+                }
+            }
+        }
+        // Use passage_text for lesson plan/activities
+        let topic = "";
+        let activities = "";
+        if (ws.passage_text) {
+            // Try to split topic and activities if possible
+            const topicMatch = ws.passage_text.match(/Lesson Topic:\s*(.*)/i);
+            if (topicMatch) topic = topicMatch[1].trim();
+            const activitiesMatch = ws.passage_text.match(/Activities:\s*([\s\S]*)/i);
+            if (activitiesMatch) activities = activitiesMatch[1].trim();
+            // Fallback if not split
+            if (!topic && !activities) {
+                topic = ws.passage_text;
+            }
+            document.getElementById("plannerTopic").value = topic;
+            document.getElementById("plannerActivities").value = activities;
+        } else {
+            document.getElementById("plannerActivities").value = ws.activities || "";
+        }
+
+        // Immediately update the preview area with the loaded lesson plan
+        // Simulate clicking the Generate button, but without regenerating from AI
+        // Use the current form field values to render the preview
+        const lessonPlanOutput = document.getElementById("lessonPlanOutput");
+        // Compose preview HTML (same as what would be generated)
+        let previewHTML = "";
+        // Header
+        previewHTML += `<div class='lesson-header'><h2>${topic || "Lesson Plan"}</h2></div>`;
+        // Info
+        previewHTML += `<div class='lesson-info'>`;
+        previewHTML += `<p><strong>Class Name:</strong> ${document.getElementById("plannerClassName").value}</p>`;
+        previewHTML += `<p><strong>Date:</strong> ${document.getElementById("plannerDate").value}</p>`;
+        let durationVal = document.getElementById("plannerDuration").value;
+        if (durationVal === "custom") durationVal = document.getElementById("customDurationInput").value;
+        previewHTML += `<p><strong>Duration:</strong> ${durationVal} minutes</p>`;
+        previewHTML += `</div>`;
+        // Activities
+        if (activities) {
+            previewHTML += `<div class='activity-item'><h3>Activities</h3><p>${activities.replace(/\n/g, "<br>")}</p></div>`;
+        }
+        lessonPlanOutput.innerHTML = previewHTML;
+    };
+    </script>
+</body>
+</html>

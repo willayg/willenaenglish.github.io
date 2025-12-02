@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+    /* Ensure the preview area fills the viewport for 1x2-portrait */
+    .preview-area.full-portrait {
+        width: 100vw;
+        height: 100vh;
+        min-height: 100vh;
+        background: white;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Load shared burger menu component -->
+    <script type="module">
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+      });
+    </script>
+    <div class="container">
+        <div class="app-card">
+            <!-- Header -->
+            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
+                <div class="logo">
+                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                </div>
+                <h1 style="flex:1; text-align:center; margin:0;">Flashcard Generator</h1>
+                <!-- Burger Menu Component (vertically centered in header, inside container) -->
+                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
+            </div>
+
+            <!-- Top Action Bar -->
+            <div class="top-actions">
+                <span class="action-link" id="newBtn">New</span>
+                <span class="action-link" id="loadBtn">Load</span>
+                <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="printBtn">Print</span>
+                <span class="action-link" id="pdfBtn">PDF</span>
+                <span class="action-link" id="moreBtn" style="margin-left:auto;">More</span>
+                <script>
+                // Attach More button to show the More Tools modal overlay
+                document.addEventListener('DOMContentLoaded', function() {
+                  const moreBtn = document.getElementById('moreBtn');
+                  if (!moreBtn) return;
+                  moreBtn.addEventListener('click', async function() {
+                    // If modal not present, fetch and inject it
+                    if (!document.getElementById('moreToolsOverlay')) {
+                      try {
+                        const resp = await fetch('/Teachers/components/more-tools.html');
+                        const html = await resp.text();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        // Only append the overlay div, not the whole HTML
+                        const overlay = tempDiv.querySelector('#moreToolsOverlay');
+                        if (overlay) document.body.appendChild(overlay);
+                        // Also append any <style> tags (for modal styling)
+                        tempDiv.querySelectorAll('style').forEach(style => document.head.appendChild(style));
+                        // Also append any <script> tags (for modal logic)
+                        tempDiv.querySelectorAll('script').forEach(script => {
+                          const s = document.createElement('script');
+                          if (script.textContent) s.textContent = script.textContent;
+                          document.body.appendChild(s);
+                        });
+                        // Attach close button handler immediately after injection
+                        setTimeout(function() {
+                          var closeBtn = document.getElementById('closeMoreToolsBtn');
+                          var overlayDiv = document.getElementById('moreToolsOverlay');
+                          if (closeBtn && overlayDiv) {
+                            closeBtn.onclick = function() {
+                              overlayDiv.style.display = 'none';
+                              document.body.style.overflow = '';
+                            };
+                          }
+                        }, 100);
+                      } catch (e) { alert('Could not load More Tools.'); return; }
+                    }
+                    if (typeof showMoreToolsModal === 'function') {
+                      showMoreToolsModal();
+                    } else {
+                      // fallback: try to show overlay directly
+                      const overlay = document.getElementById('moreToolsOverlay');
+                      if (overlay) {
+                        overlay.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        // Attach close button handler if not already
+                        var closeBtn = document.getElementById('closeMoreToolsBtn');
+                        if (closeBtn) {
+                          closeBtn.onclick = function() {
+                            overlay.style.display = 'none';
+                            document.body.style.overflow = '';
+                          };
+                        }
+                      }
+                    }
+                  });
+                });
+                </script>
+            </div>
+            <script>
+            // New button logic for Flashcard Generator
+            document.addEventListener('DOMContentLoaded', function() {
+              const newBtn = document.getElementById('newBtn');
+              if (newBtn) {
+                newBtn.addEventListener('click', function() {
+                  if (confirm('Are you sure you want to start a new flashcard set?\n\nMake sure you have saved your work. All unsaved changes will be lost.')) {
+                    // Clear all main fields
+                    const idsToClear = [
+                      'titleInput',
+                      'fontSizeInput',
+                      'wordListTextarea',
+                      'flashcardListTextarea'
+                    ];
+                    idsToClear.forEach(id => {
+                      const el = document.getElementById(id);
+                      if (el) {
+                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+                      }
+                    });
+                    // Reset selects
+                    const selectsToReset = [
+                      'fontSelect',
+                      'layoutSelect'
+                    ];
+                    selectsToReset.forEach(id => {
+                      const sel = document.getElementById(id);
+                      if (sel) sel.selectedIndex = 0;
+                    });
+                    // Optionally clear preview area
+                    const preview = document.getElementById('previewArea');
+                    if (preview) preview.innerHTML = '<div class="preview-placeholder"><p>Preview will appear here</p></div>';
+                    if (window.updateFlashcardPreview) window.updateFlashcardPreview();
+                  }
+                });
+              }
+            });
+            </script>
+
+            <!-- Floating Toolbar -->
+            <div class="floating-toolbar" id="floatingToolbar">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Poppins" selected>Poppins</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Garamond">Garamond</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Caveat">Caveat (Handwriting)</option>
+                </select>
+
+                <div class="font-size-controls">
+                    <button class="size-btn" id="decreaseFontBtn">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInput" value="18">
+                    <button class="size-btn" id="increaseFontBtn">+</button>
+                </div>
+
+                <div class="layout-group">
+                    <select class="layout-select" id="layoutSelect">
+                        <option value="1-card">1 Card Per Page</option>
+                        <option value="2-card" selected>4 Cards Per Page</option>
+                        <option value="1x2-portrait">2 Cards Per Page</option>
+                        <option value="8-card">8 Cards Per Page</option>
+                    </select>
+                </div>
+
+                <div class="slider-group">
+                    <label for="imageZoomSlider" style="font-size: 15px;">Image Zoom</label>
+                    <input type="range" class="slider" id="imageZoomSlider" min="0.5" max="2" step="0.01" value="1" style="width: 180px;">
+                    <span id="imageZoomValue" style="font-size: 14px;">1.00x</span>
+                </div>
+
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="showKoreanToggle">
+                        <span class="toggle-slider"></span>
+                        Korean
+                    </label>
+                </div>
+
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="imageOnlyToggle">
+                        <span class="toggle-slider"></span>
+                        Image Only
+                    </label>
+                </div>
+
+                <button class="secondary-btn" id="quizModeBtn" style="margin-left:12px;">Quiz Mode</button>
+                <select id="imageTypeSelect" class="toolbar-select" style="margin-left:8px;min-width:130px;">
+                    <option value="photos">Photos</option>
+                    <option value="illustrations">Illustrations</option>
+                    <option value="vectors">Clipart</option>
+                    <option value="ai">AI Images</option>
+                </select>
+                <button id="reloadImagesBtn" class="secondary-btn" style="margin-left:6px;">Reload Images</button>
+            </div>
+<script>
+// Manual reload images using selected filter (no auto-refresh on dropdown change)
+document.addEventListener('DOMContentLoaded', function() {
+    const reloadBtn = document.getElementById('reloadImagesBtn');
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', function() {
+            const typeSel = document.getElementById('imageTypeSelect');
+            const selectedType = typeSel ? typeSel.value : 'photos';
+            console.log('Manual reload requested with filter:', selectedType);
+            if (window.reloadAllImages) {
+                window.reloadAllImages(selectedType, { force: true });
+            } else if (window.generateCards) {
+                window.generateCards();
+            }
+        });
+    }
+});
+</script>
+    <!-- Fullscreen Quiz Overlay -->
+    <div id="quizOverlay" style="display:none;position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#232526 0%,#414345 100%);align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:'Poppins',sans-serif;">
+        <div id="quizImageContainer" style="max-width:98vw;height:80vh;display:flex;align-items:center;justify-content:center;position:relative;"></div>
+        <!-- quizWordContainer overlay will be injected dynamically -->
+        <div style="margin-top:32px;display:flex;gap:16px;align-items:center;justify-content:center;">
+            <button id="quizPrevBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Previous</button>
+            <button id="quizRevealBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Reveal</button>
+            <button id="quizNextBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Next</button>
+            <button id="quizExitBtn" style="font-size:1em;padding:7px 16px;font-family:'Poppins',sans-serif;background:none;border:none;color:#fff;">Exit Quiz</button>
+        </div>
+        <div id="quizProgress" style="margin-top:14px;font-size:1.08em;color:#ccc;font-family:'Poppins',sans-serif;"></div>
+    </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+
+                    <div class="input-group">
+                        <label>Card Set Title</label>
+                        <input type="text" class="input-field" id="titleInput" placeholder="Enter flashcard set title">
+                    </div>
+
+                    <!-- AI Assistant Section (moved here) -->
+                    <div class="input-group" id="aiAssistantGroup">
+                        <label for="aiTopicInput" style="font-weight: 500; font-size: 15px; margin-bottom: 4px;">AI: Generate words from topic</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" class="input-field" id="aiTopicInput" placeholder="e.g., food, animals, colors..." style="flex: 1;">
+                            <select class="toolbar-select" id="aiWordCountSelect" style="width: 70px;">
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="20" selected>20</option>
+                                <option value="25">25</option>
+                                <option value="30">30</option>
+                            </select>
+                            <button class="secondary-btn" id="aiGenerateBtn" style="padding: 8px 12px; white-space: nowrap;">AI Generate</button>
+                        </div>
+                        <div id="aiStatusArea" style="margin-top: 6px; font-size: 14px; color: #333; min-height: 18px;"></div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Word List</label>
+                        <textarea class="textarea-field" id="wordListInput" placeholder="Enter words (one per line):&#10;apple&#10;banana&#10;cat&#10;dog">apple
+banana
+cat
+dog
+book
+car
+house
+tree</textarea>
+                    </div>
+
+
+                    <div class="button-group">
+                        <button class="primary-btn" id="generateCardsBtn">Generate Cards</button>
+                        <button class="secondary-btn" id="clearCardsBtn">Clear Cards</button>
+                    </div>
+
+                    <div class="card-list-container">
+                        <div class="card-list-header">
+                            <h3>Generated Cards</h3>
+                            <span class="card-count" id="cardCount">0 cards</span>
+                        </div>
+                        <div class="card-list" id="cardList">
+                            <!-- Card items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="preview-area" id="previewArea">
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        <div class="placeholder-content">
+                            <h3>Create Your Flashcards</h3>
+                            <p>1. Enter words in the sidebar</p>
+                            <p>2. Click "Generate Cards"</p>
+                            <p>3. Add images with AI assistance</p>
+                            <p>4. Choose your layout and print</p>
+                        </div>
+                    </div>
+                    <div class="flashcard-grid" id="flashcardGrid" style="display: none;">
+                        <!-- Flashcards will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drag and Drop Overlay -->
+    <div class="drop-overlay" id="dropOverlay">
+        <div class="drop-message">
+            <h3>Drop images here</h3>
+            <p>Drag and drop images to add them to your flashcards</p>
+        </div>
+    </div>
+
+    <script src="flashcard-simple.js"></script>
+<script>
+// Make flashcard words editable in preview
+document.addEventListener('DOMContentLoaded', function() {
+    // Undo stack for edits and deletes
+    let undoStack = [];
+    function makePreviewEditable() {
+        const grid = document.getElementById('flashcardGrid');
+        if (!grid) return;
+        // Remove previous listeners to avoid duplicates
+        Array.from(grid.getElementsByClassName('editable-word')).forEach(el => {
+            el.removeEventListener('blur', handleEdit);
+            el.removeEventListener('keydown', handleKeydown);
+            el.removeEventListener('click', handleLeftClickEdit);
+            el.removeEventListener('contextmenu', handleRightClickDelete);
+        });
+        // Add contenteditable to word elements
+        Array.from(grid.getElementsByClassName('flashcard-word')).forEach((el, idx) => {
+            el.contentEditable = 'false';
+            el.classList.add('editable-word');
+            el.setAttribute('spellcheck', 'false');
+            el.addEventListener('click', handleLeftClickEdit);
+            el.addEventListener('contextmenu', handleRightClickDelete);
+            el.addEventListener('blur', handleEdit);
+            el.addEventListener('keydown', handleKeydown);
+        });
+        // Add contenteditable to Korean if present
+        Array.from(grid.getElementsByClassName('flashcard-korean')).forEach((el, idx) => {
+            el.contentEditable = 'false';
+            el.classList.add('editable-word');
+            el.setAttribute('spellcheck', 'false');
+            el.addEventListener('click', handleLeftClickEdit);
+            el.addEventListener('contextmenu', handleRightClickDelete);
+            el.addEventListener('blur', handleEdit);
+            el.addEventListener('keydown', handleKeydown);
+        });
+        // Add right-click to card background as well
+        Array.from(grid.getElementsByClassName('flashcard')).forEach(card => {
+            card.addEventListener('contextmenu', handleRightClickDelete);
+        });
+    }
+
+    function handleLeftClickEdit(e) {
+        // Only left click
+        if (e.button !== 0) return;
+        e.target.contentEditable = 'true';
+        e.target.focus();
+        // Move cursor to end
+        document.execCommand && document.execCommand('selectAll', false, null);
+        document.getSelection().collapseToEnd();
+    }
+
+    function handleRightClickDelete(e) {
+        e.preventDefault();
+        // Find card index
+        let cardDiv = e.target.closest('.flashcard');
+        if (!cardDiv) return;
+        const idx = cardDiv.id && cardDiv.id.startsWith('flashcard-') ? parseInt(cardDiv.id.split('-')[1], 10) : null;
+        if (idx === null || !window.flashcards || !window.flashcards[idx]) return;
+        // Push to undo stack
+        undoStack.push({
+            type: 'delete',
+            card: { ...window.flashcards[idx] },
+            index: idx,
+            prevWordList: document.getElementById('wordListInput').value
+        });
+        // Remove card
+        window.flashcards.splice(idx, 1);
+        updateWordListFromFlashcards();
+        if (window.generateCards) window.generateCards();
+        else document.getElementById('generateCardsBtn')?.click();
+    }
+    function handleEdit(e) {
+        const el = e.target;
+        const cardDiv = el.closest('.flashcard');
+        if (!cardDiv) return;
+        const idx = cardDiv.id && cardDiv.id.startsWith('flashcard-') ? parseInt(cardDiv.id.split('-')[1], 10) : null;
+        if (idx === null || !window.flashcards || !window.flashcards[idx]) return;
+        // Save previous value for undo
+        let prev = { ...window.flashcards[idx] };
+        if (el.classList.contains('flashcard-word')) {
+            window.flashcards[idx].english = el.textContent.trim();
+        } else if (el.classList.contains('flashcard-korean')) {
+            window.flashcards[idx].korean = el.textContent.trim();
+        }
+        undoStack.push({
+            type: 'edit',
+            card: prev,
+            index: idx,
+            prevWordList: document.getElementById('wordListInput').value
+        });
+        updateWordListFromFlashcards();
+        if (window.generateCards) window.generateCards();
+        else document.getElementById('generateCardsBtn')?.click();
+    }
+    function handleKeydown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+        }
+        // Ctrl+Z for undo
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            handleUndo();
+        }
+    }
+
+    // Also allow global Ctrl+Z for undo
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            handleUndo();
+        }
+    });
+
+    function handleUndo() {
+        if (!undoStack.length) return;
+        const last = undoStack.pop();
+        if (last.type === 'delete') {
+            // Restore deleted card
+            window.flashcards.splice(last.index, 0, last.card);
+        } else if (last.type === 'edit') {
+            // Restore previous card value
+            window.flashcards[last.index] = last.card;
+        }
+        // Restore word list
+        document.getElementById('wordListInput').value = last.prevWordList;
+        if (window.generateCards) window.generateCards();
+        else document.getElementById('generateCardsBtn')?.click();
+    }
+    function updateWordListFromFlashcards() {
+        if (!window.flashcards) return;
+        const wordListInput = document.getElementById('wordListInput');
+        if (!wordListInput) return;
+        wordListInput.value = window.flashcards.map(card => {
+            if (card.korean) return card.english + ' - ' + card.korean;
+            return card.english;
+        }).join('\n');
+    }
+    // Make functions globally accessible for consolidated patching
+    window.makePreviewEditable = makePreviewEditable;
+    
+    // Initialize image search window variable
+    window.imageSearchWindow = window.imageSearchWindow || null;
+    
+    // Comprehensive patch for generateCards to include all functionality
+    function applyComprehensiveGenerateCardsPatch() {
+        if (window.generateCards && !window._comprehensiveGenerateCardsPatch) {
+            const origGenerateCards = window.generateCards;
+            window.generateCards = function() {
+                // Call original function
+                origGenerateCards.apply(this, arguments);
+                
+                // Apply all patches with minimal delay
+                setTimeout(function() {
+                    // Image search single-click handler
+                    attachImageSearchClick();
+                    
+                    // Font updates
+                    if (typeof window.updateFlashcardFont === 'function') {
+                        window.updateFlashcardFont();
+                    }
+                    
+                    // Korean visibility
+                    if (typeof window.updateKoreanVisibility === 'function') {
+                        window.updateKoreanVisibility();
+                    }
+                    
+                    // Editable functionality
+                    makePreviewEditable();
+                }, 0);
+            };
+            window._comprehensiveGenerateCardsPatch = true;
+            console.log('Comprehensive patch applied to generateCards');
+        }
+    }
+    
+    // Image search single-click handler (Pixabay)
+    function attachImageSearchClick() {
+        const grid = document.getElementById('flashcardGrid');
+        if (!grid) { console.log('Grid not found for click attachment'); return; }
+        if (window._imageSearchClickHandler) {
+            grid.removeEventListener('click', window._imageSearchClickHandler, true);
+        }
+        // Map dropdown to correct Pixabay URL path
+        function getPixabayUrl(word, mode) {
+            const encoded = encodeURIComponent(word);
+            if (mode === 'illustrations') return `https://pixabay.com/illustrations/search/${encoded}/`;
+            if (mode === 'vectors') return `https://pixabay.com/vectors/search/${encoded}/`;
+            if (mode === 'ai') return `https://pixabay.com/images/search/${encoded}/?content_type=ai`;
+            return `https://pixabay.com/images/search/${encoded}/`;
+        }
+            window._imageSearchClickHandler = function(e) {
+                if (e.target.isContentEditable) return;
+                if (['INPUT','TEXTAREA','BUTTON','SELECT','LABEL'].includes(e.target.tagName)) return;
+                let card = e.target.closest('.flashcard');
+                if (!card) return;
+                if ((e.target.classList.contains('flashcard-word') || e.target.classList.contains('flashcard-korean')) && !e.ctrlKey) return; // protect editing clicks
+                const cardId = card.id;
+                const index = cardId && cardId.startsWith('flashcard-') ? parseInt(cardId.split('-')[1],10) : null;
+                let word = '';
+                if (index !== null && window.flashcards && window.flashcards[index]) {
+                    word = window.flashcards[index].english || '';
+                }
+                if (!word) {
+                    const lines = card.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
+                    if (lines.length) word = lines[0];
+                }
+                if (!word) return;
+            const modeSel = document.getElementById('imageTypeSelect');
+            const mode = modeSel ? modeSel.value : 'photos';
+            const url = getPixabayUrl(word, mode);
+                try {
+                    const features = 'width=400,height=720,scrollbars=yes,resizable=yes,top=20,left=0';
+                    if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
+                        window.imageSearchWindow.location.href = url;
+                        window.imageSearchWindow.focus();
+                        try { window.imageSearchWindow.resizeTo(400, 720); window.imageSearchWindow.moveTo(0, 20); } catch(_) {}
+                    } else {
+                        window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
+                    }
+                } catch(err){
+                    window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
+                }
+        };
+        grid.addEventListener('click', window._imageSearchClickHandler, true);
+        console.log('Single-click Pixabay handler attached to grid');
+    }
+    
+    // Apply the comprehensive patch
+    setTimeout(function() {
+        console.log('Applying comprehensive patch and attaching handlers');
+        applyComprehensiveGenerateCardsPatch();
+        makePreviewEditable();
+    attachImageSearchClick();
+    }, 1000); // Increased delay to ensure everything is loaded
+    
+    // Also try again after a longer delay to catch late-loading scripts
+    setTimeout(function() {
+        console.log('Second attempt at applying patch');
+        applyComprehensiveGenerateCardsPatch();
+    attachImageSearchClick();
+    }, 2000);
+});
+</script>
+<script>
+// Fullscreen Quiz Mode logic
+document.addEventListener('DOMContentLoaded', function() {
+    const quizBtn = document.getElementById('quizModeBtn');
+    const quizOverlay = document.getElementById('quizOverlay');
+    const quizImage = document.getElementById('quizImageContainer');
+    // quizWordContainer is now dynamic overlay
+    const quizPrev = document.getElementById('quizPrevBtn');
+    const quizNext = document.getElementById('quizNextBtn');
+    const quizReveal = document.getElementById('quizRevealBtn');
+    const quizExit = document.getElementById('quizExitBtn');
+    const quizProgress = document.getElementById('quizProgress');
+    let quizCards = [];
+    let quizIndex = 0;
+    let quizRevealed = false;
+
+    function getQuizCards() {
+        // Use window.flashcards if available, else parse from textarea
+        if (window.flashcards && Array.isArray(window.flashcards) && window.flashcards.length > 0) {
+            return window.flashcards;
+        }
+        const wordListInput = document.getElementById('wordListInput');
+        if (!wordListInput) return [];
+        return wordListInput.value.split('\n').map(line => {
+            const parts = line.split(' - ');
+            return { english: parts[0] ? parts[0].trim() : '', korean: parts[1] ? parts[1].trim() : '', image: '' };
+        }).filter(card => card.english);
+    }
+
+    function showQuizCard(idx) {
+        if (!quizCards.length) return;
+        quizIndex = Math.max(0, Math.min(idx, quizCards.length - 1));
+        const card = quizCards[quizIndex];
+        quizRevealed = false;
+        // Show image (try to get from flashcardGrid or card.image)
+        let imgSrc = '';
+        if (card.image) {
+            imgSrc = card.image;
+        } else {
+            // Try to get from DOM if available
+            const grid = document.getElementById('flashcardGrid');
+            if (grid) {
+                const cardDiv = grid.querySelector(`#flashcard-${quizIndex} img`);
+                if (cardDiv && cardDiv.src) imgSrc = cardDiv.src;
+            }
+        }
+        quizImage.innerHTML = imgSrc
+            ? `<img src="${imgSrc}" alt="Quiz Image" style="height:80vh;width:auto;max-width:96vw;border-radius:22px;box-shadow:0 4px 32px #000a;display:block;margin:0 auto;object-fit:contain;">`
+            : `<div style='font-size:2.3em;color:#888;background:#222;padding:70px 140px;border-radius:22px;font-family:Poppins,sans-serif;height:80vh;display:flex;align-items:center;justify-content:center;'>No Image</div>`;
+        // Remove any previous overlay
+        const oldOverlay = document.getElementById('quizWordOverlay');
+        if (oldOverlay && oldOverlay.parentNode) oldOverlay.parentNode.removeChild(oldOverlay);
+        quizReveal.style.display = '';
+        quizProgress.textContent = `Card ${quizIndex + 1} of ${quizCards.length}`;
+    }
+
+    function revealQuizWord() {
+        if (!quizCards.length) return;
+        const card = quizCards[quizIndex];
+        const showKorean = document.getElementById('showKoreanToggle')?.checked;
+        let text = card.english;
+        if (showKorean && card.korean) text += ' - ' + card.korean;
+        // Remove any previous overlay
+        const quizImage = document.getElementById('quizImageContainer');
+        const oldOverlay = document.getElementById('quizWordOverlay');
+        if (oldOverlay && oldOverlay.parentNode) oldOverlay.parentNode.removeChild(oldOverlay);
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'quizWordOverlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.background = 'rgba(30,30,30,0.18)';
+        overlay.innerHTML = `<div style="font-size:5vw;max-width:90vw;line-height:1.1;font-family:'Poppins',sans-serif;font-weight:700;color:#fff;text-shadow:0 2px 16px #000b,0 1px 0 #222;letter-spacing:0.01em;text-align:center;word-break:break-word;filter:drop-shadow(0 2px 8px #000a);background:rgba(30,30,30,0.38);border-radius:22px;padding:0.2em 0.5em;">${text}</div>`;
+        quizImage.appendChild(overlay);
+        quizRevealed = true;
+        quizReveal.style.display = 'none';
+    }
+
+    // Helper to request fullscreen
+    function enterFullscreen(elem) {
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    }
+    function exitFullscreen() {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+    if (quizBtn) {
+        quizBtn.addEventListener('click', function() {
+            quizCards = getQuizCards();
+            if (!quizCards.length) { alert('No cards to quiz.'); return; }
+            quizIndex = 0;
+            quizOverlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            // Enter true fullscreen
+            enterFullscreen(quizOverlay);
+            showQuizCard(quizIndex);
+        });
+    }
+    if (quizPrev) quizPrev.onclick = function() { showQuizCard(quizIndex - 1); };
+    if (quizNext) quizNext.onclick = function() { showQuizCard(quizIndex + 1); };
+    if (quizReveal) quizReveal.onclick = revealQuizWord;
+    if (quizExit) quizExit.onclick = function() {
+        quizOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+        exitFullscreen();
+    };
+    // Also allow clicking the image to reveal word
+    if (quizImage) quizImage.onclick = function() { if (!quizRevealed) revealQuizWord(); };
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (quizOverlay.style.display !== 'flex') return;
+        // Always allow Escape to exit quiz, even if focus is in a contenteditable
+        if (e.key === 'Escape') {
+            quizOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+            exitFullscreen();
+            e.preventDefault();
+            return;
+        }
+        // Only handle other keys if not editing a word
+        const active = document.activeElement;
+        const isEditing = active && active.isContentEditable;
+        if (!isEditing) {
+            if (e.key === 'ArrowRight') { showQuizCard(quizIndex + 1); }
+            if (e.key === 'ArrowLeft') { showQuizCard(quizIndex - 1); }
+            // Reveal on Enter, Down Arrow, or Spacebar
+            if ((e.key === 'Enter' || e.key === 'ArrowDown' || e.key === ' ') && !quizRevealed) { revealQuizWord(); }
+            // Spacebar should not scroll page
+            if (e.key === ' ') e.preventDefault();
+        }
+    });
+});
+</script>
+    <script src="../../components/feedback.js"></script>
+    <!-- html2pdf.js for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="module">
+    import { generateWordsFromTopic } from './ai.js';
+    document.addEventListener('DOMContentLoaded', function() {
+        const aiBtn = document.getElementById('aiGenerateBtn');
+        const aiInput = document.getElementById('aiTopicInput');
+        const aiCount = document.getElementById('aiWordCountSelect');
+        const aiStatus = document.getElementById('aiStatusArea');
+        const wordListInput = document.getElementById('wordListInput');
+
+        aiBtn.addEventListener('click', async function() {
+            const topic = aiInput.value.trim();
+            const count = parseInt(aiCount.value, 10) || 20;
+            if (!topic) {
+                aiStatus.textContent = 'Please enter a topic.';
+                return;
+            }
+            aiStatus.textContent = 'Generating words...';
+            aiBtn.disabled = true;
+            try {
+                const words = await generateWordsFromTopic(topic, count);
+                if (words && words.length > 0) {
+                    wordListInput.value = words.join('\n');
+                    aiStatus.textContent = `Generated ${words.length} words.`;
+                } else {
+                    aiStatus.textContent = 'No words generated.';
+                }
+            } catch (err) {
+                aiStatus.textContent = 'Error: ' + err.message;
+            }
+            aiBtn.disabled = false;
+        });
+        aiInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') aiBtn.click();
+        });
+
+        // Add save and load functionality
+
+        const saveBtn = document.getElementById('saveBtn');
+        const loadBtn = document.getElementById('loadBtn');
+        const pdfBtn = document.getElementById('pdfBtn');
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                openWorksheetManager('save');
+            });
+        }
+
+        if (loadBtn) {
+            loadBtn.addEventListener('click', function() {
+                openWorksheetManager('load');
+            });
+        }
+
+        if (pdfBtn) {
+            pdfBtn.addEventListener('click', async function() {
+                const grid = document.getElementById('flashcardGrid');
+                if (!grid || grid.children.length === 0) {
+                    alert('No flashcards to export.');
+                    return;
+                }
+                // Wait for all images to load before printing
+                const images = grid.querySelectorAll('img');
+                if (images.length > 0) {
+                    await Promise.all(Array.from(images).map(img => {
+                        return new Promise(resolve => {
+                            if (img.complete && img.naturalWidth !== 0) resolve();
+                            else {
+                                img.onload = () => resolve();
+                                img.onerror = () => resolve();
+                            }
+                        });
+                    }));
+                }
+                // Clone the grid for PDF export to avoid UI issues
+                const clone = grid.cloneNode(true);
+                clone.style.display = 'block';
+                clone.style.background = '#fff';
+                clone.style.width = '100%';
+                clone.style.padding = '20px';
+                // Create a container for PDF rendering
+                const pdfContainer = document.createElement('div');
+                pdfContainer.appendChild(clone);
+                // Use html2pdf to generate and download the PDF
+                const opt = {
+                    margin:       0.5,
+                    filename:     'flashcards.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 },
+                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(pdfContainer).save();
+            });
+        }
+
+        // ...existing code...
+
+    });
+    
+    // Function to open worksheet manager
+    function openWorksheetManager(mode) {
+        const url = `/Teachers/worksheet_manager.html?mode=${mode}`;
+        const features = 'width=1000,height=700,scrollbars=yes,resizable=yes';
+        // Use a single, consistently named window and reuse if open
+        try {
+            const w = window.open(url, 'WorksheetManager', features);
+            if (w) { w.focus(); }
+        } catch (_) {
+            window.open(url, 'WorksheetManager', features);
+        }
+    }
+
+    // Function to get current worksheet data for saving
+    function getCurrentWorksheetData() {
+        const titleInput = document.getElementById('titleInput');
+        const wordListInput = document.getElementById('wordListInput');
+        const fontSelect = document.getElementById('fontSelect');
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        const layoutSelect = document.getElementById('layoutSelect');
+        const showKoreanToggle = document.getElementById('showKoreanToggle');
+        const imageOnlyToggle = document.getElementById('imageOnlyToggle');
+        const imageZoomSlider = document.getElementById('imageZoomSlider');
+
+        // Get words from the word list
+        const words = wordListInput.value.split('\n')
+            .map(word => word.trim())
+            .filter(word => word.length > 0);
+
+        // Compose all flashcard-related data into settings (JSON string)
+        const settings = {
+            flashcards: window.flashcards || [],
+            font: fontSelect.value,
+            fontSize: parseInt(fontSizeInput.value),
+            layout: layoutSelect.value,
+            showKorean: showKoreanToggle.checked,
+            imageOnly: imageOnlyToggle.checked,
+            imageZoom: parseFloat(imageZoomSlider.value)
+        };
+
+        // Collect image data from flashcards (english word -> image src)
+        const imageData = {};
+        if (window.flashcards && Array.isArray(window.flashcards)) {
+            window.flashcards.forEach(card => {
+                if (card.image && card.english) imageData[card.english] = card.image;
+            });
+        }
+
+        return {
+            title: titleInput.value.trim() || 'Untitled Flashcard Set',
+            worksheet_type: 'flashcard',
+            words: words,
+            settings: JSON.stringify(settings),
+            images: JSON.stringify(imageData),
+            created_at: new Date().toISOString()
+        };
+    }
+
+    // Function to load worksheet data
+    function loadWorksheet(worksheet) {
+        if (!worksheet || worksheet.worksheet_type !== 'flashcard') {
+            alert('Invalid flashcard worksheet data.');
+            return;
+        }
+
+        try {
+            const titleInput = document.getElementById('titleInput');
+            const wordListInput = document.getElementById('wordListInput');
+            const fontSelect = document.getElementById('fontSelect');
+            const fontSizeInput = document.getElementById('fontSizeInput');
+            const layoutSelect = document.getElementById('layoutSelect');
+            const showKoreanToggle = document.getElementById('showKoreanToggle');
+            const imageOnlyToggle = document.getElementById('imageOnlyToggle');
+            const imageZoomSlider = document.getElementById('imageZoomSlider');
+
+            // Load basic data
+            titleInput.value = worksheet.title || '';
+            
+            // Load words (direct field)
+            if (worksheet.words) {
+                wordListInput.value = Array.isArray(worksheet.words) 
+                    ? worksheet.words.join('\n') 
+                    : worksheet.words;
+            }
+
+            // Load flashcards if available (direct field)
+            if (worksheet.flashcards) {
+                window.flashcards = worksheet.flashcards;
+            }
+
+            // Load settings (parse from JSON string if needed)
+            if (worksheet.settings) {
+                let settings;
+                if (typeof worksheet.settings === 'string') {
+                    try {
+                        settings = JSON.parse(worksheet.settings);
+                    } catch (e) {
+                        console.warn('Could not parse settings:', e);
+                        settings = {};
+                    }
+                } else {
+                    settings = worksheet.settings;
+                }
+                
+                if (settings.font) fontSelect.value = settings.font;
+                if (settings.fontSize) fontSizeInput.value = settings.fontSize;
+                if (settings.layout) layoutSelect.value = settings.layout;
+                if (typeof settings.showKorean === 'boolean') showKoreanToggle.checked = settings.showKorean;
+                if (typeof settings.imageOnly === 'boolean') imageOnlyToggle.checked = settings.imageOnly;
+                if (settings.imageZoom) imageZoomSlider.value = settings.imageZoom;
+            }
+
+            // Fallback: handle old data structure
+            if (worksheet.data) {
+                // Load words
+                if (worksheet.data.words) {
+                    wordListInput.value = worksheet.data.words.join('\n');
+                }
+
+                // Load flashcards if available
+                if (worksheet.data.flashcards) {
+                    window.flashcards = worksheet.data.flashcards;
+                }
+
+                // Load settings
+                if (worksheet.data.settings) {
+                    const settings = worksheet.data.settings;
+                    if (settings.font) fontSelect.value = settings.font;
+                    if (settings.fontSize) fontSizeInput.value = settings.fontSize;
+                    if (settings.layout) layoutSelect.value = settings.layout;
+                    if (typeof settings.showKorean === 'boolean') showKoreanToggle.checked = settings.showKorean;
+                    if (typeof settings.imageOnly === 'boolean') imageOnlyToggle.checked = settings.imageOnly;
+                    if (settings.imageZoom) imageZoomSlider.value = settings.imageZoom;
+                }
+            }
+
+            // Restore images and generate cards with a special function
+            const words = wordListInput.value.split('\n')
+                .map(word => word.trim())
+                .filter(word => word.length > 0);
+            
+            let imageData = {};
+            if (worksheet.images) {
+                try {
+                    if (typeof worksheet.images === 'string') {
+                        imageData = JSON.parse(worksheet.images);
+                    } else {
+                        imageData = worksheet.images;
+                    }
+                } catch (e) {
+                    console.warn('Could not parse images:', e);
+                }
+            }
+            
+            // Use special loading function that prevents auto-fetching and restores images
+            if (typeof window.loadFlashcardsWithImages === 'function') {
+                window.loadFlashcardsWithImages(words, imageData);
+            } else {
+                // Fallback to regular generation if function not available
+                if (typeof window.generateCards === 'function') {
+                    window.generateCards();
+                } else {
+                    const generateBtn = document.getElementById('generateCardsBtn');
+                    if (generateBtn) {
+                        generateBtn.click();
+                    }
+                }
+            }
+
+            alert('Flashcard set loaded successfully!');
+        } catch (error) {
+            console.error('Error loading worksheet:', error);
+            alert('Error loading flashcard set: ' + error.message);
+        }
+    }
+
+    // Make functions available globally for worksheet manager
+    window.getCurrentWorksheetData = getCurrentWorksheetData;
+    window.loadWorksheet = loadWorksheet;
+    </script>
+    <script>
+        // Font and font size controls
+        const fontSelect = document.getElementById('fontSelect');
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        const decreaseFontBtn = document.getElementById('decreaseFontBtn');
+        const increaseFontBtn = document.getElementById('increaseFontBtn');
+        const showKoreanToggle = document.getElementById('showKoreanToggle');
+
+        function updateFlashcardFont() {
+            const grid = document.getElementById('flashcardGrid');
+            if (!grid) return;
+            const font = fontSelect.value;
+            const fontSize = parseInt(fontSizeInput.value, 10) || 18;
+            Array.from(grid.getElementsByClassName('flashcard')).forEach(card => {
+                card.style.fontFamily = font;
+                card.style.fontSize = fontSize + 'px';
+            });
+        }
+
+        fontSelect.addEventListener('change', updateFlashcardFont);
+        fontSizeInput.addEventListener('input', updateFlashcardFont);
+        decreaseFontBtn.addEventListener('click', function() {
+            let size = parseInt(fontSizeInput.value, 10) || 18;
+            size = Math.max(8, size - 1);
+            fontSizeInput.value = size;
+            updateFlashcardFont();
+        });
+        increaseFontBtn.addEventListener('click', function() {
+            let size = parseInt(fontSizeInput.value, 10) || 18;
+            size = Math.min(72, size + 1);
+            fontSizeInput.value = size;
+            updateFlashcardFont();
+        });
+
+        // Korean toggle functionality
+        function updateKoreanVisibility() {
+            const showKorean = showKoreanToggle.checked;
+            const grid = document.getElementById('flashcardGrid');
+            if (!grid) return;
+            Array.from(grid.getElementsByClassName('flashcard-korean')).forEach(elem => {
+                elem.style.display = showKorean ? '' : 'none';
+            });
+        }
+        showKoreanToggle.addEventListener('change', updateKoreanVisibility);
+
+        // Make functions globally accessible for consolidated patching
+        window.updateFlashcardFont = updateFlashcardFont;
+        window.updateKoreanVisibility = updateKoreanVisibility;
+
+        // Comprehensive patch is now handled in the editable script section above
+
+        // Feedback modal functionality (copied from grammar module for consistency)
+        window.showFeedbackModal = async function() {
+            // Prevent multiple modals
+            if (document.getElementById('feedback-modal-bg')) return;
+            // Modal HTML
+            const modalBg = document.createElement('div');
+            modalBg.id = 'feedback-modal-bg';
+            modalBg.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            modalBg.innerHTML = `
+                <div id="feedback-modal" style="background:#fff;padding:28px 24px 18px 24px;border-radius:10px;max-width:420px;width:95vw;box-shadow:0 4px 32px #0002;position:relative;">
+                    <button id="feedback-modal-close" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;">&times;</button>
+                    <h2 style="margin-top:0;font-size:1.3em;">Send Feedback</h2>
+                    <div style="font-size:15px;margin-bottom:10px;">Help us improve the Flashcard tool!</div>
+                    <textarea id="feedback-modal-text" placeholder="Enter your feedback..." style="width:100%;height:90px;padding:10px;border:1px solid #ccc;border-radius:5px;resize:vertical;font-size:15px;"></textarea>
+                    <div id="feedback-modal-user" style="font-size:13px;color:#666;margin:8px 0 0 2px;"></div>
+                    <div style="text-align:right;margin-top:16px;">
+                        <button id="feedback-modal-cancel" style="margin-right:10px;padding:7px 18px;border:1px solid #bbb;background:#fff;border-radius:4px;cursor:pointer;">Cancel</button>
+                        <button id="feedback-modal-submit" style="padding:7px 18px;background:#007cba;color:#fff;border:none;border-radius:4px;cursor:pointer;">Submit</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalBg);
+            const closeModal = () => { if (modalBg && modalBg.parentNode) modalBg.parentNode.removeChild(modalBg); };
+            document.getElementById('feedback-modal-close').onclick = closeModal;
+            document.getElementById('feedback-modal-cancel').onclick = closeModal;
+            document.getElementById('feedback-modal-text').focus();
+
+            // Show user info
+            let user_id = localStorage.getItem('userId') || '';
+            let username = localStorage.getItem('username') || localStorage.getItem('name') || '';
+            const userDiv = document.getElementById('feedback-modal-user');
+            if (!user_id) {
+                userDiv.textContent = 'Not logged in';
+            } else if (username) {
+                userDiv.textContent = `From: ${username}`;
+            } else {
+                userDiv.textContent = '';
+            }
+
+            document.getElementById('feedback-modal-submit').onclick = async function() {
+                const feedbackText = document.getElementById('feedback-modal-text').value.trim();
+                if (!feedbackText) {
+                    alert('Please enter some feedback.');
+                    document.getElementById('feedback-modal-text').focus();
+                    return;
+                }
+                // If not logged in, block submission
+                if (!user_id) {
+                    alert('Please log in to submit feedback.');
+                    return;
+                }
+                // If no username, try to fetch it from profile
+                if (!username) {
+                    try {
+                        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+                        const result = await res.json();
+                        if (result.success && result.username) {
+                            username = result.username;
+                            localStorage.setItem('username', username);
+                        } else if (result.success && result.name) {
+                            username = result.name;
+                            localStorage.setItem('name', username);
+                        } else {
+                            username = 'Anonymous User';
+                        }
+                    } catch (e) {
+                        username = 'Anonymous User';
+                    }
+                }
+                // Collect tool state
+                const toolState = {
+                    title: document.getElementById('titleInput')?.value || '',
+                    wordCount: (document.getElementById('wordListInput')?.value || '').split('\n').filter(w => w.trim()).length,
+                    layout: document.getElementById('layoutSelect')?.value || '',
+                    flashcardCount: document.getElementById('flashcardGrid')?.children.length || 0
+                };
+                const payload = {
+                    feedback: feedbackText,
+                    module: 'flashcard',
+                    user_id,
+                    username,
+                    tool_state: JSON.stringify(toolState),
+                    page_url: window.location.href
+                };
+                try {
+                    const response = await fetch('/.netlify/functions/submit_feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'insert_feedback', data: payload })
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        closeModal();
+                        alert('Thank you for your feedback!');
+                    } else {
+                        alert('Error submitting feedback: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Network error: ' + error.message);
+                }
+            };
+        };
+    </script>
+</body>
+</html>

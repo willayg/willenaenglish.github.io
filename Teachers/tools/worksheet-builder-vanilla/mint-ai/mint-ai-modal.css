@@ -1,0 +1,195 @@
+/* Modal panel styles moved from inline HTML */
+.modal-panel {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f7fa 100%);
+  border-radius: 28px;
+  border: 2.5px solid #93cbcf;
+  box-shadow: 0 12px 48px 0 rgba(60,60,80,0.22);
+  width: min(1400px, 98vw);
+  max-width: 99vw;
+  min-height: 95vh;
+  max-height: 99vh;
+  min-width: min(900px, 90vw);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  position: relative;
+}
+/* mint-ai-modal.css - Styles for the MINT AI modal */
+
+#ai-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30,40,60,0.18);
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mint-ai-modal {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f7fa 100%);
+  border-radius: 22px;
+  border: 2.5px solid #93cbcf;
+  box-shadow: 0 12px 48px 0 rgba(60,60,80,0.22);
+  width: min(1400px, 98vw);
+  max-width: 99vw;
+  min-height: 500px;
+  min-width: min(900px, 90vw);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  position: relative;
+}
+
+.mint-ai-modal-left {
+  flex: 1.1;
+  padding: 48px 36px 48px 48px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-right: 2.5px solid #93cbcf;
+}
+
+.mint-ai-modal-title {
+  font-family: Poppins,sans-serif;
+  font-size: 2.2em;
+  margin: 0 0 18px 0;
+  color: #045c63;
+  letter-spacing: 0.5px;
+}
+
+.mint-ai-modal-desc {
+  font-size: 0.92em;
+  color: #444;
+  margin-bottom: 18px;
+  max-width: 520px;
+}
+
+#ai-modal-prompt {
+  width: 95%;
+  min-height: 180px;
+  max-height: 320px;
+  font-size: 1.18em;
+  padding: 16px 16px 16px 16px;
+  border-radius: 12px;
+  border: 2px solid #93cbcf;
+  resize: vertical;
+  font-family: Poppins,sans-serif;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 12px 0 rgba(168, 201, 211, 0.07);
+}
+
+.mint-ai-modal-btn-row {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#ai-modal-generate {
+  padding: 14px 32px;
+  border-radius: 10px;
+  border: none;
+  background: #22d3ee;
+  color: #045c63;
+  font-family: Poppins,sans-serif;
+  font-weight: 700;
+  font-size: 1.12em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px 0 rgba(34,211,238,0.08);
+}
+
+#ai-modal-cancel {
+  padding: 14px 32px;
+  border-radius: 10px;
+  border: none;
+  background: #e1e8ed;
+  color: #333;
+  font-family: Poppins,sans-serif;
+  font-size: 1.12em;
+  cursor: pointer;
+}
+
+#ai-modal-loading {
+  display: none;
+  margin-left: 28px;
+  font-size: 1.12em;
+  color: #0891b2;
+}
+
+.mint-ai-modal-right {
+  flex: 1.7;
+  padding: 48px 48px 48px 36px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #e0f7fa 0%, #f0f9ff 100%);
+}
+
+.mint-ai-modal-output-title {
+  font-size: 1.22em;
+  font-family: Poppins,sans-serif;
+  font-weight: 700;
+  color: #045c63;
+  margin-bottom: 18px;
+  letter-spacing: 0.2px;
+}
+
+#ai-modal-output {
+  flex: 1;
+  min-height: 260px;
+  max-height: 520px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #93cbcf;
+  padding: 18px 20px;
+  font-size: 1.18em;
+  color: #222;
+  box-shadow: 0 2px 12px 0 rgba(60,60,80,0.07);
+}
+
+.mint-ai-modal-btn-row-bottom {
+  display: flex;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+#ai-modal-insert {
+  padding: 14px 32px;
+  border-radius: 10px;
+  border: none;
+  background: #10b981;
+  color: white;
+  font-family: Poppins,sans-serif;
+  font-size: 1.12em;
+  cursor: pointer;
+  display: none;
+  box-shadow: 0 2px 8px 0 rgba(16,185,129,0.08);
+}
+
+#ai-modal-tryagain {
+  padding: 14px 32px;
+  border-radius: 10px;
+  border: none;
+  background: #e1e8ed;
+  color: #333;
+  font-family: Poppins,sans-serif;
+  font-size: 1.12em;
+  cursor: pointer;
+  display: none;
+}
+
+.mint-ai-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 2em;
+  color: #666;
+  cursor: pointer;
+  z-index: 1;
+}
