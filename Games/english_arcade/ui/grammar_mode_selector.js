@@ -1,6 +1,6 @@
 // Grammar Mode Selector - Shows available grammar game types for a level
 // Uses EXACT same styling as word mode_selector.js
-import { FN } from '../scripts/api-base.js';
+import { FN } from '../scripts/api-base.js?v=20251231a';
 import { historyManager } from '../history-manager.js';
 import { showGrammarL1Modal } from './level1_grammar_modal.js';
 import { showGrammarL2Modal } from './level2_grammar_modal.js';

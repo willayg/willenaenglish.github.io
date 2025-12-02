@@ -1,7 +1,7 @@
 // Shared progress data service
 // Fetches progress_summary once and derives level progress + star counts
 
-import { FN } from '../scripts/api-base.js';
+import { FN } from '../scripts/api-base.js?v=20251231a';
 import { progressCache } from './progress-cache.js';
 
 const MODE_GROUPS = {
