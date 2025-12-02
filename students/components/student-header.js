@@ -10,6 +10,7 @@ class StudentHeader extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
   this._onStorage = this._onStorage.bind(this);
+  this._onAuthChanged = this._onAuthChanged?.bind(this);
   this._fetchingPoints = false;
   // Identity fields hydrated from server session
   this._name = null;
@@ -63,6 +64,8 @@ class StudentHeader extends HTMLElement {
     this.render();
     // Update if user data changes in this or other tabs
     window.addEventListener("storage", this._onStorage);
+  // Listen for explicit auth changes dispatched by login/logout flows in the same tab
+  window.addEventListener('auth:changed', this._onAuthChanged);
   window.addEventListener('points:update', this._onPointsUpdate);
   window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.addEventListener('stars:optimistic-bump', this._onStarsBump);
@@ -79,6 +82,7 @@ class StudentHeader extends HTMLElement {
 
   disconnectedCallback() {
     window.removeEventListener("storage", this._onStorage);
+  window.removeEventListener('auth:changed', this._onAuthChanged);
   window.removeEventListener('points:update', this._onPointsUpdate);
   window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.removeEventListener('stars:optimistic-bump', this._onStarsBump);
@@ -108,15 +112,22 @@ class StudentHeader extends HTMLElement {
     }
   }
 
+  _onAuthChanged() {
+    // Clear any cached identity so hydrate fetch is authoritative
+    try { this._name = null; this._uid = null; this._avatar = null; } catch {}
+    this._hydrateProfile();
+    this._fetchOverview();
+  }
+
   async _hydrateProfile() {
     try {
-      const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+      const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
       const who = await whoRes.json();
       if (!who || !who.success || !who.user_id) return;
       this._uid = who.user_id;
   // Stash simple role for later gating (teacher/admin)
   try { if (who.role) { localStorage.setItem('user_role', who.role); } } catch {}
-      const profRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
+      const profRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_profile_name&_=${Date.now()}`);
       const prof = await profRes.json();
       if (prof && prof.success) {
         this._name = prof.name || prof.username || null;
@@ -195,17 +206,14 @@ class StudentHeader extends HTMLElement {
       const cacheKey = '__HAS_HW_CACHE';
       let hasHw = null;
       const now = Date.now();
-      try {
-        const c = window[cacheKey];
-        if (c && (now - c.t) < 120000) { hasHw = !!c.v; }
-      } catch {}
+      // Skip cache entirely - always check fresh to ensure accurate incomplete status
       if (hasHw == null) {
         // Defer to idle if available to minimize main thread contention
         await new Promise((res) => {
           try { (window.requestIdleCallback || window.requestAnimationFrame)(() => res()); }
           catch { setTimeout(res, 0); }
         });
-          const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student');
+          const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
           if (!resp.ok) return;
           const data = await resp.json().catch(() => ({}));
           // If assignments exist, check per-assignment progress for this user to determine incompletes.
@@ -215,7 +223,7 @@ class StudentHeader extends HTMLElement {
             let uid = this._uid || null;
             if (!uid) {
               try {
-                const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
                 if (who.ok) {
                   const wj = await who.json().catch(() => ({}));
                   if (wj && wj.success && wj.user_id) uid = wj.user_id;
@@ -227,7 +235,7 @@ class StudentHeader extends HTMLElement {
             try {
               await Promise.all(assignments.map(async (a) => {
                 try {
-                  const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`);
+                  const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}&_=${Date.now()}`);
                   if (!pr.ok) { incomplete++; return; }
                   const pj = await pr.json().catch(() => ({}));
                   if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
@@ -293,7 +301,7 @@ class StudentHeader extends HTMLElement {
   _fetchOverview() {
     if (this._fetchingOverview) return;
     this._fetchingOverview = true;
-    WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview')
+    WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
       .then(r => r.ok ? r.json() : null)
       .then(ov => {
         let changed = false;
@@ -348,12 +356,15 @@ class StudentHeader extends HTMLElement {
       const m = (document.cookie || '').match(/(?:^|;\s*)wa_guest_name=([^;]+)/);
       cookieGuestName = m ? decodeURIComponent(m[1]) : null;
     } catch {}
-    const name = this._name ||
+    // Prefer recently-updated storage values (they represent immediate user intent)
+    const name = (
       localStorage.getItem("user_name") || sessionStorage.getItem("user_name") ||
       localStorage.getItem("username") || sessionStorage.getItem("username") ||
       localStorage.getItem("name") || sessionStorage.getItem("name") ||
+      this._name ||
       cookieGuestName ||
-      "Guest";
+      "Guest"
+    );
     const uid = this._uid ||
       localStorage.getItem("user_id") || sessionStorage.getItem("user_id") ||
       localStorage.getItem("userId") || sessionStorage.getItem("userId") ||
@@ -700,6 +711,8 @@ class StudentHeader extends HTMLElement {
   // Ensure mission modal will show again after logout
   try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
       try { await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' }); } catch {}
+      // Let other parts of the app know auth changed before redirecting
+      try { window.dispatchEvent(new Event('auth:changed')); } catch {}
       const next = encodeURIComponent(location.pathname);
       window.location.href = `/students/login.html?next=${next}`;
     };
