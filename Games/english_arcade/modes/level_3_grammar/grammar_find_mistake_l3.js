@@ -1,5 +1,6 @@
 // Grammar Find-the-Mistake Mode (Level 3 variant)
 // Copies the core O/X experience and lives alongside the other Level 3 grammar modes.
+// Supports: past_simple_irregular, be_going_to, past_simple_regular, past_vs_future, all_tenses
 
 import { startSession, logAttempt, endSession } from '../../../../students/records.js';
 import { playSFX } from '../../sfx.js';
@@ -7,6 +8,46 @@ import { renderGrammarSummary } from '../grammar_summary.js';
 import { openNowLoadingSplash } from '../unscramble_splash.js';
 
 const MODE = 'grammar_find_mistake';
+
+// Detect grammar type from filename
+function detectGrammarType(filePath) {
+  const path = (filePath || '').toLowerCase();
+  if (path.includes('be_going_to')) return 'be_going_to';
+  if (path.includes('past_simple_regular')) return 'past_regular';
+  if (path.includes('past_vs_future')) return 'past_vs_future';
+  if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
+  if (path.includes('tense_question')) return 'tense_questions';
+  return 'past_irregular';
+}
+
+// Time words for past_vs_future mode
+const PAST_TIME_WORDS = ['yesterday', 'last week', 'last month', 'last year', 'last night', 'last summer'];
+const FUTURE_TIME_WORDS = ['tomorrow', 'soon', 'next week', 'next month', 'next year', 'next summer', 'next Saturday', 'this week'];
+
+// Extract time word from sentence
+function findTimeWordInSentence(sentence) {
+  const lowerSentence = sentence.toLowerCase();
+  for (const tw of [...PAST_TIME_WORDS, ...FUTURE_TIME_WORDS]) {
+    if (lowerSentence.includes(tw.toLowerCase())) {
+      // Find the actual casing in the sentence
+      const regex = new RegExp(tw.replace(/\s+/g, '\\s+'), 'i');
+      const match = sentence.match(regex);
+      return match ? match[0] : tw;
+    }
+  }
+  return null;
+}
+
+// Get opposite tense time word
+function getWrongTimeWord(timeWord, tense) {
+  if (!timeWord) return tense === 'past' ? 'tomorrow' : 'yesterday';
+  const isPast = PAST_TIME_WORDS.some(tw => tw.toLowerCase() === timeWord.toLowerCase());
+  if (isPast) {
+    return FUTURE_TIME_WORDS[Math.floor(Math.random() * FUTURE_TIME_WORDS.length)];
+  } else {
+    return PAST_TIME_WORDS[Math.floor(Math.random() * PAST_TIME_WORDS.length)];
+  }
+}
 
 export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, grammarConfig = {} }) {
   const container = document.getElementById('gameArea');
@@ -38,14 +79,32 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     return;
   }
 
+  const grammarType = detectGrammarType(grammarFile);
   const makeSentence = (it) => (it.en || it.exampleSentence || '').trim();
 
   function escapeRegExp(s){
     return String(s ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  // Corrupt sentence based on grammar type
   function corruptSentence(en, item) {
-    // Level 3: prefer swapping the correct verb with a detractor (e.g., broke -> broken)
+    // For past_vs_future: swap the time word to create the mistake
+    if (grammarType === 'past_vs_future') {
+      const tense = item.tense || 'past';
+      const timeWord = findTimeWordInSentence(en);
+      if (timeWord) {
+        const wrongTimeWord = getWrongTimeWord(timeWord, tense);
+        const regex = new RegExp(timeWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        const bad = en.replace(regex, wrongTimeWord);
+        return { bad, wrongToken: wrongTimeWord, correctToken: timeWord };
+      }
+      // Fallback: add wrong time word
+      const wrongTime = tense === 'past' ? 'tomorrow' : 'yesterday';
+      const correctTime = tense === 'past' ? 'yesterday' : 'tomorrow';
+      return { bad: en.replace(/\\.\\s*$/, '') + ' ' + wrongTime + '.', wrongToken: wrongTime, correctToken: correctTime };
+    }
+
+    // For past_irregular with detractors, use original logic
     const hasDetractors = item && Array.isArray(item.detractors) && item.detractors.length > 0;
     if (hasDetractors) {
       const past = (item.past || item.word || '').trim();
@@ -61,6 +120,127 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         }
       }
     }
+
+    // New: For be_going_to produce one of four clearly-defined mistake types
+    // This block is intentionally placed before the older logic so it takes precedence.
+    if (grammarType === 'be_going_to') {
+      const txt = en.trim();
+
+      function makeVerbIng(v) {
+        let vi = v;
+        if (vi.endsWith('ie')) vi = vi.slice(0, -2) + 'ying';
+        else if (vi.endsWith('e') && vi.length > 1) vi = vi.slice(0, -1) + 'ing';
+        else vi = vi + 'ing';
+        return vi;
+      }
+
+      const stmt = txt.match(/^([A-Za-z0-9'’]+)\s+(am|is|are)\s+going\s+to\s+([A-Za-z]+)/i);
+      const ques = txt.match(/^(Is|Are|Am)\s+([A-Za-z0-9'’]+)\s+going\s+to\s+([A-Za-z]+)/i);
+
+      const variants = [];
+      if (stmt) {
+        const subject = stmt[1];
+        const be = stmt[2];
+        const verb = stmt[3];
+
+        // 1) 'go' not 'going' (e.g., "They are go to eat pizza.")
+        variants.push({ bad: txt.replace(new RegExp(`\\b${escapeRegExp(be)}\\s+going\\s+to`, 'i'), `${be} go to ${verb}`), wrongToken: 'go', correctToken: 'going' });
+
+        // 2) Wrong be verb (e.g., "They is going to eat pizza.") - flip agreement
+        const wrongBe = (be.toLowerCase() === 'are') ? 'is' : (be.toLowerCase() === 'is' ? 'are' : 'is');
+        variants.push({ bad: txt.replace(new RegExp(`\\b${escapeRegExp(be)}\\b`, 'i'), wrongBe), wrongToken: wrongBe, correctToken: be });
+
+        // 3) Wrong auxiliary 'will' used (e.g., "They will going to eat pizza.")
+        variants.push({ bad: txt.replace(new RegExp(`\\b${escapeRegExp(be)}\\b`, 'i'), 'will'), wrongToken: 'will', correctToken: be });
+
+        // 4) Missing be verb (e.g., "They going to eat pizza.")
+        variants.push({ bad: txt.replace(new RegExp(`\\b${escapeRegExp(be)}\\s+`, 'i'), ''), wrongToken: 'going', correctToken: be });
+      } else if (ques) {
+        const be = ques[1];
+        const subject = ques[2];
+        const verb = ques[3];
+
+        // 1) Wrong conjugation: flip 'Is' <-> 'Are'
+        const wrongConj = (be.toLowerCase() === 'are') ? 'Is' : (be.toLowerCase() === 'is' ? 'Are' : 'Is');
+        variants.push({ bad: `${wrongConj} ${subject} going to ${verb}?`, wrongToken: wrongConj, correctToken: be });
+
+        // 2) Wrong auxiliary 'will' (e.g., "Will we going to play?")
+        variants.push({ bad: `Will ${subject} going to ${verb}?`, wrongToken: 'Will', correctToken: be });
+
+        // 3) Wrong infinitive use: use -ing after 'to' (e.g., "Are we going to playing?")
+        const verbIng = makeVerbIng(verb);
+        variants.push({ bad: `${be} ${subject} going to ${verbIng}?`, wrongToken: verbIng, correctToken: verb });
+
+        // 4) Missing be verb in question (e.g., "We going to play?")
+        variants.push({ bad: `${subject} going to ${verb}?`, wrongToken: 'going', correctToken: be });
+      }
+
+      if (variants.length) {
+        // Choose a random variant so mistakes vary across rounds
+        const idx = Math.floor(Math.random() * variants.length);
+        const chosen = variants[idx];
+        return { bad: chosen.bad, wrongToken: chosen.wrongToken, correctToken: chosen.correctToken };
+      }
+
+      if (/going to/i.test(txt)) {
+        const bad = txt.replace(/going to/i, 'go to');
+        return { bad, wrongToken: 'go to', correctToken: 'going to' };
+      }
+    }
+
+    // For be_going_to: corrupt the "going to" structure
+    if (grammarType === 'be_going_to') {
+      // Try to change "going to" to wrong form
+      const goingToMatch = en.match(/\b(am|is|are)\s+(going\s+to)/i);
+      if (goingToMatch) {
+        const subj = goingToMatch[1].toLowerCase();
+        // Use wrong subject-verb agreement
+        const wrongForms = { am: 'is', is: 'are', are: 'am' };
+        const wrong = wrongForms[subj] || 'is';
+        const bad = en.replace(new RegExp(`\\b${subj}\\s+going\\s+to`, 'i'), `${wrong} going to`);
+        return { bad, wrongToken: wrong, correctToken: goingToMatch[1] };
+      }
+      // Try changing "going to" to "gonna" or vice versa (common error)
+      if (/going to/i.test(en)) {
+        const bad = en.replace(/going to/i, 'go to');
+        return { bad, wrongToken: 'go to', correctToken: 'going to' };
+      }
+    }
+
+    // For past tenses: change verb tense
+    if (['past_regular', 'past_vs_future', 'all_tenses'].includes(grammarType)) {
+      // Try to find and corrupt a verb
+      // Look for -ed verbs and change them
+      const edMatch = en.match(/\b(\w+ed)\b/i);
+      if (edMatch) {
+        const verb = edMatch[1];
+        // Change past to present (remove -ed)
+        const baseForm = verb.replace(/ed$/i, '');
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(verb)}\\b`, 'i'), baseForm);
+        return { bad, wrongToken: baseForm, correctToken: verb };
+      }
+      // Look for "will" future and change it
+      const willMatch = en.match(/\bwill\s+(\w+)/i);
+      if (willMatch) {
+        // Change "will go" to "will going" (common error)
+        const verb = willMatch[1];
+        const bad = en.replace(/\bwill\s+\w+/i, `will ${verb}ing`);
+        return { bad, wrongToken: `will ${verb}ing`, correctToken: willMatch[0] };
+      }
+    }
+
+    // For tense_questions: corrupt question structure
+    if (grammarType === 'tense_questions') {
+      // Try to corrupt question word order
+      const questionMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      if (questionMatch) {
+        // Remove the auxiliary to make it wrong
+        const bad = en.replace(questionMatch[0], '');
+        return { bad, wrongToken: '(missing auxiliary)', correctToken: questionMatch[1] };
+      }
+    }
+
+    // Fallback: subject-verb agreement corruption
     const parts = en.split(/\s+/);
     if (parts.length >= 2) {
       const subjIdx = 0;

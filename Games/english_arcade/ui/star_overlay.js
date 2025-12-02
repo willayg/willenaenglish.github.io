@@ -93,6 +93,14 @@
     const pct = total ? Math.round((correct/total)*100) : 0;
     const starCount = pctToStars(pct);
 
+    // Dispatch optimistic star bump event so header can update immediately
+    // (Never rollback visually — retry in background if server fails)
+    if (starCount > 0) {
+      try {
+        window.dispatchEvent(new CustomEvent('stars:optimistic-bump', { detail: { delta: starCount } }));
+      } catch {}
+    }
+
     // Remove existing if any
     try { document.querySelectorAll('.star-round-overlay').forEach(n=>n.remove()); } catch{}
 

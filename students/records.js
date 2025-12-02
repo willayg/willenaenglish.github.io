@@ -18,6 +18,8 @@ let __authResolved = false; // becomes true after first successful authenticated
 const __pendingAttempts = [];
 let __flushScheduled = false;
 const __pendingSessionEnd = new Map(); // sessionId -> payload for retry
+let __authRetryCount = 0; // Track how many times we've tried auth
+const __MAX_AUTH_RETRIES = 3; // Stop retrying after this many 401s
 
 // ---- BATCHING CONFIGURATION ----
 // When true, attempts are queued and sent in batches to reduce invocations
@@ -366,17 +368,27 @@ async function flushBatchQueue() {
       
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
-        console.error('❌ BATCH LOG FAILED:', res.status, txt);
         if (res.status === 401) {
-          // Re-queue for retry after auth
-          for (const a of data.attempts) {
-            __pendingAttempts.push({ session_id: sessionId, mode: data.mode, ...a, _ts: Date.now() });
+          __authRetryCount++;
+          // Only retry a limited number of times to avoid infinite loop when not logged in
+          if (__authRetryCount <= __MAX_AUTH_RETRIES) {
+            console.debug('[records] 401 - will retry auth (attempt', __authRetryCount, '/', __MAX_AUTH_RETRIES, ')');
+            // Re-queue for retry after auth
+            for (const a of data.attempts) {
+              __pendingAttempts.push({ session_id: sessionId, mode: data.mode, ...a, _ts: Date.now() });
+            }
+            scheduleAuthFlush();
+          } else if (__authRetryCount === __MAX_AUTH_RETRIES + 1) {
+            console.debug('[records] Auth retries exhausted - guest mode, attempts will not be saved');
           }
-          scheduleAuthFlush();
+          // Suppress repeated error logs after max retries
+        } else {
+          console.error('❌ BATCH LOG FAILED:', res.status, txt);
         }
       } else {
         console.debug(`[records] ✅ Batch sent: ${data.attempts.length} attempts for session ${sessionId.slice(0,12)}...`);
         __authResolved = true;
+        __authRetryCount = 0; // Reset retry counter on success
         // Note: scheduleRefresh removed here - points refresh happens once at session end
       }
     } catch (e) {
@@ -459,8 +471,10 @@ async function flushPendingAttempts() {
   }
   const uid = getUserId();
   if (!uid) {
-    // Still no auth: re-schedule (gives user time to finish login in another tab)
-    if (__pendingAttempts.length > 0) scheduleAuthFlush();
+    // Still no auth: re-schedule only if we haven't exceeded retry limit
+    if (__pendingAttempts.length > 0 && __authRetryCount < __MAX_AUTH_RETRIES) {
+      scheduleAuthFlush();
+    }
     return;
   }
   // Drain queue snapshot (avoid infinite loop if new attempts arrive while sending)

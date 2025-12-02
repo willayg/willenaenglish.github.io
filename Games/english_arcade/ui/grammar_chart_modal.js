@@ -136,6 +136,26 @@ function buildGrammarChart(grammarName, grammarData, isKorean = false) {
             if (name.includes('negative') || name.includes('present simple negative')) {
               return buildSimplePresentNegativeChart(grammarData, isKorean);
             }
+  // Custom chart for "Be Going To" future (Level 3)
+  if (name.includes('be going to') && name.includes('future')) {
+    return buildBeGoingToFutureChart(grammarData, isKorean);
+  }
+  // Custom chart for "Be Going To" questions (Level 3)
+  if (name.includes('be going to') && name.includes('question')) {
+    return buildBeGoingToQuestionsChart(grammarData, isKorean);
+  }
+  // Custom chart for Past Simple (Regular) - Level 3
+  if (name.includes('past simple') && name.includes('regular')) {
+    return buildPastSimpleRegularChart(grammarData, isKorean);
+  }
+  // Custom chart for Past vs Future - Level 3
+  if (name.includes('past vs future') || name.includes('past_vs_future')) {
+    return buildPastVsFutureChart(grammarData, isKorean);
+  }
+  // Custom chart for All Tenses Practice - Level 3
+  if (name.includes('all tenses') || name.includes('past_vs_present_vs_future')) {
+    return buildAllTensesPracticeChart(grammarData, isKorean);
+  }
 // Custom chart builder for Simple Present Negative sentences
 function buildSimplePresentNegativeChart(data, isKorean = false) {
   // Group examples
@@ -1329,6 +1349,441 @@ function buildGenericChart(data, isKorean = false) {
           </div>
         `;
       }).join('')}
+    </div>
+  `;
+}
+
+// ==========================================
+// Level 3 Tense Chart Builders
+// ==========================================
+
+// Be Going To Future chart builder
+function buildBeGoingToFutureChart(data, isKorean = false) {
+  const iExamples = data.filter(ex => ex.word && ex.word.startsWith('i_am_going_to')).slice(0, 2);
+  const sheHeExamples = data.filter(ex => ex.word && (ex.word.startsWith('she_is_going_to') || ex.word.startsWith('he_is_going_to'))).slice(0, 2);
+  const weTheyExamples = data.filter(ex => ex.word && (ex.word.startsWith('we_are_going_to') || ex.word.startsWith('they_are_going_to'))).slice(0, 2);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>"Be going to"</strong>는 <span style="color:#4caf50;font-weight:700;">미래의 계획</span>을 말할 때 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: I am going to visit my aunt. (나는 이모를 방문할 예정이에요.)</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>구조:</strong> <span style="color:#ff6fb0;font-weight:700;">주어 + am/is/are + going to + 동사원형</span>
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div>
+          <h4 style="color:#4caf50;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">I am going to... (나는 ~할 거예요)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${iExamples.map(ex => `<li style="padding:8px;background:#e8f5e9;border-left:3px solid #4caf50;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚀'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#2196f3;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">He/She is going to... (그/그녀는 ~할 거예요)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${sheHeExamples.map(ex => `<li style="padding:8px;background:#e3f2fd;border-left:3px solid #2196f3;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '📚'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ff9800;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">We/They are going to... (우리/그들은 ~할 거예요)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${weTheyExamples.map(ex => `<li style="padding:8px;background:#fff3e0;border-left:3px solid #ff9800;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎫'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: I → am | He/She/It → is | We/You/They → are<br>+ going to + 동사원형!</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>"Be going to"</strong> is used to talk about <span style="color:#4caf50;font-weight:700;">future plans and intentions</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Example: I am going to visit my aunt.</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Structure:</strong> <span style="color:#ff6fb0;font-weight:700;">Subject + am/is/are + going to + base verb</span>
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div>
+        <h4 style="color:#4caf50;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">I am going to...</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${iExamples.map(ex => `<li style="padding:8px;background:#e8f5e9;border-left:3px solid #4caf50;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚀'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#2196f3;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">He/She is going to...</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${sheHeExamples.map(ex => `<li style="padding:8px;background:#e3f2fd;border-left:3px solid #2196f3;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '📚'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ff9800;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">We/They are going to...</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${weTheyExamples.map(ex => `<li style="padding:8px;background:#fff3e0;border-left:3px solid #ff9800;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎫'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: I → am | He/She/It → is | We/You/They → are<br>+ going to + base verb!</p>
+    </div>
+  `;
+}
+
+// Be Going To Questions chart builder
+function buildBeGoingToQuestionsChart(data, isKorean = false) {
+  const areYouExamples = data.filter(ex => ex.word && ex.word.startsWith('are_you_going_to')).slice(0, 2);
+  const isHeExamples = data.filter(ex => ex.word && (ex.word.startsWith('is_she_going_to') || ex.word.startsWith('is_he_going_to'))).slice(0, 2);
+  const areWeTheyExamples = data.filter(ex => ex.word && (ex.word.startsWith('are_we_going_to') || ex.word.startsWith('are_they_going_to'))).slice(0, 2);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#fce4ec;border-left:4px solid #e91e63;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>"Be going to" 의문문</strong>은 <span style="color:#e91e63;font-weight:700;">미래 계획을 물어볼 때</span> 써요.<br>
+            <span style="color:#19777e;font-weight:700;">예: Are you going to eat pizza? (피자 먹을 거예요?)</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>구조:</strong> <span style="color:#ff6fb0;font-weight:700;">Am/Is/Are + 주어 + going to + 동사원형?</span>
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div>
+          <h4 style="color:#e91e63;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">Are you going to...? (너는 ~할 거야?)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${areYouExamples.map(ex => `<li style="padding:8px;background:#fce4ec;border-left:3px solid #e91e63;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#9c27b0;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">Is he/she going to...? (그/그녀는 ~할 거야?)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${isHeExamples.map(ex => `<li style="padding:8px;background:#f3e5f5;border-left:3px solid #9c27b0;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🤔'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#673ab7;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">Are we/they going to...? (우리/그들은 ~할 거야?)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${areWeTheyExamples.map(ex => `<li style="padding:8px;background:#ede7f6;border-left:3px solid #673ab7;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎮'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#fce4ec;border-left:4px solid #e91e63;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: Am/Is/Are를 문장 앞으로!<br>Am I...? | Is he/she/it...? | Are you/we/they...?</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#fce4ec;border-left:4px solid #e91e63;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>"Be going to" questions</strong> are used to <span style="color:#e91e63;font-weight:700;">ask about future plans</span>.<br>
+          <span style="color:#19777e;font-weight:700;">Example: Are you going to eat pizza?</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Structure:</strong> <span style="color:#ff6fb0;font-weight:700;">Am/Is/Are + subject + going to + base verb?</span>
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div>
+        <h4 style="color:#e91e63;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">Are you going to...?</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${areYouExamples.map(ex => `<li style="padding:8px;background:#fce4ec;border-left:3px solid #e91e63;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '❓'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#9c27b0;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">Is he/she going to...?</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${isHeExamples.map(ex => `<li style="padding:8px;background:#f3e5f5;border-left:3px solid #9c27b0;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🤔'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#673ab7;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">Are we/they going to...?</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${areWeTheyExamples.map(ex => `<li style="padding:8px;background:#ede7f6;border-left:3px solid #673ab7;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎮'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#fce4ec;border-left:4px solid #e91e63;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: Move Am/Is/Are to the front!<br>Am I...? | Is he/she/it...? | Are you/we/they...?</p>
+    </div>
+  `;
+}
+
+// Past Simple Regular chart builder
+function buildPastSimpleRegularChart(data, isKorean = false) {
+  const iExamples = data.filter(ex => ex.word && ex.word.startsWith('i_')).slice(0, 2);
+  const sheHeExamples = data.filter(ex => ex.word && (ex.word.startsWith('she_') || ex.word.startsWith('he_'))).slice(0, 2);
+  const weTheyExamples = data.filter(ex => ex.word && (ex.word.startsWith('we_') || ex.word.startsWith('they_'))).slice(0, 2);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#e3f2fd;border-left:4px solid #2196f3;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>규칙 동사의 과거형</strong>은 동사 뒤에 <span style="color:#2196f3;font-weight:700;">-ed</span>를 붙여요.<br>
+            <span style="color:#19777e;font-weight:700;">예: walk → walked, play → played, clean → cleaned</span>
+          </p>
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>규칙:</strong><br>
+            • 대부분: +ed (walked, played)<br>
+            • e로 끝나면: +d (liked, moved)<br>
+            • 자음+y: y를 i로 바꾸고 +ed (studied, cried)
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div>
+          <h4 style="color:#2196f3;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">I + 과거형 (나는 ~했어요)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${iExamples.map(ex => `<li style="padding:8px;background:#e3f2fd;border-left:3px solid #2196f3;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚶'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#00bcd4;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">He/She + 과거형 (그/그녀는 ~했어요)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${sheHeExamples.map(ex => `<li style="padding:8px;background:#e0f7fa;border-left:3px solid #00bcd4;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎹'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#009688;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">We/They + 과거형 (우리/그들은 ~했어요)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${weTheyExamples.map(ex => `<li style="padding:8px;background:#e0f2f1;border-left:3px solid #009688;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎬'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#e3f2fd;border-left:4px solid #2196f3;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: 규칙 동사는 모든 주어에 같은 형태!<br>I walked = She walked = They walked</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#e3f2fd;border-left:4px solid #2196f3;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Regular past tense verbs</strong> add <span style="color:#2196f3;font-weight:700;">-ed</span> to the base form.<br>
+          <span style="color:#19777e;font-weight:700;">Examples: walk → walked, play → played, clean → cleaned</span>
+        </p>
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Spelling rules:</strong><br>
+          • Most verbs: +ed (walked, played)<br>
+          • Ends in e: +d (liked, moved)<br>
+          • Consonant + y: change y to i, +ed (studied, cried)
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div>
+        <h4 style="color:#2196f3;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">I + past verb</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${iExamples.map(ex => `<li style="padding:8px;background:#e3f2fd;border-left:3px solid #2196f3;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚶'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#00bcd4;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">He/She + past verb</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${sheHeExamples.map(ex => `<li style="padding:8px;background:#e0f7fa;border-left:3px solid #00bcd4;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎹'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#009688;font-weight:700;margin:0 0 10px 0;font-size:0.95em;">We/They + past verb</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${weTheyExamples.map(ex => `<li style="padding:8px;background:#e0f2f1;border-left:3px solid #009688;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🎬'}</span><div style="display:flex;flex-direction:column;"><span style="font-weight:700;color:#19777e;">${ex.en}</span><div style="font-size:0.9em;color:#555;margin-top:2px;">${ex.ko}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#e3f2fd;border-left:4px solid #2196f3;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: Regular past tense is the SAME for all subjects!<br>I walked = She walked = They walked</p>
+    </div>
+  `;
+}
+
+// Past vs Future chart builder
+function buildPastVsFutureChart(data, isKorean = false) {
+  const examples = data.slice(0, 4);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>과거 vs 미래</strong> - 시제를 비교해요!<br>
+            <span style="color:#9c27b0;font-weight:700;">과거:</span> 이미 일어난 일 (yesterday, last week)<br>
+            <span style="color:#4caf50;font-weight:700;">미래:</span> 앞으로 일어날 일 (tomorrow, next week)
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#9c27b0;font-weight:700;margin:0 0 10px 0;font-size:1em;">⏪ 과거 (Past)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${examples.map(ex => {
+              const pastPart = ex.en.split('.')[0] + '.';
+              return `<li style="padding:8px;background:#f3e5f5;border-left:3px solid #9c27b0;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '⏳'}</span><span style="font-weight:600;color:#19777e;">${pastPart}</span></li>`;
+            }).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#4caf50;font-weight:700;margin:0 0 10px 0;font-size:1em;">⏩ 미래 (Future)</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+            ${examples.map(ex => {
+              const parts = ex.en.split('.');
+              const futurePart = parts.length > 1 ? parts[1].trim() + '.' : parts[0];
+              return `<li style="padding:8px;background:#e8f5e9;border-left:3px solid #4caf50;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚀'}</span><span style="font-weight:600;color:#19777e;">${futurePart}</span></li>`;
+            }).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#fff3e0;border-left:4px solid #ff9800;padding:12px;border-radius:4px;">
+        <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">팁: 과거 = -ed / 불규칙 동사<br>미래 = will + 동사원형</p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Past vs Future</strong> - Compare the tenses!<br>
+          <span style="color:#9c27b0;font-weight:700;">Past:</span> Already happened (yesterday, last week)<br>
+          <span style="color:#4caf50;font-weight:700;">Future:</span> Will happen (tomorrow, next week)
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h4 style="color:#9c27b0;font-weight:700;margin:0 0 10px 0;font-size:1em;">⏪ Past</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${examples.map(ex => {
+            const pastPart = ex.en.split('.')[0] + '.';
+            return `<li style="padding:8px;background:#f3e5f5;border-left:3px solid #9c27b0;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '⏳'}</span><span style="font-weight:600;color:#19777e;">${pastPart}</span></li>`;
+          }).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#4caf50;font-weight:700;margin:0 0 10px 0;font-size:1em;">⏩ Future</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:8px;display:flex;flex-direction:column;">
+          ${examples.map(ex => {
+            const parts = ex.en.split('.');
+            const futurePart = parts.length > 1 ? parts[1].trim() + '.' : parts[0];
+            return `<li style="padding:8px;background:#e8f5e9;border-left:3px solid #4caf50;border-radius:4px;font-size:0.95em;display:flex;align-items:center;gap:8px;"><span style="font-size:1.3em;">${ex.emoji || '🚀'}</span><span style="font-weight:600;color:#19777e;">${futurePart}</span></li>`;
+          }).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#fff3e0;border-left:4px solid #ff9800;padding:12px;border-radius:4px;">
+      <p style="font-size:1.05em;color:#19777e;font-weight:700;margin:0;">Tip: Past = -ed / irregular verb<br>Future = will + base verb</p>
+    </div>
+  `;
+}
+
+// All Tenses Practice chart builder
+function buildAllTensesPracticeChart(data, isKorean = false) {
+  const examples = data.slice(0, 3);
+
+  if (isKorean) {
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="background:#ffebee;border-left:4px solid #f44336;padding:12px;border-radius:4px;">
+          <p style="margin:0 0 8px 0;font-size:1.05em;">
+            <strong>4가지 시제 연습!</strong><br>
+            <span style="color:#9c27b0;font-weight:700;">과거:</span> ~했어요 (played, studied)<br>
+            <span style="color:#2196f3;font-weight:700;">현재:</span> ~해요 (play, study)<br>
+            <span style="color:#4caf50;font-weight:700;">미래:</span> ~할 거예요 (will play, will study)<br>
+            <span style="color:#ff9800;font-weight:700;">현재진행:</span> ~하고 있어요 (am/is/are playing)
+          </p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+        <div>
+          <h4 style="color:#9c27b0;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">⏪ Past</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+            ${examples.map(ex => `<li style="padding:6px;background:#f3e5f5;border-left:2px solid #9c27b0;border-radius:3px;">${ex.emoji || '📝'} played</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#2196f3;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">📍 Present</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+            ${examples.map(ex => `<li style="padding:6px;background:#e3f2fd;border-left:2px solid #2196f3;border-radius:3px;">${ex.emoji || '📝'} play</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#4caf50;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">⏩ Future</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+            ${examples.map(ex => `<li style="padding:6px;background:#e8f5e9;border-left:2px solid #4caf50;border-radius:3px;">${ex.emoji || '📝'} will play</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:#ff9800;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">🔄 Continuous</h4>
+          <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+            ${examples.map(ex => `<li style="padding:6px;background:#fff3e0;border-left:2px solid #ff9800;border-radius:3px;">${ex.emoji || '📝'} is playing</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:18px;background:#ffebee;border-left:4px solid #f44336;padding:12px;border-radius:4px;">
+        <p style="font-size:0.95em;color:#19777e;font-weight:700;margin:0;">
+          과거 = -ed | 현재 = 원형 | 미래 = will + 원형 | 진행 = be + -ing
+        </p>
+      </div>
+    `;
+  }
+  // English version
+  return `
+    <div style="margin-bottom:18px;">
+      <div style="background:#ffebee;border-left:4px solid #f44336;padding:12px;border-radius:4px;">
+        <p style="margin:0 0 8px 0;font-size:1.05em;">
+          <strong>Practice 4 Tenses!</strong><br>
+          <span style="color:#9c27b0;font-weight:700;">Past:</span> Already happened (played, studied)<br>
+          <span style="color:#2196f3;font-weight:700;">Present:</span> Happens regularly (play, study)<br>
+          <span style="color:#4caf50;font-weight:700;">Future:</span> Will happen (will play, will study)<br>
+          <span style="color:#ff9800;font-weight:700;">Continuous:</span> Happening now (am/is/are playing)
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+      <div>
+        <h4 style="color:#9c27b0;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">⏪ Past</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+          ${examples.map(ex => `<li style="padding:6px;background:#f3e5f5;border-left:2px solid #9c27b0;border-radius:3px;">${ex.emoji || '📝'} played</li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#2196f3;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">📍 Present</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+          ${examples.map(ex => `<li style="padding:6px;background:#e3f2fd;border-left:2px solid #2196f3;border-radius:3px;">${ex.emoji || '📝'} play</li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#4caf50;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">⏩ Future</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+          ${examples.map(ex => `<li style="padding:6px;background:#e8f5e9;border-left:2px solid #4caf50;border-radius:3px;">${ex.emoji || '📝'} will play</li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#ff9800;font-weight:700;margin:0 0 8px 0;font-size:0.85em;">🔄 Continuous</h4>
+        <ul style="list-style:none;padding:0;margin:0;gap:6px;display:flex;flex-direction:column;font-size:0.85em;">
+          ${examples.map(ex => `<li style="padding:6px;background:#fff3e0;border-left:2px solid #ff9800;border-radius:3px;">${ex.emoji || '📝'} is playing</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;background:#ffebee;border-left:4px solid #f44336;padding:12px;border-radius:4px;">
+      <p style="font-size:0.95em;color:#19777e;font-weight:700;margin:0;">
+        Past = -ed | Present = base | Future = will + base | Continuous = be + -ing
+      </p>
     </div>
   `;
 }
