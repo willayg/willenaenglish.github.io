@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="Student Login">Student Login</title>
+  <!-- API config for GitHub Pages + Netlify Functions -->
+  <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/students/profile.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -280,16 +282,14 @@
 
     async function loginWithUsernamePassword(username, password){
       // Step 1: resolve username -> email via profiles
-      const u = new URL('/.netlify/functions/supabase_auth', location.origin);
-      u.searchParams.set('action','get_email_by_username');
-      u.searchParams.set('username', username.trim());
-      const r1 = await fetch(u, { credentials:'include' });
+      const u = WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth') + '?action=get_email_by_username&username=' + encodeURIComponent(username.trim());
+      const r1 = await WillenaAPI.fetch(u);
       const d1 = await r1.json();
       if (!d1.success) throw new Error(d1.error || 'Username not found');
 
       // Step 2: call login with email/password to reuse existing flow (sets cookies)
-      const r2 = await fetch('/.netlify/functions/supabase_auth?action=login', {
-        method:'POST', credentials:'include', headers:{'content-type':'application/json'},
+      const r2 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', headers:{'content-type':'application/json'},
         body: JSON.stringify({ email: d1.email, password })
       });
       const d2 = await r2.json();
@@ -299,8 +299,8 @@
 
     // Direct email login helper (used by the Help flow after password reset)
     async function loginWithEmailPassword(email, password){
-      const r = await fetch('/.netlify/functions/supabase_auth?action=login', {
-        method:'POST', credentials:'include', headers:{'content-type':'application/json'},
+      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', headers:{'content-type':'application/json'},
         body: JSON.stringify({ email, password })
       });
       const d = await r.json();
@@ -344,8 +344,8 @@
 
     // Guest login flow
     async function startGuestSession(name){
-      const r = await fetch('/.netlify/functions/guest_session', {
-        method:'POST', credentials:'include', headers:{'content-type':'application/json'},
+      const r = await WillenaAPI.fetch('/.netlify/functions/guest_session', {
+        method:'POST', headers:{'content-type':'application/json'},
         body: JSON.stringify({ name })
       });
       const d = await r.json().catch(()=>null);
@@ -610,7 +610,7 @@
       modalActions.innerHTML = '';
 
       try {
-        const res = await fetch('/.netlify/functions/verify_student', {
+        const res = await WillenaAPI.fetch('/.netlify/functions/verify_student', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
@@ -652,7 +652,7 @@
 
       try {
         const tempPassword = generateTemporaryPassword();
-        const res = await fetch('/.netlify/functions/set_student_password', {
+        const res = await WillenaAPI.fetch('/.netlify/functions/set_student_password', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
