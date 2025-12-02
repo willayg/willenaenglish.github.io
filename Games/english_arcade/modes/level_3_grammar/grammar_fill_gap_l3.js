@@ -1,12 +1,73 @@
-// Level‑3 Fill‑The‑Gap (past‑tense focused)
-// Lightweight fill-gap mode that blanks the past-tense verb and offers multiple-choice answers.
+// Level‑3 Fill‑The‑Gap (past‑tense focused + tense-based sentences)
+// Lightweight fill-gap mode that blanks a key verb/phrase and offers multiple-choice answers.
+// Supports: past_simple_irregular, be_going_to, past_simple_regular, past_vs_future, all_tenses
 
 import { startSession, logAttempt, endSession } from '../../../../students/records.js';
 import { renderGrammarSummary } from '../grammar_summary.js';
 
 let state = null;
+let pendingTimeout = null;
 const MODE = 'grammar_fill_gap';
 const DEFAULT_FILE = 'data/grammar/level3/past_simple_irregular.json';
+
+// Detect grammar type from filename or data properties
+function detectGrammarType(filePath, data) {
+  const path = (filePath || '').toLowerCase();
+  if (path.includes('be_going_to')) return 'be_going_to';
+  if (path.includes('past_simple_regular')) return 'past_regular';
+  if (path.includes('past_vs_future')) return 'past_vs_future';
+  if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
+  if (path.includes('tense_question')) return 'tense_questions';
+  // Check data properties for hints
+  if (Array.isArray(data) && data.length > 0) {
+    const first = data[0];
+    if (first.structure && first.tense) return 'sentence_based';
+    if (first.detractors) return 'past_irregular';
+  }
+  return 'past_irregular';
+}
+
+// Verb conjugation helpers for past_vs_future
+function getVerbBase(pastOrFuture) {
+  // Extract base verb from "will verb" or past tense
+  const willMatch = pastOrFuture.match(/will\s+(\w+)/i);
+  if (willMatch) return willMatch[1];
+  // Try to get base from past tense (-ed verbs)
+  if (pastOrFuture.endsWith('ed')) {
+    let base = pastOrFuture.slice(0, -2);
+    // Handle doubled consonants
+    if (/([bcdfghjklmnpqrstvwxz])\1$/.test(base)) base = base.slice(0, -1);
+    // Handle -ied -> -y
+    if (base.endsWith('i')) base = base.slice(0, -1) + 'y';
+    return base;
+  }
+  return pastOrFuture;
+}
+
+function makePastTense(base) {
+  if (!base) return base;
+  if (base.endsWith('e')) return base + 'd';
+  if (base.endsWith('y') && !/[aeiou]y$/.test(base)) return base.slice(0, -1) + 'ied';
+  return base + 'ed';
+}
+
+// Common irregular past tenses
+const IRREGULAR_PAST = {
+  go: 'went', eat: 'ate', see: 'saw', have: 'had', find: 'found',
+  buy: 'bought', watch: 'watched', play: 'played', start: 'started',
+  finish: 'finished', clean: 'cleaned', study: 'studied', work: 'worked',
+  travel: 'traveled', learn: 'learned', visit: 'visited'
+};
+
+function getPastForm(base) {
+  const lower = (base || '').toLowerCase();
+  if (IRREGULAR_PAST[lower]) return IRREGULAR_PAST[lower];
+  return makePastTense(lower);
+}
+
+function getFutureForm(base) {
+  return 'will ' + (base || '').toLowerCase();
+}
 
 function shuffle(array) {
   const arr = Array.isArray(array) ? array.slice() : [];
@@ -44,6 +105,10 @@ export async function startGrammarFillGapL3({
   onComplete,
   playSFX,
 } = {}) {
+  // Clean up any previous instance to prevent double-running
+  if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
+  state = null;
+
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -71,9 +136,11 @@ export async function startGrammarFillGapL3({
   try {
     const list = await loadGrammarList(state.grammarFile);
     state.list = Array.isArray(list) ? list.slice() : [];
+    state.grammarType = detectGrammarType(state.grammarFile, state.list);
   } catch (err) {
     console.error('Failed to load grammar list', err);
     state.list = [];
+    state.grammarType = 'past_irregular';
   }
 
   // Start session for stars/progress tracking
@@ -98,6 +165,220 @@ export async function startGrammarFillGapL3({
   state.list = shuffle(state.list);
   renderQuestion(container);
 
+  // Get instruction text based on grammar type
+  function getInstructionText() {
+    const grammarType = state.grammarType;
+    switch (grammarType) {
+      case 'be_going_to': return 'Fill in the blank with the correct form';
+      case 'past_regular': return 'Fill in the blank with the correct verb form';
+      case 'past_vs_future': return 'Choose the correct verb form';
+      case 'all_tenses':
+      case 'tense_questions':
+      case 'sentence_based':
+        return 'Fill in the blank';
+      default: return 'Fill in the correct past tense form';
+    }
+  }
+
+  // Extract the main verb phrase from a sentence for past_vs_future
+  function extractVerbPhrase(sentence, tense) {
+    if (tense === 'future') {
+      // Match "will verb" pattern
+      const willMatch = sentence.match(/\bwill\s+(\w+)/i);
+      if (willMatch) return { full: willMatch[0], base: willMatch[1] };
+    } else {
+      // Match past tense verbs (common patterns)
+      // First try irregular verbs
+      for (const [base, past] of Object.entries(IRREGULAR_PAST)) {
+        const regex = new RegExp(`\\b${past}\\b`, 'i');
+        if (regex.test(sentence)) {
+          return { full: past, base };
+        }
+      }
+      // Then try -ed verbs
+      const edMatch = sentence.match(/\b(\w+ed)\b/i);
+      if (edMatch) {
+        const verb = edMatch[1];
+        let base = verb.replace(/ed$/i, '');
+        if (/([bcdfghjklmnpqrstvwxz])\1$/.test(base)) base = base.slice(0, -1);
+        if (base.endsWith('i')) base = base.slice(0, -1) + 'y';
+        return { full: verb, base };
+      }
+    }
+    return null;
+  }
+
+  // Helper: extract verb base from -ed verb
+  function extractVerbBase(verb) {
+    let base = verb.replace(/ed$/i, '');
+    // Handle doubled consonants: "played" -> "play", "stopped" -> "stop"
+    if (/([bcdfghjklmnpqrstvwxz])\1$/i.test(base)) {
+      base = base.slice(0, -1);
+    }
+    // Handle -ied: "tried" -> "try"
+    if (base.endsWith('i')) {
+      base = base.slice(0, -1) + 'y';
+    }
+    return base;
+  }
+
+  // Generate distractors for regular past tense verb
+  function generatePastVerbDistractors(base, correct) {
+    const distractors = new Set();
+    distractors.add(base); // e.g., "talk"
+    distractors.add(base + 's'); // e.g., "talks"
+    // Present continuous form
+    if (base.endsWith('e')) {
+      distractors.add('is ' + base.slice(0, -1) + 'ing'); // e.g., "is talking"
+    } else {
+      distractors.add('is ' + base + 'ing'); // e.g., "is talking"
+    }
+    return Array.from(distractors).filter(d => d !== correct).slice(0, 3);
+  }
+
+  // Generate distractors for "be going to" phrase
+  function generateGoingToDistractors(correctPhrase) {
+    const distractors = new Set();
+    
+    // Parse the correct phrase to extract components
+    const match = correctPhrase.match(/^(am|is|are)\s+going\s+to\s+(\w+)/i);
+    if (match) {
+      const be = match[1].toLowerCase();
+      const verb = match[2];
+      
+      // Wrong agreement: swap is/are
+      const wrongBe = be === 'is' ? 'are' : (be === 'are' ? 'is' : 'is');
+      distractors.add(`${wrongBe} going to ${verb}`);
+      
+      // Missing "be": "going to verb"
+      distractors.add(`going to ${verb}`);
+      
+      // Wrong: "will going to verb"
+      distractors.add(`will going to ${verb}`);
+      
+      // Wrong: past "was going to"
+      distractors.add(`was going to ${verb}`);
+      
+      // Wrong: just "will verb"
+      distractors.add(`will ${verb}`);
+    }
+    
+    return Array.from(distractors).filter(d => d.toLowerCase() !== correctPhrase.toLowerCase()).slice(0, 3);
+  }
+
+  // Extract blank target and generate appropriate distractors
+  function extractBlankAndChoices(item) {
+    const grammarType = state.grammarType;
+    const sentence = (item.exampleSentence || item.en || '').trim();
+    
+    // Past vs Future: blank the verb, show 2 options (past vs future form)
+    if (grammarType === 'past_vs_future') {
+      const tense = item.tense || 'past';
+      const verbInfo = extractVerbPhrase(sentence, tense);
+      
+      if (verbInfo) {
+        const { full: correctVerb, base } = verbInfo;
+        const blanked = sentence.replace(new RegExp(`\\b${correctVerb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        
+        // Generate opposite tense form
+        let wrongVerb;
+        if (tense === 'future') {
+          // Correct is "will verb", wrong is past form
+          wrongVerb = getPastForm(base);
+        } else {
+          // Correct is past form, wrong is "will verb"
+          wrongVerb = getFutureForm(base);
+        }
+        
+        return {
+          blanked,
+          answer: correctVerb,
+          choices: shuffle([correctVerb, wrongVerb])
+        };
+      }
+      
+      // Fallback: just use generic options
+      return {
+        blanked: sentence.replace(/\b(went|will\s+\w+|\w+ed)\b/i, '_____'),
+        answer: 'went',
+        choices: ['went', 'will go']
+      };
+    }
+    
+    // Past Simple Regular: blank the -ed verb
+    if (grammarType === 'past_regular') {
+      const match = sentence.match(/\b(\w+ed)\b/i);
+      if (match) {
+        const pastVerb = match[1];
+        const base = extractVerbBase(pastVerb);
+        const blanked = sentence.replace(new RegExp(`\\b${pastVerb}\\b`, 'i'), '_____');
+        const distractors = generatePastVerbDistractors(base, pastVerb);
+        return {
+          blanked,
+          answer: pastVerb,
+          choices: shuffle([pastVerb, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Be Going To: blank the "am/is/are going to verb" phrase
+    if (grammarType === 'be_going_to') {
+      const match = sentence.match(/\b(am|is|are)\s+going\s+to\s+(\w+)/i);
+      if (match) {
+        const fullPhrase = match[0];
+        const blanked = sentence.replace(fullPhrase, '_____');
+        const distractors = generateGoingToDistractors(fullPhrase);
+        return {
+          blanked,
+          answer: fullPhrase,
+          choices: shuffle([fullPhrase, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Fallback for irregular past or other types
+    const pastToken = (item.past || '').trim();
+    const baseToken = (item.base || '').trim();
+    
+    if (pastToken && sentence.toLowerCase().includes(pastToken.toLowerCase())) {
+      const re = new RegExp(pastToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      const blanked = sentence.replace(re, '_____');
+      // Use detractors if available
+      let choices = [pastToken];
+      if (Array.isArray(item.detractors)) {
+        choices = [pastToken, ...item.detractors.filter(d => d && d.trim())];
+      }
+      // Add base form if not present
+      if (baseToken && !choices.includes(baseToken)) {
+        choices.push(baseToken);
+      }
+      return {
+        blanked,
+        answer: pastToken,
+        choices: shuffle(choices).slice(0, 4)
+      };
+    }
+    
+    // Last resort: blank some word
+    const words = sentence.split(/\s+/);
+    if (words.length > 2) {
+      const targetIdx = Math.floor(words.length / 2);
+      const answer = words[targetIdx];
+      words[targetIdx] = '_____';
+      return {
+        blanked: words.join(' '),
+        answer,
+        choices: shuffle([answer, 'is', 'was', 'will']).slice(0, 4)
+      };
+    }
+    
+    return {
+      blanked: sentence,
+      answer: '',
+      choices: ['is', 'was', 'will', 'are']
+    };
+  }
+
   function renderQuestion(containerEl) {
     const item = state.list[state.index];
     if (!item) {
@@ -105,50 +386,21 @@ export async function startGrammarFillGapL3({
       return;
     }
 
-    const sentenceRaw = (item.exampleSentence || item.en || '').trim();
-    const pastToken = (item.past || '').trim();
-    const baseToken = (item.base || '').trim();
-    let displaySentence = sentenceRaw;
-    let blanked = false;
-    let answerToken = '';
+    const { blanked, answer, choices } = extractBlankAndChoices(item);
+    state.currentAnswerToken = answer;
 
-    if (pastToken && sentenceRaw && sentenceRaw.toLowerCase().includes(pastToken.toLowerCase())) {
-      // Replace first occurrence of pastToken (case-insensitive) with blank
-      const re = new RegExp(pastToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      displaySentence = sentenceRaw.replace(re, '_____');
-      blanked = true;
-      answerToken = pastToken;
-    } else if (baseToken && sentenceRaw && sentenceRaw.toLowerCase().includes(baseToken.toLowerCase())) {
-      const re = new RegExp(baseToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      displaySentence = sentenceRaw.replace(re, '_____');
-      blanked = true;
-      answerToken = baseToken;
-    } else if (sentenceRaw) {
-      // try to find a token that looks like a verb (last word before punctuation)
-      const m = sentenceRaw.match(/([A-Za-z']+)[^A-Za-z']*$/);
-      if (m && m[1]) {
-        const last = m[1];
-        const re = new RegExp(last.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$');
-        displaySentence = sentenceRaw.replace(re, '_____');
-        blanked = true;
-        answerToken = last;
-      }
-    }
-
-    // Fallback answer token if nothing blanked
-    if (!answerToken) answerToken = pastToken || baseToken || '';
-    state.currentAnswerToken = answerToken;
-
-    const choices = makeChoices(item, answerToken);
     const questionNumber = state.index + 1;
     const totalQuestions = state.list.length;
+    const instructionText = getInstructionText();
+    const koText = escapeHtml(item.exampleSentenceKo || item.ko || '');
 
     containerEl.innerHTML = `
       <div class="grammar-fill-gap-l3" style="padding:22px 18px 18px;display:flex;flex-direction:column;min-height:100%;font-family:'Poppins',Arial,sans-serif;">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;text-align:center;">
-          <div style="font-size:1.05rem;font-weight:700;color:#21b5c0;">${escapeHtml(item.exampleSentenceKo || item.ko || '')}</div>
+          <div style="font-size:0.9rem;color:#888;font-weight:600;">${escapeHtml(instructionText)}</div>
         </div>
-        <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:18px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;margin-bottom:14px;color:#666;">${escapeHtml(displaySentence || '_____')}</div>
+        <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:18px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;margin-bottom:8px;color:#333;">${escapeHtml(blanked)}</div>
+        <div style="font-size:1.05rem;font-weight:600;color:#21b5c0;text-align:center;margin-bottom:14px;">${koText}</div>
         <div id="gfg-choices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px;justify-items:center;">
           ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="flex:1;min-width:clamp(120px,22vw,160px);padding:12px 18px;font-size:1.15rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);">${escapeHtml(c)}</button>`).join('')}
         </div>
@@ -197,6 +449,31 @@ export async function startGrammarFillGapL3({
     return shuffle(firstFour);
   }
 
+  // For sentence-based modes: generate sentence choices from other items
+  function makeSentenceChoices(item, correctSentence) {
+    const pool = new Set();
+    if (correctSentence) pool.add(correctSentence);
+    
+    // Collect other sentences from the list
+    for (const other of state.list) {
+      if (!other || other === item) continue;
+      const otherEn = (other.en || other.exampleSentence || '').trim();
+      if (otherEn && otherEn !== correctSentence) pool.add(otherEn);
+      if (pool.size >= 4) break;
+    }
+    
+    const arr = Array.from(pool).filter(Boolean);
+    // Ensure at least 3 options
+    while (arr.length < 3) arr.push(correctSentence || arr[0] || '');
+    
+    const options = shuffle(arr);
+    // Guarantee correct is included
+    if (correctSentence && !options.includes(correctSentence)) {
+      options[options.length - 1] = correctSentence;
+    }
+    return shuffle(options.slice(0, 4));
+  }
+
   function handleChoice(chosen, item, containerEl) {
     const correct = (state.currentAnswerToken || item.past || '').trim();
     const isCorrect = chosen.trim().toLowerCase() === correct.trim().toLowerCase();
@@ -223,7 +500,11 @@ export async function startGrammarFillGapL3({
       feedbackEl.textContent = isCorrect ? 'Correct!' : `No — the right answer is ${correct}`;
       feedbackEl.style.color = isCorrect ? '#2e7d32' : '#f44336';
     }
-    setTimeout(() => renderQuestion(containerEl), 700);
+    pendingTimeout = setTimeout(() => {
+      // Guard: only proceed if state is still valid
+      if (!state) return;
+      renderQuestion(containerEl);
+    }, 700);
   }
 
   function markChoices(choicesEl, chosenText, item) {
@@ -318,6 +599,7 @@ export async function startGrammarFillGapL3({
 }
 
 export function stopGrammarFillGapL3() {
+  if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
   state = null;
 }
 

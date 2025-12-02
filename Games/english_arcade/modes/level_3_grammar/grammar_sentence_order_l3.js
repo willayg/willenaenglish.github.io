@@ -1,6 +1,7 @@
 // Level 3 - Sentence Order Mode (chunk-based, no audio)
 // Breaks sentences into 2-3 word contiguous chunks. Player taps chunks to assemble
 // the target sentence in order. No audio feedback is used in this mode.
+// Supports: past_simple_irregular, be_going_to, past_simple_regular, past_vs_future, all_tenses
 
 import { startSession, logAttempt, endSession } from '../../../../students/records.js';
 import { renderGrammarSummary } from '../grammar_summary.js';
@@ -8,6 +9,17 @@ import { renderGrammarSummary } from '../grammar_summary.js';
 let state = null;
 const MODE = 'grammar_sentence_order';
 const DEFAULT_FILE = 'data/grammar/level3/past_simple_irregular.json';
+
+// Detect grammar type from filename
+function detectGrammarType(filePath) {
+  const path = (filePath || '').toLowerCase();
+  if (path.includes('be_going_to')) return 'be_going_to';
+  if (path.includes('past_simple_regular')) return 'past_regular';
+  if (path.includes('past_vs_future')) return 'past_vs_future';
+  if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
+  if (path.includes('tense_question')) return 'tense_questions';
+  return 'past_irregular';
+}
 
 function shuffle(arr) {
   return Array.isArray(arr) ? arr.slice().sort(() => Math.random() - 0.5) : [];
@@ -59,6 +71,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     grammarFile: grammarFile || DEFAULT_FILE,
     grammarName: grammarName || null,
     grammarConfig: grammarConfig || {},
+    grammarType: detectGrammarType(grammarFile || DEFAULT_FILE),
     score: 0,
     index: 0,
     container,
@@ -109,6 +122,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     if (!item) return finish();
 
     const target = (item.exampleSentence || item.en || item.past || item.base || '').trim();
+    const koHint = (item.exampleSentenceKo || item.ko || '').trim();
     const chunks = chunkSentence(target);
     // Save canonical target for checking (normalize: remove punctuation, lowercase, collapse spaces)
     const canonicalTarget = target.replace(/[^\w\s]|_/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -118,7 +132,8 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
 
       container.innerHTML = `
         <div style="padding:22px 18px;display:flex;flex-direction:column;min-height:100%;font-family:'Poppins',Arial,sans-serif;position:relative;">
-          <div style="text-align:center;margin-bottom:14px;color:#19777e;font-weight:700;">${escapeHtml(state.grammarName || 'Sentence Order')}</div>
+          <div style="text-align:center;margin-bottom:8px;color:#19777e;font-weight:700;">${escapeHtml(state.grammarName || 'Sentence Order')}</div>
+          ${koHint ? `<div style="text-align:center;margin-bottom:14px;color:#21b5c0;font-weight:600;font-size:1.05rem;">${escapeHtml(koHint)}</div>` : ''}
           <div id="so-target" style="height:3.6rem;line-height:1.2;border-radius:12px;border:2px dashed #e0e0e0;background:#fff;padding:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center;overflow:hidden;"> </div>
           <div id="so-pool" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;align-items:center;min-height:160px;">
           ${shuffled.map((c, i) => {

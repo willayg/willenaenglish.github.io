@@ -34,6 +34,19 @@ class StudentHeader extends HTMLElement {
       }
     } catch {}
   };
+  this._onStarsBump = (e) => {
+    try {
+      const delta = e?.detail?.delta || 1;
+      if (typeof this._stars === 'number') {
+        this._stars += delta;
+      } else {
+        this._stars = delta;
+      }
+      this.refresh();
+      // Trigger bounce animation after render
+      requestAnimationFrame(() => this._animateStarsBounce());
+    } catch {}
+  };
   this._points = null;
   this._stars = null;
   this._fetchingOverview = false;
@@ -52,6 +65,7 @@ class StudentHeader extends HTMLElement {
     window.addEventListener("storage", this._onStorage);
   window.addEventListener('points:update', this._onPointsUpdate);
   window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
+  window.addEventListener('stars:optimistic-bump', this._onStarsBump);
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
@@ -67,10 +81,25 @@ class StudentHeader extends HTMLElement {
     window.removeEventListener("storage", this._onStorage);
   window.removeEventListener('points:update', this._onPointsUpdate);
   window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
+  window.removeEventListener('stars:optimistic-bump', this._onStarsBump);
   window.removeEventListener('focus', this._onFocus);
   }
 
   refresh() { this.render(); }
+
+  // Trigger bounce animation on stars pill when stars are gained
+  _animateStarsBounce() {
+    try {
+      const pill = this.shadowRoot?.querySelector('.stars-pill');
+      if (!pill) return;
+      pill.classList.remove('bounce');
+      // Force reflow to restart animation
+      void pill.offsetWidth;
+      pill.classList.add('bounce');
+      // Remove class after animation completes
+      setTimeout(() => pill.classList.remove('bounce'), 550);
+    } catch {}
+  }
 
   _onStorage(e) {
     // Only re-render if relevant keys change
@@ -352,6 +381,14 @@ class StudentHeader extends HTMLElement {
   .points-pill svg { width:14px; height:14px; display:block; }
   .stars-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#fffaf0; border:1px solid #e8d28a; color:#b8860b; font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .stars-pill svg { width:14px; height:14px; display:block; }
+  .stars-pill.bounce { animation: starBounce .5s cubic-bezier(.36,1.2,.5,1); }
+  @keyframes starBounce {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.25); }
+    50% { transform: scale(0.95); }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
   .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin:0 auto; justify-content:center; text-align:center; min-width:0; }
   .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; margin-right:auto; }
   .spacer { flex:1; }

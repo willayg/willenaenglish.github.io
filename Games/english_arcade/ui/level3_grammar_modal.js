@@ -43,9 +43,45 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       emoji: '🦁',
       file: 'data/grammar/level3/past_simple_irregular.json',
       config: { ruleHint: 'Common irregular past-tense verbs', answerChoices: [] }
-    }
-  ];
-
+    },
+    {
+      id: 'past_simple_regular',
+      label: 'Past Simple (Regular)',
+      emoji: '🚶',
+      file: 'data/grammar/level3/past_simple_regular.json',
+      config: { ruleHint: 'Regular past-tense verbs ending in -ed', grammarType: 'past_simple_regular' }
+    },
+    {
+      id: 'be_going_to_future',
+      label: 'Be Going To (Future)',
+      emoji: '🚀',
+      file: 'data/grammar/level3/be_going_to_future.json',
+      config: { ruleHint: 'Future plans with "be going to"', grammarType: 'be_going_to_future' }
+    },
+    {
+      id: 'be_going_to_questions',
+      label: 'Be Going To (Questions)',
+      emoji: '❓',
+      file: 'data/grammar/level3/be_going_to_questions.json',
+      config: { ruleHint: 'Questions with "be going to"', grammarType: 'be_going_to_questions' }
+    },
+    {
+      id: 'past_vs_future',
+      label: 'Past vs Future',
+      emoji: '⏳',
+      file: 'data/grammar/level3/past_vs_future.json',
+      config: { ruleHint: 'Comparing past and future tenses', grammarType: 'past_vs_future' }
+    },
+  /*
+  {
+    id: 'past_vs_present_vs_future_vs_continuous',
+    label: 'All Tenses Practice',
+    emoji: '🎯',
+    file: 'data/grammar/level3/past_vs_present_vs_future_vs_continuous.json',
+    config: { ruleHint: 'Past, present, future, and continuous tenses', grammarType: 'all_tenses' }
+  }
+  */
+];
   let modal = document.getElementById('grammarL3Modal');
   if (!modal) {
     modal = document.createElement('div');
