@@ -7,7 +7,22 @@ Returns: { success:true, results:{ <id>:{ exists,true,url } | { exists:false } }
 If plain=true and R2_PUBLIC_BASE set, returns direct URLs instead of signed URLs.
 */
 exports.handler = async (event) => {
-  const cors = { 'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'POST, OPTIONS' };
+  // Get the origin from the request headers
+  const origin = event.headers?.origin || event.headers?.Origin || '*';
+  
+  // Allowed origins for CORS with credentials
+  const allowedOrigins = [
+    'https://willenaenglish.com',
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.netlify.app',
+    'http://localhost:8888',
+    'http://localhost:9000'
+  ];
+  
+  // Use the request origin if it's in allowed list, otherwise use first allowed origin
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  
+  const cors = { 'Access-Control-Allow-Origin': corsOrigin, 'Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'POST, OPTIONS', 'Access-Control-Allow-Credentials': 'true' };
   if (event.httpMethod === 'OPTIONS') return { statusCode:204, headers:cors, body:'' };
   if (event.httpMethod !== 'POST') return { statusCode:405, headers:cors, body: JSON.stringify({ error:'Method not allowed' }) };
   try {
