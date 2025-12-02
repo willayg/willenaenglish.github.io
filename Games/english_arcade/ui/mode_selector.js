@@ -115,10 +115,9 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
       // canonicalMode is now defined above outside this scope, no need to redefine it
 
       async function fetchSessions(scoped) {
-        const url = new URL(FN('progress_summary'), window.location.origin);
-        url.searchParams.set('section', 'sessions');
-        if (scoped) url.searchParams.set('list_name', listName);
-        const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
+        let url = FN('progress_summary') + '?section=sessions';
+        if (scoped) url += '&list_name=' + encodeURIComponent(listName);
+        const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
         if (!res.ok) return [];
         return await res.json();
       }
