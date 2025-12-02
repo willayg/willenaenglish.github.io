@@ -1,2685 +1,733 @@
 {
-  "generatedAt": "2025-11-24T11:36:44.789Z",
+  "generatedAt": "2025-12-02T14:16:08.200Z",
   "summary": {
-    "considered": 334,
-    "generated": 0,
-    "skippedExisting": 0,
+    "considered": 90,
+    "generated": 86,
+    "skippedExisting": 4,
     "errors": 0,
-    "dryRun": true,
+    "dryRun": false,
     "force": false
   },
   "items": [
     {
-      "key": "are_there_any_cookies_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_any_cookies",
+      "key": "be_going_to_future_1_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "i_am_going_to_visit",
+      "entryId": "be_going_to_future_1",
       "article": "",
-      "text": "Are there any cookies left?"
+      "text": "I am going to visit my aunt this weekend."
     },
     {
-      "key": "are_there_any_parks_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_any_parks",
+      "key": "be_going_to_future_10_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "they_are_going_to_clean",
+      "entryId": "be_going_to_future_10",
       "article": "",
-      "text": "Are there any parks in the city?"
+      "text": "They are going to clean the park this Saturday."
     },
     {
-      "key": "are_there_any_pens_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_any_pens",
+      "key": "be_going_to_future_11_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "i_am_going_to_learn",
+      "entryId": "be_going_to_future_11",
       "article": "",
-      "text": "Are there any pens on the desk?"
+      "text": "I am going to learn a new song for the show."
     },
     {
-      "key": "are_there_any_shops_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_are",
-      "entryId": "are_there_any_shops",
+      "key": "be_going_to_future_12_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "she_is_going_to_start",
+      "entryId": "be_going_to_future_12",
       "article": "",
-      "text": "There are some shops nearby."
+      "text": "She is going to start a new book tonight."
     },
     {
-      "key": "are_there_any_students_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_any_students",
+      "key": "be_going_to_future_13_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "we_are_going_to_visit",
+      "entryId": "be_going_to_future_13",
       "article": "",
-      "text": "Are there any students absent?"
+      "text": "We are going to visit the zoo next week."
     },
     {
-      "key": "are_there_many_birds_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_many_birds",
+      "key": "be_going_to_future_14_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "he_is_going_to_learn",
+      "entryId": "be_going_to_future_14",
       "article": "",
-      "text": "Are there many birds in the sky?"
+      "text": "He is going to take swimming lessons."
     },
     {
-      "key": "are_there_many_trees_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_many_trees",
+      "key": "be_going_to_future_15_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "they_are_going_to_adopt",
+      "entryId": "be_going_to_future_15",
       "article": "",
-      "text": "Are there many trees in the park?"
+      "text": "They are going to adopt a puppy this weekend."
     },
     {
-      "key": "are_there_two_chairs_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "are_there",
-      "entryId": "are_there_two_chairs",
+      "key": "be_going_to_future_2_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "she_is_going_to_study",
+      "entryId": "be_going_to_future_2",
       "article": "",
-      "text": "Are there two chairs in the room?"
+      "text": "She is going to study for her exam tonight."
     },
     {
-      "key": "are_they_dancing_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_they",
-      "entryId": "are_they_dancing",
+      "key": "be_going_to_future_3_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "we_are_going_to_buy",
+      "entryId": "be_going_to_future_3",
       "article": "",
-      "text": "Are they dancing?"
+      "text": "We are going to buy tickets for the concert."
     },
     {
-      "key": "are_they_playing_games_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_they",
-      "entryId": "are_they_playing_games",
+      "key": "be_going_to_future_4_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "he_is_going_to_play",
+      "entryId": "be_going_to_future_4",
       "article": "",
-      "text": "Are they playing games?"
+      "text": "He is going to play soccer with friends tomorrow."
     },
     {
-      "key": "are_they_watching_tv_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_they",
-      "entryId": "are_they_watching_tv",
+      "key": "be_going_to_future_5_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "they_are_going_to_move",
+      "entryId": "be_going_to_future_5",
       "article": "",
-      "text": "Are they watching TV?"
+      "text": "They are going to move next month."
     },
     {
-      "key": "are_we_listening_to_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_we",
-      "entryId": "are_we_listening_to",
+      "key": "be_going_to_future_6_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "i_am_going_to_make",
+      "entryId": "be_going_to_future_6",
       "article": "",
-      "text": "Are we listening to music?"
+      "text": "I am going to make dinner in an hour."
     },
     {
-      "key": "are_we_studying_now_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_we",
-      "entryId": "are_we_studying_now",
+      "key": "be_going_to_future_7_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "she_is_going_to_watch",
+      "entryId": "be_going_to_future_7",
       "article": "",
-      "text": "Are we studying now?"
+      "text": "She is going to the concert tonight."
     },
     {
-      "key": "are_you_eating_breakfast_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_you",
-      "entryId": "are_you_eating_breakfast",
+      "key": "be_going_to_future_8_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "we_are_going_to_practice",
+      "entryId": "be_going_to_future_8",
       "article": "",
-      "text": "Are you eating breakfast?"
+      "text": "We are going to practice English after school."
     },
     {
-      "key": "are_you_learning_a_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_you",
-      "entryId": "are_you_learning_a",
+      "key": "be_going_to_future_9_grammar",
+      "file": "level3\\be_going_to_future.json",
+      "word": "he_is_going_to_fix",
+      "entryId": "be_going_to_future_9",
       "article": "",
-      "text": "Are you learning a lot?"
+      "text": "He is going to fix the bike this afternoon."
     },
     {
-      "key": "are_you_reading_a_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "are_you",
-      "entryId": "are_you_reading_a",
+      "key": "be_going_to_questions_1_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_you_going_to_eat_pizza",
+      "entryId": "be_going_to_questions_1",
       "article": "",
-      "text": "Are you reading a book?"
+      "text": "Are you going to eat pizza for lunch?"
     },
     {
-      "key": "at_midnight_it_is_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "at_midnight",
-      "entryId": "at_midnight_it_is",
+      "key": "be_going_to_questions_10_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_you_going_to_watch_show",
+      "entryId": "be_going_to_questions_10",
       "article": "",
-      "text": "At midnight it is quiet."
+      "text": "Are you going to watch the show this weekend?"
     },
     {
-      "key": "cats_chase_mice_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "cats_chase",
-      "entryId": "cats_chase_mice",
+      "key": "be_going_to_questions_11_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "is_he_going_to_cook_dinner",
+      "entryId": "be_going_to_questions_11",
       "article": "",
-      "text": "Cats chase mice."
+      "text": "Is he going to cook dinner tonight?"
     },
     {
-      "key": "clouds_are_above_the_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "clouds_are",
-      "entryId": "clouds_are_above_the",
-      "article": "above",
-      "text": "Clouds are above the mountain."
-    },
-    {
-      "key": "do_cats_like_milk_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_cats",
-      "entryId": "do_cats_like_milk",
-      "article": "",
-      "text": "Do cats like milk?"
-    },
-    {
-      "key": "do_kids_like_candy_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_kids",
-      "entryId": "do_kids_like_candy",
-      "article": "",
-      "text": "Do kids like candy?"
-    },
-    {
-      "key": "do_they_play_soccer_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_they",
-      "entryId": "do_they_play_soccer",
-      "article": "",
-      "text": "Do they play soccer?"
-    },
-    {
-      "key": "do_they_understand_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_they",
-      "entryId": "do_they_understand",
-      "article": "",
-      "text": "Do they understand?"
-    },
-    {
-      "key": "do_we_need_a_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_we",
-      "entryId": "do_we_need_a",
-      "article": "",
-      "text": "Do we need a ticket?"
-    },
-    {
-      "key": "do_you_have_a_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_you",
-      "entryId": "do_you_have_a",
-      "article": "",
-      "text": "Do you have a bicycle?"
-    },
-    {
-      "key": "do_you_like_apples_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_you",
-      "entryId": "do_you_like_apples",
-      "article": "",
-      "text": "Do you like apples?"
-    },
-    {
-      "key": "do_you_speak_english_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "do_you",
-      "entryId": "do_you_speak_english",
-      "article": "",
-      "text": "Do you speak English?"
-    },
-    {
-      "key": "does_he_eat_meat_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_he",
-      "entryId": "does_he_eat_meat",
-      "article": "",
-      "text": "Does he eat meat?"
-    },
-    {
-      "key": "does_he_work_here_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_he",
-      "entryId": "does_he_work_here",
-      "article": "",
-      "text": "Does he work here?"
-    },
-    {
-      "key": "does_it_rain_a_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_it",
-      "entryId": "does_it_rain_a",
-      "article": "",
-      "text": "Does it rain a lot here?"
-    },
-    {
-      "key": "does_she_cook_dinner_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_she",
-      "entryId": "does_she_cook_dinner",
-      "article": "",
-      "text": "Does she cook dinner?"
-    },
-    {
-      "key": "does_she_go_to_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_she",
-      "entryId": "does_she_go_to",
-      "article": "",
-      "text": "Does she go to school?"
-    },
-    {
-      "key": "does_she_speak_japanese_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_she",
-      "entryId": "does_she_speak_japanese",
-      "article": "",
-      "text": "Does she speak Japanese?"
-    },
-    {
-      "key": "does_the_shop_open_grammar",
-      "file": "level2\\present_simple_questions_yesno.json",
-      "word": "does_the",
-      "entryId": "does_the_shop_open",
-      "article": "",
-      "text": "Does the shop open now?"
-    },
-    {
-      "key": "he_doesn_t_eat_rice_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "he_doesn_t",
-      "entryId": "he_doesn_t_eat_rice",
-      "article": "",
-      "text": "He doesn't eat rice."
-    },
-    {
-      "key": "he_doesn_t_like_spinach_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "he_doesn_t",
-      "entryId": "he_doesn_t_like_spinach",
-      "article": "",
-      "text": "He doesn't like spinach."
-    },
-    {
-      "key": "he_eats_breakfast_at_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "he_eats",
-      "entryId": "he_eats_breakfast_at",
-      "article": "",
-      "text": "He eats breakfast at 7."
-    },
-    {
-      "key": "he_is_at_the_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "he_is",
-      "entryId": "he_is_at_the",
-      "article": "at",
-      "text": "He is at the bus stop."
-    },
-    {
-      "key": "he_is_cooking_dinner_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "he_is",
-      "entryId": "he_is_cooking_dinner",
-      "article": "",
-      "text": "He is cooking dinner."
-    },
-    {
-      "key": "he_is_running_in_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "he_is",
-      "entryId": "he_is_running_in",
-      "article": "",
-      "text": "He is running in the park."
-    },
-    {
-      "key": "he_isn_t_cooking_dinner_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "he_isn_t",
-      "entryId": "he_isn_t_cooking_dinner",
-      "article": "",
-      "text": "He isn't cooking dinner."
-    },
-    {
-      "key": "he_isn_t_running_in_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "he_isn_t",
-      "entryId": "he_isn_t_running_in",
-      "article": "",
-      "text": "He isn't running in the park."
-    },
-    {
-      "key": "he_plays_soccer_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "he_plays",
-      "entryId": "he_plays_soccer",
-      "article": "",
-      "text": "He plays soccer."
-    },
-    {
-      "key": "he_plays_soccer_on_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "he_plays",
-      "entryId": "he_plays_soccer_on",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "he_stands_in_front_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "he_stands",
-      "entryId": "he_stands_in_front",
-      "article": "in front of",
-      "text": "He stands in front of the board."
-    },
-    {
-      "key": "he_usually_drives_to_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "he_usually",
-      "entryId": "he_usually_drives_to",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "he_wakes_up_early_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "he_wakes",
-      "entryId": "he_wakes_up_early",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "he_walks_to_school_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "he_walks",
-      "entryId": "he_walks_to_school",
-      "article": "",
-      "text": "He walks to school every day."
-    },
-    {
-      "key": "he_works_at_a_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "he_works",
-      "entryId": "he_works_at_a",
-      "article": "",
-      "text": "He works at a bank."
-    },
-    {
-      "key": "her_birthday_is_on_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "her_birthday",
-      "entryId": "her_birthday_is_on",
-      "article": "",
-      "text": "Her birthday is on December 3rd."
-    },
-    {
-      "key": "how_are_they_studying_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "how_are",
-      "entryId": "how_are_they_studying",
-      "article": "",
-      "text": "How are they studying together?"
-    },
-    {
-      "key": "how_are_you_doing_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "how_are",
-      "entryId": "how_are_you_doing",
-      "article": "",
-      "text": "How are you doing that?"
-    },
-    {
-      "key": "how_are_you_feeling_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "how_are",
-      "entryId": "how_are_you_feeling",
-      "article": "",
-      "text": "How are you feeling?"
-    },
-    {
-      "key": "how_are_you_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "how_are",
-      "entryId": "how_are_you",
-      "article": "",
-      "text": "How are you?"
-    },
-    {
-      "key": "how_do_you_get_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "how_do",
-      "entryId": "how_do_you_get",
-      "article": "",
-      "text": "How do you get to school?"
-    },
-    {
-      "key": "how_do_you_go_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "how_do",
-      "entryId": "how_do_you_go",
-      "article": "",
-      "text": "How do you go to school?"
-    },
-    {
-      "key": "how_do_you_make_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "how_do",
-      "entryId": "how_do_you_make",
-      "article": "",
-      "text": "How do you make rice?"
-    },
-    {
-      "key": "how_does_he_solve_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "how_does",
-      "entryId": "how_does_he_solve",
-      "article": "",
-      "text": "How does he solve math?"
-    },
-    {
-      "key": "how_many_apples_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_apples_are",
-      "article": "",
-      "text": "How many apples are there? There are three apples."
-    },
-    {
-      "key": "how_many_apples_did_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_apples_did",
-      "article": "",
-      "text": "How many apples did you eat? I ate two apples."
-    },
-    {
-      "key": "how_many_books_do_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_books_do",
-      "article": "",
-      "text": "How many books do you have? I have ten books."
-    },
-    {
-      "key": "how_many_cars_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_cars_are",
-      "article": "",
-      "text": "How many cars are in the parking lot? There are six cars."
-    },
-    {
-      "key": "how_many_chairs_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_chairs_are",
-      "article": "",
-      "text": "How many chairs are in the classroom? There are twenty chairs."
-    },
-    {
-      "key": "how_many_cookies_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_cookies_are",
-      "article": "",
-      "text": "How many cookies are on the plate? There are four cookies."
-    },
-    {
-      "key": "how_many_cookies_do_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_cookies_do",
-      "article": "",
-      "text": "How many cookies do you want? I want one cookie."
-    },
-    {
-      "key": "how_many_days_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_days_are",
-      "article": "",
-      "text": "How many days are in a week? There are seven days."
-    },
-    {
-      "key": "how_many_hours_do_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_hours_do",
-      "article": "",
-      "text": "How many hours do you sleep? I sleep eight hours."
-    },
-    {
-      "key": "how_many_pencils_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_pencils_are",
-      "article": "",
-      "text": "How many pencils are in the box? Ten pencils."
-    },
-    {
-      "key": "how_many_pens_do_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_pens_do",
-      "article": "",
-      "text": "How many pens do you have? I have three pens."
-    },
-    {
-      "key": "how_many_people_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_people_are",
-      "article": "",
-      "text": "How many people are in the room? There are five people."
-    },
-    {
-      "key": "how_many_sisters_do_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_sisters_do",
-      "article": "",
-      "text": "How many sisters do you have? I have two sisters."
-    },
-    {
-      "key": "how_many_students_are_2_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_students_are_2",
-      "article": "",
-      "text": "How many students are in your class? There are twenty-eight students."
-    },
-    {
-      "key": "how_many_students_are_grammar",
-      "file": "level2\\how_many_is_that.json",
-      "word": "how_many",
-      "entryId": "how_many_students_are",
-      "article": "",
-      "text": "How many students are absent? Two students are absent."
-    },
-    {
-      "key": "how_much_do_these_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "how_much",
-      "entryId": "how_much_do_these",
-      "article": "",
-      "text": "How much do these cost?"
-    },
-    {
-      "key": "how_much_is_it_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "how_much",
-      "entryId": "how_much_is_it",
-      "article": "",
-      "text": "How much is it?"
-    },
-    {
-      "key": "i_am_eating_breakfast_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "i_am",
-      "entryId": "i_am_eating_breakfast",
-      "article": "",
-      "text": "I am eating breakfast."
-    },
-    {
-      "key": "i_am_not_eating_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "i_am",
-      "entryId": "i_am_not_eating",
-      "article": "",
-      "text": "I am not eating breakfast."
-    },
-    {
-      "key": "i_am_not_reading_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "i_am",
-      "entryId": "i_am_not_reading",
-      "article": "",
-      "text": "I am not reading a book."
-    },
-    {
-      "key": "i_am_reading_a_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "i_am",
-      "entryId": "i_am_reading_a",
-      "article": "",
-      "text": "I am reading a book now."
-    },
-    {
-      "key": "i_don_t_know_the_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "i_don_t",
-      "entryId": "i_don_t_know_the",
-      "article": "",
-      "text": "I don't know the answer."
-    },
-    {
-      "key": "i_don_t_like_spinach_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "i_don_t",
-      "entryId": "i_don_t_like_spinach",
-      "article": "",
-      "text": "I don't like spinach."
-    },
-    {
-      "key": "i_don_t_want_to_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "i_don_t",
-      "entryId": "i_don_t_want_to",
-      "article": "",
-      "text": "I don't want to go."
-    },
-    {
-      "key": "i_eat_breakfast_every_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "i_eat",
-      "entryId": "i_eat_breakfast_every",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "i_go_to_school_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "i_go",
-      "entryId": "i_go_to_school",
-      "article": "",
-      "text": "I go to school on Monday."
-    },
-    {
-      "key": "i_like_music_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "i_like",
-      "entryId": "i_like_music",
-      "article": "",
-      "text": "I like music."
-    },
-    {
-      "key": "i_like_pizza_i_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "i_like",
-      "entryId": "i_like_pizza_i",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "i_like_to_exercise_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "i_like",
-      "entryId": "i_like_to_exercise",
-      "article": "",
-      "text": "I like to exercise in the morning."
-    },
-    {
-      "key": "i_read_books_before_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "i_read",
-      "entryId": "i_read_books_before",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "i_study_english_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "i_study",
-      "entryId": "i_study_english",
-      "article": "",
-      "text": "I study English."
-    },
-    {
-      "key": "i_usually_read_in_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "i_usually",
-      "entryId": "i_usually_read_in",
-      "article": "",
-      "text": "I usually read in the evening."
-    },
-    {
-      "key": "i_walk_to_school_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "i_walk",
-      "entryId": "i_walk_to_school",
-      "article": "",
-      "text": "I walk to school every day."
-    },
-    {
-      "key": "is_he_cooking_dinner_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_he",
-      "entryId": "is_he_cooking_dinner",
-      "article": "",
-      "text": "Is he cooking dinner?"
-    },
-    {
-      "key": "is_he_running_in_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_he",
-      "entryId": "is_he_running_in",
-      "article": "",
-      "text": "Is he running in the park?"
-    },
-    {
-      "key": "is_it_raining_now_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_it",
-      "entryId": "is_it_raining_now",
-      "article": "",
-      "text": "Is it raining now?"
-    },
-    {
-      "key": "is_she_cleaning_her_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_she",
-      "entryId": "is_she_cleaning_her",
-      "article": "",
-      "text": "Is she cleaning her room?"
-    },
-    {
-      "key": "is_she_drawing_a_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_she",
-      "entryId": "is_she_drawing_a",
-      "article": "",
-      "text": "Is she drawing a picture?"
-    },
-    {
-      "key": "is_she_playing_soccer_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_she",
-      "entryId": "is_she_playing_soccer",
-      "article": "",
-      "text": "Is she playing soccer?"
-    },
-    {
-      "key": "is_the_cat_sleeping_grammar",
-      "file": "level2\\present_progressive_questions_yesno.json",
-      "word": "is_the",
-      "entryId": "is_the_cat_sleeping",
-      "article": "",
-      "text": "Is the cat sleeping?"
-    },
-    {
-      "key": "is_there_a_bank_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_is",
-      "entryId": "is_there_a_bank",
-      "article": "",
-      "text": "There is a bank near here."
-    },
-    {
-      "key": "is_there_a_bus_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_a_bus",
-      "article": "",
-      "text": "Is there a bus stop near here?"
-    },
-    {
-      "key": "is_there_a_hospital_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_a_hospital",
-      "article": "",
-      "text": "Is there a hospital nearby?"
-    },
-    {
-      "key": "is_there_a_map_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_a_map",
-      "article": "",
-      "text": "Is there a map in the guidebook?"
-    },
-    {
-      "key": "is_there_a_post_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_a_post",
-      "article": "",
-      "text": "Is there a post office here?"
-    },
-    {
-      "key": "is_there_a_restroom_4695_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_is",
-      "entryId": "is_there_a_restroom",
-      "article": "",
-      "text": "There is a restroom nearby."
-    },
-    {
-      "key": "is_there_a_restroom_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_a_restroom",
-      "article": "",
-      "text": "Is there a restroom upstairs?"
-    },
-    {
-      "key": "is_there_a_supermarket_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_a_supermarket",
-      "article": "",
-      "text": "Is there a supermarket close by?"
-    },
-    {
-      "key": "is_there_any_homework_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_any_homework",
-      "article": "",
-      "text": "Is there any homework tonight?"
-    },
-    {
-      "key": "is_there_snow_on_grammar",
-      "file": "level2\\are_there_vs_is_there.json",
-      "word": "is_there",
-      "entryId": "is_there_snow_on",
-      "article": "",
-      "text": "Is there snow on the ground?"
-    },
-    {
-      "key": "it_doesn_t_cost_much_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "it_doesn_t",
-      "entryId": "it_doesn_t_cost_much",
-      "article": "",
-      "text": "It doesn't cost much."
-    },
-    {
-      "key": "it_is_raining_now_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "it_is",
-      "entryId": "it_is_raining_now",
-      "article": "",
-      "text": "It is raining now."
-    },
-    {
-      "key": "it_isn_t_raining_now_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "it_isn_t",
-      "entryId": "it_isn_t_raining_now",
-      "article": "",
-      "text": "It isn't raining now."
-    },
-    {
-      "key": "it_snows_in_winter_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "it_snows",
-      "entryId": "it_snows_in_winter",
-      "article": "",
-      "text": "It snows in winter."
-    },
-    {
-      "key": "my_bag_is_next_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "my_bag",
-      "entryId": "my_bag_is_next",
-      "article": "next to",
-      "text": "My bag is next to my desk."
-    },
-    {
-      "key": "my_birthday_is_in_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "my_birthday",
-      "entryId": "my_birthday_is_in",
-      "article": "",
-      "text": "My birthday is in July."
-    },
-    {
-      "key": "place_the_cup_next_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "place_the",
-      "entryId": "place_the_cup_next",
-      "article": "next to",
-      "text": "Place the cup next to the plate."
-    },
-    {
-      "key": "put_the_book_between_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "put_the",
-      "entryId": "put_the_book_between",
-      "article": "between",
-      "text": "Put the book between the boxes."
-    },
-    {
-      "key": "put_the_pen_between_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "put_the",
-      "entryId": "put_the_pen_between",
-      "article": "between",
-      "text": "Put the pen between the papers."
-    },
-    {
-      "key": "she_doesn_t_have_a_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "she_doesn_t",
-      "entryId": "she_doesn_t_have_a",
-      "article": "",
-      "text": "She doesn't have a car."
-    },
-    {
-      "key": "she_doesn_t_like_loud_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "she_doesn_t",
-      "entryId": "she_doesn_t_like_loud",
-      "article": "",
-      "text": "She doesn't like loud music."
-    },
-    {
-      "key": "she_doesn_t_live_here_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "she_doesn_t",
-      "entryId": "she_doesn_t_live_here",
-      "article": "",
-      "text": "She doesn't live here."
-    },
-    {
-      "key": "she_is_cleaning_her_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "she_is",
-      "entryId": "she_is_cleaning_her",
-      "article": "",
-      "text": "She is cleaning her room."
-    },
-    {
-      "key": "she_is_drawing_a_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "she_is",
-      "entryId": "she_is_drawing_a",
-      "article": "",
-      "text": "She is drawing a picture."
-    },
-    {
-      "key": "she_is_playing_soccer_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "she_is",
-      "entryId": "she_is_playing_soccer",
-      "article": "",
-      "text": "She is playing soccer."
-    },
-    {
-      "key": "she_isn_t_cleaning_her_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "she_isn_t",
-      "entryId": "she_isn_t_cleaning_her",
-      "article": "",
-      "text": "She isn't cleaning her room."
-    },
-    {
-      "key": "she_isn_t_drawing_a_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "she_isn_t",
-      "entryId": "she_isn_t_drawing_a",
-      "article": "",
-      "text": "She isn't drawing a picture."
-    },
-    {
-      "key": "she_isn_t_playing_soccer_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "she_isn_t",
-      "entryId": "she_isn_t_playing_soccer",
-      "article": "",
-      "text": "She isn't playing soccer."
-    },
-    {
-      "key": "she_likes_apples_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "she_likes",
-      "entryId": "she_likes_apples",
-      "article": "",
-      "text": "She likes apples."
-    },
-    {
-      "key": "she_loves_animals_she_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "she_loves",
-      "entryId": "she_loves_animals_she",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "she_sits_next_to_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "she_sits",
-      "entryId": "she_sits_next_to",
-      "article": "next to",
-      "text": "She sits next to me."
-    },
-    {
-      "key": "she_studies_english_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "she_studies",
-      "entryId": "she_studies_english",
-      "article": "",
-      "text": "She studies English."
-    },
-    {
-      "key": "she_studies_in_the_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "she_studies",
-      "entryId": "she_studies_in_the",
-      "article": "",
-      "text": "She studies in the morning."
-    },
-    {
-      "key": "she_usually_walks_to_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "she_usually",
-      "entryId": "she_usually_walks_to",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "she_watches_tv_in_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "she_watches",
-      "entryId": "she_watches_tv_in",
-      "article": "",
-      "text": "She watches TV in the evening."
-    },
-    {
-      "key": "she_works_at_a_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "she_works",
-      "entryId": "she_works_at_a",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "short_q_1_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "do_like",
-      "entryId": "short_q_1",
-      "article": "",
-      "text": "Do you like apples?"
-    },
-    {
-      "key": "short_q_10_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "do_live_here",
-      "entryId": "short_q_10",
-      "article": "",
-      "text": "Do they live here?"
-    },
-    {
-      "key": "short_q_11_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "do_want_candy",
-      "entryId": "short_q_11",
-      "article": "",
-      "text": "Do you want some candy?"
-    },
-    {
-      "key": "short_q_12_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "is_from_korea",
-      "entryId": "short_q_12",
-      "article": "",
-      "text": "Is he from Korea?"
-    },
-    {
-      "key": "short_q_13_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "can_ride_bike",
-      "entryId": "short_q_13",
-      "article": "",
-      "text": "Can he ride a bike?"
-    },
-    {
-      "key": "short_q_14_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "do_look_okay",
-      "entryId": "short_q_14",
-      "article": "",
-      "text": "Do I look okay?"
-    },
-    {
-      "key": "short_q_15_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "does_bus_stop",
-      "entryId": "short_q_15",
-      "article": "",
-      "text": "Does the bus stop here?"
-    },
-    {
-      "key": "short_q_16_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "do_like_kiwi",
-      "entryId": "short_q_16",
-      "article": "",
-      "text": "Do you like kiwi?"
-    },
-    {
-      "key": "short_q_17_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "is_coach",
-      "entryId": "short_q_17",
-      "article": "",
-      "text": "Is she your coach?"
-    },
-    {
-      "key": "short_q_18_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "are_classmates",
-      "entryId": "short_q_18",
-      "article": "",
-      "text": "Are they your classmates?"
-    },
-    {
-      "key": "short_q_19_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "does_play_piano",
-      "entryId": "short_q_19",
-      "article": "",
-      "text": "Does he play the piano?"
-    },
-    {
-      "key": "short_q_2_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "is_teacher",
-      "entryId": "short_q_2",
-      "article": "",
-      "text": "Is she your teacher?"
-    },
-    {
-      "key": "short_q_20_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "can_skateboard",
-      "entryId": "short_q_20",
-      "article": "",
-      "text": "Can you ride a skateboard?"
-    },
-    {
-      "key": "short_q_21_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "is_rainy",
-      "entryId": "short_q_21",
-      "article": "",
-      "text": "Is it rainy today?"
-    },
-    {
-      "key": "short_q_22_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "do_have_homework",
-      "entryId": "short_q_22",
-      "article": "",
-      "text": "Do we have homework today?"
-    },
-    {
-      "key": "short_q_23_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "does_like_games",
-      "entryId": "short_q_23",
-      "article": "",
-      "text": "Does she like video games?"
-    },
-    {
-      "key": "short_q_24_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "is_cat_sleepy",
-      "entryId": "short_q_24",
-      "article": "",
-      "text": "Is the cat sleepy?"
-    },
-    {
-      "key": "short_q_25_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "do_live_near_school",
-      "entryId": "short_q_25",
-      "article": "",
-      "text": "Do they live near the school?"
-    },
-    {
-      "key": "short_q_26_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "do_want_icecream",
-      "entryId": "short_q_26",
-      "article": "",
-      "text": "Do you want some ice cream?"
-    },
-    {
-      "key": "short_q_27_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "is_from_canada",
-      "entryId": "short_q_27",
-      "article": "",
-      "text": "Is he from Canada?"
-    },
-    {
-      "key": "short_q_28_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "can_ride_scooter",
-      "entryId": "short_q_28",
-      "article": "",
-      "text": "Can he ride a scooter?"
-    },
-    {
-      "key": "short_q_29_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "do_look_tired",
-      "entryId": "short_q_29",
-      "article": "",
-      "text": "Do I look tired?"
-    },
-    {
-      "key": "short_q_3_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "are_friends",
-      "entryId": "short_q_3",
-      "article": "",
-      "text": "Are they friends?"
-    },
-    {
-      "key": "short_q_30_grammar",
-      "file": "level2\\short_questions_2.json",
-      "word": "does_train_stop",
-      "entryId": "short_q_30",
-      "article": "",
-      "text": "Does the train stop here?"
-    },
-    {
-      "key": "short_q_4_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "does_play",
-      "entryId": "short_q_4",
-      "article": "",
-      "text": "Does he play soccer?"
-    },
-    {
-      "key": "short_q_5_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "can_swim",
-      "entryId": "short_q_5",
-      "article": "",
-      "text": "Can you swim?"
-    },
-    {
-      "key": "short_q_6_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "is_cold",
-      "entryId": "short_q_6",
-      "article": "",
-      "text": "Is it cold today?"
-    },
-    {
-      "key": "short_q_7_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "do_have_class",
-      "entryId": "short_q_7",
-      "article": "",
-      "text": "Do we have class today?"
-    },
-    {
-      "key": "short_q_8_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "does_like_music",
-      "entryId": "short_q_8",
-      "article": "",
-      "text": "Does she like music?"
-    },
-    {
-      "key": "short_q_9_grammar",
-      "file": "level2\\short_questions_1.json",
-      "word": "is_dog_big",
-      "entryId": "short_q_9",
-      "article": "",
-      "text": "Is the dog big?"
-    },
-    {
-      "key": "sit_beside_me_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "sit_beside",
-      "entryId": "sit_beside_me",
-      "article": "beside",
-      "text": "Sit beside me."
-    },
-    {
-      "key": "some_any_1_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "some_apples",
-      "entryId": "some_any_1",
-      "article": "some",
-      "text": "There are some apples on the table."
-    },
-    {
-      "key": "some_any_10_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_apples_left",
-      "entryId": "some_any_10",
-      "article": "any",
-      "text": "Are there any apples left?"
-    },
-    {
-      "key": "some_any_11_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "some_sugar",
-      "entryId": "some_any_11",
-      "article": "some",
-      "text": "He has some sugar for the cookies."
-    },
-    {
-      "key": "some_any_12_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_time",
-      "entryId": "some_any_12",
-      "article": "any",
-      "text": "We don't have any time to wait."
-    },
-    {
-      "key": "some_any_13_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "some_boxes",
-      "entryId": "some_any_13",
-      "article": "some",
-      "text": "They need some boxes for moving."
-    },
-    {
-      "key": "some_any_14_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_markers",
-      "entryId": "some_any_14",
-      "article": "any",
-      "text": "Does she have any markers?"
-    },
-    {
-      "key": "some_any_15_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_paper",
-      "entryId": "some_any_15",
-      "article": "any",
-      "text": "He doesn't need any paper."
-    },
-    {
-      "key": "some_any_2_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_milk",
-      "entryId": "some_any_2",
-      "article": "any",
-      "text": "Is there any milk in the fridge?"
-    },
-    {
-      "key": "some_any_3_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "some_money",
-      "entryId": "some_any_3",
-      "article": "some",
-      "text": "We have some money for tickets."
-    },
-    {
-      "key": "some_any_4_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_pencils",
-      "entryId": "some_any_4",
-      "article": "any",
-      "text": "Do you have any pencils?"
-    },
-    {
-      "key": "some_any_5_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_chairs",
-      "entryId": "some_any_5",
-      "article": "any",
-      "text": "There aren't any chairs in the room."
-    },
-    {
-      "key": "some_any_6_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "some_help",
-      "entryId": "some_any_6",
-      "article": "some",
-      "text": "We need some help with homework."
-    },
-    {
-      "key": "some_any_7_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_water",
-      "entryId": "some_any_7",
-      "article": "any",
-      "text": "Do they need any water?"
-    },
-    {
-      "key": "some_any_8_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "any_mistakes",
-      "entryId": "some_any_8",
-      "article": "any",
-      "text": "She doesn't have any mistakes in her test."
-    },
-    {
-      "key": "some_any_9_grammar",
-      "file": "level2\\some_vs_any.json",
-      "word": "some_bread",
-      "entryId": "some_any_9",
-      "article": "some",
-      "text": "There is some bread on the plate."
-    },
-    {
-      "key": "the_ball_is_behind_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_ball",
-      "entryId": "the_ball_is_behind",
-      "article": "behind",
-      "text": "The ball is behind the couch."
-    },
-    {
-      "key": "the_ball_is_between_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_ball",
-      "entryId": "the_ball_is_between",
-      "article": "between",
-      "text": "The ball is between the shoes."
-    },
-    {
-      "key": "the_ball_is_under_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_ball",
-      "entryId": "the_ball_is_under",
-      "article": "under",
-      "text": "The ball is under the table."
-    },
-    {
-      "key": "the_bank_is_across_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_bank",
-      "entryId": "the_bank_is_across",
-      "article": "across from",
-      "text": "The bank is across from the post office."
-    },
-    {
-      "key": "the_bench_is_between_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_bench",
-      "entryId": "the_bench_is_between",
-      "article": "between",
-      "text": "The bench is between the trees."
-    },
-    {
-      "key": "the_bench_is_in_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_bench",
-      "entryId": "the_bench_is_in",
-      "article": "in front of",
-      "text": "The bench is in front of the museum."
-    },
-    {
-      "key": "the_bird_is_above_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_bird",
-      "entryId": "the_bird_is_above",
-      "article": "above",
-      "text": "The bird is above the tree."
-    },
-    {
-      "key": "the_birds_fly_above_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_birds",
-      "entryId": "the_birds_fly_above",
-      "article": "above",
-      "text": "The birds fly above the trees."
-    },
-    {
-      "key": "the_book_is_in_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_book",
-      "entryId": "the_book_is_in",
-      "article": "in",
-      "text": "The book is in the bag."
-    },
-    {
-      "key": "the_bridge_is_across_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_bridge",
-      "entryId": "the_bridge_is_across",
-      "article": "across from",
-      "text": "The bridge is across from the river."
-    },
-    {
-      "key": "the_bus_stops_in_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_bus",
-      "entryId": "the_bus_stops_in",
-      "article": "in front of",
-      "text": "The bus stops in front of the station."
-    },
-    {
-      "key": "the_cafe_is_across_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_cafe",
-      "entryId": "the_cafe_is_across",
-      "article": "across from",
-      "text": "The cafe is across from the library."
-    },
-    {
-      "key": "the_car_is_behind_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_car",
-      "entryId": "the_car_is_behind",
-      "article": "behind",
-      "text": "The car is behind the truck."
-    },
-    {
-      "key": "the_cat_is_below_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_cat",
-      "entryId": "the_cat_is_below",
-      "article": "below",
-      "text": "The cat is below the chair."
-    },
-    {
-      "key": "the_cat_is_next_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_cat",
-      "entryId": "the_cat_is_next",
-      "article": "next to",
-      "text": "The cat is next to the box."
-    },
-    {
-      "key": "the_cat_is_on_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_cat",
-      "entryId": "the_cat_is_on",
-      "article": "on",
-      "text": "The cat is on the table."
-    },
-    {
-      "key": "the_cat_is_sleeping_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "the_cat",
-      "entryId": "the_cat_is_sleeping",
-      "article": "",
-      "text": "The cat is sleeping."
-    },
-    {
-      "key": "the_cat_isn_t_sleeping_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "the_cat",
-      "entryId": "the_cat_isn_t_sleeping",
-      "article": "",
-      "text": "The cat isn't sleeping."
-    },
-    {
-      "key": "the_cat_sits_between_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_cat",
-      "entryId": "the_cat_sits_between",
-      "article": "between",
-      "text": "The cat sits between the two dogs."
-    },
-    {
-      "key": "the_class_starts_at_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "the_class",
-      "entryId": "the_class_starts_at",
-      "article": "",
-      "text": "The class starts at 9 o'clock."
-    },
-    {
-      "key": "the_clock_is_above_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_clock",
-      "entryId": "the_clock_is_above",
-      "article": "above",
-      "text": "The clock is above the door."
-    },
-    {
-      "key": "the_dog_is_in_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_dog",
-      "entryId": "the_dog_is_in",
-      "article": "in front of",
-      "text": "The dog is in front of the house."
-    },
-    {
-      "key": "the_fish_is_below_6110_below_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_fish",
-      "entryId": "the_fish_is_below",
-      "article": "below",
-      "text": "The fish is below the water."
-    },
-    {
-      "key": "the_fish_is_below_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_fish",
-      "entryId": "the_fish_is_below",
-      "article": "below",
-      "text": "The fish is below the surface."
-    },
-    {
-      "key": "the_hospital_is_near_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_hospital",
-      "entryId": "the_hospital_is_near",
-      "article": "near",
-      "text": "The hospital is near the bus stop."
-    },
-    {
-      "key": "the_house_next_to_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_house",
-      "entryId": "the_house_next_to",
-      "article": "next",
-      "text": "The house next to mine is red."
-    },
-    {
-      "key": "the_key_is_between_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_key",
-      "entryId": "the_key_is_between",
-      "article": "between",
-      "text": "The key is between the cushions."
-    },
-    {
-      "key": "the_keys_are_on_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_keys",
-      "entryId": "the_keys_are_on",
-      "article": "on",
-      "text": "The keys are on the shelf."
-    },
-    {
-      "key": "the_kids_play_in_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "the_kids",
-      "entryId": "the_kids_play_in",
-      "article": "",
-      "text": "The kids play in the park."
-    },
-    {
-      "key": "the_lamp_is_above_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_lamp",
-      "entryId": "the_lamp_is_above",
-      "article": "above",
-      "text": "The lamp is above the table."
-    },
-    {
-      "key": "the_picture_is_above_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_picture",
-      "entryId": "the_picture_is_above",
-      "article": "above",
-      "text": "The picture is above the bed."
-    },
-    {
-      "key": "the_plane_is_over_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_plane",
-      "entryId": "the_plane_is_over",
-      "article": "over",
-      "text": "The plane is over the city."
-    },
-    {
-      "key": "the_playground_is_near_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_playground",
-      "entryId": "the_playground_is_near",
-      "article": "near",
-      "text": "The playground is near the school."
-    },
-    {
-      "key": "the_rabbit_hides_below_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_rabbit",
-      "entryId": "the_rabbit_hides_below",
-      "article": "below",
-      "text": "The rabbit hides below the bushes."
-    },
-    {
-      "key": "the_restaurant_is_by_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_restaurant",
-      "entryId": "the_restaurant_is_by",
-      "article": "by",
-      "text": "The restaurant is by the river."
-    },
-    {
-      "key": "the_school_is_near_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_school",
-      "entryId": "the_school_is_near",
-      "article": "near",
-      "text": "The school is near the park."
-    },
-    {
-      "key": "the_shop_doesn_t_open_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "the_shop",
-      "entryId": "the_shop_doesn_t_open",
-      "article": "",
-      "text": "The shop doesn't open on Sundays."
-    },
-    {
-      "key": "the_shop_is_near_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_shop",
-      "entryId": "the_shop_is_near",
-      "article": "near",
-      "text": "The shop is near the school."
-    },
-    {
-      "key": "the_statue_is_across_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "the_statue",
-      "entryId": "the_statue_is_across",
-      "article": "across from",
-      "text": "The statue is across from the library."
-    },
-    {
-      "key": "the_statue_is_between_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_statue",
-      "entryId": "the_statue_is_between",
-      "article": "between",
-      "text": "The statue is between the fountains."
-    },
-    {
-      "key": "the_store_is_behind_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_store",
-      "entryId": "the_store_is_behind",
-      "article": "behind",
-      "text": "The store is behind the school."
-    },
-    {
-      "key": "the_store_opens_at_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "the_store",
-      "entryId": "the_store_opens_at",
-      "article": "",
-      "text": "The store opens at 10 am."
-    },
-    {
-      "key": "the_student_is_behind_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_student",
-      "entryId": "the_student_is_behind",
-      "article": "behind",
-      "text": "The student is behind the teacher."
-    },
-    {
-      "key": "the_sun_is_above_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_sun",
-      "entryId": "the_sun_is_above",
-      "article": "above",
-      "text": "The sun is above the clouds."
-    },
-    {
-      "key": "the_sun_rises_in_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "the_sun",
-      "entryId": "the_sun_rises_in",
-      "article": "",
-      "text": "The sun rises in the east."
-    },
-    {
-      "key": "the_train_arrives_at_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "the_train",
-      "entryId": "the_train_arrives_at",
-      "article": "",
-      "text": "The train arrives at noon."
-    },
-    {
-      "key": "the_treasure_is_below_grammar",
-      "file": "level2\\prepositions_between_above_below.json",
-      "word": "the_treasure",
-      "entryId": "the_treasure_is_below",
-      "article": "below",
-      "text": "The treasure is below the floor."
-    },
-    {
-      "key": "the_tree_is_between_grammar",
-      "file": "level2\\prepositions_between_near_acrossfrom.json",
-      "word": "the_tree",
-      "entryId": "the_tree_is_between",
-      "article": "between",
-      "text": "The tree is between the houses."
-    },
-    {
-      "key": "the_tree_is_in_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "the_tree",
-      "entryId": "the_tree_is_in",
-      "article": "in front of",
-      "text": "The tree is in front of the house."
-    },
-    {
-      "key": "there_are_five_books_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_are",
-      "entryId": "there_are_five_books",
-      "article": "",
-      "text": "There are five books on the shelf."
-    },
-    {
-      "key": "there_are_many_stars_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_are",
-      "entryId": "there_are_many_stars",
-      "article": "",
-      "text": "There are many stars tonight."
-    },
-    {
-      "key": "there_are_many_students_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_are",
-      "entryId": "there_are_many_students",
-      "article": "",
-      "text": "There are many students in the class."
-    },
-    {
-      "key": "there_are_two_cats_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_are",
-      "entryId": "there_are_two_cats",
-      "article": "",
-      "text": "There are two cats in the garden."
-    },
-    {
-      "key": "there_are_two_chairs_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_are",
-      "entryId": "there_are_two_chairs",
-      "article": "",
-      "text": "There are two chairs in the room."
-    },
-    {
-      "key": "there_aren_t_any_apples_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_aren_t",
-      "entryId": "there_aren_t_any_apples",
-      "article": "",
-      "text": "There aren't any apples."
-    },
-    {
-      "key": "there_is_a_bird_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_is",
-      "entryId": "there_is_a_bird",
-      "article": "",
-      "text": "There is a bird outside."
-    },
-    {
-      "key": "there_is_a_book_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_is",
-      "entryId": "there_is_a_book",
-      "article": "",
-      "text": "There is a book on the table."
-    },
-    {
-      "key": "there_is_a_cat_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_is",
-      "entryId": "there_is_a_cat",
-      "article": "",
-      "text": "There is a cat on the sofa."
-    },
-    {
-      "key": "there_is_a_problem_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_is",
-      "entryId": "there_is_a_problem",
-      "article": "",
-      "text": "There is a problem with the computer."
-    },
-    {
-      "key": "there_isn_t_a_dog_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_isn_t",
-      "entryId": "there_isn_t_a_dog",
-      "article": "",
-      "text": "There isn't a dog here."
-    },
-    {
-      "key": "there_isn_t_any_milk_grammar",
-      "file": "level2\\there_is_vs_there_are.json",
-      "word": "there_isn_t",
-      "entryId": "there_isn_t_any_milk",
-      "article": "",
-      "text": "There isn't any milk left."
-    },
-    {
-      "key": "they_always_fight_they_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "they_always",
-      "entryId": "they_always_fight_they",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "they_are_dancing_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "they_are",
-      "entryId": "they_are_dancing",
-      "article": "",
-      "text": "They are dancing."
-    },
-    {
-      "key": "they_are_playing_games_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "they_are",
-      "entryId": "they_are_playing_games",
-      "article": "",
-      "text": "They are playing games."
-    },
-    {
-      "key": "they_are_watching_tv_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "they_are",
-      "entryId": "they_are_watching_tv",
-      "article": "",
-      "text": "They are watching TV."
-    },
-    {
-      "key": "they_aren_t_dancing_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "they_aren_t",
-      "entryId": "they_aren_t_dancing",
-      "article": "",
-      "text": "They aren't dancing."
-    },
-    {
-      "key": "they_aren_t_playing_games_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "they_aren_t",
-      "entryId": "they_aren_t_playing_games",
-      "article": "",
-      "text": "They aren't playing games."
-    },
-    {
-      "key": "they_aren_t_watching_tv_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "they_aren_t",
-      "entryId": "they_aren_t_watching_tv",
-      "article": "",
-      "text": "They aren't watching TV."
-    },
-    {
-      "key": "they_arrive_on_sunday_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "they_arrive",
-      "entryId": "they_arrive_on_sunday",
-      "article": "",
-      "text": "They arrive on Sunday."
-    },
-    {
-      "key": "they_don_t_go_to_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "they_don_t",
-      "entryId": "they_don_t_go_to",
-      "article": "",
-      "text": "They don't go to school on Sundays."
-    },
-    {
-      "key": "they_don_t_play_tennis_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "they_don_t",
-      "entryId": "they_don_t_play_tennis",
-      "article": "",
-      "text": "They don't play tennis."
-    },
-    {
-      "key": "they_play_soccer_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "they_play",
-      "entryId": "they_play_soccer",
-      "article": "",
-      "text": "They play soccer."
-    },
-    {
-      "key": "they_sat_behind_the_grammar",
-      "file": "level2\\prepositions_next_to_behind_infront.json",
-      "word": "they_sat",
-      "entryId": "they_sat_behind_the",
-      "article": "behind",
-      "text": "They sat behind the window."
-    },
-    {
-      "key": "they_study_english_at_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "they_study",
-      "entryId": "they_study_english_at",
-      "article": "",
-      "text": "Present Simple vs Present Progressive."
-    },
-    {
-      "key": "walk_through_the_tunnel_grammar",
-      "file": "level2\\prepositions_review.json",
-      "word": "walk_through",
-      "entryId": "walk_through_the_tunnel",
-      "article": "through",
-      "text": "Walk through the tunnel."
-    },
-    {
-      "key": "we_are_listening_to_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "we_are",
-      "entryId": "we_are_listening_to",
-      "article": "",
-      "text": "We are listening to music."
-    },
-    {
-      "key": "we_are_studying_english_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "we_are",
-      "entryId": "we_are_studying_english",
-      "article": "",
-      "text": "We are studying English."
-    },
-    {
-      "key": "we_aren_t_listening_to_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "we_aren_t",
-      "entryId": "we_aren_t_listening_to",
-      "article": "",
-      "text": "We aren't listening to music."
-    },
-    {
-      "key": "we_aren_t_studying_now_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "we_aren_t",
-      "entryId": "we_aren_t_studying_now",
-      "article": "",
-      "text": "We aren't studying now."
-    },
-    {
-      "key": "we_don_t_drink_coffee_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "we_don_t",
-      "entryId": "we_don_t_drink_coffee",
-      "article": "",
-      "text": "We don't drink coffee."
-    },
-    {
-      "key": "we_don_t_watch_horror_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "we_don_t",
-      "entryId": "we_don_t_watch_horror",
-      "article": "",
-      "text": "We don't watch horror movies."
-    },
-    {
-      "key": "we_eat_breakfast_at_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "we_eat",
-      "entryId": "we_eat_breakfast_at",
-      "article": "",
-      "text": "We eat breakfast at 7 every day."
-    },
-    {
-      "key": "we_have_class_on_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "we_have",
-      "entryId": "we_have_class_on",
+      "key": "be_going_to_questions_12_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_we_going_to_study_together",
+      "entryId": "be_going_to_questions_12",
       "article": "",
-      "text": "We have class on Fridays."
+      "text": "Are we going to study together after class?"
     },
     {
-      "key": "we_like_apples_grammar",
-      "file": "level2\\present_simple_sentences.json",
-      "word": "we_like",
-      "entryId": "we_like_apples",
+      "key": "be_going_to_questions_13_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "is_she_going_to_take_test",
+      "entryId": "be_going_to_questions_13",
       "article": "",
-      "text": "We like apples."
+      "text": "Is she going to take the test tomorrow?"
     },
     {
-      "key": "we_meet_on_saturdays_grammar",
-      "file": "level2\\in_on_at_time.json",
-      "word": "we_meet",
-      "entryId": "we_meet_on_saturdays",
+      "key": "be_going_to_questions_14_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_they_going_to_bring_gifts",
+      "entryId": "be_going_to_questions_14",
       "article": "",
-      "text": "We meet on Saturdays."
+      "text": "Are they going to bring gifts to the party?"
     },
     {
-      "key": "we_often_eat_lunch_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "we_often",
-      "entryId": "we_often_eat_lunch",
+      "key": "be_going_to_questions_15_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_you_going_to_go_shopping",
+      "entryId": "be_going_to_questions_15",
       "article": "",
-      "text": "Present Simple vs Present Progressive."
+      "text": "Are you going to go shopping this afternoon?"
     },
     {
-      "key": "we_play_games_on_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "we_play",
-      "entryId": "we_play_games_on",
+      "key": "be_going_to_questions_2_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "is_she_going_to_study",
+      "entryId": "be_going_to_questions_2",
       "article": "",
-      "text": "Present Simple vs Present Progressive."
+      "text": "Is she going to study tonight?"
     },
     {
-      "key": "we_visit_grandma_every_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "we_visit",
-      "entryId": "we_visit_grandma_every",
+      "key": "be_going_to_questions_3_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_we_going_to_play_games",
+      "entryId": "be_going_to_questions_3",
       "article": "",
-      "text": "Present Simple vs Present Progressive."
+      "text": "Are we going to play games after school?"
     },
     {
-      "key": "what_are_you_doing_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "what_are",
-      "entryId": "what_are_you_doing",
+      "key": "be_going_to_questions_4_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "is_he_going_to_travel",
+      "entryId": "be_going_to_questions_4",
       "article": "",
-      "text": "What are you doing?"
+      "text": "Is he going to travel next week?"
     },
     {
-      "key": "what_color_is_your_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "what_color",
-      "entryId": "what_color_is_your",
+      "key": "be_going_to_questions_5_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_they_going_to_sing",
+      "entryId": "be_going_to_questions_5",
       "article": "",
-      "text": "What color is your bag?"
+      "text": "Are they going to sing at the party?"
     },
     {
-      "key": "what_do_you_do_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "what_do",
-      "entryId": "what_do_you_do",
+      "key": "be_going_to_questions_6_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_you_going_to_learn_english",
+      "entryId": "be_going_to_questions_6",
       "article": "",
-      "text": "What do you do?"
+      "text": "Are you going to learn English soon?"
     },
     {
-      "key": "what_do_you_want_5435_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "what_do",
-      "entryId": "what_do_you_want",
+      "key": "be_going_to_questions_7_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_we_going_to_meet_him",
+      "entryId": "be_going_to_questions_7",
       "article": "",
-      "text": "What do you want?"
+      "text": "Are we going to meet him at the station?"
     },
     {
-      "key": "what_do_you_want_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "what_do",
-      "entryId": "what_do_you_want",
+      "key": "be_going_to_questions_8_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "is_she_going_to_buy_new_phone",
+      "entryId": "be_going_to_questions_8",
       "article": "",
-      "text": "What do you want for lunch?"
+      "text": "Is she going to buy a new phone this month?"
     },
     {
-      "key": "what_is_he_cooking_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "what_is",
-      "entryId": "what_is_he_cooking",
+      "key": "be_going_to_questions_9_grammar",
+      "file": "level3\\be_going_to_questions.json",
+      "word": "are_they_going_to_move",
+      "entryId": "be_going_to_questions_9",
       "article": "",
-      "text": "What is he cooking?"
+      "text": "Are they going to move next month?"
     },
     {
-      "key": "what_is_in_the_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "what_is",
-      "entryId": "what_is_in_the",
+      "key": "past_simple_irregular_1_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "i_went_to",
+      "entryId": "past_simple_irregular_1",
       "article": "",
-      "text": "What is in the box?"
+      "text": "I went to the zoo last weekend."
     },
     {
-      "key": "what_is_she_drawing_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "what_is",
-      "entryId": "what_is_she_drawing",
+      "key": "past_simple_irregular_10_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "they_found_the",
+      "entryId": "past_simple_irregular_10",
       "article": "",
-      "text": "What is she drawing?"
+      "text": "They found the keys under the couch."
     },
     {
-      "key": "what_is_that_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "what_is",
-      "entryId": "what_is_that",
+      "key": "past_simple_irregular_11_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "i_ran_in",
+      "entryId": "past_simple_irregular_11",
       "article": "",
-      "text": "What is that?"
+      "text": "I ran in the race last week."
     },
     {
-      "key": "what_is_your_favorite_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "what_is",
-      "entryId": "what_is_your_favorite",
+      "key": "past_simple_irregular_12_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "she_wrote_a",
+      "entryId": "past_simple_irregular_12",
       "article": "",
-      "text": "What is your favorite food?"
+      "text": "She wrote a letter to her friend."
     },
     {
-      "key": "what_is_your_name_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "what_is",
-      "entryId": "what_is_your_name",
+      "key": "past_simple_irregular_13_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "we_drank_orange",
+      "entryId": "past_simple_irregular_13",
       "article": "",
-      "text": "What is your name?"
+      "text": "We drank orange juice at lunch."
     },
     {
-      "key": "what_subject_do_you_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "what_subject",
-      "entryId": "what_subject_do_you",
+      "key": "past_simple_irregular_14_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "he_broke_the",
+      "entryId": "past_simple_irregular_14",
       "article": "",
-      "text": "What subject do you like?"
+      "text": "He broke the toy by accident."
     },
     {
-      "key": "what_time_do_you_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "what_time",
-      "entryId": "what_time_do_you",
+      "key": "past_simple_irregular_15_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "they_flew_to",
+      "entryId": "past_simple_irregular_15",
       "article": "",
-      "text": "What time do you get up?"
+      "text": "They flew to Seoul last summer."
     },
     {
-      "key": "what_time_does_class_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "what_time",
-      "entryId": "what_time_does_class",
+      "key": "past_simple_irregular_2_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "she_ate_ice",
+      "entryId": "past_simple_irregular_2",
       "article": "",
-      "text": "What time does class start?"
+      "text": "She ate ice cream after school."
     },
     {
-      "key": "what_time_does_the_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "what_time",
-      "entryId": "what_time_does_the",
+      "key": "past_simple_irregular_3_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "we_saw_a",
+      "entryId": "past_simple_irregular_3",
       "article": "",
-      "text": "What time does the train leave?"
+      "text": "We saw a rainbow after the rain."
     },
     {
-      "key": "what_time_is_dinner_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "what_time",
-      "entryId": "what_time_is_dinner",
+      "key": "past_simple_irregular_4_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "he_took_a",
+      "entryId": "past_simple_irregular_4",
       "article": "",
-      "text": "What time is dinner?"
+      "text": "He took a picture at the park."
     },
     {
-      "key": "what_time_is_the_2_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "what_time",
-      "entryId": "what_time_is_the_2",
+      "key": "past_simple_irregular_5_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "they_came_home",
+      "entryId": "past_simple_irregular_5",
       "article": "",
-      "text": "What time is the show?"
+      "text": "They came home late last night."
     },
     {
-      "key": "what_time_is_the_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "what_time",
-      "entryId": "what_time_is_the",
+      "key": "past_simple_irregular_6_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "i_gave_a",
+      "entryId": "past_simple_irregular_6",
       "article": "",
-      "text": "What time is the movie?"
+      "text": "I gave a gift to my friend yesterday."
     },
     {
-      "key": "when_do_we_meet_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "when_do",
-      "entryId": "when_do_we_meet",
+      "key": "past_simple_irregular_7_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "she_made_a",
+      "entryId": "past_simple_irregular_7",
       "article": "",
-      "text": "When do we meet?"
+      "text": "She made a cake for the party."
     },
     {
-      "key": "when_do_you_go_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "when_do",
-      "entryId": "when_do_you_go",
+      "key": "past_simple_irregular_8_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "we_had_a",
+      "entryId": "past_simple_irregular_8",
       "article": "",
-      "text": "When do you go to school?"
+      "text": "We had a great time at the festival."
     },
     {
-      "key": "when_does_he_arrive_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "when_does",
-      "entryId": "when_does_he_arrive",
+      "key": "past_simple_irregular_9_grammar",
+      "file": "level3\\past_simple_irregular.json",
+      "word": "he_bought_a",
+      "entryId": "past_simple_irregular_9",
       "article": "",
-      "text": "When does he arrive?"
+      "text": "He bought a new phone last week."
     },
     {
-      "key": "when_is_the_party_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "when_is",
-      "entryId": "when_is_the_party",
+      "key": "past_simple_regular_1_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "i_walked_to",
+      "entryId": "past_simple_regular_1",
       "article": "",
-      "text": "When is the party?"
+      "text": "I walked to school yesterday."
     },
     {
-      "key": "when_is_your_birthday_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "when_is",
-      "entryId": "when_is_your_birthday",
+      "key": "past_simple_regular_10_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "they_finished_their",
+      "entryId": "past_simple_regular_10",
       "article": "",
-      "text": "When is your birthday?"
+      "text": "They finished their homework yesterday."
     },
     {
-      "key": "where_are_the_keys_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "where_are",
-      "entryId": "where_are_the_keys",
+      "key": "past_simple_regular_11_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "i_jumped_over",
+      "entryId": "past_simple_regular_11",
       "article": "",
-      "text": "Where are the keys?"
+      "text": "I jumped over the puddle."
     },
     {
-      "key": "where_are_they_going_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "where_are",
-      "entryId": "where_are_they_going",
+      "key": "past_simple_regular_12_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "she_talked_with",
+      "entryId": "past_simple_regular_12",
       "article": "",
-      "text": "Where are they going?"
+      "text": "She talked with her friend on the phone."
     },
     {
-      "key": "where_are_we_meeting_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "where_are",
-      "entryId": "where_are_we_meeting",
+      "key": "past_simple_regular_13_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "we_baked_cookies",
+      "entryId": "past_simple_regular_13",
       "article": "",
-      "text": "Where are we meeting?"
+      "text": "We baked cookies last weekend."
     },
     {
-      "key": "where_do_they_work_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "where_do",
-      "entryId": "where_do_they_work",
+      "key": "past_simple_regular_14_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "he_helped_his",
+      "entryId": "past_simple_regular_14",
       "article": "",
-      "text": "Where do they work?"
+      "text": "He helped his mom with shopping."
     },
     {
-      "key": "where_do_we_meet_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "where_do",
-      "entryId": "where_do_we_meet",
+      "key": "past_simple_regular_15_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "they_washed_the",
+      "entryId": "past_simple_regular_15",
       "article": "",
-      "text": "Where do we meet?"
+      "text": "They washed the car on Saturday."
     },
     {
-      "key": "where_do_you_live_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "where_do",
-      "entryId": "where_do_you_live",
+      "key": "past_simple_regular_2_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "she_played_the",
+      "entryId": "past_simple_regular_2",
       "article": "",
-      "text": "Where do you live?"
+      "text": "She played the piano last night."
     },
     {
-      "key": "where_is_my_hat_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "where_is",
-      "entryId": "where_is_my_hat",
+      "key": "past_simple_regular_3_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "we_watched_a",
+      "entryId": "past_simple_regular_3",
       "article": "",
-      "text": "Where is my hat?"
+      "text": "We watched a movie on Sunday."
     },
     {
-      "key": "where_is_she_sitting_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "where_is",
-      "entryId": "where_is_she_sitting",
+      "key": "past_simple_regular_4_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "he_cleaned_his",
+      "entryId": "past_simple_regular_4",
       "article": "",
-      "text": "Where is she sitting?"
+      "text": "He cleaned his room yesterday."
     },
     {
-      "key": "where_is_the_bus_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "where_is",
-      "entryId": "where_is_the_bus",
+      "key": "past_simple_regular_5_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "they_cooked_dinner",
+      "entryId": "past_simple_regular_5",
       "article": "",
-      "text": "Where is the bus stop?"
+      "text": "They cooked dinner last night."
     },
     {
-      "key": "where_is_the_library_grammar",
-      "file": "level2\\wh_where_when_whattime.json",
-      "word": "where_is",
-      "entryId": "where_is_the_library",
+      "key": "past_simple_regular_6_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "i_opened_the",
+      "entryId": "past_simple_regular_6",
       "article": "",
-      "text": "Where is the library?"
+      "text": "I opened the door for her."
     },
     {
-      "key": "which_bag_is_yours_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "which_bag",
-      "entryId": "which_bag_is_yours",
+      "key": "past_simple_regular_7_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "she_walked_the",
+      "entryId": "past_simple_regular_7",
       "article": "",
-      "text": "Which bag is yours?"
+      "text": "She walked the dog yesterday."
     },
     {
-      "key": "which_color_do_you_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "which_color",
-      "entryId": "which_color_do_you",
+      "key": "past_simple_regular_8_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "we_studied_for",
+      "entryId": "past_simple_regular_8",
       "article": "",
-      "text": "Which color do you prefer?"
+      "text": "We studied for the test last week."
     },
     {
-      "key": "which_dress_do_you_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "which_dress",
-      "entryId": "which_dress_do_you",
+      "key": "past_simple_regular_9_grammar",
+      "file": "level3\\past_simple_regular.json",
+      "word": "he_painted_the",
+      "entryId": "past_simple_regular_9",
       "article": "",
-      "text": "Which dress do you choose?"
+      "text": "He painted the wall last weekend."
     },
     {
-      "key": "which_movie_do_you_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "which_movie",
-      "entryId": "which_movie_do_you",
+      "key": "past_vs_future_f_1_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "tomorrow",
+      "entryId": "past_vs_future_f_1",
       "article": "",
-      "text": "Which movie do you want?"
+      "text": "I will play soccer tomorrow."
     },
     {
-      "key": "which_one_is_better_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "which_one",
-      "entryId": "which_one_is_better",
+      "key": "past_vs_future_f_10_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "tomorrow",
+      "entryId": "past_vs_future_f_10",
       "article": "",
-      "text": "Which one is better?"
+      "text": "They will play more games tomorrow."
     },
     {
-      "key": "which_street_does_she_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "which_street",
-      "entryId": "which_street_does_she",
+      "key": "past_vs_future_f_11_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "this week",
+      "entryId": "past_vs_future_f_11",
       "article": "",
-      "text": "Which street does she live on?"
+      "text": "I will learn more this week."
     },
     {
-      "key": "who_are_you_talking_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "who_are",
-      "entryId": "who_are_you_talking",
+      "key": "past_vs_future_f_12_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "soon",
+      "entryId": "past_vs_future_f_12",
       "article": "",
-      "text": "Who are you talking to?"
+      "text": "She will buy another book soon."
     },
     {
-      "key": "who_called_me_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_called",
-      "entryId": "who_called_me",
+      "key": "past_vs_future_f_13_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "next summer",
+      "entryId": "past_vs_future_f_13",
       "article": "",
-      "text": "Who called me?"
+      "text": "We will travel to Busan next summer."
     },
     {
-      "key": "who_eats_cake_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_eats",
-      "entryId": "who_eats_cake",
+      "key": "past_vs_future_f_14_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "next week",
+      "entryId": "past_vs_future_f_14",
       "article": "",
-      "text": "Who eats cake?"
+      "text": "He will watch another show next week."
     },
     {
-      "key": "who_found_the_ball_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_found",
-      "entryId": "who_found_the_ball",
+      "key": "past_vs_future_f_15_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "soon",
+      "entryId": "past_vs_future_f_15",
       "article": "",
-      "text": "Who found the ball?"
+      "text": "They will start a new project soon."
     },
     {
-      "key": "who_helps_you_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_helps",
-      "entryId": "who_helps_you",
+      "key": "past_vs_future_f_2_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "next week",
+      "entryId": "past_vs_future_f_2",
       "article": "",
-      "text": "Who helps you?"
+      "text": "She will study next week."
     },
     {
-      "key": "who_is_at_the_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_is",
-      "entryId": "who_is_at_the",
+      "key": "past_vs_future_f_3_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "soon",
+      "entryId": "past_vs_future_f_3",
       "article": "",
-      "text": "Who is at the door?"
+      "text": "We will visit the museum soon."
     },
     {
-      "key": "who_is_singing_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "who_is",
-      "entryId": "who_is_singing",
+      "key": "past_vs_future_f_4_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "tomorrow",
+      "entryId": "past_vs_future_f_4",
       "article": "",
-      "text": "Who is singing?"
+      "text": "He will eat pizza tomorrow."
     },
     {
-      "key": "who_is_waiting_outside_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "who_is",
-      "entryId": "who_is_waiting_outside",
+      "key": "past_vs_future_f_5_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "next year",
+      "entryId": "past_vs_future_f_5",
       "article": "",
-      "text": "Who is waiting outside?"
+      "text": "They will travel next year."
     },
     {
-      "key": "who_is_your_friend_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "who_is",
-      "entryId": "who_is_your_friend",
+      "key": "past_vs_future_f_6_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "tomorrow",
+      "entryId": "past_vs_future_f_6",
       "article": "",
-      "text": "Who is your friend?"
+      "text": "I will finish work earlier tomorrow."
     },
     {
-      "key": "who_is_your_teacher_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_is",
-      "entryId": "who_is_your_teacher",
+      "key": "past_vs_future_f_7_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "next Saturday",
+      "entryId": "past_vs_future_f_7",
       "article": "",
-      "text": "Who is your teacher?"
+      "text": "She will clean it again next Saturday."
     },
     {
-      "key": "who_plays_the_piano_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "who_plays",
-      "entryId": "who_plays_the_piano",
+      "key": "past_vs_future_f_8_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "next month",
+      "entryId": "past_vs_future_f_8",
       "article": "",
-      "text": "Who plays the piano?"
+      "text": "We will have another picnic next month."
     },
     {
-      "key": "who_sings_this_song_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_sings",
-      "entryId": "who_sings_this_song",
+      "key": "past_vs_future_f_9_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "tomorrow",
+      "entryId": "past_vs_future_f_9",
       "article": "",
-      "text": "Who sings this song?"
+      "text": "He will watch a movie tomorrow."
     },
     {
-      "key": "who_wrote_this_book_grammar",
-      "file": "level2\\wh_who_what.json",
-      "word": "who_wrote",
-      "entryId": "who_wrote_this_book",
+      "key": "past_vs_future_p_1_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "yesterday",
+      "entryId": "past_vs_future_p_1",
       "article": "",
-      "text": "Who wrote this book?"
+      "text": "I played soccer yesterday."
     },
     {
-      "key": "why_are_they_laughing_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "why_are",
-      "entryId": "why_are_they_laughing",
+      "key": "past_vs_future_p_10_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "yesterday",
+      "entryId": "past_vs_future_p_10",
       "article": "",
-      "text": "Why are they laughing?"
+      "text": "They played games yesterday."
     },
     {
-      "key": "why_are_you_late_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "why_are",
-      "entryId": "why_are_you_late",
+      "key": "past_vs_future_p_11_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last week",
+      "entryId": "past_vs_future_p_11",
       "article": "",
-      "text": "Why are you late?"
+      "text": "I learned new words last week."
     },
     {
-      "key": "why_are_you_shouting_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "why_are",
-      "entryId": "why_are_you_shouting",
+      "key": "past_vs_future_p_12_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last month",
+      "entryId": "past_vs_future_p_12",
       "article": "",
-      "text": "Why are you shouting?"
+      "text": "She found a new book last month."
     },
     {
-      "key": "why_did_you_cry_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "why_did",
-      "entryId": "why_did_you_cry",
+      "key": "past_vs_future_p_13_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last summer",
+      "entryId": "past_vs_future_p_13",
       "article": "",
-      "text": "Why did you cry?"
+      "text": "We traveled to Seoul last summer."
     },
     {
-      "key": "why_do_you_like_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "why_do",
-      "entryId": "why_do_you_like",
+      "key": "past_vs_future_p_14_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "yesterday",
+      "entryId": "past_vs_future_p_14",
       "article": "",
-      "text": "Why do you like it?"
+      "text": "He saw the show yesterday."
     },
     {
-      "key": "why_do_you_study_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "why_do",
-      "entryId": "why_do_you_study",
+      "key": "past_vs_future_p_15_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last month",
+      "entryId": "past_vs_future_p_15",
       "article": "",
-      "text": "Why do you study English?"
+      "text": "They finished the project last month."
     },
     {
-      "key": "why_does_he_laugh_grammar",
-      "file": "level2\\present_simple_questions_wh.json",
-      "word": "why_does",
-      "entryId": "why_does_he_laugh",
+      "key": "past_vs_future_p_2_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last week",
+      "entryId": "past_vs_future_p_2",
       "article": "",
-      "text": "Why does he laugh?"
+      "text": "She studied last week."
     },
     {
-      "key": "why_is_he_crying_grammar",
-      "file": "level2\\present_progressive_questions_wh.json",
-      "word": "why_is",
-      "entryId": "why_is_he_crying",
+      "key": "past_vs_future_p_3_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last month",
+      "entryId": "past_vs_future_p_3",
       "article": "",
-      "text": "Why is he crying?"
+      "text": "We visited the museum last month."
     },
     {
-      "key": "why_is_the_cat_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "why_is",
-      "entryId": "why_is_the_cat",
+      "key": "past_vs_future_p_4_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "yesterday",
+      "entryId": "past_vs_future_p_4",
       "article": "",
-      "text": "Why is the cat sleeping?"
+      "text": "He ate pizza yesterday."
     },
     {
-      "key": "why_is_the_sky_grammar",
-      "file": "level2\\wh_how_why_which.json",
-      "word": "why_is",
-      "entryId": "why_is_the_sky",
+      "key": "past_vs_future_p_5_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last year",
+      "entryId": "past_vs_future_p_5",
       "article": "",
-      "text": "Why is the sky blue?"
+      "text": "They traveled last year."
     },
     {
-      "key": "you_are_learning_a_grammar",
-      "file": "level2\\present_progressive.json",
-      "word": "you_are",
-      "entryId": "you_are_learning_a",
+      "key": "past_vs_future_p_6_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last night",
+      "entryId": "past_vs_future_p_6",
       "article": "",
-      "text": "You are learning a lot."
+      "text": "I worked late last night."
     },
     {
-      "key": "you_aren_t_learning_a_grammar",
-      "file": "level2\\present_progressive_negative.json",
-      "word": "you_aren_t",
-      "entryId": "you_aren_t_learning_a",
+      "key": "past_vs_future_p_7_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "yesterday",
+      "entryId": "past_vs_future_p_7",
       "article": "",
-      "text": "You aren't learning a lot."
+      "text": "She cleaned the room yesterday."
     },
     {
-      "key": "you_don_t_need_to_grammar",
-      "file": "level2\\present_simple_negative.json",
-      "word": "you_don_t",
-      "entryId": "you_don_t_need_to",
+      "key": "past_vs_future_p_8_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last month",
+      "entryId": "past_vs_future_p_8",
       "article": "",
-      "text": "You don't need to hurry."
+      "text": "We had a picnic last month."
     },
     {
-      "key": "you_practice_piano_every_grammar",
-      "file": "level2\\present_simple_vs_progressive.json",
-      "word": "you_practice",
-      "entryId": "you_practice_piano_every",
+      "key": "past_vs_future_p_9_grammar",
+      "file": "level3\\past_vs_future.json",
+      "word": "last night",
+      "entryId": "past_vs_future_p_9",
       "article": "",
-      "text": "Present Simple vs Present Progressive."
+      "text": "He watched TV last night."
     }
   ]
 }
