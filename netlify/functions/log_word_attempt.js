@@ -56,7 +56,37 @@ async function getUserFromAccessToken(supabase, accessToken) {
   }
 }
 
+// CORS headers for cross-origin requests from custom domain
+const ALLOWED_ORIGINS = ['https://willenaenglish.com', 'https://www.willenaenglish.com', 'https://willenaenglish.github.io', 'https://willenaenglish.netlify.app'];
+function getCorsHeaders(event) {
+  const origin = event.headers && (event.headers.origin || event.headers.Origin) || '';
+  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+}
+
+// Helper to ensure all responses include CORS headers
+function respond(statusCode, body, extraHeaders = {}, corsHeaders = {}) {
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders, ...extraHeaders },
+    body: typeof body === 'string' ? body : JSON.stringify(body)
+  };
+}
+
 exports.handler = async (event) => {
+  const corsHeaders = getCorsHeaders(event);
+  const reply = (code, body, extra = {}) => respond(code, body, extra, corsHeaders);
+
+  // Handle OPTIONS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
+
   // Simple health check and debug helpers
   if (event.httpMethod === 'GET') {
     try {
@@ -67,6 +97,7 @@ exports.handler = async (event) => {
       if (env) {
         return {
           statusCode: 200,
+          headers: corsHeaders,
           body: JSON.stringify({
             ok: true,
             env: {
@@ -103,7 +134,7 @@ exports.handler = async (event) => {
     }
   }
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return reply(405, 'Method Not Allowed');
   }
 
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.supabase_url;
@@ -123,16 +154,16 @@ exports.handler = async (event) => {
     const { event_type } = body;
 
     if (!event_type) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing event_type' }) };
+      return reply(400, { error: 'Missing event_type' });
     }
 
   if (event_type === 'session_start') {
       // Do not create sessions for unauthenticated users
       if (!userIdFromCookie) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in to start a session.' }) };
+        return reply(401, { error: 'Not signed in. Please log in to start a session.' });
       }
   const { session_id, user_id, mode, list_name, list_size, extra } = body;
-      if (!session_id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing session_id' }) };
+      if (!session_id) return reply(400, { error: 'Missing session_id' });
       const { error } = await supabase.from('progress_sessions').upsert({
         session_id,
         user_id: userIdFromCookie,
@@ -141,24 +172,24 @@ exports.handler = async (event) => {
         list_size: (typeof list_size === 'number') ? list_size : null,
         summary: extra || null
       }, { onConflict: 'session_id' });
-      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
-      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+      if (error) return reply(400, { error: error.message, code: error.code, details: error.details, hint: error.hint });
+      return reply(200, { ok: true });
     }
 
   if (event_type === 'session_end') {
       // Require authentication
       if (!userIdFromCookie) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in to end a session.' }) };
+        return reply(401, { error: 'Not signed in. Please log in to end a session.' });
       }
   const { session_id, user_id, mode, extra, list_name, list_size } = body;
-      if (!session_id) return { statusCode: 400, body: JSON.stringify({ error: 'Missing session_id' }) };
+      if (!session_id) return reply(400, { error: 'Missing session_id' });
       // Fetch existing row to avoid overwriting list_name/list_size when not provided
       const { data: existing, error: fetchErr } = await supabase
         .from('progress_sessions')
         .select('list_name, list_size')
         .eq('session_id', session_id)
         .limit(1);
-      if (fetchErr) return { statusCode: 400, body: JSON.stringify({ error: fetchErr.message }) };
+      if (fetchErr) return reply(400, { error: fetchErr.message });
       const prev = existing && existing[0] ? existing[0] : {};
       const nextListName = (list_name !== undefined && list_name !== null && list_name !== '') ? list_name : (prev.list_name || null);
       const nextListSize = (typeof list_size === 'number') ? list_size : (typeof prev.list_size === 'number' ? prev.list_size : null);
@@ -174,14 +205,14 @@ exports.handler = async (event) => {
             list_size: nextListSize
         })
         .eq('session_id', session_id);
-      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
-      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+      if (error) return reply(400, { error: error.message, code: error.code, details: error.details, hint: error.hint });
+      return reply(200, { ok: true });
     }
 
     if (event_type === 'attempt') {
       // Require authentication: attempts must be attributed to a user
       if (!userIdFromCookie) {
-  return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in.' }) };
+  return reply(401, { error: 'Not signed in. Please log in.' });
       }
       const {
         user_id, session_id, mode, word,
@@ -190,7 +221,7 @@ exports.handler = async (event) => {
         extra
       } = body;
 
-      if (!word) return { statusCode: 400, body: JSON.stringify({ error: 'Missing word' }) };
+      if (!word) return reply(400, { error: 'Missing word' });
 
       // Ensure a session row exists to satisfy FK (if you created the FK)
       if (session_id) {
@@ -199,7 +230,7 @@ exports.handler = async (event) => {
           .from('progress_sessions')
           .upsert(stub, { onConflict: 'session_id' });
         if (sessErr) {
-          return { statusCode: 400, body: JSON.stringify({ error: sessErr.message, code: sessErr.code, details: sessErr.details, hint: sessErr.hint }) };
+          return reply(400, { error: sessErr.message, code: sessErr.code, details: sessErr.details, hint: sessErr.hint });
         }
       }
 
@@ -227,18 +258,14 @@ exports.handler = async (event) => {
         extra: extra || null
       };
       const { error } = await supabase.from('progress_attempts').insert(row);
-      if (error) return { statusCode: 400, body: JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }) };
+      if (error) return reply(400, { error: error.message, code: error.code, details: error.details, hint: error.hint });
       
       // Optional: skip the expensive server-side points total calculation.
       // Setting env `SKIP_POINTS_TOTAL_CALC=1` (or 'true') will return early
       // to reduce latency and external DB work. Frontend can fetch totals on-demand.
       const skipPoints = (process.env.SKIP_POINTS_TOTAL_CALC === '1' || process.env.SKIP_POINTS_TOTAL_CALC === 'true');
       if (skipPoints) {
-        return {
-          statusCode: 200,
-          headers: { 'content-type': 'application/json; charset=utf-8' },
-          body: JSON.stringify({ ok: true })
-        };
+        return reply(200, { ok: true });
       }
 
       // Server-authoritative total: sum of points for this user
@@ -254,7 +281,7 @@ exports.handler = async (event) => {
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userIdFromCookie)
           .not('points', 'is', null);
-        if (cntErr) return { statusCode: 400, body: JSON.stringify({ error: cntErr.message }) };
+        if (cntErr) return reply(400, { error: cntErr.message });
         const pageSize = 1000;
         const total = totalRows || 0;
         for (let from = 0; from < total; from += pageSize) {
@@ -265,15 +292,11 @@ exports.handler = async (event) => {
             .eq('user_id', userIdFromCookie)
             .not('points', 'is', null)
             .range(from, to);
-          if (pageErr) return { statusCode: 400, body: JSON.stringify({ error: pageErr.message }) };
+          if (pageErr) return reply(400, { error: pageErr.message });
           if (Array.isArray(rows)) rows.forEach(r => { points_total += (Number(r.points) || 0); });
         }
       }
-      return {
-        statusCode: 200,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({ ok: true, points_total: Number(points_total) })
-      };
+      return reply(200, { ok: true, points_total: Number(points_total) });
     }
 
     // ========== BATCH ATTEMPTS (reduces invocation count) ==========
@@ -281,18 +304,18 @@ exports.handler = async (event) => {
     // Each item in attempts array has same shape as single 'attempt' event.
     if (event_type === 'attempts_batch') {
       if (!userIdFromCookie) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Not signed in. Please log in.' }) };
+        return reply(401, { error: 'Not signed in. Please log in.' });
       }
       const { attempts, session_id, mode } = body;
       if (!Array.isArray(attempts) || !attempts.length) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'Missing or empty attempts array' }) };
+        return reply(400, { error: 'Missing or empty attempts array' });
       }
       // Ensure session exists once (if provided)
       if (session_id) {
         const stub = { session_id, user_id: userIdFromCookie, mode: mode || null };
         const { error: sessErr } = await supabase.from('progress_sessions').upsert(stub, { onConflict: 'session_id' });
         if (sessErr) {
-          return { statusCode: 400, body: JSON.stringify({ error: sessErr.message }) };
+          return reply(400, { error: sessErr.message });
         }
       }
       // Build rows for batch insert
@@ -320,22 +343,18 @@ exports.handler = async (event) => {
         };
       }).filter(r => r.word); // skip items missing word
       if (!rows.length) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'No valid attempts in batch' }) };
+        return reply(400, { error: 'No valid attempts in batch' });
       }
       const { error: batchErr } = await supabase.from('progress_attempts').insert(rows);
       if (batchErr) {
-        return { statusCode: 400, body: JSON.stringify({ error: batchErr.message }) };
+        return reply(400, { error: batchErr.message });
       }
-      return {
-        statusCode: 200,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({ ok: true, inserted: rows.length })
-      };
+      return reply(200, { ok: true, inserted: rows.length });
     }
     // ========== END BATCH ==========
 
-    return { statusCode: 400, body: JSON.stringify({ error: 'Unknown event_type' }) };
+    return reply(400, { error: 'Unknown event_type' });
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return reply(500, { error: err.message });
   }
 };
