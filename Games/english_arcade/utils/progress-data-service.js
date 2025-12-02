@@ -658,10 +658,9 @@ async function fetchAllSessions() {
   if (sessionInflightPromise) {
     return sessionInflightPromise;
   }
-  const url = new URL(FN('progress_summary'), window.location.origin);
-  url.searchParams.set('section', 'sessions');
+  const url = FN('progress_summary') + '?section=sessions';
   sessionInflightPromise = (async () => {
-    const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
+    const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!res.ok) {
       throw new Error(`progress_summary fetch failed (${res.status})`);
     }

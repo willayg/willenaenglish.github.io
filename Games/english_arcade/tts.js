@@ -1,4 +1,5 @@
 // Shared TTS utilities
+import { FN } from './scripts/api-base.js';
 
 // Audio cache for preloaded sounds (keyed by normalized key string)
 // Note: key may be a base word (e.g., "run") or a variant key (e.g., "run_itself")
@@ -28,36 +29,24 @@ function getPreferredVoiceId() {
 }
 
 async function batchCheckSupabaseAudio(words) {
-  // Try relative first (works in Netlify dev/prod), then common localhost ports
-  const endpoints = [
-    '/.netlify/functions/get_audio_urls',
-    'http://localhost:9000/.netlify/functions/get_audio_urls',
-    'http://127.0.0.1:9000/.netlify/functions/get_audio_urls',
-    'http://localhost:8888/.netlify/functions/get_audio_urls',
-    'http://127.0.0.1:8888/.netlify/functions/get_audio_urls'
-  ];
-  let lastErr = null;
-  for (const url of endpoints) {
-    try {
-      const init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ words }) };
-      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
-        init.signal = AbortSignal.timeout(12000);
-      }
-      const res = await fetch(url, init);
-      if (!res.ok) {
-        lastErr = new Error(`get_audio_urls HTTP ${res.status}`);
-        continue;
-      }
-      const data = await res.json();
-      if (data && data.results && typeof data.results === 'object') {
-        return data.results; // { [word]: { exists: boolean, url?: string } }
-      }
-      lastErr = new Error('Malformed response from get_audio_urls');
-    } catch (e) {
-      lastErr = e;
+  const url = FN('get_audio_urls');
+  try {
+    const init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ words }), credentials: 'include' };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+      init.signal = AbortSignal.timeout(12000);
     }
+    const res = await fetch(url, init);
+    if (!res.ok) {
+      throw new Error(`get_audio_urls HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    if (data && data.results && typeof data.results === 'object') {
+      return data.results; // { [word]: { exists: boolean, url?: string } }
+    }
+    throw new Error('Malformed response from get_audio_urls');
+  } catch (e) {
+    throw e;
   }
-  throw lastErr || new Error('get_audio_urls failed');
 }
 
 // Robust loader: try to load an Audio element; if it fails, fetch as Blob and use an object URL
@@ -176,50 +165,44 @@ export async function preloadAllAudio(wordList, onProgress = null) {
 }
 
 async function callTTSFunction(payload) {
-  const endpoints = [
-    '/.netlify/functions/eleven_labs_proxy',
-    'http://localhost:9000/.netlify/functions/eleven_labs_proxy'
-  ];
-  for (const url of endpoints) {
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) return await res.json();
-    } catch (e) {
-      console.warn('TTS endpoint failed:', url, e);
-    }
+  const url = FN('eleven_labs_proxy');
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) return await res.json();
+    throw new Error(`TTS endpoint failed: ${res.status}`);
+  } catch (e) {
+    console.warn('TTS endpoint failed:', url, e);
+    throw new Error('TTS endpoint failed');
   }
-  throw new Error('All TTS endpoints failed');
 }
 
 async function uploadToSupabase(word, audioBase64) {
-  const endpoints = [
-    '/.netlify/functions/upload_audio',
-    'http://localhost:9000/.netlify/functions/upload_audio'
-  ];
-  for (const url of endpoints) {
-    try {
-  const payload = { word, fileDataBase64: audioBase64 };
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        const result = await res.json();
-        return result.url;
-      } else {
-        const errorText = await res.text();
-        console.warn(`Upload failed ${res.status}:`, errorText);
-      }
-    } catch (e) {
-      console.warn('Supabase upload failed:', url, e);
+  const url = FN('upload_audio');
+  try {
+    const payload = { word, fileDataBase64: audioBase64 };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const result = await res.json();
+      return result.url;
+    } else {
+      const errorText = await res.text();
+      console.warn(`Upload failed ${res.status}:`, errorText);
+      throw new Error('Upload failed');
     }
+  } catch (e) {
+    console.warn('Supabase upload failed:', url, e);
+    throw new Error('Upload failed');
   }
-  throw new Error('Upload failed');
 }
 
 function countVowelGroups(s) {
@@ -397,19 +380,16 @@ export async function playTTS(text) {
   // Lazy-load from backend if not preloaded yet
   try {
     // Prefer get_audio_urls to get a signed/public URL when needed
-    const listEndpoints = [
-      '/.netlify/functions/get_audio_urls',
-      'http://localhost:9000/.netlify/functions/get_audio_urls'
-    ];
+    const url = FN('get_audio_urls');
     let loaded = false;
-    for (const url of listEndpoints) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ words: [word] })
-        });
-        if (!res.ok) continue;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ words: [word] })
+      });
+      if (res.ok) {
         const data = await res.json();
         if (data && data.results) {
           const info = data.results[word] || data.results[normalizeWord(word)] || null;
@@ -427,22 +407,17 @@ export async function playTTS(text) {
             audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
             try { await audio.play(); console.debug('Lazy-loaded audio from R2 (list):', word); } catch { clear(); }
             loaded = true;
-            break;
           }
         }
-      } catch { /* try next */ }
-    }
+      }
+    } catch { /* continue to fallback */ }
     if (loaded) return;
 
     // Fallback to single URL check (may require public base)
-    const singleEndpoints = [
-      '/.netlify/functions/get_audio_url',
-      'http://localhost:9000/.netlify/functions/get_audio_url'
-    ];
-    for (const url of singleEndpoints) {
-      try {
-        const res = await fetch(`${url}?word=${encodeURIComponent(word)}`, { method: 'GET' });
-        if (!res.ok) continue;
+    const singleUrl = FN('get_audio_url');
+    try {
+      const res = await fetch(`${singleUrl}?word=${encodeURIComponent(word)}`, { method: 'GET', credentials: 'include' });
+      if (res.ok) {
         const data = await res.json();
         if (data && data.exists && data.url) {
           let audioPromise = _pendingLoads.get(key);
@@ -458,8 +433,8 @@ export async function playTTS(text) {
           try { await audio.play(); console.debug('Lazy-loaded audio from R2 (single):', word); } catch { clear(); }
           return;
         }
-      } catch { /* try next */ }
-    }
+      }
+    } catch { /* swallow */ }
   } catch { /* swallow and fall back */ }
 
   // Strict mode: do not generate; fallback to system TTS (US female preferred)
@@ -512,14 +487,10 @@ export async function playTTSVariant(word, variant = 'default') {
       }
 
       // Try to resolve URL via batch endpoint
-      const listEndpoints = [
-        '/.netlify/functions/get_audio_urls',
-        'http://localhost:9000/.netlify/functions/get_audio_urls'
-      ];
-      for (const url of listEndpoints) {
-        try {
-          const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words:[keyStr] }) });
-          if (!res.ok) continue;
+      const listUrl = FN('get_audio_urls');
+      try {
+        const res = await fetch(listUrl, { method:'POST', headers:{'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify({ words:[keyStr] }) });
+        if (res.ok) {
           const data = await res.json();
           const info = data && data.results && (data.results[keyStr] || data.results[normalizeWord(keyStr)]);
           if (info && info.exists && info.url) {
@@ -535,18 +506,14 @@ export async function playTTSVariant(word, variant = 'default') {
             audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
             try { await audio.play(); return true; } catch { clear(); }
           }
-        } catch {}
-      }
+        }
+      } catch {}
 
       // Fallback: single lookup
-      const singleEndpoints = [
-        '/.netlify/functions/get_audio_url',
-        'http://localhost:9000/.netlify/functions/get_audio_url'
-      ];
-      for (const url of singleEndpoints) {
-        try {
-          const res = await fetch(`${url}?word=${encodeURIComponent(keyStr)}`);
-          if (!res.ok) continue;
+      const singleUrl = FN('get_audio_url');
+      try {
+        const res = await fetch(`${singleUrl}?word=${encodeURIComponent(keyStr)}`, { credentials: 'include' });
+        if (res.ok) {
           const data = await res.json();
           if (data && data.exists && data.url) {
             let audioPromise = _pendingLoads.get(key);
@@ -561,8 +528,8 @@ export async function playTTSVariant(word, variant = 'default') {
             audio.addEventListener('ended', clear); audio.addEventListener('pause', clear); audio.addEventListener('error', clear);
             try { await audio.play(); return true; } catch { clear(); }
           }
-        } catch {}
-      }
+        }
+      } catch {}
       return false;
     };
 
