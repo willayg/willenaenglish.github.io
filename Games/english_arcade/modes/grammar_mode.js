@@ -4,6 +4,7 @@
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { buildPrepositionScene, isInOnUnderMode } from './grammar_prepositions_data.js';
 import { renderGrammarSummary } from './grammar_summary.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 
 export async function runGrammarMode(ctx) {
   const {
@@ -32,6 +33,9 @@ export async function runGrammarMode(ctx) {
     if (inlineToast) inlineToast('Error: No grammar file selected');
     return;
   }
+  // Show loading splash while fetching grammar data
+  let splashController = null;
+  try { splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') }); if (splashController && splashController.readyPromise) await splashController.readyPromise; } catch(e){ console.debug('[GrammarMode] splash failed', e?.message); }
 
   try {
     // Load grammar data
@@ -44,6 +48,8 @@ export async function runGrammarMode(ctx) {
     }
 
     console.log('[Grammar Mode] Loaded', grammarData.length, 'grammar items');
+    // Hide splash now that data is loaded and we can render UI
+    try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 420); } catch(e){}
 
   // Detect Short Questions JSON by file name (short_questions_1/2)
   const isShortQuestions = /short_questions_1\.json$/i.test(grammarFile || '') || /short_questions_2\.json$/i.test(grammarFile || '');

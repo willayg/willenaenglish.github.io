@@ -346,17 +346,8 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
     const isProgressGame = progressIds.includes(g.id);
     const btn = document.createElement('button');
     btn.className = 'gl2-btn';
-    // Fetch first example sentence from grammar file (sync fallback, async update)
-    let example = g.label;
-    fetch(g.file).then(r => r.ok ? r.json() : []).then(list => {
-      if (Array.isArray(list)) {
-        const item = list.find(it => it && (it.en || it.exampleSentence));
-        if (item) {
-          example = item.en || item.exampleSentence;
-          btn.querySelector('.gl2-example').textContent = example;
-        }
-      }
-    }).catch(() => {});
+  // Use the friendly label as the primary display; do not replace with example sentences
+  const example = g.label;
     btn.innerHTML = `
       <span style="font-size:2em;flex-shrink:0;">${g.emoji || '📘'}</span>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0;">
@@ -391,6 +382,9 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
 
   // Move games with progress to top
   const progressIds = [
+  'wh_who_what',
+  'wh_where_when_whattime',
+  'wh_how_why_which',
     'some_vs_any',
     'there_is_vs_there_are',
     'are_there_vs_is_there',
@@ -435,8 +429,9 @@ export function showGrammarL2Modal({ onChoose, onClose }) {
       const pct = Math.max(0, Math.min(100, percents[idx] || 0));
       const bar = document.getElementById(`gl2bar-${g.id}`);
       const pctEl = document.getElementById(`gl2percent-${g.id}`);
-      if (bar) { bar.classList.remove('loading'); bar.style.width = pct + '%'; }
-      if (pctEl) { pctEl.textContent = pct + '%'; }
+  // For all lists (including wh_who_what) use the weighted percent from the service.
+  if (bar) { bar.classList.remove('loading'); bar.style.width = pct + '%'; }
+  if (pctEl) { pctEl.textContent = pct + '%'; }
     });
     // Ensure scroll restoration after layout settles
     requestAnimationFrame(() => restoreScroll());

@@ -1,17 +1,137 @@
 [
-  {"en":"I walked to school yesterday.","ko":"나는 어제 학교까지 걸어갔어요.","example":"I walked to school yesterday.","emoji":"🚶"},
-  {"en":"She played the piano last night.","ko":"그녀는 어젯밤에 피아노를 쳤어요.","example":"She played the piano last night.","emoji":"🎹"},
-  {"en":"We watched a movie on Sunday.","ko":"우리는 일요일에 영화를 봤어요.","example":"We watched a movie on Sunday.","emoji":"🎬"},
-  {"en":"He cleaned his room yesterday.","ko":"그는 어제 방을 청소했어요.","example":"He cleaned his room yesterday.","emoji":"🧹"},
-  {"en":"They cooked dinner last night.","ko":"그들은 어젯밤에 저녁을 요리했어요.","example":"They cooked dinner last night.","emoji":"🍳"},
-  {"en":"I opened the door for her.","ko":"나는 그녀를 위해 문을 열어주었어요.","example":"I opened the door for her.","emoji":"🚪"},
-  {"en":"She walked the dog yesterday.","ko":"그녀는 어제 개를 산책시켰어요.","example":"She walked the dog yesterday.","emoji":"🐶"},
-  {"en":"We studied for the test last week.","ko":"우리는 지난주에 시험 공부를 했어요.","example":"We studied for the test last week.","emoji":"📝"},
-  {"en":"He painted the wall last weekend.","ko":"그는 지난 주말에 벽을 칠했어요.","example":"He painted the wall last weekend.","emoji":"🎨"},
-  {"en":"They finished their homework.","ko":"그들은 숙제를 끝냈어요.","example":"They finished their homework yesterday.","emoji":"📒"},
-  {"en":"I jumped over the puddle.","ko":"나는 물웅덩이를 뛰어 넘었어요.","example":"I jumped over the puddle.","emoji":"💦"},
-  {"en":"She talked with her friend.","ko":"그녀는 친구와 이야기했어요.","example":"She talked with her friend on the phone.","emoji":"📞"},
-  {"en":"We baked cookies last weekend.","ko":"우리는 지난 주말에 쿠키를 구웠어요.","example":"We baked cookies last weekend.","emoji":"🍪"},
-  {"en":"He helped his mom yesterday.","ko":"그는 어제 엄마를 도왔어요.","example":"He helped his mom with shopping.","emoji":"🛒"},
-  {"en":"They washed the car on Saturday.","ko":"그들은 토요일에 차를 씻었어요.","example":"They washed the car on Saturday.","emoji":"🚗"}
+  {
+    "id": "past_simple_regular_1",
+    "word": "i_walked_to",
+    "en": "I walked to school yesterday.",
+    "ko": "나는 어제 학교까지 걸어갔어요.",
+    "exampleSentence": "I walked to school yesterday.",
+    "exampleSentenceKo": "나는 어제 학교까지 걸어갔어요.",
+    "emoji": "🚶"
+  },
+  {
+    "id": "past_simple_regular_2",
+    "word": "she_played_the",
+    "en": "She played the piano last night.",
+    "ko": "그녀는 어젯밤에 피아노를 쳤어요.",
+    "exampleSentence": "She played the piano last night.",
+    "exampleSentenceKo": "그녀는 어젯밤에 피아노를 쳤어요.",
+    "emoji": "🎹"
+  },
+  {
+    "id": "past_simple_regular_3",
+    "word": "we_watched_a",
+    "en": "We watched a movie on Sunday.",
+    "ko": "우리는 일요일에 영화를 봤어요.",
+    "exampleSentence": "We watched a movie on Sunday.",
+    "exampleSentenceKo": "우리는 일요일에 영화를 봤어요.",
+    "emoji": "🎬"
+  },
+  {
+    "id": "past_simple_regular_4",
+    "word": "he_cleaned_his",
+    "en": "He cleaned his room yesterday.",
+    "ko": "그는 어제 방을 청소했어요.",
+    "exampleSentence": "He cleaned his room yesterday.",
+    "exampleSentenceKo": "그는 어제 방을 청소했어요.",
+    "emoji": "🧹"
+  },
+  {
+    "id": "past_simple_regular_5",
+    "word": "they_cooked_dinner",
+    "en": "They cooked dinner last night.",
+    "ko": "그들은 어젯밤에 저녁을 요리했어요.",
+    "exampleSentence": "They cooked dinner last night.",
+    "exampleSentenceKo": "그들은 어젯밤에 저녁을 요리했어요.",
+    "emoji": "🍳"
+  },
+  {
+    "id": "past_simple_regular_6",
+    "word": "i_opened_the",
+    "en": "I opened the door for her.",
+    "ko": "나는 그녀를 위해 문을 열어주었어요.",
+    "exampleSentence": "I opened the door for her.",
+    "exampleSentenceKo": "나는 그녀를 위해 문을 열어주었어요.",
+    "emoji": "🚪"
+  },
+  {
+    "id": "past_simple_regular_7",
+    "word": "she_walked_the",
+    "en": "She walked the dog yesterday.",
+    "ko": "그녀는 어제 개를 산책시켰어요.",
+    "exampleSentence": "She walked the dog yesterday.",
+    "exampleSentenceKo": "그녀는 어제 개를 산책시켰어요.",
+    "emoji": "🐶"
+  },
+  {
+    "id": "past_simple_regular_8",
+    "word": "we_studied_for",
+    "en": "We studied for the test last week.",
+    "ko": "우리는 지난주에 시험 공부를 했어요.",
+    "exampleSentence": "We studied for the test last week.",
+    "exampleSentenceKo": "우리는 지난주에 시험 공부를 했어요.",
+    "emoji": "📝"
+  },
+  {
+    "id": "past_simple_regular_9",
+    "word": "he_painted_the",
+    "en": "He painted the wall last weekend.",
+    "ko": "그는 지난 주말에 벽을 칠했어요.",
+    "exampleSentence": "He painted the wall last weekend.",
+    "exampleSentenceKo": "그는 지난 주말에 벽을 칠했어요.",
+    "emoji": "🎨"
+  },
+  {
+    "id": "past_simple_regular_10",
+    "word": "they_finished_their",
+    "en": "They finished their homework.",
+    "ko": "그들은 숙제를 끝냈어요.",
+    "exampleSentence": "They finished their homework yesterday.",
+    "exampleSentenceKo": "그들은 숙제를 끝냈어요.",
+    "emoji": "📒"
+  },
+  {
+    "id": "past_simple_regular_11",
+    "word": "i_jumped_over",
+    "en": "I jumped over the puddle.",
+    "ko": "나는 물웅덩이를 뛰어 넘었어요.",
+    "exampleSentence": "I jumped over the puddle.",
+    "exampleSentenceKo": "나는 물웅덩이를 뛰어 넘었어요.",
+    "emoji": "💦"
+  },
+  {
+    "id": "past_simple_regular_12",
+    "word": "she_talked_with",
+    "en": "She talked with her friend.",
+    "ko": "그녀는 친구와 이야기했어요.",
+    "exampleSentence": "She talked with her friend on the phone.",
+    "exampleSentenceKo": "그녀는 친구와 이야기했어요.",
+    "emoji": "📞"
+  },
+  {
+    "id": "past_simple_regular_13",
+    "word": "we_baked_cookies",
+    "en": "We baked cookies last weekend.",
+    "ko": "우리는 지난 주말에 쿠키를 구웠어요.",
+    "exampleSentence": "We baked cookies last weekend.",
+    "exampleSentenceKo": "우리는 지난 주말에 쿠키를 구웠어요.",
+    "emoji": "🍪"
+  },
+  {
+    "id": "past_simple_regular_14",
+    "word": "he_helped_his",
+    "en": "He helped his mom yesterday.",
+    "ko": "그는 어제 엄마를 도왔어요.",
+    "exampleSentence": "He helped his mom with shopping.",
+    "exampleSentenceKo": "그는 어제 엄마를 도왔어요.",
+    "emoji": "🛒"
+  },
+  {
+    "id": "past_simple_regular_15",
+    "word": "they_washed_the",
+    "en": "They washed the car on Saturday.",
+    "ko": "그들은 토요일에 차를 씻었어요.",
+    "exampleSentence": "They washed the car on Saturday.",
+    "exampleSentenceKo": "그들은 토요일에 차를 씻었어요.",
+    "emoji": "🚗"
+  }
 ]

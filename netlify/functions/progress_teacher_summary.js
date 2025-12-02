@@ -1,6 +1,8 @@
 // Teacher analytics for English Arcade: class leaderboards, timeframe filters, and per-student stats
 // Secure: requires teacher/admin cookie session; verifies role from profiles
 
+const redisCache = require('../../lib/redis_cache');
+
 let createClientFn = null;
 
 async function ensureCreateClient() {
@@ -45,26 +47,55 @@ function monthStartISO(now = new Date()) {
   return d.toISOString();
 }
 
-async function getAuthedTeacher(event, admin) {
+async function getAuthedTeacher(event, admin, debug = {}) {
   try {
     const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
     const cookies = parseCookies(cookieHeader);
     const access = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
-    if (!access) return null;
+    const cookieDebug = {
+      keys: Object.keys(cookies),
+      hasAccess: Boolean(access),
+      hasRefresh: Boolean(cookies['sb_refresh'])
+    };
+    if (typeof debug === 'object' && debug !== null) debug.cookieDebug = cookieDebug;
+    if (!access) {
+      console.warn('[progress_teacher_summary] getAuthedTeacher missing access token', cookieDebug);
+      return null;
+    }
     const { data: udata, error: uerr } = await admin.auth.getUser(access);
-    if (uerr || !udata || !udata.user) return null;
+    if (uerr || !udata || !udata.user) {
+      console.warn('[progress_teacher_summary] auth.getUser failed', { error: uerr && uerr.message, cookieDebug });
+      return null;
+    }
     const uid = udata.user.id;
     const { data: prof, error: perr } = await admin
       .from('profiles')
       .select('id, role, approved, class, name, username')
       .eq('id', uid)
       .single();
-    if (perr || !prof) return null;
+    if (perr || !prof) {
+      console.warn('[progress_teacher_summary] profile lookup failed', { error: perr && perr.message, cookieDebug });
+      return null;
+    }
     const role = String(prof.role || '').toLowerCase();
-    if (!['teacher','admin'].includes(role)) return null;
-    if (prof.approved === false) return null;
+    if (!['teacher','admin'].includes(role)) {
+      console.warn('[progress_teacher_summary] unauthorized role', { role, cookieDebug });
+      return null;
+    }
+    if (prof.approved === false) {
+      console.warn('[progress_teacher_summary] teacher not approved', { cookieDebug });
+      return null;
+    }
+    if (typeof debug === 'object' && debug !== null) {
+      debug.userId = uid;
+      debug.userRole = role;
+    }
+    console.log('[progress_teacher_summary] authenticated teacher', { id: uid, role, cookieDebug });
     return { id: uid, role, name: prof.name || prof.username || 'Teacher', class: prof.class || null };
-  } catch { return null; }
+  } catch (err) {
+    console.warn('[progress_teacher_summary] getAuthedTeacher exception', err && err.message ? err.message : err);
+    return null;
+  }
 }
 
 // Utility: timeframe where clause for created_at
@@ -96,6 +127,22 @@ function normalizeClassDisplay(name) {
 
 function classKey(name) {
   return normalizeClassDisplay(name).toLowerCase();
+}
+
+const CACHE_PREFIX = 'teacher_summary';
+const CLASSES_LIST_CACHE_KEY = `${CACHE_PREFIX}:classes_v1`;
+const CLASSES_LIST_TTL_SECONDS = 5 * 60; // class dropdown rarely changes
+const LEADERBOARD_TTL_SECONDS = 2 * 60; // per-class leaderboard caching
+const STUDENT_DETAILS_TTL_SECONDS = 90; // student drilldowns change frequently
+
+function leaderboardCacheKey(name, timeframe = 'all') {
+  const tf = (timeframe || 'all').toLowerCase();
+  return `${CACHE_PREFIX}:leaderboard:${classKey(name) || 'unknown'}:${tf}`;
+}
+
+function studentDetailsCacheKey(userId, timeframe = 'all') {
+  const tf = (timeframe || 'all').toLowerCase();
+  return `${CACHE_PREFIX}:student:${userId || 'unknown'}:${tf}`;
 }
 
 // Mirrors progress_summary star thresholds so teacher and student leaderboards agree.
@@ -150,13 +197,30 @@ exports.handler = async (event) => {
   }
   const admin = createClient(SUPABASE_URL, ADMIN_KEY);
 
-  // Authz
-  const teacher = await getAuthedTeacher(event, admin);
-  if (!teacher) return json(401, { error: 'Unauthorized' });
-
   const qs = event.queryStringParameters || {};
   const action = qs.action || 'help';
 
+  const INTERNAL_WARM_KEY = process.env.INTERNAL_WARM_KEY || process.env.internal_warm_key || null;
+  const isInternalWarmRequest = Boolean(INTERNAL_WARM_KEY && qs.internal_warm_key && qs.internal_warm_key === INTERNAL_WARM_KEY);
+  const internalAllowedActions = new Set(['classes_list', 'leaderboard', 'student_details']);
+
+  // Authz
+  const authDebug = {};
+  let teacher = null;
+  if (isInternalWarmRequest && internalAllowedActions.has(action)) {
+    teacher = { id: 'internal-warm', role: 'admin', name: 'Internal Warm', class: null };
+    authDebug.internalWarm = true;
+  } else {
+    teacher = await getAuthedTeacher(event, admin, authDebug);
+    if (!teacher) return json(401, { error: 'Unauthorized' });
+  }
+
+  console.log('[progress_teacher_summary] request', {
+    action,
+    method,
+    teacher: teacher ? { id: teacher.id, role: teacher.role } : null,
+    debug: authDebug
+  });
   try {
     if (action === 'toggle_class_visibility') {
       if (method !== 'POST') return json(405, { success: false, error: 'Method Not Allowed' });
@@ -203,11 +267,16 @@ exports.handler = async (event) => {
         }
         return json(400, { success: false, error: error.message });
       }
+      await redisCache.del(CLASSES_LIST_CACHE_KEY);
       return json(200, { success: true, class: displayName, hidden: toggleTo });
     }
 
     // 1) List classes for dropdown (distinct class for students)
     if (action === 'classes_list') {
+      const cached = await redisCache.getJson(CLASSES_LIST_CACHE_KEY);
+      if (cached && Array.isArray(cached.classes)) {
+        return json(200, { success: true, classes: cached.classes, cached_at: cached.cached_at || null });
+      }
       const { data, error } = await admin
         .from('profiles')
         .select('class')
@@ -240,7 +309,9 @@ exports.handler = async (event) => {
         name,
         hidden: visMap.get(classKey(name)) || false
       }));
-      return json(200, { success: true, classes });
+      const payload = { classes, cached_at: new Date().toISOString() };
+      await redisCache.setJson(CLASSES_LIST_CACHE_KEY, payload, CLASSES_LIST_TTL_SECONDS);
+      return json(200, { success: true, ...payload });
     }
 
     // 2) Class leaderboard (stars + points + accuracy) with timeframe
@@ -248,16 +319,38 @@ exports.handler = async (event) => {
       const className = (qs.class || '').trim();
       const timeframe = (qs.timeframe || 'all').toLowerCase();
       if (!className) return json(200, { success: true, leaderboard: [], class: null });
+      const timingStart = Date.now();
+      const cacheKey = leaderboardCacheKey(className, timeframe);
+      const cached = await redisCache.getJson(cacheKey);
+      if (cached && Array.isArray(cached.leaderboard)) {
+        console.log('[progress_teacher_summary] leaderboard cache hit', {
+          className,
+          timeframe,
+          rows: cached.leaderboard.length,
+          totalMs: Date.now() - timingStart
+        });
+        return json(200, { success: true, ...cached });
+      }
 
       // Get students in class
+      const studentsStart = Date.now();
       const { data: students, error: sErr } = await admin
         .from('profiles')
         .select('id, name, username, class, korean_name')
         .eq('role', 'student')
         .eq('class', className);
+      const studentsMs = Date.now() - studentsStart;
       if (sErr) return json(400, { success: false, error: sErr.message });
       const ids = (students || []).map(s => s.id);
-      if (!ids.length) return json(200, { success: true, class: className, leaderboard: [] });
+      if (!ids.length) {
+        console.log('[progress_teacher_summary] leaderboard empty class', {
+          className,
+          timeframe,
+          studentsMs,
+          totalMs: Date.now() - timingStart
+        });
+        return json(200, { success: true, class: className, leaderboard: [] });
+      }
 
       // Aggregate attempts in timeframe for those users
       const attemptsQuery = () => timeframeFilter(
@@ -269,7 +362,9 @@ exports.handler = async (event) => {
         timeframe,
         'created_at'
       );
+    const attemptsStart = Date.now();
     const { data: attempts, error: aErr, truncated: attemptsTruncated } = await fetchAllRows(attemptsQuery, 1000, 400);
+    const attemptsMs = Date.now() - attemptsStart;
     if (aErr) return json(400, { success: false, error: aErr.message });
 
       const attemptStats = new Map(); // user_id -> { points, total, correct }
@@ -296,7 +391,9 @@ exports.handler = async (event) => {
         timeframe,
         'ended_at'
       );
+    const sessionsStart = Date.now();
     const { data: sessions, error: sessErr, truncated: sessionsTruncated } = await fetchAllRows(sessionsQuery, 500, 400);
+    const sessionsMs = Date.now() - sessionsStart;
     if (sessErr) return json(400, { success: false, error: sessErr.message });
 
       const starsByUser = new Map(); // user_id -> Map<list||mode, stars>
@@ -339,8 +436,20 @@ exports.handler = async (event) => {
 
       rows.sort((a,b)=> (b.stars - a.stars) || (b.points - a.points) || a.name.localeCompare(b.name));
       rows.forEach((r,i)=> r.rank = i+1);
-    const truncated = Boolean(attemptsTruncated || sessionsTruncated);
-    return json(200, { success: true, class: className, timeframe, leaderboard: rows, truncated });
+      const truncated = Boolean(attemptsTruncated || sessionsTruncated);
+      const payload = { class: className, timeframe, leaderboard: rows, truncated, cached_at: new Date().toISOString() };
+      await redisCache.setJson(cacheKey, payload, LEADERBOARD_TTL_SECONDS);
+      console.log('[progress_teacher_summary] leaderboard fresh', {
+        className,
+        timeframe,
+        rows: rows.length,
+        studentsMs,
+        attemptsMs,
+        sessionsMs,
+        totalMs: Date.now() - timingStart,
+        truncated
+      });
+      return json(200, { success: true, ...payload });
     }
 
     // 3) Per-student details with timeframe
@@ -348,13 +457,26 @@ exports.handler = async (event) => {
       const userId = qs.user_id || '';
       const timeframe = (qs.timeframe || 'all').toLowerCase();
       if (!userId) return json(400, { success: false, error: 'Missing user_id' });
+      const timingStart = Date.now();
+      const cacheKey = studentDetailsCacheKey(userId, timeframe);
+      const cached = await redisCache.getJson(cacheKey);
+      if (cached && cached.student && cached.totals) {
+        console.log('[progress_teacher_summary] student_details cache hit', {
+          userId,
+          timeframe,
+          totalMs: Date.now() - timingStart
+        });
+        return json(200, { success: true, ...cached });
+      }
 
       // Profile basics
+      const profileStart = Date.now();
       const { data: prof, error: pErr } = await admin
         .from('profiles')
         .select('id, name, username, class')
         .eq('id', userId)
         .single();
+      const profileMs = Date.now() - profileStart;
       if (pErr || !prof) return json(404, { success: false, error: 'Student not found' });
 
       // Attempts aggregate
@@ -367,7 +489,9 @@ exports.handler = async (event) => {
         timeframe,
         'created_at'
       );
+    const attemptsStart = Date.now();
     const { data: attempts, error: aErr, truncated: studentAttemptsTruncated } = await fetchAllRows(studentAttemptsQuery, 1000, 400);
+    const attemptsMs = Date.now() - attemptsStart;
     if (aErr) return json(400, { success: false, error: aErr.message });
 
       let total = 0, correct = 0, points = 0;
@@ -392,7 +516,9 @@ exports.handler = async (event) => {
         timeframe,
         'started_at'
       );
+    const sessionsStart = Date.now();
     const { data: sessions, error: sErr, truncated: sessionsTruncated } = await fetchAllRows(sessionsQuery, 1000, 500);
+    const sessionsMs = Date.now() - sessionsStart;
     if (sErr) return json(400, { success: false, error: sErr.message });
     console.log(`[student_details] Fetched ${sessions?.length || 0} sessions for user ${userId}, truncated: ${sessionsTruncated}`);
 
@@ -432,17 +558,30 @@ exports.handler = async (event) => {
         .map(s => ({ mode: s.mode || 'unknown', list_name: s.list_name || null, started_at: s.started_at, ended_at: s.ended_at, list_size: s.list_size || null }))
         .sort((a,b)=> ((b.ended_at||b.started_at||'').localeCompare(a.ended_at||a.started_at||'')));
 
-      return json(200, {
-        success: true,
+      const payload = {
         student: { id: prof.id, name: prof.name || prof.username, class: prof.class },
-        timeframe,
-  totals: { attempts: total, correct, accuracy, points, stars: totalStars },
+          timeframe,
+          totals: { attempts: total, correct, accuracy, points, stars: totalStars },
         sessions: { count: sessionsCount, truncated: sessionsTruncated },
         modes: modeBreakdown,
         lists: listsPlayed,
         recent: recentSessions,
-        truncated: studentAttemptsTruncated
+        truncated: studentAttemptsTruncated,
+        cached_at: new Date().toISOString()
+      };
+      await redisCache.setJson(cacheKey, payload, STUDENT_DETAILS_TTL_SECONDS);
+      console.log('[progress_teacher_summary] student_details fresh', {
+        userId,
+        timeframe,
+        attemptsCount: attempts?.length || 0,
+        sessionsCount,
+        profileMs,
+        attemptsMs,
+        sessionsMs,
+        totalMs: Date.now() - timingStart,
+        truncated: Boolean(studentAttemptsTruncated || sessionsTruncated)
       });
+      return json(200, { success: true, ...payload });
     }
 
     // Default help

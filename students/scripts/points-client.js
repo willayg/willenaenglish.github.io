@@ -7,8 +7,24 @@ let refreshing = false;
 let nextTimer = 0;
 let currentPoints = null;
 
+// THROTTLE: Prevent excessive server calls (at most once per 10 seconds)
+const REFRESH_THROTTLE_MS = 10000;
+let lastRefreshTime = 0;
+
 export function initPointsClient() {
-	// noop for now; hook for future
+	// Listen for optimistic bump events from batch mode
+	window.addEventListener('points:optimistic-bump', (e) => {
+		const delta = e.detail?.delta || 1;
+		optimisticBump(delta);
+	});
+}
+
+// Auto-init: register listener immediately so games don't need to call initPointsClient
+if (typeof window !== 'undefined') {
+	window.addEventListener('points:optimistic-bump', (e) => {
+		const delta = e.detail?.delta || 1;
+		optimisticBump(delta);
+	});
 }
 
 export function optimisticBump(delta = 1) {
@@ -21,6 +37,13 @@ export function optimisticBump(delta = 1) {
 }
 
 export function scheduleRefresh(delayMs = 0) {
+	// THROTTLE: Skip if we refreshed recently (reduce function invocations)
+	const now = Date.now();
+	const timeSinceLast = now - lastRefreshTime;
+	if (timeSinceLast < REFRESH_THROTTLE_MS && delayMs === 0) {
+		console.debug('[points-client] Throttled refresh, last was', Math.round(timeSinceLast/1000), 's ago');
+		return;
+	}
 	try { clearTimeout(nextTimer); } catch {}
 	nextTimer = setTimeout(() => { refreshFromServerOnce().catch(() => {}); }, Math.max(0, delayMs));
 }
@@ -34,6 +57,7 @@ export function applyServerPoints(n) {
 export async function refreshFromServerOnce() {
 	if (refreshing) return false;
 	refreshing = true;
+	lastRefreshTime = Date.now(); // Track for throttling
 	try {
 		// Prefer the lightweight endpoint if available
 		const res = await fetch(COUNT_URL, { credentials: 'include', cache: 'no-store' });

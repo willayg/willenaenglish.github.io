@@ -73,7 +73,7 @@
   <button class="tb-link primary" id="btnHome" data-i18n="Home">Home</button>
   <button class="tb-link" id="btnGames" data-i18n="Games">Games</button>
   <button class="tb-link" id="btnWordArcade" data-i18n="English Arcade">English Arcade</button>
-  <button class="tb-link" id="btnGrammarArcade" data-i18n="Grammar Arcade">Grammar Arcade</button>
+  <button class="tb-link" id="btnGrammarArcade" title="Coming soon" disabled data-i18n="Grammar Arcade">Grammar Arcade</button>
   </nav>
   <div class="profile-wrap">
   <main class="grid cols-3 profile-grid">
@@ -148,9 +148,9 @@
       const gamesBtn = document.getElementById('btnGames');
       if (gamesBtn) gamesBtn.onclick = () => { window.location.href = '/playzone.html'; };
       const wordArcadeBtn = document.getElementById('btnWordArcade');
-      if (wordArcadeBtn) wordArcadeBtn.onclick = () => { window.location.href = '/Games/english_arcade/index.html#levels'; };
+      if (wordArcadeBtn) wordArcadeBtn.onclick = () => { window.location.href = '/Games/english_arcade/index.html'; };
       const grammarBtn = document.getElementById('btnGrammarArcade');
-      if (grammarBtn) grammarBtn.onclick = () => { window.location.href = '/Games/GrammarArcade/index.html#levels'; };
+      if (grammarBtn) grammarBtn.onclick = () => { /* coming soon */ };
 
       // Load profile info from cookie session
       const profile = await getProfileInfo();

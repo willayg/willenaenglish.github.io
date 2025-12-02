@@ -8,6 +8,31 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="homework-modal.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Global 10% UI scale down for tracker: reduces fonts and container sizes */
+     :root { --tracker-scale: 0.95; --tracker-vertical-offset: 140px; --tracker-font-bump: 1.02; }
+     /* Prefer reducing root font-size so rem/em-based typography shrinks.
+       Apply a small font bump so typography is 2% larger while layout scale stays the same. */
+     html { font-size: calc(100% * var(--tracker-scale) * var(--tracker-font-bump)); }
+    /* Also scale whole layout to catch fixed-pixel elements and containers */
+    body {
+      transform: scale(var(--tracker-scale));
+      transform-origin: 0 0;
+      /* Compensate for the scale so layout fits viewport width */
+      width: calc(100% / var(--tracker-scale));
+      /* Ensure body occupies viewport height so calc() heights behave */
+      min-height: 100vh;
+    }
+    /* Allow more vertical space overall by reducing the top/bottom offset used in layout heights.
+       This makes containers taller so more content fits vertically after the global scale down. */
+    main, .layout { min-height: calc(100vh - var(--tracker-vertical-offset)); }
+    /* Override the homework layout height specifically (originally used calc(100vh - 200px)) */
+    #homework-content .layout { height: calc(100vh - var(--tracker-vertical-offset)); }
+    /* Stretch scroll-wrap areas to take available height where appropriate */
+    .scroll-wrap { max-height: none; min-height: 0; }
+    /* Ensure modals don't get clipped after scaling by increasing their effective max-height */
+    .homework-modal, .homework-preview-modal { max-height: calc(100vh - 80px); overflow: auto; }
+  </style>
 </head>
 <body>
   <script type="module">
@@ -127,15 +152,16 @@
         #homework-content .homework-class-btn { padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s; }
         #homework-content .homework-class-btn:hover { background: #f3f4f6; }
         #homework-content .homework-class-btn.active { background: #19777e; color: #fff; border-color: #19777e; }
+        #homework-content .class-item.homework-active span { font-weight: 600; }
         #homework-content .card:last-child { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         #homework-content .homework-panel { display: flex; flex-direction: row; gap: 16px; padding: 16px; height: 100%; overflow: auto; }
         #homework-content .homework-students-block { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        #homework-content .homework-assignment-block { width: 240px; min-width: 220px; max-width: 280px; display: flex; flex-direction: column; border-left: 1px solid #e2e8f0; padding-left: 16px; }
+        #homework-content .homework-assignment-block { width: 156px; min-width: 143px; max-width: 182px; display: flex; flex-direction: column; border-left: 1px solid #e2e8f0; padding-left: 16px; }
         #homework-content .homework-table { width: 100%; font-size: 0.85rem; }
         #homework-content .homework-table th, #homework-content .homework-table td { padding: 8px; }
-        #homework-content .card.assignment-container { width: 320px; min-width: 220px; max-width: 480px; height: 100%; overflow-y: auto; overflow-x: hidden; border-right: 1px solid #e2e8f0; background: #f9fafb; }
+        #homework-content .card.assignment-container { width: 208px; min-width: 143px; max-width: 312px; height: 100%; overflow-y: auto; overflow-x: hidden; border-right: 1px solid #e2e8f0; background: #f9fafb; }
         #homework-content #assignmentList { height: 100%; overflow-y: auto; padding-right: 6px; }
-        #homework-content .card:first-child { max-width: 320px; }
+        #homework-content .card:first-child { max-width: 208px; }
           #homework-content .hw-assignment-card {
             border: 2px solid #22d3ee;
             box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04);
@@ -230,6 +256,17 @@
             <button type="button" class="homework-modal-filter-btn" data-filter="vocab">Vocabulary</button>
             <button type="button" class="homework-modal-filter-btn" data-filter="grammar">Grammar</button>
             <button type="button" class="homework-modal-filter-btn" data-filter="phonics">Phonics</button>
+            <!-- Level filters -->
+            <div style="width:100%; height:0;"></div>
+            <div style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+              <span style="font-size:0.85rem; color:#6b7280; margin-right:6px;">Level</span>
+              <button type="button" class="homework-modal-filter-btn" data-filter="level:1">1</button>
+              <button type="button" class="homework-modal-filter-btn" data-filter="level:2">2</button>
+              <button type="button" class="homework-modal-filter-btn" data-filter="level:3">3</button>
+              <button type="button" class="homework-modal-filter-btn" data-filter="level:4">4</button>
+              <button type="button" class="homework-modal-filter-btn" data-filter="level:5">5</button>
+              <button type="button" class="homework-modal-filter-btn" data-filter="level:6">6</button>
+            </div>
           </div>
           <input 
             type="search" 

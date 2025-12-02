@@ -8,7 +8,7 @@ const MODE_GROUPS = {
   general: ['meaning', 'listening', 'multi_choice', 'listen_and_spell', 'sentence', 'level_up'],
   phonics: ['listening', 'spelling', 'multi_choice', 'listen_and_spell'],
   // Include all grammar modes, including new Level 2 ones
-  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_have_has', 'grammar_lesson_want_wants', 'grammar_lesson_like_likes', 'grammar_lesson_contractions_be', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable', 'grammar_fill_gap', 'grammar_sentence_unscramble', 'grammar_sorting', 'grammar_find_mistake', 'grammar_translation_choice'],
+  grammar: ['grammar_mode', 'grammar_choose', 'grammar_lesson', 'grammar_lesson_it_vs_they', 'grammar_lesson_am_are_is', 'grammar_lesson_this_that', 'grammar_lesson_these_those', 'grammar_lesson_have_has', 'grammar_lesson_want_wants', 'grammar_lesson_like_likes', 'grammar_lesson_contractions_be', 'grammar_lesson_in_on_under', 'grammar_lesson_plurals_s', 'grammar_lesson_plurals_es', 'grammar_lesson_plurals_ies', 'grammar_lesson_plurals_irregular', 'grammar_lesson_countable_uncountable', 'grammar_fill_gap', 'grammar_sentence_unscramble', 'grammar_sorting', 'grammar_find_mistake', 'grammar_translation_choice', 'grammar_sentence_order'],
 };
 
 const CACHE_KEYS = {
@@ -19,6 +19,7 @@ const CACHE_KEYS = {
   phonics: 'phonics_progress',
   grammarLevel1: 'grammar_level1_progress',
   grammarLevel2: 'grammar_level2_progress',
+  grammarLevel3: 'grammar_level3_progress',
   stars: 'level_stars',
 };
 
@@ -26,6 +27,12 @@ const SESSION_CACHE_WINDOW_MS = 30 * 1000; // allow reuse for rapid consecutive 
 let sessionCache = null;
 let sessionCacheTimestamp = 0;
 let sessionInflightPromise = null;
+
+function parseLevelNumber(value) {
+  if (value == null) return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
 
 function norm(value) {
   if (value == null) return '';
@@ -233,6 +240,7 @@ function identifyGrammarBucket(mode) {
   if (!m) return null;
   if (m.includes('lesson')) return 'lesson';
   if (m.includes('fill') && m.includes('gap')) return 'fill';
+  if (m.includes('sentence_order') || m.includes('sentenceorder')) return 'sentence_order';
   if (m.includes('unscramble')) return 'unscramble';
   if (m.includes('sentence') && m.includes('grammar')) return 'unscramble';
   if (m.includes('choose')) return 'choose';
@@ -280,6 +288,12 @@ function computeGrammarLevelProgress(lists, sessions) {
 // Level 2 grammar progress: track completion across six modes (Sorting, Choose, Fill, Unscramble, Find, Translation)
 function computeGrammarLevel2Progress(lists, sessions) {
   const TOTAL_MODES = 6;
+  // Expose per-item bucket data for UI overrides (e.g., custom fraction display)
+  if (typeof window !== 'undefined') {
+    if (!window.__GRAMMAR_L2_BUCKETS || typeof window.__GRAMMAR_L2_BUCKETS !== 'object') {
+      window.__GRAMMAR_L2_BUCKETS = {};
+    }
+  }
   return lists.map((item) => {
     const best = {
       sorting: null,
@@ -306,14 +320,26 @@ function computeGrammarLevel2Progress(lists, sessions) {
     const isWhQuestionsList = item.id === 'present_simple_questions_wh' || item.id === 'present_progressive_questions_wh' || 
                                (item.file && /questions_wh\.json$/i.test(item.file));
     
-    // Weighting: for WH questions use 1/5 (5 modes), otherwise use 1/6 (6 modes)
-    const weight = isWhQuestionsList ? (1/5) : (1/6);
+  // Special case: original WH question lists have 5 modes (no Sorting)
+  // Special case: WH micro lists (who/what, where/when/what time, how/why/which) currently only offer 4 modes (Sorting & Choose hidden)
+  const isWhoWhatList = item.id === 'wh_who_what';
+  const isWhereWhenWhatTimeList = item.id === 'wh_where_when_whattime';
+  const isHowWhyWhichList = item.id === 'wh_how_why_which';
+  const isWhMicroList = isWhoWhatList || isWhereWhenWhatTimeList || isHowWhyWhichList;
+  const weight = isWhMicroList ? (1/4) : (isWhQuestionsList ? (1/5) : (1/6));
     
     let attempted = 0;
     Object.values(best).forEach((pct) => { if (typeof pct === 'number') attempted++; });
     
     let total;
-    if (isWhQuestionsList) {
+    if (isWhMicroList) {
+      // Only four active modes: fill, unscramble, find, translate
+      total =
+        (best.fill ?? 0) * weight +
+        (best.unscramble ?? 0) * weight +
+        (best.find ?? 0) * weight +
+        (best.translate ?? 0) * weight;
+    } else if (isWhQuestionsList) {
       // WH questions: 5 modes (no Sorting)
       total =
         (best.choose ?? 0) * weight +
@@ -331,6 +357,48 @@ function computeGrammarLevel2Progress(lists, sessions) {
         (best.find ?? 0) * weight +
         (best.translate ?? 0) * weight;
     }
+
+    // Persist bucket detail for UI layer (non-reactive; refreshed each fetch)
+    if (typeof window !== 'undefined') {
+      try { window.__GRAMMAR_L2_BUCKETS[item.id] = { ...best }; } catch { /* ignore */ }
+    }
+    return Math.round(total);
+  });
+}
+
+// Level 3 grammar progress: track completion across six modes (Choose, Fill, Unscramble, Sentence Order, Find, Translation)
+function computeGrammarLevel3Progress(lists, sessions) {
+  return lists.map((item) => {
+    const best = {
+      choose: null,
+      fill: null,
+      unscramble: null,
+      sentence_order: null,
+      find: null,
+      translate: null,
+    };
+
+    sessions.forEach((session) => {
+      if (!isGrammarSession(session)) return;
+      const names = collectSessionNames(session) || [];
+      if (!names.some((name) => matchesGrammarList(item, name))) return;
+      const bucket = identifyGrammarBucket(session.mode);
+      if (!bucket || !(bucket in best)) return;
+      const summary = parseSummary(session.summary);
+      const pct = extractPercent(session, summary);
+      if (pct == null) return;
+      if (best[bucket] == null || best[bucket] < pct) best[bucket] = pct;
+    });
+
+    const weight = 1 / 6; // Equal weighting across 6 modes
+    const total =
+      (best.choose ?? 0) * weight +
+      (best.fill ?? 0) * weight +
+      (best.unscramble ?? 0) * weight +
+      (best.sentence_order ?? 0) * weight +
+      (best.find ?? 0) * weight +
+      (best.translate ?? 0) * weight;
+
     return Math.round(total);
   });
 }
@@ -350,6 +418,22 @@ function computeStarCountsFromSessions(sessions) {
 
   const normName = (value) => norm(value);
   const grammarModes = MODE_GROUPS.grammar;
+
+  // Debug: log all grammar sessions to see what data we have
+  sessions.forEach((session) => {
+    const summary = parseSummary(session.summary);
+    const mode = canonicalMode(session.mode);
+    const category = normName(summary?.category || session.category);
+    const isGrammar = category === 'grammar' || (mode && mode.includes('grammar'));
+    if (isGrammar) {
+      let meta = session.meta;
+      if (typeof meta === 'string') { try { meta = JSON.parse(meta); } catch { meta = null; } }
+      const lvl = meta?.level;
+      if (lvl === 3 || lvl === '3' || String(lvl) === '3') {
+        console.debug('[GrammarStars DEBUG] Found L3 session:', { mode, category, level: lvl, list_name: session.list_name, meta });
+      }
+    }
+  });
 
   sessions.forEach((session) => {
     const summary = parseSummary(session.summary);
@@ -371,6 +455,7 @@ function computeStarCountsFromSessions(sessions) {
         pushHint(summary.list);
         pushHint(summary.name);
         pushHint(summary.file);
+        pushHint(summary.grammarFile);
         pushHint(summary.grammarName);
         pushHint(summary.grammar);
       }
@@ -394,15 +479,20 @@ function computeStarCountsFromSessions(sessions) {
       // Numeric level extraction (meta.level or summary.level)
       let numericLevel = null;
       try {
-        const rawNum = summary?.level != null ? summary.level : null;
-        if (rawNum != null && /^\d+$/.test(String(rawNum))) numericLevel = Number(rawNum);
+        if (numericLevel == null) {
+          const rawNum = summary?.level;
+          const parsed = parseLevelNumber(rawNum);
+          if (parsed != null) numericLevel = parsed;
+        }
       } catch {}
       try {
-        const metaRaw2 = session.meta || summary?.meta;
-        let metaObj2 = metaRaw2;
-        if (typeof metaObj2 === 'string') { try { metaObj2 = JSON.parse(metaObj2); } catch { metaObj2 = null; } }
-        const mv = metaObj2?.level;
-        if (numericLevel == null && mv != null && /^\d+$/.test(String(mv))) numericLevel = Number(mv);
+        if (numericLevel == null) {
+          const metaRaw2 = session.meta || summary?.meta;
+          let metaObj2 = metaRaw2;
+          if (typeof metaObj2 === 'string') { try { metaObj2 = JSON.parse(metaObj2); } catch { metaObj2 = null; } }
+          const parsedMeta = parseLevelNumber(metaObj2?.level);
+          if (parsedMeta != null) numericLevel = parsedMeta;
+        }
       } catch {}
 
       // Decide which grammar level bucket to use.
@@ -462,14 +552,35 @@ function computeStarCountsFromSessions(sessions) {
         } catch {}
       }
 
-      const bucket = byLevel[bucketKey];
-      if (bucket) {
-        if (!bucket.has(targetKey)) bucket.set(targetKey, {});
-        const best = bucket.get(targetKey);
-        const pct = extractPercent(session, summary);
-        if (pct != null) {
+      // Always log Level 3 grammar bucket decisions for debugging
+      if (numericLevel === 3 || bucketKey === 'grammarLevel3') {
+        console.debug('[GrammarStars L3] bucketKey=', bucketKey, 'numericLevel=', numericLevel, 'mode=', mode, 'hints=', hintList.slice(0,5));
+      }
+
+      const pct = extractPercent(session, summary);
+      if (pct != null) {
+        const bucket = byLevel[bucketKey];
+        if (bucket) {
+          if (!bucket.has(targetKey)) bucket.set(targetKey, {});
+          const best = bucket.get(targetKey);
           if (!(mode in best) || best[mode] < pct) {
             best[mode] = pct;
+          }
+        }
+        // Secondary insertion by numericLevel - only if bucketKey doesn't already match
+        // to avoid double-counting stars when both path hints and numeric level are present
+        if (numericLevel != null) {
+          const lvlBucketName = `grammarLevel${numericLevel}`;
+          if (lvlBucketName !== bucketKey) {
+            const lvlBucket = byLevel[lvlBucketName];
+            if (lvlBucket) {
+              const lvlKey = targetKey || `${lvlBucketName}_auto`;
+              if (!lvlBucket.has(lvlKey)) lvlBucket.set(lvlKey, {});
+              const lvlBest = lvlBucket.get(lvlKey);
+              if (!(mode in lvlBest) || lvlBest[mode] < pct) {
+                lvlBest[mode] = pct;
+              }
+            }
           }
         }
       }
@@ -517,7 +628,7 @@ function computeStarCountsFromSessions(sessions) {
     return total;
   };
 
-  return {
+  const counts = {
     level0: sumStars(byLevel.level0, phonicsModes),
     level1: sumStars(byLevel.level1, generalModes),
     level2: sumStars(byLevel.level2, generalModes),
@@ -528,6 +639,15 @@ function computeStarCountsFromSessions(sessions) {
     grammarLevel3: sumStars(byLevel.grammarLevel3, grammarModes),
     grammarLevel4: sumStars(byLevel.grammarLevel4, grammarModes),
   };
+  
+  // Debug: log grammarLevel3 bucket contents
+  console.debug('[GrammarStars] grammarLevel3 bucket size:', byLevel.grammarLevel3.size);
+  byLevel.grammarLevel3.forEach((bestByMode, key) => {
+    console.debug('[GrammarStars] grammarLevel3 entry:', key, bestByMode);
+  });
+  console.debug('[GrammarStars] grammarLevel3 star count:', counts.grammarLevel3);
+  
+  return counts;
 }
 
 async function fetchAllSessions() {
@@ -606,7 +726,17 @@ export async function loadGrammarLevel2Progress(lists) {
     const values = computeGrammarLevel2Progress(lists, sessions);
     return ensureProgressPayload(values);
   });
-}export async function loadStarCounts() {
+}
+
+export async function loadGrammarLevel3Progress(lists) {
+  return progressCache.fetchWithCache(CACHE_KEYS.grammarLevel3, async () => {
+    const sessions = await fetchAllSessions();
+    const values = computeGrammarLevel3Progress(lists, sessions);
+    return ensureProgressPayload(values);
+  });
+}
+
+export async function loadStarCounts() {
   return progressCache.fetchWithCache(CACHE_KEYS.stars, async () => {
     const sessions = await fetchAllSessions();
     const counts = computeStarCountsFromSessions(sessions);

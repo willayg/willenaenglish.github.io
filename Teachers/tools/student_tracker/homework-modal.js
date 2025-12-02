@@ -23,7 +23,9 @@ const HomeworkModal = (() => {
     ].map(f => ({ path: `Games/english_arcade/phonics-lists/consonant-blends/${f}`, type: 'phonics', tags: ['consonant-blend'] })),
     // Level 1 Grammar
     ...[
-      'am_are_is.json','articles.json','can_cant.json','contractions_be.json','countable_uncountable.json','do_does_questions.json','dont_doesnt.json','have_vs_has.json','he_she_it.json','in_on_under.json','is_are_questions.json','isnt_arent.json','it_vs_they.json','like_vs_likes.json','negative_contractions.json','plurals_es.json','plurals_ies.json','plurals_irregular.json','plurals_s.json','there_are_vs_they_are.json','there_is_are.json','these_vs_those.json','this_vs_that.json','want_vs_wants.json'
+      'am_are_is.json','articles.json','can_cant.json','contractions_be.json','countable_uncountable.json','do_does_questions.json','dont_doesnt.json','have_vs_has.json','he_she_it.json','in_on_under.json','is_are_questions.json','isnt_arent.json','it_vs_they.json','like_vs_likes.json','negative_contractions.json','plurals_es.json','plurals_ies.json','plurals_irregular.json','plurals_s.json',
+      /* 'there_are_vs_they_are.json','there_is_are.json', */
+      'these_vs_those.json','this_vs_that.json','want_vs_wants.json'
     ].map(f => ({ path: `Games/english_arcade/data/grammar/level1/${f}`, level: 1, type: 'grammar', tags: [] })),
     // Level 2 Vocab
     ...[
@@ -50,21 +52,51 @@ const HomeworkModal = (() => {
       'Activities1.json','Activities2.json','Activities3.json','Adjectives4.json','Adjectives5.json','Adjectives6.json','BathroomItems.json','KitchenUtensilsTools.json','NatureObjects.json','PersonalQualities.json','SchoolSubjectsRooms.json','SnacksTreats.json','Verbs5.json','Verbs6.json','Verbs7.json','Verbs8.json'
     ].map(f => ({ path: `Games/english_arcade/sample-wordlists-level3/${f}`, level: 3, type: 'wordlist', tags: [] })),
     // Level 3 Grammar
-    ...[
-      'adjectives_people.json','adjectives_world.json','be_going_to_future.json','be_going_to_questions.json','can_cant.json','have_to.json','imperatives_suggestions.json','like_to_vs_want_to_vs_have_to.json','like_to.json','mixed_tense_questions.json','past_simple_irregular.json','past_simple_regular.json','past_tense_questions.json','past_vs_future.json','past_vs_present_vs_future_vs_continuous.json','prepositions_direction.json','short_comparatives.json','short_superlatives.json','want_to.json','will_future.json','will_questions.json'
-    ].map(f => ({ path: `Games/english_arcade/data/grammar/level3/${f}`, level: 3, type: 'grammar', tags: [] })),
+      /*
+      // Level 3 Grammar
+      ...[
+        'adjectives_people.json','adjectives_world.json','be_going_to_future.json','be_going_to_questions.json','can_cant.json','have_to.json','imperatives_suggestions.json','like_to_vs_want_to_vs_have_to.json','like_to.json','mixed_tense_questions.json','past_simple_irregular.json','past_simple_regular.json','past_tense_questions.json','past_vs_future.json','past_vs_present_vs_future_vs_continuous.json','prepositions_direction.json','short_comparatives.json','short_superlatives.json','want_to.json','will_future.json','will_questions.json'
+      ].map(f => ({ path: `Games/english_arcade/data/grammar/level3/${f}`, level: 3, type: 'grammar', tags: [] })),
+      // Level 4 Grammar
+      ...[
+        'adverbs_frequency.json','all_comparatives_review.json','all_superlatives_review.json','all_tenses_review.json','and_vs_but.json','every_vs_all.json'
+        // Add more level 4 grammar files here as needed
+      ].map(f => ({ path: `Games/english_arcade/data/grammar/level4/${f}`, level: 4, type: 'grammar', tags: [] })),
+      // Level 5 Vocab/Grammar (add as needed)
+      // ...
+      */
     // Level 4 Vocab
     ...[
       'ChoresKids.json','ClassroomPhrasesKids.json','CommunityHelpersJobs.json','DailyRoutines2.json','EmotionsInStories.json','EnvironmentalActions.json','FeelingsAboutWeather.json','FeelingsInSchool.json','FeelingsSocialSkills.json','FoodCookingActions.json','GamesBoardGames.json','HouseholdToolsFixes.json','OutdoorAdventureCamping.json','PhrasalVerbsKids1.json','PhrasalVerbsKids2.json','PlaygroundActions.json','SchoolClubsHobbies.json','ScienceLabTools.json','ShoppingMoney.json','SimpleScienceActions.json','SportsHobbiesKids2.json','TechnologyGadgets.json','TravelTransportation.json'
     ].map(f => ({ path: `Games/english_arcade/sample-wordlists-level4/${f}`, level: 4, type: 'wordlist', tags: [] })),
+    /*
     // Level 4 Grammar
     ...[
       'adverbs_frequency.json','all_comparatives_review.json','all_superlatives_review.json','all_tenses_review.json','and_vs_but.json','every_vs_all.json'
       // Add more level 4 grammar files here as needed
     ].map(f => ({ path: `Games/english_arcade/data/grammar/level4/${f}`, level: 4, type: 'grammar', tags: [] })),
+    */
     // Level 5 Vocab/Grammar (add as needed)
     // ...
   ];
+
+  // Files to exclude from the modal registry (useful for hiding in-progress lists)
+  const HIDDEN_WORDLIST_FILES = new Set([
+    'there_are_vs_they_are.json',
+    'there_is_are.json',
+    'adverbs_frequency.json',
+    'all_comparatives_review.json',
+    'all_superlatives_review.json',
+    'all_tenses_review.json'
+  ]);
+
+  function filenameFromPath(path) {
+    return String(path || '').split('/').pop();
+  }
+
+  function getAvailableRegistry() {
+    return WORDLIST_REGISTRY.filter(l => !HIDDEN_WORDLIST_FILES.has(filenameFromPath(l.path)));
+  }
 
   // Helper function to generate display title from filename
   function getDisplayTitle(path, level, type) {
@@ -115,13 +147,61 @@ const HomeworkModal = (() => {
       });
     }
 
-    // Filter buttons
-    const filterBtns = document.querySelectorAll('.homework-modal-filter-btn');
-    filterBtns.forEach(btn => {
+    // Filter buttons: support separate subject and level groups so they can be combined
+    const filterBtns = Array.from(document.querySelectorAll('.homework-modal-filter-btn'));
+    // Define groups by data-filter content: subject filters are 'all', 'vocab', 'grammar', 'phonics'
+    const subjectBtns = filterBtns.filter(b => ['all','vocab','grammar','phonics'].includes(b.dataset.filter));
+    const levelBtns = filterBtns.filter(b => b.dataset.filter && b.dataset.filter.startsWith('level:'));
+
+    // Track selected filters
+    let selectedSubjectFilter = 'all';
+    let selectedLevelFilter = null;
+
+    function applyFilters() {
+      // Build the filtered set based on selectedSubjectFilter and selectedLevelFilter
+      let registry = getAvailableRegistry();
+      if (selectedSubjectFilter && selectedSubjectFilter !== 'all') {
+        if (selectedSubjectFilter === 'vocab') registry = registry.filter(l => l.type === 'wordlist');
+        else if (selectedSubjectFilter === 'grammar') registry = registry.filter(l => l.type === 'grammar');
+        else if (selectedSubjectFilter === 'phonics') registry = registry.filter(l => l.type === 'phonics');
+      }
+      if (selectedLevelFilter) {
+        const levelNum = parseInt(selectedLevelFilter, 10);
+        if (!isNaN(levelNum)) registry = registry.filter(l => Number(l.level) === levelNum);
+      }
+      renderSearchResults(registry);
+    }
+
+    // Setup subject buttons (toggleable: clicking active button clears the subject filter)
+    subjectBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        handleFilter(btn.dataset.filter);
+        const wasActive = btn.classList.contains('active');
+        subjectBtns.forEach(b => b.classList.remove('active'));
+        if (wasActive) {
+          // clear subject filter -> treat as 'all'
+          selectedSubjectFilter = 'all';
+        } else {
+          btn.classList.add('active');
+          selectedSubjectFilter = btn.dataset.filter || 'all';
+        }
+        applyFilters();
+      });
+    });
+
+    // Setup level buttons
+    levelBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Toggleable level: clicking active level clears it; otherwise select it exclusively
+        const wasActive = btn.classList.contains('active');
+        levelBtns.forEach(b => b.classList.remove('active'));
+        if (wasActive) {
+          selectedLevelFilter = null;
+        } else {
+          btn.classList.add('active');
+          const parts = (btn.dataset.filter || '').split(':');
+          selectedLevelFilter = parts[1] || null;
+        }
+        applyFilters();
       });
     });
 
@@ -137,17 +217,26 @@ const HomeworkModal = (() => {
   }
 
   function handleFilter(filter) {
+    const registry = getAvailableRegistry();
     let filtered;
-    if (filter === 'all') {
-      filtered = WORDLIST_REGISTRY;
+    if (!filter || filter === 'all') {
+      filtered = registry;
     } else if (filter === 'vocab') {
-      filtered = WORDLIST_REGISTRY.filter(l => l.type === 'wordlist');
+      filtered = registry.filter(l => l.type === 'wordlist');
     } else if (filter === 'grammar') {
-      filtered = WORDLIST_REGISTRY.filter(l => l.type === 'grammar');
+      filtered = registry.filter(l => l.type === 'grammar');
     } else if (filter === 'phonics') {
-      filtered = WORDLIST_REGISTRY.filter(l => l.type === 'phonics');
+      filtered = registry.filter(l => l.type === 'phonics');
+    } else if (filter.startsWith && filter.startsWith('level:')) {
+      const parts = filter.split(':');
+      const levelNum = parseInt(parts[1], 10);
+      if (!isNaN(levelNum)) {
+        filtered = registry.filter(l => Number(l.level) === levelNum);
+      } else {
+        filtered = registry;
+      }
     } else {
-      filtered = WORDLIST_REGISTRY;
+      filtered = registry;
     }
     renderSearchResults(filtered);
   }
@@ -172,8 +261,8 @@ const HomeworkModal = (() => {
     const selectedDisplay = document.getElementById('hwModalSelectedList');
     if (selectedDisplay) selectedDisplay.style.display = 'none';
 
-    // Show initial search results
-    renderSearchResults(WORDLIST_REGISTRY);
+  // Show initial search results (filtered to exclude hidden files)
+  renderSearchResults(getAvailableRegistry());
 
     // Disable assign button until list selected
     document.getElementById('hwModalAssign').disabled = true;
@@ -195,7 +284,7 @@ const HomeworkModal = (() => {
 
   function getDefaultDueDate() {
     const date = new Date();
-    date.setDate(date.getDate() + 7); // Default to 1 week from now
+  date.setDate(date.getDate() + 2); // Default to 2 days from now
     return date.toISOString().split('T')[0];
   }
 
@@ -203,12 +292,12 @@ const HomeworkModal = (() => {
     const q = query.trim().toLowerCase();
     
     if (!q) {
-      renderSearchResults(WORDLIST_REGISTRY);
+      renderSearchResults(getAvailableRegistry());
       return;
     }
 
     // Search across path, tags, level
-    const results = WORDLIST_REGISTRY.filter(list => {
+  const results = getAvailableRegistry().filter(list => {
       const pathMatch = list.path.toLowerCase().includes(q);
       const tagMatch = list.tags.some(tag => tag.toLowerCase().includes(q));
       const typeMatch = list.type.toLowerCase().includes(q);
@@ -238,7 +327,7 @@ const HomeworkModal = (() => {
           meta = `Level ${list.level} - ${typeLabel}`;
         }
         return `
-          <div class="homework-modal-result-item" data-idx="${idx}">
+          <div class="homework-modal-result-item" data-idx="${idx}" data-file="${list.path}">
             <div class="homework-modal-result-content">
               <div class="homework-modal-result-title">${title}</div>
               <div class="homework-modal-result-meta">${meta}</div>
@@ -274,7 +363,7 @@ const HomeworkModal = (() => {
     document.querySelectorAll('.homework-modal-result-item').forEach(item => {
       item.classList.remove('selected');
     });
-    const selectedItem = document.querySelector(`.homework-modal-result-item[data-idx="${WORDLIST_REGISTRY.indexOf(list)}"]`);
+  const selectedItem = document.querySelector(`.homework-modal-result-item[data-file="${list.path}"]`);
     if (selectedItem) selectedItem.classList.add('selected');
 
     // Show selected list display
@@ -286,10 +375,20 @@ const HomeworkModal = (() => {
       document.getElementById('hwModalSelectedMeta').textContent = `Level ${list.level} • ${list.type} • ${list.tags.join(', ')}`;
     }
 
-    // Pre-fill title if empty
+    // Always update title when a new list is selected unless user has manually edited.
+    // Strategy: Track the last auto-filled value on the input element via dataset.
     const titleInput = document.getElementById('hwModalTitle');
-    if (titleInput && !titleInput.value) {
-      titleInput.value = title;
+    if (titleInput) {
+      const lastAuto = titleInput.dataset.lastAutoTitle || '';
+      const currentVal = titleInput.value.trim();
+      // If current value equals last auto-filled value OR is empty, replace with new auto title.
+      if (!currentVal || currentVal === lastAuto) {
+        titleInput.value = title;
+        titleInput.dataset.lastAutoTitle = title;
+      } else {
+        // User modified manually; do not override, but update lastAutoTitle for future comparisons.
+        titleInput.dataset.lastAutoTitle = title;
+      }
     }
 
     // Enable assign button

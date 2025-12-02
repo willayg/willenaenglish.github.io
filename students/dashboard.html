@@ -55,13 +55,14 @@
         <h2 class="card-title" data-i18n="Class Leaders">Class Leaders</h2>
         <div id="starsClassNameDisplay" style="font-size:1.1rem;font-weight:500;color:#67e2e6;text-align:center;margin-top:4px;margin-bottom:12px;text-shadow:0 0 10px rgba(103,226,230,0.4);"></div>
         <div class="lb-tabs" id="starsLeaderboardTabs" role="tablist">
-          <button id="slTabStars" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="stars" data-i18n="Stars">Stars</button>
+          <button id="slTabSuper" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="super" data-i18n="Super Score">Super Score</button>
+          <button id="slTabStars" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="stars" data-i18n="Stars">Stars</button>
           <button id="slTabPoints" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="points" data-i18n="Points">Points</button>
-          <button id="slTabSuper" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="super" data-i18n="Super Score">Super Score</button>
         </div>
         <div id="starsLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="slFilterMonth" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
           <button id="slFilterAll" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
+          <span id="starsSmallSpinner" class="mini-lb-spinner hidden" aria-hidden="true" title="Loading"></span>
         </div>
         <div class="card-content" id="starsLeaderboardContent" style="min-height:120px;">
           <div class="lb-loading">
@@ -82,13 +83,14 @@
       <section class="card" id="globalLeaderboardCard">
         <h2 class="card-title" data-i18n="Willena Leaders">Willena Leaders</h2>
         <div class="lb-tabs" id="globalLeaderboardTabs" role="tablist">
-          <button id="glTabStars" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="stars" data-i18n="Stars">Stars</button>
+          <button id="glTabSuper" class="lb-tab active" type="button" role="tab" aria-selected="true" data-metric="super" data-i18n="Super Score">Super Score</button>
+          <button id="glTabStars" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="stars" data-i18n="Stars">Stars</button>
           <button id="glTabPoints" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="points" data-i18n="Points">Points</button>
-          <button id="glTabSuper" class="lb-tab" type="button" role="tab" aria-selected="false" data-metric="super" data-i18n="Super Score">Super Score</button>
         </div>
         <div id="globalLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="glFilterMonth" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
           <button id="glFilterAll" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
+          <span id="globalSmallSpinner" class="mini-lb-spinner hidden" aria-hidden="true" title="Loading"></span>
         </div>
         <div class="card-content" id="globalLeaderboardContent" style="min-height:120px;">
           <div class="lb-loading">
@@ -146,8 +148,9 @@
   </div>
   <script>
     document.getElementById('logoutBig')?.addEventListener('click', async () => {
-      await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
-      location.href = '/students/login.html';
+  try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
+  await fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST', credentials:'include' });
+  location.href = '/students/login.html';
     });
   </script>
   <script>
@@ -453,19 +456,6 @@
         sectionWrap.appendChild(completeSection);
         host.appendChild(sectionWrap);
 
-        // helper to prefer teacher title and sanitize fallback
-        function displayTitle(a) {
-          // If teacher provided a friendly title use it, but ignore values that look like file paths
-          if (a && a.title && typeof a.title === 'string') {
-            if (!a.title.includes('/') && !/\.json$/i.test(a.title)) return a.title;
-          }
-          const raw = a && (a.list_title || a.list_key || '') || '';
-          let s = String(raw || '');
-          if (s.includes('/')) s = s.split('/').pop();
-          s = s.replace(/\.json$/i, '').replace(/[-_]+/g, ' ').trim();
-          return s || t('Homework');
-        }
-
         // Create cards and append to sections based on progress
         assignments.forEach(a => {
           const li = document.createElement('div');
@@ -487,7 +477,7 @@
           title.style.fontWeight = '600';
           title.style.fontSize = '1rem';
           title.style.color = '#fff';
-          title.textContent = displayTitle(a);
+          title.textContent = a.title || a.list_title || t('Homework');
 
           // Countdown calculation
           let countdown = '';
@@ -910,11 +900,13 @@
 
       // Fetch and render stars leaderboard
       let starsLbTimeframe = 'month'; // 'all' | 'month' - default to month
-      let starsLbMetric = 'stars'; // 'stars' | 'points' | 'super'
+      let starsLbMetric = 'super'; // default to 'super' (Super Score)
       const starsLbCache = new Map(); // timeframe -> data
 
       async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
+        const spinner = document.getElementById('starsSmallSpinner');
         try {
+          spinner?.classList.remove('hidden');
           starsLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
@@ -925,6 +917,8 @@
           console.error('Stars leaderboard error:', err);
           const container = document.getElementById('starsLeaderboardContent');
           if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+        } finally {
+          spinner?.classList.add('hidden');
         }
       }
 
@@ -983,11 +977,13 @@
 
       // Fetch and render global leaderboard
       let globalLbTimeframe = 'month'; // 'all' | 'month' - default to month
-      let globalLbMetric = 'stars';
+      let globalLbMetric = 'super';
       const globalLbCache = new Map();
 
       async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
+        const spinner = document.getElementById('globalSmallSpinner');
         try {
+          spinner?.classList.remove('hidden');
           globalLbTimeframe = timeframe;
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}`;
           const r = await fetch(url, { credentials: 'include' });
@@ -998,6 +994,8 @@
           console.error('Global leaderboard error:', err);
           const container = document.getElementById('globalLeaderboardContent');
           if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+        } finally {
+          spinner?.classList.add('hidden');
         }
       }
 
@@ -1371,6 +1369,20 @@
       gap: 16px;
       padding: 20px;
     }
+
+    /* Small inline spinner used next to month/all filters */
+    .mini-lb-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(103, 226, 230, 0.12);
+      border-top-color: #67e2e6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .mini-lb-spinner.hidden { display: none; }
 
     .lb-spinner {
       width: 40px;

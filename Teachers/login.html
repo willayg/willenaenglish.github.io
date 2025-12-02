@@ -216,10 +216,12 @@
       Don't have an account? <a href="/Teachers/signup.html">Sign up here</a>
     </div>
   </div>
-  
-  <div id="debugInfo" class="debug-info"></div>
 
   <script type="module">
+    import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
+
+    ensureAuthRefresh();
+
     // Configuration
   // Always use same-origin functions so auth cookies are set on the current domain
   const FUNCTIONS_BASE = '';
@@ -233,8 +235,7 @@
     const messageDiv = document.getElementById('message');
     const debugInfo = document.getElementById('debugInfo');
     
-  // Debug info display
-  debugInfo.textContent = `Auth: ${AUTH_URL} | Host: ${location.host}`;
+  // Debug info removed in production
     
     // Utility functions
     function showMessage(text, type = 'error') {

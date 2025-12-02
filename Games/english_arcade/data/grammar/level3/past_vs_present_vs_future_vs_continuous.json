@@ -1,17 +1,137 @@
 [
-  {"en":"I played soccer yesterday. I play soccer every day. I will play soccer tomorrow. I am playing soccer now.","ko":"나는 어제 축구를 했어요. 나는 매일 축구를 해요. 나는 내일 축구를 할 거예요. 나는 지금 축구를 하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"⚽"},
-  {"en":"She studied last night. She studies English. She will study tomorrow. She is studying now.","ko":"그녀는 어젯밤에 공부했어요. 그녀는 영어를 공부해요. 그녀는 내일 공부할 거예요. 그녀는 지금 공부하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"📚"},
-  {"en":"We visited the museum last month. We visit museums often. We will visit next week. We are visiting now.","ko":"우리는 지난달에 박물관을 방문했어요. 우리는 자주 박물관을 방문해요. 우리는 다음 주에 방문할 거예요. 우리는 지금 방문하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🏛️"},
-  {"en":"He ate pizza yesterday. He eats pizza every Friday. He will eat pizza next Friday. He is eating pizza now.","ko":"그는 어제 피자를 먹었어요. 그는 매주 금요일에 피자를 먹어요. 그는 다음 금요일에 피자를 먹을 거예요. 그는 지금 피자를 먹고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🍕"},
-  {"en":"They traveled last year. They travel every summer. They will travel next year. They are traveling now.","ko":"그들은 작년에 여행했어요. 그들은 매년 여름에 여행해요. 그들은 내년에 여행할 거예요. 그들은 지금 여행하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"✈️"},
-  {"en":"I learned English last semester. I learn English now. I will learn more next semester. I am learning English now.","ko":"나는 지난 학기에 영어를 배웠어요. 나는 지금 영어를 배워요. 나는 다음 학기에 더 배울 거예요. 나는 지금 영어를 배우고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🇬🇧"},
-  {"en":"She made dinner yesterday. She makes dinner every evening. She will make dinner tomorrow. She is making dinner now.","ko":"그녀는 어제 저녁을 만들었어요. 그녀는 매일 저녁을 만들어요. 그녀는 내일 저녁을 만들 거예요. 그녀는 지금 저녁을 만들고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🍽️"},
-  {"en":"We watched the game last weekend. We watch games often. We will watch another game next week. We are watching a match now.","ko":"우리는 지난 주말에 경기를 봤어요. 우리는 자주 경기를 봐요. 우리는 다음 주에 또 경기를 볼 거예요. 우리는 지금 경기를 보고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🏀"},
-  {"en":"He fixed his bike yesterday. He fixes things sometimes. He will fix the car tomorrow. He is fixing the computer now.","ko":"그는 어제 자전거를 고쳤어요. 그는 가끔 물건을 고쳐요. 그는 내일 차를 고칠 거예요. 그는 지금 컴퓨터를 고치고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🔧"},
-  {"en":"They helped their friend last week. They help others often. They will volunteer next month. They are helping now.","ko":"그들은 지난주 친구를 도왔어요. 그들은 자주 다른 사람을 도와요. 그들은 다음 달에 자원봉사할 거예요. 그들은 지금 돕고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🤝"},
-  {"en":"I painted the room last summer. I paint sometimes. I will paint another room soon. I am painting now.","ko":"나는 지난 여름에 방을 칠했어요. 나는 가끔 그림을 그려요. 나는 곧 다른 방을 칠할 거예요. 나는 지금 칠하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🎨"},
-  {"en":"She bought a bike last month. She buys things when needed. She will buy a new helmet next week. She is buying a book now.","ko":"그녀는 지난달에 자전거를 샀어요. 필요할 때 물건을 사요. 그녀는 다음 주에 새 헬멧을 살 거예요. 그녀는 지금 책을 사고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🚲"},
-  {"en":"We started the project last month. We start new ones sometimes. We will start a new project next month. We are starting a new assignment now.","ko":"우리는 지난달에 프로젝트를 시작했어요. 때때로 새 프로젝트를 시작해요. 우리는 다음 달에 새 프로젝트를 시작할 거예요. 우리는 지금 새 과제를 시작하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"📁"},
-  {"en":"He learned to drive last year. He learns new skills quickly. He will learn another skill soon. He is learning to cook now.","ko":"그는 작년에 운전법을 배웠어요. 그는 새로운 기술을 빨리 배워요. 그는 곧 다른 기술을 배울 거예요. 그는 지금 요리하는 법을 배우고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🚗"},
-  {"en":"They moved to a new house last month. They move sometimes. They will move again in a few years. They are moving into a new apartment now.","ko":"그들은 지난달에 새 집으로 이사했어요. 그들은 가끔 이사해요. 그들은 몇 년 안에 다시 이사할 거예요. 그들은 지금 새 아파트로 이사하고 있어요.","example":"Past, Present, Future, Continuous.","emoji":"🏡"}
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_1",
+    "word": "i_played_soccer_every",
+    "en": "I played soccer yesterday. I play soccer every day. I will play soccer tomorrow. I am playing soccer now.",
+    "ko": "나는 어제 축구를 했어요. 나는 매일 축구를 해요. 나는 내일 축구를 할 거예요. 나는 지금 축구를 하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "나는 어제 축구를 했어요. 나는 매일 축구를 해요. 나는 내일 축구를 할 거예요. 나는 지금 축구를 하고 있어요.",
+    "emoji": "⚽"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_2",
+    "word": "she_studied_last",
+    "en": "She studied last night. She studies English. She will study tomorrow. She is studying now.",
+    "ko": "그녀는 어젯밤에 공부했어요. 그녀는 영어를 공부해요. 그녀는 내일 공부할 거예요. 그녀는 지금 공부하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그녀는 어젯밤에 공부했어요. 그녀는 영어를 공부해요. 그녀는 내일 공부할 거예요. 그녀는 지금 공부하고 있어요.",
+    "emoji": "📚"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_3",
+    "word": "we_visited_the_museum",
+    "en": "We visited the museum last month. We visit museums often. We will visit next week. We are visiting now.",
+    "ko": "우리는 지난달에 박물관을 방문했어요. 우리는 자주 박물관을 방문해요. 우리는 다음 주에 방문할 거예요. 우리는 지금 방문하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "우리는 지난달에 박물관을 방문했어요. 우리는 자주 박물관을 방문해요. 우리는 다음 주에 방문할 거예요. 우리는 지금 방문하고 있어요.",
+    "emoji": "🏛️"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_4",
+    "word": "he_ate_pizza_yesterday",
+    "en": "He ate pizza yesterday. He eats pizza every Friday. He will eat pizza next Friday. He is eating pizza now.",
+    "ko": "그는 어제 피자를 먹었어요. 그는 매주 금요일에 피자를 먹어요. 그는 다음 금요일에 피자를 먹을 거예요. 그는 지금 피자를 먹고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그는 어제 피자를 먹었어요. 그는 매주 금요일에 피자를 먹어요. 그는 다음 금요일에 피자를 먹을 거예요. 그는 지금 피자를 먹고 있어요.",
+    "emoji": "🍕"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_5",
+    "word": "they_traveled_last",
+    "en": "They traveled last year. They travel every summer. They will travel next year. They are traveling now.",
+    "ko": "그들은 작년에 여행했어요. 그들은 매년 여름에 여행해요. 그들은 내년에 여행할 거예요. 그들은 지금 여행하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그들은 작년에 여행했어요. 그들은 매년 여름에 여행해요. 그들은 내년에 여행할 거예요. 그들은 지금 여행하고 있어요.",
+    "emoji": "✈️"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_6",
+    "word": "i_learned_english_last",
+    "en": "I learned English last semester. I learn English now. I will learn more next semester. I am learning English now.",
+    "ko": "나는 지난 학기에 영어를 배웠어요. 나는 지금 영어를 배워요. 나는 다음 학기에 더 배울 거예요. 나는 지금 영어를 배우고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "나는 지난 학기에 영어를 배웠어요. 나는 지금 영어를 배워요. 나는 다음 학기에 더 배울 거예요. 나는 지금 영어를 배우고 있어요.",
+    "emoji": "🇬🇧"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_7",
+    "word": "she_made_dinner_yesterday",
+    "en": "She made dinner yesterday. She makes dinner every evening. She will make dinner tomorrow. She is making dinner now.",
+    "ko": "그녀는 어제 저녁을 만들었어요. 그녀는 매일 저녁을 만들어요. 그녀는 내일 저녁을 만들 거예요. 그녀는 지금 저녁을 만들고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그녀는 어제 저녁을 만들었어요. 그녀는 매일 저녁을 만들어요. 그녀는 내일 저녁을 만들 거예요. 그녀는 지금 저녁을 만들고 있어요.",
+    "emoji": "🍽️"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_8",
+    "word": "we_watched_the_game",
+    "en": "We watched the game last weekend. We watch games often. We will watch another game next week. We are watching a match now.",
+    "ko": "우리는 지난 주말에 경기를 봤어요. 우리는 자주 경기를 봐요. 우리는 다음 주에 또 경기를 볼 거예요. 우리는 지금 경기를 보고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "우리는 지난 주말에 경기를 봤어요. 우리는 자주 경기를 봐요. 우리는 다음 주에 또 경기를 볼 거예요. 우리는 지금 경기를 보고 있어요.",
+    "emoji": "🏀"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_9",
+    "word": "he_fixed_his_bike",
+    "en": "He fixed his bike yesterday. He fixes things sometimes. He will fix the car tomorrow. He is fixing the computer now.",
+    "ko": "그는 어제 자전거를 고쳤어요. 그는 가끔 물건을 고쳐요. 그는 내일 차를 고칠 거예요. 그는 지금 컴퓨터를 고치고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그는 어제 자전거를 고쳤어요. 그는 가끔 물건을 고쳐요. 그는 내일 차를 고칠 거예요. 그는 지금 컴퓨터를 고치고 있어요.",
+    "emoji": "🔧"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_10",
+    "word": "they_helped_their_friend",
+    "en": "They helped their friend last week. They help others often. They will volunteer next month. They are helping now.",
+    "ko": "그들은 지난주 친구를 도왔어요. 그들은 자주 다른 사람을 도와요. 그들은 다음 달에 자원봉사할 거예요. 그들은 지금 돕고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그들은 지난주 친구를 도왔어요. 그들은 자주 다른 사람을 도와요. 그들은 다음 달에 자원봉사할 거예요. 그들은 지금 돕고 있어요.",
+    "emoji": "🤝"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_11",
+    "word": "i_painted_the_room",
+    "en": "I painted the room last summer. I paint sometimes. I will paint another room soon. I am painting now.",
+    "ko": "나는 지난 여름에 방을 칠했어요. 나는 가끔 그림을 그려요. 나는 곧 다른 방을 칠할 거예요. 나는 지금 칠하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "나는 지난 여름에 방을 칠했어요. 나는 가끔 그림을 그려요. 나는 곧 다른 방을 칠할 거예요. 나는 지금 칠하고 있어요.",
+    "emoji": "🎨"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_12",
+    "word": "she_bought_a_bike",
+    "en": "She bought a bike last month. She buys things when needed. She will buy a new helmet next week. She is buying a book now.",
+    "ko": "그녀는 지난달에 자전거를 샀어요. 필요할 때 물건을 사요. 그녀는 다음 주에 새 헬멧을 살 거예요. 그녀는 지금 책을 사고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그녀는 지난달에 자전거를 샀어요. 필요할 때 물건을 사요. 그녀는 다음 주에 새 헬멧을 살 거예요. 그녀는 지금 책을 사고 있어요.",
+    "emoji": "🚲"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_13",
+    "word": "we_started_the_project",
+    "en": "We started the project last month. We start new ones sometimes. We will start a new project next month. We are starting a new assignment now.",
+    "ko": "우리는 지난달에 프로젝트를 시작했어요. 때때로 새 프로젝트를 시작해요. 우리는 다음 달에 새 프로젝트를 시작할 거예요. 우리는 지금 새 과제를 시작하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "우리는 지난달에 프로젝트를 시작했어요. 때때로 새 프로젝트를 시작해요. 우리는 다음 달에 새 프로젝트를 시작할 거예요. 우리는 지금 새 과제를 시작하고 있어요.",
+    "emoji": "📁"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_14",
+    "word": "he_learned_to_drive",
+    "en": "He learned to drive last year. He learns new skills quickly. He will learn another skill soon. He is learning to cook now.",
+    "ko": "그는 작년에 운전법을 배웠어요. 그는 새로운 기술을 빨리 배워요. 그는 곧 다른 기술을 배울 거예요. 그는 지금 요리하는 법을 배우고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그는 작년에 운전법을 배웠어요. 그는 새로운 기술을 빨리 배워요. 그는 곧 다른 기술을 배울 거예요. 그는 지금 요리하는 법을 배우고 있어요.",
+    "emoji": "🚗"
+  },
+  {
+    "id": "past_vs_present_vs_future_vs_continuous_15",
+    "word": "they_moved_to_a_new",
+    "en": "They moved to a new house last month. They move sometimes. They will move again in a few years. They are moving into a new apartment now.",
+    "ko": "그들은 지난달에 새 집으로 이사했어요. 그들은 가끔 이사해요. 그들은 몇 년 안에 다시 이사할 거예요. 그들은 지금 새 아파트로 이사하고 있어요.",
+    "exampleSentence": "Past, Present, Future, Continuous.",
+    "exampleSentenceKo": "그들은 지난달에 새 집으로 이사했어요. 그들은 가끔 이사해요. 그들은 몇 년 안에 다시 이사할 거예요. 그들은 지금 새 아파트로 이사하고 있어요.",
+    "emoji": "🏡"
+  }
 ]

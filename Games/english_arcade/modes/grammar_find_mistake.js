@@ -5,6 +5,7 @@
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { playSFX } from '../sfx.js';
 import { renderGrammarSummary } from './grammar_summary.js';
+import { openNowLoadingSplash } from './unscramble_splash.js';
 
 const MODE = 'grammar_find_mistake';
 
@@ -12,6 +13,10 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const container = document.getElementById('gameArea');
   if (!container) return;
   container.innerHTML = '<div style="padding:20px;text-align:center;">Loading…</div>';
+
+  // Show loading splash while fetching
+  let splashController = null;
+  try { splashController = openNowLoadingSplash(document.body, { text: (grammarName ? `${grammarName} — now loading` : 'now loading') }); if (splashController && splashController.readyPromise) await splashController.readyPromise; } catch(e){ console.debug('[FindMistake] splash failed', e?.message); }
 
   // Load list
   let data = [];
@@ -22,6 +27,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     console.log('DEBUG find_mistake: grammarFile=', grammarFile, 'grammarName=', grammarName, 'data[0]=', data[0]);
   } catch (e) {
     container.innerHTML = '<div style="padding:20px;text-align:center;color:#c00">Failed to load list.</div>';
+    if (splashController && typeof splashController.hide === 'function') try { splashController.hide(); } catch {}
     return;
   }
 
@@ -44,6 +50,8 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const isPresentSimpleWhList = /present_simple_questions_wh\.json$/i.test(String(grammarFile || ''))
     || /present\s*simple[\s:\-]*wh/i.test(String(grammarName || ''))
     || /wh\s*questions?/i.test(String(grammarName || ''));
+  // Include dedicated WH micro lists (who/what, how/why/which, where/when/what time)
+  const isWhoWhatMicroList = /wh_(who_what|how_why_which|where_when_whattime)\.json$/i.test(String(grammarFile || ''));
   // Present progressive list detection (BE + V-ing sentences)
   const isPresentProgressiveList = /present_progressive\.json$/i.test(String(grammarFile || ''))
     || /present\s*progressive(?!.*(negative|yes\s*\/\s*no|wh))/i.test(String(grammarName || ''));
@@ -283,8 +291,39 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
       }
     }
 
-    // Present Simple Yes/No + WH questions: create typical DO/DOES + verb mistakes
-    if (isPresentSimpleYesNoList || isPresentSimpleWhList) {
+    // Present Simple Yes/No + WH questions: create typical word-order and DO/DOES + verb mistakes
+    if (isPresentSimpleYesNoList || isPresentSimpleWhList || isWhoWhatMicroList) {
+      // Extra corruption pattern: produce a WRONG WORD ORDER version (e.g., "Who eats cake?" -> "Who cake eats?", or verb moved to end)
+      // Also support multi-token WH like "What time" and WH+BE questions like "Where is the movie?" -> "Where the movie is?"
+      // We'll attempt this first for WH patterns, then fall back to DO/DOES logic
+      const whOrderRx = /^(Who|What\s+time|What|When|Where|Why|How|Which)\s+([^?]+?)(\?)?$/i;
+      const whOrderM = en.match(whOrderRx);
+      if (whOrderM) {
+        const wh = whOrderM[1];
+        const body = (whOrderM[2] || '').trim();
+        const bodyTokens = body.split(/\s+/).filter(Boolean);
+        if (bodyTokens.length >= 2) {
+          // Try to detect BE or main verb in the body
+          const beIdx = bodyTokens.findIndex(t => /^(am|is|are)$/i.test(t));
+          let verbIdx = beIdx;
+          if (verbIdx < 0) {
+            verbIdx = bodyTokens.findIndex(t => /s$/.test(t.toLowerCase()) || /(eat|play|like|love|need|want|watch|study|walk|go|live|make|take|have)s?$/i.test(t));
+          }
+          if (verbIdx >= 0) {
+            const verb = bodyTokens[verbIdx];
+            const before = bodyTokens.slice(0, verbIdx);
+            const after = bodyTokens.slice(verbIdx + 1);
+            // Wrong order: move verb to the very end, keep WH at front
+            const wrongArr = [wh, ...before, ...after, verb];
+            let wrongSeq = wrongArr.join(' ');
+            if (!/\?$/.test(wrongSeq)) wrongSeq += '?';
+            if (wrongSeq.toLowerCase() !== en.toLowerCase()) {
+              const wrongToken = verb;
+              return { bad: wrongSeq, wrongToken, correctToken: verb };
+            }
+          }
+        }
+      }
       // Allow optional WH word before Do/Does
       const mQ = en.match(/^(?:Who|What|When|Where|Why|How|Which)\s+(Do|Does)\s+(.+?)\s+(\w+)(.*)$/i)
                || en.match(/^(Do|Does)\s+(.+?)\s+(\w+)(.*)$/i);
@@ -499,7 +538,7 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     if (idx >= rounds.length) return end();
     const r = rounds[idx];
     container.innerHTML = '';
-    container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;';
+    container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;min-height:100dvh;display:flex;flex-direction:column;';
 
     const head = document.createElement('div');
     head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#666';
@@ -527,6 +566,12 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     xBtn.style.cssText = baseBtn('#ff6b6b');
     btnRow.appendChild(okBtn); btnRow.appendChild(xBtn);
     container.appendChild(btnRow);
+
+    // Sticky footer to keep Next/Finish button visible on small screens
+    const footer = document.createElement('div');
+    footer.id = 'gm-footer';
+    footer.style.cssText = 'position:sticky;bottom:0;left:0;right:0;padding:12px 12px calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top, rgba(251,255,255,0.98), rgba(251,255,255,0.82), rgba(251,255,255,0));display:flex;justify-content:center;z-index:1;';
+    container.appendChild(footer);
 
     const decide = (choice) => {
       const isCorrect = (r.type==='good' && choice==='O') || (r.type==='bad' && choice==='X');
@@ -572,16 +617,18 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
 
     container.appendChild(revealBox);
 
-    // Even larger spacer to push next button further down and avoid overlap
+    // Small spacer before sticky footer
     const spacer = document.createElement('div');
-    spacer.style.cssText = 'height:120px;';
+    spacer.style.cssText = 'height:16px;';
     container.appendChild(spacer);
 
     const next = document.createElement('button');
     next.textContent = (idx < rounds.length-1 ? 'Next' : 'Finish');
-    next.style.cssText = baseBtn('#21b5c0') + 'display:block;margin:0 auto;';
+    next.style.cssText = baseBtn('#21b5c0') + 'display:block;margin:0 auto;max-width:360px;width:min(92vw,360px);';
     next.onclick = () => { idx++; render(); };
-    container.appendChild(next);
+    const footerHost = container.querySelector('#gm-footer');
+    if (footerHost) { footerHost.replaceChildren(); footerHost.appendChild(next); }
+    else { container.appendChild(next); }
 
     // Add exit button bottom-right (like other modes)
     addExitButton();
@@ -620,4 +667,6 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   }
 
   render();
+  // Hide the splash now that UI is rendered
+  try { if (splashController && typeof splashController.hide === 'function') setTimeout(()=>{ try{ splashController.hide(); }catch{} }, 520); } catch(e){}
 }

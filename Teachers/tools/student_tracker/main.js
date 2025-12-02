@@ -48,12 +48,184 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // API functions
 const FN = (name) => `/.netlify/functions/${name}`;
+
+async function fetchJsonWithLog(url, label, options = {}) {
+  const init = { credentials: 'include', ...options };
+  try {
+    const resp = await fetch(url, init);
+    let data = null;
+    try {
+      data = await resp.json();
+    } catch (err) {
+      console.warn(`[student_tracker] ${label} invalid JSON`, err);
+    }
+    const meta = { url, label, status: resp.status, ok: resp.ok };
+    if (!resp.ok || (data && data.success === false)) {
+      console.warn(`[student_tracker] ${label} response warning`, meta, data);
+    } else {
+      console.debug(`[student_tracker] ${label} response ok`, meta);
+    }
+    return data;
+  } catch (err) {
+    console.warn(`[student_tracker] ${label} request error`, err);
+    throw err;
+  }
+}
+
 const API = {
-  classes: () => fetch(FN('progress_teacher_summary') + '?action=classes_list', { credentials:'include' }).then(r=>r.json()),
-  leaderboard: (cls, tf) => fetch(FN('progress_teacher_summary') + `?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
-  student: (uid, tf) => fetch(FN('progress_teacher_summary') + `?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`, { credentials:'include' }).then(r=>r.json()),
-  toggleClassVisibility: (cls, hidden) => fetch(FN('progress_teacher_summary') + `?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`, { credentials:'include', method:'POST' }).then(r=>r.json()),
+  classes: () => fetchJsonWithLog(`${FN('progress_teacher_summary')}?action=classes_list`, 'classes_list'),
+  leaderboard: (cls, tf) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+    `leaderboard (${cls} • ${tf})`
+  ),
+  student: (uid, tf) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`,
+    `student_details (${uid} • ${tf})`
+  ),
+  toggleClassVisibility: (cls, hidden) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`,
+    `toggle_class_visibility (${cls})`,
+    { method: 'POST' }
+  ),
 };
+
+const DEFAULT_TIMEFRAME = 'month';
+const LEADERBOARD_PREFETCH_COUNT = 2;
+const STUDENT_PREFETCH_COUNT = 2;
+const SW_PREFETCH_MESSAGE = 'teacher-prefetch';
+const swPrefetchQueue = new Set();
+const ST_CACHE_DEFAULT_TTL = 45000; // ~45s client cache to mask function latency
+
+const teacherPrefetchEndpoints = {
+  classes: () => `${FN('progress_teacher_summary')}?action=classes_list`,
+  leaderboard: (cls, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+  student: (uid, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`
+};
+
+function queuePrefetchUrls(urls) {
+  if (!urls || !urls.length || typeof navigator === 'undefined') return;
+  urls.forEach(url => {
+    if (typeof url === 'string' && url.trim()) swPrefetchQueue.add(url);
+  });
+  flushPrefetchQueue();
+}
+
+function flushPrefetchQueue() {
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker || !navigator.serviceWorker.controller || !swPrefetchQueue.size) return;
+  navigator.serviceWorker.controller.postMessage({ type: SW_PREFETCH_MESSAGE, urls: Array.from(swPrefetchQueue) });
+  swPrefetchQueue.clear();
+}
+
+async function registerTeacherServiceWorker() {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw-teacher.js', { scope: '/' });
+    navigator.serviceWorker.controller && flushPrefetchQueue();
+    navigator.serviceWorker.ready.then(() => flushPrefetchQueue());
+    navigator.serviceWorker.addEventListener?.('controllerchange', flushPrefetchQueue);
+    queuePrefetchUrls([teacherPrefetchEndpoints.classes()]);
+    console.log('[student_tracker] service worker registered', reg.scope);
+    return reg;
+  } catch (err) {
+    console.warn('[student_tracker] service worker registration failed', err);
+    return null;
+  }
+}
+
+function scheduleLeaderboardPrefetch(classes, timeframe = DEFAULT_TIMEFRAME) {
+  const targets = (classes || []).slice(0, LEADERBOARD_PREFETCH_COUNT);
+  const urls = targets
+    .map(cls => typeof cls === 'string' ? cls : cls.name)
+    .filter(name => !!name)
+    .map(name => teacherPrefetchEndpoints.leaderboard(name, timeframe));
+  queuePrefetchUrls(urls);
+}
+
+function scheduleStudentPrefetch(entries, timeframe = DEFAULT_TIMEFRAME) {
+  const ids = (entries || [])
+    .slice(0, STUDENT_PREFETCH_COUNT)
+    .map(entry => entry && entry.user_id)
+    .filter(Boolean);
+  const urls = ids.map(uid => teacherPrefetchEndpoints.student(uid, timeframe));
+  queuePrefetchUrls(urls);
+}
+
+// Lightweight sessionStorage cache helpers (never store tokens/secrets).
+function trackerCacheKey(prefix, parts = []) {
+  return `st-cache:${prefix}:${parts.map(p => encodeURIComponent(String(p || ''))).join('|')}`;
+}
+
+function trackerCacheSet(prefix, parts, payload) {
+  try {
+    const key = trackerCacheKey(prefix, parts);
+    const value = JSON.stringify({ ts: Date.now(), payload });
+    sessionStorage.setItem(key, value);
+  } catch (_) {}
+}
+
+function trackerCacheGet(prefix, parts, maxAgeMs = ST_CACHE_DEFAULT_TTL) {
+  try {
+    const key = trackerCacheKey(prefix, parts);
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.ts) return null;
+    if (Date.now() - parsed.ts > maxAgeMs) {
+      sessionStorage.removeItem(key);
+      return null;
+    }
+    return parsed.payload;
+  } catch (_) {
+    return null;
+  }
+}
+
+const cacheLeaderKey = (cls, tf) => ['leaderboard', cls || '', tf || DEFAULT_TIMEFRAME];
+const cacheStudentKey = (uid, tf) => ['student', uid || '', tf || DEFAULT_TIMEFRAME];
+
+function cacheSetLeaderboard(cls, tf, rows) {
+  if (!cls || !Array.isArray(rows)) return;
+  trackerCacheSet('leaderboard', [cls, tf], rows);
+}
+
+function cacheGetLeaderboard(cls, tf) {
+  if (!cls) return null;
+  const rows = trackerCacheGet('leaderboard', [cls, tf]);
+  return Array.isArray(rows) ? rows : null;
+}
+
+function cacheSetStudentDetails(uid, tf, data) {
+  if (!uid || !data) return;
+  trackerCacheSet('student', [uid, tf], data);
+}
+
+function cacheGetStudentDetails(uid, tf) {
+  if (!uid) return null;
+  return trackerCacheGet('student', [uid, tf]);
+}
+
+// Helper to request a run token for an assignment and cache it in `window.currentHomeworkRunTokens`
+async function createRunTokenForAssignment(assignmentId) {
+  if (!assignmentId) return null;
+  try {
+    window.currentHomeworkRunTokens = window.currentHomeworkRunTokens || {};
+    // If we already have a token for this assignment, reuse it
+    if (window.currentHomeworkRunTokens[assignmentId]) return window.currentHomeworkRunTokens[assignmentId];
+    const resp = await fetch(`/.netlify/functions/homework_api?action=create_run&assignment_id=${encodeURIComponent(assignmentId)}`, { credentials: 'include' });
+    const js = await resp.json().catch(()=>({}));
+    if (!resp.ok || !js.success) {
+      console.warn('createRunTokenForAssignment: failed to create run token', js.error || resp.status);
+      return null;
+    }
+    const tok = js.run_token || null;
+    if (tok) window.currentHomeworkRunTokens[assignmentId] = tok;
+    console.log('createRunTokenForAssignment: stored run token for', assignmentId, tok);
+    return tok;
+  } catch (err) {
+    console.warn('createRunTokenForAssignment error:', err && err.message ? err.message : err);
+    return null;
+  }
+}
 
 // DOM utilities
 const $ = (s, r=document) => r.querySelector(s);
@@ -81,6 +253,7 @@ let selectedStudent = null;
 let sortColumn = 'rank';
 let sortDirection = 'asc'; // 'asc' or 'desc'
 let classTrackerSelectedClass = null;
+let classesWithActiveHomework = new Set();
 
 // Chart instances
 let accuracyChartInstance = null;
@@ -568,7 +741,25 @@ function renderStudentDetails(d){
   });
   console.log('[Games] Received', lists.length, 'list-mode entries, combined into', combinedMap.size, 'lists');
 
-  const combinedGames = Array.from(combinedMap.values()).sort((a,b)=> (b.bestStars - a.bestStars) || ((b.totalSessions||0) - (a.totalSessions||0)) || friendlyListName(a.name).localeCompare(friendlyListName(b.name)));
+  // Sort combined games so the most recently-played lists appear first.
+  // This helps teachers quickly verify recent activity. Fallback to stars/sessions/name.
+  const parseDateForSort = (iso) => {
+    if (!iso) return 0;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+  };
+
+  const combinedGames = Array.from(combinedMap.values()).sort((a, b) => {
+    const aTime = parseDateForSort(a.last_played);
+    const bTime = parseDateForSort(b.last_played);
+    if (bTime !== aTime) return bTime - aTime; // newest first
+    // fallback: prefer higher stars, then more sessions, then alphabetical
+    const starDiff = (b.bestStars || 0) - (a.bestStars || 0);
+    if (starDiff !== 0) return starDiff;
+    const sessDiff = (b.totalSessions || 0) - (a.totalSessions || 0);
+    if (sessDiff !== 0) return sessDiff;
+    return friendlyListName(a.name).localeCompare(friendlyListName(b.name));
+  });
 
   // Categorize each game
   const categorizeList = (name, modes) => {
@@ -716,15 +907,21 @@ function renderStudentDetails(d){
 }
 
 // Class name formatting
+// Display: title-case the raw class name for nicer UI labels.
 const displayClassName = (raw) => {
-  const n = (raw||'').trim().toLowerCase();
-  if (n === 'ny') return 'New York';
-  return raw;
+  if (!raw) return '';
+  const s = String(raw).trim();
+  return s.split(/\s+/).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
 };
+// Backend class name: do not normalize or map values (stop legacy 'new york' -> 'NY' parsing).
+// Return the input as-is (trimmed) so the server receives the exact class identifier.
 const backendClassName = (input) => {
-  const n = (input||'').trim().toLowerCase();
-  if (n === 'new york' || n === 'ny') return 'NY';
-  return input;
+  if (input == null) return input;
+  return String(input).trim();
+};
+const canonicalClassKey = (value) => {
+  if (value == null) return '';
+  return String(value).trim().toLowerCase().replace(/\s+/g, ' ');
 };
 
 const normalizeClassRecord = (record) => {
@@ -774,6 +971,7 @@ async function loadClasses(){
     if (!normalized.length) { classSel.innerHTML = '<option value="">No classes</option>'; setStatus('No student classes found'); return; }
     classSel.innerHTML = '<option value="">Choose class…</option>' + normalized.map(c => `<option value="${c.name}">${c.display}</option>`).join('');
     setStatus(`Loaded ${normalized.length} class${normalized.length === 1 ? '' : 'es'}`);
+    scheduleLeaderboardPrefetch(normalized);
   } catch(e){ classSel.innerHTML = '<option value="">Error loading</option>'; setStatus('Failed to load classes', 'error'); }
 }
 
@@ -785,9 +983,16 @@ async function loadLeaderboard(){
   if (leaderboardTitle) leaderboardTitle.textContent = `${displayClassName(selected)} Leaderboard`;
   lbBody.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
   setStatus(`Loading ${displayClassName(selected)} (${tf})…`);
+  const cached = cacheGetLeaderboard(apiClass, tf);
+  if (cached) {
+    rawLeaderboard = cached;
+    renderLeaderboard(rawLeaderboard);
+    setStatus('Showing cached leaderboard… updating');
+  }
   try{
     const js = await API.leaderboard(apiClass, tf);
     rawLeaderboard = (js && js.success && Array.isArray(js.leaderboard)) ? js.leaderboard : [];
+    cacheSetLeaderboard(apiClass, tf, rawLeaderboard);
     renderLeaderboard(rawLeaderboard);
     if (!rawLeaderboard.length) setStatus('No attempts yet for this filter');
     else {
@@ -796,6 +1001,7 @@ async function loadLeaderboard(){
       if (js && js.truncated) msg += ' (partial data)';
       setStatus(msg);
     }
+      scheduleStudentPrefetch(rawLeaderboard, tf);
   } catch(e){ lbBody.innerHTML = '<tr><td colspan="6" class="empty">Failed to load</td></tr>'; setStatus('Leaderboard error', 'error'); }
 }
 
@@ -808,9 +1014,15 @@ async function loadStudent(uid){
   if (tabGames) tabGames.innerHTML = '<div class="empty">Loading games…</div>';
   switchTab('overview');
   setStatus('Loading student details…');
+  const cached = cacheGetStudentDetails(uid, tf);
+  if (cached && cached.success) {
+    renderStudentDetails(cached);
+    setStatus('Showing cached student details… updating');
+  }
   try{
     const js = await API.student(uid, tf);
     if (js && js.success) {
+      cacheSetStudentDetails(uid, tf, js);
       renderStudentDetails(js);
       if (js.truncated || (js.sessions && js.sessions.truncated)) {
         setStatus('Partial student data (too many records)');
@@ -882,6 +1094,7 @@ async function loadClassTrackerClasses(){
     });
     // Also populate Homework classes from the same data
     renderHomeworkClasses(displayClasses);
+    refreshHomeworkActiveStates();
   } catch(e){ classList.innerHTML = '<div style="padding:1rem; color:#6b7280;">Error loading classes</div>'; }
 }
 
@@ -893,8 +1106,10 @@ function renderHomeworkClasses(displayClasses) {
     return;
   }
   hwClassList.innerHTML = displayClasses.map(cls => {
-    return `<div class="class-item" data-class="${cls.name}" data-display="${cls.display}"><span>${cls.display}</span></div>`;
+    const key = canonicalClassKey(cls.name);
+    return `<div class="class-item" data-class="${cls.name}" data-display="${cls.display}" data-class-key="${key}"><span>${cls.display}</span></div>`;
   }).join('');
+  applyHomeworkClassHighlights(hwClassList);
   hwClassList.querySelectorAll('.class-item').forEach(item => {
     const clsName = item.dataset.class;
     const displayName = item.dataset.display;
@@ -920,6 +1135,41 @@ function renderHomeworkClasses(displayClasses) {
       // loadHomeworkStudentProgress(clsName, displayName);
     });
   });
+}
+
+function applyHomeworkClassHighlights(listRoot) {
+  if (!listRoot) return;
+  listRoot.querySelectorAll('.class-item').forEach(item => {
+    const key = item.dataset.classKey || canonicalClassKey(item.dataset.class);
+    if (key && classesWithActiveHomework.has(key)) {
+      item.classList.add('homework-active');
+    } else {
+      item.classList.remove('homework-active');
+    }
+  });
+}
+
+async function refreshHomeworkActiveStates() {
+  try {
+    const resp = await fetch('/.netlify/functions/homework_api?action=list_assignments', {
+      credentials: 'include'
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (!data || data.success !== true) throw new Error(data?.error || 'Unexpected response');
+    const newSet = new Set();
+    (Array.isArray(data.assignments) ? data.assignments : []).forEach(assign => {
+      if (assign && assign.active) {
+        const key = canonicalClassKey(assign.class || assign.class_name || assign.className);
+        if (key) newSet.add(key);
+      }
+    });
+    classesWithActiveHomework = newSet;
+    const hwClassList = document.getElementById('homeworkClassList');
+    if (hwClassList) applyHomeworkClassHighlights(hwClassList);
+  } catch (err) {
+    console.warn('Failed to refresh active homework highlights:', err && err.message ? err.message : err);
+  }
 }
 
 async function loadHomeworkForClass(className, displayName) {
@@ -948,6 +1198,7 @@ async function loadHomeworkForClass(className, displayName) {
     const activeTab = document.querySelector('.assignment-filter-tab-active');
     const showEnded = activeTab && activeTab.id === 'assignmentTabEnded';
     renderAssignmentsList(assignments, showEnded, className, displayName);
+    refreshHomeworkActiveStates();
   } catch (err) {
     console.error('loadHomeworkForClass error:', err);
     assignmentList.innerHTML = `<div class="empty" style="padding:16px; text-align:center; color:#dc2626;">Error: ${err.message}</div>`;
@@ -998,7 +1249,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
 
   // Card click triggers view progress
   assignmentList.querySelectorAll('.hw-assignment-card').forEach(card => {
-    card.addEventListener('click', (e) => {
+    card.addEventListener('click', async (e) => {
       console.log('Assignment card clicked, target:', e.target.className, 'id:', card.getAttribute('data-assignment-id'));
       if (e.target.classList.contains('hw-end-btn')) return;
       const id = card.getAttribute('data-assignment-id');
@@ -1010,7 +1261,15 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
       card.classList.add('selected');
       console.log('Added selected class, card classes:', card.className);
       try { window.currentHomeworkAssignment = id; } catch(e){}
-      if (id) loadHomeworkStudentProgress(className, id);
+      if (id) {
+        // Create a run token for this assignment (best-effort). If token is created
+        // the server and the game should use it to link sessions. Failure to
+        // create a token is non-fatal and we fall back to name-based matching.
+        try {
+          await createRunTokenForAssignment(id);
+        } catch (err) { /* non-fatal */ }
+        loadHomeworkStudentProgress(className, id);
+      }
     });
   });
   
@@ -1317,8 +1576,22 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
       GRAMMAR_CORE.forEach(m => { if (expectedSet.length < totalGuess && !expectedSet.includes(m)) expectedSet.push(m); });
     }
 
-    // Allow backend total override if present and seems reasonable
-    let totalModes = js.total_modes || (rows[0]?.modes_total) || expectedSet.length;
+    // Allow backend total override if present and seems reasonable.
+    // Prefer server-provided js.total_modes when available; fall back to
+    // row.modes_total or our expectedSet heuristic only when missing.
+    let totalModes = (Number.isFinite(js.total_modes) && js.total_modes > 0) ? Number(js.total_modes) : ((rows[0]?.modes_total) || expectedSet.length);
+    // If server didn't provide a value, apply conservative heuristics for category
+    if (!Number.isFinite(js.total_modes)) {
+      if (category === 'grammar') {
+        // Grammar: default to 6 only when advanced modes are present; else 4
+        const advancedPresent = GRAMMAR_ADV.filter(m => unionModes.has(m)).length >= 2;
+        totalModes = advancedPresent ? 6 : 4;
+      } else if (category === 'phonics') {
+        totalModes = 4;
+      } else if (category === 'vocab') {
+        totalModes = 6;
+      }
+    }
 
     // Compute per-row derived metrics when missing/wrong
     rows.forEach(r => {
@@ -1343,7 +1616,14 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
         attemptedCount = r.modes_attempted;
       }
       // If backend total_modes is missing or clearly wrong (e.g., 6 for phonics), override
-  if (!js.total_modes || (category === 'phonics' && Number(totalModes) > PHONICS_EXPECTED.length)) totalModes = expectedSet.length;
+  if (!Number.isFinite(js.total_modes)) {
+    // Re-apply heuristic if backend total missing
+    if (category === 'grammar') {
+      const advancedCount = GRAMMAR_ADV.filter(m=>unionModes.has(m)).length;
+      totalModes = advancedCount >= 2 ? 6 : 4;
+    } else if (category === 'phonics') totalModes = 4;
+    else totalModes = 6;
+  }
   // For grammar assignments, if backend gives generic 6 but our expectedSet length differs (e.g., 7), use expectedSet length.
       if (category === 'grammar') {
         // Accept backend total if within 4-6; otherwise fallback to expectedSet length (default 4 or 6).
@@ -1351,7 +1631,7 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
           totalModes = expectedSet.length;
         }
       }
-      const completionPct = totalModes ? Math.round((attemptedCount / totalModes) * 100) : (r.completion || 0);
+  const completionPct = totalModes ? Math.round((attemptedCount / totalModes) * 100) : (r.completion || 0);
       // Attach computed values for rendering and modal use
       r.__computed_modes_attempted = attemptedCount;
       r.__computed_total_modes = totalModes;
@@ -1390,7 +1670,17 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   // Prefer computed values when available (fallbacks injected earlier)
   const displayCompletion = (row.__computed_completion != null) ? row.__computed_completion : (row.completion || 0);
   const displayModesAttempted = (row.__computed_modes_attempted != null) ? row.__computed_modes_attempted : ((row.modes || []).length || 0);
-  const displayTotalModes = totalModes || (row.__computed_total_modes || (row.modes_total || 6));
+  let displayTotalModes = totalModes || (row.__computed_total_modes || (row.modes_total || null));
+  // Normalize totals conservatively: prefer server/computed values; only adjust if missing or clearly invalid.
+  const catGuess = (assignmentId && (String(assignmentId).toLowerCase().includes('phonics'))) ? 'phonics' : (displayTotalModes === 4 ? 'phonics' : (displayTotalModes && displayTotalModes <= 4 ? 'phonics' : 'grammar'));
+  if (!Number.isFinite(displayTotalModes) || displayTotalModes <= 0) {
+    // Fallback defaults
+    displayTotalModes = (catGuess === 'phonics') ? 4 : 6;
+  } else {
+    // If provided value is outside expected bounds, clamp to reasonable set
+    if (catGuess === 'phonics' && displayTotalModes > 4) displayTotalModes = 4;
+    if (catGuess === 'grammar' && (displayTotalModes < 4 || displayTotalModes > 6)) displayTotalModes = 6;
+  }
   // Was the total derived by client-side heuristic?
   const totalWasComputed = (row.modes_total == null) || (Number(row.modes_total) !== Number(displayTotalModes));
   if (meta) meta.textContent = `Completion: ${displayCompletion}% • Stars: ${row.stars || 0} • Overall Accuracy: ${row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0)}% (Best: ${row.accuracy_best||0}%) • Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
@@ -1417,6 +1707,7 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
 
 // Initialize UI on document ready
 document.addEventListener('DOMContentLoaded', () => {
+  registerTeacherServiceWorker();
   // Load classes asynchronously without blocking UI
   loadClasses().catch(e => console.error('loadClasses error:', e));
   loadClassTrackerClasses().catch(e => console.error('loadClassTrackerClasses error:', e));
