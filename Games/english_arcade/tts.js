@@ -1,5 +1,5 @@
 // Shared TTS utilities
-import { FN } from './scripts/api-base.js';
+import { FN } from './scripts/api-base.js?v=20251231a';
 
 // Audio cache for preloaded sounds (keyed by normalized key string)
 // Note: key may be a base word (e.g., "run") or a variant key (e.g., "run_itself")
