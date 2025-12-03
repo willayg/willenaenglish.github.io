@@ -57,6 +57,30 @@ function cookie(name, value, event, { maxAge, secure = true, httpOnly = true, sa
   return s;
 }
 
+// Local dev helper: load `.env` from repo root into process.env when keys are missing.
+// This makes `netlify dev` pick up local Supabase vars without changing production.
+try {
+  const fs = require('fs');
+  const path = require('path');
+  const repoRoot = path.join(__dirname, '..', '..');
+  const envPath = path.join(repoRoot, '.env');
+  if (fs.existsSync(envPath)) {
+    const raw = fs.readFileSync(envPath, 'utf8');
+    raw.split(/\r?\n/).forEach(line => {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (m) {
+        let val = m[2];
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith('\'') && val.endsWith('\''))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[m[1]]) process.env[m[1]] = val;
+      }
+    });
+  }
+} catch (e) {
+  // ignore failures — production env should be set by Netlify
+}
+
 function respond(event, statusCode, bodyObj, extraHeaders = {}, cookies /* string[] */) {
   const resp = {
     statusCode,
