@@ -55,17 +55,73 @@ BEGIN
   ),
   session_stars AS (
     -- Best stars per (user, list_name, mode) pair
+    -- Uses same accuracy extraction logic as JS: accuracy, then score/total, then score/max
     SELECT
       ps.user_id,
       ps.list_name,
       ps.mode,
       MAX(
         CASE
-          WHEN (ps.summary->>'accuracy')::NUMERIC >= 1 THEN 5
-          WHEN (ps.summary->>'accuracy')::NUMERIC >= 0.95 THEN 4
-          WHEN (ps.summary->>'accuracy')::NUMERIC >= 0.90 THEN 3
-          WHEN (ps.summary->>'accuracy')::NUMERIC >= 0.80 THEN 2
-          WHEN (ps.summary->>'accuracy')::NUMERIC >= 0.60 THEN 1
+          WHEN COALESCE(
+            (ps.summary->>'accuracy')::NUMERIC,
+            CASE 
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'total') IS NOT NULL 
+                AND (ps.summary->>'total')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'total')::NUMERIC
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'max') IS NOT NULL 
+                AND (ps.summary->>'max')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'max')::NUMERIC
+              ELSE NULL
+            END
+          ) >= 1 THEN 5
+          WHEN COALESCE(
+            (ps.summary->>'accuracy')::NUMERIC,
+            CASE 
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'total') IS NOT NULL 
+                AND (ps.summary->>'total')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'total')::NUMERIC
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'max') IS NOT NULL 
+                AND (ps.summary->>'max')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'max')::NUMERIC
+              ELSE NULL
+            END
+          ) >= 0.95 THEN 4
+          WHEN COALESCE(
+            (ps.summary->>'accuracy')::NUMERIC,
+            CASE 
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'total') IS NOT NULL 
+                AND (ps.summary->>'total')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'total')::NUMERIC
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'max') IS NOT NULL 
+                AND (ps.summary->>'max')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'max')::NUMERIC
+              ELSE NULL
+            END
+          ) >= 0.90 THEN 3
+          WHEN COALESCE(
+            (ps.summary->>'accuracy')::NUMERIC,
+            CASE 
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'total') IS NOT NULL 
+                AND (ps.summary->>'total')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'total')::NUMERIC
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'max') IS NOT NULL 
+                AND (ps.summary->>'max')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'max')::NUMERIC
+              ELSE NULL
+            END
+          ) >= 0.80 THEN 2
+          WHEN COALESCE(
+            (ps.summary->>'accuracy')::NUMERIC,
+            CASE 
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'total') IS NOT NULL 
+                AND (ps.summary->>'total')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'total')::NUMERIC
+              WHEN (ps.summary->>'score') IS NOT NULL AND (ps.summary->>'max') IS NOT NULL 
+                AND (ps.summary->>'max')::NUMERIC > 0 
+              THEN (ps.summary->>'score')::NUMERIC / (ps.summary->>'max')::NUMERIC
+              ELSE NULL
+            END
+          ) >= 0.60 THEN 1
           ELSE 0
         END
       ) AS best_stars
@@ -75,6 +131,7 @@ BEGIN
       AND ps.list_name IS NOT NULL
       AND ps.mode IS NOT NULL
       AND (v_month_start IS NULL OR ps.ended_at >= v_month_start)
+      AND (ps.summary->>'completed' IS NULL OR (ps.summary->>'completed')::BOOLEAN != false)
     GROUP BY ps.user_id, ps.list_name, ps.mode
   ),
   student_stars AS (
