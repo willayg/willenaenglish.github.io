@@ -30,7 +30,7 @@
     }
     const sw = document.getElementById('darkModeToggle');
     if (sw) sw.setAttribute('aria-checked', m === 'dark');
-    try { window.dispatchEvent(new CustomEvent('studenttheme:changed', { detail: { theme: m } })); } catch {}
+    try { setTimeout(() => { window.dispatchEvent(new CustomEvent('studenttheme:changed', { detail: { theme: m } })); }, 0); } catch {}
   }
   function setTheme(mode){
     if (mode !== 'dark' && mode !== 'light') return; // ignore invalid
