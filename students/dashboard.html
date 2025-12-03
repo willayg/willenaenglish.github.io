@@ -17,35 +17,38 @@
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        // First check whether cookie-based sessions are available (handles incognito or strict privacy modes)
+        // Check if cookies are actually blocked (try to set/read a test cookie)
+        let cookiesBlocked = false;
         try {
-          const echoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=cookie_echo&_=${Date.now()}`);
-          const echoJson = await echoRes.json().catch(() => ({}));
-          // If cookies appear to be blocked, show a clear message and stop further requests that will 401 repeatedly
-          if (echoJson && echoJson.hasAccess === false && echoJson.hasRefresh === false) {
-            // Show a lightweight banner instructing user to allow cookies or use normal browsing mode
-            const b = document.createElement('div');
-            b.style.position = 'fixed';
-            b.style.left = '0';
-            b.style.right = '0';
-            b.style.top = '0';
-            b.style.zIndex = '99999';
-            b.style.background = '#ffe9e6';
-            b.style.color = '#2b0b09';
-            b.style.padding = '12px 16px';
-            b.style.fontWeight = '700';
-            b.style.textAlign = 'center';
-            b.textContent = 'Cookies appear to be blocked in this browser window. Please enable cookies or open the site in a regular (non-incognito) window so you can sign in.';
-            const closeBtn = document.createElement('button');
-            closeBtn.textContent = 'Close';
-            closeBtn.style.marginLeft = '12px';
-            closeBtn.addEventListener('click', () => b.remove());
-            b.appendChild(closeBtn);
-            document.body.appendChild(b);
-            return; // stop further checks to avoid lots of 401s
-          }
+          document.cookie = '__cookie_test=1; Path=/; SameSite=Lax';
+          cookiesBlocked = !document.cookie.includes('__cookie_test=1');
+          // Clean up test cookie
+          document.cookie = '__cookie_test=; Path=/; Max-Age=0';
         } catch (e) {
-          // ignore cookie check errors and continue to whoami
+          cookiesBlocked = true;
+        }
+
+        if (cookiesBlocked) {
+          // Show a lightweight banner instructing user to allow cookies or use normal browsing mode
+          const b = document.createElement('div');
+          b.style.position = 'fixed';
+          b.style.left = '0';
+          b.style.right = '0';
+          b.style.top = '0';
+          b.style.zIndex = '99999';
+          b.style.background = '#ffe9e6';
+          b.style.color = '#2b0b09';
+          b.style.padding = '12px 16px';
+          b.style.fontWeight = '700';
+          b.style.textAlign = 'center';
+          b.textContent = 'Cookies appear to be blocked in this browser window. Please enable cookies or open the site in a regular (non-incognito) window so you can sign in.';
+          const closeBtn = document.createElement('button');
+          closeBtn.textContent = 'Close';
+          closeBtn.style.marginLeft = '12px';
+          closeBtn.addEventListener('click', () => b.remove());
+          b.appendChild(closeBtn);
+          document.body.appendChild(b);
+          return; // stop further checks to avoid lots of 401s
         }
 
         const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);

@@ -81,6 +81,16 @@ try {
   // ignore failures — production env should be set by Netlify
 }
 
+// ── Module-scope Supabase client (reused across warm invocations) ──
+let _createClient;
+try {
+  _createClient = require('@supabase/supabase-js').createClient;
+} catch {}
+const _SUPABASE_URL = process.env.SUPABASE_URL;
+const _SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const _ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+const _supabase = (_createClient && _SUPABASE_URL && _SERVICE_KEY) ? _createClient(_SUPABASE_URL, _SERVICE_KEY) : null;
+
 function respond(event, statusCode, bodyObj, extraHeaders = {}, cookies /* string[] */) {
   const resp = {
     statusCode,
@@ -136,28 +146,16 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Lazy import supabase only when needed
-    let createClient;
-    try {
-      const supabaseModule = await import('@supabase/supabase-js');
-      createClient = supabaseModule.createClient;
-    } catch (e) {
-      try {
-        createClient = require('@supabase/supabase-js').createClient;
-      } catch (e2) {
-        return respond(event, 500, { success: false, error: 'Failed to load supabase client' });
-      }
-    }
+    // Use module-scope Supabase client for faster warm starts
+    const createClient = _createClient;
+    const SUPABASE_URL = _SUPABASE_URL;
+    const SERVICE_KEY = _SERVICE_KEY;
+    const ANON_KEY = _ANON_KEY;
+    const supabase = _supabase;
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
-
-    if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
+    if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY || !supabase) {
       return respond(event, 500, { success: false, error: 'Missing environment variables' });
     }
-
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // Detect localhost to relax cookie flags for http dev
     const isLocalDev = () => {
@@ -189,23 +187,32 @@ exports.handler = async (event) => {
       const { email, password } = body;
       if (!email || !password) return respond(event, 400, { success: false, error: 'Missing credentials' });
 
-      // Check approval
-      const { data: profile, error: profileError } = await supabase
+      // Run profile check and auth token fetch in parallel for faster login
+      const profilePromise = supabase
         .from('profiles')
         .select('id, approved')
         .eq('email', email)
         .single();
 
-      if (profileError || !profile || !profile.approved) {
-        return respond(event, 401, { success: false, error: 'User not found or not approved' });
-      }
-
-      // Auth with Supabase
-      const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      const authPromise = fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
         body: JSON.stringify({ email, password }),
       });
+
+      const [profileResult, authResp] = await Promise.all([
+        profilePromise.then(r => ({ data: r.data, error: r.error })).catch(e => ({ error: e })),
+        authPromise
+      ]);
+
+      const { data: profile, error: profileError } = profileResult;
+
+      // Check approval (must still reject if not approved even if auth succeeded)
+      if (profileError || !profile || !profile.approved) {
+        return respond(event, 401, { success: false, error: 'User not found or not approved' });
+      }
+
+      // Process auth response
       const authData = await authResp.json();
       if (!authResp.ok || !authData.access_token) {
         return respond(event, 401, { success: false, error: (authData && authData.error_description) || 'Invalid credentials' });
