@@ -10,11 +10,26 @@
  */
 
 exports.handler = async (event) => {
-  // CORS headers
+  // CORS headers - handle credentialed requests from custom domain
+  const origin = event.headers?.origin || event.headers?.Origin || '';
+  const allowedOrigins = [
+    'https://willenaenglish.com',
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.github.io',
+    'https://willenaenglish.netlify.app',
+    'http://localhost:8888',
+    'http://localhost:9000',
+    'http://localhost:3000'
+  ];
+  
+  // Use specific origin if it's in our allowed list, otherwise use the first allowed origin
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json'
   };
 
