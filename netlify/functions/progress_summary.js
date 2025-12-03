@@ -36,7 +36,8 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || proce
 const ADMIN_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 
 // Feature flag: opt-in to SQL-based leaderboard aggregation (faster)
-const USE_SQL_LEADERBOARD = process.env.USE_SQL_LEADERBOARD === '1' || process.env.USE_SQL_LEADERBOARD === 'true';
+// DISABLED by default until SQL function is fixed to match JS accuracy extraction logic
+const USE_SQL_LEADERBOARD = false; // process.env.USE_SQL_LEADERBOARD === '1' || process.env.USE_SQL_LEADERBOARD === 'true';
 
 // Cache TTL for CDN/browser caching (seconds). Reduces invocation count.
 const CACHE_CONTROL_MAX_AGE = Number(process.env.PROGRESS_CACHE_MAX_AGE) || 60;
@@ -470,6 +471,7 @@ exports.handler = async (event) => {
       const startMs = Date.now();
       try {
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
+        const bypassCache = event.queryStringParameters && (event.queryStringParameters.bypass_cache === '1' || event.queryStringParameters.bypass_cache === 'true');
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
         const { data: meProf, error: meErr } = await adminClient.from('profiles').select('class').eq('id', userId).single();
@@ -479,10 +481,15 @@ exports.handler = async (event) => {
         if (className.length === 1) return timedJson(200, { success: true, leaderboard: [], class: null }, startMs);
 
         const cacheKey = classLeaderboardCacheKey(className, timeframe);
-        const cachedPayload = await redisCache.getJson(cacheKey);
-        if (cachedPayload) {
-          console.log(`[progress_summary] Redis cache hit for leaderboard_stars_class ${className} (${timeframe})`);
-          return timedJson(200, formatClassLeaderboardResponse(cachedPayload, userId), startMs);
+        // Skip cache if bypass_cache=1 is passed (admin/testing use)
+        if (!bypassCache) {
+          const cachedPayload = await redisCache.getJson(cacheKey);
+          if (cachedPayload) {
+            console.log(`[progress_summary] Redis cache hit for leaderboard_stars_class ${className} (${timeframe})`);
+            return timedJson(200, formatClassLeaderboardResponse(cachedPayload, userId), startMs);
+          }
+        } else {
+          console.log(`[progress_summary] bypass_cache=1, skipping cache for leaderboard_stars_class`);
         }
 
         // ========== SQL-OPTIMIZED PATH (opt-in via USE_SQL_LEADERBOARD=1 or local ?dev_sql=1) ==========
@@ -580,31 +587,39 @@ exports.handler = async (event) => {
     if (section === 'leaderboard_stars_global') {
       try {
         const timeframe = ((event.queryStringParameters && event.queryStringParameters.timeframe) || 'all').toLowerCase();
+        const bypassCache = event.queryStringParameters && (event.queryStringParameters.bypass_cache === '1' || event.queryStringParameters.bypass_cache === 'true');
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
         const cacheKey = globalLeaderboardCacheKey(timeframe);
 
-        const redisPayloadRaw = await redisCache.getJson(cacheKey);
-        const redisPayload = normalizeGlobalCachePayload(redisPayloadRaw);
-        if (redisPayload) {
-          console.log(`[progress_summary] Redis cache hit for leaderboard_stars_global (${timeframe})`);
-          const response = await formatGlobalLeaderboardResponse(redisPayload, userId, adminClient, firstOfMonthIso);
-          return json(200, response);
+        // Skip cache if bypass_cache=1 is passed (admin/testing use)
+        if (!bypassCache) {
+          const redisPayloadRaw = await redisCache.getJson(cacheKey);
+          const redisPayload = normalizeGlobalCachePayload(redisPayloadRaw);
+          if (redisPayload) {
+            console.log(`[progress_summary] Redis cache hit for leaderboard_stars_global (${timeframe})`);
+            const response = await formatGlobalLeaderboardResponse(redisPayload, userId, adminClient, firstOfMonthIso);
+            return json(200, response);
+          }
+        } else {
+          console.log(`[progress_summary] bypass_cache=1, skipping Redis/DB cache for leaderboard_stars_global`);
         }
 
         let normalizedDbPayload = null;
-        try {
-          const { data: dbCache, error: dbErr } = await adminClient
-            .from('leaderboard_cache')
-            .select('payload, updated_at')
-            .eq('section', 'leaderboard_stars_global')
-            .eq('timeframe', timeframe)
-            .single();
-          if (!dbErr && dbCache && dbCache.payload) {
-            normalizedDbPayload = normalizeGlobalCachePayload(dbCache.payload);
-            console.log('[progress_summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', dbCache.updated_at);
+        if (!bypassCache) {
+          try {
+            const { data: dbCache, error: dbErr } = await adminClient
+              .from('leaderboard_cache')
+              .select('payload, updated_at')
+              .eq('section', 'leaderboard_stars_global')
+              .eq('timeframe', timeframe)
+              .single();
+            if (!dbErr && dbCache && dbCache.payload) {
+              normalizedDbPayload = normalizeGlobalCachePayload(dbCache.payload);
+              console.log('[progress_summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', dbCache.updated_at);
+            }
+          } catch (e) {
+            console.warn('[progress_summary] DB cache read failed (continuing to compute):', e && e.message);
           }
-        } catch (e) {
-          console.warn('[progress_summary] DB cache read failed (continuing to compute):', e && e.message);
         }
 
         if (normalizedDbPayload) {
@@ -683,24 +698,23 @@ exports.handler = async (event) => {
         const ids = filteredStudents.map(p => p.id).filter(Boolean);
         const pointTotals = await aggregatePointsForIds(adminClient, ids, firstOfMonthIso);
         const pointsMap = new Map(pointTotals.map(row => [row.user_id, row.points]));
+        
+        // Fetch sessions for ALL students to compute stars correctly (same as class leaderboard)
+        const sessions = await fetchSessionsForUsers(adminClient, ids, firstOfMonthIso);
+        const starsByUser = buildStarsByUserMap(sessions);
+        
         const sortedEntries = filteredStudents.map(profile => ({
           user_id: profile.id,
           name: profile.name || profile.username || 'Student',
           avatar: profile.avatar || null,
           class: profile.class || null,
-          points: Math.round(pointsMap.get(profile.id) || 0)
+          points: Math.round(pointsMap.get(profile.id) || 0),
+          stars: starsByUser.get(profile.id) || 0
         }));
         sortedEntries.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
 
-        const topLimit = 10;
+        const topLimit = 15;
         const topEntries = sortedEntries.slice(0, topLimit);
-        const relevantUserIds = Array.from(new Set(topEntries.map(e => e.user_id))).filter(Boolean);
-        const sessions = await fetchSessionsForUsers(adminClient, relevantUserIds, firstOfMonthIso);
-        const starsByUser = buildStarsByUserMap(sessions);
-
-        topEntries.forEach(entry => {
-          entry.stars = starsByUser.get(entry.user_id) || 0;
-        });
 
         const finalizedTopEntries = finalizeLeaderboard(topEntries.map(entry => ({ ...entry }))); // avoid mutating base array
 

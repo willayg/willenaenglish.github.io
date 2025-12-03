@@ -1093,6 +1093,16 @@
     updateStarsMetricUI();
     updateGlobalMetricUI();
 
+    // Update "This Month" buttons to show current month name
+    function updateMonthButtons() {
+      const monthName = new Date().toLocaleString(window.currentLang || 'en', { month: 'long' });
+      ['slFilterMonth', 'glFilterMonth'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.textContent = monthName;
+      });
+    }
+    updateMonthButtons();
+
       // Re-translate on language change
       window.addEventListener('studentlang:changed', async () => {
         starsLbCache.clear();
@@ -1100,6 +1110,7 @@
         await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
         updateStarsMetricUI();
         updateGlobalMetricUI();
+        updateMonthButtons(); // Update month name for new language
       });
       // If auth changes in another tab or via explicit event, reload data to reflect new account
       window.addEventListener('auth:changed', () => {

@@ -1,4 +1,34 @@
 const { createClient } = require('@supabase/supabase-js');
+const redisCache = require('../../lib/redis_cache');
+
+// Helper: invalidate leaderboard caches (Redis + DB) after writes that affect points/stars
+// Uses a short "recompute lock" to avoid a storm of recomputes if many writes happen at once
+async function invalidateLeaderboardCache(supabase) {
+  const lockKey = 'lb:invalidate_lock';
+  try {
+    // Check if lock exists (someone recently invalidated)
+    const lockVal = await redisCache.getJson(lockKey);
+    if (lockVal) {
+      // Skip invalidation — another write recently cleared the cache
+      return;
+    }
+    // Set lock for 30 seconds to prevent storm
+    await redisCache.setJson(lockKey, { ts: Date.now() }, 30);
+    // Delete Redis leaderboard keys
+    await Promise.all([
+      redisCache.del('lb:global:all'),
+      redisCache.del('lb:global:month'),
+      redisCache.del('lb:class:new york:all'),
+      redisCache.del('lb:class:new york:month')
+    ]);
+    // Also delete DB cache rows (so stale DB cache doesn't repopulate Redis)
+    await supabase.from('leaderboard_cache').delete().eq('section', 'leaderboard_stars_global');
+    await supabase.from('leaderboard_cache').delete().eq('section', 'leaderboard_stars_class');
+  } catch (e) {
+    // Non-fatal: cache invalidation failure shouldn't break writes
+    console.warn('[log_word_attempt] invalidateLeaderboardCache error:', e && e.message);
+  }
+}
 
 // Expected tables (create via SQL in Supabase):
 // progress_attempts (
@@ -206,6 +236,10 @@ exports.handler = async (event) => {
         })
         .eq('session_id', session_id);
       if (error) return reply(400, { error: error.message, code: error.code, details: error.details, hint: error.hint });
+      
+      // Invalidate leaderboard cache so next read sees fresh data
+      await invalidateLeaderboardCache(supabase);
+      
       return reply(200, { ok: true });
     }
 
@@ -296,6 +330,9 @@ exports.handler = async (event) => {
           if (Array.isArray(rows)) rows.forEach(r => { points_total += (Number(r.points) || 0); });
         }
       }
+      // Invalidate leaderboard cache so next read sees fresh data
+      await invalidateLeaderboardCache(supabase);
+      
       return reply(200, { ok: true, points_total: Number(points_total) });
     }
 
@@ -349,6 +386,10 @@ exports.handler = async (event) => {
       if (batchErr) {
         return reply(400, { error: batchErr.message });
       }
+      
+      // Invalidate leaderboard cache so next read sees fresh data
+      await invalidateLeaderboardCache(supabase);
+      
       return reply(200, { ok: true, inserted: rows.length });
     }
     // ========== END BATCH ==========
