@@ -166,14 +166,30 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     const hs = document.createElement('style');
     hs.id = 'grammar-mode-selector-header-styles';
     hs.textContent = `
-      #gameArea .grammar-mode-selector-header { text-align:center; padding:12px 8px 16px; }
+      /* Title button inside the card - no border, minimal padding */
+      #gameArea .grammar-mode-selector-header { text-align:center; padding:0; margin:0; }
       #gameArea .grammar-mode-selector-header .grammar-rule-btn { 
-        appearance: none; border:2px solid #21b5c0; background:#ffffff; color:#21b5c0; cursor:pointer;
-        font-family:'Poppins', Arial, sans-serif; font-weight:800; font-size:20px; padding:12px 18px; border-radius:12px;
-        box-shadow:0 2px 8px rgba(33,181,192,0.1); transition: transform .15s ease, box-shadow .15s ease;
+        appearance: none; border:none; background:transparent; color:#ff66c4; cursor:pointer;
+        font-family:'Poppins', Arial, sans-serif; font-weight:800; font-size:22px; padding:8px 16px;
+        position:relative; display:inline-block;
+        transition: transform .15s ease;
       }
-      #gameArea .grammar-mode-selector-header .grammar-rule-btn:hover { transform: translateY(-2px); box-shadow:0 6px 16px rgba(33,181,192,0.25); }
-      #gameArea .grammar-mode-selector-header .grammar-rule-btn:active { transform: translateY(0); box-shadow:0 2px 8px rgba(33,181,192,0.15); }
+      #gameArea .grammar-mode-selector-header .grammar-rule-btn:hover { transform: scale(1.02); }
+      #gameArea .grammar-mode-selector-header .grammar-rule-btn:active { transform: scale(0.98); }
+      /* Click here overlay on the title */
+      #gameArea .grammar-mode-selector-header .grammar-rule-btn .click-overlay {
+        position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+        background:rgba(61,221,233,0.92); color:#fff; font-size:13px; font-weight:700;
+        padding:6px 14px; border-radius:20px; white-space:nowrap;
+        pointer-events:none; opacity:0;
+        animation: clickOverlayPulse 3s ease-in-out forwards;
+      }
+      @keyframes clickOverlayPulse {
+        0% { opacity:0; transform:translate(-50%,-50%) scale(0.8); }
+        15% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+        85% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+        100% { opacity:0; transform:translate(-50%,-50%) scale(0.9); }
+      }
       /* Slightly larger icons on grammar cards */
       #modeSelect .mode-btn .mode-icon img { width:88px !important; height:88px !important; }
       @media (min-width:600px){ #modeSelect .mode-btn .mode-icon img { width:96px !important; height:96px !important; } }
@@ -189,35 +205,26 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     document.head.appendChild(hs);
   }
 
-  // Clear and render title ABOVE the card, then the card below
+  // Create the card first, then add title inside it
+  const cardDiv = document.createElement('div');
+  cardDiv.className = 'wa-card';
+  cardDiv.id = 'modeSelectCard';
+  cardDiv.style.background = '#fbffff';
+  container.appendChild(cardDiv);
+
+  // Add title header INSIDE the card at the top
   const headerDiv = document.createElement('div');
   headerDiv.className = 'grammar-mode-selector-header';
   headerDiv.innerHTML = `
-  <button type="button" class="grammar-rule-btn glow-btn" aria-label="${currentGrammarName}: rules and tips" style="color: #ff66c4;">${currentGrammarName}</button>
-  <div class="grammar-help-msg" style="margin-top:8px; text-align:center; color:#888; font-size:15px; font-family:'Poppins', Arial, sans-serif; opacity:0; animation: fadeInOutMsg 4s forwards;">제목을 누르면 도움말이 나와요</div>
-      <style>
-        @keyframes pulseGlow {
-          0% { box-shadow: 0 0 0px #3ddde9ff; }
-          50% { box-shadow: 0 0 12px #3ddde9ff, 0 0 24px #3ddde988; }
-          100% { box-shadow: 0 0 0px #3ddde9ff; }
-        }
-        .glow-btn {
-          animation: pulseGlow 2s ease-in-out infinite;
-        }
-        @keyframes fadeInOutMsg {
-          0% { opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      </style>
+  <button type="button" class="grammar-rule-btn" aria-label="${currentGrammarName}: rules and tips">${currentGrammarName}<span class="click-overlay">Click for help!</span></button>
   `;
-  // Remove glow after 4 seconds
+  cardDiv.appendChild(headerDiv);
+
+  // Remove click overlay after animation ends
   setTimeout(() => {
-    const btn = headerDiv.querySelector('.glow-btn');
-    if (btn) btn.classList.remove('glow-btn');
-  }, 4000);
-  container.appendChild(headerDiv);
+    const overlay = headerDiv.querySelector('.click-overlay');
+    if (overlay) overlay.remove();
+  }, 3500);
 
   // Title click opens grammar chart modal with rules and examples
   try {
@@ -243,13 +250,6 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
       }
     });
   } catch {}
-
-  // Now add the card below the header
-  const cardDiv = document.createElement('div');
-  cardDiv.className = 'wa-card';
-  cardDiv.id = 'modeSelectCard';
-  cardDiv.style.background = '#fbffff';
-  container.appendChild(cardDiv);
 
   const modeSelectDiv = document.createElement('div');
   modeSelectDiv.id = 'modeSelect';
