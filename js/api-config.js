@@ -28,7 +28,8 @@
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  let CF_ROLLOUT_PERCENT = 0;
+  // Default to 100% so production will use Cloudflare Worker for migrated functions.
+  let CF_ROLLOUT_PERCENT = 100;
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
   // Useful for testing parity without affecting users
