@@ -5,11 +5,93 @@
 
 import { startSession, logAttempt, endSession } from '../../../../students/records.js';
 import { renderGrammarSummary } from '../grammar_summary.js';
+import { FN } from '../../scripts/api-base.js';
 
 let state = null;
 let pendingTimeout = null;
+let activeSentenceAudio = null;
+const sentenceAudioCache = new Map();
 const MODE = 'grammar_choose';
 const DEFAULT_FILE = 'data/grammar/level3/past_simple_irregular.json';
+
+// --- Audio helpers for Level 3 grammar ---
+function normalizeForGrammarKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['"`]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function buildGrammarAudioCandidates(item) {
+  const candidates = [];
+  const seen = new Set();
+  const add = (key) => { if (!key || seen.has(key)) return; seen.add(key); candidates.push(key); };
+  const idBase = normalizeForGrammarKey(item?.id);
+  const wordBase = normalizeForGrammarKey(item?.word || item?.base);
+  const articleBase = normalizeForGrammarKey(item?.article);
+  if (idBase) add(`${idBase}_grammar`);
+  if (wordBase && articleBase) add(`${wordBase}_${articleBase}_grammar`);
+  if (wordBase) add(`${wordBase}_grammar`);
+  return candidates;
+}
+
+async function hydrateGrammarAudio(items) {
+  if (!Array.isArray(items) || !items.length) return;
+  const candidateMap = new Map();
+  const allCandidates = new Set();
+  items.forEach((item) => {
+    const candidates = buildGrammarAudioCandidates(item);
+    if (!candidates.length) return;
+    candidateMap.set(item, candidates);
+    candidates.forEach((key) => allCandidates.add(key));
+  });
+  if (!candidateMap.size) return;
+  const words = Array.from(allCandidates);
+  let results = null;
+  try {
+    const endpoint = FN('get_audio_urls');
+    const init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ words }) };
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      init.signal = AbortSignal.timeout(10000);
+    }
+    const res = await fetch(endpoint, init);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.results && typeof data.results === 'object') results = data.results;
+    }
+  } catch (err) { console.debug('[GrammarChooseL3] audio lookup error', err?.message); }
+  if (!results) return;
+  candidateMap.forEach((candidates, item) => {
+    for (const key of candidates) {
+      const lower = key?.toLowerCase?.();
+      const variants = [key, lower, `${key}.mp3`, lower ? `${lower}.mp3` : null];
+      const info = variants.map((v) => (v ? results[v] : null)).find((r) => r && r.exists && r.url);
+      if (info) { item.sentenceAudioUrl = info.url; item.audio_key = key; break; }
+    }
+  });
+}
+
+function playSentenceAudio(item) {
+  if (!item) return;
+  const url = item.sentenceAudioUrl;
+  if (activeSentenceAudio) {
+    try { activeSentenceAudio.pause(); } catch {}
+    try { activeSentenceAudio.currentTime = 0; } catch {}
+    activeSentenceAudio = null;
+  }
+  if (url) {
+    try {
+      let audio = sentenceAudioCache.get(url);
+      if (!audio) { audio = new Audio(url); audio.preload = 'auto'; sentenceAudioCache.set(url, audio); }
+      activeSentenceAudio = audio;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } catch {}
+  }
+}
+// --- End audio helpers ---
 
 function shuffle(array) {
   const arr = Array.isArray(array) ? array.slice() : [];
@@ -106,6 +188,13 @@ export async function startGrammarChooseL3({
   }
 
   state.list = shuffle(state.list);
+  
+  // Hydrate audio URLs for sentence playback after answer
+  try {
+    await hydrateGrammarAudio(state.list);
+  } catch (err) {
+    console.debug('[choose_l3] Audio hydrate failed', err?.message);
+  }
   
   // Detect grammar type from the data structure
   const sampleItem = state.list[0] || {};
@@ -590,11 +679,13 @@ export async function startGrammarChooseL3({
       feedbackEl.textContent = isCorrect ? 'Correct!' : `No — the right answer is ${correct}`;
       feedbackEl.style.color = isCorrect ? '#2e7d32' : '#f44336';
     }
+    // Play sentence audio after feedback (short delay for SFX to finish)
+    setTimeout(() => { playSentenceAudio(item); }, 300);
     pendingTimeout = setTimeout(() => {
       // Guard: only proceed if state is still valid (not cleared by quit/restart)
       if (!state) return;
       renderQuestion(containerEl);
-    }, 700);
+    }, 2500); // Increased timeout to allow audio to play
   }
 
   function markChoices(choicesEl, chosenText, item) {

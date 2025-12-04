@@ -1,0 +1,14 @@
+{
+  "name": "get-audio-urls-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker replacement for Netlify get_audio_urls function",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.52.1"
+  }
+}
