@@ -51,20 +51,18 @@ const HomeworkModal = (() => {
     ...[
       'Activities1.json','Activities2.json','Activities3.json','Adjectives4.json','Adjectives5.json','Adjectives6.json','BathroomItems.json','KitchenUtensilsTools.json','NatureObjects.json','PersonalQualities.json','SchoolSubjectsRooms.json','SnacksTreats.json','Verbs5.json','Verbs6.json','Verbs7.json','Verbs8.json'
     ].map(f => ({ path: `Games/english_arcade/sample-wordlists-level3/${f}`, level: 3, type: 'wordlist', tags: [] })),
-    // Level 3 Grammar
-      /*
-      // Level 3 Grammar
-      ...[
-        'adjectives_people.json','adjectives_world.json','be_going_to_future.json','be_going_to_questions.json','can_cant.json','have_to.json','imperatives_suggestions.json','like_to_vs_want_to_vs_have_to.json','like_to.json','mixed_tense_questions.json','past_simple_irregular.json','past_simple_regular.json','past_tense_questions.json','past_vs_future.json','past_vs_present_vs_future_vs_continuous.json','prepositions_direction.json','short_comparatives.json','short_superlatives.json','want_to.json','will_future.json','will_questions.json'
-      ].map(f => ({ path: `Games/english_arcade/data/grammar/level3/${f}`, level: 3, type: 'grammar', tags: [] })),
-      // Level 4 Grammar
-      ...[
-        'adverbs_frequency.json','all_comparatives_review.json','all_superlatives_review.json','all_tenses_review.json','and_vs_but.json','every_vs_all.json'
-        // Add more level 4 grammar files here as needed
-      ].map(f => ({ path: `Games/english_arcade/data/grammar/level4/${f}`, level: 4, type: 'grammar', tags: [] })),
-      // Level 5 Vocab/Grammar (add as needed)
-      // ...
-      */
+    // Level 3 Grammar - explicit curated list (match level3_grammar_modal.js)
+    ...[
+      'past_simple_irregular.json',
+      'past_simple_regular.json',
+      'be_going_to_future.json',
+      'be_going_to_questions.json',
+      'past_vs_future.json'
+    ].map(f => ({ path: `Games/english_arcade/data/grammar/level3/${f}`, level: 3, type: 'grammar', tags: [] })),
+    // Level 4 Grammar (kept commented out previously) - leave available for future
+    ...[
+      'adverbs_frequency.json','all_comparatives_review.json','all_superlatives_review.json','all_tenses_review.json','and_vs_but.json','every_vs_all.json'
+    ].map(f => ({ path: `Games/english_arcade/data/grammar/level4/${f}`, level: 4, type: 'grammar', tags: [] })),
     // Level 4 Vocab
     ...[
       'ChoresKids.json','ClassroomPhrasesKids.json','CommunityHelpersJobs.json','DailyRoutines2.json','EmotionsInStories.json','EnvironmentalActions.json','FeelingsAboutWeather.json','FeelingsInSchool.json','FeelingsSocialSkills.json','FoodCookingActions.json','GamesBoardGames.json','HouseholdToolsFixes.json','OutdoorAdventureCamping.json','PhrasalVerbsKids1.json','PhrasalVerbsKids2.json','PlaygroundActions.json','SchoolClubsHobbies.json','ScienceLabTools.json','ShoppingMoney.json','SimpleScienceActions.json','SportsHobbiesKids2.json','TechnologyGadgets.json','TravelTransportation.json'
