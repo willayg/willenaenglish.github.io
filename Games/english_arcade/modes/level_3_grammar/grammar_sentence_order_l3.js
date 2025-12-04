@@ -401,23 +401,41 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       }
     });
 
-    // Add a quit/exit button like other modes
-    const quitBtn = document.createElement('button');
-    quitBtn.type = 'button';
-    quitBtn.style.position = 'fixed';
-    quitBtn.style.right = '16px';
-    quitBtn.style.top = '72px';
-    quitBtn.style.background = 'transparent';
-    quitBtn.style.border = 'none';
-    quitBtn.style.cursor = 'pointer';
-    quitBtn.title = 'Quit';
-    quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;" />';
-    quitBtn.onclick = () => quitToMenu('quit');
-    try { document.body.appendChild(quitBtn); } catch {}
+    // Add a quit/exit button like other modes - bottom center position
+    // Only add if not already present (prevent duplicates on re-render)
+    if (!document.getElementById('grammarL3QuitBtn')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.type = 'button';
+      quitBtn.id = 'grammarL3QuitBtn';
+      quitBtn.className = 'wa-quit-btn sentence-order-quit';
+      quitBtn.style.position = 'fixed';
+      quitBtn.style.left = '50%';
+      quitBtn.style.transform = 'translateX(-50%)';
+      quitBtn.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 16px)';
+      quitBtn.style.background = 'transparent';
+      quitBtn.style.border = 'none';
+      quitBtn.style.cursor = 'pointer';
+      quitBtn.style.zIndex = '1100';
+      quitBtn.title = 'Quit';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;" />';
+      quitBtn.onclick = () => quitToMenu('quit');
+      try { document.body.appendChild(quitBtn); } catch {}
+      
+      // Cleanup on page hide (back button navigation)
+      document.addEventListener('visibilitychange', function onVisChange() {
+        if (document.visibilityState === 'hidden') {
+          const btn = document.getElementById('grammarL3QuitBtn');
+          if (btn) btn.remove();
+          document.removeEventListener('visibilitychange', onVisChange);
+        }
+      });
+    }
 
     function quitToMenu(reason = 'quit') {
       const current = state;
       if (!current) return;
+      // Remove quit button
+      try { const qb = document.getElementById('grammarL3QuitBtn'); if (qb) qb.remove(); } catch {}
       // Partial endSession for quit
       if (current.sessionId) {
         try {
@@ -431,7 +449,26 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         } catch (e) {}
       }
       // cleanup
-      try { if (quitBtn && quitBtn.parentNode) quitBtn.remove(); } catch {}
+      try {
+        const btn = document.getElementById('grammarL3QuitBtn');
+        if (btn) btn.remove();
+      } catch {}
+      // Navigate back to grammar selector / previous screen (match other L3 modes)
+      try {
+        if (window.WordArcade?.startGrammarModeSelector) {
+          window.WordArcade.startGrammarModeSelector();
+        } else if (window.WordArcade?.showGrammarLevelsMenu) {
+          window.WordArcade.showGrammarLevelsMenu();
+        } else if (window.WordArcade?.quitToOpening) {
+          window.WordArcade.quitToOpening(true);
+        } else if (history.length > 1) {
+          history.back();
+        } else {
+          location.reload();
+        }
+      } catch (e) {
+        try { location.reload(); } catch {}
+      }
       if (typeof current.onComplete === 'function') current.onComplete({ reason });
     }
   }
@@ -447,6 +484,12 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         meta: { grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 }
       });
     } catch (e) {}
+    // Remove any stray quit buttons
+    try {
+      const btn = document.getElementById('grammarL3QuitBtn');
+      if (btn) btn.remove();
+      document.querySelectorAll('.wa-quit-btn, [title="Quit"]').forEach(b => b.remove());
+    } catch {}
     const gameArea = document.getElementById('gameArea');
     renderGrammarSummary({ gameArea, score: state.score, total: state.list.length, ctx: { grammarFile: state.grammarFile, grammarName: state.grammarName } });
     if (state && typeof state.onComplete === 'function') state.onComplete(state);
