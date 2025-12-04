@@ -59,7 +59,14 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     hs.textContent = `
       #gameArea .mode-selector-header { text-align:center; padding:4px 8px 10px; }
       #gameArea .mode-selector-header .file-title { font-family:'Poppins', Arial, sans-serif; font-weight:800; color:#19777e; font-size:18px; margin-top:4px; }
-    `; // Medal-specific CSS removed (skeleton kept minimal)
+      /* Click overlay animation for study button */
+      @keyframes clickOverlayPulse {
+        0% { opacity:0; transform:translate(-50%,-50%) scale(0.8); }
+        15% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+        85% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+        100% { opacity:0; transform:translate(-50%,-50%) scale(0.9); }
+      }
+    `;
     document.head.appendChild(hs);
   }
 
@@ -360,35 +367,35 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
 
   // Defer appending main menu button to the bottom (outside the card container)
 
-  // Add "Study" button (inside the container, at the top of the list)
+  // Add "Study" button (inside the container, at the top of the list) - matching grammar selector styling
   const studyWordsBtn = document.createElement('button');
-  studyWordsBtn.className = 'mode-btn mode-card study-words-btn';
+  studyWordsBtn.className = 'study-words-btn';
   studyWordsBtn.style.cssText = `
+    appearance: none;
     margin-bottom: 5px;
     grid-column: 1 / -1;
-    background: #fff;
-    color: #ff6fb0;
+    background: transparent;
+    color: #ff66c4;
     font-family: 'Poppins', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    padding: 10px 16px;
-    height: 56px; max-height: 60px; --mode-btn-height: 56px;
-    display: flex; align-items: center; justify-content: center;
-    border: 2px solid #21b3be;
-    border-radius: 20px;
+    font-weight: 800;
+    font-size: 22px;
+    padding: 8px 16px;
+    display: inline-block;
+    position: relative;
+    border: none;
     cursor: pointer;
-    transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 2px 6px rgba(33, 179, 190, 0.1);
+    transition: transform .15s ease;
   `;
   {
     const displayName = (typeof humanizeListName === 'function') ? humanizeListName(listName) : (listName || 'Word List');
     studyWordsBtn.setAttribute('aria-label', `${displayName}. Click to study the words.`);
-    studyWordsBtn.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
-        <span style="font-weight:800;">${displayName}</span>
-        <span style="font-size:10px;color:rgba(212, 214, 219, 1);font-weight:600;">click here</span>
-      </div>`;
+    studyWordsBtn.innerHTML = `${displayName}<span class="click-overlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(61,221,233,0.92);color:#fff;font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;white-space:nowrap;pointer-events:none;opacity:0;animation:clickOverlayPulse 3s ease-in-out forwards;">Click to study!</span>`;
   }
+  // Remove click overlay after animation ends
+  setTimeout(() => {
+    const overlay = studyWordsBtn.querySelector('.click-overlay');
+    if (overlay) overlay.remove();
+  }, 3500);
   studyWordsBtn.onclick = async () => {
     const { showStudyWordsModal } = await import('./study_words_modal.js');
     showStudyWordsModal({
@@ -397,14 +404,12 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     });
   };
 
-  // Add hover effects
+  // Add hover effects matching grammar selector
   studyWordsBtn.addEventListener('mouseenter', () => {
-    studyWordsBtn.style.transform = 'translateY(-2px)';
-    studyWordsBtn.style.boxShadow = '0 6px 16px rgba(33, 179, 190, 0.25)';
+    studyWordsBtn.style.transform = 'scale(1.02)';
   });
   studyWordsBtn.addEventListener('mouseleave', () => {
-    studyWordsBtn.style.transform = 'translateY(0)';
-    studyWordsBtn.style.boxShadow = '0 4px 12px rgba(33, 179, 190, 0.15)';
+    studyWordsBtn.style.transform = 'scale(1)';
   });
 
   // Place Study button at the top inside the card container

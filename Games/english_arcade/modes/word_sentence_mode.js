@@ -419,6 +419,8 @@ export function run(ctx){
         const wordKey = (items[index]?.eng ? `${items[index].eng}__sentence` : `sentence_${index+1}`);
   logAttempt({ session_id: sessionId, mode: sessionModeId, word: wordKey, is_correct: ok, answer: attemptNorm, correct_answer: correctNorm, points: awardedPoints, attempt_index: index, round: index + 1, extra: { pct, tokens_total, tokens_correct, sentence: items[index].sentence, sentence_id: items[index].sentence_id || null } });
       } catch(e){ console.debug('[WordSentenceMode] logAttempt failed', e?.message); }
+      // Play sentence audio after answer submission (short delay for SFX to finish)
+      setTimeout(() => { playSentenceAudio(item); }, 350);
       submitBtn.classList.remove('sm-floating-visible'); submitBtn.style.display='none'; nextBtn.style.display='';
     };
 
