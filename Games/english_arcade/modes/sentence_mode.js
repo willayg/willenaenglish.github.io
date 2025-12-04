@@ -1183,14 +1183,11 @@ async function enrichSentenceAudio(items){
 	const words = Array.from(new Set(items.map(i => (i.eng||'').trim()).filter(Boolean)));
 	if (!words.length) return;
 	const keys = words.map(w => `${w}_SENTENCE`);
-	const endpoints = [ '/.netlify/functions/get_audio_urls' ];
 	let resp = null; let lastErr=null;
-	for (const url of endpoints){
-		try {
-			const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
-			if (r.ok){ resp = await r.json(); break; }
-		} catch(e){ lastErr=e; }
-	}
+	try {
+		const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
+		if (r.ok){ resp = await r.json(); }
+	} catch(e){ lastErr=e; }
 	if (!resp || !resp.results){ if (lastErr) throw lastErr; return; }
 	const map = {}; Object.entries(resp.results).forEach(([k,v])=>{ if (v && v.exists && v.url) map[k.toLowerCase()] = v.url; });
 	items.forEach(it => {

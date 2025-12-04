@@ -5,14 +5,7 @@
 import { run as runSentenceMode } from './word_sentence_mode.js';
 import { openNowLoadingSplash } from './unscramble_splash.js';
 import { playSFX } from '../sfx.js';
-
-const AUDIO_ENDPOINTS = [
-  '/.netlify/functions/get_audio_urls',
-  'http://localhost:9000/.netlify/functions/get_audio_urls',
-  'http://127.0.0.1:9000/.netlify/functions/get_audio_urls',
-  'http://localhost:8888/.netlify/functions/get_audio_urls',
-  'http://127.0.0.1:8888/.netlify/functions/get_audio_urls'
-];
+import { FN } from '../scripts/api-base.js';
 
 function normalizeForGrammarKey(value) {
   return String(value || '')
@@ -69,35 +62,27 @@ async function hydrateGrammarAudio(items) {
   const words = Array.from(allCandidates);
   let results = null;
 
-  const isSecureOrigin = typeof window !== 'undefined' && window.location && window.location.protocol === 'https:';
-  const endpoints = AUDIO_ENDPOINTS.filter((url) => {
-    if (!isSecureOrigin) return true;
-    return !/^http:\/\//i.test(url);
-  });
-
-  for (const endpoint of endpoints) {
-    try {
-      const init = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ words })
-      };
-      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
-        init.signal = AbortSignal.timeout(10000);
-      }
-      const res = await fetch(endpoint, init);
-      if (!res.ok) {
-        console.warn('[GrammarUnscramble] audio lookup failed', endpoint, res.status);
-        continue;
-      }
+  try {
+    const endpoint = FN('get_audio_urls');
+    const init = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ words })
+    };
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      init.signal = AbortSignal.timeout(10000);
+    }
+    const res = await fetch(endpoint, init);
+    if (!res.ok) {
+      console.warn('[GrammarUnscramble] audio lookup failed', endpoint, res.status);
+    } else {
       const data = await res.json();
       if (data && data.results && typeof data.results === 'object') {
         results = data.results;
-        break;
       }
-    } catch (err) {
-      console.debug('[GrammarUnscramble] audio lookup error', endpoint, err?.message);
     }
+  } catch (err) {
+    console.debug('[GrammarUnscramble] audio lookup error', err?.message);
   }
 
   if (!results) return;
