@@ -79,6 +79,26 @@ async function loadAudioElement(url) {
       });
       return audio2;
     } catch (e2) {
+      // Report the audio failure for debugging: console + in-memory list + beacon
+      try {
+        const report = (info) => {
+          try {
+            console.warn('[AudioFail]', info);
+            if (typeof window !== 'undefined') {
+              window.__audioFailures = window.__audioFailures || [];
+              window.__audioFailures.push(info);
+            }
+            if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+              // best-effort beacon to the worker endpoint (non-blocking)
+              const payload = JSON.stringify(info);
+              try { navigator.sendBeacon('https://get-audio-urls.willena.workers.dev/_client_logs', payload); } catch (be) { /* ignore */ }
+            }
+          } catch (_) { /* ignore */ }
+        };
+
+        const filename = (url || '').split('/').pop();
+        report({ url, filename, error: e2 && e2.message ? e2.message : String(e2), ts: Date.now(), href: (typeof location !== 'undefined' ? location.href : '') });
+      } catch (_) {}
       throw e2;
     }
   }
