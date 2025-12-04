@@ -1,0 +1,27 @@
+name = "get-audio-urls"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# For local development, use `wrangler dev`
+# For production deployment, use `wrangler deploy`
+
+[vars]
+# Non-secret config
+R2_PUBLIC_BASE = ""
+
+# R2 bucket binding - MUCH faster than S3 API calls
+[[r2_buckets]]
+binding = "AUDIO_BUCKET"
+bucket_name = "tts-audio"
+# Use same bucket for dev preview (audio is read-only, safe to share)
+preview_bucket_name = "tts-audio"
+
+# Optional: Add custom domain route after testing
+# [routes]
+# pattern = "audio-api.willenaenglish.com/*"
+# zone_name = "willenaenglish.com"
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"
