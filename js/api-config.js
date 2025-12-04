@@ -1,9 +1,14 @@
 /**
- * API Configuration for GitHub Pages + Netlify Functions
+ * API Configuration for GitHub Pages + Netlify Functions + Cloudflare Workers
  * 
  * This file centralizes the API base URL configuration.
  * When hosted on GitHub Pages, API calls go to the Netlify functions domain.
  * When running locally or on Netlify, they use relative paths.
+ * 
+ * CLOUDFLARE WORKERS MIGRATION:
+ * - Set CF_ROLLOUT_PERCENT to gradually shift traffic to Cloudflare Workers
+ * - 0 = all Netlify, 100 = all Cloudflare
+ * - Shadow mode sends requests to both but uses Netlify response
  * 
  * IMPORTANT: For cross-origin cookie authentication to work:
  * 1. Netlify functions must return proper CORS headers with credentials
@@ -13,6 +18,29 @@
 
 (function() {
   'use strict';
+
+  // ============================================================
+  // CLOUDFLARE WORKERS MIGRATION CONFIG
+  // ============================================================
+  
+  // Cloudflare Worker URL (update after deploying)
+  const CF_WORKER_BASE = 'https://get-audio-urls.willena.workers.dev';
+  
+  // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
+  // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
+  let CF_ROLLOUT_PERCENT = 0;
+  
+  // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
+  // Useful for testing parity without affecting users
+  let CF_SHADOW_MODE = false;
+  
+  // Functions that have been migrated to Cloudflare Workers
+  const CF_MIGRATED_FUNCTIONS = {
+    'get_audio_urls': CF_WORKER_BASE,
+    // Add more as you migrate: 'function_name': 'https://worker-url.workers.dev'
+  };
+
+  // ============================================================
 
   // Detect the current environment
   const currentHost = window.location.hostname;
@@ -50,6 +78,38 @@
     API_BASE = NETLIFY_FUNCTIONS_URL;
   }
 
+  // --- Development override: force Cloudflare rollout on localhost for testing ---
+  // When running the frontend on localhost, enable 100% rollout so dev traffic
+  // goes to the Cloudflare Worker. This makes it easy to validate real-worker
+  // behaviour while serving the app from your local dev server.
+  if (isLocalhost) {
+    CF_ROLLOUT_PERCENT = 100;
+    CF_SHADOW_MODE = false;
+    console.log('[WillenaAPI] DEV OVERRIDE: CF_ROLLOUT_PERCENT=100 (all Cloudflare)');
+  }
+
+  /**
+   * Check if this request should go to Cloudflare Worker
+   * @param {string} functionName - The function name (e.g., 'get_audio_urls')
+   * @returns {boolean}
+   */
+  function shouldUseCloudflare(functionName) {
+    if (!CF_MIGRATED_FUNCTIONS[functionName]) return false;
+    if (CF_ROLLOUT_PERCENT <= 0) return false;
+    if (CF_ROLLOUT_PERCENT >= 100) return true;
+    return Math.random() * 100 < CF_ROLLOUT_PERCENT;
+  }
+
+  /**
+   * Extract function name from path
+   * @param {string} functionPath 
+   * @returns {string}
+   */
+  function extractFunctionName(functionPath) {
+    const match = functionPath.match(/\/?\.?netlify\/functions\/([^/?]+)/);
+    return match ? match[1] : '';
+  }
+
   /**
    * Get the full URL for a Netlify function
    * @param {string} functionPath - The function path (e.g., '/.netlify/functions/auth')
@@ -73,35 +133,63 @@
 
   /**
    * Wrapper for fetch that automatically handles credentials for cross-origin requests
+   * AND supports Cloudflare Worker migration
    * @param {string} functionPath - The function path
    * @param {RequestInit} options - Fetch options
    * @returns {Promise<Response>}
    */
   async function apiFetch(functionPath, options = {}) {
-    const url = getApiUrl(functionPath);
+    const functionName = extractFunctionName(functionPath);
+    const useCloudflare = shouldUseCloudflare(functionName);
+    const cfWorkerUrl = CF_MIGRATED_FUNCTIONS[functionName];
+    
+    // Determine primary URL
+    let primaryUrl;
+    if (useCloudflare && cfWorkerUrl) {
+      primaryUrl = cfWorkerUrl;
+    } else {
+      primaryUrl = getApiUrl(functionPath);
+    }
     
     // Always include credentials for cookie-based auth
-    // This is critical for cross-origin requests to send/receive cookies
     const fetchOptions = {
       ...options,
       credentials: 'include',
     };
     
     // For cross-origin requests with body, ensure Content-Type is set
-    if (isCrossOrigin && options.body && !options.headers?.['Content-Type']) {
+    if ((isCrossOrigin || useCloudflare) && options.body && !options.headers?.['Content-Type']) {
       fetchOptions.headers = {
         'Content-Type': 'application/json',
         ...fetchOptions.headers,
       };
     }
     
-    return fetch(url, fetchOptions);
+    // Shadow mode: call both endpoints, use Netlify response
+    if (CF_SHADOW_MODE && cfWorkerUrl && !useCloudflare) {
+      // Fire shadow request to Cloudflare (don't await)
+      fetch(cfWorkerUrl, { ...fetchOptions, credentials: 'omit' })
+        .then(r => r.json())
+        .then(data => console.log(`[CF Shadow] ${functionName}:`, data))
+        .catch(e => console.warn(`[CF Shadow Error] ${functionName}:`, e.message));
+    }
+    
+    // Log which endpoint we're using (in dev)
+    if (isLocalhost && cfWorkerUrl) {
+      console.log(`[WillenaAPI] ${functionName}: using ${useCloudflare ? 'Cloudflare' : 'Netlify'}`);
+    }
+    
+    return fetch(primaryUrl, fetchOptions);
   }
 
   // Export to window for global access
   window.WillenaAPI = {
     BASE_URL: API_BASE,
     FUNCTIONS_URL: NETLIFY_FUNCTIONS_URL,
+    CF_WORKER_BASE,
+    CF_ROLLOUT_PERCENT,
+    CF_SHADOW_MODE,
+    CF_MIGRATED_FUNCTIONS,
     isGitHubPages,
     isCustomDomain,
     isLocalhost,
@@ -109,6 +197,7 @@
     isCrossOrigin,
     getApiUrl,
     fetch: apiFetch,
+    shouldUseCloudflare,
     
     // Convenience method to check environment
     getEnvironment() {
@@ -117,6 +206,12 @@
       if (isGitHubPages) return 'github-pages';
       if (isCustomDomain) return 'custom-domain';
       return 'unknown';
+    },
+    
+    // Method to dynamically change rollout percentage (for testing)
+    setRolloutPercent(percent) {
+      console.log(`[WillenaAPI] Rollout changed: ${CF_ROLLOUT_PERCENT}% -> ${percent}%`);
+      CF_ROLLOUT_PERCENT = Number(percent) || 0;
     }
   };
 
@@ -125,5 +220,7 @@
     console.log('[WillenaAPI] Environment:', window.WillenaAPI.getEnvironment());
     console.log('[WillenaAPI] Base URL:', API_BASE || '(relative)');
     console.log('[WillenaAPI] Cross-origin mode:', isCrossOrigin);
+    console.log('[WillenaAPI] CF Rollout:', CF_ROLLOUT_PERCENT + '%');
+    console.log('[WillenaAPI] CF Shadow Mode:', CF_SHADOW_MODE);
   }
 })();
