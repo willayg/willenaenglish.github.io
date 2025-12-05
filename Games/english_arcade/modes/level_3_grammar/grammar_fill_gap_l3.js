@@ -550,6 +550,8 @@ export async function startGrammarFillGapL3({
         meta: { category: 'grammar', grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 }
       });
     } catch {}
+    // Remove any stray quit buttons from body
+    try { document.querySelectorAll('body > .wa-quit-btn, body > [title="Quit"]').forEach(btn => btn.remove()); } catch {}
     renderGrammarSummary({ gameArea: containerEl, score: state.score, total: state.list.length, ctx: { grammarFile: state.grammarFile, grammarName } });
     if (onComplete) onComplete(state);
   }
