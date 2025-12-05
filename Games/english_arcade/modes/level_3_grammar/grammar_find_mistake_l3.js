@@ -433,6 +433,8 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
       wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
       meta: { grammarFile, grammarName, level: 3 },
     });
+    // Remove quit button
+    try { const qb = document.getElementById('grammarQuitBtn'); if (qb) qb.remove(); } catch {}
     playSFX('end');
     const gameArea = document.getElementById('gameArea');
     renderGrammarSummary({

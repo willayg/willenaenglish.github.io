@@ -218,6 +218,8 @@ export async function runGrammarTranslationChoiceL3Mode({ grammarFile, grammarNa
     const total = correct + wrong;
     const pct = total ? Math.round((correct / total) * 100) : 0;
     endSession(sessionId, { mode: MODE, summary: { score: correct, total: items.length, correct, wrong, points: correct, accuracy: pct, category: 'grammar', grammarName, grammarFile, level: 3 }, listName: grammarName, wordList: items.map(it => it.word || it.id), meta: { grammarFile, grammarName, direction: 'KO→EN', level: 3 } });
+    // Remove any stray quit buttons from body
+    try { document.querySelectorAll('body > .wa-quit-btn, body > [title="Quit"], #grammarQuitBtn').forEach(btn => btn.remove()); } catch {}
     try { playSFX('end'); } catch {}
     renderGrammarSummary({ gameArea: container, score: correct, total: items.length, ctx: {} });
   }
