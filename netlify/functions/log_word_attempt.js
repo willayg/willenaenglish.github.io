@@ -1,9 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
 const redisCache = require('../../lib/redis_cache');
 
+// Known class names to invalidate (add new classes here as they're created)
+const KNOWN_CLASSES = [
+  'new york', 'chicago', 'boston', 'brown', 'berkeley', 'yale', 
+  'washington', 'manchester', 'los angeles', 'san francisco'
+];
+
 // Helper: invalidate leaderboard caches (Redis + DB) after writes that affect points/stars
 // Uses a short "recompute lock" to avoid a storm of recomputes if many writes happen at once
-async function invalidateLeaderboardCache(supabase) {
+async function invalidateLeaderboardCache(supabase, userClass = null) {
   const lockKey = 'lb:invalidate_lock';
   try {
     // Check if lock exists (someone recently invalidated)
@@ -14,13 +20,30 @@ async function invalidateLeaderboardCache(supabase) {
     }
     // Set lock for 30 seconds to prevent storm
     await redisCache.setJson(lockKey, { ts: Date.now() }, 30);
-    // Delete Redis leaderboard keys
-    await Promise.all([
-      redisCache.del('lb:global:all'),
-      redisCache.del('lb:global:month'),
-      redisCache.del('lb:class:new york:all'),
-      redisCache.del('lb:class:new york:month')
-    ]);
+    
+    // Build list of cache keys to delete
+    const keysToDelete = [
+      'lb:global:all',
+      'lb:global:month'
+    ];
+    
+    // If we know the user's class, prioritize clearing that
+    if (userClass) {
+      const normalizedClass = userClass.toLowerCase().trim();
+      keysToDelete.push(`lb:class:${normalizedClass}:all`);
+      keysToDelete.push(`lb:class:${normalizedClass}:month`);
+    }
+    
+    // Also clear all known class caches to ensure consistency
+    for (const cls of KNOWN_CLASSES) {
+      keysToDelete.push(`lb:class:${cls}:all`);
+      keysToDelete.push(`lb:class:${cls}:month`);
+    }
+    
+    // Dedupe and delete all keys
+    const uniqueKeys = [...new Set(keysToDelete)];
+    await Promise.all(uniqueKeys.map(k => redisCache.del(k)));
+    
     // Also delete DB cache rows (so stale DB cache doesn't repopulate Redis)
     await supabase.from('leaderboard_cache').delete().eq('section', 'leaderboard_stars_global');
     await supabase.from('leaderboard_cache').delete().eq('section', 'leaderboard_stars_class');
