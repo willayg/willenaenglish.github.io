@@ -1634,12 +1634,14 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
       r.__computed_completion = completionPct;
     });
 
+    // Helper to cap accuracy at 100% (backend may store raw values > 100 erroneously)
+    const capAcc = v => Math.min(100, Math.max(0, Math.round(Number(v) || 0)));
     if (tbody) tbody.innerHTML = rows.map(r => `<tr data-user-id="${r.user_id}" class="hw-progress-row">
       <td><a href="#" class="hw-student-link" data-user-id="${r.user_id}">${r.name || 'Unknown'}</a></td>
       <td>${r.korean_name || '—'}</td>
       <td>${r.status}<br><small>${r.__computed_completion || 0}% (${r.__computed_modes_attempted||0}/${r.__computed_total_modes||totalModes} modes)</small></td>
       <td class="num">${r.stars || 0}⭐</td>
-      <td class="num">${r.accuracy_overall != null ? r.accuracy_overall : (r.accuracy_best||0)}%</td>
+      <td class="num">${capAcc(r.accuracy_overall != null ? r.accuracy_overall : (r.accuracy_best||0))}%</td>
     </tr>`).join('');
     // Bind modal open for entire row
     tbody.querySelectorAll('.hw-progress-row').forEach(tr => {
@@ -1679,14 +1681,20 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   }
   // Was the total derived by client-side heuristic?
   const totalWasComputed = (row.modes_total == null) || (Number(row.modes_total) !== Number(displayTotalModes));
-  if (meta) meta.textContent = `Completion: ${displayCompletion}% • Stars: ${row.stars || 0} • Overall Accuracy: ${row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0)}% (Best: ${row.accuracy_best||0}%) • Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
+  // Cap accuracy at 100% to handle erroneous backend values
+  const capAcc = v => Math.min(100, Math.max(0, Math.round(Number(v) || 0)));
+  const overallAcc = capAcc(row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0));
+  const bestAcc = capAcc(row.accuracy_best||0);
+  if (meta) meta.textContent = `Completion: ${displayCompletion}% • Stars: ${row.stars || 0} • Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) • Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
   if (modesWrap) {
     modesWrap.innerHTML = (row.modes||[]).map(m => {
-      const acc = m.bestAccuracy || 0;
-      const stars = m.bestStars || 0;
+      const acc = capAcc(m.bestAccuracy || m.accuracy_best || m.accuracy || 0);
+      const stars = Math.min(5, Math.max(0, m.bestStars || m.stars || 0));
+      // Attempts: prefer count, then attempts, then sessions
+      const attempts = m.count || m.attempts || m.sessions || 0;
       return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;background:#fbfbfb;box-shadow:0 2px 4px rgba(0,0,0,.05);">
         <div style="font-weight:600;font-size:.9rem;color:#19777e;">${friendlyModeName(m.mode)}</div>
-        <div style="font-size:.75rem;color:#555;margin-top:4px;">Attempts: ${m.attempts || 0}</div>
+        <div style="font-size:.75rem;color:#555;margin-top:4px;">Attempts: ${attempts}</div>
         <div style="font-size:.75rem;color:#555;">Best Stars: ${stars}</div>
         <div style="font-size:.75rem;color:#555;">Best Accuracy: ${acc}%</div>
       </div>`;
