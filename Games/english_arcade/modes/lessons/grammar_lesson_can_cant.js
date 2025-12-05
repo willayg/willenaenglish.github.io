@@ -1,4 +1,4 @@
-// Grammar Lesson Runner – Can vs Can't
+// Grammar Lesson Runner ??Can vs Can't
 // Interactive lesson teaching ability and inability with can/can't.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -33,7 +33,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_can_cant',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'Can vs Can\'t', level: 'Level 1 Grammar' }
     });
   } catch (err) {
@@ -101,10 +101,10 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const heading = document.createElement('div');
     heading.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    heading.textContent = (lang === 'ko') ? '언어를 선택하세요' : 'Choose your language';
+    heading.textContent = (lang === 'ko') ? '?�어�??�택?�세?? : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('한국어');
+    const koBtn = buildLanguageButton('?�국??);
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(heading);
     wrap.appendChild(enBtn);
@@ -119,7 +119,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>can</b>은 '~할 수 있다', <b>can't</b>는 '~할 수 없다'는 뜻이에요. 버튼을 눌러서 예제를 확인해 보세요!"
+      ? "<b>can</b>?� '~?????�다', <b>can't</b>??'~?????�다'???�이?�요. 버튼???�러???�제�??�인??보세??"
       : "Use <b>can</b> to say you are able to do something, and <b>can't</b> to say you are not able. Tap each button to see examples!";
 
     const abilityRow = document.createElement('div');
@@ -187,7 +187,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     renderCard(abilitySets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -209,8 +209,8 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>Can</b> → 능력 있음 ✅<br/><b>Can't</b> → 능력 없음 ❌<br/>버튼을 눌러서 더 많은 예제를 확인하세요!"
-      : "<b>Can</b> → Ability ✅<br/><b>Can't</b> → No Ability ❌<br/>Tap each button to see more examples!";
+      ? "<b>Can</b> ???�력 ?�음 ??br/><b>Can't</b> ???�력 ?�음 ??br/>버튼???�러????많�? ?�제�??�인?�세??"
+      : "<b>Can</b> ??Ability ??br/><b>Can't</b> ??No Ability ??br/>Tap each button to see more examples!";
 
     const categoryRow = document.createElement('div');
     categoryRow.className = 'cancant-subject-row';
@@ -221,14 +221,14 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const categorySets = [
       {
         id: 'able',
-        label: lang === 'ko' ? '✅ 할 수 있어요' : '✅ Can Do',
+        label: lang === 'ko' ? '???????�어?? : '??Can Do',
         examples: canList,
         pointer: 0,
         ability: 'CAN',
       },
       {
         id: 'unable',
-        label: lang === 'ko' ? '❌ 할 수 없어요' : '❌ Cannot Do',
+        label: lang === 'ko' ? '???????�어?? : '??Cannot Do',
         examples: cantList,
         pointer: 0,
         ability: "CAN'T",
@@ -289,7 +289,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     renderCard('able', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -310,15 +310,15 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? '동물을 눌러 <b>Can Fly</b> 또는 <b>Can\'t Fly</b> 바구니에 넣어 보세요. 모두 맞으면 다음 단계로 넘어갈 수 있어요.'
+      ? '?�물???�러 <b>Can Fly</b> ?�는 <b>Can\'t Fly</b> 바구?�에 ?�어 보세?? 모두 맞으�??�음 ?�계�??�어�????�어??'
       : 'Tap each animal and move it into the <b>Can Fly</b> or <b>Can\'t Fly</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '동물 모음' : 'Animals');
-    const canBucket = makeBucket('can', lang === 'ko' ? 'Can Fly 🦅' : 'Can Fly 🦅');
-    const cantBucket = makeBucket('cant', lang === 'ko' ? 'Can\'t Fly 🐘' : 'Can\'t Fly 🐘');
+    const pool = makeBucket('pool', lang === 'ko' ? '?�물 모음' : 'Animals');
+    const canBucket = makeBucket('can', lang === 'ko' ? 'Can Fly ?��' : 'Can Fly ?��');
+    const cantBucket = makeBucket('cant', lang === 'ko' ? 'Can\'t Fly ?��' : 'Can\'t Fly ?��');
     [pool.wrap, canBucket.wrap, cantBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
 
@@ -362,13 +362,13 @@ export async function runGrammarLessonCanCant(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -409,11 +409,11 @@ export async function runGrammarLessonCanCant(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '완벽해요! 날 수 있는 동물들을 잘 골랐어요.' : 'Perfect! You sorted the flying animals correctly.';
+        message.textContent = lang === 'ko' ? '?�벽?�요! ?????�는 ?�물?�을 ??골랐?�요.' : 'Perfect! You sorted the flying animals correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -424,7 +424,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 동물을 다시 옮겨 보세요.' : 'Try again! Fix the red animals.';
+        message.textContent = lang === 'ko' ? '빨간 ?�물???�시 ??�� 보세??' : 'Try again! Fix the red animals.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -436,13 +436,13 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">이제 can/can\'t를 바르게 사용할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use can or can\'t!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
+      ? '<div style="font-weight:800;color:#19777e">?�제 can/can\'t�?바르�??�용?????�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use can or can\'t!</div><div class="stars">⭐⭐⭐⭐�?/div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -468,7 +468,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'Can vs Can\'t',
           },
-          listName: grammarName || null,
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords,
         });
       } catch (err) {
@@ -570,17 +570,17 @@ function makeChip(item) {
 function buildSortingPool(canList, cantList) {
   // Fixed animals - 4 that can fly, 4 that can't
   const flyingAnimals = [
-    { id: 'bird', answer: 'can', text: '🐦', name: 'Bird' },
-    { id: 'owl', answer: 'can', text: '🦉', name: 'Owl' },
-    { id: 'eagle', answer: 'can', text: '🦅', name: 'Eagle' },
-    { id: 'bat', answer: 'can', text: '🦇', name: 'Bat' }
+    { id: 'bird', answer: 'can', text: '?��', name: 'Bird' },
+    { id: 'owl', answer: 'can', text: '?��', name: 'Owl' },
+    { id: 'eagle', answer: 'can', text: '?��', name: 'Eagle' },
+    { id: 'bat', answer: 'can', text: '?��', name: 'Bat' }
   ];
   
   const nonFlyingAnimals = [
-    { id: 'tiger', answer: 'cant', text: '🐯', name: 'Tiger' },
-    { id: 'wolf', answer: 'cant', text: '🐺', name: 'Wolf' },
-    { id: 'cat', answer: 'cant', text: '🐱', name: 'Cat' },
-    { id: 'elephant', answer: 'cant', text: '🐘', name: 'Elephant' }
+    { id: 'tiger', answer: 'cant', text: '?��', name: 'Tiger' },
+    { id: 'wolf', answer: 'cant', text: '?��', name: 'Wolf' },
+    { id: 'cat', answer: 'cant', text: '?��', name: 'Cat' },
+    { id: 'elephant', answer: 'cant', text: '?��', name: 'Elephant' }
   ];
   
   return shuffle([...flyingAnimals, ...nonFlyingAnimals]);
@@ -598,22 +598,22 @@ function buildAbilitySets(canList, cantList) {
     {
       id: 'can',
       ability: 'can',
-      emoji: canExample.emoji || '✅',
+      emoji: canExample.emoji || '??,
       sentenceEn: canExample.exampleSentence || 'I can swim.',
-      sentenceKo: canExample.exampleSentenceKo || '나는 수영할 수 있어요.',
+      sentenceKo: canExample.exampleSentenceKo || '?�는 ?�영?????�어??',
       tipEn: "Use 'can' to show ability.",
-      tipKo: "'can'은 ~할 수 있다는 뜻이에요.",
-      label: '✅ Can'
+      tipKo: "'can'?� ~?????�다???�이?�요.",
+      label: '??Can'
     },
     {
       id: 'cant',
       ability: 'can\'t',
-      emoji: cantExample.emoji || '❌',
+      emoji: cantExample.emoji || '??,
       sentenceEn: cantExample.exampleSentence || 'I can\'t fly.',
-      sentenceKo: cantExample.exampleSentenceKo || '나는 날 수 없어요.',
+      sentenceKo: cantExample.exampleSentenceKo || '?�는 ?????�어??',
       tipEn: "Use 'can't' to show inability.",
-      tipKo: "'can't'는 ~할 수 없다는 뜻이에요.",
-      label: '❌ Can\'t'
+      tipKo: "'can't'??~?????�다???�이?�요.",
+      label: '??Can\'t'
     }
   ];
 }
@@ -627,7 +627,7 @@ function normalizeList(list, fallback) {
     exampleSentenceKo: item.exampleSentenceKo || '',
     explanation: item.explanation || '',
     explanationKo: item.explanationKo || '',
-    emoji: item.emoji || '💪',
+    emoji: item.emoji || '?��',
   })).filter((item) => item.exampleSentence);
 }
 
@@ -663,9 +663,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -686,7 +686,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['언어 선택', '1단계', '2단계', '3단계', '완료'];
+  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?�료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -696,15 +696,15 @@ function shuffle(list) {
 }
 
 const fallbackCan = [
-  { id: 'fb_can_swim', word: 'I', exampleSentence: 'I can swim.', exampleSentenceKo: '나는 수영할 수 있어요.', emoji: '✅🏊' },
-  { id: 'fb_can_read', word: 'You', exampleSentence: 'You can read.', exampleSentenceKo: '너는 읽을 수 있어요.', emoji: '✅📚' },
-  { id: 'fb_can_play', word: 'We', exampleSentence: 'We can play.', exampleSentenceKo: '우리는 놀 수 있어요.', emoji: '✅🎮' },
-  { id: 'fb_can_help', word: 'He', exampleSentence: 'He can help.', exampleSentenceKo: '그는 도울 수 있어요.', emoji: '✅🧑‍🔧' }
+  { id: 'fb_can_swim', word: 'I', exampleSentence: 'I can swim.', exampleSentenceKo: '?�는 ?�영?????�어??', emoji: '?��? },
+  { id: 'fb_can_read', word: 'You', exampleSentence: 'You can read.', exampleSentenceKo: '?�는 ?�을 ???�어??', emoji: '?��? },
+  { id: 'fb_can_play', word: 'We', exampleSentence: 'We can play.', exampleSentenceKo: '?�리???� ???�어??', emoji: '?��? },
+  { id: 'fb_can_help', word: 'He', exampleSentence: 'He can help.', exampleSentenceKo: '그는 ?�울 ???�어??', emoji: '?�🧑‍�? }
 ];
 
 const fallbackCant = [
-  { id: 'fb_cant_swim', word: 'He', exampleSentence: 'He can\'t swim.', exampleSentenceKo: '그는 수영할 수 없어요.', emoji: '❌🏊' },
-  { id: 'fb_cant_fly', word: 'I', exampleSentence: 'I can\'t fly.', exampleSentenceKo: '나는 날 수 없어요.', emoji: '❌🦅' },
-  { id: 'fb_cant_drive', word: 'She', exampleSentence: 'She can\'t drive.', exampleSentenceKo: '그녀는 운전할 수 없어요.', emoji: '❌🚗' },
-  { id: 'fb_cant_lift', word: 'They', exampleSentence: 'They can\'t lift it.', exampleSentenceKo: '그들은 들 수 없어요.', emoji: '❌💪' }
+  { id: 'fb_cant_swim', word: 'He', exampleSentence: 'He can\'t swim.', exampleSentenceKo: '그는 ?�영?????�어??', emoji: '?��? },
+  { id: 'fb_cant_fly', word: 'I', exampleSentence: 'I can\'t fly.', exampleSentenceKo: '?�는 ?????�어??', emoji: '?��? },
+  { id: 'fb_cant_drive', word: 'She', exampleSentence: 'She can\'t drive.', exampleSentenceKo: '그�????�전?????�어??', emoji: '?��? },
+  { id: 'fb_cant_lift', word: 'They', exampleSentence: 'They can\'t lift it.', exampleSentenceKo: '그들?� ?????�어??', emoji: '?��? }
 ];

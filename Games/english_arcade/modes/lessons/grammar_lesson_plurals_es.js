@@ -1,4 +1,4 @@
-// Grammar Lesson Runner – Plurals that add "es"
+// Grammar Lesson Runner ??Plurals that add "es"
 // Mirrors the plurals_s lesson but explains the add-es spelling rule for kids.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -36,7 +36,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_plurals_es',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'Add ES Plurals' },
     });
   } catch (err) {
@@ -56,10 +56,10 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = lang === 'ko' ? '언어를 선택하세요' : 'Choose your language';
+    title.textContent = lang === 'ko' ? '?�어�??�택?�세?? : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('한국어');
+    const koBtn = buildLanguageButton('?�국??);
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(title);
     wrap.appendChild(enBtn);
@@ -73,7 +73,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "s, x, z, ch, sh로 끝나면 보통 복수에서 'es'를 붙여요!"
+      ? "s, x, z, ch, sh�??�나�?보통 복수?�서 'es'�?붙여??"
       : "If a word ends with s, x, z, ch, or sh, we usually add 'es' to make it plural!";
     stepEl.appendChild(intro);
 
@@ -83,25 +83,25 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     const highlight = document.createElement('div');
     highlight.className = 'plurals-es-highlight-card';
     highlight.innerHTML = `
-      <div class="card-heading">${lang === 'ko' ? '예시로 규칙을 살펴봐요!' : 'See how the rule works!'}</div>
-      <div class="card-rule">${lang === 'ko' ? "끝이 s, x, z, ch, sh면 <strong>+es</strong>" : "Ends in s, x, z, ch, sh → add <strong>es</strong>"}</div>
+      <div class="card-heading">${lang === 'ko' ? '?�시�?규칙???�펴봐요!' : 'See how the rule works!'}</div>
+      <div class="card-rule">${lang === 'ko' ? "?�이 s, x, z, ch, sh�?<strong>+es</strong>" : "Ends in s, x, z, ch, sh ??add <strong>es</strong>"}</div>
       <div class="card-row">
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '단수 (1개)' : 'Singular (1)'}</div>
-          <div class="card-emoji">${escapeHtml(singularExample.emoji || '🚌')}</div>
+          <div class="card-label">${lang === 'ko' ? '?�수 (1�?' : 'Singular (1)'}</div>
+          <div class="card-emoji">${escapeHtml(singularExample.emoji || '?��')}</div>
           <div class="card-word">${escapeHtml(singularExample.word || 'bus')}</div>
           <div class="card-sentence">${escapeHtml(singularExample.exampleSentence || 'One bus is here.')}</div>
           ${singularExample.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(singularExample.exampleSentenceKo)}</div>` : ''}
         </div>
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '복수 (여러 개)' : 'Plural (many)'}</div>
-          <div class="card-emoji">${escapeHtml(pluralExample?.emoji || '🚌🚌')}</div>
+          <div class="card-label">${lang === 'ko' ? '복수 (?�러 �?' : 'Plural (many)'}</div>
+          <div class="card-emoji">${escapeHtml(pluralExample?.emoji || '?��?��')}</div>
           <div class="card-word">${escapeHtml(pluralExample?.word || 'buses')}</div>
           <div class="card-sentence">${escapeHtml(pluralExample?.exampleSentence || 'Many buses are here.')}</div>
           ${pluralExample?.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(pluralExample.exampleSentenceKo)}</div>` : ''}
         </div>
       </div>
-      <div class="card-tip">${lang === 'ko' ? "끝 글자를 잘 보고 'es'를 붙여요!" : 'Check the ending, then add es!'}</div>
+      <div class="card-tip">${lang === 'ko' ? "??글?��? ??보고 'es'�?붙여??" : 'Check the ending, then add es!'}</div>
     `;
     stepEl.appendChild(highlight);
 
@@ -115,7 +115,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "왼쪽은 단수(하나), 오른쪽은 'es'를 붙인 복수 예문이에요. 소리 내어 읽어 보세요!"
+      ? "?�쪽?� ?�수(?�나), ?�른쪽�? 'es'�?붙인 복수 ?�문?�에?? ?�리 ?�어 ?�어 보세??"
       : "Left shows the singular word, right shows the plural with 'es'. Read them aloud!";
     stepEl.appendChild(intro);
 
@@ -136,14 +136,14 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "단어를 눌러 단수 또는 복수 바구니에 넣어 보세요. 모두 맞히면 다음으로 갈 수 있어요!"
+      ? "?�어�??�러 ?�수 ?�는 복수 바구?�에 ?�어 보세?? 모두 맞히�??�음?�로 �????�어??"
       : "Tap each strip and move it into the singular or plural basket. Get them all correct to continue!";
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '단어 모음' : 'Word Pool');
-    const bucketSing = makeBucket('singular', lang === 'ko' ? '단수' : 'Singular');
+    const pool = makeBucket('pool', lang === 'ko' ? '?�어 모음' : 'Word Pool');
+    const bucketSing = makeBucket('singular', lang === 'ko' ? '?�수' : 'Singular');
     const bucketPlu = makeBucket('plural', lang === 'ko' ? "복수 (+'es')" : "Plural (+es)");
 
     [pool.wrap, bucketSing.wrap, bucketPlu.wrap].forEach((wrap) => buckets.appendChild(wrap));
@@ -184,14 +184,14 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '15px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.onclick = () => { playSFX?.('click'); stepIndex = Math.max(0, stepIndex - 1); render(); };
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -226,11 +226,11 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? "완벽해요! 'es' 규칙을 잘 찾았어요." : "Awesome! You spotted every +es plural.";
+        message.textContent = lang === 'ko' ? "?�벽?�요! 'es' 규칙????찾았?�요." : "Awesome! You spotted every +es plural.";
         stepEl.insertBefore(message, stepEl.firstChild);
 
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
           continueBtn.onclick = () => { playSFX?.('click'); nextStep(true); };
           nav.appendChild(continueBtn);
         }
@@ -239,7 +239,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드를 다시 옮겨 보세요.' : 'Move the red cards to the correct basket.';
+        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -259,13 +259,13 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = lang === 'ko'
-      ? "<div style=\"font-weight:800;color:#19777e\">es를 붙이는 규칙을 배웠어요!</div><div class=\"stars\">⭐⭐⭐⭐⭐</div>"
-      : "<div style=\"font-weight:800;color:#19777e\">You learned when to add es!</div><div class=\"stars\">⭐⭐⭐⭐⭐</div>";
+      ? "<div style=\"font-weight:800;color:#19777e\">es�?붙이??규칙??배웠?�요!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>"
+      : "<div style=\"font-weight:800;color:#19777e\">You learned when to add es!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>";
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       playSFX?.('click');
       try {
@@ -294,7 +294,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'Add ES Plurals',
           },
-          listName: grammarName || null,
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords,
         });
       } catch (err) {
@@ -365,7 +365,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
   }
 
   function displayStep(index) {
-    const steps = [lang === 'ko' ? '언어 선택' : 'Choose Language', lang === 'ko' ? '1단계' : 'Step 1', lang === 'ko' ? '2단계' : 'Step 2', lang === 'ko' ? '3단계' : 'Step 3', lang === 'ko' ? '완료' : 'Complete'];
+    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
     return steps[index] || '';
   }
 
@@ -435,7 +435,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
       word: item.word || '',
       prompt: item.prompt || `${item.word || ''}`,
       article: item.article || 'singular',
-      emoji: item.emoji || '🧠',
+      emoji: item.emoji || '?��',
       exampleSentence: item.exampleSentence || '',
       exampleSentenceKo: item.exampleSentenceKo || '',
       explanation: item.explanation || '',
@@ -461,7 +461,7 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     const titleWrap = document.createElement('div');
     titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
     titleWrap.textContent = kind === 'singular'
-      ? (currentLang === 'ko' ? '단수 (하나)' : 'Singular (one)')
+      ? (currentLang === 'ko' ? '?�수 (?�나)' : 'Singular (one)')
       : (currentLang === 'ko' ? "복수 (+es)" : "Plural (+es)");
     col.appendChild(titleWrap);
 
@@ -539,9 +539,9 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '15px';
-    const back = buildSecondaryButton(currentLang === 'ko' ? '뒤로' : 'Back');
+    const back = buildSecondaryButton(currentLang === 'ko' ? '?�로' : 'Back');
     back.onclick = () => { sfx?.('click'); onBack(); };
-    const next = buildPrimaryButton(currentLang === 'ko' ? '다음' : 'Next');
+    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
     next.onclick = () => { onNext(); };
     nav.appendChild(back);
     nav.appendChild(next);
@@ -566,15 +566,15 @@ export async function runGrammarLessonPluralsEs(ctx = {}) {
 }
 
 const fallbackSingular = [
-  { id: 'fb_es_bus', word: 'bus', article: 'singular', emoji: '🚌', exampleSentence: 'One bus is here.', exampleSentenceKo: '버스 한 대가 여기 있어요.' },
-  { id: 'fb_es_box', word: 'box', article: 'singular', emoji: '📦', exampleSentence: 'A box is on the table.', exampleSentenceKo: '상자 하나가 탁자 위에 있어요.' },
-  { id: 'fb_es_dish', word: 'dish', article: 'singular', emoji: '🍽️', exampleSentence: 'Wash one dish.', exampleSentenceKo: '그릇 하나를 씻어요.' },
-  { id: 'fb_es_watch', word: 'watch', article: 'singular', emoji: '⌚', exampleSentence: 'This watch is shiny.', exampleSentenceKo: '이 시계가 반짝여요.' }
+  { id: 'fb_es_bus', word: 'bus', article: 'singular', emoji: '?��', exampleSentence: 'One bus is here.', exampleSentenceKo: '버스 ???�가 ?�기 ?�어??' },
+  { id: 'fb_es_box', word: 'box', article: 'singular', emoji: '?��', exampleSentence: 'A box is on the table.', exampleSentenceKo: '?�자 ?�나가 ?�자 ?�에 ?�어??' },
+  { id: 'fb_es_dish', word: 'dish', article: 'singular', emoji: '?���?, exampleSentence: 'Wash one dish.', exampleSentenceKo: '그릇 ?�나�??�어??' },
+  { id: 'fb_es_watch', word: 'watch', article: 'singular', emoji: '??, exampleSentence: 'This watch is shiny.', exampleSentenceKo: '???�계가 반짝?�요.' }
 ];
 
 const fallbackPlural = [
-  { id: 'fb_es_buses', word: 'buses', article: 'plural', emoji: '🚌🚌', exampleSentence: 'Many buses are here.', exampleSentenceKo: '버스들이 여기 있어요.' },
-  { id: 'fb_es_boxes', word: 'boxes', article: 'plural', emoji: '📦📦', exampleSentence: 'Boxes are on the table.', exampleSentenceKo: '상자들이 탁자 위에 있어요.' },
-  { id: 'fb_es_dishes', word: 'dishes', article: 'plural', emoji: '🍽️🍽️', exampleSentence: 'Wash the dishes.', exampleSentenceKo: '그릇들을 씻어요.' },
-  { id: 'fb_es_watches', word: 'watches', article: 'plural', emoji: '⌚⌚', exampleSentence: 'He collects watches.', exampleSentenceKo: '그는 시계를 모아요.' }
+  { id: 'fb_es_buses', word: 'buses', article: 'plural', emoji: '?��?��', exampleSentence: 'Many buses are here.', exampleSentenceKo: '버스?�이 ?�기 ?�어??' },
+  { id: 'fb_es_boxes', word: 'boxes', article: 'plural', emoji: '?��?��', exampleSentence: 'Boxes are on the table.', exampleSentenceKo: '?�자?�이 ?�자 ?�에 ?�어??' },
+  { id: 'fb_es_dishes', word: 'dishes', article: 'plural', emoji: '?��️🍽️', exampleSentence: 'Wash the dishes.', exampleSentenceKo: '그릇?�을 ?�어??' },
+  { id: 'fb_es_watches', word: 'watches', article: 'plural', emoji: '?�⌚', exampleSentence: 'He collects watches.', exampleSentenceKo: '그는 ?�계�?모아??' }
 ];

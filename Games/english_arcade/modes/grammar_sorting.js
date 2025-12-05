@@ -563,10 +563,11 @@ export async function runGrammarSortingMode(ctx = {}) {
     }
   }
 
+  // Use grammarFile path for session tracking to match homework assignment list_key
   const sessionId = startSession({
     mode: 'grammar_sorting',
     wordList: poolItems.map(x => x.question),
-    listName: grammarName || 'Grammar',
+    listName: grammarFile || grammarName || 'Grammar',
     meta: { category: 'grammar', file: grammarFile, grammarName, strategy: strategy.name }
   });
 
@@ -865,10 +866,11 @@ export async function runGrammarSortingMode(ctx = {}) {
       inlineToast?.(`Finished: ${correctCount}/${attempts} (${accuracy}%)`);
       playSFX?.('end');
       try {
+        // Use grammarFile path for session tracking to match homework assignment list_key
         endSession(sessionId, {
           mode: 'grammar_sorting',
           summary: { score: correctCount, total: attempts, accuracy, list_name: grammarName, category: 'grammar', grammarName, grammarFile },
-          listName: grammarName,
+          listName: grammarFile || grammarName,
           wordList: poolItems.map(x => x.question),
           meta: { grammarFile, grammarName, category: 'grammar', strategy: strategy.name }
         });

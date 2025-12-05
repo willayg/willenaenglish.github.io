@@ -58,9 +58,10 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
   let correctCount = 0;
   let wrongCount = 0;
 
+  // Use grammarFile path for session tracking to match homework assignment list_key
   const sessionId = startSession({
     mode: MODE,
-    listName: grammarName,
+    listName: grammarFile || grammarName,
     wordList: items.map(it => it.word || it.id),
     meta: { grammarFile, direction: 'KO→EN', input_type: 'mc' }
   });
@@ -300,10 +301,11 @@ export async function runGrammarTranslationChoiceMode({ grammarFile, grammarName
     const totalAttempts = correctCount + wrongCount;
     const accuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
 
+    // Use grammarFile path for session tracking to match homework assignment list_key
     endSession(sessionId, {
       mode: MODE,
       summary: { correct: correctCount, wrong: wrongCount, total: items.length, accuracy, grammarName, grammarFile },
-      listName: grammarName,
+      listName: grammarFile || grammarName,
       wordList: items.map(it => it.word || it.id),
       meta: { grammarFile, grammarName, direction: 'KO→EN' }
     });

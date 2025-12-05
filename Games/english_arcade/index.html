@@ -287,11 +287,12 @@
           // Fetch progress for each assignment
           const assignmentsWithProgress = await Promise.all(assignments.map(async (a) => {
             try {
-              const prRes = await fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`, { credentials:'include' });
+              const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`);
               const prJson = await prRes.json().catch(()=>({}));
               if (prRes.ok && prJson.success && Array.isArray(prJson.progress)) {
                 let studentProgress = null;
-                if (currentUserId) studentProgress = prJson.progress.find(p => p.user_id === currentUserId) || null;
+                // Use String() for safe comparison - user_id may be UUID string or other type
+                if (currentUserId) studentProgress = prJson.progress.find(p => String(p.user_id) === String(currentUserId)) || null;
                 if (!studentProgress && prJson.progress.length === 1) studentProgress = prJson.progress[0];
                 if (studentProgress) {
                   let completionPct = 0;

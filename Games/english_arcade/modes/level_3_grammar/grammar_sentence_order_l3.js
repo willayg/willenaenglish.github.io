@@ -179,9 +179,10 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
 
   // Start a session for progress tracking
   try {
+    // Use grammarFile path for session tracking to match homework assignment list_key
     state.sessionId = startSession({
       mode: MODE,
-      listName: state.grammarName || null,
+      listName: state.grammarFile || state.grammarName || null,
       wordList: state.list.map(it => (it.past || it.base || it.word || it.en) ).filter(Boolean),
       meta: { category: 'grammar', grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 }
     });
@@ -439,10 +440,11 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       // Partial endSession for quit
       if (current.sessionId) {
         try {
+          // Use grammarFile path for session tracking to match homework assignment list_key
           endSession(current.sessionId, {
             mode: MODE,
             summary: { score: current.score, total: current.list.length, correct: current.score, points: current.score, category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3 },
-            listName: current.grammarName || null,
+            listName: current.grammarFile || current.grammarName || null,
             wordList: current.list.map(it => it.past || it.base || it.word || it.en).filter(Boolean),
             meta: { grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3, quit_reason: reason }
           });
@@ -476,10 +478,11 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
   function finish() {
     // End session
     try {
+      // Use grammarFile path for session tracking to match homework assignment list_key
       endSession(state.sessionId, {
         mode: MODE,
         summary: { score: state.score, total: state.list.length, correct: state.score, points: state.score, category: 'grammar', grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 },
-        listName: state.grammarName || null,
+        listName: state.grammarFile || state.grammarName || null,
         wordList: state.list.map(it => it.past || it.base || it.word || it.en).filter(Boolean),
         meta: { grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 }
       });
