@@ -215,7 +215,8 @@ export async function runGrammarSentenceUnscramble(ctx) {
   const forwardedCtx = {
     ...ctx,
     wordList: usable,
-    listName: grammarName || ctx?.listName || 'Grammar Sentences',
+    // Use grammarFile path for session tracking to match homework assignment list_key
+    listName: grammarFile || grammarName || ctx?.listName || 'Grammar Sentences',
     sessionMode: 'grammar_sentence_unscramble',
     grammarFile,
     grammarName,

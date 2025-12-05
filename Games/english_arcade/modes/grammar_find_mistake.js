@@ -511,8 +511,8 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
   const bad = shuffled.slice(half).map(it => { const en = makeSentence(it); const c = corruptSentence(en); return { type:'bad', enBad: c.bad, enCorrect: en, wrongToken: c.wrongToken, correctToken: c.correctToken, src: it }; });
   const rounds = [...good, ...bad].sort(() => Math.random() - 0.5);
 
-  // Start session
-  const sessionId = startSession({ mode: MODE, listName: grammarName, wordList: rounds.map((r,i)=>r.src?.word||`s${i}`), meta: { grammarFile } });
+  // Start session - use grammarFile path for session tracking to match homework assignment list_key
+  const sessionId = startSession({ mode: MODE, listName: grammarFile || grammarName, wordList: rounds.map((r,i)=>r.src?.word||`s${i}`), meta: { grammarFile } });
   let idx = 0, correct = 0, wrong = 0;
 
   function addExitButton() {
@@ -649,7 +649,8 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
         grammarName,
         grammarFile
       },
-      listName: grammarName,
+      // Use grammarFile path for session tracking to match homework assignment list_key
+      listName: grammarFile || grammarName,
       wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
       meta: { grammarFile, grammarName }
     });

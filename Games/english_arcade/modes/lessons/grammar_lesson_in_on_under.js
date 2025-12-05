@@ -1,4 +1,4 @@
-// Grammar Lesson Runner – In / On / Under (Prepositions of location)
+// Grammar Lesson Runner ??In / On / Under (Prepositions of location)
 // Teaches positional prepositions with visual scenes and sorting activities.
 // Updated: Cache buster v2
 
@@ -34,7 +34,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_in_on_under',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'In vs On vs Under' },
     });
   } catch (err) {
@@ -58,10 +58,10 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = lang === 'ko' ? '언어를 선택하세요' : 'Choose your language';
+    title.textContent = lang === 'ko' ? '?�어�??�택?�세?? : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('한국어');
+    const koBtn = buildLanguageButton('?�국??);
     koBtn.onclick = () => { lang = 'ko'; nextStep(); };
     wrap.appendChild(title);
     wrap.appendChild(enBtn);
@@ -76,7 +76,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "물건의 위치를 나타낼 때 <b>in</b> (안에), <b>on</b> (위에), <b>under</b> (아래에)를 써요. 버튼을 눌러서 어떤 위치인지 확인해 보세요!"
+      ? "물건???�치�??��?????<b>in</b> (?�에), <b>on</b> (?�에), <b>under</b> (?�래??�??�요. 버튼???�러???�떤 ?�치?��? ?�인??보세??"
       : "We use <b>in</b>, <b>on</b>, or <b>under</b> to describe where something is. Tap each button to see the difference!";
 
     const subjectRow = document.createElement('div');
@@ -90,11 +90,11 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     
     // Animal rotation with English and Korean names
     const animals = [
-      { emoji: '🐱', en: 'cat', ko: '고양이' },
-      { emoji: '🐶', en: 'dog', ko: '개' },
-      { emoji: '🐵', en: 'monkey', ko: '원숭이' },
-      { emoji: '🐰', en: 'rabbit', ko: '토끼' },
-      { emoji: '🐻', en: 'bear', ko: '곰' }
+      { emoji: '?��', en: 'cat', ko: '고양?? },
+      { emoji: '?��', en: 'dog', ko: '�? },
+      { emoji: '?��', en: 'monkey', ko: '?�숭?? },
+      { emoji: '?��', en: 'rabbit', ko: '?�끼' },
+      { emoji: '?��', en: 'bear', ko: '�? }
     ];
     let currentAnimalIndex = 0;
 
@@ -112,7 +112,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
       
       // Generate dynamic sentence with animal name
       const sentenceEn = `The ${animal.en} is ${set.prep} the box.`;
-      const sentenceKo = `${animal.ko}가 상자 ${set.prep === 'in' ? '안에' : set.prep === 'on' ? '위에' : '아래에'} 있어요.`;
+      const sentenceKo = `${animal.ko}가 ?�자 ${set.prep === 'in' ? '?�에' : set.prep === 'on' ? '?�에' : '?�래??} ?�어??`;
 
       cardDisplay.innerHTML = `
         <div class="prep-label">${set.prep.toUpperCase()}</div>
@@ -161,7 +161,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "왼쪽부터 <b>in</b> (안에), <b>on</b> (위에), <b>under</b> (아래에) 예문이에요. 소리를 내어 읽어 보세요!"
+      ? "?�쪽부??<b>in</b> (?�에), <b>on</b> (?�에), <b>under</b> (?�래?? ?�문?�에?? ?�리�??�어 ?�어 보세??"
       : "Examples for <b>in</b>, <b>on</b>, and <b>under</b>. Try reading them out loud!";
     stepEl.appendChild(intro);
 
@@ -183,7 +183,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "카드를 누르고 상자의 올바른 위치에 놓으세요."
+      ? "카드�??�르�??�자???�바�??�치???�으?�요."
       : "Tap a card and place it in the correct position around the box.";
     stepEl.appendChild(body);
 
@@ -227,7 +227,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     // Card pool at bottom
     const poolLabel = document.createElement('div');
     poolLabel.style.cssText = 'font-weight:700;color:#19777e;text-align:center;margin-top:20px;';
-    poolLabel.textContent = lang === 'ko' ? '카드들' : 'Cards';
+    poolLabel.textContent = lang === 'ko' ? '카드?? : 'Cards';
     sortingContainer.appendChild(poolLabel);
 
     const cardPool = document.createElement('div');
@@ -337,13 +337,13 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
       const message = document.createElement('div');
       message.className = 'completion-message';
       message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-top:20px;font-size:1.05rem;';
-      message.textContent = lang === 'ko' ? '완벽해요! 위치 표현을 잘 이해했어요.' : 'Perfect! You understand in, on, and under!';
+      message.textContent = lang === 'ko' ? '?�벽?�요! ?�치 ?�현?????�해?�어??' : 'Perfect! You understand in, on, and under!';
       sortingContainer.appendChild(message);
 
       const nav = document.createElement('div');
       nav.className = 'lesson-nav';
       nav.style.marginTop = '20px';
-      const continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next');
+      const continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next');
       continueBtn.style.background = '#fff';
       continueBtn.style.color = '#ff6fb0';
       continueBtn.style.borderColor = '#ff6fb0';
@@ -359,7 +359,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '20px';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -382,13 +382,13 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">이제 안에, 위에, 아래에를 올바르게 말할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
-      : '<div style="font-weight:800;color:#19777e">Now you know how to use in, on, and under!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
+      ? '<div style="font-weight:800;color:#19777e">?�제 ?�에, ?�에, ?�래?��? ?�바르게 말할 ???�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
+      : '<div style="font-weight:800;color:#19777e">Now you know how to use in, on, and under!</div><div class="stars">⭐⭐⭐⭐�?/div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       try {
         if (window.WordArcade?.startGrammarModeSelector) {
@@ -416,7 +416,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'In vs On vs Under'
           },
-          listName: grammarName || null,
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords
         });
       } catch (err) {
@@ -488,21 +488,21 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
 }
 
 const fallbackIn = [
-  { id: 'fb_in_box', word: 'cat', article: 'in', emoji: '🐱', exampleSentence: 'The cat is in the box.', exampleSentenceKo: '고양이가 상자 안에 있어요.' },
-  { id: 'fb_in_bag', word: 'pencils', article: 'in', emoji: '✏️', exampleSentence: 'The pencils are in the bag.', exampleSentenceKo: '연필들이 가방 안에 있어요.' },
-  { id: 'fb_in_cup', word: 'juice', article: 'in', emoji: '🥤', exampleSentence: 'The juice is in the cup.', exampleSentenceKo: '주스가 컵 안에 있어요.' }
+  { id: 'fb_in_box', word: 'cat', article: 'in', emoji: '?��', exampleSentence: 'The cat is in the box.', exampleSentenceKo: '고양?��? ?�자 ?�에 ?�어??' },
+  { id: 'fb_in_bag', word: 'pencils', article: 'in', emoji: '?�️', exampleSentence: 'The pencils are in the bag.', exampleSentenceKo: '?�필?�이 가�??�에 ?�어??' },
+  { id: 'fb_in_cup', word: 'juice', article: 'in', emoji: '?��', exampleSentence: 'The juice is in the cup.', exampleSentenceKo: '주스가 �??�에 ?�어??' }
 ];
 
 const fallbackOn = [
-  { id: 'fb_on_table', word: 'book', article: 'on', emoji: '📖', exampleSentence: 'The book is on the table.', exampleSentenceKo: '책이 탁자 위에 있어요.' },
-  { id: 'fb_on_plate', word: 'cookie', article: 'on', emoji: '🍪', exampleSentence: 'The cookie is on the plate.', exampleSentenceKo: '쿠키가 접시 위에 있어요.' },
-  { id: 'fb_on_head', word: 'hat', article: 'on', emoji: '🎩', exampleSentence: 'The hat is on my head.', exampleSentenceKo: '모자가 내 머리 위에 있어요.' }
+  { id: 'fb_on_table', word: 'book', article: 'on', emoji: '?��', exampleSentence: 'The book is on the table.', exampleSentenceKo: '책이 ?�자 ?�에 ?�어??' },
+  { id: 'fb_on_plate', word: 'cookie', article: 'on', emoji: '?��', exampleSentence: 'The cookie is on the plate.', exampleSentenceKo: '쿠키가 ?�시 ?�에 ?�어??' },
+  { id: 'fb_on_head', word: 'hat', article: 'on', emoji: '?��', exampleSentence: 'The hat is on my head.', exampleSentenceKo: '모자가 ??머리 ?�에 ?�어??' }
 ];
 
 const fallbackUnder = [
-  { id: 'fb_under_bed', word: 'dog', article: 'under', emoji: '🐶', exampleSentence: 'The dog is under the bed.', exampleSentenceKo: '강아지가 침대 아래에 있어요.' },
-  { id: 'fb_under_table', word: 'ball', article: 'under', emoji: '⚽️', exampleSentence: 'The ball is under the table.', exampleSentenceKo: '공이 탁자 아래에 있어요.' },
-  { id: 'fb_under_tree', word: 'child', article: 'under', emoji: '👧', exampleSentence: 'The child is under the tree.', exampleSentenceKo: '아이가 나무 아래에 있어요.' }
+  { id: 'fb_under_bed', word: 'dog', article: 'under', emoji: '?��', exampleSentence: 'The dog is under the bed.', exampleSentenceKo: '강아지가 침�? ?�래???�어??' },
+  { id: 'fb_under_table', word: 'ball', article: 'under', emoji: '?�️', exampleSentence: 'The ball is under the table.', exampleSentenceKo: '공이 ?�자 ?�래???�어??' },
+  { id: 'fb_under_tree', word: 'child', article: 'under', emoji: '?��', exampleSentence: 'The child is under the tree.', exampleSentenceKo: '?�이가 ?�무 ?�래???�어??' }
 ];
 
 function normalizeList(list, fallback) {
@@ -511,9 +511,9 @@ function normalizeList(list, fallback) {
     id: item.id || `fb_${idx}`,
     word: item.word || 'item',
     article: item.article || 'in',
-    emoji: item.emoji || '🐱',
+    emoji: item.emoji || '?��',
     exampleSentence: item.exampleSentence || 'Example sentence',
-    exampleSentenceKo: item.exampleSentenceKo || '예문',
+    exampleSentenceKo: item.exampleSentenceKo || '?�문',
   }));
 }
 
@@ -537,7 +537,7 @@ function buildPrepositionSets(inList, onList, underList) {
       emoji: inSample.emoji,
       sentenceEn: inSample.exampleSentence,
       tipEn: 'Use "in" for things inside or surrounded by something.',
-      tipKo: '물건이 안쪽에 있을 때는 "in"을 써요.'
+      tipKo: '물건???�쪽???�을 ?�는 "in"???�요.'
     },
     {
       id: 'on',
@@ -546,7 +546,7 @@ function buildPrepositionSets(inList, onList, underList) {
       emoji: onSample.emoji,
       sentenceEn: onSample.exampleSentence,
       tipEn: 'Use "on" when something is on top of something.',
-      tipKo: '물건이 위에 있을 때는 "on"을 써요.'
+      tipKo: '물건???�에 ?�을 ?�는 "on"???�요.'
     },
     {
       id: 'under',
@@ -555,7 +555,7 @@ function buildPrepositionSets(inList, onList, underList) {
       emoji: underSample.emoji,
       sentenceEn: underSample.exampleSentence,
       tipEn: 'Use "under" when something is below something.',
-      tipKo: '물건이 아래에 있을 때는 "under"을 써요.'
+      tipKo: '물건???�래???�을 ?�는 "under"???�요.'
     }
   ];
 }
@@ -636,12 +636,12 @@ function buildExampleColumnWithScene(label, list, lang) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const back = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
+  const back = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
   back.style.background = '#fff';
   back.style.color = '#ff6fb0';
   back.style.borderColor = '#ff6fb0';
   back.onclick = onBack;
-  const next = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
+  const next = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
   next.style.background = '#fff';
   next.style.color = '#ff6fb0';
   next.style.borderColor = '#ff6fb0';

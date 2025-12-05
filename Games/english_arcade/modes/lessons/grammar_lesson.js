@@ -79,10 +79,11 @@ export async function runGrammarLesson(ctx = {}) {
   let sessionId = null;
   let sessionClosed = false;
   try {
+    // Use grammarFile path for session tracking to match homework assignment list_key
     sessionId = startSession({
       mode: 'grammar_lesson',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || null },
     });
   } catch (err) {
@@ -607,7 +608,8 @@ export async function runGrammarLesson(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || null,
           },
-          listName: grammarName || null,
+          // Use grammarFile path for session tracking to match homework assignment list_key
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords,
         });
       } catch (err) {
