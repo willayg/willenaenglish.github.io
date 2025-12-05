@@ -5,8 +5,8 @@ const { createClient } = require('@supabase/supabase-js');
 const redisCache = require('../../lib/redis_cache');
 const { getCorsHeaders, handleCorsPreflightIfNeeded } = require('./lib/cors');
 
-const CLASS_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
-const GLOBAL_CACHE_TTL_SECONDS = 10 * 60; // 10 minutes
+const CLASS_CACHE_TTL_SECONDS = 10 * 60; // 10 minutes (up from 5)
+const GLOBAL_CACHE_TTL_SECONDS = 15 * 60; // 15 minutes (up from 10)
 
 // Cookie helpers (same as supabase_proxy_fixed.js)
 function parseCookies(header) {
@@ -40,7 +40,7 @@ const ADMIN_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY || process.env.
 const USE_SQL_LEADERBOARD = false; // process.env.USE_SQL_LEADERBOARD === '1' || process.env.USE_SQL_LEADERBOARD === 'true';
 
 // Cache TTL for CDN/browser caching (seconds). Reduces invocation count.
-const CACHE_CONTROL_MAX_AGE = Number(process.env.PROGRESS_CACHE_MAX_AGE) || 60;
+const CACHE_CONTROL_MAX_AGE = Number(process.env.PROGRESS_CACHE_MAX_AGE) || 120; // 2 minutes (up from 60s)
 
 // Store event reference for CORS
 let currentEvent = null;
@@ -393,6 +393,40 @@ exports.handler = async (event) => {
   const scope = (query) => query.eq('user_id', userId);
 
   const section = ((event.queryStringParameters && event.queryStringParameters.section) || 'kpi').toLowerCase();
+
+    // ---------- CLEAR ALL LEADERBOARD CACHES (admin action) ----------
+    if (section === 'clear_cache') {
+      try {
+        // Known class names to clear
+        const KNOWN_CLASSES = [
+          'new york', 'chicago', 'boston', 'brown', 'berkeley', 'yale', 
+          'washington', 'manchester', 'los angeles', 'san francisco'
+        ];
+        const keysToDelete = ['lb:global:all', 'lb:global:month'];
+        for (const cls of KNOWN_CLASSES) {
+          keysToDelete.push(`lb:class:${cls}:all`);
+          keysToDelete.push(`lb:class:${cls}:month`);
+        }
+        // Also delete the invalidation lock so next write triggers full clear
+        keysToDelete.push('lb:invalidate_lock');
+        
+        const deleteResults = await Promise.all(keysToDelete.map(k => redisCache.del(k).then(() => true).catch(() => false)));
+        const deletedCount = deleteResults.filter(Boolean).length;
+        
+        // Also clear DB cache
+        await adminClient.from('leaderboard_cache').delete().eq('section', 'leaderboard_stars_global');
+        await adminClient.from('leaderboard_cache').delete().eq('section', 'leaderboard_stars_class');
+        
+        return json(200, { 
+          success: true, 
+          message: `Cleared ${deletedCount} Redis keys and DB leaderboard cache`,
+          cleared_keys: keysToDelete
+        });
+      } catch (e) {
+        console.error('[progress_summary] clear_cache error:', e);
+        return json(500, { success: false, error: e?.message || 'Failed to clear cache' });
+      }
+    }
 
     // ---------- CLASS LEADERBOARD ----------
     if (section === 'leaderboard_class') {

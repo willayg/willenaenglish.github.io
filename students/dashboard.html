@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="/students/dashboard.css" />
   <link rel="stylesheet" href="/students/theme.css" />
   <base href="/students/">
@@ -115,6 +116,7 @@
         <div id="starsLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="slFilterMonth" class="sl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
           <button id="slFilterAll" class="sl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
+          <button id="slRefreshBtn" type="button" title="Refresh" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;opacity:0.6;transition:opacity 0.2s,transform 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6"><span class="material-icons" style="font-size:20px;color:#67e2e6;">refresh</span></button>
           <span id="starsSmallSpinner" class="mini-lb-spinner hidden" aria-hidden="true" title="Loading"></span>
         </div>
         <div class="card-content" id="starsLeaderboardContent" style="min-height:120px;">
@@ -143,6 +145,7 @@
         <div id="globalLeaderboardFilters" style="margin-top:8px;margin-bottom:12px;display:flex;justify-content:center;gap:16px;align-items:center;">
           <button id="glFilterMonth" class="gl-filter-btn active" type="button" aria-pressed="true" data-i18n="This Month">This Month</button>
           <button id="glFilterAll" class="gl-filter-btn" type="button" aria-pressed="false" data-i18n="All Time">All Time</button>
+          <button id="glRefreshBtn" type="button" title="Refresh" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;opacity:0.6;transition:opacity 0.2s,transform 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6"><span class="material-icons" style="font-size:20px;color:#67e2e6;">refresh</span></button>
           <span id="globalSmallSpinner" class="mini-lb-spinner hidden" aria-hidden="true" title="Loading"></span>
         </div>
         <div class="card-content" id="globalLeaderboardContent" style="min-height:120px;">
@@ -962,13 +965,62 @@
       let starsLbTimeframe = 'month'; // 'all' | 'month' - default to month
       let starsLbMetric = 'super'; // default to 'super' (Super Score)
       const starsLbCache = new Map(); // timeframe -> data
+      const LB_LOCAL_CACHE_TTL = 2 * 60 * 1000; // 2 minutes for stale-while-revalidate
 
-      async function loadStarsLeaderboard(timeframe = starsLbTimeframe) {
+      // Get current user ID for cache key scoping (prevents cross-account cache pollution)
+      function getCurrentUserId() {
+        try {
+          // Try to get from WillenaAPI or window state
+          if (window.WillenaAPI?.userId) return window.WillenaAPI.userId;
+          // Fallback: extract from any stored auth state
+          const authState = sessionStorage.getItem('sb_user_id') || localStorage.getItem('sb_user_id');
+          return authState || 'anon';
+        } catch { return 'anon'; }
+      }
+
+      // Local storage cache helpers for instant UI - scoped by user ID
+      function getLbFromLocal(key) {
+        try {
+          const userId = getCurrentUserId();
+          const fullKey = `${key}_${userId}`;
+          const raw = localStorage.getItem(fullKey);
+          if (!raw) return null;
+          const { data, ts } = JSON.parse(raw);
+          return { data, ts, stale: Date.now() - ts > LB_LOCAL_CACHE_TTL };
+        } catch { return null; }
+      }
+      function setLbToLocal(key, data) {
+        try {
+          const userId = getCurrentUserId();
+          const fullKey = `${key}_${userId}`;
+          localStorage.setItem(fullKey, JSON.stringify({ data, ts: Date.now() }));
+        } catch {}
+      }
+      function clearLbLocalCache(key) {
+        try {
+          const userId = getCurrentUserId();
+          const fullKey = `${key}_${userId}`;
+          localStorage.removeItem(fullKey);
+        } catch {}
+      }
+
+      async function loadStarsLeaderboard(timeframe = starsLbTimeframe, forceRefresh = false) {
         const spinner = document.getElementById('starsSmallSpinner');
+        starsLbTimeframe = timeframe;
+
+        // For class leaderboard, don't use localStorage cache - it's user-specific
+        // Just use in-memory cache for tab switching
+        const memCached = starsLbCache.get(timeframe);
+        if (memCached && !forceRefresh) {
+          renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', memCached, starsLbMetric);
+          return;
+        }
+
         try {
           spinner?.classList.remove('hidden');
-          starsLbTimeframe = timeframe;
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}&_=${Date.now()}`;
+          // Use bypass_cache=1 when force refreshing to get fresh data from server
+          const bypassParam = forceRefresh ? '&bypass_cache=1' : '';
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
           starsLbCache.set(timeframe, data);
@@ -1019,6 +1071,11 @@
         updateStarsLbFilterUI();
         updateStarsMetricUI();
       });
+      // Refresh button for class leaderboard - force bypass server cache
+      document.getElementById('slRefreshBtn')?.addEventListener('click', async () => {
+        starsLbCache.delete(starsLbTimeframe);
+        await loadStarsLeaderboard(starsLbTimeframe, true);
+      });
 
       document.querySelectorAll('#starsLeaderboardTabs .lb-tab').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -1040,20 +1097,36 @@
       let globalLbMetric = 'super';
       const globalLbCache = new Map();
 
-      async function loadGlobalLeaderboard(timeframe = globalLbTimeframe) {
+      async function loadGlobalLeaderboard(timeframe = globalLbTimeframe, forceRefresh = false) {
         const spinner = document.getElementById('globalSmallSpinner');
+        const cacheKey = `lb_stars_global_${timeframe}`;
+        globalLbTimeframe = timeframe;
+
+        // Instant render from local cache (stale-while-revalidate)
+        const local = getLbFromLocal(cacheKey);
+        if (local && local.data && !forceRefresh) {
+          globalLbCache.set(timeframe, local.data);
+          renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', local.data, globalLbMetric);
+          if (!local.stale) return; // Fresh enough, skip network
+        }
+
         try {
           spinner?.classList.remove('hidden');
-          globalLbTimeframe = timeframe;
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}&_=${Date.now()}`;
+          // Use bypass_cache=1 when force refreshing to get fresh data from server
+          const bypassParam = forceRefresh ? '&bypass_cache=1' : '';
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
           globalLbCache.set(timeframe, data);
+          setLbToLocal(cacheKey, data);
           renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', data, globalLbMetric);
         } catch (err) {
           console.error('Global leaderboard error:', err);
-          const container = document.getElementById('globalLeaderboardContent');
-          if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+          // Only show error if we have no cached data
+          if (!local?.data) {
+            const container = document.getElementById('globalLeaderboardContent');
+            if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+          }
         } finally {
           spinner?.classList.add('hidden');
         }
@@ -1096,6 +1169,13 @@
         updateGlobalLbFilterUI();
         updateGlobalMetricUI();
       });
+      // Refresh button for global leaderboard - force bypass server cache
+      document.getElementById('glRefreshBtn')?.addEventListener('click', async () => {
+        // Clear local cache for this timeframe (scoped by user)
+        clearLbLocalCache(`lb_stars_global_${globalLbTimeframe}`);
+        globalLbCache.delete(globalLbTimeframe);
+        await loadGlobalLeaderboard(globalLbTimeframe, true);
+      });
 
       document.querySelectorAll('#globalLeaderboardTabs .lb-tab').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -1112,8 +1192,34 @@
         });
       });
 
-    // Initial load starts immediately (skeletons already visible)
-    await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+    // Check if user just logged in (flag set by login.html) - if so, force fresh data
+    let forceInitialRefresh = false;
+    try {
+      const loginTs = localStorage.getItem('user_logged_in');
+      const alreadyRefreshed = sessionStorage.getItem('lb_refreshed_after_login');
+      
+      if (loginTs && !alreadyRefreshed) {
+        const loginAge = Date.now() - parseInt(loginTs, 10);
+        if (loginAge < 60000) { // Within last 60 seconds
+          // Login happened recently - force fresh data
+          forceInitialRefresh = true;
+          sessionStorage.setItem('lb_refreshed_after_login', '1'); // Mark as handled for this session
+          console.log('[Dashboard] Fresh login detected, forcing leaderboard refresh');
+        } else {
+          // Old flag, clean it up
+          localStorage.removeItem('user_logged_in');
+        }
+      }
+    } catch (e) {
+      console.warn('[Dashboard] Error checking login flag:', e);
+    }
+
+    // Initial load
+    // Always force refresh for class leaderboard to ensure correct class after login switch
+    await Promise.all([
+      loadStarsLeaderboard(starsLbTimeframe, true),
+      loadGlobalLeaderboard(globalLbTimeframe, forceInitialRefresh)
+    ]);
     updateStarsMetricUI();
     updateGlobalMetricUI();
 
@@ -1131,7 +1237,9 @@
       window.addEventListener('studentlang:changed', async () => {
         starsLbCache.clear();
         globalLbCache.clear();
-        await Promise.all([loadStarsLeaderboard(starsLbTimeframe), loadGlobalLeaderboard(globalLbTimeframe)]);
+        // Clear local storage caches too (user-scoped)
+        ['lb_stars_class_month', 'lb_stars_class_all', 'lb_stars_global_month', 'lb_stars_global_all'].forEach(k => clearLbLocalCache(k));
+        await Promise.all([loadStarsLeaderboard(starsLbTimeframe, true), loadGlobalLeaderboard(globalLbTimeframe, true)]);
         updateStarsMetricUI();
         updateGlobalMetricUI();
         updateMonthButtons(); // Update month name for new language
@@ -1141,6 +1249,8 @@
         try {
           starsLbCache.clear();
           globalLbCache.clear();
+          // Clear local storage caches on auth change (user-scoped keys will be different after reload anyway)
+          ['lb_stars_class_month', 'lb_stars_class_all', 'lb_stars_global_month', 'lb_stars_global_all'].forEach(k => clearLbLocalCache(k));
         } catch {}
         // Simple full reload ensures all components (header, homework, leaderboards) reinitialize
         try { location.reload(); } catch { /* ignore */ }
