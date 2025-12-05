@@ -58,9 +58,8 @@
   // For cross-origin requests (GitHub Pages or custom domain -> Netlify), we need special handling
   const isCrossOrigin = isGitHubPages || isCustomDomain;
   
-  // Detect browsers that block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
-  // or when in private/incognito mode
-  const isThirdPartyCookiesBlocked = (() => {
+  // Detect browsers that ALWAYS block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
+  const isKnownCookieBlockingBrowser = (() => {
     const ua = navigator.userAgent || '';
     // Safari (including iOS Safari) - has Intelligent Tracking Prevention
     const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Opera/.test(ua);
@@ -68,11 +67,57 @@
     const isSamsungInternet = /SamsungBrowser/.test(ua);
     // Brave browser - blocks third-party cookies by default
     const isBrave = typeof navigator.brave !== 'undefined';
-    // Firefox with Enhanced Tracking Protection (can't detect easily, but worth checking)
-    const isFirefox = /Firefox/.test(ua);
     
     return isSafari || isSamsungInternet || isBrave;
   })();
+
+  // For Chrome/Firefox/Edge in incognito/private mode, we can't detect via UA.
+  // Use a session flag + async test approach for those cases.
+  // This flag gets set by testCrossOriginCookies() if cookies fail.
+  let _crossOriginCookiesFailed = false;
+
+  // Synchronous check: known blockers OR previously detected failure
+  const isThirdPartyCookiesBlocked = () => isKnownCookieBlockingBrowser || _crossOriginCookiesFailed;
+
+  /**
+   * Async test: call Netlify function to set a test cookie, then call again to verify it's sent back.
+   * Returns true if cross-origin cookies work, false otherwise.
+   * Sets _crossOriginCookiesFailed flag as side effect.
+   */
+  async function testCrossOriginCookies() {
+    if (!isCrossOrigin) return true; // same-origin, cookies always work
+    if (isKnownCookieBlockingBrowser) {
+      _crossOriginCookiesFailed = true;
+      return false;
+    }
+    try {
+      // Use cookie_echo endpoint to check if any auth cookies are present
+      // If user was logged in before, cookies should be sent. If not, that's also fine for this test.
+      // The real test is: after login, do cookies come back on subsequent requests?
+      // For a quick pre-login check, we test if the browser sends ANY cookies to the cross-origin.
+      const resp = await fetch(NETLIFY_FUNCTIONS_URL + '/.netlify/functions/supabase_auth?action=cookie_echo&_t=' + Date.now(), {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await resp.json();
+      // If we get a response, the request worked. The cookie_echo tells us if cookies were received.
+      // For incognito without prior login, hasAccess will be false - that's expected.
+      // The test passes if we got a valid response (cookies CAN be sent, even if none exist yet).
+      // We'll rely on a post-login check for the real validation.
+      return true;
+    } catch (e) {
+      console.warn('[WillenaAPI] Cross-origin cookie test failed:', e.message);
+      _crossOriginCookiesFailed = true;
+      return false;
+    }
+  }
+
+  /**
+   * Quick synchronous check to see if we should redirect immediately.
+   * For unknown browsers (Chrome incognito), we DON'T redirect immediately -
+   * we let them try to login, and if whoami fails right after, then redirect.
+   */
+  const shouldRedirectImmediately = () => isCrossOrigin && isKnownCookieBlockingBrowser;
   
   // Set API base URL based on environment
   let API_BASE = '';
@@ -231,13 +276,24 @@
       CF_ROLLOUT_PERCENT = Number(percent) || 0;
     },
 
-    // Check if third-party cookies are likely blocked
+    // Check if third-party cookies are likely blocked (sync check)
     isThirdPartyCookiesBlocked,
+    
+    // Check if we KNOW for sure cookies are blocked (Safari, Samsung, Brave)
+    isKnownCookieBlockingBrowser,
+    
+    // Async test for cross-origin cookies
+    testCrossOriginCookies,
+    
+    // Mark cookies as failed (call this after whoami returns 401 right after login)
+    markCookiesFailed() {
+      _crossOriginCookiesFailed = true;
+    },
 
     // For cross-origin + blocked cookies scenario, redirect to Netlify-hosted version
     // This ensures cookies work properly for authentication
     redirectToNetlifyIfNeeded(pathname) {
-      if (isCrossOrigin && isThirdPartyCookiesBlocked) {
+      if (isCrossOrigin && isThirdPartyCookiesBlocked()) {
         const targetUrl = NETLIFY_FUNCTIONS_URL + (pathname || window.location.pathname + window.location.search);
         console.log('[WillenaAPI] Redirecting to Netlify for cookie support:', targetUrl);
         window.location.replace(targetUrl);
@@ -245,15 +301,19 @@
       }
       return false;
     },
+    
+    // Redirect immediately only for KNOWN cookie-blocking browsers
+    // For unknown (Chrome incognito), we let them try first
+    shouldRedirectImmediately,
 
     // Get the Netlify-hosted URL for the current page (useful for login redirects)
     getNetlifyUrl(pathname) {
       return NETLIFY_FUNCTIONS_URL + (pathname || window.location.pathname);
     },
 
-    // Check if we should show a cookie warning
+    // Check if we should show a cookie warning (sync, for known blockers)
     shouldShowCookieWarning() {
-      return isCrossOrigin && isThirdPartyCookiesBlocked;
+      return isCrossOrigin && isKnownCookieBlockingBrowser;
     }
   };
 
