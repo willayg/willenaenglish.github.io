@@ -170,9 +170,10 @@ export async function startGrammarChooseL3({
 
   // Start session for stars/progress tracking
   try {
+    // Use grammarFile path for session tracking to match homework assignment list_key
     state.sessionId = startSession({
       mode: MODE,
-      listName: grammarName || null,
+      listName: state.grammarFile || grammarName || null,
       wordList: state.list.map(it => it.word || it.id || it.base || it.past).filter(Boolean),
       meta: { category: 'grammar', grammarFile: state.grammarFile, grammarName: grammarName || null, level: 3 }
     });
@@ -724,10 +725,11 @@ export async function startGrammarChooseL3({
   function finish(containerEl) {
     // End session & show shared summary UI
     try {
+      // Use grammarFile path for session tracking to match homework assignment list_key
       endSession(state.sessionId, {
         mode: MODE,
         summary: { score: state.score, total: state.list.length, correct: state.score, points: state.score, category: 'grammar', grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 },
-        listName: state.grammarName || null,
+        listName: state.grammarFile || state.grammarName || null,
         wordList: state.list.map(it => it.word || it.id || it.base || it.past).filter(Boolean),
         meta: { category: 'grammar', grammarFile: state.grammarFile, grammarName: state.grammarName, level: 3 }
       });
@@ -754,10 +756,11 @@ function quitToMenu(reason = 'quit') {
   // Partial endSession for quit (records progress so stars can update)
   if (current.sessionId) {
     try {
+      // Use grammarFile path for session tracking to match homework assignment list_key
       endSession(current.sessionId, {
         mode: MODE,
         summary: { score: current.score, total: current.list.length, correct: current.score, points: current.score, category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3 },
-        listName: current.grammarName || null,
+        listName: current.grammarFile || current.grammarName || null,
         wordList: current.list.map(it => it.word || it.id || it.base || it.past).filter(Boolean),
         meta: { category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3, quit_reason: reason }
       });

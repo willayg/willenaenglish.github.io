@@ -101,7 +101,8 @@ export async function runGrammarMode(ctx) {
     // Create a proper tracking session (records.js) so backend receives session_start
     const sessionId = (function(){
       try {
-        const listName = (typeof getListName === 'function' ? getListName() : null) || grammarName || null;
+        // Use grammarFile path for session tracking to match homework assignment list_key
+        const listName = grammarFile || (typeof getListName === 'function' ? getListName() : null) || grammarName || null;
         return startSession({
           mode: 'grammar_mode',
           wordList: sessionWords,
@@ -1477,7 +1478,8 @@ export async function runGrammarMode(ctx) {
 
       // Call endSession with sessionId (matches word-mode pattern exactly)
       try {
-        const listName = (typeof getListName === 'function' ? getListName() : null) || grammarName || null;
+        // Use grammarFile path for session tracking to match homework assignment list_key
+        const listName = grammarFile || (typeof getListName === 'function' ? getListName() : null) || grammarName || null;
         endSession(sessionId, { 
           mode: 'grammar_mode', 
           summary: { score, total: shuffled.length, correct: score, points: score, pct: accuracy, category: 'grammar', context: 'game', duration_s: sessionDuration, grammarName, grammarFile }, 

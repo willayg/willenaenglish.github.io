@@ -913,7 +913,8 @@ export async function runGrammarFillGapMode(ctx) {
     sessionId = startSession({
       mode: 'grammar_fill_gap',
       wordList: sessionWords,
-      listName: grammarName || null,
+      // Use grammarFile path for session tracking to match homework assignment list_key
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile },
     });
   } catch (err) {
@@ -990,7 +991,8 @@ export async function runGrammarFillGapMode(ctx) {
           grammarName: grammarName || null,
           grammarFile: grammarFile || null,
         },
-        listName: grammarName || null,
+        // Use grammarFile path for session tracking to match homework assignment list_key
+        listName: grammarFile || grammarName || null,
         wordList: sessionWords,
         meta: { category: 'grammar', file: grammarFile, grammarName, grammarFile }
       });

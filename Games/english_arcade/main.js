@@ -776,8 +776,10 @@ async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
     showOpeningButtons(false);
     gameArea.innerHTML = '';
   const baseConfig = grammarConfig || {};
-  // Use displayTitle (teacher title) for UI, keep grammarName (file base) as internal key
-  currentListName = (baseConfig.displayTitle || grammarName || null);
+  // Use grammarFile path for session tracking (matches homework assignment list_key format)
+  // This ensures progress_sessions.list_name can be matched against homework_assignments.list_key
+  // E.g., grammarFile = "data/grammar/level1/articles.json" -> list_name stored, backend matches via %articles%
+  currentListName = grammarFile || (baseConfig.displayTitle || grammarName || null);
     wordList = [];
     
     // Mark as grammar flow
