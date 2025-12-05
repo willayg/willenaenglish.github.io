@@ -55,8 +55,24 @@
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
-  // For cross-origin requests (GitHub Pages -> Netlify), we need special handling
-  const isCrossOrigin = isGitHubPages;
+  // For cross-origin requests (GitHub Pages or custom domain -> Netlify), we need special handling
+  const isCrossOrigin = isGitHubPages || isCustomDomain;
+  
+  // Detect browsers that block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
+  // or when in private/incognito mode
+  const isThirdPartyCookiesBlocked = (() => {
+    const ua = navigator.userAgent || '';
+    // Safari (including iOS Safari) - has Intelligent Tracking Prevention
+    const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Opera/.test(ua);
+    // Samsung Internet - has Smart Anti-Tracking
+    const isSamsungInternet = /SamsungBrowser/.test(ua);
+    // Brave browser - blocks third-party cookies by default
+    const isBrave = typeof navigator.brave !== 'undefined';
+    // Firefox with Enhanced Tracking Protection (can't detect easily, but worth checking)
+    const isFirefox = /Firefox/.test(ua);
+    
+    return isSafari || isSamsungInternet || isBrave;
+  })();
   
   // Set API base URL based on environment
   let API_BASE = '';
@@ -213,6 +229,31 @@
     setRolloutPercent(percent) {
       console.log(`[WillenaAPI] Rollout changed: ${CF_ROLLOUT_PERCENT}% -> ${percent}%`);
       CF_ROLLOUT_PERCENT = Number(percent) || 0;
+    },
+
+    // Check if third-party cookies are likely blocked
+    isThirdPartyCookiesBlocked,
+
+    // For cross-origin + blocked cookies scenario, redirect to Netlify-hosted version
+    // This ensures cookies work properly for authentication
+    redirectToNetlifyIfNeeded(pathname) {
+      if (isCrossOrigin && isThirdPartyCookiesBlocked) {
+        const targetUrl = NETLIFY_FUNCTIONS_URL + (pathname || window.location.pathname + window.location.search);
+        console.log('[WillenaAPI] Redirecting to Netlify for cookie support:', targetUrl);
+        window.location.replace(targetUrl);
+        return true;
+      }
+      return false;
+    },
+
+    // Get the Netlify-hosted URL for the current page (useful for login redirects)
+    getNetlifyUrl(pathname) {
+      return NETLIFY_FUNCTIONS_URL + (pathname || window.location.pathname);
+    },
+
+    // Check if we should show a cookie warning
+    shouldShowCookieWarning() {
+      return isCrossOrigin && isThirdPartyCookiesBlocked;
     }
   };
 
