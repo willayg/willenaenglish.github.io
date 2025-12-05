@@ -284,7 +284,8 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
   });
   const rounds = [...good, ...bad].sort(() => Math.random() - 0.5);
 
-  const sessionId = startSession({ mode: MODE, listName: grammarName, wordList: rounds.map((r, i) => r.src?.word || `s${i}`), meta: { grammarFile, grammarName, level: 3 } });
+  // Use grammarFile path for session tracking to match homework assignment list_key
+  const sessionId = startSession({ mode: MODE, listName: grammarFile || grammarName, wordList: rounds.map((r, i) => r.src?.word || `s${i}`), meta: { grammarFile, grammarName, level: 3 } });
   let idx = 0, correct = 0, wrong = 0;
 
   function addExitButton() {
@@ -301,10 +302,11 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     quitBtn.onclick = () => {
       // End partial session and navigate like Level 2
       try {
+        // Use grammarFile path for session tracking to match homework assignment list_key
         endSession(sessionId, {
           mode: MODE,
           summary: { score: correct, total: rounds.length, correct, wrong, points: correct, category: 'grammar', grammarFile, grammarName, level: 3 },
-          listName: grammarName,
+          listName: grammarFile || grammarName,
           wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
           meta: { grammarFile, grammarName, level: 3, quit: true }
         });
@@ -429,7 +431,8 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         grammarFile,
         level: 3,
       },
-      listName: grammarName,
+      // Use grammarFile path for session tracking to match homework assignment list_key
+      listName: grammarFile || grammarName,
       wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
       meta: { grammarFile, grammarName, level: 3 },
     });

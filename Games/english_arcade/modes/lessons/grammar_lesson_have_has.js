@@ -1,4 +1,4 @@
-ï»¿// Grammar Lesson Runner â€“ Have vs. Has
+// Grammar Lesson Runner ? Have vs. Has
 // Lightweight lesson that explains verb agreement for possession.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -33,7 +33,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_have_has',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'Have vs Has', level: 'Level 1 Grammar' }
     });
   } catch (err) {
@@ -101,10 +101,10 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const heading = document.createElement('div');
     heading.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    heading.textContent = (lang === 'ko') ? 'ì–¸ì–´ë¥¼ ì„ íƒí•˜ì„¸ìš”' : 'Choose your language';
+    heading.textContent = (lang === 'ko') ? '¾ğ¾î¸¦ ¼±ÅÃÇÏ¼¼¿ä' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('í•œêµ­ì–´');
+    const koBtn = buildLanguageButton('ÇÑ±¹¾î');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(heading);
     wrap.appendChild(enBtn);
@@ -119,7 +119,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "ì£¼ì–´ì— ë”°ë¼ <b>have</b> (ê°€ì§€ë‹¤), <b>has</b> (ê°€ì§€ë‹¤)ê°€ ë°”ë€Œì–´ìš”. ë²„íŠ¼ì„ ëˆŒëŸ¬ì„œ ì–´ë–¤ ë§ì„ ì“°ëŠ”ì§€ í™•ì¸í•´ ë³´ì„¸ìš”!"
+      ? "ÁÖ¾î¿¡ µû¶ó <b>have</b> (°¡Áö´Ù), <b>has</b> (°¡Áö´Ù)°¡ ¹Ù²î¾î¿ä. ¹öÆ°À» ´­·¯¼­ ¾î¶² ¸»À» ¾²´ÂÁö È®ÀÎÇØ º¸¼¼¿ä!"
       : "The verb <b>have</b> or <b>has</b> changes with the subject. Tap each button to see which one fits!";
 
     const subjectRow = document.createElement('div');
@@ -184,7 +184,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     renderCard(subjectSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? 'ë‹¤ìŒ ì˜ˆì œ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '´ÙÀ½ ¿¹Á¦' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -206,7 +206,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>í•œ ëª…/í•œ ë¬¼ê±´</b>ì€ <b>has</b> (ê°€ì§€ë‹¤)<br/><b>ì—¬ëŸ¬ ëª…/ì—¬ëŸ¬ ë¬¼ê±´</b>ì€ <b>have</b> (ê°€ì§€ë‹¤)<br/>ë²„íŠ¼ì„ ëˆŒëŸ¬ì„œ ì˜ˆì œë¥¼ í™•ì¸í•´ ë³´ì„¸ìš”!"
+      ? "<b>ÇÑ ¸í/ÇÑ ¹°°Ç</b>Àº <b>has</b> (°¡Áö´Ù)<br/><b>¿©·¯ ¸í/¿©·¯ ¹°°Ç</b>Àº <b>have</b> (°¡Áö´Ù)<br/>¹öÆ°À» ´­·¯¼­ ¿¹Á¦¸¦ È®ÀÎÇØ º¸¼¼¿ä!"
       : "<b>One person/thing</b> uses <b>has</b><br/><b>More than one</b> uses <b>have</b><br/>Tap each button to see examples!";
 
     const typeRow = document.createElement('div');
@@ -229,13 +229,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const exampleSets = [
       {
         id: 'singular',
-        label: lang === 'ko' ? 'í•œ ê°œ (has)\nğŸ¶' : 'One (has)\nğŸ¶',
+        label: lang === 'ko' ? 'ÇÑ °³ (has)\n??' : 'One (has)\n??',
         examples: nounHasExamples.length ? nounHasExamples : hasList,
         pointer: 0,
       },
       {
         id: 'plural',
-        label: lang === 'ko' ? 'ì—¬ëŸ¬ ê°œ (have)\nğŸ¶ğŸ¶' : 'Many (have)\nğŸ¶ğŸ¶',
+        label: lang === 'ko' ? '¿©·¯ °³ (have)\n????' : 'Many (have)\n????',
         examples: nounHaveExamples.length ? nounHaveExamples : haveList,
         pointer: 0,
       }
@@ -271,7 +271,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
         <div class="verb-label">${typeId === 'singular' ? 'HAS' : 'HAVE'}</div>
         <div class="verb-emoji">${example.emoji}</div>
         <div class="verb-sentence">${escapeHtml(example.exampleSentence)}</div>
-        <div class="verb-tip">${escapeHtml(lang === 'ko' ? (typeId === 'singular' ? 'í•œ ëª…/í•œ ë¬¼ê±´ì—ëŠ” has' : 'ì—¬ëŸ¬ ëª…/ì—¬ëŸ¬ ë¬¼ê±´ì—ëŠ” have') : (typeId === 'singular' ? 'One person or thing uses has' : 'More than one uses have'))}</div>
+        <div class="verb-tip">${escapeHtml(lang === 'ko' ? (typeId === 'singular' ? 'ÇÑ ¸í/ÇÑ ¹°°Ç¿¡´Â has' : '¿©·¯ ¸í/¿©·¯ ¹°°Ç¿¡´Â have') : (typeId === 'singular' ? 'One person or thing uses has' : 'More than one uses have'))}</div>
       `;
     };
 
@@ -294,7 +294,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     renderCard('singular', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? 'ë‹¤ìŒ ì˜ˆì œ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '´ÙÀ½ ¿¹Á¦' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -315,13 +315,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? 'ë¬¸ì¥ì„ ëˆŒëŸ¬ <b>have</b> ë˜ëŠ” <b>has</b> ë°”êµ¬ë‹ˆì— ë„£ì–´ ë³´ì„¸ìš”. ëª¨ë‘ ë§ìœ¼ë©´ ë‹¤ìŒ ë‹¨ê³„ë¡œ ë„˜ì–´ê°ˆ ìˆ˜ ìˆì–´ìš”.'
+      ? '¹®ÀåÀ» ´­·¯ <b>have</b> ¶Ç´Â <b>has</b> ¹Ù±¸´Ï¿¡ ³Ö¾î º¸¼¼¿ä. ¸ğµÎ ¸ÂÀ¸¸é ´ÙÀ½ ´Ü°è·Î ³Ñ¾î°¥ ¼ö ÀÖ¾î¿ä.'
       : 'Tap each strip and move it into the <b>have</b> or <b>has</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? 'ë¬¸ì¥ ëª¨ìŒ' : 'Sentence Pool');
+    const pool = makeBucket('pool', lang === 'ko' ? '¹®Àå ¸ğÀ½' : 'Sentence Pool');
     const haveBucket = makeBucket('have', 'have');
     const hasBucket = makeBucket('has', 'has');
     [pool.wrap, haveBucket.wrap, hasBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
@@ -367,13 +367,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? 'ì •ë‹µ í™•ì¸' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? 'Á¤´ä È®ÀÎ' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? 'ë’¤ë¡œ' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? 'µÚ·Î' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -414,11 +414,11 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? 'ì™„ë²½í•´ìš”! have/hasë¥¼ ì˜ ê³¨ëì–´ìš”.' : 'Great! You used have/has correctly.';
+        message.textContent = lang === 'ko' ? '¿Ïº®ÇØ¿ä! have/has¸¦ Àß °ñ¶ú¾î¿ä.' : 'Great! You used have/has correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? 'ë‹¤ìŒ ë‹¨ê³„ë¡œ' : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '´ÙÀ½ ´Ü°è·Î' : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -429,7 +429,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? 'ë¹¨ê°„ ë¬¸ì¥ì„ ë‹¤ì‹œ ì˜®ê²¨ ë³´ì„¸ìš”.' : 'Try again! Fix the red subjects.';
+        message.textContent = lang === 'ko' ? '»¡°£ ¹®ÀåÀ» ´Ù½Ã ¿Å°Ü º¸¼¼¿ä.' : 'Try again! Fix the red subjects.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -441,13 +441,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">ì´ì œ have/hasë¥¼ ë°”ë¥´ê²Œ ê³ ë¥¼ ìˆ˜ ìˆì–´ìš”!</div><div class="stars">â­â­â­â­â­</div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use have or has!</div><div class="stars">â­â­â­â­â­</div>';
+      ? '<div style="font-weight:800;color:#19777e">ÀÌÁ¦ have/has¸¦ ¹Ù¸£°Ô °í¸¦ ¼ö ÀÖ¾î¿ä!</div><div class="stars">?????</div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use have or has!</div><div class="stars">?????</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? 'ëª¨ë“œë¡œ ëŒì•„ê°€ê¸°' : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '¸ğµå·Î µ¹¾Æ°¡±â' : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -473,7 +473,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'Have vs Has',
           },
-          listName: grammarName || null,
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords,
         });
       } catch (err) {
@@ -568,8 +568,8 @@ function buildExampleColumn(type, list, lang) {
   column.appendChild(heading);
 
   const subjects = (type === 'have')
-    ? (lang === 'ko' ? 'I / you / we / they / ë³µìˆ˜ ëª…ì‚¬' : 'I / you / we / they / plural nouns')
-    : (lang === 'ko' ? 'he / she / it / ë‹¨ìˆ˜ ëª…ì‚¬' : 'he / she / it / singular nouns');
+    ? (lang === 'ko' ? 'I / you / we / they / º¹¼ö ¸í»ç' : 'I / you / we / they / plural nouns')
+    : (lang === 'ko' ? 'he / she / it / ´Ü¼ö ¸í»ç' : 'he / she / it / singular nouns');
   const subjectLine = document.createElement('div');
   subjectLine.style.cssText = 'font-size:.95rem;color:#6b7c87;text-align:center;';
   subjectLine.textContent = subjects;
@@ -580,7 +580,7 @@ function buildExampleColumn(type, list, lang) {
     card.className = 'verb-example';
     const emoji = document.createElement('div');
     emoji.className = 'emoji';
-    emoji.textContent = item.emoji || 'âœ¨';
+    emoji.textContent = item.emoji || '?';
     const sentence = document.createElement('div');
     sentence.className = 'sentence';
     sentence.textContent = item.exampleSentence || '';
@@ -644,21 +644,21 @@ function buildSubjectSets(haveList, hasList) {
     {
       id: 'have',
       verb: 'have',
-      emoji: haveExample.emoji || 'âœï¸',
+      emoji: haveExample.emoji || '??',
       sentenceEn: haveExample.exampleSentence || 'I have two pencils.',
-      sentenceKo: haveExample.exampleSentenceKo || 'ë‚˜ëŠ” ì—°í•„ ë‘ ìë£¨ë¥¼ ê°€ì§€ê³  ìˆì–´ìš”.',
+      sentenceKo: haveExample.exampleSentenceKo || '³ª´Â ¿¬ÇÊ µÎ ÀÚ·ç¸¦ °¡Áö°í ÀÖ¾î¿ä.',
       tipEn: "Use 'have' with I, you, we, they, or plural nouns.",
-      tipKo: "I, you, we, they ê·¸ë¦¬ê³  ë³µìˆ˜ ëª…ì‚¬ì— 'have'ë¥¼ ì¨ìš”.",
+      tipKo: "I, you, we, they ±×¸®°í º¹¼ö ¸í»ç¿¡ 'have'¸¦ ½á¿ä.",
       label: 'I / You / We / They'
     },
     {
       id: 'has',
       verb: 'has',
-      emoji: hasExample.emoji || 'ğŸ‘§',
+      emoji: hasExample.emoji || '??',
       sentenceEn: hasExample.exampleSentence || 'She has a red apple.',
-      sentenceKo: hasExample.exampleSentenceKo || 'ê·¸ë…€ëŠ” ë¹¨ê°„ ì‚¬ê³¼ë¥¼ ê°€ì§€ê³  ìˆì–´ìš”.',
+      sentenceKo: hasExample.exampleSentenceKo || '±×³à´Â »¡°£ »ç°ú¸¦ °¡Áö°í ÀÖ¾î¿ä.',
       tipEn: "Use 'has' with he, she, it, or one person or thing.",
-      tipKo: "he, she, it ê·¸ë¦¬ê³  í•œ ì‚¬ëŒ/í•œ ë¬¼ê±´ì— 'has'ë¥¼ ì¨ìš”.",
+      tipKo: "he, she, it ±×¸®°í ÇÑ »ç¶÷/ÇÑ ¹°°Ç¿¡ 'has'¸¦ ½á¿ä.",
       label: 'He / She / It'
     }
   ];
@@ -672,7 +672,7 @@ function normalizeList(list, fallback) {
     prompt: item.prompt || '',
     exampleSentence: item.exampleSentence || '',
     exampleSentenceKo: item.exampleSentenceKo || '',
-    emoji: item.emoji || 'âœ¨',
+    emoji: item.emoji || '?',
   })).filter((item) => item.exampleSentence || item.prompt);
 }
 
@@ -708,9 +708,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? 'ë’¤ë¡œ' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? 'µÚ·Î' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? 'ë‹¤ìŒ' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '´ÙÀ½' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -731,7 +731,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['ì–¸ì–´ ì„ íƒ', '1ë‹¨ê³„', '2ë‹¨ê³„', '3ë‹¨ê³„', 'ì™„ë£Œ'];
+  const stepsKo = ['¾ğ¾î ¼±ÅÃ', '1´Ü°è', '2´Ü°è', '3´Ü°è', '¿Ï·á'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -741,15 +741,15 @@ function shuffle(list) {
 }
 
 const fallbackHave = [
-  { id: 'fb_have_i', word: 'I', prompt: 'I ___ two pencils.', exampleSentence: 'I have two pencils.', exampleSentenceKo: 'ë‚˜ëŠ” ì—°í•„ ë‘ ìë£¨ë¥¼ ê°€ì§€ê³  ìˆì–´ìš”.', emoji: 'âœï¸' },
-  { id: 'fb_have_we', word: 'We', prompt: 'We ___ music class.', exampleSentence: 'We have music class.', exampleSentenceKo: 'ìš°ë¦¬ëŠ” ìŒì•… ìˆ˜ì—…ì´ ìˆì–´ìš”.', emoji: 'ğŸµ' },
-  { id: 'fb_have_they', word: 'They', prompt: 'They ___ a big house.', exampleSentence: 'They have a big house.', exampleSentenceKo: 'ê·¸ë“¤ì€ í° ì§‘ì´ ìˆì–´ìš”.', emoji: 'ğŸ ' },
-  { id: 'fb_have_parents', word: 'My parents', prompt: 'My parents ___ a car.', exampleSentence: 'My parents have a car.', exampleSentenceKo: 'ìš°ë¦¬ ë¶€ëª¨ë‹˜ì€ ì°¨ë¥¼ ê°€ì§€ê³  ìˆì–´ìš”.', emoji: 'ğŸš—' }
+  { id: 'fb_have_i', word: 'I', prompt: 'I ___ two pencils.', exampleSentence: 'I have two pencils.', exampleSentenceKo: '³ª´Â ¿¬ÇÊ µÎ ÀÚ·ç¸¦ °¡Áö°í ÀÖ¾î¿ä.', emoji: '??' },
+  { id: 'fb_have_we', word: 'We', prompt: 'We ___ music class.', exampleSentence: 'We have music class.', exampleSentenceKo: '¿ì¸®´Â À½¾Ç ¼ö¾÷ÀÌ ÀÖ¾î¿ä.', emoji: '??' },
+  { id: 'fb_have_they', word: 'They', prompt: 'They ___ a big house.', exampleSentence: 'They have a big house.', exampleSentenceKo: '±×µéÀº Å« ÁıÀÌ ÀÖ¾î¿ä.', emoji: '??' },
+  { id: 'fb_have_parents', word: 'My parents', prompt: 'My parents ___ a car.', exampleSentence: 'My parents have a car.', exampleSentenceKo: '¿ì¸® ºÎ¸ğ´ÔÀº Â÷¸¦ °¡Áö°í ÀÖ¾î¿ä.', emoji: '??' }
 ];
 
 const fallbackHas = [
-  { id: 'fb_has_he', word: 'He', prompt: 'He ___ a bike.', exampleSentence: 'He has a bike.', exampleSentenceKo: 'ê·¸ëŠ” ìì „ê±°ë¥¼ ê°€ì§€ê³  ìˆì–´ìš”.', emoji: 'ğŸš²' },
-  { id: 'fb_has_she', word: 'She', prompt: 'She ___ long hair.', exampleSentence: 'She has long hair.', exampleSentenceKo: 'ê·¸ë…€ëŠ” ê¸´ ë¨¸ë¦¬ë¥¼ ê°€ì§€ê³  ìˆì–´ìš”.', emoji: 'ğŸ’‡â€â™€ï¸' },
-  { id: 'fb_has_it', word: 'It', prompt: 'It ___ four legs.', exampleSentence: 'It has four legs.', exampleSentenceKo: 'ê·¸ê²ƒì€ ë‹¤ë¦¬ê°€ ë„¤ ê°œ ìˆì–´ìš”.', emoji: 'ğŸ•' },
-  { id: 'fb_has_friend', word: 'My friend', prompt: 'My friend ___ a pencil case.', exampleSentence: 'My friend has a pencil case.', exampleSentenceKo: 'ë‚´ ì¹œêµ¬ëŠ” í•„í†µì´ ìˆì–´ìš”.', emoji: 'ğŸ–ï¸' }
+  { id: 'fb_has_he', word: 'He', prompt: 'He ___ a bike.', exampleSentence: 'He has a bike.', exampleSentenceKo: '±×´Â ÀÚÀü°Å¸¦ °¡Áö°í ÀÖ¾î¿ä.', emoji: '??' },
+  { id: 'fb_has_she', word: 'She', prompt: 'She ___ long hair.', exampleSentence: 'She has long hair.', exampleSentenceKo: '±×³à´Â ±ä ¸Ó¸®¸¦ °¡Áö°í ÀÖ¾î¿ä.', emoji: '???¡Ï?' },
+  { id: 'fb_has_it', word: 'It', prompt: 'It ___ four legs.', exampleSentence: 'It has four legs.', exampleSentenceKo: '±×°ÍÀº ´Ù¸®°¡ ³× °³ ÀÖ¾î¿ä.', emoji: '??' },
+  { id: 'fb_has_friend', word: 'My friend', prompt: 'My friend ___ a pencil case.', exampleSentence: 'My friend has a pencil case.', exampleSentenceKo: '³» Ä£±¸´Â ÇÊÅëÀÌ ÀÖ¾î¿ä.', emoji: '???' }
 ];

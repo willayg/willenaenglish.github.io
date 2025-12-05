@@ -1,4 +1,4 @@
-// Grammar Lesson Runner – These vs. Those
+// Grammar Lesson Runner ??These vs. Those
 // Teaches proximity with plural forms using a fading slider experience.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -23,14 +23,14 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
   }
 
   const fallbackThese = [
-    { id: 'fb_these_phones', word: 'phones', emoji: '📱📱', exampleSentence: 'These are phones.', exampleSentenceKo: '이것들은 전화예요.' },
-    { id: 'fb_these_books', word: 'books', emoji: '📘📘', exampleSentence: 'These are books.', exampleSentenceKo: '이것들은 책이에요.' },
-    { id: 'fb_these_cups', word: 'cups', emoji: '☕☕', exampleSentence: 'These are cups.', exampleSentenceKo: '이것들은 컵이에요.' }
+    { id: 'fb_these_phones', word: 'phones', emoji: '?��?��', exampleSentence: 'These are phones.', exampleSentenceKo: '?�것?��? ?�화?�요.' },
+    { id: 'fb_these_books', word: 'books', emoji: '?��?��', exampleSentence: 'These are books.', exampleSentenceKo: '?�것?��? 책이?�요.' },
+    { id: 'fb_these_cups', word: 'cups', emoji: '?�☕', exampleSentence: 'These are cups.', exampleSentenceKo: '?�것?��? 컵이?�요.' }
   ];
   const fallbackThose = [
-    { id: 'fb_those_trees', word: 'trees', emoji: '🌳🌳', exampleSentence: 'Those are trees.', exampleSentenceKo: '저것들은 나무예요.' },
-    { id: 'fb_those_kites', word: 'kites', emoji: '🪁🪁', exampleSentence: 'Those are kites.', exampleSentenceKo: '저것들은 연이에요.' },
-    { id: 'fb_those_buses', word: 'buses', emoji: '🚌🚌', exampleSentence: 'Those are buses.', exampleSentenceKo: '저것들은 버스예요.' }
+    { id: 'fb_those_trees', word: 'trees', emoji: '?��?��', exampleSentence: 'Those are trees.', exampleSentenceKo: '?�것들?� ?�무?�요.' },
+    { id: 'fb_those_kites', word: 'kites', emoji: '?��?��', exampleSentence: 'Those are kites.', exampleSentenceKo: '?�것들?� ?�이?�요.' },
+    { id: 'fb_those_buses', word: 'buses', emoji: '?��?��', exampleSentence: 'Those are buses.', exampleSentenceKo: '?�것들?� 버스?�요.' }
   ];
 
   const theseList = normalizeList(items.filter((it) => (it?.article || '').toLowerCase() === 'these'), 'these', fallbackThese);
@@ -46,7 +46,7 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_these_those',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'These vs Those' }
     });
   } catch (err) {
@@ -64,10 +64,10 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:40px;text-align:center;width:90%;max-width:300px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = (lang === 'ko') ? '언어를 선택하세요' : 'Choose your language';
+    title.textContent = (lang === 'ko') ? '?�어�??�택?�세?? : 'Choose your language';
     const enBtn = buildLangButton('English');
     enBtn.onclick = () => { lang = 'en'; nextStep(); };
-    const koBtn = buildLangButton('한국어');
+    const koBtn = buildLangButton('?�국??);
     koBtn.onclick = () => { lang = 'ko'; nextStep(); };
     wrap.appendChild(title);
     wrap.appendChild(enBtn);
@@ -85,7 +85,7 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? "가까운 물건들은 <span class=\"tt-highlight\">these</span>(이것들), 멀리 있는 물건들은 <span class=\"tt-highlight\">those</span>(저것들)이라고 말해요. 슬라이더를 움직여 보세요!"
+      ? "가까운 물건?��? <span class=\"tt-highlight\">these</span>(?�것??, 멀�??�는 물건?��? <span class=\"tt-highlight\">those</span>(?�것들)?�라�?말해?? ?�라?�더�??�직여 보세??"
       : "When things are close we say <span class=\"tt-highlight\">these</span>; when they are far we say <span class=\"tt-highlight\">those</span>. Slide to feel the change.";
     stepEl.appendChild(intro);
 
@@ -97,14 +97,14 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
 
     const you = document.createElement('div');
     you.className = 'tt-you';
-    you.textContent = 'You 🧍‍♂️';
+    you.textContent = 'You ?��?�♂�?;
 
   const bar = document.createElement('div');
   bar.className = 'tt-bar';
 
     const object = document.createElement('div');
     object.className = 'tt-object';
-  object.textContent = nearItem?.emoji || '📘📘';
+  object.textContent = nearItem?.emoji || '?��?��';
 
     row.appendChild(you);
     row.appendChild(bar);
@@ -126,10 +126,10 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     labelKoWrap.className = 'tt-label-wrap tt-label-ko';
     const theseKo = document.createElement('div');
     theseKo.className = 'tt-label';
-    theseKo.textContent = '이것들은 전화예요.';
+    theseKo.textContent = '?�것?��? ?�화?�요.';
     const thoseKo = document.createElement('div');
     thoseKo.className = 'tt-label';
-    thoseKo.textContent = '저것들은 전화예요.';
+    thoseKo.textContent = '?�것들?� ?�화?�요.';
     labelKoWrap.appendChild(theseKo);
     labelKoWrap.appendChild(thoseKo);
 
@@ -143,7 +143,7 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     const tip = document.createElement('div');
     tip.className = 'tt-tip';
     tip.textContent = (lang === 'ko')
-      ? '가까이 끌어오면 이것들, 멀리 보내면 저것들로 바뀌어요.'
+      ? '가까이 ?�어?�면 ?�것?? 멀�?보내�??�것들�?바뀌어??'
       : 'Drag close for "these" and push away for "those".';
 
     scene.appendChild(labelWrap);
@@ -164,8 +164,8 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
       bar.style.background = `linear-gradient(90deg, rgba(33,179,190,0.7), rgba(120,120,255,${0.4 + blend * 0.4}))`;
       object.style.transform = `translateX(${blend * 6}px)`;
       const showFar = blend > 0.55;
-      const activeNear = nearItem || { exampleSentence: 'These are near me.', exampleSentenceKo: '이것들은 내 옆에 있어요.', emoji: '📘📘' };
-      const activeFar = farItem || { exampleSentence: 'Those are over there.', exampleSentenceKo: '저것들은 저쪽에 있어요.', emoji: '🏔️🏔️' };
+      const activeNear = nearItem || { exampleSentence: 'These are near me.', exampleSentenceKo: '?�것?��? ???�에 ?�어??', emoji: '?��?��' };
+      const activeFar = farItem || { exampleSentence: 'Those are over there.', exampleSentenceKo: '?�것들?� ?�쪽에 ?�어??', emoji: '?��️🏔️' };
       object.textContent = showFar ? activeFar.emoji : activeNear.emoji;
       theseLabel.innerHTML = highlightSentence(activeNear.exampleSentence, 'en');
       thoseLabel.innerHTML = highlightSentence(activeFar.exampleSentence, 'en');
@@ -187,7 +187,7 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? "<span class=\"tt-highlight\">these</span>(이것들)은 바로 여기에 있는 물건들, <span class=\"tt-highlight\">those</span>(저것들)은 저쪽에 있는 물건들이에요." 
+      ? "<span class=\"tt-highlight\">these</span>(?�것???� 바로 ?�기???�는 물건?? <span class=\"tt-highlight\">those</span>(?�것들)?� ?�쪽에 ?�는 물건?�이?�요." 
       : "<span class=\"tt-highlight\">these</span> talks about things right here, <span class=\"tt-highlight\">those</span> points to things over there.";
     stepEl.appendChild(intro);
 
@@ -208,15 +208,15 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? "문장을 눌러서 <span class=\"tt-highlight\">these</span>(이것들) 바구니 또는 <span class=\"tt-highlight\">those</span>(저것들) 바구니에 넣어 보세요." 
+      ? "문장???�러??<span class=\"tt-highlight\">these</span>(?�것?? 바구???�는 <span class=\"tt-highlight\">those</span>(?�것들) 바구?�에 ?�어 보세??" 
       : "Tap each strip and drop it into the <span class=\"tt-highlight\">these</span> basket or the <span class=\"tt-highlight\">those</span> basket.";
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets tt-buckets';
     const pool = makeBucket('pool', lang === 'ko' ? '문장 모음' : 'Sentence Pool');
-    const bucketThese = makeBucket('these', lang === 'ko' ? 'these (이것들)' : 'these (near me)');
-    const bucketThose = makeBucket('those', lang === 'ko' ? 'those (저것들)' : 'those (far away)');
+    const bucketThese = makeBucket('these', lang === 'ko' ? 'these (?�것??' : 'these (near me)');
+    const bucketThose = makeBucket('those', lang === 'ko' ? 'those (?�것들)' : 'those (far away)');
 
     [pool.wrap, bucketThese.wrap, bucketThose.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
@@ -255,14 +255,14 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -300,11 +300,11 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '완벽해요! 이것들과 저것들을 잘 골랐어요.' : 'Great job! You sorted these vs. those.';
+        message.textContent = lang === 'ko' ? '?�벽?�요! ?�것?�과 ?�것들????골랐?�요.' : 'Great job! You sorted these vs. those.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계로' : 'Next');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next');
           continueBtn.style.background = '#fff';
           continueBtn.style.color = '#ff6fb0';
           continueBtn.style.borderColor = '#ff6fb0';
@@ -318,7 +318,7 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드를 다시 옮겨 보세요.' : 'Move the red strips to the other basket.';
+        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red strips to the other basket.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -338,13 +338,13 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">이제 가까운 물건들은 이것들, 먼 물건들은 저것들이라고 말할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
-      : '<div style="font-weight:800;color:#19777e">Now you know when to say these or those!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
+      ? '<div style="font-weight:800;color:#19777e">?�제 가까운 물건?��? ?�것?? �?물건?��? ?�것들?�라�?말할 ???�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
+      : '<div style="font-weight:800;color:#19777e">Now you know when to say these or those!</div><div class="stars">⭐⭐⭐⭐�?/div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       try {
         if (window.WordArcade?.startGrammarModeSelector) {
@@ -372,7 +372,7 @@ export async function runGrammarLessonTheseThose(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'These vs Those'
           },
-          listName: grammarName || null,
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords
         });
       } catch (err) {
@@ -449,9 +449,9 @@ function normalizeList(list, article, fallback) {
     id: item.id || `${article}_${idx}`,
     word: item.word || (article === 'these' ? 'items' : 'things'),
     article,
-    emoji: item.emoji || (article === 'these' ? '📗📗' : '🏔️🏔️'),
+    emoji: item.emoji || (article === 'these' ? '?��?��' : '?��️🏔️'),
     exampleSentence: item.exampleSentence || (article === 'these' ? 'These are near me.' : 'Those are over there.'),
-    exampleSentenceKo: item.exampleSentenceKo || (article === 'these' ? '이것들은 내 옆에 있어요.' : '저것들은 저쪽에 있어요.'),
+    exampleSentenceKo: item.exampleSentenceKo || (article === 'these' ? '?�것?��? ???�에 ?�어??' : '?�것들?� ?�쪽에 ?�어??'),
   }));
 }
 
@@ -476,8 +476,8 @@ function buildExampleColumn(label, list, lang) {
   const header = document.createElement('div');
   header.className = 'tt-column-header';
   header.textContent = label === 'these'
-    ? (lang === 'ko' ? 'these (이것들)' : 'these (near)')
-    : (lang === 'ko' ? 'those (저것들)' : 'those (far)');
+    ? (lang === 'ko' ? 'these (?�것??' : 'these (near)')
+    : (lang === 'ko' ? 'those (?�것들)' : 'those (far)');
   wrap.appendChild(header);
   list.slice(0, 4).forEach((item) => {
     const en = highlightSentence(item.exampleSentence, 'en');
@@ -499,12 +499,12 @@ function buildExampleColumn(label, list, lang) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const back = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
+  const back = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
   back.style.background = '#fff';
   back.style.color = '#ff6fb0';
   back.style.borderColor = '#ff6fb0';
   back.onclick = onBack;
-  const next = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
+  const next = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
   next.style.background = '#fff';
   next.style.color = '#ff6fb0';
   next.style.borderColor = '#ff6fb0';
@@ -552,9 +552,9 @@ function makeBucket(key, label) {
 }
 
 function displayStep(idx, lang) {
-  if (idx === 1) return lang === 'ko' ? '1단계 / 총 3단계' : 'Step 1 of 3';
-  if (idx === 2) return lang === 'ko' ? '2단계 / 총 3단계' : 'Step 2 of 3';
-  if (idx === 3) return lang === 'ko' ? '3단계 / 총 3단계' : 'Step 3 of 3';
+  if (idx === 1) return lang === 'ko' ? '1?�계 / �?3?�계' : 'Step 1 of 3';
+  if (idx === 2) return lang === 'ko' ? '2?�계 / �?3?�계' : 'Step 2 of 3';
+  if (idx === 3) return lang === 'ko' ? '3?�계 / �?3?�계' : 'Step 3 of 3';
   return '';
 }
 
@@ -622,7 +622,7 @@ function highlightSentence(text, lang) {
   if (!text) return '';
   const clean = String(text);
   if (lang === 'ko') {
-    return clean.replace(/이것들(?!\s)/g, '<span class="tt-highlight">이것들</span> ').replace(/저것들(?!\s)/g, '<span class="tt-highlight">저것들</span> ');
+    return clean.replace(/?�것???!\s)/g, '<span class="tt-highlight">?�것??/span> ').replace(/?�것들(?!\s)/g, '<span class="tt-highlight">?�것들</span> ');
   }
   return clean.replace(/([Tt]hese)(\s)/g, '<span class="tt-highlight">$1</span>$2').replace(/([Tt]hose)(\s)/g, '<span class="tt-highlight">$1</span>$2');
 }

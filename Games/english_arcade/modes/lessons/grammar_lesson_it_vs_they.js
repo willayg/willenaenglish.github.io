@@ -1,4 +1,4 @@
-// Grammar Lesson Runner – It vs. They
+// Grammar Lesson Runner ??It vs. They
 // Mirrors the article lesson structure while teaching singular vs plural pronouns.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -82,7 +82,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_it_vs_they',
       wordList: sessionWords,
-      listName: grammarName || null,
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'It vs They' },
     });
   } catch (err) {
@@ -90,16 +90,16 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
   }
 
   const fallbackIt = [
-    { id: 'fallback_it_cat', word: 'cat', article: 'it', emoji: '🐱', exampleSentence: 'It is a sleepy cat.', exampleSentenceKo: '그것은 졸린 고양이에요.', explanation: "Use 'it' when there is only one." },
-    { id: 'fallback_it_robot', word: 'robot', article: 'it', emoji: '🤖', exampleSentence: 'It is a shiny robot.', exampleSentenceKo: '그것은 반짝이는 로봇이에요.', explanation: "Use 'it' for a single machine." },
-    { id: 'fallback_it_flower', word: 'flower', article: 'it', emoji: '🌸', exampleSentence: 'It is a pink flower.', exampleSentenceKo: '그것은 분홍색 꽃이에요.', explanation: "One flower needs 'it'." },
-    { id: 'fallback_it_penguin', word: 'penguin', article: 'it', emoji: '🐧', exampleSentence: 'It is a baby penguin.', exampleSentenceKo: '그것은 아기 펭귄이에요.', explanation: "Single animals use 'it'." }
+    { id: 'fallback_it_cat', word: 'cat', article: 'it', emoji: '?��', exampleSentence: 'It is a sleepy cat.', exampleSentenceKo: '그것?� 졸린 고양?�에??', explanation: "Use 'it' when there is only one." },
+    { id: 'fallback_it_robot', word: 'robot', article: 'it', emoji: '?��', exampleSentence: 'It is a shiny robot.', exampleSentenceKo: '그것?� 반짝?�는 로봇?�에??', explanation: "Use 'it' for a single machine." },
+    { id: 'fallback_it_flower', word: 'flower', article: 'it', emoji: '?��', exampleSentence: 'It is a pink flower.', exampleSentenceKo: '그것?� 분홍??꽃이?�요.', explanation: "One flower needs 'it'." },
+    { id: 'fallback_it_penguin', word: 'penguin', article: 'it', emoji: '?��', exampleSentence: 'It is a baby penguin.', exampleSentenceKo: '그것?� ?�기 ??��?�에??', explanation: "Single animals use 'it'." }
   ];
   const fallbackThey = [
-    { id: 'fallback_they_cats', word: 'cats', article: 'they', emoji: '🐱🐱', exampleSentence: 'They are fluffy cats.', exampleSentenceKo: '그것들은 포근한 고양이들이에요.', explanation: "Use 'they' when there is more than one." },
-    { id: 'fallback_they_robots', word: 'robots', article: 'they', emoji: '🤖🤖', exampleSentence: 'They are helper robots.', exampleSentenceKo: '그것들은 도와주는 로봇들이에요.', explanation: "Many machines use 'they'." },
-    { id: 'fallback_they_flowers', word: 'flowers', article: 'they', emoji: '🌼🌼', exampleSentence: 'They are yellow flowers.', exampleSentenceKo: '그것들은 노란 꽃들이에요.', explanation: "More than one flower is 'they'." },
-    { id: 'fallback_they_penguins', word: 'penguins', article: 'they', emoji: '🐧🐧', exampleSentence: 'They are marching penguins.', exampleSentenceKo: '그것들은 행진하는 펭귄들이에요.', explanation: "A group of animals uses 'they'." }
+    { id: 'fallback_they_cats', word: 'cats', article: 'they', emoji: '?��?��', exampleSentence: 'They are fluffy cats.', exampleSentenceKo: '그것?��? ?�근??고양?�들?�에??', explanation: "Use 'they' when there is more than one." },
+    { id: 'fallback_they_robots', word: 'robots', article: 'they', emoji: '?��?��', exampleSentence: 'They are helper robots.', exampleSentenceKo: '그것?��? ?��?주는 로봇?�이?�요.', explanation: "Many machines use 'they'." },
+    { id: 'fallback_they_flowers', word: 'flowers', article: 'they', emoji: '?��?��', exampleSentence: 'They are yellow flowers.', exampleSentenceKo: '그것?��? ?��? 꽃들?�에??', explanation: "More than one flower is 'they'." },
+    { id: 'fallback_they_penguins', word: 'penguins', article: 'they', emoji: '?��?��', exampleSentence: 'They are marching penguins.', exampleSentenceKo: '그것?��? ?�진?�는 ??��?�이?�요.', explanation: "A group of animals uses 'they'." }
   ];
 
   const singularItems = (items || []).filter(it => it && String(it.article || '').toLowerCase() === 'it');
@@ -132,7 +132,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:40px;text-align:center;width:90%;max-width:300px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = (lang === 'ko') ? '언어를 선택하세요' : 'Choose your language';
+    title.textContent = (lang === 'ko') ? '?�어�??�택?�세?? : 'Choose your language';
     const enBtn = document.createElement('button');
     enBtn.textContent = 'English';
     enBtn.style.cssText = 'width:100%;border:3px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:14px;padding:14px 28px;font-weight:800;cursor:pointer;font-size:1.3rem;transition:transform .15s ease, box-shadow .15s ease;box-shadow:0 2px 8px rgba(0,0,0,.06);';
@@ -140,7 +140,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     enBtn.onmouseleave = () => { enBtn.style.transform = 'translateY(0)'; enBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,.06)'; };
     enBtn.onclick = () => { lang = 'en'; nextStep(); };
     const koBtn = document.createElement('button');
-    koBtn.textContent = '한국어';
+    koBtn.textContent = '?�국??;
     koBtn.style.cssText = 'width:100%;border:3px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:14px;padding:14px 28px;font-weight:800;cursor:pointer;font-size:1.3rem;transition:transform .15s ease, box-shadow .15s ease;box-shadow:0 2px 8px rgba(0,0,0,.06);font-family:\'Noto Sans KR\',\'Nanum Gothic\',\'Apple SD Gothic Neo\',\'Malgun Gothic\',system-ui,Arial,sans-serif;';
     koBtn.onmouseenter = () => { koBtn.style.transform = 'translateY(-2px)'; koBtn.style.boxShadow = '0 6px 16px rgba(33,181,192,0.2)'; };
     koBtn.onmouseleave = () => { koBtn.style.transform = 'translateY(0)'; koBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,.06)'; };
@@ -162,7 +162,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     const blurb = document.createElement('div');
     blurb.className = 'lesson-body';
     blurb.innerHTML = (lang === 'ko')
-      ? `하나는 <b>it</b> (그것), 두 개 이상은 <b>they</b> (그것들/그 사람들)를 써요.`
+      ? `?�나??<b>it</b> (그것), ??�??�상?� <b>they</b> (그것??�??�람??�??�요.`
       : `Use <b>it</b> for one animal or thing, and <b>they</b> when there is more than one.`;
     container.appendChild(blurb);
 
@@ -201,15 +201,15 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     card.appendChild(tipEl);
     container.appendChild(card);
 
-    const nextExampleBtn = button((lang === 'ko') ? '다른 예 보기' : 'Next Example');
+    const nextExampleBtn = button((lang === 'ko') ? '?�른 ??보기' : 'Next Example');
     nextExampleBtn.style.borderColor = '#21b3be';
     nextExampleBtn.style.color = '#ff6fb0';
     container.appendChild(nextExampleBtn);
 
     const buttonWrap = document.createElement('div');
     buttonWrap.style.cssText = 'display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px;';
-    const backBtn = button((lang === 'ko') ? '뒤로' : 'Back');
-    const proceedBtn = button((lang === 'ko') ? '다음 단계로' : 'Go to Next Step');
+    const backBtn = button((lang === 'ko') ? '?�로' : 'Back');
+    const proceedBtn = button((lang === 'ko') ? '?�음 ?�계�? : 'Go to Next Step');
     backBtn.style.borderColor = '#21b3be';
     backBtn.style.color = '#ff6fb0';
     proceedBtn.style.borderColor = '#21b3be';
@@ -233,9 +233,9 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
       const item = getPronounItem(pronoun, advance);
       if (!item) return;
       pronounLabel.textContent = (pronoun === 'it')
-        ? ((lang === 'ko') ? "'it' → 그것 (하나)" : '"it" means just one')
-        : ((lang === 'ko') ? "'they' → 그것들/그 사람들 (여러 개)" : '"they" means more than one');
-      emojiEl.textContent = item.emoji || (pronoun === 'it' ? '🐾' : '🐾🐾');
+        ? ((lang === 'ko') ? "'it' ??그것 (?�나)" : '"it" means just one')
+        : ((lang === 'ko') ? "'they' ??그것??�??�람??(?�러 �?" : '"they" means more than one');
+      emojiEl.textContent = item.emoji || (pronoun === 'it' ? '?��' : '?��?��');
       sentenceEl.innerHTML = highlightPronoun(item.exampleSentence, pronoun);
       if (lang === 'ko') {
         koreanEl.textContent = item.exampleSentenceKo;
@@ -272,8 +272,8 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? "카드를 보고 어떤 대명사를 쓰는지 기억해 보세요."
-      : 'Look at the cards to see when we say “it” or “they”.';
+      ? "카드�?보고 ?�떤 ?�명사�??�는지 기억??보세??"
+      : 'Look at the cards to see when we say ?�it??or ?�they??';
     stepEl.appendChild(intro);
 
     const grid = document.createElement('div');
@@ -294,15 +294,15 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? "한 개는 <b>it</b> (그것), 여러 개는 <b>they</b> (그것들/그 사람들) 바구니에 넣어 보세요."
+      ? "??개는 <b>it</b> (그것), ?�러 개는 <b>they</b> (그것??�??�람?? 바구?�에 ?�어 보세??"
       : 'Place single items in the <b>it</b> basket and groups in the <b>they</b> basket.';
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets';
-    const pool = makeBucket('pool', (lang === 'ko') ? '단어 모음' : 'Word Pool');
-      const bucketIt = makeBucket('it', (lang === 'ko') ? "it (그것 - 하나)" : 'it (one)');
-      const bucketThey = makeBucket('they', (lang === 'ko') ? "they (그것들/그 사람들 - 여러 개)" : 'they (more than one)');
+    const pool = makeBucket('pool', (lang === 'ko') ? '?�어 모음' : 'Word Pool');
+      const bucketIt = makeBucket('it', (lang === 'ko') ? "it (그것 - ?�나)" : 'it (one)');
+      const bucketThey = makeBucket('they', (lang === 'ko') ? "they (그것??�??�람??- ?�러 �?" : 'they (more than one)');
     buckets.appendChild(pool.wrap);
     buckets.appendChild(bucketIt.wrap);
     buckets.appendChild(bucketThey.wrap);
@@ -355,14 +355,14 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
       });
     });
 
-    const checkBtn = button((lang === 'ko') ? '정답 확인' : 'Check Answers');
+    const checkBtn = button((lang === 'ko') ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '12px';
     stepEl.appendChild(checkBtn);
 
   const navLocal = document.createElement('div');
   navLocal.className = 'lesson-nav';
   navLocal.style.marginTop = '14px';
-    const backBtn = button((lang === 'ko') ? '뒤로' : 'Back');
+    const backBtn = button((lang === 'ko') ? '?�로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -401,11 +401,11 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = (lang === 'ko') ? "완벽해요! 'it' (그것)은 하나, 'they' (그것들/그 사람들)는 여러 개!" : 'Awesome! "it" is for one, "they" is for more than one!';
+        message.textContent = (lang === 'ko') ? "?�벽?�요! 'it' (그것)?� ?�나, 'they' (그것??�??�람?????�러 �?" : 'Awesome! "it" is for one, "they" is for more than one!';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = button((lang === 'ko') ? '다음 단계로' : 'Next');
+          continueBtn = button((lang === 'ko') ? '?�음 ?�계�? : 'Next');
           continueBtn.style.background = '#fff';
           continueBtn.style.color = '#ff6fb0';
           continueBtn.style.borderColor = '#ff6fb0';
@@ -419,7 +419,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = (lang === 'ko') ? '빨간 카드를 다시 옮겨 보세요.' : 'Try again! Move the red cards.';
+        message.textContent = (lang === 'ko') ? '빨간 카드�??�시 ??�� 보세??' : 'Try again! Move the red cards.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -440,13 +440,13 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">이제 it (그것)과 they (그것들/그 사람들)을 구별할 수 있어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
-      : '<div style="font-weight:800;color:#19777e">Now you can tell "it" from "they"!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
+      ? '<div style="font-weight:800;color:#19777e">?�제 it (그것)�?they (그것??�??�람????구별?????�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
+      : '<div style="font-weight:800;color:#19777e">Now you can tell "it" from "they"!</div><div class="stars">⭐⭐⭐⭐�?/div>';
     stepEl.appendChild(body);
 
     const navWrap = document.createElement('div');
     navWrap.className = 'lesson-nav';
-    const backToModes = button((lang === 'ko') ? '모드로 돌아가기' : 'Back to Modes');
+    const backToModes = button((lang === 'ko') ? '모드�??�아가�? : 'Back to Modes');
     backToModes.onclick = () => {
       try {
         if (window.WordArcade && typeof window.WordArcade.startGrammarModeSelector === 'function') {
@@ -474,7 +474,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'It vs They',
           },
-          listName: grammarName || null,
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords,
         });
       } catch (err) {
@@ -520,8 +520,8 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     stepEl.className = 'lesson-step';
     const navBottom = document.createElement('div');
     navBottom.className = 'lesson-nav';
-    const back = button((lang === 'ko') ? '뒤로' : 'Back');
-    const next = button((lang === 'ko') ? '다음' : 'Next');
+    const back = button((lang === 'ko') ? '?�로' : 'Back');
+    const next = button((lang === 'ko') ? '?�음' : 'Next');
     back.style.borderColor = '#21b3be';
     back.style.color = '#ff6fb0';
     next.style.borderColor = '#21b3be';
@@ -611,8 +611,8 @@ function buildPronounColumn(pronoun, list, lang) {
   const heading = document.createElement('div');
   heading.style.cssText = 'font-weight:800;color:#19777e;text-align:center;font-size:1.05rem;';
   heading.textContent = pronoun === 'it'
-    ? (lang === 'ko' ? "it (그것 - 하나)" : 'it • just one')
-    : (lang === 'ko' ? "they (그것들/그 사람들 - 여러 개)" : 'they • more than one');
+    ? (lang === 'ko' ? "it (그것 - ?�나)" : 'it ??just one')
+    : (lang === 'ko' ? "they (그것??�??�람??- ?�러 �?" : 'they ??more than one');
   column.appendChild(heading);
 
   const cards = list.length ? list : [];
@@ -622,7 +622,7 @@ function buildPronounColumn(pronoun, list, lang) {
     const sentence = highlightPronoun(item.exampleSentence, pronoun);
     const korean = (lang === 'ko') ? `<div style="margin-top:4px;color:#546070;">${escapeHtml(item.exampleSentenceKo)}</div>` : '';
     card.innerHTML = `
-      <div style="font-weight:700;color:#19777e;">${pronoun === 'it' ? 'It' : 'They'} → ${escapeHtml(item.word)}</div>
+      <div style="font-weight:700;color:#19777e;">${pronoun === 'it' ? 'It' : 'They'} ??${escapeHtml(item.word)}</div>
       <div style="margin-top:6px;">${sentence}</div>
       ${korean}
     `;
@@ -655,8 +655,8 @@ function defaultPronounSentence(word, pronoun) {
 }
 
 function defaultPronounSentenceKo(word, pronoun) {
-  if (pronoun === 'they') return `그것들은 ${word}들이에요.`;
-  return `그것은 ${word}이에요.`;
+  if (pronoun === 'they') return `그것?��? ${word}?�이?�요.`;
+  return `그것?� ${word}?�에??`;
 }
 
 function defaultPronounExplanation(pronoun) {
@@ -664,7 +664,7 @@ function defaultPronounExplanation(pronoun) {
 }
 
 function defaultPronounExplanationKo(pronoun) {
-  return pronoun === 'it' ? "'it' (그것)은 한 개일 때 써요." : "'they' (그것들/그 사람들)는 두 개 이상일 때 써요.";
+  return pronoun === 'it' ? "'it' (그것)?� ??개일 ???�요." : "'they' (그것??�??�람??????�??�상?????�요.";
 }
 
 function uniqueItems(arr) {

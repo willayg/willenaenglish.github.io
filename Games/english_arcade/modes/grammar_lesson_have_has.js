@@ -39,7 +39,8 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     sessionId = startSession({
       mode: 'grammar_lesson_have_has',
       wordList: sessionWords,
-      listName: grammarName || null,
+      // Use grammarFile path for session tracking to match homework assignment list_key
+      listName: grammarFile || grammarName || null,
       meta: { category: 'grammar', file: grammarFile, lesson: grammarName || 'Have vs Has', level: 'Level 1 Grammar' }
     });
   } catch (err) {
@@ -465,7 +466,8 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
             context: 'lesson',
             grammarName: grammarName || 'Have vs Has',
           },
-          listName: grammarName || null,
+          // Use grammarFile path for session tracking to match homework assignment list_key
+          listName: grammarFile || grammarName || null,
           wordList: sessionWords,
         });
       } catch (err) {
