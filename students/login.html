@@ -264,13 +264,14 @@
   </div>
 
   <script type="module">
-  // Redirect to Netlify-hosted login if third-party cookies are blocked
-  // This ensures Safari, Samsung Internet, and Incognito mode users can log in properly
-  if (window.WillenaAPI && WillenaAPI.shouldShowCookieWarning && WillenaAPI.shouldShowCookieWarning()) {
+  // Redirect to Netlify-hosted login if third-party cookies are KNOWN to be blocked
+  // This ensures Safari, Samsung Internet, and Brave users are redirected immediately
+  // Chrome Incognito users will be redirected after login attempt fails
+  if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
     // Redirect to Netlify version where cookies will work (same-origin)
     const next = new URLSearchParams(window.location.search).get('next') || '/students/profile.html';
     const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next);
-    console.log('[Login] Redirecting to Netlify for cookie support');
+    console.log('[Login] Redirecting to Netlify for cookie support (known blocker)');
     window.location.replace(netlifyLoginUrl);
   }
 
@@ -334,6 +335,32 @@
   if (!username || !password) return show(t('Please enter both username and password.'));
       try {
         await loginWithUsernamePassword(username, password);
+        
+        // Verify cookies actually work by calling whoami immediately
+        // This catches Chrome Incognito and other cases where cookies are silently blocked
+        if (WillenaAPI.isCrossOrigin) {
+          try {
+            const whoami = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
+            const whoData = await whoami.json();
+            if (!whoData.success) {
+              // Cookies didn't work! Redirect to Netlify version
+              console.log('[Login] Cookies blocked - redirecting to Netlify');
+              WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
+              const next = getNextDest();
+              const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next) + '&retry=1';
+              location.replace(netlifyLoginUrl);
+              return;
+            }
+          } catch (e) {
+            console.warn('[Login] Cookie verification failed:', e);
+            // Redirect to Netlify as fallback
+            const next = getNextDest();
+            const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next) + '&retry=1';
+            location.replace(netlifyLoginUrl);
+            return;
+          }
+        }
+        
         // Signal other tabs/components that auth changed
         try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
         location.href = getNextDest();

@@ -14,10 +14,10 @@
   <!-- API config for GitHub Pages + Netlify Functions -->
   <script src="/js/api-config.js"></script>
   <script>
-    // Redirect to Netlify-hosted version if third-party cookies are likely blocked
-    // This handles Safari, Samsung Internet, and Incognito mode which block cross-origin cookies
+    // Redirect to Netlify-hosted version if third-party cookies are KNOWN to be blocked
+    // This handles Safari, Samsung Internet, and Brave which always block cross-origin cookies
     (function() {
-      if (window.WillenaAPI && WillenaAPI.shouldShowCookieWarning && WillenaAPI.shouldShowCookieWarning()) {
+      if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
         const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
         console.log('[Dashboard] Redirecting to Netlify for cookie support:', netlifyUrl);
         window.location.replace(netlifyUrl);
@@ -64,7 +64,18 @@
 
         const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
         const w = await who.json();
-        if (!w.success) location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
+        if (!w.success) {
+          // For cross-origin scenarios, if whoami fails, it might be due to blocked cookies
+          // Redirect to Netlify version instead of login page
+          if (WillenaAPI.isCrossOrigin) {
+            console.log('[Dashboard] whoami failed in cross-origin mode - redirecting to Netlify');
+            WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
+            const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
+            location.replace(netlifyUrl);
+            return;
+          }
+          location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
+        }
       } catch {}
     });
   </script>
