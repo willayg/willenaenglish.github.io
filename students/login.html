@@ -264,6 +264,16 @@
   </div>
 
   <script type="module">
+  // Redirect to Netlify-hosted login if third-party cookies are blocked
+  // This ensures Safari, Samsung Internet, and Incognito mode users can log in properly
+  if (window.WillenaAPI && WillenaAPI.shouldShowCookieWarning && WillenaAPI.shouldShowCookieWarning()) {
+    // Redirect to Netlify version where cookies will work (same-origin)
+    const next = new URLSearchParams(window.location.search).get('next') || '/students/profile.html';
+    const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next);
+    console.log('[Login] Redirecting to Netlify for cookie support');
+    window.location.replace(netlifyLoginUrl);
+  }
+
   // Set Help button text based on system language
   window.addEventListener('DOMContentLoaded', () => {
     const helpBtn = document.getElementById('helpBtn');
