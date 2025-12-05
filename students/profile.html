@@ -6,6 +6,17 @@
   <title data-i18n="Profile">Profile</title>
   <script src="/js/api-config.js"></script>
   <script>
+    // Redirect to Netlify-hosted version if third-party cookies are likely blocked
+    // This handles Safari, Samsung Internet, and Incognito mode which block cross-origin cookies
+    (function() {
+      if (window.WillenaAPI && WillenaAPI.shouldShowCookieWarning && WillenaAPI.shouldShowCookieWarning()) {
+        const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
+        console.log('[Profile] Redirecting to Netlify for cookie support:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return;
+      }
+    })();
+
     // Cookie-based identity fetch
     async function getProfileInfo() {
       try {

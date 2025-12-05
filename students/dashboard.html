@@ -14,6 +14,17 @@
   <!-- API config for GitHub Pages + Netlify Functions -->
   <script src="/js/api-config.js"></script>
   <script>
+    // Redirect to Netlify-hosted version if third-party cookies are likely blocked
+    // This handles Safari, Samsung Internet, and Incognito mode which block cross-origin cookies
+    (function() {
+      if (window.WillenaAPI && WillenaAPI.shouldShowCookieWarning && WillenaAPI.shouldShowCookieWarning()) {
+        const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
+        console.log('[Dashboard] Redirecting to Netlify for cookie support:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return; // Stop script execution
+      }
+    })();
+
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
       try {
