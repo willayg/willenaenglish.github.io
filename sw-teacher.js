@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teacher-tracker-cache-v1';
+const CACHE_NAME = 'teacher-tracker-cache-v2';
 const PREFETCH_MESSAGE = 'teacher-prefetch';
 
 self.addEventListener('install', (event) => {
@@ -6,7 +6,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  // Clean up old caches when new SW activates
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k.startsWith('teacher-tracker-cache-') && k !== CACHE_NAME)
+            .map(k => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
 async function fetchAndCache(request, cache) {
@@ -40,9 +48,12 @@ async function handleTeacherRequest(event) {
 self.addEventListener('fetch', (event) => {
   try {
     const url = new URL(event.request.url);
-    if (url.origin === self.location.origin && url.pathname.startsWith('/.netlify/functions/')) {
+    // Only cache teacher_admin endpoints - NOT auth or student-specific endpoints
+    // progress_summary, supabase_auth, homework_api are user-specific and must NOT be cached
+    if (url.origin === self.location.origin && url.pathname.startsWith('/.netlify/functions/teacher_admin')) {
       event.respondWith(handleTeacherRequest(event));
     }
+    // All other /.netlify/functions/ requests pass through without caching
   } catch (err) {
     console.warn('[sw-teacher] fetch handler error', err);
   }
