@@ -17,14 +17,14 @@
   <meta name="supabase-anon-key" content="YOUR_PUBLIC_ANON_KEY" />
 
   <!-- CSP: allow audio, remote ESM (supabase-js), fonts, and API calls -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 img-src 'self' data: blob: https:;
-                 media-src 'self' data: blob: https:;
-                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-                 font-src https://fonts.gstatic.com;
-                 script-src 'self' 'unsafe-inline' https:;
-                 connect-src 'self' https:;" />
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+           img-src 'self' data: blob: https:;
+           media-src 'self' data: blob: https:;
+           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+           font-src https://fonts.gstatic.com;
+           script-src 'self' 'unsafe-inline' https:;
+           connect-src 'self' https: http://127.0.0.1:8790 http://localhost:8790;" />
   <meta name="color-scheme" content="light dark" />
 
   <style>

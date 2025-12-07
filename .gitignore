@@ -7,3 +7,6 @@ Teachers/tools/worksheet-builder-vanilla/References/
 11_labs_test.html
 
 
+
+# Cloudflare Workers local dev secrets
+.dev.vars

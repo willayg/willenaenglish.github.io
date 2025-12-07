@@ -305,6 +305,13 @@
       });
       const d2 = await r2.json();
       if (!d2.success) throw new Error(d2.error || 'Login failed');
+      
+      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
+      if (d2.access_token && WillenaAPI.setLocalTokens) {
+        WillenaAPI.setLocalTokens(d2.access_token, d2.refresh_token);
+        console.log('[Login] Stored local tokens for dev mode');
+      }
+      
       return d2;
     }
 
@@ -316,6 +323,13 @@
       });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || 'Login failed');
+      
+      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
+      if (d.access_token && WillenaAPI.setLocalTokens) {
+        WillenaAPI.setLocalTokens(d.access_token, d.refresh_token);
+        console.log('[Login] Stored local tokens for dev mode');
+      }
+      
       return d;
     }
 

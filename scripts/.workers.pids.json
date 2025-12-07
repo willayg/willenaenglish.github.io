@@ -1,0 +1,26 @@
+﻿[
+    {
+        "name":  "supabase-auth",
+        "port":  8787,
+        "pid":  15872,
+        "path":  "D:\\Willena Website\\willenaenglish.github.io\\cloudflare-workers\\supabase-auth"
+    },
+    {
+        "name":  "log-word-attempt",
+        "port":  8788,
+        "pid":  11560,
+        "path":  "D:\\Willena Website\\willenaenglish.github.io\\cloudflare-workers\\log-word-attempt"
+    },
+    {
+        "name":  "homework-api",
+        "port":  8789,
+        "pid":  22872,
+        "path":  "D:\\Willena Website\\willenaenglish.github.io\\cloudflare-workers\\homework-api"
+    },
+    {
+        "name":  "progress-summary",
+        "port":  8790,
+        "pid":  15236,
+        "path":  "D:\\Willena Website\\willenaenglish.github.io\\cloudflare-workers\\progress-summary"
+    }
+]

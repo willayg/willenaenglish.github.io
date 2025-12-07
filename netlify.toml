@@ -15,3 +15,19 @@ package = "@netlify/plugin-functions-install-core"
 [dev]
   framework = "#static"
   port = 9000
+  # Local dev proxy: route only the progress_summary function to the local
+  # Cloudflare worker when testing. This preserves same-origin cookies so the
+  # worker can observe the logged-in session during development.
+  [[redirects]]
+    from = "/.netlify/functions/progress_summary/*"
+    to = "http://127.0.0.1:8790/.netlify/functions/progress_summary/:splat"
+    status = 200
+    force = true
+
+# Production/proxy: route progress_summary to the Netlify proxy function,
+# which forwards to the Cloudflare worker while keeping browser cookies intact.
+[[redirects]]
+  from = "/.netlify/functions/progress_summary/*"
+  to = "/.netlify/functions/proxy_progress_summary/:splat"
+  status = 200
+  force = true
