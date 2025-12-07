@@ -45,8 +45,21 @@
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // Start at 0% for now: 0 = all Netlify, 100 = all Cloudflare
-  let CF_ROLLOUT_PERCENT = 0;
+  // For the `cloudflare` branch we enable full rollout so the client prefers workers.
+  let CF_ROLLOUT_PERCENT = 100;
+
+  // Per-function rollout overrides (percent 0-100). If a function is listed here,
+  // this value takes precedence over the global CF_ROLLOUT_PERCENT. Defaults to 0
+  // so nothing is routed to workers unless explicitly set.
+  // NOTE: For local dev, keep everything at 0 — Cloudflare workers can't see
+  // Netlify's auth cookies. Only enable in PRODUCTION or use shadow mode.
+  const CF_ROLLOUT_PERCENT_BY_FN = {
+    get_audio_urls: 100,
+    supabase_auth: 100,
+    log_word_attempt: 100,
+    homework_api: 100,
+    progress_summary: 100,
+  };
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
   // Useful for testing parity without affecting users
@@ -177,11 +190,19 @@
    * @param {string} functionName - The function name (e.g., 'get_audio_urls')
    * @returns {boolean}
    */
+  function getRolloutPercent(functionName) {
+    if (Object.prototype.hasOwnProperty.call(CF_ROLLOUT_PERCENT_BY_FN, functionName)) {
+      return Number(CF_ROLLOUT_PERCENT_BY_FN[functionName]) || 0;
+    }
+    return CF_ROLLOUT_PERCENT;
+  }
+
   function shouldUseCloudflare(functionName) {
     if (!CF_MIGRATED_FUNCTIONS[functionName]) return false;
-    if (CF_ROLLOUT_PERCENT <= 0) return false;
-    if (CF_ROLLOUT_PERCENT >= 100) return true;
-    return Math.random() * 100 < CF_ROLLOUT_PERCENT;
+    const rollout = getRolloutPercent(functionName);
+    if (rollout <= 0) return false;
+    if (rollout >= 100) return true;
+    return Math.random() * 100 < rollout;
   }
 
   /**
@@ -202,15 +223,18 @@
   function getApiUrl(functionPath) {
     // Local dev: rewrite to local worker ports ONLY if rollout > 0
     // Otherwise keep relative paths so netlify dev handles them
-    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
+    if (isLocalhost) {
       const fn = extractFunctionName(functionPath);
-      const base = LOCAL_WORKER_MAP[fn];
-      if (base) {
-        // remove the "/.netlify/functions/<name>" prefix and keep query string
-        const pathOnly = functionPath.split('?')[0];
-        const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
-        const suffix = pathOnly.replace(new RegExp(`^/?\.?netlify/functions/${fn}/?`), '');
-        return base + '/' + suffix + query;
+      const rollout = getRolloutPercent(fn);
+      if (rollout > 0) {
+        const base = LOCAL_WORKER_MAP[fn];
+        if (base) {
+          // remove the "/.netlify/functions/<name>" prefix and keep query string
+          const pathOnly = functionPath.split('?')[0];
+          const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+          const suffix = pathOnly.replace(new RegExp(`^/?\.?netlify/functions/${fn}/?`), '');
+          return base + '/' + suffix + query;
+        }
       }
     }
 
@@ -264,8 +288,9 @@
     };
     
     // LOCAL DEV: inject Authorization header when using local workers
-    // Since cross-origin cookies won't work between localhost:9000 and 127.0.0.1:8787
-    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
+    // Since cross-origin cookies won't work between localhost and local worker ports,
+    // inject the local token when this call will be routed to Cloudflare (per-function).
+    if (isLocalhost && useCloudflare) {
       const localToken = getLocalToken();
       if (localToken) {
         // Inject for ALL auth-requiring functions (not just supabase_auth)
@@ -316,7 +341,23 @@
       }
     }
     
-    return fetch(primaryUrl, fetchOptions);
+    const res = await fetch(primaryUrl, fetchOptions).catch(err => {
+      return new Response(JSON.stringify({ success:false, error:String(err.message||err) }), { status: 520, headers: { 'Content-Type':'application/json' } });
+    });
+
+    // DEV SAFETY: if a Cloudflare-routed call to progress_summary is unauthorized,
+    // transparently retry against Netlify to avoid triggering logout flows.
+    if (useCloudflare && functionName === 'progress_summary' && res && (res.status === 401 || res.status === 403)) {
+      try {
+        const fallbackUrl = getApiUrl(functionPath);
+        const fallbackRes = await fetch(fallbackUrl, { ...fetchOptions, credentials: 'include' });
+        return fallbackRes;
+      } catch {
+        return res;
+      }
+    }
+
+    return res;
   }
 
   // --- Local dev token storage ---
@@ -362,6 +403,7 @@
     getApiUrl,
     fetch: apiFetch,
     shouldUseCloudflare,
+    CF_ROLLOUT_PERCENT_BY_FN,
     
     // Convenience method to check environment
     getEnvironment() {
@@ -376,6 +418,16 @@
     setRolloutPercent(percent) {
       console.log(`[WillenaAPI] Rollout changed: ${CF_ROLLOUT_PERCENT}% -> ${percent}%`);
       CF_ROLLOUT_PERCENT = Number(percent) || 0;
+    },
+
+    // Set rollout for a specific function (overrides global). Example:
+    //   WillenaAPI.setFunctionRollout('progress_summary', 100);
+    setFunctionRollout(functionName, percent) {
+      if (!functionName) return;
+      const prev = CF_ROLLOUT_PERCENT_BY_FN[functionName];
+      const next = Number(percent) || 0;
+      CF_ROLLOUT_PERCENT_BY_FN[functionName] = next;
+      console.log(`[WillenaAPI] Rollout (${functionName}): ${prev || 0}% -> ${next}%`);
     },
 
     // Local dev token storage (for cross-origin worker auth)
