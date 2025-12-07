@@ -1,5 +1,6 @@
 /**
  * API Configuration for GitHub Pages + Netlify Functions + Cloudflare Workers
+ * VERSION: 2025-12-07-v2 LOCAL_DEV_FIX
  * 
  * This file centralizes the API base URL configuration.
  * When hosted on GitHub Pages, API calls go to the Netlify functions domain.
@@ -23,13 +24,29 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare Worker URL (update after deploying)
-  const CF_WORKER_BASE = 'https://get-audio-urls.willena.workers.dev';
+  // Cloudflare Worker URLs (each worker has its own subdomain)
+  const CF_WORKER_URLS = {
+    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
+    supabase_auth: 'https://supabase-auth.willena.workers.dev',
+    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
+    homework_api: 'https://homework-api.willena.workers.dev',
+    progress_summary: 'https://progress-summary.willena.workers.dev',
+  };
+  // Back-compat for older code paths that referenced a single base
+  const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
+
+  // Local dev worker ports (Cloudflare Workers via wrangler dev)
+  const LOCAL_WORKER_MAP = {
+    supabase_auth: 'http://127.0.0.1:8787',
+    log_word_attempt: 'http://127.0.0.1:8788',
+    homework_api: 'http://127.0.0.1:8789',
+    progress_summary: 'http://127.0.0.1:8790',
+  };
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // Default to 100% so production will use Cloudflare Worker for migrated functions.
-  let CF_ROLLOUT_PERCENT = 100;
+  // Start at 0% for now: 0 = all Netlify, 100 = all Cloudflare
+  let CF_ROLLOUT_PERCENT = 0;
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
   // Useful for testing parity without affecting users
@@ -37,8 +54,11 @@
   
   // Functions that have been migrated to Cloudflare Workers
   const CF_MIGRATED_FUNCTIONS = {
-    'get_audio_urls': CF_WORKER_BASE,
-    // Add more as you migrate: 'function_name': 'https://worker-url.workers.dev'
+    get_audio_urls: CF_WORKER_URLS.get_audio_urls,
+    supabase_auth: CF_WORKER_URLS.supabase_auth,
+    log_word_attempt: CF_WORKER_URLS.log_word_attempt,
+    homework_api: CF_WORKER_URLS.homework_api,
+    progress_summary: CF_WORKER_URLS.progress_summary,
   };
 
   // ============================================================
@@ -140,14 +160,16 @@
     API_BASE = NETLIFY_FUNCTIONS_URL;
   }
 
-  // --- Development override: force Cloudflare rollout on localhost for testing ---
-  // When running the frontend on localhost, enable 100% rollout so dev traffic
-  // goes to the Cloudflare Worker. This makes it easy to validate real-worker
-  // behaviour while serving the app from your local dev server.
+  // --- Development override for localhost ---
+  // In `netlify dev`, the local Cloudflare workers (wrangler dev on 8787-8790)
+  // may not be running. Keep rollout at 0 by default to avoid connection refused.
+  // If you ARE running wrangler dev locally and want to hit it, call:
+  //   WillenaAPI.setRolloutPercent(100)
   if (isLocalhost) {
-    CF_ROLLOUT_PERCENT = 100;
+    // Keep localhost using the default rollout (0%) unless explicitly changed at runtime
+    CF_ROLLOUT_PERCENT = 0;
     CF_SHADOW_MODE = false;
-    console.log('[WillenaAPI] DEV OVERRIDE: CF_ROLLOUT_PERCENT=100 (all Cloudflare)');
+    console.log('[WillenaAPI] DEV MODE: CF_ROLLOUT_PERCENT=0 (local workers disabled by default). Use setRolloutPercent(100) to enable.');
   }
 
   /**
@@ -178,6 +200,20 @@
    * @returns {string} The full URL
    */
   function getApiUrl(functionPath) {
+    // Local dev: rewrite to local worker ports ONLY if rollout > 0
+    // Otherwise keep relative paths so netlify dev handles them
+    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
+      const fn = extractFunctionName(functionPath);
+      const base = LOCAL_WORKER_MAP[fn];
+      if (base) {
+        // remove the "/.netlify/functions/<name>" prefix and keep query string
+        const pathOnly = functionPath.split('?')[0];
+        const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+        const suffix = pathOnly.replace(new RegExp(`^/?\.?netlify/functions/${fn}/?`), '');
+        return base + '/' + suffix + query;
+      }
+    }
+
     // If already a full URL, return as-is
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
       return functionPath;
@@ -207,7 +243,15 @@
     
     // Determine primary URL
     let primaryUrl;
-    if (useCloudflare && cfWorkerUrl) {
+    
+    // LOCAL DEV: use local worker ports only when rollout wants Cloudflare
+    if (isLocalhost && LOCAL_WORKER_MAP[functionName] && useCloudflare) {
+      const base = LOCAL_WORKER_MAP[functionName];
+      const pathOnly = functionPath.split('?')[0];
+      const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+      primaryUrl = base + '/' + query;
+      console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
+    } else if (useCloudflare && cfWorkerUrl) {
       primaryUrl = cfWorkerUrl;
     } else {
       primaryUrl = getApiUrl(functionPath);
@@ -218,6 +262,25 @@
       ...options,
       credentials: 'include',
     };
+    
+    // LOCAL DEV: inject Authorization header when using local workers
+    // Since cross-origin cookies won't work between localhost:9000 and 127.0.0.1:8787
+    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
+      const localToken = getLocalToken();
+      if (localToken) {
+        // Inject for ALL auth-requiring functions (not just supabase_auth)
+        const authFunctions = ['supabase_auth', 'supabase-auth', 'homework_api', 'progress_summary', 'log_word_attempt'];
+        if (authFunctions.includes(functionName)) {
+          fetchOptions.headers = {
+            ...fetchOptions.headers,
+            'Authorization': `Bearer ${localToken}`,
+          };
+          console.log(`[WillenaAPI] Injected local token for ${functionName}`);
+        }
+      } else if (['supabase_auth', 'homework_api', 'progress_summary'].includes(functionName)) {
+        console.log(`[WillenaAPI] No local token found for ${functionName}`);
+      }
+    }
     
     // For cross-origin requests with body, ensure Content-Type is set
     if ((isCrossOrigin || useCloudflare) && options.body && !options.headers?.['Content-Type']) {
@@ -240,8 +303,46 @@
     if (isLocalhost && cfWorkerUrl) {
       console.log(`[WillenaAPI] ${functionName}: using ${useCloudflare ? 'Cloudflare' : 'Netlify'}`);
     }
+
+    // Safety: some callers mistakenly call get_audio_urls with GET (no body).
+    // The Cloudflare worker expects POST to `/` with a JSON body. If a
+    // caller forgot to set method, force POST here so the worker receives
+    // the intended verb (prevents a 405 from GET to the worker root).
+    if (functionName === 'get_audio_urls' && !fetchOptions.method) {
+      fetchOptions.method = 'POST';
+      fetchOptions.headers = fetchOptions.headers || {};
+      if (options.body && !fetchOptions.headers['Content-Type']) {
+        fetchOptions.headers['Content-Type'] = 'application/json';
+      }
+    }
     
     return fetch(primaryUrl, fetchOptions);
+  }
+
+  // --- Local dev token storage ---
+  // On localhost with local workers, cross-origin cookies don't work between
+  // localhost:9000 (page) and 127.0.0.1:8787 (worker). Use localStorage instead.
+  const LOCAL_TOKEN_KEY = 'sb_local_access';
+  const LOCAL_REFRESH_KEY = 'sb_local_refresh';
+
+  function getLocalToken() {
+    if (!isLocalhost) return null;
+    try { return localStorage.getItem(LOCAL_TOKEN_KEY); } catch { return null; }
+  }
+
+  function setLocalTokens(access, refresh) {
+    if (!isLocalhost) return;
+    try {
+      if (access) localStorage.setItem(LOCAL_TOKEN_KEY, access);
+      if (refresh) localStorage.setItem(LOCAL_REFRESH_KEY, refresh);
+    } catch {}
+  }
+
+  function clearLocalTokens() {
+    try {
+      localStorage.removeItem(LOCAL_TOKEN_KEY);
+      localStorage.removeItem(LOCAL_REFRESH_KEY);
+    } catch {}
   }
 
   // Export to window for global access
@@ -249,6 +350,7 @@
     BASE_URL: API_BASE,
     FUNCTIONS_URL: NETLIFY_FUNCTIONS_URL,
     CF_WORKER_BASE,
+    CF_WORKER_URLS,
     CF_ROLLOUT_PERCENT,
     CF_SHADOW_MODE,
     CF_MIGRATED_FUNCTIONS,
@@ -275,6 +377,11 @@
       console.log(`[WillenaAPI] Rollout changed: ${CF_ROLLOUT_PERCENT}% -> ${percent}%`);
       CF_ROLLOUT_PERCENT = Number(percent) || 0;
     },
+
+    // Local dev token storage (for cross-origin worker auth)
+    getLocalToken,
+    setLocalTokens,
+    clearLocalTokens,
 
     // Check if third-party cookies are likely blocked (sync check)
     isThirdPartyCookiesBlocked,
