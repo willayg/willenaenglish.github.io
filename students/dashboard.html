@@ -964,7 +964,8 @@
       // Fetch and render stars leaderboard
       let starsLbTimeframe = 'month'; // 'all' | 'month' - default to month
       let starsLbMetric = 'super'; // default to 'super' (Super Score)
-      const starsLbCache = new Map(); // timeframe -> data
+      // In-memory cache scoped by timeframe _and_ current userId to avoid cross-account pollution
+      const starsLbCache = new Map(); // key: <timeframe>_<userId> -> data
       const LB_LOCAL_CACHE_TTL = 2 * 60 * 1000; // 2 minutes for stale-while-revalidate
 
       // Get current user ID for cache key scoping (prevents cross-account cache pollution)
@@ -1009,8 +1010,10 @@
         starsLbTimeframe = timeframe;
 
         // For class leaderboard, don't use localStorage cache - it's user-specific
-        // Just use in-memory cache for tab switching
-        const memCached = starsLbCache.get(timeframe);
+        // Use in-memory cache scoped by userId for tab switching
+        const userId = getCurrentUserId();
+        const memKey = `${timeframe}_${userId}`;
+        const memCached = starsLbCache.get(memKey);
         if (memCached && !forceRefresh) {
           renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', memCached, starsLbMetric);
           return;
@@ -1020,10 +1023,11 @@
           spinner?.classList.remove('hidden');
           // Use bypass_cache=1 when force refreshing to get fresh data from server
           const bypassParam = forceRefresh ? '&bypass_cache=1' : '';
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
+          // Include a user-scoped param so CDN/cache layers don't serve another student's class leaderboard
+          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}${bypassParam}&u=${encodeURIComponent(userId)}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
-          starsLbCache.set(timeframe, data);
+          starsLbCache.set(memKey, data);
           renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', data, starsLbMetric);
         } catch (err) {
           console.error('Stars leaderboard error:', err);
@@ -1073,7 +1077,11 @@
       });
       // Refresh button for class leaderboard - force bypass server cache
       document.getElementById('slRefreshBtn')?.addEventListener('click', async () => {
-        starsLbCache.delete(starsLbTimeframe);
+        try {
+          const userId = getCurrentUserId();
+          const key = `${starsLbTimeframe}_${userId}`;
+          starsLbCache.delete(key);
+        } catch {}
         await loadStarsLeaderboard(starsLbTimeframe, true);
       });
 
@@ -1083,12 +1091,16 @@
           if (!metric || metric === starsLbMetric) return;
           starsLbMetric = metric;
           updateStarsMetricUI();
-          const cached = starsLbCache.get(starsLbTimeframe);
-          if (cached) {
-            renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', cached, starsLbMetric);
-          } else {
-            await loadStarsLeaderboard(starsLbTimeframe);
-          }
+          try {
+            const userId = getCurrentUserId();
+            const key = `${starsLbTimeframe}_${userId}`;
+            const cached = starsLbCache.get(key);
+            if (cached) {
+              renderStarsLeaderboard('starsLeaderboardContent', 'starsLeaderboardCard', cached, starsLbMetric);
+              return;
+            }
+          } catch (e) { /* ignore */ }
+          await loadStarsLeaderboard(starsLbTimeframe);
         });
       });
 
