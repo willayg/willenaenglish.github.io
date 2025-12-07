@@ -60,6 +60,22 @@ function timedJson(status, body, startMs) {
   };
 }
 
+// Like timedJson but forces no public/edge caching for user-specific responses
+function timedJsonNoCache(status, body, startMs) {
+  const duration_ms = Date.now() - startMs;
+  return {
+    statusCode: status,
+    headers: {
+      ...getCorsHeaders(currentEvent || {}),
+      'content-type': 'application/json; charset=utf-8',
+      'x-timing-ms': String(duration_ms),
+      // Prevent CDN/edge from caching user-specific leaderboard payloads
+      'cache-control': 'private, max-age=0, s-maxage=0, no-store'
+    },
+    body: JSON.stringify({ ...body, _timing_ms: duration_ms, _sql_mode: USE_SQL_LEADERBOARD })
+  };
+}
+
 function json(status, body, cacheSeconds) {
   const headers = { 
     ...getCorsHeaders(currentEvent || {}),
@@ -509,10 +525,10 @@ exports.handler = async (event) => {
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
         const { data: meProf, error: meErr } = await adminClient.from('profiles').select('class').eq('id', userId).single();
-        if (meErr || !meProf) return timedJson(400, { success: false, error: 'Profile missing' }, startMs);
+        if (meErr || !meProf) return timedJsonNoCache(400, { success: false, error: 'Profile missing' }, startMs);
         const className = meProf.class || null;
-        if (!className) return timedJson(200, { success: true, leaderboard: [], class: null }, startMs);
-        if (className.length === 1) return timedJson(200, { success: true, leaderboard: [], class: null }, startMs);
+        if (!className) return timedJsonNoCache(200, { success: true, leaderboard: [], class: null }, startMs);
+        if (className.length === 1) return timedJsonNoCache(200, { success: true, leaderboard: [], class: null }, startMs);
 
         const cacheKey = classLeaderboardCacheKey(className, timeframe);
         // Skip cache if bypass_cache=1 is passed (admin/testing use)
@@ -520,7 +536,8 @@ exports.handler = async (event) => {
           const cachedPayload = await redisCache.getJson(cacheKey);
           if (cachedPayload) {
             console.log(`[progress_summary] Redis cache hit for leaderboard_stars_class ${className} (${timeframe})`);
-            return timedJson(200, formatClassLeaderboardResponse(cachedPayload, userId), startMs);
+            // Even when returning a cached payload, ensure we do not allow public/edge caching
+            return timedJsonNoCache(200, formatClassLeaderboardResponse(cachedPayload, userId), startMs);
           }
         } else {
           console.log(`[progress_summary] bypass_cache=1, skipping cache for leaderboard_stars_class`);
@@ -575,11 +592,11 @@ exports.handler = async (event) => {
           .eq('class', className)
           .eq('approved', true)
           .limit(400);
-        if (clsErr) return timedJson(400, { success: false, error: clsErr.message }, startMs);
-        if (!classmates || !classmates.length) return timedJson(200, { success: true, leaderboard: [], class: className }, startMs);
+        if (clsErr) return timedJsonNoCache(400, { success: false, error: clsErr.message }, startMs);
+        if (!classmates || !classmates.length) return timedJsonNoCache(200, { success: true, leaderboard: [], class: className }, startMs);
 
         const filteredClassmates = classmates.filter(p => !p.username || p.username.length > 1);
-        if (!filteredClassmates.length) return timedJson(200, { success: true, leaderboard: [], class: className }, startMs);
+        if (!filteredClassmates.length) return timedJsonNoCache(200, { success: true, leaderboard: [], class: className }, startMs);
 
         const ids = filteredClassmates.map(p => p.id).filter(Boolean);
         const pointTotals = await aggregatePointsForIds(adminClient, ids, firstOfMonthIso);
@@ -609,7 +626,8 @@ exports.handler = async (event) => {
           await redisCache.setJson(cacheKey, payload, CLASS_CACHE_TTL_SECONDS);
         }
 
-        return timedJson(200, formatClassLeaderboardResponse(payload, userId), startMs);
+        // Return without allowing public/edge caching for this user-specific endpoint
+        return timedJsonNoCache(200, formatClassLeaderboardResponse(payload, userId), startMs);
       } catch (e) {
         console.error('[progress_summary] leaderboard_stars_class error:', e);
         return json(500, { success: false, error: 'Internal error', details: e?.message });
