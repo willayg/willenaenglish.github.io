@@ -276,7 +276,10 @@
       primaryUrl = base + '/' + query;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      primaryUrl = cfWorkerUrl;
+      const pathOnly = functionPath.split('?')[0];
+      const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+      const suffix = pathOnly.replace(new RegExp(`^/?\.netlify/functions/${functionName}/?`), '');
+      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + '/' + suffix + query;
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
