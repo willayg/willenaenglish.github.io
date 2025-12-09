@@ -24,13 +24,14 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare Worker URLs (each worker has its own subdomain)
+  // Cloudflare Worker URLs - unified API endpoint for all functions
+  // Using api.willenaenglish.com allows cookies to be shared across all *.willenaenglish.com subdomains
   const CF_WORKER_URLS = {
-    get_audio_urls: 'https://api-cf.willenaenglish.com',
-    supabase_auth: 'https://api-cf.willenaenglish.com',
-    log_word_attempt: 'https://api-cf.willenaenglish.com',
-    homework_api: 'https://api-cf.willenaenglish.com',
-    progress_summary: 'https://api-cf.willenaenglish.com',
+    get_audio_urls: 'https://api.willenaenglish.com',
+    supabase_auth: 'https://api.willenaenglish.com',
+    log_word_attempt: 'https://api.willenaenglish.com',
+    homework_api: 'https://api.willenaenglish.com',
+    progress_summary: 'https://api.willenaenglish.com',
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
@@ -85,11 +86,17 @@
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com';
+  const isCloudflarePages = currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev');
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
-  // For cross-origin requests (GitHub Pages or custom domain -> Netlify), we need special handling
-  const isCrossOrigin = isGitHubPages || isCustomDomain;
+  // For cross-origin requests (GitHub Pages, custom domain, or Cloudflare Pages -> API), we need special handling
+  // Note: When on cf.willenaenglish.com and calling api.willenaenglish.com, cookies with Domain=.willenaenglish.com work!
+  const isCrossOrigin = isGitHubPages || (isCustomDomain && !isNetlify);
+  
+  // Cloudflare Pages with api.willenaenglish.com uses same-root cookies (Domain=.willenaenglish.com)
+  // so it's NOT a problematic cross-origin scenario for cookies
+  const isCloudflareEcosystem = isCloudflarePages || currentHost === 'api.willenaenglish.com';
   
   // Detect browsers that ALWAYS block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
   const isKnownCookieBlockingBrowser = (() => {
@@ -149,13 +156,18 @@
    * Quick synchronous check to see if we should redirect immediately.
    * For unknown browsers (Chrome incognito), we DON'T redirect immediately -
    * we let them try to login, and if whoami fails right after, then redirect.
+   * NOTE: Cloudflare Pages (cf.willenaenglish.com) uses same-root cookies so no redirect needed.
    */
-  const shouldRedirectImmediately = () => isCrossOrigin && isKnownCookieBlockingBrowser;
+  const shouldRedirectImmediately = () => isCrossOrigin && !isCloudflarePages && isKnownCookieBlockingBrowser;
   
   // Set API base URL based on environment
   let API_BASE = '';
   
-  if (isGitHubPages) {
+  if (isCloudflarePages) {
+    // On Cloudflare Pages (cf.willenaenglish.com) - use unified API endpoint
+    // Cookies work because both use Domain=.willenaenglish.com
+    API_BASE = 'https://api.willenaenglish.com';
+  } else if (isGitHubPages) {
     // On GitHub Pages - use full Netlify URL for functions
     API_BASE = NETLIFY_FUNCTIONS_URL;
   } else if (isCustomDomain) {
@@ -400,6 +412,8 @@
     CF_MIGRATED_FUNCTIONS,
     isGitHubPages,
     isCustomDomain,
+    isCloudflarePages,
+    isCloudflareEcosystem,
     isLocalhost,
     isNetlify,
     isCrossOrigin,

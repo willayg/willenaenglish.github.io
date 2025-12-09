@@ -23,6 +23,8 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish.github.io',
   // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',
+  // Cloudflare Pages deployment
+  'https://cf.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
 ];

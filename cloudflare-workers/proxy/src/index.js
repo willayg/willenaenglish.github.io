@@ -21,7 +21,9 @@ const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish-github-io.pages.dev',
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://cf.willenaenglish.com'
+  'https://cf.willenaenglish.com',
+  // Allow API subdomain itself for CORS
+  'https://api.willenaenglish.com',
 ]);
 
 addEventListener('fetch', event => event.respondWith(handle(event.request)));
