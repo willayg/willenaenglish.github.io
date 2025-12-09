@@ -26,11 +26,11 @@
   
   // Cloudflare Worker URLs (each worker has its own subdomain)
   const CF_WORKER_URLS = {
-    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
-    supabase_auth: 'https://supabase-auth.willena.workers.dev',
-    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
-    homework_api: 'https://homework-api.willena.workers.dev',
-    progress_summary: 'https://progress-summary.willena.workers.dev',
+    get_audio_urls: 'https://api.willenaenglish.com',
+    supabase_auth: 'https://api.willenaenglish.com',
+    log_word_attempt: 'https://api.willenaenglish.com',
+    homework_api: 'https://api.willenaenglish.com',
+    progress_summary: 'https://api.willenaenglish.com',
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
