@@ -1,0 +1,7 @@
+name = "willena-proxy"
+main = "src/index.js"
+compatibility_date = "2025-12-08"
+
+# Example environment variables; replace or set in Cloudflare dashboard when deploying
+[vars]
+BACKEND_BASE = "https://willenaenglish.netlify.app"
