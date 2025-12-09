@@ -288,10 +288,9 @@
       primaryUrl = base + '/' + query;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      const pathOnly = functionPath.split('?')[0];
-      const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
-      const suffix = pathOnly.replace(new RegExp(`^/?\.netlify/functions/${functionName}/?`), '');
-      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + '/' + suffix + query;
+      // For api.willenaenglish.com, keep the full /.netlify/functions/... path
+      // The proxy worker expects it and routes accordingly
+      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + functionPath;
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
