@@ -522,9 +522,28 @@ export default {
       
       // ===== CLASS LEADERBOARD =====
       if (section === 'leaderboard_stars_class') {
-        const classFilter = url.searchParams.get('class');
+        // Get class from query param OR auto-fetch from user's profile (like Netlify does)
+        let classFilter = url.searchParams.get('class');
+        if (!classFilter && userId) {
+          // Auto-fetch user's class from their profile
+          try {
+            const profiles = await supabaseSelect(env, 'profiles', `id=eq.${userId}&select=class`);
+            if (profiles && profiles[0] && profiles[0].class) {
+              classFilter = profiles[0].class;
+            }
+          } catch (e) {
+            console.error('Failed to fetch user class:', e);
+          }
+        }
+        
         if (!classFilter) {
-          return jsonResponse({ error: 'Missing class parameter' }, 400, origin);
+          // No class found - return empty leaderboard (same as Netlify behavior)
+          return jsonResponse({ success: true, leaderboard: [], class: null }, 200, origin);
+        }
+        
+        // Skip single-letter class names (same as Netlify)
+        if (classFilter.length === 1) {
+          return jsonResponse({ success: true, leaderboard: [], class: null }, 200, origin);
         }
         
         const timeframe = url.searchParams.get('timeframe') || 'all';
