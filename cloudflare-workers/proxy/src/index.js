@@ -1,19 +1,45 @@
 /**
- * Cloudflare Worker: API proxy + Set-Cookie domain rewrite
+ * Cloudflare Worker: API Gateway + Set-Cookie domain rewrite
  *
- * Usage:
- * - Deploy to workers.dev first for testing
- * - Configure BACKEND_BASE to point at your Netlify functions base or other origin
- * - When ready, bind this worker to `api.willenaenglish.com/*` in Cloudflare routes
+ * This is the main API gateway at api.willenaenglish.com that routes requests to:
+ * 1. Cloudflare Workers (for migrated functions) via Service Bindings
+ * 2. Netlify (fallback for functions without bindings or not migrated)
  *
- * Notes:
- * - This worker proxies requests to BACKEND_BASE and copies response body/headers
- * - It rewrites any Set-Cookie headers so cookies use Domain=.willenaenglish.com
- * - It echoes Origin from an allowlist for CORS and sets Access-Control-Allow-Credentials
+ * Features:
+ * - Smart routing based on function name and available bindings
+ * - Set-Cookie domain rewrite to .willenaenglish.com for cross-subdomain auth
+ * - CORS handling with credentials support
+ * - Graceful fallback to Netlify if CF worker binding unavailable
+ *
+ * Migration status (CF Workers):
+ * - supabase_auth: ✓
+ * - homework_api: ✓
+ * - log_word_attempt: ✓
+ * - progress_summary: ✓
+ * - get_audio_urls: ✓
  */
 
-const BACKEND_BASE = typeof BACKEND_BASE !== 'undefined' ? BACKEND_BASE : 'https://willenaenglish.netlify.app';
+const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
+
+// Map function names to their service binding names
+// The binding names are defined in wrangler.toml [[services]]
+const FUNCTION_TO_BINDING = {
+  supabase_auth: 'SUPABASE_AUTH',
+  homework_api: 'HOMEWORK_API', 
+  log_word_attempt: 'LOG_WORD_ATTEMPT',
+  progress_summary: 'PROGRESS_SUMMARY',
+  get_audio_urls: 'GET_AUDIO_URLS',
+};
+
+// Functions that should prefer CF Workers (when binding available)
+const PREFER_CF_WORKER = {
+  supabase_auth: true,
+  homework_api: true,
+  log_word_attempt: true,
+  progress_summary: true,
+  get_audio_urls: true,
+};
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
@@ -22,92 +48,172 @@ const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
   'https://cf.willenaenglish.com',
-  // Allow API subdomain itself for CORS
   'https://api.willenaenglish.com',
 ]);
 
-addEventListener('fetch', event => event.respondWith(handle(event.request)));
-
-async function handle(request) {
-  try {
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders(request) });
-    }
-
-    const url = new URL(request.url);
-    // Map incoming path to backend path. If client calls /.netlify/functions/<fn>, forward as-is.
-    const forwardPath = url.pathname + url.search;
-    const backendUrl = BACKEND_BASE.replace(/\/$/, '') + forwardPath;
-
-    // Build backend request
-    const reqHeaders = new Headers(request.headers);
-    // Remove hop-by-hop headers that shouldn't be forwarded
-    reqHeaders.delete('cf-connecting-ip');
-
-    const backendReq = new Request(backendUrl, {
-      method: request.method,
-      headers: reqHeaders,
-      body: request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body,
-      redirect: 'follow'
-    });
-
-    const backendResp = await fetch(backendReq);
-
-    // Build response headers, rewriting Set-Cookie entries
-    const newHeaders = new Headers();
-    for (const [k, v] of backendResp.headers) {
-      if (k.toLowerCase() === 'set-cookie') {
-        // Collect cookies to rewrite separately
-        // We will handle rewriting below
-        continue;
-      }
-      newHeaders.append(k, v);
-    }
-
-    // Collect all Set-Cookie headers from backendResp
-    const rawCookies = [];
-    for (const [k, v] of backendResp.headers) {
-      if (k.toLowerCase() === 'set-cookie') rawCookies.push(v);
-    }
-
-    if (rawCookies.length) {
-      for (let sc of rawCookies) {
-        let cookie = sc.trim();
-        // Ensure Domain is the shared domain
-        if (/;\s*Domain=/i.test(cookie)) {
-          cookie = cookie.replace(/;\s*Domain=[^;]+/i, `; Domain=${COOKIE_DOMAIN}`);
-        } else {
-          cookie += `; Domain=${COOKIE_DOMAIN}`;
-        }
-        if (!/;\s*SameSite=/i.test(cookie)) cookie += '; SameSite=None';
-        if (!/;\s*Secure/i.test(cookie)) cookie += '; Secure';
-        newHeaders.append('Set-Cookie', cookie);
-      }
-    }
-
-    // Apply CORS headers (echo origin if allowed)
-    const cors = corsHeaders(request);
-    for (const k of Object.keys(cors)) newHeaders.set(k, cors[k]);
-
-    const body = await backendResp.arrayBuffer();
-    return new Response(body, { status: backendResp.status, statusText: backendResp.statusText, headers: newHeaders });
-  } catch (err) {
-    return new Response(JSON.stringify({ success: false, error: String(err && err.message ? err.message : err) }), { status: 520, headers: { 'Content-Type': 'application/json' } });
-  }
+/**
+ * Extract function name from /.netlify/functions/<name> path
+ */
+function extractFunctionName(pathname) {
+  const match = pathname.match(/^\/?\.?netlify\/functions\/([^/?]+)/);
+  return match ? match[1] : null;
 }
 
-function corsHeaders(request) {
-  const origin = request.headers.get('Origin') || '';
+/**
+ * Get CORS headers for origin
+ */
+function corsHeaders(origin) {
   const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://willenaenglish.netlify.app';
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 }
 
 /**
- * Exported for quick local testing when using Wrangler in module mode
+ * Route request to Cloudflare Worker via Service Binding
  */
-export { handle };
+async function routeToCFWorker(request, binding, functionName, url) {
+  // Build the URL - keep query string, but the path becomes just / or /remaining
+  const workerUrl = new URL(request.url);
+  // Remove /.netlify/functions/<name> prefix, keep anything after
+  const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
+  workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;
+  
+  console.log(`[proxy] Routing ${functionName} to CF Worker: ${workerUrl.pathname}${workerUrl.search}`);
+  
+  // Forward the request to the worker
+  const workerRequest = new Request(workerUrl.toString(), {
+    method: request.method,
+    headers: request.headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+  });
+  
+  return binding.fetch(workerRequest);
+}
+
+/**
+ * Route request to Netlify backend
+ */
+async function routeToNetlify(request, url) {
+  const forwardPath = url.pathname + url.search;
+  const backendUrl = NETLIFY_BASE + forwardPath;
+  
+  console.log(`[proxy] Routing to Netlify: ${backendUrl}`);
+  
+  const reqHeaders = new Headers(request.headers);
+  reqHeaders.delete('cf-connecting-ip');
+  
+  const backendReq = new Request(backendUrl, {
+    method: request.method,
+    headers: reqHeaders,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+    redirect: 'follow'
+  });
+  
+  return fetch(backendReq);
+}
+
+/**
+ * Rewrite response: fix Set-Cookie domain and add CORS headers
+ */
+function rewriteResponse(response, origin) {
+  const newHeaders = new Headers();
+  
+  // Copy all headers except Set-Cookie (we'll rewrite those)
+  for (const [key, value] of response.headers) {
+    if (key.toLowerCase() !== 'set-cookie') {
+      newHeaders.append(key, value);
+    }
+  }
+  
+  // Collect and rewrite Set-Cookie headers
+  for (const [key, value] of response.headers) {
+    if (key.toLowerCase() === 'set-cookie') {
+      let cookie = value.trim();
+      
+      // Ensure Domain is the shared domain for cross-subdomain cookies
+      if (/;\s*Domain=/i.test(cookie)) {
+        cookie = cookie.replace(/;\s*Domain=[^;]+/i, `; Domain=${COOKIE_DOMAIN}`);
+      } else {
+        cookie += `; Domain=${COOKIE_DOMAIN}`;
+      }
+      
+      // Ensure SameSite=None and Secure for cross-origin requests
+      if (!/;\s*SameSite=/i.test(cookie)) cookie += '; SameSite=None';
+      if (!/;\s*Secure/i.test(cookie)) cookie += '; Secure';
+      
+      newHeaders.append('Set-Cookie', cookie);
+    }
+  }
+  
+  // Apply CORS headers
+  const cors = corsHeaders(origin);
+  for (const [key, value] of Object.entries(cors)) {
+    newHeaders.set(key, value);
+  }
+  
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders
+  });
+}
+
+/**
+ * Main request handler
+ */
+async function handleRequest(request, env) {
+  const url = new URL(request.url);
+  const origin = request.headers.get('Origin') || '';
+  
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
+  }
+  
+  try {
+    const functionName = extractFunctionName(url.pathname);
+    
+    // Check if we should use CF Worker and if the binding exists
+    let response;
+    
+    if (functionName && PREFER_CF_WORKER[functionName]) {
+      const bindingName = FUNCTION_TO_BINDING[functionName];
+      const binding = env && env[bindingName];
+      
+      if (binding && typeof binding.fetch === 'function') {
+        // Use CF Worker via service binding
+        response = await routeToCFWorker(request, binding, functionName, url);
+      } else {
+        // Fallback to Netlify (binding not available)
+        console.log(`[proxy] No binding for ${functionName}, falling back to Netlify`);
+        response = await routeToNetlify(request, url);
+      }
+    } else {
+      // Not a migrated function or no preference, use Netlify
+      response = await routeToNetlify(request, url);
+    }
+    
+    // Rewrite cookies and apply CORS
+    return rewriteResponse(response, origin);
+    
+  } catch (err) {
+    console.error('[proxy] Error:', err);
+    return new Response(
+      JSON.stringify({ success: false, error: String(err?.message || err), stack: err?.stack }), 
+      { status: 520, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }
+    );
+  }
+}
+
+/**
+ * Module export for Wrangler
+ */
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env);
+  }
+};

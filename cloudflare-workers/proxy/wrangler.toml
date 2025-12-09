@@ -2,6 +2,28 @@ name = "willena-proxy"
 main = "src/index.js"
 compatibility_date = "2025-12-08"
 
-# Example environment variables; replace or set in Cloudflare dashboard when deploying
+# Service bindings to route requests to other CF Workers
+# These allow calling other workers without going through the network
+[[services]]
+binding = "SUPABASE_AUTH"
+service = "supabase-auth"
+
+[[services]]
+binding = "HOMEWORK_API"
+service = "homework-api"
+
+[[services]]
+binding = "LOG_WORD_ATTEMPT"
+service = "log-word-attempt"
+
+[[services]]
+binding = "PROGRESS_SUMMARY"
+service = "progress-summary"
+
+[[services]]
+binding = "GET_AUDIO_URLS"
+service = "get-audio-urls"
+
+# Fallback for non-CF functions
 [vars]
-BACKEND_BASE = "https://willenaenglish.netlify.app"
+NETLIFY_BASE = "https://willenaenglish.netlify.app"
