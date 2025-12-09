@@ -280,17 +280,28 @@
     // Determine primary URL
     let primaryUrl;
     
+    // If functionPath is already a full URL, extract just the path portion for routing
+    let pathForRouting = functionPath;
+    if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
+      try {
+        const parsedUrl = new URL(functionPath);
+        pathForRouting = parsedUrl.pathname + parsedUrl.search;
+      } catch (e) {
+        // If URL parsing fails, use as-is
+        pathForRouting = functionPath;
+      }
+    }
+    
     // LOCAL DEV: use local worker ports only when rollout wants Cloudflare
     if (isLocalhost && LOCAL_WORKER_MAP[functionName] && useCloudflare) {
       const base = LOCAL_WORKER_MAP[functionName];
-      const pathOnly = functionPath.split('?')[0];
-      const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+      const query = pathForRouting.includes('?') ? pathForRouting.slice(pathForRouting.indexOf('?')) : '';
       primaryUrl = base + '/' + query;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
       // For api.willenaenglish.com, keep the full /.netlify/functions/... path
       // The proxy worker expects it and routes accordingly
-      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + functionPath;
+      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + pathForRouting;
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
