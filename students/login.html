@@ -407,22 +407,26 @@
       return d.guest;
     }
 
-    document.getElementById('guestBtn').addEventListener('click', async () => {
-      show('');
-      try {
-        const prev = localStorage.getItem('guest_name') || '';
-  const name = prompt(t('Enter your name to play as a guest:'), prev);
-        if (!name) return; // cancelled
-        const guest = await startGuestSession(name);
-        localStorage.setItem('guest_name', guest.name);
-        // Also set the generic user_name used by the student header UI
-        try { localStorage.setItem('user_name', guest.name); } catch {}
-        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
-        location.href = getNextDest();
-      } catch(e){
-        show(t(e.message) || t('Guest login failed'));
-      }
-    });
+    // Guest button listener (only if element exists - may be hidden/removed)
+    const guestBtnEl = document.getElementById('guestBtn');
+    if (guestBtnEl) {
+      guestBtnEl.addEventListener('click', async () => {
+        show('');
+        try {
+          const prev = localStorage.getItem('guest_name') || '';
+          const name = prompt(t('Enter your name to play as a guest:'), prev);
+          if (!name) return; // cancelled
+          const guest = await startGuestSession(name);
+          localStorage.setItem('guest_name', guest.name);
+          // Also set the generic user_name used by the student header UI
+          try { localStorage.setItem('user_name', guest.name); } catch {}
+          try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+          location.href = getNextDest();
+        } catch(e){
+          show(t(e.message) || t('Guest login failed'));
+        }
+      });
+    }
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
 
     // =======================
