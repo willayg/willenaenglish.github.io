@@ -1,4 +1,4 @@
-﻿// Grammar Lesson Runner ??Isn't vs Aren't
+// Grammar Lesson Runner ??Isn't vs Aren't
 // Interactive lesson teaching negative be-verb contractions with isn't/aren't.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -119,7 +119,7 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "부?�형 be?�사�?만들 ??<b>isn't</b> (he/she/it), <b>aren't</b> (you/we/they)�??�요. 버튼???�러???�제�??�인??보세??"
+      ? "<b>isn't</b>은 he/she/it와, <b>aren't</b>은 you/we/they와 함께 부정을 만들 때 씁니다. 버튼을 눌러 예시를 확인하세요!"
       : "Use <b>isn't</b> with he/she/it and <b>aren't</b> with you/we/they to make negative sentences with 'be'. Tap each button to see examples!";
 
     const negativeRow = document.createElement('div');
@@ -187,7 +187,7 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     renderCard(negativeSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -209,8 +209,8 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>He/She/It</b> ??<b>Isn't</b><br/><b>You/We/They</b> ??<b>Aren't</b><br/>버튼???�러????많�? ?�제�??�인?�세??"
-      : "<b>He/She/It</b> ??<b>Isn't</b><br/><b>You/We/They</b> ??<b>Aren't</b><br/>Tap each button to see more examples!";
+      ? "<b>He/She/It</b>에는 <b>isn't</b>, <b>You/We/They</b>에는 <b>aren't</b>를 사용합니다. 버튼을 눌러 더 많은 예시를 보세요!"
+      : "<b>He/She/It</b> uses <b>isn't</b><br/><b>You/We/They</b> use <b>aren't</b><br/>Tap each button to see more examples!";
 
     const categoryRow = document.createElement('div');
     categoryRow.className = 'isntarent-subject-row';
@@ -221,14 +221,14 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     const categorySets = [
       {
         id: 'singular',
-        label: lang === 'ko' ? '?�� ?�수 주어' : '?�� Singular',
+        label: lang === 'ko' ? '단수' : 'Singular',
         examples: isntList,
         pointer: 0,
         negative: "ISN'T",
       },
       {
         id: 'plural',
-        label: lang === 'ko' ? '?�� 복수 주어' : '?�� Plural',
+        label: lang === 'ko' ? '복수' : 'Plural',
         examples: arentList,
         pointer: 0,
         negative: "AREN'T",
@@ -289,7 +289,7 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     renderCard('singular', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -310,15 +310,15 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? '주어�??�러 <b>Isn\'t</b> ?�는 <b>Aren\'t</b> 바구?�에 ?�어 보세?? 모두 맞으�??�음 ?�계�??�어�????�어??'
+      ? '각 주어를 탭하고 <b>Isn\'t</b> 또는 <b>Aren\'t</b> 바구니로 옮기세요. 모두 맞히면 계속할 수 있습니다!'
       : 'Tap each subject and move it into the <b>Isn\'t</b> or <b>Aren\'t</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '주어 모음' : 'Subject Pool');
-    const isntBucket = makeBucket('isnt', 'Isn\'t ?��');
-    const arentBucket = makeBucket('arent', 'Aren\'t ?��');
+    const pool = makeBucket('pool', lang === 'ko' ? '주어 풀' : 'Subject Pool');
+    const isntBucket = makeBucket('isnt', "Isn't");
+    const arentBucket = makeBucket('arent', "Aren't");
     [pool.wrap, isntBucket.wrap, arentBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
 
@@ -362,13 +362,13 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -409,11 +409,11 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?�벽?�요! isn\'t/aren\'t�???골랐?�요.' : 'Perfect! You used isn\'t/aren\'t correctly.';
+        message.textContent = lang === 'ko' ? '완벽해요! isn\'t/aren\'t를 올바르게 사용했어요.' : 'Perfect! You used isn\'t/aren\'t correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계' : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -424,7 +424,7 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 주어�??�시 ??�� 보세??' : 'Try again! Fix the red subjects.';
+        message.textContent = lang === 'ko' ? '다시 시도하세요! 빨간 항목을 고치세요.' : 'Try again! Fix the red subjects.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -436,13 +436,13 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">?�제 isn\'t/aren\'t�?바르�??�용?????�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use isn\'t or aren\'t!</div><div class="stars">⭐⭐⭐⭐�?/div>';
+      ? '<div style="font-weight:800;color:#19777e">축하합니다! 이제 isn\'t와 aren\'t를 언제 사용하는지 알게 되었어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use isn\'t or aren\'t!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -591,22 +591,22 @@ function buildNegativeSets(isntList, arentList) {
     {
       id: 'isnt',
       negative: 'isn\'t',
-      emoji: isntExample.emoji || '?��',
+      emoji: isntExample.emoji || '❓',
       sentenceEn: isntExample.exampleSentence || 'He isn\'t at home.',
-      sentenceKo: isntExample.exampleSentenceKo || '그는 집에 ?�어??',
-      tipEn: "Use 'isn't' with he, she, it.",
-      tipKo: "he, she, it???�??'isn't'�??�요.",
-      label: '?�� Isn\'t'
+      sentenceKo: isntExample.exampleSentenceKo || '그는 집에 없어요.',
+      tipEn: "Use 'isn\'t' with he, she, it.",
+      tipKo: "he, she, it와 함께 isn't를 사용합니다.",
+      label: "Isn't"
     },
     {
       id: 'arent',
       negative: 'aren\'t',
-      emoji: arentExample.emoji || '?��',
+      emoji: arentExample.emoji || '❓',
       sentenceEn: arentExample.exampleSentence || 'We aren\'t happy.',
-      sentenceKo: arentExample.exampleSentenceKo || '?�리???�복?��? ?�아??',
-      tipEn: "Use 'aren't' with you, we, they.",
-      tipKo: "you, we, they???�??'aren't'�??�요.",
-      label: '?�� Aren\'t'
+      sentenceKo: arentExample.exampleSentenceKo || '우리는 행복하지 않아요.',
+      tipEn: "Use 'aren\'t' with you, we, they.",
+      tipKo: "you, we, they와 함께 aren't를 사용합니다.",
+      label: "Aren't"
     }
   ];
 }
@@ -620,7 +620,7 @@ function normalizeList(list, fallback) {
     exampleSentenceKo: item.exampleSentenceKo || '',
     explanation: item.explanation || '',
     explanationKo: item.explanationKo || '',
-    emoji: item.emoji || '??,
+    emoji: item.emoji || '❓',
   })).filter((item) => item.exampleSentence);
 }
 
@@ -656,9 +656,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -679,7 +679,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?'완료'];
+  const stepsKo = ['언어 선택', '1단계', '2단계', '3단계', '완료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -689,15 +689,15 @@ function shuffle(list) {
 }
 
 const fallbackIsnt = [
-  { id: 'fb_isnt_home', word: 'He', exampleSentence: 'He isn\'t at home.', exampleSentenceKo: '그는 집에 ?�어??', emoji: '?��' },
-  { id: 'fb_isnt_happy', word: 'She', exampleSentence: 'She isn\'t happy.', exampleSentenceKo: '그�????�복?��? ?�아??', emoji: '?��' },
-  { id: 'fb_isnt_working', word: 'It', exampleSentence: 'It isn\'t working.', exampleSentenceKo: '그것?� ?�동?��? ?�아??', emoji: '?�️' },
-  { id: 'fb_isnt_ready', word: 'Tom', exampleSentence: 'Tom isn\'t ready.', exampleSentenceKo: '?��? 준비되지 ?�았?�요.', emoji: '?? }
+  { id: 'fb_isnt_home', word: 'He', exampleSentence: 'He isn\'t at home.', exampleSentenceKo: '그는 집에 없어요.', emoji: '👦' },
+  { id: 'fb_isnt_happy', word: 'She', exampleSentence: 'She isn\'t happy.', exampleSentenceKo: '그녀는 행복하지 않아요.', emoji: '👧' },
+  { id: 'fb_isnt_working', word: 'It', exampleSentence: 'It isn\'t working.', exampleSentenceKo: '그것은 작동하지 않아요.', emoji: '🔧' },
+  { id: 'fb_isnt_ready', word: 'Tom', exampleSentence: 'Tom isn\'t ready.', exampleSentenceKo: '톰은 준비가 안 됐어요.', emoji: '👨' }
 ];
 
 const fallbackArent = [
-  { id: 'fb_arent_happy', word: 'We', exampleSentence: 'We aren\'t happy.', exampleSentenceKo: '?�리???�복?��? ?�아??', emoji: '?��' },
-  { id: 'fb_arent_ready', word: 'You', exampleSentence: 'You aren\'t ready yet.', exampleSentenceKo: '?�직 준�????�어??', emoji: '?? },
-  { id: 'fb_arent_here', word: 'They', exampleSentence: 'They aren\'t here.', exampleSentenceKo: '그들?� ?�기 ?�어??', emoji: '?��' },
-  { id: 'fb_arent_students', word: 'We', exampleSentence: 'We aren\'t students.', exampleSentenceKo: '?�리???�생???�니?�요.', emoji: '?��' }
+  { id: 'fb_arent_happy', word: 'We', exampleSentence: 'We aren\'t happy.', exampleSentenceKo: '우리는 행복하지 않아요.', emoji: '👥' },
+  { id: 'fb_arent_ready', word: 'You', exampleSentence: 'You aren\'t ready yet.', exampleSentenceKo: '너는 아직 준비가 안 됐어요.', emoji: '👤' },
+  { id: 'fb_arent_here', word: 'They', exampleSentence: 'They aren\'t here.', exampleSentenceKo: '그들은 여기 없어요.', emoji: '👥' },
+  { id: 'fb_arent_students', word: 'We', exampleSentence: 'We aren\'t students.', exampleSentenceKo: '우리는 학생이 아니에요.', emoji: '👩‍🎓' }
 ];

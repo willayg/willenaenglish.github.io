@@ -1,4 +1,4 @@
-﻿// Grammar Lesson Runner ??Singular / Plural (add 's')
+// Grammar Lesson Runner ??Singular / Plural (add 's')
 // Kid-friendly five-step lesson that teaches singular vs plural words.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -73,44 +73,44 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�나???�는 ?�수, ???�상?�면 복수?�요. 보통 복수???�에 's'�?붙여??"
+      ? "하나는 단수, 두 개 이상은 복수예요. 보통 끝에 's'를 붙여요!"
       : "One is singular; more than one is plural. Usually we add 's' to make plurals!";
 
     stepEl.appendChild(intro);
     const singularExample = singularList[0] || {
       word: 'bear',
       exampleSentence: 'There is one bear.',
-      exampleSentenceKo: '곰이 ??마리 ?�어??',
-      emoji: '?��',
+      exampleSentenceKo: '곰이 한 마리 있어요.',
+      emoji: '🐻',
     };
     const pluralExample = pluralList[0] || {
       word: 'bears',
       exampleSentence: 'There are two bears.',
-      exampleSentenceKo: '곰이 ??마리 ?�어??',
-      emoji: '?��?��',
+      exampleSentenceKo: '곰이 두 마리 있어요.',
+      emoji: '🐻🐻',
     };
 
     const exampleCard = document.createElement('div');
     exampleCard.className = 'plurals-highlight-card';
     exampleCard.innerHTML = `
-      <div class="card-heading">${lang === 'ko' ? '?�시�??�인?�요!' : 'Let\'s peek at an example!'}</div>
+      <div class="card-heading">${lang === 'ko' ? '예시를 살펴봐요!' : 'Let\'s peek at an example!'}</div>
       <div class="card-row">
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '?�수 (1�?' : 'Singular (1)'}</div>
-          <div class="card-emoji">${escapeHtml(singularExample.emoji || '?��')}</div>
+          <div class="card-label">${lang === 'ko' ? '단수 (1개)' : 'Singular (1)'}</div>
+          <div class="card-emoji">${escapeHtml(singularExample.emoji || '?')}</div>
           <div class="card-word">${escapeHtml(singularExample.word || 'bear')}</div>
           <div class="card-sentence">${escapeHtml(singularExample.exampleSentence || 'There is one bear.')}</div>
           ${singularExample.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(singularExample.exampleSentenceKo)}</div>` : ''}
         </div>
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '복수 (?�러 �?' : 'Plural (many)'}</div>
-          <div class="card-emoji">${escapeHtml(pluralExample.emoji || '?��?��')}</div>
+          <div class="card-label">${lang === 'ko' ? '복수 (여러 개)' : 'Plural (many)'}</div>
+          <div class="card-emoji">${escapeHtml(pluralExample.emoji || '??')}</div>
           <div class="card-word">${escapeHtml(pluralExample.word || 'bears')}</div>
           <div class="card-sentence">${escapeHtml(pluralExample.exampleSentence || 'There are two bears.')}</div>
           ${pluralExample.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(pluralExample.exampleSentenceKo)}</div>` : ''}
         </div>
       </div>
-      <div class="card-tip">${lang === 'ko' ? "???�상?�면 ?�에 's'�?붙여??" : "Add an 's' when you have more than one!"}</div>
+      <div class="card-tip">${lang === 'ko' ? "여러 개면 보통 's'를 붙여요!" : "Add an 's' when you have more than one!"}</div>
     `;
     stepEl.appendChild(exampleCard);
     const controls = buildNavRow(() => { stepIndex = Math.max(0, stepIndex - 1); render(); }, nextStep, lang);
@@ -123,7 +123,7 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�쪽?� ?�수(?�나), ?�른쪽�? 복수(?�러 �? ?�문?�에?? ?�리 ?�어 ?�어 보세??"
+      ? "왼쪽은 단수(한 개), 오른쪽은 복수(여러 개)예요. 소리 내어 읽어 보세요!"
       : "Left shows singular (one), right shows plural (more than one). Try reading aloud!";
     stepEl.appendChild(intro);
 
@@ -144,14 +144,14 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "?�수 ?�는 복수 바구?�에 ?�어�??�어 보세?? 모두 맞히�??�음?�로 �????�어??"
+      ? "단어를 단수/복수 바구니에 옮겨 보세요. 모두 맞추면 다음 단계로 넘어가요!"
       : "Place each word into the singular or plural basket. Get them all right to continue!";
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '?�어 모음' : 'Word Pool');
-    const bucketSing = makeBucket('singular', lang === 'ko' ? '?�수' : 'Singular');
+    const pool = makeBucket('pool', lang === 'ko' ? '단어 모음' : 'Word Pool');
+    const bucketSing = makeBucket('singular', lang === 'ko' ? '단수' : 'Singular');
     const bucketPlu = makeBucket('plural', lang === 'ko' ? '복수' : 'Plural');
 
     [pool.wrap, bucketSing.wrap, bucketPlu.wrap].forEach((wrap) => buckets.appendChild(wrap));
@@ -191,14 +191,14 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '15px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '?��' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -236,11 +236,11 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?�답?�에?? ?�수?� 복수�???구분?�어??' : 'Great! You could spot singular and plural words.';
+        message.textContent = lang === 'ko' ? '잘했어요! 단수와 복수를 모두 맞췄어요.' : 'Great! You could spot singular and plural words.';
         stepEl.insertBefore(message, stepEl.firstChild);
 
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계' : 'Next Step');
           continueBtn.style.background = '#fff';
           continueBtn.style.color = '#ff6fb0';
           continueBtn.style.borderColor = '#ff6fb0';
@@ -252,7 +252,7 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Try again! Fix the red cards.';
+        message.textContent = lang === 'ko' ? '빨간 카드를 올바른 곳에 옮겨 주세요.' : 'Try again! Fix the red cards.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -272,13 +272,13 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = lang === 'ko'
-      ? '<div style="font-weight:800;color:#19777e">?�제 ?�수?� 복수�???구별?????�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
-      : '<div style="font-weight:800;color:#19777e">You can now tell singular from plural ??awesome!</div><div class="stars">⭐⭐⭐⭐�?/div>';
+      ? '<div style="font-weight:800;color:#19777e">이제 단수와 복수를 구별할 수 있어요!</div><div class="stars">⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">You can now tell singular from plural—awesome!</div><div class="stars">⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
     backBtn.onclick = () => {
       try {
         if (window.WordArcade?.startGrammarModeSelector) {
@@ -376,7 +376,7 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
   }
 
   function displayStep(index) {
-    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?'완료' : 'Complete'];
+    const steps = [lang === 'ko' ? '언어 선택' : 'Choose Language', lang === 'ko' ? '1단계' : 'Step 1', lang === 'ko' ? '2단계' : 'Step 2', lang === 'ko' ? '3단계' : 'Step 3', lang === 'ko' ? '완료' : 'Complete'];
     return steps[index] || '';
   }
 
@@ -444,7 +444,7 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
       word: item.word || '',
       prompt: item.prompt || `${item.word || ''}`,
       article: item.article || 'singular',
-      emoji: item.emoji || '?��',
+      emoji: item.emoji || '?',
       exampleSentence: item.exampleSentence || '',
       exampleSentenceKo: item.exampleSentenceKo || '',
       explanation: item.explanation || '',
@@ -470,8 +470,8 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const titleWrap = document.createElement('div');
     titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
     titleWrap.textContent = kind === 'singular'
-      ? (lang === 'ko' ? '?�수 (?�나)' : 'Singular (one)')
-      : (lang === 'ko' ? '복수 (?�럿)' : 'Plural (more)');
+      ? (lang === 'ko' ? '?�� (?��)' : 'Singular (one)')
+      : (lang === 'ko' ? '���� (?��)' : 'Plural (more)');
     col.appendChild(titleWrap);
 
     list.slice(0, 6).forEach((item) => {
@@ -541,12 +541,12 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '15px';
-    const back = buildPrimaryButton(currentLang === 'ko' ? '?�로' : 'Back');
+    const back = buildPrimaryButton(currentLang === 'ko' ? '뒤로' : 'Back');
     back.style.borderColor = '#21b3be';
     back.style.color = '#ff6fb0';
     back.style.background = '#fff';
     back.onclick = onBack;
-    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
+    const next = buildPrimaryButton(currentLang === 'ko' ? '다음' : 'Next');
     next.style.borderColor = '#21b3be';
     next.style.color = '#ff6fb0';
     next.style.background = '#fff';
