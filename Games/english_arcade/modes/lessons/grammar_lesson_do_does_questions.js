@@ -1,4 +1,4 @@
-﻿// Grammar Lesson Runner ??Do vs Does (Questions)
+// Grammar Lesson Runner ??Do vs Does (Questions)
 // Interactive lesson teaching question formation with do/does.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -119,7 +119,7 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "질문??만들 ??<b>do</b> (I/you/we/they), <b>does</b> (he/she/it)�??�요. 버튼???�러???�제�??�인??보세??"
+      ? "<b>do</b>는 I/you/we/they와 함께, <b>does</b>는 he/she/it과 함께 질문을 만들 때 사용합니다. 버튼을 탭해서 예문을 확인하세요!"
       : "Use <b>do</b> with I/you/we/they and <b>does</b> with he/she/it to make questions. Tap each button to see examples!";
 
     const questionRow = document.createElement('div');
@@ -187,7 +187,7 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     renderCard(questionSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -209,7 +209,7 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>I/You/We/They</b> ??<b>Do</b><br/><b>He/She/It</b> ??<b>Does</b><br/>버튼???�러????많�? ?�제�??�인?�세??"
+      ? "<b>I/You/We/They</b>와 함께 <b>Do</b>, <br/><b>He/She/It</b>와 함께 <b>Does</b>입니다. 버튼을 탭해서 더 많은 예문을 확인하세요!"
       : "<b>I/You/We/They</b> ??<b>Do</b><br/><b>He/She/It</b> ??<b>Does</b><br/>Tap each button to see more examples!";
 
     const categoryRow = document.createElement('div');
@@ -221,14 +221,14 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     const categorySets = [
       {
         id: 'plural',
-        label: lang === 'ko' ? '?�� 복수 주어' : '?�� Plural',
+        label: lang === 'ko' ? '복수' : '? Plural',
         examples: doList,
         pointer: 0,
         question: 'DO',
       },
       {
         id: 'singular',
-        label: lang === 'ko' ? '?�� ?�수 주어' : '?�� Singular',
+        label: lang === 'ko' ? '단수' : '? Singular',
         examples: doesList,
         pointer: 0,
         question: 'DOES',
@@ -289,7 +289,7 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     renderCard('plural', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -310,15 +310,15 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? '주어�??�러 <b>Do</b> ?�는 <b>Does</b> 바구?�에 ?�어 보세?? 모두 맞으�??�음 ?�계�??�어�????�어??'
+      ? '각 주어를 탭하여 <b>Do</b> 또는 <b>Does</b> 바구니로 옮기세요. 모두 맞히면 다음 단계로 넘어갑니다!'
       : 'Tap each subject and move it into the <b>Do</b> or <b>Does</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
     const pool = makeBucket('pool', lang === 'ko' ? '주어 모음' : 'Subject Pool');
-    const doBucket = makeBucket('do', 'Do ?��');
-    const doesBucket = makeBucket('does', 'Does ?��');
+    const doBucket = makeBucket('do', 'Do ?');
+    const doesBucket = makeBucket('does', 'Does ?');
     [pool.wrap, doBucket.wrap, doesBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
 
@@ -362,13 +362,13 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -409,11 +409,11 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?�벽?�요! do/does�???골랐?�요.' : 'Perfect! You used do/does correctly.';
+        message.textContent = lang === 'ko' ? '완벽해요! do/does를 올바르게 사용했어요.' : 'Perfect! You used do/does correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계' : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -424,7 +424,7 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 주어�??�시 ??�� 보세??' : 'Try again! Fix the red subjects.';
+        message.textContent = lang === 'ko' ? '다시 시도하세요! 빨간 주어를 수정하세요.' : 'Try again! Fix the red subjects.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -436,13 +436,13 @@ export async function runGrammarLessonDoDoesQuestions(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">?�제 do/does 질문??바르�?만들 ???�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use do or does in questions!</div><div class="stars">⭐⭐⭐⭐�?/div>';
+      ? '<div style="font-weight:800;color:#19777e">축하합니다! 이제 질문에 do 또는 does를 언제 쓰는지 알게 되었어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use do or does in questions!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -591,22 +591,22 @@ function buildQuestionSets(doList, doesList) {
     {
       id: 'do',
       question: 'do',
-      emoji: doExample.emoji || '?��',
+      emoji: doExample.emoji || '?',
       sentenceEn: doExample.exampleSentence || 'Do you like pizza?',
-      sentenceKo: doExample.exampleSentenceKo || '?�는 ?�자�?좋아?�니?',
+      sentenceKo: doExample.exampleSentenceKo || '피자를 좋아하나요?',
       tipEn: "Use 'Do' with I, you, we, they.",
-      tipKo: "I, you, we, they???�??'Do'�??�요.",
-      label: '?�� Do'
+      tipKo: "I, you, we, they와 함께 'Do'를 사용합니다.",
+      label: 'Do'
     },
     {
       id: 'does',
       question: 'does',
-      emoji: doesExample.emoji || '?��',
+      emoji: doesExample.emoji || '?',
       sentenceEn: doesExample.exampleSentence || 'Does he like pizza?',
-      sentenceKo: doesExample.exampleSentenceKo || '그는 ?�자�?좋아?�니?',
+      sentenceKo: doesExample.exampleSentenceKo || '그는 피자를 좋아하나요?',
       tipEn: "Use 'Does' with he, she, it.",
-      tipKo: "he, she, it???�??'Does'�??�요.",
-      label: '?�� Does'
+      tipKo: "he, she, it와 함께 'Does'를 사용합니다.",
+      label: 'Does'
     }
   ];
 }
@@ -620,7 +620,7 @@ function normalizeList(list, fallback) {
     exampleSentenceKo: item.exampleSentenceKo || '',
     explanation: item.explanation || '',
     explanationKo: item.explanationKo || '',
-    emoji: item.emoji || '??,
+    emoji: item.emoji || '❓',
   })).filter((item) => item.exampleSentence);
 }
 
@@ -656,9 +656,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -679,7 +679,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?'완료'];
+  const stepsKo = ['언어 선택', '1단계', '2단계', '3단계', '완료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -689,15 +689,15 @@ function shuffle(list) {
 }
 
 const fallbackDo = [
-  { id: 'fb_do_you', word: 'you', exampleSentence: 'Do you like pizza?', exampleSentenceKo: '?�는 ?�자�?좋아?�니?', emoji: '?��' },
-  { id: 'fb_do_i', word: 'I', exampleSentence: 'Do I need a pen?', exampleSentenceKo: '?��? ?�이 ?�요?�니?', emoji: '?���? },
-  { id: 'fb_do_we', word: 'we', exampleSentence: 'Do we have class today?', exampleSentenceKo: '?�리 ?�늘 ?�업 ?�니?', emoji: '?��' },
-  { id: 'fb_do_they', word: 'they', exampleSentence: 'Do they play soccer?', exampleSentenceKo: '그들?� 축구�??�니?', emoji: '?? }
+  { id: 'fb_do_you', word: 'you', exampleSentence: 'Do you like pizza?', exampleSentenceKo: '피자를 좋아하나요?', emoji: '🍕' },
+  { id: 'fb_do_i', word: 'I', exampleSentence: 'Do I need a pen?', exampleSentenceKo: '제가 펜이 필요하나요?', emoji: '✏️' },
+  { id: 'fb_do_we', word: 'we', exampleSentence: 'Do we have class today?', exampleSentenceKo: '오늘 수업이 있나요?', emoji: '🏫' },
+  { id: 'fb_do_they', word: 'they', exampleSentence: 'Do they play soccer?', exampleSentenceKo: '그들은 축구를 하나요?', emoji: '⚽' }
 ];
 
 const fallbackDoes = [
-  { id: 'fb_does_he', word: 'he', exampleSentence: 'Does he like music?', exampleSentenceKo: '그는 ?�악??좋아?�니?', emoji: '?��' },
-  { id: 'fb_does_she', word: 'she', exampleSentence: 'Does she have a cat?', exampleSentenceKo: '그�???고양?��? ?�니?', emoji: '?��' },
-  { id: 'fb_does_it', word: 'it', exampleSentence: 'Does it rain today?', exampleSentenceKo: '?�늘 비�? ?�니?', emoji: '?���? },
-  { id: 'fb_does_john', word: 'John', exampleSentence: 'Does John play guitar?', exampleSentenceKo: '존�? 기�?�?치니?', emoji: '?��' }
+  { id: 'fb_does_he', word: 'he', exampleSentence: 'Does he like music?', exampleSentenceKo: '그는 음악을 좋아하나요?', emoji: '🎵' },
+  { id: 'fb_does_she', word: 'she', exampleSentence: 'Does she have a cat?', exampleSentenceKo: '그녀는 고양이가 있나요?', emoji: '🐱' },
+  { id: 'fb_does_it', word: 'it', exampleSentence: 'Does it rain today?', exampleSentenceKo: '오늘 비가 오나요?', emoji: '🌧️' },
+  { id: 'fb_does_john', word: 'John', exampleSentence: 'Does John play guitar?', exampleSentenceKo: '존은 기타를 치나요?', emoji: '🎸' }
 ];
