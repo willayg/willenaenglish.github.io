@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ??Like vs. Likes
+﻿// Grammar Lesson Runner ??Like vs. Likes
 // Lightweight lesson that explains verb agreement for preferences.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -101,10 +101,10 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const heading = document.createElement('div');
     heading.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    heading.textContent = (lang === 'ko') ? '?�어�??�택?�세?? : 'Choose your language';
+    heading.textContent = (lang === 'ko') ? '언어를 선택하세요' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('?�국??);
+    const koBtn = buildLanguageButton('한국어');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(heading);
     wrap.appendChild(enBtn);
@@ -119,7 +119,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "주어???�라 <b>like</b> (좋아?�요), <b>likes</b> (좋아?�요)가 바뀌어?? 버튼???�러 ?�떤 말을 ?�는지 ?�인??보세??"
+      ? "주어???�라 <b>like</b> (좋아?�요), <b>likes</b> (좋아?�요)가 바뀌어?? 버튼???�러 ?�떤 말을 ?�는지 ?�인??보세??"
       : "The verb <b>like</b> or <b>likes</b> changes with the subject. Tap each button to see which one fits!";
 
     const subjectRow = document.createElement('div');
@@ -184,7 +184,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     renderCard(subjectSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -206,7 +206,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>???�람/물건</b>?� <b>likes</b> (좋아?�요)<br/><b>?�러 ?�람/물건</b>?� <b>like</b> (좋아?�요)<br/>버튼???�러 ?�제�??�인??보세??"
+      ? "<b>???�람/물건</b>?� <b>likes</b> (좋아?�요)<br/><b>?�러 ?�람/물건</b>?� <b>like</b> (좋아?�요)<br/>버튼???�러 ?�제�??�인??보세??"
       : "<b>One person/thing</b> uses <b>likes</b><br/><b>More than one</b> uses <b>like</b><br/>Tap each button to see examples!";
 
     const typeRow = document.createElement('div');
@@ -229,13 +229,13 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const exampleSets = [
       {
         id: 'singular',
-        label: lang === 'ko' ? '??�?likes)\n?��' : 'One (likes)\n?��',
+        label: lang === 'ko' ? '??�?likes)\n?��' : 'One (likes)\n?��',
         examples: nounLikesExamples.length ? nounLikesExamples : likesList,
         pointer: 0,
       },
       {
         id: 'plural',
-        label: lang === 'ko' ? '?�러 �?like)\n?��' : 'Many (like)\n?��',
+        label: lang === 'ko' ? '?�러 �?like)\n?��' : 'Many (like)\n?��',
         examples: nounLikeExamples.length ? nounLikeExamples : likeList,
         pointer: 0,
       }
@@ -294,7 +294,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     renderCard('singular', false);
 
     // Next Example button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -315,7 +315,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? '문장???�러 <b>like</b> ?�는 <b>likes</b> 바구?�에 ?�어 보세?? 모두 ??���??�음 ?�계�?�????�어??'
+      ? '문장???�러 <b>like</b> ?�는 <b>likes</b> 바구?�에 ?�어 보세?? 모두 ??���??�음 ?�계�?�????�어??'
       : 'Tap each strip and move it into the <b>like</b> or <b>likes</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
@@ -324,8 +324,8 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
 
     const pool = makeBucket('pool', lang === 'ko' ? '문장 모음' : 'Sentence Pool');
     pool.wrap.classList.add('bucket-pool');
-    const likeBucket = makeBucket('like', lang === 'ko' ? 'like (좋아?�요)' : 'like');
-    const likesBucket = makeBucket('likes', lang === 'ko' ? 'likes (좋아?�요)' : 'likes');
+    const likeBucket = makeBucket('like', lang === 'ko' ? 'like (좋아?�요)' : 'like');
+    const likesBucket = makeBucket('likes', lang === 'ko' ? 'likes (좋아?�요)' : 'likes');
 
     [pool.wrap, likeBucket.wrap, likesBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
@@ -370,14 +370,14 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -415,11 +415,11 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?�벽?�요! Like?� Likes�???구분?�어??' : 'Great job! You know like vs. likes!';
+        message.textContent = lang === 'ko' ? '?�벽?�요! Like?� Likes�???구분?�어??' : 'Great job! You know like vs. likes!';
         stepEl.insertBefore(message, stepEl.firstChild);
 
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next');
           continueBtn.style.marginTop = '12px';
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
@@ -429,7 +429,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
+        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -446,16 +446,16 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const congratsMsg = document.createElement('div');
     congratsMsg.style.cssText = 'font-size:1.6rem;font-weight:800;color:#19777e;text-align:center;';
     congratsMsg.textContent = lang === 'ko'
-      ? '축하?�요! Like?� Likes�?배웠?�요! ?��'
-      : 'Congratulations! You learned like vs. likes! ?��';
+      ? '축하?�요! Like?� Likes�?배웠?�요! ?��'
+      : 'Congratulations! You learned like vs. likes! ?��';
     stepEl.appendChild(congratsMsg);
 
     const starsDiv = document.createElement('div');
     starsDiv.style.cssText = 'font-size:3rem;';
-    starsDiv.textContent = '⭐⭐⭐⭐�?;
+    starsDiv.textContent = '⭐⭐⭐⭐�?;
     stepEl.appendChild(starsDiv);
 
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       try {
         if (window.WordArcade?.startGrammarModeSelector) {
@@ -537,21 +537,21 @@ function buildSubjectSets(likeList, likesList) {
     {
       id: 'like',
       verb: 'like',
-      emoji: likeExample.emoji || '?��',
+      emoji: likeExample.emoji || '?��',
       sentenceEn: likeExample.exampleSentence || 'I like pizza.',
-      sentenceKo: likeExample.exampleSentenceKo || '?�는 ?�자�?좋아?�요.',
+      sentenceKo: likeExample.exampleSentenceKo || '?�는 ?�자�?좋아?�요.',
       tipEn: "Use 'like' with I, you, we, they, or plural nouns.",
-      tipKo: "I, you, we, they 그리�?복수 명사?� 'like'�??�요.",
+      tipKo: "I, you, we, they 그리�?복수 명사?� 'like'�??�요.",
       label: 'I / You / We / They'
     },
     {
       id: 'likes',
       verb: 'likes',
-      emoji: likesExample.emoji || '?��',
+      emoji: likesExample.emoji || '?��',
       sentenceEn: likesExample.exampleSentence || 'She likes cats.',
-      sentenceKo: likesExample.exampleSentenceKo || '그�???고양?��? 좋아?�요.',
+      sentenceKo: likesExample.exampleSentenceKo || '그�???고양?��? 좋아?�요.',
       tipEn: "Use 'likes' with he, she, it, or one person or thing.",
-      tipKo: "he, she, it 그리�????�람/물건�?'likes'�??�요.",
+      tipKo: "he, she, it 그리�????�람/물건�?'likes'�??�요.",
       label: 'He / She / It'
     }
   ];
@@ -601,9 +601,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -637,7 +637,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?�료'];
+  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?�료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -647,17 +647,17 @@ function shuffle(list) {
 }
 
 const fallbackLike = [
-  { id: 'fb_like_i', word: 'I', prompt: 'I ___ apples.', exampleSentence: 'I like apples.', exampleSentenceKo: '?�는 ?�과�?좋아?�요.', emoji: '?��' },
-  { id: 'fb_like_we', word: 'We', prompt: 'We ___ soccer.', exampleSentence: 'We like soccer.', exampleSentenceKo: '?�리??축구�?좋아?�요.', emoji: '?? },
-  { id: 'fb_like_they', word: 'They', prompt: 'They ___ music.', exampleSentence: 'They like music.', exampleSentenceKo: '그들?� ?�악??좋아?�요.', emoji: '?��' },
-  { id: 'fb_like_kids', word: 'The kids', prompt: 'The kids ___ games.', exampleSentence: 'The kids like games.', exampleSentenceKo: '?�이?��? 게임??좋아?�요.', emoji: '?��' }
+  { id: 'fb_like_i', word: 'I', prompt: 'I ___ apples.', exampleSentence: 'I like apples.', exampleSentenceKo: '?�는 ?�과�?좋아?�요.', emoji: '?��' },
+  { id: 'fb_like_we', word: 'We', prompt: 'We ___ soccer.', exampleSentence: 'We like soccer.', exampleSentenceKo: '?�리??축구�?좋아?�요.', emoji: '?? },
+  { id: 'fb_like_they', word: 'They', prompt: 'They ___ music.', exampleSentence: 'They like music.', exampleSentenceKo: '그들?� ?�악??좋아?�요.', emoji: '?��' },
+  { id: 'fb_like_kids', word: 'The kids', prompt: 'The kids ___ games.', exampleSentence: 'The kids like games.', exampleSentenceKo: '?�이?��? 게임??좋아?�요.', emoji: '?��' }
 ];
 
 const fallbackLikes = [
-  { id: 'fb_likes_he', word: 'He', prompt: 'He ___ basketball.', exampleSentence: 'He likes basketball.', exampleSentenceKo: '그는 ?�구�?좋아?�요.', emoji: '??' },
-  { id: 'fb_likes_she', word: 'She', prompt: 'She ___ flowers.', exampleSentence: 'She likes flowers.', exampleSentenceKo: '그�???꽃을 좋아?�요.', emoji: '?��' },
-  { id: 'fb_likes_it', word: 'It', prompt: 'It ___ fish.', exampleSentence: 'It likes fish.', exampleSentenceKo: '그것?� 물고기�? 좋아?�요.', emoji: '?��' },
-  { id: 'fb_likes_dog', word: 'My dog', prompt: 'My dog ___ bones.', exampleSentence: 'My dog likes bones.', exampleSentenceKo: '??개는 뼈�? 좋아?�요.', emoji: '?��' }
+  { id: 'fb_likes_he', word: 'He', prompt: 'He ___ basketball.', exampleSentence: 'He likes basketball.', exampleSentenceKo: '그는 ?�구�?좋아?�요.', emoji: '??' },
+  { id: 'fb_likes_she', word: 'She', prompt: 'She ___ flowers.', exampleSentence: 'She likes flowers.', exampleSentenceKo: '그�???꽃을 좋아?�요.', emoji: '?��' },
+  { id: 'fb_likes_it', word: 'It', prompt: 'It ___ fish.', exampleSentence: 'It likes fish.', exampleSentenceKo: '그것?� 물고기�? 좋아?�요.', emoji: '?��' },
+  { id: 'fb_likes_dog', word: 'My dog', prompt: 'My dog ___ bones.', exampleSentence: 'My dog likes bones.', exampleSentenceKo: '??개는 뼈�? 좋아?�요.', emoji: '?��' }
 ];
 
 function ensureBaseStyles() {

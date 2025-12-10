@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ??Can vs Can't
+ï»¿// Grammar Lesson Runner ??Can vs Can't
 // Interactive lesson teaching ability and inability with can/can't.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -101,10 +101,10 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const heading = document.createElement('div');
     heading.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    heading.textContent = (lang === 'ko') ? '?¸ì–´ë¥?? íƒ?˜ì„¸?? : 'Choose your language';
+    heading.textContent = (lang === 'ko') ? 'ì–¸ì–´ë¥¼ ì„ íƒí•˜ì„¸ìš”' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('?œêµ­??);
+    const koBtn = buildLanguageButton('í•œêµ­ì–´');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(heading);
     wrap.appendChild(enBtn);
@@ -119,7 +119,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>can</b>?€ '~?????ˆë‹¤', <b>can't</b>??'~?????†ë‹¤'???»ì´?ìš”. ë²„íŠ¼???ŒëŸ¬???ˆì œë¥??•ì¸??ë³´ì„¸??"
+      ? "<b>can</b>?ï¿½ '~?????ï¿½ë‹¤', <b>can't</b>??'~?????ï¿½ë‹¤'???ï¿½ì´?ï¿½ìš”. ë²„íŠ¼???ï¿½ëŸ¬???ï¿½ì œï¿½??ï¿½ì¸??ë³´ì„¸??"
       : "Use <b>can</b> to say you are able to do something, and <b>can't</b> to say you are not able. Tap each button to see examples!";
 
     const abilityRow = document.createElement('div');
@@ -187,7 +187,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     renderCard(abilitySets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?¤ìŒ ?ˆì œ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ìŒ ?ï¿½ì œ' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -209,7 +209,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>Can</b> ???¥ë ¥ ?ˆìŒ ??br/><b>Can't</b> ???¥ë ¥ ?†ìŒ ??br/>ë²„íŠ¼???ŒëŸ¬????ë§ì? ?ˆì œë¥??•ì¸?˜ì„¸??"
+      ? "<b>Can</b> ???ï¿½ë ¥ ?ï¿½ìŒ ??br/><b>Can't</b> ???ï¿½ë ¥ ?ï¿½ìŒ ??br/>ë²„íŠ¼???ï¿½ëŸ¬????ë§ï¿½? ?ï¿½ì œï¿½??ï¿½ì¸?ï¿½ì„¸??"
       : "<b>Can</b> ??Ability ??br/><b>Can't</b> ??No Ability ??br/>Tap each button to see more examples!";
 
     const categoryRow = document.createElement('div');
@@ -221,14 +221,14 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const categorySets = [
       {
         id: 'able',
-        label: lang === 'ko' ? '???????ˆì–´?? : '??Can Do',
+        label: lang === 'ko' ? '???????ï¿½ì–´?? : '??Can Do',
         examples: canList,
         pointer: 0,
         ability: 'CAN',
       },
       {
         id: 'unable',
-        label: lang === 'ko' ? '???????†ì–´?? : '??Cannot Do',
+        label: lang === 'ko' ? '???????ï¿½ì–´?? : '??Cannot Do',
         examples: cantList,
         pointer: 0,
         ability: "CAN'T",
@@ -289,7 +289,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     renderCard('able', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?¤ìŒ ?ˆì œ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ìŒ ?ï¿½ì œ' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -310,15 +310,15 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? '?™ë¬¼???ŒëŸ¬ <b>Can Fly</b> ?ëŠ” <b>Can\'t Fly</b> ë°”êµ¬?ˆì— ?£ì–´ ë³´ì„¸?? ëª¨ë‘ ë§ìœ¼ë©??¤ìŒ ?¨ê³„ë¡??˜ì–´ê°????ˆì–´??'
+      ? '?ï¿½ë¬¼???ï¿½ëŸ¬ <b>Can Fly</b> ?ï¿½ëŠ” <b>Can\'t Fly</b> ë°”êµ¬?ï¿½ì— ?ï¿½ì–´ ë³´ì„¸?? ëª¨ë‘ ë§ìœ¼ï¿½??ï¿½ìŒ ?ï¿½ê³„ï¿½??ï¿½ì–´ï¿½????ï¿½ì–´??'
       : 'Tap each animal and move it into the <b>Can Fly</b> or <b>Can\'t Fly</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '?™ë¬¼ ëª¨ìŒ' : 'Animals');
-    const canBucket = makeBucket('can', lang === 'ko' ? 'Can Fly ?¦…' : 'Can Fly ?¦…');
-    const cantBucket = makeBucket('cant', lang === 'ko' ? 'Can\'t Fly ?˜' : 'Can\'t Fly ?˜');
+    const pool = makeBucket('pool', lang === 'ko' ? '?ï¿½ë¬¼ ëª¨ìŒ' : 'Animals');
+    const canBucket = makeBucket('can', lang === 'ko' ? 'Can Fly ?ï¿½ï¿½' : 'Can Fly ?ï¿½ï¿½');
+    const cantBucket = makeBucket('cant', lang === 'ko' ? 'Can\'t Fly ?ï¿½ï¿½' : 'Can\'t Fly ?ï¿½ï¿½');
     [pool.wrap, canBucket.wrap, cantBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
 
@@ -362,13 +362,13 @@ export async function runGrammarLessonCanCant(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?•ë‹µ ?•ì¸' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?ï¿½ë‹µ ?ï¿½ì¸' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?¤ë¡œ' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ë¡œ' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -409,11 +409,11 @@ export async function runGrammarLessonCanCant(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?„ë²½?´ìš”! ?????ˆëŠ” ?™ë¬¼?¤ì„ ??ê³¨ë?´ìš”.' : 'Perfect! You sorted the flying animals correctly.';
+        message.textContent = lang === 'ko' ? '?ï¿½ë²½?ï¿½ìš”! ?????ï¿½ëŠ” ?ï¿½ë¬¼?ï¿½ì„ ??ê³¨ë?ï¿½ìš”.' : 'Perfect! You sorted the flying animals correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?¤ìŒ ?¨ê³„ë¡? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?ï¿½ìŒ ?ï¿½ê³„ï¿½? : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -424,7 +424,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? 'ë¹¨ê°„ ?™ë¬¼???¤ì‹œ ??²¨ ë³´ì„¸??' : 'Try again! Fix the red animals.';
+        message.textContent = lang === 'ko' ? 'ë¹¨ê°„ ?ï¿½ë¬¼???ï¿½ì‹œ ??ï¿½ï¿½ ë³´ì„¸??' : 'Try again! Fix the red animals.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -436,13 +436,13 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">?´ì œ can/can\'të¥?ë°”ë¥´ê²??¬ìš©?????ˆì–´??</div><div class="stars">â­â­â­â­â­?/div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use can or can\'t!</div><div class="stars">â­â­â­â­â­?/div>';
+      ? '<div style="font-weight:800;color:#19777e">?ï¿½ì œ can/can\'tï¿½?ë°”ë¥´ï¿½??ï¿½ìš©?????ï¿½ì–´??</div><div class="stars">â­â­â­â­ï¿½?/div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use can or can\'t!</div><div class="stars">â­â­â­â­ï¿½?/div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? 'ëª¨ë“œë¡??Œì•„ê°€ê¸? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? 'ëª¨ë“œï¿½??ï¿½ì•„ê°€ï¿½? : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -570,17 +570,17 @@ function makeChip(item) {
 function buildSortingPool(canList, cantList) {
   // Fixed animals - 4 that can fly, 4 that can't
   const flyingAnimals = [
-    { id: 'bird', answer: 'can', text: '?¦', name: 'Bird' },
-    { id: 'owl', answer: 'can', text: '?¦‰', name: 'Owl' },
-    { id: 'eagle', answer: 'can', text: '?¦…', name: 'Eagle' },
-    { id: 'bat', answer: 'can', text: '?¦‡', name: 'Bat' }
+    { id: 'bird', answer: 'can', text: '?ï¿½ï¿½', name: 'Bird' },
+    { id: 'owl', answer: 'can', text: '?ï¿½ï¿½', name: 'Owl' },
+    { id: 'eagle', answer: 'can', text: '?ï¿½ï¿½', name: 'Eagle' },
+    { id: 'bat', answer: 'can', text: '?ï¿½ï¿½', name: 'Bat' }
   ];
   
   const nonFlyingAnimals = [
-    { id: 'tiger', answer: 'cant', text: '?¯', name: 'Tiger' },
-    { id: 'wolf', answer: 'cant', text: '?º', name: 'Wolf' },
-    { id: 'cat', answer: 'cant', text: '?±', name: 'Cat' },
-    { id: 'elephant', answer: 'cant', text: '?˜', name: 'Elephant' }
+    { id: 'tiger', answer: 'cant', text: '?ï¿½ï¿½', name: 'Tiger' },
+    { id: 'wolf', answer: 'cant', text: '?ï¿½ï¿½', name: 'Wolf' },
+    { id: 'cat', answer: 'cant', text: '?ï¿½ï¿½', name: 'Cat' },
+    { id: 'elephant', answer: 'cant', text: '?ï¿½ï¿½', name: 'Elephant' }
   ];
   
   return shuffle([...flyingAnimals, ...nonFlyingAnimals]);
@@ -600,9 +600,9 @@ function buildAbilitySets(canList, cantList) {
       ability: 'can',
       emoji: canExample.emoji || '??,
       sentenceEn: canExample.exampleSentence || 'I can swim.',
-      sentenceKo: canExample.exampleSentenceKo || '?˜ëŠ” ?˜ì˜?????ˆì–´??',
+      sentenceKo: canExample.exampleSentenceKo || '?ï¿½ëŠ” ?ï¿½ì˜?????ï¿½ì–´??',
       tipEn: "Use 'can' to show ability.",
-      tipKo: "'can'?€ ~?????ˆë‹¤???»ì´?ìš”.",
+      tipKo: "'can'?ï¿½ ~?????ï¿½ë‹¤???ï¿½ì´?ï¿½ìš”.",
       label: '??Can'
     },
     {
@@ -610,9 +610,9 @@ function buildAbilitySets(canList, cantList) {
       ability: 'can\'t',
       emoji: cantExample.emoji || '??,
       sentenceEn: cantExample.exampleSentence || 'I can\'t fly.',
-      sentenceKo: cantExample.exampleSentenceKo || '?˜ëŠ” ?????†ì–´??',
+      sentenceKo: cantExample.exampleSentenceKo || '?ï¿½ëŠ” ?????ï¿½ì–´??',
       tipEn: "Use 'can't' to show inability.",
-      tipKo: "'can't'??~?????†ë‹¤???»ì´?ìš”.",
+      tipKo: "'can't'??~?????ï¿½ë‹¤???ï¿½ì´?ï¿½ìš”.",
       label: '??Can\'t'
     }
   ];
@@ -627,7 +627,7 @@ function normalizeList(list, fallback) {
     exampleSentenceKo: item.exampleSentenceKo || '',
     explanation: item.explanation || '',
     explanationKo: item.explanationKo || '',
-    emoji: item.emoji || '?’ª',
+    emoji: item.emoji || '?ï¿½ï¿½',
   })).filter((item) => item.exampleSentence);
 }
 
@@ -663,9 +663,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?¤ë¡œ' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ë¡œ' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?¤ìŒ' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?ï¿½ìŒ' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -686,7 +686,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?¸ì–´ ? íƒ', '1?¨ê³„', '2?¨ê³„', '3?¨ê³„', '?„ë£Œ'];
+  const stepsKo = ['?ï¿½ì–´ ?ï¿½íƒ', '1?ï¿½ê³„', '2?ï¿½ê³„', '3?ï¿½ê³„', '?ï¿½ë£Œ'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -696,15 +696,15 @@ function shuffle(list) {
 }
 
 const fallbackCan = [
-  { id: 'fb_can_swim', word: 'I', exampleSentence: 'I can swim.', exampleSentenceKo: '?˜ëŠ” ?˜ì˜?????ˆì–´??', emoji: '?…ğŸ? },
-  { id: 'fb_can_read', word: 'You', exampleSentence: 'You can read.', exampleSentenceKo: '?ˆëŠ” ?½ì„ ???ˆì–´??', emoji: '?…ğŸ“? },
-  { id: 'fb_can_play', word: 'We', exampleSentence: 'We can play.', exampleSentenceKo: '?°ë¦¬???€ ???ˆì–´??', emoji: '?…ğŸ? },
-  { id: 'fb_can_help', word: 'He', exampleSentence: 'He can help.', exampleSentenceKo: 'ê·¸ëŠ” ?„ìš¸ ???ˆì–´??', emoji: '?…ğŸ§‘â€ğŸ”? }
+  { id: 'fb_can_swim', word: 'I', exampleSentence: 'I can swim.', exampleSentenceKo: '?ï¿½ëŠ” ?ï¿½ì˜?????ï¿½ì–´??', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_can_read', word: 'You', exampleSentence: 'You can read.', exampleSentenceKo: '?ï¿½ëŠ” ?ï¿½ì„ ???ï¿½ì–´??', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_can_play', word: 'We', exampleSentence: 'We can play.', exampleSentenceKo: '?ï¿½ë¦¬???ï¿½ ???ï¿½ì–´??', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_can_help', word: 'He', exampleSentence: 'He can help.', exampleSentenceKo: 'ê·¸ëŠ” ?ï¿½ìš¸ ???ï¿½ì–´??', emoji: '?ï¿½ğŸ§‘â€ï¿½? }
 ];
 
 const fallbackCant = [
-  { id: 'fb_cant_swim', word: 'He', exampleSentence: 'He can\'t swim.', exampleSentenceKo: 'ê·¸ëŠ” ?˜ì˜?????†ì–´??', emoji: '?ŒğŸ? },
-  { id: 'fb_cant_fly', word: 'I', exampleSentence: 'I can\'t fly.', exampleSentenceKo: '?˜ëŠ” ?????†ì–´??', emoji: '?ŒğŸ¦? },
-  { id: 'fb_cant_drive', word: 'She', exampleSentence: 'She can\'t drive.', exampleSentenceKo: 'ê·¸ë????´ì „?????†ì–´??', emoji: '?ŒğŸš? },
-  { id: 'fb_cant_lift', word: 'They', exampleSentence: 'They can\'t lift it.', exampleSentenceKo: 'ê·¸ë“¤?€ ?????†ì–´??', emoji: '?ŒğŸ’? }
+  { id: 'fb_cant_swim', word: 'He', exampleSentence: 'He can\'t swim.', exampleSentenceKo: 'ê·¸ëŠ” ?ï¿½ì˜?????ï¿½ì–´??', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_cant_fly', word: 'I', exampleSentence: 'I can\'t fly.', exampleSentenceKo: '?ï¿½ëŠ” ?????ï¿½ì–´??', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_cant_drive', word: 'She', exampleSentence: 'She can\'t drive.', exampleSentenceKo: 'ê·¸ï¿½????ï¿½ì „?????ï¿½ì–´??', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_cant_lift', word: 'They', exampleSentence: 'They can\'t lift it.', exampleSentenceKo: 'ê·¸ë“¤?ï¿½ ?????ï¿½ì–´??', emoji: '?ï¿½ï¿½? }
 ];
