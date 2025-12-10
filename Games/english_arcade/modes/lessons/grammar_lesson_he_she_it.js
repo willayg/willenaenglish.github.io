@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ??He vs She vs It
+ï»¿// Grammar Lesson Runner ??He vs She vs It
 // Interactive lesson teaching pronoun usage for males, females, and objects/animals.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -102,10 +102,10 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const heading = document.createElement('div');
     heading.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    heading.textContent = (lang === 'ko') ? '?¸ì–´ë¥?? íƒ?˜ì„¸?? : 'Choose your language';
+    heading.textContent = (lang === 'ko') ? 'ì–¸ì–´ë¥¼ ì„ íƒí•˜ì„¸ìš”' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('?œêµ­??);
+    const koBtn = buildLanguageButton('í•œêµ­ì–´');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(heading);
     wrap.appendChild(enBtn);
@@ -120,7 +120,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>He</b> (?¨ì), <b>She</b> (?¬ì), <b>It</b> (?™ë¬¼/?¬ë¬¼)??êµ¬ë¶„?´ì„œ ?¨ìš”. ë²„íŠ¼???ŒëŸ¬???ˆì œë¥??•ì¸??ë³´ì„¸??"
+      ? "<b>He</b> (?ï¿½ì), <b>She</b> (?ï¿½ì), <b>It</b> (?ï¿½ë¬¼/?ï¿½ë¬¼)??êµ¬ë¶„?ï¿½ì„œ ?ï¿½ìš”. ë²„íŠ¼???ï¿½ëŸ¬???ï¿½ì œï¿½??ï¿½ì¸??ë³´ì„¸??"
       : "Use <b>he</b> for males, <b>she</b> for females, and <b>it</b> for animals or objects. Tap each button to see examples!";
 
     const pronounRow = document.createElement('div');
@@ -195,7 +195,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     renderCard(pronounSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?¤ìŒ ?ˆì œ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ìŒ ?ï¿½ì œ' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -217,7 +217,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>?¨ì</b> ??<b>he</b><br/><b>?¬ì</b> ??<b>she</b><br/><b>?™ë¬¼/?¬ë¬¼</b> ??<b>it</b><br/>ë²„íŠ¼???ŒëŸ¬????ë§ì? ?ˆì œë¥??•ì¸?˜ì„¸??"
+      ? "<b>?ï¿½ì</b> ??<b>he</b><br/><b>?ï¿½ì</b> ??<b>she</b><br/><b>?ï¿½ë¬¼/?ï¿½ë¬¼</b> ??<b>it</b><br/>ë²„íŠ¼???ï¿½ëŸ¬????ë§ï¿½? ?ï¿½ì œï¿½??ï¿½ì¸?ï¿½ì„¸??"
       : "<b>Males</b> ??<b>he</b><br/><b>Females</b> ??<b>she</b><br/><b>Animals/Objects</b> ??<b>it</b><br/>Tap each button to see more examples!";
 
     const categoryRow = document.createElement('div');
@@ -229,21 +229,21 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const categorySets = [
       {
         id: 'male',
-        label: lang === 'ko' ? '?‘¨ ?¨ì' : '?‘¨ Male',
+        label: lang === 'ko' ? '?ï¿½ï¿½ ?ï¿½ì' : '?ï¿½ï¿½ Male',
         examples: heList,
         pointer: 0,
         pronoun: 'HE',
       },
       {
         id: 'female',
-        label: lang === 'ko' ? '?‘© ?¬ì' : '?‘© Female',
+        label: lang === 'ko' ? '?ï¿½ï¿½ ?ï¿½ì' : '?ï¿½ï¿½ Female',
         examples: sheList,
         pointer: 0,
         pronoun: 'SHE',
       },
       {
         id: 'thing',
-        label: lang === 'ko' ? '?¶ ?™ë¬¼/?¬ë¬¼' : '?¶ Animal/Thing',
+        label: lang === 'ko' ? '?ï¿½ï¿½ ?ï¿½ë¬¼/?ï¿½ë¬¼' : '?ï¿½ï¿½ Animal/Thing',
         examples: itList,
         pointer: 0,
         pronoun: 'IT',
@@ -311,7 +311,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     renderCard('male', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?¤ìŒ ?ˆì œ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ìŒ ?ï¿½ì œ' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -332,7 +332,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? 'ê°??¨ì–´ë¥??ŒëŸ¬???¬ë°”ë¥?ë°”êµ¬?ˆì— ?£ì–´ ë³´ì„¸??'
+      ? 'ï¿½??ï¿½ì–´ï¿½??ï¿½ëŸ¬???ï¿½ë°”ï¿½?ë°”êµ¬?ï¿½ì— ?ï¿½ì–´ ë³´ì„¸??'
       : 'Tap each word and place it in the correct basket!';
     stepEl.appendChild(intro);
 
@@ -343,9 +343,9 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-three';
-    const heBucket = makeBucket('he', '?‘¨');
-    const sheBucket = makeBucket('she', '?‘©');
-    const itBucket = makeBucket('it', '?¶');
+    const heBucket = makeBucket('he', '?ï¿½ï¿½');
+    const sheBucket = makeBucket('she', '?ï¿½ï¿½');
+    const itBucket = makeBucket('it', '?ï¿½ï¿½');
     [heBucket.wrap, sheBucket.wrap, itBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     
     stepEl.appendChild(chipsContainer);
@@ -393,13 +393,13 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?•ë‹µ ?•ì¸' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?ï¿½ë‹µ ?ï¿½ì¸' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?¤ë¡œ' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ë¡œ' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -442,11 +442,11 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?„ë²½?´ìš”! he/she/itë¥???ê³¨ë?´ìš”.' : 'Perfect! You used he/she/it correctly.';
+        message.textContent = lang === 'ko' ? '?ï¿½ë²½?ï¿½ìš”! he/she/itï¿½???ê³¨ë?ï¿½ìš”.' : 'Perfect! You used he/she/it correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?¤ìŒ ?¨ê³„ë¡? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?ï¿½ìŒ ?ï¿½ê³„ï¿½? : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -457,7 +457,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? 'ë¹¨ê°„ ?¨ì–´ë¥??¤ì‹œ ??²¨ ë³´ì„¸??' : 'Try again! Fix the red words.';
+        message.textContent = lang === 'ko' ? 'ë¹¨ê°„ ?ï¿½ì–´ï¿½??ï¿½ì‹œ ??ï¿½ï¿½ ë³´ì„¸??' : 'Try again! Fix the red words.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -469,13 +469,13 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">?´ì œ he/she/itë¥?ë°”ë¥´ê²?ê³ ë? ???ˆì–´??</div><div class="stars">â­â­â­â­â­?/div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use he, she, or it!</div><div class="stars">â­â­â­â­â­?/div>';
+      ? '<div style="font-weight:800;color:#19777e">?ï¿½ì œ he/she/itï¿½?ë°”ë¥´ï¿½?ê³ ï¿½? ???ï¿½ì–´??</div><div class="stars">â­â­â­â­ï¿½?/div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use he, she, or it!</div><div class="stars">â­â­â­â­ï¿½?/div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? 'ëª¨ë“œë¡??Œì•„ê°€ê¸? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? 'ëª¨ë“œï¿½??ï¿½ì•„ê°€ï¿½? : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -631,32 +631,32 @@ function buildPronounSets(heList, sheList, itList) {
     {
       id: 'he',
       pronoun: 'he',
-      emoji: heExample.emoji || '?‘¨',
+      emoji: heExample.emoji || '?ï¿½ï¿½',
       sentenceEn: heExample.exampleSentence || 'He is my friend.',
-      sentenceKo: heExample.exampleSentenceKo || 'ê·¸ëŠ” ??ì¹œêµ¬?ˆìš”.',
+      sentenceKo: heExample.exampleSentenceKo || 'ê·¸ëŠ” ??ì¹œêµ¬?ï¿½ìš”.',
       tipEn: "Use 'he' for males (boys, men).",
-      tipKo: "?¨ì(?Œë…„, ?¨ì„±)???€??'he'ë¥??¨ìš”.",
-      label: '?‘¨ He'
+      tipKo: "?ï¿½ì(?ï¿½ë…„, ?ï¿½ì„±)???ï¿½??'he'ï¿½??ï¿½ìš”.",
+      label: '?ï¿½ï¿½ He'
     },
     {
       id: 'she',
       pronoun: 'she',
-      emoji: sheExample.emoji || '?‘©',
+      emoji: sheExample.emoji || '?ï¿½ï¿½',
       sentenceEn: sheExample.exampleSentence || 'She is my sister.',
-      sentenceKo: sheExample.exampleSentenceKo || 'ê·¸ë??????¬ì ?•ì œ?ˆìš”.',
+      sentenceKo: sheExample.exampleSentenceKo || 'ê·¸ï¿½??????ï¿½ì ?ï¿½ì œ?ï¿½ìš”.',
       tipEn: "Use 'she' for females (girls, women).",
-      tipKo: "?¬ì(?Œë?, ?¬ì„±)???€??'she'ë¥??¨ìš”.",
-      label: '?‘© She'
+      tipKo: "?ï¿½ì(?ï¿½ï¿½?, ?ï¿½ì„±)???ï¿½??'she'ï¿½??ï¿½ìš”.",
+      label: '?ï¿½ï¿½ She'
     },
     {
       id: 'it',
       pronoun: 'it',
-      emoji: itExample.emoji || '?¶',
+      emoji: itExample.emoji || '?ï¿½ï¿½',
       sentenceEn: itExample.exampleSentence || 'It is a dog.',
-      sentenceKo: itExample.exampleSentenceKo || 'ê·¸ê²ƒ?€ ê°œì˜ˆ??',
+      sentenceKo: itExample.exampleSentenceKo || 'ê·¸ê²ƒ?ï¿½ ê°œì˜ˆ??',
       tipEn: "Use 'it' for animals and objects.",
-      tipKo: "?™ë¬¼ê³??¬ë¬¼???€??'it'???¨ìš”.",
-      label: '?¶ It'
+      tipKo: "?ï¿½ë¬¼ï¿½??ï¿½ë¬¼???ï¿½??'it'???ï¿½ìš”.",
+      label: '?ï¿½ï¿½ It'
     }
   ];
 }
@@ -706,9 +706,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?¤ë¡œ' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '?ï¿½ë¡œ' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?¤ìŒ' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?ï¿½ìŒ' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -729,7 +729,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?¸ì–´ ? íƒ', '1?¨ê³„', '2?¨ê³„', '3?¨ê³„', '?„ë£Œ'];
+  const stepsKo = ['?ï¿½ì–´ ?ï¿½íƒ', '1?ï¿½ê³„', '2?ï¿½ê³„', '3?ï¿½ê³„', '?ï¿½ë£Œ'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -739,22 +739,22 @@ function shuffle(list) {
 }
 
 const fallbackHe = [
-  { id: 'fb_he_friend', word: 'He', exampleSentence: 'He is my friend.', exampleSentenceKo: 'ê·¸ëŠ” ??ì¹œêµ¬?ˆìš”.', emoji: '?‘¨' },
-  { id: 'fb_he_teacher', word: 'He', exampleSentence: 'He is a teacher.', exampleSentenceKo: 'ê·¸ëŠ” ? ìƒ?˜ì´?ìš”.', emoji: '?‘¨?ğŸ? },
-  { id: 'fb_he_brother', word: 'He', exampleSentence: 'He is my brother.', exampleSentenceKo: 'ê·¸ëŠ” ???•ì´?ìš”.', emoji: '?‘¦' },
-  { id: 'fb_he_dad', word: 'He', exampleSentence: 'He is my dad.', exampleSentenceKo: 'ê·¸ëŠ” ???„ë¹ ?ˆìš”.', emoji: '?‘”' }
+  { id: 'fb_he_friend', word: 'He', exampleSentence: 'He is my friend.', exampleSentenceKo: 'ê·¸ëŠ” ??ì¹œêµ¬?ï¿½ìš”.', emoji: '?ï¿½ï¿½' },
+  { id: 'fb_he_teacher', word: 'He', exampleSentence: 'He is a teacher.', exampleSentenceKo: 'ê·¸ëŠ” ?ï¿½ìƒ?ï¿½ì´?ï¿½ìš”.', emoji: '?ï¿½ï¿½?ï¿½ï¿½? },
+  { id: 'fb_he_brother', word: 'He', exampleSentence: 'He is my brother.', exampleSentenceKo: 'ê·¸ëŠ” ???ï¿½ì´?ï¿½ìš”.', emoji: '?ï¿½ï¿½' },
+  { id: 'fb_he_dad', word: 'He', exampleSentence: 'He is my dad.', exampleSentenceKo: 'ê·¸ëŠ” ???ï¿½ë¹ ?ï¿½ìš”.', emoji: '?ï¿½ï¿½' }
 ];
 
 const fallbackShe = [
-  { id: 'fb_she_friend', word: 'She', exampleSentence: 'She is my sister.', exampleSentenceKo: 'ê·¸ë??????¬ì ?•ì œ?ˆìš”.', emoji: '?‘©' },
-  { id: 'fb_she_teacher', word: 'She', exampleSentence: 'She is a doctor.', exampleSentenceKo: 'ê·¸ë????˜ì‚¬?ˆìš”.', emoji: '?‘©?âš•ï¸? },
-  { id: 'fb_she_mom', word: 'She', exampleSentence: 'She is my mom.', exampleSentenceKo: 'ê·¸ë??????„ë§ˆ?ˆìš”.', emoji: '?‘©?ğŸ¦? },
-  { id: 'fb_she_like', word: 'She', exampleSentence: 'She likes ice cream.', exampleSentenceKo: 'ê·¸ë????„ì´?¤í¬ë¦¼ì„ ì¢‹ì•„?´ìš”.', emoji: '?¨' }
+  { id: 'fb_she_friend', word: 'She', exampleSentence: 'She is my sister.', exampleSentenceKo: 'ê·¸ï¿½??????ï¿½ì ?ï¿½ì œ?ï¿½ìš”.', emoji: '?ï¿½ï¿½' },
+  { id: 'fb_she_teacher', word: 'She', exampleSentence: 'She is a doctor.', exampleSentenceKo: 'ê·¸ï¿½????ï¿½ì‚¬?ï¿½ìš”.', emoji: '?ï¿½ï¿½?ï¿½âš•ï¿½? },
+  { id: 'fb_she_mom', word: 'She', exampleSentence: 'She is my mom.', exampleSentenceKo: 'ê·¸ï¿½??????ï¿½ë§ˆ?ï¿½ìš”.', emoji: '?ï¿½ï¿½?ï¿½ï¿½? },
+  { id: 'fb_she_like', word: 'She', exampleSentence: 'She likes ice cream.', exampleSentenceKo: 'ê·¸ï¿½????ï¿½ì´?ï¿½í¬ë¦¼ì„ ì¢‹ì•„?ï¿½ìš”.', emoji: '?ï¿½ï¿½' }
 ];
 
 const fallbackIt = [
-  { id: 'fb_it_dog', word: 'It', exampleSentence: 'It is a dog.', exampleSentenceKo: 'ê·¸ê²ƒ?€ ê°œì˜ˆ??', emoji: '?¶' },
-  { id: 'fb_it_car', word: 'It', exampleSentence: 'It is a red car.', exampleSentenceKo: 'ê·¸ê²ƒ?€ ë¹¨ê°„ ?ë™ì°¨ì˜ˆ??', emoji: '?š—' },
-  { id: 'fb_it_weather', word: 'It', exampleSentence: 'It is sunny today.', exampleSentenceKo: '?¤ëŠ˜?€ ? ì”¨ê°€ ?”ì°½?´ìš”.', emoji: '?€ï¸? },
-  { id: 'fb_it_phone', word: 'It', exampleSentence: 'It is my phone.', exampleSentenceKo: '?´ê²ƒ?€ ???„í™”?ˆìš”.', emoji: '?“±' }
+  { id: 'fb_it_dog', word: 'It', exampleSentence: 'It is a dog.', exampleSentenceKo: 'ê·¸ê²ƒ?ï¿½ ê°œì˜ˆ??', emoji: '?ï¿½ï¿½' },
+  { id: 'fb_it_car', word: 'It', exampleSentence: 'It is a red car.', exampleSentenceKo: 'ê·¸ê²ƒ?ï¿½ ë¹¨ê°„ ?ï¿½ë™ì°¨ì˜ˆ??', emoji: '?ï¿½ï¿½' },
+  { id: 'fb_it_weather', word: 'It', exampleSentence: 'It is sunny today.', exampleSentenceKo: '?ï¿½ëŠ˜?ï¿½ ?ï¿½ì”¨ê°€ ?ï¿½ì°½?ï¿½ìš”.', emoji: '?ï¿½ï¿½? },
+  { id: 'fb_it_phone', word: 'It', exampleSentence: 'It is my phone.', exampleSentenceKo: '?ï¿½ê²ƒ?ï¿½ ???ï¿½í™”?ï¿½ìš”.', emoji: '?ï¿½ï¿½' }
 ];
