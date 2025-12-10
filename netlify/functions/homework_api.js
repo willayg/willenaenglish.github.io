@@ -64,6 +64,9 @@ exports.handler = async (event) => {
     if (action === 'delete_assignment') {
       return await deleteAssignment(event);
     }
+    if (action === 'link_sessions') {
+      return await linkSessionsToAssignment(event);
+    }
     return _json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
@@ -178,6 +181,14 @@ async function createAssignment(event) {
     return _json(400, { success: false, error: 'Missing required fields: class, title, list_key, due_at' });
   }
 
+  // Auto-generate a run token for the new assignment
+  // This ensures teachers don't need to manually create run tokens
+  const autoToken = `run_auto_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const initialMeta = {
+    ...(list_meta || {}),
+    run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true }]
+  };
+
   const { data, error } = await supabase
     .from('homework_assignments')
     .insert({
@@ -186,7 +197,7 @@ async function createAssignment(event) {
       description: description || null,
       list_key,
       list_title,
-      list_meta: list_meta || {},
+      list_meta: initialMeta,
       start_at: start_at || new Date().toISOString(),
       due_at,
       goal_type: goal_type || 'stars',
@@ -207,7 +218,8 @@ async function createAssignment(event) {
     return _json(500, { success: false, error: `Failed to create assignment: ${error.message || error.code || 'unknown error'}` });
   }
 
-  return _json(200, { success: true, assignment: data });
+  console.log(`[homework_api] Created assignment ${data.id} with auto run_token: ${autoToken}`);
+  return _json(200, { success: true, assignment: data, run_token: autoToken });
 }
 
 async function listAssignments(event) {
@@ -268,8 +280,32 @@ async function assignmentProgress(event) {
   const className = event.queryStringParameters?.class || null;
   if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment_id' });
   // Fetch assignment
-  const { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
+  let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
+
+  // Auto-create run token if assignment has none (backfill for older assignments)
+  let assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
+    ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean)
+    : [];
+  if (assignmentRunTokens.length === 0) {
+    const autoToken = `run_backfill_${assignmentId}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const updatedMeta = {
+      ...(assignment.list_meta || {}),
+      run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true, backfilled: true }]
+    };
+    const { data: updatedAssignment, error: updErr } = await supabase
+      .from('homework_assignments')
+      .update({ list_meta: updatedMeta })
+      .eq('id', assignmentId)
+      .select()
+      .single();
+    if (!updErr && updatedAssignment) {
+      assignment = updatedAssignment;
+      assignmentRunTokens = [autoToken];
+      console.log(`[assignmentProgress] Backfilled run_token for assignment ${assignmentId}: ${autoToken}`);
+    }
+  }
+
   const targetClass = className || assignment.class;
   // Determine category heuristically for expected mode counts
   const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
@@ -284,9 +320,6 @@ async function assignmentProgress(event) {
   const listKeyLast = assignment.list_key.split('/').pop();
   let sessions = [];
   const requestRunToken = event.queryStringParameters?.run_token || null;
-  const assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
-    ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean)
-    : [];
   // Build tighter matching candidates to avoid cross-list overcounting
   const eq1 = listKeyLast;                   // exact filename
   const like1 = `%/${listKeyLast}`;          // path-anchored filename
@@ -626,4 +659,176 @@ async function getRunTokenForStudent(event) {
 
   const tokens = Array.isArray(assignment.list_meta?.run_tokens) ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean) : [];
   return _json(200, { success: true, assignment_id: assignment.id, tokens });
+}
+
+// Retroactively link existing sessions to an assignment by updating their summary.assignment_run field
+// This fixes cases where students played games but the token wasn't attached
+async function linkSessionsToAssignment(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) {
+    return _json(401, { success: false, error: 'Not signed in' });
+  }
+
+  // Verify teacher/admin role
+  const { data: prof, error: profErr } = await supabase
+    .from('profiles')
+    .select('id, role, approved')
+    .eq('id', authUserId)
+    .single();
+
+  if (profErr || !prof || !['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return _json(403, { success: false, error: 'Only teachers can link sessions' });
+  }
+
+  const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
+  if (!assignmentId) {
+    return _json(400, { success: false, error: 'Missing assignment_id' });
+  }
+
+  // Fetch the assignment
+  const { data: assignment, error: aErr } = await supabase
+    .from('homework_assignments')
+    .select('*')
+    .eq('id', assignmentId)
+    .single();
+
+  if (aErr || !assignment) {
+    return _json(404, { success: false, error: 'Assignment not found' });
+  }
+
+  // Get or create a run token for this assignment
+  let runToken = null;
+  const existingTokens = Array.isArray(assignment.list_meta?.run_tokens)
+    ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean)
+    : [];
+  
+  if (existingTokens.length > 0) {
+    runToken = existingTokens[0]; // Use the first existing token
+  } else {
+    // Create a new token
+    runToken = `run_link_${assignmentId}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const updatedMeta = {
+      ...(assignment.list_meta || {}),
+      run_tokens: [{ token: runToken, created_at: new Date().toISOString(), auto: true }]
+    };
+    await supabase
+      .from('homework_assignments')
+      .update({ list_meta: updatedMeta })
+      .eq('id', assignmentId);
+    console.log(`[link_sessions] Created new run_token for assignment ${assignmentId}: ${runToken}`);
+  }
+
+  // Get students in the class
+  const { data: students, error: sErr } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('class', assignment.class);
+
+  if (sErr || !students || !students.length) {
+    return _json(400, { success: false, error: 'No students found in class' });
+  }
+
+  const studentIds = students.map(s => s.id);
+
+  // Build matching patterns from the assignment list_key
+  const listKeyLast = assignment.list_key.split('/').pop();
+  const coreName = listKeyLast.replace(/\.json$/, '');
+  const normalizedCoreName = normalizeListIdentifier(coreName);
+  const normalizedListKey = normalizeListIdentifier(assignment.list_key);
+  const normalizedTitle = normalizeListIdentifier(`${assignment.title || ''} ${assignment.list_title || ''}`);
+
+  // Find all sessions for these students that might match this assignment
+  // but don't already have an assignment_run token
+  const orFilters = [
+    `list_name.eq.${listKeyLast}`,
+    `list_name.ilike.%/${listKeyLast}`,
+    `list_name.ilike.%/${listKeyLast}.json`,
+    `list_name.ilike.%${coreName}%`
+  ];
+
+  // Add normalized pattern matching
+  const normalizedPatterns = [normalizedCoreName, normalizedListKey, normalizedTitle].filter(Boolean);
+  normalizedPatterns.forEach(pat => {
+    if (pat.length >= 3) {
+      const safePattern = pat.replace(/\s+/g, '%');
+      orFilters.push(`list_name.ilike.%${safePattern}%`);
+    }
+  });
+
+  const { data: sessions, error: sessErr } = await supabase
+    .from('progress_sessions')
+    .select('id, session_id, user_id, list_name, mode, summary, started_at')
+    .in('user_id', studentIds)
+    .or(orFilters.join(','))
+    .not('ended_at', 'is', null);
+
+  if (sessErr) {
+    console.error('[link_sessions] Error fetching sessions:', sessErr);
+    return _json(500, { success: false, error: 'Failed to fetch sessions' });
+  }
+
+  if (!sessions || !sessions.length) {
+    return _json(200, { success: true, message: 'No matching sessions found', linked: 0 });
+  }
+
+  // Filter to only sessions that don't already have an assignment_run
+  const sessionsToLink = sessions.filter(s => {
+    try {
+      const sum = typeof s.summary === 'string' ? JSON.parse(s.summary) : s.summary;
+      return !sum || !sum.assignment_run;
+    } catch {
+      return true; // If we can't parse, assume it needs linking
+    }
+  });
+
+  if (!sessionsToLink.length) {
+    return _json(200, { success: true, message: 'All matching sessions already linked', linked: 0, total_found: sessions.length });
+  }
+
+  // Update each session to add the assignment_run token
+  let linkedCount = 0;
+  const errors = [];
+
+  for (const sess of sessionsToLink) {
+    try {
+      let existingSummary = {};
+      try {
+        existingSummary = typeof sess.summary === 'string' ? JSON.parse(sess.summary) : (sess.summary || {});
+      } catch {
+        existingSummary = {};
+      }
+
+      const updatedSummary = {
+        ...existingSummary,
+        assignment_run: runToken,
+        linked_at: new Date().toISOString(),
+        linked_by: 'teacher_action'
+      };
+
+      const { error: updateErr } = await supabase
+        .from('progress_sessions')
+        .update({ summary: updatedSummary })
+        .eq('id', sess.id);
+
+      if (updateErr) {
+        errors.push({ session_id: sess.session_id, error: updateErr.message });
+      } else {
+        linkedCount++;
+      }
+    } catch (e) {
+      errors.push({ session_id: sess.session_id, error: e.message });
+    }
+  }
+
+  console.log(`[link_sessions] Linked ${linkedCount}/${sessionsToLink.length} sessions to assignment ${assignmentId} with token ${runToken}`);
+
+  return _json(200, {
+    success: true,
+    message: `Linked ${linkedCount} sessions to assignment`,
+    linked: linkedCount,
+    total_found: sessions.length,
+    already_linked: sessions.length - sessionsToLink.length,
+    errors: errors.length > 0 ? errors : undefined,
+    run_token: runToken
+  });
 }

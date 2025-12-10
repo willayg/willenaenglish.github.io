@@ -36,18 +36,25 @@ CREATE POLICY "student_daily_stats_delete_none" ON public.student_daily_stats
 
 
 -- ============================================================
--- Manual backfill for a specific date (run as admin/service role)
--- Change the date literal to backfill different days
+-- IMPORTANT: Stars calculation is complex (requires parsing session JSON,
+-- finding best stars per list+mode combo, then summing). The SQL below
+-- sets stars_earned = 0 as a placeholder.
+--
+-- For accurate star calculation, use the Netlify function instead:
+--   curl "https://YOUR-SITE.netlify.app/.netlify/functions/populate_daily_stats?date=2025-12-10"
+--
+-- Or run it for multiple dates by calling the function repeatedly.
 -- ============================================================
 
--- Example: backfill yesterday
+-- Simple backfill (points/attempts/sessions only, stars = 0)
+-- Use the Netlify function for accurate stars!
 INSERT INTO public.student_daily_stats
   (user_id, date, class, stars_earned, points_earned, attempts, correct, sessions)
 SELECT
   p.id AS user_id,
   (CURRENT_DATE - INTERVAL '1 day')::date AS date,
   p.class AS class,
-  0 AS stars_earned,  -- no stars column in progress_attempts
+  0 AS stars_earned,  -- Use Netlify function for accurate stars
   COALESCE(SUM(a.points), 0)::int AS points_earned,
   COUNT(a.id)::int AS attempts,
   COALESCE(SUM(CASE WHEN a.is_correct THEN 1 ELSE 0 END), 0)::int AS correct,

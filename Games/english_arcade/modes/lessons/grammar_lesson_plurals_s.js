@@ -198,7 +198,7 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '?��' : 'Back');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -470,8 +470,8 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     const titleWrap = document.createElement('div');
     titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
     titleWrap.textContent = kind === 'singular'
-      ? (lang === 'ko' ? '?�� (?��)' : 'Singular (one)')
-      : (lang === 'ko' ? '���� (?��)' : 'Plural (more)');
+      ? (lang === 'ko' ? '단수 (1개)' : 'Singular (one)')
+      : (lang === 'ko' ? '복수 (여러 개)' : 'Plural (more)');
     col.appendChild(titleWrap);
 
     list.slice(0, 6).forEach((item) => {
@@ -523,8 +523,9 @@ export async function runGrammarLessonPluralsS(ctx = {}) {
     btn.className = 'lesson-btn primary';
     btn.textContent = label;
     btn.style.border = '2px solid #21b3be';
-    btn.style.background = '#fff';
-    btn.style.color = '#ff6fb0';
+    btn.style.background = '#21b3be';
+    btn.style.color = '#ffffff';
+    btn.style.fontFamily = "'Poppins', Arial, sans-serif";
     return btn;
   }
 

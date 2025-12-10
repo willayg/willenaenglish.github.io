@@ -9,6 +9,37 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
+// Helper: parse session summary JSON
+function parseSummary(summary) {
+  if (!summary) return null;
+  if (typeof summary === 'object') return summary;
+  try {
+    return JSON.parse(summary);
+  } catch {
+    return null;
+  }
+}
+
+// Helper: derive stars from session summary (matches progress_summary.js logic)
+// Stars thresholds: 100% = 5, 95% = 4, 90% = 3, 80% = 2, 60% = 1, else 0
+function deriveStars(summary) {
+  const s = summary || {};
+  let acc = null;
+  if (typeof s.accuracy === 'number') acc = s.accuracy;
+  else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
+  else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
+  if (acc != null) {
+    if (acc >= 1) return 5;
+    if (acc >= 0.95) return 4;
+    if (acc >= 0.90) return 3;
+    if (acc >= 0.80) return 2;
+    if (acc >= 0.60) return 1;
+    return 0;
+  }
+  if (typeof s.stars === 'number') return s.stars;
+  return 0;
+}
+
 exports.handler = async (event, context) => {
   // Allow manual trigger via HTTP or scheduled trigger
   const isScheduled = event.httpMethod === undefined;
@@ -113,10 +144,10 @@ async function populateDirectly(supabase, targetDate) {
     throw new Error(`Failed to fetch attempts: ${attErr.message}`);
   }
 
-  // Fetch sessions for the day
+  // Fetch sessions for the day (including summary for star calculation)
   const { data: sessions, error: sessErr } = await supabase
     .from('progress_sessions')
-    .select('user_id, id')
+    .select('user_id, id, list_name, mode, summary, ended_at')
     .in('user_id', userIds)
     .gte('started_at', startOfDay)
     .lt('started_at', endOfDay);
@@ -149,6 +180,35 @@ async function populateDirectly(supabase, targetDate) {
       if (att.is_correct) s.correct++;
     }
   }
+
+  // Calculate stars from sessions (best stars per list+mode combo, then sum)
+  // This matches the logic in progress_summary.js buildStarsByUserMap
+  const bestStarsByComposite = new Map();
+  for (const sess of (sessions || [])) {
+    if (!sess || !sess.user_id) continue;
+    const list = (sess.list_name || '').trim();
+    const mode = (sess.mode || '').trim();
+    if (!list || !mode) continue;
+    
+    // Only count completed sessions
+    const summary = parseSummary(sess.summary);
+    if (summary && summary.completed === false) continue;
+    
+    const stars = deriveStars(summary);
+    if (stars <= 0) continue;
+    
+    const composite = `${sess.user_id}||${list}||${mode}`;
+    const prev = bestStarsByComposite.get(composite) || 0;
+    if (stars > prev) bestStarsByComposite.set(composite, stars);
+  }
+  
+  // Sum best stars per user
+  bestStarsByComposite.forEach((starVal, composite) => {
+    const uid = composite.split('||')[0];
+    if (statsMap[uid]) {
+      statsMap[uid].stars_earned += starVal;
+    }
+  });
 
   // Count distinct sessions
   const sessionsByUser = {};

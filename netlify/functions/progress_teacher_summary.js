@@ -43,7 +43,9 @@ function parseCookies(header) {
 }
 
 function monthStartISO(now = new Date()) {
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0,0,0));
+  // Changed: "month" now means "last 30 days" instead of "start of current calendar month"
+  // This ensures students who played in the last 30 days show up regardless of month boundary
+  const d = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
   return d.toISOString();
 }
 
@@ -132,8 +134,11 @@ function classKey(name) {
 const CACHE_PREFIX = 'teacher_summary';
 const CLASSES_LIST_CACHE_KEY = `${CACHE_PREFIX}:classes_v1`;
 const CLASSES_LIST_TTL_SECONDS = 5 * 60; // class dropdown rarely changes
-const LEADERBOARD_TTL_SECONDS = 2 * 60; // per-class leaderboard caching
-const STUDENT_DETAILS_TTL_SECONDS = 90; // student drilldowns change frequently
+const LEADERBOARD_TTL_SECONDS = 3 * 60; // per-class leaderboard caching (increased from 2min)
+const LEADERBOARD_ALL_TTL_SECONDS = 10 * 60; // "all time" leaderboards change slowly, cache longer
+const STUDENT_DETAILS_TTL_SECONDS = 2 * 60; // student drilldowns (increased from 90s)
+const STUDENT_DETAILS_ALL_TTL_SECONDS = 5 * 60; // "all time" student details cache longer
+const DAILY_STATS_TABLE = 'student_daily_stats';
 
 function leaderboardCacheKey(name, timeframe = 'all') {
   const tf = (timeframe || 'all').toLowerCase();
@@ -143,6 +148,47 @@ function leaderboardCacheKey(name, timeframe = 'all') {
 function studentDetailsCacheKey(userId, timeframe = 'all') {
   const tf = (timeframe || 'all').toLowerCase();
   return `${CACHE_PREFIX}:student:${userId || 'unknown'}:${tf}`;
+}
+
+// Aggregate helper: use daily snapshot table when available to avoid scanning raw attempts/sessions
+async function loadDailyStats(admin, userIds = [], className = null, timeframe = 'all') {
+  if (!userIds.length) return { byUser: new Map(), rows: 0 };
+  try {
+    let qb = admin
+      .from(DAILY_STATS_TABLE)
+      .select('user_id, date, class, stars_earned, points_earned, attempts, correct, sessions')
+      .in('user_id', userIds);
+    if (className) qb = qb.eq('class', className);
+    if (timeframe === 'month') {
+      // monthStartISO is last-30-days; cast to date for the daily table
+      qb = qb.gte('date', monthStartISO().slice(0, 10));
+    }
+    const { data, error } = await qb;
+    if (error || !Array.isArray(data)) return { byUser: new Map(), rows: 0, error };
+    const byUser = new Map();
+    data.forEach(r => {
+      if (!r || !r.user_id) return;
+      let agg = byUser.get(r.user_id);
+      if (!agg) {
+        agg = { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
+        byUser.set(r.user_id, agg);
+      }
+      const s = Number(r.stars_earned) || 0;
+      const p = Number(r.points_earned) || 0;
+      const a = Number(r.attempts) || 0;
+      const c = Number(r.correct) || 0;
+      const sess = Number(r.sessions) || 0;
+      agg.stars += s;
+      agg.points += p;
+      agg.attempts += a;
+      agg.correct += c;
+      agg.sessions += sess;
+    });
+    return { byUser, rows: data.length };
+  } catch (e) {
+    console.warn('[progress_teacher_summary] loadDailyStats error', e?.message || e);
+    return { byUser: new Map(), rows: 0, error: e };
+  }
 }
 
 // Mirrors progress_summary star thresholds so teacher and student leaderboards agree.
@@ -318,18 +364,23 @@ exports.handler = async (event) => {
     if (action === 'leaderboard') {
       const className = (qs.class || '').trim();
       const timeframe = (qs.timeframe || 'all').toLowerCase();
+      const noCache = qs.nocache === '1' || qs.nocache === 'true';
       if (!className) return json(200, { success: true, leaderboard: [], class: null });
       const timingStart = Date.now();
       const cacheKey = leaderboardCacheKey(className, timeframe);
-      const cached = await redisCache.getJson(cacheKey);
-      if (cached && Array.isArray(cached.leaderboard)) {
-        console.log('[progress_teacher_summary] leaderboard cache hit', {
-          className,
-          timeframe,
-          rows: cached.leaderboard.length,
-          totalMs: Date.now() - timingStart
-        });
-        return json(200, { success: true, ...cached });
+      
+      // Skip cache if nocache param is set (for debugging)
+      if (!noCache) {
+        const cached = await redisCache.getJson(cacheKey);
+        if (cached && Array.isArray(cached.leaderboard)) {
+          console.log('[progress_teacher_summary] leaderboard cache hit', {
+            className,
+            timeframe,
+            rows: cached.leaderboard.length,
+            totalMs: Date.now() - timingStart
+          });
+          return json(200, { success: true, ...cached });
+        }
       }
 
       // Get students in class
@@ -350,6 +401,42 @@ exports.handler = async (event) => {
           totalMs: Date.now() - timingStart
         });
         return json(200, { success: true, class: className, leaderboard: [] });
+      }
+
+      // Try fast path via daily snapshot table
+      const dailyStart = Date.now();
+      const { byUser: dailyStats, rows: dailyRows } = await loadDailyStats(admin, ids, className, timeframe);
+      const dailyMs = Date.now() - dailyStart;
+      if (dailyRows > 0) {
+        const rows = (students || []).map(student => {
+          const stats = dailyStats.get(student.id) || { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
+          const accuracy = stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : 0;
+          return {
+            user_id: student.id,
+            name: student.name || student.username || 'Unknown',
+            korean_name: student.korean_name || null,
+            class: className,
+            stars: stats.stars || 0,
+            points: stats.points || 0,
+            accuracy,
+            attempts: stats.attempts || 0,
+            sessions: stats.sessions || 0
+          };
+        });
+        rows.sort((a,b)=> (b.stars - a.stars) || (b.points - a.points) || a.name.localeCompare(b.name));
+        rows.forEach((r,i)=> r.rank = i+1);
+        const payload = { class: className, timeframe, leaderboard: rows, truncated: false, cached_at: new Date().toISOString(), source: 'daily' };
+        const ttl = timeframe === 'all' ? LEADERBOARD_ALL_TTL_SECONDS : LEADERBOARD_TTL_SECONDS;
+        await redisCache.setJson(cacheKey, payload, ttl);
+        console.log('[progress_teacher_summary] leaderboard via daily stats', {
+          className,
+          timeframe,
+          rows: rows.length,
+          dailyMs,
+          totalMs: Date.now() - timingStart,
+          cacheTTL: ttl
+        });
+        return json(200, { success: true, ...payload });
       }
 
       // Aggregate attempts in timeframe for those users
@@ -438,7 +525,9 @@ exports.handler = async (event) => {
       rows.forEach((r,i)=> r.rank = i+1);
       const truncated = Boolean(attemptsTruncated || sessionsTruncated);
       const payload = { class: className, timeframe, leaderboard: rows, truncated, cached_at: new Date().toISOString() };
-      await redisCache.setJson(cacheKey, payload, LEADERBOARD_TTL_SECONDS);
+      // Use longer TTL for "all time" queries since they're expensive and change slowly
+      const ttl = timeframe === 'all' ? LEADERBOARD_ALL_TTL_SECONDS : LEADERBOARD_TTL_SECONDS;
+      await redisCache.setJson(cacheKey, payload, ttl);
       console.log('[progress_teacher_summary] leaderboard fresh', {
         className,
         timeframe,
@@ -447,7 +536,8 @@ exports.handler = async (event) => {
         attemptsMs,
         sessionsMs,
         totalMs: Date.now() - timingStart,
-        truncated
+        truncated,
+        cacheTTL: ttl
       });
       return json(200, { success: true, ...payload });
     }
@@ -479,6 +569,10 @@ exports.handler = async (event) => {
       const profileMs = Date.now() - profileStart;
       if (pErr || !prof) return json(404, { success: false, error: 'Student not found' });
 
+      // Try daily snapshot first (class filter optional)
+      const { byUser: dailyDetailStats } = await loadDailyStats(admin, [userId], prof.class, timeframe);
+      const dailyDetail = dailyDetailStats.get(userId) || null;
+
       // Attempts aggregate
       const studentAttemptsQuery = () => timeframeFilter(
         admin
@@ -503,6 +597,13 @@ exports.handler = async (event) => {
         let o = byMode.get(m); if (!o) { o = { total: 0, correct: 0 }; byMode.set(m, o); }
         o.total += 1; if (a.is_correct) o.correct += 1;
       }
+      // If daily snapshot exists, override aggregates with the precomputed values for speed/consistency
+      if (dailyDetail) {
+        total = dailyDetail.attempts || total;
+        correct = dailyDetail.correct || correct;
+        points = dailyDetail.points || points;
+      }
+
       const accuracy = total ? Math.round((correct / total) * 100) : 0;
       const modeBreakdown = Array.from(byMode.entries()).map(([mode, v]) => ({ mode, total: v.total, correct: v.correct, accuracy: v.total ? Math.round((v.correct/v.total)*100) : 0 })).sort((a,b)=> b.total - a.total);
 
@@ -550,6 +651,8 @@ exports.handler = async (event) => {
       }
       console.log(`[student_details] Processed ${sessionsCount} sessions into ${lists.size} list-mode combinations`);
   const totalStars = Array.from(bestStars.values()).reduce((sum, val) => sum + val, 0);
+  const totalStarsFinal = dailyDetail ? (dailyDetail.stars || totalStars) : totalStars;
+  const sessionsCountFinal = dailyDetail ? (dailyDetail.sessions || sessionsCount) : sessionsCount;
   const listsPlayedAll = Array.from(lists.values()).sort((a,b)=> (b.count - a.count) || ((b.last_played||'').localeCompare(a.last_played||'')));
   const listsPlayed = listsPlayedAll;
 
@@ -561,15 +664,17 @@ exports.handler = async (event) => {
       const payload = {
         student: { id: prof.id, name: prof.name || prof.username, class: prof.class },
           timeframe,
-          totals: { attempts: total, correct, accuracy, points, stars: totalStars },
-        sessions: { count: sessionsCount, truncated: sessionsTruncated },
+          totals: { attempts: total, correct, accuracy, points, stars: totalStarsFinal },
+        sessions: { count: sessionsCountFinal, truncated: sessionsTruncated },
         modes: modeBreakdown,
         lists: listsPlayed,
         recent: recentSessions,
         truncated: studentAttemptsTruncated,
         cached_at: new Date().toISOString()
       };
-      await redisCache.setJson(cacheKey, payload, STUDENT_DETAILS_TTL_SECONDS);
+      // Use longer TTL for "all time" queries
+      const detailsTTL = timeframe === 'all' ? STUDENT_DETAILS_ALL_TTL_SECONDS : STUDENT_DETAILS_TTL_SECONDS;
+      await redisCache.setJson(cacheKey, payload, detailsTTL);
       console.log('[progress_teacher_summary] student_details fresh', {
         userId,
         timeframe,
@@ -579,7 +684,8 @@ exports.handler = async (event) => {
         attemptsMs,
         sessionsMs,
         totalMs: Date.now() - timingStart,
-        truncated: Boolean(studentAttemptsTruncated || sessionsTruncated)
+        truncated: Boolean(studentAttemptsTruncated || sessionsTruncated),
+        cacheTTL: detailsTTL
       });
       return json(200, { success: true, ...payload });
     }

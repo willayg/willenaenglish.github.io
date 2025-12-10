@@ -5,8 +5,12 @@ import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonWantWants(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
-  const root = document.getElementById('gameArea');
-  if (!root) return;
+  let root = document.getElementById('gameArea');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'gameArea';
+    document.body.appendChild(root);
+  }
 
   ensureBaseStyles();
   ensureWantWantsStyles();
@@ -184,7 +188,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     renderCard(subjectSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -294,7 +298,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     renderCard('singular', false);
 
     // Next Example button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -673,9 +677,9 @@ function ensureBaseStyles() {
     #gameArea .lesson-step.enter{opacity:1;transform:translateY(0)}
     #gameArea .lesson-body{text-align:center;font-size:clamp(1.02rem,3.3vmin,1.22rem);line-height:1.45;color:#27323a}
     #gameArea .lesson-nav{margin-top:auto;display:flex;gap:16px;align-items:center;justify-content:center;width:100%}
-    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:transparent;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(33,181,192,0.15);transition:transform .15s ease, box-shadow .15s ease}
-    #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.25);background:rgba(33,181,192,0.08)}
-    #gameArea .lesson-btn.primary{background:transparent;color:#ff6fb0;border-color:#21b3be}
+    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(33,181,192,0.12);transition:transform .15s ease, box-shadow .15s ease;font-family:'Poppins','Noto Sans KR','Nanum Gothic',system-ui,Arial,sans-serif}
+    #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.18)}
+    #gameArea .lesson-btn.primary{background:#21b3be;color:#fff;border-color:#21b3be}
   #gameArea .amareis-subject-row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;width:100%;margin:24px 0 18px}
   #gameArea .amareis-subject-row button{padding:12px 18px;border:2px solid #93cbcf;background:#fff;color:#19777e;border-radius:12px;font-weight:700;cursor:pointer;transition:all .15s ease}
     #gameArea .amareis-subject-row button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(33,179,190,0.15)}
@@ -691,10 +695,10 @@ function ensureBaseStyles() {
   @media (min-width:720px){#gameArea .amareis-buckets.buckets-two{grid-template-columns:1fr 1fr}}
   #gameArea .amareis-buckets .bucket-pool{grid-column:1 / -1}
   @media (min-width:720px){#gameArea .amareis-buckets .bucket-pool{grid-column:1 / span 2}}
-  #gameArea .amareis-bucket{border:2px dashed #b0e2e4;border-radius:16px;background:linear-gradient(180deg,#fbffff 0%,#ffffff 100%);padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  #gameArea .amareis-bucket{border:2px dashed #b0e2e4;border-radius:16px;background:linear-gradient(180deg,#fbffff 0%,#ffffff 100%);padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(0,0,0,.05);min-height:140px}
   #gameArea .amareis-bucket h4{margin:0;font-size:1.05rem;color:#19777e;font-weight:800;text-transform:capitalize}
-  #gameArea .amareis-bucket .bucket-body{display:flex;flex-wrap:wrap;gap:8px;cursor:pointer;align-items:flex-start;align-content:flex-start}
-  #gameArea .chip{user-select:none;border:2px solid #93cbcf;background:#ffffff;color:#19777e;border-radius:12px;padding:8px 14px;font-weight:700;cursor:pointer;text-align:center;line-height:1.2;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .12s ease, box-shadow .12s ease}
+  #gameArea .amareis-bucket .bucket-body{display:flex;flex-wrap:wrap;gap:8px;cursor:pointer;align-items:flex-start;align-content:flex-start;min-height:88px;max-height:260px;overflow:auto;padding:6px}
+  #gameArea .chip{user-select:none;border:2px solid #93cbcf;background:#ffffff;color:#19777e;border-radius:12px;padding:8px 14px;font-weight:700;cursor:pointer;text-align:center;line-height:1.2;white-space:normal;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .12s ease, box-shadow .12s ease;max-width:100%;word-break:break-word}
     #gameArea .chip:hover{transform:scale(1.04);box-shadow:0 6px 16px rgba(0,0,0,.12)}
     #gameArea .chip.selected{outline:3px solid #21b3be;border-color:#21b3be;background:#e6f7f8}
     #gameArea .chip.bad{border-color:#f44336;color:#c62828;background:#ffebee}
