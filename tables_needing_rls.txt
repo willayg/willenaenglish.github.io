@@ -1,0 +1,163 @@
+auth_password_audit
+
+create table public.auth_password_audit (
+  id bigserial not null,
+  user_id bigint null,
+  actor text null,
+  source text not null,
+  ip text null,
+  action text not null,
+  success boolean not null default false,
+  timestamp timestamp with time zone not null default now(),
+  note text null,
+  user_key text null,
+  constraint auth_password_audit_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create index IF not exists auth_password_audit_user_id_idx on public.auth_password_audit using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists auth_password_audit_timestamp_idx on public.auth_password_audit using btree ("timestamp") TABLESPACE pg_default;
+
+create index IF not exists auth_password_audit_user_key_idx on public.auth_password_audit using btree (user_key) TABLESPACE pg_default;
+
+
+class_visibiliy
+
+create table public.auth_password_audit (
+  id bigserial not null,
+  user_id bigint null,
+  actor text null,
+  source text not null,
+  ip text null,
+  action text not null,
+  success boolean not null default false,
+  timestamp timestamp with time zone not null default now(),
+  note text null,
+  user_key text null,
+  constraint auth_password_audit_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create index IF not exists auth_password_audit_user_id_idx on public.auth_password_audit using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists auth_password_audit_timestamp_idx on public.auth_password_audit using btree ("timestamp") TABLESPACE pg_default;
+
+create index IF not exists auth_password_audit_user_key_idx on public.auth_password_audit using btree (user_key) TABLESPACE pg_default;
+
+homework_assignments
+
+create table public.homework_assignments (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  created_by uuid not null,
+  class text not null,
+  title text not null,
+  description text null,
+  source_type text not null default 'wordlist'::text,
+  list_key text not null,
+  list_title text not null,
+  list_meta jsonb null,
+  start_at timestamp with time zone not null default now(),
+  due_at timestamp with time zone null,
+  status text not null default 'active'::text,
+  ended_at timestamp with time zone null,
+  goal_type text null,
+  goal_value numeric(5, 2) null,
+  allow_manual_complete boolean not null default true,
+  active boolean null default true,
+  constraint homework_assignments_pkey primary key (id),
+  constraint homework_assignments_created_by_fkey foreign KEY (created_by) references profiles (id) on delete RESTRICT,
+  constraint homework_assignments_source_type_check check ((source_type = 'wordlist'::text)),
+  constraint homework_assignments_status_check check (
+    (
+      status = any (
+        array['active'::text, 'ended'::text, 'archived'::text]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_class on public.homework_assignments using btree (class) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_created_by on public.homework_assignments using btree (created_by) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_status on public.homework_assignments using btree (status) TABLESPACE pg_default;
+
+
+leaderboard_cache
+
+create table public.homework_assignments (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  created_by uuid not null,
+  class text not null,
+  title text not null,
+  description text null,
+  source_type text not null default 'wordlist'::text,
+  list_key text not null,
+  list_title text not null,
+  list_meta jsonb null,
+  start_at timestamp with time zone not null default now(),
+  due_at timestamp with time zone null,
+  status text not null default 'active'::text,
+  ended_at timestamp with time zone null,
+  goal_type text null,
+  goal_value numeric(5, 2) null,
+  allow_manual_complete boolean not null default true,
+  active boolean null default true,
+  constraint homework_assignments_pkey primary key (id),
+  constraint homework_assignments_created_by_fkey foreign KEY (created_by) references profiles (id) on delete RESTRICT,
+  constraint homework_assignments_source_type_check check ((source_type = 'wordlist'::text)),
+  constraint homework_assignments_status_check check (
+    (
+      status = any (
+        array['active'::text, 'ended'::text, 'archived'::text]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_class on public.homework_assignments using btree (class) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_created_by on public.homework_assignments using btree (created_by) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_status on public.homework_assignments using btree (status) TABLESPACE pg_default;
+
+
+user_daily_plays
+
+create table public.homework_assignments (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  created_by uuid not null,
+  class text not null,
+  title text not null,
+  description text null,
+  source_type text not null default 'wordlist'::text,
+  list_key text not null,
+  list_title text not null,
+  list_meta jsonb null,
+  start_at timestamp with time zone not null default now(),
+  due_at timestamp with time zone null,
+  status text not null default 'active'::text,
+  ended_at timestamp with time zone null,
+  goal_type text null,
+  goal_value numeric(5, 2) null,
+  allow_manual_complete boolean not null default true,
+  active boolean null default true,
+  constraint homework_assignments_pkey primary key (id),
+  constraint homework_assignments_created_by_fkey foreign KEY (created_by) references profiles (id) on delete RESTRICT,
+  constraint homework_assignments_source_type_check check ((source_type = 'wordlist'::text)),
+  constraint homework_assignments_status_check check (
+    (
+      status = any (
+        array['active'::text, 'ended'::text, 'archived'::text]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_class on public.homework_assignments using btree (class) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_created_by on public.homework_assignments using btree (created_by) TABLESPACE pg_default;
+
+create index IF not exists idx_hw_assignments_status on public.homework_assignments using btree (status) TABLESPACE pg_default;

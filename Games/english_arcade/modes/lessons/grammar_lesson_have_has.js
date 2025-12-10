@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ? Have vs. Has
+﻿// Grammar Lesson Runner ? Have vs. Has
 // Lightweight lesson that explains verb agreement for possession.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -101,10 +101,10 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const heading = document.createElement('div');
     heading.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    heading.textContent = (lang === 'ko') ? '�� �����ϼ���' : 'Choose your language';
+    heading.textContent = (lang === 'ko') ? '언어를 선택하세요' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('�ѱ���');
+    const koBtn = buildLanguageButton('한국어');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(heading);
     wrap.appendChild(enBtn);
@@ -119,7 +119,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "??  <b>have</b> (), <b>has</b> () ?. ?  ?   ? !"
+      ? "동사 <b>have</b> 와 <b>has</b> 는 주어에 따라 바뀝니다. 각 버튼을 눌러 어떤 것이 맞는지 확인하세요!"
       : "The verb <b>have</b> or <b>has</b> changes with the subject. Tap each button to see which one fits!";
 
     const subjectRow = document.createElement('div');
@@ -184,7 +184,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     renderCard(subjectSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? ' ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예제' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -206,7 +206,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b> / </b> <b>has</b> ()<br/><b> / </b> <b>have</b> ()<br/>?   ? !"
+      ? "<b>한 사람/사물</b>는 <b>has</b> 를 사용합니다<br/><b>두 개 이상</b>은 <b>have</b> 를 사용합니다<br/>각 버튼을 눌러 예시를 확인하세요!"
       : "<b>One person/thing</b> uses <b>has</b><br/><b>More than one</b> uses <b>have</b><br/>Tap each button to see examples!";
 
     const typeRow = document.createElement('div');
@@ -229,13 +229,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const exampleSets = [
       {
         id: 'singular',
-        label: lang === 'ko' ? '  (has)\n??' : 'One (has)\n??',
+          label: lang === 'ko' ? '하나 (has)' : 'One (has)',
         examples: nounHasExamples.length ? nounHasExamples : hasList,
         pointer: 0,
       },
       {
         id: 'plural',
-        label: lang === 'ko' ? '  (have)\n????' : 'Many (have)\n????',
+          label: lang === 'ko' ? '여러 개 (have)' : 'Many (have)',
         examples: nounHaveExamples.length ? nounHaveExamples : haveList,
         pointer: 0,
       }
@@ -271,7 +271,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
         <div class="verb-label">${typeId === 'singular' ? 'HAS' : 'HAVE'}</div>
         <div class="verb-emoji">${example.emoji}</div>
         <div class="verb-sentence">${escapeHtml(example.exampleSentence)}</div>
-        <div class="verb-tip">${escapeHtml(lang === 'ko' ? (typeId === 'singular' ? ' / ? has' : ' / ? have') : (typeId === 'singular' ? 'One person or thing uses has' : 'More than one uses have'))}</div>
+        <div class="verb-tip">${escapeHtml(lang === 'ko' ? (typeId === 'singular' ? '한 사람/사물은 has 를 사용합니다' : '두 개 이상은 have 를 사용합니다') : (typeId === 'singular' ? 'One person or thing uses has' : 'More than one uses have'))}</div>
       `;
     };
 
@@ -294,7 +294,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     renderCard('singular', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? ' ' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예제' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -321,7 +321,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? ' ' : 'Sentence Pool');
+    const pool = makeBucket('pool', lang === 'ko' ? '문장 모음' : 'Sentence Pool');
     const haveBucket = makeBucket('have', 'have');
     const hasBucket = makeBucket('has', 'has');
     [pool.wrap, haveBucket.wrap, hasBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
@@ -367,13 +367,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? ' ?' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -414,11 +414,11 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '??! have/has  .' : 'Great! You used have/has correctly.';
+        message.textContent = lang === 'ko' ? '잘했어요! have/has 를 올바르게 사용했어요.' : 'Great! You used have/has correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? ' ?' : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계' : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -429,7 +429,7 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '  ? ? .' : 'Try again! Fix the red subjects.';
+        message.textContent = lang === 'ko' ? '다시 해보세요! 빨간 주어를 수정하세요.' : 'Try again! Fix the red subjects.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -441,13 +441,13 @@ export async function runGrammarLessonHaveHas(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e"> have/has ?   ?!</div><div class="stars">?????</div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use have or has!</div><div class="stars">?????</div>';
+      ? '<div style="font-weight:800;color:#19777e">이제 언제 have와 has를 쓰는지 알겠어요!</div><div class="stars">⭐️⭐️⭐️</div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use have or has!</div><div class="stars">⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? ' ?' : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -568,8 +568,8 @@ function buildExampleColumn(type, list, lang) {
   column.appendChild(heading);
 
   const subjects = (type === 'have')
-    ? (lang === 'ko' ? 'I / you / we / they /  ' : 'I / you / we / they / plural nouns')
-    : (lang === 'ko' ? 'he / she / it / ? ' : 'he / she / it / singular nouns');
+    ? (lang === 'ko' ? 'I / you / we / they / 복수 명사' : 'I / you / we / they / plural nouns')
+    : (lang === 'ko' ? 'he / she / it / 단수 명사' : 'he / she / it / singular nouns');
   const subjectLine = document.createElement('div');
   subjectLine.style.cssText = 'font-size:.95rem;color:#6b7c87;text-align:center;';
   subjectLine.textContent = subjects;
@@ -646,9 +646,9 @@ function buildSubjectSets(haveList, hasList) {
       verb: 'have',
       emoji: haveExample.emoji || '??',
       sentenceEn: haveExample.exampleSentence || 'I have two pencils.',
-      sentenceKo: haveExample.exampleSentenceKo || '   ??  ?.',
+      sentenceKo: haveExample.exampleSentenceKo || '나는 연필 두 자루가 있어요.',
       tipEn: "Use 'have' with I, you, we, they, or plural nouns.",
-      tipKo: "I, you, we, they ?  �� 'have' .",
+      tipKo: "I, you, we, they 또는 복수 명사에는 'have' 를 사용합니다.",
       label: 'I / You / We / They'
     },
     {
@@ -656,9 +656,9 @@ function buildSubjectSets(haveList, hasList) {
       verb: 'has',
       emoji: hasExample.emoji || '??',
       sentenceEn: hasExample.exampleSentence || 'She has a red apple.',
-      sentenceKo: hasExample.exampleSentenceKo || '?    ?.',
+      sentenceKo: hasExample.exampleSentenceKo || '그녀는 빨간 사과를 가지고 있어요.',
       tipEn: "Use 'has' with he, she, it, or one person or thing.",
-      tipKo: "he, she, it ?  / ? 'has' .",
+      tipKo: "he, she, it 또는 단수 명사에는 'has' 를 사용합니다.",
       label: 'He / She / It'
     }
   ];
@@ -708,9 +708,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -731,7 +731,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = [' ', '1?', '2?', '3?', '?'];
+  const stepsKo = ['언어', '1단계', '2단계', '3단계', '완료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -741,15 +741,15 @@ function shuffle(list) {
 }
 
 const fallbackHave = [
-  { id: 'fb_have_i', word: 'I', prompt: 'I ___ two pencils.', exampleSentence: 'I have two pencils.', exampleSentenceKo: '   ??  ?.', emoji: '??' },
-  { id: 'fb_have_we', word: 'We', prompt: 'We ___ music class.', exampleSentence: 'We have music class.', exampleSentenceKo: '�C   ?.', emoji: '??' },
-  { id: 'fb_have_they', word: 'They', prompt: 'They ___ a big house.', exampleSentence: 'They have a big house.', exampleSentenceKo: '? ?  ?.', emoji: '??' },
-  { id: 'fb_have_parents', word: 'My parents', prompt: 'My parents ___ a car.', exampleSentence: 'My parents have a car.', exampleSentenceKo: '�C ��   ?.', emoji: '??' }
+  { id: 'fb_have_i', word: 'I', prompt: 'I ___ two pencils.', exampleSentence: 'I have two pencils.', exampleSentenceKo: '나는 연필 두 자루가 있어요.', emoji: '✏️' },
+  { id: 'fb_have_we', word: 'We', prompt: 'We ___ music class.', exampleSentence: 'We have music class.', exampleSentenceKo: '우리는 음악 수업이 있어요.', emoji: '🎶' },
+  { id: 'fb_have_they', word: 'They', prompt: 'They ___ a big house.', exampleSentence: 'They have a big house.', exampleSentenceKo: '그들은 큰 집을 가지고 있어요.', emoji: '🏠' },
+  { id: 'fb_have_parents', word: 'My parents', prompt: 'My parents ___ a car.', exampleSentence: 'My parents have a car.', exampleSentenceKo: '우리 부모님은 차를 가지고 계세요.', emoji: '🚗' }
 ];
 
 const fallbackHas = [
-  { id: 'fb_has_he', word: 'He', prompt: 'He ___ a bike.', exampleSentence: 'He has a bike.', exampleSentenceKo: '? ?  ?.', emoji: '??' },
-  { id: 'fb_has_she', word: 'She', prompt: 'She ___ long hair.', exampleSentence: 'She has long hair.', exampleSentenceKo: '?  ?  ?.', emoji: '????' },
-  { id: 'fb_has_it', word: 'It', prompt: 'It ___ four legs.', exampleSentence: 'It has four legs.', exampleSentenceKo: '? ?   ?.', emoji: '??' },
-  { id: 'fb_has_friend', word: 'My friend', prompt: 'My friend ___ a pencil case.', exampleSentence: 'My friend has a pencil case.', exampleSentenceKo: ' ?  ?.', emoji: '???' }
+  { id: 'fb_has_he', word: 'He', prompt: 'He ___ a bike.', exampleSentence: 'He has a bike.', exampleSentenceKo: '그는 자전거를 가지고 있어요.', emoji: '🚲' },
+  { id: 'fb_has_she', word: 'She', prompt: 'She ___ long hair.', exampleSentence: 'She has long hair.', exampleSentenceKo: '그녀는 긴 머리를 가지고 있어요.', emoji: '💁‍♀️' },
+  { id: 'fb_has_it', word: 'It', prompt: 'It ___ four legs.', exampleSentence: 'It has four legs.', exampleSentenceKo: '그것은 다리가 네 개 있어요.', emoji: '🐶' },
+  { id: 'fb_has_friend', word: 'My friend', prompt: 'My friend ___ a pencil case.', exampleSentence: 'My friend has a pencil case.', exampleSentenceKo: '내 친구는 필통을 가지고 있어요.', emoji: '🖊️' }
 ];

@@ -1234,11 +1234,13 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
     const actionButton = a.active 
       ? `<button type="button" class="ghost hw-end-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem;">End</button>`
       : `<button type="button" class="ghost hw-delete-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem; color: #dc2626; border-color: #dc2626;">Delete</button>`;
+    const linkButton = `<button type="button" class="ghost hw-link-btn" data-assignment-id="${a.id}" title="Retroactively link sessions that may have been played without homework tracking" style="flex: 1; padding: 4px 6px; font-size: 0.65rem; color: #6366f1; border-color: #6366f1;">🔗 Link</button>`;
     return `<div class="hw-assignment-card ${endedClass}" data-assignment-id="${a.id}" style="padding:10px 12px; border: 2px solid #22d3ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04); cursor: pointer; transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;">
       <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937; margin-bottom: 6px;">${a.title || 'Untitled'}</div>
       <div style="font-size: 0.7rem; color: #999;">Due: ${dueDate ? dueDate.toLocaleDateString() : '—'} <span style="margin-left:8px; color:#19777e; font-weight:500;">${countdown}</span></div>
       <div style="display: flex; gap: 4px; margin-top: 8px;">
         ${actionButton}
+        ${linkButton}
       </div>
     </div>`;
   }).join('');
@@ -1247,7 +1249,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
   assignmentList.querySelectorAll('.hw-assignment-card').forEach(card => {
     card.addEventListener('click', async (e) => {
       console.log('Assignment card clicked, target:', e.target.className, 'id:', card.getAttribute('data-assignment-id'));
-      if (e.target.classList.contains('hw-end-btn')) return;
+      if (e.target.classList.contains('hw-end-btn') || e.target.classList.contains('hw-link-btn') || e.target.classList.contains('hw-delete-btn')) return;
       const id = card.getAttribute('data-assignment-id');
       console.log('Processing click for assignment', id);
       // Persist selection: clear other selected cards, mark this one
@@ -1351,6 +1353,64 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
         loadHomeworkForClass(className, displayName);
       } catch (err) { 
         alert('Error deleting assignment: '+ err.message); 
+      }
+    });
+  });
+
+  // Link Sessions button - retroactively links sessions played without homework tokens
+  assignmentList.querySelectorAll('.hw-link-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-assignment-id');
+      if (!id) return;
+      
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ Linking...';
+      btn.disabled = true;
+      
+      try {
+        const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=link_sessions&assignment_id=${encodeURIComponent(id)}`);
+        const js = await resp.json().catch(() => ({}));
+        if (!resp.ok || !js.success) throw new Error(js.error || 'Failed to link sessions');
+        
+        const linked = js.linked || 0;
+        const alreadyLinked = js.already_linked || 0;
+        const totalFound = js.total_found || 0;
+        
+        if (linked > 0) {
+          btn.textContent = `✅ ${linked} linked!`;
+          btn.style.color = '#22c55e';
+          btn.style.borderColor = '#22c55e';
+          // Refresh the progress view to show updated data
+          setTimeout(() => {
+            loadHomeworkStudentProgress(className, id);
+          }, 500);
+        } else if (totalFound > 0 && alreadyLinked === totalFound) {
+          btn.textContent = '✅ All linked';
+          btn.style.color = '#22c55e';
+          btn.style.borderColor = '#22c55e';
+        } else {
+          btn.textContent = 'No sessions found';
+        }
+        
+        // Reset button after a delay
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.color = '#6366f1';
+          btn.style.borderColor = '#6366f1';
+          btn.disabled = false;
+        }, 3000);
+      } catch (err) {
+        btn.textContent = '❌ Error';
+        btn.style.color = '#dc2626';
+        btn.style.borderColor = '#dc2626';
+        console.error('Link sessions error:', err);
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.color = '#6366f1';
+          btn.style.borderColor = '#6366f1';
+          btn.disabled = false;
+        }, 2000);
       }
     });
   });

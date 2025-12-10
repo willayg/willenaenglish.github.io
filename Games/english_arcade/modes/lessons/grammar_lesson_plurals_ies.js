@@ -83,20 +83,18 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
     const highlight = document.createElement('div');
     highlight.className = 'plurals-ies-highlight-card';
     highlight.innerHTML = `
-      <div class="card-heading">${lang === 'ko' ? '?��?��Ģ???�����!' : 'See how the rule works!'}</div>
-      <div class="card-rule">${lang === 'ko' ? "?�� + y ??<strong>y?ies?�ٲ�??/strong>" : "Consonant + y ??change y to <strong>ies</strong>"}</div>
+      <div class="card-heading">${lang === 'ko' ? '규칙을 확인해요!' : 'See how the rule works!'}</div>
+      <div class="card-rule">${lang === 'ko' ? "자음 + y → <strong>y를 ies로 바꿔요</strong>" : "Consonant + y → change y to <strong>ies</strong>"}</div>
       <div class="card-row">
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '?�� (1?' : 'Singular (1)'}</div>
-            <div class="card-label">${lang === 'ko' ? '단수 (1개)' : 'Singular (1)'}</div>
+          <div class="card-label">${lang === 'ko' ? '단수 (1개)' : 'Singular (1)'}</div>
           <div class="card-emoji">${escapeHtml(singularExample.emoji || '?')}</div>
           <div class="card-word">${escapeHtml(singularExample.word || 'baby')}</div>
           <div class="card-sentence">${escapeHtml(singularExample.exampleSentence || 'One baby is sleeping.')}</div>
           ${singularExample.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(singularExample.exampleSentenceKo)}</div>` : ''}
         </div>
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '���� (?�� ?' : 'Plural (many)'}</div>
-            <div class="card-label">${lang === 'ko' ? '복수 (여러개)' : 'Plural (many)'}</div>
+          <div class="card-label">${lang === 'ko' ? '복수 (여러개)' : 'Plural (many)'}</div>
             <div class="card-tip">${lang === 'ko' ? "y를 찾아 ies로 바꿔요!" : "Find the y, then change it to ies!"}</div>
           <div class="card-emoji">${escapeHtml(pluralExample?.emoji || '??')}</div>
           <div class="card-word">${escapeHtml(pluralExample?.word || 'babies')}</div>
@@ -104,7 +102,7 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
           ${pluralExample?.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(pluralExample.exampleSentenceKo)}</div>` : ''}
         </div>
       </div>
-      <div class="card-tip">${lang === 'ko' ? "y???ġ?ã��, 'ies'?�ٲ�??" : "Find the y, then change it to ies!"}</div>
+      <div class="card-tip">${lang === 'ko' ? "y를 찾아 'ies'로 바꿔요!" : "Find the y, then change it to ies!"}</div>
     `;
     stepEl.appendChild(highlight);
 
@@ -392,7 +390,7 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
       #gameArea .lesson-step.enter{opacity:1;transform:translateY(0)}
       #gameArea .lesson-body{text-align:center;font-size:clamp(1.02rem,3.3vmin,1.22rem);line-height:1.45;color:#27323a}
       #gameArea .lesson-nav{margin-top:auto;display:flex;gap:10px;align-items:center;justify-content:center;width:100%}
-      #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#21b3be;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease}
+      #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease;font-family:'Poppins', Arial, sans-serif}
       #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.18)}
       #gameArea .lesson-btn.primary{background:#21b3be;color:#fff;border-color:#21b3be}
       #gameArea .buckets{display:grid;gap:14px;margin-top:12px;width:100%;max-width:820px}
@@ -468,8 +466,8 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
     const titleWrap = document.createElement('div');
     titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
     titleWrap.textContent = kind === 'singular'
-      ? (currentLang === 'ko' ? '?�� (?��)' : 'Singular (one)')
-      : (currentLang === 'ko' ? "���� (y?ies)" : "Plural (y?ies)");
+      ? (currentLang === 'ko' ? '단수 (1개)' : 'Singular (one)')
+      : (currentLang === 'ko' ? '복수 (y → ies)' : 'Plural (y → ies)');
     col.appendChild(titleWrap);
 
     list.slice(0, 6).forEach((item) => {
@@ -518,8 +516,9 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
     btn.className = 'lesson-btn primary';
     btn.textContent = label;
     btn.style.border = '2px solid #21b3be';
-    btn.style.background = '#fff';
-    btn.style.color = '#ff6fb0';
+    btn.style.background = '#21b3be';
+    btn.style.color = '#ffffff';
+    btn.style.fontFamily = "'Poppins', Arial, sans-serif";
     return btn;
   }
 
@@ -529,7 +528,8 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
     btn.textContent = label;
     btn.style.border = '2px solid #21b3be';
     btn.style.background = '#fff';
-    btn.style.color = '#21b3be';
+    btn.style.color = '#ff6fb0';
+    btn.style.fontFamily = "'Poppins', Arial, sans-serif";
     return btn;
   }
 
@@ -546,9 +546,9 @@ export async function runGrammarLessonPluralsIes(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '15px';
-    const back = buildSecondaryButton(currentLang === 'ko' ? '?��' : 'Back');
+    const back = buildSecondaryButton(currentLang === 'ko' ? '뒤로' : 'Back');
     back.onclick = () => { sfx?.('click'); onBack(); };
-    const next = buildPrimaryButton(currentLang === 'ko' ? '?��' : 'Next');
+    const next = buildPrimaryButton(currentLang === 'ko' ? '다음' : 'Next');
     next.onclick = () => { onNext(); };
     nav.appendChild(back);
     nav.appendChild(next);

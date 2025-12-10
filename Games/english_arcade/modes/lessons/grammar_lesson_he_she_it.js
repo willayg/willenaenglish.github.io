@@ -513,11 +513,18 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
         window.dispatchEvent(ev);
       } catch {}
     }
+  }
+
+  function nextStep() {
+    stepIndex = Math.min(stepIndex + 1, 4);
+    render();
+  }
 
   function prevStep() {
     stepIndex = Math.max(stepIndex - 1, 0);
     render();
   }
+
 }
 
 function ensureBaseStyles() {
@@ -752,5 +759,5 @@ const fallbackIt = [
   { id: 'fb_it_weather', word: 'it', exampleSentence: 'It is sunny today.', exampleSentenceKo: '오늘은 맑아요.', emoji: '☀️' },
   { id: 'fb_it_phone', word: 'it', exampleSentence: 'It is my phone.', exampleSentenceKo: '그것은 제 전화예요.', emoji: '📱' }
 ];
-}
+
 
