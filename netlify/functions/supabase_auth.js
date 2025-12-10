@@ -187,7 +187,12 @@ exports.handler = async (event) => {
 
     // Login
     if (action === 'login' && event.httpMethod === 'POST') {
-      const body = JSON.parse(event.body || '{}');
+      let body;
+      try {
+        body = JSON.parse(event.body || '{}');
+      } catch (parseErr) {
+        return respond(event, 400, { success: false, error: 'Invalid JSON body' });
+      }
       const { email, password } = body;
       if (!email || !password) return respond(event, 400, { success: false, error: 'Missing credentials' });
 
@@ -202,7 +207,7 @@ exports.handler = async (event) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
         body: JSON.stringify({ email, password }),
-      });
+      }).catch(fetchErr => ({ ok: false, fetchError: fetchErr }));
 
       const [profileResult, authResp] = await Promise.all([
         profilePromise.then(r => ({ data: r.data, error: r.error })).catch(e => ({ error: e })),
@@ -216,8 +221,20 @@ exports.handler = async (event) => {
         return respond(event, 401, { success: false, error: 'User not found or not approved' });
       }
 
+      // Check if fetch itself failed (network error)
+      if (authResp.fetchError) {
+        console.error('[supabase_auth] fetch to Supabase auth failed:', authResp.fetchError);
+        return respond(event, 500, { success: false, error: 'Auth service unavailable' });
+      }
+
       // Process auth response
-      const authData = await authResp.json();
+      let authData;
+      try {
+        authData = await authResp.json();
+      } catch (jsonErr) {
+        console.error('[supabase_auth] failed to parse auth response:', jsonErr);
+        return respond(event, 500, { success: false, error: 'Auth service error' });
+      }
       if (!authResp.ok || !authData.access_token) {
         return respond(event, 401, { success: false, error: (authData && authData.error_description) || 'Invalid credentials' });
       }
