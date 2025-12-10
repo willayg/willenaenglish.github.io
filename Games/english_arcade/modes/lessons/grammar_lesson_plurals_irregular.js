@@ -1,5 +1,5 @@
-// Grammar Lesson Runner ??Irregular Plurals
-// Teaches kids about irregular plural forms like mouse?�mice, person?�people, child?�children.
+﻿// Grammar Lesson Runner ??Irregular Plurals
+// Teaches kids about irregular plural forms like mouse?�mice, person?�people, child?�children.
 
 import { startSession, endSession } from '../../../../students/records.js';
 
@@ -56,10 +56,10 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = lang === 'ko' ? '?�어�??�택?�세?? : 'Choose your language';
+    title.textContent = lang === 'ko' ? '언어를 선택하세요' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('?�국??);
+    const koBtn = buildLanguageButton('한국어');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(title);
     wrap.appendChild(enBtn);
@@ -73,7 +73,7 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?��? ?�어?��? 복수가 ?????�전???�라?�요. ?�런 ?�어?�을 불규�?복수?�고 ?�요!"
+      ? "?��? ?�어?��? 복수가 ?????�전???�라?�요. ?�런 ?�어?�을 불규�?복수?�고 ?�요!"
       : "Some words change completely when they become plural. These are called irregular plurals!";
     stepEl.appendChild(intro);
 
@@ -83,25 +83,25 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     const highlight = document.createElement('div');
     highlight.className = 'plurals-irregular-highlight-card';
     highlight.innerHTML = `
-      <div class="card-heading">${lang === 'ko' ? '?�시�?규칙???�펴봐요!' : 'See how irregular plurals work!'}</div>
-      <div class="card-rule">${lang === 'ko' ? "<strong>?�전???�르�?/strong> 변?�요" : "The word <strong>changes completely</strong>"}</div>
+      <div class="card-heading">${lang === 'ko' ? '?�시�?규칙???�펴봐요!' : 'See how irregular plurals work!'}</div>
+      <div class="card-rule">${lang === 'ko' ? "<strong>?�전???�르�?/strong> 변?�요" : "The word <strong>changes completely</strong>"}</div>
       <div class="card-row">
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '?�수 (1�?' : 'Singular (1)'}</div>
-          <div class="card-emoji">${escapeHtml(singularExample.emoji || '?��')}</div>
+          <div class="card-label">${lang === 'ko' ? '?�수 (1�?' : 'Singular (1)'}</div>
+          <div class="card-emoji">${escapeHtml(singularExample.emoji || '?��')}</div>
           <div class="card-word">${escapeHtml(singularExample.word || 'child')}</div>
           <div class="card-sentence">${escapeHtml(singularExample.exampleSentence || 'One child is playing.')}</div>
           ${singularExample.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(singularExample.exampleSentenceKo)}</div>` : ''}
         </div>
         <div class="card-side">
-          <div class="card-label">${lang === 'ko' ? '복수 (?�러 �?' : 'Plural (many)'}</div>
-          <div class="card-emoji">${escapeHtml(pluralExample?.emoji || '?��?��')}</div>
+          <div class="card-label">${lang === 'ko' ? '복수 (?�러 �?' : 'Plural (many)'}</div>
+          <div class="card-emoji">${escapeHtml(pluralExample?.emoji || '?��?��')}</div>
           <div class="card-word">${escapeHtml(pluralExample?.word || 'children')}</div>
           <div class="card-sentence">${escapeHtml(pluralExample?.exampleSentence || 'Many children are playing.')}</div>
           ${pluralExample?.exampleSentenceKo ? `<div class="card-sentence card-sentence-ko">${escapeHtml(pluralExample.exampleSentenceKo)}</div>` : ''}
         </div>
       </div>
-      <div class="card-tip">${lang === 'ko' ? "?�어�??�워???�요! 규칙???�어??" : "You have to memorize them! No pattern here."}</div>
+      <div class="card-tip">${lang === 'ko' ? "?�어�??�워???�요! 규칙???�어??" : "You have to memorize them! No pattern here."}</div>
     `;
     stepEl.appendChild(highlight);
 
@@ -115,7 +115,7 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�쪽?� ?�수(?�나), ?�른쪽�? 불규칙하�?변??복수 ?�문?�에?? ?�리 ?�어 ?�어 보세??"
+      ? "?�쪽?� ?�수(?�나), ?�른쪽�? 불규칙하�?변??복수 ?�문?�에?? ?�리 ?�어 ?�어 보세??"
       : "Left shows singular, right shows the irregular plural form. Read them aloud!";
     stepEl.appendChild(intro);
 
@@ -136,15 +136,15 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "?�어�??�러 ?�수 ?�는 복수 바구?�에 ?�어 보세?? 모두 맞히�??�음?�로 �????�어??"
+      ? "?�어�??�러 ?�수 ?�는 복수 바구?�에 ?�어 보세?? 모두 맞히�??�음?�로 �????�어??"
       : "Tap each strip and move it into the singular or plural basket. Get them all correct to continue!";
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '?�어 모음' : 'Word Pool');
-    const bucketSing = makeBucket('singular', lang === 'ko' ? '?�수' : 'Singular');
-    const bucketPlu = makeBucket('plural', lang === 'ko' ? "복수 (불규�?" : "Plural (irregular)");
+    const pool = makeBucket('pool', lang === 'ko' ? '?�어 모음' : 'Word Pool');
+    const bucketSing = makeBucket('singular', lang === 'ko' ? '?�수' : 'Singular');
+    const bucketPlu = makeBucket('plural', lang === 'ko' ? "복수 (불규�?" : "Plural (irregular)");
 
     [pool.wrap, bucketSing.wrap, bucketPlu.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
@@ -184,14 +184,14 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '15px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.onclick = () => { playSFX?.('click'); stepIndex = Math.max(0, stepIndex - 1); render(); };
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -226,11 +226,11 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? "?�벽?�요! 불규�?복수�?모두 찾았?�요." : "Awesome! You spotted every irregular plural.";
+        message.textContent = lang === 'ko' ? "?�벽?�요! 불규�?복수�?모두 찾았?�요." : "Awesome! You spotted every irregular plural.";
         stepEl.insertBefore(message, stepEl.firstChild);
 
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
           continueBtn.onclick = () => { playSFX?.('click'); nextStep(true); };
           nav.appendChild(continueBtn);
         }
@@ -239,7 +239,7 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
+        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -259,13 +259,13 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = lang === 'ko'
-      ? "<div style=\"font-weight:800;color:#19777e\">불규�?복수�?배웠?�요!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>"
-      : "<div style=\"font-weight:800;color:#19777e\">You learned irregular plurals!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>";
+      ? "<div style=\"font-weight:800;color:#19777e\">불규�?복수�?배웠?�요!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>"
+      : "<div style=\"font-weight:800;color:#19777e\">You learned irregular plurals!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>";
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       playSFX?.('click');
       try {
@@ -365,7 +365,7 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
   }
 
   function displayStep(index) {
-    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
+    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
     return steps[index] || '';
   }
 
@@ -435,7 +435,7 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
       word: item.word || '',
       prompt: item.prompt || `${item.word || ''}`,
       article: item.article || 'singular',
-      emoji: item.emoji || '?��',
+      emoji: item.emoji || '?��',
       exampleSentence: item.exampleSentence || '',
       exampleSentenceKo: item.exampleSentenceKo || '',
       explanation: item.explanation || '',
@@ -461,8 +461,8 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     const titleWrap = document.createElement('div');
     titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
     titleWrap.textContent = kind === 'singular'
-      ? (currentLang === 'ko' ? '?�수 (?�나)' : 'Singular (one)')
-      : (currentLang === 'ko' ? "복수 (불규�?" : "Plural (irregular)");
+      ? (currentLang === 'ko' ? '?�수 (?�나)' : 'Singular (one)')
+      : (currentLang === 'ko' ? "복수 (불규�?" : "Plural (irregular)");
     col.appendChild(titleWrap);
 
     list.slice(0, 6).forEach((item) => {
@@ -539,9 +539,9 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '15px';
-    const back = buildSecondaryButton(currentLang === 'ko' ? '?�로' : 'Back');
+    const back = buildSecondaryButton(currentLang === 'ko' ? '?�로' : 'Back');
     back.onclick = () => { sfx?.('click'); onBack(); };
-    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
+    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
     next.onclick = () => { onNext(); };
     nav.appendChild(back);
     nav.appendChild(next);
@@ -566,15 +566,15 @@ export async function runGrammarLessonPluralsIrregular(ctx = {}) {
 }
 
 const fallbackSingular = [
-  { id: 'fb_irr_child', word: 'child', article: 'singular', emoji: '?��', exampleSentence: 'One child is playing.', exampleSentenceKo: '?�이 ??명이 ?��??�어??' },
-  { id: 'fb_irr_person', word: 'person', article: 'singular', emoji: '?��', exampleSentence: 'One person is here.', exampleSentenceKo: '?�람 ??명이 ?�기 ?�어??' },
-  { id: 'fb_irr_mouse', word: 'mouse', article: 'singular', emoji: '?��', exampleSentence: 'One mouse is in the house.', exampleSentenceKo: '�???마리가 집에 ?�어??' },
-  { id: 'fb_irr_man', word: 'man', article: 'singular', emoji: '?��', exampleSentence: 'One man is working.', exampleSentenceKo: '?�자 ??명이 ?�하�??�어??' }
+  { id: 'fb_irr_child', word: 'child', article: 'singular', emoji: '?��', exampleSentence: 'One child is playing.', exampleSentenceKo: '?�이 ??명이 ?��??�어??' },
+  { id: 'fb_irr_person', word: 'person', article: 'singular', emoji: '?��', exampleSentence: 'One person is here.', exampleSentenceKo: '?�람 ??명이 ?�기 ?�어??' },
+  { id: 'fb_irr_mouse', word: 'mouse', article: 'singular', emoji: '?��', exampleSentence: 'One mouse is in the house.', exampleSentenceKo: '�???마리가 집에 ?�어??' },
+  { id: 'fb_irr_man', word: 'man', article: 'singular', emoji: '?��', exampleSentence: 'One man is working.', exampleSentenceKo: '?�자 ??명이 ?�하�??�어??' }
 ];
 
 const fallbackPlural = [
-  { id: 'fb_irr_children', word: 'children', article: 'plural', emoji: '?��?��', exampleSentence: 'Many children are playing.', exampleSentenceKo: '?�이?�이 ?��??�어??' },
-  { id: 'fb_irr_people', word: 'people', article: 'plural', emoji: '?��?��', exampleSentence: 'Many people are here.', exampleSentenceKo: '많�? ?�람?�이 ?�기 ?�어??' },
-  { id: 'fb_irr_mice', word: 'mice', article: 'plural', emoji: '?��?��', exampleSentence: 'Many mice are in the house.', exampleSentenceKo: '쥐들??집에 ?�어??' },
-  { id: 'fb_irr_men', word: 'men', article: 'plural', emoji: '?��?��', exampleSentence: 'Many men are working.', exampleSentenceKo: '?�자?�이 ?�하�??�어??' }
+  { id: 'fb_irr_children', word: 'children', article: 'plural', emoji: '?��?��', exampleSentence: 'Many children are playing.', exampleSentenceKo: '?�이?�이 ?��??�어??' },
+  { id: 'fb_irr_people', word: 'people', article: 'plural', emoji: '?��?��', exampleSentence: 'Many people are here.', exampleSentenceKo: '많�? ?�람?�이 ?�기 ?�어??' },
+  { id: 'fb_irr_mice', word: 'mice', article: 'plural', emoji: '?��?��', exampleSentence: 'Many mice are in the house.', exampleSentenceKo: '쥐들??집에 ?�어??' },
+  { id: 'fb_irr_men', word: 'men', article: 'plural', emoji: '?��?��', exampleSentence: 'Many men are working.', exampleSentenceKo: '?�자?�이 ?�하�??�어??' }
 ];

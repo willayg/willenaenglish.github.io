@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ??Countable vs Uncountable Nouns
+﻿// Grammar Lesson Runner ??Countable vs Uncountable Nouns
 // Teaches kids the difference between nouns you can count (apples) and nouns you cannot count (water).
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -56,10 +56,10 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = lang === 'ko' ? '?�어�??�택?�세?? : 'Choose your language';
+    title.textContent = lang === 'ko' ? '언어를 선택하세요' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { playSFX?.('click'); lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('?�국??);
+    const koBtn = buildLanguageButton('한국어');
     koBtn.onclick = () => { playSFX?.('click'); lang = 'ko'; nextStep(); };
     wrap.appendChild(title);
     wrap.appendChild(enBtn);
@@ -73,7 +73,7 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�떤 ?�어???� ???�고, ?�떤 ?�어???� ???�어?? �? ?�유, 밥처???�체???�무 ?�아???�기 ?�려??것들?� ?� ???�어??"
+      ? "?�떤 ?�어???� ???�고, ?�떤 ?�어???� ???�어?? �? ?�유, 밥처???�체???�무 ?�아???�기 ?�려??것들?� ?� ???�어??"
       : "Some nouns you can count (apples), but some you cannot count (water). Uncountable nouns are usually liquids, semi-solids, or things too small to count!";
     stepEl.appendChild(intro);
 
@@ -84,18 +84,18 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     highlight.className = 'countable-uncountable-highlight-card-intro';
     
     let countableHtml = '<div class="examples-section">';
-    countableHtml += `<div class="section-label">${lang === 'ko' ? '?� ???�어?? : 'Countable'}</div>`;
+    countableHtml += `<div class="section-label">${lang === 'ko' ? '?� ???�어?? : 'Countable'}</div>`;
     countableHtml += '<div class="examples-list">';
     countableExamples.forEach((item) => {
-      countableHtml += `<div class="example-item"><span class="ex-emoji">${escapeHtml(item.emoji || '?��')}</span><span class="ex-word">${escapeHtml(item.word)}</span></div>`;
+      countableHtml += `<div class="example-item"><span class="ex-emoji">${escapeHtml(item.emoji || '?��')}</span><span class="ex-word">${escapeHtml(item.word)}</span></div>`;
     });
     countableHtml += '</div></div>';
 
     let uncountableHtml = '<div class="examples-section">';
-    uncountableHtml += `<div class="section-label">${lang === 'ko' ? '?� ???�어?? : 'Uncountable'}</div>`;
+    uncountableHtml += `<div class="section-label">${lang === 'ko' ? '?� ???�어?? : 'Uncountable'}</div>`;
     uncountableHtml += '<div class="examples-list">';
     uncountableExamples.forEach((item) => {
-      uncountableHtml += `<div class="example-item"><span class="ex-emoji">${escapeHtml(item.emoji || '?��')}</span><span class="ex-word">${escapeHtml(item.word)}</span></div>`;
+      uncountableHtml += `<div class="example-item"><span class="ex-emoji">${escapeHtml(item.emoji || '?��')}</span><span class="ex-word">${escapeHtml(item.word)}</span></div>`;
     });
     uncountableHtml += '</div></div>';
 
@@ -117,7 +117,7 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�쪽?� ?� ???�는 명사?? ?�른쪽�? ?� ???�는 명사?�이?�요. ?�리 ?�어 ?�어 보세??"
+      ? "?�쪽?� ?� ???�는 명사?? ?�른쪽�? ?� ???�는 명사?�이?�요. ?�리 ?�어 ?�어 보세??"
       : "Left shows countable nouns, right shows uncountable nouns. Read them aloud!";
     stepEl.appendChild(intro);
 
@@ -138,15 +138,15 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "�??�어�??�러 '?� ???�어?? ?�는 '?� ???�어?? 바구?�에 ?�어 보세?? 모두 맞히�??�음?�로 �????�어??"
+      ? "�??�어�??�러 '?� ???�어?? ?�는 '?� ???�어?? 바구?�에 ?�어 보세?? 모두 맞히�??�음?�로 �????�어??"
       : "Tap each word and sort it into countable or uncountable. Get them all right to continue!";
     stepEl.appendChild(body);
 
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-two';
-    const pool = makeBucket('pool', lang === 'ko' ? '?�어 모음' : 'Word Pool');
-    const bucketCountable = makeBucket('countable', lang === 'ko' ? '?� ???�어?? : 'Countable');
-    const bucketUncountable = makeBucket('uncountable', lang === 'ko' ? '?� ???�어?? : 'Uncountable');
+    const pool = makeBucket('pool', lang === 'ko' ? '?�어 모음' : 'Word Pool');
+    const bucketCountable = makeBucket('countable', lang === 'ko' ? '?� ???�어?? : 'Countable');
+    const bucketUncountable = makeBucket('uncountable', lang === 'ko' ? '?� ???�어?? : 'Uncountable');
 
     [pool.wrap, bucketCountable.wrap, bucketUncountable.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
@@ -186,14 +186,14 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '15px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.onclick = () => { playSFX?.('click'); stepIndex = Math.max(0, stepIndex - 1); render(); };
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -228,11 +228,11 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? "?�벽?�요! ?� ???�는 것과 ?�는 것을 모두 찾았?�요." : "Perfect! You sorted all the nouns correctly!";
+        message.textContent = lang === 'ko' ? "?�벽?�요! ?� ???�는 것과 ?�는 것을 모두 찾았?�요." : "Perfect! You sorted all the nouns correctly!";
         stepEl.insertBefore(message, stepEl.firstChild);
 
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
           continueBtn.onclick = () => { playSFX?.('click'); nextStep(true); };
           nav.appendChild(continueBtn);
         }
@@ -241,7 +241,7 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
+        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -261,13 +261,13 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = lang === 'ko'
-      ? "<div style=\"font-weight:800;color:#19777e\">?� ???�는 것과 ?�는 것을 배웠?�요!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>"
-      : "<div style=\"font-weight:800;color:#19777e\">You learned countable and uncountable nouns!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>";
+      ? "<div style=\"font-weight:800;color:#19777e\">?� ???�는 것과 ?�는 것을 배웠?�요!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>"
+      : "<div style=\"font-weight:800;color:#19777e\">You learned countable and uncountable nouns!</div><div class=\"stars\">⭐⭐⭐⭐�?/div>";
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       playSFX?.('click');
       try {
@@ -367,7 +367,7 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
   }
 
   function displayStep(index) {
-    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
+    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
     return steps[index] || '';
   }
 
@@ -448,7 +448,7 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
       word: item.word || '',
       prompt: item.prompt || `${item.word || ''}`,
       article: item.article || 'countable',
-      emoji: item.emoji || '?��',
+      emoji: item.emoji || '?��',
       exampleSentence: item.exampleSentence || '',
       exampleSentenceKo: item.exampleSentenceKo || '',
       explanation: item.explanation || '',
@@ -474,8 +474,8 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     const titleWrap = document.createElement('div');
     titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
     titleWrap.textContent = kind === 'countable'
-      ? (currentLang === 'ko' ? '?� ???�어?? : 'Countable')
-      : (currentLang === 'ko' ? "?� ???�어?? : "Uncountable");
+      ? (currentLang === 'ko' ? '?� ???�어?? : 'Countable')
+      : (currentLang === 'ko' ? "?� ???�어?? : "Uncountable");
     col.appendChild(titleWrap);
 
     list.slice(0, 6).forEach((item) => {
@@ -552,9 +552,9 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '15px';
-    const back = buildSecondaryButton(currentLang === 'ko' ? '?�로' : 'Back');
+    const back = buildSecondaryButton(currentLang === 'ko' ? '?�로' : 'Back');
     back.onclick = () => { sfx?.('click'); onBack(); };
-    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
+    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
     next.onclick = () => { onNext(); };
     nav.appendChild(back);
     nav.appendChild(next);
@@ -579,15 +579,15 @@ export async function runGrammarLessonCountableUncountable(ctx = {}) {
 }
 
 const fallbackCountable = [
-  { id: 'fb_count_apple', word: 'apple', article: 'countable', emoji: '?��', exampleSentence: 'I have an apple.', exampleSentenceKo: '?�는 ?�과�???�?가지�??�어??' },
-  { id: 'fb_count_book', word: 'book', article: 'countable', emoji: '?��', exampleSentence: 'She has a book.', exampleSentenceKo: '그�???�???권이 ?�어??' },
-  { id: 'fb_count_chair', word: 'chair', article: 'countable', emoji: '?��', exampleSentence: 'A chair is in the room.', exampleSentenceKo: '방에 ?�자 ??개�? ?�어??' },
-  { id: 'fb_count_dog', word: 'dog', article: 'countable', emoji: '?��', exampleSentence: 'A dog is friendly.', exampleSentenceKo: '개는 친절?�요.' }
+  { id: 'fb_count_apple', word: 'apple', article: 'countable', emoji: '?��', exampleSentence: 'I have an apple.', exampleSentenceKo: '?�는 ?�과�???�?가지�??�어??' },
+  { id: 'fb_count_book', word: 'book', article: 'countable', emoji: '?��', exampleSentence: 'She has a book.', exampleSentenceKo: '그�???�???권이 ?�어??' },
+  { id: 'fb_count_chair', word: 'chair', article: 'countable', emoji: '?��', exampleSentence: 'A chair is in the room.', exampleSentenceKo: '방에 ?�자 ??개�? ?�어??' },
+  { id: 'fb_count_dog', word: 'dog', article: 'countable', emoji: '?��', exampleSentence: 'A dog is friendly.', exampleSentenceKo: '개는 친절?�요.' }
 ];
 
 const fallbackUncountable = [
-  { id: 'fb_uncount_water', word: 'water', article: 'uncountable', emoji: '?��', exampleSentence: 'There is water in the bottle.', exampleSentenceKo: '병에 물이 ?�어??' },
-  { id: 'fb_uncount_milk', word: 'milk', article: 'uncountable', emoji: '?��', exampleSentence: 'Milk is in the fridge.', exampleSentenceKo: '?�유가 ?�장고에 ?�어??' },
-  { id: 'fb_uncount_rice', word: 'rice', article: 'uncountable', emoji: '?��', exampleSentence: 'We need more rice.', exampleSentenceKo: '?�리???�?????�요?�요.' },
-  { id: 'fb_uncount_honey', word: 'honey', article: 'uncountable', emoji: '?��', exampleSentence: 'Honey tastes sweet.', exampleSentenceKo: '꿀?� ?�콤?�요.' }
+  { id: 'fb_uncount_water', word: 'water', article: 'uncountable', emoji: '?��', exampleSentence: 'There is water in the bottle.', exampleSentenceKo: '병에 물이 ?�어??' },
+  { id: 'fb_uncount_milk', word: 'milk', article: 'uncountable', emoji: '?��', exampleSentence: 'Milk is in the fridge.', exampleSentenceKo: '?�유가 ?�장고에 ?�어??' },
+  { id: 'fb_uncount_rice', word: 'rice', article: 'uncountable', emoji: '?��', exampleSentence: 'We need more rice.', exampleSentenceKo: '?�리???�?????�요?�요.' },
+  { id: 'fb_uncount_honey', word: 'honey', article: 'uncountable', emoji: '?��', exampleSentence: 'Honey tastes sweet.', exampleSentenceKo: '꿀?� ?�콤?�요.' }
 ];

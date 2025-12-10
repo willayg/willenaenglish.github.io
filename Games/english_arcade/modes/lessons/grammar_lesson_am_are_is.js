@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ??Am / Is / Are
+﻿// Grammar Lesson Runner ??Am / Is / Are
 // Provides a five-step lesson teaching "to be" verb agreement in present tense.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -57,10 +57,10 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:36px;text-align:center;width:90%;max-width:320px;';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    title.textContent = lang === 'ko' ? '?�어�??�택?�세?? : 'Choose your language';
+    title.textContent = lang === 'ko' ? '언어를 선택하세요' : 'Choose your language';
     const enBtn = buildLanguageButton('English');
     enBtn.onclick = () => { lang = 'en'; nextStep(); };
-    const koBtn = buildLanguageButton('?�국??);
+    const koBtn = buildLanguageButton('한국어');
     koBtn.onclick = () => { lang = 'ko'; nextStep(); };
     wrap.appendChild(title);
     wrap.appendChild(enBtn);
@@ -75,7 +75,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "주어???�라 <b>am</b> (?�다), <b>is</b> (?�다), <b>are</b> (?�다)가 바뀌어?? 버튼???�러???�떤 말을 ?�는지 ?�인??보세??"
+      ? "주어???�라 <b>am</b> (?�다), <b>is</b> (?�다), <b>are</b> (?�다)가 바뀌어?? 버튼???�러???�떤 말을 ?�는지 ?�인??보세??"
       : "The verb <b>am</b>, <b>is</b>, or <b>are</b> changes with the subject. Tap each button to see which one fits!";
 
     const subjectRow = document.createElement('div');
@@ -130,7 +130,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�쪽부??<b>am</b> (?�다), <b>is</b> (?�다), <b>are</b> (?�다) ?�문?�에?? ?�리�??�어 ?�어 보세??"
+      ? "?�쪽부??<b>am</b> (?�다), <b>is</b> (?�다), <b>are</b> (?�다) ?�문?�에?? ?�리�??�어 ?�어 보세??"
       : "Examples for <b>am</b>, <b>is</b>, and <b>are</b>. Try reading them out loud!";
     stepEl.appendChild(intro);
 
@@ -152,7 +152,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "문장???�러??<b>am</b> (?�다), <b>is</b> (?�다), <b>are</b> (?�다) 바구?�에 ?�어 보세?? 모두 맞으�??�음?�로 �????�어??"
+      ? "문장???�러??<b>am</b> (?�다), <b>is</b> (?�다), <b>are</b> (?�다) 바구?�에 ?�어 보세?? 모두 맞으�??�음?�로 �????�어??"
       : "Tap each strip and place it into the <b>am</b>, <b>is</b>, or <b>are</b> basket. Get them all correct to continue!";
     stepEl.appendChild(body);
 
@@ -200,14 +200,14 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
     checkBtn.style.marginTop = '15px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '?�로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -250,11 +250,11 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? "?�벽?�요! am (?�다), is (?�다), are (?�다)�???골랐?�요." : 'Perfect! You matched am, is, and are.';
+        message.textContent = lang === 'ko' ? "?�벽?�요! am (?�다), is (?�다), are (?�다)�???골랐?�요." : 'Perfect! You matched am, is, and are.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
           continueBtn.style.background = '#fff';
           continueBtn.style.color = '#ff6fb0';
           continueBtn.style.borderColor = '#ff6fb0';
@@ -268,7 +268,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Try again! Fix the red cards.';
+        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Try again! Fix the red cards.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -288,13 +288,13 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '30px';
     body.innerHTML = lang === 'ko'
-      ? '<div style="font-weight:800;color:#19777e">?�제 am (?�다) / is (?�다) / are (?�다)�?바르�??????�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use am, is, or are!</div><div class="stars">⭐⭐⭐⭐�?/div>';
+      ? '<div style="font-weight:800;color:#19777e">?�제 am (?�다) / is (?�다) / are (?�다)�?바르�??????�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use am, is, or are!</div><div class="stars">⭐⭐⭐⭐�?/div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
     backBtn.onclick = () => {
       try {
         if (window.WordArcade?.startGrammarModeSelector) {
@@ -390,7 +390,7 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
   }
 
   function displayStep(index) {
-    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
+    const steps = [lang === 'ko' ? '?�어 ?�택' : 'Choose Language', lang === 'ko' ? '1?�계' : 'Step 1', lang === 'ko' ? '2?�계' : 'Step 2', lang === 'ko' ? '3?�계' : 'Step 3', lang === 'ko' ? '?�료' : 'Complete'];
     return steps[index] || '';
   }
 
@@ -410,12 +410,12 @@ export async function runGrammarLessonAmAreIs(ctx = {}) {
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '15px';
-    const back = buildPrimaryButton(currentLang === 'ko' ? '?�로' : 'Back');
+    const back = buildPrimaryButton(currentLang === 'ko' ? '?�로' : 'Back');
     back.style.borderColor = '#21b3be';
     back.style.color = '#ff6fb0';
     back.style.background = '#fff';
     back.onclick = onBack;
-    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
+    const next = buildPrimaryButton(currentLang === 'ko' ? '?�음' : 'Next');
     next.style.borderColor = '#21b3be';
     next.style.color = '#ff6fb0';
     next.style.background = '#fff';
@@ -488,7 +488,7 @@ function normalizeList(list, fallback) {
     word: item.word || '',
     prompt: item.prompt || `${item.word || ''}`,
     article: item.article || 'is',
-    emoji: item.emoji || '?��',
+    emoji: item.emoji || '?��',
     exampleSentence: item.exampleSentence || '',
     exampleSentenceKo: item.exampleSentenceKo || '',
     explanation: item.explanation || '',
@@ -535,10 +535,10 @@ function buildExampleColumn(verb, list, lang) {
   const titleWrap = document.createElement('div');
   titleWrap.style.cssText = 'text-align:center;font-weight:800;color:#19777e;margin-bottom:6px;';
   titleWrap.textContent = verb === 'am'
-    ? (lang === 'ko' ? "am (?�다 - I?� ?�께)" : 'am ??with I')
+    ? (lang === 'ko' ? "am (?�다 - I?� ?�께)" : 'am ??with I')
     : verb === 'is'
-      ? (lang === 'ko' ? "is (?�다 - ???�람/물건)" : 'is ??one person or thing')
-      : (lang === 'ko' ? "are (?�다 - ?�럿/you)" : 'are ??many or you');
+      ? (lang === 'ko' ? "is (?�다 - ???�람/물건)" : 'is ??one person or thing')
+      : (lang === 'ko' ? "are (?�다 - ?�럿/you)" : 'are ??many or you');
   col.appendChild(titleWrap);
 
   list.slice(0, 5).forEach((item) => {
@@ -591,29 +591,29 @@ function buildSubjectSets(amList, isList, areList) {
       verb: 'am',
       emoji: amExample.emoji || '??',
       sentenceEn: amExample.exampleSentence || 'I am happy.',
-      sentenceKo: amExample.exampleSentenceKo || '?�는 ?�복?�요.',
+      sentenceKo: amExample.exampleSentenceKo || '?�는 ?�복?�요.',
       tipEn: "Use 'am' only with I.",
-      tipKo: "I???�만 'am'???�요.",
+      tipKo: "I???�만 'am'???�요.",
       label: 'I'
     },
     {
       id: 'is',
       verb: 'is',
-      emoji: isExample.emoji || '?��',
+      emoji: isExample.emoji || '?��',
       sentenceEn: isExample.exampleSentence || 'She is on the bus.',
-      sentenceKo: isExample.exampleSentenceKo || '그�???버스???�어??',
+      sentenceKo: isExample.exampleSentenceKo || '그�???버스???�어??',
       tipEn: "Use 'is' with he, she, it, or one noun.",
-      tipKo: "he, she, it, 그리�??�수 명사??'is'�??�요.",
+      tipKo: "he, she, it, 그리�??�수 명사??'is'�??�요.",
       label: 'He / She / It'
     },
     {
       id: 'are',
       verb: 'are',
-      emoji: areExample.emoji || '?��',
+      emoji: areExample.emoji || '?��',
       sentenceEn: areExample.exampleSentence || 'They are playing.',
-      sentenceKo: areExample.exampleSentenceKo || '그들?� ?��??�어??',
+      sentenceKo: areExample.exampleSentenceKo || '그들?� ?��??�어??',
       tipEn: "Use 'are' with we, you, they, or plural nouns.",
-      tipKo: "we, you, they ?�는 복수 명사?�는 'are'�??�요.",
+      tipKo: "we, you, they ?�는 복수 명사?�는 'are'�??�요.",
       label: 'We / You / They'
     }
   ];
@@ -642,16 +642,16 @@ function detectLang() {
 }
 
 const fallbackAm = [
-  { id: 'fallback_am_1', word: 'I', prompt: 'I ___ happy.', article: 'am', emoji: '??', exampleSentence: 'I am happy.', exampleSentenceKo: '?�는 ?�복?�요.', explanation: "Use 'am' with I.", explanationKo: "I??'am'???�요." },
-  { id: 'fallback_am_2', word: 'I', prompt: 'I ___ from Korea.', article: 'am', emoji: '?��?��', exampleSentence: 'I am from Korea.', exampleSentenceKo: '?�는 ?�국?�서 ?�어??', explanation: "'am' links I with facts.", explanationKo: "I ???�보?�는 'am'." }
+  { id: 'fallback_am_1', word: 'I', prompt: 'I ___ happy.', article: 'am', emoji: '??', exampleSentence: 'I am happy.', exampleSentenceKo: '?�는 ?�복?�요.', explanation: "Use 'am' with I.", explanationKo: "I??'am'???�요." },
+  { id: 'fallback_am_2', word: 'I', prompt: 'I ___ from Korea.', article: 'am', emoji: '?��?��', exampleSentence: 'I am from Korea.', exampleSentenceKo: '?�는 ?�국?�서 ?�어??', explanation: "'am' links I with facts.", explanationKo: "I ???�보?�는 'am'." }
 ];
 
 const fallbackIs = [
-  { id: 'fallback_is_1', word: 'She', prompt: 'She ___ on the bus.', article: 'is', emoji: '?��', exampleSentence: 'She is on the bus.', exampleSentenceKo: '그�???버스???�어??', explanation: "Use 'is' with one person.", explanationKo: "???�람?� 'is'." },
-  { id: 'fallback_is_2', word: 'The cat', prompt: 'The cat ___ sleepy.', article: 'is', emoji: '?��', exampleSentence: 'The cat is sleepy.', exampleSentenceKo: '�?고양?�는 졸려??', explanation: "One animal uses 'is'.", explanationKo: "?�물 ?�나??'is'." }
+  { id: 'fallback_is_1', word: 'She', prompt: 'She ___ on the bus.', article: 'is', emoji: '?��', exampleSentence: 'She is on the bus.', exampleSentenceKo: '그�???버스???�어??', explanation: "Use 'is' with one person.", explanationKo: "???�람?� 'is'." },
+  { id: 'fallback_is_2', word: 'The cat', prompt: 'The cat ___ sleepy.', article: 'is', emoji: '?��', exampleSentence: 'The cat is sleepy.', exampleSentenceKo: '�?고양?�는 졸려??', explanation: "One animal uses 'is'.", explanationKo: "?�물 ?�나??'is'." }
 ];
 
 const fallbackAre = [
-  { id: 'fallback_are_1', word: 'They', prompt: 'They ___ ready.', article: 'are', emoji: '?��', exampleSentence: 'They are ready.', exampleSentenceKo: '그들?� 준비됐?�요.', explanation: "Use 'are' with they.", explanationKo: "they?�는 'are'." },
-  { id: 'fallback_are_2', word: 'We', prompt: 'We ___ in class.', article: 'are', emoji: '?��', exampleSentence: 'We are in class.', exampleSentenceKo: '?�리??교실???�어??', explanation: "Groups use 'are'.", explanationKo: "?�럿?�면 'are'." }
+  { id: 'fallback_are_1', word: 'They', prompt: 'They ___ ready.', article: 'are', emoji: '?��', exampleSentence: 'They are ready.', exampleSentenceKo: '그들?� 준비됐?�요.', explanation: "Use 'are' with they.", explanationKo: "they?�는 'are'." },
+  { id: 'fallback_are_2', word: 'We', prompt: 'We ___ in class.', article: 'are', emoji: '?��', exampleSentence: 'We are in class.', exampleSentenceKo: '?�리??교실???�어??', explanation: "Groups use 'are'.", explanationKo: "?�럿?�면 'are'." }
 ];
