@@ -1,4 +1,4 @@
-// Grammar Lesson Runner ??Contractions with the Be verb
+﻿// Grammar Lesson Runner ??Contractions with the Be verb
 // Simple multi-step lesson with sliders that show how words combine into contractions.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -45,7 +45,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
 
   const formatStepLabel = (stepValue) => {
     const current = Math.max(1, Math.min(stepValue, TOTAL_STEPS));
-    const label = lang === 'ko' ? '?�계' : 'Step';
+    const label = lang === 'ko' ? '?�계' : 'Step';
     return `${label} ${current} / ${TOTAL_STEPS}`;
   };
 
@@ -76,7 +76,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     topbar.className = 'lesson-topbar';
     const title = document.createElement('div');
     title.className = 'lesson-title';
-    title.textContent = grammarName || (lang === 'ko' ? 'Be ?�사 축약?? : 'Contractions (Be)');
+    title.textContent = grammarName || (lang === 'ko' ? 'Be ?�사 축약?? : 'Contractions (Be)');
     const progress = document.createElement('div');
     progress.className = 'lesson-progress';
   progress.textContent = stepIndex === 0 ? '' : formatStepLabel(stepIndex);
@@ -113,7 +113,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
 
     const label = document.createElement('div');
     label.style.cssText = 'font-size:clamp(1.4rem,4.5vmin,2rem);font-weight:800;color:#19777e;';
-    label.textContent = lang === 'ko' ? '?�어�??�택?�세?? : 'Choose your language';
+    label.textContent = lang === 'ko' ? '언어를 선택하세요' : 'Choose your language';
 
     const buildBtn = (text, onClick) => {
       const btn = document.createElement('button');
@@ -136,7 +136,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
       stepIndex = 1;
       render();
     });
-    const koBtn = buildBtn('?�국??, () => {
+    const koBtn = buildBtn('?�국??, () => {
       lang = 'ko';
       stepIndex = 1;
       render();
@@ -156,7 +156,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? '<b>축약??/b>?� ???�어�?밀?�서 ???�어�?만드??거예?? ?? <b>I am ??I\'m</b>'
+      ? '<b>축약??/b>?� ???�어�?밀?�서 ???�어�?만드??거예?? ?? <b>I am ??I\'m</b>'
       : '<b>Contractions</b> push two words together to make one word! Example: <b>I am ??I\'m</b>.';
     stepEl.appendChild(body);
 
@@ -172,7 +172,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.textContent = lang === 'ko'
-      ? '?�라?�더�??�래그해???�어�??�께 밀?�보?�요!'
+      ? '?�라?�더�??�래그해???�어�??�께 밀?�보?�요!'
       : 'Drag each slider to push the words together!';
     stepEl.appendChild(body);
 
@@ -194,7 +194,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.textContent = lang === 'ko'
-      ? '축약??문장?????�펴봐요:'
+      ? '축약??문장?????�펴봐요:'
       : 'Check out a few contraction sentences:';
     stepEl.appendChild(body);
 
@@ -235,14 +235,14 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.textContent = lang === 'ko'
-      ? "'s, 're, 'm 중에??맞는 축약?�을 골라 보세??"
+      ? "'s, 're, 'm 중에??맞는 축약?�을 골라 보세??"
       : "Choose 's, 're, or 'm to finish each contraction!";
     stepEl.appendChild(body);
 
     const status = document.createElement('div');
     status.className = 'match-status';
     const basePrompt = lang === 'ko'
-      ? "주어�??�른 ??축약?�을 ?�택?�세??"
+      ? "주어�??�른 ??축약?�을 ?�택?�세??"
       : "Tap a subject, then choose the contraction ending.";
     status.textContent = basePrompt;
     stepEl.appendChild(status);
@@ -262,7 +262,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const contractionColumn = document.createElement('div');
     contractionColumn.className = 'match-column contractions';
     const contractionTitle = document.createElement('h4');
-    contractionTitle.textContent = lang === 'ko' ? '축약???�택' : 'Choose Ending';
+    contractionTitle.textContent = lang === 'ko' ? '축약???�택' : 'Choose Ending';
     contractionColumn.appendChild(contractionTitle);
     const optionList = document.createElement('div');
     optionList.className = 'match-list option-list';
@@ -323,13 +323,13 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
       if (activePronoun) activePronoun.classList.remove('active');
       activePronoun = btn;
       btn.classList.add('active');
-      setStatus(lang === 'ko' ? '축약?�을 골라 보세??' : 'Now pick the ending!');
+      setStatus(lang === 'ko' ? '축약?�을 골라 보세??' : 'Now pick the ending!');
     };
 
     const handleOptionClick = (btn) => {
       if (btn.disabled) return;
       if (!activePronoun) {
-        setStatus(lang === 'ko' ? '먼�? 주어�?골라???�요.' : 'Pick a subject first.', 'error');
+        setStatus(lang === 'ko' ? '먼�? 주어�?골라???�요.' : 'Pick a subject first.', 'error');
         return;
       }
 
@@ -348,14 +348,14 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
         solvedCount += 1;
         const successMsg = pair
           ? (lang === 'ko'
-            ? `${pair.pronoun} + ${pair.fullForm} ??${pair.contraction}! ?�했?�요!`
+            ? `${pair.pronoun} + ${pair.fullForm} ??${pair.contraction}! ?�했?�요!`
             : `${pair.pronoun} + ${pair.fullForm} ??${pair.contraction}! Great!`)
           : (lang === 'ko' ? '멋져??' : 'Nice!');
         setStatus(successMsg, 'success');
         activePronoun = null;
         if (solvedCount === totalPairs) {
           const completeMsg = lang === 'ko'
-            ? "모든 축약?�을 ??맞췄?�요!"
+            ? "모든 축약?�을 ??맞췄?�요!"
             : 'All contractions solved!';
           setStatus(completeMsg, 'success');
           nextBtn.disabled = false;
@@ -364,7 +364,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
       } else {
         activePronoun.classList.add('wrong');
         btn.classList.add('wrong');
-        setStatus(lang === 'ko' ? '?�시 ?�도??봐요!' : 'Oops, try again!', 'error');
+        setStatus(lang === 'ko' ? '?�시 ?�도??봐요!' : 'Oops, try again!', 'error');
         setTimeout(() => {
           btn.classList.remove('wrong');
           activePronoun?.classList.remove('wrong');
@@ -412,8 +412,8 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     body.style.alignItems = 'center';
     body.style.gap = '18px';
     body.innerHTML = lang === 'ko'
-      ? '<div style="font-weight:800;color:#19777e">축약?�을 ?�벽?�게 배웠?�요!</div><div class="stars">⭐⭐⭐⭐�?/div>'
-      : '<div style="font-weight:800;color:#19777e">You mastered be-verb contractions!</div><div class="stars">⭐⭐⭐⭐�?/div>';
+      ? '<div style="font-weight:800;color:#19777e">축약?�을 ?�벽?�게 배웠?�요!</div><div class="stars">⭐⭐⭐⭐�?/div>'
+      : '<div style="font-weight:800;color:#19777e">You mastered be-verb contractions!</div><div class="stars">⭐⭐⭐⭐�?/div>';
     stepEl.appendChild(body);
 
     const backBtn = makeNavButton('back', lang, prevStep);
@@ -433,12 +433,12 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const btn = document.createElement('button');
     btn.className = 'lesson-btn';
     if (kind === 'back') {
-      btn.textContent = currentLang === 'ko' ? '?�로' : 'Back';
+      btn.textContent = currentLang === 'ko' ? '?�로' : 'Back';
       btn.onclick = () => {
         onClick();
       };
     } else if (kind === 'next') {
-      btn.textContent = currentLang === 'ko' ? '?�음' : 'Next';
+      btn.textContent = currentLang === 'ko' ? '?�음' : 'Next';
       btn.onclick = () => {
         onClick();
       };
@@ -448,12 +448,12 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
         onClick();
       };
     } else if (kind === 'play') {
-      btn.textContent = currentLang === 'ko' ? '게임 ?�작' : "Let's Play";
+      btn.textContent = currentLang === 'ko' ? '게임 ?�작' : "Let's Play";
       btn.onclick = () => {
         onClick();
       };
     } else {
-      btn.textContent = currentLang === 'ko' ? '게임 ?�작' : "Let's Play";
+      btn.textContent = currentLang === 'ko' ? '게임 ?�작' : "Let's Play";
       btn.onclick = () => {
         onClick();
       };
@@ -510,7 +510,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const label = document.createElement('div');
     label.className = 'slider-demo-label';
     label.textContent = lang === 'ko'
-      ? `${row.pronoun} + ${row.fullForm} �??�쳐봐요`
+      ? `${row.pronoun} + ${row.fullForm} �??�쳐봐요`
       : `Combine ${row.pronoun} + ${row.fullForm}`;
 
     const display = document.createElement('div');
@@ -570,7 +570,7 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
     const tip = document.createElement('div');
     tip.className = 'slider-tip';
     tip.textContent = lang === 'ko'
-      ? `?�라?�더�??�직이�?${row.contraction} ??가) ?��??�요`
+      ? `?�라?�더�??�직이�?${row.contraction} ??가) ?��??�요`
       : `Slide to reveal ${row.contraction}`;
 
     const update = (value) => {
@@ -670,13 +670,13 @@ export async function runGrammarLessonContractionsBe(ctx = {}) {
 }
 
 const fallbackItems = [
-  { id: 'i_am', word: 'I', pronoun: 'I', fullForm: 'am', contraction: "I'm", exampleSentence: "I'm ready to go!", exampleSentenceKo: "??출발??준비�? ?�어??", explanation: "I am becomes I'm." },
-  { id: 'you_are', word: 'You', pronoun: 'You', fullForm: 'are', contraction: "You're", exampleSentence: "You're a great friend.", exampleSentenceKo: "???�말 좋�? 친구??", explanation: "You are becomes You're." },
-  { id: 'she_is', word: 'She', pronoun: 'She', fullForm: 'is', contraction: "She's", exampleSentence: "She's playing piano.", exampleSentenceKo: "그�????�아?��? 치고 ?�어??", explanation: "She is becomes She's." },
-  { id: 'he_is', word: 'He', pronoun: 'He', fullForm: 'is', contraction: "He's", exampleSentence: "He's my teacher.", exampleSentenceKo: "그는 ???�생?�이?�요.", explanation: "He is becomes He's." },
-  { id: 'it_is', word: 'It', pronoun: 'It', fullForm: 'is', contraction: "It's", exampleSentence: "It's sunny outside.", exampleSentenceKo: "밖에???��? ?�요.", explanation: "It is becomes It's." },
-  { id: 'we_are', word: 'We', pronoun: 'We', fullForm: 'are', contraction: "We're", exampleSentence: "We're ready to learn.", exampleSentenceKo: "?�리??배울 준비�? ?�어??", explanation: "We are becomes We're." },
-  { id: 'they_are', word: 'They', pronoun: 'They', fullForm: 'are', contraction: "They're", exampleSentence: "They're playing soccer.", exampleSentenceKo: "그들?� 축구�??�고 ?�어??", explanation: "They are becomes They're." }
+  { id: 'i_am', word: 'I', pronoun: 'I', fullForm: 'am', contraction: "I'm", exampleSentence: "I'm ready to go!", exampleSentenceKo: "??출발??준비�? ?�어??", explanation: "I am becomes I'm." },
+  { id: 'you_are', word: 'You', pronoun: 'You', fullForm: 'are', contraction: "You're", exampleSentence: "You're a great friend.", exampleSentenceKo: "???�말 좋�? 친구??", explanation: "You are becomes You're." },
+  { id: 'she_is', word: 'She', pronoun: 'She', fullForm: 'is', contraction: "She's", exampleSentence: "She's playing piano.", exampleSentenceKo: "그�????�아?��? 치고 ?�어??", explanation: "She is becomes She's." },
+  { id: 'he_is', word: 'He', pronoun: 'He', fullForm: 'is', contraction: "He's", exampleSentence: "He's my teacher.", exampleSentenceKo: "그는 ???�생?�이?�요.", explanation: "He is becomes He's." },
+  { id: 'it_is', word: 'It', pronoun: 'It', fullForm: 'is', contraction: "It's", exampleSentence: "It's sunny outside.", exampleSentenceKo: "밖에???��? ?�요.", explanation: "It is becomes It's." },
+  { id: 'we_are', word: 'We', pronoun: 'We', fullForm: 'are', contraction: "We're", exampleSentence: "We're ready to learn.", exampleSentenceKo: "?�리??배울 준비�? ?�어??", explanation: "We are becomes We're." },
+  { id: 'they_are', word: 'They', pronoun: 'They', fullForm: 'are', contraction: "They're", exampleSentence: "They're playing soccer.", exampleSentenceKo: "그들?� 축구�??�고 ?�어??", explanation: "They are becomes They're." }
 ];
 
 function detectLang() {
