@@ -6,4 +6,7 @@ questions.py
 Teachers/tools/worksheet-builder-vanilla/References/
 11_labs_test.html
 
+# Ignore local dev variable files used by some workers/tools
+.dev.vars
+
 
