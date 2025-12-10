@@ -206,7 +206,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>???��/����</b>? <b>likes</b> (����?��)<br/><b>?�� ?��/����</b>? <b>like</b> (����?��)<br/>��ư???�� ?��??��??����??"
+      ? "<b>한 명/한 개</b>에는 <b>likes</b>를 사용하고<br/><b>여러 명/여러 개</b>에는 <b>like</b>를 사용해요.<br/>버튼을 눌러 예제를 확인하세요!"
       : "<b>One person/thing</b> uses <b>likes</b><br/><b>More than one</b> uses <b>like</b><br/>Tap each button to see examples!";
 
     const typeRow = document.createElement('div');
@@ -294,7 +294,7 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     renderCard('singular', false);
 
     // Next Example button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -315,17 +315,17 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? '����???�� <b>like</b> ?�� <b>likes</b> �ٱ�?�� ?�� ����?? ��� ????�� ?��?????��??'
+      ? '각 문장을 보고 <b>like</b> 또는 <b>likes</b> 바구니로 이동하세요. 모두 맞히면 다음 단계로 진행할 수 있어요!'
       : 'Tap each strip and move it into the <b>like</b> or <b>likes</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
     const buckets = document.createElement('div');
     buckets.className = 'amareis-buckets buckets-two';
 
-    const pool = makeBucket('pool', lang === 'ko' ? '���� ����' : 'Sentence Pool');
+    const pool = makeBucket('pool', lang === 'ko' ? '문장 풀' : 'Sentence Pool');
     pool.wrap.classList.add('bucket-pool');
-    const likeBucket = makeBucket('like', lang === 'ko' ? 'like (����?��)' : 'like');
-    const likesBucket = makeBucket('likes', lang === 'ko' ? 'likes (����?��)' : 'likes');
+    const likeBucket = makeBucket('like', lang === 'ko' ? 'like (단수)' : 'like');
+    const likesBucket = makeBucket('likes', lang === 'ko' ? 'likes (복수)' : 'likes');
 
     [pool.wrap, likeBucket.wrap, likesBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
@@ -370,14 +370,14 @@ export async function runGrammarLessonLikeLikes(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�� ?��' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?��' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -601,9 +601,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?��' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?��' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -673,11 +673,11 @@ function ensureBaseStyles() {
     #gameArea .lesson-step.enter{opacity:1;transform:translateY(0)}
     #gameArea .lesson-body{text-align:center;font-size:clamp(1.02rem,3.3vmin,1.22rem);line-height:1.45;color:#27323a}
     #gameArea .lesson-nav{margin-top:auto;display:flex;gap:16px;align-items:center;justify-content:center;width:100%}
-    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:transparent;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(33,181,192,0.15);transition:transform .15s ease, box-shadow .15s ease}
-    #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.25);background:rgba(33,181,192,0.08)}
-    #gameArea .lesson-btn.primary{background:transparent;color:#ff6fb0;border-color:#21b3be}
+    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(33,181,192,0.15);transition:transform .15s ease, box-shadow .15s ease;font-family:'Poppins', Arial, sans-serif}
+    #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.25);}
+    #gameArea .lesson-btn.primary{background:#21b3be;color:#ffffff;border-color:#21b3be}
   #gameArea .amareis-subject-row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;width:100%;margin:24px 0 18px}
-  #gameArea .amareis-subject-row button{padding:12px 18px;border:2px solid #93cbcf;background:#fff;color:#19777e;border-radius:12px;font-weight:700;cursor:pointer;transition:all .15s ease}
+  #gameArea .amareis-subject-row button{padding:12px 18px;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;font-weight:700;cursor:pointer;transition:all .15s ease;font-family:'Poppins', Arial, sans-serif}
     #gameArea .amareis-subject-row button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(33,179,190,0.15)}
     #gameArea .amareis-subject-row button.active{background:#21b3be;color:#fff;border-color:#21b3be}
   #gameArea .amareis-highlight-card{border:3px solid #d1e6f0;border-radius:16px;padding:22px 20px;background:#fbffff;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;max-width:420px;margin:0 auto;box-shadow:0 14px 36px -20px rgba(25,119,126,0.28)}
@@ -694,7 +694,7 @@ function ensureBaseStyles() {
   #gameArea .amareis-bucket{border:2px dashed #b0e2e4;border-radius:16px;background:linear-gradient(180deg,#fbffff 0%,#ffffff 100%);padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
   #gameArea .amareis-bucket h4{margin:0;font-size:1.05rem;color:#19777e;font-weight:800;text-transform:capitalize}
   #gameArea .amareis-bucket .bucket-body{display:flex;flex-wrap:wrap;gap:8px;cursor:pointer;align-items:flex-start;align-content:flex-start}
-  #gameArea .chip{user-select:none;border:2px solid #93cbcf;background:#ffffff;color:#19777e;border-radius:12px;padding:8px 14px;font-weight:700;cursor:pointer;text-align:center;line-height:1.2;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .12s ease, box-shadow .12s ease}
+  #gameArea .chip{user-select:none;border:2px solid #93cbcf;background:#ffffff;color:#ff6fb0;border-radius:12px;padding:8px 14px;font-weight:700;cursor:pointer;text-align:center;line-height:1.2;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .12s ease, box-shadow .12s ease}
     #gameArea .chip:hover{transform:scale(1.04);box-shadow:0 6px 16px rgba(0,0,0,.12)}
     #gameArea .chip.selected{outline:3px solid #21b3be;border-color:#21b3be;background:#e6f7f8}
     #gameArea .chip.bad{border-color:#f44336;color:#c62828;background:#ffebee}

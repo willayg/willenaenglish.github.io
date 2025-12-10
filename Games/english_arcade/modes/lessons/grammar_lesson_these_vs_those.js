@@ -5,8 +5,12 @@ import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonTheseThose(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
-  const root = document.getElementById('gameArea');
-  if (!root) return;
+  let root = document.getElementById('gameArea');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'gameArea';
+    document.body.appendChild(root);
+  }
 
   ensureBaseStyles();
   ensureTheseThoseStyles();
@@ -571,7 +575,7 @@ function ensureBaseStyles() {
     #gameArea .lesson-step.enter{opacity:1;transform:translateY(0)}
     #gameArea .lesson-body{text-align:center;font-size:clamp(1.02rem,3.3vmin,1.22rem);line-height:1.45;color:#27323a}
     #gameArea .lesson-nav{margin-top:auto;display:flex;gap:10px;align-items:center;justify-content:center;width:100%}
-    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#21b3be;color:#fff;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease}
+    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease;font-family:'Poppins','Noto Sans KR','Nanum Gothic',system-ui,Arial,sans-serif}
     #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.18)}
     #gameArea .lesson-btn.primary{background:#21b3be;color:#fff;border-color:#21b3be}
     #gameArea .lesson-examples{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:620px;margin:10px auto}
