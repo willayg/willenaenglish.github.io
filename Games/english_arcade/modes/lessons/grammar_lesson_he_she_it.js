@@ -1,4 +1,4 @@
-﻿// Grammar Lesson Runner ??He vs She vs It
+// Grammar Lesson Runner ??He vs She vs It
 // Interactive lesson teaching pronoun usage for males, females, and objects/animals.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -120,7 +120,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>He</b> (?�자), <b>She</b> (?�자), <b>It</b> (?�물/?�물)??구분?�서 ?�요. 버튼???�러???�제�??�인??보세??"
+      ? "<b>He</b>는 남성을, <b>She</b>는 여성을, <b>It</b>는 동물이나 사물에 씁니다. 버튼을 탭해서 예문을 확인하세요!"
       : "Use <b>he</b> for males, <b>she</b> for females, and <b>it</b> for animals or objects. Tap each button to see examples!";
 
     const pronounRow = document.createElement('div');
@@ -195,7 +195,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     renderCard(pronounSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -217,7 +217,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>?�자</b> ??<b>he</b><br/><b>?�자</b> ??<b>she</b><br/><b>?�물/?�물</b> ??<b>it</b><br/>버튼???�러????많�? ?�제�??�인?�세??"
+      ? "<b>남성</b>은 <b>he</b>, <b>여성</b>은 <b>she</b>, <b>동물/사물</b>은 <b>it</b>입니다. 버튼을 탭해서 더 많은 예문을 확인하세요!"
       : "<b>Males</b> ??<b>he</b><br/><b>Females</b> ??<b>she</b><br/><b>Animals/Objects</b> ??<b>it</b><br/>Tap each button to see more examples!";
 
     const categoryRow = document.createElement('div');
@@ -229,21 +229,21 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const categorySets = [
       {
         id: 'male',
-        label: lang === 'ko' ? '?�� ?�자' : '?�� Male',
+        label: lang === 'ko' ? '남성' : 'Male',
         examples: heList,
         pointer: 0,
         pronoun: 'HE',
       },
       {
         id: 'female',
-        label: lang === 'ko' ? '?�� ?�자' : '?�� Female',
+        label: lang === 'ko' ? '여성' : 'Female',
         examples: sheList,
         pointer: 0,
         pronoun: 'SHE',
       },
       {
         id: 'thing',
-        label: lang === 'ko' ? '?�� ?�물/?�물' : '?�� Animal/Thing',
+        label: lang === 'ko' ? '동물/사물' : 'Animal/Thing',
         examples: itList,
         pointer: 0,
         pronoun: 'IT',
@@ -311,7 +311,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     renderCard('male', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -332,7 +332,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = (lang === 'ko')
-      ? '�??�어�??�러???�바�?바구?�에 ?�어 보세??'
+      ? '단어를 탭하여 올바른 바구니에 넣어보세요!'
       : 'Tap each word and place it in the correct basket!';
     stepEl.appendChild(intro);
 
@@ -343,9 +343,9 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     
     const buckets = document.createElement('div');
     buckets.className = 'buckets buckets-three';
-    const heBucket = makeBucket('he', '?��');
-    const sheBucket = makeBucket('she', '?��');
-    const itBucket = makeBucket('it', '?��');
+    const heBucket = makeBucket('he', lang === 'ko' ? '남성(he)' : 'He');
+    const sheBucket = makeBucket('she', lang === 'ko' ? '여성(she)' : 'She');
+    const itBucket = makeBucket('it', lang === 'ko' ? '동물/사물(it)' : 'It');
     [heBucket.wrap, sheBucket.wrap, itBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     
     stepEl.appendChild(chipsContainer);
@@ -393,13 +393,13 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '?��' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -442,11 +442,11 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?�벽?�요! he/she/it�???골랐?�요.' : 'Perfect! You used he/she/it correctly.';
+        message.textContent = lang === 'ko' ? '완벽해요! he/she/it을 올바르게 사용했어요.' : 'Perfect! You used he/she/it correctly.';
         stepEl.insertBefore(message, stepEl.firstChild);
         
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next Step');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계' : 'Next Step');
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
         }
@@ -457,7 +457,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 ?�어�??�시 ??�� 보세??' : 'Try again! Fix the red words.';
+        message.textContent = lang === 'ko' ? '다시 시도하세요! 빨간 단어를 수정하세요.' : 'Try again! Fix the red words.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -469,13 +469,13 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? '<div style="font-weight:800;color:#19777e">?�제 he/she/it�?바르�?고�? ???�어??</div><div class="stars">⭐⭐⭐⭐�?/div>'
-      : '<div style="font-weight:800;color:#19777e">You now know when to use he, she, or it!</div><div class="stars">⭐⭐⭐⭐�?/div>';
+      ? '<div style="font-weight:800;color:#19777e">축하합니다! 이제 he, she, it을 언제 쓰는지 알게 되었어요!</div><div class="stars">⭐⭐⭐⭐⭐</div>'
+      : '<div style="font-weight:800;color:#19777e">You now know when to use he, she, or it!</div><div class="stars">⭐⭐⭐⭐⭐</div>';
     stepEl.appendChild(body);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
     backBtn.onclick = () => {
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
@@ -513,12 +513,6 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
         window.dispatchEvent(ev);
       } catch {}
     }
-  }
-
-  function nextStep() {
-    stepIndex = Math.min(stepIndex + 1, 4);
-    render();
-  }
 
   function prevStep() {
     stepIndex = Math.max(stepIndex - 1, 0);
@@ -631,32 +625,32 @@ function buildPronounSets(heList, sheList, itList) {
     {
       id: 'he',
       pronoun: 'he',
-      emoji: heExample.emoji || '?��',
+      emoji: heExample.emoji || '?',
       sentenceEn: heExample.exampleSentence || 'He is my friend.',
-      sentenceKo: heExample.exampleSentenceKo || '그는 ??친구?�요.',
+      sentenceKo: heExample.exampleSentenceKo || '�״� ??ģ��?��.',
       tipEn: "Use 'he' for males (boys, men).",
-      tipKo: "?�자(?�년, ?�성)???�??'he'�??�요.",
-      label: '?�� He'
+      tipKo: "?��(?��, ?��)?????'he'??��.",
+      label: '? He'
     },
     {
       id: 'she',
       pronoun: 'she',
-      emoji: sheExample.emoji || '?��',
+      emoji: sheExample.emoji || '?',
       sentenceEn: sheExample.exampleSentence || 'She is my sister.',
-      sentenceKo: sheExample.exampleSentenceKo || '그�??????�자 ?�제?�요.',
+      sentenceKo: sheExample.exampleSentenceKo || '��??????�� ?��?��.',
       tipEn: "Use 'she' for females (girls, women).",
-      tipKo: "?�자(?��?, ?�성)???�??'she'�??�요.",
-      label: '?�� She'
+      tipKo: "?��(??, ?��)?????'she'??��.",
+      label: '? She'
     },
     {
       id: 'it',
       pronoun: 'it',
-      emoji: itExample.emoji || '?��',
+      emoji: itExample.emoji || '?',
       sentenceEn: itExample.exampleSentence || 'It is a dog.',
-      sentenceKo: itExample.exampleSentenceKo || '그것?� 개예??',
+      sentenceKo: itExample.exampleSentenceKo || '�װ�? ����??',
       tipEn: "Use 'it' for animals and objects.",
-      tipKo: "?�물�??�물???�??'it'???�요.",
-      label: '?�� It'
+      tipKo: "?��??��?????'it'???��.",
+      label: '? It'
     }
   ];
 }
@@ -670,7 +664,7 @@ function normalizeList(list, fallback) {
     exampleSentenceKo: item.exampleSentenceKo || '',
     explanation: item.explanation || '',
     explanationKo: item.explanationKo || '',
-    emoji: item.emoji || '??,
+    emoji: item.emoji || '❓',
   })).filter((item) => item.exampleSentence);
 }
 
@@ -706,9 +700,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '?��' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?��' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -729,7 +723,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?'완료'];
+  const stepsKo = ['언어 선택', '1단계', '2단계', '3단계', '완료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -739,22 +733,22 @@ function shuffle(list) {
 }
 
 const fallbackHe = [
-  { id: 'fb_he_friend', word: 'He', exampleSentence: 'He is my friend.', exampleSentenceKo: '그는 ??친구?�요.', emoji: '?��' },
-  { id: 'fb_he_teacher', word: 'He', exampleSentence: 'He is a teacher.', exampleSentenceKo: '그는 ?�생?�이?�요.', emoji: '?��?��? },
-  { id: 'fb_he_brother', word: 'He', exampleSentence: 'He is my brother.', exampleSentenceKo: '그는 ???�이?�요.', emoji: '?��' },
-  { id: 'fb_he_dad', word: 'He', exampleSentence: 'He is my dad.', exampleSentenceKo: '그는 ???�빠?�요.', emoji: '?��' }
+  { id: 'fb_he_friend', word: 'he', exampleSentence: 'He is my friend.', exampleSentenceKo: '그는 제 친구예요.', emoji: '👦' },
+  { id: 'fb_he_teacher', word: 'he', exampleSentence: 'He is a teacher.', exampleSentenceKo: '그는 선생님이에요.', emoji: '👨‍🏫' },
+  { id: 'fb_he_brother', word: 'he', exampleSentence: 'He is my brother.', exampleSentenceKo: '그는 제 형이에요.', emoji: '👦' },
+  { id: 'fb_he_dad', word: 'he', exampleSentence: 'He is my dad.', exampleSentenceKo: '그는 제 아빠예요.', emoji: '👨' }
 ];
 
 const fallbackShe = [
-  { id: 'fb_she_friend', word: 'She', exampleSentence: 'She is my sister.', exampleSentenceKo: '그�??????�자 ?�제?�요.', emoji: '?��' },
-  { id: 'fb_she_teacher', word: 'She', exampleSentence: 'She is a doctor.', exampleSentenceKo: '그�????�사?�요.', emoji: '?��?�⚕�? },
-  { id: 'fb_she_mom', word: 'She', exampleSentence: 'She is my mom.', exampleSentenceKo: '그�??????�마?�요.', emoji: '?��?��? },
-  { id: 'fb_she_like', word: 'She', exampleSentence: 'She likes ice cream.', exampleSentenceKo: '그�????�이?�크림을 좋아?�요.', emoji: '?��' }
+  { id: 'fb_she_friend', word: 'she', exampleSentence: 'She is my sister.', exampleSentenceKo: '그녀는 제 언니예요.', emoji: '👧' },
+  { id: 'fb_she_teacher', word: 'she', exampleSentence: 'She is a doctor.', exampleSentenceKo: '그녀는 의사예요.', emoji: '👩‍⚕️' },
+  { id: 'fb_she_mom', word: 'she', exampleSentence: 'She is my mom.', exampleSentenceKo: '그녀는 제 엄마예요.', emoji: '👩' },
+  { id: 'fb_she_like', word: 'she', exampleSentence: 'She likes ice cream.', exampleSentenceKo: '그녀는 아이스크림을 좋아해요.', emoji: '🍨' }
 ];
 
 const fallbackIt = [
-  { id: 'fb_it_dog', word: 'It', exampleSentence: 'It is a dog.', exampleSentenceKo: '그것?� 개예??', emoji: '?��' },
-  { id: 'fb_it_car', word: 'It', exampleSentence: 'It is a red car.', exampleSentenceKo: '그것?� 빨간 ?�동차예??', emoji: '?��' },
-  { id: 'fb_it_weather', word: 'It', exampleSentence: 'It is sunny today.', exampleSentenceKo: '?�늘?� ?�씨가 ?�창?�요.', emoji: '?��? },
-  { id: 'fb_it_phone', word: 'It', exampleSentence: 'It is my phone.', exampleSentenceKo: '?�것?� ???�화?�요.', emoji: '?��' }
+  { id: 'fb_it_dog', word: 'it', exampleSentence: 'It is a dog.', exampleSentenceKo: '그것은 개입니다.', emoji: '🐶' },
+  { id: 'fb_it_car', word: 'it', exampleSentence: 'It is a red car.', exampleSentenceKo: '그것은 빨간 자동차예요.', emoji: '🚗' },
+  { id: 'fb_it_weather', word: 'it', exampleSentence: 'It is sunny today.', exampleSentenceKo: '오늘은 맑아요.', emoji: '☀️' },
+  { id: 'fb_it_phone', word: 'it', exampleSentence: 'It is my phone.', exampleSentenceKo: '그것은 제 전화예요.', emoji: '📱' }
 ];
