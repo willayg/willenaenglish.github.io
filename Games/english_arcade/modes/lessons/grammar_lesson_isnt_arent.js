@@ -289,7 +289,7 @@ export async function runGrammarLessonIsntArent(ctx = {}) {
     renderCard('singular', false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '다음 예시' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -506,7 +506,7 @@ function ensureBaseStyles() {
     #gameArea .lesson-step.enter{opacity:1;transform:translateY(0)}
     #gameArea .lesson-body{text-align:center;font-size:clamp(1.05rem,3.2vmin,1.22rem);line-height:1.5;color:#28323b;margin-bottom:18px}
     #gameArea .lesson-nav{margin-top:18px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#21b3be;border-radius:12px;padding:10px 18px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease}
+    #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;padding:10px 18px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease;font-family:'Poppins', Arial, sans-serif}
     #gameArea .lesson-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(33,181,192,0.18)}
     #gameArea .lesson-btn.primary{background:#21b3be;color:#fff;border-color:#21b3be}
     #gameArea .buckets{display:grid;grid-template-columns:1fr;gap:14px;margin-top:18px;width:100%;max-width:820px}
@@ -530,7 +530,7 @@ function ensureIsntArentStyles() {
   st.id = 'wa-lesson-isntarent-styles';
   st.textContent = `
     #gameArea .isntarent-subject-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:24px 0 12px}
-    #gameArea .isntarent-subject-row button{border:2px solid #21b3be;background:#ffffff;color:#21b3be;font-weight:700;padding:10px 18px;border-radius:999px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, background .15s ease}
+    #gameArea .isntarent-subject-row button{border:2px solid #21b3be;background:#ffffff;color:#ff6fb0;font-weight:700;padding:10px 18px;border-radius:999px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;font-family:'Poppins', Arial, sans-serif}
     #gameArea .isntarent-subject-row button:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(33,179,190,0.22)}
     #gameArea .isntarent-subject-row button.active{background:#21b3be;color:#ffffff;box-shadow:0 10px 22px rgba(33,179,190,0.28)}
     #gameArea .isntarent-highlight-card{background:#f7feff;border:2px solid rgba(33,179,190,0.28);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;max-width:420px;margin:0 auto;box-shadow:0 14px 40px -22px rgba(20,126,130,0.45)}

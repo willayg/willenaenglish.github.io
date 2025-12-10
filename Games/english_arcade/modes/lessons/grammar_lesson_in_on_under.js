@@ -161,7 +161,7 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "?�ʺ�??<b>in</b> (?��), <b>on</b> (?��), <b>under</b> (?��?? ?��?��?? ?��??�� ?�� ����??"
+      ? "예: <b>in</b>은 물건이 안에 있을 때, <b>on</b>은 위에 있을 때, <b>under</b>은 아래에 있을 때 씁니다. 소리내어 읽어보세요!"
       : "Examples for <b>in</b>, <b>on</b>, and <b>under</b>. Try reading them out loud!";
     stepEl.appendChild(intro);
 
@@ -183,8 +183,8 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = lang === 'ko'
-      ? "ī��??��??��???��??ġ???��?��."
-      : "Tap a card and place it in the correct position around the box.";
+      ? '카드를 탭하여 상자 주변의 올바른 위치에 놓으세요.'
+      : 'Tap a card and place it in the correct position around the box.';
     stepEl.appendChild(body);
 
     // Main container for the sorting activity
@@ -488,21 +488,21 @@ export async function runGrammarLessonInOnUnder(ctx = {}) {
 }
 
 const fallbackIn = [
-  { id: 'fb_in_box', word: 'cat', article: 'in', emoji: '?', exampleSentence: 'The cat is in the box.', exampleSentenceKo: '����?? ?�� ?�� ?��??' },
-  { id: 'fb_in_bag', word: 'pencils', article: 'in', emoji: '??', exampleSentence: 'The pencils are in the bag.', exampleSentenceKo: '?��?�� ��??�� ?��??' },
-  { id: 'fb_in_cup', word: 'juice', article: 'in', emoji: '?', exampleSentence: 'The juice is in the cup.', exampleSentenceKo: '�ֽ��� ??�� ?��??' }
+  { id: 'fb_in_box', word: 'cat', article: 'in', emoji: '🐱', exampleSentence: 'The cat is in the box.', exampleSentenceKo: '고양이는 상자 안에 있어요.' },
+  { id: 'fb_in_bag', word: 'pencils', article: 'in', emoji: '✏️', exampleSentence: 'The pencils are in the bag.', exampleSentenceKo: '연필들은 가방 안에 있어요.' },
+  { id: 'fb_in_cup', word: 'juice', article: 'in', emoji: '🥤', exampleSentence: 'The juice is in the cup.', exampleSentenceKo: '주스가 컵 안에 있어요.' }
 ];
 
 const fallbackOn = [
-  { id: 'fb_on_table', word: 'book', article: 'on', emoji: '?', exampleSentence: 'The book is on the table.', exampleSentenceKo: 'å�� ?�� ?�� ?��??' },
-  { id: 'fb_on_plate', word: 'cookie', article: 'on', emoji: '?', exampleSentence: 'The cookie is on the plate.', exampleSentenceKo: '��Ű�� ?�� ?�� ?��??' },
-  { id: 'fb_on_head', word: 'hat', article: 'on', emoji: '?', exampleSentence: 'The hat is on my head.', exampleSentenceKo: '���ڰ� ??�Ӹ� ?�� ?��??' }
+  { id: 'fb_on_table', word: 'book', article: 'on', emoji: '📚', exampleSentence: 'The book is on the table.', exampleSentenceKo: '책이 탁자 위에 있어요.' },
+  { id: 'fb_on_plate', word: 'cookie', article: 'on', emoji: '🍪', exampleSentence: 'The cookie is on the plate.', exampleSentenceKo: '쿠키가 접시 위에 있어요.' },
+  { id: 'fb_on_head', word: 'hat', article: 'on', emoji: '🎩', exampleSentence: 'The hat is on my head.', exampleSentenceKo: '모자가 내 머리 위에 있어요.' }
 ];
 
 const fallbackUnder = [
-  { id: 'fb_under_bed', word: 'dog', article: 'under', emoji: '?', exampleSentence: 'The dog is under the bed.', exampleSentenceKo: '�������� ħ? ?��???��??' },
-  { id: 'fb_under_table', word: 'ball', article: 'under', emoji: '??', exampleSentence: 'The ball is under the table.', exampleSentenceKo: '���� ?�� ?��???��??' },
-  { id: 'fb_under_tree', word: 'child', article: 'under', emoji: '?', exampleSentence: 'The child is under the tree.', exampleSentenceKo: '?�̰� ?�� ?��???��??' }
+  { id: 'fb_under_bed', word: 'dog', article: 'under', emoji: '🐶', exampleSentence: 'The dog is under the bed.', exampleSentenceKo: '개가 침대 밑에 있어요.' },
+  { id: 'fb_under_table', word: 'ball', article: 'under', emoji: '⚽', exampleSentence: 'The ball is under the table.', exampleSentenceKo: '공이 탁자 아래에 있어요.' },
+  { id: 'fb_under_tree', word: 'child', article: 'under', emoji: '🧒', exampleSentence: 'The child is under the tree.', exampleSentenceKo: '아이가 나무 아래에 있어요.' }
 ];
 
 function normalizeList(list, fallback) {
@@ -511,9 +511,9 @@ function normalizeList(list, fallback) {
     id: item.id || `fb_${idx}`,
     word: item.word || 'item',
     article: item.article || 'in',
-    emoji: item.emoji || '?',
+    emoji: item.emoji || '❓',
     exampleSentence: item.exampleSentence || 'Example sentence',
-    exampleSentenceKo: item.exampleSentenceKo || '?��',
+    exampleSentenceKo: item.exampleSentenceKo || '예시 문장',
   }));
 }
 
@@ -537,7 +537,7 @@ function buildPrepositionSets(inList, onList, underList) {
       emoji: inSample.emoji,
       sentenceEn: inSample.exampleSentence,
       tipEn: 'Use "in" for things inside or surrounded by something.',
-      tipKo: '����???��???�� ?�� "in"???��.'
+      tipKo: '"in"은 어떤 것이 내부에 있을 때 사용합니다.'
     },
     {
       id: 'on',
@@ -546,7 +546,7 @@ function buildPrepositionSets(inList, onList, underList) {
       emoji: onSample.emoji,
       sentenceEn: onSample.exampleSentence,
       tipEn: 'Use "on" when something is on top of something.',
-      tipKo: '����???�� ?�� ?�� "on"???��.'
+      tipKo: '"on"은 어떤 것이 다른 것의 위에 있을 때 사용합니다.'
     },
     {
       id: 'under',
@@ -555,7 +555,7 @@ function buildPrepositionSets(inList, onList, underList) {
       emoji: underSample.emoji,
       sentenceEn: underSample.exampleSentence,
       tipEn: 'Use "under" when something is below something.',
-      tipKo: '����???��???�� ?�� "under"???��.'
+      tipKo: '"under"은 어떤 것이 다른 것의 아래에 있을 때 사용합니다.'
     }
   ];
 }
@@ -636,12 +636,12 @@ function buildExampleColumnWithScene(label, list, lang) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const back = buildPrimaryButton(lang === 'ko' ? '?��' : 'Back');
+  const back = buildPrimaryButton(lang === 'ko' ? '뒤로' : 'Back');
   back.style.background = '#fff';
   back.style.color = '#ff6fb0';
   back.style.borderColor = '#ff6fb0';
   back.onclick = onBack;
-  const next = buildPrimaryButton(lang === 'ko' ? '?��' : 'Next');
+  const next = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   next.style.background = '#fff';
   next.style.color = '#ff6fb0';
   next.style.borderColor = '#ff6fb0';

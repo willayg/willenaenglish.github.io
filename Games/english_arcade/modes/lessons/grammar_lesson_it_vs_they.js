@@ -25,7 +25,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
       #gameArea .lesson-example{border:2px solid #d1e6f0;border-radius:14px;padding:12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.05)}
       #gameArea .lesson-example strong{color:#19777e}
       #gameArea .lesson-nav{margin-top:auto;display:flex;gap:10px;align-items:center;justify-content:center;width:100%}
-      #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#21b3be;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease}
+      #gameArea .lesson-btn{appearance:none;border:2px solid #21b3be;background:#fff;color:#ff6fb0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease, box-shadow .15s ease;font-family:'Poppins', Arial, sans-serif}
       #gameArea .lesson-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(33,181,192,0.18)}
       #gameArea .lesson-btn.primary{background:#21b3be;color:#fff;border-color:#21b3be}
       #gameArea .choice-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-width:680px;margin:12px auto}
@@ -90,16 +90,16 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
   }
 
   const fallbackIt = [
-    { id: 'fallback_it_cat', word: 'cat', article: 'it', emoji: '?', exampleSentence: 'It is a sleepy cat.', exampleSentenceKo: '�װ�? ���� ����?��??', explanation: "Use 'it' when there is only one." },
-    { id: 'fallback_it_robot', word: 'robot', article: 'it', emoji: '?', exampleSentence: 'It is a shiny robot.', exampleSentenceKo: '�װ�? ��¦?�� �κ�?��??', explanation: "Use 'it' for a single machine." },
-    { id: 'fallback_it_flower', word: 'flower', article: 'it', emoji: '?', exampleSentence: 'It is a pink flower.', exampleSentenceKo: '�װ�? ��ȫ??����?��.', explanation: "One flower needs 'it'." },
-    { id: 'fallback_it_penguin', word: 'penguin', article: 'it', emoji: '?', exampleSentence: 'It is a baby penguin.', exampleSentenceKo: '�װ�? ?�� ???��??', explanation: "Single animals use 'it'." }
+    { id: 'fallback_it_cat', word: 'cat', article: 'it', emoji: '🐱', exampleSentence: 'It is a sleepy cat.', exampleSentenceKo: '졸린 고양이예요.', explanation: "Use 'it' when there is only one." },
+    { id: 'fallback_it_robot', word: 'robot', article: 'it', emoji: '🤖', exampleSentence: 'It is a shiny robot.', exampleSentenceKo: '반짝이는 로봇이에요.', explanation: "Use 'it' for a single machine." },
+    { id: 'fallback_it_flower', word: 'flower', article: 'it', emoji: '🌸', exampleSentence: 'It is a pink flower.', exampleSentenceKo: '분홍색 꽃이에요.', explanation: "One flower needs 'it'." },
+    { id: 'fallback_it_penguin', word: 'penguin', article: 'it', emoji: '🐧', exampleSentence: 'It is a baby penguin.', exampleSentenceKo: '아기 펭귄이에요.', explanation: "Single animals use 'it'." }
   ];
   const fallbackThey = [
-    { id: 'fallback_they_cats', word: 'cats', article: 'they', emoji: '??', exampleSentence: 'They are fluffy cats.', exampleSentenceKo: '�װ�?? ?��??����?��?��??', explanation: "Use 'they' when there is more than one." },
-    { id: 'fallback_they_robots', word: 'robots', article: 'they', emoji: '??', exampleSentence: 'They are helper robots.', exampleSentenceKo: '�װ�?? ??�ִ� �κ�?��?��.', explanation: "Many machines use 'they'." },
-    { id: 'fallback_they_flowers', word: 'flowers', article: 'they', emoji: '??', exampleSentence: 'They are yellow flowers.', exampleSentenceKo: '�װ�?? ?? �ɵ�?��??', explanation: "More than one flower is 'they'." },
-    { id: 'fallback_they_penguins', word: 'penguins', article: 'they', emoji: '??', exampleSentence: 'They are marching penguins.', exampleSentenceKo: '�װ�?? ?��?�� ???��?��.', explanation: "A group of animals uses 'they'." }
+    { id: 'fallback_they_cats', word: 'cats', article: 'they', emoji: '🐱🐱', exampleSentence: 'They are fluffy cats.', exampleSentenceKo: '복슬복슬한 고양이들이에요.', explanation: "Use 'they' when there is more than one." },
+    { id: 'fallback_they_robots', word: 'robots', article: 'they', emoji: '🤖🤖', exampleSentence: 'They are helper robots.', exampleSentenceKo: '도움이 되는 로봇들이에요.', explanation: "Many machines use 'they'." },
+    { id: 'fallback_they_flowers', word: 'flowers', article: 'they', emoji: '🌼🌼', exampleSentence: 'They are yellow flowers.', exampleSentenceKo: '노란 꽃들이에요.', explanation: "More than one flower is 'they'." },
+    { id: 'fallback_they_penguins', word: 'penguins', article: 'they', emoji: '🐧🐧', exampleSentence: 'They are marching penguins.', exampleSentenceKo: '행진하는 펭귄들이에요.', explanation: "A group of animals uses 'they'." }
   ];
 
   const singularItems = (items || []).filter(it => it && String(it.article || '').toLowerCase() === 'it');
@@ -294,7 +294,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     const body = document.createElement('div');
     body.className = 'lesson-body';
     body.innerHTML = (lang === 'ko')
-      ? "??���� <b>it</b> (�װ�), ?�� ���� <b>they</b> (�װ�????��?? �ٱ�?�� ?�� ����??"
+      ? '하나인 것은 <b>it</b>에, 여러 개는 <b>they</b>에 넣으세요.'
       : 'Place single items in the <b>it</b> basket and groups in the <b>they</b> basket.';
     stepEl.appendChild(body);
 
@@ -355,14 +355,14 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
       });
     });
 
-    const checkBtn = button((lang === 'ko') ? '?�� ?��' : 'Check Answers');
+    const checkBtn = button((lang === 'ko') ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '12px';
     stepEl.appendChild(checkBtn);
 
-  const navLocal = document.createElement('div');
+    const navLocal = document.createElement('div');
   navLocal.className = 'lesson-nav';
   navLocal.style.marginTop = '14px';
-    const backBtn = button((lang === 'ko') ? '?��' : 'Back');
+    const backBtn = button((lang === 'ko') ? '뒤로' : 'Back');
     backBtn.style.background = '#fff';
     backBtn.style.color = '#ff6fb0';
     backBtn.style.borderColor = '#ff6fb0';
@@ -419,7 +419,7 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = (lang === 'ko') ? '���� ī��??�� ?? ����??' : 'Try again! Move the red cards.';
+        message.textContent = (lang === 'ko') ? '다시 시도하세요! 빨간 항목을 고치세요.' : 'Try again! Move the red cards.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -520,8 +520,8 @@ export async function runGrammarLessonItVsThey(ctx = {}) {
     stepEl.className = 'lesson-step';
     const navBottom = document.createElement('div');
     navBottom.className = 'lesson-nav';
-    const back = button((lang === 'ko') ? '?��' : 'Back');
-    const next = button((lang === 'ko') ? '?��' : 'Next');
+    const back = button((lang === 'ko') ? '뒤로' : 'Back');
+    const next = button((lang === 'ko') ? '다음' : 'Next');
     back.style.borderColor = '#21b3be';
     back.style.color = '#ff6fb0';
     next.style.borderColor = '#21b3be';

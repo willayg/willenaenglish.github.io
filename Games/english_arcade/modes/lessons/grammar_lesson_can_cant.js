@@ -5,8 +5,24 @@ import { startSession, endSession } from '../../../../students/records.js';
 
 export async function runGrammarLessonCanCant(ctx = {}) {
   const { grammarFile, grammarName, playSFX, inlineToast } = ctx;
-  const root = document.getElementById('gameArea');
-  if (!root) return;
+  let root = document.getElementById('gameArea');
+  console.debug('[CanCantLesson] start', { grammarFile, grammarName });
+  if (!root) {
+    console.error('[CanCantLesson] no #gameArea element found - creating fallback container for debugging');
+    // Create a fallback container so users see an error message instead of a white screen
+    try {
+      const fallback = document.createElement('div');
+      fallback.id = 'gameArea';
+      fallback.style.cssText = 'padding:24px;font-family:Arial,Helvetica,sans-serif;color:#333;background:#fff';
+      fallback.innerHTML = '<div style="max-width:720px;margin:20px auto;color:#b00020;font-weight:800;">Lesson failed to start: missing gameArea element. Check console for details.</div>';
+      document.body.appendChild(fallback);
+      // Re-acquire root reference
+      root = document.getElementById('gameArea');
+    } catch (err) {
+      console.error('[CanCantLesson] creating fallback failed', err);
+      return;
+    }
+  }
 
   ensureBaseStyles();
   ensureCanCantStyles();
@@ -44,7 +60,15 @@ export async function runGrammarLessonCanCant(ctx = {}) {
   lang = (lang === 'ko' || lang === 'kr') ? 'ko' : 'en';
   let stepIndex = 0;
 
-  render();
+  try {
+    render();
+  } catch (err) {
+    console.error('[CanCantLesson] render() threw', err);
+    try {
+      if (root) root.innerHTML = '<div style="padding:20px;color:#b00020;font-weight:800;">Lesson failed to render. See console for details.</div>';
+      if (typeof inlineToast === 'function') inlineToast('Lesson failed to start. Check console.');
+    } catch (e) { /* ignore */ }
+  }
 
   function render() {
     root.innerHTML = '';
@@ -128,7 +152,7 @@ export async function runGrammarLessonCanCant(ctx = {}) {
     const cardDisplay = document.createElement('div');
     cardDisplay.className = 'cancant-highlight-card';
 
-    const abilitySets = buildAbilitySets(canList, cantList);
+    const abilitySets = buildAbilitySets(canList, cantList, lang);
     let current = null;
     let currentType = 'can';
     let canPointer = 0;
@@ -590,7 +614,7 @@ function escapeHtml(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildAbilitySets(canList, cantList) {
+function buildAbilitySets(canList, cantList, lang) {
   const pick = (arr, fallback) => arr.length ? arr[0] : fallback;
   const canExample = pick(canList, fallbackCan[0]);
   const cantExample = pick(cantList, fallbackCant[0]);
