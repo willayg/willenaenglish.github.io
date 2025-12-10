@@ -1,4 +1,4 @@
-﻿// Grammar Lesson Runner ??Want vs. Wants
+// Grammar Lesson Runner ??Want vs. Wants
 // Lightweight lesson that explains verb agreement for desires.
 
 import { startSession, endSession } from '../../../../students/records.js';
@@ -119,7 +119,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "주어???�라 <b>want</b> (?�해??, <b>wants</b> (?�해??가 바뀌어?? 버튼???�러 ?�떤 말을 ?�는지 ?�인??보세??"
+      ? "주어에 맞춰 동사가 달라요. I/you/we/they는 <b>want</b>, he/she/it은 <b>wants</b>를 써요. 버튼을 눌러 확인해 보세요!"
       : "The verb <b>want</b> or <b>wants</b> changes with the subject. Tap each button to see which one fits!";
 
     const subjectRow = document.createElement('div');
@@ -184,7 +184,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     renderCard(subjectSets[0], false);
 
     // Add "Next Example" button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -206,7 +206,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? "<b>???�람/물건</b>?� <b>wants</b> (?�해??<br/><b>?�러 ?�람/물건</b>?� <b>want</b> (?�해??<br/>버튼???�러 ?�제�??�인??보세??"
+      ? "<b>한 사람/한 가지</b>는 <b>wants</b><br/><b>두 명 이상/여러 가지</b>는 <b>want</b><br/>버튼을 눌러 예시를 보세요!"
       : "<b>One person/thing</b> uses <b>wants</b><br/><b>More than one</b> uses <b>want</b><br/>Tap each button to see examples!";
 
     const typeRow = document.createElement('div');
@@ -229,13 +229,13 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     const exampleSets = [
       {
         id: 'singular',
-        label: lang === 'ko' ? '??�?wants)\n?��' : 'One (wants)\n?��',
+        label: lang === 'ko' ? '한 명 (wants)\n🥇' : 'One (wants)\n🥇',
         examples: nounWantsExamples.length ? nounWantsExamples : wantsList,
         pointer: 0,
       },
       {
         id: 'plural',
-        label: lang === 'ko' ? '?�러 �?want)\n?��' : 'Many (want)\n?��',
+        label: lang === 'ko' ? '여러 명 (want)\n🌟' : 'Many (want)\n🌟',
         examples: nounWantExamples.length ? nounWantExamples : wantList,
         pointer: 0,
       }
@@ -294,7 +294,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     renderCard('singular', false);
 
     // Next Example button
-    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�음 ?�제' : 'Next Example');
+    const nextExampleBtn = buildSecondaryButton(lang === 'ko' ? '?�� ?��' : 'Next Example');
     nextExampleBtn.style.marginTop = '18px';
     nextExampleBtn.style.display = 'block';
     nextExampleBtn.style.margin = '18px auto 0 auto';
@@ -315,7 +315,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     const intro = document.createElement('div');
     intro.className = 'lesson-body';
     intro.innerHTML = lang === 'ko'
-      ? '문장???�러 <b>want</b> ?�는 <b>wants</b> 바구?�에 ?�어 보세?? 모두 맞으�??�음 ?�계�??�어�????�어??'
+      ? '문장을 눌러 <b>want</b> 또는 <b>wants</b> 바구니에 옮겨 주세요. 모두 맞추면 다음으로 갈 수 있어요!'
       : 'Tap each strip and move it into the <b>want</b> or <b>wants</b> basket. Get them all correct to continue!';
     stepEl.appendChild(intro);
 
@@ -324,8 +324,8 @@ export async function runGrammarLessonWantWants(ctx = {}) {
 
     const pool = makeBucket('pool', lang === 'ko' ? '문장 모음' : 'Sentence Pool');
     pool.wrap.classList.add('bucket-pool');
-    const wantBucket = makeBucket('want', lang === 'ko' ? 'want (?�해??' : 'want');
-    const wantsBucket = makeBucket('wants', lang === 'ko' ? 'wants (?�해??' : 'wants');
+    const wantBucket = makeBucket('want', lang === 'ko' ? 'want (I/you/we/they)' : 'want');
+    const wantsBucket = makeBucket('wants', lang === 'ko' ? 'wants (he/she/it)' : 'wants');
 
     [pool.wrap, wantBucket.wrap, wantsBucket.wrap].forEach((wrap) => buckets.appendChild(wrap));
     stepEl.appendChild(buckets);
@@ -370,14 +370,14 @@ export async function runGrammarLessonWantWants(ctx = {}) {
       });
     });
 
-    const checkBtn = buildPrimaryButton(lang === 'ko' ? '?�답 ?�인' : 'Check Answers');
+    const checkBtn = buildPrimaryButton(lang === 'ko' ? '정답 확인' : 'Check Answers');
     checkBtn.style.marginTop = '16px';
     stepEl.appendChild(checkBtn);
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
     nav.style.marginTop = '18px';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -415,11 +415,11 @@ export async function runGrammarLessonWantWants(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#e8f5e9;border:2px solid #4caf50;border-radius:12px;padding:14px 16px;text-align:center;color:#256029;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '?�벽?�요! Want?� Wants�???구분?�어??' : 'Great job! You know want vs. wants!';
+        message.textContent = lang === 'ko' ? '잘했어요! want와 wants를 모두 맞췄어요.' : 'Great job! You know want vs. wants!';
         stepEl.insertBefore(message, stepEl.firstChild);
 
         if (!continueBtn) {
-          continueBtn = buildPrimaryButton(lang === 'ko' ? '?�음 ?�계�? : 'Next');
+          continueBtn = buildPrimaryButton(lang === 'ko' ? '다음 단계' : 'Next');
           continueBtn.style.marginTop = '12px';
           continueBtn.onclick = () => nextStep();
           nav.appendChild(continueBtn);
@@ -429,7 +429,7 @@ export async function runGrammarLessonWantWants(ctx = {}) {
         const message = document.createElement('div');
         message.className = 'completion-message';
         message.style.cssText = 'background:#ffebee;border:2px solid #f44336;border-radius:12px;padding:14px 16px;text-align:center;color:#b71c1c;font-weight:800;margin-bottom:16px;font-size:1.05rem;';
-        message.textContent = lang === 'ko' ? '빨간 카드�??�시 ??�� 보세??' : 'Move the red cards to the correct basket.';
+        message.textContent = lang === 'ko' ? '빨간 카드를 올바른 바구니로 옮겨 주세요.' : 'Move the red cards to the correct basket.';
         stepEl.insertBefore(message, stepEl.firstChild);
       }
     };
@@ -446,16 +446,16 @@ export async function runGrammarLessonWantWants(ctx = {}) {
     const congratsMsg = document.createElement('div');
     congratsMsg.style.cssText = 'font-size:1.6rem;font-weight:800;color:#19777e;text-align:center;';
     congratsMsg.textContent = lang === 'ko'
-      ? '축하?�요! Want?� Wants�?배웠?�요! ?��'
-      : 'Congratulations! You learned want vs. wants! ?��';
+      ? '축하해요! want와 wants를 배웠어요! 🎉'
+      : 'Congratulations! You learned want vs. wants! 🎉';
     stepEl.appendChild(congratsMsg);
 
     const starsDiv = document.createElement('div');
     starsDiv.style.cssText = 'font-size:3rem;';
-    starsDiv.textContent = '⭐⭐⭐⭐�?;
+    starsDiv.textContent = '⭐⭐⭐';
     stepEl.appendChild(starsDiv);
 
-    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드�??�아가�? : 'Back to Modes');
+    const backBtn = buildPrimaryButton(lang === 'ko' ? '모드로 돌아가기' : 'Back to Modes');
     backBtn.onclick = () => {
       try {
         if (window.WordArcade?.startGrammarModeSelector) {
@@ -537,21 +537,21 @@ function buildSubjectSets(wantList, wantsList) {
     {
       id: 'want',
       verb: 'want',
-      emoji: wantExample.emoji || '?��',
+      emoji: wantExample.emoji || '🙂',
       sentenceEn: wantExample.exampleSentence || 'I want a toy.',
-      sentenceKo: wantExample.exampleSentenceKo || '?�는 ?�난감을 ?�해??',
+      sentenceKo: wantExample.exampleSentenceKo || '나는 장난감을 원해요.',
       tipEn: "Use 'want' with I, you, we, they, or plural nouns.",
-      tipKo: "I, you, we, they 그리�?복수 명사?� 'want'�??�요.",
+      tipKo: "I, you, we, they 그리고 복수 명사는 'want'를 써요.",
       label: 'I / You / We / They'
     },
     {
       id: 'wants',
       verb: 'wants',
-      emoji: wantsExample.emoji || '?��',
+      emoji: wantsExample.emoji || '🤔',
       sentenceEn: wantsExample.exampleSentence || 'He wants a bicycle.',
-      sentenceKo: wantsExample.exampleSentenceKo || '그는 ?�전거�? ?�해??',
+      sentenceKo: wantsExample.exampleSentenceKo || '그는 자전거를 원해요.',
       tipEn: "Use 'wants' with he, she, it, or one person or thing.",
-      tipKo: "he, she, it 그리�????�람/물건�?'wants'�??�요.",
+      tipKo: "he, she, it 그리고 한 사람/한 가지일 때는 'wants'를 써요.",
       label: 'He / She / It'
     }
   ];
@@ -565,7 +565,7 @@ function normalizeList(list, fallback) {
     prompt: item.prompt || '',
     exampleSentence: item.exampleSentence || '',
     exampleSentenceKo: item.exampleSentenceKo || '',
-    emoji: item.emoji || '??,
+    emoji: item.emoji || '🙂',
   })).filter((item) => item.exampleSentence || item.prompt);
 }
 
@@ -601,9 +601,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?�로' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?�음' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -637,7 +637,7 @@ function detectLang() {
 
 function displayStep(stepIndex, lang) {
   const stepsEn = ['Language', 'Step 1', 'Step 2', 'Step 3', 'Complete'];
-  const stepsKo = ['?�어 ?�택', '1?�계', '2?�계', '3?�계', '?'완료'];
+  const stepsKo = ['언어 선택', '1단계', '2단계', '3단계', '완료'];
   const list = (lang === 'ko') ? stepsKo : stepsEn;
   return list[stepIndex] || '';
 }
@@ -647,17 +647,17 @@ function shuffle(list) {
 }
 
 const fallbackWant = [
-  { id: 'fb_want_i', word: 'I', prompt: 'I ___ a toy.', exampleSentence: 'I want a toy.', exampleSentenceKo: '?�는 ?�난감을 ?�해??', emoji: '?��' },
-  { id: 'fb_want_we', word: 'We', prompt: 'We ___ to play.', exampleSentence: 'We want to play.', exampleSentenceKo: '?�리???��??�어??', emoji: '?? },
-  { id: 'fb_want_they', word: 'They', prompt: 'They ___ ice cream.', exampleSentence: 'They want ice cream.', exampleSentenceKo: '그들?� ?�이?�크림을 ?�해??', emoji: '?��' },
-  { id: 'fb_want_kids', word: 'The kids', prompt: 'The kids ___ candy.', exampleSentence: 'The kids want candy.', exampleSentenceKo: '?�이?��? ?�탕???�해??', emoji: '?��' }
+  { id: 'fb_want_i', word: 'I', prompt: 'I ___ a toy.', exampleSentence: 'I want a toy.', exampleSentenceKo: '나는 장난감을 원해요.', emoji: '🧸' },
+  { id: 'fb_want_we', word: 'We', prompt: 'We ___ to play.', exampleSentence: 'We want to play.', exampleSentenceKo: '우리는 놀고 싶어 해요.', emoji: '🎲' },
+  { id: 'fb_want_they', word: 'They', prompt: 'They ___ ice cream.', exampleSentence: 'They want ice cream.', exampleSentenceKo: '그들은 아이스크림을 원해요.', emoji: '🍨' },
+  { id: 'fb_want_kids', word: 'The kids', prompt: 'The kids ___ candy.', exampleSentence: 'The kids want candy.', exampleSentenceKo: '아이들은 사탕을 원해요.', emoji: '🍬' }
 ];
 
 const fallbackWants = [
-  { id: 'fb_wants_he', word: 'He', prompt: 'He ___ a bike.', exampleSentence: 'He wants a bike.', exampleSentenceKo: '그는 ?�전거�? ?�해??', emoji: '?��' },
-  { id: 'fb_wants_she', word: 'She', prompt: 'She ___ a book.', exampleSentence: 'She wants a book.', exampleSentenceKo: '그�???책을 ?�해??', emoji: '?��' },
-  { id: 'fb_wants_it', word: 'It', prompt: 'It ___ water.', exampleSentence: 'It wants water.', exampleSentenceKo: '그것?� 물을 ?�해??', emoji: '?��' },
-  { id: 'fb_wants_cat', word: 'My cat', prompt: 'My cat ___ to sleep.', exampleSentence: 'My cat wants to sleep.', exampleSentenceKo: '??고양?�는 ?�고 ?�어??', emoji: '?��' }
+  { id: 'fb_wants_he', word: 'He', prompt: 'He ___ a bike.', exampleSentence: 'He wants a bike.', exampleSentenceKo: '그는 자전거를 원해요.', emoji: '🚲' },
+  { id: 'fb_wants_she', word: 'She', prompt: 'She ___ a book.', exampleSentence: 'She wants a book.', exampleSentenceKo: '그녀는 책을 원해요.', emoji: '📖' },
+  { id: 'fb_wants_it', word: 'It', prompt: 'It ___ water.', exampleSentence: 'It wants water.', exampleSentenceKo: '그것은 물을 원해요.', emoji: '💧' },
+  { id: 'fb_wants_cat', word: 'My cat', prompt: 'My cat ___ to sleep.', exampleSentence: 'My cat wants to sleep.', exampleSentenceKo: '내 고양이는 자고 싶어 해요.', emoji: '🐱' }
 ];
 
 function ensureBaseStyles() {
