@@ -399,7 +399,7 @@ export async function runGrammarLessonHeShelt(ctx = {}) {
 
     const nav = document.createElement('div');
     nav.className = 'lesson-nav';
-    const backBtn = buildSecondaryButton(lang === 'ko' ? '?��' : 'Back');
+    const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
     backBtn.onclick = () => prevStep();
     nav.appendChild(backBtn);
     stepEl.appendChild(nav);
@@ -627,9 +627,9 @@ function buildPronounSets(heList, sheList, itList) {
       pronoun: 'he',
       emoji: heExample.emoji || '?',
       sentenceEn: heExample.exampleSentence || 'He is my friend.',
-      sentenceKo: heExample.exampleSentenceKo || '�״� ??ģ��?��.',
+      sentenceKo: heExample.exampleSentenceKo || '그는 내 친구예요.',
       tipEn: "Use 'he' for males (boys, men).",
-      tipKo: "?��(?��, ?��)?????'he'??��.",
+      tipKo: "남자(소년, 남성)에게는 'he'를 사용해요.",
       label: '? He'
     },
     {
@@ -637,9 +637,9 @@ function buildPronounSets(heList, sheList, itList) {
       pronoun: 'she',
       emoji: sheExample.emoji || '?',
       sentenceEn: sheExample.exampleSentence || 'She is my sister.',
-      sentenceKo: sheExample.exampleSentenceKo || '��??????�� ?��?��.',
+      sentenceKo: sheExample.exampleSentenceKo || '그녀는 내 여동생이에요.',
       tipEn: "Use 'she' for females (girls, women).",
-      tipKo: "?��(??, ?��)?????'she'??��.",
+      tipKo: "여자(소녀, 여성)에게는 'she'를 사용해요.",
       label: '? She'
     },
     {
@@ -647,9 +647,9 @@ function buildPronounSets(heList, sheList, itList) {
       pronoun: 'it',
       emoji: itExample.emoji || '?',
       sentenceEn: itExample.exampleSentence || 'It is a dog.',
-      sentenceKo: itExample.exampleSentenceKo || '�װ�? ����??',
+      sentenceKo: itExample.exampleSentenceKo || '그것은 개예요.',
       tipEn: "Use 'it' for animals and objects.",
-      tipKo: "?��??��?????'it'???��.",
+      tipKo: "동물이나 사물에는 'it'를 사용해요.",
       label: '? It'
     }
   ];
@@ -700,9 +700,9 @@ function buildSecondaryButton(text) {
 function buildNavRow(onBack, onNext, lang) {
   const nav = document.createElement('div');
   nav.className = 'lesson-nav';
-  const backBtn = buildSecondaryButton(lang === 'ko' ? '?��' : 'Back');
+  const backBtn = buildSecondaryButton(lang === 'ko' ? '뒤로' : 'Back');
   backBtn.onclick = () => onBack();
-  const nextBtn = buildPrimaryButton(lang === 'ko' ? '?��' : 'Next');
+  const nextBtn = buildPrimaryButton(lang === 'ko' ? '다음' : 'Next');
   nextBtn.onclick = () => onNext();
   nav.appendChild(backBtn);
   nav.appendChild(nextBtn);
@@ -752,3 +752,5 @@ const fallbackIt = [
   { id: 'fb_it_weather', word: 'it', exampleSentence: 'It is sunny today.', exampleSentenceKo: '오늘은 맑아요.', emoji: '☀️' },
   { id: 'fb_it_phone', word: 'it', exampleSentence: 'It is my phone.', exampleSentenceKo: '그것은 제 전화예요.', emoji: '📱' }
 ];
+}
+
