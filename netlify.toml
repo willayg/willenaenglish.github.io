@@ -12,6 +12,10 @@ package = "@netlify/plugin-functions-install-core"
 [functions]
   directory = "netlify/functions"
 
+# Schedule daily stats population at 5:00 AM UTC every day
+[functions."populate_daily_stats"]
+  schedule = "0 5 * * *"
+
 [dev]
   framework = "#static"
   port = 9000
