@@ -90,7 +90,42 @@ exports.handler = async (event) => {
       }
     }
 
-    const body = JSON.parse(event.body);
+    // Robust body parsing - handle string, object, null/undefined
+    let body;
+    if (!event.body) {
+      console.error('verify_student: event.body is empty or undefined');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Invalid JSON body' })
+      };
+    }
+    
+    if (typeof event.body === 'object') {
+      // Netlify may have already parsed the body
+      body = event.body;
+    } else {
+      try {
+        body = JSON.parse(event.body);
+      } catch (parseErr) {
+        console.error('verify_student: JSON parse failed for body:', event.body?.substring?.(0, 100) || event.body);
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ success: false, error: 'Invalid JSON body' })
+        };
+      }
+    }
+    
+    if (!body || typeof body !== 'object') {
+      console.error('verify_student: parsed body is not an object:', typeof body);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Invalid JSON body' })
+      };
+    }
+    
     const { korean_name, name, auth_code } = body;
 
     if (!korean_name || !name || !auth_code) {
