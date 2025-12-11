@@ -110,7 +110,7 @@ async function insertRows(env, table, rows) {
 
 // Upsert session row
 async function upsertSession(env, sessionData) {
-  const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/progress_sessions`, {
+  const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/progress_sessions?on_conflict=session_id`, {
     method: 'POST',
     headers: {
       'apikey': env.SUPABASE_SERVICE_KEY,

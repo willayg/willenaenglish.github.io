@@ -175,6 +175,24 @@ async function handleRequest(request, env) {
   }
   
   try {
+    // Special case: /audio/* paths go directly to get-audio-urls worker for R2 proxying
+    if (url.pathname.startsWith('/audio/')) {
+      const binding = env && env.GET_AUDIO_URLS;
+      if (binding && typeof binding.fetch === 'function') {
+        console.log(`[proxy] Routing audio file to GET_AUDIO_URLS worker: ${url.pathname}`);
+        // Forward the full path to the worker
+        const workerRequest = new Request(request.url, {
+          method: request.method,
+          headers: request.headers,
+        });
+        const response = await binding.fetch(workerRequest);
+        return rewriteResponse(response, origin);
+      } else {
+        console.error('[proxy] GET_AUDIO_URLS binding not available for audio proxy');
+        return new Response('Audio service unavailable', { status: 503, headers: corsHeaders(origin) });
+      }
+    }
+    
     const functionName = extractFunctionName(url.pathname);
     
     // Check if we should use CF Worker and if the binding exists
