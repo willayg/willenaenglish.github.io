@@ -172,27 +172,38 @@ async function aggregatePointsForIds(env, ids, firstOfMonthIso) {
   if (!ids || !ids.length) return new Map();
   
   const totals = new Map();
-  const pageSize = 1000;
+  const batchSize = 1000; // Supabase default limit
   
-  // Process in chunks to avoid query limits
+  // Process in chunks of users to avoid IN query limits
   const chunkSize = 100;
   for (let i = 0; i < ids.length; i += chunkSize) {
     const chunk = ids.slice(i, i + chunkSize);
     
-    let query = `user_id=in.(${chunk.join(',')})&points=not.is.null&select=user_id,points`;
-    if (firstOfMonthIso) {
-      query += `&created_at=gte.${firstOfMonthIso}`;
-    }
-    
-    try {
-      const data = await supabaseSelect(env, 'progress_attempts', query);
-      (data || []).forEach(row => {
-        if (!row || !row.user_id) return;
-        const value = Number(row.points) || 0;
-        totals.set(row.user_id, (totals.get(row.user_id) || 0) + value);
-      });
-    } catch (e) {
-      console.error('[progress-summary] Points aggregation error:', e.message);
+    // Paginate through all attempts for this chunk of users
+    let offset = 0;
+    while (true) {
+      let query = `user_id=in.(${chunk.join(',')})&points=not.is.null&select=user_id,points&order=id.asc&limit=${batchSize}&offset=${offset}`;
+      if (firstOfMonthIso) {
+        query += `&created_at=gte.${firstOfMonthIso}`;
+      }
+      
+      try {
+        const data = await supabaseSelect(env, 'progress_attempts', query);
+        if (!data || data.length === 0) break;
+        
+        (data || []).forEach(row => {
+          if (!row || !row.user_id) return;
+          const value = Number(row.points) || 0;
+          totals.set(row.user_id, (totals.get(row.user_id) || 0) + value);
+        });
+        
+        // If we got less than batchSize, we've reached the end
+        if (data.length < batchSize) break;
+        offset += batchSize;
+      } catch (e) {
+        console.error('[progress-summary] Points aggregation error:', e.message);
+        break;
+      }
     }
   }
   
@@ -251,20 +262,32 @@ async function fetchSessionsForUsers(env, userIds, firstOfMonthIso) {
   
   const sessions = [];
   const chunkSize = 100;
+  const batchSize = 1000;
   
   for (let i = 0; i < userIds.length; i += chunkSize) {
     const chunk = userIds.slice(i, i + chunkSize);
     
-    let query = `user_id=in.(${chunk.join(',')})&ended_at=not.is.null&select=user_id,list_name,mode,summary,ended_at,session_id`;
-    if (firstOfMonthIso) {
-      query += `&ended_at=gte.${firstOfMonthIso}`;
-    }
-    
-    try {
-      const data = await supabaseSelect(env, 'progress_sessions', query);
-      sessions.push(...(data || []));
-    } catch (e) {
-      console.error('[progress-summary] Sessions fetch error:', e.message);
+    // Paginate through all sessions for this chunk of users
+    let offset = 0;
+    while (true) {
+      let query = `user_id=in.(${chunk.join(',')})&ended_at=not.is.null&select=user_id,list_name,mode,summary,ended_at,session_id&order=ended_at.desc&limit=${batchSize}&offset=${offset}`;
+      if (firstOfMonthIso) {
+        query += `&ended_at=gte.${firstOfMonthIso}`;
+      }
+      
+      try {
+        const data = await supabaseSelect(env, 'progress_sessions', query);
+        if (!data || data.length === 0) break;
+        
+        sessions.push(...data);
+        
+        // If we got less than batchSize, we've reached the end
+        if (data.length < batchSize) break;
+        offset += batchSize;
+      } catch (e) {
+        console.error('[progress-summary] Sessions fetch error:', e.message);
+        break;
+      }
     }
   }
   
@@ -422,6 +445,31 @@ export default {
           stars: totalStars,
           points: totalPoints,
         }, 200, origin, RESPONSE_CACHE_SECONDS);
+      }
+      
+      // ===== SESSIONS (for progress-data-service star/progress calculations) =====
+      if (section === 'sessions') {
+        const listNameFilter = url.searchParams.get('list_name') || null;
+        
+        // Fetch all completed sessions for this user
+        let query = `user_id=eq.${userId}&ended_at=not.is.null&order=ended_at.desc&limit=500&select=session_id,mode,list_name,started_at,ended_at,summary`;
+        if (listNameFilter) {
+          query += `&list_name=eq.${encodeURIComponent(listNameFilter)}`;
+        }
+        
+        let sessions;
+        try {
+          sessions = await supabaseSelect(env, 'progress_sessions', query);
+        } catch (e) {
+          console.error('[progress-summary] Sessions fetch error:', e.message);
+          return jsonResponse({ error: 'Failed to fetch sessions' }, 500, origin);
+        }
+        
+        // Synthesize summaries for sessions that are missing usable summary data
+        await synthesizeSummaries(env, sessions || []);
+        
+        // Return the sessions array directly (matching Netlify format)
+        return jsonResponse(sessions || [], 200, origin, RESPONSE_CACHE_SECONDS);
       }
       
       // ===== LEADERBOARD STARS (global or class) =====

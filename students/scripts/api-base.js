@@ -11,4 +11,20 @@ const getApiBase = () => {
 };
 
 const FUNCTIONS_BASE = getApiBase();
-export const FN = (name) => `${FUNCTIONS_BASE}/.netlify/functions/${name}`;
+
+/**
+ * Get the URL for a Netlify function — OR the Cloudflare Worker if rollout is enabled.
+ * Uses `WillenaAPI` from `js/api-config.js` when available.
+ */
+export const FN = (name) => {
+  // Check if WillenaAPI is loaded and if this function should use Cloudflare
+  if (typeof window !== 'undefined' && window.WillenaAPI) {
+    const api = window.WillenaAPI;
+    // If Cloudflare rollout applies to this function, return Worker URL
+    if (api.CF_MIGRATED_FUNCTIONS && api.CF_MIGRATED_FUNCTIONS[name] && api.shouldUseCloudflare(name)) {
+      return api.CF_MIGRATED_FUNCTIONS[name];
+    }
+  }
+  // Default: Netlify function path
+  return `${FUNCTIONS_BASE}/.netlify/functions/${name}`;
+};
