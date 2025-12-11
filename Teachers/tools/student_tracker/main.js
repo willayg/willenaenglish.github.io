@@ -41,10 +41,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Failed to load burger menu template:', e);
     }
   }
-  // Assuming insertBurgerMenu is available from burger-menu.js (set as window global)
-  if (typeof window.insertBurgerMenu === 'function') {
-    window.insertBurgerMenu('#burger-menu-mount');
-  }
+  
+  // Wait for ES module to set window.insertBurgerMenu (small delay for module execution)
+  const waitForBurgerMenu = (attempts = 0) => {
+    if (typeof window.insertBurgerMenu === 'function') {
+      window.insertBurgerMenu('#burger-menu-mount');
+    } else if (attempts < 20) {
+      setTimeout(() => waitForBurgerMenu(attempts + 1), 50);
+    } else {
+      console.warn('insertBurgerMenu not available after waiting');
+    }
+  };
+  waitForBurgerMenu();
 });
 
 // API functions

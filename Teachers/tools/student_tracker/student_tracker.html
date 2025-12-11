@@ -38,25 +38,13 @@
   <!-- Load api-config.js first -->
   <script src="/js/api-config.js"></script>
   
+  <!-- Load burger-menu.js to make insertBurgerMenu available globally -->
   <script type="module">
     import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
-    
-    // Ensure burger menu template is loaded
-    async function ensureBurgerMenuTemplate() {
-      if (!document.getElementById('burger-menu-template')) {
-        const resp = await fetch('/Teachers/components/burger-menu.html');
-        const html = await resp.text();
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        document.body.appendChild(tempDiv.firstElementChild);
-      }
-    }
-    
-    document.addEventListener('DOMContentLoaded', async function() {
-      await ensureBurgerMenuTemplate();
-      insertBurgerMenu('#burger-menu-mount');
-    });
+    // Expose globally for main.js to use
+    window.insertBurgerMenu = insertBurgerMenu;
   </script>
+  
   <header>
     <img src="/Assets/Images/Logo.png" alt="Logo" />
     <h1>Student Tracker • English Arcade</h1>
