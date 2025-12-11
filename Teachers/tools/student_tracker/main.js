@@ -10,7 +10,8 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
     return;
   }
   try {
-    const r = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+    const apiUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`) : `/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`;
+    const r = await fetch(apiUrl, { credentials: 'include' });
     const js = await r.json();
     if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
       location.href = '/Teachers/profile.html';
@@ -40,9 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Failed to load burger menu template:', e);
     }
   }
-  // Assuming insertBurgerMenu is available from burger-menu.js
-  if (typeof insertBurgerMenu === 'function') {
-    insertBurgerMenu('#burger-menu-mount');
+  // Assuming insertBurgerMenu is available from burger-menu.js (set as window global)
+  if (typeof window.insertBurgerMenu === 'function') {
+    window.insertBurgerMenu('#burger-menu-mount');
   }
 });
 
@@ -51,8 +52,10 @@ const FN = (name) => `/.netlify/functions/${name}`;
 
 async function fetchJsonWithLog(url, label, options = {}) {
   const init = { credentials: 'include', ...options };
+  // Use WillenaAPI to get correct endpoint (routes to Cloudflare workers on custom domains)
+  const resolvedUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(url) : url;
   try {
-    const resp = await fetch(url, init);
+    const resp = await fetch(resolvedUrl, init);
     let data = null;
     try {
       data = await resp.json();
