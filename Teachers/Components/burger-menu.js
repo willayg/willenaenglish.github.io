@@ -9,8 +9,34 @@ export function insertBurgerMenu(targetSelector = 'body') {
   // Prevent duplicate insertion
   if (document.getElementById('burger-menu-template-inserted')) return;
 
-  const template = document.getElementById('burger-menu-template');
-  if (!template) return;
+  let template = document.getElementById('burger-menu-template');
+
+  // Fallback: if the template failed to load (e.g., SPA fallback routing), inject a minimal default template
+  if (!template) {
+    const fallback = document.createElement('template');
+    fallback.id = 'burger-menu-template';
+    fallback.innerHTML = `
+      <style>
+        .burger-menu { position: relative; display: inline-block; }
+        .burger-btn { font-size: 28px; background: none; border: none; cursor: pointer; color: #fff; }
+        .burger-dropdown { display: none; position: absolute; right: 0; background: #eaebf0; min-width: 140px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; border-radius: 6px; overflow: hidden; }
+        .burger-dropdown a { display: block; padding: 12px 18px; color: #3d3752; text-decoration: none; transition: background 0.2s; }
+        .burger-dropdown a:hover { background: #f0f0f0; }
+      </style>
+      <div class="burger-menu">
+        <button class="burger-btn" aria-label="Menu">☰</button>
+        <div class="burger-dropdown">
+          <a href="/index.html">Home</a>
+          <a href="/Teachers/index.html">Dashboard</a>
+          <a href="/Teachers/profile.html">Profile</a>
+          <a href="#" id="feedbackMenuBtn">Feedback</a>
+          <a href="/Teachers/components/feedback-admin.html" id="adminMenuBtn">Admin</a>
+          <a href="#" id="logoutMenuBtn">Logout</a>
+        </div>
+      </div>`;
+    document.body.appendChild(fallback);
+    template = fallback;
+  }
   const node = template.content.cloneNode(true);
   const wrapper = document.createElement('div');
   wrapper.id = 'burger-menu-template-inserted';
