@@ -7,8 +7,13 @@ export function insertBurgerMenu(targetSelector = 'body') {
 
   let template = document.getElementById('burger-menu-template');
   
-  // Fallback: if template doesn't exist (fetch failed or SPA routing issue), inject it
-  if (!template) {
+  // Fallback: if template doesn't exist OR has invalid content (e.g., SPA routing returned index.html)
+  const isValidTemplate = template && template.content && template.content.querySelector('.burger-menu');
+  
+  if (!isValidTemplate) {
+    // Remove any invalid template that might exist
+    if (template) template.remove();
+    
     const fallback = document.createElement('template');
     fallback.id = 'burger-menu-template';
     fallback.innerHTML = `
