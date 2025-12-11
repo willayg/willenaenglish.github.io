@@ -11,8 +11,14 @@ export function insertBurgerMenu(targetSelector = 'body') {
 
   let template = document.getElementById('burger-menu-template');
 
-  // Fallback: if the template failed to load (e.g., SPA fallback routing), inject a minimal default template
-  if (!template) {
+  // Fallback: if template doesn't exist OR has invalid content (e.g., SPA routing returned index.html)
+  // Check if template content actually contains .burger-menu
+  const isValidTemplate = template && template.content && template.content.querySelector('.burger-menu');
+  
+  if (!isValidTemplate) {
+    // Remove any invalid template that might exist
+    if (template) template.remove();
+    
     const fallback = document.createElement('template');
     fallback.id = 'burger-menu-template';
     fallback.innerHTML = `
