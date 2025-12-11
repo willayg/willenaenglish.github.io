@@ -229,20 +229,12 @@
 
   <script type="module">
     import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
+    import { WillenaAPI } from '/js/api-config.js';
 
     ensureAuthRefresh();
 
-    // Configuration
-    // Detect custom domain and route to Netlify
-    const getApiBase = () => {
-      const host = window.location.hostname;
-      if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
-        return 'https://willenaenglish.netlify.app';
-      }
-      return '';
-    };
-    const FUNCTIONS_BASE = getApiBase();
-    const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
+    // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
+    const AUTH_URL = WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth');
     
     // DOM elements
     const form = document.getElementById('loginForm');
