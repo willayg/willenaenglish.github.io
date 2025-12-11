@@ -297,6 +297,31 @@ export default {
         return jsonResponse(responseBody, 200, origin, cookies);
       }
       
+      // ===== GET PROFILE ID =====
+      if (action === 'get_profile_id') {
+        const authUserId = url.searchParams.get('auth_user_id');
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Missing auth_user_id' }, 400, origin);
+        }
+        
+        const resp = await fetch(
+          `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(authUserId)}&select=id`,
+          {
+            headers: {
+              'apikey': env.SUPABASE_SERVICE_KEY,
+              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            },
+          }
+        );
+        
+        const data = await resp.json();
+        if (!resp.ok || !data || !data[0]) {
+          return jsonResponse({ success: false, error: 'Profile not found' }, 400, origin);
+        }
+        
+        return jsonResponse({ success: true, profile_id: data[0].id }, 200, origin);
+      }
+      
       // ===== WHOAMI =====
       if (action === 'whoami' && request.method === 'GET') {
         // Support multiple token sources:
