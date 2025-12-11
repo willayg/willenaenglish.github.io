@@ -35,9 +35,27 @@
   </style>
 </head>
 <body>
+  <!-- Load api-config.js first -->
+  <script src="/js/api-config.js"></script>
+  
   <script type="module">
     import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
-    window.insertBurgerMenu = insertBurgerMenu;
+    
+    // Ensure burger menu template is loaded
+    async function ensureBurgerMenuTemplate() {
+      if (!document.getElementById('burger-menu-template')) {
+        const resp = await fetch('/Teachers/components/burger-menu.html');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', async function() {
+      await ensureBurgerMenuTemplate();
+      insertBurgerMenu('#burger-menu-mount');
+    });
   </script>
   <header>
     <img src="/Assets/Images/Logo.png" alt="Logo" />
@@ -337,7 +355,6 @@
     </div>
   </div>
 
-  <script src="/js/api-config.js"></script>
   <script src="homework-modal.js"></script>
   <script src="main.js"></script>
   <!-- Homework Student Detail Modal -->
