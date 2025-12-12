@@ -308,7 +308,7 @@
         document.addEventListener('DOMContentLoaded', function(){ if (location.hostname !== 'willenaenglish.netlify.app') document.body.appendChild(btn); });
       })();
 
-      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
           const resp = await fetch('/Teachers/components/burger-menu.html');

@@ -325,7 +325,7 @@
   
   <!-- Burger menu insertion (same pattern used across tools) -->
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
     async function ensureBurgerMenuTemplate() {
       if (!document.getElementById('burger-menu-template')) {
         const resp = await fetch('/Teachers/components/burger-menu.html');

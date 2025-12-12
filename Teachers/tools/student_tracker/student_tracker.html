@@ -37,33 +37,11 @@
 <body>
   <!-- Load api-config.js first -->
   <script src="/js/api-config.js"></script>
-  <!-- Temporary logout button fallback for teachers (appears when burger menu is missing) -->
-  <script>
-    (function(){
-      if (document.getElementById('teacher-logout-pill')) return;
-      function doLogout() {
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('username');
-        const redirect = encodeURIComponent(location.pathname + location.search);
-        window.location.href = '/Teachers/login.html?redirect=' + redirect;
-      }
-      const btn = document.createElement('button');
-      btn.id = 'teacher-logout-pill';
-      btn.textContent = 'Logout';
-      Object.assign(btn.style, { position:'fixed', top:'12px', right:'12px', zIndex:99999, background:'#e74c3c', color:'#fff', border:'none', padding:'8px 12px', borderRadius:'6px', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' });
-      btn.onclick = doLogout;
-      document.addEventListener('DOMContentLoaded', function(){
-        // hide on Netlify where the proper burger menu exists
-        if (location.hostname === 'willenaenglish.netlify.app') return;
-        document.body.appendChild(btn);
-      });
-    })();
-  </script>
+  <!-- Removed temporary logout button fallback now that burger menu is fixed -->
   
   <!-- Load burger-menu.js to make insertBurgerMenu available globally -->
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
     // Expose globally for main.js to use
     window.insertBurgerMenu = insertBurgerMenu;
   </script>
