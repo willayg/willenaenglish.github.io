@@ -1551,6 +1551,7 @@ let homeworkInitialized = false;
 function initHomeworkShell() {
   if (homeworkInitialized) return;
   homeworkInitialized = true;
+  console.log('[initHomeworkShell] v20251212b initializing');
 
   const hwAssignBtn = document.getElementById('hwAssignBtn');
 
@@ -1558,22 +1559,44 @@ function initHomeworkShell() {
     hwAssignBtn.addEventListener('click', () => {
       let selected = window.currentHomeworkClass;
       console.log('[hwAssignBtn] clicked, currentHomeworkClass=', selected);
-      // Fallback: if no class stored, check for active class item in homework class list
+      
+      // Fallback 1: check for active class item in homework class list
       if (!selected) {
         const activeItem = document.querySelector('#homeworkClassList .class-item.active');
-        console.log('[hwAssignBtn] fallback activeItem=', activeItem);
+        console.log('[hwAssignBtn] fallback1 activeItem=', activeItem);
         if (activeItem) {
           selected = { name: activeItem.dataset.class, display: activeItem.dataset.display };
-          window.currentHomeworkClass = selected; // Store for future use
-          console.log('[hwAssignBtn] set selected from DOM=', selected);
+          window.currentHomeworkClass = selected;
         }
       }
-      console.log('[hwAssignBtn] HomeworkModal exists?', !!window.HomeworkModal);
+      
+      // Fallback 2: extract class from subtitle text (e.g., "Chicago • Homework")
+      if (!selected) {
+        const subtitle = document.getElementById('homeworkStudentsSubtitle');
+        if (subtitle && subtitle.textContent) {
+          const match = subtitle.textContent.match(/^(.+?)\s*[•·]\s*Homework/i);
+          if (match && match[1]) {
+            const displayName = match[1].trim();
+            // Find the class item to get the actual class name
+            const items = document.querySelectorAll('#homeworkClassList .class-item');
+            for (const item of items) {
+              if (item.dataset.display === displayName || item.textContent.trim() === displayName) {
+                selected = { name: item.dataset.class, display: displayName };
+                window.currentHomeworkClass = selected;
+                console.log('[hwAssignBtn] fallback2 from subtitle=', selected);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('[hwAssignBtn] final selected=', selected, 'HomeworkModal=', !!window.HomeworkModal);
       if (selected && window.HomeworkModal) {
         window.HomeworkModal.open(selected.name, selected.display);
       } else {
         console.warn('[hwAssignBtn] Cannot open modal: selected=', selected, 'HomeworkModal=', window.HomeworkModal);
-        alert('Please select a class first.');
+        alert('Please select a class first. (v20251212b - Check console for debug info)');
       }
     });
   }
