@@ -455,6 +455,17 @@ export default {
         const assignment = assignments[0];
         const targetClass = className || assignment.class;
         
+        // Determine category heuristically for expected mode counts
+        const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
+        let category = 'vocab';
+        // Phonics detection: check for phonics indicators in list_key, title, or list_title
+        // Also detect "blend", "sound", or specific phonics patterns
+        if (assignLower.includes('phonics') || assignLower.includes('sound') || /\bblend\b/.test(assignLower)) {
+          category = 'phonics';
+        } else if (assignLower.includes('grammar') || assignLower.includes('/grammar/')) {
+          category = 'grammar';
+        }
+        
         // Load students in class
         const students = await supabaseSelect(
           env,
@@ -467,6 +478,7 @@ export default {
             success: true,
             assignment_id: assignment.id,
             class: targetClass,
+            category,
             progress: [],
           }, 200, origin);
         }
@@ -520,11 +532,25 @@ export default {
           return 0;
         }
         
-        // Filter sessions by list name matching (simplified)
-        const listKeyLower = (assignment.list_key || '').toLowerCase();
+        // Filter sessions by list name matching
+        const listKeyLast = (assignment.list_key || '').split('/').pop();
+        const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
+        
+        // Extract tokens from filename for display-name matching (e.g., "phonics-blends-dr-fl-fr" -> ["blends", "dr", "fl", "fr"])
+        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?)$/.test(t));
+        
         const filteredSessions = (sessions || []).filter(sess => {
           const listName = (sess.list_name || '').toLowerCase();
-          return listName.includes(listKeyLower) || listKeyLower.includes(listName.split('/').pop());
+          // Direct match on list_key or filename
+          if (listName.includes(coreName) || listName.includes(listKeyLast.toLowerCase())) {
+            return true;
+          }
+          // Token-based match for display names (e.g., "Blend Dr Fl Fr")
+          if (tokens.length >= 2) {
+            const matchCount = tokens.filter(t => listName.includes(t)).length;
+            if (matchCount >= Math.min(2, tokens.length)) return true;
+          }
+          return false;
         });
         
         filteredSessions.forEach(sess => {
@@ -548,8 +574,31 @@ export default {
           }
         });
         
-        // Calculate progress
-        const totalModes = assignment.list_meta?.modes_total || 6;
+        // Determine total modes based on category
+        // Phonics: always 4 modes
+        // Vocab: always 6 modes
+        // Grammar: 4 or 6 modes based on advanced mode encounters
+        let totalModes;
+        if (category === 'phonics') {
+          totalModes = 4;
+        } else if (category === 'grammar') {
+          // Grammar: check for advanced mode encounters to determine 4 vs 6
+          const encountered = new Set(filteredSessions.map(s => (s.mode || '').toLowerCase()));
+          const advancedFlags = ['grammar_sorting', 'grammar_find_mistake', 'grammar_translation_choice'];
+          let advancedCount = 0;
+          advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
+          totalModes = advancedCount >= 2 ? 6 : 4;
+        } else {
+          // Vocab: 6 modes
+          totalModes = 6;
+        }
+        // Allow override from assignment meta if explicitly set
+        const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
+        if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+          if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
+          else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
+          else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
+        }
         
         const progress = Array.from(byStudent.values()).map(r => {
           const modesArr = Object.entries(r.modes).map(([mode, v]) => ({
@@ -559,6 +608,7 @@ export default {
           }));
           
           const starsEarned = modesArr.reduce((sum, m) => sum + (m.bestStars || 0), 0);
+          // Only count modes where student achieved at least 1 star toward homework completion
           const modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
           const completionPercent = totalModes > 0 ? Math.round((modesAttempted / totalModes) * 100) : 0;
           
@@ -571,8 +621,10 @@ export default {
             modes_attempted: modesAttempted,
             modes_total: totalModes,
             modes: modesArr,
+            category,
+            // A homework is considered completed only when every mode has at least 1 star
             status: assignment.active
-              ? (completionPercent >= 100 || starsEarned >= (assignment.goal_value || 5) ? 'Completed' : 'In Progress')
+              ? (completionPercent >= 100 ? 'Completed' : 'In Progress')
               : 'Ended',
           };
         });
@@ -582,6 +634,7 @@ export default {
           assignment_id: assignment.id,
           class: targetClass,
           total_modes: totalModes,
+          category,
           progress,
         }, 200, origin);
       }

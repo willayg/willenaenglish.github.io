@@ -1557,17 +1557,22 @@ function initHomeworkShell() {
   if (hwAssignBtn) {
     hwAssignBtn.addEventListener('click', () => {
       let selected = window.currentHomeworkClass;
+      console.log('[hwAssignBtn] clicked, currentHomeworkClass=', selected);
       // Fallback: if no class stored, check for active class item in homework class list
       if (!selected) {
         const activeItem = document.querySelector('#homeworkClassList .class-item.active');
+        console.log('[hwAssignBtn] fallback activeItem=', activeItem);
         if (activeItem) {
           selected = { name: activeItem.dataset.class, display: activeItem.dataset.display };
           window.currentHomeworkClass = selected; // Store for future use
+          console.log('[hwAssignBtn] set selected from DOM=', selected);
         }
       }
+      console.log('[hwAssignBtn] HomeworkModal exists?', !!window.HomeworkModal);
       if (selected && window.HomeworkModal) {
         window.HomeworkModal.open(selected.name, selected.display);
       } else {
+        console.warn('[hwAssignBtn] Cannot open modal: selected=', selected, 'HomeworkModal=', window.HomeworkModal);
         alert('Please select a class first.');
       }
     });
