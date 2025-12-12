@@ -620,13 +620,14 @@
         if (treatAsPhonics) {
           try {
             // Prefer existing phonics loader for proper audio preload & session state
+            // IMPORTANT: always pass listKey (file path) as listName so sessions match homework_assignments.list_key
             if (window.WordArcade?.loadPhonicsGame) {
-              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey });
+              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: listKey });
               return;
             }
             // Fallback: treat as sample list (will not show phonics-specific modes but still playable)
             if (window.WordArcade?.loadSampleWordlistByFilename) {
-              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey });
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey });
               return;
             }
           } catch (e) {

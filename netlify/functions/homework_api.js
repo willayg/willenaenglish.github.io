@@ -448,6 +448,40 @@ async function assignmentProgress(event) {
           }
         }
       }
+
+      // 5) Display-name fallback: match sessions where list_name might be a friendly display name
+      // E.g., list_key="phonics-blends-dr-fl-fr.json" but session list_name="Blend Dr Fl Fr"
+      if ((!sessions || sessions.length === 0) && coreName) {
+        // Extract significant tokens from filename (e.g., "phonics-blends-dr-fl-fr" -> ["blends", "dr", "fl", "fr"])
+        const tokens = coreName.toLowerCase().split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?)$/.test(t));
+        if (tokens.length >= 2) {
+          // Build a flexible pattern that matches if all significant tokens appear in list_name (any order)
+          // For Supabase ilike, we need a single pattern. Use a minimal approach: match first meaningful token
+          const keyToken = tokens.find(t => t.length >= 2 && !/^(and|the|is|vs)$/.test(t)) || tokens[0];
+          if (keyToken) {
+            const displayLike = `%${keyToken}%`;
+            const { data: displaySess, error: dispErr } = await supabase
+              .from('progress_sessions')
+              .select('user_id, list_name, mode, summary, list_size')
+              .in('user_id', students.map(s=>s.id))
+              .ilike('list_name', displayLike)
+              .not('ended_at', 'is', null);
+            if (!dispErr && Array.isArray(displaySess) && displaySess.length) {
+              // Filter to require at least 2 tokens present in list_name (reduces false positives)
+              const filtered = displaySess.filter(s => {
+                if (!s.list_name) return false;
+                const ln = s.list_name.toLowerCase();
+                const matchCount = tokens.filter(t => ln.includes(t)).length;
+                return matchCount >= Math.min(2, tokens.length);
+              });
+              if (filtered.length) {
+                sessions = filtered;
+                console.log(`assignmentProgress: matched sessions via display-name token fallback (${sessions.length}) for assignment ${assignment.id}, tokens: [${tokens.join(', ')}]`);
+              }
+            }
+          }
+        }
+      }
     } catch (e) {
       console.warn('assignmentProgress progress_sessions fetch error (non-fatal):', e.message);
     }
