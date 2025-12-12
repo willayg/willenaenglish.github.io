@@ -336,6 +336,13 @@ async function assignmentProgress(event) {
       // 1) Primary attempt: tighten matching by filename/path variants
       let orFilters = [`list_name.eq.${eq1}`, `list_name.ilike.${like1}`, `list_name.ilike.${like2}`, `list_name.ilike.${fuzzy1}`];
       if (fuzzy2) orFilters.push(`list_name.ilike.${fuzzy2}`);
+      // Also include variants that include the legacy project prefix
+      try {
+        const gaPrefixed = `Games/english_arcade/${eq1}`;
+        orFilters.push(`list_name.ilike.%${gaPrefixed}%`);
+        const gaCorePref = `Games/english_arcade/${coreName}`;
+        orFilters.push(`list_name.ilike.%${gaCorePref}%`);
+      } catch (e) { /* ignore */ }
       normalizedTokens.forEach(token => {
         const safeToken = token.replace(/\s+/g, '%');
         orFilters.push(`list_name.ilike.%${safeToken}%`);
@@ -375,11 +382,12 @@ async function assignmentProgress(event) {
       // 2) Conservative fallback: look for the assignment list key anywhere in list_name
       if ((!sessions || sessions.length === 0) && assignment.list_key) {
         const broadLike = `%${assignment.list_key}%`;
+        const broadLikeGa = `%Games/english_arcade/${assignment.list_key}%`;
         const { data: broadSess, error: broadErr } = await supabase
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
-          .ilike('list_name', broadLike)
+          .or(`list_name.ilike.${broadLike},list_name.ilike.${broadLikeGa}`)
           .not('ended_at', 'is', null);
         if (!broadErr && Array.isArray(broadSess) && broadSess.length) {
           console.log('assignmentProgress fallback candidate list_name samples', broadSess.slice(0,10).map(s => s.list_name));

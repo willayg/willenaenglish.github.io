@@ -5,15 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login - Willena English</title>
   <script>
-    // TEMPORARY: Redirect all teacher logins to Netlify while Cloudflare issues are resolved
-    (function() {
-      const host = window.location.hostname;
-      // Redirect from ANY domain (Cloudflare, GitHub Pages, custom domains) to Netlify
-      if (host !== 'willenaenglish.netlify.app' && host !== 'localhost' && host !== '127.0.0.1') {
-        const currentPath = window.location.pathname + window.location.search;
-        window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
-      }
-    })();
+    // Temporary redirect to Netlify disabled — teacher login now stays on this host.
+    // Re-enable only if explicit troubleshooting requires Netlify-hosted auth.
+    console.log('[Teachers/login] Netlify redirect disabled for now');
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
