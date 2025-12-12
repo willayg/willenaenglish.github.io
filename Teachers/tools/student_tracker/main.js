@@ -1556,7 +1556,15 @@ function initHomeworkShell() {
 
   if (hwAssignBtn) {
     hwAssignBtn.addEventListener('click', () => {
-      const selected = window.currentHomeworkClass;
+      let selected = window.currentHomeworkClass;
+      // Fallback: if no class stored, check for active class item in homework class list
+      if (!selected) {
+        const activeItem = document.querySelector('#homeworkClassList .class-item.active');
+        if (activeItem) {
+          selected = { name: activeItem.dataset.class, display: activeItem.dataset.display };
+          window.currentHomeworkClass = selected; // Store for future use
+        }
+      }
       if (selected && window.HomeworkModal) {
         window.HomeworkModal.open(selected.name, selected.display);
       } else {

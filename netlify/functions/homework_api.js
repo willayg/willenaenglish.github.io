@@ -310,8 +310,13 @@ async function assignmentProgress(event) {
   // Determine category heuristically for expected mode counts
   const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
   let category = 'vocab';
-  if (assignLower.includes('phonics')) category = 'phonics';
-  else if (assignLower.includes('grammar')) category = 'grammar';
+  // Phonics detection: check for phonics indicators in list_key, title, or list_title
+  // Also detect "blend", "sound", or specific phonics patterns
+  if (assignLower.includes('phonics') || assignLower.includes('sound') || /\bblend\b/.test(assignLower)) {
+    category = 'phonics';
+  } else if (assignLower.includes('grammar') || assignLower.includes('/grammar/')) {
+    category = 'grammar';
+  }
   // Load students in class
   const { data: students, error: sErr } = await supabase.from('profiles').select('id, name, korean_name').eq('class', targetClass);
   if (sErr) return _json(500,{ success:false, error:'Failed to load students: '+(sErr.message||sErr.code)});
@@ -557,37 +562,43 @@ async function assignmentProgress(event) {
   });
   // Word coverage: attempt words - we can't easily filter by list_name here without list_name on attempts; assume attempts for this list contain the listKey fragment inside word? Out of scope; treat distinct words attempted as coverage if any sessions exist.
   attempts.forEach(att => { const row = byStudent.get(att.user_id); if (!row) return; row.words_attempted.add(att.word); });
-  // Determine total modes possible for this list; fallback to 6 if not specified
-  let totalModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count || null;
-  if (category === 'phonics' && Number(totalModes) > 4) {
-    // Phonics lists are fixed at 4 modes.
+  
+  // Determine total modes possible for this list based on category
+  // Phonics: always 4 modes
+  // Vocab: always 6 modes
+  // Grammar: 4 or 6 modes based on advanced mode encounters
+  let totalModes;
+  if (category === 'phonics') {
     totalModes = 4;
-  }
-  // Determine encountered grammar advanced mode count for heuristic
-  const encountered = new Set(sessions.map(s => (s.mode||'').toLowerCase()));
-  if (category === 'grammar') {
+  } else if (category === 'grammar') {
+    // Grammar: check for advanced mode encounters to determine 4 vs 6
+    const encountered = new Set(sessions.map(s => (s.mode||'').toLowerCase()));
     const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-    let advancedCount = 0; advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
-    const heuristicTotal = advancedCount >= 2 ? 6 : 4;
-    // If meta total provided but conflicts with heuristic, override with heuristic.
-    if (!Number.isFinite(totalModes) || totalModes <= 0 || Number(totalModes) !== heuristicTotal) {
-      totalModes = heuristicTotal;
-    }
+    let advancedCount = 0;
+    advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
+    totalModes = advancedCount >= 2 ? 6 : 4;
+  } else {
+    // Vocab: 6 modes
+    totalModes = 6;
   }
-  if (!Number.isFinite(totalModes) || totalModes <= 0) {
-    if (category === 'phonics') totalModes = 4; else if (category === 'grammar') {
-      const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-      let advancedCount = 0; advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
-      totalModes = advancedCount >= 2 ? 6 : 4;
-    } else totalModes = 6;
+  // Allow override from assignment meta if explicitly set
+  const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
+  if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+    // Only override if category matches expected range
+    if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
+    else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
+    else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
   }
+  console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
+  
   const progress = Array.from(byStudent.values()).map(r => {
     const rawModesArr = Object.entries(r.modes).map(([mode,v]) => ({ mode, bestStars: v.stars, bestAccuracy: v.accuracy, sessions: v.sessions }));
     const starsEarned = rawModesArr.reduce((sum,m)=> sum + (m.bestStars||0), 0);
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
-    // Only count modes where student achieved at least 1 star (or lesson modes) toward completion
-    const countedModesArr = rawModesArr.filter(m => (m.bestStars >= 1) || /grammar_lesson|lesson/i.test(m.mode));
+    // Only count modes where the student achieved at least 1 star toward homework completion
+    // Requirement: a level is complete when the student has earned >=1 star in every mode
+    const countedModesArr = rawModesArr.filter(m => m.bestStars >= 1);
     const distinctModesAttempted = countedModesArr.length;
     const completionPercent = totalModes > 0 ? Math.round((distinctModesAttempted / totalModes) * 100) : 0;
     return {
@@ -601,7 +612,8 @@ async function assignmentProgress(event) {
       modes_attempted: distinctModesAttempted,
       modes_total: totalModes,
       modes: rawModesArr,
-      status: assignment.active ? (completionPercent >= 100 || starsEarned >= (assignment.goal_value||5) ? 'Completed' : 'In Progress') : 'Ended',
+      // A homework is considered completed only when every mode has at least 1 star
+      status: assignment.active ? (completionPercent >= 100 ? 'Completed' : 'In Progress') : 'Ended',
       category
     };
   });
