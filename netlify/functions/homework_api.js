@@ -59,6 +59,15 @@ exports.handler = async (event) => {
     const action = event.queryStringParameters?.action || 'list_assignments';
   const mode = event.queryStringParameters?.mode || 'teacher';
 
+  // Quick debug action: return which SUPABASE env values this function sees (masked)
+  if (action === 'debug_env') {
+    const url = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL || null;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE || null;
+    const preview = key ? String(key).slice(0,8) : null;
+    const len = key ? String(key).length : 0;
+    return _json(200, { success: true, env: { url, key_preview: preview, key_length: len } });
+  }
+
   try {
     if (action === 'create_assignment') {
       return await createAssignment(event);
