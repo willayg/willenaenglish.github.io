@@ -18,11 +18,19 @@ function _json(statusCode, obj) {
   return json(statusCode, obj, currentEvent);
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
-
-// Create a new supabase client for every invocation in dev mode so schema/cache changes are picked up quickly
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+// Create supabase client lazily inside handler to pick up fresh env vars after rotation
+let supabase = null;
+function getSupabase() {
+  if (!supabase) {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
+    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      throw new Error('Supabase environment variables missing');
+    }
+    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+  }
+  return supabase;
+}
 
 exports.handler = async (event) => {
   // Handle CORS preflight
@@ -32,8 +40,11 @@ exports.handler = async (event) => {
   // Store event for CORS headers in helper functions
   currentEvent = event;
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    return _json(500, { success: false, error: 'Supabase environment variables missing (SUPABASE_URL / SERVICE KEY).' });
+  // Initialize supabase client (lazy, picks up current env vars)
+  try {
+    getSupabase();
+  } catch (err) {
+    return _json(500, { success: false, error: err.message });
   }
 
     const action = event.queryStringParameters?.action || 'list_assignments';
@@ -85,7 +96,7 @@ async function createAssignmentRun(event) {
   if (!authUserId) {
     return _json(401, { success: false, error: 'Not signed in' });
   }
-  const { data: prof, error: profErr } = await supabase
+  const { data: prof, error: profErr } = await getSupabase()
     .from('profiles')
     .select('id, role, approved')
     .eq('id', authUserId)
@@ -100,7 +111,7 @@ async function createAssignmentRun(event) {
   if (!assignmentId) return _json(400, { success: false, error: 'Missing assignment_id' });
   const token = generateRunToken(assignmentId);
   // Persist inside list_meta.run_tokens array
-  const { data: current, error: getErr } = await supabase
+  const { data: current, error: getErr } = await getSupabase()
     .from('homework_assignments')
     .select('id, list_meta')
     .eq('id', assignmentId)
@@ -109,7 +120,7 @@ async function createAssignmentRun(event) {
   const list_meta = current.list_meta || {};
   const prev = Array.isArray(list_meta.run_tokens) ? list_meta.run_tokens : [];
   const updated = { ...list_meta, run_tokens: [...prev, { token, created_at: new Date().toISOString() }] };
-  const { data: upd, error: updErr } = await supabase
+  const { data: upd, error: updErr } = await getSupabase()
     .from('homework_assignments')
     .update({ list_meta: updated })
     .eq('id', assignmentId)
@@ -125,7 +136,7 @@ async function getUserIdFromCookie(event) {
   const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
   if (!m) return null;
   const token = decodeURIComponent(m[1]);
-  const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await getSupabase().auth.getUser(token);
   if (error || !data?.user) return null;
   return data.user.id;
 }
@@ -137,7 +148,7 @@ async function createAssignment(event) {
     return _json(401, { success: false, error: 'Not signed in' });
   }
 
-  const { data: prof, error: profErr } = await supabase
+  const { data: prof, error: profErr } = await getSupabase()
     .from('profiles')
     .select('id, role, approved, class')
     .eq('id', authUserId)
@@ -189,7 +200,7 @@ async function createAssignment(event) {
     run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true }]
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('homework_assignments')
     .insert({
       class: className,
@@ -225,7 +236,7 @@ async function createAssignment(event) {
 async function listAssignments(event) {
   const className = event.queryStringParameters?.class || null;
 
-  let query = supabase
+  let query = getSupabase()
     .from('homework_assignments')
     .select('*')
     .order('created_at', { ascending: false });
@@ -256,11 +267,11 @@ async function endAssignment(event) {
   const assignmentId = body.id || body.assignment_id || null;
   if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment id'});
   // Verify teacher role
-  const { data: prof, error: profErr } = await supabase.from('profiles').select('id, role').eq('id', authUserId).single();
+  const { data: prof, error: profErr } = await getSupabase().from('profiles').select('id, role').eq('id', authUserId).single();
   if (profErr || !prof || !['teacher','admin'].includes(String(prof.role||'').toLowerCase())) {
     return _json(403,{ success:false, error:'Only teachers can end assignments'});
   }
-  const { data, error } = await supabase.from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
+  const { data, error } = await getSupabase().from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
   if (error) return _json(500,{ success:false, error:'Failed to end assignment: '+(error.message||error.code)});
   return _json(200,{ success:true, assignment:data });
 }
@@ -280,7 +291,7 @@ async function assignmentProgress(event) {
   const className = event.queryStringParameters?.class || null;
   if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment_id' });
   // Fetch assignment
-  let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
+  let { data: assignment, error: aErr } = await getSupabase().from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
 
   // Auto-create run token if assignment has none (backfill for older assignments)
@@ -293,7 +304,7 @@ async function assignmentProgress(event) {
       ...(assignment.list_meta || {}),
       run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true, backfilled: true }]
     };
-    const { data: updatedAssignment, error: updErr } = await supabase
+    const { data: updatedAssignment, error: updErr } = await getSupabase()
       .from('homework_assignments')
       .update({ list_meta: updatedMeta })
       .eq('id', assignmentId)
@@ -313,7 +324,7 @@ async function assignmentProgress(event) {
   if (assignLower.includes('phonics')) category = 'phonics';
   else if (assignLower.includes('grammar')) category = 'grammar';
   // Load students in class
-  const { data: students, error: sErr } = await supabase.from('profiles').select('id, name, korean_name').eq('class', targetClass);
+  const { data: students, error: sErr } = await getSupabase().from('profiles').select('id, name, korean_name').eq('class', targetClass);
   if (sErr) return _json(500,{ success:false, error:'Failed to load students: '+(sErr.message||sErr.code)});
   // Load progress_sessions for these students matching this assignment list
   // New logic: derive stars_earned (sum of best stars per mode) and list_completion_percent (distinct words attempted / list_size)
@@ -340,7 +351,7 @@ async function assignmentProgress(event) {
         const safeToken = token.replace(/\s+/g, '%');
         orFilters.push(`list_name.ilike.%${safeToken}%`);
       });
-      const { data: sessData, error: sessErr } = await supabase
+      const { data: sessData, error: sessErr } = await getSupabase()
         .from('progress_sessions')
         .select('user_id, list_name, mode, summary, list_size')
         .in('user_id', students.map(s=>s.id))
@@ -375,7 +386,7 @@ async function assignmentProgress(event) {
       // 2) Conservative fallback: look for the assignment list key anywhere in list_name
       if ((!sessions || sessions.length === 0) && assignment.list_key) {
         const broadLike = `%${assignment.list_key}%`;
-        const { data: broadSess, error: broadErr } = await supabase
+        const { data: broadSess, error: broadErr } = await getSupabase()
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
@@ -411,7 +422,7 @@ async function assignmentProgress(event) {
       if ((!sessions || sessions.length === 0) && coreName) {
         const normalized = coreName.replace(/[^a-z0-9]+/g, '%');
         const normLike = `%${normalized}%`;
-        const { data: normSess, error: normErr } = await supabase
+        const { data: normSess, error: normErr } = await getSupabase()
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
@@ -428,7 +439,7 @@ async function assignmentProgress(event) {
         const titleCore = assignment.title.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
         if (titleCore) {
           const fallbackLike = `%${titleCore}%`;
-          const { data: fallbackSess, error: fbErr } = await supabase
+          const { data: fallbackSess, error: fbErr } = await getSupabase()
             .from('progress_sessions')
             .select('user_id, list_name, mode, summary, list_size')
             .in('user_id', students.map(s=>s.id))
@@ -455,7 +466,7 @@ async function assignmentProgress(event) {
   // Map attempts for word coverage from progress_attempts table (distinct words attempted) referencing sessions list_name
   let attempts = [];
   try {
-    const { data: attemptsData, error: attErr } = await supabase
+    const { data: attemptsData, error: attErr } = await getSupabase()
       .from('progress_attempts')
       .select('user_id, word')
       .in('user_id', students.map(s=>s.id))
@@ -570,7 +581,7 @@ async function getProfileForEvent(event) {
   const authUserId = await getUserIdFromCookie(event);
   if (!authUserId) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('profiles')
     .select('id, role, approved, class, name, korean_name')
     .eq('id', authUserId)
@@ -591,7 +602,7 @@ async function listAssignmentsForStudent(event) {
 
   const nowIso = new Date().toISOString();
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('homework_assignments')
     .select('*, profiles!homework_assignments_created_by_fkey(name)')
     .eq('class', prof.class)
@@ -632,12 +643,12 @@ async function getRunTokenForStudent(event) {
   let assignment = null;
   try {
     if (assignmentId) {
-      const { data, error } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
+      const { data, error } = await getSupabase().from('homework_assignments').select('*').eq('id', assignmentId).single();
       if (error || !data) return _json(404, { success: false, error: 'Assignment not found' });
       assignment = data;
     } else if (listKey) {
       // Try to find an active assignment for this student's class matching the list_key
-      const { data, error } = await supabase.from('homework_assignments')
+      const { data, error } = await getSupabase().from('homework_assignments')
         .select('*')
         .eq('class', prof.class)
         .eq('active', true)
@@ -670,7 +681,7 @@ async function linkSessionsToAssignment(event) {
   }
 
   // Verify teacher/admin role
-  const { data: prof, error: profErr } = await supabase
+  const { data: prof, error: profErr } = await getSupabase()
     .from('profiles')
     .select('id, role, approved')
     .eq('id', authUserId)
@@ -686,7 +697,7 @@ async function linkSessionsToAssignment(event) {
   }
 
   // Fetch the assignment
-  const { data: assignment, error: aErr } = await supabase
+  const { data: assignment, error: aErr } = await getSupabase()
     .from('homework_assignments')
     .select('*')
     .eq('id', assignmentId)
@@ -711,7 +722,7 @@ async function linkSessionsToAssignment(event) {
       ...(assignment.list_meta || {}),
       run_tokens: [{ token: runToken, created_at: new Date().toISOString(), auto: true }]
     };
-    await supabase
+    await getSupabase()
       .from('homework_assignments')
       .update({ list_meta: updatedMeta })
       .eq('id', assignmentId);
@@ -719,7 +730,7 @@ async function linkSessionsToAssignment(event) {
   }
 
   // Get students in the class
-  const { data: students, error: sErr } = await supabase
+  const { data: students, error: sErr } = await getSupabase()
     .from('profiles')
     .select('id')
     .eq('class', assignment.class);
@@ -755,7 +766,7 @@ async function linkSessionsToAssignment(event) {
     }
   });
 
-  const { data: sessions, error: sessErr } = await supabase
+  const { data: sessions, error: sessErr } = await getSupabase()
     .from('progress_sessions')
     .select('id, session_id, user_id, list_name, mode, summary, started_at')
     .in('user_id', studentIds)
@@ -805,7 +816,7 @@ async function linkSessionsToAssignment(event) {
         linked_by: 'teacher_action'
       };
 
-      const { error: updateErr } = await supabase
+      const { error: updateErr } = await getSupabase()
         .from('progress_sessions')
         .update({ summary: updatedSummary })
         .eq('id', sess.id);
