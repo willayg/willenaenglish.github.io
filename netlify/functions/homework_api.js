@@ -20,14 +20,23 @@ function _json(statusCode, obj) {
 
 // Create supabase client lazily inside handler to pick up fresh env vars after rotation
 let supabase = null;
+let supabaseKeyPreview = null;
 function getSupabase() {
-  if (!supabase) {
-    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
-    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      throw new Error('Supabase environment variables missing');
-    }
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
+  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    throw new Error('Supabase environment variables missing');
+  }
+  const preview = String(SUPABASE_SERVICE_KEY).slice(0, 8);
+  // Recreate client if not created yet or if key changed since last creation
+  if (!supabase || supabaseKeyPreview !== preview) {
     supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+    supabaseKeyPreview = preview;
+    try {
+      console.log(`[homework_api] SUPABASE key preview: ${preview}... length=${String(SUPABASE_SERVICE_KEY).length}`);
+    } catch (e) {
+      console.log('[homework_api] SUPABASE key preview: (error computing preview)');
+    }
   }
   return supabase;
 }
