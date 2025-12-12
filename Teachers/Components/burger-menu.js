@@ -1,7 +1,6 @@
-import { ensureAuthRefresh } from '../auth-refresh.js';
-
-// Burger menu component loader
+// Burger menu component loader v20251213
 // Usage: import this file and call insertBurgerMenu() after DOMContentLoaded
+import { ensureAuthRefresh } from '../auth-refresh.js';
 
 ensureAuthRefresh();
 
