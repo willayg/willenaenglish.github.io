@@ -513,7 +513,7 @@ export default {
           try { return JSON.parse(summary); } catch { return null; }
         }
         
-        function deriveStars(summary) {
+        function deriveStars(summary, modeRaw) {
           const s = summary || {};
           let acc = null;
           if (typeof s.accuracy === 'number') acc = s.accuracy;
@@ -529,6 +529,20 @@ export default {
             return 0;
           }
           if (typeof s.stars === 'number') return s.stars;
+          // Fallback: some modes (e.g., level_up) record only raw score (points).
+          const m = String(modeRaw || '').toLowerCase();
+          if (typeof s.score === 'number' && !Number.isFinite(s.total)) {
+            // Map points to stars with simple thresholds
+            const pts = Math.max(0, Math.floor(s.score));
+            if (m.includes('level_up')) {
+              if (pts >= 20) return 5;
+              if (pts >= 15) return 4;
+              if (pts >= 10) return 3;
+              if (pts >= 5) return 2;
+              if (pts >= 1) return 1;
+              return 0;
+            }
+          }
           return 0;
         }
         
@@ -562,7 +576,7 @@ export default {
           }
           
           const summary = parseSummary(sess.summary);
-          const stars = deriveStars(summary);
+          const stars = deriveStars(summary, sess.mode);
           const modeKey = sess.mode || 'unknown';
           
           const prev = row.modes[modeKey];

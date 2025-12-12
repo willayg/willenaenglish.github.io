@@ -118,6 +118,16 @@ export async function showModeModal({ onModeChosen, onClose }) {
     if (pct >= 60) return 1;
     return 0;
   };
+  // Points-to-stars fallback for modes like Level Up
+  const ptsToStars = (pts) => {
+    const p = Math.max(0, Math.floor(pts || 0));
+    if (p >= 20) return 5;
+    if (p >= 15) return 4;
+    if (p >= 10) return 3;
+    if (p >= 5) return 2;
+    if (p >= 1) return 1;
+    return 0;
+  };
 
   // Simplified modal header (medals removed)
   const buildHeader = () => {
@@ -158,8 +168,9 @@ export async function showModeModal({ onModeChosen, onClose }) {
       const filled = pctToStars(pct);
       for (let i = 0; i < 5; i++) starsHtml += starSvg(i < filled);
     } else if (best && best.pts != null) {
-      meta = `<span class="mode-meta zero">0%</span>`;
-      for (let i = 0; i < 5; i++) starsHtml += starSvg(false);
+      const filled = ptsToStars(best.pts);
+      meta = `<span class="mode-meta browse">${best.pts} pts</span>`;
+      for (let i = 0; i < 5; i++) starsHtml += starSvg(i < filled);
     } else {
       // Unplayed: show empty stars and 0% with same styling/spacing
       meta = `<span class="mode-meta zero">0%</span>`;

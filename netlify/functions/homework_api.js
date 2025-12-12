@@ -514,7 +514,7 @@ async function assignmentProgress(event) {
   function parseSummary(summary) {
     try { if (!summary) return null; if (typeof summary === 'string') return JSON.parse(summary); return summary; } catch { return null; }
   }
-  function deriveStars(summary) {
+  function deriveStars(summary, modeRaw) {
     const s = summary || {};
     let acc = null;
     if (typeof s.accuracy === 'number') acc = s.accuracy;
@@ -529,6 +529,19 @@ async function assignmentProgress(event) {
       return 0;
     }
     if (typeof s.stars === 'number') return s.stars;
+    // Fallback for point-only modes (e.g., level_up)
+    const m = String(modeRaw || '').toLowerCase();
+    if (typeof s.score === 'number' && !Number.isFinite(s.total) && !Number.isFinite(s.max)) {
+      const pts = Math.max(0, Math.floor(s.score));
+      if (m.includes('level_up')) {
+        if (pts >= 20) return 5;
+        if (pts >= 15) return 4;
+        if (pts >= 10) return 3;
+        if (pts >= 5) return 2;
+        if (pts >= 1) return 1;
+        return 0;
+      }
+    }
     return 0;
   }
   const byStudent = new Map();
@@ -537,7 +550,7 @@ async function assignmentProgress(event) {
     const row = byStudent.get(sess.user_id); if (!row) return;
     if (Number.isFinite(sess.list_size) && sess.list_size > 0) row.list_size = sess.list_size;
     const summary = parseSummary(sess.summary);
-    const stars = deriveStars(summary);
+    const stars = deriveStars(summary, sess.mode);
     const modeKey = sess.mode || 'unknown';
     // Track overall accuracy components
     if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
