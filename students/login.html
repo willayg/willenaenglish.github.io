@@ -247,7 +247,8 @@
       </div>
       <div class="row">
   <button id="loginBtn" data-i18n="Log in">Log in</button>
-  <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button>
+  <!-- Guest Login hidden - not currently in use -->
+  <!-- <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button> -->
       </div>
       <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
     </section>
@@ -305,6 +306,13 @@
       });
       const d2 = await r2.json();
       if (!d2.success) throw new Error(d2.error || 'Login failed');
+      
+      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
+      if (d2.access_token && WillenaAPI.setLocalTokens) {
+        WillenaAPI.setLocalTokens(d2.access_token, d2.refresh_token);
+        console.log('[Login] Stored local tokens for dev mode');
+      }
+      
       return d2;
     }
 
@@ -316,6 +324,13 @@
       });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || 'Login failed');
+      
+      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
+      if (d.access_token && WillenaAPI.setLocalTokens) {
+        WillenaAPI.setLocalTokens(d.access_token, d.refresh_token);
+        console.log('[Login] Stored local tokens for dev mode');
+      }
+      
       return d;
     }
 
@@ -392,22 +407,26 @@
       return d.guest;
     }
 
-    document.getElementById('guestBtn').addEventListener('click', async () => {
-      show('');
-      try {
-        const prev = localStorage.getItem('guest_name') || '';
-  const name = prompt(t('Enter your name to play as a guest:'), prev);
-        if (!name) return; // cancelled
-        const guest = await startGuestSession(name);
-        localStorage.setItem('guest_name', guest.name);
-        // Also set the generic user_name used by the student header UI
-        try { localStorage.setItem('user_name', guest.name); } catch {}
-        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
-        location.href = getNextDest();
-      } catch(e){
-        show(t(e.message) || t('Guest login failed'));
-      }
-    });
+    // Guest button listener (only if element exists - may be hidden/removed)
+    const guestBtnEl = document.getElementById('guestBtn');
+    if (guestBtnEl) {
+      guestBtnEl.addEventListener('click', async () => {
+        show('');
+        try {
+          const prev = localStorage.getItem('guest_name') || '';
+          const name = prompt(t('Enter your name to play as a guest:'), prev);
+          if (!name) return; // cancelled
+          const guest = await startGuestSession(name);
+          localStorage.setItem('guest_name', guest.name);
+          // Also set the generic user_name used by the student header UI
+          try { localStorage.setItem('user_name', guest.name); } catch {}
+          try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+          location.href = getNextDest();
+        } catch(e){
+          show(t(e.message) || t('Guest login failed'));
+        }
+      });
+    }
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
 
     // =======================

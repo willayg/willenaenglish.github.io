@@ -10,7 +10,8 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
     return;
   }
   try {
-    const r = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+    const apiUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`) : `/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`;
+    const r = await fetch(apiUrl, { credentials: 'include' });
     const js = await r.json();
     if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
       location.href = '/Teachers/profile.html';
@@ -40,10 +41,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Failed to load burger menu template:', e);
     }
   }
-  // Assuming insertBurgerMenu is available from burger-menu.js
-  if (typeof insertBurgerMenu === 'function') {
-    insertBurgerMenu('#burger-menu-mount');
-  }
+  
+  // Wait for ES module to set window.insertBurgerMenu (small delay for module execution)
+  const waitForBurgerMenu = (attempts = 0) => {
+    if (typeof window.insertBurgerMenu === 'function') {
+      window.insertBurgerMenu('#burger-menu-mount');
+    } else if (attempts < 20) {
+      setTimeout(() => waitForBurgerMenu(attempts + 1), 50);
+    } else {
+      console.warn('insertBurgerMenu not available after waiting');
+    }
+  };
+  waitForBurgerMenu();
 });
 
 // API functions
@@ -51,8 +60,10 @@ const FN = (name) => `/.netlify/functions/${name}`;
 
 async function fetchJsonWithLog(url, label, options = {}) {
   const init = { credentials: 'include', ...options };
+  // Use WillenaAPI to get correct endpoint (routes to Cloudflare workers on custom domains)
+  const resolvedUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(url) : url;
   try {
-    const resp = await fetch(url, init);
+    const resp = await fetch(resolvedUrl, init);
     let data = null;
     try {
       data = await resp.json();
@@ -1540,16 +1551,52 @@ let homeworkInitialized = false;
 function initHomeworkShell() {
   if (homeworkInitialized) return;
   homeworkInitialized = true;
+  console.log('[initHomeworkShell] v20251212b initializing');
 
   const hwAssignBtn = document.getElementById('hwAssignBtn');
 
   if (hwAssignBtn) {
     hwAssignBtn.addEventListener('click', () => {
-      const selected = window.currentHomeworkClass;
+      let selected = window.currentHomeworkClass;
+      console.log('[hwAssignBtn] clicked, currentHomeworkClass=', selected);
+      
+      // Fallback 1: check for active class item in homework class list
+      if (!selected) {
+        const activeItem = document.querySelector('#homeworkClassList .class-item.active');
+        console.log('[hwAssignBtn] fallback1 activeItem=', activeItem);
+        if (activeItem) {
+          selected = { name: activeItem.dataset.class, display: activeItem.dataset.display };
+          window.currentHomeworkClass = selected;
+        }
+      }
+      
+      // Fallback 2: extract class from subtitle text (e.g., "Chicago • Homework")
+      if (!selected) {
+        const subtitle = document.getElementById('homeworkStudentsSubtitle');
+        if (subtitle && subtitle.textContent) {
+          const match = subtitle.textContent.match(/^(.+?)\s*[•·]\s*Homework/i);
+          if (match && match[1]) {
+            const displayName = match[1].trim();
+            // Find the class item to get the actual class name
+            const items = document.querySelectorAll('#homeworkClassList .class-item');
+            for (const item of items) {
+              if (item.dataset.display === displayName || item.textContent.trim() === displayName) {
+                selected = { name: item.dataset.class, display: displayName };
+                window.currentHomeworkClass = selected;
+                console.log('[hwAssignBtn] fallback2 from subtitle=', selected);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('[hwAssignBtn] final selected=', selected, 'HomeworkModal=', !!window.HomeworkModal);
       if (selected && window.HomeworkModal) {
         window.HomeworkModal.open(selected.name, selected.display);
       } else {
-        alert('Please select a class first.');
+        console.warn('[hwAssignBtn] Cannot open modal: selected=', selected, 'HomeworkModal=', window.HomeworkModal);
+        alert('Please select a class first. (v20251212b - Check console for debug info)');
       }
     });
   }

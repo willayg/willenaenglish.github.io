@@ -18,28 +18,11 @@ function _json(statusCode, obj) {
   return json(statusCode, obj, currentEvent);
 }
 
-// Create supabase client lazily inside handler to pick up fresh env vars after rotation
-let supabase = null;
-let supabaseKeyPreview = null;
-function getSupabase() {
-  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
-  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    throw new Error('Supabase environment variables missing');
-  }
-  const preview = String(SUPABASE_SERVICE_KEY).slice(0, 8);
-  // Recreate client if not created yet or if key changed since last creation
-  if (!supabase || supabaseKeyPreview !== preview) {
-    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
-    supabaseKeyPreview = preview;
-    try {
-      console.log(`[homework_api] SUPABASE key preview: ${preview}... length=${String(SUPABASE_SERVICE_KEY).length}`);
-    } catch (e) {
-      console.log('[homework_api] SUPABASE key preview: (error computing preview)');
-    }
-  }
-  return supabase;
-}
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+
+// Create a new supabase client for every invocation in dev mode so schema/cache changes are picked up quickly
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
 exports.handler = async (event) => {
   // Handle CORS preflight
@@ -49,24 +32,12 @@ exports.handler = async (event) => {
   // Store event for CORS headers in helper functions
   currentEvent = event;
 
-  // Initialize supabase client (lazy, picks up current env vars)
-  try {
-    getSupabase();
-  } catch (err) {
-    return _json(500, { success: false, error: err.message });
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return _json(500, { success: false, error: 'Supabase environment variables missing (SUPABASE_URL / SERVICE KEY).' });
   }
 
     const action = event.queryStringParameters?.action || 'list_assignments';
   const mode = event.queryStringParameters?.mode || 'teacher';
-
-  // Quick debug action: return which SUPABASE env values this function sees (masked)
-  if (action === 'debug_env') {
-    const url = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL || null;
-    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE || null;
-    const preview = key ? String(key).slice(0,8) : null;
-    const len = key ? String(key).length : 0;
-    return _json(200, { success: true, env: { url, key_preview: preview, key_length: len } });
-  }
 
   try {
     if (action === 'create_assignment') {
@@ -114,7 +85,7 @@ async function createAssignmentRun(event) {
   if (!authUserId) {
     return _json(401, { success: false, error: 'Not signed in' });
   }
-  const { data: prof, error: profErr } = await getSupabase()
+  const { data: prof, error: profErr } = await supabase
     .from('profiles')
     .select('id, role, approved')
     .eq('id', authUserId)
@@ -129,7 +100,7 @@ async function createAssignmentRun(event) {
   if (!assignmentId) return _json(400, { success: false, error: 'Missing assignment_id' });
   const token = generateRunToken(assignmentId);
   // Persist inside list_meta.run_tokens array
-  const { data: current, error: getErr } = await getSupabase()
+  const { data: current, error: getErr } = await supabase
     .from('homework_assignments')
     .select('id, list_meta')
     .eq('id', assignmentId)
@@ -138,7 +109,7 @@ async function createAssignmentRun(event) {
   const list_meta = current.list_meta || {};
   const prev = Array.isArray(list_meta.run_tokens) ? list_meta.run_tokens : [];
   const updated = { ...list_meta, run_tokens: [...prev, { token, created_at: new Date().toISOString() }] };
-  const { data: upd, error: updErr } = await getSupabase()
+  const { data: upd, error: updErr } = await supabase
     .from('homework_assignments')
     .update({ list_meta: updated })
     .eq('id', assignmentId)
@@ -154,7 +125,7 @@ async function getUserIdFromCookie(event) {
   const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
   if (!m) return null;
   const token = decodeURIComponent(m[1]);
-  const { data, error } = await getSupabase().auth.getUser(token);
+  const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) return null;
   return data.user.id;
 }
@@ -166,7 +137,7 @@ async function createAssignment(event) {
     return _json(401, { success: false, error: 'Not signed in' });
   }
 
-  const { data: prof, error: profErr } = await getSupabase()
+  const { data: prof, error: profErr } = await supabase
     .from('profiles')
     .select('id, role, approved, class')
     .eq('id', authUserId)
@@ -218,7 +189,7 @@ async function createAssignment(event) {
     run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true }]
   };
 
-  const { data, error } = await getSupabase()
+  const { data, error } = await supabase
     .from('homework_assignments')
     .insert({
       class: className,
@@ -254,7 +225,7 @@ async function createAssignment(event) {
 async function listAssignments(event) {
   const className = event.queryStringParameters?.class || null;
 
-  let query = getSupabase()
+  let query = supabase
     .from('homework_assignments')
     .select('*')
     .order('created_at', { ascending: false });
@@ -285,11 +256,11 @@ async function endAssignment(event) {
   const assignmentId = body.id || body.assignment_id || null;
   if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment id'});
   // Verify teacher role
-  const { data: prof, error: profErr } = await getSupabase().from('profiles').select('id, role').eq('id', authUserId).single();
+  const { data: prof, error: profErr } = await supabase.from('profiles').select('id, role').eq('id', authUserId).single();
   if (profErr || !prof || !['teacher','admin'].includes(String(prof.role||'').toLowerCase())) {
     return _json(403,{ success:false, error:'Only teachers can end assignments'});
   }
-  const { data, error } = await getSupabase().from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
+  const { data, error } = await supabase.from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
   if (error) return _json(500,{ success:false, error:'Failed to end assignment: '+(error.message||error.code)});
   return _json(200,{ success:true, assignment:data });
 }
@@ -309,7 +280,7 @@ async function assignmentProgress(event) {
   const className = event.queryStringParameters?.class || null;
   if (!assignmentId) return _json(400,{ success:false, error:'Missing assignment_id' });
   // Fetch assignment
-  let { data: assignment, error: aErr } = await getSupabase().from('homework_assignments').select('*').eq('id', assignmentId).single();
+  let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
 
   // Auto-create run token if assignment has none (backfill for older assignments)
@@ -322,7 +293,7 @@ async function assignmentProgress(event) {
       ...(assignment.list_meta || {}),
       run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true, backfilled: true }]
     };
-    const { data: updatedAssignment, error: updErr } = await getSupabase()
+    const { data: updatedAssignment, error: updErr } = await supabase
       .from('homework_assignments')
       .update({ list_meta: updatedMeta })
       .eq('id', assignmentId)
@@ -339,10 +310,15 @@ async function assignmentProgress(event) {
   // Determine category heuristically for expected mode counts
   const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
   let category = 'vocab';
-  if (assignLower.includes('phonics')) category = 'phonics';
-  else if (assignLower.includes('grammar')) category = 'grammar';
+  // Phonics detection: check for phonics indicators in list_key, title, or list_title
+  // Also detect "blend", "sound", or specific phonics patterns
+  if (assignLower.includes('phonics') || assignLower.includes('sound') || /\bblend\b/.test(assignLower)) {
+    category = 'phonics';
+  } else if (assignLower.includes('grammar') || assignLower.includes('/grammar/')) {
+    category = 'grammar';
+  }
   // Load students in class
-  const { data: students, error: sErr } = await getSupabase().from('profiles').select('id, name, korean_name').eq('class', targetClass);
+  const { data: students, error: sErr } = await supabase.from('profiles').select('id, name, korean_name').eq('class', targetClass);
   if (sErr) return _json(500,{ success:false, error:'Failed to load students: '+(sErr.message||sErr.code)});
   // Load progress_sessions for these students matching this assignment list
   // New logic: derive stars_earned (sum of best stars per mode) and list_completion_percent (distinct words attempted / list_size)
@@ -365,11 +341,18 @@ async function assignmentProgress(event) {
       // 1) Primary attempt: tighten matching by filename/path variants
       let orFilters = [`list_name.eq.${eq1}`, `list_name.ilike.${like1}`, `list_name.ilike.${like2}`, `list_name.ilike.${fuzzy1}`];
       if (fuzzy2) orFilters.push(`list_name.ilike.${fuzzy2}`);
+      // Also include variants that include the legacy project prefix
+      try {
+        const gaPrefixed = `Games/english_arcade/${eq1}`;
+        orFilters.push(`list_name.ilike.%${gaPrefixed}%`);
+        const gaCorePref = `Games/english_arcade/${coreName}`;
+        orFilters.push(`list_name.ilike.%${gaCorePref}%`);
+      } catch (e) { /* ignore */ }
       normalizedTokens.forEach(token => {
         const safeToken = token.replace(/\s+/g, '%');
         orFilters.push(`list_name.ilike.%${safeToken}%`);
       });
-      const { data: sessData, error: sessErr } = await getSupabase()
+      const { data: sessData, error: sessErr } = await supabase
         .from('progress_sessions')
         .select('user_id, list_name, mode, summary, list_size')
         .in('user_id', students.map(s=>s.id))
@@ -404,11 +387,12 @@ async function assignmentProgress(event) {
       // 2) Conservative fallback: look for the assignment list key anywhere in list_name
       if ((!sessions || sessions.length === 0) && assignment.list_key) {
         const broadLike = `%${assignment.list_key}%`;
-        const { data: broadSess, error: broadErr } = await getSupabase()
+        const broadLikeGa = `%Games/english_arcade/${assignment.list_key}%`;
+        const { data: broadSess, error: broadErr } = await supabase
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
-          .ilike('list_name', broadLike)
+          .or(`list_name.ilike.${broadLike},list_name.ilike.${broadLikeGa}`)
           .not('ended_at', 'is', null);
         if (!broadErr && Array.isArray(broadSess) && broadSess.length) {
           console.log('assignmentProgress fallback candidate list_name samples', broadSess.slice(0,10).map(s => s.list_name));
@@ -440,7 +424,7 @@ async function assignmentProgress(event) {
       if ((!sessions || sessions.length === 0) && coreName) {
         const normalized = coreName.replace(/[^a-z0-9]+/g, '%');
         const normLike = `%${normalized}%`;
-        const { data: normSess, error: normErr } = await getSupabase()
+        const { data: normSess, error: normErr } = await supabase
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
@@ -457,7 +441,7 @@ async function assignmentProgress(event) {
         const titleCore = assignment.title.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
         if (titleCore) {
           const fallbackLike = `%${titleCore}%`;
-          const { data: fallbackSess, error: fbErr } = await getSupabase()
+          const { data: fallbackSess, error: fbErr } = await supabase
             .from('progress_sessions')
             .select('user_id, list_name, mode, summary, list_size')
             .in('user_id', students.map(s=>s.id))
@@ -466,6 +450,40 @@ async function assignmentProgress(event) {
           if (!fbErr && Array.isArray(fallbackSess) && fallbackSess.length) {
             sessions = fallbackSess;
             console.log(`assignmentProgress: matched sessions via title fallback (${sessions.length}) for assignment ${assignment.id}`);
+          }
+        }
+      }
+
+      // 5) Display-name fallback: match sessions where list_name might be a friendly display name
+      // E.g., list_key="phonics-blends-dr-fl-fr.json" but session list_name="Blend Dr Fl Fr"
+      if ((!sessions || sessions.length === 0) && coreName) {
+        // Extract significant tokens from filename (e.g., "phonics-blends-dr-fl-fr" -> ["blends", "dr", "fl", "fr"])
+        const tokens = coreName.toLowerCase().split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?)$/.test(t));
+        if (tokens.length >= 2) {
+          // Build a flexible pattern that matches if all significant tokens appear in list_name (any order)
+          // For Supabase ilike, we need a single pattern. Use a minimal approach: match first meaningful token
+          const keyToken = tokens.find(t => t.length >= 2 && !/^(and|the|is|vs)$/.test(t)) || tokens[0];
+          if (keyToken) {
+            const displayLike = `%${keyToken}%`;
+            const { data: displaySess, error: dispErr } = await supabase
+              .from('progress_sessions')
+              .select('user_id, list_name, mode, summary, list_size')
+              .in('user_id', students.map(s=>s.id))
+              .ilike('list_name', displayLike)
+              .not('ended_at', 'is', null);
+            if (!dispErr && Array.isArray(displaySess) && displaySess.length) {
+              // Filter to require at least 2 tokens present in list_name (reduces false positives)
+              const filtered = displaySess.filter(s => {
+                if (!s.list_name) return false;
+                const ln = s.list_name.toLowerCase();
+                const matchCount = tokens.filter(t => ln.includes(t)).length;
+                return matchCount >= Math.min(2, tokens.length);
+              });
+              if (filtered.length) {
+                sessions = filtered;
+                console.log(`assignmentProgress: matched sessions via display-name token fallback (${sessions.length}) for assignment ${assignment.id}, tokens: [${tokens.join(', ')}]`);
+              }
+            }
           }
         }
       }
@@ -484,7 +502,7 @@ async function assignmentProgress(event) {
   // Map attempts for word coverage from progress_attempts table (distinct words attempted) referencing sessions list_name
   let attempts = [];
   try {
-    const { data: attemptsData, error: attErr } = await getSupabase()
+    const { data: attemptsData, error: attErr } = await supabase
       .from('progress_attempts')
       .select('user_id, word')
       .in('user_id', students.map(s=>s.id))
@@ -496,7 +514,7 @@ async function assignmentProgress(event) {
   function parseSummary(summary) {
     try { if (!summary) return null; if (typeof summary === 'string') return JSON.parse(summary); return summary; } catch { return null; }
   }
-  function deriveStars(summary) {
+  function deriveStars(summary, modeRaw) {
     const s = summary || {};
     let acc = null;
     if (typeof s.accuracy === 'number') acc = s.accuracy;
@@ -511,6 +529,19 @@ async function assignmentProgress(event) {
       return 0;
     }
     if (typeof s.stars === 'number') return s.stars;
+    // Fallback for point-only modes (e.g., level_up)
+    const m = String(modeRaw || '').toLowerCase();
+    if (typeof s.score === 'number' && !Number.isFinite(s.total) && !Number.isFinite(s.max)) {
+      const pts = Math.max(0, Math.floor(s.score));
+      if (m.includes('level_up')) {
+        if (pts >= 20) return 5;
+        if (pts >= 15) return 4;
+        if (pts >= 10) return 3;
+        if (pts >= 5) return 2;
+        if (pts >= 1) return 1;
+        return 0;
+      }
+    }
     return 0;
   }
   const byStudent = new Map();
@@ -519,7 +550,7 @@ async function assignmentProgress(event) {
     const row = byStudent.get(sess.user_id); if (!row) return;
     if (Number.isFinite(sess.list_size) && sess.list_size > 0) row.list_size = sess.list_size;
     const summary = parseSummary(sess.summary);
-    const stars = deriveStars(summary);
+    const stars = deriveStars(summary, sess.mode);
     const modeKey = sess.mode || 'unknown';
     // Track overall accuracy components
     if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
@@ -544,37 +575,51 @@ async function assignmentProgress(event) {
   });
   // Word coverage: attempt words - we can't easily filter by list_name here without list_name on attempts; assume attempts for this list contain the listKey fragment inside word? Out of scope; treat distinct words attempted as coverage if any sessions exist.
   attempts.forEach(att => { const row = byStudent.get(att.user_id); if (!row) return; row.words_attempted.add(att.word); });
-  // Determine total modes possible for this list; fallback to 6 if not specified
-  let totalModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count || null;
-  if (category === 'phonics' && Number(totalModes) > 4) {
-    // Phonics lists are fixed at 4 modes.
+  
+  // Determine total modes possible for this list based on category and grammar level
+  // Phonics: always 4 modes (listen, read, spell, test)
+  // Vocab: always 6 modes (match, listen, read, spell, test, level_up)
+  // Grammar Level 1: 4 modes (lesson, choose, fill, unscramble)
+  // Grammar Level 2+: 6 modes (sorting, choose, fill, unscramble, find_mistake, translation)
+  let totalModes;
+  if (category === 'phonics') {
     totalModes = 4;
-  }
-  // Determine encountered grammar advanced mode count for heuristic
-  const encountered = new Set(sessions.map(s => (s.mode||'').toLowerCase()));
-  if (category === 'grammar') {
-    const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-    let advancedCount = 0; advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
-    const heuristicTotal = advancedCount >= 2 ? 6 : 4;
-    // If meta total provided but conflicts with heuristic, override with heuristic.
-    if (!Number.isFinite(totalModes) || totalModes <= 0 || Number(totalModes) !== heuristicTotal) {
-      totalModes = heuristicTotal;
+  } else if (category === 'grammar') {
+    // Detect grammar level from list_key path
+    // e.g., "data/grammar/level1/..." or "Games/english_arcade/data/grammar/level2/..."
+    const listKeyPath = (assignment.list_key || '').toLowerCase();
+    let grammarLevel = 2; // Default to level 2 (6 modes)
+    
+    // Check for level indicator in path
+    const levelMatch = listKeyPath.match(/\/grammar\/level(\d)/);
+    if (levelMatch) {
+      grammarLevel = parseInt(levelMatch[1], 10);
     }
+    
+    // Level 1 grammar has 4 modes; Level 2+ has 6 modes
+    totalModes = grammarLevel === 1 ? 4 : 6;
+  } else {
+    // Vocab: 6 modes
+    totalModes = 6;
   }
-  if (!Number.isFinite(totalModes) || totalModes <= 0) {
-    if (category === 'phonics') totalModes = 4; else if (category === 'grammar') {
-      const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-      let advancedCount = 0; advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
-      totalModes = advancedCount >= 2 ? 6 : 4;
-    } else totalModes = 6;
+  // Allow override from assignment meta if explicitly set
+  const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
+  if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+    // Only override if category matches expected range
+    if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
+    else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
+    else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
   }
+  console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
+  
   const progress = Array.from(byStudent.values()).map(r => {
     const rawModesArr = Object.entries(r.modes).map(([mode,v]) => ({ mode, bestStars: v.stars, bestAccuracy: v.accuracy, sessions: v.sessions }));
     const starsEarned = rawModesArr.reduce((sum,m)=> sum + (m.bestStars||0), 0);
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
-    // Only count modes where student achieved at least 1 star (or lesson modes) toward completion
-    const countedModesArr = rawModesArr.filter(m => (m.bestStars >= 1) || /grammar_lesson|lesson/i.test(m.mode));
+    // Only count modes where the student achieved at least 1 star toward homework completion
+    // Requirement: a level is complete when the student has earned >=1 star in every mode
+    const countedModesArr = rawModesArr.filter(m => m.bestStars >= 1);
     const distinctModesAttempted = countedModesArr.length;
     const completionPercent = totalModes > 0 ? Math.round((distinctModesAttempted / totalModes) * 100) : 0;
     return {
@@ -588,7 +633,8 @@ async function assignmentProgress(event) {
       modes_attempted: distinctModesAttempted,
       modes_total: totalModes,
       modes: rawModesArr,
-      status: assignment.active ? (completionPercent >= 100 || starsEarned >= (assignment.goal_value||5) ? 'Completed' : 'In Progress') : 'Ended',
+      // A homework is considered completed only when every mode has at least 1 star
+      status: assignment.active ? (completionPercent >= 100 ? 'Completed' : 'In Progress') : 'Ended',
       category
     };
   });
@@ -599,7 +645,7 @@ async function getProfileForEvent(event) {
   const authUserId = await getUserIdFromCookie(event);
   if (!authUserId) return null;
 
-  const { data, error } = await getSupabase()
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, role, approved, class, name, korean_name')
     .eq('id', authUserId)
@@ -620,7 +666,7 @@ async function listAssignmentsForStudent(event) {
 
   const nowIso = new Date().toISOString();
 
-  const { data, error } = await getSupabase()
+  const { data, error } = await supabase
     .from('homework_assignments')
     .select('*, profiles!homework_assignments_created_by_fkey(name)')
     .eq('class', prof.class)
@@ -661,12 +707,12 @@ async function getRunTokenForStudent(event) {
   let assignment = null;
   try {
     if (assignmentId) {
-      const { data, error } = await getSupabase().from('homework_assignments').select('*').eq('id', assignmentId).single();
+      const { data, error } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
       if (error || !data) return _json(404, { success: false, error: 'Assignment not found' });
       assignment = data;
     } else if (listKey) {
       // Try to find an active assignment for this student's class matching the list_key
-      const { data, error } = await getSupabase().from('homework_assignments')
+      const { data, error } = await supabase.from('homework_assignments')
         .select('*')
         .eq('class', prof.class)
         .eq('active', true)
@@ -699,7 +745,7 @@ async function linkSessionsToAssignment(event) {
   }
 
   // Verify teacher/admin role
-  const { data: prof, error: profErr } = await getSupabase()
+  const { data: prof, error: profErr } = await supabase
     .from('profiles')
     .select('id, role, approved')
     .eq('id', authUserId)
@@ -715,7 +761,7 @@ async function linkSessionsToAssignment(event) {
   }
 
   // Fetch the assignment
-  const { data: assignment, error: aErr } = await getSupabase()
+  const { data: assignment, error: aErr } = await supabase
     .from('homework_assignments')
     .select('*')
     .eq('id', assignmentId)
@@ -740,7 +786,7 @@ async function linkSessionsToAssignment(event) {
       ...(assignment.list_meta || {}),
       run_tokens: [{ token: runToken, created_at: new Date().toISOString(), auto: true }]
     };
-    await getSupabase()
+    await supabase
       .from('homework_assignments')
       .update({ list_meta: updatedMeta })
       .eq('id', assignmentId);
@@ -748,7 +794,7 @@ async function linkSessionsToAssignment(event) {
   }
 
   // Get students in the class
-  const { data: students, error: sErr } = await getSupabase()
+  const { data: students, error: sErr } = await supabase
     .from('profiles')
     .select('id')
     .eq('class', assignment.class);
@@ -784,7 +830,7 @@ async function linkSessionsToAssignment(event) {
     }
   });
 
-  const { data: sessions, error: sessErr } = await getSupabase()
+  const { data: sessions, error: sessErr } = await supabase
     .from('progress_sessions')
     .select('id, session_id, user_id, list_name, mode, summary, started_at')
     .in('user_id', studentIds)
@@ -834,7 +880,7 @@ async function linkSessionsToAssignment(event) {
         linked_by: 'teacher_action'
       };
 
-      const { error: updateErr } = await getSupabase()
+      const { error: updateErr } = await supabase
         .from('progress_sessions')
         .update({ summary: updatedSummary })
         .eq('id', sess.id);
