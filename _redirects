@@ -1,13 +1,29 @@
-# Don't redirect static assets - let them be served normally
-/Games/*  200
-/students/*  200
-/Teachers/*  200
-/Assets/*  200
-/js/*  200
-/*.js  200
-/*.css  200
-/*.json  200
-/*.html  200
+# IMPORTANT: Most specific rules FIRST, catch-all LAST
+# Static assets - serve as-is (status 200 = serve file)
+/*.js     200!
+/*.css    200!
+/*.json   200!
+/*.html   200!
+/*.png    200!
+/*.jpg    200!
+/*.jpeg   200!
+/*.gif    200!
+/*.svg    200!
+/*.ico    200!
+/*.woff   200!
+/*.woff2  200!
+/*.ttf    200!
+/*.mp3    200!
+/*.wav    200!
 
-# SPA fallback for everything else
+# Static asset directories - never redirect
+/Games/*          200!
+/students/*       200!
+/Teachers/*       200!
+/Assets/*         200!
+/js/*             200!
+/lib/*            200!
+/components/*     200!
+
+# SPA fallback for other routes (without !)
 /*    /index.html   200

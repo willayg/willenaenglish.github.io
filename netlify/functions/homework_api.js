@@ -309,9 +309,6 @@ async function assignmentProgress(event) {
   const targetClass = className || assignment.class;
   // Determine category heuristically for expected mode counts
   const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
-  const listKeyLower = (assignment.list_key || '').toLowerCase();
-  const listBase = listKeyLower.split('/').pop() || '';
-  const listBaseName = listBase.replace(/\.json$/, '');
   let category = 'vocab';
   // Phonics detection: check for phonics indicators in list_key, title, or list_title
   // Also detect "blend", "sound", or specific phonics patterns
@@ -566,39 +563,28 @@ async function assignmentProgress(event) {
   // Word coverage: attempt words - we can't easily filter by list_name here without list_name on attempts; assume attempts for this list contain the listKey fragment inside word? Out of scope; treat distinct words attempted as coverage if any sessions exist.
   attempts.forEach(att => { const row = byStudent.get(att.user_id); if (!row) return; row.words_attempted.add(att.word); });
   
-  // Determine total modes possible for this list based on category
-  // Phonics: always 4 modes
-  // Vocab: always 6 modes
-  // Grammar: align with game modal definitions per level
+  // Determine total modes possible for this list based on category and grammar level
+  // Phonics: always 4 modes (listen, read, spell, test)
+  // Vocab: always 6 modes (match, listen, read, spell, test, level_up)
+  // Grammar Level 1: 4 modes (lesson, choose, fill, unscramble)
+  // Grammar Level 2+: 6 modes (sorting, choose, fill, unscramble, find_mistake, translation)
   let totalModes;
   if (category === 'phonics') {
     totalModes = 4;
   } else if (category === 'grammar') {
-    const isGrammarL1 = listKeyLower.includes('/grammar/level1/');
-    const isGrammarL2 = listKeyLower.includes('/grammar/level2/');
-    const isGrammarL3 = listKeyLower.includes('/grammar/level3/');
-    const whMicroIds = ['wh_who_what','wh_where_when_whattime','wh_how_why_which'];
-    const whQuestionIds = ['present_simple_questions_wh','present_progressive_questions_wh'];
-
-    if (isGrammarL1) {
-      totalModes = 4; // Level 1 grammar: lesson, choose, fill, unscramble
-    } else if (isGrammarL2 || isGrammarL3 || listKeyLower.includes('/grammar/')) {
-      if (whMicroIds.includes(listBaseName)) {
-        totalModes = 4; // WH micro lists have 4 modes
-      } else if (whQuestionIds.includes(listBaseName) || listBaseName.endsWith('questions_wh')) {
-        totalModes = 5; // WH question lists have 5 modes (no sorting)
-      } else {
-        totalModes = 6; // Standard Level 2/3 grammar lists have 6 modes
-      }
+    // Detect grammar level from list_key path
+    // e.g., "data/grammar/level1/..." or "Games/english_arcade/data/grammar/level2/..."
+    const listKeyPath = (assignment.list_key || '').toLowerCase();
+    let grammarLevel = 2; // Default to level 2 (6 modes)
+    
+    // Check for level indicator in path
+    const levelMatch = listKeyPath.match(/\/grammar\/level(\d)/);
+    if (levelMatch) {
+      grammarLevel = parseInt(levelMatch[1], 10);
     }
-
-    // Fallback: if we cannot infer from the path, use encountered advanced modes
-    if (totalModes == null) {
-      const encountered = new Set(sessions.map(s => (s.mode||'').toLowerCase()));
-      const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-      const advancedCount = advancedFlags.reduce((count, flag) => count + ([...encountered].some(m => m.includes(flag)) ? 1 : 0), 0);
-      totalModes = advancedCount >= 2 ? 6 : 4;
-    }
+    
+    // Level 1 grammar has 4 modes; Level 2+ has 6 modes
+    totalModes = grammarLevel === 1 ? 4 : 6;
   } else {
     // Vocab: 6 modes
     totalModes = 6;
@@ -618,8 +604,11 @@ async function assignmentProgress(event) {
     const starsEarned = rawModesArr.reduce((sum,m)=> sum + (m.bestStars||0), 0);
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
-    const distinctModesAttempted = rawModesArr.length; // count any mode the student touched at least once
-    const completionPercent = totalModes > 0 ? Math.round((Math.min(distinctModesAttempted, totalModes) / totalModes) * 100) : 0;
+    // Only count modes where the student achieved at least 1 star toward homework completion
+    // Requirement: a level is complete when the student has earned >=1 star in every mode
+    const countedModesArr = rawModesArr.filter(m => m.bestStars >= 1);
+    const distinctModesAttempted = countedModesArr.length;
+    const completionPercent = totalModes > 0 ? Math.round((distinctModesAttempted / totalModes) * 100) : 0;
     return {
       user_id: r.user_id,
       name: r.name,
