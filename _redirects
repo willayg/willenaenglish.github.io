@@ -1,4 +1,3 @@
-
 # Netlify -> Cloudflare redirects
 # Preserve Netlify Functions routing
 /.netlify/functions/*       /.netlify/functions/:splat                         200
@@ -17,12 +16,6 @@
 /teachers/index.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
 /teachers/login.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
 /teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200
-
-# Force all other traffic to Cloudflare (keep functions preserved above)
-/*                          https://cf.willenaenglish.com/:splat               301!
-
-# Preserve Netlify functions
-/.netlify/functions/*       /.netlify/functions/:splat                         200
 
 # Force all remaining traffic to Cloudflare domain
 /*                          https://cf.willenaenglish.com/:splat               301!
