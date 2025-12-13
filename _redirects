@@ -4,22 +4,22 @@
 /.netlify/functions/*       /.netlify/functions/:splat                         200
 
 # Student login/signin
-/login.html                 https://cf.willenaenglish.com/students/signin.html  301!
-/students/login.html        https://cf.willenaenglish.com/students/signin.html  301!
-/students/signin.html       https://cf.willenaenglish.com/students/signin.html  200
+ /login.html                 https://willenaenglish.com/students/signin.html  301!
+ /students/login.html        https://willenaenglish.com/students/signin.html  301!
+ /students/signin.html       https://willenaenglish.com/students/signin.html  200
 
 # Teacher login/signin
-/Teachers/index.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
-/Teachers/login.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
-/Teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200
+/Teachers/index.html        https://willenaenglish.com/Teachers/signin.html  301!
+/Teachers/login.html        https://willenaenglish.com/Teachers/signin.html  301!
+/Teachers/signin.html       https://willenaenglish.com/Teachers/signin.html  200
 
 # Lowercase variants
-/teachers/index.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
-/teachers/login.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
-/teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200
+/teachers/index.html        https://willenaenglish.com/Teachers/signin.html  301!
+/teachers/login.html        https://willenaenglish.com/Teachers/signin.html  301!
+/teachers/signin.html       https://willenaenglish.com/Teachers/signin.html  200
 
 # Force all other traffic to Cloudflare (keep functions preserved above)
-/*                          https://cf.willenaenglish.com/:splat               301!
+/*                          https://willenaenglish.com/:splat               301!
 
 # Preserve Netlify functions
 /.netlify/functions/*       /.netlify/functions/:splat                         200
