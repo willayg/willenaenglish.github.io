@@ -85,15 +85,16 @@
   
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
+  // Custom domain now served by Cloudflare Pages - treat as Cloudflare ecosystem
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com';
-  // willenaenglish.com is served by Cloudflare Pages (custom domain), so treat it as Cloudflare Pages.
-  const isCloudflarePages = currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev') || isCustomDomain;
+  // Cloudflare Pages: includes cf subdomain, custom domain, and *.pages.dev previews
+  const isCloudflarePages = isCustomDomain || currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev');
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
-  // For cross-origin requests (GitHub Pages, custom domain, or Cloudflare Pages -> API), we need special handling
-  // Note: When on cf.willenaenglish.com and calling api.willenaenglish.com, cookies with Domain=.willenaenglish.com work!
-  const isCrossOrigin = isGitHubPages || (isCustomDomain && !isNetlify);
+  // For cross-origin requests (GitHub Pages only now), we need special handling
+  // Cloudflare Pages (including willenaenglish.com) uses api.willenaenglish.com with same-root cookies
+  const isCrossOrigin = isGitHubPages;
   
   // Cloudflare Pages with api.willenaenglish.com uses same-root cookies (Domain=.willenaenglish.com)
   // so it's NOT a problematic cross-origin scenario for cookies
@@ -165,16 +166,12 @@
   let API_BASE = '';
   
   if (isCloudflarePages) {
-    // On Cloudflare Pages (cf.willenaenglish.com) - use unified API endpoint
-    // Cookies work because both use Domain=.willenaenglish.com
+    // On Cloudflare Pages (willenaenglish.com, cf.willenaenglish.com, *.pages.dev)
+    // Use unified API endpoint - cookies work with Domain=.willenaenglish.com
     API_BASE = 'https://api.willenaenglish.com';
   } else if (isGitHubPages) {
     // On GitHub Pages - use full Netlify URL for functions
     API_BASE = NETLIFY_FUNCTIONS_URL;
-  } else if (isCustomDomain) {
-    // Custom domain is hosted on Cloudflare Pages; route API calls through the Cloudflare API gateway.
-    // This keeps auth cookies working via Domain=.willenaenglish.com.
-    API_BASE = 'https://api.willenaenglish.com';
   } else if (isLocalhost) {
     // Local development - use relative path for local netlify dev (port 8888 or 9000)
     API_BASE = '';

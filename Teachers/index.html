@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
-    <!-- Removed cross-origin redirect to Netlify; Teachers pages should stay same-origin to avoid CORS/cookie issues -->
+    <!-- Netlify redirect removed - now using Cloudflare -->
     <script src="/js/api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -343,15 +343,7 @@
         try {
           const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
           const result = await res.json();
-          // Temporarily relax approval: allow teacher/admin regardless of approved flag
-          if (!result.success) {
-            const redirect = encodeURIComponent(location.pathname + location.search);
-            window.location.href = `/Teachers/login.html?redirect=${redirect}`;
-            return;
-          }
-          const role = String(result.role || '').toLowerCase();
-          const isStaff = role === 'teacher' || role === 'admin';
-          if (!isStaff && result.approved !== true) {
+          if (!result.success || result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
             return;
           }

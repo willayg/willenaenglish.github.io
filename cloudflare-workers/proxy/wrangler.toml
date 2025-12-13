@@ -24,11 +24,6 @@ service = "progress-summary"
 binding = "GET_AUDIO_URLS"
 service = "get-audio-urls"
 
-# Custom domain route - api.willenaenglish.com -> this proxy worker
-routes = [
-  { pattern = "api.willenaenglish.com/*", zone_name = "willenaenglish.com" }
-]
-
 # Fallback for non-CF functions
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
