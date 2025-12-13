@@ -343,7 +343,15 @@
         try {
           const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
           const result = await res.json();
-          if (!result.success || result.approved !== true) {
+          // Temporarily relax approval: allow teacher/admin regardless of approved flag
+          if (!result.success) {
+            const redirect = encodeURIComponent(location.pathname + location.search);
+            window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+            return;
+          }
+          const role = String(result.role || '').toLowerCase();
+          const isStaff = role === 'teacher' || role === 'admin';
+          if (!isStaff && result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
             return;
           }
