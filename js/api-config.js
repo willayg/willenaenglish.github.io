@@ -86,7 +86,8 @@
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com';
-  const isCloudflarePages = currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev');
+  // willenaenglish.com is served by Cloudflare Pages (custom domain), so treat it as Cloudflare Pages.
+  const isCloudflarePages = currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev') || isCustomDomain;
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
@@ -171,9 +172,9 @@
     // On GitHub Pages - use full Netlify URL for functions
     API_BASE = NETLIFY_FUNCTIONS_URL;
   } else if (isCustomDomain) {
-    // Custom domain: keep requests same-origin to avoid CORS and third-party cookie issues.
-    // Functions should be reachable via /.netlify/functions through proxy/CDN config.
-    API_BASE = '';
+    // Custom domain is hosted on Cloudflare Pages; route API calls through the Cloudflare API gateway.
+    // This keeps auth cookies working via Domain=.willenaenglish.com.
+    API_BASE = 'https://api.willenaenglish.com';
   } else if (isLocalhost) {
     // Local development - use relative path for local netlify dev (port 8888 or 9000)
     API_BASE = '';

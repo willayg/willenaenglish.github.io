@@ -9,6 +9,9 @@ Teachers/tools/worksheet-builder-vanilla/References/
 # Ignore local dev variable files used by some workers/tools
 .dev.vars
 
+# Cloudflare Workers build/dev artifacts
+**/.wrangler/
+
 
 
 # Cloudflare Workers local dev secrets
