@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Login - Willena English</title>
+  <script>
+    // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain
+    (function() {
+      const host = window.location.hostname;
+      if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
+      }
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .logo h1 {
+      color: #1a202c;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .logo p {
+      color: #718096;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2d3748;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+      background: #f7fafc;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+    
+    .login-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+    
+    .message.error {
+      background: #fed7d7;
+      color: #c53030;
+      border: 1px solid #feb2b2;
+    }
+    
+    .message.success {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+    
+    .signup-link {
+      text-align: center;
+      color: #718096;
+      font-size: 14px;
+    }
+    
+    .signup-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .debug-info {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: monospace;
+      max-width: 300px;
+      word-break: break-all;
+    }
+    
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <h1>Teacher Login</h1>
+      <p>Welcome back to Willena English</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email or Username</label>
+        <input 
+          type="text" 
+          id="email" 
+          name="email" 
+          required 
+          autocomplete="username"
+          placeholder="Enter your email or username"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          required 
+          autocomplete="current-password"
+          placeholder="Enter your password"
+        >
+      </div>
+      
+      <button type="submit" class="login-btn" id="loginBtn">
+        Sign In
+      </button>
+    </form>
+    
+    <div class="signup-link">
+      Don't have an account? <a href="/Teachers/signup.html">Sign up here</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
+
+    ensureAuthRefresh();
+
+    // Configuration
+    // Detect custom domain and route to Netlify
+    const getApiBase = () => {
+      const host = window.location.hostname;
+      if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+        return 'https://willenaenglish.netlify.app';
+      }
+      return '';
+    };
+    const FUNCTIONS_BASE = getApiBase();
+    const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
+    
+    // DOM elements
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const messageDiv = document.getElementById('message');
+    const debugInfo = document.getElementById('debugInfo');
+    
+  // Debug info removed in production
+    
+    // Utility functions
+    function showMessage(text, type = 'error') {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+    }
+    
+    function hideMessage() {
+      messageDiv.style.display = 'none';
+    }
+    
+    function setLoading(loading) {
+      loginBtn.disabled = loading;
+      loginBtn.textContent = loading ? 'Signing in...' : 'Sign In';
+    }
+    
+    // API functions
+    async function apiCall(url, options = {}) {
+      try {
+        const response = await fetch(url, {
+          credentials: 'include',
+          ...options
+        });
+        
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error(`Server error (${response.status})`);
+        }
+        
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || `Request failed (${response.status})`);
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('API call failed:', error);
+        throw error;
+      }
+    }
+    
+    async function getEmailByUsername(username) {
+      const url = `${AUTH_URL}?action=get_email_by_username&username=${encodeURIComponent(username)}`;
+      const result = await apiCall(url);
+      return result.email;
+    }
+    
+    async function login(email, password) {
+      const url = `${AUTH_URL}?action=login`;
+      const result = await apiCall(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      return result.user;
+    }
+    
+    async function getUserRole(userId) {
+      const url = `${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`;
+      const result = await apiCall(url);
+      return result.role;
+    }
+    
+    async function getProfileId(authUserId) {
+      const url = `${AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`;
+      const result = await apiCall(url);
+      return result.profile_id;
+    }
+    
+    // Form submission handler
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMessage();
+      setLoading(true);
+      
+      try {
+        let email = emailInput.value.trim();
+        const password = passwordInput.value;
+        
+        if (!email || !password) {
+          throw new Error('Please enter both email/username and password');
+        }
+        
+        // Convert username to email if needed
+        if (!email.includes('@')) {
+          showMessage('Looking up username...', 'success');
+          email = await getEmailByUsername(email);
+        }
+        
+        // Perform login
+        showMessage('Signing in...', 'success');
+        const user = await login(email, password);
+        
+        if (!user || !user.id) {
+          throw new Error('Login successful but no user data received');
+        }
+        
+        // Get user role and profile ID
+        showMessage('Loading profile...', 'success');
+        const [role, profileId] = await Promise.all([
+          getUserRole(user.id),
+          getProfileId(user.id)
+        ]);
+        
+        // Store user data
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('profile_id', profileId);
+        localStorage.setItem('userRole', role);
+        
+        showMessage(`Welcome back! Redirecting...`, 'success');
+        
+        // Determine redirect target: honor ?redirect= param if present and same-origin.
+        // If no explicit redirect, always send back to the main Teacher dashboard.
+        const params = new URLSearchParams(location.search);
+        let target = params.get('redirect');
+        if (target && !/^https?:/i.test(target) && target.startsWith('/')) {
+          // Allow only internal paths
+        } else {
+          target = '/Teachers/index.html';
+        }
+        setTimeout(() => { window.location.href = target; }, 700);
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        showMessage(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+    
+    // If already logged in (has session), optionally auto-redirect if redirect= present
+    (async () => {
+      try {
+        const debugUrl = `${AUTH_URL}?action=debug`;
+        const debugResult = await fetch(debugUrl, { credentials: 'include' });
+        const debugData = await debugResult.json();
+        
+        if (debugData.hasSupabaseUrl && debugData.hasAnonKey && debugData.hasServiceRole) {
+          console.log('✓ Auth service healthy');
+        } else {
+          console.warn('⚠ Auth service missing environment variables');
+        }
+        if (debugData.session && debugData.session.user && debugData.session.user.id) {
+          // Already logged in, perform quick redirect
+          const params = new URLSearchParams(location.search);
+          const redirect = params.get('redirect');
+          if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
+            window.location.replace(redirect);
+          } else {
+            // Already logged in and no specific redirect: go to Teacher dashboard
+            window.location.replace('/Teachers/index.html');
+          }
+        }
+      } catch (error) {
+        console.error('Auth service unreachable:', error);
+      }
+    })();
+  </script>
+</body>
+</html>

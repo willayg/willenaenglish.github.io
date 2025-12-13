@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title data-i18n="Student Login">Student Login</title>
+  <!-- API config for GitHub Pages + Netlify Functions -->
+  <script src="/js/api-config.js"></script>
+  <link rel="stylesheet" href="/students/profile.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', 'Inter', Arial, sans-serif;
+      background: linear-gradient(135deg, #67e2e6 0%, #93cbcf 100%);
+      min-height: 100vh;
+      display: flex;
+  flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-wrap { width: 100%; display: flex; align-items: center; justify-content: center; }
+    .login-card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.10);
+      padding: 38px 32px 32px 32px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #67e2e6, #93cbcf);
+    }
+    .login-title {
+      font-weight: 800;
+      color: #1aafb9;
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .mut {
+      color: #6b7a8f;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .field {
+      margin-bottom: 22px;
+    }
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: #19777e;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .field input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 16px;
+      background: #f7fafc;
+      transition: all 0.2s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: #67e2e6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(103, 226, 230, 0.12);
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+      justify-content: center;
+    }
+    button {
+      border-radius: 10px;
+      padding: 13px 18px;
+      font-weight: 700;
+      border: none;
+      background: linear-gradient(135deg, #67e2e6 0%, #93cbcf 100%);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(103, 226, 230, 0.08);
+      transition: all 0.18s;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(103, 226, 230, 0.18);
+    }
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #guestBtn {
+      background: linear-gradient(135deg, #93cbcf 0%, #67e2e6 100%);
+      color: #19777e;
+      border: 2px solid #67e2e6;
+    }
+    .error {
+      color: #b00020;
+      font-weight: 700;
+      margin-top: 6px;
+      background: #e0f7fa;
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: center;
+      border: 1px solid #67e2e6;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 480px) {
+      .login-card { padding: 24px 10px; margin: 10px; }
+      .login-title { font-size: 1.3rem; }
+    }
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      padding: 32px;
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      animation: modalFadeIn 0.3s ease;
+      overflow: hidden; /* clip pseudo header for crisp rounded corners */
+      border: 1px solid #e6eaef; /* subtle border to avoid subpixel artifacts */
+      background-clip: padding-box; /* ensure background doesn't bleed under border */
+      will-change: transform, opacity; /* smoother animation in some browsers */
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #67e2e6, #93cbcf);
+      border-radius: 0; /* parent clips the corners */
+    }
+    .modal-title {
+      font-weight: 800;
+      color: #1aafb9;
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .modal-body {
+      margin-bottom: 20px;
+      color: #6b7a8f;
+      text-align: center;
+      font-size: 16px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .modal-btn {
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-weight: 700;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.18s;
+      min-width: 100px;
+    }
+    .modal-btn-primary {
+      background: linear-gradient(135deg, #67e2e6 0%, #93cbcf 100%);
+      color: #fff;
+    }
+    .modal-btn-secondary {
+      background: #fff;
+      color: #19777e;
+      border: 2px solid #e2e8f0;
+    }
+    .modal-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(103, 226, 230, 0.2);
+    }
+    .modal-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #6b7a8f;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: #1aafb9; }
+  </style>
+  <script src="/students/language.js"></script>
+  <!-- System language detection now handled globally in language.js -->
+</head>
+<body>
+  <div style="width:100%;display:flex;flex-direction:column;align-items:center;margin-bottom:18px;">
+    <a href="index.html">
+      <img id="logo" src="../../Assets/Images/Logo.png" alt="Willena Logo" style="max-width:120px;max-height:120px;">
+    </a>
+  </div>
+  <main class="login-wrap">
+    <section class="login-card">
+  <h1 class="login-title" data-i18n="Student Login">Student Login</h1>
+  <p class="mut" data-i18n="Use your username and password.">Use your username and password.</p>
+      <button id="helpBtn" type="button" data-i18n="Help Please" style="display:block;width:100%;background:#fff;color:#ff1493;border:2px solid #67e2e6;margin-bottom:18px;box-shadow:0 2px 8px rgba(103,226,230,0.15);">
+        Easy Login
+      </button>
+      <div class="field">
+  <label for="username" data-i18n="Username">Username</label>
+        <input id="username" autocomplete="username" />
+      </div>
+      <div class="field">
+  <label for="password" data-i18n="Password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" />
+      </div>
+      <div class="row">
+  <button id="loginBtn" data-i18n="Log in">Log in</button>
+  <!-- Guest Login hidden - not currently in use -->
+  <!-- <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button> -->
+      </div>
+      <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
+    </section>
+  </main>
+
+  <!-- Modal container -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <script type="module">
+  // Netlify redirect removed - using Cloudflare exclusively now
+
+  // Set Help button text based on system language
+  window.addEventListener('DOMContentLoaded', () => {
+    const helpBtn = document.getElementById('helpBtn');
+    if (helpBtn) {
+      const lang = (window.StudentLang && window.StudentLang.currentLang) || navigator.language || 'en';
+      if (lang.startsWith('ko')) {
+        helpBtn.textContent = '쉽게 로그인';
+      } else {
+        helpBtn.textContent = 'Easy Login';
+      }
+    }
+  });
+  const msg = document.getElementById('msg');
+  function t(k){ return (window.StudentLang && StudentLang.translate(k)) || k; }
+    function show(err){ msg.textContent = err; msg.style.display = err? 'block':'none'; }
+
+    async function loginWithUsernamePassword(username, password){
+      // Step 1: resolve username -> email via profiles
+      const u = WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth') + '?action=get_email_by_username&username=' + encodeURIComponent(username.trim());
+      const r1 = await WillenaAPI.fetch(u);
+      const d1 = await r1.json();
+      if (!d1.success) throw new Error(d1.error || 'Username not found');
+
+      // Step 2: call login with email/password to reuse existing flow (sets cookies)
+      const r2 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ email: d1.email, password })
+      });
+      const d2 = await r2.json();
+      if (!d2.success) throw new Error(d2.error || 'Login failed');
+      
+      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
+      if (d2.access_token && WillenaAPI.setLocalTokens) {
+        WillenaAPI.setLocalTokens(d2.access_token, d2.refresh_token);
+        console.log('[Login] Stored local tokens for dev mode');
+      }
+      
+      return d2;
+    }
+
+    // Direct email login helper (used by the Help flow after password reset)
+    async function loginWithEmailPassword(email, password){
+      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ email, password })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Login failed');
+      
+      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
+      if (d.access_token && WillenaAPI.setLocalTokens) {
+        WillenaAPI.setLocalTokens(d.access_token, d.refresh_token);
+        console.log('[Login] Stored local tokens for dev mode');
+      }
+      
+      return d;
+    }
+
+    function getNextDest() {
+      try {
+        const params = new URLSearchParams(location.search);
+        const nxt = params.get('next');
+        if (nxt && /^\//.test(nxt)) return nxt; // only allow same-site absolute path
+      } catch {}
+      return '/students/profile.html';
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      show('');
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+  if (!username || !password) return show(t('Please enter both username and password.'));
+      try {
+        await loginWithUsernamePassword(username, password);
+        
+        // Verify cookies actually work by calling whoami immediately
+        // This catches Chrome Incognito and other cases where cookies are silently blocked
+        try {
+          const whoami = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
+          const whoData = await whoami.json();
+          if (!whoData.success) {
+            console.warn('[Login] Cookie verification failed - user may need to enable cookies');
+            // Show message but proceed anyway - let user know
+            show('Login succeeded but cookies may be blocked. Enable cookies for best experience.');
+          }
+        } catch (e) {
+          console.warn('[Login] Cookie verification failed:', e);
+        }
+        
+        // Signal other tabs/components that auth changed
+        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+        location.href = getNextDest();
+      } catch (e) {
+        show(t(e.message) || t('Login failed'));
+      }
+    });
+
+    // Allow Enter to submit login when focused on username or password
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    function trySubmitLoginOnEnter(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('loginBtn').click();
+      }
+    }
+    if (usernameInput) usernameInput.addEventListener('keydown', trySubmitLoginOnEnter);
+    if (passwordInput) passwordInput.addEventListener('keydown', trySubmitLoginOnEnter);
+
+    // Guest login flow
+    async function startGuestSession(name){
+      const r = await WillenaAPI.fetch('/.netlify/functions/guest_session', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ name })
+      });
+      const d = await r.json().catch(()=>null);
+      if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Guest login failed');
+      return d.guest;
+    }
+
+    // Guest button listener (only if element exists - may be hidden/removed)
+    const guestBtnEl = document.getElementById('guestBtn');
+    if (guestBtnEl) {
+      guestBtnEl.addEventListener('click', async () => {
+        show('');
+        try {
+          const prev = localStorage.getItem('guest_name') || '';
+          const name = prompt(t('Enter your name to play as a guest:'), prev);
+          if (!name) return; // cancelled
+          const guest = await startGuestSession(name);
+          localStorage.setItem('guest_name', guest.name);
+          // Also set the generic user_name used by the student header UI
+          try { localStorage.setItem('user_name', guest.name); } catch {}
+          try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+          location.href = getNextDest();
+        } catch(e){
+          show(t(e.message) || t('Guest login failed'));
+        }
+      });
+    }
+    document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
+
+    // =======================
+    // Student Help Modal Flow
+    // =======================
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalActions = document.getElementById('modalActions');
+    const modalClose = document.getElementById('modalClose');
+
+    // Store student verification data
+    let studentData = {};
+
+    // Translations for modal text
+    const modalTexts = {
+      en: {
+        areYouStudent: "Are you a Willena student?",
+        yes: "Yes",
+        no: "No",
+        enterKoreanName: "What is your Korean name?",
+        koreanNamePlaceholder: "한국어 이름",
+        enterEnglishName: "What is your English name?",
+        englishNamePlaceholder: "English Name",
+        enterAuthCode: "What is the 인증번호?",
+        authCodePlaceholder: "Last 4 digits",
+        authCodeHelper: "Enter the last four digits of mom's phone number.",
+        authCodeInvalid: "Please enter the last four digits (numbers only).",
+        next: "Next",
+        back: "Back",
+        verifying: "Verifying...",
+        loggingIn: "Logging you in...",
+        notFound: "We couldn't find a student with that information. Please check the 인증번호 and try again.",
+        tryAgain: "Try Again",
+        success: "Login successful! Redirecting...",
+        errorOccurred: "An error occurred. Please try again."
+      },
+      ko: {
+        areYouStudent: "윌레나 학생이신가요?",
+        yes: "예",
+        no: "아니오",
+        enterKoreanName: "한국어 이름을 입력하세요",
+        koreanNamePlaceholder: "한국어 이름",
+        enterEnglishName: "영어 이름을 입력하세요",
+        englishNamePlaceholder: "English Name",
+        enterAuthCode: "인증번호(엄마 전화번호 뒤 4자리)는 무엇인가요?",
+        authCodePlaceholder: "마지막 4자리",
+        authCodeHelper: "엄마 전화번호 뒤 4자리인 인증번호를 입력하세요.",
+        authCodeInvalid: "인증번호는 숫자 4자리여야 합니다.",
+        next: "다음",
+        back: "뒤로",
+        verifying: "확인 중...",
+        loggingIn: "로그인 중...",
+        notFound: "해당 정보로 학생을 찾을 수 없습니다. 인증번호를 확인하고 다시 시도해 주세요.",
+        tryAgain: "다시 시도",
+        success: "로그인 성공! 이동 중...",
+        errorOccurred: "오류가 발생했습니다. 다시 시도해 주세요."
+      }
+    };
+
+    function getModalLang() {
+      // Detect language from browser or StudentLang
+      try {
+        if (window.StudentLang && window.StudentLang.currentLang) {
+          return window.StudentLang.currentLang === 'ko' ? 'ko' : 'en';
+        }
+      } catch {}
+      const lang = navigator.language || navigator.userLanguage || 'en';
+      return lang.startsWith('ko') ? 'ko' : 'en';
+    }
+
+    function mt(key) {
+      const lang = getModalLang();
+      return modalTexts[lang][key] || modalTexts.en[key] || key;
+    }
+
+    function showModal() {
+      modalOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      // Attach Enter key handler while modal is open to trigger primary action
+      try { document.addEventListener('keydown', modalEnterHandler); } catch {}
+    }
+
+    function hideModal() {
+      modalOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+      studentData = {};
+      try { document.removeEventListener('keydown', modalEnterHandler); } catch {}
+    }
+
+    // When modal open, pressing Enter should activate the visible primary action button
+    function modalEnterHandler(e) {
+      if (e.key !== 'Enter') return;
+      // Ignore if focus is inside a button to avoid double-activation
+      const t = document.activeElement;
+      if (t && (t.tagName === 'BUTTON' || t.tagName === 'A')) return;
+      // Find the primary action button inside the modal actions
+      const primary = modalActions.querySelector('.modal-btn.modal-btn-primary:not([disabled])');
+      if (primary) {
+        e.preventDefault();
+        primary.click();
+      }
+    }
+
+    modalClose.addEventListener('click', hideModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) hideModal();
+    });
+
+    // Step 1: Are you a student?
+    function showStep1() {
+      studentData = {};
+      modalTitle.textContent = mt('areYouStudent');
+      modalBody.innerHTML = '';
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-primary" id="yesBtn">${mt('yes')}</button>
+        <button class="modal-btn modal-btn-secondary" id="noBtn">${mt('no')}</button>
+      `;
+      
+      document.getElementById('yesBtn').addEventListener('click', showStep2);
+      document.getElementById('noBtn').addEventListener('click', hideModal);
+      showModal();
+    }
+
+    // Step 2: Korean name
+    function showStep2() {
+      modalTitle.textContent = mt('enterKoreanName');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="koreanNameInput" class="field input" placeholder="${mt('koreanNamePlaceholder')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="nextBtn">${mt('next')}</button>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', showStep1);
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        const val = document.getElementById('koreanNameInput').value.trim();
+        if (!val) return;
+        studentData.korean_name = val;
+        showStep3();
+      });
+
+      const koreanInput = document.getElementById('koreanNameInput');
+      if (koreanInput) {
+        koreanInput.focus();
+        // Submit next on Enter
+        const kHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nextBtn').click(); } };
+        koreanInput.addEventListener('keydown', kHandler);
+        // remove listener when modal hidden to avoid leaks
+        const cleanupK = () => { try { koreanInput.removeEventListener('keydown', kHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupK); };
+        // best-effort cleanup after step changes
+        modalOverlay.addEventListener('transitionend', cleanupK);
+      }
+    }
+
+    // Step 3: English name
+    function showStep3() {
+      modalTitle.textContent = mt('enterEnglishName');
+      modalBody.innerHTML = `
+        <div class="field">
+          <input id="englishNameInput" class="field input" placeholder="${mt('englishNamePlaceholder')}" style="width:100%;" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="nextBtn">${mt('next')}</button>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', showStep2);
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        const val = document.getElementById('englishNameInput').value.trim();
+        if (!val) return;
+        studentData.name = val;
+        showStep4();
+      });
+
+      const englishInput = document.getElementById('englishNameInput');
+      if (englishInput) {
+        englishInput.focus();
+        const eHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nextBtn').click(); } };
+        englishInput.addEventListener('keydown', eHandler);
+        const cleanupE = () => { try { englishInput.removeEventListener('keydown', eHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupE); };
+        modalOverlay.addEventListener('transitionend', cleanupE);
+      }
+    }
+
+    // Step 4: 인증번호 (mom's phone last four digits)
+    function showStep4() {
+      modalTitle.textContent = mt('enterAuthCode');
+      modalBody.innerHTML = `
+        <div class="field">
+          <p style="margin-bottom:12px;">${mt('authCodeHelper')}</p>
+          <input id="authCodeInput" class="field input" placeholder="${mt('authCodePlaceholder')}" style="width:100%;" inputmode="numeric" />
+        </div>
+      `;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="backBtn">${mt('back')}</button>
+        <button class="modal-btn modal-btn-primary" id="verifyBtn">${mt('next')}</button>
+      `;
+
+      document.getElementById('backBtn').addEventListener('click', showStep3);
+      document.getElementById('verifyBtn').addEventListener('click', async () => {
+        const raw = document.getElementById('authCodeInput').value.trim();
+        const digits = raw.replace(/\D/g, '');
+        if (digits.length !== 4) {
+          alert(mt('authCodeInvalid'));
+          return;
+        }
+        studentData.auth_code = digits;
+        await verifyStudent();
+      });
+
+      const authInput = document.getElementById('authCodeInput');
+      if (authInput) {
+        authInput.focus();
+        const aHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('verifyBtn').click(); } };
+        authInput.addEventListener('keydown', aHandler);
+        const cleanupA = () => { try { authInput.removeEventListener('keydown', aHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupA); };
+        modalOverlay.addEventListener('transitionend', cleanupA);
+      }
+    }
+
+    function generateTemporaryPassword() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$';
+      let result = '';
+      for (let i = 0; i < 12; i += 1) {
+        const idx = Math.floor(Math.random() * chars.length);
+        result += chars[idx];
+      }
+      return result;
+    }
+
+    // Verify student with backend
+    async function verifyStudent() {
+      modalTitle.textContent = mt('verifying');
+      modalBody.innerHTML = '<p>⏳</p>';
+      modalActions.innerHTML = '';
+
+      try {
+        const res = await WillenaAPI.fetch('/.netlify/functions/verify_student', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            korean_name: studentData.korean_name,
+            name: studentData.name,
+            auth_code: studentData.auth_code
+          })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && data.student) {
+          studentData.id = data.student.id;
+          studentData.username = data.student.username;
+          studentData.email = data.student.email || null;
+          await completeEasyLogin();
+        } else {
+          let message = (data && data.error) ? data.error : mt('notFound');
+          if (typeof message === 'string') {
+            if (message === 'Student not found. Please check your information.') {
+              message = mt('notFound');
+            } else if (message === 'Authentication code must be 4 digits.') {
+              message = mt('authCodeInvalid');
+            }
+          } else {
+            message = mt('notFound');
+          }
+          showError(message);
+        }
+      } catch (err) {
+        console.error('Verification error:', err);
+        showError(mt('errorOccurred'));
+      }
+    }
+
+    async function completeEasyLogin() {
+      modalTitle.textContent = mt('loggingIn');
+      modalBody.innerHTML = '<p>⏳</p>';
+      modalActions.innerHTML = '';
+
+      try {
+        const tempPassword = generateTemporaryPassword();
+        const res = await WillenaAPI.fetch('/.netlify/functions/set_student_password', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            student_id: studentData.id,
+            password: tempPassword
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data || !data.success) {
+          throw new Error((data && data.error) || 'Failed to set password');
+        }
+
+        if (studentData.email) {
+          await loginWithEmailPassword(studentData.email, tempPassword);
+        } else if (studentData.username) {
+          await loginWithUsernamePassword(studentData.username, tempPassword);
+        } else {
+          throw new Error('Missing login identifier');
+        }
+
+        modalTitle.textContent = mt('success');
+        modalBody.innerHTML = '<p>✅</p>';
+        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+        setTimeout(() => {
+          location.href = getNextDest();
+        }, 1200);
+      } catch (err) {
+        console.error('Easy login error:', err);
+        showError(mt('errorOccurred'));
+      }
+    }
+
+    function showError(message) {
+      modalTitle.textContent = '⚠️';
+      modalBody.innerHTML = `<p>${message}</p>`;
+      modalActions.innerHTML = `
+        <button class="modal-btn modal-btn-secondary" id="retryBtn">${mt('tryAgain')}</button>
+      `;
+      document.getElementById('retryBtn').addEventListener('click', () => {
+        studentData = {};
+        showStep2();
+      });
+    }
+
+    // Attach to Help button
+    document.getElementById('helpBtn').addEventListener('click', showStep1);
+  </script>
+</body>
+</html>
