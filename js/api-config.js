@@ -45,7 +45,8 @@
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // Start at 0% for now: 0 = all Netlify, 100 = all Cloudflare
+  // Default to 0% (Netlify) but when running on the production custom domain
+  // prefer Cloudflare Workers (they provide proper CORS and parity).
   let CF_ROLLOUT_PERCENT = 0;
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
@@ -158,6 +159,15 @@
   } else {
     // Unknown environment - default to Netlify
     API_BASE = NETLIFY_FUNCTIONS_URL;
+  }
+
+  // If we're running on the production custom domain, prefer Cloudflare Workers
+  // to avoid cross-origin CORS issues with Netlify functions. This forces
+  // API calls for migrated functions to go to CF workers.
+  if (isCustomDomain) {
+    CF_ROLLOUT_PERCENT = 100;
+    CF_SHADOW_MODE = false;
+    console.log('[WillenaAPI] Custom domain detected: forcing Cloudflare Worker usage for migrated functions');
   }
 
   // --- Development override for localhost ---
