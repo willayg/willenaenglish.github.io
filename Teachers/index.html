@@ -4,16 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
-    <script>
-      // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain
-      (function() {
-        const host = window.location.hostname;
-        if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
-          const currentPath = window.location.pathname + window.location.search;
-          window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
-        }
-      })();
-    </script>
+    <!-- Removed cross-origin redirect to Netlify; Teachers pages should stay same-origin to avoid CORS/cookie issues -->
     <script src="/js/api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
