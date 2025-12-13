@@ -567,6 +567,56 @@ export default {
           return false;
         });
         
+        // Normalize mode names: multiple recorded modes map to a single canonical mode for counting
+        // This handles cases like sentence submodes (full_sentence_mode, broken_sentence_mode, fill_blank_sentence_mode)
+        // all counting as the single "sentence" mode for homework completion.
+        function normalizeMode(rawMode, cat) {
+          const m = String(rawMode || '').toLowerCase();
+          
+          // Vocab modes normalization
+          if (cat === 'vocab' || cat === 'phonics') {
+            // Sentence mode variants -> sentence
+            if (m.includes('sentence') && !m.includes('grammar')) return 'sentence';
+            // Listening variants -> listening
+            if (m === 'listening' || m === 'listening_multi_choice') return 'listening';
+            // Match/meaning variants -> meaning
+            if (m === 'meaning' || m === 'matching' || m === 'picture' || m === 'picture_multi_choice' || m === 'easy_picture') return 'meaning';
+            // Phonics listening -> listen (normalized phonics mode)
+            if (m === 'phonics_listening') return 'listen';
+            // Multi-choice variants -> multi_choice
+            if (m === 'multi_choice' || m === 'multi_choice_eng_to_kor' || m === 'multi_choice_kor_to_eng') return 'multi_choice';
+            // Spell variants -> listen_and_spell
+            if (m === 'listen_and_spell' || m === 'spelling') return 'listen_and_spell';
+            // Level up
+            if (m === 'level_up') return 'level_up';
+            // Missing letter
+            if (m === 'missing_letter') return 'missing_letter';
+          }
+          
+          // Grammar modes normalization
+          if (cat === 'grammar') {
+            // Choose mode variants (legacy grammar_mode, new grammar_choose, L3 variants)
+            if (m === 'grammar_mode' || m === 'grammar_choose' || m === 'grammar_choose_l3') return 'choose';
+            // Fill gap variants
+            if (m === 'grammar_fill_gap' || m === 'grammar_fill_gap_l3') return 'fill_gap';
+            // Unscramble
+            if (m === 'grammar_sentence_unscramble' || m === 'grammar_unscramble') return 'unscramble';
+            // Sorting
+            if (m === 'grammar_sorting') return 'sorting';
+            // Find mistake variants
+            if (m === 'grammar_find_mistake' || m === 'grammar_find_mistake_l3') return 'find_mistake';
+            // Translation variants
+            if (m === 'grammar_translation_choice' || m === 'grammar_translation_choice_l3') return 'translation';
+            // Sentence order
+            if (m === 'grammar_sentence_order' || m === 'grammar_sentence_order_l3') return 'sentence_order';
+            // Lesson variants (many specific lesson modules)
+            if (m.startsWith('grammar_lesson') || m === 'lesson') return 'lesson';
+          }
+          
+          // Fallback: return original mode
+          return m;
+        }
+        
         filteredSessions.forEach(sess => {
           const row = byStudent.get(sess.user_id);
           if (!row) return;
@@ -577,14 +627,19 @@ export default {
           
           const summary = parseSummary(sess.summary);
           const stars = deriveStars(summary, sess.mode);
-          const modeKey = sess.mode || 'unknown';
+          // Use normalized mode key for grouping
+          const modeKey = normalizeMode(sess.mode, category) || 'unknown';
+          const rawMode = sess.mode || 'unknown';
           
           const prev = row.modes[modeKey];
           if (prev) {
             if (stars > prev.stars) prev.stars = stars;
             prev.sessions += 1;
+            // Track raw mode names for debugging
+            if (!prev.rawModes) prev.rawModes = [];
+            if (!prev.rawModes.includes(rawMode)) prev.rawModes.push(rawMode);
           } else {
-            row.modes[modeKey] = { stars, sessions: 1 };
+            row.modes[modeKey] = { stars, sessions: 1, rawModes: [rawMode] };
           }
         });
         
@@ -627,6 +682,7 @@ export default {
             mode,
             bestStars: v.stars,
             sessions: v.sessions,
+            rawModes: v.rawModes || [], // Include raw mode names for debugging
           }));
           
           const starsEarned = modesArr.reduce((sum, m) => sum + (m.bestStars || 0), 0);
