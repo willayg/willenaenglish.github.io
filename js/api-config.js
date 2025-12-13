@@ -171,9 +171,9 @@
     // On GitHub Pages - use full Netlify URL for functions
     API_BASE = NETLIFY_FUNCTIONS_URL;
   } else if (isCustomDomain) {
-    // Custom domain - check if it points to Netlify or GH Pages
-    // For now, assume Netlify functions are still on netlify subdomain
-    API_BASE = NETLIFY_FUNCTIONS_URL;
+    // Custom domain: keep requests same-origin to avoid CORS and third-party cookie issues.
+    // Functions should be reachable via /.netlify/functions through proxy/CDN config.
+    API_BASE = '';
   } else if (isLocalhost) {
     // Local development - use relative path for local netlify dev (port 8888 or 9000)
     API_BASE = '';
