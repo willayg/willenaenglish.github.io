@@ -1,16 +1,25 @@
-# Login/signin redirects to Cloudflare site
+
+# Netlify -> Cloudflare redirects
+# Preserve Netlify Functions routing
+/.netlify/functions/*       /.netlify/functions/:splat                         200
+
+# Student login/signin
 /login.html                 https://cf.willenaenglish.com/students/signin.html  301!
 /students/login.html        https://cf.willenaenglish.com/students/signin.html  301!
-/students/signin.html       https://cf.willenaenglish.com/students/signin.html  200!
+/students/signin.html       https://cf.willenaenglish.com/students/signin.html  200
 
+# Teacher login/signin
 /Teachers/index.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
 /Teachers/login.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
-/Teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200!
+/Teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200
 
-# Catch any lowercase/uppercase variants
+# Lowercase variants
 /teachers/index.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
 /teachers/login.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
-/teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200!
+/teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200
+
+# Force all other traffic to Cloudflare (keep functions preserved above)
+/*                          https://cf.willenaenglish.com/:splat               301!
 
 # Preserve Netlify functions
 /.netlify/functions/*       /.netlify/functions/:splat                         200
