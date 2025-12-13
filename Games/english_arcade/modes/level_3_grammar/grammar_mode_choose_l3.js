@@ -613,11 +613,13 @@ export async function startGrammarChooseL3({
     if (correct && !arr.includes(correct)) arr.unshift(correct);
     // Guarantee at least 3 options
     while (arr.length < 3) arr.push(correct || arr[0] || '');
-    const options = shuffle(arr);
+    // Shuffle then slice to 4, ensuring correct is still included
+    let options = shuffle(arr).slice(0, 4);
+    // IMPORTANT: Check correct is included AFTER slicing, not before
     if (correct && !options.includes(correct)) {
-      options[options.length - 1] = correct;
+      options[Math.floor(Math.random() * options.length)] = correct;
     }
-    return options.slice(0, 4);
+    return shuffle(options);
   }
 
   function getCorrectAnswer(item) {

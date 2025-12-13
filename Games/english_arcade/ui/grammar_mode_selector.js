@@ -448,7 +448,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
           pct = Math.round((summary.score / summary.total) * 100);
         } else if (summary && typeof summary.accuracy === 'number') {
-          pct = Math.round(summary.accuracy);
+          // accuracy is stored as decimal (0.0-1.0), so multiply by 100
+          pct = summary.accuracy <= 1 ? Math.round(summary.accuracy * 100) : Math.round(summary.accuracy);
         } else if (typeof session.correct === 'number' && typeof session.total === 'number' && session.total > 0) {
           pct = Math.round((session.correct / session.total) * 100);
         }

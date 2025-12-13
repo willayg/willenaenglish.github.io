@@ -111,9 +111,9 @@ function normalizeModeName(mode) {
     return 'spelling';
   }
   
-  // Translation variants  
-  if (m.includes('translation') && !m.includes('grammar')) {
-    return 'translation';
+  // Translation variants (including grammar_translation_choice)  
+  if (m.includes('translation')) {
+    return 'grammar_translation';
   }
   
   // Typing/dictation
