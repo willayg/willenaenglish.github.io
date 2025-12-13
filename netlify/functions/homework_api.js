@@ -544,6 +544,57 @@ async function assignmentProgress(event) {
     }
     return 0;
   }
+  
+  // Normalize mode names: multiple recorded modes map to a single canonical mode for counting
+  // This handles cases like sentence submodes (full_sentence_mode, broken_sentence_mode, fill_blank_sentence_mode)
+  // all counting as the single "sentence" mode for homework completion.
+  function normalizeMode(rawMode, cat) {
+    const m = String(rawMode || '').toLowerCase();
+    
+    // Vocab modes normalization
+    if (cat === 'vocab' || cat === 'phonics') {
+      // Sentence mode variants -> sentence
+      if (m.includes('sentence') && !m.includes('grammar')) return 'sentence';
+      // Listening variants -> listening
+      if (m === 'listening' || m === 'listening_multi_choice') return 'listening';
+      // Match/meaning variants -> meaning
+      if (m === 'meaning' || m === 'matching' || m === 'picture' || m === 'picture_multi_choice' || m === 'easy_picture') return 'meaning';
+      // Phonics listening -> listen (normalized phonics mode)
+      if (m === 'phonics_listening') return 'listen';
+      // Multi-choice variants -> multi_choice
+      if (m === 'multi_choice' || m === 'multi_choice_eng_to_kor' || m === 'multi_choice_kor_to_eng') return 'multi_choice';
+      // Spell variants -> listen_and_spell
+      if (m === 'listen_and_spell' || m === 'spelling') return 'listen_and_spell';
+      // Level up
+      if (m === 'level_up') return 'level_up';
+      // Missing letter
+      if (m === 'missing_letter') return 'missing_letter';
+    }
+    
+    // Grammar modes normalization
+    if (cat === 'grammar') {
+      // Choose mode variants (legacy grammar_mode, new grammar_choose, L3 variants)
+      if (m === 'grammar_mode' || m === 'grammar_choose' || m === 'grammar_choose_l3') return 'choose';
+      // Fill gap variants
+      if (m === 'grammar_fill_gap' || m === 'grammar_fill_gap_l3') return 'fill_gap';
+      // Unscramble
+      if (m === 'grammar_sentence_unscramble' || m === 'grammar_unscramble') return 'unscramble';
+      // Sorting
+      if (m === 'grammar_sorting') return 'sorting';
+      // Find mistake variants
+      if (m === 'grammar_find_mistake' || m === 'grammar_find_mistake_l3') return 'find_mistake';
+      // Translation variants
+      if (m === 'grammar_translation_choice' || m === 'grammar_translation_choice_l3') return 'translation';
+      // Sentence order
+      if (m === 'grammar_sentence_order' || m === 'grammar_sentence_order_l3') return 'sentence_order';
+      // Lesson variants (many specific lesson modules)
+      if (m.startsWith('grammar_lesson') || m === 'lesson') return 'lesson';
+    }
+    
+    // Fallback: return original mode
+    return m;
+  }
+  
   const byStudent = new Map();
   students.forEach(st => byStudent.set(st.id, { user_id: st.id, name: st.name, korean_name: st.korean_name, modes: {}, list_size: null, words_attempted: new Set() }));
   sessions.forEach(sess => {
@@ -551,7 +602,9 @@ async function assignmentProgress(event) {
     if (Number.isFinite(sess.list_size) && sess.list_size > 0) row.list_size = sess.list_size;
     const summary = parseSummary(sess.summary);
     const stars = deriveStars(summary, sess.mode);
-    const modeKey = sess.mode || 'unknown';
+    // Use normalized mode key for grouping related modes
+    const modeKey = normalizeMode(sess.mode, category) || 'unknown';
+    const rawMode = sess.mode || 'unknown';
     // Track overall accuracy components
     if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
       row._score = (row._score || 0) + summary.score;
@@ -568,9 +621,12 @@ async function assignmentProgress(event) {
       const acc = summary && typeof summary.accuracy === 'number' ? Math.round(summary.accuracy * 100) : (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0 ? Math.round((summary.score/summary.total)*100) : 0);
       if (acc > prev.accuracy) prev.accuracy = acc;
       prev.sessions += 1;
+      // Track raw mode names for debugging
+      if (!prev.rawModes) prev.rawModes = [];
+      if (!prev.rawModes.includes(rawMode)) prev.rawModes.push(rawMode);
     } else {
       const acc = summary && typeof summary.accuracy === 'number' ? Math.round(summary.accuracy * 100) : (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0 ? Math.round((summary.score/summary.total)*100) : 0);
-      row.modes[modeKey] = { stars, accuracy: acc, sessions: 1 };
+      row.modes[modeKey] = { stars, accuracy: acc, sessions: 1, rawModes: [rawMode] };
     }
   });
   // Word coverage: attempt words - we can't easily filter by list_name here without list_name on attempts; assume attempts for this list contain the listKey fragment inside word? Out of scope; treat distinct words attempted as coverage if any sessions exist.
@@ -613,7 +669,7 @@ async function assignmentProgress(event) {
   console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
   
   const progress = Array.from(byStudent.values()).map(r => {
-    const rawModesArr = Object.entries(r.modes).map(([mode,v]) => ({ mode, bestStars: v.stars, bestAccuracy: v.accuracy, sessions: v.sessions }));
+    const rawModesArr = Object.entries(r.modes).map(([mode,v]) => ({ mode, bestStars: v.stars, bestAccuracy: v.accuracy, sessions: v.sessions, rawModes: v.rawModes || [] }));
     const starsEarned = rawModesArr.reduce((sum,m)=> sum + (m.bestStars||0), 0);
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
