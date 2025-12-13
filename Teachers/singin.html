@@ -4,8 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login - Willena English</title>
-  <!-- Netlify redirect removed - now using Cloudflare -->
-  <script src="/js/api-config.js"></script>
+  <script>
+    // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain
+    (function() {
+      const host = window.location.hostname;
+      if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
+      }
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
@@ -219,16 +227,22 @@
     </div>
   </div>
 
-  <!-- Load api-config.js first (sets window.WillenaAPI) -->
-  <script src="/js/api-config.js"></script>
-  
   <script type="module">
     import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
 
     ensureAuthRefresh();
 
-    // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
-    const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth');
+    // Configuration
+    // Detect custom domain and route to Netlify
+    const getApiBase = () => {
+      const host = window.location.hostname;
+      if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+        return 'https://willenaenglish.netlify.app';
+      }
+      return '';
+    };
+    const FUNCTIONS_BASE = getApiBase();
+    const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
     
     // DOM elements
     const form = document.getElementById('loginForm');

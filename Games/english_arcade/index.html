@@ -17,14 +17,14 @@
   <meta name="supabase-anon-key" content="YOUR_PUBLIC_ANON_KEY" />
 
   <!-- CSP: allow audio, remote ESM (supabase-js), fonts, and API calls -->
-    <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self';
-           img-src 'self' data: blob: https:;
-           media-src 'self' data: blob: https:;
-           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-           font-src https://fonts.gstatic.com;
-           script-src 'self' 'unsafe-inline' https:;
-           connect-src 'self' https: http://127.0.0.1:8790 http://localhost:8790;" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 img-src 'self' data: blob: https:;
+                 media-src 'self' data: blob: https:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com;
+                 script-src 'self' 'unsafe-inline' https:;
+                 connect-src 'self' https:;" />
   <meta name="color-scheme" content="light dark" />
 
   <style>
@@ -620,14 +620,13 @@
         if (treatAsPhonics) {
           try {
             // Prefer existing phonics loader for proper audio preload & session state
-            // IMPORTANT: always pass listKey (file path) as listName so sessions match homework_assignments.list_key
             if (window.WordArcade?.loadPhonicsGame) {
-              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: listKey });
+              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey });
               return;
             }
             // Fallback: treat as sample list (will not show phonics-specific modes but still playable)
             if (window.WordArcade?.loadSampleWordlistByFilename) {
-              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey });
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey });
               return;
             }
           } catch (e) {

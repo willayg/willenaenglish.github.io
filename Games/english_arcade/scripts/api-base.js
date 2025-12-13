@@ -20,12 +20,9 @@ export const FN = (name) => {
   // Check if WillenaAPI is loaded and if this function should use Cloudflare
   if (typeof window !== 'undefined' && window.WillenaAPI) {
     const api = window.WillenaAPI;
-    // If Cloudflare rollout applies to this function, return Worker URL with full path
+    // If Cloudflare rollout applies to this function, return Worker URL
     if (api.CF_MIGRATED_FUNCTIONS && api.CF_MIGRATED_FUNCTIONS[name] && api.shouldUseCloudflare(name)) {
-      // CF_MIGRATED_FUNCTIONS[name] is the base URL (e.g., https://api.willenaenglish.com)
-      // We still need to append the full function path for the proxy to route correctly
-      const baseUrl = api.CF_MIGRATED_FUNCTIONS[name].replace(/\/$/, '');
-      return `${baseUrl}/.netlify/functions/${name}`;
+      return api.CF_MIGRATED_FUNCTIONS[name];
     }
   }
   // Default: Netlify function path

@@ -1,5 +1,9 @@
+import { ensureAuthRefresh } from '../auth-refresh.js';
+
 // Burger menu component loader
 // Usage: import this file and call insertBurgerMenu() after DOMContentLoaded
+
+ensureAuthRefresh();
 
 export function insertBurgerMenu(targetSelector = 'body') {
   // Prevent duplicate insertion
@@ -33,6 +37,28 @@ export function insertBurgerMenu(targetSelector = 'body') {
     else alert('Feedback modal not implemented!');
     dropdown.style.display = 'none';
   };
+
+  // Admin button logic (optional: close dropdown on click)
+  const adminBtn = wrapper.querySelector('#adminMenuBtn');
+  if (adminBtn) {
+    adminBtn.onclick = function() {
+      dropdown.style.display = 'none';
+      // Let the link work normally
+    };
+  }
+
+  // Logout button logic
+  const logoutBtn = wrapper.querySelector('#logoutMenuBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = function(e) {
+      e.preventDefault();
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+      dropdown.style.display = 'none';
+    };
+  }
 }
 
 // If not using modules, you can expose insertBurgerMenu globally:

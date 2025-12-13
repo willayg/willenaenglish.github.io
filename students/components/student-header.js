@@ -36,15 +36,16 @@ class StudentHeader extends HTMLElement {
     } catch {}
   };
   this._onStarsBump = (e) => {
+    // Legacy optimistic bump - kept for backward compatibility but now just triggers refresh
     try {
-      const delta = e?.detail?.delta || 1;
-      if (typeof this._stars === 'number') {
-        this._stars += delta;
-      } else {
-        this._stars = delta;
-      }
-      this.refresh();
-      // Trigger bounce animation after render
+      this._fetchOverview(); // Refresh from server instead of local bump
+      requestAnimationFrame(() => this._animateStarsBounce());
+    } catch {}
+  };
+  this._onStarsRefresh = (e) => {
+    // New event: fetch updated totals from server after game completes
+    try {
+      this._fetchOverview();
       requestAnimationFrame(() => this._animateStarsBounce());
     } catch {}
   };
@@ -69,6 +70,7 @@ class StudentHeader extends HTMLElement {
   window.addEventListener('points:update', this._onPointsUpdate);
   window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.addEventListener('stars:optimistic-bump', this._onStarsBump);
+  window.addEventListener('stars:refresh', this._onStarsRefresh);
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
@@ -86,6 +88,7 @@ class StudentHeader extends HTMLElement {
   window.removeEventListener('points:update', this._onPointsUpdate);
   window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.removeEventListener('stars:optimistic-bump', this._onStarsBump);
+  window.removeEventListener('stars:refresh', this._onStarsRefresh);
   window.removeEventListener('focus', this._onFocus);
   }
 

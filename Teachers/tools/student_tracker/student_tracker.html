@@ -35,17 +35,10 @@
   </style>
 </head>
 <body>
-  <!-- Load api-config.js first -->
-  <script src="/js/api-config.js?v=20251214a"></script>
-  <!-- Removed temporary logout button fallback now that burger menu is fixed -->
-  
-  <!-- Load burger-menu.js to make insertBurgerMenu available globally -->
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
-    // Expose globally for main.js to use
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
     window.insertBurgerMenu = insertBurgerMenu;
   </script>
-  
   <header>
     <img src="/Assets/Images/Logo.png" alt="Logo" />
     <h1>Student Tracker • English Arcade</h1>
@@ -344,8 +337,9 @@
     </div>
   </div>
 
-  <script src="homework-modal.js?v=20251213a"></script>
-  <script src="main.js?v=20251213a"></script>
+  <script src="/js/api-config.js"></script>
+  <script src="homework-modal.js"></script>
+  <script src="main.js"></script>
   <!-- Homework Student Detail Modal -->
   <div id="hwStudentModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:24px;">
     <div style="background:#fff;border-radius:18px;max-width:640px;width:100%;box-shadow:0 6px 32px rgba(0,0,0,.25);font-family:'Poppins',sans-serif;position:relative;padding:28px;">

@@ -25,21 +25,15 @@ async function ensureCreateClient() {
   return createClientFn;
 }
 
-// Import shared CORS helper
-const { getCorsHeaders, handleCorsPreflightIfNeeded } = require('../../lib/cors');
-
-// Module-level event reference for CORS headers (set at start of handler)
-let _currentEvent = null;
-
-function getHeaders() {
-  return {
-    'content-type': 'application/json; charset=utf-8',
-    ...getCorsHeaders(_currentEvent)
-  };
-}
+const baseHeaders = {
+  'content-type': 'application/json; charset=utf-8',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+};
 
 function json(status, body) {
-  return { statusCode: status, headers: getHeaders(), body: JSON.stringify(body) };
+  return { statusCode: status, headers: baseHeaders, body: JSON.stringify(body) };
 }
 
 function parseCookies(header) {
@@ -234,9 +228,6 @@ async function fetchAllRows(createQuery, batchSize = 1000, maxBatches = 200) {
 }
 
 exports.handler = async (event) => {
-  // Store event for CORS headers
-  _currentEvent = event;
-  
   const method = event.httpMethod || 'GET';
   if (method === 'OPTIONS') return json(200, { ok: true });
   if (!['GET', 'POST'].includes(method)) return json(405, { error: 'Method Not Allowed' });

@@ -1,16 +1,33 @@
+
+# Netlify -> Cloudflare redirects
+# Preserve Netlify Functions routing
+/.netlify/functions/*       /.netlify/functions/:splat                         200
+
+# Student login/signin
+ /login.html                 https://willenaenglish.com/students/signin.html  301!
+ /students/login.html        https://willenaenglish.com/students/signin.html  301!
+ /students/signin.html       https://willenaenglish.com/students/signin.html  200
+
+# Teacher login/signin
+/Teachers/index.html        https://willenaenglish.com/Teachers/signin.html  301!
+/Teachers/login.html        https://willenaenglish.com/Teachers/signin.html  301!
+/Teachers/signin.html       https://willenaenglish.com/Teachers/signin.html  200
+
+# Lowercase variants
+/teachers/index.html        https://willenaenglish.com/Teachers/signin.html  301!
+/teachers/login.html        https://willenaenglish.com/Teachers/signin.html  301!
+/teachers/signin.html       https://willenaenglish.com/Teachers/signin.html  200
+
+# Force all other traffic to Cloudflare (keep functions preserved above)
+/*                          https://willenaenglish.com/:splat               301!
+
+# Preserve Netlify functions
+/.netlify/functions/*       /.netlify/functions/:splat                         200
+
+# Force all remaining traffic to Cloudflare domain
+/*                          https://cf.willenaenglish.com/:splat               301!
 # IMPORTANT: Most specific rules FIRST, catch-all LAST
-# Netlify processes rules top-to-bottom and stops at first match with !
-
-# Static asset directories - serve as-is (never redirect)
-/Games/*          200!
-/students/*       200!
-/Teachers/*       200!
-/Assets/*         200!
-/js/*             200!
-/lib/*            200!
-/components/*     200!
-
-# Static file extensions - serve as-is
+# Static assets - serve as-is (status 200 = serve file)
 /*.js     200!
 /*.css    200!
 /*.json   200!
@@ -27,8 +44,14 @@
 /*.mp3    200!
 /*.wav    200!
 
-# Preserve Netlify functions
-/.netlify/functions/*       /.netlify/functions/:splat                         200
+# Static asset directories - never redirect
+/Games/*          200!
+/students/*       200!
+/Teachers/*       200!
+/Assets/*         200!
+/js/*             200!
+/lib/*            200!
+/components/*     200!
 
-# SPA fallback for other routes (without ! so it doesn't force)
+# SPA fallback for other routes (without !)
 /*    /index.html   200

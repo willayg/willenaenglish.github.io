@@ -320,12 +320,9 @@
   </div>
   </div>
 
-  <!-- Load api-config.js first -->
-  <script src="/js/api-config.js"></script>
-  
   <!-- Burger menu insertion (same pattern used across tools) -->
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
     async function ensureBurgerMenuTemplate() {
       if (!document.getElementById('burger-menu-template')) {
         const resp = await fetch('/Teachers/components/burger-menu.html');
@@ -340,6 +337,7 @@
       insertBurgerMenu('#burger-menu-mount');
     });
   </script>
+  <script src="/js/api-config.js"></script>
   <script type="module" src="./manage_students.js"></script>
 </body>
 </html>

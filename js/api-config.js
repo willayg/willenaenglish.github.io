@@ -24,14 +24,13 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare Worker URLs - unified API endpoint for all functions
-  // Using api.willenaenglish.com allows cookies to be shared across all *.willenaenglish.com subdomains
+  // Cloudflare Worker URLs (each worker has its own subdomain)
   const CF_WORKER_URLS = {
-    get_audio_urls: 'https://api.willenaenglish.com',
-    supabase_auth: 'https://api.willenaenglish.com',
-    log_word_attempt: 'https://api.willenaenglish.com',
-    homework_api: 'https://api.willenaenglish.com',
-    progress_summary: 'https://api.willenaenglish.com',
+    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
+    supabase_auth: 'https://supabase-auth.willena.workers.dev',
+    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
+    homework_api: 'https://homework-api.willena.workers.dev',
+    progress_summary: 'https://progress-summary.willena.workers.dev',
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
@@ -46,21 +45,9 @@
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // For the `cloudflare` branch we enable full rollout so the client prefers workers.
-  let CF_ROLLOUT_PERCENT = 100;
-
-  // Per-function rollout overrides (percent 0-100). If a function is listed here,
-  // this value takes precedence over the global CF_ROLLOUT_PERCENT. Defaults to 0
-  // so nothing is routed to workers unless explicitly set.
-  // NOTE: For local dev, keep everything at 0 — Cloudflare workers can't see
-  // Netlify's auth cookies. Only enable in PRODUCTION or use shadow mode.
-  const CF_ROLLOUT_PERCENT_BY_FN = {
-    get_audio_urls: 100,
-    supabase_auth: 100,
-    log_word_attempt: 100,
-    homework_api: 100,
-    progress_summary: 100,
-  };
+  // Default to 0% (Netlify) but when running on the production custom domain
+  // prefer Cloudflare Workers (they provide proper CORS and parity).
+  let CF_ROLLOUT_PERCENT = 0;
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
   // Useful for testing parity without affecting users
@@ -85,20 +72,12 @@
   
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
-  // Custom domain now served by Cloudflare Pages - treat as Cloudflare ecosystem
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com';
-  // Cloudflare Pages: includes cf subdomain, custom domain, and *.pages.dev previews
-  const isCloudflarePages = isCustomDomain || currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev');
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
-  // For cross-origin requests (GitHub Pages only now), we need special handling
-  // Cloudflare Pages (including willenaenglish.com) uses api.willenaenglish.com with same-root cookies
-  const isCrossOrigin = isGitHubPages;
-  
-  // Cloudflare Pages with api.willenaenglish.com uses same-root cookies (Domain=.willenaenglish.com)
-  // so it's NOT a problematic cross-origin scenario for cookies
-  const isCloudflareEcosystem = isCloudflarePages || currentHost === 'api.willenaenglish.com';
+  // For cross-origin requests (GitHub Pages or custom domain -> Netlify), we need special handling
+  const isCrossOrigin = isGitHubPages || isCustomDomain;
   
   // Detect browsers that ALWAYS block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
   const isKnownCookieBlockingBrowser = (() => {
@@ -158,19 +137,18 @@
    * Quick synchronous check to see if we should redirect immediately.
    * For unknown browsers (Chrome incognito), we DON'T redirect immediately -
    * we let them try to login, and if whoami fails right after, then redirect.
-   * NOTE: Cloudflare Pages (cf.willenaenglish.com) uses same-root cookies so no redirect needed.
    */
-  const shouldRedirectImmediately = () => isCrossOrigin && !isCloudflarePages && isKnownCookieBlockingBrowser;
+  const shouldRedirectImmediately = () => isCrossOrigin && isKnownCookieBlockingBrowser;
   
   // Set API base URL based on environment
   let API_BASE = '';
   
-  if (isCloudflarePages) {
-    // On Cloudflare Pages (willenaenglish.com, cf.willenaenglish.com, *.pages.dev)
-    // Use unified API endpoint - cookies work with Domain=.willenaenglish.com
-    API_BASE = 'https://api.willenaenglish.com';
-  } else if (isGitHubPages) {
+  if (isGitHubPages) {
     // On GitHub Pages - use full Netlify URL for functions
+    API_BASE = NETLIFY_FUNCTIONS_URL;
+  } else if (isCustomDomain) {
+    // Custom domain - check if it points to Netlify or GH Pages
+    // For now, assume Netlify functions are still on netlify subdomain
     API_BASE = NETLIFY_FUNCTIONS_URL;
   } else if (isLocalhost) {
     // Local development - use relative path for local netlify dev (port 8888 or 9000)
@@ -181,6 +159,15 @@
   } else {
     // Unknown environment - default to Netlify
     API_BASE = NETLIFY_FUNCTIONS_URL;
+  }
+
+  // If we're running on the production custom domain, prefer Cloudflare Workers
+  // to avoid cross-origin CORS issues with Netlify functions. This forces
+  // API calls for migrated functions to go to CF workers.
+  if (isCustomDomain) {
+    CF_ROLLOUT_PERCENT = 100;
+    CF_SHADOW_MODE = false;
+    console.log('[WillenaAPI] Custom domain detected: forcing Cloudflare Worker usage for migrated functions');
   }
 
   // --- Development override for localhost ---
@@ -200,19 +187,11 @@
    * @param {string} functionName - The function name (e.g., 'get_audio_urls')
    * @returns {boolean}
    */
-  function getRolloutPercent(functionName) {
-    if (Object.prototype.hasOwnProperty.call(CF_ROLLOUT_PERCENT_BY_FN, functionName)) {
-      return Number(CF_ROLLOUT_PERCENT_BY_FN[functionName]) || 0;
-    }
-    return CF_ROLLOUT_PERCENT;
-  }
-
   function shouldUseCloudflare(functionName) {
     if (!CF_MIGRATED_FUNCTIONS[functionName]) return false;
-    const rollout = getRolloutPercent(functionName);
-    if (rollout <= 0) return false;
-    if (rollout >= 100) return true;
-    return Math.random() * 100 < rollout;
+    if (CF_ROLLOUT_PERCENT <= 0) return false;
+    if (CF_ROLLOUT_PERCENT >= 100) return true;
+    return Math.random() * 100 < CF_ROLLOUT_PERCENT;
   }
 
   /**
@@ -233,18 +212,15 @@
   function getApiUrl(functionPath) {
     // Local dev: rewrite to local worker ports ONLY if rollout > 0
     // Otherwise keep relative paths so netlify dev handles them
-    if (isLocalhost) {
+    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
       const fn = extractFunctionName(functionPath);
-      const rollout = getRolloutPercent(fn);
-      if (rollout > 0) {
-        const base = LOCAL_WORKER_MAP[fn];
-        if (base) {
-          // remove the "/.netlify/functions/<name>" prefix and keep query string
-          const pathOnly = functionPath.split('?')[0];
-          const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
-          const suffix = pathOnly.replace(new RegExp(`^/?\.?netlify/functions/${fn}/?`), '');
-          return base + '/' + suffix + query;
-        }
+      const base = LOCAL_WORKER_MAP[fn];
+      if (base) {
+        // remove the "/.netlify/functions/<name>" prefix and keep query string
+        const pathOnly = functionPath.split('?')[0];
+        const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+        const suffix = pathOnly.replace(new RegExp(`^/?\.?netlify/functions/${fn}/?`), '');
+        return base + '/' + suffix + query;
       }
     }
 
@@ -278,28 +254,15 @@
     // Determine primary URL
     let primaryUrl;
     
-    // If functionPath is already a full URL, extract just the path portion for routing
-    let pathForRouting = functionPath;
-    if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
-      try {
-        const parsedUrl = new URL(functionPath);
-        pathForRouting = parsedUrl.pathname + parsedUrl.search;
-      } catch (e) {
-        // If URL parsing fails, use as-is
-        pathForRouting = functionPath;
-      }
-    }
-    
     // LOCAL DEV: use local worker ports only when rollout wants Cloudflare
     if (isLocalhost && LOCAL_WORKER_MAP[functionName] && useCloudflare) {
       const base = LOCAL_WORKER_MAP[functionName];
-      const query = pathForRouting.includes('?') ? pathForRouting.slice(pathForRouting.indexOf('?')) : '';
+      const pathOnly = functionPath.split('?')[0];
+      const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
       primaryUrl = base + '/' + query;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      // For api.willenaenglish.com, keep the full /.netlify/functions/... path
-      // The proxy worker expects it and routes accordingly
-      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + pathForRouting;
+      primaryUrl = cfWorkerUrl;
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
@@ -311,9 +274,8 @@
     };
     
     // LOCAL DEV: inject Authorization header when using local workers
-    // Since cross-origin cookies won't work between localhost and local worker ports,
-    // inject the local token when this call will be routed to Cloudflare (per-function).
-    if (isLocalhost && useCloudflare) {
+    // Since cross-origin cookies won't work between localhost:9000 and 127.0.0.1:8787
+    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
       const localToken = getLocalToken();
       if (localToken) {
         // Inject for ALL auth-requiring functions (not just supabase_auth)
@@ -364,23 +326,7 @@
       }
     }
     
-    const res = await fetch(primaryUrl, fetchOptions).catch(err => {
-      return new Response(JSON.stringify({ success:false, error:String(err.message||err) }), { status: 520, headers: { 'Content-Type':'application/json' } });
-    });
-
-    // DEV SAFETY: if a Cloudflare-routed call to progress_summary is unauthorized,
-    // transparently retry against Netlify to avoid triggering logout flows.
-    if (useCloudflare && functionName === 'progress_summary' && res && (res.status === 401 || res.status === 403)) {
-      try {
-        const fallbackUrl = getApiUrl(functionPath);
-        const fallbackRes = await fetch(fallbackUrl, { ...fetchOptions, credentials: 'include' });
-        return fallbackRes;
-      } catch {
-        return res;
-      }
-    }
-
-    return res;
+    return fetch(primaryUrl, fetchOptions);
   }
 
   // --- Local dev token storage ---
@@ -420,15 +366,12 @@
     CF_MIGRATED_FUNCTIONS,
     isGitHubPages,
     isCustomDomain,
-    isCloudflarePages,
-    isCloudflareEcosystem,
     isLocalhost,
     isNetlify,
     isCrossOrigin,
     getApiUrl,
     fetch: apiFetch,
     shouldUseCloudflare,
-    CF_ROLLOUT_PERCENT_BY_FN,
     
     // Convenience method to check environment
     getEnvironment() {
@@ -443,16 +386,6 @@
     setRolloutPercent(percent) {
       console.log(`[WillenaAPI] Rollout changed: ${CF_ROLLOUT_PERCENT}% -> ${percent}%`);
       CF_ROLLOUT_PERCENT = Number(percent) || 0;
-    },
-
-    // Set rollout for a specific function (overrides global). Example:
-    //   WillenaAPI.setFunctionRollout('progress_summary', 100);
-    setFunctionRollout(functionName, percent) {
-      if (!functionName) return;
-      const prev = CF_ROLLOUT_PERCENT_BY_FN[functionName];
-      const next = Number(percent) || 0;
-      CF_ROLLOUT_PERCENT_BY_FN[functionName] = next;
-      console.log(`[WillenaAPI] Rollout (${functionName}): ${prev || 0}% -> ${next}%`);
     },
 
     // Local dev token storage (for cross-origin worker auth)

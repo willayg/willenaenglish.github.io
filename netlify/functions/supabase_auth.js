@@ -5,8 +5,6 @@ function cors(event, extra = {}) {
   'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
-    // Cloudflare Pages deployment
-    'https://cf.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
@@ -29,8 +27,6 @@ function makeCorsHeaders(event, extra = {}) {
     'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
-    // Cloudflare Pages deployment
-    'https://cf.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
