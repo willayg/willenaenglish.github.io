@@ -365,7 +365,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         // Fall back if FN not available in this scope
         const u = new URL(base, window.location.origin);
         u.searchParams.set('section', 'sessions');
-  if (scoped && currentGrammarName) u.searchParams.set('list_name', currentGrammarName);
+        // Use grammarFile path (not display name) for list_name lookup since sessions store file paths
+        if (scoped && currentGrammarFile) u.searchParams.set('list_name', currentGrammarFile);
         return u.toString();
       };
       let sessions = [];
