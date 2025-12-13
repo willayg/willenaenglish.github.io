@@ -11,6 +11,12 @@
 /teachers/index.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
 /teachers/login.html        https://cf.willenaenglish.com/Teachers/signin.html  301!
 /teachers/signin.html       https://cf.willenaenglish.com/Teachers/signin.html  200!
+
+# Preserve Netlify functions
+/.netlify/functions/*       /.netlify/functions/:splat                         200
+
+# Force all remaining traffic to Cloudflare domain
+/*                          https://cf.willenaenglish.com/:splat               301!
 # IMPORTANT: Most specific rules FIRST, catch-all LAST
 # Static assets - serve as-is (status 200 = serve file)
 /*.js     200!
