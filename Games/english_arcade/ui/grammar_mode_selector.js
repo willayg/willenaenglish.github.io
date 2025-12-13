@@ -429,15 +429,19 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           const ck = canonKey(candidate);
           // Also extract file basename from paths
           const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
-          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename));
+          // Check for substring match as well (more lenient for grammar lists)
+          const substringMatch = fileBasename && (ck.includes(fileBasename) || fileBasename.includes(ck) || cFile.includes(fileBasename) || fileBasename.includes(cFile));
+          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
         });
 
         // If we have a target and no match, skip this session
+        // Be more lenient: if no list candidates at all, include the session if it's grammar-related
         if (target && !matchesTarget && listCandidates.length > 0) return;
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);
-        const isGrammar = category === 'grammar' || (modeKey && modeKey.includes('grammar'));
+        // More lenient grammar detection: check mode name for grammar prefix or category
+        const isGrammar = category === 'grammar' || (modeKey && (modeKey.includes('grammar') || modeKey.startsWith('grammar_')));
         if (!isGrammar) return;
 
         let pct = null;
@@ -465,6 +469,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         }
         const candidates = Array.isArray(modeDef.sessionMode) ? modeDef.sessionMode : [modeDef.sessionMode];
         let pct = null;
+        
+        // First try exact match
         candidates.forEach((modeName) => {
           const key = canon(modeName);
           if (!key) return;
@@ -475,18 +481,45 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
             }
           }
         });
-        if (pct == null && modeDef.mode === 'lesson') {
-          Object.entries(bestByMode).forEach(([modeName, val]) => {
-            if (pct != null) return;
-            if (modeName.includes('lesson') && typeof val === 'number') {
-              pct = val;
+        
+        // If no exact match, try partial/fuzzy matching based on mode type
+        if (pct == null) {
+          const modeType = modeDef.mode;
+          Object.entries(bestByMode).forEach(([sessionMode, val]) => {
+            if (pct != null && pct >= val) return;
+            if (typeof val !== 'number') return;
+            
+            // Match based on mode type keywords
+            const sm = sessionMode.toLowerCase();
+            let matches = false;
+            
+            if (modeType === 'lesson' && (sm.includes('lesson'))) matches = true;
+            if (modeType === 'sorting' && (sm.includes('sorting') || sm.includes('sort'))) matches = true;
+            if (modeType === 'choose' && (sm.includes('choose') || sm.includes('grammar_mode') || sm === 'grammar_mode')) matches = true;
+            if (modeType === 'fill_gap' && (sm.includes('fill') || sm.includes('gap') || sm.includes('blank'))) matches = true;
+            if (modeType === 'unscramble' && (sm.includes('unscramble') || sm.includes('scramble') || sm.includes('sentence_unscramble'))) matches = true;
+            if (modeType === 'sentence_order' && (sm.includes('sentence_order') || sm.includes('order') || sm.includes('reorder'))) matches = true;
+            if (modeType === 'find_mistake' && (sm.includes('mistake') || sm.includes('find_mistake') || sm.includes('error'))) matches = true;
+            if (modeType === 'translation' && (sm.includes('translation') || sm.includes('translate'))) matches = true;
+            
+            if (matches) {
+              pct = pct == null ? val : Math.max(pct, val);
             }
           });
         }
+        
         renderStarsInto(starEl, pct);
       });
+      
+      // Debug: log what was found (can be removed after verification)
+      console.debug('[GrammarModeSelector] Star matching complete:', { 
+        grammarName: currentGrammarName, 
+        grammarFile: currentGrammarFile,
+        bestByMode, 
+        visibleModeCount: visibleModes.length 
+      });
     } catch (e) {
-      // Silent; stars are optional
+      console.warn('[GrammarModeSelector] Error loading stars:', e);
     }
   })();
 
