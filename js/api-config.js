@@ -297,9 +297,11 @@
       primaryUrl = base + '/' + query;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      // For api.willenaenglish.com, keep the full /.netlify/functions/... path
-      // The proxy worker expects it and routes accordingly
-      primaryUrl = cfWorkerUrl.replace(/\/$/, '') + pathForRouting;
+      // Extract ONLY the query string from the path (not the /.netlify/functions/... part)
+      // Direct worker URLs don't need the Netlify function path prefix
+      const query = pathForRouting.includes('?') ? pathForRouting.slice(pathForRouting.indexOf('?')) : '';
+      primaryUrl = cfWorkerUrl + query;
+      console.log(`[WillenaAPI] ${functionName}: using CF Worker -> ${primaryUrl}`);
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
