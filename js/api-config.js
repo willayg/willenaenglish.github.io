@@ -24,14 +24,14 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare Worker URLs - unified API endpoint for all functions
-  // Using api.willenaenglish.com allows cookies to be shared across all *.willenaenglish.com subdomains
+  // Cloudflare Worker URLs - use direct *.workers.dev URLs (each worker has its own subdomain)
+  // NOTE: api.willenaenglish.com DNS was pointing to Netlify, not CF Workers!
   const CF_WORKER_URLS = {
-    get_audio_urls: 'https://api.willenaenglish.com',
-    supabase_auth: 'https://api.willenaenglish.com',
-    log_word_attempt: 'https://api.willenaenglish.com',
-    homework_api: 'https://api.willenaenglish.com',
-    progress_summary: 'https://api.willenaenglish.com',
+    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
+    supabase_auth: 'https://supabase-auth.willena.workers.dev',
+    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
+    homework_api: 'https://homework-api.willena.workers.dev',
+    progress_summary: 'https://progress-summary.willena.workers.dev',
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
