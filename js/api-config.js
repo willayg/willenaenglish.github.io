@@ -72,7 +72,7 @@
   
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
-  const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com';
+  const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
@@ -251,18 +251,20 @@
     const useCloudflare = shouldUseCloudflare(functionName);
     const cfWorkerUrl = CF_MIGRATED_FUNCTIONS[functionName];
     
+    // Extract query string from original path
+    const queryString = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
+    
     // Determine primary URL
     let primaryUrl;
     
     // LOCAL DEV: use local worker ports only when rollout wants Cloudflare
     if (isLocalhost && LOCAL_WORKER_MAP[functionName] && useCloudflare) {
       const base = LOCAL_WORKER_MAP[functionName];
-      const pathOnly = functionPath.split('?')[0];
-      const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
-      primaryUrl = base + '/' + query;
+      primaryUrl = base + '/' + queryString;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      primaryUrl = cfWorkerUrl;
+      // Append query string to CF Worker URL
+      primaryUrl = cfWorkerUrl + queryString;
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
@@ -303,15 +305,15 @@
     // Shadow mode: call both endpoints, use Netlify response
     if (CF_SHADOW_MODE && cfWorkerUrl && !useCloudflare) {
       // Fire shadow request to Cloudflare (don't await)
-      fetch(cfWorkerUrl, { ...fetchOptions, credentials: 'omit' })
+      fetch(cfWorkerUrl + queryString, { ...fetchOptions, credentials: 'omit' })
         .then(r => r.json())
         .then(data => console.log(`[CF Shadow] ${functionName}:`, data))
         .catch(e => console.warn(`[CF Shadow Error] ${functionName}:`, e.message));
     }
     
-    // Log which endpoint we're using (in dev)
-    if (isLocalhost && cfWorkerUrl) {
-      console.log(`[WillenaAPI] ${functionName}: using ${useCloudflare ? 'Cloudflare' : 'Netlify'}`);
+    // Log which endpoint we're using
+    if (cfWorkerUrl) {
+      console.log(`[WillenaAPI] ${functionName}: using ${useCloudflare ? 'Cloudflare Worker' : 'Netlify'} -> ${primaryUrl}`);
     }
 
     // Safety: some callers mistakenly call get_audio_urls with GET (no body).
