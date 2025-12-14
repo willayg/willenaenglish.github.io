@@ -1,17 +1,137 @@
 [
-  {"eng": "pencil", "kor": "연필", "def": "a tool for writing with graphite", "ex": "I use a pencil.", "ex_kor": "나는 연필을 사용한다.", "emoji": "✏️"},
-  {"eng": "pen", "kor": "펜", "def": "a tool for writing with ink", "ex": "I hold a pen.", "ex_kor": "나는 펜을 잡는다.", "emoji": "🖊️"},
-  {"eng": "eraser", "kor": "지우개", "def": "a thing that removes pencil marks", "ex": "I use an eraser.", "ex_kor": "나는 지우개를 사용한다.", "emoji": "🧹"},
-  {"eng": "notebook", "kor": "공책", "def": "a small book of blank pages", "ex": "I open a notebook.", "ex_kor": "나는 공책을 연다.", "emoji": "📓"},
-  {"eng": "ruler", "kor": "자", "def": "a tool to measure length", "ex": "I use a ruler.", "ex_kor": "나는 자를 사용한다.", "emoji": "📏"},
-  {"eng": "scissors", "kor": "가위", "def": "a tool that cuts paper", "ex": "She uses scissors.", "ex_kor": "그녀는 가위를 사용한다.", "emoji": "✂️"},
-  {"eng": "glue", "kor": "풀", "def": "a sticky substance for joining", "ex": "I add glue.", "ex_kor": "나는 풀을 칠한다.", "emoji": "🧴"},
-  {"eng": "crayon", "kor": "크레용", "def": "a colored stick for drawing", "ex": "He grabs a crayon.", "ex_kor": "그는 크레용을 잡는다.", "emoji": "🖍️"},
-  {"eng": "marker", "kor": "마커", "def": "a pen with strong ink", "ex": "I use a marker.", "ex_kor": "나는 마커를 사용한다.", "emoji": "🖌️"},
-  {"eng": "backpack", "kor": "책가방", "def": "a bag carried on the back", "ex": "I pack a backpack.", "ex_kor": "나는 책가방을 챙긴다.", "emoji": "🎒"},
-  {"eng": "desk", "kor": "책상", "def": "a table for work or study", "ex": "I clean the desk.", "ex_kor": "나는 책상을 정소한다.", "emoji": "🪑"},
-  {"eng": "chair", "kor": "의자", "def": "a seat for one person", "ex": "He moves the chair.", "ex_kor": "그는 의자를 옮긴다.", "emoji": "💺"},
-  {"eng": "chalk", "kor": "분필", "def": "a white stick for writing on boards", "ex": "She holds chalk.", "ex_kor": "그녀는 분필을 잡는다.", "emoji": "⚪"},
-  {"eng": "board", "kor": "칠판", "def": "a flat surface for writing", "ex": "The teacher cleans the board.", "ex_kor": "선생님이 칠판을 지운다.", "emoji": "📋"},
-  {"eng": "paper", "kor": "종이", "def": "thin material for writing", "ex": "I fold paper.", "ex_kor": "나는 종이를 접는다.", "emoji": "📄"}
+  {
+    "eng": "pencil",
+    "kor": "연필",
+    "def": "a tool for writing with graphite",
+    "ex": "I use a pencil.",
+    "ex_kor": "나는 연필을 사용한다.",
+    "emoji": "✏️",
+    "sentence_id": "e2c595f6-1e56-48b3-91b9-0afe95b7d52a"
+  },
+  {
+    "eng": "pen",
+    "kor": "펜",
+    "def": "a tool for writing with ink",
+    "ex": "I hold a pen.",
+    "ex_kor": "나는 펜을 잡는다.",
+    "emoji": "🖊️",
+    "sentence_id": "378623c5-ae61-4ec4-b132-648e25ea71a6"
+  },
+  {
+    "eng": "eraser",
+    "kor": "지우개",
+    "def": "a thing that removes pencil marks",
+    "ex": "I use an eraser.",
+    "ex_kor": "나는 지우개를 사용한다.",
+    "emoji": "🧹",
+    "sentence_id": "643ec77d-d893-4076-b2ca-1f2b5357f635"
+  },
+  {
+    "eng": "notebook",
+    "kor": "공책",
+    "def": "a small book of blank pages",
+    "ex": "I open a notebook.",
+    "ex_kor": "나는 공책을 연다.",
+    "emoji": "📓",
+    "sentence_id": "47a9db10-b19f-4175-a652-61557d36084a"
+  },
+  {
+    "eng": "ruler",
+    "kor": "자",
+    "def": "a tool to measure length",
+    "ex": "I use a ruler.",
+    "ex_kor": "나는 자를 사용한다.",
+    "emoji": "📏",
+    "sentence_id": "ce6effa7-0ebf-4485-ae79-ba26e51471af"
+  },
+  {
+    "eng": "scissors",
+    "kor": "가위",
+    "def": "a tool that cuts paper",
+    "ex": "She uses scissors.",
+    "ex_kor": "그녀는 가위를 사용한다.",
+    "emoji": "✂️",
+    "sentence_id": "b5939a08-628c-4c81-9d64-e467c69cfcaa"
+  },
+  {
+    "eng": "glue",
+    "kor": "풀",
+    "def": "a sticky substance for joining",
+    "ex": "I add glue.",
+    "ex_kor": "나는 풀을 칠한다.",
+    "emoji": "🧴",
+    "sentence_id": "17a2e55a-7f18-4c32-92f6-8882a11b1405"
+  },
+  {
+    "eng": "crayon",
+    "kor": "크레용",
+    "def": "a colored stick for drawing",
+    "ex": "He grabs a crayon.",
+    "ex_kor": "그는 크레용을 잡는다.",
+    "emoji": "🖍️",
+    "sentence_id": "5747f584-908f-4699-939f-9e2e3fbc4cdb"
+  },
+  {
+    "eng": "marker",
+    "kor": "마커",
+    "def": "a pen with strong ink",
+    "ex": "I use a marker.",
+    "ex_kor": "나는 마커를 사용한다.",
+    "emoji": "🖌️",
+    "sentence_id": "8dd2f1bf-511d-4065-b5a9-5872528cd6f5"
+  },
+  {
+    "eng": "backpack",
+    "kor": "책가방",
+    "def": "a bag carried on the back",
+    "ex": "I pack a backpack.",
+    "ex_kor": "나는 책가방을 챙긴다.",
+    "emoji": "🎒",
+    "sentence_id": "28a9a770-df12-4951-aca3-ed0b5df7cbdf"
+  },
+  {
+    "eng": "desk",
+    "kor": "책상",
+    "def": "a table for work or study",
+    "ex": "I clean the desk.",
+    "ex_kor": "나는 책상을 정소한다.",
+    "emoji": "🪑",
+    "sentence_id": "c773a25b-61f2-48e5-bc76-98a7610d2fb8"
+  },
+  {
+    "eng": "chair",
+    "kor": "의자",
+    "def": "a seat for one person",
+    "ex": "He moves the chair.",
+    "ex_kor": "그는 의자를 옮긴다.",
+    "emoji": "💺",
+    "sentence_id": "3e261d7e-cce1-406b-aa54-9bafc3923b17"
+  },
+  {
+    "eng": "chalk",
+    "kor": "분필",
+    "def": "a white stick for writing on boards",
+    "ex": "She holds chalk.",
+    "ex_kor": "그녀는 분필을 잡는다.",
+    "emoji": "⚪",
+    "sentence_id": "67a86f76-9934-496f-84a1-f96295267dd9"
+  },
+  {
+    "eng": "board",
+    "kor": "칠판",
+    "def": "a flat surface for writing",
+    "ex": "The teacher cleans the board.",
+    "ex_kor": "선생님이 칠판을 지운다.",
+    "emoji": "📋",
+    "sentence_id": "db3bef7b-e910-48d2-a45f-a763c190d772"
+  },
+  {
+    "eng": "paper",
+    "kor": "종이",
+    "def": "thin material for writing",
+    "ex": "I fold paper.",
+    "ex_kor": "나는 종이를 접는다.",
+    "emoji": "📄",
+    "sentence_id": "dd933bde-748c-4824-9914-a0ed92af6592"
+  }
 ]

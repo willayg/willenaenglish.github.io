@@ -1,14 +1,98 @@
 [
-  {"eng":"honest","kor":"정직한","def":"always tells the truth","ex":"Be honest with your friends.","ex_kor":"친구들에게 정직하세요."},
-  {"eng":"brave","kor":"용감한","def":"not afraid to do something hard","ex":"She is brave in the dark.","ex_kor":"그녀는 어둠 속에서 용감해요."},
-  {"eng":"careful","kor":"조심스러운","def":"tries not to make mistakes","ex":"Be careful when crossing the street.","ex_kor":"길을 건널 때 조심하세요."},
-  {"eng":"creative","kor":"창의적인","def":"good at making new things or ideas","ex":"He is creative in art class.","ex_kor":"그는 미술 시간에 창의적이에요."},
-  {"eng":"generous","kor":"관대한","def":"likes to share with others","ex":"She is generous with her snacks.","ex_kor":"그녀는 간식을 잘 나눠줘요."},
-  {"eng":"polite","kor":"예의 바른","def":"shows good manners","ex":"Say thank you to be polite.","ex_kor":"예의 바르게 감사하다고 말하세요."},
-  {"eng":"fair","kor":"공정한","def":"treats everyone the same","ex":"The teacher is fair to all students.","ex_kor":"선생님은 모든 학생에게 공정해요."},
-  {"eng":"helpful","kor":"도움이 되는","def":"likes to help others","ex":"He is helpful at home.","ex_kor":"그는 집에서 도움이 돼요."},
-  {"eng":"curious","kor":"호기심 많은","def":"wants to know more","ex":"The child is curious about bugs.","ex_kor":"그 아이는 벌레에 대해 호기심이 많아요."},
-  {"eng":"patient","kor":"참을성 있는","def":"can wait without getting upset","ex":"Be patient when waiting in line.","ex_kor":"줄을 설 때 참을성을 가지세요."},
-  {"eng":"responsible","kor":"책임감 있는","def":"does what needs to be done","ex":"She is responsible for her homework.","ex_kor":"그녀는 숙제를 책임감 있게 해요."},
-  {"eng":"cheerful","kor":"명랑한","def":"happy and smiling a lot","ex":"He is cheerful every morning.","ex_kor":"그는 매일 아침 명랑해요."}
+  {
+    "eng": "honest",
+    "kor": "정직한",
+    "def": "always tells the truth",
+    "ex": "Be honest with your friends.",
+    "ex_kor": "친구들에게 정직하세요.",
+    "sentence_id": "8051c19d-582b-4122-91ed-8ee30a49f074"
+  },
+  {
+    "eng": "brave",
+    "kor": "용감한",
+    "def": "not afraid to do something hard",
+    "ex": "She is brave in the dark.",
+    "ex_kor": "그녀는 어둠 속에서 용감해요.",
+    "sentence_id": "072ca043-b9a6-48da-93b8-d8be8ae0fda2"
+  },
+  {
+    "eng": "careful",
+    "kor": "조심스러운",
+    "def": "tries not to make mistakes",
+    "ex": "Be careful when crossing the street.",
+    "ex_kor": "길을 건널 때 조심하세요.",
+    "sentence_id": "a6cd4969-9fdb-4209-a340-21d1d1d01edf"
+  },
+  {
+    "eng": "creative",
+    "kor": "창의적인",
+    "def": "good at making new things or ideas",
+    "ex": "He is creative in art class.",
+    "ex_kor": "그는 미술 시간에 창의적이에요.",
+    "sentence_id": "e36ecd93-f5c1-440d-805f-ea0675e44642"
+  },
+  {
+    "eng": "generous",
+    "kor": "관대한",
+    "def": "likes to share with others",
+    "ex": "She is generous with her snacks.",
+    "ex_kor": "그녀는 간식을 잘 나눠줘요.",
+    "sentence_id": "5f66cd82-eaa5-40ac-bb68-a1f0b6aeff6d"
+  },
+  {
+    "eng": "polite",
+    "kor": "예의 바른",
+    "def": "shows good manners",
+    "ex": "Say thank you to be polite.",
+    "ex_kor": "예의 바르게 감사하다고 말하세요.",
+    "sentence_id": "f49ea764-e82c-4be0-8f2c-a174b60bd0f9"
+  },
+  {
+    "eng": "fair",
+    "kor": "공정한",
+    "def": "treats everyone the same",
+    "ex": "The teacher is fair to all students.",
+    "ex_kor": "선생님은 모든 학생에게 공정해요.",
+    "sentence_id": "1b71a026-4111-4651-8fe0-fa8cb6d63944"
+  },
+  {
+    "eng": "helpful",
+    "kor": "도움이 되는",
+    "def": "likes to help others",
+    "ex": "He is helpful at home.",
+    "ex_kor": "그는 집에서 도움이 돼요.",
+    "sentence_id": "d50c04f8-98e2-469c-bad9-344073975a83"
+  },
+  {
+    "eng": "curious",
+    "kor": "호기심 많은",
+    "def": "wants to know more",
+    "ex": "The child is curious about bugs.",
+    "ex_kor": "그 아이는 벌레에 대해 호기심이 많아요.",
+    "sentence_id": "29a9561f-5c0e-4b3a-98cf-765e6cc3bdbc"
+  },
+  {
+    "eng": "patient",
+    "kor": "참을성 있는",
+    "def": "can wait without getting upset",
+    "ex": "Be patient when waiting in line.",
+    "ex_kor": "줄을 설 때 참을성을 가지세요.",
+    "sentence_id": "c217da32-421e-4eb1-8463-14a0a100dbc9"
+  },
+  {
+    "eng": "responsible",
+    "kor": "책임감 있는",
+    "def": "does what needs to be done",
+    "ex": "She is responsible for her homework.",
+    "ex_kor": "그녀는 숙제를 책임감 있게 해요.",
+    "sentence_id": "2fb31334-716c-4f42-8aca-c4ebd0f12506"
+  },
+  {
+    "eng": "cheerful",
+    "kor": "명랑한",
+    "def": "happy and smiling a lot",
+    "ex": "He is cheerful every morning.",
+    "ex_kor": "그는 매일 아침 명랑해요.",
+    "sentence_id": "99aa3b54-905c-428e-8eaa-4e3e066d9c33"
+  }
 ]

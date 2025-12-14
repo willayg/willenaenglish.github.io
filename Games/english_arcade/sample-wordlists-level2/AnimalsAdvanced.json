@@ -1,12 +1,90 @@
 [
-  {"eng":"cheetah","kor":"치타","def":"a very fast wild cat with spots","ex":"The cheetah runs quickly.","ex_kor":"치타는 빠르게 달려요.","emoji":"🐆"},
-  {"eng":"hippopotamus","kor":"하마","def":"a very large animal that lives in rivers","ex":"The hippopotamus rests in water.","ex_kor":"하마는 물에서 쉬어요.","emoji":"🦛"},
-  {"eng":"rhinoceros","kor":"코뿔소","def":"a large animal with one or two horns on its nose","ex":"The rhinoceros walks slowly.","ex_kor":"코뿔소는 천천히 걸어요.","emoji":"🦏"},
-  {"eng":"panda","kor":"판다","def":"a black and white bear that eats bamboo","ex":"The panda eats bamboo.","ex_kor":"판다는 대나무를 먹어요.","emoji":"🐼"},
-  {"eng":"koala","kor":"코알라","def":"a gray animal from Australia that eats leaves","ex":"The koala sleeps in a tree.","ex_kor":"코알라는 나무에서 자요.","emoji":"🐨"},
-  {"eng":"sloth","kor":"나무늘보","def":"a slow animal that hangs from trees","ex":"The sloth moves slowly.","ex_kor":"나무늘보는 천천히 움직여요."},
-  {"eng":"otter","kor":"수달","def":"an animal that swims well and likes rivers","ex":"The otter plays in the water.","ex_kor":"수달은 물에서 놀아요.","emoji":"🦦"},
-  {"eng":"beaver","kor":"비버","def":"an animal that builds dams in rivers","ex":"The beaver builds a dam.","ex_kor":"비버는 댐을 만들어요."},
-  {"eng":"eagle","kor":"독수리","def":"a large bird that flies high and hunts","ex":"The eagle flies over the mountain.","ex_kor":"독수리는 산 위를 날아요.","emoji":"🦅"},
-  {"eng":"owl","kor":"부엉이","def":"a bird that sees in the dark and hoots","ex":"The owl hoots at night.","ex_kor":"부엉이는 밤에 울어요.","emoji":"🦉"}
+  {
+    "eng": "cheetah",
+    "kor": "치타",
+    "def": "a very fast wild cat with spots",
+    "ex": "The cheetah runs quickly.",
+    "ex_kor": "치타는 빠르게 달려요.",
+    "emoji": "🐆",
+    "sentence_id": "21dc2986-a6cc-49b5-9a15-429e0c3403ad"
+  },
+  {
+    "eng": "hippopotamus",
+    "kor": "하마",
+    "def": "a very large animal that lives in rivers",
+    "ex": "The hippopotamus rests in water.",
+    "ex_kor": "하마는 물에서 쉬어요.",
+    "emoji": "🦛",
+    "sentence_id": "748d33c5-6969-4ab9-9d16-57cd91e3a45e"
+  },
+  {
+    "eng": "rhinoceros",
+    "kor": "코뿔소",
+    "def": "a large animal with one or two horns on its nose",
+    "ex": "The rhinoceros walks slowly.",
+    "ex_kor": "코뿔소는 천천히 걸어요.",
+    "emoji": "🦏",
+    "sentence_id": "cd03850c-d5c7-4b38-a3a4-bbf593928ebd"
+  },
+  {
+    "eng": "panda",
+    "kor": "판다",
+    "def": "a black and white bear that eats bamboo",
+    "ex": "The panda eats bamboo.",
+    "ex_kor": "판다는 대나무를 먹어요.",
+    "emoji": "🐼",
+    "sentence_id": "52239c76-3c43-474c-9daf-d2ce49a9cf6d"
+  },
+  {
+    "eng": "koala",
+    "kor": "코알라",
+    "def": "a gray animal from Australia that eats leaves",
+    "ex": "The koala sleeps in a tree.",
+    "ex_kor": "코알라는 나무에서 자요.",
+    "emoji": "🐨",
+    "sentence_id": "61d83ecc-493c-429a-9c49-0e414209798d"
+  },
+  {
+    "eng": "sloth",
+    "kor": "나무늘보",
+    "def": "a slow animal that hangs from trees",
+    "ex": "The sloth moves slowly.",
+    "ex_kor": "나무늘보는 천천히 움직여요.",
+    "sentence_id": "19f31b40-b91f-4b58-bae2-22e97795ad36"
+  },
+  {
+    "eng": "otter",
+    "kor": "수달",
+    "def": "an animal that swims well and likes rivers",
+    "ex": "The otter plays in the water.",
+    "ex_kor": "수달은 물에서 놀아요.",
+    "emoji": "🦦",
+    "sentence_id": "53515c56-1c9e-430c-ae67-e84d59b0839d"
+  },
+  {
+    "eng": "beaver",
+    "kor": "비버",
+    "def": "an animal that builds dams in rivers",
+    "ex": "The beaver builds a dam.",
+    "ex_kor": "비버는 댐을 만들어요.",
+    "sentence_id": "ffef0468-d13e-4ef3-92de-b668fb2f6c65"
+  },
+  {
+    "eng": "eagle",
+    "kor": "독수리",
+    "def": "a large bird that flies high and hunts",
+    "ex": "The eagle flies over the mountain.",
+    "ex_kor": "독수리는 산 위를 날아요.",
+    "emoji": "🦅",
+    "sentence_id": "2d54851a-d483-4d7b-a7e6-d2c2b8988e33"
+  },
+  {
+    "eng": "owl",
+    "kor": "부엉이",
+    "def": "a bird that sees in the dark and hoots",
+    "ex": "The owl hoots at night.",
+    "ex_kor": "부엉이는 밤에 울어요.",
+    "emoji": "🦉",
+    "sentence_id": "e6355a5a-a4ca-42e5-92a7-6fc67df3554a"
+  }
 ]

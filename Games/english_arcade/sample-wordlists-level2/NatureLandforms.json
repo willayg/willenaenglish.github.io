@@ -1,12 +1,79 @@
 [
-  {"eng":"mountain","kor":"산","def":"a very high hill","ex":"We climb a mountain.","emoji":"⛰️"},
-  {"eng":"valley","kor":"계곡","def":"low land between hills","ex":"The river flows through the valley."},
-  {"eng":"river","kor":"강","def":"a long line of water that flows","ex":"The river moves fast.","emoji":"🏞️"},
-  {"eng":"ocean","kor":"바다","def":"a very large area of salt water","ex":"The ocean is blue.","emoji":"🌊"},
-  {"eng":"desert","kor":"사막","def":"a very dry area with little rain","ex":"The desert is hot.","emoji":"🏜️"},
-  {"eng":"forest","kor":"숲","def":"a large area with many trees","ex":"Animals live in the forest.","emoji":"🌲"},
-  {"eng":"island","kor":"섬","def":"land with water all around it","ex":"The island is small.","emoji":"🏝️"},
-  {"eng":"volcano","kor":"화산","def":"a mountain that can shoot out lava","ex":"The volcano is quiet.","emoji":"🌋"},
-  {"eng":"waterfall","kor":"폭포","def":"water falling from a high place","ex":"We see a waterfall."},
-  {"eng":"cave","kor":"동굴","def":"a large hole in the side of a hill or under the ground","ex":"We explore a cave."}
+  {
+    "eng": "mountain",
+    "kor": "산",
+    "def": "a very high hill",
+    "ex": "We climb a mountain.",
+    "emoji": "⛰️",
+    "sentence_id": "878199c1-4274-4044-821f-e87a922a8d58"
+  },
+  {
+    "eng": "valley",
+    "kor": "계곡",
+    "def": "low land between hills",
+    "ex": "The river flows through the valley.",
+    "sentence_id": "84ac7275-a9fd-4615-be40-92b4ee4aa381"
+  },
+  {
+    "eng": "river",
+    "kor": "강",
+    "def": "a long line of water that flows",
+    "ex": "The river moves fast.",
+    "emoji": "🏞️",
+    "sentence_id": "b4fdae25-c51c-4076-8fa0-b1e85f9e1a7d"
+  },
+  {
+    "eng": "ocean",
+    "kor": "바다",
+    "def": "a very large area of salt water",
+    "ex": "The ocean is blue.",
+    "emoji": "🌊",
+    "sentence_id": "4fcac188-a735-46e5-ab3a-ada60f98c960"
+  },
+  {
+    "eng": "desert",
+    "kor": "사막",
+    "def": "a very dry area with little rain",
+    "ex": "The desert is hot.",
+    "emoji": "🏜️",
+    "sentence_id": "79a45cb7-754d-470e-b1d4-3dd1d028c059"
+  },
+  {
+    "eng": "forest",
+    "kor": "숲",
+    "def": "a large area with many trees",
+    "ex": "Animals live in the forest.",
+    "emoji": "🌲",
+    "sentence_id": "d86c150f-3e1b-4d0c-8eb7-9c92d75a4af0"
+  },
+  {
+    "eng": "island",
+    "kor": "섬",
+    "def": "land with water all around it",
+    "ex": "The island is small.",
+    "emoji": "🏝️",
+    "sentence_id": "c065bd22-0250-415d-893c-299b9f889ee3"
+  },
+  {
+    "eng": "volcano",
+    "kor": "화산",
+    "def": "a mountain that can shoot out lava",
+    "ex": "The volcano is quiet.",
+    "emoji": "🌋",
+    "sentence_id": "a916afee-f075-4b01-b12e-0991d58a9b80"
+  },
+  {
+    "eng": "waterfall",
+    "kor": "폭포",
+    "def": "water falling from a high place",
+    "ex": "We see a waterfall.",
+    "sentence_id": "ec143058-e7de-4ac5-9d53-48a56eb19afa"
+  },
+  {
+    "eng": "cave",
+    "kor": "동굴",
+    "def": "a large hole in the side of a hill or under the ground",
+    "ex": "We explore a cave.",
+    "sentence_id": "7189a562-4ed7-4483-94d7-264168bc3e32"
+  }
 ]

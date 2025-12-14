@@ -1,12 +1,92 @@
 [
-  {"eng": "lion", "kor": "사자", "def": "a big wild cat with a mane", "ex": "The lion rests.", "ex_kor": "사자가 쉰다.", "emoji": "🦁"},
-  {"eng": "tiger", "kor": "호랑이", "def": "a large orange and black striped cat", "ex": "The tiger walks.", "ex_kor": "호랑이가 걷는다.", "emoji": "🐯"},
-  {"eng": "elephant", "kor": "코끼리", "def": "a very big animal with a trunk", "ex": "The elephant drinks.", "ex_kor": "코끼리가 마신다.", "emoji": "🐘"},
-  {"eng": "giraffe", "kor": "기린", "def": "a tall animal with a long neck", "ex": "The giraffe eats leaves.", "ex_kor": "기린이 잎을 먹는다.", "emoji": "🦒"},
-  {"eng": "zebra", "kor": "얼룩말", "def": "a horse with black and white stripes", "ex": "The zebra runs.", "ex_kor": "얼룩말이 달린다.", "emoji": "🦓"},
-  {"eng": "monkey", "kor": "원숭이", "def": "a small animal that climbs trees", "ex": "The monkey climbs.", "ex_kor": "원숭이가 올라간다.", "emoji": "🐒"},
-  {"eng": "bear", "kor": "곰", "def": "a large strong animal with thick fur", "ex": "The bear sleeps.", "ex_kor": "곰이 잔다.", "emoji": "🐻"},
-  {"eng": "wolf", "kor": "늑대", "def": "a wild dog that howls", "ex": "The wolf howls.", "ex_kor": "늑대가 울부짖는다.", "emoji": "🐺"},
-  {"eng": "fox", "kor": "여우", "def": "a small wild animal with a bushy tail", "ex": "The fox hides.", "ex_kor": "여우가 숨는다.", "emoji": "🦊"},
-  {"eng": "kangaroo", "kor": "캥거루", "def": "an animal that jumps and has a pouch", "ex": "The kangaroo jumps.", "ex_kor": "캥거루가 뛴다.", "emoji": "🦘"}
+  {
+    "eng": "lion",
+    "kor": "사자",
+    "def": "a big wild cat with a mane",
+    "ex": "The lion rests.",
+    "ex_kor": "사자가 쉰다.",
+    "emoji": "🦁",
+    "sentence_id": "576900bf-0888-4224-b8bb-cf7a02003feb"
+  },
+  {
+    "eng": "tiger",
+    "kor": "호랑이",
+    "def": "a large orange and black striped cat",
+    "ex": "The tiger walks.",
+    "ex_kor": "호랑이가 걷는다.",
+    "emoji": "🐯",
+    "sentence_id": "f072f909-c677-45cf-8202-51f4b6989892"
+  },
+  {
+    "eng": "elephant",
+    "kor": "코끼리",
+    "def": "a very big animal with a trunk",
+    "ex": "The elephant drinks.",
+    "ex_kor": "코끼리가 마신다.",
+    "emoji": "🐘",
+    "sentence_id": "6e480a0c-ea62-4591-81fd-5cb3b2abe010"
+  },
+  {
+    "eng": "giraffe",
+    "kor": "기린",
+    "def": "a tall animal with a long neck",
+    "ex": "The giraffe eats leaves.",
+    "ex_kor": "기린이 잎을 먹는다.",
+    "emoji": "🦒",
+    "sentence_id": "4667f996-11ce-49a9-bb3e-52c7d942a1ec"
+  },
+  {
+    "eng": "zebra",
+    "kor": "얼룩말",
+    "def": "a horse with black and white stripes",
+    "ex": "The zebra runs.",
+    "ex_kor": "얼룩말이 달린다.",
+    "emoji": "🦓",
+    "sentence_id": "e3dfb0d7-875c-42ff-b311-d681730e4232"
+  },
+  {
+    "eng": "monkey",
+    "kor": "원숭이",
+    "def": "a small animal that climbs trees",
+    "ex": "The monkey climbs.",
+    "ex_kor": "원숭이가 올라간다.",
+    "emoji": "🐒",
+    "sentence_id": "e0162d63-4d87-4c8f-a959-b49d3904b970"
+  },
+  {
+    "eng": "bear",
+    "kor": "곰",
+    "def": "a large strong animal with thick fur",
+    "ex": "The bear sleeps.",
+    "ex_kor": "곰이 잔다.",
+    "emoji": "🐻",
+    "sentence_id": "b80e5229-2e73-4a91-910d-24277bc2cb2f"
+  },
+  {
+    "eng": "wolf",
+    "kor": "늑대",
+    "def": "a wild dog that howls",
+    "ex": "The wolf howls.",
+    "ex_kor": "늑대가 울부짖는다.",
+    "emoji": "🐺",
+    "sentence_id": "a031a2d9-de92-4341-b221-071a34c73958"
+  },
+  {
+    "eng": "fox",
+    "kor": "여우",
+    "def": "a small wild animal with a bushy tail",
+    "ex": "The fox hides.",
+    "ex_kor": "여우가 숨는다.",
+    "emoji": "🦊",
+    "sentence_id": "95882a9f-e14e-4b5c-bd4f-18cc9cdc48df"
+  },
+  {
+    "eng": "kangaroo",
+    "kor": "캥거루",
+    "def": "an animal that jumps and has a pouch",
+    "ex": "The kangaroo jumps.",
+    "ex_kor": "캥거루가 뛴다.",
+    "emoji": "🦘",
+    "sentence_id": "0cf814a6-ef93-43e2-91ac-17397ca3fa7b"
+  }
 ]

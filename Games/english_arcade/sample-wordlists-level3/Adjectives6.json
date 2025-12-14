@@ -1,14 +1,98 @@
 [
-  {"eng":"round","kor":"둥근","def":"shaped like a circle","ex":"The earth is round.","ex_kor":"지구는 둥글다."},
-  {"eng":"square","kor":"정사각형의","def":"having four equal sides","ex":"The table is square.","ex_kor":"테이블이 정사각형이다."},
-  {"eng":"wide","kor":"넓은","def":"having a great width","ex":"The road is wide.","ex_kor":"도로가 넓다."},
-  {"eng":"narrow","kor":"좁은","def":"not wide","ex":"This street is narrow.","ex_kor":"이 거리는 좁다."},
-  {"eng":"deep","kor":"깊은","def":"far down from the surface","ex":"The water is deep.","ex_kor":"물이 깊다."},
-  {"eng":"shallow","kor":"얕은","def":"not deep","ex":"The pool is shallow here.","ex_kor":"여기 수영장이 얕다."},
-  {"eng":"strong","kor":"튼튼한","def":"having power or force","ex":"He has strong arms.","ex_kor":"그의 팔은 튼튼하다."},
-  {"eng":"weak","kor":"약한","def":"not strong","ex":"She felt weak after running.","ex_kor":"그녀는 달린 후에 힘이 약해졌다."},
-  {"eng":"thick","kor":"두꺼운","def":"wide or dense in size","ex":"The book is thick.","ex_kor":"그 책은 두껍다."},
-  {"eng":"thin","kor":"얇은","def":"not thick","ex":"She cut a thin slice of bread.","ex_kor":"그녀는 얇은 빵 조각을 잘랐다."},
-  {"eng":"rich","kor":"부유한","def":"having a lot of money","ex":"He is a rich man.","ex_kor":"그는 부자다."},
-  {"eng":"poor","kor":"가난한","def":"having little money","ex":"They are poor farmers.","ex_kor":"그들은 가난한 농부들이다."}
+  {
+    "eng": "round",
+    "kor": "둥근",
+    "def": "shaped like a circle",
+    "ex": "The earth is round.",
+    "ex_kor": "지구는 둥글다.",
+    "sentence_id": "d21c91a8-3128-4b1e-81e7-54d96ef97e9c"
+  },
+  {
+    "eng": "square",
+    "kor": "정사각형의",
+    "def": "having four equal sides",
+    "ex": "The table is square.",
+    "ex_kor": "테이블이 정사각형이다.",
+    "sentence_id": "24cbcdbf-cf9e-44e9-ac20-e9615c3026c7"
+  },
+  {
+    "eng": "wide",
+    "kor": "넓은",
+    "def": "having a great width",
+    "ex": "The road is wide.",
+    "ex_kor": "도로가 넓다.",
+    "sentence_id": "a6d8535f-fb68-4139-a513-0d58469eaca4"
+  },
+  {
+    "eng": "narrow",
+    "kor": "좁은",
+    "def": "not wide",
+    "ex": "This street is narrow.",
+    "ex_kor": "이 거리는 좁다.",
+    "sentence_id": "3c010a22-034a-457f-be0c-6f78e8d89bc7"
+  },
+  {
+    "eng": "deep",
+    "kor": "깊은",
+    "def": "far down from the surface",
+    "ex": "The water is deep.",
+    "ex_kor": "물이 깊다.",
+    "sentence_id": "5ddf23f7-a6a5-4f56-89f1-d671db9f3334"
+  },
+  {
+    "eng": "shallow",
+    "kor": "얕은",
+    "def": "not deep",
+    "ex": "The pool is shallow here.",
+    "ex_kor": "여기 수영장이 얕다.",
+    "sentence_id": "2806e5f6-3ab1-4eaf-be7d-ee70418fe03f"
+  },
+  {
+    "eng": "strong",
+    "kor": "튼튼한",
+    "def": "having power or force",
+    "ex": "He has strong arms.",
+    "ex_kor": "그의 팔은 튼튼하다.",
+    "sentence_id": "fd84daab-d268-46c8-b4b3-69d496d3113f"
+  },
+  {
+    "eng": "weak",
+    "kor": "약한",
+    "def": "not strong",
+    "ex": "She felt weak after running.",
+    "ex_kor": "그녀는 달린 후에 힘이 약해졌다.",
+    "sentence_id": "dab094df-89ee-4d58-8060-312d573ba5fd"
+  },
+  {
+    "eng": "thick",
+    "kor": "두꺼운",
+    "def": "wide or dense in size",
+    "ex": "The book is thick.",
+    "ex_kor": "그 책은 두껍다.",
+    "sentence_id": "f05cc110-c105-4a5b-be6b-19ef5f731dd4"
+  },
+  {
+    "eng": "thin",
+    "kor": "얇은",
+    "def": "not thick",
+    "ex": "She cut a thin slice of bread.",
+    "ex_kor": "그녀는 얇은 빵 조각을 잘랐다.",
+    "sentence_id": "0a00fee4-bafb-4799-910c-03d24803fb61"
+  },
+  {
+    "eng": "rich",
+    "kor": "부유한",
+    "def": "having a lot of money",
+    "ex": "He is a rich man.",
+    "ex_kor": "그는 부자다.",
+    "sentence_id": "86770de9-70b3-4d44-b510-7b102ca591b9"
+  },
+  {
+    "eng": "poor",
+    "kor": "가난한",
+    "def": "having little money",
+    "ex": "They are poor farmers.",
+    "ex_kor": "그들은 가난한 농부들이다.",
+    "sentence_id": "0f460ff7-dd26-4859-98e7-9c7410970c75"
+  }
 ]

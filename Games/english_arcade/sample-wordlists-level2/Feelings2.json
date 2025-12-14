@@ -1,12 +1,92 @@
 [
-  {"eng":"curious","kor":"호기심이 많은","def":"wanting to know or learn","ex":"The child is curious.","ex_kor":"그 아이는 호기심이 많아요.","emoji":"🤔"},
-  {"eng":"frustrated","kor":"좌절한","def":"feeling upset because you can't do something","ex":"She feels frustrated.","ex_kor":"그녀는 좌절감을 느껴요.","emoji":"😤"},
-  {"eng":"jealous","kor":"질투하는","def":"wanting what someone else has","ex":"He is jealous of the prize.","ex_kor":"그는 상을 질투해요.","emoji":"😒"},
-  {"eng":"embarrassed","kor":"부끄러운","def":"feeling shy or ashamed","ex":"I feel embarrassed.","ex_kor":"나는 부끄러워요.","emoji":"😳"},
-  {"eng":"relaxed","kor":"편안한","def":"feeling calm and not worried","ex":"We feel relaxed.","ex_kor":"우리는 편안함을 느껴요.","emoji":"😌"},
-  {"eng":"lonely","kor":"외로운","def":"feeling alone and sad","ex":"He feels lonely.","ex_kor":"그는 외로움을 느껴요.","emoji":"😢"},
-  {"eng":"grateful","kor":"감사한","def":"feeling thanks","ex":"I am grateful for your help.","ex_kor":"나는 너의 도움에 감사해요.","emoji":"🙏"},
-  {"eng":"anxious","kor":"불안한","def":"feeling worried or nervous","ex":"She feels anxious.","ex_kor":"그녀는 불안해해요.","emoji":"😟"},
-  {"eng":"calm","kor":"차분한","def":"not excited or upset","ex":"He stays calm.","ex_kor":"그는 차분함을 유지해요.","emoji":"😐"},
-  {"eng":"brave","kor":"용감한","def":"ready to face fear or danger","ex":"The girl is brave.","ex_kor":"그 소녀는 용감해요.","emoji":"💪"}
+  {
+    "eng": "curious",
+    "kor": "호기심이 많은",
+    "def": "wanting to know or learn",
+    "ex": "The child is curious.",
+    "ex_kor": "그 아이는 호기심이 많아요.",
+    "emoji": "🤔",
+    "sentence_id": "557a5b7e-e8e3-4760-a5e5-57b793c0724e"
+  },
+  {
+    "eng": "frustrated",
+    "kor": "좌절한",
+    "def": "feeling upset because you can't do something",
+    "ex": "She feels frustrated.",
+    "ex_kor": "그녀는 좌절감을 느껴요.",
+    "emoji": "😤",
+    "sentence_id": "98906fdf-d18b-42a0-80e2-476a0c5f33be"
+  },
+  {
+    "eng": "jealous",
+    "kor": "질투하는",
+    "def": "wanting what someone else has",
+    "ex": "He is jealous of the prize.",
+    "ex_kor": "그는 상을 질투해요.",
+    "emoji": "😒",
+    "sentence_id": "69aefef0-f5fa-418a-ac48-9559f68e0bfb"
+  },
+  {
+    "eng": "embarrassed",
+    "kor": "부끄러운",
+    "def": "feeling shy or ashamed",
+    "ex": "I feel embarrassed.",
+    "ex_kor": "나는 부끄러워요.",
+    "emoji": "😳",
+    "sentence_id": "a3156e48-97c4-4454-b6d9-1a6402e9e53d"
+  },
+  {
+    "eng": "relaxed",
+    "kor": "편안한",
+    "def": "feeling calm and not worried",
+    "ex": "We feel relaxed.",
+    "ex_kor": "우리는 편안함을 느껴요.",
+    "emoji": "😌",
+    "sentence_id": "572ef562-938c-4dad-8e8f-530e6200b5ed"
+  },
+  {
+    "eng": "lonely",
+    "kor": "외로운",
+    "def": "feeling alone and sad",
+    "ex": "He feels lonely.",
+    "ex_kor": "그는 외로움을 느껴요.",
+    "emoji": "😢",
+    "sentence_id": "6253af66-f3ff-4b33-a89c-085d2480a932"
+  },
+  {
+    "eng": "grateful",
+    "kor": "감사한",
+    "def": "feeling thanks",
+    "ex": "I am grateful for your help.",
+    "ex_kor": "나는 너의 도움에 감사해요.",
+    "emoji": "🙏",
+    "sentence_id": "79313b8f-c5b5-4b96-94d7-0d64e5627ea9"
+  },
+  {
+    "eng": "anxious",
+    "kor": "불안한",
+    "def": "feeling worried or nervous",
+    "ex": "She feels anxious.",
+    "ex_kor": "그녀는 불안해해요.",
+    "emoji": "😟",
+    "sentence_id": "c0fd81de-c0f5-459f-a51f-74c76fc6045f"
+  },
+  {
+    "eng": "calm",
+    "kor": "차분한",
+    "def": "not excited or upset",
+    "ex": "He stays calm.",
+    "ex_kor": "그는 차분함을 유지해요.",
+    "emoji": "😐",
+    "sentence_id": "739b79c3-dda1-4b7e-abc3-b9f4b9f12e55"
+  },
+  {
+    "eng": "brave",
+    "kor": "용감한",
+    "def": "ready to face fear or danger",
+    "ex": "The girl is brave.",
+    "ex_kor": "그 소녀는 용감해요.",
+    "emoji": "💪",
+    "sentence_id": "57b7fe14-1998-47ee-8064-9e839fd3f2ed"
+  }
 ]
