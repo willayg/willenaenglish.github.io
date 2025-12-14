@@ -45,10 +45,13 @@ const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
+  'https://staging.willenaenglish-github-io.pages.dev',
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
   'https://cf.willenaenglish.com',
+  'https://staging.willenaenglish.com',
   'https://api.willenaenglish.com',
+  'https://api-cf.willenaenglish.com',
 ]);
 
 /**

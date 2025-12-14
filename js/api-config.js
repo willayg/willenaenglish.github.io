@@ -47,20 +47,19 @@
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // SAFETY: Set to 0 while CF Workers routes are still being configured
-  // Once routes are confirmed working, gradually increase to 100
-  let CF_ROLLOUT_PERCENT = 0;
+  // MIGRATION STATUS: CF Workers are ready - set to 100 for staging, production can start at 50
+  let CF_ROLLOUT_PERCENT = 100;
 
   // Per-function rollout overrides (percent 0-100). If a function is listed here,
   // this value takes precedence over the global CF_ROLLOUT_PERCENT. Defaults to 0
   // so nothing is routed to workers unless explicitly set.
-  // NOTE: Keep at 0 until CF Workers are fully tested
+  // MIGRATION STATUS: All functions migrated and tested - set to 100
   const CF_ROLLOUT_PERCENT_BY_FN = {
-    get_audio_urls: 0,
-    supabase_auth: 0,
-    log_word_attempt: 0,
-    homework_api: 0,
-    progress_summary: 0,
+    get_audio_urls: 100,
+    supabase_auth: 100,
+    log_word_attempt: 100,
+    homework_api: 100,
+    progress_summary: 100,
   };
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
@@ -88,8 +87,10 @@
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
   // Custom domain now served by Cloudflare Pages - treat as Cloudflare ecosystem
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com';
-  // Cloudflare Pages: includes cf subdomain, custom domain, and *.pages.dev previews
-  const isCloudflarePages = isCustomDomain || currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev');
+  // Staging domain for testing
+  const isStagingDomain = currentHost === 'staging.willenaenglish.com' || currentHost.startsWith('staging.willenaenglish');
+  // Cloudflare Pages: includes cf subdomain, custom domain, staging, and *.pages.dev previews
+  const isCloudflarePages = isCustomDomain || isStagingDomain || currentHost === 'cf.willenaenglish.com' || currentHost.endsWith('.pages.dev');
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
   
