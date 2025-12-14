@@ -55,26 +55,12 @@ const VOICE = getArg('voice', '') || undefined;
 const ROOT = process.cwd();
 const DIRS = DDIRS.split(',').map(d => path.join(ROOT, d.trim())).filter(Boolean);
 
-// Find running netlify dev server OR use production
-const functionCandidates = [
-  'http://localhost:9000/.netlify/functions',
-  'http://127.0.0.1:9000/.netlify/functions',
-  'http://localhost:8888/.netlify/functions',
-  'http://127.0.0.1:8888/.netlify/functions',
-  'https://willenaenglish.com/.netlify/functions'  // Production fallback
-];
+// Use production endpoint only (skip localhost to avoid connection issues)
+const FUNCTIONS_BASE = 'https://willenaenglish.com/.netlify/functions';
 
 async function pickBase() {
-  for (const base of functionCandidates) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(base + '/diag_env', { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) return base;
-    } catch { /* ignore */ }
-  }
-  return null;
+  // Always use production
+  return FUNCTIONS_BASE;
 }
 
 function normText(s) {
