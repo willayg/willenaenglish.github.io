@@ -352,8 +352,8 @@
   </style>
 </head>
 <body>
-  <!-- Staging badge: local-only visual indicator -->
-  <div id="staging-badge" style="position:fixed; top:8px; right:8px; z-index:9999; background:linear-gradient(90deg,#ff6f61,#ff9a76); color:#fff; font-weight:700; font-size:12px; padding:6px 8px; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.2); font-family:Arial, sans-serif; pointer-events:none; user-select:none;">STAGING</div>
+  <!-- Staging badge: only visible on the staging domain -->
+  <div id="staging-badge" style="display:none; position:fixed; top:8px; right:8px; z-index:9999; background:linear-gradient(90deg,#ff6f61,#ff9a76); color:#fff; font-weight:700; font-size:12px; padding:6px 8px; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.2); font-family:Arial, sans-serif; pointer-events:none; user-select:none;">STAGING</div>
   <div class="header-bar">
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
     <div class="burger-menu" onclick="toggleMenu()">
@@ -474,6 +474,21 @@
     }
 
     createSparkles();
+
+    // Show staging badge only on the staging hostname
+    (function(){
+      try {
+        var host = location.hostname;
+        var badge = document.getElementById('staging-badge');
+        if (!badge) return;
+        var allowed = ['staging.willenaenglish.com'];
+        if (allowed.indexOf(host) !== -1) {
+          badge.style.display = 'block';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch (e) { /* no-op */ }
+    })();
   </script>
 </body>
 </html>
