@@ -2,34 +2,34 @@
 // Rewritten with: Supabase singleton auth, robust fetchJSON, abortable audio preload,
 // safer sample list URLs, inline toasts, and lazy-loaded modes.
 
-import { playTTS, playTTSVariant, preprocessTTS, preloadAllAudio } from './tts.js?v=20251231a';
-import { playSFX } from './sfx.js?v=20251231a';
-import { renderModeSelector } from './ui/mode_selector.js?v=20251231a';
-import { showGrammarModeSelector } from './ui/grammar_mode_selector.js?v=20251231a';
-import { renderGameView } from './ui/game_view.js?v=20251231a';
-import { showModeModal } from './ui/mode_modal.js?v=20251231a';
-import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js?v=20251231a';
-import { showBrowseModal } from './ui/browse_modal.js?v=20251231a';
-import { showPhonicsModal } from './ui/phonics_modal.js?v=20251231a';
-import { showLevel2Modal } from './ui/level2_modal.js?v=20251231a';
-import { showLevel3Modal } from './ui/level3_modal.js?v=20251231a';
-import { showLevel4Modal } from './ui/level4_modal.js?v=20251231a';
-import { showGrammarL1Modal } from './ui/level1_grammar_modal.js?v=20251231a';
-import { showGrammarL2Modal } from './ui/level2_grammar_modal.js?v=20251231a';
-import { showGrammarL3Modal } from './ui/level3_grammar_modal.js?v=20251231a';
+import { playTTS, playTTSVariant, preprocessTTS, preloadAllAudio } from './tts.js?v=20251214a';
+import { playSFX } from './sfx.js?v=20251214a';
+import { renderModeSelector } from './ui/mode_selector.js?v=20251214a';
+import { showGrammarModeSelector } from './ui/grammar_mode_selector.js?v=20251214a';
+import { renderGameView } from './ui/game_view.js?v=20251214a';
+import { showModeModal } from './ui/mode_modal.js?v=20251214a';
+import { showSampleWordlistModal } from './ui/sample_wordlist_modal.js?v=20251214a';
+import { showBrowseModal } from './ui/browse_modal.js?v=20251214a';
+import { showPhonicsModal } from './ui/phonics_modal.js?v=20251214a';
+import { showLevel2Modal } from './ui/level2_modal.js?v=20251214a';
+import { showLevel3Modal } from './ui/level3_modal.js?v=20251214a';
+import { showLevel4Modal } from './ui/level4_modal.js?v=20251214a';
+import { showGrammarL1Modal } from './ui/level1_grammar_modal.js?v=20251214a';
+import { showGrammarL2Modal } from './ui/level2_grammar_modal.js?v=20251214a';
+import { showGrammarL3Modal } from './ui/level3_grammar_modal.js?v=20251214a';
 // Ensure star overlay script is loaded once; it attaches window.showRoundStars
-import './ui/star_overlay.js?v=20251231a';
-import { FN } from './scripts/api-base.js?v=20251231a';
+import './ui/star_overlay.js?v=20251214a';
+import { FN } from './scripts/api-base.js?v=20251214a';
 // Review manager (provenance + enrichment for review attempts)
 // Legacy review manager (kept for rollback) not needed for new flow.
 // import { ReviewManager } from './modes/review.js';
-import { showReviewSelectionModal, runReviewSession } from './modes/review_session.js?v=20251231a';
+import { showReviewSelectionModal, runReviewSession } from './modes/review_session.js?v=20251214a';
 // History manager for browser back button support
-import { historyManager } from './history-manager.js?v=20251231a';
+import { historyManager } from './history-manager.js?v=20251214a';
 // Progress cache for instant progress bar loading
-import { progressCache } from './utils/progress-cache.js?v=20251231a';
-import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251231a';
-import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251231a';
+import { progressCache } from './utils/progress-cache.js?v=20251214a';
+import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
+import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
 // -----------------------------
 // Auth redirect helper
