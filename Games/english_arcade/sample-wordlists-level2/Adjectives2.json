@@ -1,14 +1,98 @@
 [
-  {"eng":"happy","kor":"행복한","def":"feeling good or pleased","ex":"She looks happy today.","ex_kor":"그녀는 오늘 행복해 보여요."},
-  {"eng":"sad","kor":"슬픈","def":"feeling unhappy","ex":"He felt sad after the movie.","ex_kor":"그는 영화를 보고 슬펐어요."},
-  {"eng":"angry","kor":"화난","def":"feeling strong dislike or upset","ex":"Mom is angry at me.","ex_kor":"엄마가 나에게 화가 났어요."},
-  {"eng":"funny","kor":"웃긴","def":"causing laughter","ex":"That movie is very funny.","ex_kor":"그 영화는 정말 웃겨요."},
-  {"eng":"kind","kor":"친절한","def":"helpful and caring","ex":"She is kind to animals.","ex_kor":"그녀는 동물들에게 친절해요."},
-  {"eng":"nice","kor":"좋은","def":"pleasant or friendly","ex":"He is a nice person.","ex_kor":"그는 좋은 사람이에요."},
-  {"eng":"beautiful","kor":"아름다운","def":"very pretty or attractive","ex":"The flowers are beautiful.","ex_kor":"꽃들이 아름다워요."},
-  {"eng":"clean","kor":"깨끗한","def":"not dirty","ex":"The classroom is clean.","ex_kor":"교실이 깨끗해요."},
-  {"eng":"dirty","kor":"더러운","def":"not clean","ex":"Your hands are dirty.","ex_kor":"네 손이 더러워요."},
-  {"eng":"hot","kor":"뜨거운","def":"having a high temperature","ex":"The soup is hot.","ex_kor":"수프가 뜨거워요."},
-  {"eng":"cold","kor":"차가운","def":"having a low temperature","ex":"It’s cold outside.","ex_kor":"밖이 추워요."},
-  {"eng":"warm","kor":"따뜻한","def":"comfortably hot","ex":"I like warm weather.","ex_kor":"나는 따뜻한 날씨를 좋아해요."}
+  {
+    "eng": "happy",
+    "kor": "행복한",
+    "def": "feeling good or pleased",
+    "ex": "She looks happy today.",
+    "ex_kor": "그녀는 오늘 행복해 보여요.",
+    "sentence_id": "66e1e8d1-3479-4f8f-a98a-7ddf1ea0fe65"
+  },
+  {
+    "eng": "sad",
+    "kor": "슬픈",
+    "def": "feeling unhappy",
+    "ex": "He felt sad after the movie.",
+    "ex_kor": "그는 영화를 보고 슬펐어요.",
+    "sentence_id": "4ec302ec-5bf6-4554-9e26-aa76579e1a80"
+  },
+  {
+    "eng": "angry",
+    "kor": "화난",
+    "def": "feeling strong dislike or upset",
+    "ex": "Mom is angry at me.",
+    "ex_kor": "엄마가 나에게 화가 났어요.",
+    "sentence_id": "594f48b0-6070-4120-a24c-775db33c6d29"
+  },
+  {
+    "eng": "funny",
+    "kor": "웃긴",
+    "def": "causing laughter",
+    "ex": "That movie is very funny.",
+    "ex_kor": "그 영화는 정말 웃겨요.",
+    "sentence_id": "82ef475e-f580-4300-9ca1-a06383a114f7"
+  },
+  {
+    "eng": "kind",
+    "kor": "친절한",
+    "def": "helpful and caring",
+    "ex": "She is kind to animals.",
+    "ex_kor": "그녀는 동물들에게 친절해요.",
+    "sentence_id": "7236691f-c3ea-4239-9153-7cacfd31ba3e"
+  },
+  {
+    "eng": "nice",
+    "kor": "좋은",
+    "def": "pleasant or friendly",
+    "ex": "He is a nice person.",
+    "ex_kor": "그는 좋은 사람이에요.",
+    "sentence_id": "fe8fcc12-614c-4eda-96fa-b0e4f166b400"
+  },
+  {
+    "eng": "beautiful",
+    "kor": "아름다운",
+    "def": "very pretty or attractive",
+    "ex": "The flowers are beautiful.",
+    "ex_kor": "꽃들이 아름다워요.",
+    "sentence_id": "b1ad97a5-3b4f-4ab2-a2f2-08dc63d4d691"
+  },
+  {
+    "eng": "clean",
+    "kor": "깨끗한",
+    "def": "not dirty",
+    "ex": "The classroom is clean.",
+    "ex_kor": "교실이 깨끗해요.",
+    "sentence_id": "4a3c8b8f-9d25-413b-a377-bac57086c4e3"
+  },
+  {
+    "eng": "dirty",
+    "kor": "더러운",
+    "def": "not clean",
+    "ex": "Your hands are dirty.",
+    "ex_kor": "네 손이 더러워요.",
+    "sentence_id": "f7354f5a-4e77-4e7e-ba07-c71eb2d5c99d"
+  },
+  {
+    "eng": "hot",
+    "kor": "뜨거운",
+    "def": "having a high temperature",
+    "ex": "The soup is hot.",
+    "ex_kor": "수프가 뜨거워요.",
+    "sentence_id": "029a83f2-43b4-4844-93d0-f874e3e1fa27"
+  },
+  {
+    "eng": "cold",
+    "kor": "차가운",
+    "def": "having a low temperature",
+    "ex": "It’s cold outside.",
+    "ex_kor": "밖이 추워요.",
+    "sentence_id": "081fd652-6fe1-45b5-8026-e049acd8557c"
+  },
+  {
+    "eng": "warm",
+    "kor": "따뜻한",
+    "def": "comfortably hot",
+    "ex": "I like warm weather.",
+    "ex_kor": "나는 따뜻한 날씨를 좋아해요.",
+    "sentence_id": "420c3b30-4f2c-4b40-a0e6-01036099c839"
+  }
 ]

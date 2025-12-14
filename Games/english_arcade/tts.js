@@ -563,3 +563,132 @@ export async function playTTSVariant(word, variant = 'default') {
     await speakWithSystemTTS(base);
   } catch {}
 }
+
+// Sentence ID-aware playback: plays audio by sentence_id (sent_<uuid>.mp3) with legacy fallback
+// This is the proper fix for sentence audio collisions across wordlists
+export async function playSentenceById(sentenceId, fallbackWord = null) {
+  if (!sentenceId) {
+    // No sentence ID - fall back to legacy word-based lookup
+    if (fallbackWord) {
+      return playTTSVariant(fallbackWord, 'sentence');
+    }
+    return;
+  }
+
+  const key = `sent_${sentenceId}`;
+  const now = Date.now();
+  const lastAt = _lastPlayAt.get(key) || 0;
+  if (now - lastAt < PLAY_COOLDOWN_MS) return;
+  _lastPlayAt.set(key, now);
+
+  // Check cache first
+  if (audioCache.has(key)) {
+    const audio = audioCache.get(key);
+    if (_playingKeys.has(key)) return;
+    _playingKeys.add(key);
+    audio.currentTime = 0;
+    const clear = () => {
+      _playingKeys.delete(key);
+      audio.removeEventListener('ended', clear);
+      audio.removeEventListener('pause', clear);
+      audio.removeEventListener('error', clear);
+    };
+    audio.addEventListener('ended', clear);
+    audio.addEventListener('pause', clear);
+    audio.addEventListener('error', clear);
+    try {
+      await audio.play();
+      return;
+    } catch {
+      clear();
+    }
+  }
+
+  // Try to get URL via get_sentence_audio_urls endpoint
+  try {
+    const url = FN('get_sentence_audio_urls');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ sentence_ids: [sentenceId], plain: true })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && data.results) {
+        const info = data.results[sentenceId];
+        if (info && info.exists && info.url) {
+          let audioPromise = _pendingLoads.get(key);
+          if (!audioPromise) {
+            audioPromise = loadAudioElement(info.url)
+              .then(a => { audioCache.set(key, a); return a; })
+              .finally(() => _pendingLoads.delete(key));
+            _pendingLoads.set(key, audioPromise);
+          }
+          const audio = await audioPromise;
+          if (_playingKeys.has(key)) return;
+          _playingKeys.add(key);
+          const clear = () => {
+            _playingKeys.delete(key);
+            audio.removeEventListener('ended', clear);
+            audio.removeEventListener('pause', clear);
+            audio.removeEventListener('error', clear);
+          };
+          audio.addEventListener('ended', clear);
+          audio.addEventListener('pause', clear);
+          audio.addEventListener('error', clear);
+          try {
+            await audio.play();
+            console.debug('Played sentence audio by ID:', sentenceId);
+            return;
+          } catch {
+            clear();
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.debug('Sentence ID audio lookup failed:', e?.message);
+  }
+
+  // Fallback: try R2 public base directly
+  const R2_BASE = (typeof window !== 'undefined' && window.R2_PUBLIC_BASE) || '';
+  if (R2_BASE) {
+    const directUrl = `${R2_BASE.replace(/\/$/, '')}/sent_${sentenceId}.mp3`;
+    try {
+      let audioPromise = _pendingLoads.get(key);
+      if (!audioPromise) {
+        audioPromise = loadAudioElement(directUrl)
+          .then(a => { audioCache.set(key, a); return a; })
+          .finally(() => _pendingLoads.delete(key));
+        _pendingLoads.set(key, audioPromise);
+      }
+      const audio = await audioPromise;
+      if (_playingKeys.has(key)) return;
+      _playingKeys.add(key);
+      const clear = () => {
+        _playingKeys.delete(key);
+        audio.removeEventListener('ended', clear);
+        audio.removeEventListener('pause', clear);
+        audio.removeEventListener('error', clear);
+      };
+      audio.addEventListener('ended', clear);
+      audio.addEventListener('pause', clear);
+      audio.addEventListener('error', clear);
+      try {
+        await audio.play();
+        console.debug('Played sentence audio via R2 direct:', sentenceId);
+        return;
+      } catch {
+        clear();
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Final fallback: legacy word-based lookup
+  if (fallbackWord) {
+    console.debug('Sentence ID audio not found, falling back to word:', fallbackWord);
+    return playTTSVariant(fallbackWord, 'sentence');
+  }
+}

@@ -1,22 +1,162 @@
 [
-  {"eng":"study English","kor":"영어를 공부하다","def":"to learn English","ex":"I study English after class.","ex_kor":"나는 수업이 끝난 후 영어를 공부한다."},
-  {"eng":"eat breakfast","kor":"아침을 먹다","def":"to have food in the morning","ex":"We eat breakfast together.","ex_kor":"우리는 함께 아침을 먹는다."},
-  {"eng":"go to bed","kor":"잠자리에 들다","def":"to lie down to sleep","ex":"I go to bed at ten.","ex_kor":"나는 열 시에 잠자리에 든다."},
-  {"eng":"take a shower","kor":"샤워하다","def":"to wash your body with water","ex":"She takes a shower every night.","ex_kor":"그녀는 매일 밤 샤워한다."},
-  {"eng":"listen to music","kor":"음악을 듣다","def":"to enjoy songs or sounds","ex":"I listen to music every day.","ex_kor":"나는 매일 음악을 듣는다."},
-  {"eng":"do homework","kor":"숙제를 하다","def":"to complete school assignments","ex":"He does his homework at night.","ex_kor":"그는 밤에 숙제를 한다."},
-  {"eng":"sleep","kor":"자다","def":"to rest your body and mind","ex":"The baby sleeps all night.","ex_kor":"아기는 밤새 잔다."},
-  {"eng":"wash my face","kor":"세수하다","def":"to clean your face with water","ex":"He washes his face before school.","ex_kor":"그는 학교에 가기 전에 세수를 한다."},
-  {"eng":"cook dinner","kor":"저녁을 요리하다","def":"to make food for the evening meal","ex":"Mom cooks dinner every night.","ex_kor":"엄마는 매일 저녁을 요리한다."},
-  {"eng":"clean my room","kor":"방을 청소하다","def":"to make your room tidy","ex":"She cleans her room on Sundays.","ex_kor":"그녀는 일요일마다 방을 청소한다."},
-  {"eng":"watch TV","kor":"TV를 보다","def":"to look at shows on television","ex":"She watches TV after dinner.","ex_kor":"그녀는 저녁 식사 후 TV를 본다."},
-  {"eng":"brush my teeth","kor":"이를 닦다","def":"to clean your teeth with a brush","ex":"I brush my teeth every morning.","ex_kor":"나는 매일 아침 이를 닦는다."},
-  {"eng":"feed the dog","kor":"강아지에게 밥을 주다","def":"to give food to your dog","ex":"He feeds the dog every morning.","ex_kor":"그는 매일 아침 강아지에게 밥을 준다."},
-  {"eng":"read a book","kor":"책을 읽다","def":"to look at and understand written words","ex":"I read a book before bed.","ex_kor":"나는 자기 전에 책을 읽는다."},
-  {"eng":"have lunch","kor":"점심을 먹다","def":"to eat food in the afternoon","ex":"We have lunch at noon.","ex_kor":"우리는 정오에 점심을 먹는다."},
-  {"eng":"wash the dishes","kor":"설거지를 하다","def":"to clean plates and cups","ex":"I wash the dishes after dinner.","ex_kor":"나는 저녁 식사 후 설거지를 한다."},
-  {"eng":"go to school","kor":"학교에 가다","def":"to travel to school","ex":"They go to school by bus.","ex_kor":"그들은 버스로 학교에 간다."},
-  {"eng":"get dressed","kor":"옷을 입다","def":"to put on clothes","ex":"I get dressed quickly.","ex_kor":"나는 빨리 옷을 입는다."},
-  {"eng":"take a nap","kor":"낮잠을 자다","def":"to sleep for a short time","ex":"Dad takes a nap after lunch.","ex_kor":"아빠는 점심 후 낮잠을 잔다."},
-  {"eng":"wake up","kor":"일어나다","def":"to stop sleeping","ex":"I wake up at seven.","ex_kor":"나는 일곱 시에 일어난다."}
+  {
+    "eng": "study English",
+    "kor": "영어를 공부하다",
+    "def": "to learn English",
+    "ex": "I study English after class.",
+    "ex_kor": "나는 수업이 끝난 후 영어를 공부한다.",
+    "sentence_id": "7ad09baf-a695-49ea-bb8b-198b40e20dde"
+  },
+  {
+    "eng": "eat breakfast",
+    "kor": "아침을 먹다",
+    "def": "to have food in the morning",
+    "ex": "We eat breakfast together.",
+    "ex_kor": "우리는 함께 아침을 먹는다.",
+    "sentence_id": "44f8f5ce-7c0d-41de-a457-b7b64560df9d"
+  },
+  {
+    "eng": "go to bed",
+    "kor": "잠자리에 들다",
+    "def": "to lie down to sleep",
+    "ex": "I go to bed at ten.",
+    "ex_kor": "나는 열 시에 잠자리에 든다.",
+    "sentence_id": "691d522e-ae7c-4ce6-8b2a-2e9fe07bdcdb"
+  },
+  {
+    "eng": "take a shower",
+    "kor": "샤워하다",
+    "def": "to wash your body with water",
+    "ex": "She takes a shower every night.",
+    "ex_kor": "그녀는 매일 밤 샤워한다.",
+    "sentence_id": "3e57c33f-4329-404a-8224-0d9d532b7a01"
+  },
+  {
+    "eng": "listen to music",
+    "kor": "음악을 듣다",
+    "def": "to enjoy songs or sounds",
+    "ex": "I listen to music every day.",
+    "ex_kor": "나는 매일 음악을 듣는다.",
+    "sentence_id": "4a055e02-97e5-4189-ba99-f40ccc1f71b4"
+  },
+  {
+    "eng": "do homework",
+    "kor": "숙제를 하다",
+    "def": "to complete school assignments",
+    "ex": "He does his homework at night.",
+    "ex_kor": "그는 밤에 숙제를 한다.",
+    "sentence_id": "20611fb1-1f25-42d9-b966-c980ec60996f"
+  },
+  {
+    "eng": "sleep",
+    "kor": "자다",
+    "def": "to rest your body and mind",
+    "ex": "The baby sleeps all night.",
+    "ex_kor": "아기는 밤새 잔다.",
+    "sentence_id": "887c4bab-cf45-49b4-a8c9-bdf07d842325"
+  },
+  {
+    "eng": "wash my face",
+    "kor": "세수하다",
+    "def": "to clean your face with water",
+    "ex": "He washes his face before school.",
+    "ex_kor": "그는 학교에 가기 전에 세수를 한다.",
+    "sentence_id": "2512ac8f-a5da-47ba-9599-b0a0d33273a1"
+  },
+  {
+    "eng": "cook dinner",
+    "kor": "저녁을 요리하다",
+    "def": "to make food for the evening meal",
+    "ex": "Mom cooks dinner every night.",
+    "ex_kor": "엄마는 매일 저녁을 요리한다.",
+    "sentence_id": "317060d0-004f-494e-92cd-100fbd8e7706"
+  },
+  {
+    "eng": "clean my room",
+    "kor": "방을 청소하다",
+    "def": "to make your room tidy",
+    "ex": "She cleans her room on Sundays.",
+    "ex_kor": "그녀는 일요일마다 방을 청소한다.",
+    "sentence_id": "32f7aee9-c0aa-4f2b-8098-d8d3eae5fe5f"
+  },
+  {
+    "eng": "watch TV",
+    "kor": "TV를 보다",
+    "def": "to look at shows on television",
+    "ex": "She watches TV after dinner.",
+    "ex_kor": "그녀는 저녁 식사 후 TV를 본다.",
+    "sentence_id": "fbe9b35d-dbdc-4fb9-8156-a85e51bf755f"
+  },
+  {
+    "eng": "brush my teeth",
+    "kor": "이를 닦다",
+    "def": "to clean your teeth with a brush",
+    "ex": "I brush my teeth every morning.",
+    "ex_kor": "나는 매일 아침 이를 닦는다.",
+    "sentence_id": "f083cfd0-1903-4439-a523-f9039fa85f0b"
+  },
+  {
+    "eng": "feed the dog",
+    "kor": "강아지에게 밥을 주다",
+    "def": "to give food to your dog",
+    "ex": "He feeds the dog every morning.",
+    "ex_kor": "그는 매일 아침 강아지에게 밥을 준다.",
+    "sentence_id": "695d1f0c-f968-4ba6-9a01-ac197dad8255"
+  },
+  {
+    "eng": "read a book",
+    "kor": "책을 읽다",
+    "def": "to look at and understand written words",
+    "ex": "I read a book before bed.",
+    "ex_kor": "나는 자기 전에 책을 읽는다.",
+    "sentence_id": "0f7f1960-865a-46f5-9826-2f218462c3db"
+  },
+  {
+    "eng": "have lunch",
+    "kor": "점심을 먹다",
+    "def": "to eat food in the afternoon",
+    "ex": "We have lunch at noon.",
+    "ex_kor": "우리는 정오에 점심을 먹는다.",
+    "sentence_id": "44073086-93d0-4ed8-8359-6b396a230164"
+  },
+  {
+    "eng": "wash the dishes",
+    "kor": "설거지를 하다",
+    "def": "to clean plates and cups",
+    "ex": "I wash the dishes after dinner.",
+    "ex_kor": "나는 저녁 식사 후 설거지를 한다.",
+    "sentence_id": "301aabe5-7a06-42c1-8c90-90f80ce8a16a"
+  },
+  {
+    "eng": "go to school",
+    "kor": "학교에 가다",
+    "def": "to travel to school",
+    "ex": "They go to school by bus.",
+    "ex_kor": "그들은 버스로 학교에 간다.",
+    "sentence_id": "48ef2ba9-2959-42a5-a00e-1cad27478509"
+  },
+  {
+    "eng": "get dressed",
+    "kor": "옷을 입다",
+    "def": "to put on clothes",
+    "ex": "I get dressed quickly.",
+    "ex_kor": "나는 빨리 옷을 입는다.",
+    "sentence_id": "cac214dd-cac6-4d03-91f4-d4382100c306"
+  },
+  {
+    "eng": "take a nap",
+    "kor": "낮잠을 자다",
+    "def": "to sleep for a short time",
+    "ex": "Dad takes a nap after lunch.",
+    "ex_kor": "아빠는 점심 후 낮잠을 잔다.",
+    "sentence_id": "ffee490a-2b32-4018-8328-8b06d4ff5908"
+  },
+  {
+    "eng": "wake up",
+    "kor": "일어나다",
+    "def": "to stop sleeping",
+    "ex": "I wake up at seven.",
+    "ex_kor": "나는 일곱 시에 일어난다.",
+    "sentence_id": "d07c1002-9c4e-40cb-aa71-646b0ba9ac44"
+  }
 ]

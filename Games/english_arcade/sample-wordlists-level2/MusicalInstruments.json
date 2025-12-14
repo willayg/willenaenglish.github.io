@@ -1,19 +1,144 @@
 [
-  {"eng":"violin","kor":"바이올린","def":"a string instrument you play with a bow","ex":"She plays the violin.","ex_kor":"그녀는 바이올린을 연주해요.","emoji":"🎻"},
-  {"eng":"guitar","kor":"기타","def":"a string instrument you strum or pluck","ex":"He plays the guitar.","ex_kor":"그는 기타를 연주해요.","emoji":"🎸"},
-  {"eng":"piano","kor":"피아노","def":"a large instrument with black and white keys","ex":"She plays the piano.","ex_kor":"그녀는 피아노를 쳐요.","emoji":"🎹"},
-  {"eng":"trumpet","kor":"트럼펫","def":"a brass instrument that is shiny","ex":"He plays the trumpet.","ex_kor":"그는 트럼펫을 불어요.","emoji":"🎺"},
-  {"eng":"drum","kor":"드럼","def":"a round instrument you hit to make sound","ex":"The drummer plays the drums.","ex_kor":"드러머가 드럼을 쳐요.","emoji":"🥁"},
-  {"eng":"flute","kor":"플루트","def":"a long, thin instrument you blow into","ex":"She plays the flute.","ex_kor":"그녀는 플루트를 불어요."},
-  {"eng":"clarinet","kor":"클라리넷","def":"a black woodwind instrument you blow into","ex":"He plays the clarinet.","ex_kor":"그는 클라리넷을 연주해요."},
-  {"eng":"harp","kor":"하프","def":"a large string instrument with a frame","ex":"The musician plays the harp.","ex_kor":"음악가는 하프를 연주해요."},
-  {"eng":"saxophone","kor":"색소폰","def":"a metal instrument you blow into","ex":"He plays the saxophone.","ex_kor":"그는 색소폰을 불어요.","emoji":"🎷"},
-  {"eng":"tambourine","kor":"탬버린","def":"a round instrument with metal rings","ex":"I shake the tambourine.","ex_kor":"나는 탬버린을 흔들어요."},
-  {"eng":"cymbals","kor":"심벌즈","def":"two metal discs that clash together","ex":"The cymbals make loud noise.","ex_kor":"심벌즈는 큰 소리를 내요."},
-  {"eng":"accordion","kor":"아코디언","def":"an instrument that expands and squeezes","ex":"The old man plays the accordion.","ex_kor":"노인은 아코디언을 연주해요."},
-  {"eng":"maracas","kor":"마라카스","def":"small instruments with beads inside that shake","ex":"She shakes maracas.","ex_kor":"그녀는 마라카스를 흔들어요."},
-  {"eng":"xylophone","kor":"실로폰","def":"an instrument with wooden bars you hit","ex":"The child plays the xylophone.","ex_kor":"아이들이 실로폰을 쳐요."},
-  {"eng":"cello","kor":"첼로","def":"a large string instrument you play with a bow","ex":"He plays the cello.","ex_kor":"그는 첼로를 연주해요."},
-  {"eng":"electric guitar","kor":"일렉트릭 기타","def":"a guitar that uses electricity to make sound","ex":"She plays the electric guitar.","ex_kor":"그녀는 일렉트릭 기타를 연주해요."},
-  {"eng":"keyboard","kor":"키보드","def":"an electronic instrument with keys like a piano","ex":"He plays the keyboard.","ex_kor":"그는 키보드를 연주해요."}
+  {
+    "eng": "violin",
+    "kor": "바이올린",
+    "def": "a string instrument you play with a bow",
+    "ex": "She plays the violin.",
+    "ex_kor": "그녀는 바이올린을 연주해요.",
+    "emoji": "🎻",
+    "sentence_id": "884b047b-4bfe-4cfa-8eb6-b71c423a66d3"
+  },
+  {
+    "eng": "guitar",
+    "kor": "기타",
+    "def": "a string instrument you strum or pluck",
+    "ex": "He plays the guitar.",
+    "ex_kor": "그는 기타를 연주해요.",
+    "emoji": "🎸",
+    "sentence_id": "cf908eb3-218f-4237-9080-1a63a849c801"
+  },
+  {
+    "eng": "piano",
+    "kor": "피아노",
+    "def": "a large instrument with black and white keys",
+    "ex": "She plays the piano.",
+    "ex_kor": "그녀는 피아노를 쳐요.",
+    "emoji": "🎹",
+    "sentence_id": "eb5a02b1-98e2-42cc-9213-9cd470cb6a41"
+  },
+  {
+    "eng": "trumpet",
+    "kor": "트럼펫",
+    "def": "a brass instrument that is shiny",
+    "ex": "He plays the trumpet.",
+    "ex_kor": "그는 트럼펫을 불어요.",
+    "emoji": "🎺",
+    "sentence_id": "94fec037-1f8f-4716-a154-e7fb75c3ccc8"
+  },
+  {
+    "eng": "drum",
+    "kor": "드럼",
+    "def": "a round instrument you hit to make sound",
+    "ex": "The drummer plays the drums.",
+    "ex_kor": "드러머가 드럼을 쳐요.",
+    "emoji": "🥁",
+    "sentence_id": "aebf68a6-4827-4596-953b-396faf17f725"
+  },
+  {
+    "eng": "flute",
+    "kor": "플루트",
+    "def": "a long, thin instrument you blow into",
+    "ex": "She plays the flute.",
+    "ex_kor": "그녀는 플루트를 불어요.",
+    "sentence_id": "a1ae9ffa-acd2-4e82-8361-ee81ed6a3e6d"
+  },
+  {
+    "eng": "clarinet",
+    "kor": "클라리넷",
+    "def": "a black woodwind instrument you blow into",
+    "ex": "He plays the clarinet.",
+    "ex_kor": "그는 클라리넷을 연주해요.",
+    "sentence_id": "d2d4f6c7-74b6-4ce0-ad9d-2b35741fd03f"
+  },
+  {
+    "eng": "harp",
+    "kor": "하프",
+    "def": "a large string instrument with a frame",
+    "ex": "The musician plays the harp.",
+    "ex_kor": "음악가는 하프를 연주해요.",
+    "sentence_id": "07c93d96-b632-4e05-b21f-9bee2f911a6b"
+  },
+  {
+    "eng": "saxophone",
+    "kor": "색소폰",
+    "def": "a metal instrument you blow into",
+    "ex": "He plays the saxophone.",
+    "ex_kor": "그는 색소폰을 불어요.",
+    "emoji": "🎷",
+    "sentence_id": "408942db-56ce-4e10-bcea-c6030e172c07"
+  },
+  {
+    "eng": "tambourine",
+    "kor": "탬버린",
+    "def": "a round instrument with metal rings",
+    "ex": "I shake the tambourine.",
+    "ex_kor": "나는 탬버린을 흔들어요.",
+    "sentence_id": "d49faf34-6705-4b1a-bdf2-4c3cab4e02fb"
+  },
+  {
+    "eng": "cymbals",
+    "kor": "심벌즈",
+    "def": "two metal discs that clash together",
+    "ex": "The cymbals make loud noise.",
+    "ex_kor": "심벌즈는 큰 소리를 내요.",
+    "sentence_id": "e2732f7b-55dc-41b0-aa39-0cbd8c0f7de2"
+  },
+  {
+    "eng": "accordion",
+    "kor": "아코디언",
+    "def": "an instrument that expands and squeezes",
+    "ex": "The old man plays the accordion.",
+    "ex_kor": "노인은 아코디언을 연주해요.",
+    "sentence_id": "1d8a8feb-8dea-445e-bf1e-576b123203b1"
+  },
+  {
+    "eng": "maracas",
+    "kor": "마라카스",
+    "def": "small instruments with beads inside that shake",
+    "ex": "She shakes maracas.",
+    "ex_kor": "그녀는 마라카스를 흔들어요.",
+    "sentence_id": "95df83b4-19a3-44d6-b8b8-d893b57b0019"
+  },
+  {
+    "eng": "xylophone",
+    "kor": "실로폰",
+    "def": "an instrument with wooden bars you hit",
+    "ex": "The child plays the xylophone.",
+    "ex_kor": "아이들이 실로폰을 쳐요.",
+    "sentence_id": "455f62a1-0dfe-4fac-a4cc-97d0cc0f1f08"
+  },
+  {
+    "eng": "cello",
+    "kor": "첼로",
+    "def": "a large string instrument you play with a bow",
+    "ex": "He plays the cello.",
+    "ex_kor": "그는 첼로를 연주해요.",
+    "sentence_id": "07764937-875c-405b-a5e6-b9d04f700344"
+  },
+  {
+    "eng": "electric guitar",
+    "kor": "일렉트릭 기타",
+    "def": "a guitar that uses electricity to make sound",
+    "ex": "She plays the electric guitar.",
+    "ex_kor": "그녀는 일렉트릭 기타를 연주해요.",
+    "sentence_id": "ef807168-9f05-4b3f-b14c-97c7740998b0"
+  },
+  {
+    "eng": "keyboard",
+    "kor": "키보드",
+    "def": "an electronic instrument with keys like a piano",
+    "ex": "He plays the keyboard.",
+    "ex_kor": "그는 키보드를 연주해요.",
+    "sentence_id": "71fc1339-c805-44c2-88c6-3ece1d7219e1"
+  }
 ]

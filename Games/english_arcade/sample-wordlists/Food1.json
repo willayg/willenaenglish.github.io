@@ -1,22 +1,178 @@
 [
-  {"eng":"apple","kor":"사과","def":"a round red or green fruit","ex":"I eat an apple.","ex_kor":"나는 사과를 먹는다.","emoji":"🍎"},
-  {"eng":"banana","kor":"바나나","def":"a long yellow fruit","ex":"I peel a banana.","ex_kor":"나는 바나나를 벗긴다.","emoji":"🍌"},
-  {"eng":"orange","kor":"오렌지","def":"a round orange citrus fruit","ex":"I eat an orange.","ex_kor":"나는 오렌지를 먹는다.","emoji":"🍊"},
-  {"eng":"grape","kor":"포도","def":"a small round sweet fruit","ex":"She eats grapes.","ex_kor":"그녀는 포도를 먹는다.","emoji":"🍇"},
-  {"eng":"watermelon","kor":"수박","def":"a very large green melon","ex":"We cut a watermelon.","ex_kor":"우리는 수박을 자른다.","emoji":"🍉"},
-  {"eng":"strawberry","kor":"딸기","def":"a small red sweet fruit","ex":"He picks a strawberry.","ex_kor":"그는 딸기를 딴다.","emoji":"🍓"},
-  {"eng":"pear","kor":"배","def":"a sweet fruit with a wide bottom","ex":"I slice a pear.","ex_kor":"나는 배를 자른다.","emoji":"🍐"},
-  {"eng":"peach","kor":"복숭아","def":"a soft fruit with fuzzy skin","ex":"I bite a peach.","ex_kor":"나는 복숭아를 물어뜯는다."},
-  {"eng":"cherry","kor":"체리","def":"a small round red fruit","ex":"She eats a cherry.","ex_kor":"그녀는 체리를 먹는다.","emoji":"🍒"},
-  {"eng":"lemon","kor":"레몬","def":"a sour yellow citrus fruit","ex":"I cut a lemon.","ex_kor":"나는 레몬을 자른다.","emoji":"🍋"},
-  {"eng":"lime","kor":"라임","def":"a small green sour fruit","ex":"We squeeze a lime for juice.","ex_kor":"우리는 주스를 위해 라임을 짠다."},
-  {"eng":"pineapple","kor":"파인애플","def":"a tropical fruit with sharp skin","ex":"He cuts a pineapple.","ex_kor":"그는 파인애플을 자른다.","emoji":"🍍"},
-  {"eng":"mango","kor":"망고","def":"a soft yellow tropical fruit","ex":"I eat a sweet mango.","ex_kor":"나는 달콤한 망고를 먹는다.","emoji":"🥭"},
-  {"eng":"kiwi","kor":"키위","def":"a small brown fruit with green inside","ex":"She eats a kiwi.","ex_kor":"그녀는 키위를 먹는다.","emoji":"🥝"},
-  {"eng":"plum","kor":"자두","def":"a small purple or red fruit","ex":"I eat a plum.","ex_kor":"나는 자두를 먹는다.","emoji":"🍑"},
-  {"eng":"melon","kor":"멜론","def":"a large round sweet fruit","ex":"We share a melon.","ex_kor":"우리는 멜론을 나눈다.","emoji":"🍈"},
-  {"eng":"coconut","kor":"코코넛","def":"a large brown fruit with white flesh","ex":"He drinks coconut water.","ex_kor":"그는 코코넛 물을 마신다.","emoji":"🥥"},
-  {"eng":"blueberry","kor":"블루베리","def":"a small round blue fruit","ex":"She eats blueberries with yogurt.","ex_kor":"그녀는 요구르트와 블루베리를 먹는다.","emoji":"🫐"},
-  {"eng":"raspberry","kor":"라즈베리","def":"a small red soft fruit","ex":"I put raspberries in cereal.","ex_kor":"나는 시리얼에 라즈베리를 넣는다."},
-  {"eng":"grapefruit","kor":"자몽","def":"a large sour citrus fruit","ex":"I drink grapefruit juice.","ex_kor":"나는 자몽 주스를 마신다."}
+  {
+    "eng": "apple",
+    "kor": "사과",
+    "def": "a round red or green fruit",
+    "ex": "I eat an apple.",
+    "ex_kor": "나는 사과를 먹는다.",
+    "emoji": "🍎",
+    "sentence_id": "0acca231-9074-4ae0-921b-5511397c8431"
+  },
+  {
+    "eng": "banana",
+    "kor": "바나나",
+    "def": "a long yellow fruit",
+    "ex": "I peel a banana.",
+    "ex_kor": "나는 바나나를 벗긴다.",
+    "emoji": "🍌",
+    "sentence_id": "c859a21c-d22e-4553-8455-f46c44880c7b"
+  },
+  {
+    "eng": "orange",
+    "kor": "오렌지",
+    "def": "a round orange citrus fruit",
+    "ex": "I eat an orange.",
+    "ex_kor": "나는 오렌지를 먹는다.",
+    "emoji": "🍊",
+    "sentence_id": "2d881566-b27e-4137-b56a-086b7a243aa9"
+  },
+  {
+    "eng": "grape",
+    "kor": "포도",
+    "def": "a small round sweet fruit",
+    "ex": "She eats grapes.",
+    "ex_kor": "그녀는 포도를 먹는다.",
+    "emoji": "🍇",
+    "sentence_id": "531486cf-7431-4d74-a21b-685100581516"
+  },
+  {
+    "eng": "watermelon",
+    "kor": "수박",
+    "def": "a very large green melon",
+    "ex": "We cut a watermelon.",
+    "ex_kor": "우리는 수박을 자른다.",
+    "emoji": "🍉",
+    "sentence_id": "418348e5-3313-49c4-b1f5-2fe7086acaa0"
+  },
+  {
+    "eng": "strawberry",
+    "kor": "딸기",
+    "def": "a small red sweet fruit",
+    "ex": "He picks a strawberry.",
+    "ex_kor": "그는 딸기를 딴다.",
+    "emoji": "🍓",
+    "sentence_id": "361ea9f6-5f6c-423b-b7be-cd7031854aa4"
+  },
+  {
+    "eng": "pear",
+    "kor": "배",
+    "def": "a sweet fruit with a wide bottom",
+    "ex": "I slice a pear.",
+    "ex_kor": "나는 배를 자른다.",
+    "emoji": "🍐",
+    "sentence_id": "eae718f6-ce6b-4fdb-a757-fc36574348f1"
+  },
+  {
+    "eng": "peach",
+    "kor": "복숭아",
+    "def": "a soft fruit with fuzzy skin",
+    "ex": "I bite a peach.",
+    "ex_kor": "나는 복숭아를 물어뜯는다.",
+    "sentence_id": "003e1e55-fe9c-4496-bd9b-d87d106411dd"
+  },
+  {
+    "eng": "cherry",
+    "kor": "체리",
+    "def": "a small round red fruit",
+    "ex": "She eats a cherry.",
+    "ex_kor": "그녀는 체리를 먹는다.",
+    "emoji": "🍒",
+    "sentence_id": "299daf1e-5360-4703-98c3-0721dceb5631"
+  },
+  {
+    "eng": "lemon",
+    "kor": "레몬",
+    "def": "a sour yellow citrus fruit",
+    "ex": "I cut a lemon.",
+    "ex_kor": "나는 레몬을 자른다.",
+    "emoji": "🍋",
+    "sentence_id": "95990242-2c5b-4d4d-b4cb-bc08aff16ca3"
+  },
+  {
+    "eng": "lime",
+    "kor": "라임",
+    "def": "a small green sour fruit",
+    "ex": "We squeeze a lime for juice.",
+    "ex_kor": "우리는 주스를 위해 라임을 짠다.",
+    "sentence_id": "f1906fd0-90eb-4cb9-a2b5-5a4cbb043312"
+  },
+  {
+    "eng": "pineapple",
+    "kor": "파인애플",
+    "def": "a tropical fruit with sharp skin",
+    "ex": "He cuts a pineapple.",
+    "ex_kor": "그는 파인애플을 자른다.",
+    "emoji": "🍍",
+    "sentence_id": "b420238a-a95c-45e8-8cb4-f783fe6fc9fd"
+  },
+  {
+    "eng": "mango",
+    "kor": "망고",
+    "def": "a soft yellow tropical fruit",
+    "ex": "I eat a sweet mango.",
+    "ex_kor": "나는 달콤한 망고를 먹는다.",
+    "emoji": "🥭",
+    "sentence_id": "c4915f55-81d7-4ca8-b30e-56cc70eca0f2"
+  },
+  {
+    "eng": "kiwi",
+    "kor": "키위",
+    "def": "a small brown fruit with green inside",
+    "ex": "She eats a kiwi.",
+    "ex_kor": "그녀는 키위를 먹는다.",
+    "emoji": "🥝",
+    "sentence_id": "24c86d86-9812-4fc3-9e92-833c9e4b8fe2"
+  },
+  {
+    "eng": "plum",
+    "kor": "자두",
+    "def": "a small purple or red fruit",
+    "ex": "I eat a plum.",
+    "ex_kor": "나는 자두를 먹는다.",
+    "emoji": "🍑",
+    "sentence_id": "70479d31-730d-4d01-a573-bde47b92eba1"
+  },
+  {
+    "eng": "melon",
+    "kor": "멜론",
+    "def": "a large round sweet fruit",
+    "ex": "We share a melon.",
+    "ex_kor": "우리는 멜론을 나눈다.",
+    "emoji": "🍈",
+    "sentence_id": "139eb593-6729-4fc9-979f-abb5ecc674b4"
+  },
+  {
+    "eng": "coconut",
+    "kor": "코코넛",
+    "def": "a large brown fruit with white flesh",
+    "ex": "He drinks coconut water.",
+    "ex_kor": "그는 코코넛 물을 마신다.",
+    "emoji": "🥥",
+    "sentence_id": "d8d1c42f-cc35-4128-833f-21fb68218f31"
+  },
+  {
+    "eng": "blueberry",
+    "kor": "블루베리",
+    "def": "a small round blue fruit",
+    "ex": "She eats blueberries with yogurt.",
+    "ex_kor": "그녀는 요구르트와 블루베리를 먹는다.",
+    "emoji": "🫐",
+    "sentence_id": "da5131e3-772f-494d-89e3-621c133d6cda"
+  },
+  {
+    "eng": "raspberry",
+    "kor": "라즈베리",
+    "def": "a small red soft fruit",
+    "ex": "I put raspberries in cereal.",
+    "ex_kor": "나는 시리얼에 라즈베리를 넣는다.",
+    "sentence_id": "2180f240-2443-4080-8377-6c76837fb0b2"
+  },
+  {
+    "eng": "grapefruit",
+    "kor": "자몽",
+    "def": "a large sour citrus fruit",
+    "ex": "I drink grapefruit juice.",
+    "ex_kor": "나는 자몽 주스를 마신다.",
+    "sentence_id": "1702d8cd-2b37-4681-8d21-ae73fe6ce8de"
+  }
 ]
