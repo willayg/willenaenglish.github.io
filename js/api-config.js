@@ -47,20 +47,20 @@
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // For the `cloudflare` branch we enable full rollout so the client prefers workers.
-  let CF_ROLLOUT_PERCENT = 100;
+  // SAFETY: Set to 0 while CF Workers routes are still being configured
+  // Once routes are confirmed working, gradually increase to 100
+  let CF_ROLLOUT_PERCENT = 0;
 
   // Per-function rollout overrides (percent 0-100). If a function is listed here,
   // this value takes precedence over the global CF_ROLLOUT_PERCENT. Defaults to 0
   // so nothing is routed to workers unless explicitly set.
-  // NOTE: For local dev, keep everything at 0 — Cloudflare workers can't see
-  // Netlify's auth cookies. Only enable in PRODUCTION or use shadow mode.
+  // NOTE: Keep at 0 until CF Workers are fully tested
   const CF_ROLLOUT_PERCENT_BY_FN = {
-    get_audio_urls: 100,
-    supabase_auth: 100,
-    log_word_attempt: 100,
-    homework_api: 100,
-    progress_summary: 100,
+    get_audio_urls: 0,
+    supabase_auth: 0,
+    log_word_attempt: 0,
+    homework_api: 0,
+    progress_summary: 0,
   };
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
