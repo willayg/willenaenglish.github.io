@@ -24,14 +24,15 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare Worker URLs - use direct *.workers.dev URLs (each worker has its own subdomain)
-  // NOTE: api.willenaenglish.com DNS was pointing to Netlify, not CF Workers!
+  // Cloudflare Worker URLs - use the proxy at api-cf.willenaenglish.com
+  // The proxy routes /.netlify/functions/<name> to the appropriate worker
+  const CF_PROXY_BASE = 'https://api-cf.willenaenglish.com';
   const CF_WORKER_URLS = {
-    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
-    supabase_auth: 'https://supabase-auth.willena.workers.dev',
-    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
-    homework_api: 'https://homework-api.willena.workers.dev',
-    progress_summary: 'https://progress-summary.willena.workers.dev',
+    get_audio_urls: CF_PROXY_BASE,
+    supabase_auth: CF_PROXY_BASE,
+    log_word_attempt: CF_PROXY_BASE,
+    homework_api: CF_PROXY_BASE,
+    progress_summary: CF_PROXY_BASE,
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
@@ -167,8 +168,8 @@
   
   if (isCloudflarePages) {
     // On Cloudflare Pages (willenaenglish.com, cf.willenaenglish.com, *.pages.dev)
-    // Use unified API endpoint - cookies work with Domain=.willenaenglish.com
-    API_BASE = 'https://api.willenaenglish.com';
+    // Use the CF proxy - cookies work with Domain=.willenaenglish.com
+    API_BASE = 'https://api-cf.willenaenglish.com';
   } else if (isGitHubPages) {
     // On GitHub Pages - use full Netlify URL for functions
     API_BASE = NETLIFY_FUNCTIONS_URL;
@@ -297,11 +298,12 @@
       primaryUrl = base + '/' + query;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      // Extract ONLY the query string from the path (not the /.netlify/functions/... part)
-      // Direct worker URLs don't need the Netlify function path prefix
+      // Using the CF proxy at api-cf.willenaenglish.com
+      // The proxy expects the full path like /.netlify/functions/progress_summary?section=kpi
+      // Extract query string and build the full URL with Netlify-style path
       const query = pathForRouting.includes('?') ? pathForRouting.slice(pathForRouting.indexOf('?')) : '';
-      primaryUrl = cfWorkerUrl + query;
-      console.log(`[WillenaAPI] ${functionName}: using CF Worker -> ${primaryUrl}`);
+      primaryUrl = `${cfWorkerUrl}/.netlify/functions/${functionName}${query}`;
+      console.log(`[WillenaAPI] ${functionName}: using CF Proxy -> ${primaryUrl}`);
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
