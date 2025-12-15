@@ -254,6 +254,19 @@
    * @returns {Promise<Response>}
    */
   async function apiFetch(functionPath, options = {}) {
+    // If already a full URL, don't modify it - just fetch with credentials
+    if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
+      console.log(`[WillenaAPI] Using provided URL directly: ${functionPath}`);
+      return fetch(functionPath, {
+        ...options,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+    }
+    
     const functionName = extractFunctionName(functionPath);
     const useCloudflare = shouldUseCloudflare(functionName);
     const cfWorkerUrl = CF_MIGRATED_FUNCTIONS[functionName];
@@ -274,6 +287,7 @@
       // use the CF API proxy (api.willenaenglish.com) which has proper CORS headers,
       // NOT the direct worker URLs (*.willena.workers.dev) which may block cross-origin.
       if (isCrossOrigin) {
+        // functionPath is relative (e.g., /.netlify/functions/...) - add proxy base
         primaryUrl = CF_API_PROXY_URL + functionPath;
         console.log(`[WillenaAPI] ${functionName}: using CF API proxy -> ${primaryUrl}`);
       } else {
