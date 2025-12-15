@@ -384,7 +384,9 @@ function showInlineError(text, onRetry) {
 // Core flow
 // -----------------------------
 async function callProgressSummary(section, params = {}, opts = {}) {
-  const url = new URL(FN('progress_summary'), window.location.origin);
+  const fnUrl = FN('progress_summary');
+  // If FN returns a full URL (starts with http), use it directly; otherwise use relative to origin
+  const url = fnUrl.startsWith('http') ? new URL(fnUrl) : new URL(fnUrl, window.location.origin);
   url.searchParams.set('section', section);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
