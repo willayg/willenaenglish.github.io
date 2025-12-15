@@ -1,18 +1,19 @@
 // profiles/profile.js - client script to load and render user progress
 (function(){
-  // Helper to get API URL - use Cloudflare Workers in production
+  // Helper to get API URL - use Cloudflare API proxy in production
   function getProgressSummaryUrl(section) {
     // Use WillenaAPI if available (handles CF worker routing)
     if (window.WillenaAPI && window.WillenaAPI.getApiUrl) {
       return window.WillenaAPI.getApiUrl(`/.netlify/functions/progress_summary?section=${section}`);
     }
-    // Direct CF Worker URL for production
+    // Direct CF API proxy URL for production/staging
     const host = window.location.hostname;
     if (host === 'willenaenglish.github.io' || 
         host === 'willenaenglish.com' || 
         host === 'www.willenaenglish.com' ||
-        host.endsWith('.willenaenglish.com')) {
-      return `https://progress-summary.willena.workers.dev?section=${section}`;
+        host.endsWith('.willenaenglish.com') ||
+        host.endsWith('.pages.dev')) {
+      return `https://api.willenaenglish.com/.netlify/functions/progress_summary?section=${section}`;
     }
     // Local dev fallback
     return `/.netlify/functions/progress_summary?section=${section}`;
