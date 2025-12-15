@@ -10,11 +10,11 @@
 /students/login.html        /students/signin.html                              301
 
 # Normalize teacher URLs (relative redirects)
-/Teachers/index.html        /Teachers/signin.html                              301
-/Teachers/login.html        /Teachers/signin.html                              301
-/teachers/index.html        /Teachers/signin.html                              301
-/teachers/login.html        /Teachers/signin.html                              301
-/teachers/signin.html       /Teachers/signin.html                              301
+# Note: Teacher login page is login.html (not signin.html)
+/Teachers/index.html        /Teachers/login.html                               301
+/teachers/index.html        /Teachers/login.html                               301
+/teachers/login.html        /Teachers/login.html                               301
+/Teachers/singin.html       /Teachers/login.html                               301
 
 # All other routes - serve files directly (no external redirects)
 # This allows staging to work without redirecting to production
