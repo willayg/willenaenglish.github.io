@@ -70,14 +70,19 @@
   // Netlify functions base URL
   const NETLIFY_FUNCTIONS_URL = 'https://willenaenglish.netlify.app';
   
+  // Cloudflare API proxy URL (handles CORS properly for all origins)
+  const CF_API_PROXY_URL = 'https://api.willenaenglish.com';
+  
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
+  // Detect Cloudflare Pages (staging, preview deployments, etc.)
+  const isCloudflarePages = currentHost.endsWith('.pages.dev');
   
-  // For cross-origin requests (GitHub Pages or custom domain -> Netlify), we need special handling
-  const isCrossOrigin = isGitHubPages || isCustomDomain;
+  // For cross-origin requests (GitHub Pages, custom domain, or CF Pages -> Netlify), we need special handling
+  const isCrossOrigin = isGitHubPages || isCustomDomain || isCloudflarePages;
   
   // Detect browsers that ALWAYS block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
   const isKnownCookieBlockingBrowser = (() => {
@@ -144,12 +149,14 @@
   let API_BASE = '';
   
   if (isGitHubPages) {
-    // On GitHub Pages - use full Netlify URL for functions
-    API_BASE = NETLIFY_FUNCTIONS_URL;
+    // On GitHub Pages - use Cloudflare API proxy for proper CORS
+    API_BASE = CF_API_PROXY_URL;
+  } else if (isCloudflarePages) {
+    // On Cloudflare Pages (staging, preview) - use Cloudflare API proxy for proper CORS
+    API_BASE = CF_API_PROXY_URL;
   } else if (isCustomDomain) {
-    // Custom domain - check if it points to Netlify or GH Pages
-    // For now, assume Netlify functions are still on netlify subdomain
-    API_BASE = NETLIFY_FUNCTIONS_URL;
+    // Custom domain - use Cloudflare API proxy
+    API_BASE = CF_API_PROXY_URL;
   } else if (isLocalhost) {
     // Local development - use relative path for local netlify dev (port 8888 or 9000)
     API_BASE = '';
@@ -161,13 +168,13 @@
     API_BASE = NETLIFY_FUNCTIONS_URL;
   }
 
-  // If we're running on the production custom domain, prefer Cloudflare Workers
-  // to avoid cross-origin CORS issues with Netlify functions. This forces
-  // API calls for migrated functions to go to CF workers.
-  if (isCustomDomain) {
+  // If we're running on a cross-origin host (custom domain, GH Pages, or CF Pages),
+  // prefer Cloudflare Workers to avoid CORS issues with Netlify functions.
+  // The CF API proxy handles CORS properly for all allowed origins.
+  if (isCustomDomain || isCloudflarePages || isGitHubPages) {
     CF_ROLLOUT_PERCENT = 100;
     CF_SHADOW_MODE = false;
-    console.log('[WillenaAPI] Custom domain detected: forcing Cloudflare Worker usage for migrated functions');
+    console.log('[WillenaAPI] Cross-origin host detected: forcing Cloudflare Worker usage (100% rollout)');
   }
 
   // --- Development override for localhost ---
@@ -361,6 +368,7 @@
   window.WillenaAPI = {
     BASE_URL: API_BASE,
     FUNCTIONS_URL: NETLIFY_FUNCTIONS_URL,
+    CF_API_PROXY_URL,
     CF_WORKER_BASE,
     CF_WORKER_URLS,
     CF_ROLLOUT_PERCENT,
@@ -368,6 +376,7 @@
     CF_MIGRATED_FUNCTIONS,
     isGitHubPages,
     isCustomDomain,
+    isCloudflarePages,
     isLocalhost,
     isNetlify,
     isCrossOrigin,
@@ -380,6 +389,7 @@
       if (isLocalhost) return 'local';
       if (isNetlify) return 'netlify';
       if (isGitHubPages) return 'github-pages';
+      if (isCloudflarePages) return 'cloudflare-pages';
       if (isCustomDomain) return 'custom-domain';
       return 'unknown';
     },
@@ -436,8 +446,8 @@
     }
   };
 
-  // Log configuration in development
-  if (isLocalhost || isGitHubPages) {
+  // Log configuration in development or staging
+  if (isLocalhost || isGitHubPages || isCloudflarePages) {
     console.log('[WillenaAPI] Environment:', window.WillenaAPI.getEnvironment());
     console.log('[WillenaAPI] Base URL:', API_BASE || '(relative)');
     console.log('[WillenaAPI] Cross-origin mode:', isCrossOrigin);
