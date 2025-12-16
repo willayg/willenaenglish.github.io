@@ -91,6 +91,42 @@
   }
 
   /**
+   * Safe JSON parser for API responses.
+   * BUG FIX: Handles HTML error pages, empty responses, and malformed JSON gracefully.
+   * Returns { success: false, error: string } on parse failure instead of throwing.
+   */
+  async function safeParseJSON(response) {
+    const contentType = response.headers.get('content-type') || '';
+    let responseText;
+    try {
+      responseText = await response.text();
+    } catch (e) {
+      console.error('[WillenaAPI] Failed to read response text:', e);
+      return { success: false, error: 'Failed to read response', _parseError: true };
+    }
+    
+    // Empty response
+    if (!responseText || !responseText.trim()) {
+      console.warn('[WillenaAPI] Empty response body');
+      return { success: false, error: 'Empty response', _parseError: true };
+    }
+    
+    // Non-JSON content type (likely HTML error page)
+    if (!contentType.includes('application/json')) {
+      console.error('[WillenaAPI] Non-JSON response (content-type:', contentType, '), body:', responseText.substring(0, 200));
+      return { success: false, error: 'Server error (non-JSON response)', _parseError: true };
+    }
+    
+    // Try to parse JSON
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      console.error('[WillenaAPI] JSON parse error:', e, 'Body:', responseText.substring(0, 200));
+      return { success: false, error: 'Invalid JSON response', _parseError: true };
+    }
+  }
+
+  /**
    * Wrapper for fetch that handles credentials.
    * Does NOT do any fancy routing - just adds credentials: 'include'.
    * Background fetch failures do NOT trigger logout.
@@ -152,6 +188,7 @@
     // Core API
     getApiUrl,
     fetch: apiFetch,
+    safeParseJSON,  // Safe JSON parsing that handles HTML error pages
     
     // Environment info (read-only)
     BASE_URL: API_BASE,

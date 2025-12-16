@@ -658,7 +658,27 @@
             auth_code: studentData.auth_code
           })
         });
-        const data = await res.json();
+        
+        // BUG FIX: Safely parse JSON response, handle HTML error pages
+        // On slow networks or server errors, we may get HTML instead of JSON
+        let data;
+        const contentType = res.headers.get('content-type') || '';
+        const responseText = await res.text();
+        
+        if (contentType.includes('application/json') && responseText) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseErr) {
+            console.error('[login] JSON parse failed:', parseErr, 'Response:', responseText.substring(0, 200));
+            showError(mt('errorOccurred'));
+            return;
+          }
+        } else {
+          // Server returned non-JSON (likely HTML error page)
+          console.error('[login] Non-JSON response:', res.status, responseText.substring(0, 200));
+          showError(mt('errorOccurred'));
+          return;
+        }
 
         if (res.ok && data.success && data.student) {
           studentData.id = data.student.id;
@@ -699,7 +719,23 @@
             password: tempPassword
           })
         });
-        const data = await res.json();
+        
+        // BUG FIX: Safely parse JSON response
+        let data;
+        const contentType = res.headers.get('content-type') || '';
+        const responseText = await res.text();
+        
+        if (contentType.includes('application/json') && responseText) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseErr) {
+            console.error('[login] set_student_password JSON parse failed:', parseErr);
+            throw new Error('Server error during login');
+          }
+        } else {
+          console.error('[login] set_student_password non-JSON response:', res.status);
+          throw new Error('Server error during login');
+        }
 
         if (!res.ok || !data || !data.success) {
           throw new Error((data && data.error) || 'Failed to set password');

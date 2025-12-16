@@ -15,11 +15,27 @@ const ENDPOINT = FN('log_word_attempt');
 let __userId = null;
 let __whoamiPromise = null;
 let __authResolved = false; // becomes true after first successful authenticated write
+let __authChecked = false; // BUG FIX: Track whether auth check has completed (even if failed)
 const __pendingAttempts = [];
 let __flushScheduled = false;
 const __pendingSessionEnd = new Map(); // sessionId -> payload for retry
 let __authRetryCount = 0; // Track how many times we've tried auth
 const __MAX_AUTH_RETRIES = 3; // Stop retrying after this many 401s
+
+// BUG FIX: Auth-ready event listeners for progress/stars loading
+// This solves the race condition where progress loads before auth completes
+const __authReadyCallbacks = [];
+function notifyAuthReady(userId) {
+  __authChecked = true;
+  console.log('[records] Auth check complete, userId:', userId ? '(set)' : '(null)');
+  // Dispatch custom event for global listeners
+  try {
+    window.dispatchEvent(new CustomEvent('auth:ready', { detail: { userId } }));
+  } catch (e) {}
+  // Call registered callbacks
+  __authReadyCallbacks.forEach(cb => { try { cb(userId); } catch (e) {} });
+  __authReadyCallbacks.length = 0;
+}
 
 // ---- BATCHING CONFIGURATION ----
 // When true, attempts are queued and sent in batches to reduce invocations
@@ -55,7 +71,18 @@ async function fetchWhoAmI() {
 
 function kickOffWhoAmI() {
   if (!__whoamiPromise) {
-    __whoamiPromise = fetchWhoAmI().then(id => { __userId = id; return id; }).catch(() => null);
+    __whoamiPromise = fetchWhoAmI()
+      .then(id => { 
+        __userId = id; 
+        // BUG FIX: Notify listeners that auth check is complete
+        notifyAuthReady(id);
+        return id; 
+      })
+      .catch(() => {
+        // BUG FIX: Still notify even on failure (user is not authenticated)
+        notifyAuthReady(null);
+        return null;
+      });
   }
   return __whoamiPromise;
 }
@@ -121,6 +148,37 @@ try {
 // Synchronous getter used by logging; returns cached id (may be null on first call).
 export function getUserId() { return __userId; }
 
+// BUG FIX: Check if auth check has completed (even if result was null/no user)
+export function isAuthChecked() { return __authChecked; }
+
+// BUG FIX: Wait for auth to be checked. Resolves with userId (or null if not logged in).
+// This is different from ensureUserId which just returns the current value.
+// This WAITS for the auth check to complete, then resolves.
+export function waitForAuth(timeoutMs = 10000) {
+  // If already checked, resolve immediately
+  if (__authChecked) {
+    return Promise.resolve(__userId);
+  }
+  // If whoami is in flight, wait for it
+  if (__whoamiPromise) {
+    return __whoamiPromise;
+  }
+  // Otherwise, kick off whoami and wait
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      console.warn('[records] waitForAuth timed out');
+      resolve(null);
+    }, timeoutMs);
+    
+    __authReadyCallbacks.push((userId) => {
+      clearTimeout(timeout);
+      resolve(userId);
+    });
+    
+    // Start the auth check
+    kickOffWhoAmI();
+  });
+}
 // Optional async helper for callers that want to ensure best-effort id resolution.
 export async function ensureUserId() { return (__userId ?? (await kickOffWhoAmI())); }
 

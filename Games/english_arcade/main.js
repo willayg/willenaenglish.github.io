@@ -30,8 +30,9 @@ import { historyManager } from './history-manager.js?v=20251231a';
 import { progressCache } from './utils/progress-cache.js?v=20251231a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251231a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251231a';
-// Import ensureUserId to wait for auth before prefetching progress
-import { ensureUserId } from '../../students/records.js';
+// BUG FIX: Import waitForAuth which properly waits for auth check to complete
+// This solves the race condition where progress loads show 0 because auth wasn't ready
+import { waitForAuth } from '../../students/records.js';
 
 // -----------------------------
 // Auth redirect helper
@@ -1276,14 +1277,16 @@ function showLevelsMenu() {
         if (s4) s4.textContent = `⭐ ${starCounts.level4 || 0}`;
       };
 
-      // IMPORTANT: Wait for user auth before loading star counts
-      // This prevents showing 0 stars when user is not authenticated yet
-      const userId = await ensureUserId();
+      // BUG FIX: Use waitForAuth() which properly waits for auth check to complete
+      // This prevents showing 0 stars due to race condition where auth wasn't ready
+      console.log('[levels] Waiting for auth to complete before loading stars...');
+      const userId = await waitForAuth(10000);
       if (!userId) {
-        console.log('[levels] User not authenticated, skipping star count load');
-        // Don't update UI - leave initial state (⭐ Loading... or empty)
+        console.log('[levels] User not authenticated after auth check, skipping star count load');
+        // Don't update UI - leave initial state
         return;
       }
+      console.log('[levels] Auth ready, loading star counts...');
 
       // Fetch from shared progress service (instant if prefetched!)
       const { data, fromCache } = await loadStarCounts();
@@ -1391,14 +1394,15 @@ function showGrammarLevelsMenu() {
       el.textContent = `⭐ ${Math.max(0, Math.round(val))}`;
     };
 
-    // IMPORTANT: Wait for user auth before loading star counts
-    // This prevents showing 0 stars when user is not authenticated yet
-    const userId = await ensureUserId();
+    // BUG FIX: Use waitForAuth() which properly waits for auth check to complete
+    console.log('[GrammarLevels] Waiting for auth to complete before loading stars...');
+    const userId = await waitForAuth(10000);
     if (!userId) {
-      console.log('[GrammarLevels] User not authenticated, skipping star count load');
+      console.log('[GrammarLevels] User not authenticated after auth check, skipping star count load');
       // Don't update UI - leave initial state
       return;
     }
+    console.log('[GrammarLevels] Auth ready, loading star counts...');
 
     try {
       const { data, fromCache } = await loadStarCounts();
@@ -1520,15 +1524,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Prefetch progress data in background (non-blocking)
   // This warms up the cache so modals open instantly
-  // IMPORTANT: Wait for user auth to complete first to avoid caching empty data
+  // BUG FIX: Use waitForAuth() which properly waits for auth check to complete
   setTimeout(async () => {
-    console.log('[WordArcade] Waiting for user auth before prefetching progress...');
-    const userId = await ensureUserId();
+    console.log('[WordArcade] Waiting for auth check to complete before prefetching progress...');
+    const userId = await waitForAuth(10000);
     if (!userId) {
-      console.log('[WordArcade] User not authenticated, skipping progress prefetch');
+      console.log('[WordArcade] User not authenticated after auth check, skipping progress prefetch');
       return;
     }
-    console.log('[WordArcade] User ready, prefetching progress data for instant modal loading...');
+    console.log('[WordArcade] Auth ready, prefetching progress data for instant modal loading...');
     prefetchAllProgress({
       level1Lists: LEVEL1_LISTS,
       level2Lists: LEVEL2_LISTS,

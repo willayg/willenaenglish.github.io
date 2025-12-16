@@ -11,11 +11,16 @@
  * - User-scoped keys prevent cross-user contamination
  * - 5-minute expiry prevents stale data
  * - Clears on logout
+ * 
+ * BUG FIX: Now properly waits for auth check to complete before determining
+ * if user is "not ready". Uses waitForAuth() instead of synchronous getUserId().
  */
 
-// Import getUserId from records.js to check user readiness
-// This is the same function used throughout the app to get the authenticated user
-import { getUserId, ensureUserId } from '../../../students/records.js';
+// Import auth functions from records.js
+// - getUserId: synchronous, may return null before auth check completes
+// - isAuthChecked: returns true once auth check has completed (even if user is null)
+// - waitForAuth: async, waits for auth check to complete, then returns userId
+import { getUserId, ensureUserId, isAuthChecked, waitForAuth } from '../../../students/records.js';
 
 class ProgressCache {
   constructor() {
@@ -29,6 +34,7 @@ class ProgressCache {
   /**
    * Check if we have a real authenticated user (not 'guest')
    * Used to gate progress caching to prevent poisoning cache with empty data
+   * NOTE: This is synchronous - use waitForUserReady() for async waiting
    */
   isUserReady() {
     try {
@@ -42,17 +48,23 @@ class ProgressCache {
   }
 
   /**
-   * Wait for user to be authenticated (for use before prefetch)
-   * Returns true if user becomes ready, false on timeout
+   * BUG FIX: Wait for auth check to complete, then check if user is ready.
+   * This solves the race condition where progress loads before auth completes.
+   * Returns userId if authenticated, null if not authenticated or timeout.
    */
-  async waitForUserReady(timeoutMs = 5000) {
-    if (this.isUserReady()) return true;
+  async waitForUserReady(timeoutMs = 10000) {
+    // If auth already checked and user is ready, return immediately
+    if (isAuthChecked && isAuthChecked() && this.isUserReady()) {
+      return getUserId();
+    }
     try {
-      // Try to trigger whoami and wait for result
-      const uid = await ensureUserId();
-      return !!uid;
-    } catch {
-      return false;
+      // Wait for auth check to complete
+      const uid = await waitForAuth(timeoutMs);
+      console.log('[ProgressCache] waitForUserReady resolved with:', uid ? '(user)' : '(null)');
+      return uid;
+    } catch (e) {
+      console.warn('[ProgressCache] waitForUserReady failed:', e);
+      return null;
     }
   }
 
