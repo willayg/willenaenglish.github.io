@@ -8,9 +8,8 @@
   <script>
     (function() {
       const host = window.location.hostname;
-      // These are the domains served by Netlify where cookies work
-      const netlifyHosts = ['willenaenglish.netlify.app', 'cf.willenaenglish.com'];
-      if (!netlifyHosts.includes(host)) {
+      // Only willenaenglish.netlify.app works - all others redirect there
+      if (host !== 'willenaenglish.netlify.app') {
         const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
         console.log('[Login] Redirecting to Netlify for auth:', netlifyUrl);
         window.location.replace(netlifyUrl);
