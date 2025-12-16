@@ -8,10 +8,8 @@
   <script>
     (function() {
       const host = window.location.hostname;
-      // Only redirect from the main apex/www domains served by Cloudflare Pages
-      // Do NOT redirect cf.willenaenglish.com or other subdomains (they may be Netlify aliases)
-      const isMainCloudflare = host === 'willenaenglish.com' || host === 'www.willenaenglish.com';
-      if (isMainCloudflare) {
+      // If NOT already on Netlify, redirect there
+      if (host !== 'willenaenglish.netlify.app') {
         const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
         console.log('[Login] Redirecting to Netlify for auth:', netlifyUrl);
         window.location.replace(netlifyUrl);

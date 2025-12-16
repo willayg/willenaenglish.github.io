@@ -16,14 +16,11 @@
   <script src="/js/api-config.js"></script>
   <script>
     // EMERGENCY FIX: Redirect to Netlify for all authenticated pages
-    // Cross-origin cookies don't work reliably between Cloudflare and Netlify
-    // Only redirect from MAIN Cloudflare domains, NOT subdomains like cf.willenaenglish.com
+    // Cross-origin cookies don't work - MUST be on willenaenglish.netlify.app
     (function() {
       const host = window.location.hostname;
-      // Only redirect from the main apex/www domains served by Cloudflare Pages
-      // Do NOT redirect cf.willenaenglish.com or other subdomains (they may be Netlify aliases)
-      const isMainCloudflare = host === 'willenaenglish.com' || host === 'www.willenaenglish.com';
-      if (isMainCloudflare) {
+      // If NOT already on Netlify, redirect there
+      if (host !== 'willenaenglish.netlify.app') {
         const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
         console.log('[Dashboard] Redirecting to Netlify for auth:', netlifyUrl);
         window.location.replace(netlifyUrl);
