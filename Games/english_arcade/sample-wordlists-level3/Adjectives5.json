@@ -1,98 +1,14 @@
 [
-  {
-    "eng": "empty",
-    "kor": "빈",
-    "def": "with nothing inside",
-    "ex": "The box is empty.",
-    "ex_kor": "상자가 비어 있다.",
-    "sentence_id": "880061c1-8190-4b1d-a362-cbb12ac89148"
-  },
-  {
-    "eng": "heavy",
-    "kor": "무거운",
-    "def": "having a lot of weight",
-    "ex": "This bag is heavy.",
-    "ex_kor": "이 가방은 무겁다.",
-    "sentence_id": "3689e47f-87a0-4dbf-9274-a5b150313258"
-  },
-  {
-    "eng": "light",
-    "kor": "가벼운",
-    "def": "not heavy",
-    "ex": "A feather is light.",
-    "ex_kor": "깃털은 가볍다.",
-    "sentence_id": "2f8ceefd-124e-47da-9d38-75d8bbd6f764"
-  },
-  {
-    "eng": "bright",
-    "kor": "밝은",
-    "def": "giving a lot of light",
-    "ex": "The sun is bright today.",
-    "ex_kor": "오늘 태양이 밝다.",
-    "sentence_id": "4559c60f-baa6-4673-a47a-50310b19ce8a"
-  },
-  {
-    "eng": "dark",
-    "kor": "어두운",
-    "def": "without much light",
-    "ex": "It’s dark in the room.",
-    "ex_kor": "방 안이 어둡다.",
-    "sentence_id": "b8b778bb-b087-4804-964e-62b8fa401d06"
-  },
-  {
-    "eng": "clean",
-    "kor": "깨끗한",
-    "def": "without dirt or marks",
-    "ex": "The table is clean.",
-    "ex_kor": "테이블이 깨끗하다.",
-    "sentence_id": "dd2316ad-bd54-4943-b5d5-6c497dba96ae"
-  },
-  {
-    "eng": "dirty",
-    "kor": "더러운",
-    "def": "covered with dirt",
-    "ex": "Your shoes are dirty.",
-    "ex_kor": "네 신발이 더럽다.",
-    "sentence_id": "afa0cb83-6804-4330-a0e0-a9940a6a0d0a"
-  },
-  {
-    "eng": "quiet",
-    "kor": "조용한",
-    "def": "making little or no noise",
-    "ex": "Be quiet in the library.",
-    "ex_kor": "도서관에서는 조용히 해라.",
-    "sentence_id": "a6ef5753-e8cd-4dce-9af0-173edcd8d50c"
-  },
-  {
-    "eng": "loud",
-    "kor": "시끄러운",
-    "def": "making a lot of noise",
-    "ex": "The music is too loud.",
-    "ex_kor": "음악이 너무 시끄럽다.",
-    "sentence_id": "e747f18c-e5ec-4f03-b6d9-0ddbf71e725f"
-  },
-  {
-    "eng": "soft",
-    "kor": "부드러운",
-    "def": "easy to press or not hard",
-    "ex": "This pillow is soft.",
-    "ex_kor": "이 베개는 부드럽다.",
-    "sentence_id": "3fa74738-5a30-4904-bc24-4dbb544091f5"
-  },
-  {
-    "eng": "hard",
-    "kor": "딱딱한",
-    "def": "solid or firm",
-    "ex": "The floor is hard.",
-    "ex_kor": "바닥이 딱딱하다.",
-    "sentence_id": "108e3d9a-10da-41f4-8d8f-a5e3e34d6749"
-  },
-  {
-    "eng": "sharp",
-    "kor": "날카로운",
-    "def": "having a thin edge or point",
-    "ex": "Be careful, the knife is sharp.",
-    "ex_kor": "조심해, 칼이 날카롭다.",
-    "sentence_id": "8671602a-5bb5-45a8-9bd6-e61b2b6ab36e"
-  }
+  {"eng":"empty","kor":"빈","def":"with nothing inside","ex":"The box is empty.","ex_kor":"상자가 비어 있다."},
+  {"eng":"heavy","kor":"무거운","def":"having a lot of weight","ex":"This bag is heavy.","ex_kor":"이 가방은 무겁다."},
+  {"eng":"light","kor":"가벼운","def":"not heavy","ex":"A feather is light.","ex_kor":"깃털은 가볍다."},
+  {"eng":"bright","kor":"밝은","def":"giving a lot of light","ex":"The sun is bright today.","ex_kor":"오늘 태양이 밝다."},
+  {"eng":"dark","kor":"어두운","def":"without much light","ex":"It’s dark in the room.","ex_kor":"방 안이 어둡다."},
+  {"eng":"clean","kor":"깨끗한","def":"without dirt or marks","ex":"The table is clean.","ex_kor":"테이블이 깨끗하다."},
+  {"eng":"dirty","kor":"더러운","def":"covered with dirt","ex":"Your shoes are dirty.","ex_kor":"네 신발이 더럽다."},
+  {"eng":"quiet","kor":"조용한","def":"making little or no noise","ex":"Be quiet in the library.","ex_kor":"도서관에서는 조용히 해라."},
+  {"eng":"loud","kor":"시끄러운","def":"making a lot of noise","ex":"The music is too loud.","ex_kor":"음악이 너무 시끄럽다."},
+  {"eng":"soft","kor":"부드러운","def":"easy to press or not hard","ex":"This pillow is soft.","ex_kor":"이 베개는 부드럽다."},
+  {"eng":"hard","kor":"딱딱한","def":"solid or firm","ex":"The floor is hard.","ex_kor":"바닥이 딱딱하다."},
+  {"eng":"sharp","kor":"날카로운","def":"having a thin edge or point","ex":"Be careful, the knife is sharp.","ex_kor":"조심해, 칼이 날카롭다."}
 ]

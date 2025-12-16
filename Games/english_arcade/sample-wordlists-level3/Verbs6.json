@@ -1,98 +1,14 @@
 [
-  {
-    "eng": "end",
-    "kor": "끝나다",
-    "def": "to finish something",
-    "ex": "The movie ends.",
-    "ex_kor": "영화가 끝난다.",
-    "sentence_id": "e5ead4a0-fa5b-475f-b512-257a21779d44"
-  },
-  {
-    "eng": "change",
-    "kor": "바꾸다",
-    "def": "to make something different",
-    "ex": "He changes his shirt.",
-    "ex_kor": "그는 셔츠를 갈아입는다.",
-    "sentence_id": "00f73015-29d7-47f2-81fc-29eb408fb722"
-  },
-  {
-    "eng": "grow",
-    "kor": "자라다",
-    "def": "to become bigger or older",
-    "ex": "The plant grows fast.",
-    "ex_kor": "그 식물은 빨리 자란다.",
-    "sentence_id": "b2f94d59-075c-4612-9c3c-e1f8e53824e9"
-  },
-  {
-    "eng": "carry",
-    "kor": "나르다",
-    "def": "to hold and move something",
-    "ex": "She carries the bag.",
-    "ex_kor": "그녀는 가방을 든다.",
-    "sentence_id": "5bae826d-dd0e-4ee9-9170-4f857b2be095"
-  },
-  {
-    "eng": "cut",
-    "kor": "자르다",
-    "def": "to divide something with a knife",
-    "ex": "Cut the paper in half.",
-    "ex_kor": "종이를 반으로 잘라라.",
-    "sentence_id": "bc9b9c0c-938e-4621-9077-c91ecb655fb5"
-  },
-  {
-    "eng": "put",
-    "kor": "놓다",
-    "def": "to move something to a place",
-    "ex": "Put your pen down.",
-    "ex_kor": "펜을 내려놓아라.",
-    "sentence_id": "be36e11b-5904-4e7c-9fd6-29e70694b290"
-  },
-  {
-    "eng": "hold",
-    "kor": "잡다",
-    "def": "to keep something in your hand",
-    "ex": "Hold my hand.",
-    "ex_kor": "내 손을 잡아라.",
-    "sentence_id": "30b48b44-bcf6-4aaa-802d-bdee54f736a5"
-  },
-  {
-    "eng": "keep",
-    "kor": "유지하다",
-    "def": "to continue having something",
-    "ex": "Keep your promise.",
-    "ex_kor": "약속을 지켜라.",
-    "sentence_id": "a6166e56-f6ee-417c-821f-c4939e25e710"
-  },
-  {
-    "eng": "draw",
-    "kor": "그리다",
-    "def": "to make a picture",
-    "ex": "I draw a cat.",
-    "ex_kor": "나는 고양이를 그린다.",
-    "sentence_id": "8cd5fdb8-904b-4e54-b7bd-e9f629423101"
-  },
-  {
-    "eng": "run (2)",
-    "kor": "운영하다",
-    "def": "to manage or control something",
-    "ex": "She runs a small shop.",
-    "ex_kor": "그녀는 작은 가게를 운영한다.",
-    "sentence_id": "74a7c34a-ee81-4cf8-9a0b-e455e296cc50"
-  },
-  {
-    "eng": "fall",
-    "kor": "떨어지다",
-    "def": "to move down suddenly",
-    "ex": "Leaves fall in autumn.",
-    "ex_kor": "낙엽은 가을에 떨어진다.",
-    "sentence_id": "1c634c3d-42ce-4eb5-9ff2-0ea0c1a8f6df"
-  },
-  {
-    "eng": "break",
-    "kor": "부수다",
-    "def": "to separate into pieces",
-    "ex": "Don’t break the glass.",
-    "ex_kor": "유리를 깨지 마라.",
-    "sentence_id": "5085d4fa-50f3-4d57-950b-b802e6fe3aff"
-  }
+  {"eng":"end","kor":"끝나다","def":"to finish something","ex":"The movie ends.","ex_kor":"영화가 끝난다."},
+  {"eng":"change","kor":"바꾸다","def":"to make something different","ex":"He changes his shirt.","ex_kor":"그는 셔츠를 갈아입는다."},
+  {"eng":"grow","kor":"자라다","def":"to become bigger or older","ex":"The plant grows fast.","ex_kor":"그 식물은 빨리 자란다."},
+  {"eng":"carry","kor":"나르다","def":"to hold and move something","ex":"She carries the bag.","ex_kor":"그녀는 가방을 든다."},
+  {"eng":"cut","kor":"자르다","def":"to divide something with a knife","ex":"Cut the paper in half.","ex_kor":"종이를 반으로 잘라라."},
+  {"eng":"put","kor":"놓다","def":"to move something to a place","ex":"Put your pen down.","ex_kor":"펜을 내려놓아라."},
+  {"eng":"hold","kor":"잡다","def":"to keep something in your hand","ex":"Hold my hand.","ex_kor":"내 손을 잡아라."},
+  {"eng":"keep","kor":"유지하다","def":"to continue having something","ex":"Keep your promise.","ex_kor":"약속을 지켜라."},
+  {"eng":"draw","kor":"그리다","def":"to make a picture","ex":"I draw a cat.","ex_kor":"나는 고양이를 그린다."},
+  {"eng":"run (2)","kor":"운영하다","def":"to manage or control something","ex":"She runs a small shop.","ex_kor":"그녀는 작은 가게를 운영한다."},
+  {"eng":"fall","kor":"떨어지다","def":"to move down suddenly","ex":"Leaves fall in autumn.","ex_kor":"낙엽은 가을에 떨어진다."},
+  {"eng":"break","kor":"부수다","def":"to separate into pieces","ex":"Don’t break the glass.","ex_kor":"유리를 깨지 마라."}
 ]

@@ -1,0 +1,31 @@
+# Cloudflare Pages custom headers
+# Fix NS_ERROR_CORRUPTED_CONTENT by ensuring proper content-type and caching
+
+# JavaScript files
+/Teachers/components/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/Teachers/tools/student_tracker/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/js/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=86400
+
+# All JS files
+/*.js
+  Content-Type: application/javascript; charset=utf-8
+  
+# CSS files
+/*.css
+  Content-Type: text/css; charset=utf-8
+
+# JSON files
+/*.json
+  Content-Type: application/json; charset=utf-8
+
+# HTML files - allow caching but revalidate
+/*.html
+  Cache-Control: public, max-age=3600, must-revalidate

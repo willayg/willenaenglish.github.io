@@ -1,97 +1,13 @@
 [
-  {
-    "eng": "get",
-    "kor": "얻다",
-    "def": "to receive or obtain something",
-    "ex": "I get a new book.",
-    "ex_kor": "나는 새 책을 얻는다.",
-    "sentence_id": "ed229dd5-6761-4d9e-aa4b-2d5c60418496"
-  },
-  {
-    "eng": "make",
-    "kor": "만들다",
-    "def": "to create or produce something",
-    "ex": "She makes a cake.",
-    "ex_kor": "그녀는 케이크를 만든다.",
-    "emoji": "🛠️",
-    "sentence_id": "dec07f06-a426-4761-98c2-d58fc7376b06"
-  },
-  {
-    "eng": "go",
-    "kor": "가다",
-    "def": "to move from one place to another",
-    "ex": "We go to school every day.",
-    "ex_kor": "우리는 매일 학교에 간다.",
-    "emoji": "🚶",
-    "sentence_id": "13dad112-da4c-49ca-b550-9b7c990948e0"
-  },
-  {
-    "eng": "come",
-    "kor": "오다",
-    "def": "to move toward a place",
-    "ex": "He came home late.",
-    "ex_kor": "그는 늦게 집에 온다.",
-    "sentence_id": "7414378b-5946-43ae-a9ca-1b2ac53ca589"
-  },
-  {
-    "eng": "look",
-    "kor": "보다",
-    "def": "to direct your eyes toward something",
-    "ex": "Look at the stars.",
-    "ex_kor": "별을 봐라.",
-    "emoji": "👀",
-    "sentence_id": "e5eacba6-a8b9-4a31-8bbf-52e2aa37b4d8"
-  },
-  {
-    "eng": "take",
-    "kor": "가져가다",
-    "def": "to carry or remove something",
-    "ex": "Take your bag with you.",
-    "ex_kor": "너의 가방을 가져가라.",
-    "sentence_id": "16b552ac-75d4-4ffc-95eb-c590330624ef"
-  },
-  {
-    "eng": "find",
-    "kor": "찾다",
-    "def": "to discover something",
-    "ex": "I find my keys.",
-    "ex_kor": "나는 내 열쇠를 찾는다.",
-    "emoji": "🔍",
-    "sentence_id": "f3b13d28-4bc2-44de-a2b1-d2a8f03f7bc4"
-  },
-  {
-    "eng": "give",
-    "kor": "주다",
-    "def": "to hand something to someone",
-    "ex": "She gives me a pen.",
-    "ex_kor": "그녀는 나에게 펜을 준다.",
-    "emoji": "🤲",
-    "sentence_id": "9853d32e-8578-48aa-9e8a-a0c4a1bc5ec4"
-  },
-  {
-    "eng": "tell",
-    "kor": "말하다",
-    "def": "to say something to someone",
-    "ex": "He tells me a story.",
-    "ex_kor": "그는 나에게 이야기를 말한다.",
-    "emoji": "🗣️",
-    "sentence_id": "85b4d074-68ed-46d9-8389-05431298f5b5"
-  },
-  {
-    "eng": "ask",
-    "kor": "묻다",
-    "def": "to request information",
-    "ex": "Ask your teacher for help.",
-    "ex_kor": "너의 선생님에게 도움을 청해라.",
-    "emoji": "❓",
-    "sentence_id": "a192a0ae-4c54-4533-954b-3960d47ada40"
-  },
-  {
-    "eng": "use",
-    "kor": "사용하다",
-    "def": "to do something with a tool or object",
-    "ex": "I use my phone every day.",
-    "ex_kor": "나는 매일 내 휴대폰을 사용한다.",
-    "sentence_id": "9abff5dd-a24a-47c0-813b-2b35b870f1cc"
-  }
+  {"eng":"get","kor":"얻다","def":"to receive or obtain something","ex":"I get a new book.","ex_kor":"나는 새 책을 얻는다."},
+  {"eng":"make","kor":"만들다","def":"to create or produce something","ex":"She makes a cake.","ex_kor":"그녀는 케이크를 만든다.","emoji":"🛠️"},
+  {"eng":"go","kor":"가다","def":"to move from one place to another","ex":"We go to school every day.","ex_kor":"우리는 매일 학교에 간다.","emoji":"🚶"},
+  {"eng":"come","kor":"오다","def":"to move toward a place","ex":"He came home late.","ex_kor":"그는 늦게 집에 온다."},
+  {"eng":"look","kor":"보다","def":"to direct your eyes toward something","ex":"Look at the stars.","ex_kor":"별을 봐라.","emoji":"👀"},
+  {"eng":"take","kor":"가져가다","def":"to carry or remove something","ex":"Take your bag with you.","ex_kor":"너의 가방을 가져가라."},
+  {"eng":"find","kor":"찾다","def":"to discover something","ex":"I find my keys.","ex_kor":"나는 내 열쇠를 찾는다.","emoji":"🔍"},
+  {"eng":"give","kor":"주다","def":"to hand something to someone","ex":"She gives me a pen.","ex_kor": "그녀는 나에게 펜을 준다.","emoji":"🤲"},
+  {"eng":"tell","kor":"말하다","def":"to say something to someone","ex":"He tells me a story.","ex_kor":"그는 나에게 이야기를 말한다.","emoji":"🗣️"},
+  {"eng":"ask","kor":"묻다","def":"to request information","ex":"Ask your teacher for help.","ex_kor":"너의 선생님에게 도움을 청해라.","emoji":"❓"},
+  {"eng":"use","kor":"사용하다","def":"to do something with a tool or object","ex":"I use my phone every day.","ex_kor":"나는 매일 내 휴대폰을 사용한다."}
 ]

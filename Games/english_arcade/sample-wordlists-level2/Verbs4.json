@@ -1,98 +1,14 @@
 [
-  {
-    "eng": "speak",
-    "kor": "말하다",
-    "def": "to say words aloud",
-    "ex": "He speaks loudly.",
-    "ex_kor": "그는 크게 말한다.",
-    "sentence_id": "7d0b8f68-e60e-40f7-8a40-6042ad8758e4"
-  },
-  {
-    "eng": "hear",
-    "kor": "듣다",
-    "def": "to notice sounds with your ears",
-    "ex": "I hear music.",
-    "ex_kor": "나는 음악을 듣는다.",
-    "sentence_id": "3fdecc1f-e704-495b-ba56-a4df240cd59f"
-  },
-  {
-    "eng": "open",
-    "kor": "열다",
-    "def": "to move something so it is not closed",
-    "ex": "Open the door.",
-    "ex_kor": "문을 열어라.",
-    "sentence_id": "1d0cacdc-18a3-4f16-afa0-ab779ebb739d"
-  },
-  {
-    "eng": "close",
-    "kor": "닫다",
-    "def": "to move something to make it shut",
-    "ex": "Close your book.",
-    "ex_kor": "책을 닫아라.",
-    "sentence_id": "a5de72c2-ee50-44be-87d9-860bff5072bd"
-  },
-  {
-    "eng": "buy",
-    "kor": "사다",
-    "def": "to get something by paying money",
-    "ex": "I buy some fruit.",
-    "ex_kor": "나는 과일을 산다.",
-    "sentence_id": "2f227487-96eb-4e25-b5ce-2d318b95d06a"
-  },
-  {
-    "eng": "sell",
-    "kor": "팔다",
-    "def": "to give something for money",
-    "ex": "They sell toys.",
-    "ex_kor": "그들은 장난감을 판다.",
-    "sentence_id": "50b6b817-4944-45d9-8a2b-5f70e8f6a123"
-  },
-  {
-    "eng": "drive",
-    "kor": "운전하다",
-    "def": "to control a car or vehicle",
-    "ex": "He drives to work.",
-    "ex_kor": "그는 운전해서 출근한다.",
-    "sentence_id": "1b731eae-0914-4996-b62f-5c565bcefa98"
-  },
-  {
-    "eng": "fly",
-    "kor": "날다",
-    "def": "to move through the air",
-    "ex": "Birds fly in the sky.",
-    "ex_kor": "새들은 하늘을 난다.",
-    "sentence_id": "5b725eda-e394-47aa-9743-7e1f0a711767"
-  },
-  {
-    "eng": "live",
-    "kor": "살다",
-    "def": "to have life or stay somewhere",
-    "ex": "We live in Korea.",
-    "ex_kor": "우리는 한국에 산다.",
-    "sentence_id": "6551b709-da0e-47f4-b2c2-aa99236ad7cf"
-  },
-  {
-    "eng": "die",
-    "kor": "죽다",
-    "def": "to stop living",
-    "ex": "The plant dies.",
-    "ex_kor": "그 식물은 죽는다.",
-    "sentence_id": "77db6348-315d-47c6-9b3e-7fa9eb9afee4"
-  },
-  {
-    "eng": "think",
-    "kor": "생각하다",
-    "def": "to have ideas in your mind",
-    "ex": "I think it’s funny.",
-    "ex_kor": "나는 그게 재미있다고 생각한다.",
-    "sentence_id": "a322be2e-063e-4c9d-806d-b40e5abc7f61"
-  },
-  {
-    "eng": "feel",
-    "kor": "느끼다",
-    "def": "to experience an emotion or touch",
-    "ex": "I feel happy today.",
-    "ex_kor": "나는 오늘 행복하다.",
-    "sentence_id": "bdd27eda-f752-441b-ab89-cb8be45f0635"
-  }
+  {"eng":"speak","kor":"말하다","def":"to say words aloud","ex":"He speaks loudly.","ex_kor":"그는 크게 말한다."},
+  {"eng":"hear","kor":"듣다","def":"to notice sounds with your ears","ex":"I hear music.","ex_kor":"나는 음악을 듣는다."},
+  {"eng":"open","kor":"열다","def":"to move something so it is not closed","ex":"Open the door.","ex_kor":"문을 열어라."},
+  {"eng":"close","kor":"닫다","def":"to move something to make it shut","ex":"Close your book.","ex_kor":"책을 닫아라."},
+  {"eng":"buy","kor":"사다","def":"to get something by paying money","ex":"I buy some fruit.","ex_kor":"나는 과일을 산다."},
+  {"eng":"sell","kor":"팔다","def":"to give something for money","ex":"They sell toys.","ex_kor":"그들은 장난감을 판다."},
+  {"eng":"drive","kor":"운전하다","def":"to control a car or vehicle","ex":"He drives to work.","ex_kor":"그는 운전해서 출근한다."},
+  {"eng":"fly","kor":"날다","def":"to move through the air","ex":"Birds fly in the sky.","ex_kor":"새들은 하늘을 난다."},
+  {"eng":"live","kor":"살다","def":"to have life or stay somewhere","ex":"We live in Korea.","ex_kor":"우리는 한국에 산다."},
+  {"eng":"die","kor":"죽다","def":"to stop living","ex":"The plant dies.","ex_kor":"그 식물은 죽는다."},
+  {"eng":"think","kor":"생각하다","def":"to have ideas in your mind","ex":"I think it’s funny.","ex_kor":"나는 그게 재미있다고 생각한다."},
+  {"eng":"feel","kor":"느끼다","def":"to experience an emotion or touch","ex":"I feel happy today.","ex_kor":"나는 오늘 행복하다."}
 ]

@@ -1,97 +1,14 @@
 [
-  {
-    "eng": "work",
-    "kor": "일하다",
-    "def": "to do a job or task",
-    "ex": "He works at a bank.",
-    "ex_kor": "그는 은행에서 일한다.",
-    "sentence_id": "ed81e674-9690-4285-b765-1cbe384e10bc"
-  },
-  {
-    "eng": "try",
-    "kor": "시도하다",
-    "def": "to make an effort",
-    "ex": "Try your best!",
-    "ex_kor": "최선을 다해!",
-    "sentence_id": "5cbefdf4-c627-40d6-8c10-c384050ecbc3"
-  },
-  {
-    "eng": "leave",
-    "kor": "떠나다",
-    "def": "to go away from a place",
-    "ex": "She leaves home early.",
-    "ex_kor": "그녀는 일찍 집을 떠난다.",
-    "sentence_id": "c58cee08-67f4-4db3-b576-dc7f615fd103"
-  },
-  {
-    "eng": "call",
-    "kor": "전화하다",
-    "def": "to speak to someone by phone",
-    "ex": "I call my friend.",
-    "ex_kor": "나는 내 친구에게 전화한다.",
-    "sentence_id": "0cfaae9d-0814-41aa-b651-89f91c61b19d"
-  },
-  {
-    "eng": "move",
-    "kor": "움직이다",
-    "def": "to change position or place",
-    "ex": "Don't move!",
-    "ex_kor": "움직이지 마!"
-  },
-  {
-    "eng": "start",
-    "kor": "시작하다",
-    "def": "to begin doing something",
-    "ex": "We start class at nine.",
-    "ex_kor": "우리는 9시에 수업을 시작한다.",
-    "sentence_id": "ad5c113b-76fe-4d54-8f04-c8a3c8a035d6"
-  },
-  {
-    "eng": "help",
-    "kor": "돕다",
-    "def": "to give support to someone",
-    "ex": "Can you help me?",
-    "ex_kor": "너는 나를 도와줄 수 있니?",
-    "sentence_id": "afc78b3e-a2e3-4910-9c7a-6903e2408140"
-  },
-  {
-    "eng": "play",
-    "kor": "놀다",
-    "def": "to do something for fun",
-    "ex": "The children play outside.",
-    "ex_kor": "아이들은 밖에서 논다.",
-    "sentence_id": "61d09e80-5ff6-47ca-b08a-133afe115c6b"
-  },
-  {
-    "eng": "run",
-    "kor": "달리다",
-    "def": "to move quickly with your legs",
-    "ex": "He runs every morning.",
-    "ex_kor": "그는 매일 아침 달린다.",
-    "sentence_id": "33302209-bd5f-48eb-b1ce-9b72c3197d25"
-  },
-  {
-    "eng": "bring",
-    "kor": "가져오다",
-    "def": "to carry something to a place",
-    "ex": "Please bring your homework.",
-    "ex_kor": "너의 숙제를 가져와 줘.",
-    "sentence_id": "f6219488-d543-41b6-91de-7f4f38064be4"
-  },
-  {
-    "eng": "write",
-    "kor": "쓰다",
-    "def": "to make words with a pen or keyboard",
-    "ex": "She writes a letter.",
-    "ex_kor": "그녀는 편지를 쓴다.",
-    "sentence_id": "28e42969-49de-44c8-a3de-988ac9359133"
-  },
-  {
-    "eng": "read",
-    "kor": "읽다",
-    "def": "to look at and understand words",
-    "ex": "I read books every night.",
-    "ex_kor": "나는 매일 밤 책을 읽는다.",
-    "sentence_id": "c2c41e2a-ad21-4b20-ad70-c8619507608e"
-  }
+  {"eng":"work","kor":"일하다","def":"to do a job or task","ex":"He works at a bank.","ex_kor":"그는 은행에서 일한다."},
+  {"eng":"try","kor":"시도하다","def":"to make an effort","ex":"Try your best!","ex_kor":"최선을 다해!"},
+  {"eng":"leave","kor":"떠나다","def":"to go away from a place","ex":"She leaves home early.","ex_kor":"그녀는 일찍 집을 떠난다."},
+  {"eng":"call","kor":"전화하다","def":"to speak to someone by phone","ex":"I call my friend.","ex_kor":"나는 내 친구에게 전화한다."},
+  {"eng":"move","kor":"움직이다","def":"to change position or place","ex":"Don't move!","ex_kor":"움직이지 마!"},
+  {"eng":"start","kor":"시작하다","def":"to begin doing something","ex":"We start class at nine.","ex_kor":"우리는 9시에 수업을 시작한다."},
+  {"eng":"help","kor":"돕다","def":"to give support to someone","ex":"Can you help me?","ex_kor":"너는 나를 도와줄 수 있니?"},
+  {"eng":"play","kor":"놀다","def":"to do something for fun","ex":"The children play outside.","ex_kor":"아이들은 밖에서 논다."},
+  {"eng":"run","kor":"달리다","def":"to move quickly with your legs","ex":"He runs every morning.","ex_kor":"그는 매일 아침 달린다."},
+  {"eng":"bring","kor":"가져오다","def":"to carry something to a place","ex":"Please bring your homework.","ex_kor":"너의 숙제를 가져와 줘."},
+  {"eng":"write","kor":"쓰다","def":"to make words with a pen or keyboard","ex":"She writes a letter.","ex_kor":"그녀는 편지를 쓴다."},
+  {"eng":"read","kor":"읽다","def":"to look at and understand words","ex":"I read books every night.","ex_kor":"나는 매일 밤 책을 읽는다."}
 ]

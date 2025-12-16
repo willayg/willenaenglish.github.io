@@ -1,89 +1,12 @@
 [
-  {
-    "eng": "bedroom",
-    "kor": "침실",
-    "def": "a room for sleeping",
-    "ex": "I sleep in the bedroom.",
-    "ex_kor": "나는 침실에서 자요.",
-    "emoji": "🛏️",
-    "sentence_id": "ed5dbd1a-ad52-4b5e-ba8e-2634414739c7"
-  },
-  {
-    "eng": "kitchen",
-    "kor": "주방",
-    "def": "a room for cooking",
-    "ex": "We cook in the kitchen.",
-    "ex_kor": "우리는 주방에서 요리해요.",
-    "emoji": "🍳",
-    "sentence_id": "75a2fb23-832c-46f9-9614-4f70c91c49aa"
-  },
-  {
-    "eng": "bathroom",
-    "kor": "욕실",
-    "def": "a room with toilet and shower",
-    "ex": "I wash in the bathroom.",
-    "ex_kor": "나는 욕실에서 씻어요.",
-    "emoji": "🚿",
-    "sentence_id": "802cec3b-a7a9-406d-959e-abf4cc72ba5a"
-  },
-  {
-    "eng": "living room",
-    "kor": "거실",
-    "def": "a room for sitting and watching TV",
-    "ex": "We sit in the living room.",
-    "ex_kor": "우리는 거실에 앉아요.",
-    "emoji": "🛋️",
-    "sentence_id": "4e3bbe1f-16c1-46aa-b522-915a7bb411f1"
-  },
-  {
-    "eng": "basement",
-    "kor": "지하실",
-    "def": "the part of a building below ground",
-    "ex": "Tools are in the basement.",
-    "ex_kor": "지하실에 도구가 있어요.",
-    "sentence_id": "9a991413-e743-4b8b-aac8-af693d0e7a27"
-  },
-  {
-    "eng": "attic",
-    "kor": "다락",
-    "def": "the space under the roof of a building",
-    "ex": "Old boxes are in the attic.",
-    "ex_kor": "다락에 오래된 상자가 있어요.",
-    "sentence_id": "a53dc5cc-bd3b-4fed-942a-7f5eea7ebdd5"
-  },
-  {
-    "eng": "staircase",
-    "kor": "계단",
-    "def": "steps for going up or down",
-    "ex": "I walk up the staircase.",
-    "ex_kor": "나는 계단을 올라가요.",
-    "emoji": "🪜",
-    "sentence_id": "858d1cce-b312-4500-82b4-d4d2d7941374"
-  },
-  {
-    "eng": "balcony",
-    "kor": "발코니",
-    "def": "a platform outside a room",
-    "ex": "We sit on the balcony.",
-    "ex_kor": "우리는 발코니에 앉아요.",
-    "emoji": "🪟",
-    "sentence_id": "f213bf3e-6d63-419e-a3ef-fb6693f93004"
-  },
-  {
-    "eng": "garage",
-    "kor": "차고",
-    "def": "a room for parking a car",
-    "ex": "The car is in the garage.",
-    "ex_kor": "차가 차고에 있어요.",
-    "emoji": "🚗",
-    "sentence_id": "c406b480-eb1f-4d9e-b6e1-1351070a8554"
-  },
-  {
-    "eng": "hallway",
-    "kor": "복도",
-    "def": "a long passage with rooms on the sides",
-    "ex": "Pictures hang in the hallway.",
-    "ex_kor": "복도에 그림이 걸려 있어요.",
-    "sentence_id": "cb93f250-9222-4413-92ca-e33badedfd73"
-  }
+  {"eng":"bedroom","kor":"침실","def":"a room for sleeping","ex":"I sleep in the bedroom.","ex_kor":"나는 침실에서 자요.","emoji":"🛏️"},
+  {"eng":"kitchen","kor":"주방","def":"a room for cooking","ex":"We cook in the kitchen.","ex_kor":"우리는 주방에서 요리해요.","emoji":"🍳"},
+  {"eng":"bathroom","kor":"욕실","def":"a room with toilet and shower","ex":"I wash in the bathroom.","ex_kor":"나는 욕실에서 씻어요.","emoji":"🚿"},
+  {"eng":"living room","kor":"거실","def":"a room for sitting and watching TV","ex":"We sit in the living room.","ex_kor":"우리는 거실에 앉아요.","emoji":"🛋️"},
+  {"eng":"basement","kor":"지하실","def":"the part of a building below ground","ex":"Tools are in the basement.","ex_kor":"지하실에 도구가 있어요."},
+  {"eng":"attic","kor":"다락","def":"the space under the roof of a building","ex":"Old boxes are in the attic.","ex_kor":"다락에 오래된 상자가 있어요."},
+  {"eng":"staircase","kor":"계단","def":"steps for going up or down","ex":"I walk up the staircase.","ex_kor":"나는 계단을 올라가요.","emoji":"🪜"},
+  {"eng":"balcony","kor":"발코니","def":"a platform outside a room","ex":"We sit on the balcony.","ex_kor":"우리는 발코니에 앉아요.","emoji":"🪟"},
+  {"eng":"garage","kor":"차고","def":"a room for parking a car","ex":"The car is in the garage.","ex_kor":"차가 차고에 있어요.","emoji":"🚗"},
+  {"eng":"hallway","kor":"복도","def":"a long passage with rooms on the sides","ex":"Pictures hang in the hallway.","ex_kor":"복도에 그림이 걸려 있어요."}
 ]

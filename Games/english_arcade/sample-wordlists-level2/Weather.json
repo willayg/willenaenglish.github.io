@@ -1,133 +1,17 @@
 [
-  {
-    "eng": "sun",
-    "kor": "해",
-    "def": "the bright star in the sky that gives us light and warmth",
-    "ex": "The sun is shining.",
-    "ex_kor": "해가 빛나고 있다.",
-    "emoji": "☀️",
-    "sentence_id": "eee14b0d-629f-48bb-92f6-f5fdbfc7091d"
-  },
-  {
-    "eng": "rain",
-    "kor": "비",
-    "def": "water that falls from clouds in drops",
-    "ex": "It is raining today.",
-    "ex_kor": "오늘 비가 온다.",
-    "emoji": "🌧️",
-    "sentence_id": "cc2b7b08-3329-4b61-be8b-ec452501cd5e"
-  },
-  {
-    "eng": "snow",
-    "kor": "눈",
-    "def": "soft white pieces of frozen water that fall from the sky",
-    "ex": "Snow covers the ground.",
-    "ex_kor": "눈이 땅을 덮고 있다.",
-    "emoji": "❄️",
-    "sentence_id": "6479c431-0b93-4c29-9e44-430ab2a10e96"
-  },
-  {
-    "eng": "wind",
-    "kor": "바람",
-    "def": "moving air outside",
-    "ex": "The wind is strong.",
-    "ex_kor": "바람이 강하다.",
-    "emoji": "💨",
-    "sentence_id": "972a8e83-4844-4068-b73f-d46719a7e032"
-  },
-  {
-    "eng": "cloud",
-    "kor": "구름",
-    "def": "a white or gray mass in the sky made of tiny drops of water",
-    "ex": "There are many clouds today.",
-    "ex_kor": "오늘은 구름이 많다.",
-    "emoji": "☁️",
-    "sentence_id": "b68c19ce-a884-476a-ad25-07a8b2839141"
-  },
-  {
-    "eng": "autumn",
-    "kor": "가을",
-    "def": "the season after summer with falling leaves",
-    "ex": "I like autumn colors.",
-    "ex_kor": "나는 가을 색깔을 좋아한다.",
-    "emoji": "🍂",
-    "sentence_id": "570ab901-6ad9-4869-8bcb-c9dc3e6bee54"
-  },
-  {
-    "eng": "spring",
-    "kor": "봄",
-    "def": "the season with blooming flowers",
-    "ex": "Spring is warm and sunny.",
-    "ex_kor": "봄은 따뜻하고 화창하다.",
-    "emoji": "🌸",
-    "sentence_id": "fdee5dd0-e11e-446b-a67b-0d94ddcbfa08"
-  },
-  {
-    "eng": "frost",
-    "kor": "서리",
-    "def": "ice crystals on cold surfaces",
-    "ex": "There is frost on the grass.",
-    "ex_kor": "잔디에 서리가 끼었다.",
-    "sentence_id": "2dd6e530-ee8e-430c-8c71-427164aaeca9"
-  },
-  {
-    "eng": "thunder",
-    "kor": "천둥",
-    "def": "a loud sound after lightning",
-    "ex": "I hear thunder during the storm.",
-    "ex_kor": "폭풍우가 치는 동안 천둥 소리가 들린다.",
-    "emoji": "⛈️",
-    "sentence_id": "03bbe281-6f40-4d59-9634-63c5b28c1a95"
-  },
-  {
-    "eng": "lightning",
-    "kor": "번개",
-    "def": "a bright flash during a storm",
-    "ex": "Lightning lights up the sky.",
-    "ex_kor": "번개가 하늘을 밝힌다.",
-    "emoji": "⚡",
-    "sentence_id": "52ca465d-50b8-4e57-bfbe-ded9cd1cb3a7"
-  },
-  {
-    "eng": "rainbow",
-    "kor": "무지개",
-    "def": "colorful arc in the sky after rain",
-    "ex": "A rainbow appears after the rain.",
-    "ex_kor": "비가 온 뒤 무지개가 나타난다.",
-    "emoji": "🌈",
-    "sentence_id": "89ee1fd7-52ca-414b-a903-e326367bfa95"
-  },
-  {
-    "eng": "breeze",
-    "kor": "산들바람",
-    "def": "a soft gentle wind",
-    "ex": "A nice breeze blows today.",
-    "ex_kor": "오늘은 시원한 산들바람이 분다.",
-    "sentence_id": "3ac77384-1cce-4353-863c-5745d370377e"
-  },
-  {
-    "eng": "typhoon",
-    "kor": "태풍",
-    "def": "a very strong wind and rain storm",
-    "ex": "The typhoon is coming.",
-    "ex_kor": "태풍이 오고 있다.",
-    "emoji": "🌪️",
-    "sentence_id": "0efe9bda-034a-47e3-94dc-24e7189d2690"
-  },
-  {
-    "eng": "hail",
-    "kor": "우박",
-    "def": "small balls of ice that fall from clouds",
-    "ex": "Hail hits the roof.",
-    "ex_kor": "우박이 지붕을 때린다.",
-    "sentence_id": "e3ec8326-00e2-4497-87d3-c27079a9a623"
-  },
-  {
-    "eng": "humid",
-    "kor": "습도가 많은",
-    "def": "moisture or wetness in the air",
-    "ex": "High humidity makes it feel hot.",
-    "ex_kor": "습도가 높으면 더 덥게 느껴진다.",
-    "sentence_id": "19cd52e6-4f6b-46f8-9fad-80a8267624c8"
-  }
+  {"eng":"sun","kor":"해","def":"the bright star in the sky that gives us light and warmth","ex":"The sun is shining.","ex_kor":"해가 빛나고 있다.","emoji":"☀️"},
+  {"eng":"rain","kor":"비","def":"water that falls from clouds in drops","ex":"It is raining today.","ex_kor":"오늘 비가 온다.","emoji":"🌧️"},
+  {"eng":"snow","kor":"눈","def":"soft white pieces of frozen water that fall from the sky","ex":"Snow covers the ground.","ex_kor":"눈이 땅을 덮고 있다.","emoji":"❄️"},
+  {"eng":"wind","kor":"바람","def":"moving air outside","ex":"The wind is strong.","ex_kor":"바람이 강하다.","emoji":"💨"},
+  {"eng":"cloud","kor":"구름","def":"a white or gray mass in the sky made of tiny drops of water","ex":"There are many clouds today.","ex_kor":"오늘은 구름이 많다.","emoji":"☁️"},
+  {"eng":"autumn","kor":"가을","def":"the season after summer with falling leaves","ex":"I like autumn colors.","ex_kor":"나는 가을 색깔을 좋아한다.","emoji":"🍂"},
+  {"eng":"spring","kor":"봄","def":"the season with blooming flowers","ex":"Spring is warm and sunny.","ex_kor":"봄은 따뜻하고 화창하다.","emoji":"🌸"},
+  {"eng":"frost","kor":"서리","def":"ice crystals on cold surfaces","ex":"There is frost on the grass.","ex_kor":"잔디에 서리가 끼었다."},
+  {"eng":"thunder","kor":"천둥","def":"a loud sound after lightning","ex":"I hear thunder during the storm.","ex_kor":"폭풍우가 치는 동안 천둥 소리가 들린다.","emoji":"⛈️"},
+  {"eng":"lightning","kor":"번개","def":"a bright flash during a storm","ex":"Lightning lights up the sky.","ex_kor":"번개가 하늘을 밝힌다.","emoji":"⚡"},
+  {"eng":"rainbow","kor":"무지개","def":"colorful arc in the sky after rain","ex":"A rainbow appears after the rain.","ex_kor":"비가 온 뒤 무지개가 나타난다.","emoji":"🌈"},
+  {"eng":"breeze","kor":"산들바람","def":"a soft gentle wind","ex":"A nice breeze blows today.","ex_kor":"오늘은 시원한 산들바람이 분다."},
+  {"eng":"typhoon","kor":"태풍","def":"a very strong wind and rain storm","ex":"The typhoon is coming.","ex_kor":"태풍이 오고 있다.","emoji":"🌪️"},
+  {"eng":"hail","kor":"우박","def":"small balls of ice that fall from clouds","ex":"Hail hits the roof.","ex_kor":"우박이 지붕을 때린다."},
+  {"eng":"humid","kor":"습도가 많은","def":"moisture or wetness in the air","ex":"High humidity makes it feel hot.","ex_kor":"습도가 높으면 더 덥게 느껴진다."}
 ]

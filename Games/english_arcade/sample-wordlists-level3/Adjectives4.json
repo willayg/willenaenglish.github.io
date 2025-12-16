@@ -1,98 +1,14 @@
 [
-  {
-    "eng": "busy",
-    "kor": "바쁜",
-    "def": "having a lot to do",
-    "ex": "She is busy with homework.",
-    "ex_kor": "그녀는 숙제로 바쁘다.",
-    "sentence_id": "0e9d79ca-f094-4121-b774-519593d6e277"
-  },
-  {
-    "eng": "free",
-    "kor": "한가한",
-    "def": "not busy or not costing money",
-    "ex": "I am free this weekend.",
-    "ex_kor": "나는 이번 주말에 한가하다.",
-    "sentence_id": "f88d4fec-9e35-4b4f-8486-5e5db526e05f"
-  },
-  {
-    "eng": "important",
-    "kor": "중요한",
-    "def": "having great meaning or value",
-    "ex": "This meeting is important.",
-    "ex_kor": "이 회의는 중요하다.",
-    "sentence_id": "1ad9269f-611f-48eb-938d-d454748ec321"
-  },
-  {
-    "eng": "interesting",
-    "kor": "흥미로운",
-    "def": "holding attention or curiosity",
-    "ex": "That book is interesting.",
-    "ex_kor": "그 책은 흥미롭다.",
-    "sentence_id": "969e3f5f-d22b-492b-85a2-e2dc7fada0da"
-  },
-  {
-    "eng": "boring",
-    "kor": "지루한",
-    "def": "not fun or exciting",
-    "ex": "The class was boring.",
-    "ex_kor": "그 수업은 지루했다.",
-    "sentence_id": "c016c5c0-179e-439a-bde0-9d526584cc2c"
-  },
-  {
-    "eng": "safe",
-    "kor": "안전한",
-    "def": "not dangerous",
-    "ex": "It’s safe to cross now.",
-    "ex_kor": "지금 건너도 안전하다.",
-    "sentence_id": "14b89f85-23ad-4802-b83f-44e2b511d3cd"
-  },
-  {
-    "eng": "dangerous",
-    "kor": "위험한",
-    "def": "likely to cause harm",
-    "ex": "That road is dangerous.",
-    "ex_kor": "그 도로는 위험하다.",
-    "sentence_id": "6cf06b96-71ee-4520-9146-d9dc7c38ba1f"
-  },
-  {
-    "eng": "healthy",
-    "kor": "건강한",
-    "def": "in good health",
-    "ex": "She eats healthy food.",
-    "ex_kor": "그녀는 건강한 음식을 먹는다.",
-    "sentence_id": "1637f0a8-3fe7-42c1-9cb7-6b217fc2d1cc"
-  },
-  {
-    "eng": "sick",
-    "kor": "아픈",
-    "def": "not healthy; ill",
-    "ex": "He is sick today.",
-    "ex_kor": "그는 오늘 아프다.",
-    "sentence_id": "01130545-2d65-4adf-aac1-1b2337c389f3"
-  },
-  {
-    "eng": "hungry",
-    "kor": "배고픈",
-    "def": "wanting food",
-    "ex": "I’m hungry after school.",
-    "ex_kor": "나는 방과 후에 배고프다.",
-    "sentence_id": "d29f0bf2-50a6-4c2b-84fa-8366dcb04131"
-  },
-  {
-    "eng": "thirsty",
-    "kor": "목마른",
-    "def": "wanting something to drink",
-    "ex": "He felt thirsty after running.",
-    "ex_kor": "그는 달린 후 목이 말랐다.",
-    "sentence_id": "741aa865-b6b5-483b-9915-7e1ab2b00cb2"
-  },
-  {
-    "eng": "full",
-    "kor": "배부른",
-    "def": "having eaten enough",
-    "ex": "I can’t eat more, I’m full.",
-    "ex_kor": "더 이상 못 먹겠다, 배가 부르다.",
-    "sentence_id": "db3407d0-78e5-4a66-aba7-088937ad6d8a"
-  }
+  {"eng":"busy","kor":"바쁜","def":"having a lot to do","ex":"She is busy with homework.","ex_kor":"그녀는 숙제로 바쁘다."},
+  {"eng":"free","kor":"한가한","def":"not busy or not costing money","ex":"I am free this weekend.","ex_kor":"나는 이번 주말에 한가하다."},
+  {"eng":"important","kor":"중요한","def":"having great meaning or value","ex":"This meeting is important.","ex_kor":"이 회의는 중요하다."},
+  {"eng":"interesting","kor":"흥미로운","def":"holding attention or curiosity","ex":"That book is interesting.","ex_kor":"그 책은 흥미롭다."},
+  {"eng":"boring","kor":"지루한","def":"not fun or exciting","ex":"The class was boring.","ex_kor":"그 수업은 지루했다."},
+  {"eng":"safe","kor":"안전한","def":"not dangerous","ex":"It’s safe to cross now.","ex_kor":"지금 건너도 안전하다."},
+  {"eng":"dangerous","kor":"위험한","def":"likely to cause harm","ex":"That road is dangerous.","ex_kor":"그 도로는 위험하다."},
+  {"eng":"healthy","kor":"건강한","def":"in good health","ex":"She eats healthy food.","ex_kor":"그녀는 건강한 음식을 먹는다."},
+  {"eng":"sick","kor":"아픈","def":"not healthy; ill","ex":"He is sick today.","ex_kor":"그는 오늘 아프다."},
+  {"eng":"hungry","kor":"배고픈","def":"wanting food","ex":"I’m hungry after school.","ex_kor":"나는 방과 후에 배고프다."},
+  {"eng":"thirsty","kor":"목마른","def":"wanting something to drink","ex":"He felt thirsty after running.","ex_kor":"그는 달린 후 목이 말랐다."},
+  {"eng":"full","kor":"배부른","def":"having eaten enough","ex":"I can’t eat more, I’m full.","ex_kor":"더 이상 못 먹겠다, 배가 부르다."}
 ]

@@ -1,182 +1,22 @@
 [
-  {
-    "eng": "doctor",
-    "kor": "의사",
-    "def": "a person who helps sick people",
-    "ex": "The doctor helps patients.",
-    "ex_kor": "의사가 환자를 돕는다.",
-    "emoji": "👨‍⚕️",
-    "sentence_id": "8adddcd9-8789-496e-ad85-0885cc9357fb"
-  },
-  {
-    "eng": "nurse",
-    "kor": "간호사",
-    "def": "a person who cares for patients",
-    "ex": "The nurse checks patients.",
-    "ex_kor": "간호사가 환자를 확인한다.",
-    "emoji": "👩‍⚕️",
-    "sentence_id": "293534d5-f8ff-4476-815d-d87d13f7d5d7"
-  },
-  {
-    "eng": "teacher",
-    "kor": "선생님",
-    "def": "a person who teaches students",
-    "ex": "The teacher explains lessons.",
-    "ex_kor": "선생님이 수업을 설명한다.",
-    "emoji": "👨‍🏫",
-    "sentence_id": "cd89522e-07ba-481a-bb07-7b544f1a76c3"
-  },
-  {
-    "eng": "student",
-    "kor": "학생",
-    "def": "a person who learns in school",
-    "ex": "The student reads books.",
-    "ex_kor": "학생이 책을 읽는다.",
-    "emoji": "👨‍🎓",
-    "sentence_id": "6ddb52c7-8512-45bd-bb4a-7b4d7c56b7fe"
-  },
-  {
-    "eng": "police",
-    "kor": "경찰",
-    "def": "a person who keeps people safe",
-    "ex": "The police help people.",
-    "ex_kor": "경찰이 사람들을 돕는다.",
-    "emoji": "👮",
-    "sentence_id": "01687512-cb52-4c45-bd79-aeaf87296066"
-  },
-  {
-    "eng": "firefighter",
-    "kor": "소방관",
-    "def": "a person who stops fires",
-    "ex": "The firefighter sprays water.",
-    "ex_kor": "소방관이 물을 뿌린다.",
-    "emoji": "👨‍🚒",
-    "sentence_id": "f850b666-9a58-4c5a-931c-80035de1e39b"
-  },
-  {
-    "eng": "chef",
-    "kor": "요리사",
-    "def": "a person who cooks food",
-    "ex": "The chef cooks meals.",
-    "ex_kor": "요리사가 음식을 요리한다.",
-    "emoji": "👨‍🍳",
-    "sentence_id": "9b5416e9-6440-4060-aebf-7d4e07ad2053"
-  },
-  {
-    "eng": "farmer",
-    "kor": "농부",
-    "def": "a person who grows food",
-    "ex": "The farmer plants seeds.",
-    "ex_kor": "농부가 씨를 심는다.",
-    "emoji": "👨‍🌾",
-    "sentence_id": "344d5680-f546-4cdb-bd4a-6470619cee05"
-  },
-  {
-    "eng": "artist",
-    "kor": "예술가",
-    "def": "a person who makes art",
-    "ex": "The artist paints pictures.",
-    "ex_kor": "예술가가 그림을 그린다.",
-    "emoji": "🎨",
-    "sentence_id": "40315c23-e5bc-4a0c-aaf7-9d3b55aae4a6"
-  },
-  {
-    "eng": "musician",
-    "kor": "음악가",
-    "def": "a person who plays music",
-    "ex": "The musician plays songs.",
-    "ex_kor": "음악가가 음악을 연주한다.",
-    "emoji": "🎵",
-    "sentence_id": "03b1548c-7096-4594-a5cf-1a0c571bb8f1"
-  },
-  {
-    "eng": "pilot",
-    "kor": "조종사",
-    "def": "a person who flies planes",
-    "ex": "The pilot flies an airplane.",
-    "ex_kor": "조종사가 비행기를 조종한다.",
-    "emoji": "👨‍✈️",
-    "sentence_id": "11352e09-0636-43c1-a596-5fbc8b98e5ba"
-  },
-  {
-    "eng": "engineer",
-    "kor": "엔지니어",
-    "def": "a person who designs or builds things",
-    "ex": "The engineer builds bridges.",
-    "ex_kor": "엔지니어가 다리를 건설한다.",
-    "emoji": "👷",
-    "sentence_id": "e75ac5b8-df80-4742-96fb-ab6c9686d595"
-  },
-  {
-    "eng": "mechanic",
-    "kor": "정비공",
-    "def": "a person who fixes machines",
-    "ex": "The mechanic fixes cars.",
-    "ex_kor": "정비공이 자동차를 수리한다.",
-    "emoji": "🔧",
-    "sentence_id": "73a0fb03-52a6-4eb7-a11f-34cf92a3561f"
-  },
-  {
-    "eng": "scientist",
-    "kor": "과학자",
-    "def": "a person who studies how things work",
-    "ex": "The scientist tests ideas.",
-    "ex_kor": "과학자가 아이디어를 테스트한다.",
-    "emoji": "🧪",
-    "sentence_id": "77641a92-8f27-4cf0-b304-c6f854a1c89a"
-  },
-  {
-    "eng": "programmer",
-    "kor": "프로그래머",
-    "def": "a person who writes code",
-    "ex": "The programmer writes apps.",
-    "ex_kor": "프로그래머가 앱을 작성한다.",
-    "emoji": "💻",
-    "sentence_id": "6205eefa-35ce-461e-8994-79a894db5745"
-  },
-  {
-    "eng": "writer",
-    "kor": "작가",
-    "def": "a person who writes stories",
-    "ex": "The writer writes books.",
-    "ex_kor": "작가가 책을 쓴다.",
-    "emoji": "✏️",
-    "sentence_id": "e023babb-b976-4a46-8325-4fef3df825ca"
-  },
-  {
-    "eng": "actor",
-    "kor": "배우",
-    "def": "a person who plays roles",
-    "ex": "The actor learns lines.",
-    "ex_kor": "배우가 대사를 배운다.",
-    "emoji": "🎭",
-    "sentence_id": "9dcba7cf-e58b-4526-a201-b18e0df5adec"
-  },
-  {
-    "eng": "dancer",
-    "kor": "무용수",
-    "def": "a person who dances",
-    "ex": "The dancer practices moves.",
-    "ex_kor": "무용수가 춤을 연습한다.",
-    "emoji": "🩰",
-    "sentence_id": "b7861437-bec6-4910-8182-b8ce49ef791e"
-  },
-  {
-    "eng": "waiter",
-    "kor": "웨이터",
-    "def": "a person who brings food",
-    "ex": "The waiter carries plates.",
-    "ex_kor": "웨이터가 접시를 나른다.",
-    "emoji": "🍽️",
-    "sentence_id": "d3acc422-8771-4e46-b699-0fecfdb86378"
-  },
-  {
-    "eng": "driver",
-    "kor": "운전사",
-    "def": "a person who drives vehicles",
-    "ex": "The driver drives a bus.",
-    "ex_kor": "운전사가 버스를 운전한다.",
-    "emoji": "🚗",
-    "sentence_id": "e69f51f0-2b4a-429c-93bc-2a3e666120c1"
-  }
+  {"eng": "doctor", "kor": "의사", "def": "a person who helps sick people", "ex": "The doctor helps patients.", "ex_kor": "의사가 환자를 돕는다.", "emoji": "👨‍⚕️"},
+  {"eng": "nurse", "kor": "간호사", "def": "a person who cares for patients", "ex": "The nurse checks patients.", "ex_kor": "간호사가 환자를 확인한다.", "emoji": "👩‍⚕️"},
+  {"eng": "teacher", "kor": "선생님", "def": "a person who teaches students", "ex": "The teacher explains lessons.", "ex_kor": "선생님이 수업을 설명한다.", "emoji": "👨‍🏫"},
+  {"eng": "student", "kor": "학생", "def": "a person who learns in school", "ex": "The student reads books.", "ex_kor": "학생이 책을 읽는다.", "emoji": "👨‍🎓"},
+  {"eng": "police", "kor": "경찰", "def": "a person who keeps people safe", "ex": "The police help people.", "ex_kor": "경찰이 사람들을 돕는다.", "emoji": "👮"},
+  {"eng": "firefighter", "kor": "소방관", "def": "a person who stops fires", "ex": "The firefighter sprays water.", "ex_kor": "소방관이 물을 뿌린다.", "emoji": "👨‍🚒"},
+  {"eng": "chef", "kor": "요리사", "def": "a person who cooks food", "ex": "The chef cooks meals.", "ex_kor": "요리사가 음식을 요리한다.", "emoji": "👨‍🍳"},
+  {"eng": "farmer", "kor": "농부", "def": "a person who grows food", "ex": "The farmer plants seeds.", "ex_kor": "농부가 씨를 심는다.", "emoji": "👨‍🌾"},
+  {"eng": "artist", "kor": "예술가", "def": "a person who makes art", "ex": "The artist paints pictures.", "ex_kor": "예술가가 그림을 그린다.", "emoji": "🎨"},
+  {"eng": "musician", "kor": "음악가", "def": "a person who plays music", "ex": "The musician plays songs.", "ex_kor": "음악가가 음악을 연주한다.", "emoji": "🎵"},
+  {"eng": "pilot", "kor": "조종사", "def": "a person who flies planes", "ex": "The pilot flies an airplane.", "ex_kor": "조종사가 비행기를 조종한다.", "emoji": "👨‍✈️"},
+  {"eng": "engineer", "kor": "엔지니어", "def": "a person who designs or builds things", "ex": "The engineer builds bridges.", "ex_kor": "엔지니어가 다리를 건설한다.", "emoji": "👷"},
+  {"eng": "mechanic", "kor": "정비공", "def": "a person who fixes machines", "ex": "The mechanic fixes cars.", "ex_kor": "정비공이 자동차를 수리한다.", "emoji": "🔧"},
+  {"eng": "scientist", "kor": "과학자", "def": "a person who studies how things work", "ex": "The scientist tests ideas.", "ex_kor": "과학자가 아이디어를 테스트한다.", "emoji": "🧪"},
+  {"eng": "programmer", "kor": "프로그래머", "def": "a person who writes code", "ex": "The programmer writes apps.", "ex_kor": "프로그래머가 앱을 작성한다.", "emoji": "💻"},
+  {"eng": "writer", "kor": "작가", "def": "a person who writes stories", "ex": "The writer writes books.", "ex_kor": "작가가 책을 쓴다.", "emoji": "✏️"},
+  {"eng": "actor", "kor": "배우", "def": "a person who plays roles", "ex": "The actor learns lines.", "ex_kor": "배우가 대사를 배운다.", "emoji": "🎭"},
+  {"eng": "dancer", "kor": "무용수", "def": "a person who dances", "ex": "The dancer practices moves.", "ex_kor": "무용수가 춤을 연습한다.", "emoji": "🩰"},
+  {"eng": "waiter", "kor": "웨이터", "def": "a person who brings food", "ex": "The waiter carries plates.", "ex_kor": "웨이터가 접시를 나른다.", "emoji": "🍽️"},
+  {"eng": "driver", "kor": "운전사", "def": "a person who drives vehicles", "ex": "The driver drives a bus.", "ex_kor": "운전사가 버스를 운전한다.", "emoji": "🚗"}
 ]

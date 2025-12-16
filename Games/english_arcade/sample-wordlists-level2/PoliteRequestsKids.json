@@ -1,81 +1,12 @@
 [
-  {
-    "eng": "please wait",
-    "kor": "기다려 주세요",
-    "def": "to ask someone to wait politely",
-    "ex": "Please wait in line.",
-    "ex_kor": "줄에서 잠시만 기다려 주세요.",
-    "sentence_id": "acecbfef-f5b6-42d4-8f13-dd609d0fa274"
-  },
-  {
-    "eng": "excuse me",
-    "kor": "실례합니다",
-    "def": "to politely get attention or pass",
-    "ex": "Excuse me, may I pass?",
-    "ex_kor": "실례합니다, 지나가도 될까요?",
-    "sentence_id": "8a6a7cc4-eeef-43c4-9ec2-b72c3857ef5c"
-  },
-  {
-    "eng": "could you help me",
-    "kor": "저를 도와줄 수 있나요",
-    "def": "to ask for help politely",
-    "ex": "Could you help me with this?",
-    "ex_kor": "이것 좀 도와줄 수 있나요?",
-    "sentence_id": "a2ae5b07-ba42-4eb7-9229-5e7b30e9899d"
-  },
-  {
-    "eng": "may I borrow",
-    "kor": "빌려도 될까요",
-    "def": "to ask to use something that isn’t yours",
-    "ex": "May I borrow a pencil?",
-    "ex_kor": "연필을 빌려도 될까요?",
-    "sentence_id": "bd0a9ab8-3ffd-4479-ae77-faf366960db0"
-  },
-  {
-    "eng": "can I join",
-    "kor": "같이 해도 돼요?",
-    "def": "to ask to take part in an activity",
-    "ex": "Can I join the game?",
-    "ex_kor": "게임에 같이 해도 돼요?",
-    "sentence_id": "9d76a4f7-172b-4191-a249-61363225be7f"
-  },
-  {
-    "eng": "I’m sorry",
-    "kor": "미안해요",
-    "def": "to say sorry politely",
-    "ex": "I’m sorry for being late.",
-    "ex_kor": "늦어서 미안해요.",
-    "sentence_id": "f2c7fe7c-b3c1-4142-91f8-4c4cdfe576be"
-  },
-  {
-    "eng": "thank you",
-    "kor": "감사합니다",
-    "def": "to show thanks",
-    "ex": "Thank you for your help.",
-    "ex_kor": "도와줘서 감사합니다.",
-    "sentence_id": "20fb3b28-7d42-4b3d-a9ef-20a42871b5b5"
-  },
-  {
-    "eng": "you’re welcome",
-    "kor": "천만에요",
-    "def": "a polite reply after ‘thank you’",
-    "ex": "You’re welcome!",
-    "ex_kor": "천만에요!"
-  },
-  {
-    "eng": "nice to meet you",
-    "kor": "만나서 반가워요",
-    "def": "a polite greeting when meeting",
-    "ex": "Nice to meet you.",
-    "ex_kor": "만나서 반가워요.",
-    "sentence_id": "0001414d-c1a6-49e7-b586-04f49b0ad22b"
-  },
-  {
-    "eng": "please be quiet",
-    "kor": "조용히 해 주세요",
-    "def": "to ask for quiet politely",
-    "ex": "Please be quiet during the movie.",
-    "ex_kor": "영화 보는 동안 조용히 해 주세요.",
-    "sentence_id": "e4a6b608-0e8b-4211-af13-682d346e98e4"
-  }
+  {"eng":"please wait","kor":"기다려 주세요","def":"to ask someone to wait politely","ex":"Please wait in line.","ex_kor":"줄에서 잠시만 기다려 주세요."},
+  {"eng":"excuse me","kor":"실례합니다","def":"to politely get attention or pass","ex":"Excuse me, may I pass?","ex_kor":"실례합니다, 지나가도 될까요?"},
+  {"eng":"could you help me","kor":"저를 도와줄 수 있나요","def":"to ask for help politely","ex":"Could you help me with this?","ex_kor":"이것 좀 도와줄 수 있나요?"},
+  {"eng":"may I borrow","kor":"빌려도 될까요","def":"to ask to use something that isn’t yours","ex":"May I borrow a pencil?","ex_kor":"연필을 빌려도 될까요?"},
+  {"eng":"can I join","kor":"같이 해도 돼요?","def":"to ask to take part in an activity","ex":"Can I join the game?","ex_kor":"게임에 같이 해도 돼요?"},
+  {"eng":"I’m sorry","kor":"미안해요","def":"to say sorry politely","ex":"I’m sorry for being late.","ex_kor":"늦어서 미안해요."},
+  {"eng":"thank you","kor":"감사합니다","def":"to show thanks","ex":"Thank you for your help.","ex_kor":"도와줘서 감사합니다."},
+  {"eng":"you’re welcome","kor":"천만에요","def":"a polite reply after ‘thank you’","ex":"You’re welcome!","ex_kor":"천만에요!"},
+  {"eng":"nice to meet you","kor":"만나서 반가워요","def":"a polite greeting when meeting","ex":"Nice to meet you.","ex_kor":"만나서 반가워요."},
+  {"eng":"please be quiet","kor":"조용히 해 주세요","def":"to ask for quiet politely","ex":"Please be quiet during the movie.","ex_kor":"영화 보는 동안 조용히 해 주세요."}
 ]

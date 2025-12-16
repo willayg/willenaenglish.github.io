@@ -1,4 +1,4 @@
-import { playTTSVariant, playSentenceById } from '../tts.js';
+import { playTTSVariant } from '../tts.js';
 
 // SVG Play Icon
 const playIconSvg = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:20px;height:20px;">
@@ -259,13 +259,7 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
       sentenceBtn.onclick = async () => {
         sentenceBtn.style.background = '#2d9ba0';
         try {
-          // Use sentence_id if available (proper fix), fallback to word-based lookup
-          const sentenceId = (item && typeof item === 'object') ? item.sentence_id : null;
-          if (sentenceId) {
-            await playSentenceById(sentenceId, getEngWord(item));
-          } else {
-            await playTTSVariant(getEngWord(item), 'sentence');
-          }
+          await playTTSVariant(getEngWord(item), 'sentence');
         } catch (e) {
           console.error('Error playing sentence audio:', e);
         }

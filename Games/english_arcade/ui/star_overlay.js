@@ -93,11 +93,11 @@
     const pct = total ? Math.round((correct/total)*100) : 0;
     const starCount = pctToStars(pct);
 
-    // Dispatch stars:refresh event so header can fetch updated totals from server
-    // (Removed optimistic bump - was causing double-counting issues)
+    // Dispatch optimistic star bump event so header can update immediately
+    // (Never rollback visually — retry in background if server fails)
     if (starCount > 0) {
       try {
-        window.dispatchEvent(new CustomEvent('stars:refresh', { detail: { earned: starCount } }));
+        window.dispatchEvent(new CustomEvent('stars:optimistic-bump', { detail: { delta: starCount } }));
       } catch {}
     }
 

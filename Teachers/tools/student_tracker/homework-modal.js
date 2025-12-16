@@ -1,4 +1,4 @@
-// Homework Assignment Modal Module
+// Homework Assignment Modal Module v20251213
 // Handles opening, closing, and assignment creation flow
 
 const HomeworkModal = (() => {
@@ -436,9 +436,13 @@ const HomeworkModal = (() => {
     console.log('Assignment payload:', assignment);
 
     try {
-      const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=create_assignment', {
+      const apiUrl = window.WillenaAPI
+        ? window.WillenaAPI.getApiUrl('/.netlify/functions/homework_api?action=create_assignment')
+        : '/.netlify/functions/homework_api?action=create_assignment';
+      const resp = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(assignment)
       });
 

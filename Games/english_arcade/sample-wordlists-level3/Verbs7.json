@@ -1,97 +1,14 @@
 [
-  {
-    "eng": "catch",
-    "kor": "잡다",
-    "def": "to grab or take hold of something",
-    "ex": "Catch the ball!",
-    "ex_kor": "공을 잡아!",
-    "sentence_id": "8372829b-4b9a-473e-a2dc-de878ab1450a"
-  },
-  {
-    "eng": "stay",
-    "kor": "머물다",
-    "def": "to not leave a place",
-    "ex": "Stay at home.",
-    "ex_kor": "집에 있어라.",
-    "sentence_id": "10c06132-9e5a-45d4-a63d-4eea8cf001df"
-  },
-  {
-    "eng": "stop",
-    "kor": "멈추다",
-    "def": "to finish or end an action",
-    "ex": "Stop talking, please.",
-    "ex_kor": "말 그만하세요.",
-    "sentence_id": "8d6166d6-3118-4270-93c4-d6b78e7e0670"
-  },
-  {
-    "eng": "study",
-    "kor": "공부하다",
-    "def": "to learn about something",
-    "ex": "She studies English.",
-    "ex_kor": "그녀는 영어를 공부한다.",
-    "sentence_id": "d9511eb5-8fea-43a8-9a2e-30c1047baf93"
-  },
-  {
-    "eng": "sing",
-    "kor": "노래하다",
-    "def": "to make music with your voice",
-    "ex": "He sings well.",
-    "ex_kor": "그는 노래를 잘한다.",
-    "sentence_id": "52adf204-9496-46cd-ac37-7db5e1a82a49"
-  },
-  {
-    "eng": "dance",
-    "kor": "춤추다",
-    "def": "to move your body to music",
-    "ex": "Let’s dance!",
-    "ex_kor": "춤추자!"
-  },
-  {
-    "eng": "send",
-    "kor": "보내다",
-    "def": "to cause something to go to another place",
-    "ex": "I send a message.",
-    "ex_kor": "나는 메시지를 보낸다.",
-    "sentence_id": "9d73197a-28b0-49e6-9de4-d5985c68f063"
-  },
-  {
-    "eng": "spend",
-    "kor": "시간을 보내다",
-    "def": "to use money or time",
-    "ex": "She spends a lot of time studying.",
-    "ex_kor": "그녀는 공부하는 데 많은 시간을 보낸다.",
-    "sentence_id": "c24df239-2123-47b1-b673-303b9b39e951"
-  },
-  {
-    "eng": "wait",
-    "kor": "기다리다",
-    "def": "to stay until something happens",
-    "ex": "Wait for the bus.",
-    "ex_kor": "버스를 기다려라.",
-    "sentence_id": "f08c819d-004f-4930-8a48-47d22174193a"
-  },
-  {
-    "eng": "travel",
-    "kor": "여행하다",
-    "def": "to go to different places",
-    "ex": "We travel every summer.",
-    "ex_kor": "우리는 매 여름 여행한다.",
-    "sentence_id": "1a43dda9-c272-44a1-8274-412b5b44cd72"
-  },
-  {
-    "eng": "choose",
-    "kor": "고르다",
-    "def": "to pick one thing from many",
-    "ex": "Choose your favorite color.",
-    "ex_kor": "좋아하는 색을 골라라.",
-    "sentence_id": "5108b91b-bd57-4968-843b-f9537eb0ed15"
-  },
-  {
-    "eng": "win",
-    "kor": "이기다",
-    "def": "to succeed in a game or contest",
-    "ex": "They win the match.",
-    "ex_kor": "그들은 경기에서 이긴다.",
-    "sentence_id": "c8bafd14-96c5-4b5d-baae-80537e748e2a"
-  }
+  {"eng":"catch","kor":"잡다","def":"to grab or take hold of something","ex":"Catch the ball!","ex_kor":"공을 잡아!"},
+  {"eng":"stay","kor":"머물다","def":"to not leave a place","ex":"Stay at home.","ex_kor":"집에 있어라."},
+  {"eng":"stop","kor":"멈추다","def":"to finish or end an action","ex":"Stop talking, please.","ex_kor":"말 그만하세요."},
+  {"eng":"study","kor":"공부하다","def":"to learn about something","ex":"She studies English.","ex_kor":"그녀는 영어를 공부한다."},
+  {"eng":"sing","kor":"노래하다","def":"to make music with your voice","ex":"He sings well.","ex_kor":"그는 노래를 잘한다."},
+  {"eng":"dance","kor":"춤추다","def":"to move your body to music","ex":"Let’s dance!","ex_kor":"춤추자!"},
+  {"eng":"send","kor":"보내다","def":"to cause something to go to another place","ex":"I send a message.","ex_kor":"나는 메시지를 보낸다."},
+  {"eng":"spend","kor":"시간을 보내다","def":"to use money or time","ex":"She spends a lot of time studying.","ex_kor":"그녀는 공부하는 데 많은 시간을 보낸다."},
+  {"eng":"wait","kor":"기다리다","def":"to stay until something happens","ex":"Wait for the bus.","ex_kor":"버스를 기다려라."},
+  {"eng":"travel","kor":"여행하다","def":"to go to different places","ex":"We travel every summer.","ex_kor":"우리는 매 여름 여행한다."},
+  {"eng":"choose","kor":"고르다","def":"to pick one thing from many","ex":"Choose your favorite color.","ex_kor":"좋아하는 색을 골라라."},
+  {"eng":"win","kor":"이기다","def":"to succeed in a game or contest","ex":"They win the match.","ex_kor":"그들은 경기에서 이긴다."}
 ]

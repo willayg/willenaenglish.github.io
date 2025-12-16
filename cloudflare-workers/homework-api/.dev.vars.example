@@ -1,6 +1,0 @@
-# Local development secrets
-# Copy to .dev.vars and fill in actual values
-# DO NOT commit .dev.vars to version control
-
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key-here

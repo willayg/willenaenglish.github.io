@@ -1,31 +1,13 @@
 // profiles/profile.js - client script to load and render user progress
 (function(){
-  // Helper to get API URL - use Cloudflare Workers in production
-  function getProgressSummaryUrl(section) {
-    // Use WillenaAPI if available (handles CF worker routing)
-    if (window.WillenaAPI && window.WillenaAPI.getApiUrl) {
-      return window.WillenaAPI.getApiUrl(`/.netlify/functions/progress_summary?section=${section}`);
-    }
-    // Direct CF Worker URL for production
-    const host = window.location.hostname;
-    if (host === 'willenaenglish.github.io' || 
-        host === 'willenaenglish.com' || 
-        host === 'www.willenaenglish.com' ||
-        host.endsWith('.willenaenglish.com')) {
-      return `https://progress-summary.willena.workers.dev?section=${section}`;
-    }
-    // Local dev fallback
-    return `/.netlify/functions/progress_summary?section=${section}`;
-  }
-
   const API = {
-    // endpoints powered by Cloudflare Workers (production) or Netlify functions (local)
-    attempts: () => getProgressSummaryUrl('attempts'),
-    sessions: () => getProgressSummaryUrl('sessions'),
-    kpi:      () => getProgressSummaryUrl('kpi'),
-    modes:    () => getProgressSummaryUrl('modes'),
-    badges:   () => getProgressSummaryUrl('badges'),
-    overview: () => getProgressSummaryUrl('overview')
+    // endpoints powered by Netlify functions
+    attempts: () => `/.netlify/functions/progress_summary?section=attempts`,
+    sessions: () => `/.netlify/functions/progress_summary?section=sessions`,
+  kpi:      () => `/.netlify/functions/progress_summary?section=kpi`,
+    modes:    () => `/.netlify/functions/progress_summary?section=modes`,
+  badges:   () => `/.netlify/functions/progress_summary?section=badges`,
+  overview: () => `/.netlify/functions/progress_summary?section=overview`
   };
 
   async function fetchJSON(url){

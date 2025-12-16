@@ -1,98 +1,14 @@
 [
-  {
-    "eng": "easy",
-    "kor": "쉬운",
-    "def": "not hard to do",
-    "ex": "This question is easy.",
-    "ex_kor": "이 문제는 쉬워요.",
-    "sentence_id": "0fa86659-cf15-46e9-bf61-af875252b970"
-  },
-  {
-    "eng": "difficult",
-    "kor": "어려운",
-    "def": "hard to do or understand",
-    "ex": "The test was difficult.",
-    "ex_kor": "시험이 어려웠어요.",
-    "sentence_id": "0e434328-5a4f-44ff-9edf-bbcea3c208b0"
-  },
-  {
-    "eng": "fast",
-    "kor": "빠른",
-    "def": "moving quickly",
-    "ex": "He runs very fast.",
-    "ex_kor": "그는 아주 빨리 달려요.",
-    "sentence_id": "d29f57eb-cb08-44ca-8d32-d757f12c963b"
-  },
-  {
-    "eng": "slow",
-    "kor": "느린",
-    "def": "not fast",
-    "ex": "The turtle is slow.",
-    "ex_kor": "거북이는 느려요.",
-    "sentence_id": "84534aaa-2cb9-4936-82dd-fd7fc94e38c0"
-  },
-  {
-    "eng": "strong",
-    "kor": "강한",
-    "def": "having power or force",
-    "ex": "He is very strong.",
-    "ex_kor": "그는 아주 강해요.",
-    "sentence_id": "578472ca-40d1-42dd-845c-33e465d6c603"
-  },
-  {
-    "eng": "weak",
-    "kor": "약한",
-    "def": "not strong",
-    "ex": "She felt weak after the run.",
-    "ex_kor": "그녀는 달린 후에 약해졌어요.",
-    "sentence_id": "7abe15e7-b954-4cca-a853-918bf549b687"
-  },
-  {
-    "eng": "rich",
-    "kor": "부자인",
-    "def": "having a lot of money",
-    "ex": "They are rich people.",
-    "ex_kor": "그들은 부자예요.",
-    "sentence_id": "6bf7645d-18b2-4e20-84c1-5405b422f037"
-  },
-  {
-    "eng": "poor",
-    "kor": "가난한",
-    "def": "having little money",
-    "ex": "The poor man needs help.",
-    "ex_kor": "가난한 남자는 도움이 필요해요.",
-    "sentence_id": "78471ec8-5bbd-40f7-8fe0-58a473524ba3"
-  },
-  {
-    "eng": "right",
-    "kor": "옳은",
-    "def": "correct or true",
-    "ex": "That answer is right.",
-    "ex_kor": "그 답이 맞아요.",
-    "sentence_id": "2e591e77-d4a7-4a2e-9fd4-53a1d5930433"
-  },
-  {
-    "eng": "wrong",
-    "kor": "틀린",
-    "def": "not correct",
-    "ex": "You chose the wrong door.",
-    "ex_kor": "너는 틀린 문을 골랐어요.",
-    "sentence_id": "598ce83e-9a52-4fac-b88f-29cdc25c14f6"
-  },
-  {
-    "eng": "early",
-    "kor": "이른",
-    "def": "happening before the usual time",
-    "ex": "He came early to class.",
-    "ex_kor": "그는 수업에 일찍 왔어요.",
-    "sentence_id": "fc9357f1-44c4-423b-8726-f15e95a2d702"
-  },
-  {
-    "eng": "late",
-    "kor": "늦은",
-    "def": "happening after the usual time",
-    "ex": "She arrived late again.",
-    "ex_kor": "그녀는 또 늦게 도착했어요.",
-    "sentence_id": "78d83147-a48c-481e-930e-9594b5d12bf9"
-  }
+  {"eng":"easy","kor":"쉬운","def":"not hard to do","ex":"This question is easy.","ex_kor":"이 문제는 쉬워요."},
+  {"eng":"difficult","kor":"어려운","def":"hard to do or understand","ex":"The test was difficult.","ex_kor":"시험이 어려웠어요."},
+  {"eng":"fast","kor":"빠른","def":"moving quickly","ex":"He runs very fast.","ex_kor":"그는 아주 빨리 달려요."},
+  {"eng":"slow","kor":"느린","def":"not fast","ex":"The turtle is slow.","ex_kor":"거북이는 느려요."},
+  {"eng":"strong","kor":"강한","def":"having power or force","ex":"He is very strong.","ex_kor":"그는 아주 강해요."},
+  {"eng":"weak","kor":"약한","def":"not strong","ex":"She felt weak after the run.","ex_kor":"그녀는 달린 후에 약해졌어요."},
+  {"eng":"rich","kor":"부자인","def":"having a lot of money","ex":"They are rich people.","ex_kor":"그들은 부자예요."},
+  {"eng":"poor","kor":"가난한","def":"having little money","ex":"The poor man needs help.","ex_kor":"가난한 남자는 도움이 필요해요."},
+  {"eng":"right","kor":"옳은","def":"correct or true","ex":"That answer is right.","ex_kor":"그 답이 맞아요."},
+  {"eng":"wrong","kor":"틀린","def":"not correct","ex":"You chose the wrong door.","ex_kor":"너는 틀린 문을 골랐어요."},
+  {"eng":"early","kor":"이른","def":"happening before the usual time","ex":"He came early to class.","ex_kor":"그는 수업에 일찍 왔어요."},
+  {"eng":"late","kor":"늦은","def":"happening after the usual time","ex":"She arrived late again.","ex_kor":"그녀는 또 늦게 도착했어요."}
 ]

@@ -1,87 +1,12 @@
 [
-  {
-    "eng": "elephant",
-    "kor": "코끼리",
-    "def": "a very large animal with a long trunk and big ears",
-    "ex": "The elephant drinks water.",
-    "ex_kor": "코끼리는 물을 마셔요.",
-    "emoji": "🐘",
-    "sentence_id": "41374b2c-71d5-42e1-a0a8-d8a052c457b2"
-  },
-  {
-    "eng": "penguin",
-    "kor": "펭귄",
-    "def": "a black and white bird that swims",
-    "ex": "Penguins live in cold places.",
-    "ex_kor": "펭귄은 추운 곳에 살아요.",
-    "emoji": "🐧",
-    "sentence_id": "c807276c-a5bd-4205-9256-33da6e7415b9"
-  },
-  {
-    "eng": "peacock",
-    "kor": "공작",
-    "def": "a large bird with colorful tail feathers",
-    "ex": "The peacock displays its tail.",
-    "ex_kor": "공작은 꼬리를 펼쳐요.",
-    "sentence_id": "e7f8a67d-e77b-4020-9af8-62ca884133e1"
-  },
-  {
-    "eng": "crocodile",
-    "kor": "악어",
-    "def": "a large reptile with sharp teeth",
-    "ex": "The crocodile swims in the river.",
-    "ex_kor": "악어는 강에서 헤엄쳐요.",
-    "emoji": "🐊",
-    "sentence_id": "7fc2b168-4645-4783-988e-9d22ba86a306"
-  },
-  {
-    "eng": "tortoise",
-    "kor": "거북이",
-    "def": "a slow animal with a hard shell on its back",
-    "ex": "The tortoise walks slowly.",
-    "ex_kor": "거북이는 천천히 걸어요.",
-    "emoji": "🐢",
-    "sentence_id": "55c3da95-1008-4ddc-bf7c-a2a4d2cd614b"
-  },
-  {
-    "eng": "jellyfish",
-    "kor": "해파리",
-    "def": "a soft sea animal with tentacles",
-    "ex": "The jellyfish floats in the ocean.",
-    "ex_kor": "해파리는 바다에 떠 있어요.",
-    "sentence_id": "34433e36-2a0d-4f59-94e6-4feff876adf8"
-  },
-  {
-    "eng": "butterfly",
-    "kor": "나비",
-    "def": "a colorful insect with big wings",
-    "ex": "The butterfly lands on a flower.",
-    "ex_kor": "나비가 꽃에 내려앉아요.",
-    "emoji": "🦋",
-    "sentence_id": "f77a8e02-3841-4df5-889b-1d42b11e13b9"
-  },
-  {
-    "eng": "dragonfly",
-    "kor": "잠자리",
-    "def": "an insect with long wings that lives near water",
-    "ex": "The dragonfly flies fast.",
-    "ex_kor": "잠자리는 빠르게 날아요.",
-    "sentence_id": "c221404f-2b86-4c92-a255-7a33f3651e35"
-  },
-  {
-    "eng": "caterpillar",
-    "kor": "애벌레",
-    "def": "a small creature that becomes a butterfly",
-    "ex": "The caterpillar eats leaves.",
-    "ex_kor": "애벌레는 잎을 먹어요.",
-    "sentence_id": "ee2cb809-7228-48a5-8d20-15d8a1aacdce"
-  },
-  {
-    "eng": "seahorse",
-    "kor": "해마",
-    "def": "a small sea animal that looks like a horse",
-    "ex": "The seahorse swims slowly.",
-    "ex_kor": "해마는 천천히 헤엄쳐요.",
-    "sentence_id": "6a13d474-f7bb-44d1-a7b2-da64a87529e7"
-  }
+  {"eng":"elephant","kor":"코끼리","def":"a very large animal with a long trunk and big ears","ex":"The elephant drinks water.","ex_kor":"코끼리는 물을 마셔요.","emoji":"🐘"},
+  {"eng":"penguin","kor":"펭귄","def":"a black and white bird that swims","ex":"Penguins live in cold places.","ex_kor":"펭귄은 추운 곳에 살아요.","emoji":"🐧"},
+  {"eng":"peacock","kor":"공작","def":"a large bird with colorful tail feathers","ex":"The peacock displays its tail.","ex_kor":"공작은 꼬리를 펼쳐요."},
+  {"eng":"crocodile","kor":"악어","def":"a large reptile with sharp teeth","ex":"The crocodile swims in the river.","ex_kor":"악어는 강에서 헤엄쳐요.","emoji":"🐊"},
+  {"eng":"tortoise","kor":"거북이","def":"a slow animal with a hard shell on its back","ex":"The tortoise walks slowly.","ex_kor":"거북이는 천천히 걸어요.","emoji":"🐢"},
+  {"eng":"jellyfish","kor":"해파리","def":"a soft sea animal with tentacles","ex":"The jellyfish floats in the ocean.","ex_kor":"해파리는 바다에 떠 있어요."},
+  {"eng":"butterfly","kor":"나비","def":"a colorful insect with big wings","ex":"The butterfly lands on a flower.","ex_kor":"나비가 꽃에 내려앉아요.","emoji":"🦋"},
+  {"eng":"dragonfly","kor":"잠자리","def":"an insect with long wings that lives near water","ex":"The dragonfly flies fast.","ex_kor":"잠자리는 빠르게 날아요."},
+  {"eng":"caterpillar","kor":"애벌레","def":"a small creature that becomes a butterfly","ex":"The caterpillar eats leaves.","ex_kor":"애벌레는 잎을 먹어요."},
+  {"eng":"seahorse","kor":"해마","def":"a small sea animal that looks like a horse","ex":"The seahorse swims slowly.","ex_kor":"해마는 천천히 헤엄쳐요."}
 ]

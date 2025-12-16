@@ -310,8 +310,13 @@ async function assignmentProgress(event) {
   // Determine category heuristically for expected mode counts
   const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
   let category = 'vocab';
-  if (assignLower.includes('phonics')) category = 'phonics';
-  else if (assignLower.includes('grammar')) category = 'grammar';
+  // Phonics detection: check for phonics indicators in list_key, title, or list_title
+  // Also detect "blend", "sound", or specific phonics patterns
+  if (assignLower.includes('phonics') || assignLower.includes('sound') || /\bblend\b/.test(assignLower)) {
+    category = 'phonics';
+  } else if (assignLower.includes('grammar') || assignLower.includes('/grammar/')) {
+    category = 'grammar';
+  }
   // Load students in class
   const { data: students, error: sErr } = await supabase.from('profiles').select('id, name, korean_name').eq('class', targetClass);
   if (sErr) return _json(500,{ success:false, error:'Failed to load students: '+(sErr.message||sErr.code)});
@@ -336,6 +341,13 @@ async function assignmentProgress(event) {
       // 1) Primary attempt: tighten matching by filename/path variants
       let orFilters = [`list_name.eq.${eq1}`, `list_name.ilike.${like1}`, `list_name.ilike.${like2}`, `list_name.ilike.${fuzzy1}`];
       if (fuzzy2) orFilters.push(`list_name.ilike.${fuzzy2}`);
+      // Also include variants that include the legacy project prefix
+      try {
+        const gaPrefixed = `Games/english_arcade/${eq1}`;
+        orFilters.push(`list_name.ilike.%${gaPrefixed}%`);
+        const gaCorePref = `Games/english_arcade/${coreName}`;
+        orFilters.push(`list_name.ilike.%${gaCorePref}%`);
+      } catch (e) { /* ignore */ }
       normalizedTokens.forEach(token => {
         const safeToken = token.replace(/\s+/g, '%');
         orFilters.push(`list_name.ilike.%${safeToken}%`);
@@ -375,11 +387,12 @@ async function assignmentProgress(event) {
       // 2) Conservative fallback: look for the assignment list key anywhere in list_name
       if ((!sessions || sessions.length === 0) && assignment.list_key) {
         const broadLike = `%${assignment.list_key}%`;
+        const broadLikeGa = `%Games/english_arcade/${assignment.list_key}%`;
         const { data: broadSess, error: broadErr } = await supabase
           .from('progress_sessions')
           .select('user_id, list_name, mode, summary, list_size')
           .in('user_id', students.map(s=>s.id))
-          .ilike('list_name', broadLike)
+          .or(`list_name.ilike.${broadLike},list_name.ilike.${broadLikeGa}`)
           .not('ended_at', 'is', null);
         if (!broadErr && Array.isArray(broadSess) && broadSess.length) {
           console.log('assignmentProgress fallback candidate list_name samples', broadSess.slice(0,10).map(s => s.list_name));
@@ -440,6 +453,40 @@ async function assignmentProgress(event) {
           }
         }
       }
+
+      // 5) Display-name fallback: match sessions where list_name might be a friendly display name
+      // E.g., list_key="phonics-blends-dr-fl-fr.json" but session list_name="Blend Dr Fl Fr"
+      if ((!sessions || sessions.length === 0) && coreName) {
+        // Extract significant tokens from filename (e.g., "phonics-blends-dr-fl-fr" -> ["blends", "dr", "fl", "fr"])
+        const tokens = coreName.toLowerCase().split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?)$/.test(t));
+        if (tokens.length >= 2) {
+          // Build a flexible pattern that matches if all significant tokens appear in list_name (any order)
+          // For Supabase ilike, we need a single pattern. Use a minimal approach: match first meaningful token
+          const keyToken = tokens.find(t => t.length >= 2 && !/^(and|the|is|vs)$/.test(t)) || tokens[0];
+          if (keyToken) {
+            const displayLike = `%${keyToken}%`;
+            const { data: displaySess, error: dispErr } = await supabase
+              .from('progress_sessions')
+              .select('user_id, list_name, mode, summary, list_size')
+              .in('user_id', students.map(s=>s.id))
+              .ilike('list_name', displayLike)
+              .not('ended_at', 'is', null);
+            if (!dispErr && Array.isArray(displaySess) && displaySess.length) {
+              // Filter to require at least 2 tokens present in list_name (reduces false positives)
+              const filtered = displaySess.filter(s => {
+                if (!s.list_name) return false;
+                const ln = s.list_name.toLowerCase();
+                const matchCount = tokens.filter(t => ln.includes(t)).length;
+                return matchCount >= Math.min(2, tokens.length);
+              });
+              if (filtered.length) {
+                sessions = filtered;
+                console.log(`assignmentProgress: matched sessions via display-name token fallback (${sessions.length}) for assignment ${assignment.id}, tokens: [${tokens.join(', ')}]`);
+              }
+            }
+          }
+        }
+      }
     } catch (e) {
       console.warn('assignmentProgress progress_sessions fetch error (non-fatal):', e.message);
     }
@@ -467,7 +514,7 @@ async function assignmentProgress(event) {
   function parseSummary(summary) {
     try { if (!summary) return null; if (typeof summary === 'string') return JSON.parse(summary); return summary; } catch { return null; }
   }
-  function deriveStars(summary) {
+  function deriveStars(summary, modeRaw) {
     const s = summary || {};
     let acc = null;
     if (typeof s.accuracy === 'number') acc = s.accuracy;
@@ -482,6 +529,19 @@ async function assignmentProgress(event) {
       return 0;
     }
     if (typeof s.stars === 'number') return s.stars;
+    // Fallback for point-only modes (e.g., level_up)
+    const m = String(modeRaw || '').toLowerCase();
+    if (typeof s.score === 'number' && !Number.isFinite(s.total) && !Number.isFinite(s.max)) {
+      const pts = Math.max(0, Math.floor(s.score));
+      if (m.includes('level_up')) {
+        if (pts >= 20) return 5;
+        if (pts >= 15) return 4;
+        if (pts >= 10) return 3;
+        if (pts >= 5) return 2;
+        if (pts >= 1) return 1;
+        return 0;
+      }
+    }
     return 0;
   }
   const byStudent = new Map();
@@ -490,7 +550,7 @@ async function assignmentProgress(event) {
     const row = byStudent.get(sess.user_id); if (!row) return;
     if (Number.isFinite(sess.list_size) && sess.list_size > 0) row.list_size = sess.list_size;
     const summary = parseSummary(sess.summary);
-    const stars = deriveStars(summary);
+    const stars = deriveStars(summary, sess.mode);
     const modeKey = sess.mode || 'unknown';
     // Track overall accuracy components
     if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
@@ -515,37 +575,51 @@ async function assignmentProgress(event) {
   });
   // Word coverage: attempt words - we can't easily filter by list_name here without list_name on attempts; assume attempts for this list contain the listKey fragment inside word? Out of scope; treat distinct words attempted as coverage if any sessions exist.
   attempts.forEach(att => { const row = byStudent.get(att.user_id); if (!row) return; row.words_attempted.add(att.word); });
-  // Determine total modes possible for this list; fallback to 6 if not specified
-  let totalModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count || null;
-  if (category === 'phonics' && Number(totalModes) > 4) {
-    // Phonics lists are fixed at 4 modes.
+  
+  // Determine total modes possible for this list based on category and grammar level
+  // Phonics: always 4 modes (listen, read, spell, test)
+  // Vocab: always 6 modes (match, listen, read, spell, test, level_up)
+  // Grammar Level 1: 4 modes (lesson, choose, fill, unscramble)
+  // Grammar Level 2+: 6 modes (sorting, choose, fill, unscramble, find_mistake, translation)
+  let totalModes;
+  if (category === 'phonics') {
     totalModes = 4;
-  }
-  // Determine encountered grammar advanced mode count for heuristic
-  const encountered = new Set(sessions.map(s => (s.mode||'').toLowerCase()));
-  if (category === 'grammar') {
-    const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-    let advancedCount = 0; advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
-    const heuristicTotal = advancedCount >= 2 ? 6 : 4;
-    // If meta total provided but conflicts with heuristic, override with heuristic.
-    if (!Number.isFinite(totalModes) || totalModes <= 0 || Number(totalModes) !== heuristicTotal) {
-      totalModes = heuristicTotal;
+  } else if (category === 'grammar') {
+    // Detect grammar level from list_key path
+    // e.g., "data/grammar/level1/..." or "Games/english_arcade/data/grammar/level2/..."
+    const listKeyPath = (assignment.list_key || '').toLowerCase();
+    let grammarLevel = 2; // Default to level 2 (6 modes)
+    
+    // Check for level indicator in path
+    const levelMatch = listKeyPath.match(/\/grammar\/level(\d)/);
+    if (levelMatch) {
+      grammarLevel = parseInt(levelMatch[1], 10);
     }
+    
+    // Level 1 grammar has 4 modes; Level 2+ has 6 modes
+    totalModes = grammarLevel === 1 ? 4 : 6;
+  } else {
+    // Vocab: 6 modes
+    totalModes = 6;
   }
-  if (!Number.isFinite(totalModes) || totalModes <= 0) {
-    if (category === 'phonics') totalModes = 4; else if (category === 'grammar') {
-      const advancedFlags = ['grammar_sorting','grammar_find_mistake','grammar_translation_choice'];
-      let advancedCount = 0; advancedFlags.forEach(flag => { if ([...encountered].some(m => m.includes(flag))) advancedCount++; });
-      totalModes = advancedCount >= 2 ? 6 : 4;
-    } else totalModes = 6;
+  // Allow override from assignment meta if explicitly set
+  const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
+  if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+    // Only override if category matches expected range
+    if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
+    else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
+    else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
   }
+  console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
+  
   const progress = Array.from(byStudent.values()).map(r => {
     const rawModesArr = Object.entries(r.modes).map(([mode,v]) => ({ mode, bestStars: v.stars, bestAccuracy: v.accuracy, sessions: v.sessions }));
     const starsEarned = rawModesArr.reduce((sum,m)=> sum + (m.bestStars||0), 0);
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
-    // Only count modes where student achieved at least 1 star (or lesson modes) toward completion
-    const countedModesArr = rawModesArr.filter(m => (m.bestStars >= 1) || /grammar_lesson|lesson/i.test(m.mode));
+    // Only count modes where the student achieved at least 1 star toward homework completion
+    // Requirement: a level is complete when the student has earned >=1 star in every mode
+    const countedModesArr = rawModesArr.filter(m => m.bestStars >= 1);
     const distinctModesAttempted = countedModesArr.length;
     const completionPercent = totalModes > 0 ? Math.round((distinctModesAttempted / totalModes) * 100) : 0;
     return {
@@ -559,7 +633,8 @@ async function assignmentProgress(event) {
       modes_attempted: distinctModesAttempted,
       modes_total: totalModes,
       modes: rawModesArr,
-      status: assignment.active ? (completionPercent >= 100 || starsEarned >= (assignment.goal_value||5) ? 'Completed' : 'In Progress') : 'Ended',
+      // A homework is considered completed only when every mode has at least 1 star
+      status: assignment.active ? (completionPercent >= 100 ? 'Completed' : 'In Progress') : 'Ended',
       category
     };
   });

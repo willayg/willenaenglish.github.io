@@ -1,89 +1,12 @@
 [
-  {
-    "eng": "broccoli",
-    "kor": "브로콜리",
-    "def": "a green vegetable with small tree-like parts",
-    "ex": "I cook broccoli.",
-    "ex_kor": "나는 브로콜리를 요리해요.",
-    "emoji": "🥦",
-    "sentence_id": "bd5ca10d-4eff-48bd-a2f1-29c790fa2fcb"
-  },
-  {
-    "eng": "cucumber",
-    "kor": "오이",
-    "def": "a long green vegetable",
-    "ex": "She cuts a cucumber.",
-    "ex_kor": "그녀는 오이를 잘라요.",
-    "emoji": "🥒",
-    "sentence_id": "06835ec1-e4a2-4b01-a87b-0b568092f481"
-  },
-  {
-    "eng": "lettuce",
-    "kor": "상추",
-    "def": "green leaves used in salads",
-    "ex": "We wash lettuce.",
-    "ex_kor": "우리는 상추를 씻어요.",
-    "emoji": "🥬",
-    "sentence_id": "aee7bdc5-ba99-4225-8a32-6b7b15540f94"
-  },
-  {
-    "eng": "tomato",
-    "kor": "토마토",
-    "def": "a red round vegetable used in many dishes",
-    "ex": "I slice a tomato.",
-    "ex_kor": "나는 토마토를 썰어요.",
-    "emoji": "🍅",
-    "sentence_id": "ed50ae85-768d-42cd-8cb3-a6fcfed76280"
-  },
-  {
-    "eng": "cabbage",
-    "kor": "양배추",
-    "def": "a round vegetable with many leaves",
-    "ex": "He chops cabbage.",
-    "ex_kor": "그는 양배추를 썰어요.",
-    "sentence_id": "9d8f0f09-81d7-4b1e-913c-29dd05ec00b6"
-  },
-  {
-    "eng": "spinach",
-    "kor": "시금치",
-    "def": "soft green leaves used as food",
-    "ex": "I eat spinach.",
-    "ex_kor": "나는 시금치를 먹어요.",
-    "sentence_id": "7f1b4703-24ee-494b-a0f3-1993c4606f0c"
-  },
-  {
-    "eng": "eggplant",
-    "kor": "가지",
-    "def": "a purple vegetable",
-    "ex": "We fry eggplant.",
-    "ex_kor": "우리는 가지를 튀겨요.",
-    "emoji": "🍆",
-    "sentence_id": "0c0ac912-580b-423d-8cbb-3e1d08a5d8e8"
-  },
-  {
-    "eng": "cauliflower",
-    "kor": "콜리플라워",
-    "def": "a white vegetable like broccoli",
-    "ex": "She steams cauliflower.",
-    "ex_kor": "그녀는 콜리플라워를 쪄요.",
-    "sentence_id": "d94bae0d-f730-43d7-a2f1-3dca75ab22e2"
-  },
-  {
-    "eng": "mushroom",
-    "kor": "버섯",
-    "def": "a soft food that grows in damp places",
-    "ex": "I add mushrooms.",
-    "ex_kor": "나는 버섯을 넣어요.",
-    "emoji": "🍄",
-    "sentence_id": "196b7386-16be-4c5c-be72-922a53c6c7fd"
-  },
-  {
-    "eng": "pepper",
-    "kor": "고추",
-    "def": "a vegetable that can be sweet or spicy",
-    "ex": "He cuts a pepper.",
-    "ex_kor": "그는 고추를 잘라요.",
-    "emoji": "🌶️",
-    "sentence_id": "cec43f7d-04a6-4ee4-8815-bde1c8a0a2da"
-  }
+  {"eng":"broccoli","kor":"브로콜리","def":"a green vegetable with small tree-like parts","ex":"I cook broccoli.","ex_kor":"나는 브로콜리를 요리해요.","emoji":"🥦"},
+  {"eng":"cucumber","kor":"오이","def":"a long green vegetable","ex":"She cuts a cucumber.","ex_kor":"그녀는 오이를 잘라요.","emoji":"🥒"},
+  {"eng":"lettuce","kor":"상추","def":"green leaves used in salads","ex":"We wash lettuce.","ex_kor":"우리는 상추를 씻어요.","emoji":"🥬"},
+  {"eng":"tomato","kor":"토마토","def":"a red round vegetable used in many dishes","ex":"I slice a tomato.","ex_kor":"나는 토마토를 썰어요.","emoji":"🍅"},
+  {"eng":"cabbage","kor":"양배추","def":"a round vegetable with many leaves","ex":"He chops cabbage.","ex_kor":"그는 양배추를 썰어요."},
+  {"eng":"spinach","kor":"시금치","def":"soft green leaves used as food","ex":"I eat spinach.","ex_kor":"나는 시금치를 먹어요."},
+  {"eng":"eggplant","kor":"가지","def":"a purple vegetable","ex":"We fry eggplant.","ex_kor":"우리는 가지를 튀겨요.","emoji":"🍆"},
+  {"eng":"cauliflower","kor":"콜리플라워","def":"a white vegetable like broccoli","ex":"She steams cauliflower.","ex_kor":"그녀는 콜리플라워를 쪄요."},
+  {"eng":"mushroom","kor":"버섯","def":"a soft food that grows in damp places","ex":"I add mushrooms.","ex_kor":"나는 버섯을 넣어요.","emoji":"🍄"},
+  {"eng":"pepper","kor":"고추","def":"a vegetable that can be sweet or spicy","ex":"He cuts a pepper.","ex_kor":"그는 고추를 잘라요.","emoji":"🌶️"}
 ]

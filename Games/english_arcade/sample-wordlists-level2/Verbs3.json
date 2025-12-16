@@ -1,98 +1,14 @@
 [
-  {
-    "eng": "sit",
-    "kor": "앉다",
-    "def": "to rest on a chair or surface",
-    "ex": "Please sit down.",
-    "ex_kor": "앉아 주세요.",
-    "sentence_id": "0d5029a7-b848-4934-8888-ecba227640c7"
-  },
-  {
-    "eng": "stand",
-    "kor": "서다",
-    "def": "to be on your feet",
-    "ex": "He stands by the door.",
-    "ex_kor": "그는 문 옆에 선다.",
-    "sentence_id": "966883a9-5f6e-4e17-b533-41d9138ddafd"
-  },
-  {
-    "eng": "eat",
-    "kor": "먹다",
-    "def": "to put food in your mouth",
-    "ex": "We eat breakfast together.",
-    "ex_kor": "우리는 함께 아침을 먹는다.",
-    "sentence_id": "44f8f5ce-7c0d-41de-a457-b7b64560df9d"
-  },
-  {
-    "eng": "drink",
-    "kor": "마시다",
-    "def": "to take liquid into your mouth",
-    "ex": "I drink coffee every morning.",
-    "ex_kor": "나는 매일 아침 커피를 마신다.",
-    "sentence_id": "cef86fc2-ee8e-43dc-a7cb-695f148882fa"
-  },
-  {
-    "eng": "sleep",
-    "kor": "자다",
-    "def": "to rest your body and mind",
-    "ex": "She sleeps early.",
-    "ex_kor": "그녀는 일찍 잔다.",
-    "sentence_id": "73b739f1-b82a-4ad0-9959-4fb9c8fe0249"
-  },
-  {
-    "eng": "walk",
-    "kor": "걷다",
-    "def": "to move on foot",
-    "ex": "Let’s walk to the park.",
-    "ex_kor": "공원까지 걸어가자.",
-    "sentence_id": "54a7fdfc-af71-4cc2-b7a1-54e7c86d6f6b"
-  },
-  {
-    "eng": "build",
-    "kor": "짓다",
-    "def": "to make something by putting parts together",
-    "ex": "They build a house.",
-    "ex_kor": "그들은 집을 짓는다.",
-    "sentence_id": "b83d5cc4-42bc-4f09-b664-568d7344b601"
-  },
-  {
-    "eng": "learn",
-    "kor": "배우다",
-    "def": "to get knowledge or a skill",
-    "ex": "I learn English at school.",
-    "ex_kor": "나는 학교에서 영어를 배운다.",
-    "sentence_id": "8a0b1e19-c529-4b83-b2ff-a0632b76d8e3"
-  },
-  {
-    "eng": "teach",
-    "kor": "가르치다",
-    "def": "to help someone learn",
-    "ex": "She teaches math.",
-    "ex_kor": "그녀는 수학을 가르친다.",
-    "sentence_id": "2c8ae749-8c80-4ca4-864d-f335a58f9656"
-  },
-  {
-    "eng": "show",
-    "kor": "보여주다",
-    "def": "to let someone see something",
-    "ex": "Show me your drawing.",
-    "ex_kor": "네 그림을 보여줘.",
-    "sentence_id": "3016d113-cde6-4c9b-b7fa-d62549b3dfbb"
-  },
-  {
-    "eng": "watch",
-    "kor": "보다",
-    "def": "to look at something carefully",
-    "ex": "We watch a movie.",
-    "ex_kor": "우리는 영화를 본다.",
-    "sentence_id": "8950fb3d-a57c-48bb-8741-8d03c6fe650b"
-  },
-  {
-    "eng": "listen",
-    "kor": "듣다",
-    "def": "to pay attention to sounds",
-    "ex": "Listen to the teacher.",
-    "ex_kor": "선생님의 말을 들어라.",
-    "sentence_id": "8d34920a-6e58-4254-a878-c00bf1f6d9d6"
-  }
+  {"eng":"sit","kor":"앉다","def":"to rest on a chair or surface","ex":"Please sit down.","ex_kor":"앉아 주세요."},
+  {"eng":"stand","kor":"서다","def":"to be on your feet","ex":"He stands by the door.","ex_kor":"그는 문 옆에 선다."},
+  {"eng":"eat","kor":"먹다","def":"to put food in your mouth","ex":"We eat breakfast together.","ex_kor":"우리는 함께 아침을 먹는다."},
+  {"eng":"drink","kor":"마시다","def":"to take liquid into your mouth","ex":"I drink coffee every morning.","ex_kor":"나는 매일 아침 커피를 마신다."},
+  {"eng":"sleep","kor":"자다","def":"to rest your body and mind","ex":"She sleeps early.","ex_kor":"그녀는 일찍 잔다."},
+  {"eng":"walk","kor":"걷다","def":"to move on foot","ex":"Let’s walk to the park.","ex_kor":"공원까지 걸어가자."},
+  {"eng":"build","kor":"짓다","def":"to make something by putting parts together","ex":"They build a house.","ex_kor":"그들은 집을 짓는다."},
+  {"eng":"learn","kor":"배우다","def":"to get knowledge or a skill","ex":"I learn English at school.","ex_kor":"나는 학교에서 영어를 배운다."},
+  {"eng":"teach","kor":"가르치다","def":"to help someone learn","ex":"She teaches math.","ex_kor":"그녀는 수학을 가르친다."},
+  {"eng":"show","kor":"보여주다","def":"to let someone see something","ex":"Show me your drawing.","ex_kor":"네 그림을 보여줘."},
+  {"eng":"watch","kor":"보다","def":"to look at something carefully","ex":"We watch a movie.","ex_kor":"우리는 영화를 본다."},
+  {"eng":"listen","kor":"듣다","def":"to pay attention to sounds","ex":"Listen to the teacher.","ex_kor":"선생님의 말을 들어라."}
 ]

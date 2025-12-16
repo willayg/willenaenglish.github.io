@@ -1,110 +1,14 @@
 [
-  {
-    "eng": "soccer",
-    "kor": "축구",
-    "def": "a game where players kick a ball into a goal",
-    "ex": "We play soccer.",
-    "ex_kor": "우리는 축구를 한다.",
-    "emoji": "⚽",
-    "sentence_id": "c9af170d-43de-4937-80ee-7fb43a79ef14"
-  },
-  {
-    "eng": "basketball",
-    "kor": "농구",
-    "def": "a game where players shoot a ball into a hoop",
-    "ex": "They play basketball.",
-    "ex_kor": "그들은 농구를 한다.",
-    "emoji": "🏀",
-    "sentence_id": "b4914b8d-9446-410f-9085-fe4bd84f8969"
-  },
-  {
-    "eng": "baseball",
-    "kor": "야구",
-    "def": "a game where players hit a ball and run bases",
-    "ex": "He plays baseball.",
-    "ex_kor": "그는 야구를 한다.",
-    "emoji": "⚾",
-    "sentence_id": "dca6b840-57db-43d1-808e-1652a115da6d"
-  },
-  {
-    "eng": "tennis",
-    "kor": "테니스",
-    "def": "a game hitting a ball over a net",
-    "ex": "She plays tennis.",
-    "ex_kor": "그녀는 테니스를 한다.",
-    "emoji": "🎾",
-    "sentence_id": "c9608529-c539-4675-9e8b-898b740fffc2"
-  },
-  {
-    "eng": "volleyball",
-    "kor": "배구",
-    "def": "a game hitting a ball over a high net",
-    "ex": "We play volleyball.",
-    "ex_kor": "우리는 배구를 한다.",
-    "emoji": "🏐",
-    "sentence_id": "3b66305a-d708-464a-b60c-fb3f2eae1a52"
-  },
-  {
-    "eng": "swimming",
-    "kor": "수영",
-    "def": "moving through water with arms and legs",
-    "ex": "I enjoy swimming.",
-    "ex_kor": "나는 수영을 즐긴다.",
-    "emoji": "🏊",
-    "sentence_id": "9428bb18-0de5-4ebc-9068-8d2c4df5f9c3"
-  },
-  {
-    "eng": "running",
-    "kor": "달리기",
-    "def": "moving fast on your feet",
-    "ex": "He likes running.",
-    "ex_kor": "그는 달리기를 좋아한다.",
-    "emoji": "🏃",
-    "sentence_id": "da39130f-9e60-4459-90e8-dba5deb263d7"
-  },
-  {
-    "eng": "cycling",
-    "kor": "자전거 타기",
-    "def": "riding a bicycle for sport",
-    "ex": "She likes cycling.",
-    "ex_kor": "그녀는 자전거 타기를 좋아한다.",
-    "emoji": "🚴",
-    "sentence_id": "c218c8fa-d4a1-46b1-9302-e07b39c89a6b"
-  },
-  {
-    "eng": "skiing",
-    "kor": "스키",
-    "def": "moving on snow with skis",
-    "ex": "We go skiing.",
-    "ex_kor": "우리는 스키를 탄다.",
-    "emoji": "⛷️",
-    "sentence_id": "dabc5314-001c-4c98-bcfb-fe38b85fb6ee"
-  },
-  {
-    "eng": "skating",
-    "kor": "스케이트",
-    "def": "moving on wheels or blades",
-    "ex": "She enjoys skating.",
-    "ex_kor": "그녀는 스케이트를 즐긴다.",
-    "emoji": "⛸️",
-    "sentence_id": "1114744d-d466-4c24-a2d8-3928c2ec8e9c"
-  },
-  {
-    "eng": "golf",
-    "kor": "골프",
-    "def": "a game hitting a small ball into holes",
-    "ex": "He plays golf.",
-    "ex_kor": "그는 골프를 한다.",
-    "emoji": "⛳",
-    "sentence_id": "065bfb2c-4745-432d-b5e9-5d336ea56881"
-  },
-  {
-    "eng": "badminton",
-    "kor": "배드민턴",
-    "def": "a game hitting a shuttle over a net",
-    "ex": "They play badminton.",
-    "ex_kor": "그들은 배드민턴을 한다.",
-    "emoji": "🏸",
-    "sentence_id": "210d56fb-931d-4eed-8d92-1451e559c0d1"
-  }
+  {"eng": "soccer", "kor": "축구", "def": "a game where players kick a ball into a goal", "ex": "We play soccer.", "ex_kor": "우리는 축구를 한다.", "emoji": "⚽"},
+  {"eng": "basketball", "kor": "농구", "def": "a game where players shoot a ball into a hoop", "ex": "They play basketball.", "ex_kor": "그들은 농구를 한다.", "emoji": "🏀"},
+  {"eng": "baseball", "kor": "야구", "def": "a game where players hit a ball and run bases", "ex": "He plays baseball.", "ex_kor": "그는 야구를 한다.", "emoji": "⚾"},
+  {"eng": "tennis", "kor": "테니스", "def": "a game hitting a ball over a net", "ex": "She plays tennis.", "ex_kor": "그녀는 테니스를 한다.", "emoji": "🎾"},
+  {"eng": "volleyball", "kor": "배구", "def": "a game hitting a ball over a high net", "ex": "We play volleyball.", "ex_kor": "우리는 배구를 한다.", "emoji": "🏐"},
+  {"eng": "swimming", "kor": "수영", "def": "moving through water with arms and legs", "ex": "I enjoy swimming.", "ex_kor": "나는 수영을 즐긴다.", "emoji": "🏊"},
+  {"eng": "running", "kor": "달리기", "def": "moving fast on your feet", "ex": "He likes running.", "ex_kor": "그는 달리기를 좋아한다.", "emoji": "🏃"},
+  {"eng": "cycling", "kor": "자전거 타기", "def": "riding a bicycle for sport", "ex": "She likes cycling.", "ex_kor": "그녀는 자전거 타기를 좋아한다.", "emoji": "🚴"},
+  {"eng": "skiing", "kor": "스키", "def": "moving on snow with skis", "ex": "We go skiing.", "ex_kor": "우리는 스키를 탄다.", "emoji": "⛷️"},
+  {"eng": "skating", "kor": "스케이트", "def": "moving on wheels or blades", "ex": "She enjoys skating.", "ex_kor": "그녀는 스케이트를 즐긴다.", "emoji": "⛸️"},
+  {"eng": "golf", "kor": "골프", "def": "a game hitting a small ball into holes", "ex": "He plays golf.", "ex_kor": "그는 골프를 한다.", "emoji": "⛳"},
+  {"eng": "badminton", "kor": "배드민턴", "def": "a game hitting a shuttle over a net", "ex": "They play badminton.", "ex_kor": "그들은 배드민턴을 한다.", "emoji": "🏸"}
 ]

@@ -1,154 +1,21 @@
 [
-  {
-    "eng": "what",
-    "kor": "무엇",
-    "def": "ask for information",
-    "ex": "What is this?",
-    "ex_kor": "이게 뭐예요?",
-    "sentence_id": "60e30c38-eadb-4b25-b615-8c36f881c596"
-  },
-  {
-    "eng": "where",
-    "kor": "어디",
-    "def": "ask for a place",
-    "ex": "Where do you live?",
-    "ex_kor": "어디에 살아요?",
-    "sentence_id": "306fee3d-b9d8-492e-902d-136a5e860ef0"
-  },
-  {
-    "eng": "when",
-    "kor": "언제",
-    "def": "ask for a time",
-    "ex": "When is your birthday?",
-    "ex_kor": "생일이 언제예요?",
-    "sentence_id": "a3b5d4fb-c9ce-47e3-b095-658199dce304"
-  },
-  {
-    "eng": "who",
-    "kor": "누구",
-    "def": "ask for a person",
-    "ex": "Who is your teacher?",
-    "ex_kor": "선생님이 누구예요?",
-    "sentence_id": "24accdec-d8c2-42a6-8275-aab25469e55d"
-  },
-  {
-    "eng": "why",
-    "kor": "왜",
-    "def": "ask for a reason",
-    "ex": "Why are you late?",
-    "ex_kor": "왜 늦었어요?",
-    "sentence_id": "b492edb8-e9fc-4014-9e5c-d683676c766c"
-  },
-  {
-    "eng": "how",
-    "kor": "어떻게",
-    "def": "ask for a way or manner",
-    "ex": "How do you say this in English?",
-    "ex_kor": "이것을 영어로 어떻게 말해요?",
-    "sentence_id": "f6f07f79-8992-4fac-b5ff-08c86295add8"
-  },
-  {
-    "eng": "which",
-    "kor": "어느/어떤",
-    "def": "ask to choose between options",
-    "ex": "Which color do you like?",
-    "ex_kor": "어떤 색을 좋아해요?",
-    "sentence_id": "cffdb680-bf5b-453f-8664-6115f1906164"
-  },
-  {
-    "eng": "whose",
-    "kor": "누구의",
-    "def": "ask about possession",
-    "ex": "Whose bag is this?",
-    "ex_kor": "이 가방은 누구 거예요?",
-    "sentence_id": "4dce3289-159f-42a3-b854-c237f178b30b"
-  },
-  {
-    "eng": "how many",
-    "kor": "몇 개",
-    "def": "ask for a count (things/people)",
-    "ex": "How many apples do you have?",
-    "ex_kor": "사과가 몇 개 있어요?",
-    "sentence_id": "97946136-9f2f-461d-a84a-173ca3da7836"
-  },
-  {
-    "eng": "how much",
-    "kor": "얼마/얼마나",
-    "def": "ask for price or amount",
-    "ex": "How much is this?",
-    "ex_kor": "이거 얼마예요?",
-    "sentence_id": "7610b436-cab3-4e63-a9fa-afbc7aeca15b"
-  },
-  {
-    "eng": "how often",
-    "kor": "얼마나 자주",
-    "def": "ask for frequency",
-    "ex": "How often do you exercise?",
-    "ex_kor": "얼마나 자주 운동해요?",
-    "sentence_id": "e496cab1-74da-4e13-950a-e9986a36804f"
-  },
-  {
-    "eng": "how long",
-    "kor": "얼마나 오래",
-    "def": "ask for duration or length",
-    "ex": "How long is the movie?",
-    "ex_kor": "영화 길이가 얼마나 돼요?",
-    "sentence_id": "5e985f60-3e97-406d-abd0-62f8771d4867"
-  },
-  {
-    "eng": "how far",
-    "kor": "얼마나 멀리",
-    "def": "ask for distance",
-    "ex": "How far is your school?",
-    "ex_kor": "학교가 얼마나 멀어요?",
-    "sentence_id": "4a90a44f-61ee-4675-91d3-db5ac63e6cb6"
-  },
-  {
-    "eng": "how old",
-    "kor": "몇 살",
-    "def": "ask for age",
-    "ex": "How old are you?",
-    "ex_kor": "몇 살이에요?",
-    "sentence_id": "e085db2e-dfcd-429a-9809-c11389e449c9"
-  },
-  {
-    "eng": "how come",
-    "kor": "왜 (어째서)",
-    "def": "ask the reason (informal)",
-    "ex": "How come you are late?",
-    "ex_kor": "왜 늦었어요?",
-    "sentence_id": "34cd5ce2-82b7-4bf3-b9dd-01241977b686"
-  },
-  {
-    "eng": "what time",
-    "kor": "몇 시",
-    "def": "ask for a specific time",
-    "ex": "What time is it?",
-    "ex_kor": "몇 시예요?",
-    "sentence_id": "d9fcee53-1708-479f-85c5-10fc78d24d85"
-  },
-  {
-    "eng": "what color",
-    "kor": "무슨 색",
-    "def": "ask for a color",
-    "ex": "What color is your bike?",
-    "ex_kor": "자전거 색이 뭐예요?",
-    "sentence_id": "0e639061-d570-44a6-b631-940f8a32f57f"
-  },
-  {
-    "eng": "what kind",
-    "kor": "어떤 종류",
-    "def": "ask for a type/kind",
-    "ex": "What kind of music do you like?",
-    "ex_kor": "어떤 음악을 좋아해요?",
-    "sentence_id": "426bdd89-4b9f-42d5-a27d-503edbfde61f"
-  },
-  {
-    "eng": "what size",
-    "kor": "무슨 사이즈/몇 사이즈",
-    "def": "ask for size",
-    "ex": "What size do you wear?",
-    "ex_kor": "사이즈가 몇이에요?",
-    "sentence_id": "faf6a249-96b0-4148-a0f8-1464e3673680"
-  }
+  {"eng":"what","kor":"무엇","def":"ask for information","ex":"What is this?","ex_kor":"이게 뭐예요?"},
+  {"eng":"where","kor":"어디","def":"ask for a place","ex":"Where do you live?","ex_kor":"어디에 살아요?"},
+  {"eng":"when","kor":"언제","def":"ask for a time","ex":"When is your birthday?","ex_kor":"생일이 언제예요?"},
+  {"eng":"who","kor":"누구","def":"ask for a person","ex":"Who is your teacher?","ex_kor":"선생님이 누구예요?"},
+  {"eng":"why","kor":"왜","def":"ask for a reason","ex":"Why are you late?","ex_kor":"왜 늦었어요?"},
+  {"eng":"how","kor":"어떻게","def":"ask for a way or manner","ex":"How do you say this in English?","ex_kor":"이것을 영어로 어떻게 말해요?"},
+  {"eng":"which","kor":"어느/어떤","def":"ask to choose between options","ex":"Which color do you like?","ex_kor":"어떤 색을 좋아해요?"},
+  {"eng":"whose","kor":"누구의","def":"ask about possession","ex":"Whose bag is this?","ex_kor":"이 가방은 누구 거예요?"},
+  {"eng":"how many","kor":"몇 개","def":"ask for a count (things/people)","ex":"How many apples do you have?","ex_kor":"사과가 몇 개 있어요?"},
+  {"eng":"how much","kor":"얼마/얼마나","def":"ask for price or amount","ex":"How much is this?","ex_kor":"이거 얼마예요?"},
+  {"eng":"how often","kor":"얼마나 자주","def":"ask for frequency","ex":"How often do you exercise?","ex_kor":"얼마나 자주 운동해요?"},
+  {"eng":"how long","kor":"얼마나 오래","def":"ask for duration or length","ex":"How long is the movie?","ex_kor":"영화 길이가 얼마나 돼요?"},
+  {"eng":"how far","kor":"얼마나 멀리","def":"ask for distance","ex":"How far is your school?","ex_kor":"학교가 얼마나 멀어요?"},
+  {"eng":"how old","kor":"몇 살","def":"ask for age","ex":"How old are you?","ex_kor":"몇 살이에요?"},
+  {"eng":"how come","kor":"왜 (어째서)","def":"ask the reason (informal)","ex":"How come you are late?","ex_kor":"왜 늦었어요?"},
+  {"eng":"what time","kor":"몇 시","def":"ask for a specific time","ex":"What time is it?","ex_kor":"몇 시예요?"},
+  {"eng":"what color","kor":"무슨 색","def":"ask for a color","ex":"What color is your bike?","ex_kor":"자전거 색이 뭐예요?"},
+  {"eng":"what kind","kor":"어떤 종류","def":"ask for a type/kind","ex":"What kind of music do you like?","ex_kor":"어떤 음악을 좋아해요?"},
+  {"eng":"what size","kor":"무슨 사이즈/몇 사이즈","def":"ask for size","ex":"What size do you wear?","ex_kor":"사이즈가 몇이에요?"}
 ]

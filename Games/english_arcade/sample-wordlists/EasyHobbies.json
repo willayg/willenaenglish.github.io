@@ -1,182 +1,22 @@
 [
-  {
-    "eng": "reading",
-    "kor": "독서",
-    "def": "the activity of looking at books",
-    "ex": "I like reading books.",
-    "ex_kor": "나는 책 읽기를 좋아한다.",
-    "emoji": "📖",
-    "sentence_id": "87364a06-3727-4642-be59-83b04c7772fb"
-  },
-  {
-    "eng": "painting",
-    "kor": "그림 그리기",
-    "def": "the activity of making art with paint",
-    "ex": "She enjoys painting pictures.",
-    "ex_kor": "그녀는 그림 그리기를 즐긴다.",
-    "emoji": "🎨",
-    "sentence_id": "f28e6078-126a-4efa-9d69-6f1988240e7b"
-  },
-  {
-    "eng": "cooking",
-    "kor": "요리",
-    "def": "the activity of making food",
-    "ex": "I enjoy cooking dinner.",
-    "ex_kor": "나는 저녁 요리를 즐긴다.",
-    "emoji": "🍳",
-    "sentence_id": "0f32f732-4ff9-46d8-8b34-b4131299e520"
-  },
-  {
-    "eng": "gardening",
-    "kor": "정원 가꾸기",
-    "def": "the activity of growing plants",
-    "ex": "My mom likes gardening flowers.",
-    "ex_kor": "우리 엄마는 꽃 정원을 좋아한다.",
-    "emoji": "🌱",
-    "sentence_id": "32ea7c6f-d771-43ba-be5b-dbabdab078c4"
-  },
-  {
-    "eng": "photography",
-    "kor": "사진 찍기",
-    "def": "the activity of taking photos",
-    "ex": "He loves photography work.",
-    "ex_kor": "그는 사진 찍기를 사랑한다.",
-    "emoji": "📷",
-    "sentence_id": "2ea8829f-5647-4b7a-965e-ce9ca884dc3f"
-  },
-  {
-    "eng": "dancing",
-    "kor": "춤추기",
-    "def": "moving the body to music",
-    "ex": "We enjoy dancing songs.",
-    "ex_kor": "우리는 춤을 추기를 즐긴다.",
-    "emoji": "💃",
-    "sentence_id": "f0f51405-de85-4d57-a499-fb5a7e2f2dfe"
-  },
-  {
-    "eng": "singing",
-    "kor": "노래 부르기",
-    "def": "making music with the voice",
-    "ex": "She likes singing songs.",
-    "ex_kor": "그녀는 노래 부르기를 좋아한다.",
-    "emoji": "🎤",
-    "sentence_id": "9f9a54b5-c950-491e-ba5b-743342e2ab89"
-  },
-  {
-    "eng": "playing guitar",
-    "kor": "기타 치기",
-    "def": "making music with a guitar",
-    "ex": "He likes playing guitar music.",
-    "ex_kor": "그는 기타 치기를 좋아한다.",
-    "emoji": "🎸",
-    "sentence_id": "dee29186-fa3f-4f77-8274-bb81db1c1204"
-  },
-  {
-    "eng": "playing piano",
-    "kor": "피아노 치기",
-    "def": "making music with a piano",
-    "ex": "She practices playing piano songs.",
-    "ex_kor": "그녀는 피아노 연주를 연습한다.",
-    "emoji": "🎹",
-    "sentence_id": "6eca5a68-d1ca-498e-b359-505f84c22d80"
-  },
-  {
-    "eng": "swimming",
-    "kor": "수영",
-    "def": "moving in water for fun",
-    "ex": "We enjoy swimming laps.",
-    "ex_kor": "우리는 수영을 즐긴다.",
-    "emoji": "🏊",
-    "sentence_id": "b5f89349-2120-43a5-9c10-58b3450a75cc"
-  },
-  {
-    "eng": "cycling",
-    "kor": "자전거 타기",
-    "def": "riding a bicycle",
-    "ex": "He enjoys cycling roads.",
-    "ex_kor": "그는 자전거 타기를 즐긴다.",
-    "emoji": "🚴",
-    "sentence_id": "aa169328-92f1-48c2-b4d9-0c42fc9550e6"
-  },
-  {
-    "eng": "hiking",
-    "kor": "등산",
-    "def": "walking in nature",
-    "ex": "We go hiking trails.",
-    "ex_kor": "우리는 등산을 간다.",
-    "emoji": "🥾",
-    "sentence_id": "583b1355-fbf3-4e03-801b-36ec3b3ebb71"
-  },
-  {
-    "eng": "fishing",
-    "kor": "낚시",
-    "def": "catching fish for fun",
-    "ex": "Dad likes fishing rivers.",
-    "ex_kor": "아버지는 낚시를 좋아한다.",
-    "emoji": "🎣",
-    "sentence_id": "f025e359-0140-41dd-9eb5-c3543aa4834b"
-  },
-  {
-    "eng": "traveling",
-    "kor": "여행",
-    "def": "going to new places",
-    "ex": "Our family likes traveling places.",
-    "ex_kor": "우리 가족은 여행을 좋아한다.",
-    "emoji": "✈️",
-    "sentence_id": "b7705cd2-b1b6-4e45-bea1-0f25afa5113f"
-  },
-  {
-    "eng": "writing",
-    "kor": "글쓰기",
-    "def": "making words on paper",
-    "ex": "I enjoy writing stories.",
-    "ex_kor": "나는 이야기 쓰기를 즐긴다.",
-    "emoji": "✍️",
-    "sentence_id": "48c10cde-de8a-4517-9fc4-658d5c99e865"
-  },
-  {
-    "eng": "drawing",
-    "kor": "그리기",
-    "def": "making pictures with a pencil",
-    "ex": "The child likes drawing animals.",
-    "ex_kor": "아이는 동물 그리기를 좋아한다.",
-    "emoji": "✏️",
-    "sentence_id": "d5584969-d835-46c0-bd9b-12c7ad0b5fa9"
-  },
-  {
-    "eng": "playing chess",
-    "kor": "체스 두기",
-    "def": "playing the board game chess",
-    "ex": "We enjoy playing chess games.",
-    "ex_kor": "우리는 체스 두기를 즐긴다.",
-    "emoji": "♟️",
-    "sentence_id": "c8f747c6-8e49-4884-ac00-287734c6f9d7"
-  },
-  {
-    "eng": "playing video games",
-    "kor": "비디오 게임하기",
-    "def": "playing games on a screen",
-    "ex": "He likes playing video games.",
-    "ex_kor": "그는 비디오 게임을 좋아한다.",
-    "emoji": "🎮",
-    "sentence_id": "f45ad601-4d4d-49d5-85c4-ef53224f46f0"
-  },
-  {
-    "eng": "knitting",
-    "kor": "뜨개질",
-    "def": "making cloth with yarn",
-    "ex": "Grandma enjoys knitting hats.",
-    "ex_kor": "할머니는 모자 뜨개질을 즐긴다.",
-    "emoji": "🧶",
-    "sentence_id": "db949751-ab26-44df-8c80-da95dd974ae6"
-  },
-  {
-    "eng": "baking",
-    "kor": "베이킹",
-    "def": "cooking bread or cake in an oven",
-    "ex": "She enjoys baking cookies.",
-    "ex_kor": "그녀는 쿠키 굽기를 즐긴다.",
-    "emoji": "🧁",
-    "sentence_id": "0be8b886-0b72-4715-b8d7-9925f6586d46"
-  }
+  {"eng": "reading", "kor": "독서", "def": "the activity of looking at books", "ex": "I like reading books.", "ex_kor": "나는 책 읽기를 좋아한다.", "emoji": "📖"},
+  {"eng": "painting", "kor": "그림 그리기", "def": "the activity of making art with paint", "ex": "She enjoys painting pictures.", "ex_kor": "그녀는 그림 그리기를 즐긴다.", "emoji": "🎨"},
+  {"eng": "cooking", "kor": "요리", "def": "the activity of making food", "ex": "I enjoy cooking dinner.", "ex_kor": "나는 저녁 요리를 즐긴다.", "emoji": "🍳"},
+  {"eng": "gardening", "kor": "정원 가꾸기", "def": "the activity of growing plants", "ex": "My mom likes gardening flowers.", "ex_kor": "우리 엄마는 꽃 정원을 좋아한다.", "emoji": "🌱"},
+  {"eng": "photography", "kor": "사진 찍기", "def": "the activity of taking photos", "ex": "He loves photography work.", "ex_kor": "그는 사진 찍기를 사랑한다.", "emoji": "📷"},
+  {"eng": "dancing", "kor": "춤추기", "def": "moving the body to music", "ex": "We enjoy dancing songs.", "ex_kor": "우리는 춤을 추기를 즐긴다.", "emoji": "💃"},
+  {"eng": "singing", "kor": "노래 부르기", "def": "making music with the voice", "ex": "She likes singing songs.", "ex_kor": "그녀는 노래 부르기를 좋아한다.", "emoji": "🎤"},
+  {"eng": "playing guitar", "kor": "기타 치기", "def": "making music with a guitar", "ex": "He likes playing guitar music.", "ex_kor": "그는 기타 치기를 좋아한다.", "emoji": "🎸"},
+  {"eng": "playing piano", "kor": "피아노 치기", "def": "making music with a piano", "ex": "She practices playing piano songs.", "ex_kor": "그녀는 피아노 연주를 연습한다.", "emoji": "🎹"},
+  {"eng": "swimming", "kor": "수영", "def": "moving in water for fun", "ex": "We enjoy swimming laps.", "ex_kor": "우리는 수영을 즐긴다.", "emoji": "🏊"},
+  {"eng": "cycling", "kor": "자전거 타기", "def": "riding a bicycle", "ex": "He enjoys cycling roads.", "ex_kor": "그는 자전거 타기를 즐긴다.", "emoji": "🚴"},
+  {"eng": "hiking", "kor": "등산", "def": "walking in nature", "ex": "We go hiking trails.", "ex_kor": "우리는 등산을 간다.", "emoji": "🥾"},
+  {"eng": "fishing", "kor": "낚시", "def": "catching fish for fun", "ex": "Dad likes fishing rivers.", "ex_kor": "아버지는 낚시를 좋아한다.", "emoji": "🎣"},
+  {"eng": "traveling", "kor": "여행", "def": "going to new places", "ex": "Our family likes traveling places.", "ex_kor": "우리 가족은 여행을 좋아한다.", "emoji": "✈️"},
+  {"eng": "writing", "kor": "글쓰기", "def": "making words on paper", "ex": "I enjoy writing stories.", "ex_kor": "나는 이야기 쓰기를 즐긴다.", "emoji": "✍️"},
+  {"eng": "drawing", "kor": "그리기", "def": "making pictures with a pencil", "ex": "The child likes drawing animals.", "ex_kor": "아이는 동물 그리기를 좋아한다.", "emoji": "✏️"},
+  {"eng": "playing chess", "kor": "체스 두기", "def": "playing the board game chess", "ex": "We enjoy playing chess games.", "ex_kor": "우리는 체스 두기를 즐긴다.", "emoji": "♟️"},
+  {"eng": "playing video games", "kor": "비디오 게임하기", "def": "playing games on a screen", "ex": "He likes playing video games.", "ex_kor": "그는 비디오 게임을 좋아한다.", "emoji": "🎮"},
+  {"eng": "knitting", "kor": "뜨개질", "def": "making cloth with yarn", "ex": "Grandma enjoys knitting hats.", "ex_kor": "할머니는 모자 뜨개질을 즐긴다.", "emoji": "🧶"},
+  {"eng": "baking", "kor": "베이킹", "def": "cooking bread or cake in an oven", "ex": "She enjoys baking cookies.", "ex_kor": "그녀는 쿠키 굽기를 즐긴다.", "emoji": "🧁"}
 ]
