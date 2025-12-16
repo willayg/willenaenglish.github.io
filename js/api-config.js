@@ -57,10 +57,15 @@
   // ============================================================
   // API BASE - Simple rule
   // ============================================================
-  // Production: relative paths (same-origin) EXCEPT custom domain -> use Netlify base
+  // On willenaenglish.netlify.app: relative paths (same-origin) - this is the ONLY place auth works
   // GitHub Pages: absolute Netlify URL (cross-origin)
+  // Custom domains: absolute Netlify URL (cross-origin) - but users should be redirected to netlify anyway
+  const isNetlifyApp = currentHost === 'willenaenglish.netlify.app';
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
-  const API_BASE = isGitHubPages ? NETLIFY_BASE : (isCustomDomain ? NETLIFY_BASE : '');
+  
+  // ONLY use relative paths on willenaenglish.netlify.app or localhost
+  // Everything else needs absolute URLs to Netlify
+  const API_BASE = (isNetlifyApp || isLocalhost) ? '' : NETLIFY_BASE;
 
   // ============================================================
   // COOKIE BLOCKING DETECTION (for GitHub Pages redirect)
