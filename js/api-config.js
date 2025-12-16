@@ -22,6 +22,24 @@
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
   const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 
+  // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
+  // even when CF_ROLLOUT_PERCENT is 100
+  const NETLIFY_ONLY_FUNCTIONS = [
+    'verify_student',
+    'set_student_password',
+    'debug_student_data',
+    'openai_proxy',
+    'pixabay',
+    'google_vision_proxy',
+    'supabase_proxy',
+    'supabase_proxy_fixed',
+    'teacher_admin',
+    'test_admin',
+    'eleven_labs_proxy',
+    'translate',
+    'define_word',
+  ];
+
   // ============================================================
   // ENVIRONMENT DETECTION (minimal)
   // ============================================================
@@ -86,7 +104,7 @@
    * Extract function name from path
    */
   function extractFunctionName(functionPath) {
-    const match = functionPath.match(/\/?\.?netlify\/functions\/([^/?]+)/);
+    const match = functionPath.match(/\/?\.?netlify\/functions\/([^\/?]+)/);
     return match ? match[1] : '';
   }
 
@@ -151,17 +169,8 @@
       const res = await fetch(url, fetchOptions);
       return res;
     } catch (err) {
-      // Network errors should NOT trigger logout
-      // Return a synthetic error response that callers can handle gracefully
-      console.warn('[WillenaAPI] Fetch failed (non-fatal):', err.message);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Network error: ' + (err.message || 'unknown'),
-        _networkError: true 
-      }), { 
-        status: 0, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
+      console.error('[WillenaAPI] Fetch error:', err);
+      throw err;
     }
   }
 

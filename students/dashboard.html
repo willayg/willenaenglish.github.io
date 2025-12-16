@@ -60,7 +60,11 @@
           // Not logged in - redirect to login
           location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
         }
-      } catch {}
+      } catch (err) {
+        // If auth check fails (network error, JSON parse error, etc.), redirect to login
+        console.error('[Dashboard] Auth check error:', err);
+        location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
+      }
     });
   </script>
   <script type="module" src="/students/components/student-header.js"></script>
