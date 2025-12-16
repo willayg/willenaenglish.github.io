@@ -30,6 +30,8 @@ import { historyManager } from './history-manager.js?v=20251231a';
 import { progressCache } from './utils/progress-cache.js?v=20251231a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251231a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251231a';
+// Import ensureUserId to wait for auth before prefetching progress
+import { ensureUserId } from '../../students/records.js';
 
 // -----------------------------
 // Auth redirect helper
@@ -1274,14 +1276,24 @@ function showLevelsMenu() {
         if (s4) s4.textContent = `⭐ ${starCounts.level4 || 0}`;
       };
 
+      // IMPORTANT: Wait for user auth before loading star counts
+      // This prevents showing 0 stars when user is not authenticated yet
+      const userId = await ensureUserId();
+      if (!userId) {
+        console.log('[levels] User not authenticated, skipping star count load');
+        // Don't update UI - leave initial state (⭐ Loading... or empty)
+        return;
+      }
+
       // Fetch from shared progress service (instant if prefetched!)
       const { data, fromCache } = await loadStarCounts();
 
       if (data?.ready) {
         renderStars(data.counts);
-      } else {
-        renderStars({ level0: 0, level1: 0, level2: 0, level3: 0, level4: 0 });
       }
+      // NOTE: Removed fallback to 0 when !data?.ready - if user is authenticated but no data,
+      // this is likely a real case of 0 stars, but we let the UI stay in loading state
+      // until we have confirmed data
 
       if (fromCache) {
         const unsubscribe = progressCache.onUpdate('level_stars', (fresh) => {
@@ -1379,9 +1391,14 @@ function showGrammarLevelsMenu() {
       el.textContent = `⭐ ${Math.max(0, Math.round(val))}`;
     };
 
-    applyStars('wa-stars-grammar-level1', 0);
-    applyStars('wa-stars-grammar-level2', 0);
-    applyStars('wa-stars-grammar-level3', 0);
+    // IMPORTANT: Wait for user auth before loading star counts
+    // This prevents showing 0 stars when user is not authenticated yet
+    const userId = await ensureUserId();
+    if (!userId) {
+      console.log('[GrammarLevels] User not authenticated, skipping star count load');
+      // Don't update UI - leave initial state
+      return;
+    }
 
     try {
       const { data, fromCache } = await loadStarCounts();
@@ -1503,8 +1520,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Prefetch progress data in background (non-blocking)
   // This warms up the cache so modals open instantly
-  setTimeout(() => {
-    console.log('[WordArcade] Prefetching progress data for instant modal loading...');
+  // IMPORTANT: Wait for user auth to complete first to avoid caching empty data
+  setTimeout(async () => {
+    console.log('[WordArcade] Waiting for user auth before prefetching progress...');
+    const userId = await ensureUserId();
+    if (!userId) {
+      console.log('[WordArcade] User not authenticated, skipping progress prefetch');
+      return;
+    }
+    console.log('[WordArcade] User ready, prefetching progress data for instant modal loading...');
     prefetchAllProgress({
       level1Lists: LEVEL1_LISTS,
       level2Lists: LEVEL2_LISTS,

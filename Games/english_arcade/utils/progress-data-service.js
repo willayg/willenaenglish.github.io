@@ -651,6 +651,13 @@ function computeStarCountsFromSessions(sessions) {
 }
 
 async function fetchAllSessions() {
+  // CRITICAL: Check user readiness before fetching
+  // This prevents fetching (and caching) empty data when user is not authenticated
+  if (!progressCache.isUserReady()) {
+    console.log('[ProgressService] fetchAllSessions skipped - user not ready');
+    return []; // Return empty array; caller should not cache this
+  }
+  
   const now = Date.now();
   if (sessionCache && (now - sessionCacheTimestamp) < SESSION_CACHE_WINDOW_MS) {
     return sessionCache;
@@ -662,12 +669,20 @@ async function fetchAllSessions() {
   sessionInflightPromise = (async () => {
     const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!res.ok) {
+      // On 401/403, don't cache and return empty
+      if (res.status === 401 || res.status === 403) {
+        console.warn('[ProgressService] fetchAllSessions got auth error, returning empty');
+        return [];
+      }
       throw new Error(`progress_summary fetch failed (${res.status})`);
     }
     const data = await res.json().catch(() => []);
     const sessions = Array.isArray(data) ? data : [];
-    sessionCache = sessions;
-    sessionCacheTimestamp = Date.now();
+    // Only cache if user is still ready (double-check after async)
+    if (progressCache.isUserReady()) {
+      sessionCache = sessions;
+      sessionCacheTimestamp = Date.now();
+    }
     return sessions;
   })();
 
@@ -678,11 +693,17 @@ async function fetchAllSessions() {
   }
 }
 
-function ensureProgressPayload(values) {
-  return { ready: true, values: Array.isArray(values) ? values : [] };
+function ensureProgressPayload(values, ready = true) {
+  return { ready, values: Array.isArray(values) ? values : [] };
 }
 
 async function loadProgress(cacheKey, lists, modeGroup, matcher) {
+  // CRITICAL: If user is not ready, return not-ready state instead of 0s
+  if (!progressCache.isUserReady()) {
+    console.log(`[ProgressService] loadProgress(${cacheKey}) - user not ready, returning not-ready state`);
+    return { data: { ready: false, values: [] }, fromCache: false };
+  }
+  
   return progressCache.fetchWithCache(cacheKey, async () => {
     const sessions = await fetchAllSessions();
     const modeIds = MODE_GROUPS[modeGroup];
@@ -712,6 +733,11 @@ export async function loadPhonicsProgress(lists) {
 }
 
 export async function loadGrammarLevelProgress(lists) {
+  // CRITICAL: If user is not ready, return not-ready state
+  if (!progressCache.isUserReady()) {
+    console.log('[ProgressService] loadGrammarLevelProgress - user not ready');
+    return { data: { ready: false, values: [] }, fromCache: false };
+  }
   return progressCache.fetchWithCache(CACHE_KEYS.grammarLevel1, async () => {
     const sessions = await fetchAllSessions();
     const values = computeGrammarLevelProgress(lists, sessions);
@@ -720,6 +746,11 @@ export async function loadGrammarLevelProgress(lists) {
 }
 
 export async function loadGrammarLevel2Progress(lists) {
+  // CRITICAL: If user is not ready, return not-ready state
+  if (!progressCache.isUserReady()) {
+    console.log('[ProgressService] loadGrammarLevel2Progress - user not ready');
+    return { data: { ready: false, values: [] }, fromCache: false };
+  }
   return progressCache.fetchWithCache(CACHE_KEYS.grammarLevel2, async () => {
     const sessions = await fetchAllSessions();
     const values = computeGrammarLevel2Progress(lists, sessions);
@@ -728,6 +759,11 @@ export async function loadGrammarLevel2Progress(lists) {
 }
 
 export async function loadGrammarLevel3Progress(lists) {
+  // CRITICAL: If user is not ready, return not-ready state
+  if (!progressCache.isUserReady()) {
+    console.log('[ProgressService] loadGrammarLevel3Progress - user not ready');
+    return { data: { ready: false, values: [] }, fromCache: false };
+  }
   return progressCache.fetchWithCache(CACHE_KEYS.grammarLevel3, async () => {
     const sessions = await fetchAllSessions();
     const values = computeGrammarLevel3Progress(lists, sessions);
@@ -736,6 +772,11 @@ export async function loadGrammarLevel3Progress(lists) {
 }
 
 export async function loadStarCounts() {
+  // CRITICAL: If user is not ready, return not-ready state
+  if (!progressCache.isUserReady()) {
+    console.log('[ProgressService] loadStarCounts - user not ready');
+    return { data: { ready: false, counts: {} }, fromCache: false };
+  }
   return progressCache.fetchWithCache(CACHE_KEYS.stars, async () => {
     const sessions = await fetchAllSessions();
     const counts = computeStarCountsFromSessions(sessions);
@@ -744,6 +785,12 @@ export async function loadStarCounts() {
 }
 
 export async function prefetchAllProgress(levels) {
+  // CRITICAL: Don't prefetch if user is not ready - would cache empty/0 values
+  if (!progressCache.isUserReady()) {
+    console.log('[ProgressService] prefetchAllProgress skipped - user not ready');
+    return;
+  }
+  
   try {
     await fetchAllSessions();
     const tasks = [];

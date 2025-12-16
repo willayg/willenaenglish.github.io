@@ -13,6 +13,10 @@
  * - Clears on logout
  */
 
+// Import getUserId from records.js to check user readiness
+// This is the same function used throughout the app to get the authenticated user
+import { getUserId, ensureUserId } from '../../../students/records.js';
+
 class ProgressCache {
   constructor() {
   this.CACHE_KEY_PREFIX = 'wa_progress_';
@@ -20,6 +24,36 @@ class ProgressCache {
     this.USER_KEY_CACHE = 'wa_user_key';
     this.inFlight = new Map(); // Prevent duplicate fetches
     this.listeners = new Map(); // Event listeners per cache type
+  }
+
+  /**
+   * Check if we have a real authenticated user (not 'guest')
+   * Used to gate progress caching to prevent poisoning cache with empty data
+   */
+  isUserReady() {
+    try {
+      // Use getUserId from records.js - the authoritative source of user auth state
+      const uid = getUserId ? getUserId() : null;
+      // Must have a truthy uid
+      return !!uid;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Wait for user to be authenticated (for use before prefetch)
+   * Returns true if user becomes ready, false on timeout
+   */
+  async waitForUserReady(timeoutMs = 5000) {
+    if (this.isUserReady()) return true;
+    try {
+      // Try to trigger whoami and wait for result
+      const uid = await ensureUserId();
+      return !!uid;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -31,8 +65,8 @@ class ProgressCache {
       let userKey = sessionStorage.getItem(this.USER_KEY_CACHE);
       if (userKey) return userKey;
 
-      // Generate from available user data
-      const uid = window.__USER_ID || window.__WA_USER_ID || 'guest';
+      // Generate from available user data - use getUserId from records.js
+      const uid = (getUserId ? getUserId() : null) || 'guest';
       // Simple hash using btoa (Base64 encode)
       userKey = btoa(String(uid)).slice(0, 16).replace(/[^a-zA-Z0-9]/g, '');
       
@@ -52,10 +86,16 @@ class ProgressCache {
   }
 
   /**
-   * Get cached data (returns null if expired or missing)
+   * Get cached data (returns null if expired, missing, or user not ready)
    */
   get(type) {
     try {
+      // If user not ready, don't serve cached data (could be stale/wrong user)
+      if (!this.isUserReady()) {
+        console.log(`[ProgressCache] SKIP GET ${type} - user not ready`);
+        return null;
+      }
+      
       const key = this._getCacheKey(type);
       const cached = localStorage.getItem(key);
       if (!cached) return null;
@@ -80,9 +120,17 @@ class ProgressCache {
 
   /**
    * Set cache for a data type
+   * NOTE: Will skip caching if user is not ready (prevents cache poisoning)
    */
   set(type, data) {
     try {
+      // CRITICAL: Don't cache progress data if user is not ready
+      // This prevents poisoning the cache with empty/0 values before auth completes
+      if (!this.isUserReady()) {
+        console.log(`[ProgressCache] SKIP SET ${type} - user not ready (would poison cache)`);
+        return;
+      }
+      
       const key = this._getCacheKey(type);
       const payload = JSON.stringify({
         data,
