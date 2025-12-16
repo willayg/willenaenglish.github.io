@@ -2,8 +2,12 @@
 // Determine the correct API base URL based on environment
 const getApiBase = () => {
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  // GitHub Pages or custom domain needs full Netlify URL
-  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+  // Prefer Cloudflare API proxy on custom domain to keep cookies same-site
+  if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'cf.willenaenglish.com') {
+    return 'https://api-cf.willenaenglish.com';
+  }
+  // GitHub Pages needs full Netlify URL
+  if (host === 'willenaenglish.github.io') {
     return 'https://willenaenglish.netlify.app';
   }
   // Netlify or localhost use relative paths
@@ -13,21 +17,15 @@ const getApiBase = () => {
 const FUNCTIONS_BASE = getApiBase();
 
 /**
- * Get the URL for a Netlify function — OR the Cloudflare Worker if rollout is enabled.
- * Uses `WillenaAPI` from `js/api-config.js` when available.
+ * Get the URL for a server function. If WillenaAPI is present, delegate to it
+ * so environment-specific routing (Cloudflare proxy vs Netlify) is handled
+ * consistently site‑wide.
  */
 export const FN = (name) => {
-  // Check if WillenaAPI is loaded and if this function should use Cloudflare
-  if (typeof window !== 'undefined' && window.WillenaAPI) {
-    const api = window.WillenaAPI;
-    // If Cloudflare rollout applies to this function, return Worker URL with full path
-    if (api.CF_MIGRATED_FUNCTIONS && api.CF_MIGRATED_FUNCTIONS[name] && api.shouldUseCloudflare(name)) {
-      // CF_MIGRATED_FUNCTIONS[name] is the base URL (e.g., https://api.willenaenglish.com)
-      // We still need to append the full function path for the proxy to route correctly
-      const baseUrl = api.CF_MIGRATED_FUNCTIONS[name].replace(/\/$/, '');
-      return `${baseUrl}/.netlify/functions/${name}`;
-    }
+  // If global config is loaded, use its resolver for correct base per env
+  if (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.getApiUrl === 'function') {
+    return window.WillenaAPI.getApiUrl(`/.netlify/functions/${name}`);
   }
-  // Default: Netlify function path
+  // Default: build from local decision
   return `${FUNCTIONS_BASE}/.netlify/functions/${name}`;
 };
