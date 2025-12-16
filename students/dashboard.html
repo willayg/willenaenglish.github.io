@@ -15,7 +15,18 @@
   <!-- API config for Cloudflare -->
   <script src="/js/api-config.js"></script>
   <script>
-    // Netlify redirect removed - now using Cloudflare exclusively
+    // EMERGENCY FIX: Redirect to Netlify for all authenticated pages
+    // Cross-origin cookies don't work reliably between Cloudflare and Netlify
+    (function() {
+      const host = window.location.hostname;
+      const isCloudflare = host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host.endsWith('.willenaenglish.com');
+      if (isCloudflare) {
+        const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
+        console.log('[Dashboard] Redirecting to Netlify for auth:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return;
+      }
+    })();
 
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
