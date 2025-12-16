@@ -50,11 +50,16 @@ function makeCorsHeaders(event, extra = {}) {
 function cookie(name, value, event, { maxAge, secure = true, httpOnly = true, sameSite = 'Lax', path = '/' } = {}) {
   const hdrs = event?.headers || {};
   const host = hdrs.host || hdrs.Host || '';
+  const origin = hdrs.origin || hdrs.Origin || '';
   
   let s = `${name}=${encodeURIComponent(value ?? '')}`;
   if (maxAge != null) s += `; Max-Age=${maxAge}`;
   if (path) s += `; Path=${path}`;
-  if (host.endsWith('willenaenglish.com')) s += '; Domain=.willenaenglish.com';
+  // Set domain cookie if request comes FROM willenaenglish.com (check origin) OR is hosted on it
+  // This allows cross-origin cookies to work when site is on Cloudflare and functions on Netlify
+  if (host.endsWith('willenaenglish.com') || origin.includes('willenaenglish.com')) {
+    s += '; Domain=.willenaenglish.com';
+  }
   if (secure) s += '; Secure';
   if (httpOnly) s += '; HttpOnly';
   if (sameSite) s += `; SameSite=${sameSite}`;

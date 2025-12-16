@@ -4,6 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="Student Login">Student Login</title>
+  <!-- EMERGENCY FIX: Redirect to Netlify for login -->
+  <script>
+    (function() {
+      const host = window.location.hostname;
+      const isCloudflare = host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host.endsWith('.willenaenglish.com');
+      if (isCloudflare) {
+        const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
+        console.log('[Login] Redirecting to Netlify for auth:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return;
+      }
+    })();
+  </script>
   <!-- API config for GitHub Pages + Netlify Functions -->
   <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/students/profile.css" />
