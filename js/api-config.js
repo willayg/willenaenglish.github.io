@@ -57,9 +57,10 @@
   // ============================================================
   // API BASE - Simple rule
   // ============================================================
-  // Production: relative paths (same-origin)
+  // Production: relative paths (same-origin) EXCEPT custom domain -> use Netlify base
   // GitHub Pages: absolute Netlify URL (cross-origin)
-  const API_BASE = isGitHubPages ? NETLIFY_BASE : '';
+  const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
+  const API_BASE = isGitHubPages ? NETLIFY_BASE : (isCustomDomain ? NETLIFY_BASE : '');
 
   // ============================================================
   // COOKIE BLOCKING DETECTION (for GitHub Pages redirect)
