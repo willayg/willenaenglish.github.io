@@ -66,10 +66,15 @@
         }
 
         const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+        console.log('[Dashboard] Auth check response:', who.status, who.statusText);
         const w = await who.json();
+        console.log('[Dashboard] Auth data:', w);
         if (!w.success) {
+          console.log('[Dashboard] Not logged in, redirecting to signin');
           // Not logged in - redirect to login
           location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
+        } else {
+          console.log('[Dashboard] User is logged in:', w.user_id || w.id);
         }
       } catch (err) {
         // If auth check fails (network error, JSON parse error, etc.), redirect to login
