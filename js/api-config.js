@@ -158,12 +158,21 @@
       credentials: 'include',
     };
     
-    // For requests with body, ensure Content-Type is set
-    if (options.body && !options.headers?.['Content-Type']) {
-      fetchOptions.headers = {
-        'Content-Type': 'application/json',
-        ...fetchOptions.headers,
-      };
+    // For requests with body, ensure Content-Type is set (case-insensitive check)
+    if (options.body) {
+      const hasContentType = options.headers && 
+        Object.keys(options.headers).some(k => k.toLowerCase() === 'content-type');
+      if (!hasContentType) {
+        fetchOptions.headers = {
+          'Content-Type': 'application/json',
+          ...fetchOptions.headers,
+        };
+      }
+    }
+    
+    // Debug logging for POST requests
+    if (options.method === 'POST' || options.body) {
+      console.log('[WillenaAPI] POST request:', url, 'body:', options.body ? options.body.substring(0, 100) : '(none)');
     }
     
     try {
