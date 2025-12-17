@@ -354,6 +354,50 @@ function normalizeListIdentifier(value) {
     .replace(/\s+/g, ' ');
 }
 
+/**
+ * Normalize mode name variations to canonical form
+ * Maps 'spell', 'spelling_test', 'spelling_practice' -> 'spelling'
+ * Maps 'listen', 'listening' -> 'listen'
+ * etc.
+ */
+function normalizeModeName(mode) {
+  if (!mode) return 'unknown';
+  const m = String(mode).toLowerCase().trim();
+  
+  // Spelling variants
+  if (m.includes('spell') && !m.includes('listen')) {
+    return 'spelling';
+  }
+  
+  // Listen variants (but NOT listen_and_spell)
+  if ((m === 'listen' || m === 'listening') && !m.includes('spell')) {
+    return 'listen';
+  }
+  
+  // Reading variants
+  if (m === 'read' || m === 'reading') {
+    return 'read';
+  }
+  
+  // Picture/image matching variants
+  if (m.includes('picture') || m.includes('image') || m === 'match') {
+    return 'picture';
+  }
+  
+  // Multiple choice variants
+  if (m.includes('multi') || m.includes('choice') || m === 'mc') {
+    return 'multi_choice';
+  }
+  
+  // Test variants
+  if (m === 'test' || m === 'testing') {
+    return 'test';
+  }
+  
+  // Keep compound modes as-is (listen_and_spell, etc.)
+  return m;
+}
+
 async function assignmentProgress(event) {
   // Returns per-student progress for a given assignment id
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
@@ -631,7 +675,7 @@ async function assignmentProgress(event) {
     if (Number.isFinite(sess.list_size) && sess.list_size > 0) row.list_size = sess.list_size;
     const summary = parseSummary(sess.summary);
     const stars = deriveStars(summary, sess.mode);
-    const modeKey = sess.mode || 'unknown';
+    const modeKey = normalizeModeName(sess.mode);
     // Track overall accuracy components
     if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
       row._score = (row._score || 0) + summary.score;
