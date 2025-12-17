@@ -41,6 +41,18 @@ const PREFER_CF_WORKER = {
   get_audio_urls: true,
 };
 
+// Sections of progress_summary that are NOT implemented in CF Worker
+// These must fall back to Netlify
+const PROGRESS_SUMMARY_NETLIFY_ONLY = new Set([
+  'challenging',
+  'challenging_v2',
+  'attempts',
+  'sessions',
+  'kpi',
+  'modes',
+  'badges',
+]);
+
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
@@ -240,6 +252,17 @@ async function handleRequest(request, env) {
     
     // Check if we should use CF Worker and if the binding exists
     let response;
+    
+    // Special case: progress_summary with sections not implemented in CF Worker
+    // must fall back to Netlify
+    if (functionName === 'progress_summary') {
+      const section = url.searchParams.get('section') || '';
+      if (PROGRESS_SUMMARY_NETLIFY_ONLY.has(section)) {
+        console.log(`[proxy] progress_summary section=${section} not in CF Worker, using Netlify`);
+        response = await routeToNetlify(request, url);
+        return rewriteResponse(response, origin);
+      }
+    }
     
     if (functionName && PREFER_CF_WORKER[functionName]) {
       const bindingName = FUNCTION_TO_BINDING[functionName];
