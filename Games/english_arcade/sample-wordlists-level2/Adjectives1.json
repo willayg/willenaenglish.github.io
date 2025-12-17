@@ -1,14 +1,98 @@
 [
-  {"eng":"good","kor":"좋은","def":"having a positive quality","ex":"This is a good idea.","ex_kor":"이것은 좋은 아이디어이다."},
-  {"eng":"bad","kor":"나쁜","def":"having a negative quality","ex":"That was a bad day.","ex_kor":"그날은 안 좋은 날이었다."},
-  {"eng":"big","kor":"큰","def":"large in size","ex":"He has a big house.","ex_kor":"그는 큰 집을 가지고 있다."},
-  {"eng":"small","kor":"작은","def":"not big; little","ex":"She has a small cat.","ex_kor":"그녀는 작은 고양이를 키운다."},
-  {"eng":"long","kor":"긴","def":"having a great length","ex":"It’s a long road.","ex_kor":"긴 길이다."},
-  {"eng":"short","kor":"짧은","def":"not long","ex":"He wrote a short note.","ex_kor":"그는 짧은 쪽지를 썼다."},
-  {"eng":"tall","kor":"키가 큰","def":"having a great height","ex":"She is tall and strong.","ex_kor":"그녀는 키가 크고 튼튼하다."},
-  {"eng":"young","kor":"젊은","def":"not old","ex":"He is still young.","ex_kor":"그는 아직 젊다."},
-  {"eng":"old","kor":"늙은","def":"having lived a long time","ex":"That man is very old.","ex_kor":"그 남자는 나이가 매우 많다."},
-  {"eng":"new","kor":"새로운","def":"recently made or found","ex":"I bought a new phone.","ex_kor":"나는 새 휴대폰을 샀다."},
-  {"eng":"first","kor":"첫 번째의","def":"coming before all others","ex":"This is my first car.","ex_kor":"이것은 나의 첫 차이다."},
-  {"eng":"last","kor":"마지막의","def":"coming after all others","ex":"He finished in last place.","ex_kor":"그는 마지막으로 끝냈다."}
+  {
+    "eng": "good",
+    "kor": "좋은",
+    "def": "having a positive quality",
+    "ex": "This is a good idea.",
+    "ex_kor": "이것은 좋은 아이디어이다.",
+    "sentence_id": "66ce7f20-7e8b-4841-8b69-cd86848644d1"
+  },
+  {
+    "eng": "bad",
+    "kor": "나쁜",
+    "def": "having a negative quality",
+    "ex": "That was a bad day.",
+    "ex_kor": "그날은 안 좋은 날이었다.",
+    "sentence_id": "b4ab9345-28d7-4fe7-a6f6-79062d5ec649"
+  },
+  {
+    "eng": "big",
+    "kor": "큰",
+    "def": "large in size",
+    "ex": "He has a big house.",
+    "ex_kor": "그는 큰 집을 가지고 있다.",
+    "sentence_id": "0d29ccf1-e8c2-4fc3-9f9d-4e0f2bcf85c7"
+  },
+  {
+    "eng": "small",
+    "kor": "작은",
+    "def": "not big; little",
+    "ex": "She has a small cat.",
+    "ex_kor": "그녀는 작은 고양이를 키운다.",
+    "sentence_id": "aadabbb0-6bfe-4396-ada8-35ab7748d2bb"
+  },
+  {
+    "eng": "long",
+    "kor": "긴",
+    "def": "having a great length",
+    "ex": "It’s a long road.",
+    "ex_kor": "긴 길이다.",
+    "sentence_id": "ea32291d-34e4-4624-a7bb-d3ac218a1fdc"
+  },
+  {
+    "eng": "short",
+    "kor": "짧은",
+    "def": "not long",
+    "ex": "He wrote a short note.",
+    "ex_kor": "그는 짧은 쪽지를 썼다.",
+    "sentence_id": "88ef0f54-1388-4ec6-8cde-dbd103cc0b0b"
+  },
+  {
+    "eng": "tall",
+    "kor": "키가 큰",
+    "def": "having a great height",
+    "ex": "She is tall and strong.",
+    "ex_kor": "그녀는 키가 크고 튼튼하다.",
+    "sentence_id": "1be75c00-f256-4c76-a692-775fc186688c"
+  },
+  {
+    "eng": "young",
+    "kor": "젊은",
+    "def": "not old",
+    "ex": "He is still young.",
+    "ex_kor": "그는 아직 젊다.",
+    "sentence_id": "e782a734-51b3-4377-b1b3-25e9a81a4c99"
+  },
+  {
+    "eng": "old",
+    "kor": "늙은",
+    "def": "having lived a long time",
+    "ex": "That man is very old.",
+    "ex_kor": "그 남자는 나이가 매우 많다.",
+    "sentence_id": "85759d41-49d0-401c-a34c-a2f2c80eae3a"
+  },
+  {
+    "eng": "new",
+    "kor": "새로운",
+    "def": "recently made or found",
+    "ex": "I bought a new phone.",
+    "ex_kor": "나는 새 휴대폰을 샀다.",
+    "sentence_id": "590e735e-6d23-47b9-98b9-a2e2ecfdaf72"
+  },
+  {
+    "eng": "first",
+    "kor": "첫 번째의",
+    "def": "coming before all others",
+    "ex": "This is my first car.",
+    "ex_kor": "이것은 나의 첫 차이다.",
+    "sentence_id": "0017606c-fb76-41c6-affa-320422b4a7f2"
+  },
+  {
+    "eng": "last",
+    "kor": "마지막의",
+    "def": "coming after all others",
+    "ex": "He finished in last place.",
+    "ex_kor": "그는 마지막으로 끝냈다.",
+    "sentence_id": "cb15b736-605d-4400-b39a-6f6eff846ebc"
+  }
 ]

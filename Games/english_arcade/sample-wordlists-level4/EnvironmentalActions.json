@@ -1,14 +1,98 @@
 [
-  {"eng":"recycle","kor":"재활용하다","def":"to use something again instead of throwing it away","ex":"Recycle paper and plastic.","ex_kor":"종이와 플라스틱을 재활용하세요."},
-  {"eng":"reuse","kor":"다시 사용하다","def":"to use something more than once","ex":"Reuse your water bottle.","ex_kor":"물병을 다시 사용하세요."},
-  {"eng":"reduce","kor":"줄이다","def":"to make less waste","ex":"Reduce the amount of trash.","ex_kor":"쓰레기 양을 줄이세요."},
-  {"eng":"compost","kor":"퇴비로 만들다","def":"to turn food scraps into soil","ex":"Compost fruit peels.","ex_kor":"과일 껍질을 퇴비로 만드세요."},
-  {"eng":"litter","kor":"쓰레기를 버리다","def":"to throw trash on the ground","ex":"Don’t litter in the park.","ex_kor":"공원에 쓰레기를 버리지 마세요."},
-  {"eng":"pollution","kor":"오염","def":"dirty air, water, or land","ex":"Pollution is bad for animals.","ex_kor":"오염은 동물에게 나쁩니다."},
-  {"eng":"conserve","kor":"보존하다","def":"to save and protect resources","ex":"Conserve water every day.","ex_kor":"매일 물을 아끼세요."},
-  {"eng":"protect","kor":"보호하다","def":"to keep something safe","ex":"Protect the forest.","ex_kor":"숲을 보호하세요."},
-  {"eng":"clean up","kor":"청소하다","def":"to make a place tidy","ex":"Clean up after the picnic.","ex_kor":"소풍 후에 청소하세요."},
-  {"eng":"plant","kor":"심다","def":"to put seeds or plants in the ground","ex":"Plant a tree on Earth Day.","ex_kor":"지구의 날에 나무를 심으세요."},
-  {"eng":"save","kor":"절약하다","def":"to use less of something","ex":"Save electricity by turning off lights.","ex_kor":"불을 꺼서 전기를 절약하세요."},
-  {"eng":"wildlife","kor":"야생동물","def":"animals that live in nature","ex":"Wildlife needs clean water.","ex_kor":"야생동물은 깨끗한 물이 필요해요."}
+  {
+    "eng": "recycle",
+    "kor": "재활용하다",
+    "def": "to use something again instead of throwing it away",
+    "ex": "Recycle paper and plastic.",
+    "ex_kor": "종이와 플라스틱을 재활용하세요.",
+    "sentence_id": "aa20b94f-5ed5-49fe-85f3-06f89279ea35"
+  },
+  {
+    "eng": "reuse",
+    "kor": "다시 사용하다",
+    "def": "to use something more than once",
+    "ex": "Reuse your water bottle.",
+    "ex_kor": "물병을 다시 사용하세요.",
+    "sentence_id": "23038320-4c0d-4bc4-bfee-6235e6768280"
+  },
+  {
+    "eng": "reduce",
+    "kor": "줄이다",
+    "def": "to make less waste",
+    "ex": "Reduce the amount of trash.",
+    "ex_kor": "쓰레기 양을 줄이세요.",
+    "sentence_id": "e436068f-6565-4468-ac0e-40e8157fe1d3"
+  },
+  {
+    "eng": "compost",
+    "kor": "퇴비로 만들다",
+    "def": "to turn food scraps into soil",
+    "ex": "Compost fruit peels.",
+    "ex_kor": "과일 껍질을 퇴비로 만드세요.",
+    "sentence_id": "409ab423-ddb5-4111-98bc-a19987e5770f"
+  },
+  {
+    "eng": "litter",
+    "kor": "쓰레기를 버리다",
+    "def": "to throw trash on the ground",
+    "ex": "Don’t litter in the park.",
+    "ex_kor": "공원에 쓰레기를 버리지 마세요.",
+    "sentence_id": "dd930979-d0e1-4afc-a4c6-f7d5ec7686a5"
+  },
+  {
+    "eng": "pollution",
+    "kor": "오염",
+    "def": "dirty air, water, or land",
+    "ex": "Pollution is bad for animals.",
+    "ex_kor": "오염은 동물에게 나쁩니다.",
+    "sentence_id": "67d20b2e-eec6-4bee-88b5-e10e4690b5d1"
+  },
+  {
+    "eng": "conserve",
+    "kor": "보존하다",
+    "def": "to save and protect resources",
+    "ex": "Conserve water every day.",
+    "ex_kor": "매일 물을 아끼세요.",
+    "sentence_id": "5a6a4f6c-0134-4c37-8b64-6ecaf4666ff5"
+  },
+  {
+    "eng": "protect",
+    "kor": "보호하다",
+    "def": "to keep something safe",
+    "ex": "Protect the forest.",
+    "ex_kor": "숲을 보호하세요.",
+    "sentence_id": "af3864ae-6594-41fb-b549-6c22c63d607b"
+  },
+  {
+    "eng": "clean up",
+    "kor": "청소하다",
+    "def": "to make a place tidy",
+    "ex": "Clean up after the picnic.",
+    "ex_kor": "소풍 후에 청소하세요.",
+    "sentence_id": "d2eb3b58-6dd0-433b-b62e-cdaaf46f5aa0"
+  },
+  {
+    "eng": "plant",
+    "kor": "심다",
+    "def": "to put seeds or plants in the ground",
+    "ex": "Plant a tree on Earth Day.",
+    "ex_kor": "지구의 날에 나무를 심으세요.",
+    "sentence_id": "b06212f2-3766-4111-8d9e-30006fc7acad"
+  },
+  {
+    "eng": "save",
+    "kor": "절약하다",
+    "def": "to use less of something",
+    "ex": "Save electricity by turning off lights.",
+    "ex_kor": "불을 꺼서 전기를 절약하세요.",
+    "sentence_id": "5e9dd7de-523d-4e01-a049-44ccdfa080c2"
+  },
+  {
+    "eng": "wildlife",
+    "kor": "야생동물",
+    "def": "animals that live in nature",
+    "ex": "Wildlife needs clean water.",
+    "ex_kor": "야생동물은 깨끗한 물이 필요해요.",
+    "sentence_id": "f025bccf-414e-413d-85ed-15da40419a34"
+  }
 ]

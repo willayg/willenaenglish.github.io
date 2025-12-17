@@ -1,14 +1,98 @@
 [
-  {"eng":"dice","kor":"주사위","def":"a small cube with dots for games","ex":"Roll the dice to start the game.","ex_kor":"게임을 시작하려면 주사위를 굴리세요."},
-  {"eng":"board","kor":"보드","def":"a flat surface for playing games","ex":"Put the pieces on the board.","ex_kor":"말을 보드 위에 놓으세요."},
-  {"eng":"card","kor":"카드","def":"a small piece of paper for games","ex":"Shuffle the cards before playing.","ex_kor":"게임 전에 카드를 섞으세요."},
-  {"eng":"piece","kor":"말","def":"a small object used in a game","ex":"Move your piece forward.","ex_kor":"말을 앞으로 움직이세요."},
-  {"eng":"move","kor":"이동","def":"an action in a game","ex":"It’s your move now.","ex_kor":"이제 네 차례예요."},
-  {"eng":"turn","kor":"차례","def":"when it is your time to play","ex":"Wait for your turn.","ex_kor":"네 차례를 기다리세요."},
-  {"eng":"win","kor":"이기다","def":"to be the best in a game","ex":"Try your best to win.","ex_kor":"이기기 위해 최선을 다하세요."},
-  {"eng":"lose","kor":"지다","def":"to not win a game","ex":"Don’t be sad if you lose.","ex_kor":"져도 슬퍼하지 마세요."},
-  {"eng":"draw","kor":"무승부","def":"when no one wins","ex":"The game ended in a draw.","ex_kor":"게임이 무승부로 끝났어요."},
-  {"eng":"shuffle","kor":"섞다","def":"to mix cards before playing","ex":"Shuffle the cards well.","ex_kor":"카드를 잘 섞으세요."},
-  {"eng":"deal","kor":"나누다","def":"to give out cards to players","ex":"Deal five cards to each player.","ex_kor":"각 플레이어에게 카드 다섯 장을 나누세요."},
-  {"eng":"score","kor":"점수","def":"the points you get in a game","ex":"Add up your score at the end.","ex_kor":"끝나면 점수를 합산하세요."}
+  {
+    "eng": "dice",
+    "kor": "주사위",
+    "def": "a small cube with dots for games",
+    "ex": "Roll the dice to start the game.",
+    "ex_kor": "게임을 시작하려면 주사위를 굴리세요.",
+    "sentence_id": "ab2c8f83-a8ca-4512-b51c-3c26b7ca89dc"
+  },
+  {
+    "eng": "board",
+    "kor": "보드",
+    "def": "a flat surface for playing games",
+    "ex": "Put the pieces on the board.",
+    "ex_kor": "말을 보드 위에 놓으세요.",
+    "sentence_id": "65cca568-7172-466e-973e-da34832825a2"
+  },
+  {
+    "eng": "card",
+    "kor": "카드",
+    "def": "a small piece of paper for games",
+    "ex": "Shuffle the cards before playing.",
+    "ex_kor": "게임 전에 카드를 섞으세요.",
+    "sentence_id": "64996d16-c514-440b-b9ab-8b1ef961d02b"
+  },
+  {
+    "eng": "piece",
+    "kor": "말",
+    "def": "a small object used in a game",
+    "ex": "Move your piece forward.",
+    "ex_kor": "말을 앞으로 움직이세요.",
+    "sentence_id": "366fa191-de64-4f17-a2db-0cee578d4ff1"
+  },
+  {
+    "eng": "move",
+    "kor": "이동",
+    "def": "an action in a game",
+    "ex": "It’s your move now.",
+    "ex_kor": "이제 네 차례예요.",
+    "sentence_id": "15d124bc-de4a-4c4e-9107-37e0a3eab624"
+  },
+  {
+    "eng": "turn",
+    "kor": "차례",
+    "def": "when it is your time to play",
+    "ex": "Wait for your turn.",
+    "ex_kor": "네 차례를 기다리세요.",
+    "sentence_id": "15bcba2a-0f67-4246-a3cc-bf6214ee581a"
+  },
+  {
+    "eng": "win",
+    "kor": "이기다",
+    "def": "to be the best in a game",
+    "ex": "Try your best to win.",
+    "ex_kor": "이기기 위해 최선을 다하세요.",
+    "sentence_id": "442080d7-7fa4-46fa-9231-047719360917"
+  },
+  {
+    "eng": "lose",
+    "kor": "지다",
+    "def": "to not win a game",
+    "ex": "Don’t be sad if you lose.",
+    "ex_kor": "져도 슬퍼하지 마세요.",
+    "sentence_id": "8e6e1e2f-f098-47e9-9628-fae46791a900"
+  },
+  {
+    "eng": "draw",
+    "kor": "무승부",
+    "def": "when no one wins",
+    "ex": "The game ended in a draw.",
+    "ex_kor": "게임이 무승부로 끝났어요.",
+    "sentence_id": "5b6518f6-656b-43fb-861d-507560a1f3bf"
+  },
+  {
+    "eng": "shuffle",
+    "kor": "섞다",
+    "def": "to mix cards before playing",
+    "ex": "Shuffle the cards well.",
+    "ex_kor": "카드를 잘 섞으세요.",
+    "sentence_id": "889aad9e-3cea-4b20-bd6b-f1d05f7fdc88"
+  },
+  {
+    "eng": "deal",
+    "kor": "나누다",
+    "def": "to give out cards to players",
+    "ex": "Deal five cards to each player.",
+    "ex_kor": "각 플레이어에게 카드 다섯 장을 나누세요.",
+    "sentence_id": "1426239e-3604-465f-9733-a6a6c6264f72"
+  },
+  {
+    "eng": "score",
+    "kor": "점수",
+    "def": "the points you get in a game",
+    "ex": "Add up your score at the end.",
+    "ex_kor": "끝나면 점수를 합산하세요.",
+    "sentence_id": "405a4749-87d5-4186-aab9-c31ce46562f9"
+  }
 ]

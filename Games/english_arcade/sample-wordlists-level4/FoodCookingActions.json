@@ -1,14 +1,98 @@
 [
-  {"eng":"chop","kor":"자르다","def":"to cut into small pieces","ex":"Chop the carrots for the soup.","ex_kor":"수프를 위해 당근을 자르세요."},
-  {"eng":"stir","kor":"젓다","def":"to mix with a spoon","ex":"Stir the soup gently.","ex_kor":"수프를 부드럽게 저으세요."},
-  {"eng":"boil","kor":"끓이다","def":"to heat a liquid until it bubbles","ex":"Boil the water for pasta.","ex_kor":"파스타를 위해 물을 끓이세요."},
-  {"eng":"bake","kor":"굽다","def":"to cook in an oven","ex":"Bake the bread in the oven.","ex_kor":"오븐에서 빵을 구우세요."},
-  {"eng":"grill","kor":"굽다","def":"to cook over fire or heat","ex":"Grill the meat on the barbecue.","ex_kor":"바비큐에서 고기를 구우세요."},
-  {"eng":"taste","kor":"맛보다","def":"to try the flavor of food","ex":"Taste the soup before serving.","ex_kor":"내기 전에 수프를 맛보세요."},
-  {"eng":"pour","kor":"붓다","def":"to make a liquid flow from one place to another","ex":"Pour milk into the glass.","ex_kor":"유리를 따라 우유를 부으세요."},
-  {"eng":"peel","kor":"껍질을 벗기다","def":"to remove the skin from fruits or vegetables","ex":"Peel the banana before eating.","ex_kor":"먹기 전에 바나나 껍질을 벗기세요."},
-  {"eng":"mix","kor":"섞다","def":"to combine things together","ex":"Mix the flour and eggs.","ex_kor":"밀가루와 달걀을 섞으세요."},
-  {"eng":"serve","kor":"서빙하다","def":"to give food to someone","ex":"Serve the food to your family.","ex_kor":"가족에게 음식을 서빙하세요."},
-  {"eng":"slice","kor":"얇게 썰다","def":"to cut into thin pieces","ex":"Slice the bread for sandwiches.","ex_kor":"샌드위치를 위해 빵을 얇게 써세요."},
-  {"eng":"spread","kor":"바르다","def":"to put a layer on top of something","ex":"Spread butter on the toast.","ex_kor":"토스트에 버터를 바르세요."}
+  {
+    "eng": "chop",
+    "kor": "자르다",
+    "def": "to cut into small pieces",
+    "ex": "Chop the carrots for the soup.",
+    "ex_kor": "수프를 위해 당근을 자르세요.",
+    "sentence_id": "ab234f18-731d-4856-83da-2edd65b29859"
+  },
+  {
+    "eng": "stir",
+    "kor": "젓다",
+    "def": "to mix with a spoon",
+    "ex": "Stir the soup gently.",
+    "ex_kor": "수프를 부드럽게 저으세요.",
+    "sentence_id": "885bfbfd-a7b6-4c87-a6e6-12cf420dfc53"
+  },
+  {
+    "eng": "boil",
+    "kor": "끓이다",
+    "def": "to heat a liquid until it bubbles",
+    "ex": "Boil the water for pasta.",
+    "ex_kor": "파스타를 위해 물을 끓이세요.",
+    "sentence_id": "307b8626-ab39-4445-bdfa-3cc96d3bd017"
+  },
+  {
+    "eng": "bake",
+    "kor": "굽다",
+    "def": "to cook in an oven",
+    "ex": "Bake the bread in the oven.",
+    "ex_kor": "오븐에서 빵을 구우세요.",
+    "sentence_id": "d030c1b8-60a3-43f2-b0cd-774b3d56de09"
+  },
+  {
+    "eng": "grill",
+    "kor": "굽다",
+    "def": "to cook over fire or heat",
+    "ex": "Grill the meat on the barbecue.",
+    "ex_kor": "바비큐에서 고기를 구우세요.",
+    "sentence_id": "b4d96538-3eb3-4db8-a735-d21fd996cb8f"
+  },
+  {
+    "eng": "taste",
+    "kor": "맛보다",
+    "def": "to try the flavor of food",
+    "ex": "Taste the soup before serving.",
+    "ex_kor": "내기 전에 수프를 맛보세요.",
+    "sentence_id": "41fe7d8a-be6d-4c23-84aa-76ba5e8cd332"
+  },
+  {
+    "eng": "pour",
+    "kor": "붓다",
+    "def": "to make a liquid flow from one place to another",
+    "ex": "Pour milk into the glass.",
+    "ex_kor": "유리를 따라 우유를 부으세요.",
+    "sentence_id": "84026cf7-38ee-4967-8cbf-9e6f276471d9"
+  },
+  {
+    "eng": "peel",
+    "kor": "껍질을 벗기다",
+    "def": "to remove the skin from fruits or vegetables",
+    "ex": "Peel the banana before eating.",
+    "ex_kor": "먹기 전에 바나나 껍질을 벗기세요.",
+    "sentence_id": "db9665cd-9c28-40ab-97ed-2d2ff256dc35"
+  },
+  {
+    "eng": "mix",
+    "kor": "섞다",
+    "def": "to combine things together",
+    "ex": "Mix the flour and eggs.",
+    "ex_kor": "밀가루와 달걀을 섞으세요.",
+    "sentence_id": "fcba2a63-e239-4a79-934a-3fb2f955455d"
+  },
+  {
+    "eng": "serve",
+    "kor": "서빙하다",
+    "def": "to give food to someone",
+    "ex": "Serve the food to your family.",
+    "ex_kor": "가족에게 음식을 서빙하세요.",
+    "sentence_id": "1f62d859-398e-46dd-af50-987a1de36640"
+  },
+  {
+    "eng": "slice",
+    "kor": "얇게 썰다",
+    "def": "to cut into thin pieces",
+    "ex": "Slice the bread for sandwiches.",
+    "ex_kor": "샌드위치를 위해 빵을 얇게 써세요.",
+    "sentence_id": "0f721e95-856e-4b5a-af31-41214f9faf2f"
+  },
+  {
+    "eng": "spread",
+    "kor": "바르다",
+    "def": "to put a layer on top of something",
+    "ex": "Spread butter on the toast.",
+    "ex_kor": "토스트에 버터를 바르세요.",
+    "sentence_id": "cb253cc5-8d24-4f46-a383-4dd8a65d2363"
+  }
 ]

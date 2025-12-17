@@ -1,14 +1,98 @@
 [
-  {"eng":"wallet","kor":"지갑","def":"a small case for holding money","ex":"Put your money in your wallet.","ex_kor":"돈을 지갑에 넣으세요."},
-  {"eng":"receipt","kor":"영수증","def":"a paper that shows what you bought","ex":"Keep your receipt after shopping.","ex_kor":"쇼핑 후에 영수증을 보관하세요."},
-  {"eng":"price","kor":"가격","def":"how much something costs","ex":"Check the price before you buy.","ex_kor":"구매 전에 가격을 확인하세요."},
-  {"eng":"change","kor":"잔돈","def":"money you get back after paying","ex":"Get your change from the cashier.","ex_kor":"계산원에게서 잔돈을 받으세요."},
-  {"eng":"cashier","kor":"계산원","def":"a person who takes your money in a store","ex":"The cashier gives you a receipt.","ex_kor":"계산원이 영수증을 줘요."},
-  {"eng":"sale","kor":"세일","def":"a time when things are cheaper","ex":"Buy clothes during a sale.","ex_kor":"세일 때 옷을 사세요."},
-  {"eng":"discount","kor":"할인","def":"a lower price than usual","ex":"Ask for a student discount.","ex_kor":"학생 할인을 요청하세요."},
-  {"eng":"coin","kor":"동전","def":"a small, round piece of money","ex":"Put a coin in the vending machine.","ex_kor":"자판기에 동전을 넣으세요."},
-  {"eng":"bill","kor":"지폐","def":"paper money","ex":"Pay with a bill or a coin.","ex_kor":"지폐나 동전으로 지불하세요."},
-  {"eng":"credit card","kor":"신용카드","def":"a plastic card for paying","ex":"Swipe your credit card to pay.","ex_kor":"신용카드를 긁어서 결제하세요."},
-  {"eng":"checkout","kor":"계산대","def":"the place where you pay in a store","ex":"Go to the checkout to pay.","ex_kor":"계산하러 계산대로 가세요."},
-  {"eng":"return","kor":"반품하다","def":"to give something back to the store","ex":"Return the shirt if it doesn’t fit.","ex_kor":"셔츠가 맞지 않으면 반품하세요."}
+  {
+    "eng": "wallet",
+    "kor": "지갑",
+    "def": "a small case for holding money",
+    "ex": "Put your money in your wallet.",
+    "ex_kor": "돈을 지갑에 넣으세요.",
+    "sentence_id": "231ddfad-1b4d-4413-bf98-cbaf3e5cb2c3"
+  },
+  {
+    "eng": "receipt",
+    "kor": "영수증",
+    "def": "a paper that shows what you bought",
+    "ex": "Keep your receipt after shopping.",
+    "ex_kor": "쇼핑 후에 영수증을 보관하세요.",
+    "sentence_id": "98dde688-d02f-45e8-a9aa-a0f89b81ee1d"
+  },
+  {
+    "eng": "price",
+    "kor": "가격",
+    "def": "how much something costs",
+    "ex": "Check the price before you buy.",
+    "ex_kor": "구매 전에 가격을 확인하세요.",
+    "sentence_id": "7aad718b-ebbf-4143-8147-401eb46ced6d"
+  },
+  {
+    "eng": "change",
+    "kor": "잔돈",
+    "def": "money you get back after paying",
+    "ex": "Get your change from the cashier.",
+    "ex_kor": "계산원에게서 잔돈을 받으세요.",
+    "sentence_id": "29959632-449b-4ad5-801b-994427a2539c"
+  },
+  {
+    "eng": "cashier",
+    "kor": "계산원",
+    "def": "a person who takes your money in a store",
+    "ex": "The cashier gives you a receipt.",
+    "ex_kor": "계산원이 영수증을 줘요.",
+    "sentence_id": "5ea092e4-8f5a-4097-a922-f9de371e9cf3"
+  },
+  {
+    "eng": "sale",
+    "kor": "세일",
+    "def": "a time when things are cheaper",
+    "ex": "Buy clothes during a sale.",
+    "ex_kor": "세일 때 옷을 사세요.",
+    "sentence_id": "98eb4cb8-1522-47b3-a884-30ab8a8e0867"
+  },
+  {
+    "eng": "discount",
+    "kor": "할인",
+    "def": "a lower price than usual",
+    "ex": "Ask for a student discount.",
+    "ex_kor": "학생 할인을 요청하세요.",
+    "sentence_id": "14b58a93-8917-452a-b95b-1aba0bd49295"
+  },
+  {
+    "eng": "coin",
+    "kor": "동전",
+    "def": "a small, round piece of money",
+    "ex": "Put a coin in the vending machine.",
+    "ex_kor": "자판기에 동전을 넣으세요.",
+    "sentence_id": "d74ceff1-734b-460f-8ea2-dfd8174ec79e"
+  },
+  {
+    "eng": "bill",
+    "kor": "지폐",
+    "def": "paper money",
+    "ex": "Pay with a bill or a coin.",
+    "ex_kor": "지폐나 동전으로 지불하세요.",
+    "sentence_id": "ddfc91c4-e860-4b75-bcb9-8612700a7979"
+  },
+  {
+    "eng": "credit card",
+    "kor": "신용카드",
+    "def": "a plastic card for paying",
+    "ex": "Swipe your credit card to pay.",
+    "ex_kor": "신용카드를 긁어서 결제하세요.",
+    "sentence_id": "6f44d126-16a8-419f-92fb-588adf0f135c"
+  },
+  {
+    "eng": "checkout",
+    "kor": "계산대",
+    "def": "the place where you pay in a store",
+    "ex": "Go to the checkout to pay.",
+    "ex_kor": "계산하러 계산대로 가세요.",
+    "sentence_id": "b9c7762d-2e47-44fd-a121-95b27aeb3958"
+  },
+  {
+    "eng": "return",
+    "kor": "반품하다",
+    "def": "to give something back to the store",
+    "ex": "Return the shirt if it doesn’t fit.",
+    "ex_kor": "셔츠가 맞지 않으면 반품하세요.",
+    "sentence_id": "b529f6f7-ad59-4e1a-aabc-abe465c0806d"
+  }
 ]

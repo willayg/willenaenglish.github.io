@@ -1,14 +1,98 @@
 [
-  {"eng":"leaf","kor":"나뭇잎","def":"a flat, green part of a plant","ex":"A leaf falls from the tree.","ex_kor":"나뭇잎이 나무에서 떨어져요."},
-  {"eng":"rock","kor":"돌","def":"a hard, solid piece of earth","ex":"He found a rock in the garden.","ex_kor":"그는 정원에서 돌을 찾았어요."},
-  {"eng":"stick","kor":"막대기","def":"a thin piece of wood","ex":"Pick up a stick on the ground.","ex_kor":"땅에서 막대기를 주우세요."},
-  {"eng":"flower","kor":"꽃","def":"the colorful part of a plant","ex":"The flower smells nice.","ex_kor":"꽃이 좋은 향이 나요."},
-  {"eng":"pinecone","kor":"솔방울","def":"a woody cone from a pine tree","ex":"A pinecone fell from the tree.","ex_kor":"솔방울이 나무에서 떨어졌어요."},
-  {"eng":"shell","kor":"조개껍데기","def":"a hard cover from the sea","ex":"She found a shell at the beach.","ex_kor":"그녀는 해변에서 조개껍데기를 찾았어요."},
-  {"eng":"feather","kor":"깃털","def":"a soft part of a bird","ex":"A feather is light and soft.","ex_kor":"깃털은 가볍고 부드러워요."},
-  {"eng":"acorn","kor":"도토리","def":"a nut from an oak tree","ex":"A squirrel eats an acorn.","ex_kor":"다람쥐가 도토리를 먹어요."},
-  {"eng":"berry","kor":"베리","def":"a small, juicy fruit","ex":"Pick a berry from the bush.","ex_kor":"덤불에서 베리를 따세요."},
-  {"eng":"mushroom","kor":"버섯","def":"a soft plant that grows in damp places","ex":"A mushroom grows in the forest.","ex_kor":"버섯이 숲에서 자라요."},
-  {"eng":"log","kor":"통나무","def":"a big piece of cut wood","ex":"Sit on a log by the fire.","ex_kor":"불 옆에 통나무에 앉으세요."},
-  {"eng":"pebble","kor":"조약돌","def":"a small, smooth stone","ex":"A pebble is smaller than a rock.","ex_kor":"조약돌은 돌보다 작아요."}
+  {
+    "eng": "leaf",
+    "kor": "나뭇잎",
+    "def": "a flat, green part of a plant",
+    "ex": "A leaf falls from the tree.",
+    "ex_kor": "나뭇잎이 나무에서 떨어져요.",
+    "sentence_id": "6a3fcab8-9078-4431-8c69-0cca4e01c49f"
+  },
+  {
+    "eng": "rock",
+    "kor": "돌",
+    "def": "a hard, solid piece of earth",
+    "ex": "He found a rock in the garden.",
+    "ex_kor": "그는 정원에서 돌을 찾았어요.",
+    "sentence_id": "20ba5aae-fadb-4bdc-961f-f196490a63b7"
+  },
+  {
+    "eng": "stick",
+    "kor": "막대기",
+    "def": "a thin piece of wood",
+    "ex": "Pick up a stick on the ground.",
+    "ex_kor": "땅에서 막대기를 주우세요.",
+    "sentence_id": "bf81e73b-8f85-42ae-9029-79f15acafb67"
+  },
+  {
+    "eng": "flower",
+    "kor": "꽃",
+    "def": "the colorful part of a plant",
+    "ex": "The flower smells nice.",
+    "ex_kor": "꽃이 좋은 향이 나요.",
+    "sentence_id": "01435184-e0d1-423a-ad9d-e348aacf2d6e"
+  },
+  {
+    "eng": "pinecone",
+    "kor": "솔방울",
+    "def": "a woody cone from a pine tree",
+    "ex": "A pinecone fell from the tree.",
+    "ex_kor": "솔방울이 나무에서 떨어졌어요.",
+    "sentence_id": "c3203b07-627d-462a-b175-6bc6fe92a1ee"
+  },
+  {
+    "eng": "shell",
+    "kor": "조개껍데기",
+    "def": "a hard cover from the sea",
+    "ex": "She found a shell at the beach.",
+    "ex_kor": "그녀는 해변에서 조개껍데기를 찾았어요.",
+    "sentence_id": "cacd674b-a230-40e4-8ccb-63959adbfb29"
+  },
+  {
+    "eng": "feather",
+    "kor": "깃털",
+    "def": "a soft part of a bird",
+    "ex": "A feather is light and soft.",
+    "ex_kor": "깃털은 가볍고 부드러워요.",
+    "sentence_id": "385f2241-46fb-460c-be70-873568e11f24"
+  },
+  {
+    "eng": "acorn",
+    "kor": "도토리",
+    "def": "a nut from an oak tree",
+    "ex": "A squirrel eats an acorn.",
+    "ex_kor": "다람쥐가 도토리를 먹어요.",
+    "sentence_id": "226541fe-1e35-4c3e-84ca-45f78251c277"
+  },
+  {
+    "eng": "berry",
+    "kor": "베리",
+    "def": "a small, juicy fruit",
+    "ex": "Pick a berry from the bush.",
+    "ex_kor": "덤불에서 베리를 따세요.",
+    "sentence_id": "47b70cb5-805e-40c1-a33b-4e1129abf520"
+  },
+  {
+    "eng": "mushroom",
+    "kor": "버섯",
+    "def": "a soft plant that grows in damp places",
+    "ex": "A mushroom grows in the forest.",
+    "ex_kor": "버섯이 숲에서 자라요.",
+    "sentence_id": "004c24aa-45a1-434f-b5c9-5588a12e11e9"
+  },
+  {
+    "eng": "log",
+    "kor": "통나무",
+    "def": "a big piece of cut wood",
+    "ex": "Sit on a log by the fire.",
+    "ex_kor": "불 옆에 통나무에 앉으세요.",
+    "sentence_id": "734fdb62-4d22-4140-aef2-f0328378b108"
+  },
+  {
+    "eng": "pebble",
+    "kor": "조약돌",
+    "def": "a small, smooth stone",
+    "ex": "A pebble is smaller than a rock.",
+    "ex_kor": "조약돌은 돌보다 작아요.",
+    "sentence_id": "de4016fd-2f91-49e6-ac44-66cc02582fb3"
+  }
 ]

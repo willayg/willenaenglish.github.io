@@ -1,14 +1,98 @@
 [
-  {"eng":"cookie","kor":"쿠키","def":"a small sweet baked snack","ex":"I eat a cookie after lunch.","ex_kor":"나는 점심 후에 쿠키를 먹어요."},
-  {"eng":"candy","kor":"사탕","def":"a sweet treat that melts in your mouth","ex":"She likes to eat candy.","ex_kor":"그녀는 사탕 먹는 것을 좋아해요."},
-  {"eng":"chocolate","kor":"초콜릿","def":"a sweet brown treat","ex":"Chocolate is my favorite snack.","ex_kor":"초콜릿은 내가 가장 좋아하는 간식이에요."},
-  {"eng":"chips","kor":"감자칩","def":"thin, crispy potato snacks","ex":"He eats chips while watching TV.","ex_kor":"그는 TV를 보면서 감자칩을 먹어요."},
-  {"eng":"popcorn","kor":"팝콘","def":"popped corn eaten as a snack","ex":"We eat popcorn at the movies.","ex_kor":"우리는 영화관에서 팝콘을 먹어요."},
-  {"eng":"ice cream","kor":"아이스크림","def":"a cold, sweet frozen treat","ex":"Ice cream melts in the sun.","ex_kor":"아이스크림은 햇볕에 녹아요."},
-  {"eng":"cake","kor":"케이크","def":"a sweet baked dessert","ex":"She has cake on her birthday.","ex_kor":"그녀는 생일에 케이크를 먹어요."},
-  {"eng":"muffin","kor":"머핀","def":"a small, round, sweet bread","ex":"He eats a muffin for breakfast.","ex_kor":"그는 아침에 머핀을 먹어요."},
-  {"eng":"donut","kor":"도넛","def":"a round, sweet fried snack","ex":"Donuts are sold at the bakery.","ex_kor":"도넛은 빵집에서 팔아요."},
-  {"eng":"jelly","kor":"젤리","def":"a soft, sweet, wobbly snack","ex":"Jelly is fun to eat.","ex_kor":"젤리는 먹기에 재미있어요."},
-  {"eng":"cracker","kor":"크래커","def":"a thin, crispy, salty snack","ex":"Eat cheese with a cracker.","ex_kor":"치즈를 크래커와 함께 먹으세요."},
-  {"eng":"lollipop","kor":"막대사탕","def":"a sweet candy on a stick","ex":"She buys a lollipop at the store.","ex_kor":"그녀는 가게에서 막대사탕을 사요."}
+  {
+    "eng": "cookie",
+    "kor": "쿠키",
+    "def": "a small sweet baked snack",
+    "ex": "I eat a cookie after lunch.",
+    "ex_kor": "나는 점심 후에 쿠키를 먹어요.",
+    "sentence_id": "81055cd5-366c-4af8-9209-4f7f6caae78c"
+  },
+  {
+    "eng": "candy",
+    "kor": "사탕",
+    "def": "a sweet treat that melts in your mouth",
+    "ex": "She likes to eat candy.",
+    "ex_kor": "그녀는 사탕 먹는 것을 좋아해요.",
+    "sentence_id": "54494d23-4887-4529-828b-d70d15b0a301"
+  },
+  {
+    "eng": "chocolate",
+    "kor": "초콜릿",
+    "def": "a sweet brown treat",
+    "ex": "Chocolate is my favorite snack.",
+    "ex_kor": "초콜릿은 내가 가장 좋아하는 간식이에요.",
+    "sentence_id": "ab283d9a-2f3c-48ec-952a-264dc31e84ba"
+  },
+  {
+    "eng": "chips",
+    "kor": "감자칩",
+    "def": "thin, crispy potato snacks",
+    "ex": "He eats chips while watching TV.",
+    "ex_kor": "그는 TV를 보면서 감자칩을 먹어요.",
+    "sentence_id": "a0f349f2-11d9-44ca-afc4-036ddf7ae27b"
+  },
+  {
+    "eng": "popcorn",
+    "kor": "팝콘",
+    "def": "popped corn eaten as a snack",
+    "ex": "We eat popcorn at the movies.",
+    "ex_kor": "우리는 영화관에서 팝콘을 먹어요.",
+    "sentence_id": "c33b025b-1c26-4459-963c-49b9e307d0b3"
+  },
+  {
+    "eng": "ice cream",
+    "kor": "아이스크림",
+    "def": "a cold, sweet frozen treat",
+    "ex": "Ice cream melts in the sun.",
+    "ex_kor": "아이스크림은 햇볕에 녹아요.",
+    "sentence_id": "bcc3c1d5-c75c-4b62-80bd-9ac87aff2f37"
+  },
+  {
+    "eng": "cake",
+    "kor": "케이크",
+    "def": "a sweet baked dessert",
+    "ex": "She has cake on her birthday.",
+    "ex_kor": "그녀는 생일에 케이크를 먹어요.",
+    "sentence_id": "5a333442-a261-4331-9c35-2ee6cc2ee3b1"
+  },
+  {
+    "eng": "muffin",
+    "kor": "머핀",
+    "def": "a small, round, sweet bread",
+    "ex": "He eats a muffin for breakfast.",
+    "ex_kor": "그는 아침에 머핀을 먹어요.",
+    "sentence_id": "1b00a67b-bf6f-4e39-9fc4-45784238fdef"
+  },
+  {
+    "eng": "donut",
+    "kor": "도넛",
+    "def": "a round, sweet fried snack",
+    "ex": "Donuts are sold at the bakery.",
+    "ex_kor": "도넛은 빵집에서 팔아요.",
+    "sentence_id": "81b4ecd0-c881-46f6-8f53-74dff2bdc1f0"
+  },
+  {
+    "eng": "jelly",
+    "kor": "젤리",
+    "def": "a soft, sweet, wobbly snack",
+    "ex": "Jelly is fun to eat.",
+    "ex_kor": "젤리는 먹기에 재미있어요.",
+    "sentence_id": "1fccc07d-ce87-4fd6-95f2-997c6cc5c0e8"
+  },
+  {
+    "eng": "cracker",
+    "kor": "크래커",
+    "def": "a thin, crispy, salty snack",
+    "ex": "Eat cheese with a cracker.",
+    "ex_kor": "치즈를 크래커와 함께 먹으세요.",
+    "sentence_id": "c9ef3621-6f03-4ec8-8e10-a68a96ecac02"
+  },
+  {
+    "eng": "lollipop",
+    "kor": "막대사탕",
+    "def": "a sweet candy on a stick",
+    "ex": "She buys a lollipop at the store.",
+    "ex_kor": "그녀는 가게에서 막대사탕을 사요.",
+    "sentence_id": "991dd176-c1dc-4674-af01-4274e058fe4a"
+  }
 ]

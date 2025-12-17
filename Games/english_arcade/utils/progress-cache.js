@@ -11,16 +11,7 @@
  * - User-scoped keys prevent cross-user contamination
  * - 5-minute expiry prevents stale data
  * - Clears on logout
- * 
- * BUG FIX: Now properly waits for auth check to complete before determining
- * if user is "not ready". Uses waitForAuth() instead of synchronous getUserId().
  */
-
-// Import auth functions from records.js
-// - getUserId: synchronous, may return null before auth check completes
-// - isAuthChecked: returns true once auth check has completed (even if user is null)
-// - waitForAuth: async, waits for auth check to complete, then returns userId
-import { getUserId, ensureUserId, isAuthChecked, waitForAuth } from '../../../students/records.js';
 
 class ProgressCache {
   constructor() {
@@ -32,43 +23,6 @@ class ProgressCache {
   }
 
   /**
-   * Check if we have a real authenticated user (not 'guest')
-   * Used to gate progress caching to prevent poisoning cache with empty data
-   * NOTE: This is synchronous - use waitForUserReady() for async waiting
-   */
-  isUserReady() {
-    try {
-      // Use getUserId from records.js - the authoritative source of user auth state
-      const uid = getUserId ? getUserId() : null;
-      // Must have a truthy uid
-      return !!uid;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * BUG FIX: Wait for auth check to complete, then check if user is ready.
-   * This solves the race condition where progress loads before auth completes.
-   * Returns userId if authenticated, null if not authenticated or timeout.
-   */
-  async waitForUserReady(timeoutMs = 10000) {
-    // If auth already checked and user is ready, return immediately
-    if (isAuthChecked && isAuthChecked() && this.isUserReady()) {
-      return getUserId();
-    }
-    try {
-      // Wait for auth check to complete
-      const uid = await waitForAuth(timeoutMs);
-      console.log('[ProgressCache] waitForUserReady resolved with:', uid ? '(user)' : '(null)');
-      return uid;
-    } catch (e) {
-      console.warn('[ProgressCache] waitForUserReady failed:', e);
-      return null;
-    }
-  }
-
-  /**
    * Hash user ID for privacy (not cryptographic, just obfuscation)
    */
   _getUserKey() {
@@ -77,8 +31,8 @@ class ProgressCache {
       let userKey = sessionStorage.getItem(this.USER_KEY_CACHE);
       if (userKey) return userKey;
 
-      // Generate from available user data - use getUserId from records.js
-      const uid = (getUserId ? getUserId() : null) || 'guest';
+      // Generate from available user data
+      const uid = window.__USER_ID || window.__WA_USER_ID || 'guest';
       // Simple hash using btoa (Base64 encode)
       userKey = btoa(String(uid)).slice(0, 16).replace(/[^a-zA-Z0-9]/g, '');
       
@@ -98,16 +52,10 @@ class ProgressCache {
   }
 
   /**
-   * Get cached data (returns null if expired, missing, or user not ready)
+   * Get cached data (returns null if expired or missing)
    */
   get(type) {
     try {
-      // If user not ready, don't serve cached data (could be stale/wrong user)
-      if (!this.isUserReady()) {
-        console.log(`[ProgressCache] SKIP GET ${type} - user not ready`);
-        return null;
-      }
-      
       const key = this._getCacheKey(type);
       const cached = localStorage.getItem(key);
       if (!cached) return null;
@@ -132,17 +80,9 @@ class ProgressCache {
 
   /**
    * Set cache for a data type
-   * NOTE: Will skip caching if user is not ready (prevents cache poisoning)
    */
   set(type, data) {
     try {
-      // CRITICAL: Don't cache progress data if user is not ready
-      // This prevents poisoning the cache with empty/0 values before auth completes
-      if (!this.isUserReady()) {
-        console.log(`[ProgressCache] SKIP SET ${type} - user not ready (would poison cache)`);
-        return;
-      }
-      
       const key = this._getCacheKey(type);
       const payload = JSON.stringify({
         data,
