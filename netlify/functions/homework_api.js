@@ -696,7 +696,7 @@ async function assignmentProgress(event) {
     if (Number.isFinite(sess.list_size) && sess.list_size > 0) row.list_size = sess.list_size;
     const summary = parseSummary(sess.summary);
     const stars = deriveStars(summary, sess.mode);
-    const modeKey = sess.mode || 'unknown';
+    const modeKey = normalizeModeName(sess.mode);
     // Track overall accuracy components
     if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
       row._score = (row._score || 0) + summary.score;
