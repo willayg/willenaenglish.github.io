@@ -19,7 +19,20 @@ function _json(statusCode, obj) {
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_API_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+
+// DEBUG: Log environment check (without exposing actual keys)
+console.log('[homework_api] Environment check:', {
+  hasUrl: !!SUPABASE_URL,
+  urlPrefix: SUPABASE_URL ? SUPABASE_URL.substring(0, 30) + '...' : '(missing)',
+  hasServiceKey: !!SUPABASE_SERVICE_KEY,
+  keyPrefix: SUPABASE_SERVICE_KEY ? SUPABASE_SERVICE_KEY.substring(0, 15) + '...' : '(missing)',
+  keySource: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SERVICE_ROLE_KEY' 
+    : process.env.SUPABASE_SERVICE_KEY ? 'SERVICE_KEY'
+    : process.env.SUPABASE_KEY ? 'KEY'
+    : process.env.SUPABASE_SERVICE_ROLE ? 'SERVICE_ROLE'
+    : '(NONE - CRITICAL ERROR)'
+});
 
 // Create a new supabase client for every invocation in dev mode so schema/cache changes are picked up quickly
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
@@ -163,25 +176,38 @@ async function getUserIdFromCookie(event) {
     return null;
   }
   
-  // Use the global supabase client (already configured with service key)
-  console.log('[homework_api] Calling supabase.auth.getUser with token...');
-  const { data, error } = await supabase.auth.getUser(token);
-  
-  console.log('[homework_api] Auth result:', { 
-    hasData: !!data, 
-    hasUser: !!data?.user,
-    userId: data?.user?.id,
-    errorMessage: error?.message,
-    errorStatus: error?.status
-  });
-  
-  if (error || !data?.user) {
-    console.log('[homework_api] ✗ FAIL: Auth validation failed');
+  // Use REST endpoint as a compatibility fallback for different key formats
+  // This avoids SDK key-format mismatches: call /auth/v1/user with service key
+  console.log('[homework_api] Calling REST /auth/v1/user with service key...');
+  try {
+    const url = (SUPABASE_URL || '').replace(/\/$/, '') + '/auth/v1/user';
+    const userResp = await fetch(url, {
+      method: 'GET',
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const userJson = await userResp.json().catch(() => null);
+    console.log('[homework_api] REST /auth/v1/user status:', userResp.status, 'bodySample:', userJson ? JSON.stringify(userJson).substring(0,200) : '(no body)');
+
+    if (!userResp.ok || !userJson) {
+      console.log('[homework_api] ✗ FAIL: REST auth validation failed');
+      return null;
+    }
+
+    const userId = userJson?.id || userJson?.user?.id || null;
+    if (!userId) {
+      console.log('[homework_api] ✗ FAIL: Could not find user id in REST response');
+      return null;
+    }
+    console.log('[homework_api] ✓ SUCCESS: Authenticated as user', userId);
+    return userId;
+  } catch (e) {
+    console.log('[homework_api] ✗ FAIL: Exception calling REST auth:', e && e.message);
     return null;
   }
-  
-  console.log('[homework_api] ✓ SUCCESS: Authenticated as user', data.user.id);
-  return data.user.id;
 }
 
 async function createAssignment(event) {
