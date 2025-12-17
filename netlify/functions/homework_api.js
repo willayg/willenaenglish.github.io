@@ -351,7 +351,72 @@ function normalizeListIdentifier(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
-    .replace(/\s+/g, ' ');
+    .replace(/[s+/g, ' ');
+}
+
+/**
+ * Normalize mode name variations to canonical form
+ * IMPORTANT: For vocab homework, expected modes are:
+ * meaning, listening, picture, multi_choice, spelling, listen_and_spell
+ * BUT students might do EITHER spelling OR listen_and_spell for the "spelling" component
+ * So we normalize spelling variants EXCEPT listen_and_spell which counts separately
+ */
+function normalizeModeName(mode) {
+  if (!mode) return 'unknown';
+  const m = String(mode).toLowerCase().trim();
+  
+  // Flashcard/meaning variants
+  if (m === 'flashcard' || m === 'flashcards' || m === 'meaning' || m === 'meanings') {
+    return 'meaning';
+  }
+  
+  // Listen variants (preserve listen_and_spell as separate mode!)
+  if ((m === 'listen' || m === 'listening' || m === 'phonics_listening') && !m.includes('spell')) {
+    return 'listen';
+  }
+  
+  // Spelling variants (but NOT listen_and_spell - that's separate!)
+  if ((m.includes('spell') || m === 'spelling_test' || m === 'spelling_practice') && !m.includes('listen_and') && !m.includes('listen&')) {
+    return 'spelling';
+  }
+  
+  // listen_and_spell is its own mode (counts separately from spelling)
+  if (m.includes('listen') && m.includes('spell')) {
+    return 'listen_and_spell';
+  }
+  
+  // Reading variants
+  if (m === 'read' || m === 'reading') {
+    return 'read';
+  }
+  
+  // Picture/image matching variants (easy_picture and picture are the same for progress)
+  if (m.includes('picture') || m.includes('image') || m === 'match' || m === 'easy_picture') {
+    return 'picture';
+  }
+  
+  // Multiple choice variants
+  if (m.includes('multi') || m.includes('choice') || m === 'mc') {
+    return 'multi_choice';
+  }
+  
+  // Missing letter (phonics mode)
+  if (m === 'missing_letter' || m === 'missing_letters') {
+    return 'missing_letter';
+  }
+  
+  // Test variants
+  if (m === 'test' || m === 'testing') {
+    return 'test';
+  }
+  
+  // Grammar lesson variants (collapse all lesson types to grammar_lesson)
+  if (m.startsWith('grammar_lesson')) {
+    return 'grammar_lesson';
+  }
+  
+  // Keep other modes as-is (level_up, time_battle, grammar modes, etc.)
+  return m;
 }
 
 async function assignmentProgress(event) {
