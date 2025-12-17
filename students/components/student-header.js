@@ -695,6 +695,8 @@ class StudentHeader extends HTMLElement {
         const keys = ['user_name','username','name','user_id','userId','student_id','profile_id','id','selectedEmojiAvatar','avatar'];
         keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
       } catch {}
+      // Clear localStorage tokens
+      try { WillenaAPI.clearLocalTokens?.(); } catch {}
       // Clear guest cookies if present so routes don't consider guest authenticated
       try {
         const opts = 'Path=/; Max-Age=0';

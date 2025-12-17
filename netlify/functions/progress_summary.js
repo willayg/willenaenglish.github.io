@@ -24,9 +24,23 @@ function parseCookies(header) {
 }
 
 function getAccessTokenFromCookie(event) {
-  const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+  const hdrs = event.headers || {};
+  
+  // Method 1: Check Cookie header (primary - set by login response)
+  const cookieHeader = (hdrs.Cookie || hdrs.cookie) || '';
   const cookies = parseCookies(cookieHeader);
-  return cookies['sb_access'] || null;
+  if (cookies['sb_access']) {
+    return cookies['sb_access'];
+  }
+  
+  // Method 2: Check Authorization header (fallback for localStorage tokens)
+  // Frontend can send: Authorization: Bearer <token> when cookies fail
+  const authHeader = hdrs.authorization || hdrs.Authorization || '';
+  if (authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7);
+  }
+  
+  return null;
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.supabase_url;

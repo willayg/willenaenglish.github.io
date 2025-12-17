@@ -47,13 +47,24 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SERVICE_KEY) return json(500, { success: false, error: 'Supabase env missing', hasUrl: !!SUPABASE_URL, hasKey: !!SERVICE_KEY });
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // Resolve user via sb_access cookie
+  // Resolve user via sb_access cookie or Authorization header
   async function requireUser() {
     try {
-      const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+      const hdrs = event.headers || {};
+      const cookieHeader = (hdrs.Cookie || hdrs.cookie) || '';
       const cookies = parseCookies(cookieHeader);
-      const token = cookies['sb_access'];
-      if (!token) return { error: 'Not authenticated (no cookie)' };
+      
+      let token = cookies['sb_access'];
+      
+      // Fallback: check Authorization header if no cookie found
+      if (!token) {
+        const authHeader = hdrs.authorization || hdrs.Authorization || '';
+        if (authHeader.startsWith('Bearer ')) {
+          token = authHeader.slice(7);
+        }
+      }
+      
+      if (!token) return { error: 'Not authenticated (no cookie or auth header)' };
       const { data: userData, error: userErr } = await supabase.auth.getUser(token);
       if (userErr || !userData || !userData.user) return { error: 'Not authenticated (invalid token)' };
       const user = userData.user;

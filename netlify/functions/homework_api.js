@@ -121,11 +121,45 @@ async function createAssignmentRun(event) {
 
 async function getUserIdFromCookie(event) {
   const hdrs = event.headers || {};
+  let token = null;
+  
+  // Method 1: Check Cookie header (primary - set by login response)
+  // Cookies are preferred because they're automatically sent by browsers
   const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
-  const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
-  if (!m) return null;
-  const token = decodeURIComponent(m[1]);
-  const { data, error } = await supabase.auth.getUser(token);
+  const cookieMatch = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+  if (cookieMatch) {
+    token = decodeURIComponent(cookieMatch[1]);
+    console.log('[homework_api] Token from cookie, length:', token.length);
+  }
+  
+  // Method 2: Check Authorization header only if no cookie found (fallback for localStorage tokens)
+  // This helps when cookies fail (e.g., incognito, cross-origin on some browsers)
+  if (!token) {
+    const authHeader = hdrs.authorization || hdrs.Authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+      console.log('[homework_api] Token from Authorization header, length:', token.length);
+    } else if (authHeader) {
+      console.log('[homework_api] Authorization header present but invalid format:', authHeader.substring(0, 20));
+    }
+  }
+  
+  if (!token) {
+    console.log('[homework_api] No valid token found in cookies or Authorization header');
+    return null;
+  }
+  
+  // Create admin client like supabase_auth.js does
+  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const { data, error } = await adminClient.auth.getUser(token);
+  
+  console.log('[homework_api] Auth result:', { 
+    hasData: !!data, 
+    hasUser: !!data?.user,
+    userId: data?.user?.id,
+    errorMessage: error?.message 
+  });
+  
   if (error || !data?.user) return null;
   return data.user.id;
 }

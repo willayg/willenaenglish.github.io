@@ -8,8 +8,9 @@
   <script>
     (function() {
       const host = window.location.hostname;
-      // Only willenaenglish.netlify.app works - all others redirect there
-      if (host !== 'willenaenglish.netlify.app') {
+      // Allow localhost/127.0.0.1 for local dev; only willenaenglish.netlify.app works in production
+      const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
+      if (!isLocalDev && host !== 'willenaenglish.netlify.app') {
         const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
         console.log('[Login] Redirecting to Netlify for auth:', netlifyUrl);
         window.location.replace(netlifyUrl);

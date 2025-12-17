@@ -3,6 +3,7 @@ import { setupChoiceButtons, splashResult } from '../ui/buttons.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 import { ensureImageStyles } from '../ui/image_styles.js';
+import { playSentenceById } from '../tts.js';
 
 // Listening mode: English audio, choose correct Korean translation
 export function runListeningMode({ wordList, gameArea, playTTS, playTTSVariant, preprocessTTS, startGame, listName = null }) {
@@ -178,7 +179,14 @@ export function runListeningMode({ wordList, gameArea, playTTS, playTTSVariant, 
           </div>`;
 
   // Play sentence-style audio when available; fall back to base
-  const playCurrentWord = () => (playTTSVariant ? playTTSVariant(current.eng, 'sentence') : playTTS(current.eng));
+  // Use sentence_id if available (proper fix for audio collisions)
+  const playCurrentWord = () => {
+    const sentenceId = current.sentence_id;
+    if (sentenceId) {
+      return playSentenceById(sentenceId, current.eng);
+    }
+    return playTTSVariant ? playTTSVariant(current.eng, 'sentence') : playTTS(current.eng);
+  };
         playCurrentWord();
         document.getElementById('playAudioBtn').onclick = playCurrentWord;
         setupChoiceButtons(gameArea);
@@ -231,7 +239,14 @@ export function runListeningMode({ wordList, gameArea, playTTS, playTTSVariant, 
       <div id="listening-score" style="margin-top:8px;text-align:center;font-size:1.2em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
     </div>`;
 
-  const playCurrentWord = () => (playTTSVariant ? playTTSVariant(current.eng, 'sentence') : playTTS(current.eng));
+  // Use sentence_id if available (proper fix for audio collisions)
+  const playCurrentWord = () => {
+    const sentenceId = current.sentence_id;
+    if (sentenceId) {
+      return playSentenceById(sentenceId, current.eng);
+    }
+    return playTTSVariant ? playTTSVariant(current.eng, 'sentence') : playTTS(current.eng);
+  };
     playCurrentWord();
     document.getElementById('playAudioBtn').onclick = playCurrentWord;
 
