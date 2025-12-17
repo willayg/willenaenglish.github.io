@@ -149,9 +149,8 @@ async function getUserIdFromCookie(event) {
     return null;
   }
   
-  // Create admin client like supabase_auth.js does
-  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  const { data, error } = await adminClient.auth.getUser(token);
+  // Use the global supabase client (already configured with service key)
+  const { data, error } = await supabase.auth.getUser(token);
   
   console.log('[homework_api] Auth result:', { 
     hasData: !!data, 
