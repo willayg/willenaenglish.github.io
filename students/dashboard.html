@@ -19,14 +19,15 @@
     // Cross-origin cookies don't work - MUST be on willenaenglish.netlify.app
     (function() {
       const host = window.location.hostname;
-      // Only willenaenglish.netlify.app works - all others redirect there
-      if (host !== 'willenaenglish.netlify.app') {
+      // Allow localhost/127.0.0.1 for local dev; only willenaenglish.netlify.app works in production
+      const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
+      if (!isLocalDev && host !== 'willenaenglish.netlify.app') {
         const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
         console.log('[Dashboard] Redirecting to Netlify for auth:', netlifyUrl);
         window.location.replace(netlifyUrl);
         return;
       }
-    })();
+    });
 
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
@@ -215,6 +216,7 @@
   <script>
     document.getElementById('logoutBig')?.addEventListener('click', async () => {
   try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
+  try { WillenaAPI.clearLocalTokens?.(); } catch {} // Clear localStorage tokens
   await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' });
   location.href = '/students/login.html';
     });

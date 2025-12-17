@@ -51,9 +51,20 @@ function monthStartISO(now = new Date()) {
 
 async function getAuthedTeacher(event, admin, debug = {}) {
   try {
-    const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+    const hdrs = event.headers || {};
+    const cookieHeader = (hdrs.Cookie || hdrs.cookie) || '';
     const cookies = parseCookies(cookieHeader);
-    const access = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
+    
+    let access = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
+    
+    // Fallback: check Authorization header if no cookie found
+    if (!access) {
+      const authHeader = hdrs.authorization || hdrs.Authorization || '';
+      if (authHeader.startsWith('Bearer ')) {
+        access = authHeader.slice(7);
+      }
+    }
+    
     const cookieDebug = {
       keys: Object.keys(cookies),
       hasAccess: Boolean(access),
