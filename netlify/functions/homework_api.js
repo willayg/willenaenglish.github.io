@@ -123,13 +123,27 @@ async function getUserIdFromCookie(event) {
   const hdrs = event.headers || {};
   let token = null;
   
+  // DEBUG: Log all headers to diagnose cookie extraction issues
+  console.log('[homework_api] All headers:', JSON.stringify({
+    cookie: hdrs.cookie ? '(present)' : '(missing)',
+    Cookie: hdrs.Cookie ? '(present)' : '(missing)',
+    authorization: hdrs.authorization ? hdrs.authorization.substring(0, 20) + '...' : '(missing)',
+    Authorization: hdrs.Authorization ? hdrs.Authorization.substring(0, 20) + '...' : '(missing)',
+    host: hdrs.host || hdrs.Host,
+    origin: hdrs.origin || hdrs.Origin
+  }));
+  
   // Method 1: Check Cookie header (primary - set by login response)
   // Cookies are preferred because they're automatically sent by browsers
   const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+  console.log('[homework_api] Cookie header length:', cookieHeader.length, 'sample:', cookieHeader.substring(0, 100));
+  
   const cookieMatch = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
   if (cookieMatch) {
     token = decodeURIComponent(cookieMatch[1]);
-    console.log('[homework_api] Token from cookie, length:', token.length);
+    console.log('[homework_api] ✓ Token from cookie, length:', token.length);
+  } else {
+    console.log('[homework_api] ✗ No sb_access cookie found in header');
   }
   
   // Method 2: Check Authorization header only if no cookie found (fallback for localStorage tokens)
@@ -138,28 +152,35 @@ async function getUserIdFromCookie(event) {
     const authHeader = hdrs.authorization || hdrs.Authorization || '';
     if (authHeader.startsWith('Bearer ')) {
       token = authHeader.slice(7);
-      console.log('[homework_api] Token from Authorization header, length:', token.length);
+      console.log('[homework_api] ✓ Token from Authorization header, length:', token.length);
     } else if (authHeader) {
-      console.log('[homework_api] Authorization header present but invalid format:', authHeader.substring(0, 20));
+      console.log('[homework_api] ✗ Authorization header present but invalid format:', authHeader.substring(0, 20));
     }
   }
   
   if (!token) {
-    console.log('[homework_api] No valid token found in cookies or Authorization header');
+    console.log('[homework_api] ✗ FAIL: No valid token found in cookies or Authorization header');
     return null;
   }
   
   // Use the global supabase client (already configured with service key)
+  console.log('[homework_api] Calling supabase.auth.getUser with token...');
   const { data, error } = await supabase.auth.getUser(token);
   
   console.log('[homework_api] Auth result:', { 
     hasData: !!data, 
     hasUser: !!data?.user,
     userId: data?.user?.id,
-    errorMessage: error?.message 
+    errorMessage: error?.message,
+    errorStatus: error?.status
   });
   
-  if (error || !data?.user) return null;
+  if (error || !data?.user) {
+    console.log('[homework_api] ✗ FAIL: Auth validation failed');
+    return null;
+  }
+  
+  console.log('[homework_api] ✓ SUCCESS: Authenticated as user', data.user.id);
   return data.user.id;
 }
 
