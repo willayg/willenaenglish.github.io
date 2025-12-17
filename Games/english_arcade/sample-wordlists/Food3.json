@@ -1,12 +1,92 @@
 [
-  {"eng": "pizza", "kor": "피자", "def": "flat bread with cheese and toppings", "ex": "We eat pizza.", "ex_kor": "우리는 피자를 먹는다.", "emoji": "🍕"},
-  {"eng": "hamburger", "kor": "햄버거", "def": "a meat patty in a bun", "ex": "He eats a hamburger.", "ex_kor": "그는 햄버거를 먹는다.", "emoji": "🍔"},
-  {"eng": "sandwich", "kor": "샌드위치", "def": "food between two bread slices", "ex": "I make a sandwich.", "ex_kor": "나는 샌드위치를 만든다.", "emoji": "🥪"},
-  {"eng": "spaghetti", "kor": "스파게티", "def": "long pasta with sauce", "ex": "We eat spaghetti.", "ex_kor": "우리는 스파게티를 먹는다.", "emoji": "🍝"},
-  {"eng": "salad", "kor": "샐러드", "def": "mixed raw vegetables", "ex": "She eats salad.", "ex_kor": "그녀는 샐러드를 먹는다.", "emoji": "🥗"},
-  {"eng": "hotdog", "kor": "핫도그", "def": "a sausage in a bun", "ex": "I eat a hotdog.", "ex_kor": "나는 핫도그를 먹는다.", "emoji": "🌭"},
-  {"eng": "fries", "kor": "감자튀김", "def": "fried potato sticks", "ex": "We share fries.", "ex_kor": "우리는 감자튀김을 나눈다.", "emoji": "🍟"},
-  {"eng": "ice cream", "kor": "아이스크림", "def": "sweet frozen dessert", "ex": "I like ice cream.", "ex_kor": "나는 아이스크림을 좋아한다.", "emoji": "🍦"},
-  {"eng": "cake", "kor": "케이크", "def": "sweet baked dessert", "ex": "She cuts a cake.", "ex_kor": "그녀는 케이크를 자른다.", "emoji": "🎂"},
-  {"eng": "cookie", "kor": "쿠키", "def": "small sweet baked treat", "ex": "I eat a cookie.", "ex_kor": "나는 쿠키를 먹는다.", "emoji": "🍪"}
+  {
+    "eng": "pizza",
+    "kor": "피자",
+    "def": "flat bread with cheese and toppings",
+    "ex": "We eat pizza.",
+    "ex_kor": "우리는 피자를 먹는다.",
+    "emoji": "🍕",
+    "sentence_id": "ab1ea269-bdfa-4aa3-903a-11a8d4da1dfa"
+  },
+  {
+    "eng": "hamburger",
+    "kor": "햄버거",
+    "def": "a meat patty in a bun",
+    "ex": "He eats a hamburger.",
+    "ex_kor": "그는 햄버거를 먹는다.",
+    "emoji": "🍔",
+    "sentence_id": "ee747bc9-6918-4c39-8c3a-5d4f0ffec6dc"
+  },
+  {
+    "eng": "sandwich",
+    "kor": "샌드위치",
+    "def": "food between two bread slices",
+    "ex": "I make a sandwich.",
+    "ex_kor": "나는 샌드위치를 만든다.",
+    "emoji": "🥪",
+    "sentence_id": "5b688691-971d-47c0-89be-2f6f11c8d076"
+  },
+  {
+    "eng": "spaghetti",
+    "kor": "스파게티",
+    "def": "long pasta with sauce",
+    "ex": "We eat spaghetti.",
+    "ex_kor": "우리는 스파게티를 먹는다.",
+    "emoji": "🍝",
+    "sentence_id": "ec7211eb-7f1b-4b85-81de-f4b9e62f812b"
+  },
+  {
+    "eng": "salad",
+    "kor": "샐러드",
+    "def": "mixed raw vegetables",
+    "ex": "She eats salad.",
+    "ex_kor": "그녀는 샐러드를 먹는다.",
+    "emoji": "🥗",
+    "sentence_id": "9de42d0f-6af4-498c-b81e-4a4a63ffc10d"
+  },
+  {
+    "eng": "hotdog",
+    "kor": "핫도그",
+    "def": "a sausage in a bun",
+    "ex": "I eat a hotdog.",
+    "ex_kor": "나는 핫도그를 먹는다.",
+    "emoji": "🌭",
+    "sentence_id": "cfce801d-3cdb-48da-9bb4-c98fdaf4cdb5"
+  },
+  {
+    "eng": "fries",
+    "kor": "감자튀김",
+    "def": "fried potato sticks",
+    "ex": "We share fries.",
+    "ex_kor": "우리는 감자튀김을 나눈다.",
+    "emoji": "🍟",
+    "sentence_id": "0d8a60a5-3ba5-4de3-86b8-4131a196b9c5"
+  },
+  {
+    "eng": "ice cream",
+    "kor": "아이스크림",
+    "def": "sweet frozen dessert",
+    "ex": "I like ice cream.",
+    "ex_kor": "나는 아이스크림을 좋아한다.",
+    "emoji": "🍦",
+    "sentence_id": "ca12d011-6f4f-46fa-814f-33092e062374"
+  },
+  {
+    "eng": "cake",
+    "kor": "케이크",
+    "def": "sweet baked dessert",
+    "ex": "She cuts a cake.",
+    "ex_kor": "그녀는 케이크를 자른다.",
+    "emoji": "🎂",
+    "sentence_id": "0f62236b-277e-4ce4-ace0-cf34cb5776f9"
+  },
+  {
+    "eng": "cookie",
+    "kor": "쿠키",
+    "def": "small sweet baked treat",
+    "ex": "I eat a cookie.",
+    "ex_kor": "나는 쿠키를 먹는다.",
+    "emoji": "🍪",
+    "sentence_id": "f1723427-a167-4e17-9972-d6a084ac2304"
+  }
 ]

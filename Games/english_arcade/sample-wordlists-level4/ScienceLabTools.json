@@ -1,14 +1,98 @@
 [
-  {"eng":"beaker","kor":"비커","def":"a glass container for mixing liquids","ex":"Pour water into the beaker.","ex_kor":"비커에 물을 부으세요."},
-  {"eng":"microscope","kor":"현미경","def":"a tool to see tiny things","ex":"Look at the leaf with a microscope.","ex_kor":"현미경으로 잎을 보세요."},
-  {"eng":"experiment","kor":"실험","def":"a test to learn something new","ex":"We do an experiment in science class.","ex_kor":"과학 수업에서 실험을 합니다."},
-  {"eng":"measure","kor":"측정하다","def":"to find the size or amount of something","ex":"Measure the water carefully.","ex_kor":"물을 조심스럽게 측정하세요."},
-  {"eng":"observe","kor":"관찰하다","def":"to watch something closely","ex":"Observe the color change.","ex_kor":"색이 변하는 것을 관찰하세요."},
-  {"eng":"goggles","kor":"보안경","def":"glasses that protect your eyes","ex":"Wear goggles for safety.","ex_kor":"안전을 위해 보안경을 착용하세요."},
-  {"eng":"magnet","kor":"자석","def":"an object that attracts metal","ex":"The magnet sticks to the fridge.","ex_kor":"자석이 냉장고에 붙어요."},
-  {"eng":"dissolve","kor":"녹이다","def":"to mix into a liquid and disappear","ex":"Sugar dissolves in water.","ex_kor":"설탕이 물에 녹아요."},
-  {"eng":"reaction","kor":"반응","def":"what happens when things mix","ex":"A reaction makes bubbles.","ex_kor":"반응이 거품을 만듭니다."},
-  {"eng":"test tube","kor":"시험관","def":"a small glass tube for experiments","ex":"Put the liquid in the test tube.","ex_kor":"액체를 시험관에 넣으세요."},
-  {"eng":"dropper","kor":"스포이드","def":"a tool to move small drops of liquid","ex":"Use a dropper to add water.","ex_kor":"스포이드로 물을 추가하세요."},
-  {"eng":"lab coat","kor":"실험실 가운","def":"a coat to protect your clothes in the lab","ex":"Wear a lab coat during experiments.","ex_kor":"실험할 때 실험실 가운을 입으세요."}
+  {
+    "eng": "beaker",
+    "kor": "비커",
+    "def": "a glass container for mixing liquids",
+    "ex": "Pour water into the beaker.",
+    "ex_kor": "비커에 물을 부으세요.",
+    "sentence_id": "34f5a7bd-7730-4d0e-94ed-c25b3be4176c"
+  },
+  {
+    "eng": "microscope",
+    "kor": "현미경",
+    "def": "a tool to see tiny things",
+    "ex": "Look at the leaf with a microscope.",
+    "ex_kor": "현미경으로 잎을 보세요.",
+    "sentence_id": "f1db113f-f515-454e-98d5-b5a24fac1622"
+  },
+  {
+    "eng": "experiment",
+    "kor": "실험",
+    "def": "a test to learn something new",
+    "ex": "We do an experiment in science class.",
+    "ex_kor": "과학 수업에서 실험을 합니다.",
+    "sentence_id": "28d6f2f4-be77-4a59-833d-03a91f6c57b8"
+  },
+  {
+    "eng": "measure",
+    "kor": "측정하다",
+    "def": "to find the size or amount of something",
+    "ex": "Measure the water carefully.",
+    "ex_kor": "물을 조심스럽게 측정하세요.",
+    "sentence_id": "22610095-46a2-46e3-b31e-08ae7a093634"
+  },
+  {
+    "eng": "observe",
+    "kor": "관찰하다",
+    "def": "to watch something closely",
+    "ex": "Observe the color change.",
+    "ex_kor": "색이 변하는 것을 관찰하세요.",
+    "sentence_id": "67ccd9d4-0cbc-467e-aa89-621f945d202b"
+  },
+  {
+    "eng": "goggles",
+    "kor": "보안경",
+    "def": "glasses that protect your eyes",
+    "ex": "Wear goggles for safety.",
+    "ex_kor": "안전을 위해 보안경을 착용하세요.",
+    "sentence_id": "e211ea80-5782-4b44-a8e4-cc1614812032"
+  },
+  {
+    "eng": "magnet",
+    "kor": "자석",
+    "def": "an object that attracts metal",
+    "ex": "The magnet sticks to the fridge.",
+    "ex_kor": "자석이 냉장고에 붙어요.",
+    "sentence_id": "71c44e9d-f963-41e5-8676-f05e05642a55"
+  },
+  {
+    "eng": "dissolve",
+    "kor": "녹이다",
+    "def": "to mix into a liquid and disappear",
+    "ex": "Sugar dissolves in water.",
+    "ex_kor": "설탕이 물에 녹아요.",
+    "sentence_id": "f6804043-4482-4d39-96b3-0a77127f47c2"
+  },
+  {
+    "eng": "reaction",
+    "kor": "반응",
+    "def": "what happens when things mix",
+    "ex": "A reaction makes bubbles.",
+    "ex_kor": "반응이 거품을 만듭니다.",
+    "sentence_id": "a535eb6d-da96-4bb0-bee8-7abb469309f5"
+  },
+  {
+    "eng": "test tube",
+    "kor": "시험관",
+    "def": "a small glass tube for experiments",
+    "ex": "Put the liquid in the test tube.",
+    "ex_kor": "액체를 시험관에 넣으세요.",
+    "sentence_id": "26521ab4-98cb-49a8-a73c-0b615c92cdee"
+  },
+  {
+    "eng": "dropper",
+    "kor": "스포이드",
+    "def": "a tool to move small drops of liquid",
+    "ex": "Use a dropper to add water.",
+    "ex_kor": "스포이드로 물을 추가하세요.",
+    "sentence_id": "0f61f2fb-ac42-42c9-b96d-9e52edcd806f"
+  },
+  {
+    "eng": "lab coat",
+    "kor": "실험실 가운",
+    "def": "a coat to protect your clothes in the lab",
+    "ex": "Wear a lab coat during experiments.",
+    "ex_kor": "실험할 때 실험실 가운을 입으세요.",
+    "sentence_id": "003dbaf3-ce24-4ca6-8f16-8e1142ac4218"
+  }
 ]

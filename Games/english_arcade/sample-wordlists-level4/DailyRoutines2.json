@@ -1,14 +1,98 @@
 [
-  {"eng":"get dressed","kor":"옷을 입다","def":"to put on clothes","ex":"I get dressed after breakfast.","ex_kor":"나는 아침을 먹고 옷을 입어요."},
-  {"eng":"pack my bag","kor":"가방을 싸다","def":"to put things into your bag","ex":"I pack my bag for school.","ex_kor":"학교에 가려고 가방을 싸요."},
-  {"eng":"catch the bus","kor":"버스를 타다","def":"to get on the bus in time","ex":"I catch the bus at eight.","ex_kor":"나는 여덟 시에 버스를 타요."},
-  {"eng":"have a snack","kor":"간식을 먹다","def":"to eat a small amount of food","ex":"We have a snack after school.","ex_kor":"우리는 방과 후 간식을 먹어요."},
-  {"eng":"do a project","kor":"프로젝트를 하다","def":"to work on a task for school","ex":"I do a project with my friend.","ex_kor":"나는 친구와 프로젝트를 해요."},
-  {"eng":"practice piano","kor":"피아노 연습을 하다","def":"to play piano for practice","ex":"I practice piano every day.","ex_kor":"나는 매일 피아노를 연습해요."},
-  {"eng":"feed the cat","kor":"고양이에게 밥을 주다","def":"to give food to the cat","ex":"I feed the cat in the morning.","ex_kor":"나는 아침에 고양이에게 밥을 줘요."},
-  {"eng":"water the plants","kor":"식물에 물을 주다","def":"to pour water on plants","ex":"I water the plants on Sunday.","ex_kor":"나는 일요일에 식물에 물을 줘요."},
-  {"eng":"set the table","kor":"식탁을 차리다","def":"to prepare the table for a meal","ex":"I set the table for dinner.","ex_kor":"나는 저녁 식사를 위해 식탁을 차려요."},
-  {"eng":"brush my hair","kor":"머리를 빗다","def":"to make your hair neat with a brush","ex":"I brush my hair before school.","ex_kor":"나는 학교 가기 전에 머리를 빗어요."},
-  {"eng":"do stretches","kor":"스트레칭을 하다","def":"to stretch your body to warm up","ex":"We do stretches in P.E. class.","ex_kor":"우리는 체육 시간에 스트레칭을 해요."},
-  {"eng":"charge my tablet","kor":"태블릿을 충전하다","def":"to give power to your tablet","ex":"I charge my tablet at night.","ex_kor":"나는 밤에 태블릿을 충전해요."}
+  {
+    "eng": "get dressed",
+    "kor": "옷을 입다",
+    "def": "to put on clothes",
+    "ex": "I get dressed after breakfast.",
+    "ex_kor": "나는 아침을 먹고 옷을 입어요.",
+    "sentence_id": "74e649ba-9456-43c1-acae-ab41233b606f"
+  },
+  {
+    "eng": "pack my bag",
+    "kor": "가방을 싸다",
+    "def": "to put things into your bag",
+    "ex": "I pack my bag for school.",
+    "ex_kor": "학교에 가려고 가방을 싸요.",
+    "sentence_id": "40651864-29a2-411b-8f28-221d4692b9e2"
+  },
+  {
+    "eng": "catch the bus",
+    "kor": "버스를 타다",
+    "def": "to get on the bus in time",
+    "ex": "I catch the bus at eight.",
+    "ex_kor": "나는 여덟 시에 버스를 타요.",
+    "sentence_id": "f1410d42-5cdf-407d-a006-99cf1c92e3fe"
+  },
+  {
+    "eng": "have a snack",
+    "kor": "간식을 먹다",
+    "def": "to eat a small amount of food",
+    "ex": "We have a snack after school.",
+    "ex_kor": "우리는 방과 후 간식을 먹어요.",
+    "sentence_id": "2c361e03-731e-403e-b3d0-1acb3e9e673a"
+  },
+  {
+    "eng": "do a project",
+    "kor": "프로젝트를 하다",
+    "def": "to work on a task for school",
+    "ex": "I do a project with my friend.",
+    "ex_kor": "나는 친구와 프로젝트를 해요.",
+    "sentence_id": "7e602cee-7e0a-4ba9-a351-1b93f029113a"
+  },
+  {
+    "eng": "practice piano",
+    "kor": "피아노 연습을 하다",
+    "def": "to play piano for practice",
+    "ex": "I practice piano every day.",
+    "ex_kor": "나는 매일 피아노를 연습해요.",
+    "sentence_id": "3207cd86-d357-4ceb-953a-ac2c47087a33"
+  },
+  {
+    "eng": "feed the cat",
+    "kor": "고양이에게 밥을 주다",
+    "def": "to give food to the cat",
+    "ex": "I feed the cat in the morning.",
+    "ex_kor": "나는 아침에 고양이에게 밥을 줘요.",
+    "sentence_id": "ec6ffbac-f354-4227-be15-d70d6787a9b2"
+  },
+  {
+    "eng": "water the plants",
+    "kor": "식물에 물을 주다",
+    "def": "to pour water on plants",
+    "ex": "I water the plants on Sunday.",
+    "ex_kor": "나는 일요일에 식물에 물을 줘요.",
+    "sentence_id": "2554353c-adc5-4045-a26b-0afbd37a2ba1"
+  },
+  {
+    "eng": "set the table",
+    "kor": "식탁을 차리다",
+    "def": "to prepare the table for a meal",
+    "ex": "I set the table for dinner.",
+    "ex_kor": "나는 저녁 식사를 위해 식탁을 차려요.",
+    "sentence_id": "364fcb4e-e036-490f-b699-dcf97413daae"
+  },
+  {
+    "eng": "brush my hair",
+    "kor": "머리를 빗다",
+    "def": "to make your hair neat with a brush",
+    "ex": "I brush my hair before school.",
+    "ex_kor": "나는 학교 가기 전에 머리를 빗어요.",
+    "sentence_id": "eab8ec0f-ca53-4642-863e-5322dd74e721"
+  },
+  {
+    "eng": "do stretches",
+    "kor": "스트레칭을 하다",
+    "def": "to stretch your body to warm up",
+    "ex": "We do stretches in P.E. class.",
+    "ex_kor": "우리는 체육 시간에 스트레칭을 해요.",
+    "sentence_id": "b519266b-39dc-4974-9c88-290223d668d9"
+  },
+  {
+    "eng": "charge my tablet",
+    "kor": "태블릿을 충전하다",
+    "def": "to give power to your tablet",
+    "ex": "I charge my tablet at night.",
+    "ex_kor": "나는 밤에 태블릿을 충전해요.",
+    "sentence_id": "0319206d-29d9-4221-83a9-9df99aa2cb05"
+  }
 ]

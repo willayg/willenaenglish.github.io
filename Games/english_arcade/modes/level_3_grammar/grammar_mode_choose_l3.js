@@ -440,7 +440,7 @@ export async function startGrammarChooseL3({
         <div id="gch-choices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:14px;justify-items:center;">
           ${answers.map((answer) => {
             const safeAnswer = escapeHtml(answer);
-            return `<button data-answer="${safeAnswer}" class="grammar-choice-btn" style="flex:1;min-width:clamp(120px, 24vw, 170px);padding:clamp(12px,2.5vh,16px) clamp(16px,3vw,24px);font-size:clamp(1.1rem,3vw,1.5rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 10px rgba(0,0,0,0.08);text-transform:none;font-family:'Poppins',Arial,sans-serif;">${safeAnswer}</button>`;
+            return `<button data-answer="${safeAnswer}" class="grammar-choice-btn" style="flex:1;min-width:clamp(120px, 24vw, 170px);padding:clamp(12px,2.5vh,16px) clamp(16px,3vw,24px);font-size:clamp(1.1rem,3vw,1.5rem);font-weight:800;border-radius:22px;border:3px solid #ff6fb0;background:#fff;color:#00bcd4;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 10px rgba(0,0,0,0.08);text-transform:none;font-family:'Poppins',Arial,sans-serif;">${safeAnswer}</button>`;
           }).join('')}
         </div>
         <div id="gch-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;margin-bottom:12px;color:#2e7d32"></div>
@@ -613,11 +613,13 @@ export async function startGrammarChooseL3({
     if (correct && !arr.includes(correct)) arr.unshift(correct);
     // Guarantee at least 3 options
     while (arr.length < 3) arr.push(correct || arr[0] || '');
-    const options = shuffle(arr);
+    // Shuffle then slice to 4, ensuring correct is still included
+    let options = shuffle(arr).slice(0, 4);
+    // IMPORTANT: Check correct is included AFTER slicing, not before
     if (correct && !options.includes(correct)) {
-      options[options.length - 1] = correct;
+      options[Math.floor(Math.random() * options.length)] = correct;
     }
-    return options.slice(0, 4);
+    return shuffle(options);
   }
 
   function getCorrectAnswer(item) {

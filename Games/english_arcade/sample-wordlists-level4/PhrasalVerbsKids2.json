@@ -1,18 +1,130 @@
 [
-  {"eng":"come back","kor":"돌아오다","def":"to return","ex":"Come back soon.","ex_kor":"곧 돌아와요."},
-  {"eng":"go back","kor":"돌아가다","def":"to return to a place","ex":"Go back to your seat.","ex_kor":"자리로 돌아가요."},
-  {"eng":"hurry up","kor":"서두르다","def":"to move or act faster","ex":"Hurry up, please.","ex_kor":"서둘러요."},
-  {"eng":"slow down","kor":"천천히 하다","def":"to move or act more slowly","ex":"Slow down when you read.","ex_kor":"읽을 때 천천히 해요."},
-  {"eng":"calm down","kor":"진정하다","def":"to relax and be quiet","ex":"Calm down and take a breath.","ex_kor":"진정하고 숨을 쉬어요."},
-  {"eng":"line up","kor":"줄을 서다","def":"to stand in a line","ex":"Line up at the door.","ex_kor":"문 앞에 줄을 서요."},
-  {"eng":"share with","kor":"~와 나누다","def":"to give part to someone","ex":"Share your crayons with a friend.","ex_kor":"친구와 색연필을 나눠요."},
-  {"eng":"play with","kor":"~와 놀다","def":"to enjoy time with someone or something","ex":"Play with your little brother.","ex_kor":"동생과 같이 놀아요."},
-  {"eng":"wait for","kor":"기다리다","def":"to stay until something happens","ex":"Wait for the bus.","ex_kor":"버스를 기다려요."},
-  {"eng":"look after","kor":"돌보다","def":"to take care of","ex":"Look after your sister.","ex_kor":"여동생을 돌봐요."},
-  {"eng":"take care of","kor":"돌보다","def":"to keep someone or something safe and well","ex":"Take care of the plants.","ex_kor":"식물을 돌봐요."},
-  {"eng":"help out","kor":"도와주다","def":"to help someone with a task","ex":"Help out with the dishes.","ex_kor":"설거지를 도와요."},
-  {"eng":"tidy up","kor":"정리하다","def":"to make a place neat","ex":"Tidy up your room.","ex_kor":"방을 정리해요."},
-  {"eng":"wash up","kor":"씻다","def":"to wash your hands or face","ex":"Wash up before dinner.","ex_kor":"저녁 먹기 전에 손을 씻어요."},
-  {"eng":"try on","kor":"입어 보다/신어 보다","def":"to put on clothes to see if they fit","ex":"Try on the shoes.","ex_kor":"신발을 신어 봐요."},
-  {"eng":"hand in","kor":"제출하다","def":"to give work to a teacher","ex":"Hand in your homework.","ex_kor":"숙제를 제출해요."}
+  {
+    "eng": "come back",
+    "kor": "돌아오다",
+    "def": "to return",
+    "ex": "Come back soon.",
+    "ex_kor": "곧 돌아와요.",
+    "sentence_id": "b507faf2-6a4e-4bcd-b67b-5a60419a1d32"
+  },
+  {
+    "eng": "go back",
+    "kor": "돌아가다",
+    "def": "to return to a place",
+    "ex": "Go back to your seat.",
+    "ex_kor": "자리로 돌아가요.",
+    "sentence_id": "20f40eb6-a727-4815-b60c-6a033db15388"
+  },
+  {
+    "eng": "hurry up",
+    "kor": "서두르다",
+    "def": "to move or act faster",
+    "ex": "Hurry up, please.",
+    "ex_kor": "서둘러요.",
+    "sentence_id": "7c8acc3b-e42a-4e0f-99cb-da5cff119eb2"
+  },
+  {
+    "eng": "slow down",
+    "kor": "천천히 하다",
+    "def": "to move or act more slowly",
+    "ex": "Slow down when you read.",
+    "ex_kor": "읽을 때 천천히 해요.",
+    "sentence_id": "1118c2c6-5d60-43de-82b8-f4190c9566e1"
+  },
+  {
+    "eng": "calm down",
+    "kor": "진정하다",
+    "def": "to relax and be quiet",
+    "ex": "Calm down and take a breath.",
+    "ex_kor": "진정하고 숨을 쉬어요.",
+    "sentence_id": "473154fc-9379-4ed5-9957-098f22647bea"
+  },
+  {
+    "eng": "line up",
+    "kor": "줄을 서다",
+    "def": "to stand in a line",
+    "ex": "Line up at the door.",
+    "ex_kor": "문 앞에 줄을 서요.",
+    "sentence_id": "1250a4c2-e294-42eb-871e-93495575d7dc"
+  },
+  {
+    "eng": "share with",
+    "kor": "~와 나누다",
+    "def": "to give part to someone",
+    "ex": "Share your crayons with a friend.",
+    "ex_kor": "친구와 색연필을 나눠요.",
+    "sentence_id": "49d92730-dca2-486c-80aa-b7d78d793214"
+  },
+  {
+    "eng": "play with",
+    "kor": "~와 놀다",
+    "def": "to enjoy time with someone or something",
+    "ex": "Play with your little brother.",
+    "ex_kor": "동생과 같이 놀아요.",
+    "sentence_id": "2d8a77e2-cb34-4081-b0f5-e59a445d0e82"
+  },
+  {
+    "eng": "wait for",
+    "kor": "기다리다",
+    "def": "to stay until something happens",
+    "ex": "Wait for the bus.",
+    "ex_kor": "버스를 기다려요.",
+    "sentence_id": "f0a6ce1d-50e3-40ae-8684-917cbcfda690"
+  },
+  {
+    "eng": "look after",
+    "kor": "돌보다",
+    "def": "to take care of",
+    "ex": "Look after your sister.",
+    "ex_kor": "여동생을 돌봐요.",
+    "sentence_id": "440c8d7d-8adb-463a-b032-7f2e29ed1ce5"
+  },
+  {
+    "eng": "take care of",
+    "kor": "돌보다",
+    "def": "to keep someone or something safe and well",
+    "ex": "Take care of the plants.",
+    "ex_kor": "식물을 돌봐요.",
+    "sentence_id": "5c9821f6-15f3-499f-8d49-22760b6c6f88"
+  },
+  {
+    "eng": "help out",
+    "kor": "도와주다",
+    "def": "to help someone with a task",
+    "ex": "Help out with the dishes.",
+    "ex_kor": "설거지를 도와요.",
+    "sentence_id": "b01ccefe-a597-4b4b-bda4-de3b213a8b4c"
+  },
+  {
+    "eng": "tidy up",
+    "kor": "정리하다",
+    "def": "to make a place neat",
+    "ex": "Tidy up your room.",
+    "ex_kor": "방을 정리해요.",
+    "sentence_id": "0e8c43b7-66e6-4e6a-9038-b315e60ef1f2"
+  },
+  {
+    "eng": "wash up",
+    "kor": "씻다",
+    "def": "to wash your hands or face",
+    "ex": "Wash up before dinner.",
+    "ex_kor": "저녁 먹기 전에 손을 씻어요.",
+    "sentence_id": "24ecf501-1f29-40c8-a7c2-b88c438ea996"
+  },
+  {
+    "eng": "try on",
+    "kor": "입어 보다/신어 보다",
+    "def": "to put on clothes to see if they fit",
+    "ex": "Try on the shoes.",
+    "ex_kor": "신발을 신어 봐요.",
+    "sentence_id": "e3c2f2e6-1eb3-4d2b-a372-64052e556dc7"
+  },
+  {
+    "eng": "hand in",
+    "kor": "제출하다",
+    "def": "to give work to a teacher",
+    "ex": "Hand in your homework.",
+    "ex_kor": "숙제를 제출해요.",
+    "sentence_id": "1e4bbd9d-4f09-4e1f-8671-56cd029dd998"
+  }
 ]

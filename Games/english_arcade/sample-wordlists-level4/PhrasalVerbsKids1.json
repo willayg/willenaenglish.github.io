@@ -1,19 +1,138 @@
 [
-  {"eng":"put on","kor":"입다/쓰다","def":"to wear clothes or accessories","ex":"Put on your hat.","ex_kor":"모자를 써요."},
-  {"eng":"take off","kor":"벗다","def":"to remove clothes or accessories","ex":"Take off your shoes.","ex_kor":"신발을 벗어요."},
-  {"eng":"turn on","kor":"켜다","def":"to start a machine or light","ex":"Turn on the light.","ex_kor":"불을 켜요."},
-  {"eng":"turn off","kor":"끄다","def":"to stop a machine or light","ex":"Turn off the TV.","ex_kor":"TV를 꺼요."},
-  {"eng":"pick up","kor":"집다/주워 들다","def":"to lift something from a surface or the floor","ex":"Pick up the pencil.","ex_kor":"연필을 집어요."},
-  {"eng":"put down","kor":"내려놓다","def":"to place something you are holding onto a surface","ex":"Put down the book.","ex_kor":"책을 내려놓아요."},
-  {"eng":"sit down","kor":"앉다","def":"to take a seat","ex":"Sit down, please.","ex_kor":"앉으세요."},
-  {"eng":"stand up","kor":"일어서다","def":"to rise to your feet","ex":"Stand up, please.","ex_kor":"일어나세요."},
-  {"eng":"wake up","kor":"깨다/일어나다","def":"to stop sleeping","ex":"I wake up at seven.","ex_kor":"나는 일곱 시에 일어나요."},
-  {"eng":"get up","kor":"일어나다","def":"to get out of bed","ex":"Get up now.","ex_kor":"지금 일어나요."},
-  {"eng":"put away","kor":"치워 넣다/정리하다","def":"to place things back where they belong","ex":"Put away your toys.","ex_kor":"장난감을 정리하세요."},
-  {"eng":"clean up","kor":"치우다/정리하다","def":"to make a place tidy","ex":"Clean up the table.","ex_kor":"식탁을 치워요."},
-  {"eng":"look for","kor":"찾다","def":"to try to find something","ex":"Look for your bag.","ex_kor":"가방을 찾아요."},
-  {"eng":"take out","kor":"꺼내다/내놓다","def":"to remove something from a place","ex":"Take out the trash.","ex_kor":"쓰레기를 버리세요."},
-  {"eng":"put back","kor":"다시 놓다","def":"to return something to its place","ex":"Put it back on the shelf.","ex_kor":"그것을 선반에 다시 놓아요."},
-  {"eng":"come in","kor":"들어오다","def":"to enter a room or place","ex":"Come in, please.","ex_kor":"들어오세요."},
-  {"eng":"go out","kor":"나가다","def":"to leave a room or building","ex":"Go out and play.","ex_kor":"나가서 놀아요."}
+  {
+    "eng": "put on",
+    "kor": "입다/쓰다",
+    "def": "to wear clothes or accessories",
+    "ex": "Put on your hat.",
+    "ex_kor": "모자를 써요.",
+    "sentence_id": "1d264bbc-36df-4706-9910-ac8275d78e6a"
+  },
+  {
+    "eng": "take off",
+    "kor": "벗다",
+    "def": "to remove clothes or accessories",
+    "ex": "Take off your shoes.",
+    "ex_kor": "신발을 벗어요.",
+    "sentence_id": "b2a437f1-4526-45a4-ac35-90721f787d15"
+  },
+  {
+    "eng": "turn on",
+    "kor": "켜다",
+    "def": "to start a machine or light",
+    "ex": "Turn on the light.",
+    "ex_kor": "불을 켜요.",
+    "sentence_id": "438491ca-c71b-4467-a036-a7b7138fa397"
+  },
+  {
+    "eng": "turn off",
+    "kor": "끄다",
+    "def": "to stop a machine or light",
+    "ex": "Turn off the TV.",
+    "ex_kor": "TV를 꺼요.",
+    "sentence_id": "ae01d49c-50a5-45fb-8d3a-3c69014908a9"
+  },
+  {
+    "eng": "pick up",
+    "kor": "집다/주워 들다",
+    "def": "to lift something from a surface or the floor",
+    "ex": "Pick up the pencil.",
+    "ex_kor": "연필을 집어요.",
+    "sentence_id": "da1b8fe9-50c5-4ec9-bf3b-cb82f8815477"
+  },
+  {
+    "eng": "put down",
+    "kor": "내려놓다",
+    "def": "to place something you are holding onto a surface",
+    "ex": "Put down the book.",
+    "ex_kor": "책을 내려놓아요.",
+    "sentence_id": "d33aae3e-f87b-4ede-9cf8-fb2657c6bb0c"
+  },
+  {
+    "eng": "sit down",
+    "kor": "앉다",
+    "def": "to take a seat",
+    "ex": "Sit down, please.",
+    "ex_kor": "앉으세요.",
+    "sentence_id": "d3f55fe5-3dc0-4063-9ce7-c4c244720c99"
+  },
+  {
+    "eng": "stand up",
+    "kor": "일어서다",
+    "def": "to rise to your feet",
+    "ex": "Stand up, please.",
+    "ex_kor": "일어나세요.",
+    "sentence_id": "4aab89eb-3c42-42df-b9be-712736f2c2fb"
+  },
+  {
+    "eng": "wake up",
+    "kor": "깨다/일어나다",
+    "def": "to stop sleeping",
+    "ex": "I wake up at seven.",
+    "ex_kor": "나는 일곱 시에 일어나요.",
+    "sentence_id": "354429ed-fbda-44ef-a6f7-a6ae385150d6"
+  },
+  {
+    "eng": "get up",
+    "kor": "일어나다",
+    "def": "to get out of bed",
+    "ex": "Get up now.",
+    "ex_kor": "지금 일어나요.",
+    "sentence_id": "9b2fc184-9198-4a3f-9e48-ddb7d13a32a9"
+  },
+  {
+    "eng": "put away",
+    "kor": "치워 넣다/정리하다",
+    "def": "to place things back where they belong",
+    "ex": "Put away your toys.",
+    "ex_kor": "장난감을 정리하세요.",
+    "sentence_id": "f21498fd-7c5f-45f8-b7a9-ff4a72190e62"
+  },
+  {
+    "eng": "clean up",
+    "kor": "치우다/정리하다",
+    "def": "to make a place tidy",
+    "ex": "Clean up the table.",
+    "ex_kor": "식탁을 치워요.",
+    "sentence_id": "697dcedb-3adf-4815-8b22-82254ec477a8"
+  },
+  {
+    "eng": "look for",
+    "kor": "찾다",
+    "def": "to try to find something",
+    "ex": "Look for your bag.",
+    "ex_kor": "가방을 찾아요.",
+    "sentence_id": "804737ac-0d07-4293-bcd8-f5362f8492bc"
+  },
+  {
+    "eng": "take out",
+    "kor": "꺼내다/내놓다",
+    "def": "to remove something from a place",
+    "ex": "Take out the trash.",
+    "ex_kor": "쓰레기를 버리세요.",
+    "sentence_id": "8035dcac-a82d-4f5a-96db-bae8c4383358"
+  },
+  {
+    "eng": "put back",
+    "kor": "다시 놓다",
+    "def": "to return something to its place",
+    "ex": "Put it back on the shelf.",
+    "ex_kor": "그것을 선반에 다시 놓아요.",
+    "sentence_id": "cf455147-114c-43cc-a7c9-c37366927ad6"
+  },
+  {
+    "eng": "come in",
+    "kor": "들어오다",
+    "def": "to enter a room or place",
+    "ex": "Come in, please.",
+    "ex_kor": "들어오세요.",
+    "sentence_id": "78cea9b8-0f6e-4752-ab8f-c1c1709ca47a"
+  },
+  {
+    "eng": "go out",
+    "kor": "나가다",
+    "def": "to leave a room or building",
+    "ex": "Go out and play.",
+    "ex_kor": "나가서 놀아요.",
+    "sentence_id": "ca966dd3-b8ad-4b7f-9a6d-c8fdf304897f"
+  }
 ]

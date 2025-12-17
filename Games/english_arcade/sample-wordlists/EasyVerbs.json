@@ -1,22 +1,182 @@
 [
-  { "eng": "run", "kor": "달리다", "def": "to move fast on feet", "ex": "I run home.", "ex_kor": "나는 집에 달린다.", "emoji": "🏃" },
-  { "eng": "eat", "kor": "먹다", "def": "to put food in the mouth", "ex": "I eat rice.", "ex_kor": "나는 밥을 먹는다.", "emoji": "🍽️" },
-  { "eng": "drink", "kor": "마시다", "def": "to take liquid", "ex": "I drink water.", "ex_kor": "나는 물을 마신다.", "emoji": "🥤" },
-  { "eng": "sleep", "kor": "자다", "def": "to rest with eyes closed", "ex": "I sleep well.", "ex_kor": "나는 잘 잔다.", "emoji": "😴" },
-  { "eng": "read", "kor": "읽다", "def": "to look at words and understand them", "ex": "I read a book.", "ex_kor": "나는 책을 읽는다.", "emoji": "📖" },
-  { "eng": "write", "kor": "쓰다", "def": "to put words on paper", "ex": "I write a note.", "ex_kor": "나는 메모를 쓴다.", "emoji": "✍️" },
-  { "eng": "sing", "kor": "노래하다", "def": "to make music with the voice", "ex": "I sing a song.", "ex_kor": "나는 노래를 부른다.", "emoji": "🎤" },
-  { "eng": "dance", "kor": "춤추다", "def": "to move the body to music", "ex": "We dance together.", "ex_kor": "우리는 함께 춤을 춘다.", "emoji": "💃" },
-  { "eng": "swim", "kor": "수영하다", "def": "to move in water", "ex": "I swim laps.", "ex_kor": "나는 수영을 한다.", "emoji": "🏊" },
-  { "eng": "jump", "kor": "뛰다", "def": "to push up off the ground", "ex": "I jump high.", "ex_kor": "나는 높이 뛴다.", "emoji": "⬆️" },
-  { "eng": "walk", "kor": "걷다", "def": "to move at a normal pace on feet", "ex": "We walk home.", "ex_kor": "우리는 집에 걷는다.", "emoji": "🚶" },
-  { "eng": "talk", "kor": "말하다", "def": "to use words with someone", "ex": "We talk softly.", "ex_kor": "우리는 천천히 말한다.", "emoji": "💬" },
-  { "eng": "listen", "kor": "듣다", "def": "to pay attention to sound", "ex": "I listen carefully.", "ex_kor": "나는 주의 깊게 듣는다.", "emoji": "👂" },
-  { "eng": "see", "kor": "보다", "def": "to notice with eyes", "ex": "I see a bird.", "ex_kor": "나는 새를 본다.", "emoji": "👁️" },
-  { "eng": "buy", "kor": "사다", "def": "to get something with money", "ex": "I buy bread.", "ex_kor": "나는 빵을 산다.", "emoji": "🛒" },
-  { "eng": "sell", "kor": "팔다", "def": "to give something for money", "ex": "They sell fruit.", "ex_kor": "그들은 과일을 판다.", "emoji": "💳" },
-  { "eng": "make", "kor": "만들다", "def": "to create or build something", "ex": "I make a cake.", "ex_kor": "나는 케이크를 만든다.", "emoji": "🔨" },
-  { "eng": "give", "kor": "주다", "def": "to hand something to someone", "ex": "I give a gift.", "ex_kor": "나는 선물을 준다.", "emoji": "🎁" },
-  { "eng": "take", "kor": "가지다", "def": "to get and hold something", "ex": "I take a pen.", "ex_kor": "나는 펜을 집는다.", "emoji": "✋" },
-  { "eng": "open", "kor": "열다", "def": "to move something so it is not closed", "ex": "I open a box.", "ex_kor": "나는 상자를 연다.", "emoji": "📂" }
+  {
+    "eng": "run",
+    "kor": "달리다",
+    "def": "to move fast on feet",
+    "ex": "I run home.",
+    "ex_kor": "나는 집에 달린다.",
+    "emoji": "🏃",
+    "sentence_id": "f8c1e3cb-66a4-42ac-8409-89bf3fd42543"
+  },
+  {
+    "eng": "eat",
+    "kor": "먹다",
+    "def": "to put food in the mouth",
+    "ex": "I eat rice.",
+    "ex_kor": "나는 밥을 먹는다.",
+    "emoji": "🍽️",
+    "sentence_id": "4f7547a6-5f81-4cc6-9f97-cf3c6a9e3893"
+  },
+  {
+    "eng": "drink",
+    "kor": "마시다",
+    "def": "to take liquid",
+    "ex": "I drink water.",
+    "ex_kor": "나는 물을 마신다.",
+    "emoji": "🥤",
+    "sentence_id": "2b6527b9-e829-42ff-bbfa-a8e9fabdf570"
+  },
+  {
+    "eng": "sleep",
+    "kor": "자다",
+    "def": "to rest with eyes closed",
+    "ex": "I sleep well.",
+    "ex_kor": "나는 잘 잔다.",
+    "emoji": "😴",
+    "sentence_id": "65ff54da-0bf0-4911-84b3-bf989d2c446a"
+  },
+  {
+    "eng": "read",
+    "kor": "읽다",
+    "def": "to look at words and understand them",
+    "ex": "I read a book.",
+    "ex_kor": "나는 책을 읽는다.",
+    "emoji": "📖",
+    "sentence_id": "12c150a6-4d87-496b-ab39-849dc4a5398f"
+  },
+  {
+    "eng": "write",
+    "kor": "쓰다",
+    "def": "to put words on paper",
+    "ex": "I write a note.",
+    "ex_kor": "나는 메모를 쓴다.",
+    "emoji": "✍️",
+    "sentence_id": "1c92c728-1c23-448d-9734-3ff832d78f25"
+  },
+  {
+    "eng": "sing",
+    "kor": "노래하다",
+    "def": "to make music with the voice",
+    "ex": "I sing a song.",
+    "ex_kor": "나는 노래를 부른다.",
+    "emoji": "🎤",
+    "sentence_id": "cd39a8f1-1843-48c7-a4a1-65d41e52385b"
+  },
+  {
+    "eng": "dance",
+    "kor": "춤추다",
+    "def": "to move the body to music",
+    "ex": "We dance together.",
+    "ex_kor": "우리는 함께 춤을 춘다.",
+    "emoji": "💃",
+    "sentence_id": "2b7be434-6c83-428f-b36a-e34872032d54"
+  },
+  {
+    "eng": "swim",
+    "kor": "수영하다",
+    "def": "to move in water",
+    "ex": "I swim laps.",
+    "ex_kor": "나는 수영을 한다.",
+    "emoji": "🏊",
+    "sentence_id": "8791f43c-266c-443c-bff3-99e86b7f701a"
+  },
+  {
+    "eng": "jump",
+    "kor": "뛰다",
+    "def": "to push up off the ground",
+    "ex": "I jump high.",
+    "ex_kor": "나는 높이 뛴다.",
+    "emoji": "⬆️",
+    "sentence_id": "407ed4f4-019d-4866-977b-ba7a35dd07a8"
+  },
+  {
+    "eng": "walk",
+    "kor": "걷다",
+    "def": "to move at a normal pace on feet",
+    "ex": "We walk home.",
+    "ex_kor": "우리는 집에 걷는다.",
+    "emoji": "🚶",
+    "sentence_id": "a42afb7e-79dd-44f9-a88d-f5c38875ff06"
+  },
+  {
+    "eng": "talk",
+    "kor": "말하다",
+    "def": "to use words with someone",
+    "ex": "We talk softly.",
+    "ex_kor": "우리는 천천히 말한다.",
+    "emoji": "💬",
+    "sentence_id": "88d56add-2033-43ef-8b68-38a1005cea50"
+  },
+  {
+    "eng": "listen",
+    "kor": "듣다",
+    "def": "to pay attention to sound",
+    "ex": "I listen carefully.",
+    "ex_kor": "나는 주의 깊게 듣는다.",
+    "emoji": "👂",
+    "sentence_id": "c61c331c-a405-4077-8f28-af5d24d7ca5e"
+  },
+  {
+    "eng": "see",
+    "kor": "보다",
+    "def": "to notice with eyes",
+    "ex": "I see a bird.",
+    "ex_kor": "나는 새를 본다.",
+    "emoji": "👁️",
+    "sentence_id": "6d3a56ad-2fd8-4418-b6a8-d6aa30b8ed8c"
+  },
+  {
+    "eng": "buy",
+    "kor": "사다",
+    "def": "to get something with money",
+    "ex": "I buy bread.",
+    "ex_kor": "나는 빵을 산다.",
+    "emoji": "🛒",
+    "sentence_id": "325625c8-11f9-4c25-9f39-788159acdcb1"
+  },
+  {
+    "eng": "sell",
+    "kor": "팔다",
+    "def": "to give something for money",
+    "ex": "They sell fruit.",
+    "ex_kor": "그들은 과일을 판다.",
+    "emoji": "💳",
+    "sentence_id": "11d3e942-a498-42be-8c4c-8ae2d0d1787c"
+  },
+  {
+    "eng": "make",
+    "kor": "만들다",
+    "def": "to create or build something",
+    "ex": "I make a cake.",
+    "ex_kor": "나는 케이크를 만든다.",
+    "emoji": "🔨",
+    "sentence_id": "530271f1-3835-455f-bf7f-d25d76b9319f"
+  },
+  {
+    "eng": "give",
+    "kor": "주다",
+    "def": "to hand something to someone",
+    "ex": "I give a gift.",
+    "ex_kor": "나는 선물을 준다.",
+    "emoji": "🎁",
+    "sentence_id": "5b4d23fc-337e-466d-9fab-e520da1c05e6"
+  },
+  {
+    "eng": "take",
+    "kor": "가지다",
+    "def": "to get and hold something",
+    "ex": "I take a pen.",
+    "ex_kor": "나는 펜을 집는다.",
+    "emoji": "✋",
+    "sentence_id": "91f53602-9510-4848-86da-e6937d1ffaf8"
+  },
+  {
+    "eng": "open",
+    "kor": "열다",
+    "def": "to move something so it is not closed",
+    "ex": "I open a box.",
+    "ex_kor": "나는 상자를 연다.",
+    "emoji": "📂",
+    "sentence_id": "326fd628-ae05-4284-b5ad-6b2a200a30c7"
+  }
 ]

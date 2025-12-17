@@ -1,14 +1,98 @@
 [
-  {"eng":"surprised","kor":"놀란","def":"feeling something unexpected happened","ex":"She was surprised by the gift.","ex_kor":"그녀는 선물에 놀랐어요."},
-  {"eng":"worried","kor":"걱정하는","def":"feeling afraid something bad might happen","ex":"He felt worried about the test.","ex_kor":"그는 시험이 걱정됐어요."},
-  {"eng":"relieved","kor":"안도한","def":"feeling happy that a problem is gone","ex":"I was relieved when the rain stopped.","ex_kor":"비가 그쳐서 안도했어요."},
-  {"eng":"excited","kor":"신이 난","def":"feeling very happy and eager","ex":"The children are excited for the trip.","ex_kor":"아이들은 여행에 신이 났어요."},
-  {"eng":"embarrassed","kor":"당황한","def":"feeling shy or uncomfortable","ex":"He was embarrassed to sing on stage.","ex_kor":"그는 무대에서 노래하는 것이 당황스러웠어요."},
-  {"eng":"determined","kor":"결심한","def":"not giving up easily","ex":"She is determined to win the game.","ex_kor":"그녀는 게임에서 이기기로 결심했어요."},
-  {"eng":"confused","kor":"혼란스러운","def":"not sure what is happening","ex":"He looked confused by the story.","ex_kor":"그는 이야기에 혼란스러워했어요."},
-  {"eng":"grateful","kor":"감사한","def":"feeling thankful for something","ex":"I am grateful for your help.","ex_kor":"나는 너의 도움에 감사해요."},
-  {"eng":"hopeful","kor":"희망에 찬","def":"feeling that good things will happen","ex":"She is hopeful about the future.","ex_kor":"그녀는 미래에 희망을 가지고 있어요."},
-  {"eng":"bored","kor":"지루한","def":"not interested or excited","ex":"He was bored during the long movie.","ex_kor":"그는 긴 영화 동안 지루했어요."},
-  {"eng":"proud","kor":"자랑스러운","def":"feeling good about what you did","ex":"She felt proud of her drawing.","ex_kor":"그녀는 자신의 그림이 자랑스러웠어요."},
-  {"eng":"jealous","kor":"질투하는","def":"wanting what someone else has","ex":"He was jealous of his friend’s new bike.","ex_kor":"그는 친구의 새 자전거를 질투했어요."}
+  {
+    "eng": "surprised",
+    "kor": "놀란",
+    "def": "feeling something unexpected happened",
+    "ex": "She was surprised by the gift.",
+    "ex_kor": "그녀는 선물에 놀랐어요.",
+    "sentence_id": "5b418b72-514d-43c4-84f5-7a0cd32b222c"
+  },
+  {
+    "eng": "worried",
+    "kor": "걱정하는",
+    "def": "feeling afraid something bad might happen",
+    "ex": "He felt worried about the test.",
+    "ex_kor": "그는 시험이 걱정됐어요.",
+    "sentence_id": "20a2c810-d2c5-4179-8a86-99dabef205c7"
+  },
+  {
+    "eng": "relieved",
+    "kor": "안도한",
+    "def": "feeling happy that a problem is gone",
+    "ex": "I was relieved when the rain stopped.",
+    "ex_kor": "비가 그쳐서 안도했어요.",
+    "sentence_id": "6553904d-6e51-4122-9489-e9e5c7736d5d"
+  },
+  {
+    "eng": "excited",
+    "kor": "신이 난",
+    "def": "feeling very happy and eager",
+    "ex": "The children are excited for the trip.",
+    "ex_kor": "아이들은 여행에 신이 났어요.",
+    "sentence_id": "25a85dc5-1a15-4ad6-a329-c3fee5e23ab4"
+  },
+  {
+    "eng": "embarrassed",
+    "kor": "당황한",
+    "def": "feeling shy or uncomfortable",
+    "ex": "He was embarrassed to sing on stage.",
+    "ex_kor": "그는 무대에서 노래하는 것이 당황스러웠어요.",
+    "sentence_id": "d22b814e-78fb-4d11-a636-e28a3c4c456e"
+  },
+  {
+    "eng": "determined",
+    "kor": "결심한",
+    "def": "not giving up easily",
+    "ex": "She is determined to win the game.",
+    "ex_kor": "그녀는 게임에서 이기기로 결심했어요.",
+    "sentence_id": "6d1d3997-db81-415f-b978-51da59f2fe3f"
+  },
+  {
+    "eng": "confused",
+    "kor": "혼란스러운",
+    "def": "not sure what is happening",
+    "ex": "He looked confused by the story.",
+    "ex_kor": "그는 이야기에 혼란스러워했어요.",
+    "sentence_id": "0eba6b43-d3f0-43bc-ae87-ccdad0e81d20"
+  },
+  {
+    "eng": "grateful",
+    "kor": "감사한",
+    "def": "feeling thankful for something",
+    "ex": "I am grateful for your help.",
+    "ex_kor": "나는 너의 도움에 감사해요.",
+    "sentence_id": "610fceeb-b295-4c06-a958-6110978bcfa1"
+  },
+  {
+    "eng": "hopeful",
+    "kor": "희망에 찬",
+    "def": "feeling that good things will happen",
+    "ex": "She is hopeful about the future.",
+    "ex_kor": "그녀는 미래에 희망을 가지고 있어요.",
+    "sentence_id": "0bd5c1c6-258b-45f9-a622-a5065d293869"
+  },
+  {
+    "eng": "bored",
+    "kor": "지루한",
+    "def": "not interested or excited",
+    "ex": "He was bored during the long movie.",
+    "ex_kor": "그는 긴 영화 동안 지루했어요.",
+    "sentence_id": "115bb7bf-30eb-4edd-bfc7-dcb487ef1952"
+  },
+  {
+    "eng": "proud",
+    "kor": "자랑스러운",
+    "def": "feeling good about what you did",
+    "ex": "She felt proud of her drawing.",
+    "ex_kor": "그녀는 자신의 그림이 자랑스러웠어요.",
+    "sentence_id": "0708e6e7-1686-4b04-8788-a13ba742cd29"
+  },
+  {
+    "eng": "jealous",
+    "kor": "질투하는",
+    "def": "wanting what someone else has",
+    "ex": "He was jealous of his friend’s new bike.",
+    "ex_kor": "그는 친구의 새 자전거를 질투했어요.",
+    "sentence_id": "285417fe-2291-4cc6-a3a8-791bd50893e3"
+  }
 ]

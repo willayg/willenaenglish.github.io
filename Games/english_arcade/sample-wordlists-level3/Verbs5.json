@@ -1,14 +1,98 @@
 [
-  {"eng":"believe","kor":"믿다","def":"to think something is true","ex":"I believe you.","ex_kor":"나는 너를 믿어."},
-  {"eng":"love","kor":"사랑하다","def":"to care deeply for someone","ex":"I love my family.","ex_kor":"나는 가족을 사랑한다."},
-  {"eng":"like","kor":"좋아하다","def":"to enjoy or prefer something","ex":"She likes pizza.","ex_kor":"그녀는 피자를 좋아한다."},
-  {"eng":"hate","kor":"싫어하다","def":"to strongly dislike","ex":"He hates homework.","ex_kor":"그는 숙제를 싫어한다."},
-  {"eng":"hope","kor":"희망하다","def":"to want something good to happen","ex":"I hope it doesn’t rain.","ex_kor":"비가 오지 않기를 바란다."},
-  {"eng":"need","kor":"필요하다","def":"to require something","ex":"I need more time.","ex_kor":"시간이 더 필요하다."},
-  {"eng":"want","kor":"원하다","def":"to wish for something","ex":"She wants a new phone.","ex_kor":"그녀는 새 휴대폰을 원한다."},
-  {"eng":"mean","kor":"의미하다","def":"to have a certain meaning","ex":"What does this word mean?","ex_kor":"이 단어는 무슨 뜻이야?"},
-  {"eng":"understand","kor":"이해하다","def":"to know what something means","ex":"Do you understand me?","ex_kor":"내 말 이해하니?"},
-  {"eng":"remember","kor":"기억하다","def":"to keep information in your mind","ex":"I remember your name.","ex_kor":"나는 네 이름을 기억한다."},
-  {"eng":"forget","kor":"잊다","def":"to not remember something","ex":"I forget my homework.","ex_kor":"나는 숙제를 잊어버린다."},
-  {"eng":"begin","kor":"시작하다","def":"to start something","ex":"Class begins at nine.","ex_kor":"수업은 아홉 시에 시작한다."}
+  {
+    "eng": "believe",
+    "kor": "믿다",
+    "def": "to think something is true",
+    "ex": "I believe you.",
+    "ex_kor": "나는 너를 믿어.",
+    "sentence_id": "d7c8e3a3-06be-4003-adc7-54e185b33882"
+  },
+  {
+    "eng": "love",
+    "kor": "사랑하다",
+    "def": "to care deeply for someone",
+    "ex": "I love my family.",
+    "ex_kor": "나는 가족을 사랑한다.",
+    "sentence_id": "6ba9811d-8b79-45b1-bebb-29f65d940713"
+  },
+  {
+    "eng": "like",
+    "kor": "좋아하다",
+    "def": "to enjoy or prefer something",
+    "ex": "She likes pizza.",
+    "ex_kor": "그녀는 피자를 좋아한다.",
+    "sentence_id": "e06e5a30-c0b8-4462-82f4-c2972654d636"
+  },
+  {
+    "eng": "hate",
+    "kor": "싫어하다",
+    "def": "to strongly dislike",
+    "ex": "He hates homework.",
+    "ex_kor": "그는 숙제를 싫어한다.",
+    "sentence_id": "3c7b8bf9-75c1-420f-b5ec-689176104dfd"
+  },
+  {
+    "eng": "hope",
+    "kor": "희망하다",
+    "def": "to want something good to happen",
+    "ex": "I hope it doesn’t rain.",
+    "ex_kor": "비가 오지 않기를 바란다.",
+    "sentence_id": "709c0357-fddb-45da-bd34-f46a6df59837"
+  },
+  {
+    "eng": "need",
+    "kor": "필요하다",
+    "def": "to require something",
+    "ex": "I need more time.",
+    "ex_kor": "시간이 더 필요하다.",
+    "sentence_id": "4cba28b2-426e-4b31-92b5-d20696247328"
+  },
+  {
+    "eng": "want",
+    "kor": "원하다",
+    "def": "to wish for something",
+    "ex": "She wants a new phone.",
+    "ex_kor": "그녀는 새 휴대폰을 원한다.",
+    "sentence_id": "65babfda-2587-421b-ba56-66d6ebebda6e"
+  },
+  {
+    "eng": "mean",
+    "kor": "의미하다",
+    "def": "to have a certain meaning",
+    "ex": "What does this word mean?",
+    "ex_kor": "이 단어는 무슨 뜻이야?",
+    "sentence_id": "f87dde35-8866-4ba2-af00-ad1b9c7a0ef6"
+  },
+  {
+    "eng": "understand",
+    "kor": "이해하다",
+    "def": "to know what something means",
+    "ex": "Do you understand me?",
+    "ex_kor": "내 말 이해하니?",
+    "sentence_id": "cce94822-be26-4a1f-85b4-3144552be708"
+  },
+  {
+    "eng": "remember",
+    "kor": "기억하다",
+    "def": "to keep information in your mind",
+    "ex": "I remember your name.",
+    "ex_kor": "나는 네 이름을 기억한다.",
+    "sentence_id": "dc55a787-0ba7-4339-960b-290265cd70dc"
+  },
+  {
+    "eng": "forget",
+    "kor": "잊다",
+    "def": "to not remember something",
+    "ex": "I forget my homework.",
+    "ex_kor": "나는 숙제를 잊어버린다.",
+    "sentence_id": "2e8ad630-6c66-4f83-813c-808d04cd922c"
+  },
+  {
+    "eng": "begin",
+    "kor": "시작하다",
+    "def": "to start something",
+    "ex": "Class begins at nine.",
+    "ex_kor": "수업은 아홉 시에 시작한다.",
+    "sentence_id": "f77163f4-cde5-4dc2-8a0b-5167195d5952"
+  }
 ]

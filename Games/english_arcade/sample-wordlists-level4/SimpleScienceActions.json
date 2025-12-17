@@ -1,14 +1,98 @@
 [
-  {"eng":"mix","kor":"섞다","def":"to combine things together","ex":"Mix the flour and water.","ex_kor":"밀가루와 물을 섞으세요."},
-  {"eng":"pour","kor":"붓다","def":"to make a liquid flow from one place to another","ex":"Pour juice into the glass.","ex_kor":"잔에 주스를 부으세요."},
-  {"eng":"float","kor":"뜨다","def":"to stay on top of water","ex":"Leaves float on the pond.","ex_kor":"잎이 연못에 떠 있어요."},
-  {"eng":"sink","kor":"가라앉다","def":"to go down below the surface","ex":"Rocks sink in water.","ex_kor":"돌은 물에 가라앉아요."},
-  {"eng":"freeze","kor":"얼다","def":"to become solid from cold","ex":"Water will freeze in winter.","ex_kor":"겨울에는 물이 얼어요."},
-  {"eng":"melt","kor":"녹다","def":"to become liquid from heat","ex":"Ice cream melts in the sun.","ex_kor":"아이스크림은 햇볕에 녹아요."},
-  {"eng":"weigh","kor":"무게를 재다","def":"to find out how heavy something is","ex":"Weigh the apple on the scale.","ex_kor":"저울에 사과의 무게를 재세요."},
-  {"eng":"heat","kor":"데우다","def":"to make something warm or hot","ex":"Heat the soup on the stove.","ex_kor":"스토브에서 수프를 데우세요."},
-  {"eng":"cool","kor":"식히다","def":"to make something less hot","ex":"Let the cookies cool.","ex_kor":"쿠키를 식히세요."},
-  {"eng":"measure","kor":"측정하다","def":"to find the size or amount of something","ex":"Measure the water carefully.","ex_kor":"물을 조심스럽게 측정하세요."},
-  {"eng":"observe","kor":"관찰하다","def":"to watch something closely","ex":"Observe the color change.","ex_kor":"색이 변하는 것을 관찰하세요."},
-  {"eng":"record","kor":"기록하다","def":"to write down what you see or find","ex":"Record your results in a notebook.","ex_kor":"노트에 결과를 기록하세요."}
+  {
+    "eng": "mix",
+    "kor": "섞다",
+    "def": "to combine things together",
+    "ex": "Mix the flour and water.",
+    "ex_kor": "밀가루와 물을 섞으세요.",
+    "sentence_id": "cb6547a5-19b0-4767-9877-2ee352d3dd90"
+  },
+  {
+    "eng": "pour",
+    "kor": "붓다",
+    "def": "to make a liquid flow from one place to another",
+    "ex": "Pour juice into the glass.",
+    "ex_kor": "잔에 주스를 부으세요.",
+    "sentence_id": "897eef15-9a18-4b5f-84cb-110dcbd94cff"
+  },
+  {
+    "eng": "float",
+    "kor": "뜨다",
+    "def": "to stay on top of water",
+    "ex": "Leaves float on the pond.",
+    "ex_kor": "잎이 연못에 떠 있어요.",
+    "sentence_id": "1ec8aa14-3688-4377-9c27-995ad79447d3"
+  },
+  {
+    "eng": "sink",
+    "kor": "가라앉다",
+    "def": "to go down below the surface",
+    "ex": "Rocks sink in water.",
+    "ex_kor": "돌은 물에 가라앉아요.",
+    "sentence_id": "310e61ab-b320-4504-a0ce-081fb7397914"
+  },
+  {
+    "eng": "freeze",
+    "kor": "얼다",
+    "def": "to become solid from cold",
+    "ex": "Water will freeze in winter.",
+    "ex_kor": "겨울에는 물이 얼어요.",
+    "sentence_id": "5ae11260-a509-4b24-ab49-85b5c6bb37ea"
+  },
+  {
+    "eng": "melt",
+    "kor": "녹다",
+    "def": "to become liquid from heat",
+    "ex": "Ice cream melts in the sun.",
+    "ex_kor": "아이스크림은 햇볕에 녹아요.",
+    "sentence_id": "1c387d85-b4dc-41f0-a4ad-ae92a6b57aa3"
+  },
+  {
+    "eng": "weigh",
+    "kor": "무게를 재다",
+    "def": "to find out how heavy something is",
+    "ex": "Weigh the apple on the scale.",
+    "ex_kor": "저울에 사과의 무게를 재세요.",
+    "sentence_id": "3a96ce63-9a18-444f-abb4-a6b43229a8ca"
+  },
+  {
+    "eng": "heat",
+    "kor": "데우다",
+    "def": "to make something warm or hot",
+    "ex": "Heat the soup on the stove.",
+    "ex_kor": "스토브에서 수프를 데우세요.",
+    "sentence_id": "eec79082-d4a5-4a11-954b-2076f480ed03"
+  },
+  {
+    "eng": "cool",
+    "kor": "식히다",
+    "def": "to make something less hot",
+    "ex": "Let the cookies cool.",
+    "ex_kor": "쿠키를 식히세요.",
+    "sentence_id": "3df65266-943d-441e-ae04-fcc4c9825ab5"
+  },
+  {
+    "eng": "measure",
+    "kor": "측정하다",
+    "def": "to find the size or amount of something",
+    "ex": "Measure the water carefully.",
+    "ex_kor": "물을 조심스럽게 측정하세요.",
+    "sentence_id": "be871773-cc14-4131-9f52-b561b486b967"
+  },
+  {
+    "eng": "observe",
+    "kor": "관찰하다",
+    "def": "to watch something closely",
+    "ex": "Observe the color change.",
+    "ex_kor": "색이 변하는 것을 관찰하세요.",
+    "sentence_id": "5763b110-599a-49d7-9651-00cc0d382551"
+  },
+  {
+    "eng": "record",
+    "kor": "기록하다",
+    "def": "to write down what you see or find",
+    "ex": "Record your results in a notebook.",
+    "ex_kor": "노트에 결과를 기록하세요.",
+    "sentence_id": "ed18ecc3-4315-4fb0-901d-e18c047edc50"
+  }
 ]
