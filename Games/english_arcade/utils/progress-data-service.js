@@ -651,9 +651,10 @@ function computeStarCountsFromSessions(sessions) {
 }
 
 async function fetchAllSessions() {
-  // CRITICAL: Check user readiness before fetching
-  // This prevents fetching (and caching) empty data when user is not authenticated
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete, then check user readiness
+  // This prevents race condition where progress loads before auth check finishes
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log('[ProgressService] fetchAllSessions skipped - user not ready');
     return []; // Return empty array; caller should not cache this
   }
@@ -698,8 +699,10 @@ function ensureProgressPayload(values, ready = true) {
 }
 
 async function loadProgress(cacheKey, lists, modeGroup, matcher) {
-  // CRITICAL: If user is not ready, return not-ready state instead of 0s
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete before loading progress
+  // This fixes the race condition where progress loads before auth check finishes
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log(`[ProgressService] loadProgress(${cacheKey}) - user not ready, returning not-ready state`);
     return { data: { ready: false, values: [] }, fromCache: false };
   }
@@ -733,8 +736,9 @@ export async function loadPhonicsProgress(lists) {
 }
 
 export async function loadGrammarLevelProgress(lists) {
-  // CRITICAL: If user is not ready, return not-ready state
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete before loading progress
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log('[ProgressService] loadGrammarLevelProgress - user not ready');
     return { data: { ready: false, values: [] }, fromCache: false };
   }
@@ -746,8 +750,9 @@ export async function loadGrammarLevelProgress(lists) {
 }
 
 export async function loadGrammarLevel2Progress(lists) {
-  // CRITICAL: If user is not ready, return not-ready state
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete before loading progress
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log('[ProgressService] loadGrammarLevel2Progress - user not ready');
     return { data: { ready: false, values: [] }, fromCache: false };
   }
@@ -759,8 +764,9 @@ export async function loadGrammarLevel2Progress(lists) {
 }
 
 export async function loadGrammarLevel3Progress(lists) {
-  // CRITICAL: If user is not ready, return not-ready state
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete before loading progress
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log('[ProgressService] loadGrammarLevel3Progress - user not ready');
     return { data: { ready: false, values: [] }, fromCache: false };
   }
@@ -772,8 +778,9 @@ export async function loadGrammarLevel3Progress(lists) {
 }
 
 export async function loadStarCounts() {
-  // CRITICAL: If user is not ready, return not-ready state
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete before loading stars
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log('[ProgressService] loadStarCounts - user not ready');
     return { data: { ready: false, counts: {} }, fromCache: false };
   }
@@ -785,8 +792,9 @@ export async function loadStarCounts() {
 }
 
 export async function prefetchAllProgress(levels) {
-  // CRITICAL: Don't prefetch if user is not ready - would cache empty/0 values
-  if (!progressCache.isUserReady()) {
+  // CRITICAL: Wait for auth check to complete before prefetching
+  const userId = await progressCache.waitForUserReady();
+  if (!userId) {
     console.log('[ProgressService] prefetchAllProgress skipped - user not ready');
     return;
   }
