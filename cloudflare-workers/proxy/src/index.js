@@ -41,6 +41,17 @@ const PREFER_CF_WORKER = {
   get_audio_urls: true,
 };
 
+// For certain progress_summary sections we prefer Netlify backend
+// because the CF worker or its binding may not support those sections yet.
+const PROGRESS_SUMMARY_NETLIFY_ONLY = new Set([
+  'challenging',
+  'challenging_v2',
+  'kpi',
+  'modes',
+  'badges',
+  'attempts',
+  'sessions'
+]);
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
@@ -237,6 +248,17 @@ async function handleRequest(request, env) {
     }
     
     const functionName = extractFunctionName(url.pathname);
+
+    // If this is a progress_summary call with a section that should hit Netlify,
+    // bypass CF Worker routing and go straight to Netlify.
+    if (functionName === 'progress_summary') {
+      const section = url.searchParams.get('section');
+      if (section && PROGRESS_SUMMARY_NETLIFY_ONLY.has(section)) {
+        console.log(`[proxy] Forcing Netlify for progress_summary section=${section}`);
+        const response = await routeToNetlify(request, url);
+        return rewriteResponse(response, origin);
+      }
+    }
     
     // Check if we should use CF Worker and if the binding exists
     let response;
