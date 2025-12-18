@@ -41,8 +41,8 @@ const PREFER_CF_WORKER = {
   get_audio_urls: true,
 };
 
-// For certain progress_summary sections we prefer Netlify backend
-// because the CF worker or its binding may not support those sections yet.
+// Force Netlify for specific progress_summary sections that are not fully
+// supported by the Cloudflare Worker implementation yet.
 const PROGRESS_SUMMARY_NETLIFY_ONLY = new Set([
   'challenging',
   'challenging_v2',
@@ -52,6 +52,7 @@ const PROGRESS_SUMMARY_NETLIFY_ONLY = new Set([
   'attempts',
   'sessions'
 ]);
+
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
@@ -249,14 +250,14 @@ async function handleRequest(request, env) {
     
     const functionName = extractFunctionName(url.pathname);
 
-    // If this is a progress_summary call with a section that should hit Netlify,
-    // bypass CF Worker routing and go straight to Netlify.
+    // If this is progress_summary and the requested section is in the
+    // Netlify-only list, bypass CF worker routing and go straight to Netlify.
     if (functionName === 'progress_summary') {
       const section = url.searchParams.get('section');
       if (section && PROGRESS_SUMMARY_NETLIFY_ONLY.has(section)) {
         console.log(`[proxy] Forcing Netlify for progress_summary section=${section}`);
-        const response = await routeToNetlify(request, url);
-        return rewriteResponse(response, origin);
+        const forced = await routeToNetlify(request, url);
+        return rewriteResponse(forced, origin);
       }
     }
     
