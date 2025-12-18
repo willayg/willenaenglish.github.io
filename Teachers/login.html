@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login - Willena English</title>
   <script>
-    // Temporary redirect to Netlify disabled — teacher login now stays on this host.
-    // Re-enable only if explicit troubleshooting requires Netlify-hosted auth.
-    console.log('[Teachers/login] Netlify redirect disabled for now');
+    (function() {
+      const targetHost = 'https://willenaenglish.netlify.app';
+      if (location.hostname === 'willenaenglish.netlify.app') return;
+      const path = location.pathname + location.search + location.hash;
+      window.location.replace(targetHost + path);
+    })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
