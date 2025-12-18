@@ -6,6 +6,7 @@
 const ALLOWED_ORIGINS = new Set([
   'https://www.willenaenglish.com',
   'https://willenaenglish.com',
+  'https://students.willenaenglish.com',
   'https://willenaenglish.github.io',
   'https://willenaenglish.netlify.app',
   'http://localhost:9000',
