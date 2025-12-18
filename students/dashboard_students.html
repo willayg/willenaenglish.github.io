@@ -15,112 +15,14 @@
   <!-- API config for GitHub Pages + Netlify Functions -->
   <script src="/js/api-config.js"></script>
   <script>
-    // Show a user-facing banner (Korean) instead of silently redirecting.
-    // If user previously chose the Netlify fallback, honor that choice automatically.
+    // Redirect to Netlify-hosted version if third-party cookies are KNOWN to be blocked
+    // This handles Safari, Samsung Internet, and Brave which always block cross-origin cookies
     (function() {
-      function createCookieBanner(netlifyUrl, nextLocal) {
-        if (document.getElementById('wa-cookie-banner')) return;
-        const b = document.createElement('div');
-        b.id = 'wa-cookie-banner';
-        b.style.position = 'fixed';
-        b.style.left = '0';
-        b.style.right = '0';
-        b.style.top = '0';
-        b.style.zIndex = '999999';
-        b.style.background = '#fff8f0';
-        b.style.color = '#161616';
-        b.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
-        b.style.padding = '12px 16px';
-        b.style.display = 'flex';
-        b.style.alignItems = 'center';
-        b.style.justifyContent = 'space-between';
-        b.style.gap = '12px';
-
-        const txt = document.createElement('div');
-        txt.style.flex = '1';
-        txt.style.fontWeight = '700';
-        txt.style.fontSize = '0.95rem';
-        txt.textContent = '이 브라우저는 타사 쿠키를 차단하고 있어 로그인이 원활하지 않을 수 있습니다.';
-
-        const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.alignItems = 'center';
-        actions.style.gap = '8px';
-
-        const remember = document.createElement('label');
-        remember.style.display = 'inline-flex';
-        remember.style.alignItems = 'center';
-        remember.style.gap = '6px';
-        remember.style.fontWeight = '600';
-        const chk = document.createElement('input');
-        chk.type = 'checkbox';
-        chk.id = 'wa-cookie-remember';
-        const chkText = document.createElement('span');
-        chkText.textContent = '선택 기억하기';
-        remember.appendChild(chk);
-        remember.appendChild(chkText);
-
-        const continueBtn = document.createElement('button');
-        continueBtn.textContent = '여기서 계속';
-        continueBtn.style.background = '#2b6f77';
-        continueBtn.style.color = '#fff';
-        continueBtn.style.border = 'none';
-        continueBtn.style.padding = '8px 12px';
-        continueBtn.style.borderRadius = '8px';
-        continueBtn.style.fontWeight = '700';
-
-        const fallbackBtn = document.createElement('button');
-        fallbackBtn.textContent = '대체 로그인 열기';
-        fallbackBtn.style.background = 'transparent';
-        fallbackBtn.style.color = '#2b6f77';
-        fallbackBtn.style.border = '2px solid #2b6f77';
-        fallbackBtn.style.padding = '6px 10px';
-        fallbackBtn.style.borderRadius = '8px';
-        fallbackBtn.style.fontWeight = '700';
-
-        const closeX = document.createElement('button');
-        closeX.textContent = '×';
-        closeX.title = '닫기';
-        closeX.style.background = 'transparent';
-        closeX.style.border = 'none';
-        closeX.style.fontSize = '18px';
-        closeX.style.marginLeft = '8px';
-
-        actions.appendChild(remember);
-        actions.appendChild(continueBtn);
-        actions.appendChild(fallbackBtn);
-        actions.appendChild(closeX);
-
-        b.appendChild(txt);
-        b.appendChild(actions);
-        document.body.appendChild(b);
-
-        function hide() { try{ b.remove(); }catch(e){} }
-
-        continueBtn.addEventListener('click', () => {
-          if (chk.checked) localStorage.setItem('wa_cookie_choice', 'local');
-          hide();
-          if (nextLocal) location.replace(nextLocal);
-        });
-
-        fallbackBtn.addEventListener('click', () => {
-          if (chk.checked) localStorage.setItem('wa_cookie_choice', 'netlify');
-          hide();
-          if (netlifyUrl) location.replace(netlifyUrl);
-        });
-
-        closeX.addEventListener('click', () => { hide(); });
-      }
-
       if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
         const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
-        const saved = localStorage.getItem('wa_cookie_choice');
-        if (saved === 'netlify') {
-          window.location.replace(netlifyUrl);
-          return;
-        }
-        // Show banner offering choice instead of immediate redirect
-        createCookieBanner(netlifyUrl);
+        console.log('[Dashboard] Redirecting to Netlify for cookie support:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return; // Stop script execution
       }
     })();
 
@@ -139,94 +41,25 @@
         }
 
         if (cookiesBlocked) {
-          // Show a Korean banner offering fallback when cookies are blocked
-          const netlifyUrl = (WillenaAPI && WillenaAPI.getNetlifyUrl) ? WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search) : null;
-          if (!document.getElementById('wa-cookie-banner')) {
-            const b = document.createElement('div');
-            b.id = 'wa-cookie-banner';
-            b.style.position = 'fixed';
-            b.style.left = '0';
-            b.style.right = '0';
-            b.style.top = '0';
-            b.style.zIndex = '999999';
-            b.style.background = '#fff8f0';
-            b.style.color = '#161616';
-            b.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
-            b.style.padding = '12px 16px';
-            b.style.display = 'flex';
-            b.style.alignItems = 'center';
-            b.style.justifyContent = 'space-between';
-            b.style.gap = '12px';
-
-            const txt = document.createElement('div');
-            txt.style.flex = '1';
-            txt.style.fontWeight = '700';
-            txt.style.fontSize = '0.95rem';
-            txt.textContent = '이 브라우저 창에서 쿠키가 차단되어 로그인에 문제가 생길 수 있습니다. 쿠키를 허용하거나 일반 창에서 사이트를 열어 로그인하세요.';
-
-            const actions = document.createElement('div');
-            actions.style.display = 'flex';
-            actions.style.alignItems = 'center';
-            actions.style.gap = '8px';
-
-            const remember = document.createElement('label');
-            remember.style.display = 'inline-flex';
-            remember.style.alignItems = 'center';
-            remember.style.gap = '6px';
-            remember.style.fontWeight = '600';
-            const chk = document.createElement('input');
-            chk.type = 'checkbox';
-            chk.id = 'wa-cookie-remember';
-            const chkText = document.createElement('span');
-            chkText.textContent = '선택 기억하기';
-            remember.appendChild(chk);
-            remember.appendChild(chkText);
-
-            const continueBtn = document.createElement('button');
-            continueBtn.textContent = '여기서 계속';
-            continueBtn.style.background = '#2b6f77';
-            continueBtn.style.color = '#fff';
-            continueBtn.style.border = 'none';
-            continueBtn.style.padding = '8px 12px';
-            continueBtn.style.borderRadius = '8px';
-            continueBtn.style.fontWeight = '700';
-
-            const fallbackBtn = document.createElement('button');
-            fallbackBtn.textContent = '대체 로그인 열기';
-            fallbackBtn.style.background = 'transparent';
-            fallbackBtn.style.color = '#2b6f77';
-            fallbackBtn.style.border = '2px solid #2b6f77';
-            fallbackBtn.style.padding = '6px 10px';
-            fallbackBtn.style.borderRadius = '8px';
-            fallbackBtn.style.fontWeight = '700';
-
-            const closeX = document.createElement('button');
-            closeX.textContent = '×';
-            closeX.title = '닫기';
-            closeX.style.background = 'transparent';
-            closeX.style.border = 'none';
-            closeX.style.fontSize = '18px';
-            closeX.style.marginLeft = '8px';
-
-            actions.appendChild(remember);
-            actions.appendChild(continueBtn);
-            actions.appendChild(fallbackBtn);
-            actions.appendChild(closeX);
-
-            b.appendChild(txt);
-            b.appendChild(actions);
-            document.body.appendChild(b);
-
-            closeX.addEventListener('click', () => b.remove());
-            continueBtn.addEventListener('click', () => {
-              if (chk.checked) localStorage.setItem('wa_cookie_choice', 'local');
-              b.remove();
-            });
-            fallbackBtn.addEventListener('click', () => {
-              if (chk.checked) localStorage.setItem('wa_cookie_choice', 'netlify');
-              if (netlifyUrl) location.replace(netlifyUrl);
-            });
-          }
+          // Show a lightweight banner instructing user to allow cookies or use normal browsing mode
+          const b = document.createElement('div');
+          b.style.position = 'fixed';
+          b.style.left = '0';
+          b.style.right = '0';
+          b.style.top = '0';
+          b.style.zIndex = '99999';
+          b.style.background = '#ffe9e6';
+          b.style.color = '#2b0b09';
+          b.style.padding = '12px 16px';
+          b.style.fontWeight = '700';
+          b.style.textAlign = 'center';
+          b.textContent = 'Cookies appear to be blocked in this browser window. Please enable cookies or open the site in a regular (non-incognito) window so you can sign in.';
+          const closeBtn = document.createElement('button');
+          closeBtn.textContent = 'Close';
+          closeBtn.style.marginLeft = '12px';
+          closeBtn.addEventListener('click', () => b.remove());
+          b.appendChild(closeBtn);
+          document.body.appendChild(b);
           return; // stop further checks to avoid lots of 401s
         }
 
@@ -234,104 +67,13 @@
         const w = await who.json();
         if (!w.success) {
           // For cross-origin scenarios, if whoami fails, it might be due to blocked cookies
-          // Instead of forcing a redirect, show a banner allowing the user to choose.
+          // Only redirect to Netlify for KNOWN cookie-blocking browsers on GitHub Pages/custom domain
+          // On staging (Cloudflare Pages), just redirect to local login page
           if (WillenaAPI.isCrossOrigin && !WillenaAPI.isCloudflarePages && WillenaAPI.isThirdPartyCookiesBlocked && WillenaAPI.isThirdPartyCookiesBlocked()) {
-            console.log('[Dashboard] whoami failed with known cookie-blocking browser - offering fallback banner');
+            console.log('[Dashboard] whoami failed with known cookie-blocking browser - redirecting to Netlify');
             WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
             const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
-            const saved = localStorage.getItem('wa_cookie_choice');
-            if (saved === 'netlify') {
-              location.replace(netlifyUrl);
-              return;
-            }
-            // Build an in-place banner offering Netlify fallback or continue to local login
-            if (!document.getElementById('wa-cookie-banner')) {
-              const b = document.createElement('div');
-              b.id = 'wa-cookie-banner';
-              b.style.position = 'fixed';
-              b.style.left = '0';
-              b.style.right = '0';
-              b.style.top = '0';
-              b.style.zIndex = '999999';
-              b.style.background = '#fff8f0';
-              b.style.color = '#161616';
-              b.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
-              b.style.padding = '12px 16px';
-              b.style.display = 'flex';
-              b.style.alignItems = 'center';
-              b.style.justifyContent = 'space-between';
-              b.style.gap = '12px';
-
-              const txt = document.createElement('div');
-              txt.style.flex = '1';
-              txt.style.fontWeight = '700';
-              txt.style.fontSize = '0.95rem';
-              txt.textContent = '로그인 시 쿠키 문제가 감지되었습니다. 대체 로그인 페이지를 사용하시겠습니까?';
-
-              const actions = document.createElement('div');
-              actions.style.display = 'flex';
-              actions.style.alignItems = 'center';
-              actions.style.gap = '8px';
-
-              const remember = document.createElement('label');
-              remember.style.display = 'inline-flex';
-              remember.style.alignItems = 'center';
-              remember.style.gap = '6px';
-              remember.style.fontWeight = '600';
-              const chk = document.createElement('input');
-              chk.type = 'checkbox';
-              chk.id = 'wa-cookie-remember';
-              const chkText = document.createElement('span');
-              chkText.textContent = '선택 기억하기';
-              remember.appendChild(chk);
-              remember.appendChild(chkText);
-
-              const continueBtn = document.createElement('button');
-              continueBtn.textContent = '여기서 계속';
-              continueBtn.style.background = '#2b6f77';
-              continueBtn.style.color = '#fff';
-              continueBtn.style.border = 'none';
-              continueBtn.style.padding = '8px 12px';
-              continueBtn.style.borderRadius = '8px';
-              continueBtn.style.fontWeight = '700';
-
-              const fallbackBtn = document.createElement('button');
-              fallbackBtn.textContent = '대체 로그인 열기';
-              fallbackBtn.style.background = 'transparent';
-              fallbackBtn.style.color = '#2b6f77';
-              fallbackBtn.style.border = '2px solid #2b6f77';
-              fallbackBtn.style.padding = '6px 10px';
-              fallbackBtn.style.borderRadius = '8px';
-              fallbackBtn.style.fontWeight = '700';
-
-              const closeX = document.createElement('button');
-              closeX.textContent = '×';
-              closeX.title = '닫기';
-              closeX.style.background = 'transparent';
-              closeX.style.border = 'none';
-              closeX.style.fontSize = '18px';
-              closeX.style.marginLeft = '8px';
-
-              actions.appendChild(remember);
-              actions.appendChild(continueBtn);
-              actions.appendChild(fallbackBtn);
-              actions.appendChild(closeX);
-
-              b.appendChild(txt);
-              b.appendChild(actions);
-              document.body.appendChild(b);
-
-              closeX.addEventListener('click', () => b.remove());
-              continueBtn.addEventListener('click', () => {
-                if (chk.checked) localStorage.setItem('wa_cookie_choice', 'local');
-                // proceed to local login page
-                location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
-              });
-              fallbackBtn.addEventListener('click', () => {
-                if (chk.checked) localStorage.setItem('wa_cookie_choice', 'netlify');
-                if (netlifyUrl) location.replace(netlifyUrl);
-              });
-            }
+            location.replace(netlifyUrl);
             return;
           }
           // For staging or regular browsers, just go to local login page

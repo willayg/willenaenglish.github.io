@@ -1,0 +1,10 @@
+{
+  // Edit the name to match your existing proxy worker name
+  "name": "api-proxy",
+  "main": "src/index.js",
+  "compatibility_date": "2025-12-18",
+  // Attach the worker to your API subdomain
+  "routes": [
+    "https://api.willenaenglish.com/*"
+  ]
+}
