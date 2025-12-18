@@ -7,8 +7,12 @@ const ALLOWED_ORIGINS = new Set([
   'https://www.willenaenglish.com',
   'https://willenaenglish.com',
   'https://students.willenaenglish.com',
+  'https://staging.willenaenglish.com',
   'https://willenaenglish.github.io',
   'https://willenaenglish.netlify.app',
+  // Cloudflare Pages staging/preview
+  'https://staging.willenaenglish-github-io.pages.dev',
+  'https://willenaenglish-github-io.pages.dev',
   'http://localhost:9000',
   'http://localhost:8888',
   'http://localhost:3000',
