@@ -21,6 +21,12 @@
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
   const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
+  // Cloudflare worker endpoints (branch testing)
+  const USE_CF_WORKERS = true; // enable CF routing on this branch
+  const CF_FUNCTIONS = {
+    supabase_auth: 'https://supabase-auth.willena.workers.dev',
+    verify_student: 'https://verify-student.willena.workers.dev',
+  };
 
   // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
   // even when CF_ROLLOUT_PERCENT is 100
@@ -95,6 +101,14 @@
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
       return functionPath;
     }
+
+    const fn = extractFunctionName(functionPath);
+    if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
+      const qIndex = functionPath.indexOf('?');
+      const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
+      return CF_FUNCTIONS[fn] + search;
+    }
+
     // Ensure path starts with /.netlify/functions/
     if (!functionPath.startsWith('/.netlify/functions/')) {
       if (functionPath.startsWith('/')) {
@@ -301,9 +315,9 @@
     },
 
     // Legacy compatibility stubs (CF migration disabled)
-    CF_ROLLOUT_PERCENT: 0,
+    CF_ROLLOUT_PERCENT: 100,
     CF_SHADOW_MODE: false,
-    shouldUseCloudflare: () => false,
+    shouldUseCloudflare: () => USE_CF_WORKERS,
     setRolloutPercent: () => {},
     setFunctionRollout: () => {},
   };
