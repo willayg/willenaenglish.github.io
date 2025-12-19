@@ -222,15 +222,29 @@
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
       return functionPath;
     }
-    // Ensure path starts with /.netlify/functions/
-    if (!functionPath.startsWith('/.netlify/functions/')) {
-      if (functionPath.startsWith('/')) {
-        functionPath = '/.netlify/functions' + functionPath;
+
+    let pathOnly = functionPath;
+    let queryString = '';
+    const qIndex = functionPath.indexOf('?');
+    if (qIndex !== -1) {
+      pathOnly = functionPath.slice(0, qIndex);
+      queryString = functionPath.slice(qIndex);
+    }
+
+    if (!pathOnly.startsWith('/.netlify/functions/')) {
+      if (pathOnly.startsWith('/')) {
+        pathOnly = '/.netlify/functions' + pathOnly;
       } else {
-        functionPath = '/.netlify/functions/' + functionPath;
+        pathOnly = '/.netlify/functions/' + pathOnly;
       }
     }
-    return API_BASE + functionPath;
+
+    const fnName = extractFunctionName(pathOnly);
+    if (fnName && shouldUseCloudflare(fnName) && CF_MIGRATED_FUNCTIONS[fnName]) {
+      return CF_MIGRATED_FUNCTIONS[fnName] + queryString;
+    }
+
+    return API_BASE + pathOnly + queryString;
   }
 
   /**
