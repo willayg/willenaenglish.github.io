@@ -194,13 +194,38 @@ exports.handler = async (event) => {
     if (action === 'login' && event.httpMethod === 'POST') {
       let body;
       try {
-        // Debug: log raw body for troubleshooting
-        console.log('[supabase_auth] login: raw body type:', typeof event.body, 'length:', event.body?.length || 0);
-        if (!event.body || event.body === 'undefined' || event.body === 'null') {
-          console.error('[supabase_auth] login: body is empty/undefined:', event.body);
+        const rawBody = event.body;
+        const bodyType = rawBody === null ? 'null' : typeof rawBody;
+        const preview = bodyType === 'string'
+          ? rawBody.slice(0, 100)
+          : rawBody && bodyType !== 'undefined'
+            ? JSON.stringify(rawBody).slice(0, 100)
+            : '';
+        console.log('[supabase_auth] login: raw body type:', bodyType, 'length:', rawBody?.length || 0, 'preview:', preview || '(empty)');
+
+        if (rawBody === undefined || rawBody === null || rawBody === 'undefined' || rawBody === 'null') {
+          console.error('[supabase_auth] login: body is missing', rawBody);
           return respond(event, 400, { success: false, error: 'Empty request body' });
         }
-        body = JSON.parse(event.body);
+
+        if (bodyType === 'string' && !rawBody.trim()) {
+          console.error('[supabase_auth] login: body string is empty after trimming');
+          return respond(event, 400, { success: false, error: 'Empty request body' });
+        }
+
+        if (bodyType === 'string') {
+          body = JSON.parse(rawBody);
+        } else if (bodyType === 'object') {
+          body = rawBody;
+        } else {
+          console.error('[supabase_auth] login: unsupported body type', bodyType);
+          return respond(event, 400, { success: false, error: 'Invalid request body' });
+        }
+
+        if (!body || typeof body !== 'object') {
+          console.error('[supabase_auth] login: parsed body is not an object', bodyType);
+          return respond(event, 400, { success: false, error: 'Invalid request body' });
+        }
       } catch (parseErr) {
         console.error('[supabase_auth] login: JSON parse error:', parseErr.message, 'body preview:', (event.body || '').substring(0, 100));
         return respond(event, 400, { success: false, error: 'Invalid JSON body' });

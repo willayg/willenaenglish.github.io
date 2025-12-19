@@ -305,9 +305,11 @@
       if (!d1.success) throw new Error(d1.error || 'Username not found');
 
       // Step 2: call login with email/password to reuse existing flow (sets cookies)
+      const loginPayload = { email: d1.email, password };
+      console.log('[Login] login payload:', loginPayload);
       const r2 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
-        method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ email: d1.email, password })
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(loginPayload)
       });
       const d2 = await r2.json();
       if (!d2.success) throw new Error(d2.error || 'Login failed');
@@ -323,9 +325,11 @@
 
     // Direct email login helper (used by the Help flow after password reset)
     async function loginWithEmailPassword(email, password){
+      const loginPayload = { email, password };
+      console.log('[Login] login payload (email flow):', loginPayload);
       const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
-        method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ email, password })
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(loginPayload)
       });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || 'Login failed');
