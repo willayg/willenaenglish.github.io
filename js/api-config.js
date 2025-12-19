@@ -270,18 +270,10 @@
       primaryUrl = base + '/' + queryString;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      // IMPORTANT: For cross-origin scenarios (GitHub Pages, custom domain, CF Pages),
-      // use the CF API proxy (api.willenaenglish.com) which has proper CORS headers,
-      // NOT the direct worker URLs (*.willena.workers.dev) which may block cross-origin.
-      if (isCrossOrigin) {
-        // functionPath is relative (e.g., /.netlify/functions/...) - add proxy base
-        primaryUrl = CF_API_PROXY_URL + functionPath;
-        console.log(`[WillenaAPI] ${functionName}: using CF API proxy -> ${primaryUrl}`);
-      } else {
-        // Same-origin (Netlify) - can use direct worker URLs
-        primaryUrl = cfWorkerUrl + queryString;
-        console.log(`[WillenaAPI] ${functionName}: using direct CF Worker -> ${primaryUrl}`);
-      }
+      // STAGING/PRODUCTION: Go directly to CF worker URLs (they have proper CORS)
+      // The workers are configured with ALLOWED_ORIGINS for all our domains
+      primaryUrl = cfWorkerUrl + queryString;
+      console.log(`[WillenaAPI] ${functionName}: using direct CF Worker -> ${primaryUrl}`);
     } else {
       primaryUrl = getApiUrl(functionPath);
     }
