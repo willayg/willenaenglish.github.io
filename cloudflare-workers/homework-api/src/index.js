@@ -654,9 +654,10 @@ async function handleAssignmentProgress(request, supabase, params, origin) {
     const eq1 = listKeyLast;
     const like1 = `%/${listKeyLast}`;
     const like2 = `%/${listKeyLast}.json`;
-    const fuzzy1 = `%${coreName}%`;
+    // Use .json suffix to prevent matching similar-named files (e.g., present_progressive vs present_progressive_negative)
+    const fuzzy1 = listKeyLast.endsWith('.json') ? `%${coreName}.json` : `%/${coreName}`;
     const fuzzy2 = assignment.list_title 
-      ? `%${assignment.list_title.toLowerCase().replace(/\s+/g, '_')}%` 
+      ? `%${assignment.list_title.toLowerCase().replace(/\s+/g, '_')}.json` 
       : null;
 
     let orFilters = [
@@ -708,6 +709,24 @@ async function handleAssignmentProgress(request, supabase, params, origin) {
         const titleFilter = `(list_name.ilike.%${titleCore}%)`;
         sessions = await fetchSessions(titleFilter);
         console.log(`[assignmentProgress] Title fallback found ${sessions.length} sessions`);
+      }
+    }
+
+    // Post-filter: ensure sessions match the exact target list (prevents matching present_progressive_negative for present_progressive)
+    if (sessions.length > 0) {
+      const beforeCount = sessions.length;
+      const targetFileBase = coreName.toLowerCase();
+      sessions = sessions.filter(s => {
+        if (!s.list_name) return false;
+        const ln = s.list_name.toLowerCase();
+        // Extract filename without path and extension
+        const parts = ln.replace(/\.json$/, '').split('/');
+        const sessionFileBase = parts[parts.length - 1];
+        // Exact match required: present_progressive must match present_progressive, not present_progressive_negative
+        return sessionFileBase === targetFileBase;
+      });
+      if (sessions.length < beforeCount) {
+        console.log(`[assignmentProgress] Post-filter: ${beforeCount} -> ${sessions.length} sessions (exact list match for "${coreName}")`);
       }
     }
 
