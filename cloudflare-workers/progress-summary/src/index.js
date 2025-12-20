@@ -792,38 +792,41 @@ async function handleLeaderboardStarsClass(client, userId, timeframe, origin) {
   const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
   // Fast path: use Supabase RPC function if deployed.
-  // This avoids downloading all sessions/attempts and aggregating in the Worker.
-  try {
-    const me = await client.query('profiles', {
-      select: 'class',
-      filters: [{ column: 'id', op: 'eq', value: userId }],
-      single: true,
-    });
-    const className = me?.class || null;
-    if (!className || String(className).trim().length <= 1) {
-      return timedJsonResponse({ success: true, leaderboard: [], class: null }, 200, origin, startMs, false);
-    }
+  // Disabled for now - RPC may not be deployed or have type mismatches
+  const USE_RPC = false;
+  if (USE_RPC) {
+    try {
+      const me = await client.query('profiles', {
+        select: 'class',
+        filters: [{ column: 'id', op: 'eq', value: userId }],
+        single: true,
+      });
+      const className = me?.class || null;
+      if (!className || String(className).trim().length <= 1) {
+        return timedJsonResponse({ success: true, leaderboard: [], class: null }, 200, origin, startMs, false);
+      }
 
-    const rpcRows = await client.rpc('get_class_leaderboard_stars', {
-      p_class_name: className,
-      p_timeframe: timeframe || 'all',
-      p_user_id: userId,
-    });
+      const rpcRows = await client.rpc('get_class_leaderboard_stars', {
+        p_class_name: className,
+        p_timeframe: timeframe || 'all',
+        p_user_id: userId,
+      });
 
-    if (Array.isArray(rpcRows)) {
-      const leaderboard = rpcRows
-        .map(r => normalizeLeaderboardRow(r, userId))
-        .filter(r => r && r.user_id);
-      return timedJsonResponse(
-        { success: true, class: className, timeframe, leaderboard },
-        200,
-        origin,
-        startMs,
-        false
-      );
+      if (Array.isArray(rpcRows) && rpcRows.length > 0) {
+        const leaderboard = rpcRows
+          .map(r => normalizeLeaderboardRow(r, userId))
+          .filter(r => r && r.user_id);
+        return timedJsonResponse(
+          { success: true, class: className, timeframe, leaderboard },
+          200,
+          origin,
+          startMs,
+          false
+        );
+      }
+    } catch (e) {
+      console.warn('[progress-summary] RPC class leaderboard unavailable, falling back to JS:', e?.message || e);
     }
-  } catch (e) {
-    console.warn('[progress-summary] RPC class leaderboard unavailable, falling back to JS:', e?.message || e);
   }
 
   const meProf = await client.query('profiles', {
@@ -894,26 +897,30 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
 
   // Fast path: use Supabase RPC function if deployed.
   // Returns top N + self (if present), already aggregated server-side.
-  try {
-    const rpcRows = await client.rpc('get_global_leaderboard_stars', {
-      p_timeframe: timeframe || 'all',
-      p_user_id: userId,
-      p_limit: 25,
-    });
-    if (Array.isArray(rpcRows)) {
-      const leaderboard = rpcRows
-        .map(r => normalizeLeaderboardRow(r, userId))
-        .filter(r => r && r.user_id);
-      return timedJsonResponse(
-        { success: true, timeframe, leaderboard },
-        200,
-        origin,
-        startMs,
-        false
-      );
+  // Disabled for now - RPC may not be deployed or have type mismatches
+  const USE_RPC = false;
+  if (USE_RPC) {
+    try {
+      const rpcRows = await client.rpc('get_global_leaderboard_stars', {
+        p_timeframe: timeframe || 'all',
+        p_user_id: userId,
+        p_limit: 25,
+      });
+      if (Array.isArray(rpcRows) && rpcRows.length > 0) {
+        const leaderboard = rpcRows
+          .map(r => normalizeLeaderboardRow(r, userId))
+          .filter(r => r && r.user_id);
+        return timedJsonResponse(
+          { success: true, timeframe, leaderboard },
+          200,
+          origin,
+          startMs,
+          false
+        );
+      }
+    } catch (e) {
+      console.warn('[progress-summary] RPC global leaderboard unavailable, falling back to JS:', e?.message || e);
     }
-  } catch (e) {
-    console.warn('[progress-summary] RPC global leaderboard unavailable, falling back to JS:', e?.message || e);
   }
 
   // Fetch all approved students
