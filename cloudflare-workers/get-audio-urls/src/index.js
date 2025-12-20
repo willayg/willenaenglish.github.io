@@ -19,10 +19,20 @@
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://cf.willenaenglish.com',
+  'https://api.willenaenglish.com',
+  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
+  'https://willenaenglish-github-io.pages.dev',
+  'https://staging.willenaenglish-github-io.pages.dev',
   'http://localhost:8888',
   'http://localhost:9000',
+  'http://127.0.0.1:8888',
+  'http://127.0.0.1:9000',
 ];
 
 // Cache TTL in seconds
@@ -30,11 +40,22 @@ const CACHE_TTL = 300; // 5 minutes
 const SIGNED_URL_EXPIRY = 8 * 60 * 60; // 8 hours (same as Netlify)
 
 function getCorsHeaders(origin) {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  let allowedOrigin = ALLOWED_ORIGINS[0];
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    allowedOrigin = origin;
+  } else if (origin) {
+    try {
+      const u = new URL(origin);
+      const host = u.hostname.toLowerCase();
+      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
+        allowedOrigin = origin;
+      }
+    } catch {}
+  }
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     'Access-Control-Allow-Credentials': 'true',
   };
 }

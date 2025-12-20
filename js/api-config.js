@@ -24,19 +24,13 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare API proxy URL (handles CORS properly for all origins)
-  const CF_API_PROXY_URL = 'https://api.willenaenglish.com';
-
-  // Cloudflare Worker URLs routed through the API proxy so cookies land on
-  // the shared .willenaenglish.com domain. Direct workers.dev hosts keep
-  // cookies host-only, which breaks cross-worker auth.
+  // Cloudflare Worker URLs (each worker has its own subdomain)
   const CF_WORKER_URLS = {
-    get_audio_urls: `${CF_API_PROXY_URL}/.netlify/functions/get_audio_urls`,
-    supabase_auth: `${CF_API_PROXY_URL}/.netlify/functions/supabase_auth`,
-    log_word_attempt: `${CF_API_PROXY_URL}/.netlify/functions/log_word_attempt`,
-    homework_api: `${CF_API_PROXY_URL}/.netlify/functions/homework_api`,
-    progress_summary: `${CF_API_PROXY_URL}/.netlify/functions/progress_summary`,
-    verify_student: `${CF_API_PROXY_URL}/.netlify/functions/verify_student`,
+    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
+    supabase_auth: 'https://supabase-auth.willena.workers.dev',
+    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
+    homework_api: 'https://homework-api.willena.workers.dev',
+    progress_summary: 'https://progress-summary.willena.workers.dev',
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
@@ -47,14 +41,13 @@
     log_word_attempt: 'http://127.0.0.1:8788',
     homework_api: 'http://127.0.0.1:8789',
     progress_summary: 'http://127.0.0.1:8790',
-    verify_student: 'http://127.0.0.1:8791',
   };
   
   // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
   // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
   // Default to 0% (Netlify) but when running on the production custom domain
   // prefer Cloudflare Workers (they provide proper CORS and parity).
-  let CF_ROLLOUT_PERCENT = 100; // staging branch: use Cloudflare Workers by default
+  let CF_ROLLOUT_PERCENT = 0;
   
   // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
   // Useful for testing parity without affecting users
@@ -67,7 +60,6 @@
     log_word_attempt: CF_WORKER_URLS.log_word_attempt,
     homework_api: CF_WORKER_URLS.homework_api,
     progress_summary: CF_WORKER_URLS.progress_summary,
-    verify_student: CF_WORKER_URLS.verify_student,
   };
 
   // ============================================================
@@ -77,6 +69,9 @@
   
   // Netlify functions base URL
   const NETLIFY_FUNCTIONS_URL = 'https://willenaenglish.netlify.app';
+  
+  // Cloudflare API proxy URL (handles CORS properly for all origins)
+  const CF_API_PROXY_URL = 'https://api.willenaenglish.com';
   
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
@@ -154,25 +149,41 @@
   let API_BASE = '';
   
   if (isGitHubPages) {
+    // On GitHub Pages - use Cloudflare API proxy for proper CORS
     API_BASE = CF_API_PROXY_URL;
   } else if (isCloudflarePages) {
+    // On Cloudflare Pages (staging, preview) - use Cloudflare API proxy for proper CORS
     API_BASE = CF_API_PROXY_URL;
   } else if (isCustomDomain) {
+    // Custom domain - use Cloudflare API proxy
     API_BASE = CF_API_PROXY_URL;
   } else if (isLocalhost) {
+    // Local development - use relative path for local netlify dev (port 8888 or 9000)
     API_BASE = '';
   } else if (isNetlify) {
+    // On Netlify - use relative paths
     API_BASE = '';
   } else {
+    // Unknown environment - default to Netlify
     API_BASE = NETLIFY_FUNCTIONS_URL;
   }
 
-  // Staging branch policy: force Cloudflare Workers (except localhost override below)
-  CF_ROLLOUT_PERCENT = 100;
-  CF_SHADOW_MODE = false;
+  // If we're running on a cross-origin host (custom domain, GH Pages, or CF Pages),
+  // prefer Cloudflare Workers to avoid CORS issues with Netlify functions.
+  // The CF API proxy handles CORS properly for all allowed origins.
+  if (isCustomDomain || isCloudflarePages || isGitHubPages) {
+    CF_ROLLOUT_PERCENT = 100;
+    CF_SHADOW_MODE = false;
+    console.log('[WillenaAPI] Cross-origin host detected: forcing Cloudflare Worker usage (100% rollout)');
+  }
 
-  // Localhost safety: default to Netlify unless explicitly set via setRolloutPercent
+  // --- Development override for localhost ---
+  // In `netlify dev`, the local Cloudflare workers (wrangler dev on 8787-8790)
+  // may not be running. Keep rollout at 0 by default to avoid connection refused.
+  // If you ARE running wrangler dev locally and want to hit it, call:
+  //   WillenaAPI.setRolloutPercent(100)
   if (isLocalhost) {
+    // Keep localhost using the default rollout (0%) unless explicitly changed at runtime
     CF_ROLLOUT_PERCENT = 0;
     CF_SHADOW_MODE = false;
     console.log('[WillenaAPI] DEV MODE: CF_ROLLOUT_PERCENT=0 (local workers disabled by default). Use setRolloutPercent(100) to enable.');
@@ -224,29 +235,15 @@
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
       return functionPath;
     }
-
-    let pathOnly = functionPath;
-    let queryString = '';
-    const qIndex = functionPath.indexOf('?');
-    if (qIndex !== -1) {
-      pathOnly = functionPath.slice(0, qIndex);
-      queryString = functionPath.slice(qIndex);
-    }
-
-    if (!pathOnly.startsWith('/.netlify/functions/')) {
-      if (pathOnly.startsWith('/')) {
-        pathOnly = '/.netlify/functions' + pathOnly;
+    // Ensure path starts with /.netlify/functions/
+    if (!functionPath.startsWith('/.netlify/functions/')) {
+      if (functionPath.startsWith('/')) {
+        functionPath = '/.netlify/functions' + functionPath;
       } else {
-        pathOnly = '/.netlify/functions/' + pathOnly;
+        functionPath = '/.netlify/functions/' + functionPath;
       }
     }
-
-    const fnName = extractFunctionName(pathOnly);
-    if (fnName && shouldUseCloudflare(fnName) && CF_MIGRATED_FUNCTIONS[fnName]) {
-      return CF_MIGRATED_FUNCTIONS[fnName] + queryString;
-    }
-
-    return API_BASE + pathOnly + queryString;
+    return API_BASE + functionPath;
   }
 
   /**
@@ -286,10 +283,14 @@
       primaryUrl = base + '/' + queryString;
       console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
     } else if (useCloudflare && cfWorkerUrl) {
-      // STAGING/PRODUCTION: Go directly to CF worker URLs (they have proper CORS)
-      // The workers are configured with ALLOWED_ORIGINS for all our domains
-      primaryUrl = cfWorkerUrl + queryString;
-      console.log(`[WillenaAPI] ${functionName}: using direct CF Worker -> ${primaryUrl}`);
+      // ALWAYS use the CF API proxy (api.willenaenglish.com) for Cloudflare Workers.
+      // This ensures:
+      // 1. Cookies are set on .willenaenglish.com domain (shared across all subdomains)
+      // 2. CORS headers are consistent
+      // 3. No cookie isolation issues between *.workers.dev subdomains
+      // Direct worker URLs (*.willena.workers.dev) cause cookie sharing failures.
+      primaryUrl = CF_API_PROXY_URL + functionPath;
+      console.log(`[WillenaAPI] ${functionName}: using CF API proxy -> ${primaryUrl}`);
     } else {
       primaryUrl = getApiUrl(functionPath);
     }

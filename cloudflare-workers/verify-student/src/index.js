@@ -8,9 +8,14 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
   'https://staging.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://api.willenaenglish.com',
+  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
+  'https://staging.willenaenglish-github-io.pages.dev',
   'https://cf.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
@@ -19,11 +24,22 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin) {
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  let allowed = ALLOWED_ORIGINS[0];
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    allowed = origin;
+  } else if (origin) {
+    try {
+      const u = new URL(origin);
+      const host = u.hostname.toLowerCase();
+      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
+        allowed = origin;
+      }
+    } catch {}
+  }
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     'Access-Control-Allow-Credentials': 'true',
     'Cache-Control': 'no-store',
   };

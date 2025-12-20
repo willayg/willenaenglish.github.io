@@ -9,10 +9,15 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
   'https://staging.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://api.willenaenglish.com',
+  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',
+  'https://staging.willenaenglish-github-io.pages.dev',
   // Cloudflare Pages deployment
   'https://cf.willenaenglish.com',
   'http://localhost:8888',
@@ -22,11 +27,22 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin) {
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  let allowed = ALLOWED_ORIGINS[0];
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    allowed = origin;
+  } else if (origin) {
+    try {
+      const u = new URL(origin);
+      const host = u.hostname.toLowerCase();
+      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
+        allowed = origin;
+      }
+    } catch {}
+  }
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     'Access-Control-Allow-Credentials': 'true',
     'Cache-Control': 'no-store',
   };
@@ -461,8 +477,29 @@ export default {
       if (action === 'update_profile_avatar' && request.method === 'POST') {
         // CSRF check
         const referer = request.headers.get('Referer') || '';
-        const okOrigin = ALLOWED_ORIGINS.includes(origin);
-        const okReferer = ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'));
+        const okOrigin = (() => {
+          if (!origin) return false;
+          if (ALLOWED_ORIGINS.includes(origin)) return true;
+          try {
+            const u = new URL(origin);
+            const host = u.hostname.toLowerCase();
+            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
+          } catch {
+            return false;
+          }
+        })();
+
+        const okReferer = (() => {
+          if (!referer) return false;
+          if (ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'))) return true;
+          try {
+            const u = new URL(referer);
+            const host = u.hostname.toLowerCase();
+            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
+          } catch {
+            return false;
+          }
+        })();
         
         if (!okOrigin && !okReferer) {
           return jsonResponse({ success: false, error: 'CSRF check failed' }, 403, origin);
