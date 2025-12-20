@@ -23,6 +23,7 @@
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
+  'https://staging.willenaenglish.com',
   'https://cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',

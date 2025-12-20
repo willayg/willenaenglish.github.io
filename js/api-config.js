@@ -25,13 +25,16 @@
   // ============================================================
   
   // Cloudflare Worker URLs (each worker has its own subdomain)
+  // Use the API gateway so Set-Cookie domains are rewritten to .willenaenglish.com
+  // and credentials flow for staging/production subdomains.
+  const CF_API_GATEWAY_BASE = 'https://api.willenaenglish.com/.netlify/functions/';
   const CF_WORKER_URLS = {
-    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
-    supabase_auth: 'https://supabase-auth.willena.workers.dev',
-    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
-    homework_api: 'https://homework-api.willena.workers.dev',
-    progress_summary: 'https://progress-summary.willena.workers.dev',
-    verify_student: 'https://verify-student.willena.workers.dev',
+    get_audio_urls: `${CF_API_GATEWAY_BASE}get_audio_urls`,
+    supabase_auth: `${CF_API_GATEWAY_BASE}supabase_auth`,
+    log_word_attempt: `${CF_API_GATEWAY_BASE}log_word_attempt`,
+    homework_api: `${CF_API_GATEWAY_BASE}homework_api`,
+    progress_summary: `${CF_API_GATEWAY_BASE}progress_summary`,
+    verify_student: `${CF_API_GATEWAY_BASE}verify_student`,
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
