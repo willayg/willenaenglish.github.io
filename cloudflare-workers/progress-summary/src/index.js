@@ -898,14 +898,16 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
   // Fast path: check leaderboard_cache table (populated by Netlify/cron)
   // This avoids expensive aggregation when cached data is available
   try {
-    const cacheData = await client.query('leaderboard_cache', {
+    const cacheRows = await client.query('leaderboard_cache', {
       select: 'payload,updated_at',
       filters: [
         { column: 'section', op: 'eq', value: 'leaderboard_stars_global' },
         { column: 'timeframe', op: 'eq', value: timeframe || 'all' },
       ],
-      single: true,
+      limit: 1,
     });
+
+    const cacheData = Array.isArray(cacheRows) && cacheRows.length > 0 ? cacheRows[0] : null;
 
     if (cacheData && cacheData.payload) {
       console.log('[progress-summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', cacheData.updated_at);
