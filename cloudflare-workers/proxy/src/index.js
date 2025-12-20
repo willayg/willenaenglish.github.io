@@ -261,18 +261,10 @@ async function handleRequest(request, env) {
       }
     }
 
-    // For supabase_auth login, some environments show body parsing issues
-    // with the CF Worker binding. To ensure reliability, route POST
-    // action=login directly to Netlify.
-    if (functionName === 'supabase_auth') {
-      const action = url.searchParams.get('action');
-      if (request.method === 'POST' && action === 'login') {
-        console.log('[proxy] Forcing Netlify for supabase_auth login');
-        const forced = await routeToNetlify(request, url);
-        return rewriteResponse(forced, origin);
-      }
-    }
-    
+    // supabase_auth login now prefers the CF Worker path; the service binding
+    // handles JSON bodies correctly and cookies are rewritten by this proxy.
+    // (Previously forced to Netlify here.)
+
     // Check if we should use CF Worker and if the binding exists
     let response;
     
