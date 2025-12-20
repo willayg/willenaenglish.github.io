@@ -895,34 +895,68 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
   const startMs = Date.now();
   const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
-  // Fast path: use Supabase RPC function if deployed.
-  // Returns top N + self (if present), already aggregated server-side.
-  // Disabled for now - RPC may not be deployed or have type mismatches
-  const USE_RPC = false;
-  if (USE_RPC) {
-    try {
-      const rpcRows = await client.rpc('get_global_leaderboard_stars', {
-        p_timeframe: timeframe || 'all',
-        p_user_id: userId,
-        p_limit: 25,
-      });
-      if (Array.isArray(rpcRows) && rpcRows.length > 0) {
-        const leaderboard = rpcRows
-          .map(r => normalizeLeaderboardRow(r, userId))
-          .filter(r => r && r.user_id);
-        return timedJsonResponse(
-          { success: true, timeframe, leaderboard },
-          200,
-          origin,
-          startMs,
-          false
-        );
+  // Fast path: check leaderboard_cache table (populated by Netlify/cron)
+  // This avoids expensive aggregation when cached data is available
+  try {
+    const cacheData = await client.query('leaderboard_cache', {
+      select: 'payload,updated_at',
+      filters: [
+        { column: 'section', op: 'eq', value: 'leaderboard_stars_global' },
+        { column: 'timeframe', op: 'eq', value: timeframe || 'all' },
+      ],
+      single: true,
+    });
+
+    if (cacheData && cacheData.payload) {
+      console.log('[progress-summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', cacheData.updated_at);
+      const payload = typeof cacheData.payload === 'string' ? JSON.parse(cacheData.payload) : cacheData.payload;
+      
+      // Format cached payload for response (same as Netlify formatGlobalLeaderboardResponse)
+      if (payload.topEntries && Array.isArray(payload.topEntries)) {
+        const leaderboard = payload.topEntries.map(entry => ({
+          user_id: entry.user_id,
+          name: entry.name || 'Student',
+          avatar: entry.avatar || null,
+          class: entry.class || null,
+          points: entry.points || 0,
+          stars: entry.stars || 0,
+          superScore: entry.superScore || 0,
+          rank: entry.rank || 0,
+          self: entry.user_id === userId,
+        }));
+
+        // Add current user if not in top entries
+        const hasUser = leaderboard.some(e => e.user_id === userId);
+        if (!hasUser && userId && payload.userPoints && payload.userPoints[userId]) {
+          const up = payload.userPoints[userId];
+          leaderboard.push({
+            user_id: userId,
+            name: up.name || 'You',
+            avatar: up.avatar || null,
+            class: up.class || null,
+            points: up.points || 0,
+            stars: 0, // userPoints may not have stars, but rank is what matters
+            superScore: 0,
+            rank: up.rank || 999,
+            self: true,
+          });
+        }
+
+        return timedJsonResponse({
+          success: true,
+          timeframe: payload.timeframe || timeframe,
+          leaderboard,
+          _cached: true,
+          _cached_at: payload.cached_at || cacheData.updated_at,
+        }, 200, origin, startMs, false);
       }
-    } catch (e) {
-      console.warn('[progress-summary] RPC global leaderboard unavailable, falling back to JS:', e?.message || e);
     }
+  } catch (e) {
+    console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message || e);
+    // Continue to compute from scratch
   }
 
+  // Fallback: compute from scratch (slow path)
   // Fetch all approved students
   let students = [];
   let offset = 0;
