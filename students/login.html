@@ -247,7 +247,6 @@
       </div>
       <div class="row">
   <button id="loginBtn" data-i18n="Log in">Log in</button>
-  <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button>
       </div>
       <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
     </section>
@@ -381,33 +380,6 @@
     if (usernameInput) usernameInput.addEventListener('keydown', trySubmitLoginOnEnter);
     if (passwordInput) passwordInput.addEventListener('keydown', trySubmitLoginOnEnter);
 
-    // Guest login flow
-    async function startGuestSession(name){
-      const r = await WillenaAPI.fetch('/.netlify/functions/guest_session', {
-        method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ name })
-      });
-      const d = await r.json().catch(()=>null);
-      if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Guest login failed');
-      return d.guest;
-    }
-
-    document.getElementById('guestBtn').addEventListener('click', async () => {
-      show('');
-      try {
-        const prev = localStorage.getItem('guest_name') || '';
-  const name = prompt(t('Enter your name to play as a guest:'), prev);
-        if (!name) return; // cancelled
-        const guest = await startGuestSession(name);
-        localStorage.setItem('guest_name', guest.name);
-        // Also set the generic user_name used by the student header UI
-        try { localStorage.setItem('user_name', guest.name); } catch {}
-        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
-        location.href = getNextDest();
-      } catch(e){
-        show(t(e.message) || t('Guest login failed'));
-      }
-    });
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
 
     // =======================

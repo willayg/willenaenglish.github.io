@@ -192,31 +192,12 @@ function determineGrammarLevel(listKey) {
  *   - translation (Translation)
  */
 function getGrammarModeCount(listKey) {
-  if (!listKey) return 5;
-  const lk = listKey.toLowerCase();
+  // Match Netlify behavior:
+  // - Grammar level 1: 4 modes
+  // - Grammar level 2+: 6 modes
+  // Any special-case reductions should be expressed via assignment.list_meta.modes_total
   const level = determineGrammarLevel(listKey);
-  
-  if (level === 3) {
-    // Level 3: 6 modes (choose, fill_gap, unscramble, sentence_order, find_mistake, translation)
-    return 6;
-  }
-  
-  if (level === 2) {
-    // Level 2: Check for special lists with fewer modes
-    // Preposition lists: no sorting, no choose → 4 modes (fill_gap, unscramble, find_mistake, translation)
-    if (lk.includes('prepositions_')) return 4;
-    // WH lists: no sorting, no choose → 4 modes
-    if (lk.includes('wh_who_what') || lk.includes('wh_where_when') || lk.includes('wh_how_why')) return 4;
-    // Present Simple WH Questions: no sorting → 5 modes
-    if (lk.includes('present_simple_questions_wh')) return 5;
-    // Most L2 lists: 5 modes (sorting, choose, fill_gap, unscramble, find_mistake, translation)
-    // Actually many L2 don't have all - typically: sorting, choose, fill_gap, unscramble, find_mistake = 5
-    return 5;
-  }
-  
-  // Level 1: 4 modes (lesson, choose, fill_gap, unscramble)
-  // Some lists might not have all modes compatible
-  return 4;
+  return level === 1 ? 4 : 6;
 }
 
 /**
@@ -838,9 +819,14 @@ async function handleAssignmentProgress(request, supabase, params, origin) {
     });
 
     // Get expected total modes for this category
-    const totalModes = assignment.list_meta?.modes_total || 
-                       assignment.list_meta?.total_modes || 
-                       getExpectedModes(category, assignment.list_key, encounteredModes);
+    // Determine total modes (align with Netlify) and allow safe override from assignment meta
+    let totalModes = getExpectedModes(category, assignment.list_key, encounteredModes);
+    const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
+    if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+      if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
+      else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
+      else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
+    }
 
     console.log(`[assignmentProgress] Category: ${category}, Total modes: ${totalModes}, Encountered: ${[...encounteredModes].join(', ')}`);
 
@@ -875,8 +861,8 @@ async function handleAssignmentProgress(request, supabase, params, origin) {
         modes_attempted: distinctModesAttempted,
         modes_total: totalModes,
         modes: rawModesArr,
-        status: assignment.active 
-          ? (completionPercent >= 100 || starsEarned >= (assignment.goal_value || 5) ? 'Completed' : 'In Progress') 
+        status: assignment.active
+          ? (completionPercent >= 100 ? 'Completed' : 'In Progress')
           : 'Ended',
         category,
       };

@@ -376,37 +376,7 @@
     if (usernameInput) usernameInput.addEventListener('keydown', trySubmitLoginOnEnter);
     if (passwordInput) passwordInput.addEventListener('keydown', trySubmitLoginOnEnter);
 
-    // Guest login flow
-    async function startGuestSession(name){
-      const r = await WillenaAPI.fetch('/.netlify/functions/guest_session', {
-        method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ name })
-      });
-      const d = await r.json().catch(()=>null);
-      if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Guest login failed');
-      return d.guest;
-    }
-
-    // Guest button listener (only if element exists - may be hidden/removed)
-    const guestBtnEl = document.getElementById('guestBtn');
-    if (guestBtnEl) {
-      guestBtnEl.addEventListener('click', async () => {
-        show('');
-        try {
-          const prev = localStorage.getItem('guest_name') || '';
-          const name = prompt(t('Enter your name to play as a guest:'), prev);
-          if (!name) return; // cancelled
-          const guest = await startGuestSession(name);
-          localStorage.setItem('guest_name', guest.name);
-          // Also set the generic user_name used by the student header UI
-          try { localStorage.setItem('user_name', guest.name); } catch {}
-          try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
-          location.href = getNextDest();
-        } catch(e){
-          show(t(e.message) || t('Guest login failed'));
-        }
-      });
-    }
+    // Guest mode removed (accounts only)
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
 
     // =======================
