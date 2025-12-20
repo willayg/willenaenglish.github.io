@@ -68,11 +68,96 @@ function toKey(word) {
     .replace(/[^a-z0-9_\-]/g, '') + '.mp3';
 }
 
+const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeBaseName(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_\-]/g, '');
+}
+
+function toAudioKey(input) {
+  let s = String(input ?? '').trim();
+  if (!s) return '';
+
+  // If caller passed a URL, use the last path segment
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      s = decodeURIComponent(u.pathname.split('/').pop() || '');
+    } catch {
+      // fall through
+    }
+  }
+  s = String(s || '').trim();
+  if (!s) return '';
+
+  // If caller already provided a .mp3 key, keep the extension
+  const mp3Match = s.match(/^(.*)\.mp3$/i);
+  if (mp3Match) {
+    const base = normalizeBaseName(mp3Match[1]);
+    return base ? `${base}.mp3` : '';
+  }
+
+  const lower = s.toLowerCase();
+  // If a bare UUID was provided (common when passing sentence_id), map to sent_<uuid>.mp3
+  if (UUID_V4_RE.test(lower)) {
+    return `sent_${lower}.mp3`;
+  }
+
+  // If sent_<uuid> was provided, normalize to sent_<uuid>.mp3
+  const sentUuid = lower.match(/^sent_([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+  if (sentUuid) {
+    return `sent_${sentUuid[1].toLowerCase()}.mp3`;
+  }
+
+  const base = normalizeBaseName(s);
+  return base ? `${base}.mp3` : '';
+}
+
+function normalizeRequestEntry(entry) {
+  // Backward compatible: strings behave exactly as before (keyed by the original string)
+  if (typeof entry === 'string') {
+    const token = entry;
+    const key = toAudioKey(entry);
+    if (!key) return null;
+    return { token, key, cachePart: `${token}=>${key}` };
+  }
+
+  // Forward compatible: allow objects so callers can pass { id, eng, sentence_id, audio_key }
+  if (entry && typeof entry === 'object') {
+    const audioKey = entry.audio_key || entry.audioKey || entry.key || entry.audio;
+    const sentenceId = entry.sentence_id || entry.sentenceId || entry.sid;
+    const id = entry.id || entry.word_id || entry.wordId;
+    const eng = entry.eng || entry.word || entry.text || entry.value;
+
+    let token = null;
+    if (typeof id === 'string' && id.trim()) token = id.trim();
+    else if (typeof sentenceId === 'string' && sentenceId.trim()) token = sentenceId.trim();
+    else if (typeof eng === 'string' && eng.trim()) token = eng.trim();
+    else if (typeof audioKey === 'string' && audioKey.trim()) token = audioKey.trim();
+
+    let lookup = null;
+    if (typeof audioKey === 'string' && audioKey.trim()) lookup = audioKey.trim();
+    else if (typeof sentenceId === 'string' && sentenceId.trim()) lookup = `sent_${sentenceId.trim()}`;
+    else if (typeof eng === 'string' && eng.trim()) lookup = eng.trim();
+    else if (typeof token === 'string' && token.trim()) lookup = token.trim();
+
+    const key = toAudioKey(lookup);
+    if (!token || !key) return null;
+    return { token, key, cachePart: `${token}=>${key}` };
+  }
+
+  return null;
+}
+
 /**
  * Generate a cache key for the request
  */
-function getCacheKey(words) {
-  const sorted = [...words].sort().join(',');
+function getCacheKey(parts) {
+  const sorted = [...parts].sort().join(',');
   return `audio-urls:${sorted}`;
 }
 
@@ -108,9 +193,10 @@ export default {
 
     try {
       const body = await request.json();
-      const words = Array.isArray(body.words) ? body.words : [];
+      const rawWords = Array.isArray(body.words) ? body.words : [];
+      const entries = rawWords.map(normalizeRequestEntry).filter(Boolean);
 
-      if (!words.length) {
+      if (!entries.length) {
         return new Response(
           JSON.stringify({ error: 'Missing words' }),
           { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -118,7 +204,7 @@ export default {
       }
 
       // Log request (visible in wrangler tail / CF dashboard)
-      console.log(`[${requestId}] get_audio_urls: ${words.length} words from ${origin}`);
+      console.log(`[${requestId}] get_audio_urls: ${entries.length} words from ${origin}`);
 
       // Check R2 bucket binding OR a public base for local/dev testing
       const publicBase = env.R2_PUBLIC_BASE || env.R2_PUBLIC_URL || '';
@@ -134,7 +220,7 @@ export default {
 
       // Try to get from cache first (Workers Cache API)
       const cache = caches.default;
-      const cacheKey = new Request(new URL(`/cache/${getCacheKey(words)}`, request.url), { method: 'GET' });
+      const cacheKey = new Request(new URL(`/cache/${getCacheKey(entries.map(e => e.cachePart))}`, request.url), { method: 'GET' });
       
       let cachedResponse = await cache.match(cacheKey);
       if (cachedResponse) {
@@ -156,19 +242,18 @@ export default {
         );
       }
 
-      console.log(`[${requestId}] Cache MISS, checking ${words.length} files in R2`);
+      console.log(`[${requestId}] Cache MISS, checking ${entries.length} files in R2`);
 
       const results = {};
-      const concurrency = Math.min(12, words.length);
+      const concurrency = Math.min(12, entries.length);
       let idx = 0;
       let foundCount = 0;
 
       // Worker function for concurrent processing
       async function processWord() {
-        while (idx < words.length) {
+        while (idx < entries.length) {
           const i = idx++;
-          const word = words[i];
-          const key = toKey(word);
+          const { token, key } = entries[i];
 
           try {
             if (hasR2) {
@@ -179,18 +264,18 @@ export default {
                 // Generate a URL for the audio file
                 // Option 1: Use public bucket URL if configured
                 if (publicBase) {
-                  results[word] = { exists: true, url: `${publicBase.replace(/\/$/, '')}/${key}` };
+                  results[token] = { exists: true, url: `${publicBase.replace(/\/$/, '')}/${key}` };
                 } else {
                   // Option 2: Generate a worker proxy URL
                   // The client will call this URL and we'll stream from R2
                   const workerUrl = new URL(request.url);
-                  results[word] = {
+                  results[token] = {
                     exists: true,
                     url: `${workerUrl.origin}/audio/${encodeURIComponent(key)}`,
                   };
                 }
               } else {
-                results[word] = { exists: false };
+                results[token] = { exists: false };
               }
             } else {
               // No R2 binding in dev; try a public URL HEAD request against R2_PUBLIC_BASE
@@ -199,17 +284,17 @@ export default {
                 const headResp = await fetch(url, { method: 'HEAD' });
                 if (headResp.ok) {
                   foundCount++;
-                  results[word] = { exists: true, url };
+                  results[token] = { exists: true, url };
                 } else {
-                  results[word] = { exists: false };
+                  results[token] = { exists: false };
                 }
               } catch (fe) {
-                results[word] = { exists: false };
+                results[token] = { exists: false };
               }
             }
           } catch (e) {
             // File doesn't exist or error
-            results[word] = { exists: false };
+            results[token] = { exists: false };
           }
         }
       }
@@ -218,7 +303,7 @@ export default {
       await Promise.all(Array.from({ length: concurrency }, () => processWord()));
 
       const duration = Date.now() - startTime;
-      console.log(`[${requestId}] Completed: ${foundCount}/${words.length} found in ${duration}ms`);
+      console.log(`[${requestId}] Completed: ${foundCount}/${entries.length} found in ${duration}ms`);
 
       const responseBody = { results, _timing_ms: duration, _request_id: requestId };
       const response = new Response(

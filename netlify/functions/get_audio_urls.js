@@ -57,26 +57,94 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const words = Array.isArray(body.words) ? body.words : [];
-    if (!words.length) {
+    const rawWords = Array.isArray(body.words) ? body.words : [];
+    if (!rawWords.length) {
       return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing words' }) };
     }
-    const toKey = (word) => String(word).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '') + '.mp3';
+
+    const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const normalizeBaseName = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '');
+    const toAudioKey = (input) => {
+      let s = String(input ?? '').trim();
+      if (!s) return '';
+      if (/^https?:\/\//i.test(s)) {
+        try {
+          const u = new URL(s);
+          s = decodeURIComponent(u.pathname.split('/').pop() || '');
+        } catch {}
+      }
+      s = String(s || '').trim();
+      if (!s) return '';
+
+      const mp3Match = s.match(/^(.*)\.mp3$/i);
+      if (mp3Match) {
+        const base = normalizeBaseName(mp3Match[1]);
+        return base ? `${base}.mp3` : '';
+      }
+
+      const lower = s.toLowerCase();
+      if (UUID_V4_RE.test(lower)) {
+        return `sent_${lower}.mp3`;
+      }
+      const sentUuid = lower.match(/^sent_([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+      if (sentUuid) {
+        return `sent_${sentUuid[1].toLowerCase()}.mp3`;
+      }
+
+      const base = normalizeBaseName(s);
+      return base ? `${base}.mp3` : '';
+    };
+
+    const normalizeRequestEntry = (entry) => {
+      if (typeof entry === 'string') {
+        const token = entry;
+        const key = toAudioKey(entry);
+        return key ? { token, key } : null;
+      }
+      if (entry && typeof entry === 'object') {
+        const audioKey = entry.audio_key || entry.audioKey || entry.key || entry.audio;
+        const sentenceId = entry.sentence_id || entry.sentenceId || entry.sid;
+        const id = entry.id || entry.word_id || entry.wordId;
+        const eng = entry.eng || entry.word || entry.text || entry.value;
+
+        let token = null;
+        if (typeof id === 'string' && id.trim()) token = id.trim();
+        else if (typeof sentenceId === 'string' && sentenceId.trim()) token = sentenceId.trim();
+        else if (typeof eng === 'string' && eng.trim()) token = eng.trim();
+        else if (typeof audioKey === 'string' && audioKey.trim()) token = audioKey.trim();
+
+        let lookup = null;
+        if (typeof audioKey === 'string' && audioKey.trim()) lookup = audioKey.trim();
+        else if (typeof sentenceId === 'string' && sentenceId.trim()) lookup = `sent_${sentenceId.trim()}`;
+        else if (typeof eng === 'string' && eng.trim()) lookup = eng.trim();
+        else if (typeof token === 'string' && token.trim()) lookup = token.trim();
+
+        const key = toAudioKey(lookup);
+        if (!token || !key) return null;
+        return { token, key };
+      }
+      return null;
+    };
+
+    const entries = rawWords.map(normalizeRequestEntry).filter(Boolean);
+    if (!entries.length) {
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing words' }) };
+    }
+
     const results = {};
 
-    let idx = 0; const conc = Math.min(12, words.length);
+    let idx = 0; const conc = Math.min(12, entries.length);
     async function worker() {
-      while (idx < words.length) {
+      while (idx < entries.length) {
         const i = idx++;
-        const w = words[i];
-        const Key = toKey(w);
+        const { token, key: Key } = entries[i];
         try {
           await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key }));
           // Always return a presigned URL to avoid misconfigured public bases
           const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key }), { expiresIn: 60 * 60 * 8 });
-          results[w] = { exists: true, url };
+          results[token] = { exists: true, url };
         } catch (e) {
-          results[w] = { exists: false };
+          results[token] = { exists: false };
         }
       }
     }
