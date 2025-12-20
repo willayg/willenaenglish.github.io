@@ -24,17 +24,19 @@
   // CLOUDFLARE WORKERS MIGRATION CONFIG
   // ============================================================
   
-  // Cloudflare Worker URLs (each worker has its own subdomain)
-  // Use the API gateway so Set-Cookie domains are rewritten to .willenaenglish.com
-  // and credentials flow for staging/production subdomains.
-  const CF_API_GATEWAY_BASE = 'https://api.willenaenglish.com/.netlify/functions/';
+  // Cloudflare API proxy URL (handles CORS properly for all origins)
+  const CF_API_PROXY_URL = 'https://api.willenaenglish.com';
+
+  // Cloudflare Worker URLs routed through the API proxy so cookies land on
+  // the shared .willenaenglish.com domain. Direct workers.dev hosts keep
+  // cookies host-only, which breaks cross-worker auth.
   const CF_WORKER_URLS = {
-    get_audio_urls: `${CF_API_GATEWAY_BASE}get_audio_urls`,
-    supabase_auth: `${CF_API_GATEWAY_BASE}supabase_auth`,
-    log_word_attempt: `${CF_API_GATEWAY_BASE}log_word_attempt`,
-    homework_api: `${CF_API_GATEWAY_BASE}homework_api`,
-    progress_summary: `${CF_API_GATEWAY_BASE}progress_summary`,
-    verify_student: `${CF_API_GATEWAY_BASE}verify_student`,
+    get_audio_urls: `${CF_API_PROXY_URL}/.netlify/functions/get_audio_urls`,
+    supabase_auth: `${CF_API_PROXY_URL}/.netlify/functions/supabase_auth`,
+    log_word_attempt: `${CF_API_PROXY_URL}/.netlify/functions/log_word_attempt`,
+    homework_api: `${CF_API_PROXY_URL}/.netlify/functions/homework_api`,
+    progress_summary: `${CF_API_PROXY_URL}/.netlify/functions/progress_summary`,
+    verify_student: `${CF_API_PROXY_URL}/.netlify/functions/verify_student`,
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
@@ -75,9 +77,6 @@
   
   // Netlify functions base URL
   const NETLIFY_FUNCTIONS_URL = 'https://willenaenglish.netlify.app';
-  
-  // Cloudflare API proxy URL (handles CORS properly for all origins)
-  const CF_API_PROXY_URL = 'https://api.willenaenglish.com';
   
   // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
   const isGitHubPages = currentHost === 'willenaenglish.github.io';
