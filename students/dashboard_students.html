@@ -700,7 +700,7 @@
                 // Find current student's progress row explicitly
                 let studentProgress = null;
                 if (currentUserId) {
-                  studentProgress = progressData.progress.find(p => p.user_id === currentUserId) || null;
+                  studentProgress = progressData.progress.find(p => String(p.user_id) === String(currentUserId)) || null;
                 }
                 // If user id missing, but only one row and names match profile name, allow fallback
                 if (!studentProgress && progressData.progress.length === 1) {
