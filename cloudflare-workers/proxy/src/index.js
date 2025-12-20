@@ -29,6 +29,7 @@ const FUNCTION_TO_BINDING = {
   log_word_attempt: 'LOG_WORD_ATTEMPT',
   progress_summary: 'PROGRESS_SUMMARY',
   get_audio_urls: 'GET_AUDIO_URLS',
+  get_sentence_audio_urls: 'GET_AUDIO_URLS', // Route to same worker, different path
   verify_student: 'VERIFY_STUDENT',
 };
 
@@ -39,6 +40,7 @@ const CF_WORKER_FUNCTIONS = new Set([
   'log_word_attempt',
   'progress_summary',
   'get_audio_urls',
+  'get_sentence_audio_urls',
   'verify_student',
 ]);
 
@@ -128,7 +130,13 @@ async function routeToCFWorker(request, binding, functionName, url) {
   // Build the URL - keep query string, but the path becomes just / or /remaining
   const workerUrl = new URL(request.url);
   // Remove /.netlify/functions/<name> prefix, keep anything after
-  const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
+  let remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
+  
+  // Special routing: get_sentence_audio_urls -> /sentence path on get_audio_urls worker
+  if (functionName === 'get_sentence_audio_urls') {
+    remainingPath = '/sentence';
+  }
+  
   workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;
   
   console.log(`[proxy] Routing ${functionName} to CF Worker: ${workerUrl.pathname}${workerUrl.search}`);
