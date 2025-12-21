@@ -435,6 +435,83 @@ async function fetchSessionsForUsers(client, userIds, firstOfMonthIso) {
   return sessions;
 }
 
+async function fetchAllApprovedStudents(client) {
+  const batchSize = 500;
+  const students = [];
+  let offset = 0;
+
+  while (true) {
+    const batch = await client.query('profiles', {
+      select: 'id,name,username,avatar,class',
+      filters: [
+        { column: 'role', op: 'eq', value: 'student' },
+        { column: 'approved', op: 'eq', value: 'true' },
+      ],
+      order: { column: 'id', ascending: true },
+      range: { from: offset, to: offset + batchSize - 1 },
+    });
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    students.push(...batch);
+    if (batch.length < batchSize) break;
+    offset += batchSize;
+  }
+
+  return students;
+}
+
+async function computeGlobalLeaderboardPayload(client, timeframe) {
+  const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
+  const students = await fetchAllApprovedStudents(client);
+  const filtered = (students || []).filter(p => !p.username || p.username.length > 1);
+  if (!filtered.length) {
+    return {
+      timeframe: timeframe || 'all',
+      cached_at: new Date().toISOString(),
+      topEntries: [],
+      userPoints: {},
+    };
+  }
+
+  const ids = filtered.map(p => p.id).filter(Boolean);
+  const pointTotals = await aggregatePointsForIds(client, ids, firstOfMonthIso);
+  const pointsMap = new Map(pointTotals.map(row => [row.user_id, row.points]));
+  const sessions = await fetchSessionsForUsers(client, ids, firstOfMonthIso);
+  const starsByUser = buildStarsByUserMap(sessions);
+
+  const entries = filtered.map(profile => ({
+    user_id: profile.id,
+    name: profile.name || profile.username || 'Student',
+    avatar: profile.avatar || null,
+    class: profile.class || null,
+    points: Math.round(pointsMap.get(profile.id) || 0),
+    stars: starsByUser.get(profile.id) || 0,
+  }));
+
+  entries.sort((a, b) => (b.points || 0) - (a.points || 0) || (a.name || '').localeCompare(b.name || ''));
+  const finalized = finalizeLeaderboard(entries.map(entry => ({ ...entry })));
+  const topEntries = finalized.slice(0, 15);
+
+  const userPoints = {};
+  finalized.forEach((entry, idx) => {
+    if (!entry || !entry.user_id) return;
+    userPoints[entry.user_id] = {
+      name: entry.name,
+      class: entry.class,
+      avatar: entry.avatar,
+      points: entry.points,
+      stars: entry.stars,
+      rank: idx + 1,
+    };
+  });
+
+  return {
+    timeframe: timeframe || 'all',
+    cached_at: new Date().toISOString(),
+    topEntries,
+    userPoints,
+  };
+}
+
 // Section handlers
 async function handleKpi(client, userId, origin) {
   const attempts = await client.query('progress_attempts', {
@@ -947,14 +1024,16 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, e
         const hasUser = leaderboard.some(e => e.user_id === userId);
         if (!hasUser && userId && payload.userPoints && payload.userPoints[userId]) {
           const up = payload.userPoints[userId];
+          const userStars = up.stars || 0;
+          const userPoints = up.points || 0;
           leaderboard.push({
             user_id: userId,
             name: up.name || 'You',
             avatar: up.avatar || null,
             class: up.class || null,
-            points: up.points || 0,
-            stars: 0,
-            superScore: 0,
+            points: userPoints,
+            stars: userStars,
+            superScore: Math.round((userStars * userPoints) / 1000),
             rank: up.rank || 999,
             self: true,
           });
@@ -990,87 +1069,49 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, e
   // Fallback: compute on-demand if cache miss
   console.log('[progress-summary] Cache miss for leaderboard_stars_global, computing on-demand. Timeframe:', timeframe);
   try {
-    // Fetch all students approved
-    const profiles = await client.query('profiles', {
-      select: 'id,name,avatar,class',
-      filters: [
-        { column: 'role', op: 'eq', value: 'student' },
-        { column: 'approved', op: 'eq', value: true },
-      ],
-      limit: 500,
-    });
-
-    if (!Array.isArray(profiles)) {
-      throw new Error('Invalid profiles response');
+    const payload = await computeGlobalLeaderboardPayload(client, timeframe);
+    if (!payload || !Array.isArray(payload.topEntries)) {
+      throw new Error('Invalid leaderboard payload');
     }
 
-    // Fetch all progress attempts
-    const attempts = await client.query('progress_attempts', {
-      select: 'user_id,stars,points,created_at',
-      limit: 10000,
-    });
+    const leaderboard = payload.topEntries.map(entry => ({
+      ...entry,
+      self: entry.user_id === userId,
+    }));
 
-    if (!Array.isArray(attempts)) {
-      throw new Error('Invalid attempts response');
+    if (!leaderboard.some(entry => entry.user_id === userId) && userId && payload.userPoints && payload.userPoints[userId]) {
+      const me = payload.userPoints[userId];
+      leaderboard.push({
+        user_id: userId,
+        name: me.name || 'You',
+        avatar: me.avatar || null,
+        class: me.class || null,
+        points: me.points || 0,
+        stars: me.stars || 0,
+        superScore: Math.round((me.stars || 0) * (me.points || 0) / 1000),
+        rank: me.rank || leaderboard.length + 1,
+        self: true,
+      });
     }
-
-    // Aggregate by user
-    const stats = {};
-    const monthStart = timeframe === 'month' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() : null;
-
-    attempts.forEach(attempt => {
-      // Filter by timeframe
-      if (monthStart && new Date(attempt.created_at) < new Date(monthStart)) {
-        return;
-      }
-
-      if (!stats[attempt.user_id]) {
-        stats[attempt.user_id] = { stars: 0, points: 0 };
-      }
-      stats[attempt.user_id].stars += Number(attempt.stars) || 0;
-      stats[attempt.user_id].points += Number(attempt.points) || 0;
-    });
-
-    // Build leaderboard
-    const leaderboard = profiles
-      .map((p) => {
-        const s = stats[p.id] || { stars: 0, points: 0 };
-        return {
-          user_id: p.id,
-          name: p.name || 'Student',
-          avatar: p.avatar || null,
-          class: p.class || null,
-          points: s.points,
-          stars: s.stars,
-          superScore: Math.round((s.stars * s.points) / 1000),
-          rank: 0,
-          self: p.id === userId,
-        };
-      })
-      .sort((a, b) => (b.stars - a.stars) || (b.points - a.points))
-      .slice(0, 15)
-      .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
-
-    console.log('[progress-summary] Computed leaderboard_stars_global on-demand with', leaderboard.length, 'entries in', Date.now() - startMs, 'ms');
 
     const response = {
       success: true,
-      timeframe,
+      timeframe: payload.timeframe || timeframe,
       leaderboard,
       _cached: false,
       _computed_ms: Date.now() - startMs,
+      _cached_at: payload.cached_at,
     };
 
-    // Store in KV for future requests (30 min TTL for computed data)
     try {
       await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify({
-        timeframe,
-        leaderboard,
-        _cached_at: new Date().toISOString(),
+        timeframe: payload.timeframe,
+        leaderboard: payload.topEntries,
+        _cached_at: payload.cached_at,
       }), { expirationTtl: 1800 });
       console.log('[progress-summary] Stored computed leaderboard in KV cache for', timeframe);
-    } catch (e) {
-      console.warn('[progress-summary] Failed to store computed result in KV:', e?.message);
+    } catch (kvErr) {
+      console.warn('[progress-summary] Failed to store computed result in KV:', kvErr?.message);
     }
 
     return timedJsonResponse(response, 200, origin, startMs, false);
@@ -1078,9 +1119,8 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, e
     console.error('[progress-summary] Fallback computation failed for leaderboard_stars_global:', e?.message || e);
     return timedJsonResponse({
       success: false,
-      error: 'Failed to compute leaderboard: ' + (e?.message || 'unknown error'),
-      timeframe,
-      leaderboard: [],
+      message: 'Failed to compute leaderboard',
+      error: e?.message,
     }, 500, origin, startMs, false);
   }
 }
@@ -1118,113 +1158,53 @@ async function handleChallengingV2(client, userId, origin) {
 async function generateLeaderboardCache(client, timeframe, env) {
   const startMs = Date.now();
   const kvKey = `leaderboard_stars_global_${timeframe || 'all'}`;
-  
+
   try {
     console.log('[cron] Generating leaderboard cache for timeframe:', timeframe);
-    
-    // Fetch all approved students
-    const profiles = await client.query('profiles', {
-      select: 'id,name,avatar,class',
-      filters: [
-        { column: 'role', op: 'eq', value: 'student' },
-        { column: 'approved', op: 'eq', value: true },
-      ],
-      limit: 500,
-    });
-
-    if (!Array.isArray(profiles)) {
-      console.warn('[cron] Invalid profiles response');
+    const payload = await computeGlobalLeaderboardPayload(client, timeframe);
+    if (!payload || !Array.isArray(payload.topEntries)) {
+      console.warn('[cron] Empty payload returned for', timeframe);
       return;
     }
 
-    // Fetch all progress attempts
-    const attempts = await client.query('progress_attempts', {
-      select: 'user_id,stars,points,created_at',
-      limit: 10000,
-    });
-
-    if (!Array.isArray(attempts)) {
-      console.warn('[cron] Invalid attempts response');
-      return;
-    }
-
-    // Aggregate by user
-    const stats = {};
-    const monthStart = timeframe === 'month' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() : null;
-
-    attempts.forEach(attempt => {
-      // Filter by timeframe
-      if (monthStart && new Date(attempt.created_at) < new Date(monthStart)) {
-        return;
-      }
-
-      if (!stats[attempt.user_id]) {
-        stats[attempt.user_id] = { stars: 0, points: 0 };
-      }
-      stats[attempt.user_id].stars += Number(attempt.stars) || 0;
-      stats[attempt.user_id].points += Number(attempt.points) || 0;
-    });
-
-    // Build top 15 leaderboard
-    const leaderboard = profiles
-      .map((p) => {
-        const s = stats[p.id] || { stars: 0, points: 0 };
-        return {
-          user_id: p.id,
-          name: p.name || 'Student',
-          avatar: p.avatar || null,
-          class: p.class || null,
-          points: s.points,
-          stars: s.stars,
-          superScore: Math.round((s.stars * s.points) / 1000),
-          rank: 0,
-          self: false,
-        };
-      })
-      .sort((a, b) => (b.stars - a.stars) || (b.points - a.points))
-      .slice(0, 15)
-      .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
-
-    const cachePayload = {
-      timeframe,
-      leaderboard,
-      _cached_at: new Date().toISOString(),
-    };
-
-    // Store in KV (1 hour TTL)
     try {
-      await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify(cachePayload), { expirationTtl: 3600 });
+      await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify({
+        timeframe: payload.timeframe,
+        leaderboard: payload.topEntries,
+        _cached_at: payload.cached_at,
+      }), { expirationTtl: 3600 });
       console.log('[cron] Stored leaderboard in KV for', timeframe);
-    } catch (e) {
-      console.warn('[cron] Failed to store in KV:', e?.message);
+    } catch (kvErr) {
+      console.warn('[cron] Failed to store KV leaderboard:', kvErr?.message);
     }
 
-    // Also store in database cache table
     try {
-      const dbCacheRows = await client.query('leaderboard_cache', {
-        select: 'id',
-        filters: [
-          { column: 'section', op: 'eq', value: 'leaderboard_stars_global' },
-          { column: 'timeframe', op: 'eq', value: timeframe || 'all' },
-        ],
-        limit: 1,
+      const resp = await fetch(`${client.url}/rest/v1/leaderboard_cache?on_conflict=section,timeframe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': client.serviceKey,
+          'Authorization': `Bearer ${client.serviceKey}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          section: 'leaderboard_stars_global',
+          timeframe: payload.timeframe,
+          payload,
+          updated_at: new Date().toISOString(),
+        }),
       });
-
-      const existingId = Array.isArray(dbCacheRows) && dbCacheRows.length > 0 ? dbCacheRows[0].id : null;
-
-      if (existingId) {
-        // Update existing
-        await client.query('leaderboard_cache', {
-          filters: [{ column: 'id', op: 'eq', value: existingId }],
-        });
+      if (!resp.ok) {
+        const body = await resp.text();
+        console.warn('[cron] leaderboard_cache upsert failed:', resp.status, body);
       }
-    } catch (e) {
-      console.warn('[cron] Failed to update database cache:', e?.message);
+    } catch (dbErr) {
+      console.warn('[cron] Failed to upsert leaderboard_cache:', dbErr?.message);
     }
 
     console.log('[cron] Leaderboard cache generated for', timeframe, 'in', Date.now() - startMs, 'ms');
   } catch (e) {
-    console.error('[cron] Error generating leaderboard cache for', timeframe, ':', e.message);
+    console.error('[cron] Error generating leaderboard cache for', timeframe, ':', e?.message);
   }
 }
 
@@ -1318,8 +1298,8 @@ export default {
       
       // Generate cache for both timeframes
       await Promise.all([
-        generateLeaderboardCache(client, 'all'),
-        generateLeaderboardCache(client, 'month'),
+        generateLeaderboardCache(client, 'all', env),
+        generateLeaderboardCache(client, 'month', env),
       ]);
       
       console.log('[cron] Leaderboard cache generation completed');
