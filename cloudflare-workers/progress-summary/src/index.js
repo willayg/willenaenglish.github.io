@@ -895,7 +895,7 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
   const startMs = Date.now();
   const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
 
-  // Fast path: check leaderboard_cache table (populated by Netlify/cron)
+  // Fast path: check leaderboard_cache table (populated by cron)
   // This avoids expensive aggregation when cached data is available
   try {
     const cacheRows = await client.query('leaderboard_cache', {
@@ -913,7 +913,7 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
       console.log('[progress-summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', cacheData.updated_at);
       const payload = typeof cacheData.payload === 'string' ? JSON.parse(cacheData.payload) : cacheData.payload;
       
-      // Format cached payload for response (same as Netlify formatGlobalLeaderboardResponse)
+      // Format cached payload for response
       if (payload.topEntries && Array.isArray(payload.topEntries)) {
         const leaderboard = payload.topEntries.map(entry => ({
           user_id: entry.user_id,
@@ -937,7 +937,7 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
             avatar: up.avatar || null,
             class: up.class || null,
             points: up.points || 0,
-            stars: 0, // userPoints may not have stars, but rank is what matters
+            stars: 0,
             superScore: 0,
             rank: up.rank || 999,
             self: true,
@@ -951,28 +951,81 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
           _cached: true,
           _cached_at: payload.cached_at || cacheData.updated_at,
         }, 200, origin, startMs, false);
-      } else {
-        console.warn('[progress-summary] Cache payload missing topEntries for leaderboard_stars_global:', payload);
       }
-    } else {
-      console.warn('[progress-summary] No cache data found for leaderboard_stars_global, timeframe=' + timeframe);
     }
   } catch (e) {
     console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message || e);
-    // No cache available - return empty rather than slow compute (cache populated by Netlify)
-    console.warn('[progress-summary] leaderboard_stars_global returning empty (cache not populated). Timeframe:', timeframe);
   }
 
-  // Cache hit handled above - if we get here, cache was empty
-  // Return empty leaderboard (Netlify traffic will populate cache)
-  console.warn('[progress-summary] leaderboard_stars_global: returning empty leaderboard for timeframe=' + timeframe + '. This is expected if cache is not yet populated.');
-  return timedJsonResponse({
-    success: true,
-    timeframe,
-    leaderboard: [],
-    _no_cache: true,
-    _warning: 'Cache not yet populated. Ensure leaderboard generation cron or Netlify function is running.',
-  }, 200, origin, startMs, false);
+  // Fallback: compute on-demand if cache miss
+  // This ensures leaderboard is always available, even on first request
+  console.log('[progress-summary] Cache miss for leaderboard_stars_global, computing on-demand. Timeframe:', timeframe);
+  try {
+    const query = timeframe === 'month'
+      ? `
+        SELECT 
+          p.id as user_id,
+          p.name,
+          p.avatar,
+          p.class,
+          COALESCE(SUM(CASE WHEN pa.created_at >= ${firstOfMonthIso ? `'${firstOfMonthIso}'` : 'NOW()'} THEN pa.stars ELSE 0 END), 0) as stars,
+          COALESCE(SUM(CASE WHEN pa.created_at >= ${firstOfMonthIso ? `'${firstOfMonthIso}'` : 'NOW()'} THEN pa.points ELSE 0 END), 0) as points
+        FROM profiles p
+        LEFT JOIN points_attempts pa ON p.id = pa.user_id
+        WHERE p.role = 'student' AND p.approved = true
+        GROUP BY p.id
+        ORDER BY stars DESC, points DESC
+        LIMIT 15
+      `
+      : `
+        SELECT 
+          p.id as user_id,
+          p.name,
+          p.avatar,
+          p.class,
+          COALESCE(SUM(pa.stars), 0) as stars,
+          COALESCE(SUM(pa.points), 0) as points
+        FROM profiles p
+        LEFT JOIN points_attempts pa ON p.id = pa.user_id
+        WHERE p.role = 'student' AND p.approved = true
+        GROUP BY p.id
+        ORDER BY stars DESC, points DESC
+        LIMIT 15
+      `;
+
+    const result = await client.rpc('sql_query', { query_text: query });
+    const rows = Array.isArray(result) ? result : [];
+
+    const leaderboard = rows.map((entry, index) => ({
+      user_id: entry.user_id,
+      name: entry.name || 'Student',
+      avatar: entry.avatar || null,
+      class: entry.class || null,
+      points: Number(entry.points) || 0,
+      stars: Number(entry.stars) || 0,
+      superScore: Math.round((Number(entry.stars) * Number(entry.points)) / 1000),
+      rank: index + 1,
+      self: entry.user_id === userId,
+    }));
+
+    console.log('[progress-summary] Computed leaderboard_stars_global on-demand with', leaderboard.length, 'entries in', Date.now() - startMs, 'ms');
+
+    return timedJsonResponse({
+      success: true,
+      timeframe,
+      leaderboard,
+      _cached: false,
+      _computed_ms: Date.now() - startMs,
+    }, 200, origin, startMs, false);
+  } catch (e) {
+    console.error('[progress-summary] Fallback computation failed for leaderboard_stars_global:', e?.message || e);
+    return timedJsonResponse({
+      success: false,
+      error: 'Failed to compute leaderboard',
+      timeframe,
+      leaderboard: [],
+    }, 500, origin, startMs, false);
+  }
 }
 
 async function handleChallengingV2(client, userId, origin) {
