@@ -480,139 +480,20 @@ exports.handler = async (event) => {
     await checkAndIncrement(RATE.ipMap, clientIp, true);
     await checkAndIncrement(RATE.userMap, userKey, true);
 
-    // Generate session tokens for the verified student
-    let sessionData = null;
-    try {
-      if (!match.email) {
-        console.error('Cannot create session: student has no email');
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ 
-            success: false, 
-            error: 'Student account is missing email. Please contact support.' 
-          })
-        };
-      }
-
-      // Use admin API to get the user by email, then create a session
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(match.email);
-      
-      if (userError || !userData?.user?.id) {
-        console.error('Failed to find auth user:', userError);
-        throw userError || new Error('User not found in auth');
-      }
-
-      // Generate session for this user (admin API in newer Supabase)
-      // If this method doesn't exist, we'll catch and use fallback
-      let sessionResult;
-      
-      try {
-        // Try newer admin.createSession method (Supabase v2.39+)
-        const createSessionResult = await supabase.auth.admin.createSession({
-          user_id: userData.user.id
-        });
-        sessionResult = createSessionResult;
-      } catch (methodErr) {
-        // Fallback: generate magic link and extract token
-        console.log('createSession not available, using magic link method');
-        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-          type: 'magiclink',
-          email: match.email
-        });
-        
-        if (linkError || !linkData?.properties?.action_link) {
-          throw linkError || new Error('Failed to generate magic link');
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        student: {
+          id: match.id,
+          username: match.username,
+          email: match.email,
+          name: match.name,
+          korean_name: match.korean_name
         }
-        
-        // Extract token from the action_link URL
-        const url = new URL(linkData.properties.action_link);
-        const token = url.searchParams.get('token');
-        const type = url.searchParams.get('type') || 'magiclink';
-        
-        if (!token) {
-          throw new Error('No token in magic link');
-        }
-        
-        // Verify the OTP to get a session
-        sessionResult = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: type
-        });
-      }
-
-      if (sessionResult.error || !sessionResult.data?.session) {
-        console.error('Failed to create session:', sessionResult.error);
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ 
-            success: false, 
-            error: 'Failed to create login session. Please try again.' 
-          })
-        };
-      }
-
-      sessionData = sessionResult.data.session;
-      
-      // Set secure cookies
-      const cookieOptions = [
-        'Path=/',
-        'HttpOnly',
-        'SameSite=Lax',
-        'Max-Age=604800' // 7 days
-      ];
-      
-      if (origin.startsWith('https://')) {
-        cookieOptions.push('Secure');
-      }
-
-      const accessCookie = `sb-access-token=${sessionData.access_token}; ${cookieOptions.join('; ')}`;
-      const refreshCookie = `sb-refresh-token=${sessionData.refresh_token}; ${cookieOptions.join('; ')}`;
-
-      return {
-        statusCode: 200,
-        headers: {
-          ...headers,
-          'Set-Cookie': [accessCookie, refreshCookie]
-        },
-        multiValueHeaders: {
-          'Set-Cookie': [accessCookie, refreshCookie]
-        },
-        body: JSON.stringify({
-          success: true,
-          student: {
-            id: match.id,
-            username: match.username,
-            email: match.email,
-            name: match.name,
-            korean_name: match.korean_name
-          },
-          session: {
-            access_token: sessionData.access_token,
-            refresh_token: sessionData.refresh_token
-          }
-        })
-      };
-    } catch (sessionErr) {
-      console.error('Session creation failed, returning student data only:', sessionErr);
-      // Return student data without session as fallback
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          student: {
-            id: match.id,
-            username: match.username,
-            email: match.email,
-            name: match.name,
-            korean_name: match.korean_name
-          },
-          warning: 'Session creation failed'
-        })
-      };
-    }
+      })
+    };
 
   } catch (err) {
     console.error('Error verifying student:', err);

@@ -1,21 +1,16 @@
 /**
  * Cloudflare Worker: verify-student
- * Replacement for Netlify function verify_student.js
- * Validates student identity via Supabase REST, with in-memory rate limiting.
+ *
+ * Replacement for Netlify function verify_student.js.
+ * Validates student identity via Supabase using REST APIs.
  */
 
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://staging.willenaenglish.com',
-  'https://students.willenaenglish.com',
-  'https://teachers.willenaenglish.com',
-  'https://api.willenaenglish.com',
-  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
-  'https://staging.willenaenglish-github-io.pages.dev',
   'https://cf.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
@@ -24,22 +19,11 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin) {
-  let allowed = ALLOWED_ORIGINS[0];
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    allowed = origin;
-  } else if (origin) {
-    try {
-      const u = new URL(origin);
-      const host = u.hostname.toLowerCase();
-      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
-        allowed = origin;
-      }
-    } catch {}
-  }
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
     'Cache-Control': 'no-store',
   };
@@ -54,11 +38,6 @@ function jsonResponse(data, status = 200, origin = '') {
     },
   });
 }
-
-const RATE = { ip: new Map(), user: new Map() };
-const MAX_FAILED = 5;
-const WINDOW_MS = 15 * 60 * 1000;
-const LOCKOUT_MS = 5 * 60 * 1000;
 
 function normalize(val) {
   return (val || '')
@@ -79,6 +58,11 @@ function getClientIp(request) {
   const h = request.headers;
   return (h.get('x-forwarded-for') || h.get('x-real-ip') || '').split(',')[0].trim() || 'unknown';
 }
+
+const RATE = { ip: new Map(), user: new Map() };
+const MAX_FAILED = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+const LOCKOUT_MS = 5 * 60 * 1000;
 
 function checkRate(map, key, success) {
   const now = Date.now();
@@ -113,7 +97,8 @@ function checkRate(map, key, success) {
 
 function isBlocked(map, key) {
   const entry = map.get(key);
-  return entry && entry.lockedUntil && entry.lockedUntil > Date.now();
+  if (!entry) return false;
+  return entry.lockedUntil && entry.lockedUntil > Date.now();
 }
 
 async function fetchCandidates(env, koreanPattern, englishPattern, limit = 50) {
@@ -190,6 +175,7 @@ export default {
       return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
     }
 
+    // Parse body safely
     let body;
     try {
       body = await request.json();
@@ -219,10 +205,11 @@ export default {
     const clientIp = getClientIp(request);
     const userKey = `user:${normalizedKoreanInput}|${normalizedEnglishInput}`;
 
-    // Check existing lockouts without incrementing
+    // Rate-limit checks (do not increment yet)
     if (isBlocked(RATE.ip, clientIp)) {
       return jsonResponse({ success: false, error: 'Too many requests from this IP. Try again later.' }, 429, origin);
     }
+
     if (isBlocked(RATE.user, userKey)) {
       return jsonResponse({ success: false, error: 'Too many attempts for this user. Try again later.' }, 429, origin);
     }
@@ -230,7 +217,7 @@ export default {
     const patternVariants = [
       { korean: buildIlikePattern(koreanNameValue), english: buildIlikePattern(englishNameValue) },
       { korean: null, english: buildIlikePattern(englishNameValue) },
-      { korean: buildIlikePattern(koreanNameValue), english: null },
+      { korean: buildIlikePattern(koreanNameValue), english: null }
     ].filter(v => v.korean || v.english);
 
     let records = [];
@@ -294,115 +281,15 @@ export default {
     checkRate(RATE.ip, clientIp, true);
     checkRate(RATE.user, userKey, true);
 
-    // Generate session tokens for the verified student
-    if (!match.email) {
-      return jsonResponse({ 
-        success: false, 
-        error: 'Student account is missing email. Please contact support.' 
-      }, 500, origin);
-    }
-
-    try {
-      // Use Supabase Admin API to generate a magic link, then verify it
-      const linkRes = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-          'apikey': env.SUPABASE_SERVICE_ROLE_KEY
-        },
-        body: JSON.stringify({
-          type: 'magiclink',
-          email: match.email
-        })
-      });
-
-      if (!linkRes.ok) {
-        const errText = await linkRes.text();
-        console.error('Generate link failed:', errText);
-        throw new Error('Failed to generate auth link');
+    return jsonResponse({
+      success: true,
+      student: {
+        id: match.id,
+        username: match.username,
+        email: match.email,
+        name: match.name,
+        korean_name: match.korean_name
       }
-
-      const linkData = await linkRes.json();
-      
-      // The hashed_token can be used directly with verifyOtp
-      const hashedToken = linkData.properties?.hashed_token;
-      
-      if (!hashedToken) {
-        console.error('No hashed_token in response:', JSON.stringify(linkData));
-        throw new Error('No hashed_token in response');
-      }
-
-      // Step 3: Verify the OTP to get session tokens
-      const verifyRes = await fetch(`${env.SUPABASE_URL}/auth/v1/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY
-        },
-        body: JSON.stringify({
-          type: 'magiclink',
-          token_hash: hashedToken
-        })
-      });
-
-      const verifyText = await verifyRes.text();
-      console.log('Verify response:', verifyRes.status, verifyText.substring(0, 200));
-
-      if (!verifyRes.ok) {
-        console.error('Verify token failed:', verifyText);
-        throw new Error('Failed to verify token: ' + verifyText.substring(0, 100));
-      }
-
-      let sessionData;
-      try {
-        sessionData = JSON.parse(verifyText);
-      } catch (e) {
-        throw new Error('Invalid JSON from verify');
-      }
-      
-      if (!sessionData.access_token) {
-        console.error('No access_token in session:', JSON.stringify(sessionData).substring(0, 200));
-        throw new Error('No access_token in session');
-      }
-
-      // Build response with session cookies
-      const cookieOptions = 'Path=/; HttpOnly; SameSite=None; Max-Age=604800; Secure';
-      
-      const responseHeaders = new Headers({
-        'Content-Type': 'application/json',
-        ...getCorsHeaders(origin)
-      });
-      
-      responseHeaders.append('Set-Cookie', `sb-access-token=${sessionData.access_token}; ${cookieOptions}`);
-      responseHeaders.append('Set-Cookie', `sb-refresh-token=${sessionData.refresh_token}; ${cookieOptions}`);
-
-      return new Response(JSON.stringify({
-        success: true,
-        student: {
-          id: match.id,
-          username: match.username,
-          email: match.email,
-          name: match.name,
-          korean_name: match.korean_name
-        },
-        session: {
-          access_token: sessionData.access_token,
-          refresh_token: sessionData.refresh_token
-        }
-      }), {
-        status: 200,
-        headers: responseHeaders
-      });
-
-    } catch (sessionErr) {
-      console.error('Session creation failed:', sessionErr.message || sessionErr);
-      // Return detailed error for debugging
-      return jsonResponse({ 
-        success: false, 
-        error: 'Failed to create login session. Please try again or use username/password.',
-        debug: sessionErr.message || String(sessionErr)
-      }, 500, origin);
-    }
+    }, 200, origin);
   }
 };

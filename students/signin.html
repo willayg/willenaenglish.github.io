@@ -4,6 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="Student Login">Student Login</title>
+  <!-- EMERGENCY FIX: Redirect to Netlify for login -->
+  <script>
+    (function() {
+      const host = window.location.hostname;
+      // Allow localhost/127.0.0.1 for local dev; only willenaenglish.netlify.app works in production
+      const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
+      if (!isLocalDev && host !== 'willenaenglish.netlify.app') {
+        const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
+        console.log('[Login] Redirecting to Netlify for auth:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return;
+      }
+    })();
+  </script>
   <!-- API config for GitHub Pages + Netlify Functions -->
   <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/students/profile.css" />
@@ -376,7 +390,37 @@
     if (usernameInput) usernameInput.addEventListener('keydown', trySubmitLoginOnEnter);
     if (passwordInput) passwordInput.addEventListener('keydown', trySubmitLoginOnEnter);
 
-    // Guest mode removed (accounts only)
+    // Guest login flow
+    async function startGuestSession(name){
+      const r = await WillenaAPI.fetch('/.netlify/functions/guest_session', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ name })
+      });
+      const d = await r.json().catch(()=>null);
+      if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Guest login failed');
+      return d.guest;
+    }
+
+    // Guest button listener (only if element exists - may be hidden/removed)
+    const guestBtnEl = document.getElementById('guestBtn');
+    if (guestBtnEl) {
+      guestBtnEl.addEventListener('click', async () => {
+        show('');
+        try {
+          const prev = localStorage.getItem('guest_name') || '';
+          const name = prompt(t('Enter your name to play as a guest:'), prev);
+          if (!name) return; // cancelled
+          const guest = await startGuestSession(name);
+          localStorage.setItem('guest_name', guest.name);
+          // Also set the generic user_name used by the student header UI
+          try { localStorage.setItem('user_name', guest.name); } catch {}
+          try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+          location.href = getNextDest();
+        } catch(e){
+          show(t(e.message) || t('Guest login failed'));
+        }
+      });
+    }
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
 
     // =======================
@@ -405,11 +449,6 @@
         authCodePlaceholder: "Last 4 digits",
         authCodeHelper: "Enter the last four digits of mom's phone number.",
         authCodeInvalid: "Please enter the last four digits (numbers only).",
-        enterPassword: "Enter your password",
-        passwordPlaceholder: "Password",
-        passwordHelper: "Enter the password you use to log in.",
-        logIn: "Log In",
-        wrongPassword: "Wrong password. Please try again.",
         next: "Next",
         back: "Back",
         verifying: "Verifying...",
@@ -431,11 +470,6 @@
         authCodePlaceholder: "마지막 4자리",
         authCodeHelper: "엄마 전화번호 뒤 4자리인 인증번호를 입력하세요.",
         authCodeInvalid: "인증번호는 숫자 4자리여야 합니다.",
-        enterPassword: "비밀번호를 입력하세요",
-        passwordPlaceholder: "비밀번호",
-        passwordHelper: "로그인할 때 사용하는 비밀번호를 입력하세요.",
-        logIn: "로그인",
-        wrongPassword: "비밀번호가 틀렸습니다. 다시 시도해 주세요.",
         next: "다음",
         back: "뒤로",
         verifying: "확인 중...",
@@ -612,6 +646,16 @@
       }
     }
 
+    function generateTemporaryPassword() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$';
+      let result = '';
+      for (let i = 0; i < 12; i += 1) {
+        const idx = Math.floor(Math.random() * chars.length);
+        result += chars[idx];
+      }
+      return result;
+    }
+
     // Verify student with backend
     async function verifyStudent() {
       modalTitle.textContent = mt('verifying');
@@ -628,30 +672,31 @@
             auth_code: studentData.auth_code
           })
         });
-        const data = await res.json();
+        
+        // BUG FIX: Safely parse JSON response, handle HTML error pages
+        let data;
+        const contentType = res.headers.get('content-type') || '';
+        const responseText = await res.text();
+        
+        if (contentType.includes('application/json') && responseText) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseErr) {
+            console.error('[signin] JSON parse failed:', parseErr, 'Response:', responseText.substring(0, 200));
+            showError(mt('errorOccurred'));
+            return;
+          }
+        } else {
+          console.error('[signin] Non-JSON response:', res.status, responseText.substring(0, 200));
+          showError(mt('errorOccurred'));
+          return;
+        }
 
         if (res.ok && data.success && data.student) {
           studentData.id = data.student.id;
           studentData.username = data.student.username;
           studentData.email = data.student.email || null;
-          
-          // If session tokens were returned, store them and redirect
-          if (data.session && data.session.access_token) {
-            // Store tokens for local dev
-            if (WillenaAPI.setLocalTokens) {
-              WillenaAPI.setLocalTokens(data.session.access_token, data.session.refresh_token);
-            }
-            
-            modalTitle.textContent = mt('success');
-            modalBody.innerHTML = '<p>✅</p>';
-            try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
-            setTimeout(() => {
-              location.href = getNextDest();
-            }, 1200);
-          } else {
-            // Fallback if no session returned
-            showError(mt('errorOccurred'));
-          }
+          await completeEasyLogin();
         } else {
           let message = (data && data.error) ? data.error : mt('notFound');
           if (typeof message === 'string') {
@@ -667,6 +712,63 @@
         }
       } catch (err) {
         console.error('Verification error:', err);
+        showError(mt('errorOccurred'));
+      }
+    }
+
+    async function completeEasyLogin() {
+      modalTitle.textContent = mt('loggingIn');
+      modalBody.innerHTML = '<p>⏳</p>';
+      modalActions.innerHTML = '';
+
+      try {
+        const tempPassword = generateTemporaryPassword();
+        const res = await WillenaAPI.fetch('/.netlify/functions/set_student_password', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            student_id: studentData.id,
+            password: tempPassword
+          })
+        });
+        
+        // BUG FIX: Safely parse JSON response
+        let data;
+        const contentType = res.headers.get('content-type') || '';
+        const responseText = await res.text();
+        
+        if (contentType.includes('application/json') && responseText) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseErr) {
+            console.error('[signin] set_student_password JSON parse failed:', parseErr);
+            throw new Error('Server error during login');
+          }
+        } else {
+          console.error('[signin] set_student_password non-JSON response:', res.status);
+          throw new Error('Server error during login');
+        }
+
+        if (!res.ok || !data || !data.success) {
+          throw new Error((data && data.error) || 'Failed to set password');
+        }
+
+        if (studentData.email) {
+          await loginWithEmailPassword(studentData.email, tempPassword);
+        } else if (studentData.username) {
+          await loginWithUsernamePassword(studentData.username, tempPassword);
+        } else {
+          throw new Error('Missing login identifier');
+        }
+
+        modalTitle.textContent = mt('success');
+        modalBody.innerHTML = '<p>✅</p>';
+        try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
+        setTimeout(() => {
+          location.href = getNextDest();
+        }, 1200);
+      } catch (err) {
+        console.error('Easy login error:', err);
         showError(mt('errorOccurred'));
       }
     }
