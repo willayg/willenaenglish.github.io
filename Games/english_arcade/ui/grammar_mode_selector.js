@@ -360,23 +360,36 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   (async () => {
     try {
       // Fetch sessions (try list-scoped first for speed)
-      const makeUrl = (scoped) => {
+      const makeUrl = (listName) => {
         const base = (window.WordArcade && window.WordArcade.FN) ? window.WordArcade.FN('progress_summary') : (typeof FN === 'function' ? FN('progress_summary') : '/.netlify/functions/progress_summary');
         // Fall back if FN not available in this scope
         const u = new URL(base, window.location.origin);
         u.searchParams.set('section', 'sessions');
-        // Use grammarFile path (not display name) for list_name lookup since sessions store file paths
-        if (scoped && currentGrammarFile) u.searchParams.set('list_name', currentGrammarFile);
+        // Use grammarFile path (not display name) for list_name lookup since sessions store file paths.
+        // Some historical data stores basename (or basename without .json), so allow callers to pass variants.
+        if (listName) u.searchParams.set('list_name', listName);
         return u.toString();
       };
       let sessions = [];
-      try {
-        const res = await fetch(makeUrl(true), { cache: 'no-store', credentials: 'include' });
-        if (res.ok) sessions = await res.json();
-      } catch {}
+      const listNameVariants = (() => {
+        const out = [];
+        if (currentGrammarFile) out.push(String(currentGrammarFile));
+        const base = currentGrammarFile ? String(currentGrammarFile).split('/').pop() : '';
+        if (base && !out.includes(base)) out.push(base);
+        const baseNoExt = base ? base.replace(/\.json$/i, '') : '';
+        if (baseNoExt && !out.includes(baseNoExt)) out.push(baseNoExt);
+        return out;
+      })();
+      for (const listName of listNameVariants) {
+        try {
+          const res = await fetch(makeUrl(listName), { cache: 'no-store', credentials: 'include' });
+          if (res.ok) sessions = await res.json();
+        } catch {}
+        if (Array.isArray(sessions) && sessions.length) break;
+      }
       if (!Array.isArray(sessions) || !sessions.length) {
         try {
-          const res = await fetch(makeUrl(false), { cache: 'no-store', credentials: 'include' });
+          const res = await fetch(makeUrl(null), { cache: 'no-store', credentials: 'include' });
           if (res.ok) sessions = await res.json();
         } catch {}
       }
@@ -435,9 +448,14 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
         });
 
-        // If we have a target and no match, skip this session
-        // Be more lenient: if no list candidates at all, include the session if it's grammar-related
-        if (target && !matchesTarget && listCandidates.length > 0) return;
+        // IMPORTANT: Only apply stars from sessions that match the current grammar list.
+        // If a session has no list identifiers at all, we cannot safely attribute it to this list,
+        // so we skip it (otherwise every list shows the same stars).
+        if (fileBasename) {
+          if (!matchesTarget) return;
+        } else {
+          if (target && !matchesTarget) return;
+        }
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);
