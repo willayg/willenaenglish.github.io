@@ -15,14 +15,14 @@
   <!-- API config for Cloudflare -->
   <script src="/js/api-config.js"></script>
   <script>
-    // EMERGENCY FIX: Redirect to Netlify for all authenticated pages
-    // Cross-origin cookies don't work - MUST be on willenaenglish.netlify.app
+    // EMERGENCY FIX: Redirect to students domain for all authenticated pages
+    // Cross-origin cookies don't work - MUST be on students.willenaenglish.com
     (function() {
       const host = window.location.hostname;
-      // Allow localhost/127.0.0.1 for local dev; only willenaenglish.netlify.app works in production
+      // Allow localhost/127.0.0.1 for local dev; only students.willenaenglish.com works in production
       const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
-      if (!isLocalDev && host !== 'willenaenglish.netlify.app') {
-        const netlifyUrl = 'https://willenaenglish.netlify.app' + window.location.pathname + window.location.search;
+      if (!isLocalDev && host !== 'students.willenaenglish.com') {
+        const netlifyUrl = 'https://students.willenaenglish.com' + window.location.pathname + window.location.search;
         console.log('[Dashboard] Redirecting to Netlify for auth:', netlifyUrl);
         window.location.replace(netlifyUrl);
         return;

@@ -2,15 +2,15 @@
  * API Configuration - Simple and Deterministic
  * VERSION: 2025-12-16 HOTFIX
  * 
- * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, localhost, netlify.app):
+ * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, students.willenaenglish.com, localhost):
  *   → Relative paths only: /.netlify/functions/<name>
  *   → Same-origin requests, cookies work automatically
  *   → NO absolute URLs, NO proxy domains, NO api-cf.*
  *
  * GITHUB PAGES (willenaenglish.github.io):
- *   → Absolute URL to Netlify: https://willenaenglish.netlify.app/.netlify/functions/<name>
+ *   → Absolute URL to students domain: https://students.willenaenglish.com/.netlify/functions/<name>
  *   → Cross-origin, requires credentials: 'include'
- *   → Known cookie-blocking browsers redirected to Netlify
+ *   → Known cookie-blocking browsers redirected to students domain
  */
 
 (function() {
@@ -20,7 +20,7 @@
   // CONSTANTS
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
-  const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
+  const NETLIFY_BASE = 'https://students.willenaenglish.com';
   // Cloudflare worker endpoints (branch testing)
   const USE_CF_WORKERS = true; // enable CF routing on this branch
   const CF_FUNCTIONS = {
@@ -63,14 +63,14 @@
   // ============================================================
   // API BASE - Simple rule
   // ============================================================
-  // On willenaenglish.netlify.app: relative paths (same-origin) - this is the ONLY place auth works
-  // GitHub Pages: absolute Netlify URL (cross-origin)
-  // Custom domains: absolute Netlify URL (cross-origin) - but users should be redirected to netlify anyway
-  const isNetlifyApp = currentHost === 'willenaenglish.netlify.app';
+  // On students.willenaenglish.com: relative paths (same-origin) - this is the ONLY place auth works
+  // GitHub Pages: absolute students domain URL (cross-origin)
+  // Custom domains: absolute students domain URL (cross-origin) - but users should be redirected to students domain anyway
+  const isNetlifyApp = currentHost === 'students.willenaenglish.com';
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
   
-  // ONLY use relative paths on willenaenglish.netlify.app or localhost
-  // Everything else needs absolute URLs to Netlify
+  // ONLY use relative paths on students.willenaenglish.com or localhost
+  // Everything else needs absolute URLs to students domain
   const API_BASE = (isNetlifyApp || isLocalhost) ? '' : NETLIFY_BASE;
 
   // ============================================================
