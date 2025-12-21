@@ -951,26 +951,27 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
           _cached: true,
           _cached_at: payload.cached_at || cacheData.updated_at,
         }, 200, origin, startMs, false);
+      } else {
+        console.warn('[progress-summary] Cache payload missing topEntries for leaderboard_stars_global:', payload);
       }
+    } else {
+      console.warn('[progress-summary] No cache data found for leaderboard_stars_global, timeframe=' + timeframe);
     }
   } catch (e) {
     console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message || e);
     // No cache available - return empty rather than slow compute (cache populated by Netlify)
-    return timedJsonResponse({
-      success: true,
-      timeframe,
-      leaderboard: [],
-      _no_cache: true,
-    }, 200, origin, startMs, false);
+    console.warn('[progress-summary] leaderboard_stars_global returning empty (cache not populated). Timeframe:', timeframe);
   }
 
   // Cache hit handled above - if we get here, cache was empty
   // Return empty leaderboard (Netlify traffic will populate cache)
+  console.warn('[progress-summary] leaderboard_stars_global: returning empty leaderboard for timeframe=' + timeframe + '. This is expected if cache is not yet populated.');
   return timedJsonResponse({
     success: true,
     timeframe,
     leaderboard: [],
     _no_cache: true,
+    _warning: 'Cache not yet populated. Ensure leaderboard generation cron or Netlify function is running.',
   }, 200, origin, startMs, false);
 }
 

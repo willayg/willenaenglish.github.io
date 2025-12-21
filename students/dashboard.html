@@ -981,6 +981,8 @@
         if (!container || !card) return;
 
         if (!data || !data.success || !Array.isArray(data.leaderboard) || data.leaderboard.length === 0) {
+          const reason = !data ? 'no data' : !data.success ? 'success=false' : !Array.isArray(data.leaderboard) ? 'leaderboard not array' : 'empty leaderboard';
+          console.warn('[renderGlobalLeaderboard] No data to render. Reason:', reason, 'Data:', data);
           container.innerHTML = `<p style="text-align:center;color:#666;">${t('No data available')}</p>`;
           return;
         }
@@ -1041,6 +1043,7 @@
         });
         html += '</ul>';
         container.innerHTML = html;
+        console.log('[renderGlobalLeaderboard] Rendered', sorted.length, 'entries for metric:', metric);
       }
 
       // Fetch and render stars leaderboard
@@ -1211,15 +1214,36 @@
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
+          
+          // Validate response structure
+          if (!data || typeof data !== 'object') {
+            console.error('[Global LB] Invalid response type:', typeof data, data);
+            throw new Error('Invalid response: expected object');
+          }
+          
+          if (!data.success) {
+            console.error('[Global LB] API returned success=false:', data.error || data);
+            throw new Error(data.error || 'API returned success=false');
+          }
+          
+          if (!Array.isArray(data.leaderboard)) {
+            console.error('[Global LB] Invalid leaderboard field:', typeof data.leaderboard, 'expected array. Full response:', data);
+            throw new Error('Invalid leaderboard field: expected array');
+          }
+          
           globalLbCache.set(timeframe, data);
           setLbToLocal(cacheKey, data);
           renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', data, globalLbMetric);
         } catch (err) {
-          console.error('Global leaderboard error:', err);
+          console.error('[Global LB] Error:', err.message, err);
           // Only show error if we have no cached data
           if (!local?.data) {
             const container = document.getElementById('globalLeaderboardContent');
-            if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
+            if (container) {
+              container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}: ${err.message}</p>`;
+            }
+          } else {
+            console.warn('[Global LB] Fetch failed but showing cached data');
           }
         } finally {
           spinner?.classList.add('hidden');
