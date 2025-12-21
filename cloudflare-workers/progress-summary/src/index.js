@@ -961,43 +961,26 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
   // This ensures leaderboard is always available, even on first request
   console.log('[progress-summary] Cache miss for leaderboard_stars_global, computing on-demand. Timeframe:', timeframe);
   try {
-    // Fetch aggregated stats for all students using REST API
-    const select = 'id,name,avatar,class';
-    const resp = await fetch(
-      `${client.url}/rest/v1/profiles?role=eq.student&approved=eq.true&select=${encodeURIComponent(select)}&limit=500`,
-      {
-        headers: {
-          'apikey': client.key,
-          'Authorization': `Bearer ${client.key}`,
-        },
-      }
-    );
+    // Fetch all students approved
+    const profiles = await client.query('profiles', {
+      select: 'id,name,avatar,class',
+      filters: [
+        { column: 'role', op: 'eq', value: 'student' },
+        { column: 'approved', op: 'eq', value: true },
+      ],
+      limit: 500,
+    });
 
-    if (!resp.ok) {
-      throw new Error(`Supabase query failed: ${resp.status}`);
-    }
-
-    const profiles = await resp.json();
     if (!Array.isArray(profiles)) {
-      throw new Error('Invalid response: expected array');
+      throw new Error('Invalid profiles response');
     }
 
-    // Now fetch points_attempts and aggregate
-    const attemptsResp = await fetch(
-      `${client.url}/rest/v1/points_attempts?select=${encodeURIComponent('user_id,stars,points,created_at')}&limit=10000`,
-      {
-        headers: {
-          'apikey': client.key,
-          'Authorization': `Bearer ${client.key}`,
-        },
-      }
-    );
+    // Fetch all points attempts
+    const attempts = await client.query('points_attempts', {
+      select: 'user_id,stars,points,created_at',
+      limit: 10000,
+    });
 
-    if (!attemptsResp.ok) {
-      throw new Error(`Fetch attempts failed: ${attemptsResp.status}`);
-    }
-
-    const attempts = await attemptsResp.json();
     if (!Array.isArray(attempts)) {
       throw new Error('Invalid attempts response');
     }
@@ -1021,7 +1004,7 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
 
     // Build leaderboard
     const leaderboard = profiles
-      .map((p, idx) => {
+      .map((p) => {
         const s = stats[p.id] || { stars: 0, points: 0 };
         return {
           user_id: p.id,
