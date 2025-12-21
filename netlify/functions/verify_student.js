@@ -480,20 +480,111 @@ exports.handler = async (event) => {
     await checkAndIncrement(RATE.ipMap, clientIp, true);
     await checkAndIncrement(RATE.userMap, userKey, true);
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        student: {
-          id: match.id,
-          username: match.username,
-          email: match.email,
-          name: match.name,
-          korean_name: match.korean_name
-        }
-      })
-    };
+    // Generate session tokens for the verified student
+    let sessionData = null;
+    try {
+      if (!match.email) {
+        console.error('Cannot create session: student has no email');
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ 
+            success: false, 
+            error: 'Student account is missing email. Please contact support.' 
+          })
+        };
+      }
+
+      // Sign in as the user using admin auth
+      const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: match.email
+      });
+
+      if (authError || !authData?.properties?.hashed_token) {
+        console.error('Failed to generate auth link:', authError);
+        // Fallback: try admin.createUser session (if available)
+        throw authError || new Error('No hashed token');
+      }
+
+      // Exchange the hashed token for a session
+      const { data: sessionResult, error: sessionError } = await supabase.auth.verifyOtp({
+        token_hash: authData.properties.hashed_token,
+        type: 'magiclink'
+      });
+
+      if (sessionError || !sessionResult?.session) {
+        console.error('Failed to create session:', sessionError);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ 
+            success: false, 
+            error: 'Failed to create login session. Please try again.' 
+          })
+        };
+      }
+
+      sessionData = sessionResult.session;
+      
+      // Set secure cookies
+      const cookieOptions = [
+        'Path=/',
+        'HttpOnly',
+        'SameSite=Lax',
+        'Max-Age=604800' // 7 days
+      ];
+      
+      if (origin.startsWith('https://')) {
+        cookieOptions.push('Secure');
+      }
+
+      const accessCookie = `sb-access-token=${sessionData.access_token}; ${cookieOptions.join('; ')}`;
+      const refreshCookie = `sb-refresh-token=${sessionData.refresh_token}; ${cookieOptions.join('; ')}`;
+
+      return {
+        statusCode: 200,
+        headers: {
+          ...headers,
+          'Set-Cookie': [accessCookie, refreshCookie]
+        },
+        multiValueHeaders: {
+          'Set-Cookie': [accessCookie, refreshCookie]
+        },
+        body: JSON.stringify({
+          success: true,
+          student: {
+            id: match.id,
+            username: match.username,
+            email: match.email,
+            name: match.name,
+            korean_name: match.korean_name
+          },
+          session: {
+            access_token: sessionData.access_token,
+            refresh_token: sessionData.refresh_token
+          }
+        })
+      };
+    } catch (sessionErr) {
+      console.error('Session creation failed, returning student data only:', sessionErr);
+      // Return student data without session as fallback
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          student: {
+            id: match.id,
+            username: match.username,
+            email: match.email,
+            name: match.name,
+            korean_name: match.korean_name
+          },
+          warning: 'Session creation failed'
+        })
+      };
+    }
 
   } catch (err) {
     console.error('Error verifying student:', err);

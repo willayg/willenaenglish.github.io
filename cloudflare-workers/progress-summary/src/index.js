@@ -955,80 +955,22 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
     }
   } catch (e) {
     console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message || e);
-    // Continue to compute from scratch
+    // No cache available - return empty rather than slow compute (cache populated by Netlify)
+    return timedJsonResponse({
+      success: true,
+      timeframe,
+      leaderboard: [],
+      _no_cache: true,
+    }, 200, origin, startMs, false);
   }
 
-  // Fallback: compute from scratch (slow path)
-  // Fetch all approved students
-  let students = [];
-  let offset = 0;
-  const batchSize = 500;
-  
-  while (true) {
-    const batch = await client.query('profiles', {
-      select: 'id,name,username,avatar,class',
-      filters: [
-        { column: 'role', op: 'eq', value: 'student' },
-        { column: 'approved', op: 'eq', value: true },
-      ],
-      order: { column: 'id', ascending: true },
-      range: { from: offset, to: offset + batchSize - 1 },
-    });
-    if (!batch || !batch.length) break;
-    students.push(...batch);
-    if (batch.length < batchSize) break;
-    offset += batchSize;
-  }
-
-  if (!students.length) {
-    return timedJsonResponse({ success: true, leaderboard: [] }, 200, origin, startMs, false);
-  }
-
-  const filtered = students.filter(p => !p.username || p.username.length > 1);
-  if (!filtered.length) {
-    return timedJsonResponse({ success: true, leaderboard: [] }, 200, origin, startMs, false);
-  }
-
-  const ids = filtered.map(p => p.id).filter(Boolean);
-  const pointTotals = await aggregatePointsForIds(client, ids, firstOfMonthIso);
-  const pointsMap = new Map(pointTotals.map(row => [row.user_id, row.points]));
-  const sessions = await fetchSessionsForUsers(client, ids, firstOfMonthIso);
-  const starsByUser = buildStarsByUserMap(sessions);
-
-  const sortedEntries = filtered.map(profile => ({
-    user_id: profile.id,
-    name: profile.name || profile.username || 'Student',
-    avatar: profile.avatar || null,
-    class: profile.class || null,
-    points: Math.round(pointsMap.get(profile.id) || 0),
-    stars: starsByUser.get(profile.id) || 0,
-  }));
-  sortedEntries.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
-
-  const topLimit = 15;
-  const topEntries = finalizeLeaderboard(sortedEntries.slice(0, topLimit).map(e => ({ ...e })));
-
-  // Format with self marker
-  const formatted = topEntries.map(entry => ({ ...entry, self: entry.user_id === userId }));
-  let hasUser = formatted.some(e => e.user_id === userId);
-
-  if (!hasUser && userId) {
-    const userEntry = sortedEntries.find(e => e.user_id === userId);
-    if (userEntry) {
-      const rank = sortedEntries.findIndex(e => e.user_id === userId) + 1;
-      formatted.push({
-        ...userEntry,
-        superScore: Math.round((userEntry.stars * userEntry.points) / 1000),
-        rank,
-        self: true,
-      });
-    }
-  }
-
+  // Cache hit handled above - if we get here, cache was empty
+  // Return empty leaderboard (Netlify traffic will populate cache)
   return timedJsonResponse({
     success: true,
     timeframe,
-    leaderboard: formatted,
+    leaderboard: [],
+    _no_cache: true,
   }, 200, origin, startMs, false);
 }
 
