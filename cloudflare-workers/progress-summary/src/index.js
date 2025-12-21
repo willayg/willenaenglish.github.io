@@ -1004,8 +1004,8 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, e
       throw new Error('Invalid profiles response');
     }
 
-    // Fetch all points attempts
-    const attempts = await client.query('points_attempts', {
+    // Fetch all progress attempts
+    const attempts = await client.query('progress_attempts', {
       select: 'user_id,stars,points,created_at',
       limit: 10000,
     });
@@ -1137,8 +1137,8 @@ async function generateLeaderboardCache(client, timeframe, env) {
       return;
     }
 
-    // Fetch all points attempts
-    const attempts = await client.query('points_attempts', {
+    // Fetch all progress attempts
+    const attempts = await client.query('progress_attempts', {
       select: 'user_id,stars,points,created_at',
       limit: 10000,
     });
