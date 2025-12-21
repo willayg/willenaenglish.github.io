@@ -31,6 +31,7 @@
     log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
     homework_api: 'https://homework-api.willena.workers.dev',
     progress_summary: 'https://progress-summary.willena.workers.dev',
+    verify_student: 'https://verify-student.willena.workers.dev',
   };
   // Back-compat for older code paths that referenced a single base
   const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
@@ -60,6 +61,7 @@
     log_word_attempt: CF_WORKER_URLS.log_word_attempt,
     homework_api: CF_WORKER_URLS.homework_api,
     progress_summary: CF_WORKER_URLS.progress_summary,
+    verify_student: CF_WORKER_URLS.verify_student,
   };
 
   // ============================================================
