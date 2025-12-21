@@ -891,12 +891,30 @@ async function handleLeaderboardStarsClass(client, userId, timeframe, origin) {
   }, 200, origin, startMs, false);
 }
 
-async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
+async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, env) {
   const startMs = Date.now();
-  const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
+  const kvKey = `leaderboard_stars_global_${timeframe || 'all'}`;
 
-  // Fast path: check leaderboard_cache table (populated by cron)
-  // This avoids expensive aggregation when cached data is available
+  // Fast path 1: Check KV cache (instant, edge)
+  try {
+    const kvData = await env.LEADERBOARD_CACHE.get(kvKey);
+    if (kvData) {
+      console.log('[progress-summary] KV cache hit for leaderboard_stars_global', timeframe);
+      const data = JSON.parse(kvData);
+      return timedJsonResponse({
+        success: true,
+        timeframe: data.timeframe,
+        leaderboard: data.leaderboard,
+        _cached: 'kv',
+        _cached_at: data._cached_at,
+      }, 200, origin, startMs, false);
+    }
+  } catch (e) {
+    console.warn('[progress-summary] KV cache read error:', e?.message);
+    // Fall through to database cache
+  }
+
+  // Fast path 2: Check leaderboard_cache table (populated by cron)
   try {
     const cacheRows = await client.query('leaderboard_cache', {
       select: 'payload,updated_at',
@@ -910,10 +928,9 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
     const cacheData = Array.isArray(cacheRows) && cacheRows.length > 0 ? cacheRows[0] : null;
 
     if (cacheData && cacheData.payload) {
-      console.log('[progress-summary] DB cache hit for leaderboard_stars_global', timeframe, 'updated_at=', cacheData.updated_at);
+      console.log('[progress-summary] DB cache hit for leaderboard_stars_global', timeframe);
       const payload = typeof cacheData.payload === 'string' ? JSON.parse(cacheData.payload) : cacheData.payload;
       
-      // Format cached payload for response
       if (payload.topEntries && Array.isArray(payload.topEntries)) {
         const leaderboard = payload.topEntries.map(entry => ({
           user_id: entry.user_id,
@@ -927,7 +944,6 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
           self: entry.user_id === userId,
         }));
 
-        // Add current user if not in top entries
         const hasUser = leaderboard.some(e => e.user_id === userId);
         if (!hasUser && userId && payload.userPoints && payload.userPoints[userId]) {
           const up = payload.userPoints[userId];
@@ -944,21 +960,34 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
           });
         }
 
-        return timedJsonResponse({
+        const response = {
           success: true,
           timeframe: payload.timeframe || timeframe,
           leaderboard,
-          _cached: true,
+          _cached: 'db',
           _cached_at: payload.cached_at || cacheData.updated_at,
-        }, 200, origin, startMs, false);
+        };
+
+        // Store in KV for future requests (1 hour TTL)
+        try {
+          await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify({
+            timeframe: payload.timeframe || timeframe,
+            leaderboard,
+            _cached_at: payload.cached_at || cacheData.updated_at,
+          }), { expirationTtl: 3600 });
+          console.log('[progress-summary] Stored leaderboard in KV cache for', timeframe);
+        } catch (e) {
+          console.warn('[progress-summary] Failed to store in KV:', e?.message);
+        }
+
+        return timedJsonResponse(response, 200, origin, startMs, false);
       }
     }
   } catch (e) {
-    console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message || e);
+    console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message);
   }
 
   // Fallback: compute on-demand if cache miss
-  // This ensures leaderboard is always available, even on first request
   console.log('[progress-summary] Cache miss for leaderboard_stars_global, computing on-demand. Timeframe:', timeframe);
   try {
     // Fetch all students approved
@@ -1014,7 +1043,7 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
           points: s.points,
           stars: s.stars,
           superScore: Math.round((s.stars * s.points) / 1000),
-          rank: 0, // will update below
+          rank: 0,
           self: p.id === userId,
         };
       })
@@ -1024,13 +1053,27 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
 
     console.log('[progress-summary] Computed leaderboard_stars_global on-demand with', leaderboard.length, 'entries in', Date.now() - startMs, 'ms');
 
-    return timedJsonResponse({
+    const response = {
       success: true,
       timeframe,
       leaderboard,
       _cached: false,
       _computed_ms: Date.now() - startMs,
-    }, 200, origin, startMs, false);
+    };
+
+    // Store in KV for future requests (30 min TTL for computed data)
+    try {
+      await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify({
+        timeframe,
+        leaderboard,
+        _cached_at: new Date().toISOString(),
+      }), { expirationTtl: 1800 });
+      console.log('[progress-summary] Stored computed leaderboard in KV cache for', timeframe);
+    } catch (e) {
+      console.warn('[progress-summary] Failed to store computed result in KV:', e?.message);
+    }
+
+    return timedJsonResponse(response, 200, origin, startMs, false);
   } catch (e) {
     console.error('[progress-summary] Fallback computation failed for leaderboard_stars_global:', e?.message || e);
     return timedJsonResponse({
@@ -1072,69 +1115,118 @@ async function handleChallengingV2(client, userId, origin) {
 }
 
 // Generate leaderboard cache (called by cron trigger)
-async function generateLeaderboardCache(client, timeframe) {
+async function generateLeaderboardCache(client, timeframe, env) {
   const startMs = Date.now();
+  const kvKey = `leaderboard_stars_global_${timeframe || 'all'}`;
+  
   try {
     console.log('[cron] Generating leaderboard cache for timeframe:', timeframe);
     
-    // Get top 15 students by stars for this timeframe
-    const whereClause = timeframe === 'month' 
-      ? `AND pa.created_at >= NOW() - INTERVAL '30 days'` 
-      : '';
-    
-    const query = `
-      SELECT 
-        p.id,
-        p.name,
-        p.avatar,
-        p.class,
-        COALESCE(SUM(pa.stars), 0) AS stars,
-        COALESCE(SUM(pa.points), 0) AS points,
-        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(pa.stars), 0) DESC) AS rank
-      FROM profiles p
-      LEFT JOIN points_attempts pa ON p.id = pa.user_id ${whereClause}
-      WHERE p.role = 'student' AND p.approved = true
-      GROUP BY p.id, p.name, p.avatar, p.class
-      ORDER BY stars DESC
-      LIMIT 15
-    `;
-    
-    // Execute raw SQL query through Supabase
-    const resp = await fetch(`${client.url}/rest/v1/rpc/get_leaderboard_cache`, {
-      method: 'POST',
-      headers: {
-        'apikey': client.key,
-        'Authorization': `Bearer ${client.key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ p_timeframe: timeframe }),
+    // Fetch all approved students
+    const profiles = await client.query('profiles', {
+      select: 'id,name,avatar,class',
+      filters: [
+        { column: 'role', op: 'eq', value: 'student' },
+        { column: 'approved', op: 'eq', value: true },
+      ],
+      limit: 500,
     });
-    
-    if (!resp.ok) {
-      // Fallback: compute locally if RPC doesn't exist
-      console.warn('[cron] RPC get_leaderboard_cache not available, computing locally');
-      // For now, just log and skip - a full SQL implementation would go here
+
+    if (!Array.isArray(profiles)) {
+      console.warn('[cron] Invalid profiles response');
       return;
     }
-    
-    const topEntries = await resp.json();
-    if (!Array.isArray(topEntries)) {
-      console.warn('[cron] Unexpected response format from RPC');
+
+    // Fetch all points attempts
+    const attempts = await client.query('points_attempts', {
+      select: 'user_id,stars,points,created_at',
+      limit: 10000,
+    });
+
+    if (!Array.isArray(attempts)) {
+      console.warn('[cron] Invalid attempts response');
       return;
     }
-    
-    const payload = {
+
+    // Aggregate by user
+    const stats = {};
+    const monthStart = timeframe === 'month' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() : null;
+
+    attempts.forEach(attempt => {
+      // Filter by timeframe
+      if (monthStart && new Date(attempt.created_at) < new Date(monthStart)) {
+        return;
+      }
+
+      if (!stats[attempt.user_id]) {
+        stats[attempt.user_id] = { stars: 0, points: 0 };
+      }
+      stats[attempt.user_id].stars += Number(attempt.stars) || 0;
+      stats[attempt.user_id].points += Number(attempt.points) || 0;
+    });
+
+    // Build top 15 leaderboard
+    const leaderboard = profiles
+      .map((p) => {
+        const s = stats[p.id] || { stars: 0, points: 0 };
+        return {
+          user_id: p.id,
+          name: p.name || 'Student',
+          avatar: p.avatar || null,
+          class: p.class || null,
+          points: s.points,
+          stars: s.stars,
+          superScore: Math.round((s.stars * s.points) / 1000),
+          rank: 0,
+          self: false,
+        };
+      })
+      .sort((a, b) => (b.stars - a.stars) || (b.points - a.points))
+      .slice(0, 15)
+      .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
+
+    const cachePayload = {
       timeframe,
-      topEntries: topEntries.map(e => ({
-        user_id: e.id,
-        name: e.name,
-        avatar: e.avatar,
-        class: e.class,
-        stars: e.stars,
-        points: e.points,
-        superScore: Math.round((e.stars * e.points) / 1000),
-        rank: e.rank,
-      })),
+      leaderboard,
+      _cached_at: new Date().toISOString(),
+    };
+
+    // Store in KV (1 hour TTL)
+    try {
+      await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify(cachePayload), { expirationTtl: 3600 });
+      console.log('[cron] Stored leaderboard in KV for', timeframe);
+    } catch (e) {
+      console.warn('[cron] Failed to store in KV:', e?.message);
+    }
+
+    // Also store in database cache table
+    try {
+      const dbCacheRows = await client.query('leaderboard_cache', {
+        select: 'id',
+        filters: [
+          { column: 'section', op: 'eq', value: 'leaderboard_stars_global' },
+          { column: 'timeframe', op: 'eq', value: timeframe || 'all' },
+        ],
+        limit: 1,
+      });
+
+      const existingId = Array.isArray(dbCacheRows) && dbCacheRows.length > 0 ? dbCacheRows[0].id : null;
+
+      if (existingId) {
+        // Update existing
+        await client.query('leaderboard_cache', {
+          filters: [{ column: 'id', op: 'eq', value: existingId }],
+        });
+      }
+    } catch (e) {
+      console.warn('[cron] Failed to update database cache:', e?.message);
+    }
+
+    console.log('[cron] Leaderboard cache generated for', timeframe, 'in', Date.now() - startMs, 'ms');
+  } catch (e) {
+    console.error('[cron] Error generating leaderboard cache for', timeframe, ':', e.message);
+  }
+}
       cached_at: new Date().toISOString(),
     };
     
@@ -1214,9 +1306,9 @@ export default {
         case 'leaderboard_stars_class':
           return handleLeaderboardStarsClass(client, userId, timeframe, origin);
         case 'leaderboard_stars_global':
-          return handleLeaderboardStarsGlobal(client, userId, timeframe, origin);
+          return handleLeaderboardStarsGlobal(client, userId, timeframe, origin, env);
         case 'leaderboard_global':
-          return handleLeaderboardStarsGlobal(client, userId, 'all', origin);
+          return handleLeaderboardStarsGlobal(client, userId, 'all', origin, env);
         case 'challenging_v2':
           return handleChallengingV2(client, userId, origin);
         case 'challenging':
