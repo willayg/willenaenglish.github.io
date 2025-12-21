@@ -961,52 +961,83 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
   // This ensures leaderboard is always available, even on first request
   console.log('[progress-summary] Cache miss for leaderboard_stars_global, computing on-demand. Timeframe:', timeframe);
   try {
-    const query = timeframe === 'month'
-      ? `
-        SELECT 
-          p.id as user_id,
-          p.name,
-          p.avatar,
-          p.class,
-          COALESCE(SUM(CASE WHEN pa.created_at >= ${firstOfMonthIso ? `'${firstOfMonthIso}'` : 'NOW()'} THEN pa.stars ELSE 0 END), 0) as stars,
-          COALESCE(SUM(CASE WHEN pa.created_at >= ${firstOfMonthIso ? `'${firstOfMonthIso}'` : 'NOW()'} THEN pa.points ELSE 0 END), 0) as points
-        FROM profiles p
-        LEFT JOIN points_attempts pa ON p.id = pa.user_id
-        WHERE p.role = 'student' AND p.approved = true
-        GROUP BY p.id
-        ORDER BY stars DESC, points DESC
-        LIMIT 15
-      `
-      : `
-        SELECT 
-          p.id as user_id,
-          p.name,
-          p.avatar,
-          p.class,
-          COALESCE(SUM(pa.stars), 0) as stars,
-          COALESCE(SUM(pa.points), 0) as points
-        FROM profiles p
-        LEFT JOIN points_attempts pa ON p.id = pa.user_id
-        WHERE p.role = 'student' AND p.approved = true
-        GROUP BY p.id
-        ORDER BY stars DESC, points DESC
-        LIMIT 15
-      `;
+    // Fetch aggregated stats for all students using REST API
+    const select = 'id,name,avatar,class';
+    const resp = await fetch(
+      `${client.url}/rest/v1/profiles?role=eq.student&approved=eq.true&select=${encodeURIComponent(select)}&limit=500`,
+      {
+        headers: {
+          'apikey': client.key,
+          'Authorization': `Bearer ${client.key}`,
+        },
+      }
+    );
 
-    const result = await client.rpc('sql_query', { query_text: query });
-    const rows = Array.isArray(result) ? result : [];
+    if (!resp.ok) {
+      throw new Error(`Supabase query failed: ${resp.status}`);
+    }
 
-    const leaderboard = rows.map((entry, index) => ({
-      user_id: entry.user_id,
-      name: entry.name || 'Student',
-      avatar: entry.avatar || null,
-      class: entry.class || null,
-      points: Number(entry.points) || 0,
-      stars: Number(entry.stars) || 0,
-      superScore: Math.round((Number(entry.stars) * Number(entry.points)) / 1000),
-      rank: index + 1,
-      self: entry.user_id === userId,
-    }));
+    const profiles = await resp.json();
+    if (!Array.isArray(profiles)) {
+      throw new Error('Invalid response: expected array');
+    }
+
+    // Now fetch points_attempts and aggregate
+    const attemptsResp = await fetch(
+      `${client.url}/rest/v1/points_attempts?select=${encodeURIComponent('user_id,stars,points,created_at')}&limit=10000`,
+      {
+        headers: {
+          'apikey': client.key,
+          'Authorization': `Bearer ${client.key}`,
+        },
+      }
+    );
+
+    if (!attemptsResp.ok) {
+      throw new Error(`Fetch attempts failed: ${attemptsResp.status}`);
+    }
+
+    const attempts = await attemptsResp.json();
+    if (!Array.isArray(attempts)) {
+      throw new Error('Invalid attempts response');
+    }
+
+    // Aggregate by user
+    const stats = {};
+    const monthStart = timeframe === 'month' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() : null;
+
+    attempts.forEach(attempt => {
+      // Filter by timeframe
+      if (monthStart && new Date(attempt.created_at) < new Date(monthStart)) {
+        return;
+      }
+
+      if (!stats[attempt.user_id]) {
+        stats[attempt.user_id] = { stars: 0, points: 0 };
+      }
+      stats[attempt.user_id].stars += Number(attempt.stars) || 0;
+      stats[attempt.user_id].points += Number(attempt.points) || 0;
+    });
+
+    // Build leaderboard
+    const leaderboard = profiles
+      .map((p, idx) => {
+        const s = stats[p.id] || { stars: 0, points: 0 };
+        return {
+          user_id: p.id,
+          name: p.name || 'Student',
+          avatar: p.avatar || null,
+          class: p.class || null,
+          points: s.points,
+          stars: s.stars,
+          superScore: Math.round((s.stars * s.points) / 1000),
+          rank: 0, // will update below
+          self: p.id === userId,
+        };
+      })
+      .sort((a, b) => (b.stars - a.stars) || (b.points - a.points))
+      .slice(0, 15)
+      .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
 
     console.log('[progress-summary] Computed leaderboard_stars_global on-demand with', leaderboard.length, 'entries in', Date.now() - startMs, 'ms');
 
@@ -1021,7 +1052,7 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin) {
     console.error('[progress-summary] Fallback computation failed for leaderboard_stars_global:', e?.message || e);
     return timedJsonResponse({
       success: false,
-      error: 'Failed to compute leaderboard',
+      error: 'Failed to compute leaderboard: ' + (e?.message || 'unknown error'),
       timeframe,
       leaderboard: [],
     }, 500, origin, startMs, false);
