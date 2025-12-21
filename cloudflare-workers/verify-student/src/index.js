@@ -325,20 +325,15 @@ export default {
 
       const linkData = await linkRes.json();
       
-      // Extract token from action_link
-      if (!linkData.properties?.action_link) {
-        throw new Error('No action_link in response');
-      }
+      // The hashed_token can be used directly with verifyOtp
+      const hashedToken = linkData.properties?.hashed_token;
       
-      const actionUrl = new URL(linkData.properties.action_link);
-      const token = actionUrl.searchParams.get('token');
-      const tokenType = actionUrl.searchParams.get('type') || 'magiclink';
-      
-      if (!token) {
-        throw new Error('No token in action_link');
+      if (!hashedToken) {
+        console.error('No hashed_token in response:', JSON.stringify(linkData));
+        throw new Error('No hashed_token in response');
       }
 
-      // Verify the token to get a session
+      // Step 3: Verify the OTP to get session tokens
       const verifyRes = await fetch(`${env.SUPABASE_URL}/auth/v1/verify`, {
         method: 'POST',
         headers: {
@@ -346,34 +341,41 @@ export default {
           'apikey': env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY
         },
         body: JSON.stringify({
-          token_hash: token,
-          type: tokenType
+          type: 'magiclink',
+          token_hash: hashedToken
         })
       });
 
+      const verifyText = await verifyRes.text();
+      console.log('Verify response:', verifyRes.status, verifyText.substring(0, 200));
+
       if (!verifyRes.ok) {
-        const errText = await verifyRes.text();
-        console.error('Verify token failed:', errText);
-        throw new Error('Failed to verify token');
+        console.error('Verify token failed:', verifyText);
+        throw new Error('Failed to verify token: ' + verifyText.substring(0, 100));
       }
 
-      const sessionData = await verifyRes.json();
+      let sessionData;
+      try {
+        sessionData = JSON.parse(verifyText);
+      } catch (e) {
+        throw new Error('Invalid JSON from verify');
+      }
       
       if (!sessionData.access_token) {
+        console.error('No access_token in session:', JSON.stringify(sessionData).substring(0, 200));
         throw new Error('No access_token in session');
       }
 
       // Build response with session cookies
-      const cookieOptions = 'Path=/; HttpOnly; SameSite=Lax; Max-Age=604800';
-      const secureCookie = origin.startsWith('https://') ? '; Secure' : '';
+      const cookieOptions = 'Path=/; HttpOnly; SameSite=None; Max-Age=604800; Secure';
       
       const responseHeaders = new Headers({
         'Content-Type': 'application/json',
         ...getCorsHeaders(origin)
       });
       
-      responseHeaders.append('Set-Cookie', `sb-access-token=${sessionData.access_token}; ${cookieOptions}${secureCookie}`);
-      responseHeaders.append('Set-Cookie', `sb-refresh-token=${sessionData.refresh_token}; ${cookieOptions}${secureCookie}`);
+      responseHeaders.append('Set-Cookie', `sb-access-token=${sessionData.access_token}; ${cookieOptions}`);
+      responseHeaders.append('Set-Cookie', `sb-refresh-token=${sessionData.refresh_token}; ${cookieOptions}`);
 
       return new Response(JSON.stringify({
         success: true,
@@ -394,11 +396,12 @@ export default {
       });
 
     } catch (sessionErr) {
-      console.error('Session creation failed:', sessionErr);
-      // Return error since we need session for Easy Login
+      console.error('Session creation failed:', sessionErr.message || sessionErr);
+      // Return detailed error for debugging
       return jsonResponse({ 
         success: false, 
-        error: 'Failed to create login session. Please try again or use username/password.' 
+        error: 'Failed to create login session. Please try again or use username/password.',
+        debug: sessionErr.message || String(sessionErr)
       }, 500, origin);
     }
   }
