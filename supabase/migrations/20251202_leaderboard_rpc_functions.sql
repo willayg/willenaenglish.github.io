@@ -245,9 +245,9 @@ BEGIN
     LEFT JOIN student_stars sst ON sst.user_id = s.id
   )
   SELECT * FROM ranked
-  WHERE rank <= p_limit
-     OR user_id = p_user_id
-  ORDER BY rank ASC;
+    WHERE ranked.rank <= p_limit
+      OR ranked.user_id = p_user_id
+    ORDER BY ranked.rank ASC;
 END;
 $$;
 
