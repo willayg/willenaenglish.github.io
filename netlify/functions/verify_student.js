@@ -495,26 +495,54 @@ exports.handler = async (event) => {
         };
       }
 
-      // Sign in as the user using admin auth
-      const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email: match.email
-      });
-
-      if (authError || !authData?.properties?.hashed_token) {
-        console.error('Failed to generate auth link:', authError);
-        // Fallback: try admin.createUser session (if available)
-        throw authError || new Error('No hashed token');
+      // Use admin API to get the user by email, then create a session
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(match.email);
+      
+      if (userError || !userData?.user?.id) {
+        console.error('Failed to find auth user:', userError);
+        throw userError || new Error('User not found in auth');
       }
 
-      // Exchange the hashed token for a session
-      const { data: sessionResult, error: sessionError } = await supabase.auth.verifyOtp({
-        token_hash: authData.properties.hashed_token,
-        type: 'magiclink'
-      });
+      // Generate session for this user (admin API in newer Supabase)
+      // If this method doesn't exist, we'll catch and use fallback
+      let sessionResult;
+      
+      try {
+        // Try newer admin.createSession method (Supabase v2.39+)
+        const createSessionResult = await supabase.auth.admin.createSession({
+          user_id: userData.user.id
+        });
+        sessionResult = createSessionResult;
+      } catch (methodErr) {
+        // Fallback: generate magic link and extract token
+        console.log('createSession not available, using magic link method');
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: 'magiclink',
+          email: match.email
+        });
+        
+        if (linkError || !linkData?.properties?.action_link) {
+          throw linkError || new Error('Failed to generate magic link');
+        }
+        
+        // Extract token from the action_link URL
+        const url = new URL(linkData.properties.action_link);
+        const token = url.searchParams.get('token');
+        const type = url.searchParams.get('type') || 'magiclink';
+        
+        if (!token) {
+          throw new Error('No token in magic link');
+        }
+        
+        // Verify the OTP to get a session
+        sessionResult = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: type
+        });
+      }
 
-      if (sessionError || !sessionResult?.session) {
-        console.error('Failed to create session:', sessionError);
+      if (sessionResult.error || !sessionResult.data?.session) {
+        console.error('Failed to create session:', sessionResult.error);
         return {
           statusCode: 500,
           headers,
@@ -525,7 +553,7 @@ exports.handler = async (event) => {
         };
       }
 
-      sessionData = sessionResult.session;
+      sessionData = sessionResult.data.session;
       
       // Set secure cookies
       const cookieOptions = [
