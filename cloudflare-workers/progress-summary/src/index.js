@@ -1066,57 +1066,57 @@ async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, e
     console.warn('[progress-summary] DB cache read failed for leaderboard_stars_global:', e?.message);
   }
 
-  // Fallback: compute on-demand if cache miss
-  console.log('[progress-summary] Cache miss for leaderboard_stars_global, computing on-demand. Timeframe:', timeframe);
+  // Fallback: Use RPC function to compute in a single query (avoids subrequest limit)
+  console.log('[progress-summary] Cache miss for leaderboard_stars_global, using RPC. Timeframe:', timeframe);
   try {
-    const payload = await computeGlobalLeaderboardPayload(client, timeframe);
-    if (!payload || !Array.isArray(payload.topEntries)) {
-      throw new Error('Invalid leaderboard payload');
+    // Use the Supabase RPC function - only 1 subrequest instead of 50+
+    const rpcRows = await client.rpc('get_global_leaderboard_stars', {
+      p_timeframe: timeframe || 'all',
+      p_user_id: userId,
+      p_limit: 20,
+    });
+
+    if (!Array.isArray(rpcRows)) {
+      throw new Error('RPC returned non-array');
     }
 
-    const leaderboard = payload.topEntries.map(entry => ({
-      ...entry,
-      self: entry.user_id === userId,
+    const leaderboard = rpcRows.map(row => ({
+      user_id: row.user_id,
+      name: row.name || 'Student',
+      avatar: row.avatar || null,
+      class: row.class_name || null,
+      points: Number(row.total_points) || 0,
+      stars: Number(row.total_stars) || 0,
+      superScore: Number(row.super_score) || 0,
+      rank: Number(row.rank) || 0,
+      self: row.user_id === userId,
     }));
 
-    if (!leaderboard.some(entry => entry.user_id === userId) && userId && payload.userPoints && payload.userPoints[userId]) {
-      const me = payload.userPoints[userId];
-      leaderboard.push({
-        user_id: userId,
-        name: me.name || 'You',
-        avatar: me.avatar || null,
-        class: me.class || null,
-        points: me.points || 0,
-        stars: me.stars || 0,
-        superScore: Math.round((me.stars || 0) * (me.points || 0) / 1000),
-        rank: me.rank || leaderboard.length + 1,
-        self: true,
-      });
-    }
-
+    const cachedAt = new Date().toISOString();
     const response = {
       success: true,
-      timeframe: payload.timeframe || timeframe,
+      timeframe: timeframe || 'all',
       leaderboard,
       _cached: false,
       _computed_ms: Date.now() - startMs,
-      _cached_at: payload.cached_at,
+      _cached_at: cachedAt,
     };
 
+    // Store in KV for future requests (30 min TTL)
     try {
       await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify({
-        timeframe: payload.timeframe,
-        leaderboard: payload.topEntries,
-        _cached_at: payload.cached_at,
+        timeframe: timeframe || 'all',
+        leaderboard,
+        _cached_at: cachedAt,
       }), { expirationTtl: 1800 });
-      console.log('[progress-summary] Stored computed leaderboard in KV cache for', timeframe);
+      console.log('[progress-summary] Stored RPC result in KV cache for', timeframe);
     } catch (kvErr) {
-      console.warn('[progress-summary] Failed to store computed result in KV:', kvErr?.message);
+      console.warn('[progress-summary] Failed to store RPC result in KV:', kvErr?.message);
     }
 
     return timedJsonResponse(response, 200, origin, startMs, false);
   } catch (e) {
-    console.error('[progress-summary] Fallback computation failed for leaderboard_stars_global:', e?.message || e);
+    console.error('[progress-summary] RPC computation failed for leaderboard_stars_global:', e?.message || e);
     return timedJsonResponse({
       success: false,
       message: 'Failed to compute leaderboard',
@@ -1161,11 +1161,37 @@ async function generateLeaderboardCache(client, timeframe, env) {
 
   try {
     console.log('[cron] Generating leaderboard cache for timeframe:', timeframe);
-    const payload = await computeGlobalLeaderboardPayload(client, timeframe);
-    if (!payload || !Array.isArray(payload.topEntries)) {
-      console.warn('[cron] Empty payload returned for', timeframe);
+    
+    // Use RPC for single-query computation (avoids subrequest limits)
+    const rpcRows = await client.rpc('get_global_leaderboard_stars', {
+      p_timeframe: timeframe || 'all',
+      p_user_id: null,
+      p_limit: 100, // More entries for cache
+    });
+
+    if (!Array.isArray(rpcRows) || rpcRows.length === 0) {
+      console.warn('[cron] Empty RPC result for', timeframe);
       return;
     }
+
+    const topEntries = rpcRows.map(row => ({
+      user_id: row.user_id,
+      name: row.name || 'Student',
+      avatar: row.avatar || null,
+      class: row.class_name || null,
+      points: Number(row.total_points) || 0,
+      stars: Number(row.total_stars) || 0,
+      superScore: Number(row.super_score) || 0,
+      rank: Number(row.rank) || 0,
+    }));
+
+    const cachedAt = new Date().toISOString();
+    const payload = {
+      timeframe: timeframe || 'all',
+      cached_at: cachedAt,
+      topEntries,
+      userPoints: Object.fromEntries(topEntries.map(e => [e.user_id, e])),
+    };
 
     try {
       await env.LEADERBOARD_CACHE.put(kvKey, JSON.stringify({
