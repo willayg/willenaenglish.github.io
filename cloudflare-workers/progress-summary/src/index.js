@@ -1227,24 +1227,6 @@ async function generateLeaderboardCache(client, timeframe, env) {
     console.error('[cron] Error generating leaderboard cache for', timeframe, ':', e.message);
   }
 }
-      cached_at: new Date().toISOString(),
-    };
-    
-    // Insert or update cache entry
-    const cacheResp = await client.upsert('leaderboard_cache', {
-      section: 'leaderboard_stars_global',
-      timeframe: timeframe || 'all',
-      payload: JSON.stringify(payload),
-      updated_at: new Date().toISOString(),
-    }, {
-      onConflict: ['section', 'timeframe'],
-    });
-    
-    console.log('[cron] Successfully cached leaderboard for', timeframe, 'in', Date.now() - startMs, 'ms');
-  } catch (e) {
-    console.error('[cron] Error generating leaderboard cache for', timeframe, ':', e.message);
-  }
-}
 
 // Main handler
 export default {
