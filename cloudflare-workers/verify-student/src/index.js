@@ -294,15 +294,112 @@ export default {
     checkRate(RATE.ip, clientIp, true);
     checkRate(RATE.user, userKey, true);
 
-    return jsonResponse({
-      success: true,
-      student: {
-        id: match.id,
-        username: match.username,
-        email: match.email,
-        name: match.name,
-        korean_name: match.korean_name
+    // Generate session tokens for the verified student
+    if (!match.email) {
+      return jsonResponse({ 
+        success: false, 
+        error: 'Student account is missing email. Please contact support.' 
+      }, 500, origin);
+    }
+
+    try {
+      // Use Supabase Admin API to generate a magic link, then verify it
+      const linkRes = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': env.SUPABASE_SERVICE_ROLE_KEY
+        },
+        body: JSON.stringify({
+          type: 'magiclink',
+          email: match.email
+        })
+      });
+
+      if (!linkRes.ok) {
+        const errText = await linkRes.text();
+        console.error('Generate link failed:', errText);
+        throw new Error('Failed to generate auth link');
       }
-    }, 200, origin);
+
+      const linkData = await linkRes.json();
+      
+      // Extract token from action_link
+      if (!linkData.properties?.action_link) {
+        throw new Error('No action_link in response');
+      }
+      
+      const actionUrl = new URL(linkData.properties.action_link);
+      const token = actionUrl.searchParams.get('token');
+      const tokenType = actionUrl.searchParams.get('type') || 'magiclink';
+      
+      if (!token) {
+        throw new Error('No token in action_link');
+      }
+
+      // Verify the token to get a session
+      const verifyRes = await fetch(`${env.SUPABASE_URL}/auth/v1/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY
+        },
+        body: JSON.stringify({
+          token_hash: token,
+          type: tokenType
+        })
+      });
+
+      if (!verifyRes.ok) {
+        const errText = await verifyRes.text();
+        console.error('Verify token failed:', errText);
+        throw new Error('Failed to verify token');
+      }
+
+      const sessionData = await verifyRes.json();
+      
+      if (!sessionData.access_token) {
+        throw new Error('No access_token in session');
+      }
+
+      // Build response with session cookies
+      const cookieOptions = 'Path=/; HttpOnly; SameSite=Lax; Max-Age=604800';
+      const secureCookie = origin.startsWith('https://') ? '; Secure' : '';
+      
+      const responseHeaders = new Headers({
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(origin)
+      });
+      
+      responseHeaders.append('Set-Cookie', `sb-access-token=${sessionData.access_token}; ${cookieOptions}${secureCookie}`);
+      responseHeaders.append('Set-Cookie', `sb-refresh-token=${sessionData.refresh_token}; ${cookieOptions}${secureCookie}`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        student: {
+          id: match.id,
+          username: match.username,
+          email: match.email,
+          name: match.name,
+          korean_name: match.korean_name
+        },
+        session: {
+          access_token: sessionData.access_token,
+          refresh_token: sessionData.refresh_token
+        }
+      }), {
+        status: 200,
+        headers: responseHeaders
+      });
+
+    } catch (sessionErr) {
+      console.error('Session creation failed:', sessionErr);
+      // Return error since we need session for Easy Login
+      return jsonResponse({ 
+        success: false, 
+        error: 'Failed to create login session. Please try again or use username/password.' 
+      }, 500, origin);
+    }
   }
 };
