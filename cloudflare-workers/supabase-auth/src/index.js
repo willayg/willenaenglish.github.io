@@ -715,6 +715,62 @@ export default {
         return jsonResponse({ success: true }, 200, origin);
       }
       
+      // ===== SET STUDENT PASSWORD (Easy Login flow) =====
+      // This is called after verify_student succeeds to set a temporary password
+      // so the student can be logged in via username/password flow
+      if (action === 'set_student_password' && request.method === 'POST') {
+        const body = await request.json();
+        const { student_id, password } = body;
+        
+        if (!student_id || !password) {
+          return jsonResponse({ success: false, error: 'Missing student_id or password' }, 400, origin);
+        }
+        
+        if (String(password).length < 6) {
+          return jsonResponse({ success: false, error: 'Password too short' }, 400, origin);
+        }
+        
+        // Verify the student exists and is a student role
+        const profileResp = await fetch(
+          `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(student_id)}&select=id,role,approved`,
+          {
+            headers: {
+              'apikey': env.SUPABASE_SERVICE_KEY,
+              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            },
+          }
+        );
+        
+        const profiles = await profileResp.json();
+        if (!profiles || !profiles[0]) {
+          return jsonResponse({ success: false, error: 'Student not found' }, 404, origin);
+        }
+        
+        const profile = profiles[0];
+        if (profile.role !== 'student') {
+          return jsonResponse({ success: false, error: 'Not a student account' }, 403, origin);
+        }
+        
+        // Update password using admin API
+        const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${student_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          },
+          body: JSON.stringify({ password }),
+        });
+        
+        if (!updateResp.ok) {
+          const errText = await updateResp.text();
+          console.error('[set_student_password] Update failed:', updateResp.status, errText);
+          return jsonResponse({ success: false, error: 'Password update failed' }, 400, origin);
+        }
+        
+        return jsonResponse({ success: true }, 200, origin);
+      }
+      
       // ===== ACTION NOT FOUND =====
       return jsonResponse({ success: false, error: 'Action not found' }, 404, origin);
       
