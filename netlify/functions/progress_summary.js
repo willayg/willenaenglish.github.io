@@ -266,7 +266,7 @@ function classLeaderboardCacheKey(className, timeframe) {
 }
 
 function globalLeaderboardCacheKey(timeframe) {
-  return `lb:global:${timeframe}`;
+  return `lb:global:v2:${timeframe}`;
 }
 
 function normalizeGlobalCachePayload(payload) {
