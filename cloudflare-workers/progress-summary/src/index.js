@@ -970,7 +970,7 @@ async function handleLeaderboardStarsClass(client, userId, timeframe, origin) {
 
 async function handleLeaderboardStarsGlobal(client, userId, timeframe, origin, env) {
   const startMs = Date.now();
-  const kvKey = `leaderboard_stars_global_${timeframe || 'all'}`;
+  const kvKey = `leaderboard_stars_global_v2_${timeframe || 'all'}`;
 
   // Fast path 1: Check KV cache (instant, edge)
   try {
@@ -1157,7 +1157,7 @@ async function handleChallengingV2(client, userId, origin) {
 // Generate leaderboard cache (called by cron trigger)
 async function generateLeaderboardCache(client, timeframe, env) {
   const startMs = Date.now();
-  const kvKey = `leaderboard_stars_global_${timeframe || 'all'}`;
+  const kvKey = `leaderboard_stars_global_v2_${timeframe || 'all'}`;
 
   try {
     console.log('[cron] Generating leaderboard cache for timeframe:', timeframe);
