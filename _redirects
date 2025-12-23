@@ -11,8 +11,6 @@
 
 # Normalize teacher URLs (relative redirects)
 # Note: Teacher login page is login.html (not signin.html)
-/Teachers/index.html        /Teachers/login.html                               301
-/teachers/index.html        /Teachers/login.html                               301
 /teachers/login.html        /Teachers/login.html                               301
 /Teachers/singin.html       /Teachers/login.html                               301
 
