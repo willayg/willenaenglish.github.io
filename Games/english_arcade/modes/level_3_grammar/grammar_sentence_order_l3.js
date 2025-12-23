@@ -13,6 +13,36 @@ const sentenceAudioCache = new Map();
 const MODE = 'grammar_sentence_order';
 const DEFAULT_FILE = 'data/grammar/level3/past_simple_irregular.json';
 
+// Track timeouts so quitting/back navigation can't leave delayed callbacks running
+const __timeouts = new Set();
+function __setSafeTimeout(fn, ms) {
+  const id = setTimeout(() => {
+    __timeouts.delete(id);
+    try { fn(); } catch {}
+  }, ms);
+  __timeouts.add(id);
+  return id;
+}
+function __clearAllTimeouts() {
+  for (const id of Array.from(__timeouts)) {
+    try { clearTimeout(id); } catch {}
+    __timeouts.delete(id);
+  }
+}
+
+function __stopActiveAudio() {
+  if (activeSentenceAudio) {
+    try { activeSentenceAudio.pause(); } catch {}
+    try { activeSentenceAudio.currentTime = 0; } catch {}
+    activeSentenceAudio = null;
+  }
+}
+
+function __removeFloatingUi() {
+  try { document.getElementById('grammarL3QuitBtn')?.remove(); } catch {}
+  try { document.getElementById('so-next-btn')?.remove(); } catch {}
+}
+
 // --- Audio helpers for Level 3 grammar ---
 function normalizeForGrammarKey(value) {
   return String(value || '')
@@ -75,11 +105,7 @@ async function hydrateGrammarAudio(items) {
 function playSentenceAudio(item) {
   if (!item) return;
   const url = item.sentenceAudioUrl;
-  if (activeSentenceAudio) {
-    try { activeSentenceAudio.pause(); } catch {}
-    try { activeSentenceAudio.currentTime = 0; } catch {}
-    activeSentenceAudio = null;
-  }
+  __stopActiveAudio();
   if (url) {
     try {
       let audio = sentenceAudioCache.get(url);
@@ -149,6 +175,11 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  // Defensive cleanup: if a previous run left floating UI/timers, clear them now.
+  __clearAllTimeouts();
+  __stopActiveAudio();
+  __removeFloatingUi();
+
   state = {
     grammarFile: grammarFile || DEFAULT_FILE,
     grammarName: grammarName || null,
@@ -162,6 +193,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     attempted: 0,
     onQuit,
     onComplete,
+    __active: true,
   };
 
   try {
@@ -209,6 +241,9 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
   renderRound();
 
   function renderRound() {
+    if (!state || state.__active !== true) return;
+    // Remove any leftover fixed UI from a previous wrong answer
+    __removeFloatingUi();
     const item = state.list[state.index];
     if (!item) return finish();
 
@@ -301,6 +336,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     });
 
     submitBtn.addEventListener('click', () => {
+      if (!state || state.__active !== true) return;
       const assembled = selection.join(' ').replace(/\s+/g,' ').trim();
       const normalizedAssembled = assembled.replace(/[^\w\s]|_/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
       const isCorrect = normalizedAssembled === canonicalTarget;
@@ -337,7 +373,10 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       } catch (e) {}
 
       // Play sentence audio after feedback (short delay for SFX to finish)
-      setTimeout(() => { playSentenceAudio(item); }, 300);
+      __setSafeTimeout(() => {
+        if (!state || state.__active !== true) return;
+        playSentenceAudio(item);
+      }, 300);
 
       // Hide the check button after submission
       submitBtn.style.opacity = '0';
@@ -347,7 +386,8 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         fb.style.color = '#2e7d32';
         fb.textContent = 'Correct!';
         try { feedbackArea.innerHTML = ''; feedbackArea.appendChild(fb); } catch (e) { container.querySelector('#so-target').after(fb); }
-        setTimeout(() => {
+        __setSafeTimeout(() => {
+          if (!state || state.__active !== true) return;
           state.index += 1;
           renderRound();
         }, 2000); // Increased timeout to allow audio to play
@@ -368,6 +408,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
 
         // Next button for wrong-case (pauses until player advances)
         const nextBtn = document.createElement('button');
+        nextBtn.id = 'so-next-btn';
         nextBtn.textContent = 'Next ▶';
         // Place Next button at bottom center of the screen
         nextBtn.style.position = 'fixed';
@@ -396,6 +437,8 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
 
         nextBtn.addEventListener('click', () => {
           try { fb.remove(); } catch (e) {}
+          try { nextBtn.remove(); } catch (e) {}
+          if (!state || state.__active !== true) return;
           state.index += 1;
           renderRound();
         });
@@ -435,6 +478,13 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     function quitToMenu(reason = 'quit') {
       const current = state;
       if (!current) return;
+
+      // Mark inactive and cancel any pending timers/audio so nothing can mutate UI after quit
+      try { current.__active = false; } catch {}
+      __clearAllTimeouts();
+      __stopActiveAudio();
+      __removeFloatingUi();
+
       // Remove quit button
       try { const qb = document.getElementById('grammarL3QuitBtn'); if (qb) qb.remove(); } catch {}
       // Partial endSession for quit
@@ -457,14 +507,14 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       } catch {}
       // Navigate back to grammar selector / previous screen (match other L3 modes)
       try {
-        if (window.WordArcade?.startGrammarModeSelector) {
+        if (typeof current.onQuit === 'function') {
+          current.onQuit({ reason });
+        } else if (window.WordArcade?.startGrammarModeSelector) {
           window.WordArcade.startGrammarModeSelector();
         } else if (window.WordArcade?.showGrammarLevelsMenu) {
           window.WordArcade.showGrammarLevelsMenu();
         } else if (window.WordArcade?.quitToOpening) {
           window.WordArcade.quitToOpening(true);
-        } else if (history.length > 1) {
-          history.back();
         } else {
           location.reload();
         }
@@ -476,6 +526,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
   }
 
   function finish() {
+    if (!state) return;
     // End session
     try {
       // Use grammarFile path for session tracking to match homework assignment list_key
@@ -493,12 +544,25 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       if (btn) btn.remove();
       document.querySelectorAll('.wa-quit-btn, [title="Quit"]').forEach(b => b.remove());
     } catch {}
+
+    // Prevent any pending callbacks from running after summary renders
+    try { state.__active = false; } catch {}
+    __clearAllTimeouts();
+    __stopActiveAudio();
+    __removeFloatingUi();
+
     const gameArea = document.getElementById('gameArea');
     renderGrammarSummary({ gameArea, score: state.score, total: state.list.length, ctx: { grammarFile: state.grammarFile, grammarName: state.grammarName } });
     if (state && typeof state.onComplete === 'function') state.onComplete(state);
   }
 }
 
-export function stopGrammarSentenceOrderL3() { state = null; }
+export function stopGrammarSentenceOrderL3() {
+  try { if (state) state.__active = false; } catch {}
+  __clearAllTimeouts();
+  __stopActiveAudio();
+  __removeFloatingUi();
+  state = null;
+}
 
 export default { start: startGrammarSentenceOrderL3, stop: stopGrammarSentenceOrderL3 };
