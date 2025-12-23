@@ -106,7 +106,8 @@ function getStatsFromPage() {
   // Read current counters already painted by student_profile.js
   return {
     points: parseInt(document.getElementById('awardPoints')?.textContent)||0,
-    medals: parseInt(document.getElementById('awardMedals')?.textContent)||0,
+    superScore: parseInt(document.getElementById('awardSuperScore')?.textContent)||0,
+    medals: parseInt(document.getElementById('awardSuperScore')?.textContent)||0,
     stars: parseInt(document.getElementById('awardStars')?.textContent)||0,
     // Fallbacks until overview event arrives
     perfectRuns: parseInt(document.getElementById('ovPerfectRuns')?.textContent)||0,
@@ -154,7 +155,8 @@ window.addEventListener('profile:overview', (ev) => {
   const stats = {
     points: Number(ov.points)||0,
     stars: Number(ov.stars)||0,
-    medals: Number(ov.perfect_runs ?? ov.mastered_lists ?? 0)||0,
+    superScore: Math.round((Number(ov.points||0) * Number(ov.stars||0)) / 1000) || 0,
+    medals: Math.round((Number(ov.points||0) * Number(ov.stars||0)) / 1000) || 0,
     perfectRuns: Number(ov.perfect_runs)||0,
     listsExplored: Number(ov.lists_explored)||0,
     hotStreak: Number(ov.best_streak)||0,
@@ -171,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBadges();
   // Fallback: observe counters and re-render when they change
   const starsEl = document.getElementById('awardStars');
-  const medalsEl = document.getElementById('awardMedals');
+  const medalsEl = document.getElementById('awardSuperScore');
   const obs = new MutationObserver(() => renderBadges());
   [starsEl, medalsEl].forEach(el => { if (el) obs.observe(el, { characterData: true, subtree: true, childList: true }); });
 });
