@@ -15,12 +15,18 @@ const IS_NETLIFY = (typeof window !== 'undefined' && window.location)
   ? /netlify\.app$/i.test(window.location.hostname)
   : false;
 
-const FUNCTIONS_BASE = '';
+// Detect custom domain and route to Netlify
+const getApiBase = () => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+    return 'https://willenaenglish.netlify.app';
+  }
+  return '';
+};
+const FUNCTIONS_BASE = getApiBase();
 
-// Resolve supabase_auth via WillenaAPI so Cloudflare worker routing works.
-const AUTH_URL = (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.getApiUrl === 'function')
-  ? window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth')
-  : '/.netlify/functions/supabase_auth';
+// Use the correct API base so auth works on all domains
+const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;
 
 /**
  * Internal helper for making authenticated API calls

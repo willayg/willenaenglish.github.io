@@ -1,4 +1,13 @@
-const REFRESH_PATH = '/.netlify/functions/supabase_auth?action=refresh';
+// Detect custom domain and route to Netlify
+const getApiBase = () => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+    return 'https://willenaenglish.netlify.app';
+  }
+  return '';
+};
+const API_BASE = getApiBase();
+const REFRESH_ENDPOINT = `${API_BASE}/.netlify/functions/supabase_auth?action=refresh`;
 const REFRESH_INTERVAL = 1000 * 60 * 40; // 40 minutes
 
 let refreshTimer = null;
@@ -9,10 +18,7 @@ async function callRefresh() {
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
     try {
-      const resp = (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function')
-        ? await window.WillenaAPI.fetch(REFRESH_PATH, { cache: 'no-store' })
-        : await fetch(REFRESH_PATH, { credentials: 'include', cache: 'no-store' });
-
+      const resp = await fetch(REFRESH_ENDPOINT, { credentials: 'include' });
       const json = await resp.json().catch(() => ({}));
         if (!resp.ok || !(json && json.success)) {
           console.debug('[auth-refresh] refresh request failed', { status: resp.status, body: json });
