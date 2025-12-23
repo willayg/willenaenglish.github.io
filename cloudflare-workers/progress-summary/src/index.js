@@ -128,6 +128,10 @@ function classKey(name) {
     .replace(/[^a-z0-9_\-]/g, '');
 }
 
+function timeframeStartIso(timeframe) {
+  return timeframe === 'month' ? monthStartISO() : null;
+}
+
 function normalizeClassDisplay(name) {
   const raw = String(name || '').trim();
   if (!raw) return '';
@@ -189,6 +193,84 @@ async function teacherLoadDailyAgg(client, userIds, className, timeframe) {
     agg.sessions += Number(r.sessions) || 0;
   });
   return byUser;
+}
+
+async function teacherLoadAttemptsAgg(client, userIds, timeframe) {
+  const filters = [{ column: 'user_id', op: 'in', value: userIds }];
+  const startIso = timeframeStartIso(timeframe);
+  if (startIso) filters.push({ column: 'created_at', op: 'gte', value: startIso });
+
+  const rows = await client.query('progress_attempts', {
+    select: 'user_id, is_correct, points',
+    filters,
+    limit: 50000,
+  });
+
+  const byUser = new Map();
+  (rows || []).forEach(r => {
+    const uid = r?.user_id;
+    if (!uid) return;
+    let agg = byUser.get(uid);
+    if (!agg) {
+      agg = { points: 0, attempts: 0, correct: 0 };
+      byUser.set(uid, agg);
+    }
+    agg.attempts += 1;
+    if (r?.is_correct) agg.correct += 1;
+    const p = Number(r?.points);
+    if (Number.isFinite(p)) agg.points += p;
+  });
+  return byUser;
+}
+
+async function teacherLoadSessionStarsAgg(client, userIds, timeframe) {
+  const filters = [
+    { column: 'user_id', op: 'in', value: userIds },
+    { column: 'ended_at', op: 'not.is', value: 'null' },
+  ];
+  const startIso = timeframeStartIso(timeframe);
+  if (startIso) filters.push({ column: 'ended_at', op: 'gte', value: startIso });
+
+  const rows = await client.query('progress_sessions', {
+    select: 'user_id, list_name, mode, summary, ended_at',
+    filters,
+    order: { column: 'ended_at', ascending: true },
+    limit: 50000,
+  });
+
+  const bestByUser = new Map(); // uid -> Map<list||mode, bestStars>
+  const sessionsCountByUser = new Map();
+  (rows || []).forEach(sess => {
+    const uid = sess?.user_id;
+    if (!uid) return;
+    sessionsCountByUser.set(uid, (sessionsCountByUser.get(uid) || 0) + 1);
+
+    const list = String(sess?.list_name || '').trim();
+    const mode = String(sess?.mode || '').trim();
+    if (!list || !mode) return;
+
+    const summary = safeParseSummary(sess?.summary);
+    if (summary && summary.completed === false) return;
+    const stars = deriveStars(summary);
+    if (stars <= 0) return;
+
+    let userBest = bestByUser.get(uid);
+    if (!userBest) {
+      userBest = new Map();
+      bestByUser.set(uid, userBest);
+    }
+    const key = `${list}||${mode}`;
+    const prev = userBest.get(key) || 0;
+    if (stars > prev) userBest.set(key, stars);
+  });
+
+  const starsByUser = new Map();
+  for (const [uid, map] of bestByUser.entries()) {
+    let total = 0;
+    for (const v of map.values()) total += Number(v) || 0;
+    starsByUser.set(uid, total);
+  }
+  return { starsByUser, sessionsCountByUser };
 }
 
 async function teacherHandle(request, env, origin) {
@@ -289,13 +371,61 @@ async function teacherHandle(request, env, origin) {
     const ids = (students || []).map(s => s?.id).filter(Boolean);
     if (!ids.length) return jsonResponse({ success: true, class: className, timeframe, leaderboard: [] }, 200, origin);
 
+    // Prefer daily snapshot table if available; otherwise fall back to raw aggregation.
     let dailyByUser = new Map();
+    let dailyUsable = false;
     try {
       dailyByUser = await teacherLoadDailyAgg(client, ids, className, timeframe);
-    } catch (_) {}
+      for (const stats of dailyByUser.values()) {
+        if ((stats?.stars || 0) > 0 || (stats?.points || 0) > 0 || (stats?.attempts || 0) > 0) {
+          dailyUsable = true;
+          break;
+        }
+      }
+    } catch (_) {
+      dailyByUser = new Map();
+      dailyUsable = false;
+    }
+
+    let source = 'daily';
+    let attemptsByUser = new Map();
+    let starsByUser = new Map();
+    let sessionsCountByUser = new Map();
+
+    if (!dailyUsable) {
+      source = 'raw';
+      try {
+        attemptsByUser = await teacherLoadAttemptsAgg(client, ids, timeframe);
+      } catch (_) {
+        attemptsByUser = new Map();
+      }
+      try {
+        const sessAgg = await teacherLoadSessionStarsAgg(client, ids, timeframe);
+        starsByUser = sessAgg.starsByUser || new Map();
+        sessionsCountByUser = sessAgg.sessionsCountByUser || new Map();
+      } catch (_) {
+        starsByUser = new Map();
+        sessionsCountByUser = new Map();
+      }
+    }
 
     const rows = (students || []).map(student => {
-      const stats = dailyByUser.get(student.id) || { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
+      const base = { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
+      let stats = base;
+
+      if (dailyUsable) {
+        stats = dailyByUser.get(student.id) || base;
+      } else {
+        const a = attemptsByUser.get(student.id) || { points: 0, attempts: 0, correct: 0 };
+        stats = {
+          stars: starsByUser.get(student.id) || 0,
+          points: a.points || 0,
+          attempts: a.attempts || 0,
+          correct: a.correct || 0,
+          sessions: sessionsCountByUser.get(student.id) || 0,
+        };
+      }
+
       const accuracy = stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : 0;
       return {
         user_id: student.id,
@@ -313,7 +443,7 @@ async function teacherHandle(request, env, origin) {
     rows.sort((a, b) => (b.stars - a.stars) || (b.points - a.points) || String(a.name).localeCompare(String(b.name)));
     rows.forEach((r, i) => { r.rank = i + 1; });
 
-    return jsonResponse({ success: true, class: className, timeframe, leaderboard: rows, cached_at: null, source: 'daily' }, 200, origin);
+    return jsonResponse({ success: true, class: className, timeframe, leaderboard: rows, cached_at: null, source }, 200, origin);
   }
 
   // --- student_details ---
