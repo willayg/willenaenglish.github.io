@@ -484,7 +484,6 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       __clearAllTimeouts();
       __stopActiveAudio();
       __removeFloatingUi();
-
       // Remove quit button
       try { const qb = document.getElementById('grammarL3QuitBtn'); if (qb) qb.remove(); } catch {}
       // Partial endSession for quit
@@ -550,7 +549,6 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     __clearAllTimeouts();
     __stopActiveAudio();
     __removeFloatingUi();
-
     const gameArea = document.getElementById('gameArea');
     renderGrammarSummary({ gameArea, score: state.score, total: state.list.length, ctx: { grammarFile: state.grammarFile, grammarName: state.grammarName } });
     if (state && typeof state.onComplete === 'function') state.onComplete(state);

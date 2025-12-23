@@ -1599,6 +1599,7 @@ window.WordArcade = {
               choose: 'grammar_choose',
               fill_gap: 'grammar_fill_gap',
               unscramble: 'grammar_sentence_unscramble',
+              sentence_order: 'grammar_sentence_order_l3',
               sorting: 'grammar_sorting',
               find_mistake: 'grammar_find_mistake',
               translation: 'grammar_translation_choice',
@@ -1611,6 +1612,7 @@ window.WordArcade = {
                 if (config?.mode === 'fill_gap') targetKey = 'grammar_fill_gap_l3';
                 if (config?.mode === 'find_mistake') targetKey = 'grammar_find_mistake_l3';
                 if (config?.mode === 'translation') targetKey = 'grammar_translation_choice_l3';
+                if (config?.mode === 'sentence_order') targetKey = 'grammar_sentence_order_l3';
               }
             } catch {}
             const loader = modeLoaders[targetKey];
