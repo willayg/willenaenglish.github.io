@@ -306,6 +306,11 @@
       const result = await apiCall(url);
       return result.role;
     }
+
+    function redirectStudentToStudentLoginNotice() {
+      // Keep it simple: a dedicated notice page (Korean) with a student-login link.
+      window.location.replace('/Teachers/student-login-here.html');
+    }
     
     async function getProfileId(authUserId) {
       const url = getAuthUrl('get_profile_id', `&auth_user_id=${encodeURIComponent(authUserId)}`);
@@ -347,6 +352,16 @@
           getUserRole(user.id),
           getProfileId(user.id)
         ]);
+
+        const normalizedRole = String(role || '').toLowerCase();
+        if (normalizedRole === 'student') {
+          redirectStudentToStudentLoginNotice();
+          return;
+        }
+
+        if (normalizedRole && !['teacher', 'admin'].includes(normalizedRole)) {
+          throw new Error('This account is not allowed to access the teacher portal.');
+        }
         
         // Store user data
         localStorage.setItem('userId', user.id);
@@ -387,7 +402,20 @@
         } else {
           console.warn('⚠ Auth service missing environment variables');
         }
+        // If already logged in (cookie session), ensure student accounts are redirected out.
         if (debugData.session && debugData.session.user && debugData.session.user.id) {
+          const userId = debugData.session.user.id;
+          let role = '';
+          try {
+            role = await getUserRole(userId);
+          } catch (e) {
+            console.warn('Role check failed during auto-redirect:', e?.message || e);
+          }
+          if (String(role || '').toLowerCase() === 'student') {
+            redirectStudentToStudentLoginNotice();
+            return;
+          }
+
           // Already logged in, perform quick redirect
           const params = new URLSearchParams(location.search);
           const redirect = params.get('redirect');

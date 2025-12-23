@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 로그인 안내 - Willena English</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 520px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    h1 {
+      color: #1a202c;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #4a5568;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    .small {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>학생 로그인은 여기에서 해주세요</h1>
+    <p>
+      학생 계정으로는 교사용(Teachers) 페이지에 로그인할 수 없습니다.<br />
+      아래 버튼을 눌러 학생 로그인 페이지로 이동해 주세요.
+    </p>
+    <a id="studentLoginLink" class="btn" href="#">학생 로그인 페이지 열기</a>
+    <div class="small">(문제가 계속되면 선생님께 문의해 주세요.)</div>
+  </div>
+
+  <script>
+    (function() {
+      const host = (window.location.hostname || '').toLowerCase();
+      const isStaging = host.startsWith('staging.');
+      const base = isStaging ? 'https://staging.willenaenglish.com' : 'https://willenaenglish.com';
+      const url = base + '/students/login.html';
+      const a = document.getElementById('studentLoginLink');
+      a.href = url;
+    })();
+  </script>
+</body>
+</html>
