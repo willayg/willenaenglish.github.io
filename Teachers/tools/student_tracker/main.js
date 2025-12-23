@@ -57,10 +57,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 // API functions
 const FN = (name) => `/.netlify/functions/${name}`;
 
-async function fetchJsonWithLog(url, label, options = {}) {
-  const init = { credentials: 'include', ...options };
+function trackerApiUrl(path) {
   try {
-    const resp = await fetch(url, init);
+    if (window.WillenaAPI && typeof window.WillenaAPI.getApiUrl === 'function') {
+      return window.WillenaAPI.getApiUrl(path);
+    }
+  } catch (_) {}
+  return path;
+}
+
+async function fetchJsonWithLog(url, label, options = {}) {
+  const init = { credentials: 'include', cache: 'no-store', ...options };
+  try {
+    const doFetch = (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function')
+      ? window.WillenaAPI.fetch
+      : fetch;
+    const resp = await doFetch(url, init);
     let data = null;
     try {
       data = await resp.json();
@@ -105,9 +117,9 @@ const swPrefetchQueue = new Set();
 const ST_CACHE_DEFAULT_TTL = 45000; // ~45s client cache to mask function latency
 
 const teacherPrefetchEndpoints = {
-  classes: () => `${FN('progress_teacher_summary')}?action=classes_list`,
-  leaderboard: (cls, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
-  student: (uid, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`
+  classes: () => trackerApiUrl(`${FN('progress_teacher_summary')}?action=classes_list`),
+  leaderboard: (cls, tf = DEFAULT_TIMEFRAME) => trackerApiUrl(`${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`),
+  student: (uid, tf = DEFAULT_TIMEFRAME) => trackerApiUrl(`${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`)
 };
 
 function queuePrefetchUrls(urls) {

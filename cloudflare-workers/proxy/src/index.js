@@ -28,6 +28,7 @@ const FUNCTION_TO_BINDING = {
   homework_api: 'HOMEWORK_API', 
   log_word_attempt: 'LOG_WORD_ATTEMPT',
   progress_summary: 'PROGRESS_SUMMARY',
+  progress_teacher_summary: 'PROGRESS_SUMMARY',
   get_audio_urls: 'GET_AUDIO_URLS',
   get_sentence_audio_urls: 'GET_AUDIO_URLS', // Route to same worker, different path
   verify_student: 'VERIFY_STUDENT',
@@ -39,6 +40,7 @@ const CF_WORKER_FUNCTIONS = new Set([
   'homework_api',
   'log_word_attempt',
   'progress_summary',
+  'progress_teacher_summary',
   'get_audio_urls',
   'get_sentence_audio_urls',
   'verify_student',
@@ -135,6 +137,11 @@ async function routeToCFWorker(request, binding, functionName, url) {
   // Special routing: get_sentence_audio_urls -> /sentence path on get_audio_urls worker
   if (functionName === 'get_sentence_audio_urls') {
     remainingPath = '/sentence';
+  }
+
+  // Teacher analytics endpoint is served by progress_summary worker under a distinct path
+  if (functionName === 'progress_teacher_summary') {
+    remainingPath = '/teacher_summary';
   }
   
   workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;

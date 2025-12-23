@@ -115,6 +115,336 @@ function getAccessToken(request) {
   return null;
 }
 
+function monthStartISO(now = new Date()) {
+  const d = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+  return d.toISOString();
+}
+
+function parseSummary(summary) {
+  try {
+    if (!summary) return null;
+    if (typeof summary === 'string') return JSON.parse(summary);
+    return summary;
+  } catch {
+    return null;
+  }
+}
+
+function deriveStars(summary) {
+  const s = summary || {};
+  let acc = null;
+  if (typeof s.accuracy === 'number') acc = s.accuracy;
+  else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
+  else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
+  if (acc != null) {
+    if (acc >= 1) return 5;
+    if (acc >= 0.95) return 4;
+    if (acc >= 0.90) return 3;
+    if (acc >= 0.80) return 2;
+    if (acc >= 0.60) return 1;
+    return 0;
+  }
+  if (typeof s.stars === 'number') return s.stars;
+  return 0;
+}
+
+function classKey(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_\-]/g, '');
+}
+
+function normalizeClassDisplay(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  // Keep common formatting consistent
+  return lower
+    .split(/\s+/)
+    .map(s => s ? (s[0].toUpperCase() + s.slice(1)) : s)
+    .join(' ')
+    .replace(/\bMit\b/g, 'MIT');
+}
+
+async function safeJson(resp) {
+  try { return await resp.json(); } catch { return null; }
+}
+
+async function teacherAuth(client, request) {
+  const accessToken = getAccessToken(request);
+  if (!accessToken) return { ok: false, status: 401, error: 'Not signed in (cookie missing or invalid)' };
+  const userData = await client.verifyToken(accessToken);
+  if (!userData || !userData.id) return { ok: false, status: 401, error: 'Invalid or expired session' };
+  const userId = userData.id;
+
+  const prof = await client.query('profiles', {
+    select: 'id, role, approved, class, name, username',
+    filters: [{ column: 'id', op: 'eq', value: userId }],
+    single: true,
+  });
+  const role = String(prof?.role || '').toLowerCase();
+  if (!['teacher', 'admin'].includes(role)) return { ok: false, status: 403, error: 'Unauthorized' };
+  if (prof?.approved === false) return { ok: false, status: 403, error: 'Not approved' };
+
+  return { ok: true, userId, role, profile: prof };
+}
+
+async function teacherLoadDailyAgg(client, userIds, className, timeframe) {
+  const filters = [
+    { column: 'user_id', op: 'in', value: userIds },
+  ];
+  if (className) filters.push({ column: 'class', op: 'eq', value: className });
+  if (timeframe === 'month') filters.push({ column: 'date', op: 'gte', value: monthStartISO().slice(0, 10) });
+  const rows = await client.query('progress_daily_stats', {
+    select: 'user_id, stars_earned, points_earned, attempts, correct, sessions',
+    filters,
+    limit: 5000,
+  });
+  const byUser = new Map();
+  (rows || []).forEach(r => {
+    if (!r?.user_id) return;
+    let agg = byUser.get(r.user_id);
+    if (!agg) {
+      agg = { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
+      byUser.set(r.user_id, agg);
+    }
+    agg.stars += Number(r.stars_earned) || 0;
+    agg.points += Number(r.points_earned) || 0;
+    agg.attempts += Number(r.attempts) || 0;
+    agg.correct += Number(r.correct) || 0;
+    agg.sessions += Number(r.sessions) || 0;
+  });
+  return byUser;
+}
+
+async function teacherHandle(request, env, origin) {
+  const url = new URL(request.url);
+  const action = (url.searchParams.get('action') || '').toLowerCase();
+  const timeframe = (url.searchParams.get('timeframe') || 'all').toLowerCase();
+
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return jsonResponse({ success: false, error: 'Server misconfigured' }, 500, origin);
+  }
+  const client = new SupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+  const auth = await teacherAuth(client, request);
+  if (!auth.ok) return jsonResponse({ success: false, error: auth.error }, auth.status, origin);
+
+  // --- classes_list ---
+  if (action === 'classes_list') {
+    const data = await client.query('profiles', {
+      select: 'class',
+      filters: [{ column: 'role', op: 'eq', value: 'student' }],
+      limit: 5000,
+    });
+    const rawClasses = Array.from(new Set((data || [])
+      .map(r => r?.class ? String(r.class).trim() : '')
+      .filter(Boolean)));
+
+    const preferredOrder = ['Brown', 'Stanford', 'Manchester', 'Melbourne', 'New York', 'Hawaii', 'Boston', 'Sydney', 'Berkeley', 'Chicago', 'Cambridge', 'Yale', 'Washington', 'Oxford', 'MIT', 'Dublin', 'Harvard'];
+
+    const normalized = [];
+    const seen = new Set();
+    rawClasses.forEach(c => {
+      const display = normalizeClassDisplay(c);
+      if (!display || seen.has(display)) return;
+      seen.add(display);
+      normalized.push(display);
+    });
+
+    const inOrder = preferredOrder.filter(p => normalized.includes(p));
+    const remaining = normalized.filter(c => !inOrder.includes(c)).sort((a, b) => a.localeCompare(b));
+
+    // class_visibility is optional; default hidden=false if missing
+    let visMap = new Map();
+    try {
+      const visRows = await client.query('class_visibility', {
+        select: 'class_key, hidden',
+        filters: [],
+        limit: 5000,
+      });
+      visMap = new Map((visRows || []).map(r => [r?.class_key, !!r?.hidden]));
+    } catch (_) {}
+
+    const classes = [...inOrder, ...remaining].map(name => ({
+      name,
+      hidden: visMap.get(classKey(name)) || false,
+    }));
+
+    return jsonResponse({ success: true, classes, cached_at: null }, 200, origin);
+  }
+
+  // --- toggle_class_visibility (POST) ---
+  if (action === 'toggle_class_visibility') {
+    if (request.method !== 'POST') {
+      return jsonResponse({ success: false, error: 'Method Not Allowed' }, 405, origin);
+    }
+    const className = String(url.searchParams.get('class') || '').trim();
+    const hidden = String(url.searchParams.get('hidden') || '').toLowerCase();
+    const toggleTo = hidden === '1' || hidden === 'true';
+    if (!className) return jsonResponse({ success: false, error: 'Missing class' }, 400, origin);
+
+    const payload = {
+      class_key: classKey(className),
+      class_name: className,
+      hidden: toggleTo,
+      updated_by: auth.userId,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Upsert with conflict on class_key
+    const upsertOk = await client.upsert('class_visibility', payload, 'class_key');
+    if (!upsertOk) {
+      return jsonResponse({ success: false, error: 'Failed to update class visibility' }, 400, origin);
+    }
+    return jsonResponse({ success: true, class: className, hidden: toggleTo }, 200, origin);
+  }
+
+  // --- leaderboard ---
+  if (action === 'leaderboard') {
+    const className = String(url.searchParams.get('class') || '').trim();
+    if (!className) return jsonResponse({ success: true, class: null, timeframe, leaderboard: [] }, 200, origin);
+
+    const students = await client.query('profiles', {
+      select: 'id, name, username, class, korean_name',
+      filters: [
+        { column: 'role', op: 'eq', value: 'student' },
+        { column: 'class', op: 'eq', value: className },
+      ],
+      limit: 2000,
+    });
+    const ids = (students || []).map(s => s?.id).filter(Boolean);
+    if (!ids.length) return jsonResponse({ success: true, class: className, timeframe, leaderboard: [] }, 200, origin);
+
+    let dailyByUser = new Map();
+    try {
+      dailyByUser = await teacherLoadDailyAgg(client, ids, className, timeframe);
+    } catch (_) {}
+
+    const rows = (students || []).map(student => {
+      const stats = dailyByUser.get(student.id) || { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
+      const accuracy = stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : 0;
+      return {
+        user_id: student.id,
+        name: student.name || student.username || 'Unknown',
+        korean_name: student.korean_name || null,
+        class: className,
+        stars: stats.stars || 0,
+        points: stats.points || 0,
+        accuracy,
+        attempts: stats.attempts || 0,
+        sessions: stats.sessions || 0,
+      };
+    });
+
+    rows.sort((a, b) => (b.stars - a.stars) || (b.points - a.points) || String(a.name).localeCompare(String(b.name)));
+    rows.forEach((r, i) => { r.rank = i + 1; });
+
+    return jsonResponse({ success: true, class: className, timeframe, leaderboard: rows, cached_at: null, source: 'daily' }, 200, origin);
+  }
+
+  // --- student_details ---
+  if (action === 'student_details') {
+    const targetId = String(url.searchParams.get('user_id') || '').trim();
+    if (!targetId) return jsonResponse({ success: false, error: 'Missing user_id' }, 400, origin);
+
+    const student = await client.query('profiles', {
+      select: 'id, name, username, class, korean_name',
+      filters: [{ column: 'id', op: 'eq', value: targetId }],
+      single: true,
+    });
+
+    // Totals from daily stats (fast)
+    let totals = { attempts: 0, correct: 0, accuracy: 0, points: 0, stars: 0 };
+    let sessionsCount = 0;
+    try {
+      const filters = [{ column: 'user_id', op: 'eq', value: targetId }];
+      if (timeframe === 'month') filters.push({ column: 'date', op: 'gte', value: monthStartISO().slice(0, 10) });
+      const dailyRows = await client.query('progress_daily_stats', {
+        select: 'attempts, correct, points_earned, stars_earned, sessions',
+        filters,
+        limit: 5000,
+      });
+      (dailyRows || []).forEach(r => {
+        totals.attempts += Number(r?.attempts) || 0;
+        totals.correct += Number(r?.correct) || 0;
+        totals.points += Number(r?.points_earned) || 0;
+        totals.stars += Number(r?.stars_earned) || 0;
+        sessionsCount += Number(r?.sessions) || 0;
+      });
+      totals.accuracy = totals.attempts ? Math.round((totals.correct / totals.attempts) * 100) : 0;
+    } catch (_) {}
+
+    // Recent sessions for activity + list aggregation
+    const sessFilters = [
+      { column: 'user_id', op: 'eq', value: targetId },
+      { column: 'ended_at', op: 'not.is', value: 'null' },
+    ];
+    if (timeframe === 'month') sessFilters.push({ column: 'ended_at', op: 'gte', value: monthStartISO() });
+    let sessions = [];
+    try {
+      sessions = await client.query('progress_sessions', {
+        select: 'list_name, mode, summary, ended_at, started_at',
+        filters: sessFilters,
+        order: { column: 'ended_at', ascending: false },
+        limit: 500,
+      });
+    } catch (_) {
+      sessions = [];
+    }
+
+    const recent = (sessions || []).map(s => ({
+      list_name: s?.list_name || null,
+      mode: s?.mode || null,
+      summary: s?.summary || null,
+      ended_at: s?.ended_at || null,
+      started_at: s?.started_at || null,
+    }));
+
+    // Build list-mode aggregates similar to Netlify function (enough for UI)
+    const listModeMap = new Map();
+    const modeAgg = new Map();
+    recent.forEach(sess => {
+      const list = String(sess.list_name || '').trim();
+      const mode = String(sess.mode || '').trim();
+      if (!list || !mode) return;
+      const summary = parseSummary(sess.summary);
+      const stars = deriveStars(summary);
+      const key = `${list}||${mode}`;
+      const prev = listModeMap.get(key) || { list_name: list, mode, count: 0, stars: 0, last_played: null };
+      prev.count += 1;
+      prev.stars = Math.max(prev.stars, stars);
+      const ended = sess.ended_at || null;
+      if (ended && (!prev.last_played || ended > prev.last_played)) prev.last_played = ended;
+      listModeMap.set(key, prev);
+
+      const m = modeAgg.get(mode) || { mode, _accSum: 0, _accN: 0 };
+      if (typeof summary?.accuracy === 'number') { m._accSum += summary.accuracy; m._accN += 1; }
+      modeAgg.set(mode, m);
+    });
+
+    const lists = Array.from(listModeMap.values());
+    const modes = Array.from(modeAgg.values()).map(m => ({
+      mode: m.mode,
+      accuracy: m._accN ? Math.round((m._accSum / m._accN) * 100) : null,
+    }));
+
+    return jsonResponse({
+      success: true,
+      student,
+      timeframe,
+      totals,
+      sessions: { count: sessionsCount },
+      lists,
+      modes,
+      recent,
+    }, 200, origin);
+  }
+
+  return jsonResponse({ success: false, error: 'Unknown action', action }, 400, origin);
+}
+
 // Supabase REST client
 class SupabaseClient {
   constructor(url, serviceKey) {
@@ -1243,6 +1573,20 @@ export default {
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 200, headers: getCorsHeaders(origin) });
+    }
+
+    // Teacher analytics endpoint (used by Student Tracker)
+    if (url.pathname === '/teacher_summary' || url.pathname === '/teacher_summary/') {
+      // Allow GET + POST for this route
+      if (request.method !== 'GET' && request.method !== 'POST') {
+        return jsonResponse({ success: false, error: 'Method Not Allowed' }, 405, origin);
+      }
+      try {
+        return await teacherHandle(request, env, origin);
+      } catch (e) {
+        console.error('[progress-summary] teacher_summary error:', e);
+        return jsonResponse({ success: false, error: e?.message || 'Internal error' }, 500, origin);
+      }
     }
 
     if (request.method !== 'GET') {

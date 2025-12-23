@@ -13,6 +13,8 @@
 # Note: Teacher login page is login.html (not signin.html)
 /teachers/login.html        /Teachers/login.html                               301
 /Teachers/singin.html       /Teachers/login.html                               301
+/Teachers/components/*       /Teachers/Components/:splat                         200
+/teachers/components/*       /Teachers/Components/:splat                         200
 
 # All other routes - serve files directly (no external redirects)
 # This allows staging to work without redirecting to production
