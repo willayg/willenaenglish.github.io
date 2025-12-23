@@ -120,34 +120,6 @@ function monthStartISO(now = new Date()) {
   return d.toISOString();
 }
 
-function parseSummary(summary) {
-  try {
-    if (!summary) return null;
-    if (typeof summary === 'string') return JSON.parse(summary);
-    return summary;
-  } catch {
-    return null;
-  }
-}
-
-function deriveStars(summary) {
-  const s = summary || {};
-  let acc = null;
-  if (typeof s.accuracy === 'number') acc = s.accuracy;
-  else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
-  else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) acc = s.score / s.max;
-  if (acc != null) {
-    if (acc >= 1) return 5;
-    if (acc >= 0.95) return 4;
-    if (acc >= 0.90) return 3;
-    if (acc >= 0.80) return 2;
-    if (acc >= 0.60) return 1;
-    return 0;
-  }
-  if (typeof s.stars === 'number') return s.stars;
-  return 0;
-}
-
 function classKey(name) {
   return String(name || '')
     .trim()
@@ -409,7 +381,7 @@ async function teacherHandle(request, env, origin) {
       const list = String(sess.list_name || '').trim();
       const mode = String(sess.mode || '').trim();
       if (!list || !mode) return;
-      const summary = parseSummary(sess.summary);
+      const summary = safeParseSummary(sess.summary);
       const stars = deriveStars(summary);
       const key = `${list}||${mode}`;
       const prev = listModeMap.get(key) || { list_name: list, mode, count: 0, stars: 0, last_played: null };
