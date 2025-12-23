@@ -223,6 +223,51 @@ async function teacherLoadAttemptsAgg(client, userIds, timeframe) {
   return byUser;
 }
 
+async function teacherAggregateAttemptPointStats(client, ids, firstOfMonthIso) {
+  if (!ids || !ids.length) return new Map();
+  const chunkSize = 200;
+  const pageSize = 1000;
+  const totals = new Map(); // uid -> { points, attempts, correct }
+
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    if (!chunk.length) continue;
+    let offset = 0;
+    while (true) {
+      const filters = [
+        { column: 'user_id', op: 'in', value: chunk },
+      ];
+      if (firstOfMonthIso) {
+        filters.push({ column: 'created_at', op: 'gte', value: firstOfMonthIso });
+      }
+
+      const data = await client.query('progress_attempts', {
+        select: 'user_id,points,is_correct',
+        filters,
+        order: { column: 'id', ascending: true },
+        range: { from: offset, to: offset + pageSize - 1 },
+      });
+
+      if (!data || !data.length) break;
+      data.forEach(row => {
+        const uid = row?.user_id;
+        if (!uid) return;
+        const agg = totals.get(uid) || { points: 0, attempts: 0, correct: 0 };
+        agg.attempts += 1;
+        if (row?.is_correct) agg.correct += 1;
+        const p = Number(row?.points);
+        if (Number.isFinite(p)) agg.points += p;
+        totals.set(uid, agg);
+      });
+
+      if (data.length < pageSize) break;
+      offset += pageSize;
+    }
+  }
+
+  return totals;
+}
+
 async function teacherLoadSessionStarsAgg(client, userIds, timeframe) {
   const filters = [
     { column: 'user_id', op: 'in', value: userIds },
@@ -365,85 +410,55 @@ async function teacherHandle(request, env, origin) {
       filters: [
         { column: 'role', op: 'eq', value: 'student' },
         { column: 'class', op: 'eq', value: className },
+        { column: 'approved', op: 'eq', value: true },
       ],
       limit: 2000,
     });
     const ids = (students || []).map(s => s?.id).filter(Boolean);
     if (!ids.length) return jsonResponse({ success: true, class: className, timeframe, leaderboard: [] }, 200, origin);
 
-    // Prefer daily snapshot table if available; otherwise fall back to raw aggregation.
-    let dailyByUser = new Map();
-    let dailyUsable = false;
-    try {
-      dailyByUser = await teacherLoadDailyAgg(client, ids, className, timeframe);
-      for (const stats of dailyByUser.values()) {
-        if ((stats?.stars || 0) > 0 || (stats?.points || 0) > 0 || (stats?.attempts || 0) > 0) {
-          dailyUsable = true;
-          break;
-        }
-      }
-    } catch (_) {
-      dailyByUser = new Map();
-      dailyUsable = false;
-    }
+    // Match student dashboard calculation:
+    // - points from progress_attempts.points
+    // - stars from best-per-list+mode progress_sessions
+    // - timeframe=month means first day of current calendar month (UTC)
+    const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
+    const attemptStats = await teacherAggregateAttemptPointStats(client, ids, firstOfMonthIso);
+    const sessions = await fetchSessionsForUsers(client, ids, firstOfMonthIso);
+    const starsByUser = buildStarsByUserMap(sessions);
 
-    let source = 'daily';
-    let attemptsByUser = new Map();
-    let starsByUser = new Map();
-    let sessionsCountByUser = new Map();
-
-    if (!dailyUsable) {
-      source = 'raw';
-      try {
-        attemptsByUser = await teacherLoadAttemptsAgg(client, ids, timeframe);
-      } catch (_) {
-        attemptsByUser = new Map();
-      }
-      try {
-        const sessAgg = await teacherLoadSessionStarsAgg(client, ids, timeframe);
-        starsByUser = sessAgg.starsByUser || new Map();
-        sessionsCountByUser = sessAgg.sessionsCountByUser || new Map();
-      } catch (_) {
-        starsByUser = new Map();
-        sessionsCountByUser = new Map();
-      }
-    }
-
-    const rows = (students || []).map(student => {
-      const base = { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
-      let stats = base;
-
-      if (dailyUsable) {
-        stats = dailyByUser.get(student.id) || base;
-      } else {
-        const a = attemptsByUser.get(student.id) || { points: 0, attempts: 0, correct: 0 };
-        stats = {
-          stars: starsByUser.get(student.id) || 0,
-          points: a.points || 0,
-          attempts: a.attempts || 0,
-          correct: a.correct || 0,
-          sessions: sessionsCountByUser.get(student.id) || 0,
+    const rows = (students || [])
+      .filter(s => s && s.id)
+      .map(student => {
+        const a = attemptStats.get(student.id) || { points: 0, attempts: 0, correct: 0 };
+        const stars = starsByUser.get(student.id) || 0;
+        const points = Math.round(a.points || 0);
+        const attempts = a.attempts || 0;
+        const correct = a.correct || 0;
+        const accuracy = attempts ? Math.round((correct / attempts) * 100) : 0;
+        return {
+          user_id: student.id,
+          name: student.name || student.username || 'Unknown',
+          korean_name: student.korean_name || null,
+          class: className,
+          stars,
+          points,
+          accuracy,
+          attempts,
         };
-      }
+      });
 
-      const accuracy = stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : 0;
-      return {
-        user_id: student.id,
-        name: student.name || student.username || 'Unknown',
-        korean_name: student.korean_name || null,
-        class: className,
-        stars: stats.stars || 0,
-        points: stats.points || 0,
-        accuracy,
-        attempts: stats.attempts || 0,
-        sessions: stats.sessions || 0,
-      };
+    // Rank by super score by default (matches the "Super score" view expectation)
+    rows.sort((a, b) => {
+      const aSuper = Math.round(((a.points || 0) * (a.stars || 0)) / 1000);
+      const bSuper = Math.round(((b.points || 0) * (b.stars || 0)) / 1000);
+      if (bSuper !== aSuper) return bSuper - aSuper;
+      if ((b.points || 0) !== (a.points || 0)) return (b.points || 0) - (a.points || 0);
+      if ((b.stars || 0) !== (a.stars || 0)) return (b.stars || 0) - (a.stars || 0);
+      return String(a.name || '').localeCompare(String(b.name || ''));
     });
-
-    rows.sort((a, b) => (b.stars - a.stars) || (b.points - a.points) || String(a.name).localeCompare(String(b.name)));
     rows.forEach((r, i) => { r.rank = i + 1; });
 
-    return jsonResponse({ success: true, class: className, timeframe, leaderboard: rows, cached_at: null, source }, 200, origin);
+    return jsonResponse({ success: true, class: className, timeframe, leaderboard: rows, cached_at: null, source: 'attempts+sessions' }, 200, origin);
   }
 
   // --- student_details ---
@@ -457,25 +472,23 @@ async function teacherHandle(request, env, origin) {
       single: true,
     });
 
-    // Totals from daily stats (fast)
+    // Totals: match student dashboard leaderboard logic.
+    // points from attempts, stars from best-per-list+mode sessions.
     let totals = { attempts: 0, correct: 0, accuracy: 0, points: 0, stars: 0 };
-    let sessionsCount = 0;
+    const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
     try {
-      const filters = [{ column: 'user_id', op: 'eq', value: targetId }];
-      if (timeframe === 'month') filters.push({ column: 'date', op: 'gte', value: monthStartISO().slice(0, 10) });
-      const dailyRows = await client.query('progress_daily_stats', {
-        select: 'attempts, correct, points_earned, stars_earned, sessions',
-        filters,
-        limit: 5000,
-      });
-      (dailyRows || []).forEach(r => {
-        totals.attempts += Number(r?.attempts) || 0;
-        totals.correct += Number(r?.correct) || 0;
-        totals.points += Number(r?.points_earned) || 0;
-        totals.stars += Number(r?.stars_earned) || 0;
-        sessionsCount += Number(r?.sessions) || 0;
-      });
+      const statsMap = await teacherAggregateAttemptPointStats(client, [targetId], firstOfMonthIso);
+      const a = statsMap.get(targetId) || { points: 0, attempts: 0, correct: 0 };
+      totals.points = Math.round(a.points || 0);
+      totals.attempts = a.attempts || 0;
+      totals.correct = a.correct || 0;
       totals.accuracy = totals.attempts ? Math.round((totals.correct / totals.attempts) * 100) : 0;
+    } catch (_) {}
+
+    try {
+      const sess = await fetchSessionsForUsers(client, [targetId], firstOfMonthIso);
+      const starsByUser = buildStarsByUserMap(sess);
+      totals.stars = starsByUser.get(targetId) || 0;
     } catch (_) {}
 
     // Recent sessions for activity + list aggregation
@@ -537,7 +550,7 @@ async function teacherHandle(request, env, origin) {
       student,
       timeframe,
       totals,
-      sessions: { count: sessionsCount },
+      sessions: { count: (sessions || []).length },
       lists,
       modes,
       recent,
