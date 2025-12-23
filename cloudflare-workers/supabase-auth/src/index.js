@@ -472,6 +472,124 @@ export default {
         
         return jsonResponse({ success: true, role: profile.role }, 200, origin);
       }
+
+      // ===== UPDATE PROFILE (name/username/email/password) =====
+      // Used by Teachers/profile.html
+      if (action === 'update_profile' && request.method === 'POST') {
+        // CSRF check (same approach as update_profile_avatar)
+        const referer = request.headers.get('Referer') || '';
+        const okOrigin = (() => {
+          if (!origin) return false;
+          if (ALLOWED_ORIGINS.includes(origin)) return true;
+          try {
+            const u = new URL(origin);
+            const host = u.hostname.toLowerCase();
+            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
+          } catch {
+            return false;
+          }
+        })();
+
+        const okReferer = (() => {
+          if (!referer) return false;
+          if (ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'))) return true;
+          try {
+            const u = new URL(referer);
+            const host = u.hostname.toLowerCase();
+            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
+          } catch {
+            return false;
+          }
+        })();
+
+        if (!okOrigin && !okReferer) {
+          return jsonResponse({ success: false, error: 'CSRF check failed' }, 403, origin);
+        }
+
+        const cookieHeader = request.headers.get('Cookie') || '';
+        const cookies = parseCookies(cookieHeader);
+        const token = cookies['sb_access'];
+        if (!token) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+
+        const user = await verifyToken(env, token);
+        if (!user) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+
+        const body = await request.json();
+        const name = typeof body?.name === 'string' ? body.name.trim() : '';
+        const username = typeof body?.username === 'string' ? body.username.trim() : '';
+        const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+        const password = typeof body?.password === 'string' ? body.password : '';
+
+        // Optional: restrict to teacher/admin accounts
+        try {
+          const prof = await fetchProfile(env, user.id, 'role');
+          const role = String(prof?.role || '').toLowerCase();
+          if (role && !['teacher', 'admin'].includes(role)) {
+            return jsonResponse({ success: false, error: 'Unauthorized' }, 403, origin);
+          }
+        } catch {
+          // If role check fails, continue (token already verified)
+        }
+
+        // Update profiles fields
+        const updateFields = {};
+        if (name) updateFields.name = name;
+        if (username) updateFields.username = username;
+
+        // Email format validation if provided
+        if (email) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+          if (!emailRegex.test(email)) {
+            return jsonResponse({ success: false, error: 'Invalid email address' }, 400, origin);
+          }
+          updateFields.email = email;
+        }
+
+        // Apply profile update first
+        if (Object.keys(updateFields).length > 0) {
+          await updateProfile(env, user.id, updateFields);
+        }
+
+        // Update auth email/password via admin API if requested
+        if (email) {
+          const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': env.SUPABASE_SERVICE_KEY,
+              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            },
+            body: JSON.stringify({ email }),
+          });
+          if (!updateResp.ok) {
+            return jsonResponse({ success: false, error: 'Email update failed' }, 400, origin);
+          }
+        }
+
+        if (password) {
+          if (String(password).length < 6) {
+            return jsonResponse({ success: false, error: 'Password too short' }, 400, origin);
+          }
+          const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': env.SUPABASE_SERVICE_KEY,
+              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            },
+            body: JSON.stringify({ password }),
+          });
+          if (!updateResp.ok) {
+            return jsonResponse({ success: false, error: 'Password update failed' }, 400, origin);
+          }
+        }
+
+        return jsonResponse({ success: true }, 200, origin);
+      }
       
       // ===== UPDATE AVATAR =====
       if (action === 'update_profile_avatar' && request.method === 'POST') {

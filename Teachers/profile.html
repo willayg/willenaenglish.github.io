@@ -4,16 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Profile</title>
-  <script>
-    // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain
-    (function() {
-      const host = window.location.hostname;
-      if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
-        const currentPath = window.location.pathname + window.location.search;
-        window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
-      }
-    })();
-  </script>
+  <script src="/js/api-config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -110,6 +101,29 @@
       background: #3d3752;
       color: #fff;
     }
+
+    .stat-card {
+      margin: 0 0 16px 0;
+      padding: 14px 16px;
+      background: #f6f7fb;
+      border: 1px solid #b0bfc4;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .stat-card .label {
+      font-weight: 700;
+      color: #39384a;
+      font-size: 1rem;
+    }
+    .stat-card .value {
+      font-weight: 800;
+      color: #5a4ad1;
+      font-size: 1.4rem;
+      letter-spacing: 0.2px;
+    }
   </style>
 </head>
 <body>
@@ -131,6 +145,10 @@
       <form class="profile-form" id="profileForm">
         <div id="profileMessage"></div>
         <div id="approvalStatus" style="margin-bottom:16px; font-weight:600;"></div>
+        <div class="stat-card" aria-label="Super Score">
+          <div class="label">Super Score</div>
+          <div class="value" id="superScoreValue">—</div>
+        </div>
         <!-- Hidden field to trick autofill -->
         <fieldset style="display:none;">
           <input type="text" name="username" autocomplete="username">
@@ -161,7 +179,27 @@
         };
       }
     });
-    const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_proxy_fixed';
+
+    const getAuthUrl = (action, params = '') => {
+      const path = `/.netlify/functions/supabase_auth?action=${action}${params}`;
+      return window.WillenaAPI ? WillenaAPI.getApiUrl(path) : path;
+    };
+
+    async function apiCall(url, options = {}) {
+      const fetchFn = window.WillenaAPI ? WillenaAPI.fetch.bind(WillenaAPI) : fetch;
+      const response = await fetchFn(url, { credentials: 'include', ...options });
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(`Server error (${response.status})`);
+      }
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.error || `Request failed (${response.status})`);
+      }
+      return data;
+    }
+
     const profileForm = document.getElementById('profileForm');
     const profileMessage = document.getElementById('profileMessage');
     // Make logo clickable to dashboard (redundant if <a> is present, but ensures for future changes)
@@ -172,18 +210,16 @@
         logoImg.onclick = () => { window.location.href = '/Teachers/index.html'; };
       }
     });
-    // Assume user is already logged in and userId is stored in localStorage
+    // Assume user is already logged in (cookie session preferred). Keep localStorage userId for compatibility.
     let userId = localStorage.getItem('userId');
 let userEmail = '';
 // Ensure username is always in localStorage for feedback
 async function ensureUsernameInLocalStorage() {
-  const userId = localStorage.getItem('userId');
-  if (!userId) return;
+  const localUserId = localStorage.getItem('userId');
   if (!localStorage.getItem('username')) {
     try {
-      const res = await fetch(`/Teachers/components/../.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-      const result = await res.json();
-      if (res.ok && result.success && result.username) {
+      const result = await apiCall(getAuthUrl('get_profile'));
+      if (result && result.username) {
         localStorage.setItem('username', result.username);
       }
     } catch (e) {}
@@ -191,10 +227,9 @@ async function ensureUsernameInLocalStorage() {
 }
 ensureUsernameInLocalStorage();
     async function fetchProfile() {
-      // Fetch current profile info from proxy
-      const res = await fetch(`${SUPABASE_PROXY_URL}?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-      const result = await res.json();
-      if (res.ok && result.success) {
+      // Fetch current profile info (cookie session)
+      const result = await apiCall(getAuthUrl('get_profile'));
+      if (result && result.success) {
         document.getElementById('email').value = result.email;
         userEmail = result.email;
         if (result.name) {
@@ -204,6 +239,10 @@ ensureUsernameInLocalStorage();
         if (result.username) {
           document.getElementById('username').value = result.username;
           localStorage.setItem('username', result.username);
+        }
+        if (result && result.id) {
+          localStorage.setItem('userId', result.id);
+          userId = result.id;
         }
         // Show approval status
         const approvalStatus = document.getElementById('approvalStatus');
@@ -216,7 +255,37 @@ ensureUsernameInLocalStorage();
         }
       }
     }
-    if (userId) fetchProfile();
+
+    async function fetchSuperScore() {
+      const el = document.getElementById('superScoreValue');
+      if (!el) return;
+      try {
+        const url = window.WillenaAPI
+          ? WillenaAPI.getApiUrl('/.netlify/functions/progress_summary?section=overview')
+          : '/.netlify/functions/progress_summary?section=overview';
+        const data = await apiCall(url);
+        const points = Number(data?.points) || 0;
+        const stars = Number(data?.stars) || 0;
+        const superScore = Math.round((points * stars) / 1000);
+        el.textContent = String(superScore);
+      } catch (e) {
+        // Keep UI minimal: show dash on failure
+        el.textContent = '—';
+      }
+    }
+
+    // Load profile + super score
+    (async () => {
+      try {
+        await fetchProfile();
+        await fetchSuperScore();
+      } catch (e) {
+        // If not signed in, go to login
+        profileMessage.textContent = e?.message || 'Not signed in.';
+        profileMessage.className = 'error';
+        setTimeout(() => { window.location.href = '/Teachers/login.html?redirect=/Teachers/profile.html'; }, 600);
+      }
+    })();
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       profileMessage.textContent = '';
@@ -225,14 +294,15 @@ ensureUsernameInLocalStorage();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value.trim();
-      // Update name, email, username and/or password via proxy
-      const res = await fetch(SUPABASE_PROXY_URL + '?action=update_profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, name, email, password, username })
-      });
-      const result = await res.json();
-      if (res.ok && result.success) {
+
+      // Update name/email/username/password via supabase_auth (session cookie)
+      try {
+        const result = await apiCall(getAuthUrl('update_profile'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, username })
+        });
+
         profileMessage.textContent = 'Profile updated successfully!';
         profileMessage.className = 'success';
         if (email) userEmail = email;
@@ -242,9 +312,10 @@ ensureUsernameInLocalStorage();
           localStorage.setItem('username', username);
         }
         // Optionally refresh approval status and username
-        fetchProfile();
-      } else {
-        profileMessage.textContent = result.error || 'Update failed.';
+        await fetchProfile();
+        await fetchSuperScore();
+      } catch (e) {
+        profileMessage.textContent = e?.message || 'Update failed.';
         profileMessage.className = 'error';
       }
     });
