@@ -3,19 +3,27 @@ let userRole = null;
 let userRoleReadyResolve;
 const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve; });
 (async function() {
-  const userId = localStorage.getItem('userId');
-  if (!userId) {
-    const redirect = encodeURIComponent(location.pathname + location.search);
-    location.href = `/Teachers/login.html?redirect=${redirect}`;
-    return;
-  }
   try {
-    const r = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-    const js = await r.json();
-    if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
-      location.href = '/Teachers/profile.html';
+    const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+    const who = await whoRes.json().catch(() => null);
+    if (!who || !who.success || !who.user_id) {
+      throw new Error('not signed in');
     }
-    userRole = String(js.role||'').toLowerCase();
+
+    // Cache userId for any older pages that still rely on it
+    try { localStorage.setItem('userId', who.user_id); } catch {}
+
+    const profRes = await WillenaAPI.fetch(
+      `/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(who.user_id)}&_=${Date.now()}`
+    );
+    const prof = await profRes.json().catch(() => null);
+    const role = String(prof?.role || '').toLowerCase();
+    if (!prof || !prof.success || prof.approved !== true || !['teacher','admin'].includes(role)) {
+      location.href = '/Teachers/profile.html';
+      return;
+    }
+
+    userRole = role;
     if (typeof userRoleReadyResolve === 'function') {
       userRoleReadyResolve(userRole);
       userRoleReadyResolve = null;

@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login - Willena English</title>
-  <!-- API config for cross-origin support (GitHub Pages, CF Pages, etc.) -->
-  <script src="/js/api-config.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
@@ -219,17 +217,16 @@
     </div>
   </div>
 
+  <!-- Load api-config.js first (sets window.WillenaAPI) -->
+  <script src="/js/api-config.js"></script>
+  
   <script type="module">
     import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
 
     ensureAuthRefresh();
 
-    // Use WillenaAPI for proper cross-origin support (CF Pages staging, etc.)
-    // Falls back to relative paths on same-origin (Netlify)
-    const getAuthUrl = (action, params = '') => {
-      const path = `/.netlify/functions/supabase_auth?action=${action}${params}`;
-      return window.WillenaAPI ? WillenaAPI.getApiUrl(path) : path;
-    };
+    // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
+    const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth');
     
     // DOM elements
     const form = document.getElementById('loginForm');
@@ -257,12 +254,10 @@
       loginBtn.textContent = loading ? 'Signing in...' : 'Sign In';
     }
     
-    // API functions - now use WillenaAPI.fetch for proper cross-origin support
+    // API functions
     async function apiCall(url, options = {}) {
       try {
-        // Use WillenaAPI.fetch if available for proper CORS handling
-        const fetchFn = window.WillenaAPI ? WillenaAPI.fetch.bind(WillenaAPI) : fetch;
-        const response = await fetchFn(url, {
+        const response = await fetch(url, {
           credentials: 'include',
           ...options
         });
@@ -286,13 +281,13 @@
     }
     
     async function getEmailByUsername(username) {
-      const url = getAuthUrl('get_email_by_username', `&username=${encodeURIComponent(username)}`);
+      const url = `${AUTH_URL}?action=get_email_by_username&username=${encodeURIComponent(username)}`;
       const result = await apiCall(url);
       return result.email;
     }
     
     async function login(email, password) {
-      const url = getAuthUrl('login');
+      const url = `${AUTH_URL}?action=login`;
       const result = await apiCall(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -302,13 +297,13 @@
     }
     
     async function getUserRole(userId) {
-      const url = getAuthUrl('get_role', `&user_id=${encodeURIComponent(userId)}`);
+      const url = `${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`;
       const result = await apiCall(url);
       return result.role;
     }
     
     async function getProfileId(authUserId) {
-      const url = getAuthUrl('get_profile_id', `&auth_user_id=${encodeURIComponent(authUserId)}`);
+      const url = `${AUTH_URL}?action=get_profile_id&auth_user_id=${encodeURIComponent(authUserId)}`;
       const result = await apiCall(url);
       return result.profile_id;
     }
@@ -377,9 +372,8 @@
     // If already logged in (has session), optionally auto-redirect if redirect= present
     (async () => {
       try {
-        const debugUrl = getAuthUrl('debug');
-        const fetchFn = window.WillenaAPI ? WillenaAPI.fetch.bind(WillenaAPI) : fetch;
-        const debugResult = await fetchFn(debugUrl, { credentials: 'include' });
+        const debugUrl = `${AUTH_URL}?action=debug`;
+        const debugResult = await fetch(debugUrl, { credentials: 'include' });
         const debugData = await debugResult.json();
         
         if (debugData.hasSupabaseUrl && debugData.hasAnonKey && debugData.hasServiceRole) {
