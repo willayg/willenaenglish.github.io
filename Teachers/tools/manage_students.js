@@ -330,7 +330,12 @@ async function prefetchClassList(cls) {
   if (cacheGetClassData(cls, 60000)) return null;
   const url = `${API}?action=list_students&class=${encodeURIComponent(cls)}`;
   try {
-    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    let res;
+    if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
+      res = await WillenaAPI.fetch(url, { credentials: 'include', cache: 'no-store' });
+    } else {
+      res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+    }
     const data = await res.json().catch(()=>({}));
     if (res.ok && data && Array.isArray(data.students)) {
       cacheSetClassData(cls, data.students);
@@ -431,7 +436,12 @@ async function refresh(force = false) {
     }
   } catch(e) {}
   try {
-    const res = await fetch(url, { credentials:'include', cache:'no-store' });
+    let res;
+    if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
+      res = await WillenaAPI.fetch(url, { credentials:'include', cache:'no-store' });
+    } else {
+      res = await fetch(url, { credentials:'include', cache:'no-store' });
+    }
     data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
   } catch (err) {
