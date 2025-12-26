@@ -139,7 +139,7 @@ async function verifyToken(env, token) {
 // Fetch profile from database
 async function fetchProfile(env, userId, fields = '*') {
   const resp = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=${fields}`,
+    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=${encodeURIComponent(fields)}`,
     {
       headers: {
         'apikey': env.SUPABASE_SERVICE_KEY,
@@ -156,7 +156,7 @@ async function fetchProfile(env, userId, fields = '*') {
 // Update profile
 async function updateProfile(env, userId, updates) {
   const resp = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`,
     {
       method: 'PATCH',
       headers: {
@@ -465,12 +465,14 @@ export default {
           return jsonResponse({ success: false, error: 'Missing user_id' }, 400, origin);
         }
         
-        const profile = await fetchProfile(env, userId, 'role');
+        // Fetch full profile to ensure we get all data
+        const profile = await fetchProfile(env, userId, 'id,role');
         if (!profile) {
           return jsonResponse({ success: false, error: 'User not found' }, 404, origin);
         }
         
-        return jsonResponse({ success: true, role: profile.role }, 200, origin);
+        // Return role even if it's null/undefined (the client will handle it)
+        return jsonResponse({ success: true, role: profile.role || null }, 200, origin);
       }
 
       // ===== UPDATE PROFILE (name/username/email/password) =====
