@@ -175,14 +175,27 @@ let IS_ADMIN = false; // set after role check
 
 async function api(action, opts = {}) {
   const method = opts.method || (opts.body ? 'POST' : 'GET');
-  const url = `${API}?action=${encodeURIComponent(action)}`;
-  const res = await fetch(url, {
-    method,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-    cache: 'no-store'
-  });
+  const path = `${API}?action=${encodeURIComponent(action)}`;
+  const body = opts.body ? JSON.stringify(opts.body) : undefined;
+  const headers = { 'Content-Type': 'application/json' };
+
+  let res;
+  if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
+    res = await WillenaAPI.fetch(path, {
+      method,
+      headers,
+      body
+    });
+  } else {
+    res = await fetch(path, {
+      method,
+      credentials: 'include',
+      headers,
+      body,
+      cache: 'no-store'
+    });
+  }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.success === false) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;
