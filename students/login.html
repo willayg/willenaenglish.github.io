@@ -695,7 +695,11 @@
         }, 1200);
       } catch (err) {
         console.error('Easy login error:', err);
-        showError(mt('errorOccurred'));
+        if (err.message === 'Account not approved' || err.message.includes('not approved')) {
+          showError(mt('notApproved') || 'Account not approved. Please ask your teacher.');
+        } else {
+          showError(mt('errorOccurred'));
+        }
       }
     }
 
