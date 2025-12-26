@@ -366,11 +366,18 @@ export default {
         if (!user) {
           return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
         }
+
+        // Check approval status
+        const profile = await fetchProfile(env, user.id);
+        if (!profile || !profile.approved) {
+          return jsonResponse({ success: false, error: 'Not approved' }, 403, origin);
+        }
         
         return jsonResponse({
           success: true,
           user_id: user.id,
           email: user.email,
+          approved: profile.approved,
         }, 200, origin);
       }
       
@@ -871,6 +878,10 @@ export default {
           return jsonResponse({ success: false, error: 'Not a student account' }, 403, origin);
         }
         
+        if (!profile.approved) {
+          return jsonResponse({ success: false, error: 'Account not approved' }, 403, origin);
+        }
+
         // Update password using admin API
         const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${student_id}`, {
           method: 'PUT',
