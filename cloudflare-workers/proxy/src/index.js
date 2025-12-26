@@ -21,6 +21,10 @@
 
 const COOKIE_DOMAIN = '.willenaenglish.com';
 
+// Some endpoints are still hosted on Netlify but must be reachable via this gateway
+// so that `.willenaenglish.com` cookies are available to them.
+const NETLIFY_ORIGIN = 'https://willenaenglish.netlify.app';
+
 // Map function names to their service binding names
 // The binding names are defined in wrangler.jsonc [[services]]
 const FUNCTION_TO_BINDING = {
@@ -45,6 +49,30 @@ const CF_WORKER_FUNCTIONS = new Set([
   'get_sentence_audio_urls',
   'verify_student',
 ]);
+
+// Netlify-backed functions that should be proxied through this gateway.
+// Keep this list tight; only add functions that still require Netlify.
+const NETLIFY_PROXY_FUNCTIONS = new Set([
+  'teacher_admin',
+]);
+
+async function routeToNetlifyFunction(request, url, functionName) {
+  const targetUrl = new URL(NETLIFY_ORIGIN);
+  targetUrl.pathname = `/.netlify/functions/${functionName}`;
+  targetUrl.search = url.search;
+
+  const headers = new Headers(request.headers);
+  // Ensure upstream sees the right host for absolute redirects/logging.
+  headers.set('Host', new URL(NETLIFY_ORIGIN).host);
+
+  const upstreamRequest = new Request(targetUrl.toString(), {
+    method: request.method,
+    headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+  });
+
+  return fetch(upstreamRequest);
+}
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
@@ -247,6 +275,12 @@ async function handleRequest(request, env) {
       });
     }
     
+    // Netlify proxy fallback for a small set of endpoints that haven't been migrated yet.
+    if (NETLIFY_PROXY_FUNCTIONS.has(functionName)) {
+      const response = await routeToNetlifyFunction(request, url, functionName);
+      return rewriteResponse(response, origin);
+    }
+
     // Check if this is a supported CF Worker function
     if (!CF_WORKER_FUNCTIONS.has(functionName)) {
       return new Response(JSON.stringify({ error: `Unknown function: ${functionName}` }), {
