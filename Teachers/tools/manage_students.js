@@ -506,7 +506,12 @@ function attachRowHandlers() {
     try {
       if (act === 'approve') {
         const currentlyApproved = btn.textContent.includes('Unapprove');
-        await api('set_approved', { method:'POST', body:{ user_id: uid, approved: !currentlyApproved } });
+        const newStatus = !currentlyApproved;
+        await api('set_approved', { method:'POST', body:{ user_id: uid, approved: newStatus } });
+        // If unapproving, also move to "unapproved" class
+        if (!newStatus) {
+          await api('update_student', { method:'POST', body:{ user_id: uid, class: 'unapproved' } });
+        }
       } else if (act === 'changeclass') {
         const currentClass = tr?.dataset?.class || '';
         const newClass = prompt(`Enter new class for ${username}`, currentClass) || '';
