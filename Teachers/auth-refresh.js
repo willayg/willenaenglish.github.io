@@ -25,7 +25,6 @@ async function callRefresh() {
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
     try {
-      // Prefer token-mode refresh when we have a refresh token stored (handles third-party cookie blocking).
       let refreshToken = '';
       try { refreshToken = localStorage.getItem('sb_refresh_token') || ''; } catch {}
 

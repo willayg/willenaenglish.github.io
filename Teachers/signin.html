@@ -7,11 +7,13 @@
   <script>
     (function() {
       const host = location.hostname;
-      // Allow staging and localhost to use CF workers directly
-      if (host === 'willenaenglish.netlify.app' || host === 'staging.willenaenglish.com' || host === 'localhost' || host === '127.0.0.1') return;
-      const targetHost = 'https://willenaenglish.netlify.app';
-      const path = location.pathname + location.search + location.hash;
-      window.location.replace(targetHost + path);
+      // Only GitHub Pages should bounce to Netlify.
+      // Custom domains and staging should use Cloudflare Workers.
+      if (host === 'willenaenglish.github.io') {
+        const targetHost = 'https://willenaenglish.netlify.app';
+        const path = location.pathname + location.search + location.hash;
+        window.location.replace(targetHost + path);
+      }
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -297,12 +299,17 @@
     }
     
     async function login(email, password) {
-      const url = `${AUTH_URL}?action=login`;
+      const url = `${AUTH_URL}?action=login&tokens=1`;
       const result = await apiCall(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      // Persist tokens for browsers that don't send third-party cookies (common on mobile).
+      try {
+        if (result && result.access_token) localStorage.setItem('sb_access_token', result.access_token);
+        if (result && result.refresh_token) localStorage.setItem('sb_refresh_token', result.refresh_token);
+      } catch {}
       return result.user;
     }
     
