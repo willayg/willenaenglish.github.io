@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login - Willena English</title>
+  <script>
+    (function() {
+      const host = location.hostname;
+      // Allow staging and localhost to use CF workers directly
+      if (host === 'willenaenglish.netlify.app' || host === 'staging.willenaenglish.com' || host === 'localhost' || host === '127.0.0.1') return;
+      const targetHost = 'https://willenaenglish.netlify.app';
+      const path = location.pathname + location.search + location.hash;
+      window.location.replace(targetHost + path);
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
@@ -287,17 +297,12 @@
     }
     
     async function login(email, password) {
-      const url = `${AUTH_URL}?action=login&tokens=1`;
+      const url = `${AUTH_URL}?action=login`;
       const result = await apiCall(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      // Persist tokens for browsers that block third-party cookies (common on mobile).
-      try {
-        if (result && result.access_token) localStorage.setItem('sb_access_token', result.access_token);
-        if (result && result.refresh_token) localStorage.setItem('sb_refresh_token', result.refresh_token);
-      } catch {}
       return result.user;
     }
     
@@ -374,13 +379,31 @@
       }
     });
     
-    // If already logged in, auto-redirect.
+    // If already logged in (has session), optionally auto-redirect if redirect= present
+    // Loop guard: prevent infinite redirects if session check keeps failing
     (async () => {
+      const LOOP_KEY = 'teacher_login_redirect_count';
+      const MAX_REDIRECTS = 2;
       try {
-        const whoRes = await window.WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-        const who = await whoRes.json().catch(() => null);
-        if (who && who.success && who.user_id) {
-          try { localStorage.setItem('userId', who.user_id); } catch {}
+        const count = parseInt(sessionStorage.getItem(LOOP_KEY) || '0', 10);
+        if (count >= MAX_REDIRECTS) {
+          console.warn('[login] Too many redirect attempts, staying on login page');
+          sessionStorage.removeItem(LOOP_KEY);
+          return;
+        }
+
+        const debugUrl = `${AUTH_URL}?action=debug`;
+        const debugResult = await fetch(debugUrl, { credentials: 'include' });
+        const debugData = await debugResult.json();
+        
+        if (debugData.hasSupabaseUrl && debugData.hasAnonKey && debugData.hasServiceRole) {
+          console.log('✓ Auth service healthy');
+        } else {
+          console.warn('⚠ Auth service missing environment variables');
+        }
+        if (debugData.session && debugData.session.user && debugData.session.user.id) {
+          // Already logged in, perform quick redirect
+          sessionStorage.setItem(LOOP_KEY, String(count + 1));
           const params = new URLSearchParams(location.search);
           const redirect = params.get('redirect');
           if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
@@ -389,9 +412,13 @@
             // Already logged in and no specific redirect: go to Teacher dashboard
             window.location.replace('/Teachers/index.html');
           }
+        } else {
+          // Not logged in - clear counter so future logins work
+          sessionStorage.removeItem(LOOP_KEY);
         }
       } catch (error) {
         console.error('Auth service unreachable:', error);
+        sessionStorage.removeItem(LOOP_KEY);
       }
     })();
   </script>
