@@ -12,117 +12,22 @@
   <link rel="stylesheet" href="/students/theme.css" />
   <base href="/students/">
   <meta name="robots" content="noindex" />
-  <!-- API config for GitHub Pages + Netlify Functions -->
+  <!-- API config for Cloudflare -->
   <script src="/js/api-config.js"></script>
   <script>
-    // Show a user-facing banner (Korean) instead of silently redirecting.
-    // If user previously chose the Netlify fallback, honor that choice automatically.
+    // EMERGENCY FIX: Redirect to students domain for all authenticated pages
+    // Cross-origin cookies don't work - MUST be on students.willenaenglish.com
     (function() {
-      function createCookieBanner(netlifyUrl, nextLocal) {
-        if (document.getElementById('wa-cookie-banner')) return;
-        const b = document.createElement('div');
-        b.id = 'wa-cookie-banner';
-        b.style.position = 'fixed';
-        b.style.left = '0';
-        b.style.right = '0';
-        b.style.top = '0';
-        b.style.zIndex = '999999';
-        b.style.background = '#fff8f0';
-        b.style.color = '#161616';
-        b.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
-        b.style.padding = '12px 16px';
-        b.style.display = 'flex';
-        b.style.alignItems = 'center';
-        b.style.justifyContent = 'space-between';
-        b.style.gap = '12px';
-
-        const txt = document.createElement('div');
-        txt.style.flex = '1';
-        txt.style.fontWeight = '700';
-        txt.style.fontSize = '0.95rem';
-        txt.textContent = '이 브라우저는 타사 쿠키를 차단하고 있어 로그인이 원활하지 않을 수 있습니다.';
-
-        const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.alignItems = 'center';
-        actions.style.gap = '8px';
-
-        const remember = document.createElement('label');
-        remember.style.display = 'inline-flex';
-        remember.style.alignItems = 'center';
-        remember.style.gap = '6px';
-        remember.style.fontWeight = '600';
-        const chk = document.createElement('input');
-        chk.type = 'checkbox';
-        chk.id = 'wa-cookie-remember';
-        const chkText = document.createElement('span');
-        chkText.textContent = '선택 기억하기';
-        remember.appendChild(chk);
-        remember.appendChild(chkText);
-
-        const continueBtn = document.createElement('button');
-        continueBtn.textContent = '여기서 계속';
-        continueBtn.style.background = '#2b6f77';
-        continueBtn.style.color = '#fff';
-        continueBtn.style.border = 'none';
-        continueBtn.style.padding = '8px 12px';
-        continueBtn.style.borderRadius = '8px';
-        continueBtn.style.fontWeight = '700';
-
-        const fallbackBtn = document.createElement('button');
-        fallbackBtn.textContent = '대체 로그인 열기';
-        fallbackBtn.style.background = 'transparent';
-        fallbackBtn.style.color = '#2b6f77';
-        fallbackBtn.style.border = '2px solid #2b6f77';
-        fallbackBtn.style.padding = '6px 10px';
-        fallbackBtn.style.borderRadius = '8px';
-        fallbackBtn.style.fontWeight = '700';
-
-        const closeX = document.createElement('button');
-        closeX.textContent = '×';
-        closeX.title = '닫기';
-        closeX.style.background = 'transparent';
-        closeX.style.border = 'none';
-        closeX.style.fontSize = '18px';
-        closeX.style.marginLeft = '8px';
-
-        actions.appendChild(remember);
-        actions.appendChild(continueBtn);
-        actions.appendChild(fallbackBtn);
-        actions.appendChild(closeX);
-
-        b.appendChild(txt);
-        b.appendChild(actions);
-        document.body.appendChild(b);
-
-        function hide() { try{ b.remove(); }catch(e){} }
-
-        continueBtn.addEventListener('click', () => {
-          if (chk.checked) localStorage.setItem('wa_cookie_choice', 'local');
-          hide();
-          if (nextLocal) location.replace(nextLocal);
-        });
-
-        fallbackBtn.addEventListener('click', () => {
-          if (chk.checked) localStorage.setItem('wa_cookie_choice', 'netlify');
-          hide();
-          if (netlifyUrl) location.replace(netlifyUrl);
-        });
-
-        closeX.addEventListener('click', () => { hide(); });
+      const host = window.location.hostname;
+      // Allow localhost/127.0.0.1 for local dev; only students.willenaenglish.com works in production
+      const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
+      if (!isLocalDev && host !== 'students.willenaenglish.com') {
+        const netlifyUrl = 'https://students.willenaenglish.com' + window.location.pathname + window.location.search;
+        console.log('[Dashboard] Redirecting to Netlify for auth:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return;
       }
-
-      if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
-        const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
-        const saved = localStorage.getItem('wa_cookie_choice');
-        if (saved === 'netlify') {
-          window.location.replace(netlifyUrl);
-          return;
-        }
-        // Show banner offering choice instead of immediate redirect
-        createCookieBanner(netlifyUrl);
-      }
-    })();
+    });
 
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
@@ -139,27 +44,44 @@
         }
 
         if (cookiesBlocked) {
-          // No guest mode: always require login.
-          // Login page handles any cookie diagnostics/fallback.
-          location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname + location.search));
-          return;
+          // Show a lightweight banner instructing user to allow cookies or use normal browsing mode
+          const b = document.createElement('div');
+          b.style.position = 'fixed';
+          b.style.left = '0';
+          b.style.right = '0';
+          b.style.top = '0';
+          b.style.zIndex = '99999';
+          b.style.background = '#ffe9e6';
+          b.style.color = '#2b0b09';
+          b.style.padding = '12px 16px';
+          b.style.fontWeight = '700';
+          b.style.textAlign = 'center';
+          b.textContent = 'Cookies appear to be blocked in this browser window. Please enable cookies or open the site in a regular (non-incognito) window so you can sign in.';
+          const closeBtn = document.createElement('button');
+          closeBtn.textContent = 'Close';
+          closeBtn.style.marginLeft = '12px';
+          closeBtn.addEventListener('click', () => b.remove());
+          b.appendChild(closeBtn);
+          document.body.appendChild(b);
+          return; // stop further checks to avoid lots of 401s
         }
 
         const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-        const w = await who.json().catch(()=>({}));
-        if (!who.ok || !w.success) {
-          // No guest mode.
-          // For known third-party-cookie blockers on cross-origin (e.g., GitHub Pages), go to Netlify fallback.
-          if (WillenaAPI.isCrossOrigin && !WillenaAPI.isCloudflarePages && WillenaAPI.isThirdPartyCookiesBlocked && WillenaAPI.isThirdPartyCookiesBlocked()) {
-            WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
-            const netlifyUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(location.pathname + location.search);
-            location.replace(netlifyUrl);
-            return;
-          }
-          location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname + location.search));
-          return;
+        console.log('[Dashboard] Auth check response:', who.status, who.statusText);
+        const w = await who.json();
+        console.log('[Dashboard] Auth data:', w);
+        if (!w.success) {
+          console.log('[Dashboard] Not logged in, redirecting to signin');
+          // Not logged in - redirect to login
+          location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
+        } else {
+          console.log('[Dashboard] User is logged in:', w.user_id || w.id);
         }
-      } catch {}
+      } catch (err) {
+        // If auth check fails (network error, JSON parse error, etc.), redirect to login
+        console.error('[Dashboard] Auth check error:', err);
+        location.replace('/students/login.html?next=' + encodeURIComponent(location.pathname));
+      }
     });
   </script>
   <script type="module" src="/students/components/student-header.js"></script>
@@ -176,7 +98,7 @@
           <!-- English Arcade (merged with Grammar) -->
           <a href="/Games/english_arcade/index.html" class="wa-option-card wa-word-arcade" style="text-decoration: none; color: inherit; background: #343d44; border: 3px solid #59d7db; border-radius: 16px; padding: 24px 12px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease; cursor: pointer; grid-column: span 2; min-height: 200px;">
             <img src="/Games/english_arcade/assets/Images/icons/english-arcade.svg" alt="English Arcade" style="width: 250px; height: 100px; max-width: none; object-fit: contain;">
-            <div style="text-align: center; font-size: 1.6rem; font-weight: 700; letter-spacing: .3px; color: white; text-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0,255,255,0.6);" data-i18n="Start Game Now">Start Game Now</div>
+            <div style="text-align: center; font-size: 1.6rem; font-weight: 700; letter-spacing: .3px; color: white; text-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0,255,255,0.6);" data-i18n="Start Game">Start Game</div>
           </a>
         </div>
       </section>
@@ -294,6 +216,7 @@
   <script>
     document.getElementById('logoutBig')?.addEventListener('click', async () => {
   try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
+  try { WillenaAPI.clearLocalTokens?.(); } catch {} // Clear localStorage tokens
   await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' });
   location.href = '/students/login.html';
     });
@@ -780,7 +703,7 @@
                 // Find current student's progress row explicitly
                 let studentProgress = null;
                 if (currentUserId) {
-                  studentProgress = progressData.progress.find(p => String(p.user_id) === String(currentUserId)) || null;
+                  studentProgress = progressData.progress.find(p => p.user_id === currentUserId) || null;
                 }
                 // If user id missing, but only one row and names match profile name, allow fallback
                 if (!studentProgress && progressData.progress.length === 1) {
@@ -981,8 +904,6 @@
         if (!container || !card) return;
 
         if (!data || !data.success || !Array.isArray(data.leaderboard) || data.leaderboard.length === 0) {
-          const reason = !data ? 'no data' : !data.success ? 'success=false' : !Array.isArray(data.leaderboard) ? 'leaderboard not array' : 'empty leaderboard';
-          console.warn('[renderGlobalLeaderboard] No data to render. Reason:', reason, 'Data:', data);
           container.innerHTML = `<p style="text-align:center;color:#666;">${t('No data available')}</p>`;
           return;
         }
@@ -1043,7 +964,6 @@
         });
         html += '</ul>';
         container.innerHTML = html;
-        console.log('[renderGlobalLeaderboard] Rendered', sorted.length, 'entries for metric:', metric);
       }
 
       // Fetch and render stars leaderboard
@@ -1214,36 +1134,15 @@
           const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
-          
-          // Validate response structure
-          if (!data || typeof data !== 'object') {
-            console.error('[Global LB] Invalid response type:', typeof data, data);
-            throw new Error('Invalid response: expected object');
-          }
-          
-          if (!data.success) {
-            console.error('[Global LB] API returned success=false:', data.error || data);
-            throw new Error(data.error || 'API returned success=false');
-          }
-          
-          if (!Array.isArray(data.leaderboard)) {
-            console.error('[Global LB] Invalid leaderboard field:', typeof data.leaderboard, 'expected array. Full response:', data);
-            throw new Error('Invalid leaderboard field: expected array');
-          }
-          
           globalLbCache.set(timeframe, data);
           setLbToLocal(cacheKey, data);
           renderGlobalLeaderboard('globalLeaderboardContent', 'globalLeaderboardCard', data, globalLbMetric);
         } catch (err) {
-          console.error('[Global LB] Error:', err.message, err);
+          console.error('Global leaderboard error:', err);
           // Only show error if we have no cached data
           if (!local?.data) {
             const container = document.getElementById('globalLeaderboardContent');
-            if (container) {
-              container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}: ${err.message}</p>`;
-            }
-          } else {
-            console.warn('[Global LB] Fetch failed but showing cached data');
+            if (container) container.innerHTML = `<p style="color:#b00020;">${t('Failed to load')}</p>`;
           }
         } finally {
           spinner?.classList.add('hidden');

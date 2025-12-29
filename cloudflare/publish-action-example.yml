@@ -1,0 +1,27 @@
+# Example GitHub Actions workflow to publish Cloudflare worker from this branch
+# Copy to .github/workflows/publish-cloudflare.yml if you want automated publishing on this branch
+
+name: Publish Cloudflare Worker (example)
+
+on:
+  push:
+    branches:
+      - cloudflare
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install deps
+        run: npm ci
+        working-directory: ./cloudflare
+      - name: Publish with wrangler
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npx wrangler publish
+        working-directory: ./cloudflare

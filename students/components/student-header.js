@@ -36,16 +36,15 @@ class StudentHeader extends HTMLElement {
     } catch {}
   };
   this._onStarsBump = (e) => {
-    // Legacy optimistic bump - kept for backward compatibility but now just triggers refresh
     try {
-      this._fetchOverview(); // Refresh from server instead of local bump
-      requestAnimationFrame(() => this._animateStarsBounce());
-    } catch {}
-  };
-  this._onStarsRefresh = (e) => {
-    // New event: fetch updated totals from server after game completes
-    try {
-      this._fetchOverview();
+      const delta = e?.detail?.delta || 1;
+      if (typeof this._stars === 'number') {
+        this._stars += delta;
+      } else {
+        this._stars = delta;
+      }
+      this.refresh();
+      // Trigger bounce animation after render
       requestAnimationFrame(() => this._animateStarsBounce());
     } catch {}
   };
@@ -70,7 +69,6 @@ class StudentHeader extends HTMLElement {
   window.addEventListener('points:update', this._onPointsUpdate);
   window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.addEventListener('stars:optimistic-bump', this._onStarsBump);
-  window.addEventListener('stars:refresh', this._onStarsRefresh);
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
@@ -88,7 +86,6 @@ class StudentHeader extends HTMLElement {
   window.removeEventListener('points:update', this._onPointsUpdate);
   window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.removeEventListener('stars:optimistic-bump', this._onStarsBump);
-  window.removeEventListener('stars:refresh', this._onStarsRefresh);
   window.removeEventListener('focus', this._onFocus);
   }
 
@@ -122,29 +119,11 @@ class StudentHeader extends HTMLElement {
     this._fetchOverview();
   }
 
-  _redirectToLoginIfNeeded() {
-    try {
-      const p = String(location.pathname || '');
-      // Avoid redirect loops on login pages
-      if (/\/students\/(login|signin)\.html$/i.test(p)) return;
-
-      const next = encodeURIComponent(String(location.pathname || '') + String(location.search || ''));
-      location.replace(`/students/login.html?next=${next}`);
-    } catch {}
-  }
-
   async _hydrateProfile() {
     try {
       const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-      if (!whoRes.ok) {
-        this._redirectToLoginIfNeeded();
-        return;
-      }
-      const who = await whoRes.json().catch(() => null);
-      if (!who || !who.success || !who.user_id) {
-        this._redirectToLoginIfNeeded();
-        return;
-      }
+      const who = await whoRes.json();
+      if (!who || !who.success || !who.user_id) return;
       this._uid = who.user_id;
   // Stash simple role for later gating (teacher/admin)
   try { if (who.role) { localStorage.setItem('user_role', who.role); } } catch {}
@@ -168,8 +147,7 @@ class StudentHeader extends HTMLElement {
         this.refresh();
       }
     } catch {
-      // If auth fails or network errors occur, force login (no guest mode)
-      this._redirectToLoginIfNeeded();
+      // ignore fetch errors; keep any existing values
     }
   }
 
@@ -372,13 +350,20 @@ class StudentHeader extends HTMLElement {
   }
 
   render() {
+    // Try established identity sources; if none, fall back to guest cookie
+    let cookieGuestName = null;
+    try {
+      const m = (document.cookie || '').match(/(?:^|;\s*)wa_guest_name=([^;]+)/);
+      cookieGuestName = m ? decodeURIComponent(m[1]) : null;
+    } catch {}
     // Prefer recently-updated storage values (they represent immediate user intent)
     const name = (
       localStorage.getItem("user_name") || sessionStorage.getItem("user_name") ||
       localStorage.getItem("username") || sessionStorage.getItem("username") ||
       localStorage.getItem("name") || sessionStorage.getItem("name") ||
       this._name ||
-      ""
+      cookieGuestName ||
+      "Guest"
     );
     const uid = this._uid ||
       localStorage.getItem("user_id") || sessionStorage.getItem("user_id") ||
@@ -709,6 +694,21 @@ class StudentHeader extends HTMLElement {
       try {
         const keys = ['user_name','username','name','user_id','userId','student_id','profile_id','id','selectedEmojiAvatar','avatar'];
         keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+      } catch {}
+      // Clear localStorage tokens
+      try { WillenaAPI.clearLocalTokens?.(); } catch {}
+      // Clear guest cookies if present so routes don't consider guest authenticated
+      try {
+        const opts = 'Path=/; Max-Age=0';
+        // Clear for current domain
+        document.cookie = 'wa_guest_id=; ' + opts;
+        document.cookie = 'wa_guest_name=; ' + opts;
+        // Also attempt clearing on top-level domain used in production
+        const host = location.hostname;
+        if (/willenaenglish\.com$/i.test(host)) {
+          document.cookie = 'wa_guest_id=; Domain=.willenaenglish.com; ' + opts;
+          document.cookie = 'wa_guest_name=; Domain=.willenaenglish.com; ' + opts;
+        }
       } catch {}
   // Ensure mission modal will show again after logout
   try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}

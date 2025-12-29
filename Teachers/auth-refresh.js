@@ -1,4 +1,20 @@
-const REFRESH_PATH = '/.netlify/functions/supabase_auth?action=refresh';
+// Detect custom domain and route to Netlify
+const getApiBase = () => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
+    return 'https://willenaenglish.netlify.app';
+  }
+  return '';
+};
+const API_BASE = getApiBase();
+const REFRESH_ENDPOINT = (() => {
+  try {
+    if (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.getApiUrl === 'function') {
+      return window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth') + '?action=refresh&tokens=1';
+    }
+  } catch {}
+  return `${API_BASE}/.netlify/functions/supabase_auth?action=refresh&tokens=1`;
+})();
 const REFRESH_INTERVAL = 1000 * 60 * 40; // 40 minutes
 
 let refreshTimer = null;
@@ -9,11 +25,23 @@ async function callRefresh() {
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
     try {
-      const resp = (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function')
-        ? await window.WillenaAPI.fetch(REFRESH_PATH, { cache: 'no-store' })
-        : await fetch(REFRESH_PATH, { credentials: 'include', cache: 'no-store' });
+      // Prefer token-mode refresh when we have a refresh token stored (handles third-party cookie blocking).
+      let refreshToken = '';
+      try { refreshToken = localStorage.getItem('sb_refresh_token') || ''; } catch {}
 
+      const resp = refreshToken
+        ? await fetch(REFRESH_ENDPOINT, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken })
+          })
+        : await fetch(REFRESH_ENDPOINT, { credentials: 'include' });
       const json = await resp.json().catch(() => ({}));
+      try {
+        if (json && json.access_token) localStorage.setItem('sb_access_token', json.access_token);
+        if (json && json.refresh_token) localStorage.setItem('sb_refresh_token', json.refresh_token);
+      } catch {}
         if (!resp.ok || !(json && json.success)) {
           console.debug('[auth-refresh] refresh request failed', { status: resp.status, body: json });
         } else {

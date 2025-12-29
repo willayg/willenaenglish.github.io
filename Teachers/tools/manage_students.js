@@ -175,27 +175,14 @@ let IS_ADMIN = false; // set after role check
 
 async function api(action, opts = {}) {
   const method = opts.method || (opts.body ? 'POST' : 'GET');
-  const path = `${API}?action=${encodeURIComponent(action)}`;
-  const body = opts.body ? JSON.stringify(opts.body) : undefined;
-  const headers = { 'Content-Type': 'application/json' };
-
-  let res;
-  if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
-    res = await WillenaAPI.fetch(path, {
-      method,
-      headers,
-      body
-    });
-  } else {
-    res = await fetch(path, {
-      method,
-      credentials: 'include',
-      headers,
-      body,
-      cache: 'no-store'
-    });
-  }
-
+  const url = `${API}?action=${encodeURIComponent(action)}`;
+  const res = await fetch(url, {
+    method,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    cache: 'no-store'
+  });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.success === false) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;
@@ -330,12 +317,7 @@ async function prefetchClassList(cls) {
   if (cacheGetClassData(cls, 60000)) return null;
   const url = `${API}?action=list_students&class=${encodeURIComponent(cls)}`;
   try {
-    let res;
-    if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
-      res = await WillenaAPI.fetch(url, { credentials: 'include', cache: 'no-store' });
-    } else {
-      res = await fetch(url, { credentials: 'include', cache: 'no-store' });
-    }
+    const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
     const data = await res.json().catch(()=>({}));
     if (res.ok && data && Array.isArray(data.students)) {
       cacheSetClassData(cls, data.students);
@@ -436,12 +418,7 @@ async function refresh(force = false) {
     }
   } catch(e) {}
   try {
-    let res;
-    if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
-      res = await WillenaAPI.fetch(url, { credentials:'include', cache:'no-store' });
-    } else {
-      res = await fetch(url, { credentials:'include', cache:'no-store' });
-    }
+    const res = await fetch(url, { credentials:'include', cache:'no-store' });
     data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
   } catch (err) {
@@ -506,12 +483,7 @@ function attachRowHandlers() {
     try {
       if (act === 'approve') {
         const currentlyApproved = btn.textContent.includes('Unapprove');
-        const newStatus = !currentlyApproved;
-        await api('set_approved', { method:'POST', body:{ user_id: uid, approved: newStatus } });
-        // If unapproving, also move to "unapproved" class
-        if (!newStatus) {
-          await api('update_student', { method:'POST', body:{ user_id: uid, class: 'unapproved' } });
-        }
+        await api('set_approved', { method:'POST', body:{ user_id: uid, approved: !currentlyApproved } });
       } else if (act === 'changeclass') {
         const currentClass = tr?.dataset?.class || '';
         const newClass = prompt(`Enter new class for ${username}`, currentClass) || '';

@@ -176,12 +176,9 @@ import { initPointsClient } from './scripts/points-client.js';
       const stars = Math.max(0, Math.min(10, Number(sum.stars)||0));
       parts.push(`${'⭐'.repeat(stars)}`);
     }
-          const pts = (typeof cc.points === 'number') ? cc.points : (typeof cc.correct === 'number' ? cc.correct : (ov.points ?? 0));
-          const stars = (ov && typeof ov.stars === 'number') ? ov.stars : 0;
-          const superScore = Math.round((Number(pts || 0) * Number(stars || 0)) / 1000);
-          setCount('awardSuperScore', superScore);
-          setText('awardPoints', String(pts));
-          try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
+    return parts.join(' · ');
+  }
+
   async function loadAttempts(uid){
     const tb = document.getElementById('attemptsBody');
     try {

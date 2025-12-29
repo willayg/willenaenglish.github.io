@@ -287,12 +287,16 @@
     }
     
     async function login(email, password) {
-      const url = `${AUTH_URL}?action=login`;
+      const url = `${AUTH_URL}?action=login&tokens=1`;
       const result = await apiCall(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      try {
+        if (result && result.access_token) localStorage.setItem('sb_access_token', result.access_token);
+        if (result && result.refresh_token) localStorage.setItem('sb_refresh_token', result.refresh_token);
+      } catch {}
       return result.user;
     }
     
@@ -369,20 +373,13 @@
       }
     });
     
-    // If already logged in (has session), optionally auto-redirect if redirect= present
+    // If already logged in, auto-redirect.
     (async () => {
       try {
-        const debugUrl = `${AUTH_URL}?action=debug`;
-        const debugResult = await fetch(debugUrl, { credentials: 'include' });
-        const debugData = await debugResult.json();
-        
-        if (debugData.hasSupabaseUrl && debugData.hasAnonKey && debugData.hasServiceRole) {
-          console.log('✓ Auth service healthy');
-        } else {
-          console.warn('⚠ Auth service missing environment variables');
-        }
-        if (debugData.session && debugData.session.user && debugData.session.user.id) {
-          // Already logged in, perform quick redirect
+        const whoRes = await window.WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+        const who = await whoRes.json().catch(() => null);
+        if (who && who.success && who.user_id) {
+          try { localStorage.setItem('userId', who.user_id); } catch {}
           const params = new URLSearchParams(location.search);
           const redirect = params.get('redirect');
           if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {

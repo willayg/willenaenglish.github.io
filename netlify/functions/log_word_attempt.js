@@ -194,11 +194,22 @@ exports.handler = async (event) => {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.supabase_key;
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Best-effort resolve user from cookie access token
-  const cookieHeader = (event.headers && (event.headers.Cookie || event.headers.cookie)) || '';
+  // Best-effort resolve user from cookie or Authorization header
+  const hdrs = event.headers || {};
+  const cookieHeader = (hdrs.Cookie || hdrs.cookie) || '';
   const cookies = parseCookies(cookieHeader);
+  
   // Support a few legacy/alternate cookie names defensively
-  const accessToken = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
+  let accessToken = cookies['sb_access'] || cookies['sb-access'] || cookies['sb_access_token'] || cookies['sb-access-token'] || null;
+  
+  // Fallback: check Authorization header if no cookie found
+  if (!accessToken) {
+    const authHeader = hdrs.authorization || hdrs.Authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.slice(7);
+    }
+  }
+  
   const user = await getUserFromAccessToken(supabase, accessToken);
   const userIdFromCookie = user && user.id ? user.id : null;
 

@@ -1,98 +1,55 @@
 /**
  * Cloudflare Worker: API Gateway + Set-Cookie domain rewrite
  *
- * This is the main API gateway at api.willenaenglish.com that routes ALL requests to:
- * Cloudflare Workers via Service Bindings (NO Netlify fallback)
+ * This is the main API gateway at api.willenaenglish.com that routes requests to:
+ * 1. Cloudflare Workers (for migrated functions) via Service Bindings
+ * 2. Netlify (fallback for functions without bindings or not migrated)
  *
  * Features:
- * - All API traffic goes through CF Workers only
+ * - Smart routing based on function name and available bindings
  * - Set-Cookie domain rewrite to .willenaenglish.com for cross-subdomain auth
  * - CORS handling with credentials support
- * - Centralized cookie management at api.willenaenglish.com
+ * - Graceful fallback to Netlify if CF worker binding unavailable
  *
- * Active CF Workers:
- * - supabase_auth: Authentication & session management
- * - homework_api: Homework assignments and progress
- * - log_word_attempt: Progress tracking (sessions, attempts)
- * - progress_summary: Leaderboards, stats, overview
- * - get_audio_urls: Audio file serving from R2
- * - verify_student: Student identity verification
+ * Migration status (CF Workers):
+ * - supabase_auth: ✓
+ * - homework_api: ✓
+ * - log_word_attempt: ✓
+ * - progress_summary: ✓
+ * - get_audio_urls: ✓
  */
 
+const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
 
-// Some endpoints are still hosted on Netlify but must be reachable via this gateway
-// so that `.willenaenglish.com` cookies are available to them.
-const NETLIFY_ORIGIN = 'https://willenaenglish.netlify.app';
-
 // Map function names to their service binding names
-// The binding names are defined in wrangler.jsonc [[services]]
+// The binding names are defined in wrangler.toml [[services]]
 const FUNCTION_TO_BINDING = {
   supabase_auth: 'SUPABASE_AUTH',
   homework_api: 'HOMEWORK_API', 
   log_word_attempt: 'LOG_WORD_ATTEMPT',
   progress_summary: 'PROGRESS_SUMMARY',
-  progress_teacher_summary: 'PROGRESS_SUMMARY',
   get_audio_urls: 'GET_AUDIO_URLS',
-  get_sentence_audio_urls: 'GET_AUDIO_URLS', // Route to same worker, different path
-  verify_student: 'VERIFY_STUDENT',
 };
 
-// ALL listed functions use CF Workers exclusively (no Netlify fallback)
-const CF_WORKER_FUNCTIONS = new Set([
-  'supabase_auth',
-  'homework_api',
-  'log_word_attempt',
-  'progress_summary',
-  'progress_teacher_summary',
-  'get_audio_urls',
-  'get_sentence_audio_urls',
-  'verify_student',
-]);
-
-// Netlify-backed functions that should be proxied through this gateway.
-// Keep this list tight; only add functions that still require Netlify.
-const NETLIFY_PROXY_FUNCTIONS = new Set([
-  'teacher_admin',
-]);
-
-async function routeToNetlifyFunction(request, url, functionName) {
-  const targetUrl = new URL(NETLIFY_ORIGIN);
-  targetUrl.pathname = `/.netlify/functions/${functionName}`;
-  targetUrl.search = url.search;
-
-  const headers = new Headers(request.headers);
-  // Ensure upstream sees the right host for absolute redirects/logging.
-  headers.set('Host', new URL(NETLIFY_ORIGIN).host);
-
-  const upstreamRequest = new Request(targetUrl.toString(), {
-    method: request.method,
-    headers,
-    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-  });
-
-  return fetch(upstreamRequest);
-}
+// Functions that should prefer CF Workers (when binding available)
+const PREFER_CF_WORKER = {
+  supabase_auth: true,
+  homework_api: true,
+  log_word_attempt: true,
+  progress_summary: true,
+  get_audio_urls: true,
+};
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
-  'https://staging.willenaenglish-github-io.pages.dev',
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://students.willenaenglish.com',
-  'https://teachers.willenaenglish.com',
   'https://cf.willenaenglish.com',
-  'https://staging.willenaenglish.com',
   'https://api.willenaenglish.com',
-  'https://api-cf.willenaenglish.com',
-  // Allow explicit staging Pages hostname used in testing
-  'https://staging.willenaenglish-github-io.pages.dev'
 ]);
-
-const CORS_ALLOW_HEADERS = 'Content-Type, Authorization, Cookie';
-const CORS_ALLOW_METHODS = 'GET,POST,DELETE,OPTIONS';
 
 /**
  * Extract function name from /.netlify/functions/<name> path
@@ -106,50 +63,12 @@ function extractFunctionName(pathname) {
  * Get CORS headers for origin
  */
 function corsHeaders(origin) {
-  // If origin exactly matches an allowed origin, return it.
-  if (ALLOWED_ORIGINS.has(origin)) {
-    return {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Methods': CORS_ALLOW_METHODS,
-      'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS
-    };
-  }
-
-  // Accept dynamic Pages/preview and internal willenaenglish subdomains.
-  try {
-    const u = new URL(origin);
-    const host = u.hostname.toLowerCase();
-
-    // Allow any pages.dev origin for staging/previews
-    if (host.endsWith('.pages.dev')) {
-      return {
-        'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Methods': CORS_ALLOW_METHODS,
-        'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS
-      };
-    }
-
-    // Allow any subdomain of willenaenglish.com (production/staging variants)
-    if (host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
-      return {
-        'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Methods': CORS_ALLOW_METHODS,
-        'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS
-      };
-    }
-  } catch (e) {
-    // ignore invalid origin
-  }
-
-  // Default fallback to Netlify origin for unknown requests
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://willenaenglish.netlify.app';
   return {
-    'Access-Control-Allow-Origin': 'https://willenaenglish.netlify.app',
+    'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Methods': CORS_ALLOW_METHODS,
-    'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS
+    'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 }
 
@@ -160,18 +79,7 @@ async function routeToCFWorker(request, binding, functionName, url) {
   // Build the URL - keep query string, but the path becomes just / or /remaining
   const workerUrl = new URL(request.url);
   // Remove /.netlify/functions/<name> prefix, keep anything after
-  let remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
-  
-  // Special routing: get_sentence_audio_urls -> /sentence path on get_audio_urls worker
-  if (functionName === 'get_sentence_audio_urls') {
-    remainingPath = '/sentence';
-  }
-
-  // Teacher analytics endpoint is served by progress_summary worker under a distinct path
-  if (functionName === 'progress_teacher_summary') {
-    remainingPath = '/teacher_summary';
-  }
-  
+  const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
   workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;
   
   console.log(`[proxy] Routing ${functionName} to CF Worker: ${workerUrl.pathname}${workerUrl.search}`);
@@ -184,6 +92,28 @@ async function routeToCFWorker(request, binding, functionName, url) {
   });
   
   return binding.fetch(workerRequest);
+}
+
+/**
+ * Route request to Netlify backend
+ */
+async function routeToNetlify(request, url) {
+  const forwardPath = url.pathname + url.search;
+  const backendUrl = NETLIFY_BASE + forwardPath;
+  
+  console.log(`[proxy] Routing to Netlify: ${backendUrl}`);
+  
+  const reqHeaders = new Headers(request.headers);
+  reqHeaders.delete('cf-connecting-ip');
+  
+  const backendReq = new Request(backendUrl, {
+    method: request.method,
+    headers: reqHeaders,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+    redirect: 'follow'
+  });
+  
+  return fetch(backendReq);
 }
 
 /**
@@ -233,7 +163,7 @@ function rewriteResponse(response, origin) {
 }
 
 /**
- * Main request handler - CF Workers only, no Netlify fallback
+ * Main request handler
  */
 async function handleRequest(request, env) {
   const url = new URL(request.url);
@@ -250,6 +180,7 @@ async function handleRequest(request, env) {
       const binding = env && env.GET_AUDIO_URLS;
       if (binding && typeof binding.fetch === 'function') {
         console.log(`[proxy] Routing audio file to GET_AUDIO_URLS worker: ${url.pathname}`);
+        // Forward the full path to the worker
         const workerRequest = new Request(request.url, {
           method: request.method,
           headers: request.headers,
@@ -257,56 +188,32 @@ async function handleRequest(request, env) {
         const response = await binding.fetch(workerRequest);
         return rewriteResponse(response, origin);
       } else {
-        console.error('[proxy] GET_AUDIO_URLS binding not available');
-        return new Response(JSON.stringify({ error: 'Audio service unavailable' }), { 
-          status: 503, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } 
-        });
+        console.error('[proxy] GET_AUDIO_URLS binding not available for audio proxy');
+        return new Response('Audio service unavailable', { status: 503, headers: corsHeaders(origin) });
       }
     }
     
     const functionName = extractFunctionName(url.pathname);
     
-    // Validate function name
-    if (!functionName) {
-      return new Response(JSON.stringify({ error: 'Invalid API path' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) }
-      });
-    }
+    // Check if we should use CF Worker and if the binding exists
+    let response;
     
-    // Netlify proxy fallback for a small set of endpoints that haven't been migrated yet.
-    if (NETLIFY_PROXY_FUNCTIONS.has(functionName)) {
-      const response = await routeToNetlifyFunction(request, url, functionName);
-      return rewriteResponse(response, origin);
+    if (functionName && PREFER_CF_WORKER[functionName]) {
+      const bindingName = FUNCTION_TO_BINDING[functionName];
+      const binding = env && env[bindingName];
+      
+      if (binding && typeof binding.fetch === 'function') {
+        // Use CF Worker via service binding
+        response = await routeToCFWorker(request, binding, functionName, url);
+      } else {
+        // Fallback to Netlify (binding not available)
+        console.log(`[proxy] No binding for ${functionName}, falling back to Netlify`);
+        response = await routeToNetlify(request, url);
+      }
+    } else {
+      // Not a migrated function or no preference, use Netlify
+      response = await routeToNetlify(request, url);
     }
-
-    // Check if this is a supported CF Worker function
-    if (!CF_WORKER_FUNCTIONS.has(functionName)) {
-      return new Response(JSON.stringify({ error: `Unknown function: ${functionName}` }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) }
-      });
-    }
-    
-    // Get the service binding for this function
-    const bindingName = FUNCTION_TO_BINDING[functionName];
-    const binding = env && env[bindingName];
-    
-    if (!binding || typeof binding.fetch !== 'function') {
-      console.error(`[proxy] Missing binding for ${functionName} (${bindingName})`);
-      return new Response(JSON.stringify({ 
-        error: `Service ${functionName} is not available`,
-        binding: bindingName,
-        hint: 'Service binding not configured in wrangler.jsonc'
-      }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) }
-      });
-    }
-    
-    // Route to CF Worker via service binding
-    const response = await routeToCFWorker(request, binding, functionName, url);
     
     // Rewrite cookies and apply CORS
     return rewriteResponse(response, origin);
@@ -314,7 +221,7 @@ async function handleRequest(request, env) {
   } catch (err) {
     console.error('[proxy] Error:', err);
     return new Response(
-      JSON.stringify({ success: false, error: String(err?.message || err) }), 
+      JSON.stringify({ success: false, error: String(err?.message || err), stack: err?.stack }), 
       { status: 520, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }
     );
   }

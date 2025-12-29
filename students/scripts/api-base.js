@@ -1,22 +1,27 @@
 // students/scripts/api-base.js
-// Determine the correct API base URL based on environment
+// API URL helper - simple and deterministic
+//
+// PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, localhost, netlify.app):
+//   → Relative paths: /.netlify/functions/<name>
+//   → Same-origin requests, cookies work automatically
+//
+// GITHUB PAGES (willenaenglish.github.io):
+//   → Absolute URL to Netlify: https://willenaenglish.netlify.app/.netlify/functions/<name>
+//   → Cross-origin, requires credentials: 'include'
 
-// Cloudflare API Proxy URL (unified gateway with proper CORS and cookie handling)
-const CF_API_PROXY = 'https://api.willenaenglish.com';
+const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
+const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 
-const getApiBase = () => {
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  // GitHub Pages, custom domain, or Cloudflare Pages needs CF API proxy for CORS
-  if (host === 'willenaenglish.github.io' || 
-      host === 'willenaenglish.com' || 
-      host === 'www.willenaenglish.com' ||
-      host.endsWith('.willenaenglish.com') ||
-      host.endsWith('.pages.dev')) {
-    return CF_API_PROXY;
+/**
+ * Get the URL for a Netlify function.
+ * Returns relative path for same-origin environments (production),
+ * absolute Netlify URL only for GitHub Pages.
+ */
+export const FN = (name) => {
+  // Only GitHub Pages needs absolute URLs
+  if (typeof window !== 'undefined' && window.location.hostname === GITHUB_PAGES_HOST) {
+    return `${NETLIFY_BASE}/.netlify/functions/${name}`;
   }
-  // Netlify or localhost use relative paths
-  return '';
+  // Everything else: relative path (same-origin)
+  return `/.netlify/functions/${name}`;
 };
-
-const FUNCTIONS_BASE = getApiBase();
-export const FN = (name) => `${FUNCTIONS_BASE}/.netlify/functions/${name}`;

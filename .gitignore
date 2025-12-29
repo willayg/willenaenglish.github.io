@@ -10,3 +10,6 @@ Teachers/tools/worksheet-builder-vanilla/References/
 .dev.vars
 
 
+
+# Cloudflare Workers local dev secrets
+.dev.vars

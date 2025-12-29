@@ -5,6 +5,8 @@ function cors(event, extra = {}) {
   'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
+    // Cloudflare Pages deployment
+    'https://cf.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
@@ -27,6 +29,8 @@ function makeCorsHeaders(event, extra = {}) {
     'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
+    // Cloudflare Pages deployment
+    'https://cf.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
@@ -46,11 +50,16 @@ function makeCorsHeaders(event, extra = {}) {
 function cookie(name, value, event, { maxAge, secure = true, httpOnly = true, sameSite = 'Lax', path = '/' } = {}) {
   const hdrs = event?.headers || {};
   const host = hdrs.host || hdrs.Host || '';
+  const origin = hdrs.origin || hdrs.Origin || '';
   
   let s = `${name}=${encodeURIComponent(value ?? '')}`;
   if (maxAge != null) s += `; Max-Age=${maxAge}`;
   if (path) s += `; Path=${path}`;
-  if (host.endsWith('willenaenglish.com')) s += '; Domain=.willenaenglish.com';
+  // Set domain cookie if request comes FROM willenaenglish.com (check origin) OR is hosted on it
+  // This allows cross-origin cookies to work when site is on Cloudflare and functions on Netlify
+  if (host.endsWith('willenaenglish.com') || origin.includes('willenaenglish.com')) {
+    s += '; Domain=.willenaenglish.com';
+  }
   if (secure) s += '; Secure';
   if (httpOnly) s += '; HttpOnly';
   if (sameSite) s += `; SameSite=${sameSite}`;
@@ -185,8 +194,40 @@ exports.handler = async (event) => {
     if (action === 'login' && event.httpMethod === 'POST') {
       let body;
       try {
-        body = JSON.parse(event.body || '{}');
+        const rawBody = event.body;
+        const bodyType = rawBody === null ? 'null' : typeof rawBody;
+        const preview = bodyType === 'string'
+          ? rawBody.slice(0, 100)
+          : rawBody && bodyType !== 'undefined'
+            ? JSON.stringify(rawBody).slice(0, 100)
+            : '';
+        console.log('[supabase_auth] login: raw body type:', bodyType, 'length:', rawBody?.length || 0, 'preview:', preview || '(empty)');
+
+        if (rawBody === undefined || rawBody === null || rawBody === 'undefined' || rawBody === 'null') {
+          console.error('[supabase_auth] login: body is missing', rawBody);
+          return respond(event, 400, { success: false, error: 'Empty request body' });
+        }
+
+        if (bodyType === 'string' && !rawBody.trim()) {
+          console.error('[supabase_auth] login: body string is empty after trimming');
+          return respond(event, 400, { success: false, error: 'Empty request body' });
+        }
+
+        if (bodyType === 'string') {
+          body = JSON.parse(rawBody);
+        } else if (bodyType === 'object') {
+          body = rawBody;
+        } else {
+          console.error('[supabase_auth] login: unsupported body type', bodyType);
+          return respond(event, 400, { success: false, error: 'Invalid request body' });
+        }
+
+        if (!body || typeof body !== 'object') {
+          console.error('[supabase_auth] login: parsed body is not an object', bodyType);
+          return respond(event, 400, { success: false, error: 'Invalid request body' });
+        }
       } catch (parseErr) {
+        console.error('[supabase_auth] login: JSON parse error:', parseErr.message, 'body preview:', (event.body || '').substring(0, 100));
         return respond(event, 400, { success: false, error: 'Invalid JSON body' });
       }
       const { email, password } = body;

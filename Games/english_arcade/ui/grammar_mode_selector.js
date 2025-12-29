@@ -357,194 +357,168 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   });
 
   // After rendering buttons, fetch session history to compute stars per mode
-  // Uses the same approach as Level 3 grammar modal: fetch ALL sessions and filter client-side
-  // This is more reliable than trying to filter server-side with exact list_name match
   (async () => {
     try {
-      // Fetch ALL sessions (no list_name filter - like L3 grammar modal does)
-      const base = (window.WordArcade && window.WordArcade.FN) ? window.WordArcade.FN('progress_summary') : (typeof FN === 'function' ? FN('progress_summary') : '/.netlify/functions/progress_summary');
-      const url = `${base}?section=sessions`;
-      const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
-      if (!res.ok) return;
-      const sessions = await res.json();
+      // Fetch sessions (try list-scoped first for speed)
+      const makeUrl = (scoped) => {
+        const base = (window.WordArcade && window.WordArcade.FN) ? window.WordArcade.FN('progress_summary') : (typeof FN === 'function' ? FN('progress_summary') : '/.netlify/functions/progress_summary');
+        // Fall back if FN not available in this scope
+        const u = new URL(base, window.location.origin);
+        u.searchParams.set('section', 'sessions');
+        // Use grammarFile path (not display name) for list_name lookup since sessions store file paths
+        if (scoped && currentGrammarFile) u.searchParams.set('list_name', currentGrammarFile);
+        return u.toString();
+      };
+      let sessions = [];
+      try {
+        const res = await fetch(makeUrl(true), { cache: 'no-store', credentials: 'include' });
+        if (res.ok) sessions = await res.json();
+      } catch {}
+      if (!Array.isArray(sessions) || !sessions.length) {
+        try {
+          const res = await fetch(makeUrl(false), { cache: 'no-store', credentials: 'include' });
+          if (res.ok) sessions = await res.json();
+        } catch {}
+      }
       if (!Array.isArray(sessions) || !sessions.length) return;
 
-      // Build target keys from the current grammar file/name for matching
-      // This mirrors progress-data-service.js buildGrammarKeys logic
-      const norm = (v) => (v || '').toString().trim().toLowerCase();
-      const stripExt = (v) => v.replace(/\.json$/i, '');
-      const buildKeys = (value) => {
-        const keys = new Set();
-        const pushForms = (raw) => {
-          const base = norm(raw);
-          if (!base) return;
-          [base, stripExt(base)].forEach((candidate) => {
-            if (!candidate) return;
-            const noSpace = candidate.replace(/\s+/g, '');
-            const underscored = candidate.replace(/\s+/g, '_');
-            const alphaOnly = candidate.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-            [candidate, noSpace, underscored, stripExt(noSpace), stripExt(underscored), alphaOnly].forEach((form) => {
-              if (form) keys.add(form);
-            });
-          });
-        };
-        if (typeof value === 'string') {
-          pushForms(value);
-          if (value.includes('/')) pushForms(value.split('/').pop());
-          if (value.includes('\\')) pushForms(value.split('\\').pop());
-        }
-        return keys;
-      };
+      const canon = (s) => (s || '').toString().trim().toLowerCase();
+      // Create a canonical key by normalizing to letters/digits and underscores
+      const canonKey = (s) => canon(s).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      const target = canon(currentGrammarName);
+      const targetKey = canonKey(currentGrammarName);
+      // Also extract just the file basename if grammarFile is available
+      const fileBasename = currentGrammarFile ? canonKey(currentGrammarFile.split('/').pop().replace(/\.json$/i, '')) : '';
+      const bestByMode = {};
 
-      // Build target keys from both grammarFile and grammarName
-      const targetKeys = new Set();
-      buildKeys(currentGrammarFile).forEach(k => targetKeys.add(k));
-      buildKeys(currentGrammarName).forEach(k => targetKeys.add(k));
-      
-      // Helper to collect all name candidates from a session (mirrors progress-data-service.js)
-      const collectSessionNames = (session) => {
-        const names = [];
-        if (session.list_name) names.push(session.list_name);
+      // Debug: log target matching info for Level 3
+      if (isLevel3Grammar) {
+        console.debug('[GrammarModeSelector L3] Matching sessions for:', { target, targetKey, fileBasename, sessionCount: sessions.length });
+      }
+
+      (sessions || []).forEach((session) => {
+        if (!session) return;
         let summary = session.summary;
         if (typeof summary === 'string') {
           try { summary = JSON.parse(summary); } catch { summary = null; }
         }
-        if (summary) {
-          if (summary.list_name) names.push(summary.list_name);
-          if (summary.listName) names.push(summary.listName);
-          if (summary.listFile) names.push(summary.listFile);
-          if (summary.grammarName) names.push(summary.grammarName);
-          if (summary.grammar) names.push(summary.grammar);
-          if (summary.grammarFile) names.push(summary.grammarFile);
-        }
+
+        // Collect all possible list name sources
+        const listCandidates = [];
+        if (session.list_name) listCandidates.push(session.list_name);
+        if (summary?.list_name) listCandidates.push(summary.list_name);
+        if (summary?.list) listCandidates.push(summary.list);
+        if (summary?.name) listCandidates.push(summary.name);
+        if (summary?.grammarName) listCandidates.push(summary.grammarName);
+        if (summary?.grammarFile) listCandidates.push(summary.grammarFile);
+
         let meta = session.meta || summary?.meta;
         if (typeof meta === 'string') {
           try { meta = JSON.parse(meta); } catch { meta = null; }
         }
         if (meta && typeof meta === 'object') {
-          ['grammarName', 'grammar', 'list', 'listName', 'file', 'name', 'grammarFile'].forEach((key) => {
-            if (meta[key]) names.push(meta[key]);
-          });
+          if (meta.grammarName) listCandidates.push(meta.grammarName);
+          if (meta.listName) listCandidates.push(meta.listName);
+          if (meta.list) listCandidates.push(meta.list);
+          if (meta.name) listCandidates.push(meta.name);
+          if (meta.grammarFile) listCandidates.push(meta.grammarFile);
         }
-        return names;
-      };
 
-      // Helper to check if session matches current grammar list
-      const sessionMatchesList = (session) => {
-        if (!targetKeys.size) return false;
-        const names = collectSessionNames(session);
-        if (!names.length) return false;
-        const candidateKeys = new Set();
-        names.forEach(name => buildKeys(name).forEach(k => candidateKeys.add(k)));
-        for (const key of targetKeys) {
-          if (candidateKeys.has(key)) return true;
-        }
-        return false;
-      };
+        // Check if any candidate matches target (using both exact and canonical key matching)
+        const matchesTarget = listCandidates.some(candidate => {
+          const c = canon(candidate);
+          const ck = canonKey(candidate);
+          // Also extract file basename from paths
+          const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
+          // Check for substring match as well (more lenient for grammar lists)
+          const substringMatch = fileBasename && (ck.includes(fileBasename) || fileBasename.includes(ck) || cFile.includes(fileBasename) || fileBasename.includes(cFile));
+          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
+        });
 
-      // Helper to check if session is a grammar session
-      const isGrammarSession = (session) => {
-        let summary = session.summary;
-        if (typeof summary === 'string') {
-          try { summary = JSON.parse(summary); } catch { summary = null; }
-        }
-        const category = norm(summary?.category || session.category);
-        const mode = norm(session.mode);
-        if (category === 'grammar') return true;
-        if (mode && mode.includes('grammar')) return true;
-        return false;
-      };
+        // If we have a target and no match, skip this session
+        // Be more lenient: if no list candidates at all, include the session if it's grammar-related
+        if (target && !matchesTarget && listCandidates.length > 0) return;
 
-      // Helper to extract percentage from session
-      const extractPercent = (session) => {
-        let summary = session.summary;
-        if (typeof summary === 'string') {
-          try { summary = JSON.parse(summary); } catch { summary = null; }
-        }
-        const sum = summary || {};
-        if (typeof sum.score === 'number' && typeof sum.total === 'number' && sum.total > 0) {
-          return Math.round((sum.score / sum.total) * 100);
-        }
-        if (typeof sum.score === 'number' && typeof sum.max === 'number' && sum.max > 0) {
-          return Math.round((sum.score / sum.max) * 100);
-        }
-        if (typeof sum.accuracy === 'number') {
-          const acc = sum.accuracy || 0;
-          return Math.round(acc > 1 ? acc : acc * 100);
-        }
-        if (typeof session.correct === 'number' && typeof session.total === 'number' && session.total > 0) {
-          return Math.round((session.correct / session.total) * 100);
-        }
-        return null;
-      };
+        const modeKey = canon(session.mode);
+        const category = canon(summary?.category || session.category);
+        // More lenient grammar detection: check mode name for grammar prefix or category
+        const isGrammar = category === 'grammar' || (modeKey && (modeKey.includes('grammar') || modeKey.startsWith('grammar_')));
+        if (!isGrammar) return;
 
-      // Helper to identify grammar bucket from mode (mirrors progress-data-service.js)
-      const identifyGrammarBucket = (mode) => {
-        const m = norm(mode);
-        if (!m) return null;
-        if (m.includes('lesson')) return 'lesson';
-        if (m.includes('fill') && m.includes('gap')) return 'fill_gap';
-        if (m.includes('fill')) return 'fill_gap';
-        if (m.includes('sentence_order') || m.includes('sentenceorder')) return 'sentence_order';
-        if (m.includes('unscramble')) return 'unscramble';
-        if (m.includes('sentence') && m.includes('grammar')) return 'unscramble';
-        if (m.includes('choose')) return 'choose';
-        if (m === 'grammar_mode') return 'choose';
-        if (m === 'grammar') return 'choose';
-        if (m.includes('sorting')) return 'sorting';
-        if (m.includes('find_mistake') || m.includes('mistake')) return 'find_mistake';
-        if (m.includes('translation') || m.includes('translate')) return 'translation';
-        return null;
-      };
-
-      // Build best scores by bucket for matching sessions
-      const bestByBucket = {};
-      sessions.forEach((session) => {
-        if (!session) return;
-        if (!isGrammarSession(session)) return;
-        if (!sessionMatchesList(session)) return;
-        
-        const pct = extractPercent(session);
+        let pct = null;
+        if (summary && typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
+          pct = Math.round((summary.score / summary.total) * 100);
+        } else if (summary && typeof summary.accuracy === 'number') {
+          // accuracy is stored as decimal (0.0-1.0), so multiply by 100
+          pct = summary.accuracy <= 1 ? Math.round(summary.accuracy * 100) : Math.round(summary.accuracy);
+        } else if (typeof session.correct === 'number' && typeof session.total === 'number' && session.total > 0) {
+          pct = Math.round((session.correct / session.total) * 100);
+        }
         if (pct == null) return;
-        
-        const bucket = identifyGrammarBucket(session.mode);
-        if (!bucket) return;
-        
-        if (!(bucket in bestByBucket) || bestByBucket[bucket] < pct) {
-          bestByBucket[bucket] = pct;
+
+        if (!(modeKey in bestByMode) || bestByMode[modeKey] < pct) {
+          bestByMode[modeKey] = pct;
         }
       });
 
-      // Map mode definitions to buckets
-      const modeToBucket = {
-        'lesson': 'lesson',
-        'sorting': 'sorting',
-        'choose': 'choose',
-        'fill_gap': 'fill_gap',
-        'unscramble': 'unscramble',
-        'sentence_order': 'sentence_order',
-        'find_mistake': 'find_mistake',
-        'translation': 'translation',
-      };
-
-      // Update star display for each visible mode
       visibleModes.forEach((modeDef) => {
         if (modeDef.showStars === false) return;
         const starEl = document.getElementById(`grammar-star-${modeDef.mode}`);
         if (!starEl) return;
+        if (!modeDef.sessionMode) {
+          renderStarsInto(starEl, null);
+          return;
+        }
+        const candidates = Array.isArray(modeDef.sessionMode) ? modeDef.sessionMode : [modeDef.sessionMode];
+        let pct = null;
         
-        const bucket = modeToBucket[modeDef.mode];
-        const pct = bucket && bestByBucket[bucket] != null ? bestByBucket[bucket] : null;
+        // First try exact match
+        candidates.forEach((modeName) => {
+          const key = canon(modeName);
+          if (!key) return;
+          if (key in bestByMode) {
+            const val = bestByMode[key];
+            if (typeof val === 'number') {
+              pct = pct == null ? val : Math.max(pct, val);
+            }
+          }
+        });
+        
+        // If no exact match, try partial/fuzzy matching based on mode type
+        if (pct == null) {
+          const modeType = modeDef.mode;
+          Object.entries(bestByMode).forEach(([sessionMode, val]) => {
+            if (pct != null && pct >= val) return;
+            if (typeof val !== 'number') return;
+            
+            // Match based on mode type keywords
+            const sm = sessionMode.toLowerCase();
+            let matches = false;
+            
+            if (modeType === 'lesson' && (sm.includes('lesson'))) matches = true;
+            if (modeType === 'sorting' && (sm.includes('sorting') || sm.includes('sort'))) matches = true;
+            if (modeType === 'choose' && (sm.includes('choose') || sm.includes('grammar_mode') || sm === 'grammar_mode')) matches = true;
+            if (modeType === 'fill_gap' && (sm.includes('fill') || sm.includes('gap') || sm.includes('blank'))) matches = true;
+            if (modeType === 'unscramble' && (sm.includes('unscramble') || sm.includes('scramble') || sm.includes('sentence_unscramble'))) matches = true;
+            if (modeType === 'sentence_order' && (sm.includes('sentence_order') || sm.includes('order') || sm.includes('reorder'))) matches = true;
+            if (modeType === 'find_mistake' && (sm.includes('mistake') || sm.includes('find_mistake') || sm.includes('error'))) matches = true;
+            if (modeType === 'translation' && (sm.includes('translation') || sm.includes('translate'))) matches = true;
+            
+            if (matches) {
+              pct = pct == null ? val : Math.max(pct, val);
+            }
+          });
+        }
+        
         renderStarsInto(starEl, pct);
       });
       
+      // Debug: log what was found (can be removed after verification)
       console.debug('[GrammarModeSelector] Star matching complete:', { 
         grammarName: currentGrammarName, 
         grammarFile: currentGrammarFile,
-        targetKeysCount: targetKeys.size,
-        bestByBucket, 
-        visibleModeCount: visibleModes.length,
-        totalSessions: sessions.length
+        bestByMode, 
+        visibleModeCount: visibleModes.length 
       });
     } catch (e) {
       console.warn('[GrammarModeSelector] Error loading stars:', e);
