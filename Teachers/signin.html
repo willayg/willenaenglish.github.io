@@ -299,18 +299,29 @@
     }
     
     async function login(email, password) {
-      const url = `${AUTH_URL}?action=login&tokens=1`;
+      const url = `${AUTH_URL}?action=login`;
       const result = await apiCall(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      // Persist tokens for browsers that don't send third-party cookies (common on mobile).
-      try {
-        if (result && result.access_token) localStorage.setItem('sb_access_token', result.access_token);
-        if (result && result.refresh_token) localStorage.setItem('sb_refresh_token', result.refresh_token);
-      } catch {}
       return result.user;
+    }
+
+    async function ensureSessionCookieReady() {
+      const delays = [0, 150, 300, 600, 1000];
+      for (const ms of delays) {
+        if (ms) await new Promise(r => setTimeout(r, ms));
+        try {
+          const res = await fetch(`${AUTH_URL}?action=whoami&_=${Date.now()}`, { credentials: 'include' });
+          const data = await res.json().catch(() => null);
+          if (res.ok && data && data.success && data.user_id) return true;
+        } catch {}
+        try {
+          await fetch(`${AUTH_URL}?action=refresh&_=${Date.now()}`, { credentials: 'include' });
+        } catch {}
+      }
+      return false;
     }
     
     async function getUserRole(userId) {
@@ -359,6 +370,11 @@
           getUserRole(user.id),
           getProfileId(user.id)
         ]);
+
+        const sessionReady = await ensureSessionCookieReady();
+        if (!sessionReady) {
+          throw new Error('Signed in, but your browser did not keep the session. Please enable cookies for this site and try again.');
+        }
         
         // Store user data
         localStorage.setItem('userId', user.id);

@@ -178,6 +178,9 @@ export default {
     const origin = request.headers.get('Origin') || '';
     const corsHeaders = getCorsHeaders(origin);
 
+    // Enable debug logging only when explicitly requested.
+    const debugLog = url.searchParams.get('debuglog') === '1' || request.headers.get('X-Debug-Log') === '1';
+
     // Some browsers (notably mobile) will not send cookies to a third-party origin
     // (e.g. *.workers.dev). Support explicit token mode for those cases.
     const wantTokens = url.searchParams.get('tokens') === '1' || request.headers.get('X-Return-Tokens') === '1';
@@ -222,6 +225,24 @@ export default {
     const action = url.searchParams.get('action');
     const isDev = isLocalDev(request);
     const cookieDomain = getCookieDomain(request);
+
+    // TEMP DEBUG: record header presence (do NOT log cookie/token contents)
+    if (debugLog) {
+      try {
+        const hasCookie = !!request.headers.get('Cookie');
+        const hasAuthorization = !!request.headers.get('Authorization');
+        console.log(JSON.stringify({
+          debug: 'hdr_presence',
+          origin: origin || null,
+          host: request.headers.get('Host') || null,
+          action: action || null,
+          hasCookie,
+          hasAuthorization,
+        }));
+      } catch (e) {
+        // ignore logging errors
+      }
+    }
     
     // Cookie options based on environment
     const cookieOpts = {
@@ -338,6 +359,20 @@ export default {
           makeCookie('sb_access', authData.access_token, cookieOpts),
           makeCookie('sb_refresh', authData.refresh_token || '', cookieOpts),
         ];
+
+        // TEMP DEBUG: indicate whether the worker will set cookies on login response
+        if (debugLog) {
+          try {
+            console.log(JSON.stringify({
+              debug: 'login_set_cookies',
+              origin: origin || null,
+              host: request.headers.get('Host') || null,
+              setCookies: Array.isArray(cookies) && cookies.length > 0,
+            }));
+          } catch (e) {
+            // ignore
+          }
+        }
         
         // Token mode: return tokens in body when explicitly requested.
         // This is needed when third-party cookies to *.workers.dev are blocked.

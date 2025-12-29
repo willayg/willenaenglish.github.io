@@ -189,27 +189,7 @@
       }
     }
     
-    // Add Authorization header from localStorage if token exists and no auth header already present
-    // This is a fallback for when cookies fail (e.g., on some browsers/incognito modes)
-    // IMPORTANT: Only send Authorization if we have a valid non-empty token to avoid interfering with cookie-based auth
-    const existingAuth = (fetchOptions.headers && (fetchOptions.headers.Authorization || fetchOptions.headers.authorization));
-    if (!existingAuth) {
-      let localToken = null;
-      try {
-        localToken = localStorage.getItem('sb_access_token') || null;
-      } catch (e) {
-        // localStorage not available or blocked
-      }
-      
-      // Only add Authorization header if we have a valid token that looks like a JWT (contains dots)
-      if (localToken && localToken.includes('.') && localToken.length > 50) {
-        fetchOptions.headers = {
-          ...fetchOptions.headers,
-          'Authorization': `Bearer ${localToken}`
-        };
-        console.log('[WillenaAPI] Added Authorization header from localStorage (token length:', localToken.length + ')');
-      }
-    }
+    // Auth: prefer HTTP-only cookies. Do not persist tokens in localStorage.
 
     
     // Debug logging for POST requests
@@ -281,37 +261,18 @@
       return 'production';
     },
 
-    // Token storage helpers - fallback for when cookies fail
-    // Store access/refresh tokens in localStorage (used when cookies are blocked/not persisting)
+    // Token helper stubs (in-memory only; do not persist tokens)
     setLocalTokens(accessToken, refreshToken) {
-      try {
-        if (accessToken) localStorage.setItem('sb_access_token', accessToken);
-        if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken);
-        console.log('[WillenaAPI] Tokens stored in localStorage');
-      } catch (e) {
-        console.warn('[WillenaAPI] Failed to store tokens in localStorage:', e);
-      }
+      window.__willenaAuthTokens = {
+        accessToken: accessToken || null,
+        refreshToken: refreshToken || null,
+      };
     },
-    
-    // Get stored access token from localStorage
     getLocalAccessToken() {
-      try {
-        return localStorage.getItem('sb_access_token') || null;
-      } catch (e) {
-        console.warn('[WillenaAPI] Failed to read access token from localStorage:', e);
-        return null;
-      }
+      return (window.__willenaAuthTokens && window.__willenaAuthTokens.accessToken) || null;
     },
-    
-    // Clear stored tokens from localStorage
     clearLocalTokens() {
-      try {
-        localStorage.removeItem('sb_access_token');
-        localStorage.removeItem('sb_refresh_token');
-        console.log('[WillenaAPI] Tokens cleared from localStorage');
-      } catch (e) {
-        console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
-      }
+      window.__willenaAuthTokens = { accessToken: null, refreshToken: null };
     },
 
     // Legacy compatibility stubs (CF migration disabled)
