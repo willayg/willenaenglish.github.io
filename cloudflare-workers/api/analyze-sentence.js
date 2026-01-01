@@ -24,9 +24,9 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Validate API Key
     // ─────────────────────────────────────────────
-    const openaiKey = env.OPENAI_API;
+    const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
     if (!openaiKey) {
-      console.error('[analyze-sentence] OPENAI_API not set');
+      console.error('[analyze-sentence] OpenAI key not set (expected OPENAI_API, OPENAI_KEY, or OPENAI_API_KEY)');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
         { status: 500, headers: corsHeaders }
