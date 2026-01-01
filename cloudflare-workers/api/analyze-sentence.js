@@ -24,24 +24,11 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Validate API Key
     // ─────────────────────────────────────────────
-    // Temporary diagnostic logging
-    const envKeys = Object.keys(env || {});
-    const openaiRelated = envKeys.filter(k => k.toLowerCase().includes('openai'));
-    console.log('[analyze-sentence] Available env keys count:', envKeys.length);
-    console.log('[analyze-sentence] OpenAI-related keys:', openaiRelated);
-    
     const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
     if (!openaiKey) {
       console.error('[analyze-sentence] OpenAI key not set (expected OPENAI_API, OPENAI_KEY, or OPENAI_API_KEY)');
       return new Response(
-        JSON.stringify({ 
-          error: 'Server configuration error',
-          debug: { 
-            envCount: envKeys.length,
-            openaiKeys: openaiRelated,
-            checkedVars: ['OPENAI_API', 'OPENAI_KEY', 'OPENAI_API_KEY']
-          }
-        }),
+        JSON.stringify({ error: 'Server configuration error' }),
         { status: 500, headers: corsHeaders }
       );
     }
