@@ -1,0 +1,327 @@
+/* =============================================
+   Talk the Talk - Mobile-First Kid-Friendly CSS
+   ============================================= */
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Container */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  color: white;
+  padding: 1.5rem 0;
+}
+
+.header h1 {
+  font-size: 2rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Instructions */
+.instructions {
+  background: rgba(255,255,255,0.95);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.instructions p {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.instructions p:last-child {
+  margin-bottom: 0;
+}
+
+/* Timer Display */
+.timer-display {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  margin-bottom: 1.5rem;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.timer-display.active {
+  opacity: 1;
+  background: rgba(255,255,255,0.3);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 20px;
+  padding: 1.25rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  min-width: 120px;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.btn-text {
+  font-size: 1rem;
+}
+
+/* Record Button */
+.btn-record {
+  background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+  color: white;
+}
+
+.btn-record:hover:not(:disabled) {
+  background: linear-gradient(145deg, #ff5252, #e04848);
+}
+
+.btn-record.recording {
+  animation: recordPulse 1s infinite;
+}
+
+@keyframes recordPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.7); }
+  50% { box-shadow: 0 0 0 15px rgba(255,107,107,0); }
+}
+
+/* Stop Button */
+.btn-stop {
+  background: linear-gradient(145deg, #4ecdc4, #44b3ab);
+  color: white;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background: linear-gradient(145deg, #44b3ab, #3aa39b);
+}
+
+/* Try Again Button */
+.btn-try-again {
+  background: linear-gradient(145deg, #a29bfe, #8c7ae6);
+  color: white;
+  margin-top: 1rem;
+  flex-direction: row;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+}
+
+.btn-try-again .btn-icon {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+/* Status */
+.status {
+  background: rgba(255,255,255,0.9);
+  color: #555;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.status.recording {
+  background: #ff6b6b;
+  color: white;
+}
+
+.status.processing {
+  background: #feca57;
+  color: #333;
+}
+
+.status.success {
+  background: #26de81;
+  color: white;
+}
+
+.status.error {
+  background: #fc5c65;
+  color: white;
+}
+
+/* Results */
+.results {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.result-card h2 {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.result-card p {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.result-corrected {
+  background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+}
+
+.result-corrected h2 {
+  color: #2d5016;
+}
+
+.result-corrected p {
+  color: #1a3009;
+  font-weight: 600;
+}
+
+.result-note {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+}
+
+.result-note h2 {
+  color: #555;
+}
+
+.result-note p {
+  color: #444;
+  font-style: italic;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-overlay p {
+  color: white;
+  font-size: 1.25rem;
+  margin-top: 1rem;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (min-width: 400px) {
+  .btn {
+    min-width: 140px;
+    padding: 1.5rem 2.5rem;
+  }
+  
+  .btn-icon {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 600px) {
+  html {
+    font-size: 20px;
+  }
+  
+  .container {
+    padding: 2rem;
+  }
+}
+
+/* Hidden utility */
+[hidden] {
+  display: none !important;
+}
