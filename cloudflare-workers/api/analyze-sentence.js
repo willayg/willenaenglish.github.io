@@ -121,8 +121,27 @@ export async function onRequestOptions() {
 // Whisper Transcription
 // ─────────────────────────────────────────────
 async function transcribeAudio(audioFile, apiKey) {
+  // Determine proper filename extension based on content type
+  let filename = audioFile.name || 'audio.webm';
+  const contentType = audioFile.type || '';
+  
+  // Map content types to proper extensions that Whisper accepts
+  if (contentType.includes('webm')) {
+    filename = 'audio.webm';
+  } else if (contentType.includes('mp4') || contentType.includes('m4a')) {
+    filename = 'audio.mp4';
+  } else if (contentType.includes('ogg')) {
+    filename = 'audio.ogg';
+  } else if (contentType.includes('wav')) {
+    filename = 'audio.wav';
+  } else if (contentType.includes('mpeg') || contentType.includes('mp3')) {
+    filename = 'audio.mp3';
+  }
+  
+  console.log(`[Whisper] Sending file: ${filename}, type: ${contentType}, size: ${audioFile.size}`);
+  
   const formData = new FormData();
-  formData.append('file', audioFile, audioFile.name || 'audio.webm');
+  formData.append('file', audioFile, filename);
   formData.append('model', 'whisper-1');
   formData.append('language', 'en');
   formData.append('response_format', 'text');
@@ -137,7 +156,28 @@ async function transcribeAudio(audioFile, apiKey) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Whisper] Error response:', errorText);
+    console.error(`[Whisper] Error ${response.status}:`, errorText);
+    
+    // Provide more specific error messages
+    if (response.status === 403) {
+      // Check if it's an API key issue or format issue
+      let errorDetail = 'Access denied';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetail = errorJson.error?.message || errorDetail;
+      } catch (e) {
+        // Use raw text if not JSON
+        errorDetail = errorText.substring(0, 100);
+      }
+      throw new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
+    } else if (response.status === 400) {
+      throw new Error('Audio format not supported. Please try a different browser.');
+    } else if (response.status === 401) {
+      throw new Error('API authentication error. Please contact support.');
+    } else if (response.status === 429) {
+      throw new Error('Too many requests. Please wait a moment and try again.');
+    }
+    
     throw new Error(`Whisper transcription failed: ${response.status}`);
   }
 

@@ -4,73 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Talk the Talk 🗣️</title>
+  <title>Talk the Talk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="container">
     <!-- Header -->
     <header class="header">
-      <h1>🗣️ Talk the Talk</h1>
-      <p class="subtitle">Practice speaking English!</p>
+      <h1>Talk the Talk</h1>
     </header>
 
-    <!-- Instructions -->
-    <section class="instructions">
-      <p>📱 Tap <strong>Record</strong>, say a sentence, then tap <strong>Stop</strong>.</p>
-      <p>🤖 I'll help fix your grammar!</p>
-    </section>
-
-    <!-- Timer Display -->
-    <div class="timer-display" id="timerDisplay">
-      <span id="timerValue">15</span>s
+    <!-- Chat Messages Area -->
+    <div class="chat-area" id="chatArea">
+      <!-- Messages will be dynamically added here -->
     </div>
 
-    <!-- Recording Controls -->
-    <div class="controls">
-      <button id="recordBtn" class="btn btn-record">
-        <span class="btn-icon">🎤</span>
-        <span class="btn-text">Record</span>
-      </button>
-      <button id="stopBtn" class="btn btn-stop" disabled>
-        <span class="btn-icon">⏹️</span>
-        <span class="btn-text">Stop</span>
+    <!-- Status Bar -->
+    <div class="status-bar" id="statusBar" hidden>
+      <span class="status-text" id="statusText"></span>
+      <span class="timer" id="timerDisplay"><span id="timerValue">15</span>s</span>
+    </div>
+
+    <!-- Record Button (fixed at bottom) -->
+    <div class="record-container">
+      <button id="recordBtn" class="record-btn" aria-label="Record">
+        <span class="record-icon"></span>
       </button>
     </div>
-
-    <!-- Status Message -->
-    <div class="status" id="status">
-      Tap Record to start!
-    </div>
-
-    <!-- Results Section -->
-    <section class="results" id="results" hidden>
-      <div class="result-card">
-        <h2>📝 What you said:</h2>
-        <p class="transcript" id="transcript"></p>
-      </div>
-      
-      <div class="result-card result-corrected">
-        <h2>✅ Corrected sentence:</h2>
-        <p class="corrected" id="corrected"></p>
-      </div>
-      
-      <div class="result-card result-note">
-        <h2>👩‍🏫 Teacher note:</h2>
-        <p class="teacher-note" id="teacherNote"></p>
-      </div>
-    </section>
-
-    <!-- Try Again Button -->
-    <button id="tryAgainBtn" class="btn btn-try-again" hidden>
-      <span class="btn-icon">🔄</span>
-      <span class="btn-text">Try Again</span>
-    </button>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay" hidden>
       <div class="spinner"></div>
-      <p>🤔 Thinking...</p>
+      <p>Processing...</p>
     </div>
   </div>
 
