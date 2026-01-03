@@ -1,6 +1,6 @@
 /**
  * Talk the Talk - Speech Recording & Grammar Correction App
- * For elementary English learners
+ * Messenger-style UI for elementary English learners
  */
 
 (function () {
@@ -26,15 +26,11 @@
   // ─────────────────────────────────────────────
   const elements = {
     recordBtn: document.getElementById('recordBtn'),
-    stopBtn: document.getElementById('stopBtn'),
+    chatArea: document.getElementById('chatArea'),
+    statusBar: document.getElementById('statusBar'),
+    statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
     timerValue: document.getElementById('timerValue'),
-    status: document.getElementById('status'),
-    results: document.getElementById('results'),
-    transcript: document.getElementById('transcript'),
-    corrected: document.getElementById('corrected'),
-    teacherNote: document.getElementById('teacherNote'),
-    tryAgainBtn: document.getElementById('tryAgainBtn'),
     loadingOverlay: document.getElementById('loadingOverlay')
   };
 
@@ -46,6 +42,7 @@
   let timerInterval = null;
   let timeRemaining = CONFIG.maxRecordingTime;
   let selectedMimeType = null;
+  let isRecording = false;
 
   // ─────────────────────────────────────────────
   // Initialize
@@ -55,17 +52,26 @@
     selectedMimeType = CONFIG.mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
     
     if (!selectedMimeType) {
-      setStatus('❌ Your browser does not support audio recording.', 'error');
+      showStatus('Your browser does not support audio recording.', 'error');
       elements.recordBtn.disabled = true;
       return;
     }
 
     console.log('[TalkTheTalk] Using MIME type:', selectedMimeType);
 
-    // Attach event listeners
-    elements.recordBtn.addEventListener('click', startRecording);
-    elements.stopBtn.addEventListener('click', stopRecording);
-    elements.tryAgainBtn.addEventListener('click', resetUI);
+    // Attach event listener - single button toggles record/stop
+    elements.recordBtn.addEventListener('click', toggleRecording);
+  }
+
+  // ─────────────────────────────────────────────
+  // Toggle Recording
+  // ─────────────────────────────────────────────
+  function toggleRecording() {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -85,6 +91,7 @@
       // Reset state
       audioChunks = [];
       timeRemaining = CONFIG.maxRecordingTime;
+      isRecording = true;
       
       // Create MediaRecorder
       mediaRecorder = new MediaRecorder(stream, { mimeType: selectedMimeType });
@@ -105,25 +112,22 @@
       mediaRecorder.start(100); // Collect data every 100ms
       
       // Update UI
-      elements.recordBtn.disabled = true;
       elements.recordBtn.classList.add('recording');
-      elements.stopBtn.disabled = false;
-      elements.timerDisplay.classList.add('active');
-      setStatus('🎤 Recording... Speak now!', 'recording');
-      hideResults();
+      showStatus('Recording... Speak now!', 'recording');
 
       // Start countdown timer
       startTimer();
 
     } catch (err) {
       console.error('[TalkTheTalk] Microphone error:', err);
+      isRecording = false;
       
       if (err.name === 'NotAllowedError') {
-        setStatus('🚫 Microphone access denied. Please allow microphone.', 'error');
+        showStatus('Microphone access denied. Please allow microphone.', 'error');
       } else if (err.name === 'NotFoundError') {
-        setStatus('🎤 No microphone found.', 'error');
+        showStatus('No microphone found.', 'error');
       } else {
-        setStatus('❌ Could not start recording.', 'error');
+        showStatus('Could not start recording.', 'error');
       }
     }
   }
@@ -132,10 +136,10 @@
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       clearInterval(timerInterval);
       mediaRecorder.stop();
+      isRecording = false;
       
       elements.recordBtn.classList.remove('recording');
-      elements.stopBtn.disabled = true;
-      elements.timerDisplay.classList.remove('active');
+      hideStatus();
     }
   }
 
@@ -161,8 +165,7 @@
   // ─────────────────────────────────────────────
   async function handleRecordingComplete() {
     if (audioChunks.length === 0) {
-      setStatus('⚠️ No audio recorded. Try again.', 'error');
-      resetControls();
+      showStatus('No audio recorded. Try again.', 'error');
       return;
     }
 
@@ -172,8 +175,7 @@
     console.log('[TalkTheTalk] Audio blob size:', audioBlob.size, 'bytes');
 
     if (audioBlob.size < 1000) {
-      setStatus('⚠️ Recording too short. Please speak longer.', 'error');
-      resetControls();
+      showStatus('Recording too short. Please speak longer.', 'error');
       return;
     }
 
@@ -182,7 +184,6 @@
   }
 
   async function sendAudioForAnalysis(audioBlob) {
-    setStatus('🤔 Processing your speech...', 'processing');
     showLoading();
 
     try {
@@ -210,14 +211,12 @@
       const data = await response.json();
       console.log('[TalkTheTalk] API response:', data);
 
-      // Display results
+      // Display results as chat messages
       displayResults(data);
-      setStatus('✅ Done! Check your results below.', 'success');
 
     } catch (err) {
       console.error('[TalkTheTalk] API error:', err);
-      setStatus(`❌ ${err.message || 'Something went wrong. Try again.'}`, 'error');
-      resetControls();
+      showStatus(err.message || 'Something went wrong. Try again.', 'error');
     } finally {
       hideLoading();
     }
@@ -227,25 +226,70 @@
   // UI Functions
   // ─────────────────────────────────────────────
   function displayResults(data) {
-    elements.transcript.textContent = data.transcript || '(no speech detected)';
-    elements.corrected.textContent = data.corrected_sentence || data.transcript || '';
-    elements.teacherNote.textContent = data.teacher_note || 'Good job trying!';
+    const transcript = data.transcript || '(no speech detected)';
+    const corrected = data.corrected_sentence || data.transcript || '';
+    const teacherNote = data.teacher_note || '';
     
-    elements.results.hidden = false;
-    elements.tryAgainBtn.hidden = false;
-  }
-
-  function hideResults() {
-    elements.results.hidden = true;
-    elements.tryAgainBtn.hidden = true;
-  }
-
-  function setStatus(message, type = '') {
-    elements.status.textContent = message;
-    elements.status.className = 'status';
-    if (type) {
-      elements.status.classList.add(type);
+    // Add student message (what they said)
+    addMessage(transcript, 'student', 'You said');
+    
+    // Add correction if different from transcript
+    if (corrected && corrected.toLowerCase() !== transcript.toLowerCase()) {
+      setTimeout(() => {
+        addMessage(corrected, 'correction', 'Corrected');
+      }, 300);
     }
+    
+    // Add teacher note if present
+    if (teacherNote) {
+      setTimeout(() => {
+        addMessage(teacherNote, 'teacher', 'Teacher');
+      }, 600);
+    } else {
+      setTimeout(() => {
+        addMessage('Good job! Keep practicing!', 'teacher', 'Teacher');
+      }, 600);
+    }
+    
+    // Scroll to bottom
+    setTimeout(() => {
+      elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+    }, 700);
+  }
+
+  function addMessage(text, type, label) {
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    
+    if (label) {
+      const labelEl = document.createElement('div');
+      labelEl.className = 'message-label';
+      labelEl.textContent = label;
+      message.appendChild(labelEl);
+    }
+    
+    const textEl = document.createElement('div');
+    textEl.className = 'message-text';
+    textEl.textContent = text;
+    message.appendChild(textEl);
+    
+    elements.chatArea.appendChild(message);
+    
+    // Scroll to bottom
+    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+  }
+
+  function showStatus(message, type = '') {
+    elements.statusText.textContent = message;
+    elements.statusBar.hidden = false;
+    elements.statusBar.className = 'status-bar';
+    if (type) {
+      elements.statusBar.classList.add(type);
+    }
+  }
+
+  function hideStatus() {
+    elements.statusBar.hidden = true;
   }
 
   function showLoading() {
@@ -254,21 +298,6 @@
 
   function hideLoading() {
     elements.loadingOverlay.hidden = true;
-  }
-
-  function resetControls() {
-    elements.recordBtn.disabled = false;
-    elements.recordBtn.classList.remove('recording');
-    elements.stopBtn.disabled = true;
-    elements.timerDisplay.classList.remove('active');
-    timeRemaining = CONFIG.maxRecordingTime;
-    updateTimerDisplay();
-  }
-
-  function resetUI() {
-    hideResults();
-    resetControls();
-    setStatus('Tap Record to start!', '');
   }
 
   // ─────────────────────────────────────────────
