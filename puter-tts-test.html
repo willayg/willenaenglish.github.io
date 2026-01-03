@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Puter TTS Test</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 140px;
+      font-size: 16px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Puter Text-to-Speech Quick Test</h2>
+
+  <textarea id="text">
+Hello. This is a quick test of the Puter text to speech API.
+  </textarea>
+
+  <br />
+
+  <button id="speakBtn">Speak</button>
+
+  <script>
+    const btn = document.getElementById("speakBtn");
+    const textarea = document.getElementById("text");
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Speaking…";
+
+      try {
+        const audio = await puter.ai.txt2speech(textarea.value);
+        audio.play();
+      } catch (err) {
+        console.error(err);
+        alert("TTS failed. Check the console.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Speak";
+      }
+    });
+  </script>
+
+</body>
+</html>
