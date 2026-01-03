@@ -147,38 +147,26 @@ export async function onRequestOptions() {
 // ─────────────────────────────────────────────
 async function transcribeAudioWorkersAI(audioFile, aiBinding) {
   try {
-    const buffer = await audioFile.arrayBuffer();
-    const audioBase64 = arrayBufferToBase64(buffer);
+    // Workers AI Whisper expects raw audio bytes as ArrayBuffer or Uint8Array
+    const audioBytes = await audioFile.arrayBuffer();
+
+    console.log('[WorkersAI][Whisper] Sending audio, size:', audioBytes.byteLength);
 
     const result = await aiBinding.run('@cf/openai/whisper-large-v3-turbo', {
-      audio: audioBase64,
-      task: 'transcribe',
-      language: 'en',
-      vad_filter: true,
+      audio: [...new Uint8Array(audioBytes)],  // Array of bytes
     });
+
+    console.log('[WorkersAI][Whisper] Result:', JSON.stringify(result));
 
     const transcript = result?.text || '';
     return String(transcript).trim();
   } catch (e) {
-    console.error('[WorkersAI][Whisper] Error:', e);
+    console.error('[WorkersAI][Whisper] Error:', e?.message || e);
     const err = new Error('Speech transcription failed. Please try again.');
     err.status = 502;
     err.code = 'AI_TRANSCRIBE';
     throw err;
   }
-}
-
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  let binary = '';
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
 }
 
 async function transcribeAudioOpenAI(audioFile, apiKey) {
