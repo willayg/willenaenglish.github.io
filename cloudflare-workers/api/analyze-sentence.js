@@ -1,14 +1,21 @@
 /**
  * Cloudflare Pages Function: /api/analyze-sentence
  * 
- * Receives audio from student, transcribes via Whisper,
- * corrects grammar via GPT, returns JSON response.
- * 
- * Environment variable required: OPENAI_API (set in Cloudflare Pages)
+ * Receives audio from student, transcribes speech,
+ * corrects grammar, returns JSON response.
+ *
+ * Preferred: Cloudflare Workers AI binding (env.AI) for ASR + correction.
+ * Fallback: OpenAI (env.OPENAI_API / OPENAI_KEY / OPENAI_API_KEY).
  */
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  const cfDebug = {
+    country: request.headers.get('CF-IPCountry') || request.cf?.country || null,
+    colo: request.cf?.colo || null,
+    asn: request.cf?.asn || null,
+  };
 
   // ─────────────────────────────────────────────
   // CORS Headers
@@ -22,11 +29,12 @@ export async function onRequestPost(context) {
 
   try {
     // ─────────────────────────────────────────────
-    // Validate API Key
+    // Validate AI Configuration
     // ─────────────────────────────────────────────
+    const hasWorkersAI = !!env.AI;
     const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
-    if (!openaiKey) {
-      console.error('[analyze-sentence] OpenAI key not set (expected OPENAI_API, OPENAI_KEY, or OPENAI_API_KEY)');
+    if (!hasWorkersAI && !openaiKey) {
+      console.error('[analyze-sentence] No AI configured (expected env.AI binding or OPENAI_API/OPENAI_KEY/OPENAI_API_KEY)');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
         { status: 500, headers: corsHeaders }
@@ -47,6 +55,7 @@ export async function onRequestPost(context) {
     }
 
     console.log(`[analyze-sentence] Received audio: ${audioFile.name}, size: ${audioFile.size} bytes, type: ${audioFile.type}`);
+    console.log('[analyze-sentence] cf:', cfDebug);
 
     // Validate file size (max 25MB for Whisper)
     if (audioFile.size > 25 * 1024 * 1024) {
@@ -59,7 +68,9 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 1: Transcribe with Whisper
     // ─────────────────────────────────────────────
-    const transcript = await transcribeAudio(audioFile, openaiKey);
+    const transcript = hasWorkersAI
+      ? await transcribeAudioWorkersAI(audioFile, env.AI)
+      : await transcribeAudioOpenAI(audioFile, openaiKey);
     
     if (!transcript || transcript.trim() === '') {
       return new Response(
@@ -77,7 +88,9 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 2: Correct Grammar with GPT
     // ─────────────────────────────────────────────
-    const correction = await correctGrammar(transcript, openaiKey);
+    const correction = hasWorkersAI
+      ? await correctGrammarWorkersAI(transcript, env.AI)
+      : await correctGrammarOpenAI(transcript, openaiKey);
 
     console.log(`[analyze-sentence] Correction:`, correction);
 
@@ -94,10 +107,22 @@ export async function onRequestPost(context) {
     );
 
   } catch (error) {
-    console.error('[analyze-sentence] Error:', error);
+    const status = Number(error?.status) || 500;
+    const code = error?.code || undefined;
+    const message = error?.message || 'Internal server error';
+
+    console.error('[analyze-sentence] Error:', { status, code, message });
+
+    // Only include cfDebug for region-related failures (helps diagnose ISP/device routing differences)
+    const includeCf = code === 'UNSUPPORTED_REGION';
+
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({
+        error: message,
+        ...(code ? { code } : {}),
+        ...(includeCf ? { cf: cfDebug } : {}),
+      }),
+      { status, headers: corsHeaders }
     );
   }
 }
@@ -120,7 +145,43 @@ export async function onRequestOptions() {
 // ─────────────────────────────────────────────
 // Whisper Transcription
 // ─────────────────────────────────────────────
-async function transcribeAudio(audioFile, apiKey) {
+async function transcribeAudioWorkersAI(audioFile, aiBinding) {
+  try {
+    const buffer = await audioFile.arrayBuffer();
+    const audioBase64 = arrayBufferToBase64(buffer);
+
+    const result = await aiBinding.run('@cf/openai/whisper-large-v3-turbo', {
+      audio: audioBase64,
+      task: 'transcribe',
+      language: 'en',
+      vad_filter: true,
+    });
+
+    const transcript = result?.text || '';
+    return String(transcript).trim();
+  } catch (e) {
+    console.error('[WorkersAI][Whisper] Error:', e);
+    const err = new Error('Speech transcription failed. Please try again.');
+    err.status = 502;
+    err.code = 'AI_TRANSCRIBE';
+    throw err;
+  }
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = '';
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+async function transcribeAudioOpenAI(audioFile, apiKey) {
   // Determine proper filename extension based on content type
   let filename = audioFile.name || 'audio.webm';
   const contentType = audioFile.type || '';
@@ -160,25 +221,54 @@ async function transcribeAudio(audioFile, apiKey) {
     
     // Provide more specific error messages
     if (response.status === 403) {
-      // Check if it's an API key issue or format issue
       let errorDetail = 'Access denied';
       try {
         const errorJson = JSON.parse(errorText);
         errorDetail = errorJson.error?.message || errorDetail;
-      } catch (e) {
-        // Use raw text if not JSON
-        errorDetail = errorText.substring(0, 100);
+      } catch {
+        errorDetail = errorText.substring(0, 140);
       }
-      throw new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
-    } else if (response.status === 400) {
-      throw new Error('Audio format not supported. Please try a different browser.');
-    } else if (response.status === 401) {
-      throw new Error('API authentication error. Please contact support.');
-    } else if (response.status === 429) {
-      throw new Error('Too many requests. Please wait a moment and try again.');
+
+      // This is the specific case you're seeing: OpenAI blocks based on request origin IP geography.
+      // On Cloudflare, the origin IP is the Worker egress (can vary by device/ISP due to different colos).
+      if (/Country, region, or territory not supported/i.test(errorDetail)) {
+        const err = new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
+        err.status = 503;
+        err.code = 'UNSUPPORTED_REGION';
+        throw err;
+      }
+
+      const err = new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
+      err.status = 403;
+      err.code = 'FORBIDDEN';
+      throw err;
     }
-    
-    throw new Error(`Whisper transcription failed: ${response.status}`);
+
+    if (response.status === 400) {
+      const err = new Error('Audio format not supported. Please try a different browser.');
+      err.status = 400;
+      err.code = 'BAD_AUDIO_FORMAT';
+      throw err;
+    }
+
+    if (response.status === 401) {
+      const err = new Error('API authentication error. Please contact support.');
+      err.status = 500;
+      err.code = 'OPENAI_AUTH';
+      throw err;
+    }
+
+    if (response.status === 429) {
+      const err = new Error('Too many requests. Please wait a moment and try again.');
+      err.status = 429;
+      err.code = 'RATE_LIMIT';
+      throw err;
+    }
+
+    const err = new Error(`Whisper transcription failed: ${response.status}`);
+    err.status = 502;
+    err.code = 'WHISPER_ERROR';
+    throw err;
   }
 
   const transcript = await response.text();
@@ -188,7 +278,57 @@ async function transcribeAudio(audioFile, apiKey) {
 // ─────────────────────────────────────────────
 // GPT Grammar Correction
 // ─────────────────────────────────────────────
-async function correctGrammar(transcript, apiKey) {
+async function correctGrammarWorkersAI(transcript, aiBinding) {
+  const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
+Your job is to correct the student's spoken sentence.
+
+RULES:
+1. ONLY fix grammar, tense, plurals, articles, and missing words
+2. Do NOT add new ideas or information
+3. Do NOT change the meaning of the sentence
+4. Keep corrections simple and age-appropriate
+5. If the sentence is already correct, return it unchanged
+
+OUTPUT FORMAT (strict JSON only, no markdown):
+{
+  "corrected_sentence": "the corrected sentence here",
+  "teacher_note": "brief, encouraging explanation of what was fixed (1-2 sentences max)"
+}
+
+If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
+
+  try {
+    const result = await aiBinding.run('@cf/meta/llama-3.1-8b-instruct', {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Student said: "${transcript}"` }
+      ],
+      temperature: 0.2,
+      max_tokens: 220,
+      response_format: { type: 'json_object' }
+    });
+
+    const content = result?.response;
+    if (!content) {
+      return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+    }
+
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      console.error('[WorkersAI][Llama] JSON parse error:', e, 'Content:', content);
+      return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+    }
+  } catch (e) {
+    console.error('[WorkersAI][Llama] Error:', e);
+    const err = new Error('Grammar correction failed. Please try again.');
+    err.status = 502;
+    err.code = 'AI_CORRECT';
+    throw err;
+  }
+}
+
+async function correctGrammarOpenAI(transcript, apiKey) {
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
 Your job is to correct the student's spoken sentence.
 
