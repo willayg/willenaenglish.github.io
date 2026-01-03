@@ -310,8 +310,8 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
         { role: 'user', content: `Student said: "${transcript}"` }
       ],
       temperature: 0.2,
-      max_tokens: 220,
-      response_format: { type: 'json_object' }
+      max_tokens: 220
+      // Note: Cloudflare Llama doesn't support json_object, only json_schema; omit for now.
     });
 
     const content = result?.response;
