@@ -205,6 +205,12 @@
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        const code = errorData.code;
+
+        if (code === 'UNSUPPORTED_REGION') {
+          throw new Error('Speech service is unavailable on this network. Try switching networks or disabling VPN and try again.');
+        }
+
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
