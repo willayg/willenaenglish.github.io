@@ -11,8 +11,7 @@
   // ─────────────────────────────────────────────
   const CONFIG = {
     maxRecordingTime: 15,           // seconds
-    // Use Netlify function (AWS US egress) to avoid OpenAI region blocks from CF Asia POPs
-    apiEndpoint: '/.netlify/functions/analyze-sentence',
+    apiEndpoint: '/api/analyze-sentence',
     mimeTypes: [
       'audio/webm;codecs=opus',
       'audio/webm',
