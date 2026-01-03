@@ -10,6 +10,12 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  const cfDebug = {
+    country: request.headers.get('CF-IPCountry') || request.cf?.country || null,
+    colo: request.cf?.colo || null,
+    asn: request.cf?.asn || null,
+  };
+
   // ─────────────────────────────────────────────
   // CORS Headers
   // ─────────────────────────────────────────────
@@ -47,6 +53,7 @@ export async function onRequestPost(context) {
     }
 
     console.log(`[analyze-sentence] Received audio: ${audioFile.name}, size: ${audioFile.size} bytes, type: ${audioFile.type}`);
+    console.log('[analyze-sentence] cf:', cfDebug);
 
     // Validate file size (max 25MB for Whisper)
     if (audioFile.size > 25 * 1024 * 1024) {
@@ -94,10 +101,22 @@ export async function onRequestPost(context) {
     );
 
   } catch (error) {
-    console.error('[analyze-sentence] Error:', error);
+    const status = Number(error?.status) || 500;
+    const code = error?.code || undefined;
+    const message = error?.message || 'Internal server error';
+
+    console.error('[analyze-sentence] Error:', { status, code, message });
+
+    // Only include cfDebug for region-related failures (helps diagnose ISP/device routing differences)
+    const includeCf = code === 'UNSUPPORTED_REGION';
+
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({
+        error: message,
+        ...(code ? { code } : {}),
+        ...(includeCf ? { cf: cfDebug } : {}),
+      }),
+      { status, headers: corsHeaders }
     );
   }
 }
@@ -160,25 +179,54 @@ async function transcribeAudio(audioFile, apiKey) {
     
     // Provide more specific error messages
     if (response.status === 403) {
-      // Check if it's an API key issue or format issue
       let errorDetail = 'Access denied';
       try {
         const errorJson = JSON.parse(errorText);
         errorDetail = errorJson.error?.message || errorDetail;
-      } catch (e) {
-        // Use raw text if not JSON
-        errorDetail = errorText.substring(0, 100);
+      } catch {
+        errorDetail = errorText.substring(0, 140);
       }
-      throw new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
-    } else if (response.status === 400) {
-      throw new Error('Audio format not supported. Please try a different browser.');
-    } else if (response.status === 401) {
-      throw new Error('API authentication error. Please contact support.');
-    } else if (response.status === 429) {
-      throw new Error('Too many requests. Please wait a moment and try again.');
+
+      // This is the specific case you're seeing: OpenAI blocks based on request origin IP geography.
+      // On Cloudflare, the origin IP is the Worker egress (can vary by device/ISP due to different colos).
+      if (/Country, region, or territory not supported/i.test(errorDetail)) {
+        const err = new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
+        err.status = 503;
+        err.code = 'UNSUPPORTED_REGION';
+        throw err;
+      }
+
+      const err = new Error(`Whisper transcription failed: ${response.status} - ${errorDetail}`);
+      err.status = 403;
+      err.code = 'FORBIDDEN';
+      throw err;
     }
-    
-    throw new Error(`Whisper transcription failed: ${response.status}`);
+
+    if (response.status === 400) {
+      const err = new Error('Audio format not supported. Please try a different browser.');
+      err.status = 400;
+      err.code = 'BAD_AUDIO_FORMAT';
+      throw err;
+    }
+
+    if (response.status === 401) {
+      const err = new Error('API authentication error. Please contact support.');
+      err.status = 500;
+      err.code = 'OPENAI_AUTH';
+      throw err;
+    }
+
+    if (response.status === 429) {
+      const err = new Error('Too many requests. Please wait a moment and try again.');
+      err.status = 429;
+      err.code = 'RATE_LIMIT';
+      throw err;
+    }
+
+    const err = new Error(`Whisper transcription failed: ${response.status}`);
+    err.status = 502;
+    err.code = 'WHISPER_ERROR';
+    throw err;
   }
 
   const transcript = await response.text();
