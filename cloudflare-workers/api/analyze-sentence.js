@@ -286,23 +286,34 @@ async function transcribeAudioOpenAI(audioFile, apiKey) {
 // ─────────────────────────────────────────────
 async function correctGrammarWorkersAI(transcript, aiBinding) {
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
-Your job is to correct the student's spoken sentence.
+Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
 
-RULES:
-1. ONLY fix small grammar issues: tense, missing helping words (is/are/was), plurals, and articles.
-2. Do NOT add new ideas or information.
-3. Do NOT change the meaning of the sentence.
-4. Use very simple, child-friendly wording (no grammar jargon).
-5. Keep `teacher_note` short: 1-2 simple sentences, friendly and encouraging.
-6. When possible give a short example of the corrected sentence.
+CRITICAL - WHAT IS NOT AN ERROR (do NOT correct these):
+- Contractions (she's, I'm, don't, isn't, can't, won't, he's, they're, etc.) are CORRECT
+- Different word choices that mean the same thing (wrong vs right, good vs nice, etc.)
+- Informal but correct phrasing
+- Complete sentences that sound natural
+
+ONLY FIX THESE ACTUAL ERRORS:
+- Missing helping verb: "She eating pizza" → "She is eating pizza"
+- Wrong verb form: "He go home" → "He goes home"
+- Missing article where required: "I saw dog" → "I saw a dog"
+- Clear subject-verb disagreement: "They was happy" → "They were happy"
+
+STRICT RULES:
+1. If the sentence is grammatically correct, return it UNCHANGED - even if you could say it differently
+2. NEVER change the meaning or main words
+3. NEVER correct contractions - they are correct
+4. NEVER change style or word choice
+5. When in doubt, do NOT correct it
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
-  "corrected_sentence": "the corrected sentence here",
-  "teacher_note": "brief, encouraging explanation of what was fixed (1-2 sentences max)"
+  "corrected_sentence": "the corrected sentence here (or original if correct)",
+  "teacher_note": "brief explanation ONLY if you made a change, otherwise 'Perfect! Your sentence is correct!'"
 }
 
-If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
+If NO changes needed, you MUST return the original sentence unchanged.`;
 
   try {
     const result = await aiBinding.run('@cf/meta/llama-3.1-8b-instruct', {
@@ -338,23 +349,34 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
 
 async function correctGrammarOpenAI(transcript, apiKey) {
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
-Your job is to correct the student's spoken sentence.
+Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
 
-RULES:
-1. ONLY fix small grammar issues: tense, missing helping words (is/are/was), plurals, and articles.
-2. Do NOT add new ideas or information.
-3. Do NOT change the meaning of the sentence.
-4. Use very simple, child-friendly wording (no grammar jargon).
-5. Keep `teacher_note` short: 1-2 simple sentences, friendly and encouraging.
-6. When possible give a short example of the corrected sentence.
+CRITICAL - WHAT IS NOT AN ERROR (do NOT correct these):
+- Contractions (she's, I'm, don't, isn't, can't, won't, he's, they're, etc.) are CORRECT
+- Different word choices that mean the same thing (wrong vs right, good vs nice, etc.)
+- Informal but correct phrasing
+- Complete sentences that sound natural
+
+ONLY FIX THESE ACTUAL ERRORS:
+- Missing helping verb: "She eating pizza" → "She is eating pizza"
+- Wrong verb form: "He go home" → "He goes home"
+- Missing article where required: "I saw dog" → "I saw a dog"
+- Clear subject-verb disagreement: "They was happy" → "They were happy"
+
+STRICT RULES:
+1. If the sentence is grammatically correct, return it UNCHANGED - even if you could say it differently
+2. NEVER change the meaning or main words
+3. NEVER correct contractions - they are correct
+4. NEVER change style or word choice
+5. When in doubt, do NOT correct it
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
-  "corrected_sentence": "the corrected sentence here",
-  "teacher_note": "brief, encouraging explanation of what was fixed (1-2 sentences max)"
+  "corrected_sentence": "the corrected sentence here (or original if correct)",
+  "teacher_note": "brief explanation ONLY if you made a change, otherwise 'Perfect! Your sentence is correct!'"
 }
 
-If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
+If NO changes needed, you MUST return the original sentence unchanged.`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
