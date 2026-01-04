@@ -386,3 +386,15 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
     return { corrected_sentence: transcript, teacher_note: 'Good try!' };
   }
 }
+
+// ─────────────────────────────────────────────
+// Standard Worker Export (for wrangler deploy)
+// ─────────────────────────────────────────────
+export default {
+  async fetch(request, env, ctx) {
+    if (request.method === 'OPTIONS') {
+      return onRequestOptions();
+    }
+    return onRequest({ request, env, ctx });
+  }
+};
