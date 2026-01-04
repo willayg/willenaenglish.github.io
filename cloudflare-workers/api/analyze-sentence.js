@@ -289,11 +289,12 @@ async function correctGrammarWorkersAI(transcript, aiBinding) {
 Your job is to correct the student's spoken sentence.
 
 RULES:
-1. ONLY fix grammar, tense, plurals, articles, and missing words
-2. Do NOT add new ideas or information
-3. Do NOT change the meaning of the sentence
-4. Keep corrections simple and age-appropriate
-5. If the sentence is already correct, return it unchanged
+1. ONLY fix small grammar issues: tense, missing helping words (is/are/was), plurals, and articles.
+2. Do NOT add new ideas or information.
+3. Do NOT change the meaning of the sentence.
+4. Use very simple, child-friendly wording (no grammar jargon).
+5. Keep `teacher_note` short: 1-2 simple sentences, friendly and encouraging.
+6. When possible give a short example of the corrected sentence.
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
@@ -316,14 +317,15 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
 
     const content = result?.response;
     if (!content) {
-      return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+      return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good job!' }, transcript);
     }
 
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      return sanitizeCorrection(parsed, transcript);
     } catch (e) {
       console.error('[WorkersAI][Llama] JSON parse error:', e, 'Content:', content);
-      return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+      return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good job!' }, transcript);
     }
   } catch (e) {
     console.error('[WorkersAI][Llama] Error:', e);
@@ -339,11 +341,12 @@ async function correctGrammarOpenAI(transcript, apiKey) {
 Your job is to correct the student's spoken sentence.
 
 RULES:
-1. ONLY fix grammar, tense, plurals, articles, and missing words
-2. Do NOT add new ideas or information
-3. Do NOT change the meaning of the sentence
-4. Keep corrections simple and age-appropriate
-5. If the sentence is already correct, return it unchanged
+1. ONLY fix small grammar issues: tense, missing helping words (is/are/was), plurals, and articles.
+2. Do NOT add new ideas or information.
+3. Do NOT change the meaning of the sentence.
+4. Use very simple, child-friendly wording (no grammar jargon).
+5. Keep `teacher_note` short: 1-2 simple sentences, friendly and encouraging.
+6. When possible give a short example of the corrected sentence.
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
@@ -381,13 +384,68 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
-    return { corrected_sentence: transcript, teacher_note: 'Good try!' };
+    return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good try!' }, transcript);
   }
 
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    return sanitizeCorrection(parsed, transcript);
   } catch (e) {
     console.error('[GPT] JSON parse error:', e, 'Content:', content);
-    return { corrected_sentence: transcript, teacher_note: 'Good try!' };
+    return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good try!' }, transcript);
+  }
+}
+
+// -----------------
+// Post-processing helpers
+// -----------------
+function sanitizeCorrection(obj, originalTranscript) {
+  const out = { corrected_sentence: String(obj.corrected_sentence || originalTranscript).trim() };
+
+  let note = String(obj.teacher_note || '').trim();
+
+  // If the model returned no note or something too short, provide a friendly fallback
+  if (!note || note.length < 6) {
+    note = generateFallbackNote(originalTranscript, out.corrected_sentence);
+  }
+
+  // Replace technical grammar jargon with simple phrasing
+  note = note.replace(/present participle|participle|auxiliary verb|auxiliary/gi,
+    "a small helper word like 'is' or 'are'");
+
+  // Reduce phrasing like "We need to use" -> "Use"
+  note = note.replace(/\bWe (need to use|usually add)\b/gi, 'Use');
+  note = note.replace(/\bYou should use\b/gi, 'Use');
+
+  // Trim to a reasonable length for kids
+  if (note.length > 140) note = note.slice(0, 137) + '...';
+
+  // Ensure capitalization and punctuation
+  note = note.charAt(0).toUpperCase() + note.slice(1);
+  if (!/[.!?]$/.test(note)) note += '.';
+
+  out.teacher_note = note;
+  return out;
+}
+
+function generateFallbackNote(original, corrected) {
+  try {
+    const o = original.toLowerCase();
+    const c = corrected.toLowerCase();
+
+    // If corrected adds ' is ' or ' are ', explain helper word
+    if ((/\bis\b/.test(c) || /\bare\b/.test(c)) && !(/\bis\b/.test(o) || /\bare\b/.test(o))) {
+      return `Use 'is' or 'are' to show the action is happening now. Try: "${corrected}"`;
+    }
+
+    // If corrected added an ending 's' for plural
+    if (c.replace(/[^a-z ]/g, '') !== o.replace(/[^a-z ]/g, '') && c.includes('s') && !o.includes('s')) {
+      return `We changed the word to make it correct. Try: "${corrected}"`;
+    }
+
+    // Default encouraging fallback
+    return `Try: "${corrected}". Good job!`;
+  } catch (e) {
+    return 'Good job!';
   }
 }
