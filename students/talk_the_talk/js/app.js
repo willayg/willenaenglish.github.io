@@ -30,8 +30,7 @@
     statusBar: document.getElementById('statusBar'),
     statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
-    timerValue: document.getElementById('timerValue'),
-    loadingOverlay: document.getElementById('loadingOverlay')
+    timerValue: document.getElementById('timerValue')
   };
 
   // ─────────────────────────────────────────────
@@ -232,6 +231,8 @@
   // UI Functions
   // ─────────────────────────────────────────────
   function displayResults(data) {
+    hideLoading();
+
     const transcript = data.transcript || '(no speech detected)';
     const corrected = data.corrected_sentence || data.transcript || '';
     const teacherNote = data.teacher_note || '';
@@ -299,11 +300,39 @@
   }
 
   function showLoading() {
-    elements.loadingOverlay.hidden = false;
+    showTypingIndicator();
   }
 
   function hideLoading() {
-    elements.loadingOverlay.hidden = true;
+    hideTypingIndicator();
+  }
+
+  function showTypingIndicator() {
+    if (!elements.chatArea) return;
+
+    const existing = document.getElementById('typingIndicator');
+    if (existing) return;
+
+    const message = document.createElement('div');
+    message.className = 'message teacher typing';
+    message.id = 'typingIndicator';
+    message.setAttribute('aria-label', 'Teacher is typing');
+
+    const dots = document.createElement('div');
+    dots.className = 'typing-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = '<span></span><span></span><span></span>';
+
+    message.appendChild(dots);
+    elements.chatArea.appendChild(message);
+    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+  }
+
+  function hideTypingIndicator() {
+    const existing = document.getElementById('typingIndicator');
+    if (existing) {
+      existing.remove();
+    }
   }
 
   // ─────────────────────────────────────────────
