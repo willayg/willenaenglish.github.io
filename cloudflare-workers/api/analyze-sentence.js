@@ -93,6 +93,8 @@ export async function onRequestPost(context) {
     // Step 2: Correct Grammar with GPT
     // ─────────────────────────────────────────────
     const language = formData.get('language') || 'en';
+    console.log(`[analyze-sentence] Language requested: ${language}`);
+    
     const correction = hasWorkersAI
       ? await correctGrammarWorkersAI(transcript, env.AI, language)
       : await correctGrammarOpenAI(transcript, openaiKey, language);
@@ -290,8 +292,14 @@ async function transcribeAudioOpenAI(audioFile, apiKey) {
 // GPT Grammar Correction
 // ─────────────────────────────────────────────
 async function correctGrammarWorkersAI(transcript, aiBinding, language = 'en') {
+  const langInstruction = language === 'ko' 
+    ? 'IMPORTANT: You MUST write the teacher_note entirely in Korean (한국어). Do NOT use English in the teacher_note.'
+    : 'Write the teacher_note in English.';
+
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
 Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
+
+${langInstruction}
 
 CRITICAL - WHAT IS NOT AN ERROR (do NOT correct these):
 - Contractions (she's, I'm, don't, isn't, can't, won't, he's, they're, etc.) are CORRECT
@@ -316,11 +324,11 @@ STRICT RULES:
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
   "corrected_sentence": "the corrected sentence here (or original if correct)",
-  "teacher_note": "NUMBERED POINTS ONLY. Each fix on a new numbered line. Example: '1. Use past tense \"went\" instead of \"go\".\\n2. Add apostrophe: grandma's.' If no changes: 'Perfect! Your sentence is correct!'"
+  "teacher_note": "${language === 'ko' ? '한국어로 번호가 매겨진 포인트만. 예: 1. go 대신 과거형 went를 사용하세요.' : 'NUMBERED POINTS ONLY in English. Example: 1. Use past tense went instead of go.'}"
 }
 
-Language: ${language === 'ko' ? 'Output teacher_note in Korean (한국어)' : 'Output teacher_note in English'}.
-If NO changes needed, you MUST return the original sentence unchanged.`;
+If NO changes needed, return teacher_note as: "${language === 'ko' ? '완벽해요! 문장이 맞아요!' : 'Perfect! Your sentence is correct!'}"
+If changes were made, explain each fix as a numbered point ${language === 'ko' ? 'IN KOREAN' : 'in English'}.`;
 
   try {
     const result = await aiBinding.run('@cf/meta/llama-3.1-8b-instruct', {
@@ -355,8 +363,14 @@ If NO changes needed, you MUST return the original sentence unchanged.`;
 }
 
 async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
+  const langInstruction = language === 'ko' 
+    ? 'IMPORTANT: You MUST write the teacher_note entirely in Korean (한국어). Do NOT use English in the teacher_note.'
+    : 'Write the teacher_note in English.';
+
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
 Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
+
+${langInstruction}
 
 CRITICAL - WHAT IS NOT AN ERROR (do NOT correct these):
 - Contractions (she's, I'm, don't, isn't, can't, won't, he's, they're, etc.) are CORRECT
@@ -381,11 +395,11 @@ STRICT RULES:
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
   "corrected_sentence": "the corrected sentence here (or original if correct)",
-  "teacher_note": "NUMBERED POINTS ONLY. Each fix on a new numbered line. Example: '1. Use past tense \"went\" instead of \"go\".\\n2. Add apostrophe: grandma's.' If no changes: 'Perfect! Your sentence is correct!'"
+  "teacher_note": "${language === 'ko' ? '한국어로 번호가 매겨진 포인트만. 예: 1. go 대신 과거형 went를 사용하세요.' : 'NUMBERED POINTS ONLY in English. Example: 1. Use past tense went instead of go.'}"
 }
 
-Language: ${language === 'ko' ? 'Output teacher_note in Korean (한국어)' : 'Output teacher_note in English'}.
-If NO changes needed, you MUST return the original sentence unchanged.`;
+If NO changes needed, return teacher_note as: "${language === 'ko' ? '완벽해요! 문장이 맞아요!' : 'Perfect! Your sentence is correct!'}"
+If changes were made, explain each fix as a numbered point ${language === 'ko' ? 'IN KOREAN' : 'in English'}.`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
