@@ -8,7 +8,7 @@
  * Fallback: OpenAI (env.OPENAI_API / OPENAI_KEY / OPENAI_API_KEY).
  */
 
-export async function onRequestPost(context) {
+export async function onRequest(context) {
   const { request, env } = context;
 
   const cfDebug = {
@@ -288,6 +288,7 @@ RULES:
 3. Do NOT change the meaning of the sentence
 4. Keep corrections simple and age-appropriate
 5. If the sentence is already correct, return it unchanged
+6. Do not correct punctuation.
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {

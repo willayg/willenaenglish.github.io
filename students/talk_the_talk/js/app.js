@@ -30,7 +30,8 @@
     statusBar: document.getElementById('statusBar'),
     statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
-    timerValue: document.getElementById('timerValue')
+    timerValue: document.getElementById('timerValue'),
+    loadingOverlay: document.getElementById('loadingOverlay')
   };
 
   // ─────────────────────────────────────────────
@@ -42,7 +43,6 @@
   let timeRemaining = CONFIG.maxRecordingTime;
   let selectedMimeType = null;
   let isRecording = false;
-  let processingTypingEl = null;
 
   // ─────────────────────────────────────────────
   // Initialize
@@ -184,7 +184,10 @@
   }
 
   async function sendAudioForAnalysis(audioBlob) {
-    processingTypingEl = showTeacherTyping(processingTypingEl);
+    // Show student's "You said" bubble immediately with typing indicator for correction
+    addMessage('...', 'student', 'You said');
+    const studentBubble = elements.chatArea.lastElementChild;
+    studentBubble.classList.add('typing-indicator');
 
     try {
       // Prepare form data
@@ -218,79 +221,52 @@
       console.log('[TalkTheTalk] API response:', data);
 
       // Display results as chat messages
-      clearTeacherTyping(processingTypingEl);
-      processingTypingEl = null;
-      await displayResults(data);
+      displayResults(data);
 
     } catch (err) {
       console.error('[TalkTheTalk] API error:', err);
+      // Remove placeholder bubble on error
+      const placeholder = elements.chatArea.querySelector('.message.student.typing-indicator');
+      if (placeholder) placeholder.remove();
       showStatus(err.message || 'Something went wrong. Try again.', 'error');
-    } finally {
-      clearTeacherTyping(processingTypingEl);
-      processingTypingEl = null;
     }
   }
 
   // ─────────────────────────────────────────────
   // UI Functions
   // ─────────────────────────────────────────────
-  async function displayResults(data) {
+  function displayResults(data) {
     const transcript = data.transcript || '(no speech detected)';
     const corrected = data.corrected_sentence || data.transcript || '';
-    const teacherNote = data.teacher_note || '';
+    const teacherNote = data.teacher_note || 'Good job! Keep practicing!';
     
-    // Add student message (what they said)
-    addMessage(transcript, 'student', 'You said');
-
-    // Always show the correct sentence first (only when it differs).
-    const hasCorrection =
-      corrected &&
-      transcript &&
-      corrected.trim() &&
-      transcript.trim() &&
-      corrected.trim().toLowerCase() !== transcript.trim().toLowerCase();
-
-    if (hasCorrection) {
-      await delay(220);
-      addMessage(corrected, 'correction', 'Correct sentence');
+    // Find and update the placeholder student bubble
+    const studentBubble = elements.chatArea.querySelector('.message.student.typing-indicator');
+    if (studentBubble) {
+      studentBubble.classList.remove('typing-indicator');
+      studentBubble.querySelector('.message-text').textContent = transcript;
+    } else {
+      addMessage(transcript, 'student', 'You said');
     }
-
-    // Then show a chat-style typing indicator, followed by the teacher comment.
-    await delay(220);
-    const typingEl = showTeacherTyping(null);
-    await delay(900);
-    clearTeacherTyping(typingEl);
-
-    addMessage(teacherNote || 'Good job! Keep practicing!', 'teacher', 'Teacher');
-  }
-
-  function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  function showTeacherTyping(existingEl) {
-    if (existingEl && existingEl.isConnected) {
-      return existingEl;
+    
+    // Show correction first (if different)
+    let delay = 300;
+    if (corrected && corrected.toLowerCase() !== transcript.toLowerCase()) {
+      setTimeout(() => {
+        addMessage(corrected, 'correction', 'Corrected');
+      }, delay);
+      delay += 300;
     }
-
-    const message = document.createElement('div');
-    message.className = 'message teacher typing';
-    message.setAttribute('aria-label', 'Teacher is typing');
-
-    const dots = document.createElement('div');
-    dots.className = 'typing-dots';
-    dots.innerHTML = '<span></span><span></span><span></span>';
-    message.appendChild(dots);
-
-    elements.chatArea.appendChild(message);
-    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
-    return message;
-  }
-
-  function clearTeacherTyping(el) {
-    if (el && el.isConnected) {
-      el.remove();
-    }
+    
+    // Show typing indicator for teacher, then replace with actual comment
+    setTimeout(() => {
+      addTypingIndicator('teacher', 'Teacher');
+    }, delay);
+    
+    setTimeout(() => {
+      replaceTypingWithMessage(teacherNote, 'teacher', 'Teacher');
+      elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+    }, delay + 800);
   }
 
   function addMessage(text, type, label) {
@@ -315,6 +291,42 @@
     elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
   }
 
+  function addTypingIndicator(type, label) {
+    const message = document.createElement('div');
+    message.className = `message ${type} typing-indicator`;
+    
+    if (label) {
+      const labelEl = document.createElement('div');
+      labelEl.className = 'message-label';
+      labelEl.textContent = label;
+      message.appendChild(labelEl);
+    }
+    
+    const dotsEl = document.createElement('div');
+    dotsEl.className = 'typing-dots';
+    dotsEl.innerHTML = '<span></span><span></span><span></span>';
+    message.appendChild(dotsEl);
+    
+    elements.chatArea.appendChild(message);
+    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+  }
+
+  function replaceTypingWithMessage(text, type, label) {
+    const typingBubble = elements.chatArea.querySelector(`.message.${type}.typing-indicator`);
+    if (typingBubble) {
+      typingBubble.classList.remove('typing-indicator');
+      const dots = typingBubble.querySelector('.typing-dots');
+      if (dots) dots.remove();
+      
+      const textEl = document.createElement('div');
+      textEl.className = 'message-text';
+      textEl.textContent = text;
+      typingBubble.appendChild(textEl);
+    } else {
+      addMessage(text, type, label);
+    }
+  }
+
   function showStatus(message, type = '') {
     elements.statusText.textContent = message;
     elements.statusBar.hidden = false;
@@ -328,7 +340,13 @@
     elements.statusBar.hidden = true;
   }
 
-  // Loading overlay removed intentionally (no spinner UX).
+  function showLoading() {
+    elements.loadingOverlay.hidden = false;
+  }
+
+  function hideLoading() {
+    elements.loadingOverlay.hidden = true;
+  }
 
   // ─────────────────────────────────────────────
   // Start App
