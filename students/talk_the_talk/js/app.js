@@ -30,8 +30,7 @@
     statusBar: document.getElementById('statusBar'),
     statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
-    timerValue: document.getElementById('timerValue'),
-    loadingOverlay: document.getElementById('loadingOverlay')
+    timerValue: document.getElementById('timerValue')
   };
 
   // ─────────────────────────────────────────────
@@ -43,6 +42,7 @@
   let timeRemaining = CONFIG.maxRecordingTime;
   let selectedMimeType = null;
   let isRecording = false;
+  let processingTypingEl = null;
 
   // ─────────────────────────────────────────────
   // Initialize
@@ -184,7 +184,7 @@
   }
 
   async function sendAudioForAnalysis(audioBlob) {
-    showLoading();
+    processingTypingEl = showTeacherTyping(processingTypingEl);
 
     try {
       // Prepare form data
@@ -218,49 +218,79 @@
       console.log('[TalkTheTalk] API response:', data);
 
       // Display results as chat messages
-      displayResults(data);
+      clearTeacherTyping(processingTypingEl);
+      processingTypingEl = null;
+      await displayResults(data);
 
     } catch (err) {
       console.error('[TalkTheTalk] API error:', err);
       showStatus(err.message || 'Something went wrong. Try again.', 'error');
     } finally {
-      hideLoading();
+      clearTeacherTyping(processingTypingEl);
+      processingTypingEl = null;
     }
   }
 
   // ─────────────────────────────────────────────
   // UI Functions
   // ─────────────────────────────────────────────
-  function displayResults(data) {
+  async function displayResults(data) {
     const transcript = data.transcript || '(no speech detected)';
     const corrected = data.corrected_sentence || data.transcript || '';
     const teacherNote = data.teacher_note || '';
     
     // Add student message (what they said)
     addMessage(transcript, 'student', 'You said');
-    
-    // Add correction if different from transcript
-    if (corrected && corrected.toLowerCase() !== transcript.toLowerCase()) {
-      setTimeout(() => {
-        addMessage(corrected, 'correction', 'Corrected');
-      }, 300);
+
+    // Always show the correct sentence first (only when it differs).
+    const hasCorrection =
+      corrected &&
+      transcript &&
+      corrected.trim() &&
+      transcript.trim() &&
+      corrected.trim().toLowerCase() !== transcript.trim().toLowerCase();
+
+    if (hasCorrection) {
+      await delay(220);
+      addMessage(corrected, 'correction', 'Correct sentence');
     }
-    
-    // Add teacher note if present
-    if (teacherNote) {
-      setTimeout(() => {
-        addMessage(teacherNote, 'teacher', 'Teacher');
-      }, 600);
-    } else {
-      setTimeout(() => {
-        addMessage('Good job! Keep practicing!', 'teacher', 'Teacher');
-      }, 600);
+
+    // Then show a chat-style typing indicator, followed by the teacher comment.
+    await delay(220);
+    const typingEl = showTeacherTyping(null);
+    await delay(900);
+    clearTeacherTyping(typingEl);
+
+    addMessage(teacherNote || 'Good job! Keep practicing!', 'teacher', 'Teacher');
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function showTeacherTyping(existingEl) {
+    if (existingEl && existingEl.isConnected) {
+      return existingEl;
     }
-    
-    // Scroll to bottom
-    setTimeout(() => {
-      elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
-    }, 700);
+
+    const message = document.createElement('div');
+    message.className = 'message teacher typing';
+    message.setAttribute('aria-label', 'Teacher is typing');
+
+    const dots = document.createElement('div');
+    dots.className = 'typing-dots';
+    dots.innerHTML = '<span></span><span></span><span></span>';
+    message.appendChild(dots);
+
+    elements.chatArea.appendChild(message);
+    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+    return message;
+  }
+
+  function clearTeacherTyping(el) {
+    if (el && el.isConnected) {
+      el.remove();
+    }
   }
 
   function addMessage(text, type, label) {
@@ -298,13 +328,7 @@
     elements.statusBar.hidden = true;
   }
 
-  function showLoading() {
-    elements.loadingOverlay.hidden = false;
-  }
-
-  function hideLoading() {
-    elements.loadingOverlay.hidden = true;
-  }
+  // Loading overlay removed intentionally (no spinner UX).
 
   // ─────────────────────────────────────────────
   // Start App
