@@ -31,8 +31,8 @@
     statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
     timerValue: document.getElementById('timerValue'),
-    langToggle: document.getElementById('langToggle'),
-    langText: document.getElementById('langText')
+    settingsBtn: document.getElementById('settingsBtn'),
+    settingsMenu: document.getElementById('settingsMenu')
   };
 
   // ─────────────────────────────────────────────
@@ -61,25 +61,69 @@
 
     console.log('[TalkTheTalk] Using MIME type:', selectedMimeType);
 
-    // Initialize language toggle
+    // Initialize settings menu
     updateLanguageDisplay();
-    elements.langToggle.addEventListener('click', toggleLanguage);
+    elements.settingsBtn.addEventListener('click', toggleSettingsMenu);
+    
+    // Wire language option buttons
+    document.querySelectorAll('.lang-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        setLanguage(lang);
+        closeSettingsMenu();
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!elements.settingsMenu.hidden && 
+          !elements.settingsMenu.contains(e.target) && 
+          !elements.settingsBtn.contains(e.target)) {
+        closeSettingsMenu();
+      }
+    });
 
     // Attach event listener - single button toggles record/stop
     elements.recordBtn.addEventListener('click', toggleRecording);
   }
 
   // ─────────────────────────────────────────────
-  // Language Toggle
+  // Settings Menu
   // ─────────────────────────────────────────────
-  function toggleLanguage() {
-    currentLanguage = currentLanguage === 'en' ? 'ko' : 'en';
+  function toggleSettingsMenu() {
+    if (elements.settingsMenu.hidden) {
+      elements.settingsMenu.hidden = false;
+    } else {
+      closeSettingsMenu();
+    }
+  }
+
+  function closeSettingsMenu() {
+    if (!elements.settingsMenu.hidden) {
+      // Trigger exit animation
+      elements.settingsMenu.style.animation = 'menuSlideOut 0.15s ease-in forwards';
+      setTimeout(() => {
+        elements.settingsMenu.hidden = true;
+        elements.settingsMenu.style.animation = '';
+      }, 150);
+    }
+  }
+
+  function setLanguage(lang) {
+    currentLanguage = lang;
     localStorage.setItem('talkLanguage', currentLanguage);
     updateLanguageDisplay();
   }
 
   function updateLanguageDisplay() {
-    elements.langText.textContent = currentLanguage === 'en' ? 'EN' : '한글';
+    // Update checkmarks
+    document.querySelectorAll('.lang-option').forEach(btn => {
+      if (btn.getAttribute('data-lang') === currentLanguage) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   // ─────────────────────────────────────────────
