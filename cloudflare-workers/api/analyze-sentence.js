@@ -31,8 +31,10 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Validate AI Configuration
     // ─────────────────────────────────────────────
-    const hasWorkersAI = !!env.AI;
+    const preferOpenAI = env.PREFER_OPENAI === 'true' || env.USE_OPENAI === 'true';
+    const hasWorkersAI = !!env.AI && !preferOpenAI;
     const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+    
     if (!hasWorkersAI && !openaiKey) {
       console.error('[analyze-sentence] No AI configured (expected env.AI binding or OPENAI_API/OPENAI_KEY/OPENAI_API_KEY)');
       return new Response(
@@ -40,6 +42,8 @@ export async function onRequestPost(context) {
         { status: 500, headers: corsHeaders }
       );
     }
+    
+    console.log(`[analyze-sentence] Using ${hasWorkersAI ? 'Workers AI (Llama)' : 'OpenAI (GPT)'} for correction`);
 
     // ─────────────────────────────────────────────
     // Parse Form Data
