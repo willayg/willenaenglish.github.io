@@ -49,10 +49,6 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
 }
 
 .header h1 {
@@ -60,38 +56,6 @@ body {
   font-weight: 600;
   color: #19777e;
   margin: 0;
-}
-
-/* Language Toggle */
-.lang-toggle {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #f0f0f0;
-  border: 2px solid #19777e;
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 600;
-  color: #19777e;
-  font-size: 0.85rem;
-}
-
-.lang-toggle:hover {
-  background: #e0f7fa;
-  transform: translateY(-50%) scale(1.05);
-}
-
-.lang-toggle:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-.lang-text {
-  display: inline-block;
-  min-width: 24px;
-  text-align: center;
 }
 
 /* Chat Area */
@@ -284,6 +248,136 @@ body {
 @keyframes recordPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
   50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+
+/* Settings Button (bottom-right) */
+.settings-btn {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #19777e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(25, 119, 126, 0.15);
+  z-index: 30;
+  color: #19777e;
+}
+
+.settings-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(25, 119, 126, 0.25);
+  background: #e0f7fa;
+}
+
+.settings-btn:active {
+  transform: scale(0.95);
+}
+
+/* Settings Menu */
+.settings-menu {
+  position: fixed;
+  bottom: 160px;
+  right: 20px;
+  background: #ffffff;
+  border: 2px solid #19777e;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(25, 119, 126, 0.2);
+  min-width: 200px;
+  z-index: 25;
+  overflow: hidden;
+  transform-origin: bottom right;
+  animation: menuSlideIn 0.2s ease-out;
+}
+
+.settings-menu[hidden] {
+  display: block;
+  animation: menuSlideOut 0.15s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes menuSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes menuSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+}
+
+.settings-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.lang-option {
+  width: 100%;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 0.95rem;
+  color: #444;
+  position: relative;
+}
+
+.lang-option:hover {
+  background: #e0f7fa;
+}
+
+.lang-option:active {
+  background: #b2ebf2;
+}
+
+.lang-flag {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.lang-name {
+  flex: 1;
+  text-align: left;
+}
+
+.lang-check {
+  color: #19777e;
+  font-weight: bold;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.lang-option.active .lang-check {
+  opacity: 1;
 }
 
 @keyframes pulse {
