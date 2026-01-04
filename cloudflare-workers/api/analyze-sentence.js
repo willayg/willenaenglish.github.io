@@ -92,9 +92,10 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 2: Correct Grammar with GPT
     // ─────────────────────────────────────────────
+    const language = formData.get('language') || 'en';
     const correction = hasWorkersAI
-      ? await correctGrammarWorkersAI(transcript, env.AI)
-      : await correctGrammarOpenAI(transcript, openaiKey);
+      ? await correctGrammarWorkersAI(transcript, env.AI, language)
+      : await correctGrammarOpenAI(transcript, openaiKey, language);
 
     console.log(`[analyze-sentence] Correction:`, correction);
 
@@ -288,7 +289,7 @@ async function transcribeAudioOpenAI(audioFile, apiKey) {
 // ─────────────────────────────────────────────
 // GPT Grammar Correction
 // ─────────────────────────────────────────────
-async function correctGrammarWorkersAI(transcript, aiBinding) {
+async function correctGrammarWorkersAI(transcript, aiBinding, language = 'en') {
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
 Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
 
@@ -303,6 +304,7 @@ ONLY FIX THESE ACTUAL ERRORS:
 - Wrong verb form: "He go home" → "He goes home"
 - Missing article where required: "I saw dog" → "I saw a dog"
 - Clear subject-verb disagreement: "They was happy" → "They were happy"
+- Missing possessive apostrophe: "my grandma house" → "my grandma's house"
 
 STRICT RULES:
 1. If the sentence is grammatically correct, return it UNCHANGED - even if you could say it differently
@@ -314,9 +316,10 @@ STRICT RULES:
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
   "corrected_sentence": "the corrected sentence here (or original if correct)",
-  "teacher_note": "brief explanation ONLY if you made a change, otherwise 'Perfect! Your sentence is correct!'"
+  "teacher_note": "NUMBERED POINTS ONLY. Each fix on a new numbered line. Example: '1. Use past tense \"went\" instead of \"go\".\\n2. Add apostrophe: grandma's.' If no changes: 'Perfect! Your sentence is correct!'"
 }
 
+Language: ${language === 'ko' ? 'Output teacher_note in Korean (한국어)' : 'Output teacher_note in English'}.
 If NO changes needed, you MUST return the original sentence unchanged.`;
 
   try {
@@ -351,7 +354,7 @@ If NO changes needed, you MUST return the original sentence unchanged.`;
   }
 }
 
-async function correctGrammarOpenAI(transcript, apiKey) {
+async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
   const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
 Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
 
@@ -366,6 +369,7 @@ ONLY FIX THESE ACTUAL ERRORS:
 - Wrong verb form: "He go home" → "He goes home"
 - Missing article where required: "I saw dog" → "I saw a dog"
 - Clear subject-verb disagreement: "They was happy" → "They were happy"
+- Missing possessive apostrophe: "my grandma house" → "my grandma's house"
 
 STRICT RULES:
 1. If the sentence is grammatically correct, return it UNCHANGED - even if you could say it differently
@@ -377,9 +381,10 @@ STRICT RULES:
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
   "corrected_sentence": "the corrected sentence here (or original if correct)",
-  "teacher_note": "brief explanation ONLY if you made a change, otherwise 'Perfect! Your sentence is correct!'"
+  "teacher_note": "NUMBERED POINTS ONLY. Each fix on a new numbered line. Example: '1. Use past tense \"went\" instead of \"go\".\\n2. Add apostrophe: grandma's.' If no changes: 'Perfect! Your sentence is correct!'"
 }
 
+Language: ${language === 'ko' ? 'Output teacher_note in Korean (한국어)' : 'Output teacher_note in English'}.
 If NO changes needed, you MUST return the original sentence unchanged.`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {

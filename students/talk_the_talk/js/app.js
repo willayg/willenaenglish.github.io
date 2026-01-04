@@ -30,7 +30,9 @@
     statusBar: document.getElementById('statusBar'),
     statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
-    timerValue: document.getElementById('timerValue')
+    timerValue: document.getElementById('timerValue'),
+    langToggle: document.getElementById('langToggle'),
+    langText: document.getElementById('langText')
   };
 
   // ─────────────────────────────────────────────
@@ -42,6 +44,7 @@
   let timeRemaining = CONFIG.maxRecordingTime;
   let selectedMimeType = null;
   let isRecording = false;
+  let currentLanguage = localStorage.getItem('talkLanguage') || 'en'; // 'en' or 'ko'
 
   // ─────────────────────────────────────────────
   // Initialize
@@ -58,8 +61,25 @@
 
     console.log('[TalkTheTalk] Using MIME type:', selectedMimeType);
 
+    // Initialize language toggle
+    updateLanguageDisplay();
+    elements.langToggle.addEventListener('click', toggleLanguage);
+
     // Attach event listener - single button toggles record/stop
     elements.recordBtn.addEventListener('click', toggleRecording);
+  }
+
+  // ─────────────────────────────────────────────
+  // Language Toggle
+  // ─────────────────────────────────────────────
+  function toggleLanguage() {
+    currentLanguage = currentLanguage === 'en' ? 'ko' : 'en';
+    localStorage.setItem('talkLanguage', currentLanguage);
+    updateLanguageDisplay();
+  }
+
+  function updateLanguageDisplay() {
+    elements.langText.textContent = currentLanguage === 'en' ? 'EN' : '한글';
   }
 
   // ─────────────────────────────────────────────
@@ -195,6 +215,7 @@
       else if (selectedMimeType.includes('ogg')) ext = 'ogg';
       
       formData.append('audio', audioBlob, `recording.${ext}`);
+      formData.append('language', currentLanguage);
 
       // Send to API
       const response = await fetch(CONFIG.apiEndpoint, {
@@ -277,7 +298,8 @@
     
     const textEl = document.createElement('div');
     textEl.className = 'message-text';
-    textEl.textContent = text;
+    // Handle line breaks for numbered points
+    textEl.innerHTML = text.replace(/\n/g, '<br>');
     message.appendChild(textEl);
     
     elements.chatArea.appendChild(message);
