@@ -1,13 +1,7 @@
 {
   "functions": {
-    "vercel/api/*.js": {
-      "runtime": "nodejs20.x"
+    "api/*.js": {
+      "runtime": "nodejs18.x"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/analyze-sentence",
-      "destination": "/vercel/api/analyze-sentence"
-    }
-  ]
+  }
 }
