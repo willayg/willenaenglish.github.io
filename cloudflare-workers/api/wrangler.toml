@@ -1,8 +1,11 @@
 name = "willena-analyze-sentence"
-main = "analyze-sentence.js"
+main = "src/index.js"
 compatibility_date = "2025-12-02"
 
 workers_dev = true
+
+[ai]
+binding = "AI"
 
 [vars]
 # Add environment variables here or via wrangler secret put
