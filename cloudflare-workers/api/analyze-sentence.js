@@ -31,11 +31,16 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Validate AI Configuration
     // ─────────────────────────────────────────────
+    // Prefer Workers AI to avoid OpenAI region restrictions (especially important for non-US regions)
     const preferOpenAI = env.PREFER_OPENAI === 'true' || env.USE_OPENAI === 'true';
-    const hasWorkersAI = !!env.AI && !preferOpenAI;
+    const hasWorkersAI = !!env.AI;
     const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
     
-    if (!hasWorkersAI && !openaiKey) {
+    // If Workers AI is available, use it (avoids region blocking from OpenAI)
+    // Only fall back to OpenAI if Workers AI is explicitly disabled
+    const useWorkersAI = hasWorkersAI && !preferOpenAI;
+    
+    if (!useWorkersAI && !openaiKey) {
       console.error('[analyze-sentence] No AI configured (expected env.AI binding or OPENAI_API/OPENAI_KEY/OPENAI_API_KEY)');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
@@ -43,7 +48,7 @@ export async function onRequestPost(context) {
       );
     }
     
-    console.log(`[analyze-sentence] Using ${hasWorkersAI ? 'Workers AI (Llama)' : 'OpenAI (GPT)'} for correction`);
+    console.log(`[analyze-sentence] Using ${useWorkersAI ? 'Workers AI (Llama)' : 'OpenAI (GPT)'} for correction`);
 
     // ─────────────────────────────────────────────
     // Parse Form Data
@@ -72,7 +77,7 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 1: Transcribe with Whisper
     // ─────────────────────────────────────────────
-    const transcript = hasWorkersAI
+    const transcript = useWorkersAI
       ? await transcribeAudioWorkersAI(audioFile, env.AI)
       : await transcribeAudioOpenAI(audioFile, openaiKey);
     
@@ -95,7 +100,7 @@ export async function onRequestPost(context) {
     const language = formData.get('language') || 'en';
     console.log(`[analyze-sentence] Language requested: ${language}`);
     
-    const correction = hasWorkersAI
+    const correction = useWorkersAI
       ? await correctGrammarWorkersAI(transcript, env.AI, language)
       : await correctGrammarOpenAI(transcript, openaiKey, language);
 
