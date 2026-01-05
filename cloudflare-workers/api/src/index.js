@@ -17,7 +17,7 @@ const CORS_HEADERS = {
 };
 
 // External proxy endpoint (calls OpenAI from a supported region)
-const VERCEL_PROXY_URL = 'https://willenaenglish-github-io.vercel.app/api/analyze-sentence';
+const VERCEL_PROXY_URL = 'https://willena-openai-proxy.willena.workers.dev';
 
 export default {
   async fetch(request, env) {

@@ -1,0 +1,8 @@
+name = "willena-openai-proxy"
+main = "index.js"
+compatibility_date = "2025-12-02"
+
+workers_dev = true
+
+[vars]
+# Set OPENAI_API_KEY via wrangler secret put OPENAI_API_KEY
