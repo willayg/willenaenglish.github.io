@@ -3,62 +3,26 @@ let userRole = null;
 let userRoleReadyResolve;
 const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve; });
 (async function() {
-  const redirect = encodeURIComponent(location.pathname + location.search);
-
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const doFetch = (path) => (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function')
-    ? window.WillenaAPI.fetch(path)
-    : fetch(path, { credentials: 'include' });
-
-  async function whoamiOnce() {
-    const res = await doFetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-    const json = window.WillenaAPI && typeof window.WillenaAPI.safeParseJSON === 'function'
-      ? await window.WillenaAPI.safeParseJSON(res)
-      : await res.json().catch(() => null);
-    if (res.ok && json && json.success && json.user_id) return json;
-    return null;
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    location.href = `/Teachers/login.html?redirect=${redirect}`;
+    return;
   }
-
-  async function refreshOnce() {
-    try {
-      await doFetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`);
-    } catch {}
-  }
-
   try {
-    const delays = [0, 150, 300, 600, 1000];
-    let who = null;
-    for (const ms of delays) {
-      if (ms) await sleep(ms);
-      who = await whoamiOnce();
-      if (who) break;
-      await refreshOnce();
-    }
-
-    if (!who || !who.user_id) {
-      location.href = `/Teachers/login.html?redirect=${redirect}`;
-      return;
-    }
-
-    try { localStorage.setItem('userId', who.user_id); } catch {}
-
-    const profRes = await doFetch(`/.netlify/functions/supabase_auth?action=get_profile&_=${Date.now()}`);
-    const prof = window.WillenaAPI && typeof window.WillenaAPI.safeParseJSON === 'function'
-      ? await window.WillenaAPI.safeParseJSON(profRes)
-      : await profRes.json().catch(() => null);
-    const role = String((prof && prof.role) || '').toLowerCase();
-
-    if (!prof || !prof.success || prof.approved !== true || !['teacher','admin'].includes(role)) {
+    const apiUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`) : `/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`;
+    const r = await fetch(apiUrl, { credentials: 'include' });
+    const js = await r.json();
+    if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
       location.href = '/Teachers/profile.html';
-      return;
     }
-
-    userRole = role;
+    userRole = String(js.role||'').toLowerCase();
     if (typeof userRoleReadyResolve === 'function') {
       userRoleReadyResolve(userRole);
       userRoleReadyResolve = null;
     }
   } catch {
+    const redirect = encodeURIComponent(location.pathname + location.search);
     location.href = `/Teachers/login.html?redirect=${redirect}`;
   }
 })();

@@ -31,7 +31,8 @@
     statusText: document.getElementById('statusText'),
     timerDisplay: document.getElementById('timerDisplay'),
     timerValue: document.getElementById('timerValue'),
-    loadingOverlay: document.getElementById('loadingOverlay')
+    settingsBtn: document.getElementById('settingsBtn'),
+    settingsMenu: document.getElementById('settingsMenu')
   };
 
   // ─────────────────────────────────────────────
@@ -43,6 +44,7 @@
   let timeRemaining = CONFIG.maxRecordingTime;
   let selectedMimeType = null;
   let isRecording = false;
+  let currentLanguage = localStorage.getItem('talkLanguage') || 'en'; // 'en' or 'ko'
 
   // ─────────────────────────────────────────────
   // Initialize
@@ -59,8 +61,69 @@
 
     console.log('[TalkTheTalk] Using MIME type:', selectedMimeType);
 
+    // Initialize settings menu
+    updateLanguageDisplay();
+    elements.settingsBtn.addEventListener('click', toggleSettingsMenu);
+    
+    // Wire language option buttons
+    document.querySelectorAll('.lang-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        setLanguage(lang);
+        closeSettingsMenu();
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!elements.settingsMenu.hidden && 
+          !elements.settingsMenu.contains(e.target) && 
+          !elements.settingsBtn.contains(e.target)) {
+        closeSettingsMenu();
+      }
+    });
+
     // Attach event listener - single button toggles record/stop
     elements.recordBtn.addEventListener('click', toggleRecording);
+  }
+
+  // ─────────────────────────────────────────────
+  // Settings Menu
+  // ─────────────────────────────────────────────
+  function toggleSettingsMenu() {
+    if (elements.settingsMenu.hidden) {
+      elements.settingsMenu.hidden = false;
+    } else {
+      closeSettingsMenu();
+    }
+  }
+
+  function closeSettingsMenu() {
+    if (!elements.settingsMenu.hidden) {
+      // Trigger exit animation
+      elements.settingsMenu.style.animation = 'menuSlideOut 0.15s ease-in forwards';
+      setTimeout(() => {
+        elements.settingsMenu.hidden = true;
+        elements.settingsMenu.style.animation = '';
+      }, 150);
+    }
+  }
+
+  function setLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem('talkLanguage', currentLanguage);
+    updateLanguageDisplay();
+  }
+
+  function updateLanguageDisplay() {
+    // Update checkmarks
+    document.querySelectorAll('.lang-option').forEach(btn => {
+      if (btn.getAttribute('data-lang') === currentLanguage) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   // ─────────────────────────────────────────────
@@ -184,10 +247,7 @@
   }
 
   async function sendAudioForAnalysis(audioBlob) {
-    // Show student's "You said" bubble immediately with typing indicator for correction
-    addMessage('...', 'student', 'You said');
-    const studentBubble = elements.chatArea.lastElementChild;
-    studentBubble.classList.add('typing-indicator');
+    showLoading();
 
     try {
       // Prepare form data
@@ -199,6 +259,7 @@
       else if (selectedMimeType.includes('ogg')) ext = 'ogg';
       
       formData.append('audio', audioBlob, `recording.${ext}`);
+      formData.append('language', currentLanguage);
 
       // Send to API
       const response = await fetch(CONFIG.apiEndpoint, {
@@ -225,10 +286,9 @@
 
     } catch (err) {
       console.error('[TalkTheTalk] API error:', err);
-      // Remove placeholder bubble on error
-      const placeholder = elements.chatArea.querySelector('.message.student.typing-indicator');
-      if (placeholder) placeholder.remove();
       showStatus(err.message || 'Something went wrong. Try again.', 'error');
+    } finally {
+      hideLoading();
     }
   }
 
@@ -236,37 +296,37 @@
   // UI Functions
   // ─────────────────────────────────────────────
   function displayResults(data) {
+    hideLoading();
+
     const transcript = data.transcript || '(no speech detected)';
     const corrected = data.corrected_sentence || data.transcript || '';
-    const teacherNote = data.teacher_note || 'Good job! Keep practicing!';
+    const teacherNote = data.teacher_note || '';
     
-    // Find and update the placeholder student bubble
-    const studentBubble = elements.chatArea.querySelector('.message.student.typing-indicator');
-    if (studentBubble) {
-      studentBubble.classList.remove('typing-indicator');
-      studentBubble.querySelector('.message-text').textContent = transcript;
-    } else {
-      addMessage(transcript, 'student', 'You said');
-    }
+    // Add student message (what they said)
+    addMessage(transcript, 'student', 'You said');
     
-    // Show correction first (if different)
-    let delay = 300;
+    // Add correction if different from transcript
     if (corrected && corrected.toLowerCase() !== transcript.toLowerCase()) {
       setTimeout(() => {
         addMessage(corrected, 'correction', 'Corrected');
-      }, delay);
-      delay += 300;
+      }, 300);
     }
     
-    // Show typing indicator for teacher, then replace with actual comment
-    setTimeout(() => {
-      addTypingIndicator('teacher', 'Teacher');
-    }, delay);
+    // Add teacher note if present
+    if (teacherNote) {
+      setTimeout(() => {
+        addMessage(teacherNote, 'teacher', 'Teacher');
+      }, 600);
+    } else {
+      setTimeout(() => {
+        addMessage('Good job! Keep practicing!', 'teacher', 'Teacher');
+      }, 600);
+    }
     
+    // Scroll to bottom
     setTimeout(() => {
-      replaceTypingWithMessage(teacherNote, 'teacher', 'Teacher');
       elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
-    }, delay + 800);
+    }, 700);
   }
 
   function addMessage(text, type, label) {
@@ -282,49 +342,14 @@
     
     const textEl = document.createElement('div');
     textEl.className = 'message-text';
-    textEl.textContent = text;
+    // Handle line breaks for numbered points
+    textEl.innerHTML = text.replace(/\n/g, '<br>');
     message.appendChild(textEl);
     
     elements.chatArea.appendChild(message);
     
     // Scroll to bottom
     elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
-  }
-
-  function addTypingIndicator(type, label) {
-    const message = document.createElement('div');
-    message.className = `message ${type} typing-indicator`;
-    
-    if (label) {
-      const labelEl = document.createElement('div');
-      labelEl.className = 'message-label';
-      labelEl.textContent = label;
-      message.appendChild(labelEl);
-    }
-    
-    const dotsEl = document.createElement('div');
-    dotsEl.className = 'typing-dots';
-    dotsEl.innerHTML = '<span></span><span></span><span></span>';
-    message.appendChild(dotsEl);
-    
-    elements.chatArea.appendChild(message);
-    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
-  }
-
-  function replaceTypingWithMessage(text, type, label) {
-    const typingBubble = elements.chatArea.querySelector(`.message.${type}.typing-indicator`);
-    if (typingBubble) {
-      typingBubble.classList.remove('typing-indicator');
-      const dots = typingBubble.querySelector('.typing-dots');
-      if (dots) dots.remove();
-      
-      const textEl = document.createElement('div');
-      textEl.className = 'message-text';
-      textEl.textContent = text;
-      typingBubble.appendChild(textEl);
-    } else {
-      addMessage(text, type, label);
-    }
   }
 
   function showStatus(message, type = '') {
@@ -341,11 +366,39 @@
   }
 
   function showLoading() {
-    elements.loadingOverlay.hidden = false;
+    showTypingIndicator();
   }
 
   function hideLoading() {
-    elements.loadingOverlay.hidden = true;
+    hideTypingIndicator();
+  }
+
+  function showTypingIndicator() {
+    if (!elements.chatArea) return;
+
+    const existing = document.getElementById('typingIndicator');
+    if (existing) return;
+
+    const message = document.createElement('div');
+    message.className = 'message teacher typing';
+    message.id = 'typingIndicator';
+    message.setAttribute('aria-label', 'Teacher is typing');
+
+    const dots = document.createElement('div');
+    dots.className = 'typing-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = '<span></span><span></span><span></span>';
+
+    message.appendChild(dots);
+    elements.chatArea.appendChild(message);
+    elements.chatArea.scrollTop = elements.chatArea.scrollHeight;
+  }
+
+  function hideTypingIndicator() {
+    const existing = document.getElementById('typingIndicator');
+    if (existing) {
+      existing.remove();
+    }
   }
 
   // ─────────────────────────────────────────────

@@ -7,14 +7,7 @@ const getApiBase = () => {
   return '';
 };
 const API_BASE = getApiBase();
-const REFRESH_ENDPOINT = (() => {
-  try {
-    if (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.getApiUrl === 'function') {
-      return window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth') + '?action=refresh';
-    }
-  } catch {}
-  return `${API_BASE}/.netlify/functions/supabase_auth?action=refresh`;
-})();
+const REFRESH_ENDPOINT = `${API_BASE}/.netlify/functions/supabase_auth?action=refresh`;
 const REFRESH_INTERVAL = 1000 * 60 * 40; // 40 minutes
 
 let refreshTimer = null;

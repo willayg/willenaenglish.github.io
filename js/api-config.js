@@ -2,15 +2,15 @@
  * API Configuration - Simple and Deterministic
  * VERSION: 2025-12-16 HOTFIX
  * 
- * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, localhost, netlify.app):
+ * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, students.willenaenglish.com, localhost):
  *   → Relative paths only: /.netlify/functions/<name>
  *   → Same-origin requests, cookies work automatically
  *   → NO absolute URLs, NO proxy domains, NO api-cf.*
  *
  * GITHUB PAGES (willenaenglish.github.io):
- *   → Absolute URL to Netlify: https://willenaenglish.netlify.app/.netlify/functions/<name>
+ *   → Absolute URL to students domain: https://students.willenaenglish.com/.netlify/functions/<name>
  *   → Cross-origin, requires credentials: 'include'
- *   → Known cookie-blocking browsers redirected to Netlify
+ *   → Known cookie-blocking browsers redirected to students domain
  */
 
 (function() {
@@ -20,7 +20,7 @@
   // CONSTANTS
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
-  const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
+  const NETLIFY_BASE = 'https://students.willenaenglish.com';
   // Cloudflare worker endpoints (branch testing)
   const USE_CF_WORKERS = true; // enable CF routing on this branch
   const CF_FUNCTIONS = {
@@ -63,14 +63,14 @@
   // ============================================================
   // API BASE - Simple rule
   // ============================================================
-  // On willenaenglish.netlify.app: relative paths (same-origin) - this is the ONLY place auth works
-  // GitHub Pages: absolute Netlify URL (cross-origin)
-  // Custom domains: absolute Netlify URL (cross-origin) - but users should be redirected to netlify anyway
-  const isNetlifyApp = currentHost === 'willenaenglish.netlify.app';
+  // On students.willenaenglish.com: relative paths (same-origin) - this is the ONLY place auth works
+  // GitHub Pages: absolute students domain URL (cross-origin)
+  // Custom domains: absolute students domain URL (cross-origin) - but users should be redirected to students domain anyway
+  const isNetlifyApp = currentHost === 'students.willenaenglish.com';
   const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
   
-  // ONLY use relative paths on willenaenglish.netlify.app or localhost
-  // Everything else needs absolute URLs to Netlify
+  // ONLY use relative paths on students.willenaenglish.com or localhost
+  // Everything else needs absolute URLs to students domain
   const API_BASE = (isNetlifyApp || isLocalhost) ? '' : NETLIFY_BASE;
 
   // ============================================================
@@ -189,7 +189,27 @@
       }
     }
     
-    // Auth: prefer HTTP-only cookies. Do not persist tokens in localStorage.
+    // Add Authorization header from localStorage if token exists and no auth header already present
+    // This is a fallback for when cookies fail (e.g., on some browsers/incognito modes)
+    // IMPORTANT: Only send Authorization if we have a valid non-empty token to avoid interfering with cookie-based auth
+    const existingAuth = (fetchOptions.headers && (fetchOptions.headers.Authorization || fetchOptions.headers.authorization));
+    if (!existingAuth) {
+      let localToken = null;
+      try {
+        localToken = localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        // localStorage not available or blocked
+      }
+      
+      // Only add Authorization header if we have a valid token that looks like a JWT (contains dots)
+      if (localToken && localToken.includes('.') && localToken.length > 50) {
+        fetchOptions.headers = {
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localToken}`
+        };
+        console.log('[WillenaAPI] Added Authorization header from localStorage (token length:', localToken.length + ')');
+      }
+    }
 
     
     // Debug logging for POST requests
@@ -261,18 +281,37 @@
       return 'production';
     },
 
-    // Token helper stubs (in-memory only; do not persist tokens)
+    // Token storage helpers - fallback for when cookies fail
+    // Store access/refresh tokens in localStorage (used when cookies are blocked/not persisting)
     setLocalTokens(accessToken, refreshToken) {
-      window.__willenaAuthTokens = {
-        accessToken: accessToken || null,
-        refreshToken: refreshToken || null,
-      };
+      try {
+        if (accessToken) localStorage.setItem('sb_access_token', accessToken);
+        if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken);
+        console.log('[WillenaAPI] Tokens stored in localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to store tokens in localStorage:', e);
+      }
     },
+    
+    // Get stored access token from localStorage
     getLocalAccessToken() {
-      return (window.__willenaAuthTokens && window.__willenaAuthTokens.accessToken) || null;
+      try {
+        return localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to read access token from localStorage:', e);
+        return null;
+      }
     },
+    
+    // Clear stored tokens from localStorage
     clearLocalTokens() {
-      window.__willenaAuthTokens = { accessToken: null, refreshToken: null };
+      try {
+        localStorage.removeItem('sb_access_token');
+        localStorage.removeItem('sb_refresh_token');
+        console.log('[WillenaAPI] Tokens cleared from localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
+      }
     },
 
     // Legacy compatibility stubs (CF migration disabled)

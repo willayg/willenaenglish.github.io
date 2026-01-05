@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Admin - Willena Tools</title>
+  <!-- Netlify redirect removed - now using Cloudflare -->
+  <script src="/js/api-config.js"></script>
+  <link rel="stylesheet" href="/Teachers/components/style.css">
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
+    .top-bar { position:sticky; top:0; z-index:500; display:flex; align-items:center; gap:16px; padding:10px 16px; background:#0f172a; box-shadow:0 4px 18px -4px rgba(0,0,0,.35); }
+    .top-bar h2 { margin:0; font-size:1.05rem; font-weight:700; color:#67e2e6; letter-spacing:.5px; }
+    .admin-container { 
+      width:98vw !important; max-width:2000px; 
+      margin: 24px auto 60px; 
+      background: #fff; 
+      border-radius: 18px; 
+      box-shadow: 0 4px 28px -6px rgba(15,23,42,0.20); 
+      padding: 34px 42px; 
+      box-sizing:border-box;
+    }
+    /* Inline minimal burger menu */
+    .burger { position:relative; }
+    .burger button { background:none; border:2px solid #67e2e6; color:#67e2e6; font-size:22px; padding:6px 14px; border-radius:12px; font-weight:700; cursor:pointer; letter-spacing:.5px; }
+    .burger button:hover { background:#67e2e6; color:#0f172a; }
+    .burger-menu { position:absolute; top:100%; right:0; margin-top:10px; background:#fff; border:1px solid #e2e8f0; border-radius:16px; min-width:200px; box-shadow:0 10px 34px -8px rgba(0,0,0,.35); padding:6px 0; display:none; }
+    .burger-menu a { display:flex; align-items:center; gap:10px; padding:10px 16px; font-weight:600; font-size:.85rem; color:#0f172a; text-decoration:none; letter-spacing:.3px; }
+    .burger-menu a:hover { background:#f1f7f9; }
+    .burger-menu.open { display:block; animation:fadeIn .18s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:translateY(0);} }
+    @media (max-width:880px){ .admin-container { padding:26px 20px; } }
+    @media (max-width:2000px){ .burger-menu { right:auto; left:0; } }
+    h1 { text-align: center; color: #1976d2; margin-bottom: 24px; }
+    .feedback-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .feedback-table th, .feedback-table td { padding: 10px 12px; border-bottom: 1px solid #e0e0e0; text-align: left; }
+    .feedback-table th { background: #f0f6ff; color: #1976d2; font-weight: 600; }
+    .feedback-table tr:last-child td { border-bottom: none; }
+    .feedback-row { transition: background 0.2s; }
+    .feedback-row:hover { background: #f5faff; }
+    .tool-state-details { font-size: 0.95em; color: #444; background: #f8f8fa; border-radius: 6px; padding: 8px; margin-top: 6px; white-space: pre-wrap; }
+    .search-bar { margin-bottom: 18px; display: flex; gap: 10px; }
+    .search-bar input { flex: 1; padding: 8px 12px; border-radius: 5px; border: 1px solid #d0d0d0; font-size: 1em; }
+    .search-bar button { padding: 8px 18px; border-radius: 5px; border: none; background: #1976d2; color: #fff; font-size: 1em; cursor: pointer; }
+    .search-bar button:hover { background: #1256a3; }
+    .json-toggle { color: #1976d2; cursor: pointer; font-size: 0.95em; margin-left: 8px; }
+    .json-toggle:hover { text-decoration: underline; }
+    .json-collapsed { display: none; }
+  </style>
+</head>
+<body>
+  <script>
+    // Access control: prefer cookie session; fall back to localStorage only if needed (temporary)
+    (async function() {
+      try {
+        // Try cookie-based whoami + get_profile
+        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami');
+        const whoRes = await who.json();
+        let userId = whoRes && whoRes.success ? whoRes.user_id : null;
+        if (!userId) {
+          // Fallback to legacy localStorage (for partial migration)
+          userId = localStorage.getItem('userId');
+        }
+        if (!userId) {
+          window.location.href = '/Teachers/login.html';
+          return;
+        }
+        const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile${userId ? `&user_id=${encodeURIComponent(userId)}` : ''}`);
+        const result = await res.json();
+        const role = (result && result.role) ? String(result.role).toLowerCase() : '';
+        if (!result.success || role !== 'admin') {
+          window.location.href = '/Teachers/components/access-denied.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/Teachers/login.html';
+      }
+    })();
+  </script>
+  <!-- Inline Admin Header -->
+  <style>
+    .admin-top-bar { position:sticky; top:0; z-index:600; display:flex; align-items:center; gap:18px; padding:10px 18px; background:#0f172a; box-shadow:0 4px 18px -4px rgba(0,0,0,.35); }
+    .admin-top-bar h2 { margin:0; font-size:1.05rem; font-weight:700; color:#67e2e6; letter-spacing:.5px; }
+    .admin-burger { position:relative; }
+    .admin-burger button { background:none; border:2px solid #67e2e6; color:#67e2e6; font-size:22px; padding:6px 14px; border-radius:12px; font-weight:700; cursor:pointer; letter-spacing:.5px; }
+    .admin-burger button:hover { background:#67e2e6; color:#0f172a; }
+    .admin-menu { position:absolute; top:100%; left:0; margin-top:10px; background:#fff; border:1px solid #e2e8f0; border-radius:16px; min-width:240px; box-shadow:0 10px 34px -8px rgba(0,0,0,.35); padding:6px 0; display:none; }
+    .admin-menu.open { display:block; animation:fadeIn .18s ease; }
+    .admin-menu a { display:flex; align-items:center; gap:10px; padding:10px 16px; font-weight:600; font-size:.85rem; color:#0f172a; text-decoration:none; letter-spacing:.3px; }
+    .admin-menu a:hover { background:#f1f7f9; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:translateY(0);} }
+  </style>
+  <div class="admin-top-bar">
+    <div class="admin-burger">
+      <button class="admin-burger-btn" aria-haspopup="true" aria-expanded="false">☰</button>
+      <div class="admin-menu" role="menu">
+        <a href="/Teachers/components/admin-dashboard.html" role="menuitem">📊 Admin Dashboard</a>
+        <a href="/Teachers/components/feedback-admin.html" role="menuitem" style="font-weight:800;color:#1976d2;">💬 Feedback Admin</a>
+        <a href="/Teachers/components/admin_teachers.html" role="menuitem">👩‍🏫 Manage Teachers</a>
+        <a href="/Teachers/tools/planner/planner.html" role="menuitem">📝 Planner</a>
+        <a href="#" data-action="bugs" role="menuitem">🐞 Bugs</a>
+        <a href="/Teachers/index.html" role="menuitem">🏠 Teacher Dashboard</a>
+        <a href="/Teachers/login.html" data-action="logout" role="menuitem">🚪 Logout</a>
+      </div>
+    </div>
+    <h2 class="admin-header-title">Feedback Admin</h2>
+  </div>
+  <div class="admin-container">
+    <div style="width:100%; display:flex; justify-content:flex-end; margin-bottom:16px;">
+      <a href="/Teachers/components/admin-dashboard.html" class="dashboard-btn" style="background:#1976d2; color:#fff; font-weight:600; border:none; border-radius:6px; padding:10px 22px; font-size:1rem; text-decoration:none; box-shadow:0 2px 8px rgba(30,41,59,0.10); transition:background 0.2s;">Back to Admin Dashboard</a>
+    </div>
+    <h1>Feedback Admin</h1>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search feedback, module, or user...">
+      <select id="statusFilter" style="min-width:120px;">
+        <option value="open" selected>Open</option>
+        <option value="all">All Statuses</option>
+        <option value="new">New</option>
+        <option value="urgent">Urgent</option>
+        <option value="fixed">Fixed</option>
+        <option value="unfixed">Unfixed</option>
+        <option value="ignore">Ignore</option>
+      </select>
+      <select id="moduleFilter" style="min-width:120px;"><option value="all">All Modules</option></select>
+      <button id="refreshBtn">Refresh</button>
+    </div>
+    <table class="feedback-table" id="feedbackTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Feedback</th>
+          <th>Module</th>
+          <th>Tool State</th>
+          <th>User ID</th>
+          <th>Username</th>
+          <th>Page</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="feedbackTableBody">
+        <tr><td colspan="7" style="text-align:center; color:#888;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <script>
+    (function(){
+      const bar = document.querySelector('.admin-top-bar');
+      const btn = bar.querySelector('.admin-burger-btn');
+      const menu = bar.querySelector('.admin-menu');
+      btn.addEventListener('click', ()=>{ const open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
+      document.addEventListener('click', (e)=>{ if(!menu.contains(e.target) && !btn.contains(e.target) && menu.classList.contains('open')){ menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } }, true);
+      menu.addEventListener('click', (e)=>{ const a = e.target.closest('a'); if(!a) return; if(a.dataset.action==='bugs'){ e.preventDefault(); if(window.showFeedbackModal) window.showFeedbackModal(); else alert('Feedback modal not available.'); menu.classList.remove('open'); } else if(a.dataset.action==='logout'){ e.preventDefault(); fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST',credentials:'include'}).finally(()=> location.href='/Teachers/login.html'); } });
+    })();
+  </script>
+  <script type="module" src="/Teachers/components/feedback-admin.js"></script>
+</body>
+</html>

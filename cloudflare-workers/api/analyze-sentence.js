@@ -8,7 +8,7 @@
  * Fallback: OpenAI (env.OPENAI_API / OPENAI_KEY / OPENAI_API_KEY).
  */
 
-export async function onRequest(context) {
+export async function onRequestPost(context) {
   const { request, env } = context;
 
   const cfDebug = {
@@ -31,8 +31,10 @@ export async function onRequest(context) {
     // ─────────────────────────────────────────────
     // Validate AI Configuration
     // ─────────────────────────────────────────────
-    const hasWorkersAI = !!env.AI;
+    const preferOpenAI = env.PREFER_OPENAI === 'true' || env.USE_OPENAI === 'true';
+    const hasWorkersAI = !!env.AI && !preferOpenAI;
     const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+    
     if (!hasWorkersAI && !openaiKey) {
       console.error('[analyze-sentence] No AI configured (expected env.AI binding or OPENAI_API/OPENAI_KEY/OPENAI_API_KEY)');
       return new Response(
@@ -40,6 +42,8 @@ export async function onRequest(context) {
         { status: 500, headers: corsHeaders }
       );
     }
+    
+    console.log(`[analyze-sentence] Using ${hasWorkersAI ? 'Workers AI (Llama)' : 'OpenAI (GPT)'} for correction`);
 
     // ─────────────────────────────────────────────
     // Parse Form Data
@@ -88,9 +92,12 @@ export async function onRequest(context) {
     // ─────────────────────────────────────────────
     // Step 2: Correct Grammar with GPT
     // ─────────────────────────────────────────────
+    const language = formData.get('language') || 'en';
+    console.log(`[analyze-sentence] Language requested: ${language}`);
+    
     const correction = hasWorkersAI
-      ? await correctGrammarWorkersAI(transcript, env.AI)
-      : await correctGrammarOpenAI(transcript, openaiKey);
+      ? await correctGrammarWorkersAI(transcript, env.AI, language)
+      : await correctGrammarOpenAI(transcript, openaiKey, language);
 
     console.log(`[analyze-sentence] Correction:`, correction);
 
@@ -147,6 +154,7 @@ export async function onRequestOptions() {
 // ─────────────────────────────────────────────
 async function transcribeAudioWorkersAI(audioFile, aiBinding) {
   try {
+    // @cf/openai/whisper-large-v3-turbo expects base64-encoded audio bytes.
     const buffer = await audioFile.arrayBuffer();
     const audioBase64 = arrayBufferToBase64(buffer);
 
@@ -160,7 +168,7 @@ async function transcribeAudioWorkersAI(audioFile, aiBinding) {
     const transcript = result?.text || '';
     return String(transcript).trim();
   } catch (e) {
-    console.error('[WorkersAI][Whisper] Error:', e);
+    console.error('[WorkersAI][Whisper] Error:', e?.message || e);
     const err = new Error('Speech transcription failed. Please try again.');
     err.status = 502;
     err.code = 'AI_TRANSCRIBE';
@@ -173,9 +181,14 @@ function arrayBufferToBase64(buffer) {
   const chunkSize = 0x8000;
   let binary = '';
 
+  // Avoid spreading large arrays into String.fromCharCode (can throw on some runtimes).
   for (let i = 0; i < bytes.length; i += chunkSize) {
     const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
+    let chunkStr = '';
+    for (let j = 0; j < chunk.length; j++) {
+      chunkStr += String.fromCharCode(chunk[j]);
+    }
+    binary += chunkStr;
   }
 
   return btoa(binary);
@@ -278,25 +291,44 @@ async function transcribeAudioOpenAI(audioFile, apiKey) {
 // ─────────────────────────────────────────────
 // GPT Grammar Correction
 // ─────────────────────────────────────────────
-async function correctGrammarWorkersAI(transcript, aiBinding) {
-  const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
-Your job is to correct the student's spoken sentence.
+async function correctGrammarWorkersAI(transcript, aiBinding, language = 'en') {
+  const langInstruction = language === 'ko' 
+    ? 'IMPORTANT: You MUST write the teacher_note entirely in Korean (한국어). Do NOT use English in the teacher_note.'
+    : 'Write the teacher_note in English.';
 
-RULES:
-1. ONLY fix grammar, tense, plurals, articles, and missing words
-2. Do NOT add new ideas or information
-3. Do NOT change the meaning of the sentence
-4. Keep corrections simple and age-appropriate
-5. If the sentence is already correct, return it unchanged
-6. Do not correct punctuation.
+  const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
+Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
+
+${langInstruction}
+
+CRITICAL - WHAT IS NOT AN ERROR (do NOT correct these):
+- Contractions (she's, I'm, don't, isn't, can't, won't, he's, they're, etc.) are CORRECT
+- Different word choices that mean the same thing (wrong vs right, good vs nice, etc.)
+- Informal but correct phrasing
+- Complete sentences that sound natural
+
+ONLY FIX THESE ACTUAL ERRORS:
+- Missing helping verb: "She eating pizza" → "She is eating pizza"
+- Wrong verb form: "He go home" → "He goes home"
+- Missing article where required: "I saw dog" → "I saw a dog"
+- Clear subject-verb disagreement: "They was happy" → "They were happy"
+- Missing possessive apostrophe: "my grandma house" → "my grandma's house"
+
+STRICT RULES:
+1. If the sentence is grammatically correct, return it UNCHANGED - even if you could say it differently
+2. NEVER change the meaning or main words
+3. NEVER correct contractions - they are correct
+4. NEVER change style or word choice
+5. When in doubt, do NOT correct it
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
-  "corrected_sentence": "the corrected sentence here",
-  "teacher_note": "brief, encouraging explanation of what was fixed (1-2 sentences max)"
+  "corrected_sentence": "the corrected sentence here (or original if correct)",
+  "teacher_note": "${language === 'ko' ? '한국어로 번호가 매겨진 포인트만. 예: 1. go 대신 과거형 went를 사용하세요.' : 'NUMBERED POINTS ONLY in English. Example: 1. Use past tense went instead of go.'}"
 }
 
-If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
+If NO changes needed, return teacher_note as: "${language === 'ko' ? '완벽해요! 문장이 맞아요!' : 'Perfect! Your sentence is correct!'}"
+If changes were made, explain each fix as a numbered point ${language === 'ko' ? 'IN KOREAN' : 'in English'}.`;
 
   try {
     const result = await aiBinding.run('@cf/meta/llama-3.1-8b-instruct', {
@@ -305,20 +337,21 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
         { role: 'user', content: `Student said: "${transcript}"` }
       ],
       temperature: 0.2,
-      max_tokens: 220,
-      response_format: { type: 'json_object' }
+      max_tokens: 220
+      // Note: Cloudflare Llama doesn't support json_object, only json_schema; omit for now.
     });
 
     const content = result?.response;
     if (!content) {
-      return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+      return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good job!' }, transcript);
     }
 
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      return sanitizeCorrection(parsed, transcript);
     } catch (e) {
       console.error('[WorkersAI][Llama] JSON parse error:', e, 'Content:', content);
-      return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+      return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good job!' }, transcript);
     }
   } catch (e) {
     console.error('[WorkersAI][Llama] Error:', e);
@@ -329,24 +362,44 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
   }
 }
 
-async function correctGrammarOpenAI(transcript, apiKey) {
-  const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
-Your job is to correct the student's spoken sentence.
+async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
+  const langInstruction = language === 'ko' 
+    ? 'IMPORTANT: You MUST write the teacher_note entirely in Korean (한국어). Do NOT use English in the teacher_note.'
+    : 'Write the teacher_note in English.';
 
-RULES:
-1. ONLY fix grammar, tense, plurals, articles, and missing words
-2. Do NOT add new ideas or information
-3. Do NOT change the meaning of the sentence
-4. Keep corrections simple and age-appropriate
-5. If the sentence is already correct, return it unchanged
+  const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
+Your job is to ONLY fix ACTUAL grammar errors in the student's spoken sentence.
+
+${langInstruction}
+
+CRITICAL - WHAT IS NOT AN ERROR (do NOT correct these):
+- Contractions (she's, I'm, don't, isn't, can't, won't, he's, they're, etc.) are CORRECT
+- Different word choices that mean the same thing (wrong vs right, good vs nice, etc.)
+- Informal but correct phrasing
+- Complete sentences that sound natural
+
+ONLY FIX THESE ACTUAL ERRORS:
+- Missing helping verb: "She eating pizza" → "She is eating pizza"
+- Wrong verb form: "He go home" → "He goes home"
+- Missing article where required: "I saw dog" → "I saw a dog"
+- Clear subject-verb disagreement: "They was happy" → "They were happy"
+- Missing possessive apostrophe: "my grandma house" → "my grandma's house"
+
+STRICT RULES:
+1. If the sentence is grammatically correct, return it UNCHANGED - even if you could say it differently
+2. NEVER change the meaning or main words
+3. NEVER correct contractions - they are correct
+4. NEVER change style or word choice
+5. When in doubt, do NOT correct it
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {
-  "corrected_sentence": "the corrected sentence here",
-  "teacher_note": "brief, encouraging explanation of what was fixed (1-2 sentences max)"
+  "corrected_sentence": "the corrected sentence here (or original if correct)",
+  "teacher_note": "${language === 'ko' ? '한국어로 번호가 매겨진 포인트만. 예: 1. go 대신 과거형 went를 사용하세요.' : 'NUMBERED POINTS ONLY in English. Example: 1. Use past tense went instead of go.'}"
 }
 
-If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
+If NO changes needed, return teacher_note as: "${language === 'ko' ? '완벽해요! 문장이 맞아요!' : 'Perfect! Your sentence is correct!'}"
+If changes were made, explain each fix as a numbered point ${language === 'ko' ? 'IN KOREAN' : 'in English'}.`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -376,25 +429,68 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
-    return { corrected_sentence: transcript, teacher_note: 'Good try!' };
+    return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good try!' }, transcript);
   }
 
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    return sanitizeCorrection(parsed, transcript);
   } catch (e) {
     console.error('[GPT] JSON parse error:', e, 'Content:', content);
-    return { corrected_sentence: transcript, teacher_note: 'Good try!' };
+    return sanitizeCorrection({ corrected_sentence: transcript, teacher_note: 'Good try!' }, transcript);
   }
 }
 
-// ─────────────────────────────────────────────
-// Standard Worker Export (for wrangler deploy)
-// ─────────────────────────────────────────────
-export default {
-  async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') {
-      return onRequestOptions();
-    }
-    return onRequest({ request, env, ctx });
+// -----------------
+// Post-processing helpers
+// -----------------
+function sanitizeCorrection(obj, originalTranscript) {
+  const out = { corrected_sentence: String(obj.corrected_sentence || originalTranscript).trim() };
+
+  let note = String(obj.teacher_note || '').trim();
+
+  // If the model returned no note or something too short, provide a friendly fallback
+  if (!note || note.length < 6) {
+    note = generateFallbackNote(originalTranscript, out.corrected_sentence);
   }
-};
+
+  // Replace technical grammar jargon with simple phrasing
+  note = note.replace(/present participle|participle|auxiliary verb|auxiliary/gi,
+    "a small helper word like 'is' or 'are'");
+
+  // Reduce phrasing like "We need to use" -> "Use"
+  note = note.replace(/\bWe (need to use|usually add)\b/gi, 'Use');
+  note = note.replace(/\bYou should use\b/gi, 'Use');
+
+  // Trim to a reasonable length for kids
+  if (note.length > 140) note = note.slice(0, 137) + '...';
+
+  // Ensure capitalization and punctuation
+  note = note.charAt(0).toUpperCase() + note.slice(1);
+  if (!/[.!?]$/.test(note)) note += '.';
+
+  out.teacher_note = note;
+  return out;
+}
+
+function generateFallbackNote(original, corrected) {
+  try {
+    const o = original.toLowerCase();
+    const c = corrected.toLowerCase();
+
+    // If corrected adds ' is ' or ' are ', explain helper word
+    if ((/\bis\b/.test(c) || /\bare\b/.test(c)) && !(/\bis\b/.test(o) || /\bare\b/.test(o))) {
+      return `Use 'is' or 'are' to show the action is happening now. Try: "${corrected}"`;
+    }
+
+    // If corrected added an ending 's' for plural
+    if (c.replace(/[^a-z ]/g, '') !== o.replace(/[^a-z ]/g, '') && c.includes('s') && !o.includes('s')) {
+      return `We changed the word to make it correct. Try: "${corrected}"`;
+    }
+
+    // Default encouraging fallback
+    return `Try: "${corrected}". Good job!`;
+  } catch (e) {
+    return 'Good job!';
+  }
+}

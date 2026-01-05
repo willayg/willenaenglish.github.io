@@ -6,14 +6,10 @@
   <title>Teacher Login - Willena English</title>
   <script>
     (function() {
-      const host = location.hostname;
-      // Only GitHub Pages should bounce to Netlify.
-      // Custom domains and staging should use Cloudflare Workers.
-      if (host === 'willenaenglish.github.io') {
-        const targetHost = 'https://willenaenglish.netlify.app';
-        const path = location.pathname + location.search + location.hash;
-        window.location.replace(targetHost + path);
-      }
+      const targetHost = 'https://willenaenglish.netlify.app';
+      if (location.hostname === 'willenaenglish.netlify.app') return;
+      const path = location.pathname + location.search + location.hash;
+      window.location.replace(targetHost + path);
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -307,23 +303,6 @@
       });
       return result.user;
     }
-
-    async function ensureSessionCookieReady() {
-      const delays = [0, 150, 300, 600, 1000];
-      for (const ms of delays) {
-        if (ms) await new Promise(r => setTimeout(r, ms));
-        try {
-          const res = await fetch(`${AUTH_URL}?action=whoami&_=${Date.now()}`, { credentials: 'include' });
-          const data = await res.json().catch(() => null);
-          if (res.ok && data && data.success && data.user_id) return true;
-        } catch {}
-        try {
-          // Best-effort refresh in case access token cookie just needs rotation.
-          await fetch(`${AUTH_URL}?action=refresh&_=${Date.now()}`, { credentials: 'include' });
-        } catch {}
-      }
-      return false;
-    }
     
     async function getUserRole(userId) {
       const url = `${AUTH_URL}?action=get_role&user_id=${encodeURIComponent(userId)}`;
@@ -371,12 +350,6 @@
           getUserRole(user.id),
           getProfileId(user.id)
         ]);
-
-        // Robust: wait until browser applies the session cookie before redirecting.
-        const sessionReady = await ensureSessionCookieReady();
-        if (!sessionReady) {
-          throw new Error('Signed in, but your browser did not keep the session. Please enable cookies for this site and try again.');
-        }
         
         // Store user data
         localStorage.setItem('userId', user.id);
@@ -405,35 +378,30 @@
     });
     
     // If already logged in (has session), optionally auto-redirect if redirect= present
-    // Loop guard: prevent infinite redirects if session check keeps failing
     (async () => {
-      const LOOP_KEY = 'teacher_login_redirect_count';
-      const MAX_REDIRECTS = 2;
       try {
-        const count = parseInt(sessionStorage.getItem(LOOP_KEY) || '0', 10);
-        if (count >= MAX_REDIRECTS) {
-          console.warn('[login] Too many redirect attempts, staying on login page');
-          sessionStorage.removeItem(LOOP_KEY);
-          return;
-        }
-        const ok = await ensureSessionCookieReady();
-        if (!ok) {
-          sessionStorage.removeItem(LOOP_KEY);
-          return;
-        }
-
-        // Already logged in, perform quick redirect
-        sessionStorage.setItem(LOOP_KEY, String(count + 1));
-        const params = new URLSearchParams(location.search);
-        const redirect = params.get('redirect');
-        if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
-          window.location.replace(redirect);
+        const debugUrl = `${AUTH_URL}?action=debug`;
+        const debugResult = await fetch(debugUrl, { credentials: 'include' });
+        const debugData = await debugResult.json();
+        
+        if (debugData.hasSupabaseUrl && debugData.hasAnonKey && debugData.hasServiceRole) {
+          console.log('✓ Auth service healthy');
         } else {
-          window.location.replace('/Teachers/index.html');
+          console.warn('⚠ Auth service missing environment variables');
+        }
+        if (debugData.session && debugData.session.user && debugData.session.user.id) {
+          // Already logged in, perform quick redirect
+          const params = new URLSearchParams(location.search);
+          const redirect = params.get('redirect');
+          if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
+            window.location.replace(redirect);
+          } else {
+            // Already logged in and no specific redirect: go to Teacher dashboard
+            window.location.replace('/Teachers/index.html');
+          }
         }
       } catch (error) {
         console.error('Auth service unreachable:', error);
-        sessionStorage.removeItem(LOOP_KEY);
       }
     })();
   </script>

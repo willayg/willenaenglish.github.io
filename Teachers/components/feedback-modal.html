@@ -1,0 +1,92 @@
+<template id="feedback-modal-template">
+  <style>
+    .feedback-modal-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.35);
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feedback-modal {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      padding: 28px 24px 24px 24px;
+      min-width: 320px;
+      max-width: 95vw;
+      width: 400px;
+      position: relative;
+      font-family: inherit;
+    }
+    .feedback-modal h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.3em;
+      color: #1976d2;
+      text-align: center;
+    }
+    .feedback-modal textarea {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+      min-height: 80px;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+      padding: 10px;
+      font-size: 1em;
+      margin-bottom: 12px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .feedback-modal .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .feedback-modal button {
+      padding: 7px 18px;
+      border-radius: 5px;
+      border: none;
+      font-size: 1em;
+      cursor: pointer;
+      background: #1976d2;
+      color: #fff;
+      transition: background 0.2s;
+    }
+    .feedback-modal button.cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .feedback-modal button:hover:not(.cancel) {
+      background: #1256a3;
+    }
+    .feedback-modal .modal-close {
+      position: absolute;
+      top: 10px; right: 14px;
+      font-size: 1.3em;
+      color: #888;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .feedback-modal .modal-close:hover {
+      color: #1976d2;
+    }
+  </style>
+  <div class="feedback-modal-bg" id="feedbackModalBg">
+    <div class="feedback-modal">
+      <button class="modal-close" id="feedbackModalCloseBtn" title="Close">&times;</button>
+      <h2>Send Feedback</h2>
+      <div id="feedbackUsernameDisplay"></div>
+      <textarea id="feedbackText" placeholder="Describe your issue, suggestion, or feedback..."></textarea>
+      <!-- JS logic moved to feedback.js for consistency and reliability -->
+      <div class="modal-actions">
+        <button class="cancel" id="feedbackCancelBtn">Cancel</button>
+        <button id="feedbackSubmitBtn">Send</button>
+      </div>
+    </div>
+  </div>
+</template>

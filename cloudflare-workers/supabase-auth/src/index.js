@@ -8,16 +8,10 @@
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://staging.willenaenglish.com',
-  'https://students.willenaenglish.com',
-  'https://teachers.willenaenglish.com',
-  'https://api.willenaenglish.com',
-  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',
-  'https://staging.willenaenglish-github-io.pages.dev',
   // Cloudflare Pages deployment
   'https://cf.willenaenglish.com',
   'http://localhost:8888',
@@ -27,22 +21,11 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin) {
-  let allowed = ALLOWED_ORIGINS[0];
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    allowed = origin;
-  } else if (origin) {
-    try {
-      const u = new URL(origin);
-      const host = u.hostname.toLowerCase();
-      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
-        allowed = origin;
-      }
-    } catch {}
-  }
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
     'Cache-Control': 'no-store',
   };
@@ -139,7 +122,7 @@ async function verifyToken(env, token) {
 // Fetch profile from database
 async function fetchProfile(env, userId, fields = '*') {
   const resp = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=${encodeURIComponent(fields)}`,
+    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=${fields}`,
     {
       headers: {
         'apikey': env.SUPABASE_SERVICE_KEY,
@@ -156,7 +139,7 @@ async function fetchProfile(env, userId, fields = '*') {
 // Update profile
 async function updateProfile(env, userId, updates) {
   const resp = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`,
+    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
     {
       method: 'PATCH',
       headers: {
@@ -177,45 +160,6 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     const corsHeaders = getCorsHeaders(origin);
-
-    // Enable debug logging only when explicitly requested.
-    const debugLog = url.searchParams.get('debuglog') === '1' || request.headers.get('X-Debug-Log') === '1';
-
-    // Some browsers (notably mobile) will not send cookies to a third-party origin
-    // (e.g. *.workers.dev). Support explicit token mode for those cases.
-    const wantTokens = url.searchParams.get('tokens') === '1' || request.headers.get('X-Return-Tokens') === '1';
-
-    function getAccessTokenFromRequest() {
-      // 1) Cookie (preferred)
-      // 2) Authorization header (token fallback)
-      // 3) Query param (debug/local)
-      const cookieHeader = request.headers.get('Cookie') || '';
-      const cookies = parseCookies(cookieHeader);
-      const authHeader = request.headers.get('Authorization') || '';
-      const tokenFromQuery = url.searchParams.get('token');
-
-      let token = cookies['sb_access'];
-      if (!token && authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
-      if (!token && tokenFromQuery) token = tokenFromQuery;
-      return token || null;
-    }
-
-    async function getRefreshTokenFromRequestBodyOrHeader() {
-      // 1) Cookie (preferred)
-      // 2) X-Refresh-Token header
-      // 3) JSON body { refresh_token }
-      const cookieHeader = request.headers.get('Cookie') || '';
-      const cookies = parseCookies(cookieHeader);
-      const cookieToken = cookies['sb_refresh'] || '';
-      if (cookieToken) return cookieToken;
-
-      const headerToken = request.headers.get('X-Refresh-Token') || '';
-      if (headerToken) return headerToken;
-
-      const body = await request.json().catch(() => ({}));
-      const bodyToken = body && body.refresh_token ? String(body.refresh_token) : '';
-      return bodyToken || '';
-    }
     
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
@@ -225,24 +169,6 @@ export default {
     const action = url.searchParams.get('action');
     const isDev = isLocalDev(request);
     const cookieDomain = getCookieDomain(request);
-
-    // TEMP DEBUG: record header presence (do NOT log cookie/token contents)
-    if (debugLog) {
-      try {
-        const hasCookie = !!request.headers.get('Cookie');
-        const hasAuthorization = !!request.headers.get('Authorization');
-        console.log(JSON.stringify({
-          debug: 'hdr_presence',
-          origin: origin || null,
-          host: request.headers.get('Host') || null,
-          action: action || null,
-          hasCookie,
-          hasAuthorization,
-        }));
-      } catch (e) {
-        // ignore logging errors
-      }
-    }
     
     // Cookie options based on environment
     const cookieOpts = {
@@ -359,25 +285,11 @@ export default {
           makeCookie('sb_access', authData.access_token, cookieOpts),
           makeCookie('sb_refresh', authData.refresh_token || '', cookieOpts),
         ];
-
-        // TEMP DEBUG: indicate whether the worker will set cookies on login response
-        if (debugLog) {
-          try {
-            console.log(JSON.stringify({
-              debug: 'login_set_cookies',
-              origin: origin || null,
-              host: request.headers.get('Host') || null,
-              setCookies: Array.isArray(cookies) && cookies.length > 0,
-            }));
-          } catch (e) {
-            // ignore
-          }
-        }
         
-        // Token mode: return tokens in body when explicitly requested.
-        // This is needed when third-party cookies to *.workers.dev are blocked.
+        // For local dev, also return tokens in body since cross-origin cookies don't work
+        // between localhost:9000 and 127.0.0.1:8787
         const responseBody = { success: true, user: authData.user };
-        if (isDev || wantTokens) {
+        if (isDev) {
           responseBody.access_token = authData.access_token;
           responseBody.refresh_token = authData.refresh_token || '';
         }
@@ -490,19 +402,23 @@ export default {
       
       // ===== GET PROFILE (full) =====
       if (action === 'get_profile' && request.method === 'GET') {
-        // Always require a verified token; if user_id is provided it must match.
-        const requestedUserId = url.searchParams.get('user_id');
-        const token = getAccessTokenFromRequest();
-        if (!token) return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-
-        const user = await verifyToken(env, token);
-        if (!user) return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-
-        if (requestedUserId && requestedUserId !== user.id) {
-          return jsonResponse({ success: false, error: 'Forbidden' }, 403, origin);
+        let userId = url.searchParams.get('user_id');
+        
+        if (!userId) {
+          const cookieHeader = request.headers.get('Cookie') || '';
+          const cookies = parseCookies(cookieHeader);
+          const token = cookies['sb_access'];
+          
+          if (!token) {
+            return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+          }
+          
+          const user = await verifyToken(env, token);
+          if (!user) {
+            return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+          }
+          userId = user.id;
         }
-
-        const userId = user.id;
         
         const profile = await fetchProfile(env, userId);
         if (!profile) {
@@ -532,159 +448,20 @@ export default {
           return jsonResponse({ success: false, error: 'Missing user_id' }, 400, origin);
         }
         
-        // Fetch full profile to ensure we get all data
-        const profile = await fetchProfile(env, userId, 'id,role');
+        const profile = await fetchProfile(env, userId, 'role');
         if (!profile) {
           return jsonResponse({ success: false, error: 'User not found' }, 404, origin);
         }
         
-        // Return role even if it's null/undefined (the client will handle it)
-        return jsonResponse({ success: true, role: profile.role || null }, 200, origin);
-      }
-
-      // ===== UPDATE PROFILE (name/username/email/password) =====
-      // Used by Teachers/profile.html
-      if (action === 'update_profile' && request.method === 'POST') {
-        // CSRF check (same approach as update_profile_avatar)
-        const referer = request.headers.get('Referer') || '';
-        const okOrigin = (() => {
-          if (!origin) return false;
-          if (ALLOWED_ORIGINS.includes(origin)) return true;
-          try {
-            const u = new URL(origin);
-            const host = u.hostname.toLowerCase();
-            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
-          } catch {
-            return false;
-          }
-        })();
-
-        const okReferer = (() => {
-          if (!referer) return false;
-          if (ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'))) return true;
-          try {
-            const u = new URL(referer);
-            const host = u.hostname.toLowerCase();
-            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
-          } catch {
-            return false;
-          }
-        })();
-
-        if (!okOrigin && !okReferer) {
-          return jsonResponse({ success: false, error: 'CSRF check failed' }, 403, origin);
-        }
-
-        const token = getAccessTokenFromRequest();
-        if (!token) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-
-        const user = await verifyToken(env, token);
-        if (!user) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-
-        const body = await request.json();
-        const name = typeof body?.name === 'string' ? body.name.trim() : '';
-        const username = typeof body?.username === 'string' ? body.username.trim() : '';
-        const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
-        const password = typeof body?.password === 'string' ? body.password : '';
-
-        // Optional: restrict to teacher/admin accounts
-        try {
-          const prof = await fetchProfile(env, user.id, 'role');
-          const role = String(prof?.role || '').toLowerCase();
-          if (role && !['teacher', 'admin'].includes(role)) {
-            return jsonResponse({ success: false, error: 'Unauthorized' }, 403, origin);
-          }
-        } catch {
-          // If role check fails, continue (token already verified)
-        }
-
-        // Update profiles fields
-        const updateFields = {};
-        if (name) updateFields.name = name;
-        if (username) updateFields.username = username;
-
-        // Email format validation if provided
-        if (email) {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-          if (!emailRegex.test(email)) {
-            return jsonResponse({ success: false, error: 'Invalid email address' }, 400, origin);
-          }
-          updateFields.email = email;
-        }
-
-        // Apply profile update first
-        if (Object.keys(updateFields).length > 0) {
-          await updateProfile(env, user.id, updateFields);
-        }
-
-        // Update auth email/password via admin API if requested
-        if (email) {
-          const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': env.SUPABASE_SERVICE_KEY,
-              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-            },
-            body: JSON.stringify({ email }),
-          });
-          if (!updateResp.ok) {
-            return jsonResponse({ success: false, error: 'Email update failed' }, 400, origin);
-          }
-        }
-
-        if (password) {
-          if (String(password).length < 6) {
-            return jsonResponse({ success: false, error: 'Password too short' }, 400, origin);
-          }
-          const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': env.SUPABASE_SERVICE_KEY,
-              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-            },
-            body: JSON.stringify({ password }),
-          });
-          if (!updateResp.ok) {
-            return jsonResponse({ success: false, error: 'Password update failed' }, 400, origin);
-          }
-        }
-
-        return jsonResponse({ success: true }, 200, origin);
+        return jsonResponse({ success: true, role: profile.role }, 200, origin);
       }
       
       // ===== UPDATE AVATAR =====
       if (action === 'update_profile_avatar' && request.method === 'POST') {
         // CSRF check
         const referer = request.headers.get('Referer') || '';
-        const okOrigin = (() => {
-          if (!origin) return false;
-          if (ALLOWED_ORIGINS.includes(origin)) return true;
-          try {
-            const u = new URL(origin);
-            const host = u.hostname.toLowerCase();
-            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
-          } catch {
-            return false;
-          }
-        })();
-
-        const okReferer = (() => {
-          if (!referer) return false;
-          if (ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'))) return true;
-          try {
-            const u = new URL(referer);
-            const host = u.hostname.toLowerCase();
-            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
-          } catch {
-            return false;
-          }
-        })();
+        const okOrigin = ALLOWED_ORIGINS.includes(origin);
+        const okReferer = ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'));
         
         if (!okOrigin && !okReferer) {
           return jsonResponse({ success: false, error: 'CSRF check failed' }, 403, origin);
@@ -758,51 +535,8 @@ export default {
             makeCookie('sb_access', data.access_token, cookieOpts),
             makeCookie('sb_refresh', data.refresh_token || refreshToken, cookieOpts),
           ];
-
-          const responseBody = { success: true };
-          if (isDev || wantTokens) {
-            responseBody.access_token = data.access_token;
-            responseBody.refresh_token = data.refresh_token || refreshToken;
-          }
-
-          return jsonResponse(responseBody, 200, origin, newCookies);
-        } catch {
-          return jsonResponse({ success: false, message: 'Refresh failed' }, 200, origin);
-        }
-      }
-
-      // ===== REFRESH (token mode) =====
-      if (action === 'refresh' && request.method === 'POST') {
-        const refreshToken = await getRefreshTokenFromRequestBodyOrHeader();
-        if (!refreshToken) {
-          return jsonResponse({ success: false, message: 'No refresh token' }, 200, origin);
-        }
-
-        try {
-          const resp = await fetch(`${env.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': env.SUPABASE_ANON_KEY,
-            },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-
-          const data = await resp.json();
-          if (!resp.ok || !data.access_token) {
-            return jsonResponse({ success: false, message: 'Refresh failed' }, 200, origin);
-          }
-
-          const newCookies = [
-            makeCookie('sb_access', data.access_token, cookieOpts),
-            makeCookie('sb_refresh', data.refresh_token || refreshToken, cookieOpts),
-          ];
-
-          return jsonResponse({
-            success: true,
-            access_token: data.access_token,
-            refresh_token: data.refresh_token || refreshToken,
-          }, 200, origin, newCookies);
+          
+          return jsonResponse({ success: true }, 200, origin, newCookies);
         } catch {
           return jsonResponse({ success: false, message: 'Refresh failed' }, 200, origin);
         }
@@ -939,62 +673,6 @@ export default {
         
         // Update profiles table
         await updateProfile(env, user.id, { email: emailNorm });
-        
-        return jsonResponse({ success: true }, 200, origin);
-      }
-      
-      // ===== SET STUDENT PASSWORD (Easy Login flow) =====
-      // This is called after verify_student succeeds to set a temporary password
-      // so the student can be logged in via username/password flow
-      if (action === 'set_student_password' && request.method === 'POST') {
-        const body = await request.json();
-        const { student_id, password } = body;
-        
-        if (!student_id || !password) {
-          return jsonResponse({ success: false, error: 'Missing student_id or password' }, 400, origin);
-        }
-        
-        if (String(password).length < 6) {
-          return jsonResponse({ success: false, error: 'Password too short' }, 400, origin);
-        }
-        
-        // Verify the student exists and is a student role
-        const profileResp = await fetch(
-          `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(student_id)}&select=id,role,approved`,
-          {
-            headers: {
-              'apikey': env.SUPABASE_SERVICE_KEY,
-              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-            },
-          }
-        );
-        
-        const profiles = await profileResp.json();
-        if (!profiles || !profiles[0]) {
-          return jsonResponse({ success: false, error: 'Student not found' }, 404, origin);
-        }
-        
-        const profile = profiles[0];
-        if (profile.role !== 'student') {
-          return jsonResponse({ success: false, error: 'Not a student account' }, 403, origin);
-        }
-        
-        // Update password using admin API
-        const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${student_id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': env.SUPABASE_SERVICE_KEY,
-            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-          },
-          body: JSON.stringify({ password }),
-        });
-        
-        if (!updateResp.ok) {
-          const errText = await updateResp.text();
-          console.error('[set_student_password] Update failed:', updateResp.status, errText);
-          return jsonResponse({ success: false, error: 'Password update failed' }, 400, origin);
-        }
         
         return jsonResponse({ success: true }, 200, origin);
       }

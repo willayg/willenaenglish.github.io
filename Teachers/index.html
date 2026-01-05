@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
+    <!-- Netlify redirect removed - now using Cloudflare -->
     <script>
       (function() {
-        const host = location.hostname;
-        // Only GitHub Pages should bounce to Netlify.
-        // Custom domains and staging should use Cloudflare Workers.
-        if (host === 'willenaenglish.github.io') {
-          const targetHost = 'https://willenaenglish.netlify.app';
-          const path = location.pathname + location.search + location.hash;
-          window.location.replace(targetHost + path);
-        }
+        const targetHost = 'https://willenaenglish.netlify.app';
+        if (location.hostname === 'willenaenglish.netlify.app') return;
+        const path = location.pathname + location.search + location.hash;
+        window.location.replace(targetHost + path);
       })();
     </script>
     <script src="/js/api-config.js"></script>
@@ -345,51 +342,21 @@
     <script>
       // Access control: redirect if not logged in or not approved
       (async function() {
-        const redirect = encodeURIComponent(location.pathname + location.search);
-
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-        async function whoamiOnce() {
-          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-          const json = await WillenaAPI.safeParseJSON(res);
-          if (res.ok && json && json.success && json.user_id) return json;
-          return null;
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          const redirect = encodeURIComponent(location.pathname + location.search);
+          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+          return;
         }
-
-        async function refreshOnce() {
-          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`);
-          const json = await WillenaAPI.safeParseJSON(res);
-          return !!(json && json.success);
-        }
-
         try {
-          // 1) whoami (cookie-based). Retry briefly to avoid cookie timing races after login.
-          const delays = [0, 150, 300, 600, 1000];
-          let who = null;
-          for (const ms of delays) {
-            if (ms) await sleep(ms);
-            who = await whoamiOnce();
-            if (who) break;
-            // Best-effort refresh to rotate/restore access cookie
-            await refreshOnce().catch(() => false);
-          }
-
-          if (!who || !who.success || !who.user_id) {
-            window.location.href = `/Teachers/login.html?redirect=${redirect}`;
-            return;
-          }
-
-          try { localStorage.setItem('userId', who.user_id); } catch {}
-
-          // 2) get_profile for approval + role
-          const profRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_profile&_=${Date.now()}`);
-          const prof = await profRes.json().catch(() => null);
-          const role = String((prof && prof.role) || '').toLowerCase();
-          if (!prof || !prof.success || prof.approved !== true || !['teacher','admin'].includes(role)) {
+          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+          const result = await res.json();
+          if (!result.success || result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
             return;
           }
         } catch (e) {
+          const redirect = encodeURIComponent(location.pathname + location.search);
           window.location.href = `/Teachers/login.html?redirect=${redirect}`;
         }
       })();
