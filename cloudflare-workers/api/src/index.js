@@ -6,11 +6,11 @@
  * Strategy:
  * - ASR (Whisper): Uses @cf/openai/whisper-large-v3-turbo (Workers AI) — no region block
  * - Grammar Correction:
- *   1. Try OpenAI GPT (env.OPENAI_API) if available
- *   2. If OpenAI returns 403 "unsupported region", fall back to Netlify function
+ *   1. Try OpenAI GPT directly (env.OPENAI_API)
+ *   2. If OpenAI returns 403 "unsupported region", fall back to external Vercel proxy
  *   3. Otherwise use Llama fallback
  *
- * This allows GPT-quality feedback on staging without geo restrictions.
+ * This allows GPT-quality feedback without geo restrictions.
  */
 
 const CORS_HEADERS = {
@@ -19,6 +19,9 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
+
+// Vercel proxy endpoint (handles OpenAI calls from US region)
+const VERCEL_PROXY_URL = 'https://willenaenglish-github-io.vercel.app/api/analyze-sentence';
 
 export default {
   async fetch(request, env) {
@@ -131,14 +134,14 @@ async function correctGrammar(transcript, env, language) {
     try {
       return await correctGrammarOpenAI(transcript, openaiKey, language);
     } catch (e) {
-      // If OpenAI blocks due to region, fall back to Netlify (US egress)
+      // If OpenAI blocks due to region, fall back to Vercel proxy (US egress)
       if (e?.code === 'UNSUPPORTED_REGION') {
-        console.warn('[analyze-sentence] OpenAI blocked by region, falling back to Netlify');
+        console.warn('[analyze-sentence] OpenAI blocked by region, falling back to Vercel proxy');
         try {
-          return await correctGrammarViaNetlify(transcript, language);
+          return await correctGrammarViaProxy(transcript, language);
         } catch (fallbackErr) {
-          console.error('[analyze-sentence] Netlify fallback failed:', fallbackErr?.message);
-          // If Netlify also fails, use Llama as last resort
+          console.error('[analyze-sentence] Vercel proxy failed:', fallbackErr?.message);
+          // If proxy also fails, use Llama as last resort
           return await correctGrammarWorkersAI(transcript, env.AI, language);
         }
       }
@@ -220,21 +223,21 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
   }
 }
 
-async function correctGrammarViaNetlify(transcript, language) {
-  // Call the Netlify function for grammar correction (US egress, OpenAI won't block)
-  const url = 'https://willenaenglish.netlify.app/.netlify/functions/analyze-sentence';
-
-  const formData = new FormData();
-  formData.append('transcript', transcript);
-  formData.append('language', language);
-
-  const response = await fetch(url, {
+async function correctGrammarViaProxy(transcript, language) {
+  // Call external Vercel proxy function (US region, OpenAI won't block)
+  const response = await fetch(VERCEL_PROXY_URL, {
     method: 'POST',
-    body: formData,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      transcript,
+      language,
+    }),
   });
 
   if (!response.ok) {
-    throw new Error(`Netlify fallback failed: ${response.status}`);
+    throw new Error(`Vercel proxy failed: ${response.status}`);
   }
 
   const data = await response.json();
