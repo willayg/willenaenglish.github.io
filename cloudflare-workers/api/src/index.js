@@ -3,11 +3,14 @@
  *
  * Route this worker to: https://staging.willenaenglish.com/api/analyze-sentence
  *
- * Uses Cloudflare Workers AI for:
- * - ASR: @cf/openai/whisper-large-v3-turbo
- * - Correction: @cf/meta/llama-3.1-8b-instruct
+ * Strategy:
+ * - ASR (Whisper): Uses @cf/openai/whisper-large-v3-turbo (Workers AI) — no region block
+ * - Grammar Correction:
+ *   1. Try OpenAI GPT (env.OPENAI_API) if available
+ *   2. If OpenAI returns 403 "unsupported region", fall back to Netlify function
+ *   3. Otherwise use Llama fallback
  *
- * This avoids OpenAI geo restrictions seen on staging.
+ * This allows GPT-quality feedback on staging without geo restrictions.
  */
 
 const CORS_HEADERS = {
@@ -73,7 +76,7 @@ export default {
         );
       }
 
-      const correction = await correctGrammarWorkersAI(transcript, env.AI, language);
+      const correction = await correctGrammar(transcript, env, language);
 
       return new Response(
         JSON.stringify({
@@ -118,6 +121,127 @@ async function transcribeAudioWorkersAI(audioFile, aiBinding, language) {
     err.code = 'AI_TRANSCRIBE';
     throw err;
   }
+}
+
+async function correctGrammar(transcript, env, language) {
+  const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+
+  // Try OpenAI first if configured (best quality feedback)
+  if (openaiKey) {
+    try {
+      return await correctGrammarOpenAI(transcript, openaiKey, language);
+    } catch (e) {
+      // If OpenAI blocks due to region, fall back to Netlify (US egress)
+      if (e?.code === 'UNSUPPORTED_REGION') {
+        console.warn('[analyze-sentence] OpenAI blocked by region, falling back to Netlify');
+        try {
+          return await correctGrammarViaNetlify(transcript, language);
+        } catch (fallbackErr) {
+          console.error('[analyze-sentence] Netlify fallback failed:', fallbackErr?.message);
+          // If Netlify also fails, use Llama as last resort
+          return await correctGrammarWorkersAI(transcript, env.AI, language);
+        }
+      }
+      // If it's a different OpenAI error, try Llama instead of failing
+      console.warn('[analyze-sentence] OpenAI error, using Llama fallback:', e?.message);
+      return await correctGrammarWorkersAI(transcript, env.AI, language);
+    }
+  }
+
+  // No OpenAI configured, use Llama
+  return await correctGrammarWorkersAI(transcript, env.AI, language);
+}
+
+async function correctGrammarOpenAI(transcript, apiKey, language) {
+  const systemPrompt = `You are a friendly English teacher for elementary students (ages 6-12).
+Your job is to correct the student's spoken English sentence.
+
+RULES:
+1. ONLY fix grammar, tense, plurals, articles, and missing words
+2. Do NOT add new ideas or information
+3. Do NOT change the meaning of the sentence
+4. Keep corrections simple and age-appropriate
+5. If the sentence is already correct, return it unchanged
+
+OUTPUT FORMAT (strict JSON only, no markdown):
+{
+  "corrected_sentence": "the corrected sentence here",
+  "teacher_note": "brief, encouraging explanation of what was fixed (1-2 sentences max)"
+}
+
+If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Student said: "${transcript}"` },
+      ],
+      temperature: 0.3,
+      max_tokens: 200,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    if (response.status === 403) {
+      let errorDetail = 'Forbidden';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetail = errorJson.error?.message || errorDetail;
+      } catch {}
+
+      if (/Country, region, or territory not supported/i.test(errorDetail)) {
+        const err = new Error(`OpenAI blocked by region: ${errorDetail}`);
+        err.status = 403;
+        err.code = 'UNSUPPORTED_REGION';
+        throw err;
+      }
+    }
+
+    throw new Error(`OpenAI error: ${response.status} - ${errorText.substring(0, 180)}`);
+  }
+
+  const data = await response.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+
+  try {
+    return JSON.parse(content);
+  } catch {
+    return { corrected_sentence: transcript, teacher_note: 'Good job!' };
+  }
+}
+
+async function correctGrammarViaNetlify(transcript, language) {
+  // Call the Netlify function for grammar correction (US egress, OpenAI won't block)
+  const url = 'https://willenaenglish.netlify.app/.netlify/functions/analyze-sentence';
+
+  const formData = new FormData();
+  formData.append('transcript', transcript);
+  formData.append('language', language);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Netlify fallback failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return {
+    corrected_sentence: data.corrected_sentence || transcript,
+    teacher_note: data.teacher_note || 'Good job!',
+  };
 }
 
 async function correctGrammarWorkersAI(transcript, aiBinding, language) {
