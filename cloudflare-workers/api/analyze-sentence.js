@@ -411,7 +411,7 @@ async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'gpt-5-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Student said: "${transcript}"` }
@@ -424,8 +424,8 @@ async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[GPT] Error response:', errorText);
-    throw new Error(`Grammar correction failed: ${response.status}`);
+    console.error('[GPT] Error response:', response.status, errorText);
+    throw new Error(`Grammar correction failed: ${response.status} - ${errorText.substring(0, 100)}`);
   }
 
   const data = await response.json();
