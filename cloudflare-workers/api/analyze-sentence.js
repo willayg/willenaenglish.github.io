@@ -73,9 +73,8 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 1: Transcribe with Whisper
     // ─────────────────────────────────────────────
-    const transcript = useOpenAI
-      ? await transcribeAudioOpenAI(audioFile, openaiKey)
-      : await transcribeAudioWorkersAI(audioFile, env.AI);
+    // Always use Workers AI for transcription to avoid OpenAI regional blocks
+    const transcript = await transcribeAudioWorkersAI(audioFile, env.AI);
     
     if (!transcript || transcript.trim() === '') {
       return new Response(
@@ -93,9 +92,22 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 2: Correct Grammar with GPT
     // ─────────────────────────────────────────────
-    const correction = useOpenAI
-      ? await correctGrammarOpenAI(transcript, openaiKey, language)
-      : await correctGrammarWorkersAI(transcript, env.AI, language);
+    let correction;
+    if (useOpenAI) {
+      try {
+        correction = await correctGrammarOpenAI(transcript, openaiKey, language);
+      } catch (err) {
+        // If OpenAI is blocked by region, fall back to Workers AI
+        if (err.code === 'UNSUPPORTED_REGION' || err.code === 'FORBIDDEN') {
+          console.warn('[analyze-sentence] OpenAI blocked, falling back to Workers AI for grammar correction');
+          correction = await correctGrammarWorkersAI(transcript, env.AI, language);
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      correction = await correctGrammarWorkersAI(transcript, env.AI, language);
+    }
 
     console.log(`[analyze-sentence] Correction:`, correction);
 
@@ -429,6 +441,23 @@ async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[GPT] Error response:', response.status, errorText);
+    
+    // Check if this is a regional block
+    if (response.status === 403) {
+      let errorDetail = 'Access denied';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetail = errorJson.error?.message || errorDetail;
+      } catch {}
+      
+      if (/Country, region, or territory not supported/i.test(errorDetail)) {
+        const err = new Error(`OpenAI blocked in this region`);
+        err.status = 403;
+        err.code = 'UNSUPPORTED_REGION';
+        throw err;
+      }
+    }
+    
     throw new Error(`Grammar correction failed: ${response.status} - ${errorText.substring(0, 100)}`);
   }
 
