@@ -97,10 +97,15 @@ export async function onRequestPost(context) {
       try {
         correction = await correctGrammarOpenAI(transcript, openaiKey, language);
       } catch (err) {
-        // If OpenAI is blocked by region, fall back to Workers AI
+        // If OpenAI is blocked by region, try Netlify proxy (US-based)
         if (err.code === 'UNSUPPORTED_REGION' || err.code === 'FORBIDDEN') {
-          console.warn('[analyze-sentence] OpenAI blocked, falling back to Workers AI for grammar correction');
-          correction = await correctGrammarWorkersAI(transcript, env.AI, language);
+          console.warn('[analyze-sentence] OpenAI blocked, trying Netlify proxy');
+          try {
+            correction = await correctGrammarNetlifyProxy(transcript, openaiKey, language, env.NETLIFY_URL);
+          } catch (proxyErr) {
+            console.warn('[analyze-sentence] Netlify proxy also failed, falling back to Workers AI');
+            correction = await correctGrammarWorkersAI(transcript, env.AI, language);
+          }
         } else {
           throw err;
         }
@@ -474,4 +479,29 @@ async function correctGrammarOpenAI(transcript, apiKey, language = 'en') {
     console.error('[GPT] JSON parse error:', e, 'Content:', content);
     return { corrected_sentence: transcript, teacher_note: 'Good try!' };
   }
+}
+
+async function correctGrammarNetlifyProxy(transcript, apiKey, language = 'en', netlifyUrl) {
+  const proxyUrl = netlifyUrl || 'https://willenaenglish.com';
+  
+  const response = await fetch(`${proxyUrl}/.netlify/functions/openai-grammar-proxy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      transcript,
+      language,
+      apiKey
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[Netlify Proxy] Error response:', response.status, errorText);
+    throw new Error(`Netlify proxy failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data;
 }
