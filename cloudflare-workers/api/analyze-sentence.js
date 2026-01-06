@@ -31,15 +31,19 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Validate AI Configuration
     // ─────────────────────────────────────────────
-    const hasWorkersAI = !!env.AI;
     const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
-    if (!hasWorkersAI && !openaiKey) {
+    const hasWorkersAI = !!env.AI;
+    const useOpenAI = !!openaiKey;
+    
+    if (!useOpenAI && !hasWorkersAI) {
       console.error('[analyze-sentence] No AI configured (expected env.AI binding or OPENAI_API/OPENAI_KEY/OPENAI_API_KEY)');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
         { status: 500, headers: corsHeaders }
       );
     }
+    
+    console.log(`[analyze-sentence] Using ${useOpenAI ? 'OpenAI (gpt-4o-mini)' : 'Workers AI (Llama)'} for grammar correction`);
 
     // ─────────────────────────────────────────────
     // Parse Form Data
@@ -69,9 +73,9 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 1: Transcribe with Whisper
     // ─────────────────────────────────────────────
-    const transcript = hasWorkersAI
-      ? await transcribeAudioWorkersAI(audioFile, env.AI)
-      : await transcribeAudioOpenAI(audioFile, openaiKey);
+    const transcript = useOpenAI
+      ? await transcribeAudioOpenAI(audioFile, openaiKey)
+      : await transcribeAudioWorkersAI(audioFile, env.AI);
     
     if (!transcript || transcript.trim() === '') {
       return new Response(
@@ -89,9 +93,9 @@ export async function onRequestPost(context) {
     // ─────────────────────────────────────────────
     // Step 2: Correct Grammar with GPT
     // ─────────────────────────────────────────────
-    const correction = hasWorkersAI
-      ? await correctGrammarWorkersAI(transcript, env.AI, language)
-      : await correctGrammarOpenAI(transcript, openaiKey, language);
+    const correction = useOpenAI
+      ? await correctGrammarOpenAI(transcript, openaiKey, language)
+      : await correctGrammarWorkersAI(transcript, env.AI, language);
 
     console.log(`[analyze-sentence] Correction:`, correction);
 
