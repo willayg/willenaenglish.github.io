@@ -333,56 +333,6 @@
       } catch (e) {
         console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
       }
- { _crossOriginCookiesFailed = true; },
-    
-    // Redirect helpers (for GitHub Pages)
-    shouldRedirectImmediately,
-    redirectToNetlifyIfNeeded,
-    getNetlifyUrl(pathname) {
-      return NETLIFY_BASE + (pathname || window.location.pathname);
-    },
-    shouldShowCookieWarning() {
-      return isCrossOrigin && isKnownCookieBlockingBrowser;
-    },
-    
-    // Environment helper
-    getEnvironment() {
-      if (isLocalhost) return 'local';
-      if (isGitHubPages) return 'github-pages';
-      return 'production';
-    },
-
-    // Token storage helpers - fallback for when cookies fail
-    // Store access/refresh tokens in localStorage (used when cookies are blocked/not persisting)
-    setLocalTokens(accessToken, refreshToken) {
-      try {
-        if (accessToken) localStorage.setItem('sb_access_token', accessToken);
-        if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken);
-        console.log('[WillenaAPI] Tokens stored in localStorage');
-      } catch (e) {
-        console.warn('[WillenaAPI] Failed to store tokens in localStorage:', e);
-      }
-    },
-    
-    // Get stored access token from localStorage
-    getLocalAccessToken() {
-      try {
-        return localStorage.getItem('sb_access_token') || null;
-      } catch (e) {
-        console.warn('[WillenaAPI] Failed to read access token from localStorage:', e);
-        return null;
-      }
-    },
-    
-    // Clear stored tokens from localStorage
-    clearLocalTokens() {
-      try {
-        localStorage.removeItem('sb_access_token');
-        localStorage.removeItem('sb_refresh_token');
-        console.log('[WillenaAPI] Tokens cleared from localStorage');
-      } catch (e) {
-        console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
-      }
     },
 
     // Legacy compatibility stubs (CF migration disabled)
