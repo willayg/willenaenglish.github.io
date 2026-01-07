@@ -2,10 +2,15 @@
  * API Configuration - Simple and Deterministic
  * VERSION: 2025-12-16 HOTFIX
  * 
- * All environments:
- *   → Use /api/<name> routes.
- *   → Default base origin: https://api.willenaenglish.com
- *   → Cookies should be HTTP-only; do not store tokens client-side.
+ * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, students.willenaenglish.com, localhost):
+ *   → Relative paths only: /.netlify/functions/<name>
+ *   → Same-origin requests, cookies work automatically
+ *   → NO absolute URLs, NO proxy domains, NO api-cf.*
+ *
+ * GITHUB PAGES (willenaenglish.github.io):
+ *   → Absolute URL to students domain: https://students.willenaenglish.com/.netlify/functions/<name>
+ *   → Cross-origin, requires credentials: 'include'
+ *   → Known cookie-blocking browsers redirected to students domain
  */
 
 (function() {
@@ -15,19 +20,31 @@
   // CONSTANTS
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
-  const API_GATEWAY_ORIGIN = 'https://api.willenaenglish.com';
+  const NETLIFY_BASE = 'https://students.willenaenglish.com';
   // Cloudflare worker endpoints (branch testing)
-  // IMPORTANT:
-  // - Cookie-based auth must be same-site.
-  // - Routing auth calls to `workers.dev` or an API gateway origin causes cross-site cookies + CORS failures.
-  // Keep workers.dev routing ONLY for local/api-gateway testing.
+  const USE_CF_WORKERS = true; // enable CF routing on this branch
   const CF_FUNCTIONS = {
     supabase_auth: 'https://supabase-auth.willena.workers.dev',
     verify_student: 'https://verify-student.willena.workers.dev',
   };
 
-  // Note: some endpoints may not be migrated yet. The API gateway will return 404/503
-  // for unknown/unbound functions.
+  // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
+  // even when CF_ROLLOUT_PERCENT is 100
+  const NETLIFY_ONLY_FUNCTIONS = [
+    'verify_student',
+    'set_student_password',
+    'debug_student_data',
+    'openai_proxy',
+    'pixabay',
+    'google_vision_proxy',
+    'supabase_proxy',
+    'supabase_proxy_fixed',
+    'teacher_admin',
+    'test_admin',
+    'eleven_labs_proxy',
+    'translate',
+    'define_word',
+  ];
 
   // ============================================================
   // ENVIRONMENT DETECTION (minimal)
@@ -37,6 +54,7 @@
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   
   // Production = everything except GitHub Pages
+  // On production, we ONLY use relative paths
   const isProduction = !isGitHubPages;
   
   // Cross-origin only applies to GitHub Pages
@@ -45,26 +63,16 @@
   // ============================================================
   // API BASE - Simple rule
   // ============================================================
-  // Use api.willenaenglish.com as the default backend origin.
-  // - localhost: relative (so local proxy/dev can work)
-  // - api.willenaenglish.com itself: relative
-  // - everything else: absolute api gateway
-  const isApiGatewayHost = currentHost === 'api.willenaenglish.com';
-
-  // For first-party app hosts (e.g., staging/prod custom domains), keep API calls SAME-ORIGIN.
-  // This avoids:
-  // - Cross-site cookie blocking (SameSite/3p cookie rules)
-  // - CORS failures when using `credentials: 'include'`
-  const isFirstPartyAppHost = isProduction && !isApiGatewayHost;
-
-  // - localhost: relative (so local proxy/dev can work)
-  // - api.willenaenglish.com: relative
-  // - first-party app hosts (staging/prod): relative (same-origin)
-  // - GitHub Pages: use gateway origin (cross-origin)
-  const API_BASE = (isLocalhost || isApiGatewayHost || isFirstPartyAppHost) ? '' : API_GATEWAY_ORIGIN;
-
-  // Workers.dev routing is only safe when you are not relying on same-site cookies.
-  const USE_CF_WORKERS = (isLocalhost || isApiGatewayHost);
+  // First-party domains (staging, prod, etc.): relative paths for same-origin auth with CF workers
+  // GitHub Pages only: absolute URL (cross-origin)
+  const isFirstPartyDomain = currentHost.endsWith('.willenaenglish.com') || 
+                              currentHost === 'willenaenglish.com' || 
+                              currentHost === 'localhost' || 
+                              currentHost === '127.0.0.1';
+  
+  // Use relative paths on all first-party domains (enables same-origin CF worker auth)
+  // Only GitHub Pages needs absolute URLs
+  const API_BASE = isFirstPartyDomain ? '' : NETLIFY_BASE;
 
   // ============================================================
   // COOKIE BLOCKING DETECTION (for GitHub Pages redirect)
@@ -85,8 +93,9 @@
   // ============================================================
 
   /**
-   * Get the full URL for an API function.
-   * Returns /api/<name> (optionally prefixed by API_BASE).
+   * Get the full URL for a Netlify function.
+   * Production: returns relative path (e.g., /.netlify/functions/auth)
+   * GitHub Pages: returns absolute Netlify URL
    */
   function getApiUrl(functionPath) {
     // If already a full URL, return as-is
@@ -101,20 +110,14 @@
       return CF_FUNCTIONS[fn] + search;
     }
 
-    // Normalize legacy paths (/.netlify/functions/<name>) to /api/<name>
-    if (functionPath.startsWith('/.netlify/functions/')) {
-      functionPath = '/api/' + functionPath.slice('/.netlify/functions/'.length);
-    }
-
-    // Ensure path starts with /api/
-    if (!functionPath.startsWith('/api/')) {
+    // Ensure path starts with /.netlify/functions/
+    if (!functionPath.startsWith('/.netlify/functions/')) {
       if (functionPath.startsWith('/')) {
-        functionPath = '/api' + functionPath;
+        functionPath = '/.netlify/functions' + functionPath;
       } else {
-        functionPath = '/api/' + functionPath;
+        functionPath = '/.netlify/functions/' + functionPath;
       }
     }
-
     return API_BASE + functionPath;
   }
 
@@ -122,7 +125,7 @@
    * Extract function name from path
    */
   function extractFunctionName(functionPath) {
-    const match = functionPath.match(/(?:\/?api\/|\/?\.?netlify\/functions\/)([^\/?]+)/);
+    const match = functionPath.match(/\/?\.?netlify\/functions\/([^\/?]+)/);
     return match ? match[1] : '';
   }
 
@@ -187,6 +190,28 @@
       }
     }
     
+    // Add Authorization header from localStorage if token exists and no auth header already present
+    // This is a fallback for when cookies fail (e.g., on some browsers/incognito modes)
+    // IMPORTANT: Only send Authorization if we have a valid non-empty token to avoid interfering with cookie-based auth
+    const existingAuth = (fetchOptions.headers && (fetchOptions.headers.Authorization || fetchOptions.headers.authorization));
+    if (!existingAuth) {
+      let localToken = null;
+      try {
+        localToken = localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        // localStorage not available or blocked
+      }
+      
+      // Only add Authorization header if we have a valid token that looks like a JWT (contains dots)
+      if (localToken && localToken.includes('.') && localToken.length > 50) {
+        fetchOptions.headers = {
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localToken}`
+        };
+        console.log('[WillenaAPI] Added Authorization header from localStorage (token length:', localToken.length + ')');
+      }
+    }
+
     
     // Debug logging for POST requests
     if (options.method === 'POST' || options.body) {
@@ -203,6 +228,22 @@
   }
 
   // ============================================================
+  // GITHUB PAGES HELPERS (redirect to Netlify if cookies blocked)
+  // ============================================================
+  
+  const shouldRedirectImmediately = () => isCrossOrigin && isKnownCookieBlockingBrowser;
+
+  function redirectToNetlifyIfNeeded(pathname) {
+    if (isCrossOrigin && isThirdPartyCookiesBlocked()) {
+      const targetUrl = NETLIFY_BASE + (pathname || window.location.pathname + window.location.search);
+      console.log('[WillenaAPI] Redirecting to Netlify for cookie support:', targetUrl);
+      window.location.replace(targetUrl);
+      return true;
+    }
+    return false;
+  }
+
+  // ============================================================
   // EXPORT
   // ============================================================
   window.WillenaAPI = {
@@ -213,6 +254,7 @@
     
     // Environment info (read-only)
     BASE_URL: API_BASE,
+    FUNCTIONS_URL: NETLIFY_BASE,
     isGitHubPages,
     isLocalhost,
     isProduction,
@@ -223,6 +265,12 @@
     isKnownCookieBlockingBrowser,
     markCookiesFailed() { _crossOriginCookiesFailed = true; },
     
+    // Redirect helpers (for GitHub Pages)
+    shouldRedirectImmediately,
+    redirectToNetlifyIfNeeded,
+    getNetlifyUrl(pathname) {
+      return NETLIFY_BASE + (pathname || window.location.pathname);
+    },
     shouldShowCookieWarning() {
       return isCrossOrigin && isKnownCookieBlockingBrowser;
     },
@@ -232,6 +280,89 @@
       if (isLocalhost) return 'local';
       if (isGitHubPages) return 'github-pages';
       return 'production';
+    },
+
+    // Token storage helpers - fallback for when cookies fail
+    // Store access/refresh tokens in localStorage (used when cookies are blocked/not persisting)
+    setLocalTokens(accessToken, refreshToken) {
+      try {
+        if (accessToken) localStorage.setItem('sb_access_token', accessToken);
+        if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken);
+        console.log('[WillenaAPI] Tokens stored in localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to store tokens in localStorage:', e);
+      }
+    },
+    
+    // Get stored access token from localStorage
+    getLocalAccessToken() {
+      try {
+        return localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to read access token from localStorage:', e);
+        return null;
+      }
+    },
+    
+    // Clear stored tokens from localStorage
+    clearLocalTokens() {
+      try {
+        localStorage.removeItem('sb_access_token');
+        localStorage.removeItem('sb_refresh_token');
+        console.log('[WillenaAPI] Tokens cleared from localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
+      }
+ { _crossOriginCookiesFailed = true; },
+    
+    // Redirect helpers (for GitHub Pages)
+    shouldRedirectImmediately,
+    redirectToNetlifyIfNeeded,
+    getNetlifyUrl(pathname) {
+      return NETLIFY_BASE + (pathname || window.location.pathname);
+    },
+    shouldShowCookieWarning() {
+      return isCrossOrigin && isKnownCookieBlockingBrowser;
+    },
+    
+    // Environment helper
+    getEnvironment() {
+      if (isLocalhost) return 'local';
+      if (isGitHubPages) return 'github-pages';
+      return 'production';
+    },
+
+    // Token storage helpers - fallback for when cookies fail
+    // Store access/refresh tokens in localStorage (used when cookies are blocked/not persisting)
+    setLocalTokens(accessToken, refreshToken) {
+      try {
+        if (accessToken) localStorage.setItem('sb_access_token', accessToken);
+        if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken);
+        console.log('[WillenaAPI] Tokens stored in localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to store tokens in localStorage:', e);
+      }
+    },
+    
+    // Get stored access token from localStorage
+    getLocalAccessToken() {
+      try {
+        return localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to read access token from localStorage:', e);
+        return null;
+      }
+    },
+    
+    // Clear stored tokens from localStorage
+    clearLocalTokens() {
+      try {
+        localStorage.removeItem('sb_access_token');
+        localStorage.removeItem('sb_refresh_token');
+        console.log('[WillenaAPI] Tokens cleared from localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
+      }
     },
 
     // Legacy compatibility stubs (CF migration disabled)
