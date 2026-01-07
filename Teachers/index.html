@@ -333,16 +333,21 @@
     <script>
       // Access control: redirect if not logged in or not approved
       (async function() {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          const redirect = encodeURIComponent(location.pathname + location.search);
-          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
-          return;
-        }
         try {
-          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-          const result = await res.json();
-          if (!result.success || result.approved !== true) {
+          // Prefer cookie-based auth; do not depend on localStorage for access control.
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=whoami&_=${Date.now()}`);
+          const who = await whoRes.json().catch(() => ({}));
+          if (!who || !who.success || !who.user_id) {
+            const redirect = encodeURIComponent(location.pathname + location.search);
+            window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+            return;
+          }
+
+          try { localStorage.setItem('userId', who.user_id); } catch (e) {}
+
+          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(who.user_id)}&_=${Date.now()}`);
+          const result = await res.json().catch(() => ({}));
+          if (!result || !result.success || result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
             return;
           }
@@ -452,35 +457,39 @@
         const usernameSpan = document.getElementById('username-display');
         let username = '';
         let name = '';
-        let userId = localStorage.getItem('userId');
-        if (userId) {
-          try {
-            const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-            const result = await res.json();
-            if (result.success) {
+        let userId = '';
+        try {
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=whoami&_=${Date.now()}`);
+          const who = await whoRes.json().catch(() => ({}));
+          if (who && who.success && who.user_id) {
+            userId = who.user_id;
+            try { localStorage.setItem('userId', userId); } catch (e) {}
+          } else {
+            userId = localStorage.getItem('userId') || '';
+          }
+
+          if (userId) {
+            const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}&_=${Date.now()}`);
+            const result = await res.json().catch(() => ({}));
+            if (result && result.success) {
               if (result.username) {
                 username = result.username;
-                localStorage.setItem('username', username);
+                try { localStorage.setItem('username', username); } catch (e) {}
               }
               if (result.name) {
                 name = result.name;
-                localStorage.setItem('name', name);
+                try { localStorage.setItem('name', name); } catch (e) {}
               }
               if (result.email) {
-                localStorage.setItem('userEmail', result.email);
+                try { localStorage.setItem('userEmail', result.email); } catch (e) {}
               }
               if (result.role) {
-                localStorage.setItem('userRole', result.role);
-              }
-              // Always set userId in case it changes
-              if (result.id) {
-                userId = result.id;
-                localStorage.setItem('userId', userId);
+                try { localStorage.setItem('userRole', result.role); } catch (e) {}
               }
             }
-          } catch (e) {
-            // fallback below
           }
+        } catch (e) {
+          // fallback below
         }
         if (!username) {
           // fallback to localStorage/email
