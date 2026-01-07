@@ -17,7 +17,10 @@
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
   const API_GATEWAY_ORIGIN = 'https://api.willenaenglish.com';
   // Cloudflare worker endpoints (branch testing)
-  const USE_CF_WORKERS = true; // enable CF routing on this branch
+  // IMPORTANT:
+  // - Cookie-based auth must be same-site.
+  // - Routing auth calls to `workers.dev` or an API gateway origin causes cross-site cookies + CORS failures.
+  // Keep workers.dev routing ONLY for local/api-gateway testing.
   const CF_FUNCTIONS = {
     supabase_auth: 'https://supabase-auth.willena.workers.dev',
     verify_student: 'https://verify-student.willena.workers.dev',
@@ -34,7 +37,6 @@
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
   
   // Production = everything except GitHub Pages
-  // On production, we ONLY use relative paths
   const isProduction = !isGitHubPages;
   
   // Cross-origin only applies to GitHub Pages
@@ -48,7 +50,21 @@
   // - api.willenaenglish.com itself: relative
   // - everything else: absolute api gateway
   const isApiGatewayHost = currentHost === 'api.willenaenglish.com';
-  const API_BASE = (isLocalhost || isApiGatewayHost) ? '' : API_GATEWAY_ORIGIN;
+
+  // For first-party app hosts (e.g., staging/prod custom domains), keep API calls SAME-ORIGIN.
+  // This avoids:
+  // - Cross-site cookie blocking (SameSite/3p cookie rules)
+  // - CORS failures when using `credentials: 'include'`
+  const isFirstPartyAppHost = isProduction && !isApiGatewayHost;
+
+  // - localhost: relative (so local proxy/dev can work)
+  // - api.willenaenglish.com: relative
+  // - first-party app hosts (staging/prod): relative (same-origin)
+  // - GitHub Pages: use gateway origin (cross-origin)
+  const API_BASE = (isLocalhost || isApiGatewayHost || isFirstPartyAppHost) ? '' : API_GATEWAY_ORIGIN;
+
+  // Workers.dev routing is only safe when you are not relying on same-site cookies.
+  const USE_CF_WORKERS = (isLocalhost || isApiGatewayHost);
 
   // ============================================================
   // COOKIE BLOCKING DETECTION (for GitHub Pages redirect)
