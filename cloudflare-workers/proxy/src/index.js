@@ -3,13 +3,11 @@
  *
  * This is the main API gateway at api.willenaenglish.com that routes requests to:
  * 1. Cloudflare Workers (for migrated functions) via Service Bindings
- * 2. Netlify (fallback for functions without bindings or not migrated)
  *
  * Features:
  * - Smart routing based on function name and available bindings
  * - Set-Cookie domain rewrite to .willenaenglish.com for cross-subdomain auth
  * - CORS handling with credentials support
- * - Graceful fallback to Netlify if CF worker binding unavailable
  *
  * Migration status (CF Workers):
  * - supabase_auth: ✓
@@ -18,8 +16,6 @@
  * - progress_summary: ✓
  * - get_audio_urls: ✓
  */
-
-const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
 
 // Map function names to their service binding names
@@ -42,7 +38,6 @@ const PREFER_CF_WORKER = {
 };
 
 const ALLOWED_ORIGINS = new Set([
-  'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
   'https://willenaenglish.com',
@@ -52,18 +47,22 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 /**
- * Extract function name from /.netlify/functions/<name> path
+ * Extract function name from /api/<name> or legacy /.netlify/functions/<name> path
  */
 function extractFunctionName(pathname) {
-  const match = pathname.match(/^\/?\.?netlify\/functions\/([^/?]+)/);
+  const match = pathname.match(/^\/(?:api|\.?netlify\/functions)\/([^/?]+)/);
   return match ? match[1] : null;
+}
+
+function stripFunctionPrefix(pathname) {
+  return pathname.replace(/^\/(?:api|\.?netlify\/functions)\/[^/?]+\/?/, '/') || '/';
 }
 
 /**
  * Get CORS headers for origin
  */
 function corsHeaders(origin) {
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://willenaenglish.netlify.app';
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://willenaenglish.com';
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Credentials': 'true',
@@ -78,8 +77,8 @@ function corsHeaders(origin) {
 async function routeToCFWorker(request, binding, functionName, url) {
   // Build the URL - keep query string, but the path becomes just / or /remaining
   const workerUrl = new URL(request.url);
-  // Remove /.netlify/functions/<name> prefix, keep anything after
-  const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
+  // Remove /api/<name> or legacy /.netlify/functions/<name> prefix, keep anything after
+  const remainingPath = stripFunctionPrefix(url.pathname);
   workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;
   
   console.log(`[proxy] Routing ${functionName} to CF Worker: ${workerUrl.pathname}${workerUrl.search}`);
@@ -92,28 +91,6 @@ async function routeToCFWorker(request, binding, functionName, url) {
   });
   
   return binding.fetch(workerRequest);
-}
-
-/**
- * Route request to Netlify backend
- */
-async function routeToNetlify(request, url) {
-  const forwardPath = url.pathname + url.search;
-  const backendUrl = NETLIFY_BASE + forwardPath;
-  
-  console.log(`[proxy] Routing to Netlify: ${backendUrl}`);
-  
-  const reqHeaders = new Headers(request.headers);
-  reqHeaders.delete('cf-connecting-ip');
-  
-  const backendReq = new Request(backendUrl, {
-    method: request.method,
-    headers: reqHeaders,
-    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-    redirect: 'follow'
-  });
-  
-  return fetch(backendReq);
 }
 
 /**
@@ -206,13 +183,17 @@ async function handleRequest(request, env) {
         // Use CF Worker via service binding
         response = await routeToCFWorker(request, binding, functionName, url);
       } else {
-        // Fallback to Netlify (binding not available)
-        console.log(`[proxy] No binding for ${functionName}, falling back to Netlify`);
-        response = await routeToNetlify(request, url);
+        console.log(`[proxy] No binding for ${functionName}`);
+        return new Response(
+          JSON.stringify({ success: false, error: `Service binding unavailable for ${functionName}` }),
+          { status: 503, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }
+        );
       }
     } else {
-      // Not a migrated function or no preference, use Netlify
-      response = await routeToNetlify(request, url);
+      return new Response(
+        JSON.stringify({ success: false, error: `Unknown API function: ${functionName || '(none)'}` }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }
+      );
     }
     
     // Rewrite cookies and apply CORS

@@ -86,12 +86,6 @@ export async function onRequestPost(context) {
         ? await transcribeAudioWorkersAI(audioFile, env.AI)
         : await transcribeAudioOpenAI(audioFile, openaiKey);
     } catch (err) {
-      // Cloudflare egress can land in an OpenAI-unsupported region (e.g., KR -> HKG colo).
-      // In that case, fall back to the Netlify function (US egress) so staging keeps working.
-      if (err?.code === 'UNSUPPORTED_REGION') {
-        const fallbackData = await analyzeSentenceViaNetlify(audioFile, language);
-        return new Response(JSON.stringify(fallbackData), { status: 200, headers: corsHeaders });
-      }
       throw err;
     }
     
@@ -163,38 +157,6 @@ export async function onRequestOptions() {
       'Access-Control-Max-Age': '86400'
     }
   });
-}
-
-async function analyzeSentenceViaNetlify(audioFile, language = 'en') {
-  // Netlify function uses US egress, so OpenAI region restrictions typically don't apply.
-  // This is only used as a fallback when OpenAI blocks Cloudflare egress.
-  const url = 'https://willenaenglish.netlify.app/.netlify/functions/analyze-sentence';
-
-  const formData = new FormData();
-  formData.append('audio', audioFile, audioFile.name || 'audio.webm');
-  formData.append('language', language);
-
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData,
-  });
-
-  const text = await response.text();
-  if (!response.ok) {
-    const err = new Error(`Netlify fallback failed: ${response.status} - ${text.substring(0, 180)}`);
-    err.status = 502;
-    err.code = 'NETLIFY_FALLBACK_FAILED';
-    throw err;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    const err = new Error('Netlify fallback returned non-JSON response');
-    err.status = 502;
-    err.code = 'NETLIFY_FALLBACK_BAD_RESPONSE';
-    throw err;
-  }
 }
 
 // ─────────────────────────────────────────────

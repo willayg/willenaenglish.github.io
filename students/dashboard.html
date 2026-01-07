@@ -12,23 +12,9 @@
   <link rel="stylesheet" href="/students/theme.css" />
   <base href="/students/">
   <meta name="robots" content="noindex" />
-  <!-- API config for Cloudflare -->
+  <!-- API config -->
   <script src="/js/api-config.js"></script>
   <script>
-    // EMERGENCY FIX: Redirect to students domain for all authenticated pages
-    // Cross-origin cookies don't work - MUST be on students.willenaenglish.com
-    (function() {
-      const host = window.location.hostname;
-      // Allow localhost/127.0.0.1 for local dev; only students.willenaenglish.com works in production
-      const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
-      if (!isLocalDev && host !== 'students.willenaenglish.com') {
-        const netlifyUrl = 'https://students.willenaenglish.com' + window.location.pathname + window.location.search;
-        console.log('[Dashboard] Redirecting to Netlify for auth:', netlifyUrl);
-        window.location.replace(netlifyUrl);
-        return;
-      }
-    });
-
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
       try {
@@ -66,7 +52,7 @@
           return; // stop further checks to avoid lots of 401s
         }
 
-        const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+        const who = await WillenaAPI.fetch(`/api/supabase_auth?action=whoami&_=${Date.now()}`);
         console.log('[Dashboard] Auth check response:', who.status, who.statusText);
         const w = await who.json();
         console.log('[Dashboard] Auth data:', w);
@@ -217,7 +203,7 @@
     document.getElementById('logoutBig')?.addEventListener('click', async () => {
   try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
   try { WillenaAPI.clearLocalTokens?.(); } catch {} // Clear localStorage tokens
-  await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' });
+  await WillenaAPI.fetch('/api/supabase_auth?action=logout', { method:'POST' });
   location.href = '/students/login.html';
     });
   </script>
@@ -346,7 +332,7 @@
         if(n1.length < 6) return showError(t('Password must be at least 6 characters.'));
         if(n1 !== n2) return showError(t('Passwords do not match'));
         try {
-          const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=change_password', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ current_password:c, new_password:n1 }) });
+          const r = await WillenaAPI.fetch('/api/supabase_auth?action=change_password', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ current_password:c, new_password:n1 }) });
           const j = await r.json().catch(()=>({}));
           if(!j.success){
             if(j.error_code==='bad_current') return showError(t('Incorrect current password'));
@@ -407,7 +393,7 @@
         if(e1.toLowerCase() !== e2.toLowerCase()) return showError(t('Emails do not match'));
         if(!emailRegex.test(e1)) return showError(t('Invalid email address'));
         try {
-          const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=change_email', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ current_password:cp, new_email:e1 }) });
+          const r = await WillenaAPI.fetch('/api/supabase_auth?action=change_email', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ current_password:cp, new_email:e1 }) });
           const j = await r.json().catch(()=>({}));
           if(!j.success){
             if(j.error_code==='bad_current') return showError(t('Incorrect current password'));
@@ -431,14 +417,14 @@
         // First try get_profile_name (returns class)
         let cls = null;
         try {
-          const r1 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
+          const r1 = await WillenaAPI.fetch('/api/supabase_auth?action=get_profile_name');
           const j1 = await r1.json().catch(() => ({}));
           if (j1 && j1.class) cls = j1.class;
         } catch {}
         // Fallback to get_profile
         if (!cls) {
           try {
-            const r2 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile');
+            const r2 = await WillenaAPI.fetch('/api/supabase_auth?action=get_profile');
             const j2 = await r2.json().catch(() => ({}));
             if (j2 && j2.class) cls = j2.class;
           } catch {}
@@ -667,19 +653,19 @@
         // Determine current student user_id first so we can match progress rows
         let currentUserId = null;
         try {
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/api/supabase_auth?action=whoami&_=${Date.now()}`);
           const whoJson = await whoRes.json().catch(()=>({}));
           if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
         } catch {}
         // Fallback to get_profile_name for user id if needed (returns nothing? then skip)
         if (!currentUserId) {
           try {
-            const profRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile');
+            const profRes = await WillenaAPI.fetch('/api/supabase_auth?action=get_profile');
             const profJson = await profRes.json().catch(()=>({}));
             if (profRes.ok && profJson.success && profJson.id) currentUserId = profJson.id;
           } catch {}
         }
-        const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
+        const resp = await WillenaAPI.fetch(`/api/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
         const text = await resp.text();
         let data = {};
         try { data = text ? JSON.parse(text) : {}; } catch (e) {
@@ -695,7 +681,7 @@
           (data.assignments || []).map(async (assignment) => {
             try {
               const progressResp = await WillenaAPI.fetch(
-                `/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}&_=${Date.now()}`
+                `/api/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}&_=${Date.now()}`
               );
               const progressData = await progressResp.json();
               
@@ -1029,7 +1015,7 @@
           // Use bypass_cache=1 when force refreshing to get fresh data from server
           const bypassParam = forceRefresh ? '&bypass_cache=1' : '';
           // Include a user-scoped param so CDN/cache layers don't serve another student's class leaderboard
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}${bypassParam}&u=${encodeURIComponent(userId)}`;
+          const url = `/api/progress_summary?section=leaderboard_stars_class&timeframe=${encodeURIComponent(timeframe)}${bypassParam}&u=${encodeURIComponent(userId)}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
           starsLbCache.set(memKey, data);
@@ -1131,7 +1117,7 @@
           spinner?.classList.remove('hidden');
           // Use bypass_cache=1 when force refreshing to get fresh data from server
           const bypassParam = forceRefresh ? '&bypass_cache=1' : '';
-          const url = `/.netlify/functions/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
+          const url = `/api/progress_summary?section=leaderboard_stars_global&timeframe=${encodeURIComponent(timeframe)}${bypassParam}`;
           const r = await WillenaAPI.fetch(url);
           const data = await r.json();
           globalLbCache.set(timeframe, data);

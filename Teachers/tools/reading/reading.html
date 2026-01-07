@@ -53,7 +53,7 @@
                 btn.textContent = 'Logout';
                 Object.assign(btn.style, { position:'fixed', top:'12px', right:'12px', zIndex:99999, background:'#e74c3c', color:'#fff', border:'none', padding:'8px 12px', borderRadius:'6px', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' });
                 btn.onclick = doLogout;
-                document.addEventListener('DOMContentLoaded', function(){ if (location.hostname !== 'willenaenglish.netlify.app') document.body.appendChild(btn); });
+                document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(btn); });
             })();
 
     import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';

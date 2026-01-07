@@ -1,14 +1,13 @@
 /**
  * Cloudflare Worker: supabase-auth
  * 
- * Drop-in replacement for Netlify function supabase_auth.js
+ * Drop-in replacement for the legacy supabase_auth function
  * Uses direct REST calls to Supabase (no SDK required)
  */
 
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',

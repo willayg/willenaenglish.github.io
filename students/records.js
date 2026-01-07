@@ -1,5 +1,5 @@
 // Reusable client-side tracker for student activity and per-word attempts
-// Works with Netlify function: /.netlify/functions/log_word_attempt
+// Works with the activity logging endpoint
 import { FN } from './scripts/api-base.js';
 import { scheduleRefresh } from './scripts/points-client.js';
 // Optional shared points helpers (non-breaking):
@@ -50,7 +50,7 @@ console.debug('[records] BATCH_MODE =', BATCH_MODE, 'flush delay =', BATCH_FLUSH
 const __pendingSessionStarts = new Map(); // sessionId -> { payload, tries }
 // Throttle: avoid hammering the auth refresh endpoint if user id not yet resolved.
 // Previously, flushPendingAttempts() retried every ~250ms, causing a rapid
-// stream of GET /.netlify/functions/supabase_auth?action=refresh requests.
+// stream of GET /api/supabase_auth?action=refresh requests.
 // We cap refresh attempts to at most once every THROTTLE_MS while unauthenticated.
 const __AUTH_REFRESH_THROTTLE_MS = 5000; // adjust (e.g. 3000) if you want faster retries
 let __lastAuthRefresh = 0;

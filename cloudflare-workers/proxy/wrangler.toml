@@ -23,7 +23,3 @@ service = "progress-summary"
 [[services]]
 binding = "GET_AUDIO_URLS"
 service = "get-audio-urls"
-
-# Fallback for non-CF functions
-[vars]
-NETLIFY_BASE = "https://willenaenglish.netlify.app"

@@ -4,21 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="Student Login">Student Login</title>
-  <!-- EMERGENCY FIX: Redirect to Netlify for login -->
-  <script>
-    (function() {
-      const host = window.location.hostname;
-      // Allow localhost/127.0.0.1 for local dev; only students.willenaenglish.com works in production
-      const isLocalDev = host === 'localhost' || host === '127.0.0.1' || host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
-      if (!isLocalDev && host !== 'students.willenaenglish.com') {
-        const netlifyUrl = 'https://students.willenaenglish.com' + window.location.pathname + window.location.search;
-        console.log('[Login] Redirecting to Netlify for auth:', netlifyUrl);
-        window.location.replace(netlifyUrl);
-        return;
-      }
-    })();
-  </script>
-  <!-- API config for GitHub Pages + Netlify Functions -->
+  <!-- API config -->
   <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/students/profile.css" />
   <style>
@@ -279,7 +265,7 @@
   </div>
 
   <script type="module">
-  // Netlify redirect removed - using Cloudflare exclusively now
+  // Login stays on the current host
 
   // Set Help button text based on system language
   window.addEventListener('DOMContentLoaded', () => {
@@ -299,13 +285,13 @@
 
     async function loginWithUsernamePassword(username, password){
       // Step 1: resolve username -> email via profiles
-      const u = WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth') + '?action=get_email_by_username&username=' + encodeURIComponent(username.trim());
+      const u = WillenaAPI.getApiUrl('/api/supabase_auth') + '?action=get_email_by_username&username=' + encodeURIComponent(username.trim());
       const r1 = await WillenaAPI.fetch(u);
       const d1 = await r1.json();
       if (!d1.success) throw new Error(d1.error || 'Username not found');
 
       // Step 2: call login with email/password to reuse existing flow (sets cookies)
-      const r2 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+      const r2 = await WillenaAPI.fetch('/api/supabase_auth?action=login', {
         method:'POST', headers:{'content-type':'application/json'},
         body: JSON.stringify({ email: d1.email, password })
       });
@@ -323,7 +309,7 @@
 
     // Direct email login helper (used by the Help flow after password reset)
     async function loginWithEmailPassword(email, password){
-      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+      const r = await WillenaAPI.fetch('/api/supabase_auth?action=login', {
         method:'POST', headers:{'content-type':'application/json'},
         body: JSON.stringify({ email, password })
       });
@@ -359,7 +345,7 @@
         // Verify cookies actually work by calling whoami immediately
         // This catches Chrome Incognito and other cases where cookies are silently blocked
         try {
-          const whoami = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
+          const whoami = await WillenaAPI.fetch('/api/supabase_auth?action=whoami&_=' + Date.now());
           const whoData = await whoami.json();
           if (!whoData.success) {
             console.warn('[Login] Cookie verification failed - user may need to enable cookies');
@@ -392,7 +378,7 @@
 
     // Guest login flow
     async function startGuestSession(name){
-      const r = await WillenaAPI.fetch('/.netlify/functions/guest_session', {
+      const r = await WillenaAPI.fetch('/api/guest_session', {
         method:'POST', headers:{'content-type':'application/json'},
         body: JSON.stringify({ name })
       });
@@ -663,7 +649,7 @@
       modalActions.innerHTML = '';
 
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/verify_student', {
+        const res = await WillenaAPI.fetch('/api/verify_student', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
@@ -723,7 +709,7 @@
 
       try {
         const tempPassword = generateTemporaryPassword();
-        const res = await WillenaAPI.fetch('/.netlify/functions/set_student_password', {
+        const res = await WillenaAPI.fetch('/api/set_student_password', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
