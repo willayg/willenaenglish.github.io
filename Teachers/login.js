@@ -15,8 +15,21 @@ const IS_NETLIFY = (typeof window !== 'undefined' && window.location)
   ? /netlify\.app$/i.test(window.location.hostname)
   : false;
 
-// Keep auth calls same-origin so staging stays on its own host.
-const FUNCTIONS_BASE = '';
+// Use relative paths on first-party domains (same-origin for cookie auth)
+// Only GitHub Pages needs cross-origin absolute URLs
+const getApiBase = () => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  // First-party domains: use relative paths (same-origin)
+  if (host.endsWith('.willenaenglish.com') || host === 'willenaenglish.com' || host === 'localhost' || host === '127.0.0.1') {
+    return '';
+  }
+  // GitHub Pages: cross-origin to students domain
+  if (host === 'willenaenglish.github.io') {
+    return 'https://students.willenaenglish.com';
+  }
+  return '';
+};
+const FUNCTIONS_BASE = getApiBase();
 
 // Use the correct API base so auth works on all domains
 const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;

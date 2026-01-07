@@ -21,12 +21,15 @@
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
   const NETLIFY_BASE = 'https://students.willenaenglish.com';
-  // Cloudflare worker endpoints (branch testing)
-  const USE_CF_WORKERS = true; // enable CF routing on this branch
+  // Cloudflare worker endpoints - ONLY use on localhost for testing
+  // On production/staging, use relative paths to same-origin /api/* routes
   const CF_FUNCTIONS = {
     supabase_auth: 'https://supabase-auth.willena.workers.dev',
     verify_student: 'https://verify-student.willena.workers.dev',
   };
+  // Only enable workers.dev routing on localhost (for dev testing)
+  // Production/staging use relative /api/* paths (same-origin, no CORS issues)
+  const USE_CF_WORKERS = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
 
   // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
   // even when CF_ROLLOUT_PERCENT is 100

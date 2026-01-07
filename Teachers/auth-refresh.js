@@ -1,6 +1,19 @@
-// Keep refresh calls same-origin so staging stays on its own host.
-// (api-config / edge routing should take care of mapping the backend correctly.)
-const REFRESH_ENDPOINT = `/.netlify/functions/supabase_auth?action=refresh`;
+// Use relative paths on first-party domains (same-origin for cookie auth)
+// Only GitHub Pages needs cross-origin absolute URLs
+const getApiBase = () => {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  // First-party domains: use relative paths (same-origin)
+  if (host.endsWith('.willenaenglish.com') || host === 'willenaenglish.com' || host === 'localhost' || host === '127.0.0.1') {
+    return '';
+  }
+  // GitHub Pages: cross-origin to students domain
+  if (host === 'willenaenglish.github.io') {
+    return 'https://students.willenaenglish.com';
+  }
+  return '';
+};
+const API_BASE = getApiBase();
+const REFRESH_ENDPOINT = `${API_BASE}/.netlify/functions/supabase_auth?action=refresh`;
 const REFRESH_INTERVAL = 1000 * 60 * 40; // 40 minutes
 
 let refreshTimer = null;
