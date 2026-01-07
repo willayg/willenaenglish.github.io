@@ -15,15 +15,8 @@ const IS_NETLIFY = (typeof window !== 'undefined' && window.location)
   ? /netlify\.app$/i.test(window.location.hostname)
   : false;
 
-// Detect custom domain and route to Netlify
-const getApiBase = () => {
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
-    return 'https://willenaenglish.netlify.app';
-  }
-  return '';
-};
-const FUNCTIONS_BASE = getApiBase();
+// Keep auth calls same-origin so staging stays on its own host.
+const FUNCTIONS_BASE = '';
 
 // Use the correct API base so auth works on all domains
 const AUTH_URL = `${FUNCTIONS_BASE}/.netlify/functions/supabase_auth`;

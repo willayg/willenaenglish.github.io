@@ -1,13 +1,6 @@
-// Detect custom domain and route to Netlify
-const getApiBase = () => {
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
-    return 'https://willenaenglish.netlify.app';
-  }
-  return '';
-};
-const API_BASE = getApiBase();
-const REFRESH_ENDPOINT = `${API_BASE}/.netlify/functions/supabase_auth?action=refresh`;
+// Keep refresh calls same-origin so staging stays on its own host.
+// (api-config / edge routing should take care of mapping the backend correctly.)
+const REFRESH_ENDPOINT = `/.netlify/functions/supabase_auth?action=refresh`;
 const REFRESH_INTERVAL = 1000 * 60 * 40; // 40 minutes
 
 let refreshTimer = null;
