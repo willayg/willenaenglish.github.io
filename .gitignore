@@ -13,7 +13,3 @@ Teachers/tools/worksheet-builder-vanilla/References/
 
 # Cloudflare Workers local dev secrets
 .dev.vars
-
-# Wrangler build artifacts
-.wrangler/
-

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="Student Login">Student Login</title>
-  <!-- API config -->
+  <!-- API config for GitHub Pages + Netlify Functions -->
   <script src="/js/api-config.js"></script>
   <link rel="stylesheet" href="/students/profile.css" />
   <style>
@@ -247,8 +247,6 @@
       </div>
       <div class="row">
   <button id="loginBtn" data-i18n="Log in">Log in</button>
-  <!-- Guest Login hidden - not currently in use -->
-  <!-- <button id="guestBtn" type="button" style="background:#fff;color:#19777e;border-color:#e6eaef" data-i18n="Guest Login">Guest Login</button> -->
       </div>
       <div id="msg" class="error" role="alert" aria-live="polite" style="display:none"></div>
     </section>
@@ -265,7 +263,16 @@
   </div>
 
   <script type="module">
-  // Login stays on the current host
+  // Redirect to Netlify-hosted login if third-party cookies are KNOWN to be blocked
+  // This ensures Safari, Samsung Internet, and Brave users are redirected immediately
+  // Chrome Incognito users will be redirected after login attempt fails
+  if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
+    // Redirect to Netlify version where cookies will work (same-origin)
+    const next = new URLSearchParams(window.location.search).get('next') || '/students/profile.html';
+    const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next);
+    console.log('[Login] Redirecting to Netlify for cookie support (known blocker)');
+    window.location.replace(netlifyLoginUrl);
+  }
 
   // Set Help button text based on system language
   window.addEventListener('DOMContentLoaded', () => {
@@ -285,47 +292,29 @@
 
     async function loginWithUsernamePassword(username, password){
       // Step 1: resolve username -> email via profiles
-      const u = WillenaAPI.getApiUrl('/api/supabase_auth') + '?action=get_email_by_username&username=' + encodeURIComponent(username.trim());
+      const u = WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth') + '?action=get_email_by_username&username=' + encodeURIComponent(username.trim());
       const r1 = await WillenaAPI.fetch(u);
       const d1 = await r1.json();
       if (!d1.success) throw new Error(d1.error || 'Username not found');
 
       // Step 2: call login with email/password to reuse existing flow (sets cookies)
-      const loginPayload = { email: d1.email, password };
-      console.log('[Login] login payload:', loginPayload);
-      const r2 = await WillenaAPI.fetch('/api/supabase_auth?action=login', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(loginPayload)
+      const r2 = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ email: d1.email, password })
       });
       const d2 = await r2.json();
       if (!d2.success) throw new Error(d2.error || 'Login failed');
-      
-      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
-      if (d2.access_token && WillenaAPI.setLocalTokens) {
-        WillenaAPI.setLocalTokens(d2.access_token, d2.refresh_token);
-        console.log('[Login] Stored local tokens for dev mode');
-      }
-      
       return d2;
     }
 
     // Direct email login helper (used by the Help flow after password reset)
     async function loginWithEmailPassword(email, password){
-      const loginPayload = { email, password };
-      console.log('[Login] login payload (email flow):', loginPayload);
-      const r = await WillenaAPI.fetch('/api/supabase_auth?action=login', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(loginPayload)
+      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=login', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ email, password })
       });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || 'Login failed');
-      
-      // LOCAL DEV: store tokens in localStorage (cross-origin cookies don't work)
-      if (d.access_token && WillenaAPI.setLocalTokens) {
-        WillenaAPI.setLocalTokens(d.access_token, d.refresh_token);
-        console.log('[Login] Stored local tokens for dev mode');
-      }
-      
       return d;
     }
 
@@ -348,16 +337,27 @@
         
         // Verify cookies actually work by calling whoami immediately
         // This catches Chrome Incognito and other cases where cookies are silently blocked
-        try {
-          const whoami = await WillenaAPI.fetch('/api/supabase_auth?action=whoami&_=' + Date.now());
-          const whoData = await whoami.json();
-          if (!whoData.success) {
-            console.warn('[Login] Cookie verification failed - user may need to enable cookies');
-            // Show message but proceed anyway - let user know
-            show('Login succeeded but cookies may be blocked. Enable cookies for best experience.');
+        if (WillenaAPI.isCrossOrigin) {
+          try {
+            const whoami = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
+            const whoData = await whoami.json();
+            if (!whoData.success) {
+              // Cookies didn't work! Redirect to Netlify version
+              console.log('[Login] Cookies blocked - redirecting to Netlify');
+              WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
+              const next = getNextDest();
+              const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next) + '&retry=1';
+              location.replace(netlifyLoginUrl);
+              return;
+            }
+          } catch (e) {
+            console.warn('[Login] Cookie verification failed:', e);
+            // Redirect to Netlify as fallback
+            const next = getNextDest();
+            const netlifyLoginUrl = WillenaAPI.getNetlifyUrl('/students/login.html') + '?next=' + encodeURIComponent(next) + '&retry=1';
+            location.replace(netlifyLoginUrl);
+            return;
           }
-        } catch (e) {
-          console.warn('[Login] Cookie verification failed:', e);
         }
         
         // Signal other tabs/components that auth changed
@@ -380,37 +380,6 @@
     if (usernameInput) usernameInput.addEventListener('keydown', trySubmitLoginOnEnter);
     if (passwordInput) passwordInput.addEventListener('keydown', trySubmitLoginOnEnter);
 
-    // Guest login flow
-    async function startGuestSession(name){
-      const r = await WillenaAPI.fetch('/api/guest_session', {
-        method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ name })
-      });
-      const d = await r.json().catch(()=>null);
-      if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Guest login failed');
-      return d.guest;
-    }
-
-    // Guest button listener (only if element exists - may be hidden/removed)
-    const guestBtnEl = document.getElementById('guestBtn');
-    if (guestBtnEl) {
-      guestBtnEl.addEventListener('click', async () => {
-        show('');
-        try {
-          const prev = localStorage.getItem('guest_name') || '';
-          const name = prompt(t('Enter your name to play as a guest:'), prev);
-          if (!name) return; // cancelled
-          const guest = await startGuestSession(name);
-          localStorage.setItem('guest_name', guest.name);
-          // Also set the generic user_name used by the student header UI
-          try { localStorage.setItem('user_name', guest.name); } catch {}
-          try { localStorage.setItem('user_logged_in', String(Date.now())); window.dispatchEvent(new Event('auth:changed')); } catch {}
-          location.href = getNextDest();
-        } catch(e){
-          show(t(e.message) || t('Guest login failed'));
-        }
-      });
-    }
     document.addEventListener('studentlang:changed', () => { try { if(window.StudentLang) StudentLang.applyTranslations(); } catch {} });
 
     // =======================
@@ -653,7 +622,7 @@
       modalActions.innerHTML = '';
 
       try {
-        const res = await WillenaAPI.fetch('/api/verify_student', {
+        const res = await WillenaAPI.fetch('/.netlify/functions/verify_student', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
@@ -662,27 +631,7 @@
             auth_code: studentData.auth_code
           })
         });
-        
-        // BUG FIX: Safely parse JSON response, handle HTML error pages
-        // On slow networks or server errors, we may get HTML instead of JSON
-        let data;
-        const contentType = res.headers.get('content-type') || '';
-        const responseText = await res.text();
-        
-        if (contentType.includes('application/json') && responseText) {
-          try {
-            data = JSON.parse(responseText);
-          } catch (parseErr) {
-            console.error('[login] JSON parse failed:', parseErr, 'Response:', responseText.substring(0, 200));
-            showError(mt('errorOccurred'));
-            return;
-          }
-        } else {
-          // Server returned non-JSON (likely HTML error page)
-          console.error('[login] Non-JSON response:', res.status, responseText.substring(0, 200));
-          showError(mt('errorOccurred'));
-          return;
-        }
+        const data = await res.json();
 
         if (res.ok && data.success && data.student) {
           studentData.id = data.student.id;
@@ -715,7 +664,8 @@
 
       try {
         const tempPassword = generateTemporaryPassword();
-        const res = await WillenaAPI.fetch('/api/set_student_password', {
+        // Use supabase_auth worker with action=set_student_password (CF Workers migration)
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=set_student_password', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
@@ -723,23 +673,7 @@
             password: tempPassword
           })
         });
-        
-        // BUG FIX: Safely parse JSON response
-        let data;
-        const contentType = res.headers.get('content-type') || '';
-        const responseText = await res.text();
-        
-        if (contentType.includes('application/json') && responseText) {
-          try {
-            data = JSON.parse(responseText);
-          } catch (parseErr) {
-            console.error('[login] set_student_password JSON parse failed:', parseErr);
-            throw new Error('Server error during login');
-          }
-        } else {
-          console.error('[login] set_student_password non-JSON response:', res.status);
-          throw new Error('Server error during login');
-        }
+        const data = await res.json();
 
         if (!res.ok || !data || !data.success) {
           throw new Error((data && data.error) || 'Failed to set password');

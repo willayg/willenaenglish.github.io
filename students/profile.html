@@ -6,20 +6,39 @@
   <title data-i18n="Profile">Profile</title>
   <script src="/js/api-config.js"></script>
   <script>
+    // Redirect to Netlify-hosted version if third-party cookies are KNOWN to be blocked
+    // This handles Safari, Samsung Internet, and Brave which always block cross-origin cookies
+    (function() {
+      if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
+        const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
+        console.log('[Profile] Redirecting to Netlify for cookie support:', netlifyUrl);
+        window.location.replace(netlifyUrl);
+        return;
+      }
+    })();
+
     // Cookie-based identity fetch
     async function getProfileInfo() {
       try {
         // Get user id from cookie session
-        const who = await WillenaAPI.fetch('/api/supabase_auth?action=whoami');
+        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
         const whoRes = await who.json();
         if (!whoRes.success || !whoRes.user_id) {
+          // For cross-origin scenarios, if whoami fails, redirect to Netlify version
+          if (WillenaAPI.isCrossOrigin) {
+            console.log('[Profile] whoami failed in cross-origin mode - redirecting to Netlify');
+            WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
+            const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
+            location.replace(netlifyUrl);
+            return { error: 'Redirecting...' };
+          }
           // Redirect to login with return URL
           const next = encodeURIComponent(location.pathname + location.search + location.hash);
           location.replace('/students/login.html?next=' + next);
           return { error: 'Sign in required. No valid session.' };
         }
         // Get profile info
-        const res = await WillenaAPI.fetch('/api/supabase_auth?action=get_profile');
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile');
         const profile = await res.json();
         if (!profile.success) {
           return { error: 'Could not fetch profile information.' };

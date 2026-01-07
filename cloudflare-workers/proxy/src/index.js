@@ -123,44 +123,55 @@ async function routeToNetlify(request, url) {
  */
 function rewriteResponse(response, origin) {
   const newHeaders = new Headers();
-  
-  // Copy all headers except Set-Cookie (we'll rewrite those)
+
+  // Copy all headers except Set-Cookie (we'll rewrite those).
+  // NOTE: In Workers runtimes, `set-cookie` is not reliably visible via
+  // `for (const [k,v] of response.headers)`, so we must use getSetCookie().
   for (const [key, value] of response.headers) {
     if (key.toLowerCase() !== 'set-cookie') {
       newHeaders.append(key, value);
     }
   }
-  
-  // Collect and rewrite Set-Cookie headers
-  for (const [key, value] of response.headers) {
-    if (key.toLowerCase() === 'set-cookie') {
-      let cookie = value.trim();
-      
-      // Ensure Domain is the shared domain for cross-subdomain cookies
-      if (/;\s*Domain=/i.test(cookie)) {
-        cookie = cookie.replace(/;\s*Domain=[^;]+/i, `; Domain=${COOKIE_DOMAIN}`);
-      } else {
-        cookie += `; Domain=${COOKIE_DOMAIN}`;
-      }
-      
-      // Ensure SameSite=None and Secure for cross-origin requests
-      if (!/;\s*SameSite=/i.test(cookie)) cookie += '; SameSite=None';
-      if (!/;\s*Secure/i.test(cookie)) cookie += '; Secure';
-      
-      newHeaders.append('Set-Cookie', cookie);
+
+  // Collect Set-Cookie values safely
+  let setCookies = [];
+  try {
+    if (response.headers && typeof response.headers.getSetCookie === 'function') {
+      setCookies = response.headers.getSetCookie();
     }
+  } catch (e) {
+    setCookies = [];
   }
-  
+
+  // Rewrite cookies for cross-subdomain auth
+  for (const rawCookie of setCookies) {
+    let cookie = String(rawCookie || '').trim();
+    if (!cookie) continue;
+
+    // Ensure Domain is the shared domain for cross-subdomain cookies
+    if (/;\s*Domain=/i.test(cookie)) {
+      cookie = cookie.replace(/;\s*Domain=[^;]+/i, `; Domain=${COOKIE_DOMAIN}`);
+    } else {
+      cookie += `; Domain=${COOKIE_DOMAIN}`;
+    }
+
+    // Ensure SameSite=None and Secure so browsers accept cookies set via fetch
+    if (!/;\s*SameSite=/i.test(cookie)) cookie += '; SameSite=None';
+    if (!/;\s*Secure/i.test(cookie)) cookie += '; Secure';
+
+    newHeaders.append('Set-Cookie', cookie);
+  }
+
   // Apply CORS headers
   const cors = corsHeaders(origin);
   for (const [key, value] of Object.entries(cors)) {
     newHeaders.set(key, value);
   }
-  
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: newHeaders
+    headers: newHeaders,
   });
 }
 

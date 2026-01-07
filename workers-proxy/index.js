@@ -1,11 +1,11 @@
-// Worker proxy to forward legacy /.netlify/functions/* requests to the API gateway
+// Worker proxy to forward /.netlify/functions/* requests to Netlify
 // and to proxy static site requests to either a local static server (during
 // `wrangler dev`) or to GitHub Pages (deployed preview on workers.dev).
 addEventListener('fetch', event => {
   event.respondWith(handle(event.request));
 });
 
-const API_ORIGIN = 'https://api.willenaenglish.com';
+const NETLIFY_ORIGIN = 'https://willenaenglish.netlify.app';
 const GHPAGES_ORIGIN = 'https://willenaenglish.github.io';
 const LOCAL_STATIC = 'http://127.0.0.1:8000';
 
@@ -13,7 +13,7 @@ async function handle(request) {
   try {
     const url = new URL(request.url);
 
-    // Proxy legacy function requests to API origin
+    // Proxy Netlify function requests to Netlify origin
     if (url.pathname.startsWith('/.netlify/functions/')) {
       return proxyFunctionRequest(request, url);
     }
@@ -48,7 +48,7 @@ async function handle(request) {
 }
 
 async function proxyFunctionRequest(request, url) {
-  const target = API_ORIGIN + url.pathname + (url.search || '');
+  const target = NETLIFY_ORIGIN + url.pathname + (url.search || '');
   const headers = new Headers(request.headers);
   const init = {
     method: request.method,

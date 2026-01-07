@@ -249,9 +249,9 @@ import { initPointsClient } from './scripts/points-client.js';
     }
     function hideNotice(){ try { const el = document.getElementById('syncNotice'); if (el) el.remove(); } catch {} }
 
-  // If running on GitHub Pages, live sync may be limited (cookie/session constraints)
+  // If running on GitHub Pages, inform that live sync needs Netlify
   if (IS_GHPAGES) {
-      showNotice('Live score sync may be limited here. Showing cached points when available.', 'warn');
+      showNotice('Live score sync requires the Netlify site. Showing cached points only here.', 'warn');
     }
 
     // Try cached critical sections first (1 min TTL)
@@ -388,7 +388,7 @@ import { initPointsClient } from './scripts/points-client.js';
       showNotice('Trying to sync scores…', 'info');
       const endAt = Date.now() + 30000;
       const poll = async () => {
-        if (Date.now() > endAt) { showNotice('Live sync unavailable. Please ensure you are signed in.', 'warn'); return; }
+        if (Date.now() > endAt) { showNotice('Live sync unavailable. Use the Netlify site and ensure you are signed in.', 'warn'); return; }
         const ov2 = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: OVERVIEW_TIMEOUT, label: 'overview:poll' }));
         if (ov2 && typeof ov2.points === 'number') {
           paintOverview(ov2); setCache(`ov:${uid}`, ov2, TTL); hideNotice();

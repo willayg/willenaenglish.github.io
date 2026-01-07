@@ -1,13 +1,13 @@
 // profiles/profile.js - client script to load and render user progress
 (function(){
   const API = {
-    // endpoints powered by the API gateway
-      attempts: () => `/api/progress_summary?section=attempts`,
-      sessions: () => `/api/progress_summary?section=sessions`,
-    kpi:      () => `/api/progress_summary?section=kpi`,
-      modes:    () => `/api/progress_summary?section=modes`,
-    badges:   () => `/api/progress_summary?section=badges`,
-    overview: () => `/api/progress_summary?section=overview`
+    // endpoints powered by Netlify functions
+    attempts: () => `/.netlify/functions/progress_summary?section=attempts`,
+    sessions: () => `/.netlify/functions/progress_summary?section=sessions`,
+  kpi:      () => `/.netlify/functions/progress_summary?section=kpi`,
+    modes:    () => `/.netlify/functions/progress_summary?section=modes`,
+  badges:   () => `/.netlify/functions/progress_summary?section=badges`,
+  overview: () => `/.netlify/functions/progress_summary?section=overview`
   };
 
   async function fetchJSON(url){

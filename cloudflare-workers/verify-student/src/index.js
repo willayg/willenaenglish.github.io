@@ -8,6 +8,7 @@
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
+  'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
   'https://cf.willenaenglish.com',
