@@ -2,11 +2,14 @@
 function cors(event, extra = {}) {
   const ALLOWLIST = new Set([
     'https://www.willenaenglish.com',
-  'https://willenaenglish.com',
+    'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
-    // Cloudflare Pages deployment
+    // Cloudflare Pages deployments
     'https://cf.willenaenglish.com',
+    'https://staging.willenaenglish.com',
+    'https://students.willenaenglish.com',
+    'https://api.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
@@ -29,8 +32,11 @@ function makeCorsHeaders(event, extra = {}) {
     'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
-    // Cloudflare Pages deployment
+    // Cloudflare Pages deployments
     'https://cf.willenaenglish.com',
+    'https://staging.willenaenglish.com',
+    'https://students.willenaenglish.com',
+    'https://api.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
