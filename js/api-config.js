@@ -21,6 +21,8 @@
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
   const NETLIFY_BASE = 'https://students.willenaenglish.com';
+  // Cloudflare API Gateway - handles function routing for CF Pages deployments
+  const CF_API_GATEWAY = 'https://api.willenaenglish.com';
   // Cloudflare worker endpoints - ONLY use on localhost for testing
   // On production/staging, use relative paths to same-origin /api/* routes
   const CF_FUNCTIONS = {
@@ -55,6 +57,13 @@
   const currentHost = window.location.hostname;
   const isGitHubPages = currentHost === GITHUB_PAGES_HOST;
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
+  // Detect Cloudflare Pages deployments (staging, cf, etc.) - these need the API gateway
+  const isCloudflarePages = currentHost === 'staging.willenaenglish.com' || 
+                             currentHost === 'cf.willenaenglish.com' ||
+                             currentHost.endsWith('.pages.dev');
+  // Netlify = students.willenaenglish.com (has /.netlify/functions/ natively)
+  const isNetlify = currentHost === 'students.willenaenglish.com' || 
+                    currentHost === 'willenaenglish.netlify.app';
   
   // Production = everything except GitHub Pages
   // On production, we ONLY use relative paths
@@ -64,18 +73,26 @@
   const isCrossOrigin = isGitHubPages;
 
   // ============================================================
-  // API BASE - Simple rule
+  // API BASE - Environment-specific routing
   // ============================================================
-  // First-party domains (staging, prod, etc.): relative paths for same-origin auth with CF workers
-  // GitHub Pages only: absolute URL (cross-origin)
-  const isFirstPartyDomain = currentHost.endsWith('.willenaenglish.com') || 
-                              currentHost === 'willenaenglish.com' || 
-                              currentHost === 'localhost' || 
-                              currentHost === '127.0.0.1';
-  
-  // Use relative paths on all first-party domains (enables same-origin CF worker auth)
-  // Only GitHub Pages needs absolute URLs
-  const API_BASE = isFirstPartyDomain ? '' : NETLIFY_BASE;
+  // - Netlify (students.willenaenglish.com): relative paths (functions exist natively)
+  // - Cloudflare Pages (staging, cf): use API gateway (api.willenaenglish.com)
+  // - GitHub Pages: use Netlify absolute URL (cross-origin)
+  // - Localhost: relative paths (for local dev with netlify dev)
+  let API_BASE;
+  if (isNetlify || isLocalhost) {
+    // Netlify or localhost: relative paths work (functions exist locally)
+    API_BASE = '';
+  } else if (isCloudflarePages) {
+    // Cloudflare Pages: route to API gateway which proxies to CF Workers
+    API_BASE = CF_API_GATEWAY;
+  } else if (isGitHubPages) {
+    // GitHub Pages: cross-origin to Netlify
+    API_BASE = NETLIFY_BASE;
+  } else {
+    // Unknown domain (e.g., willenaenglish.com without subdomain): use Netlify
+    API_BASE = NETLIFY_BASE;
+  }
 
   // ============================================================
   // COOKIE BLOCKING DETECTION (for GitHub Pages redirect)

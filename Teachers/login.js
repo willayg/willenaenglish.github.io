@@ -15,19 +15,32 @@ const IS_NETLIFY = (typeof window !== 'undefined' && window.location)
   ? /netlify\.app$/i.test(window.location.hostname)
   : false;
 
-// Use relative paths on first-party domains (same-origin for cookie auth)
-// Only GitHub Pages needs cross-origin absolute URLs
+// Environment-specific API routing (must match js/api-config.js logic)
+// - Netlify (students.willenaenglish.com): relative paths (functions exist natively)  
+// - Cloudflare Pages (staging, cf): use API gateway (api.willenaenglish.com)
+// - GitHub Pages: cross-origin to Netlify
+// - Localhost: relative paths (for local dev)
 const getApiBase = () => {
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  // First-party domains: use relative paths (same-origin)
-  if (host.endsWith('.willenaenglish.com') || host === 'willenaenglish.com' || host === 'localhost' || host === '127.0.0.1') {
+  
+  // Netlify domain: has /.netlify/functions/ natively
+  if (host === 'students.willenaenglish.com' || host === 'willenaenglish.netlify.app') {
     return '';
   }
-  // GitHub Pages: cross-origin to students domain
+  // Localhost: relative paths work with netlify dev
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return '';
+  }
+  // Cloudflare Pages (staging, cf): route through API gateway
+  if (host === 'staging.willenaenglish.com' || host === 'cf.willenaenglish.com' || host.endsWith('.pages.dev')) {
+    return 'https://api.willenaenglish.com';
+  }
+  // GitHub Pages: cross-origin to Netlify
   if (host === 'willenaenglish.github.io') {
     return 'https://students.willenaenglish.com';
   }
-  return '';
+  // Unknown domain: fallback to Netlify
+  return 'https://students.willenaenglish.com';
 };
 const FUNCTIONS_BASE = getApiBase();
 

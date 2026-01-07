@@ -8,11 +8,16 @@
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
+  'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',
-  // Cloudflare Pages deployment
+  // Cloudflare Pages deployments
   'https://cf.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  // API gateway (for internal routing)
+  'https://api.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
   'http://127.0.0.1:8888',
