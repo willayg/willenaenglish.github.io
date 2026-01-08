@@ -324,9 +324,9 @@
         };
         let arrow = '';
         if (sortState.col === col.key) {
-          arrow = sortState.dir === 1 ? ' ?? : ' ??;
+          arrow = sortState.dir === 1 ? ' ▲' : ' ▼';
         } else {
-          arrow = ' <span style="color:#bbb;">??/span>';
+          arrow = ' <span style="color:#bbb;">▲</span>';
         }
         th.innerHTML = col.label + arrow;
       } else {
