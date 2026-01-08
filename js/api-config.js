@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2025-12-16 HOTFIX
+ * VERSION: 2026-01-08 CACHE_BUST
  * 
  * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, students.willenaenglish.com, localhost):
  *   → Relative paths only: /.netlify/functions/<name>
