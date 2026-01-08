@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Text Capture</title>
-  <script src="/js/api-config.js"></script>
+  <script src="/js/api-config.js?v=20260108"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -150,7 +150,7 @@
     saveBtn.addEventListener("click", () => {
       const passageText = output.value.trim();
       if (!passageText) {
-        status.textContent = "❌ No text to save.";
+        status.textContent = "??No text to save.";
         return;
       }
       titlePrompt.style.display = "flex";
@@ -162,14 +162,14 @@
       const passageText = output.value.trim();
       const worksheetTitle = worksheetTitleInput.value.trim();
       if (!worksheetTitle) {
-        status.textContent = "❌ Please enter a worksheet title.";
+        status.textContent = "??Please enter a worksheet title.";
         worksheetTitleInput.focus();
         return;
       }
-      status.textContent = "⏳ Saving...";
+      status.textContent = "??Saving...";
       titlePrompt.style.display = "none";
       try {
-        const response = await WillenaAPI.fetch("/.netlify/functions/supabase_proxy_fixed/save_worksheet", {
+        const response = await WillenaAPI.fetch("/.netlify/functions/supabase_auth/save_worksheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -180,23 +180,23 @@
         });
         const data = await response.json();
         if (data.success) {
-          status.textContent = "✅ Saved!";
+          status.textContent = "??Saved!";
         } else {
-          status.textContent = "❌ Save failed: " + (data.error || "Unknown error");
+          status.textContent = "??Save failed: " + (data.error || "Unknown error");
         }
       } catch (err) {
-        status.textContent = "❌ Save failed: " + (err.message || "Unknown error");
+        status.textContent = "??Save failed: " + (err.message || "Unknown error");
       }
     });
 
     imageInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      status.textContent = "⏳ Converting image to base64...";
+      status.textContent = "??Converting image to base64...";
       const reader = new FileReader();
       reader.onload = async function () {
         const base64Image = reader.result.split(',')[1];
-        status.textContent = "⏳ Sending to Vision API...";
+        status.textContent = "??Sending to Vision API...";
         try {
           const response = await WillenaAPI.fetch("/.netlify/functions/google_vision_proxy", {
             method: "POST",
@@ -214,13 +214,13 @@
           const text = data.responses?.[0]?.fullTextAnnotation?.text || "";
           if (text) {
             output.value = text;
-            status.textContent = "✅ OCR complete!";
+            status.textContent = "??OCR complete!";
           } else {
-            status.textContent = "❌ No text found.";
+            status.textContent = "??No text found.";
             output.value = "";
           }
         } catch (err) {
-          status.textContent = "❌ OCR failed: " + (err.message || "Unknown error");
+          status.textContent = "??OCR failed: " + (err.message || "Unknown error");
           output.value = "";
         }
       };
@@ -229,14 +229,14 @@
 
     copyBtn.addEventListener("click", () => {
       navigator.clipboard.writeText(output.value).then(() => {
-        status.textContent = "✅ Text copied!";
+        status.textContent = "??Text copied!";
         setTimeout(() => { status.textContent = ""; }, 1200);
       });
     });
 
     clearBtn.addEventListener("click", () => {
       output.value = "";
-      status.textContent = "📁 Waiting for image...";
+      status.textContent = "?�� Waiting for image...";
       imageInput.value = "";
     });
   </script>

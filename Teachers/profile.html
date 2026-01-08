@@ -151,7 +151,7 @@
         };
       }
     });
-    const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_proxy_fixed';
+    const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_auth';
     const profileForm = document.getElementById('profileForm');
     const profileMessage = document.getElementById('profileMessage');
     // Make logo clickable to dashboard (redundant if <a> is present, but ensures for future changes)
@@ -171,7 +171,7 @@ async function ensureUsernameInLocalStorage() {
   if (!userId) return;
   if (!localStorage.getItem('username')) {
     try {
-      const res = await fetch(`/Teachers/components/../.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+      const res = await fetch(`/Teachers/components/../.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(userId)}`);
       const result = await res.json();
       if (res.ok && result.success && result.username) {
         localStorage.setItem('username', result.username);
@@ -198,10 +198,10 @@ ensureUsernameInLocalStorage();
         // Show approval status
         const approvalStatus = document.getElementById('approvalStatus');
         if (result.approved === true) {
-          approvalStatus.textContent = 'Status: Approved ✅';
+          approvalStatus.textContent = 'Status: Approved ??;
           approvalStatus.style.color = '#388e3c';
         } else {
-          approvalStatus.textContent = 'Status: Pending Approval ⏳';
+          approvalStatus.textContent = 'Status: Pending Approval ??;
           approvalStatus.style.color = '#d32f2f';
         }
       }

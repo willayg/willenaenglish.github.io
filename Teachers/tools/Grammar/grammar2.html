@@ -1,7 +1,7 @@
 
     <!-- html2pdf.js for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260108"></script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,7 +154,7 @@
         return;
       }
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -224,7 +224,7 @@
           const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
           
           try {
-            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -269,7 +269,7 @@
       };
       
       try {
-        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -463,7 +463,7 @@
                         <option value="large-text">Large Text</option>
                     </select>
                 </div>
-                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">??/button>
             </div>
             <!-- Main Content -->
             <div class="main-content">
