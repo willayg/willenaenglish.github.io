@@ -225,9 +225,8 @@
 
     ensureAuthRefresh();
 
-    // TEMPORARY FIX: Hardcode auth URL while api-config.js deployment is broken
-    // const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase-auth');
-    const AUTH_URL = 'https://api.willenaenglish.com/.netlify/functions/supabase-auth';
+    // Use API gateway for auth (works with CF Workers)
+    const AUTH_URL = 'https://api.willenaenglish.com/.netlify/functions/supabase_auth';
     
     // DOM elements
     const form = document.getElementById('loginForm');
