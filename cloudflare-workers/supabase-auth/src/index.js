@@ -682,6 +682,135 @@ export default {
         return jsonResponse({ success: true }, 200, origin);
       }
       
+      // ===== WORKSHEET OPERATIONS =====
+      // list_worksheets action
+      if (action === 'list_worksheets') {
+        const params = url.searchParams;
+        const fieldsParam = params.get('fields');
+        const limit = parseInt(params.get('limit')) || 50;
+        const offset = parseInt(params.get('offset')) || 0;
+        const idFilter = params.get('id');
+        const typeFilter = params.get('type');
+        const searchQuery = params.get('search');
+        const bookFilter = params.get('book');
+        
+        // Build select clause
+        let selectClause = fieldsParam || '*';
+        
+        // Build query URL
+        let queryUrl = `${env.SUPABASE_URL}/rest/v1/worksheets?select=${encodeURIComponent(selectClause)}`;
+        
+        // Add filters
+        if (idFilter) {
+          queryUrl += `&user_id=eq.${encodeURIComponent(idFilter)}`;
+        }
+        if (typeFilter) {
+          queryUrl += `&worksheet_type=eq.${encodeURIComponent(typeFilter)}`;
+        }
+        if (searchQuery) {
+          queryUrl += `&or=(title.ilike.%25${encodeURIComponent(searchQuery)}%25,book.ilike.%25${encodeURIComponent(searchQuery)}%25,unit.ilike.%25${encodeURIComponent(searchQuery)}%25)`;
+        }
+        if (bookFilter) {
+          queryUrl += `&book=ilike.%25${encodeURIComponent(bookFilter)}%25`;
+        }
+        
+        // Add pagination and ordering
+        queryUrl += `&order=created_at.desc&offset=${offset}&limit=${limit}`;
+        
+        const resp = await fetch(queryUrl, {
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Prefer': 'count=exact',
+          },
+        });
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return jsonResponse({ success: false, error: errText }, resp.status, origin);
+        }
+        
+        const data = await resp.json();
+        const totalCount = resp.headers.get('content-range')?.split('/')[1] || data.length;
+        
+        return jsonResponse({ success: true, data, totalCount: parseInt(totalCount) }, 200, origin);
+      }
+      
+      // save_worksheet action
+      if (action === 'save_worksheet') {
+        if (method !== 'POST') {
+          return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
+        }
+        
+        const body = await request.json();
+        
+        // Normalize words to array
+        let words = body.words;
+        if (typeof words === 'string') {
+          words = words.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        } else if (Array.isArray(words)) {
+          words = words.map(w => typeof w === 'string' ? w.trim() : '').filter(w => w.length > 0);
+        } else {
+          words = [];
+        }
+        body.words = words;
+        
+        // Normalize language_point
+        if (typeof body.language_point === 'string') {
+          body.language_point = body.language_point.trim() ? [body.language_point.trim()] : [];
+        } else if (!Array.isArray(body.language_point)) {
+          body.language_point = [];
+        }
+        
+        // Upsert worksheet
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/worksheets`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(body),
+        });
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return jsonResponse({ success: false, error: errText }, resp.status, origin);
+        }
+        
+        return jsonResponse({ success: true }, 200, origin);
+      }
+      
+      // delete_worksheet action
+      if (action === 'delete_worksheet') {
+        if (method !== 'POST') {
+          return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
+        }
+        
+        const body = await request.json();
+        const { id } = body;
+        
+        if (!id) {
+          return jsonResponse({ success: false, error: 'Missing worksheet id' }, 400, origin);
+        }
+        
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/worksheets?user_id=eq.${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          },
+        });
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return jsonResponse({ success: false, error: errText }, resp.status, origin);
+        }
+        
+        return jsonResponse({ success: true }, 200, origin);
+      }
+      
       // ===== ACTION NOT FOUND =====
       return jsonResponse({ success: false, error: 'Action not found' }, 404, origin);
       

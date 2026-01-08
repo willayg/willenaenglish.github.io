@@ -181,7 +181,7 @@
     let duplicateFound = false;
     if (worksheet.username && worksheet.title) {
       try {
-        const checkRes = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=user_id,title,username');
+        const checkRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=list_worksheets&fields=user_id,title,username');
         const checkData = await checkRes.json();
         if (checkData.success && Array.isArray(checkData.data)) {
           const found = checkData.data.find(ws => ws.title === worksheet.title && ws.username === worksheet.username);
@@ -201,7 +201,7 @@
     if (existingId) worksheet.user_id = existingId;
 
     // Save (will update if id is present)
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=save_worksheet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(worksheet)
@@ -393,7 +393,7 @@
         showSpinner();
         try {
           // Fetch the complete worksheet data using list_worksheets with ID filter
-          const fullRes = await fetch(`/.netlify/functions/supabase_proxy/list_worksheets?id=${ws.user_id}`);
+          const fullRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=list_worksheets&id=${ws.user_id}`);
           const fullResult = await fullRes.json();
           
           if (fullResult.success && fullResult.data && fullResult.data.length > 0) {
@@ -514,7 +514,7 @@
         let deletedCount = 0;
         for (const id of selectedIds) {
           try {
-            const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/delete_worksheet', {
+            const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=delete_worksheet', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id })
@@ -692,7 +692,7 @@
       });
     }
     
-    fetch(`/.netlify/functions/supabase_proxy/list_worksheets?${queryParams}`)
+    WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=list_worksheets&${queryParams}`)
       .then(res => res.json())
       .then(result => {
         console.log('Loaded worksheets:', result);
@@ -787,7 +787,7 @@
     // Populate teacher & book dropdowns
     (async function populateFilters() {
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/list_worksheets?fields=username,book&limit=10000');
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=list_worksheets&fields=username,book&limit=10000');
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           const teacherSet = new Set();
@@ -913,7 +913,7 @@ async function saveWorksheet() {
     const worksheet = window.opener.getCurrentWorksheetData();
     console.log('Saving worksheet:', worksheet); // Debug: See what is being sent
 
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/save_worksheet', {
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=save_worksheet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(worksheet)
@@ -932,7 +932,7 @@ async function saveWorksheet() {
 
 async function loadWorksheet() {
   try {
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy/list_worksheets');
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=list_worksheets');
     const result = await res.json();
     
     if (result.success && result.data && result.data.length > 0) {
