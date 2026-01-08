@@ -290,13 +290,14 @@ export default {
           makeCookie('sb_refresh', authData.refresh_token || '', cookieOpts),
         ];
         
-        // For local dev, also return tokens in body since cross-origin cookies don't work
-        // between localhost:9000 and 127.0.0.1:8787
-        const responseBody = { success: true, user: authData.user };
-        if (isDev) {
-          responseBody.access_token = authData.access_token;
-          responseBody.refresh_token = authData.refresh_token || '';
-        }
+        // Always return tokens in body so client can store in localStorage as fallback
+        // for browsers that block third-party/cross-site cookies
+        const responseBody = {
+          success: true,
+          user: authData.user,
+          access_token: authData.access_token,
+          refresh_token: authData.refresh_token || '',
+        };
         
         return jsonResponse(responseBody, 200, origin, cookies);
       }

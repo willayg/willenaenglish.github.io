@@ -293,6 +293,20 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      
+      // Store tokens in localStorage as fallback for browsers blocking cross-site cookies
+      if (result.access_token) {
+        try {
+          localStorage.setItem('sb_access_token', result.access_token);
+          if (result.refresh_token) {
+            localStorage.setItem('sb_refresh_token', result.refresh_token);
+          }
+          console.log('[signin] Stored auth tokens in localStorage');
+        } catch (e) {
+          console.warn('[signin] Failed to store tokens:', e);
+        }
+      }
+      
       return result.user;
     }
     
