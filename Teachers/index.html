@@ -335,7 +335,7 @@
       (async function() {
         try {
           // Prefer cookie-based auth; do not depend on localStorage for access control.
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=whoami&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase-auth?action=whoami&_=${Date.now()}`);
           const who = await whoRes.json().catch(() => ({}));
           if (!who || !who.success || !who.user_id) {
             const redirect = encodeURIComponent(location.pathname + location.search);
@@ -345,7 +345,7 @@
 
           try { localStorage.setItem('userId', who.user_id); } catch (e) {}
 
-          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(who.user_id)}&_=${Date.now()}`);
+          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase-auth?action=get_profile&user_id=${encodeURIComponent(who.user_id)}&_=${Date.now()}`);
           const result = await res.json().catch(() => ({}));
           if (!result || !result.success || result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
@@ -459,7 +459,7 @@
         let name = '';
         let userId = '';
         try {
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=whoami&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase-auth?action=whoami&_=${Date.now()}`);
           const who = await whoRes.json().catch(() => ({}));
           if (who && who.success && who.user_id) {
             userId = who.user_id;
@@ -469,7 +469,7 @@
           }
 
           if (userId) {
-            const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}&_=${Date.now()}`);
+            const res = await WillenaAPI.fetch(`/.netlify/functions/supabase-auth?action=get_profile&user_id=${encodeURIComponent(userId)}&_=${Date.now()}`);
             const result = await res.json().catch(() => ({}));
             if (result && result.success) {
               if (result.username) {
