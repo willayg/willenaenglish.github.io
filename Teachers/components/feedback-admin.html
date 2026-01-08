@@ -94,13 +94,13 @@
     <div class="admin-burger">
       <button class="admin-burger-btn" aria-haspopup="true" aria-expanded="false">??/button>
       <div class="admin-menu" role="menu">
-        <a href="/Teachers/components/admin-dashboard.html" role="menuitem">?“Š Admin Dashboard</a>
-        <a href="/Teachers/components/feedback-admin.html" role="menuitem" style="font-weight:800;color:#1976d2;">?’¬ Feedback Admin</a>
-        <a href="/Teachers/components/admin_teachers.html" role="menuitem">?‘©?ğŸ?Manage Teachers</a>
-        <a href="/Teachers/tools/planner/planner.html" role="menuitem">?“ Planner</a>
-        <a href="#" data-action="bugs" role="menuitem">? Bugs</a>
-        <a href="/Teachers/index.html" role="menuitem">?  Teacher Dashboard</a>
-        <a href="/Teachers/login.html" data-action="logout" role="menuitem">?šª Logout</a>
+        <a href="/Teachers/components/admin-dashboard.html" role="menuitem">?ï¿½ï¿½ Admin Dashboard</a>
+        <a href="/Teachers/components/feedback-admin.html" role="menuitem" style="font-weight:800;color:#1976d2;">?ï¿½ï¿½ Feedback Admin</a>
+        <a href="/Teachers/components/admin_teachers.html" role="menuitem">?ï¿½ï¿½?ï¿½ï¿½?Manage Teachers</a>
+        <a href="/Teachers/tools/planner/planner.html" role="menuitem">?ï¿½ï¿½ Planner</a>
+        <a href="#" data-action="bugs" role="menuitem">?ï¿½ï¿½ Bugs</a>
+        <a href="/Teachers/index.html" role="menuitem">?ï¿½ï¿½ Teacher Dashboard</a>
+        <a href="/Teachers/login.html" data-action="logout" role="menuitem">?ï¿½ï¿½ Logout</a>
       </div>
     </div>
     <h2 class="admin-header-title">Feedback Admin</h2>
@@ -149,7 +149,7 @@
       const menu = bar.querySelector('.admin-menu');
       btn.addEventListener('click', ()=>{ const open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
       document.addEventListener('click', (e)=>{ if(!menu.contains(e.target) && !btn.contains(e.target) && menu.classList.contains('open')){ menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } }, true);
-      menu.addEventListener('click', (e)=>{ const a = e.target.closest('a'); if(!a) return; if(a.dataset.action==='bugs'){ e.preventDefault(); if(window.showFeedbackModal) window.showFeedbackModal(); else alert('Feedback modal not available.'); menu.classList.remove('open'); } else if(a.dataset.action==='logout'){ e.preventDefault(); fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST',credentials:'include'}).finally(()=> location.href='/Teachers/login.html'); } });
+      menu.addEventListener('click', (e)=>{ const a = e.target.closest('a'); if(!a) return; if(a.dataset.action==='bugs'){ e.preventDefault(); if(window.showFeedbackModal) window.showFeedbackModal(); else alert('Feedback modal not available.'); menu.classList.remove('open'); } else if(a.dataset.action==='logout'){ e.preventDefault(); WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST',credentials:'include'}).finally(()=> location.href='/Teachers/login.html'); } });
     })();
   </script>
   <script type="module" src="/Teachers/components/feedback-admin.js"></script>
