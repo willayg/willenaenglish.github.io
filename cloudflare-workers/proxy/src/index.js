@@ -49,6 +49,7 @@ const ALLOWED_ORIGINS = new Set([
   'https://www.willenaenglish.com',
   'https://cf.willenaenglish.com',
   'https://staging.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
   'https://students.willenaenglish.com',
   'https://api.willenaenglish.com',
 ]);

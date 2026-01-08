@@ -31,8 +31,8 @@ const getApiBase = () => {
   if (host === 'localhost' || host === '127.0.0.1') {
     return '';
   }
-  // Cloudflare Pages (staging, cf): route through API gateway
-  if (host === 'staging.willenaenglish.com' || host === 'cf.willenaenglish.com' || host.endsWith('.pages.dev')) {
+  // Cloudflare Pages (staging, cf, teachers): route through API gateway
+  if (host === 'staging.willenaenglish.com' || host === 'cf.willenaenglish.com' || host === 'teachers.willenaenglish.com' || host.endsWith('.pages.dev')) {
     return 'https://api.willenaenglish.com';
   }
   // GitHub Pages: cross-origin to Netlify

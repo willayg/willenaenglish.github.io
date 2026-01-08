@@ -15,6 +15,7 @@ const ALLOWED_ORIGINS = [
   // Cloudflare Pages deployments
   'https://cf.willenaenglish.com',
   'https://staging.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
   'https://students.willenaenglish.com',
   // API gateway (for internal routing)
   'https://api.willenaenglish.com',
