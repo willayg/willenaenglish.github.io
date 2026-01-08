@@ -10,7 +10,7 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
     return;
   }
   try {
-    const apiUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`) : `/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`;
+    const apiUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(`/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(userId)}`) : `/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(userId)}`;
     const r = await fetch(apiUrl, { credentials: 'include' });
     const js = await r.json();
     if (!js || !js.success || js.approved !== true || !['teacher','admin'].includes(String(js.role||'').toLowerCase())) {
