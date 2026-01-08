@@ -225,8 +225,9 @@
 
     ensureAuthRefresh();
 
-    // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
-    const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase-auth');
+    // TEMPORARY FIX: Hardcode auth URL while api-config.js deployment is broken
+    // const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase-auth');
+    const AUTH_URL = 'https://api.willenaenglish.com/.netlify/functions/supabase-auth';
     
     // DOM elements
     const form = document.getElementById('loginForm');
