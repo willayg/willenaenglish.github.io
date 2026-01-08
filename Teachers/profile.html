@@ -198,10 +198,10 @@ ensureUsernameInLocalStorage();
         // Show approval status
         const approvalStatus = document.getElementById('approvalStatus');
         if (result.approved === true) {
-          approvalStatus.textContent = 'Status: Approved ??;
+          approvalStatus.textContent = 'Status: Approved ✓';
           approvalStatus.style.color = '#388e3c';
         } else {
-          approvalStatus.textContent = 'Status: Pending Approval ??;
+          approvalStatus.textContent = 'Status: Pending Approval ⏳';
           approvalStatus.style.color = '#d32f2f';
         }
       }
