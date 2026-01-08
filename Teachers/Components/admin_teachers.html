@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Admin - Manage Teachers</title>
   <!-- Netlify redirect removed - now using Cloudflare -->
-  <script src="/js/api-config.js"></script>
+  <script src="/js/api-config.js?v=20260108"></script>
   <link rel="stylesheet" href="/Teachers/components/style.css">
   <style>
     body { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fb; margin: 0; }
@@ -34,15 +34,15 @@
   </style>
   <div class="admin-top-bar">
     <div class="admin-burger">
-      <button class="admin-burger-btn" aria-haspopup="true" aria-expanded="false">â˜°</button>
+      <button class="admin-burger-btn" aria-haspopup="true" aria-expanded="false">??/button>
       <div class="admin-menu" role="menu">
-        <a href="/Teachers/components/admin-dashboard.html" role="menuitem">ğŸ“Š Admin Dashboard</a>
-        <a href="/Teachers/components/feedback-admin.html" role="menuitem">ğŸ’¬ Feedback Admin</a>
-        <a href="/Teachers/components/admin_teachers.html" role="menuitem" style="font-weight:800;color:#1976d2;">ğŸ‘©â€ğŸ« Manage Teachers</a>
-        <a href="/Teachers/tools/planner/planner.html" role="menuitem">ğŸ“ Planner</a>
-        <a href="#" data-action="bugs" role="menuitem">ğŸ Bugs</a>
-        <a href="/Teachers/index.html" role="menuitem">ğŸ  Teacher Dashboard</a>
-        <a href="/Teachers/login.html" data-action="logout" role="menuitem">ğŸšª Logout</a>
+        <a href="/Teachers/components/admin-dashboard.html" role="menuitem">?“Š Admin Dashboard</a>
+        <a href="/Teachers/components/feedback-admin.html" role="menuitem">?’¬ Feedback Admin</a>
+        <a href="/Teachers/components/admin_teachers.html" role="menuitem" style="font-weight:800;color:#1976d2;">?‘©?ğŸ?Manage Teachers</a>
+        <a href="/Teachers/tools/planner/planner.html" role="menuitem">?“ Planner</a>
+        <a href="#" data-action="bugs" role="menuitem">? Bugs</a>
+        <a href="/Teachers/index.html" role="menuitem">?  Teacher Dashboard</a>
+        <a href="/Teachers/login.html" data-action="logout" role="menuitem">?šª Logout</a>
       </div>
     </div>
     <h2 class="admin-header-title">Manage Teachers</h2>
@@ -78,7 +78,7 @@
   </div>
   <script>
     async function fetchTeachers() {
-      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_teachers');
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_teachers');
       const teachers = await res.json();
       const tbody = document.querySelector('#teacherTable tbody');
       tbody.innerHTML = '';
@@ -100,7 +100,7 @@
 
     async function toggleApprove(id, currentStatus) {
       const newStatus = !currentStatus;
-      await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=update_teacher_approval', {
+      await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=update_teacher_approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, approved: newStatus })
