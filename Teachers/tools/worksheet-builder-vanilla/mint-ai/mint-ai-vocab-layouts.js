@@ -620,42 +620,76 @@
     return `https://via.placeholder.com/150x100/${color}/ffffff?text=${text}`;
   }
 
-  // Function to open image search in a new window based on selected source
-  function openPixabaySearch(word) {
+  // Function to open image search using shared modal or fallback to new window
+  function openPixabaySearch(word, targetElement = null) {
     if (!word) return;
     
     // Get the current picture source setting (default to illustrations if not set)
     const pictureSource = window.currentPictureSource || 'illustrations';
     
-    let searchUrl = '';
-    let windowTitle = 'ImageSearchWindow';
-    switch (pictureSource) {
-      case 'any':
-        searchUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
-        windowTitle = 'AnyImageSearchWindow';
-        break;
-      case 'illustrations':
-        searchUrl = `https://pixabay.com/illustrations/search/${encodeURIComponent(word)}/`;
-        windowTitle = 'IllustrationSearchWindow';
-        break;
-      case 'photos':
-        searchUrl = `https://pixabay.com/photos/search/${encodeURIComponent(word)}/`;
-        windowTitle = 'PhotoSearchWindow';
-        break;
-      case 'ai':
-        searchUrl = `https://lexica.art/?q=${encodeURIComponent(word)}`;
-        windowTitle = 'LexicaAISearchWindow';
-        break;
-      default:
-        searchUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
-        windowTitle = 'AnyImageSearchWindow';
+    // Map picture source to SharedImagePicker filter
+    const filterMap = { any: 'all', illustrations: 'illustration', photos: 'photo', ai: 'ai' };
+    const filter = filterMap[pictureSource] || 'all';
+    
+    // Try using shared image picker modal
+    if (window.SharedImagePicker) {
+      window.SharedImagePicker.open({
+        query: word,
+        filter: filter,
+        context: { word: word, pictureSource: pictureSource, targetElement: targetElement },
+        onSelect: function(imageUrl, ctx) {
+          // Try to find the target element
+          let imgContainer = ctx.targetElement;
+          if (!imgContainer) {
+            // Try to find by data-word attribute
+            imgContainer = document.querySelector(`[data-word="${ctx.word}"] .image-container`);
+            if (!imgContainer) {
+              imgContainer = document.querySelector(`[data-word="${ctx.word}"]`);
+            }
+          }
+          if (imgContainer) {
+            let imgEl = imgContainer.querySelector('img');
+            if (imgEl) {
+              imgEl.src = imageUrl;
+            } else {
+              imgContainer.innerHTML = '<img src="' + imageUrl + '" style="max-width:100%;max-height:100%;object-fit:contain;" alt="' + ctx.word + '">';
+            }
+          }
+          console.log('Selected image for', ctx.word, ':', imageUrl);
+        }
+      });
+      console.log(`Opening shared image picker for: ${word} with filter: ${filter}`);
+    } else {
+      // Fallback: open external search in a new window
+      let searchUrl = '';
+      let windowTitle = 'ImageSearchWindow';
+      switch (pictureSource) {
+        case 'any':
+          searchUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+          windowTitle = 'AnyImageSearchWindow';
+          break;
+        case 'illustrations':
+          searchUrl = `https://pixabay.com/illustrations/search/${encodeURIComponent(word)}/`;
+          windowTitle = 'IllustrationSearchWindow';
+          break;
+        case 'photos':
+          searchUrl = `https://pixabay.com/photos/search/${encodeURIComponent(word)}/`;
+          windowTitle = 'PhotoSearchWindow';
+          break;
+        case 'ai':
+          searchUrl = `https://lexica.art/?q=${encodeURIComponent(word)}`;
+          windowTitle = 'LexicaAISearchWindow';
+          break;
+        default:
+          searchUrl = `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+          windowTitle = 'AnyImageSearchWindow';
+      }
+      console.log(`Opening ${pictureSource} search for: ${word}`);
+      const width = Math.round(window.innerWidth * 0.25);
+      const height = Math.round(window.innerHeight * 0.99);
+      const windowFeatures = 'width=' + width + ',height=' + height + ',left=0,top=0,scrollbars=yes,resizable=yes';
+      window.open(searchUrl, windowTitle, windowFeatures);
     }
-    console.log(`Opening ${pictureSource} search for: ${word}`);
-  // Open search in a new window - 25vw wide, tall, positioned far left
-  const width = Math.round(window.innerWidth * 0.25);
-  const height = Math.round(window.innerHeight * 0.99);
-  const windowFeatures = 'width=' + width + ',height=' + height + ',left=0,top=0,scrollbars=yes,resizable=yes';
-  window.open(searchUrl, windowTitle, windowFeatures);
   }
 
   // Make the function globally available

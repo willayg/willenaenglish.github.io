@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard Generator</title>
     <script src="/js/api-config.js?v=20260108"></script>
+    <!-- Shared Image Picker Modal -->
+    <script type="module" src="/Teachers/tools/shared/image-picker-modal.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
     /* Ensure the preview area fills the viewport for 1x2-portrait */
@@ -505,56 +507,81 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Image search single-click handler (Pixabay)
+    // Image search single-click handler using shared image picker modal
     function attachImageSearchClick() {
         const grid = document.getElementById('flashcardGrid');
         if (!grid) { console.log('Grid not found for click attachment'); return; }
         if (window._imageSearchClickHandler) {
             grid.removeEventListener('click', window._imageSearchClickHandler, true);
         }
-        // Map dropdown to correct Pixabay URL path
-        function getPixabayUrl(word, mode) {
-            const encoded = encodeURIComponent(word);
-            if (mode === 'illustrations') return `https://pixabay.com/illustrations/search/${encoded}/`;
-            if (mode === 'vectors') return `https://pixabay.com/vectors/search/${encoded}/`;
-            if (mode === 'ai') return `https://pixabay.com/images/search/${encoded}/?content_type=ai`;
-            return `https://pixabay.com/images/search/${encoded}/`;
+        // Map dropdown mode to SharedImagePicker filter
+        function getModeFilter(mode) {
+            const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+            return filterMap[mode] || 'all';
         }
-            window._imageSearchClickHandler = function(e) {
-                if (e.target.isContentEditable) return;
-                if (['INPUT','TEXTAREA','BUTTON','SELECT','LABEL'].includes(e.target.tagName)) return;
-                let card = e.target.closest('.flashcard');
-                if (!card) return;
-                if ((e.target.classList.contains('flashcard-word') || e.target.classList.contains('flashcard-korean')) && !e.ctrlKey) return; // protect editing clicks
-                const cardId = card.id;
-                const index = cardId && cardId.startsWith('flashcard-') ? parseInt(cardId.split('-')[1],10) : null;
-                let word = '';
-                if (index !== null && window.flashcards && window.flashcards[index]) {
-                    word = window.flashcards[index].english || '';
-                }
-                if (!word) {
-                    const lines = card.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
-                    if (lines.length) word = lines[0];
-                }
-                if (!word) return;
+        window._imageSearchClickHandler = function(e) {
+            if (e.target.isContentEditable) return;
+            if (['INPUT','TEXTAREA','BUTTON','SELECT','LABEL'].includes(e.target.tagName)) return;
+            let card = e.target.closest('.flashcard');
+            if (!card) return;
+            if ((e.target.classList.contains('flashcard-word') || e.target.classList.contains('flashcard-korean')) && !e.ctrlKey) return; // protect editing clicks
+            const cardId = card.id;
+            const index = cardId && cardId.startsWith('flashcard-') ? parseInt(cardId.split('-')[1],10) : null;
+            let word = '';
+            if (index !== null && window.flashcards && window.flashcards[index]) {
+                word = window.flashcards[index].english || '';
+            }
+            if (!word) {
+                const lines = card.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
+                if (lines.length) word = lines[0];
+            }
+            if (!word) return;
+            
             const modeSel = document.getElementById('imageTypeSelect');
             const mode = modeSel ? modeSel.value : 'photos';
-            const url = getPixabayUrl(word, mode);
-                try {
-                    const features = 'width=400,height=720,scrollbars=yes,resizable=yes,top=20,left=0';
-                    if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
-                        window.imageSearchWindow.location.href = url;
-                        window.imageSearchWindow.focus();
-                        try { window.imageSearchWindow.resizeTo(400, 720); window.imageSearchWindow.moveTo(0, 20); } catch(_) {}
-                    } else {
-                        window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
+            
+            // Try using shared image picker modal
+            if (window.SharedImagePicker) {
+                window.SharedImagePicker.open({
+                    query: word,
+                    filter: getModeFilter(mode),
+                    context: { word: word, index: index, cardId: cardId },
+                    onSelect: function(imageUrl, ctx) {
+                        // Update flashcard image
+                        const targetCard = document.getElementById(ctx.cardId);
+                        if (targetCard) {
+                            let imgEl = targetCard.querySelector('.flashcard-image img');
+                            if (imgEl) {
+                                imgEl.src = imageUrl;
+                            } else {
+                                // Find or create the image container
+                                let imgContainer = targetCard.querySelector('.flashcard-image');
+                                if (!imgContainer) {
+                                    imgContainer = document.createElement('div');
+                                    imgContainer.className = 'flashcard-image';
+                                    targetCard.insertBefore(imgContainer, targetCard.firstChild);
+                                }
+                                imgContainer.innerHTML = '<img src="' + imageUrl + '" alt="' + ctx.word + '">';
+                            }
+                        }
+                        // Also update the flashcards data array
+                        if (ctx.index !== null && window.flashcards && window.flashcards[ctx.index]) {
+                            window.flashcards[ctx.index].image = imageUrl;
+                        }
                     }
-                } catch(err){
-                    window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
-                }
+                });
+            } else {
+                // Fallback: open Pixabay in new window
+                const encoded = encodeURIComponent(word);
+                let url = 'https://pixabay.com/images/search/' + encoded + '/';
+                if (mode === 'illustrations') url = 'https://pixabay.com/illustrations/search/' + encoded + '/';
+                if (mode === 'vectors') url = 'https://pixabay.com/vectors/search/' + encoded + '/';
+                if (mode === 'ai') url = 'https://pixabay.com/images/search/' + encoded + '/?content_type=ai';
+                window.open(url, 'PixabaySearchWindow', 'width=400,height=720,scrollbars=yes,resizable=yes,top=20,left=0');
+            }
         };
         grid.addEventListener('click', window._imageSearchClickHandler, true);
-        console.log('Single-click Pixabay handler attached to grid');
+        console.log('Single-click image picker handler attached to grid');
     }
     
     // Apply the comprehensive patch

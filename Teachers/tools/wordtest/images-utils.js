@@ -36,22 +36,47 @@ export function getPixabaySearchUrl(word, mode) {
 
 // Helper function to render an image (kept identical to original)
 export function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
-	// Add double-click to open image search based on selected mode
+	// Add click to open shared image picker modal
 	let clickHandler = '';
 	if (word) {
+		// Get initial filter from pictureModeSelect if available
 		clickHandler = `onclick="
 			const pictureModeSelect = document.getElementById('pictureModeSelect');
 			const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-			const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : '${getPixabaySearchUrl('${word}', '${mode}')}' ;
-			// Calculate left-side position and size (80vh x 25vw)
-			const screenW = window.screen.availWidth || window.innerWidth;
-			const screenH = window.screen.availHeight || window.innerHeight;
-			const width = Math.round(screenW * 0.25);
-			const height = Math.round(screenH * 0.8);
-			const left = 10;
-			const top = Math.round((screenH - height) / 2);
-			const windowFeatures = 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes';
-			window.open(url, 'ImageSearchWindow', windowFeatures);
+			// Map mode to SharedImagePicker filter
+			const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+			const filter = filterMap[mode] || 'all';
+			
+			// Open shared image picker modal
+			if (window.SharedImagePicker) {
+				window.SharedImagePicker.open({
+					query: '${word.replace(/'/g, "\\'")}',
+					filter: filter,
+					context: { word: '${word.replace(/'/g, "\\'")}', index: ${index} },
+					onSelect: function(imageUrl, ctx) {
+						// Update the image in the DOM
+						const zone = document.querySelector('[data-word=\\\"' + ctx.word + '\\\"][data-index=\\\"' + ctx.index + '\\\"]');
+						if (zone) {
+							const img = zone.querySelector('img');
+							if (img) {
+								img.src = imageUrl;
+							} else {
+								// Replace placeholder/emoji with real image
+								const imgContainer = zone.querySelector('div > div') || zone.firstElementChild;
+								if (imgContainer) {
+									imgContainer.innerHTML = '<img src=\\\"' + imageUrl + '\\\" style=\\\"display:block;width:100%;height:100%;object-fit:cover;\\\" alt=\\\"Image\\\">';
+								}
+							}
+						}
+						// Trigger updatePreview if available
+						if (window.updatePreview) window.updatePreview();
+					}
+				});
+			} else {
+				// Fallback: open Pixabay in new window
+				const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : 'https://pixabay.com/images/search/${encodeURIComponent(word)}/';
+				window.open(url, 'ImageSearchWindow', 'width=400,height=600,left=10,top=100');
+			}
 		"`;
 	}
 
