@@ -645,7 +645,7 @@
     </script>
     <script type="module" src="wordtest.js"></script>
     <script>
-    // Improved double-click event for image search based on selected mode
+    // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
       const previewArea = document.getElementById('previewArea');
       if (previewArea) {
@@ -690,20 +690,59 @@
               // Get selected picture mode
               const pictureModeSelect = document.getElementById('pictureModeSelect');
               const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
+              const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+              const filter = filterMap[mode] || 'all';
               
-              // Use centralized helper for all modes
-              let url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl(word, mode) : `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+              // Find the clicked element's index if it has one
+              const dataIndex = card.dataset?.index || e.target.closest('[data-index]')?.dataset?.index || 0;
               
-              // Calculate left-side position and size (80vh x 25vw)
-              const screenW = window.screen.availWidth || window.innerWidth;
-              const screenH = window.screen.availHeight || window.innerHeight;
-              const width = Math.round(screenW * 0.25);
-              const height = Math.round(screenH * 0.8);
-              const left = 10;
-              const top = Math.round((screenH - height) / 2);
-              const windowFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`;
-              
-              window.open(url, 'ImageSearchWindow', windowFeatures);
+              // Use shared image picker modal
+              if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+                window.SharedImagePicker.open({
+                  query: word,
+                  filter: filter,
+                  context: { word: word, index: dataIndex, targetElement: card },
+                  onSelect: function(imageUrl, ctx) {
+                    // Find the image element to update
+                    let imgEl = ctx.targetElement.querySelector('img');
+                    if (imgEl) {
+                      imgEl.src = imageUrl;
+                    } else {
+                      // Look for image drop zone or container
+                      const zone = ctx.targetElement.closest('.image-drop-zone') || ctx.targetElement.querySelector('.image-drop-zone');
+                      if (zone) {
+                        const innerImg = zone.querySelector('img');
+                        if (innerImg) {
+                          innerImg.src = imageUrl;
+                        } else {
+                          const container = zone.querySelector('div') || zone;
+                          container.innerHTML = '<img src="' + imageUrl + '" style="display:block;width:100%;height:100%;object-fit:cover;" alt="' + ctx.word + '">';
+                        }
+                      }
+                    }
+                    // Trigger preview update if available
+                    if (window.updatePreview) window.updatePreview();
+                  }
+                });
+              } else if (typeof window.ensureSharedImagePicker === 'function') {
+                // Try to load the modal on-demand
+                window.ensureSharedImagePicker().then(function() {
+                  if (window.SharedImagePicker) {
+                    window.SharedImagePicker.open({
+                      query: word,
+                      filter: filter,
+                      context: { word: word, index: dataIndex, targetElement: card },
+                      onSelect: function(imageUrl, ctx) {
+                        let imgEl = ctx.targetElement.querySelector('img');
+                        if (imgEl) {
+                          imgEl.src = imageUrl;
+                        }
+                        if (window.updatePreview) window.updatePreview();
+                      }
+                    });
+                  }
+                });
+              }
             }
           }
         });
