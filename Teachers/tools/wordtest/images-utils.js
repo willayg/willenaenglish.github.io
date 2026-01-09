@@ -41,16 +41,14 @@ export function renderImage(imageUrl, index, word = null, kor = null, currentSet
 	if (word) {
 		// Get initial filter from pictureModeSelect if available
 		clickHandler = `onclick="
+			event.stopPropagation();
 			const pictureModeSelect = document.getElementById('pictureModeSelect');
 			const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-			// Map mode to SharedImagePicker filter
 			const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
 			const filter = filterMap[mode] || 'all';
-
-			function openPicker() {
-				const picker = window.SharedImagePicker;
-				if (!picker || typeof picker.open !== 'function') return false;
-				picker.open({
+			
+			if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+				window.SharedImagePicker.open({
 					query: '${word.replace(/'/g, "\\'")}',
 					filter: filter,
 					context: { word: '${word.replace(/'/g, "\\'")}', index: ${index} },
@@ -70,21 +68,7 @@ export function renderImage(imageUrl, index, word = null, kor = null, currentSet
 						if (window.updatePreview) window.updatePreview();
 					}
 				});
-				return true;
 			}
-
-			// Open shared image picker modal (load it on-demand if needed)
-			try {
-				if (openPicker()) return;
-				if (typeof window.ensureSharedImagePicker === 'function') {
-					window.ensureSharedImagePicker().then(function(){ openPicker(); }).catch(function(){});
-					return;
-				}
-			} catch (e) {}
-
-			// Last-resort fallback: open Pixabay in a new window
-			const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : 'https://pixabay.com/images/search/${encodeURIComponent(word)}/';
-			window.open(url, 'ImageSearchWindow', 'width=400,height=600,left=10,top=100');
 		"`;
 	}
 
