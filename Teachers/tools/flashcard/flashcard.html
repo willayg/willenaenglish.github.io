@@ -7,6 +7,32 @@
     <script src="/js/api-config.js?v=20260108"></script>
     <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
     <script src="/Teachers/tools/shared/image-picker-modal.js"></script>
+        <script>
+            // Ensure the shared image picker can be loaded on demand
+            window.ensureSharedImagePicker = window.ensureSharedImagePicker || function () {
+                if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+                    return Promise.resolve(window.SharedImagePicker);
+                }
+                if (window.__sharedImagePickerPromise) return window.__sharedImagePickerPromise;
+                window.__sharedImagePickerPromise = new Promise(function (resolve, reject) {
+                    var existing = document.querySelector('script[src="/Teachers/tools/shared/image-picker-modal.js"]');
+                    if (existing && window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+                        resolve(window.SharedImagePicker);
+                        return;
+                    }
+                    var s = document.createElement('script');
+                    s.src = '/Teachers/tools/shared/image-picker-modal.js';
+                    s.async = true;
+                    s.onload = function () {
+                        if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') resolve(window.SharedImagePicker);
+                        else reject(new Error('SharedImagePicker not available after load'));
+                    };
+                    s.onerror = function () { reject(new Error('Failed to load shared image picker script')); };
+                    document.head.appendChild(s);
+                });
+                return window.__sharedImagePickerPromise;
+            };
+        </script>
     <link rel="stylesheet" href="style.css">
     <style>
     /* Ensure the preview area fills the viewport for 1x2-portrait */
@@ -540,9 +566,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const modeSel = document.getElementById('imageTypeSelect');
             const mode = modeSel ? modeSel.value : 'photos';
             
-            // Try using shared image picker modal
-            if (window.SharedImagePicker) {
-                window.SharedImagePicker.open({
+            function openPicker() {
+                const picker = window.SharedImagePicker;
+                if (!picker || typeof picker.open !== 'function') return false;
+                picker.open({
                     query: word,
                     filter: getModeFilter(mode),
                     context: { word: word, index: index, cardId: cardId },
@@ -573,7 +600,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 });
-            } else {
+                return true;
+            }
+
+            // Try using shared image picker modal (load it on-demand if needed)
+            try {
+                if (openPicker()) return;
+                if (typeof window.ensureSharedImagePicker === 'function') {
+                    window.ensureSharedImagePicker().then(function(){ openPicker(); }).catch(function(){});
+                    return;
+                }
+            } catch (e) {}
+
+            {
                 // Fallback: open Pixabay in new window
                 const encoded = encodeURIComponent(word);
                 let url = 'https://pixabay.com/images/search/' + encoded + '/';

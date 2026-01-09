@@ -7,6 +7,32 @@
     <script src="/js/api-config.js?v=20260108"></script>
     <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
     <script src="/Teachers/tools/shared/image-picker-modal.js"></script>
+    <script>
+      // Ensure the shared image picker can be loaded on demand (even if cached/blocked on first paint)
+      window.ensureSharedImagePicker = window.ensureSharedImagePicker || function () {
+        if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+          return Promise.resolve(window.SharedImagePicker);
+        }
+        if (window.__sharedImagePickerPromise) return window.__sharedImagePickerPromise;
+        window.__sharedImagePickerPromise = new Promise(function (resolve, reject) {
+          var existing = document.querySelector('script[src="/Teachers/tools/shared/image-picker-modal.js"]');
+          if (existing && window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+            resolve(window.SharedImagePicker);
+            return;
+          }
+          var s = document.createElement('script');
+          s.src = '/Teachers/tools/shared/image-picker-modal.js';
+          s.async = true;
+          s.onload = function () {
+            if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') resolve(window.SharedImagePicker);
+            else reject(new Error('SharedImagePicker not available after load'));
+          };
+          s.onerror = function () { reject(new Error('Failed to load shared image picker script')); };
+          document.head.appendChild(s);
+        });
+        return window.__sharedImagePickerPromise;
+      };
+    </script>
     <!-- Preconnect to Google Fonts for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

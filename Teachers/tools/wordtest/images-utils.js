@@ -46,37 +46,45 @@ export function renderImage(imageUrl, index, word = null, kor = null, currentSet
 			// Map mode to SharedImagePicker filter
 			const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
 			const filter = filterMap[mode] || 'all';
-			
-			// Open shared image picker modal
-			if (window.SharedImagePicker) {
-				window.SharedImagePicker.open({
+
+			function openPicker() {
+				const picker = window.SharedImagePicker;
+				if (!picker || typeof picker.open !== 'function') return false;
+				picker.open({
 					query: '${word.replace(/'/g, "\\'")}',
 					filter: filter,
 					context: { word: '${word.replace(/'/g, "\\'")}', index: ${index} },
 					onSelect: function(imageUrl, ctx) {
-						// Update the image in the DOM
 						const zone = document.querySelector('[data-word=\\\"' + ctx.word + '\\\"][data-index=\\\"' + ctx.index + '\\\"]');
 						if (zone) {
 							const img = zone.querySelector('img');
 							if (img) {
 								img.src = imageUrl;
 							} else {
-								// Replace placeholder/emoji with real image
 								const imgContainer = zone.querySelector('div > div') || zone.firstElementChild;
 								if (imgContainer) {
 									imgContainer.innerHTML = '<img src=\\\"' + imageUrl + '\\\" style=\\\"display:block;width:100%;height:100%;object-fit:cover;\\\" alt=\\\"Image\\\">';
 								}
 							}
 						}
-						// Trigger updatePreview if available
 						if (window.updatePreview) window.updatePreview();
 					}
 				});
-			} else {
-				// Fallback: open Pixabay in new window
-				const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : 'https://pixabay.com/images/search/${encodeURIComponent(word)}/';
-				window.open(url, 'ImageSearchWindow', 'width=400,height=600,left=10,top=100');
+				return true;
 			}
+
+			// Open shared image picker modal (load it on-demand if needed)
+			try {
+				if (openPicker()) return;
+				if (typeof window.ensureSharedImagePicker === 'function') {
+					window.ensureSharedImagePicker().then(function(){ openPicker(); }).catch(function(){});
+					return;
+				}
+			} catch (e) {}
+
+			// Last-resort fallback: open Pixabay in a new window
+			const url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl('${word}', mode) : 'https://pixabay.com/images/search/${encodeURIComponent(word)}/';
+			window.open(url, 'ImageSearchWindow', 'width=400,height=600,left=10,top=100');
 		"`;
 	}
 
