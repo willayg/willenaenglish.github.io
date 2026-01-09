@@ -643,7 +643,7 @@
       }
     };
     </script>
-    <script type="module" src="wordtest.js?v=20260110b"></script>
+    <script type="module" src="wordtest.js?v=20260110c"></script>
     <script>
     // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
@@ -678,25 +678,28 @@
               context: { word: word, index: dataIndex, targetElement: zone },
               onSelect: function(imageUrl, ctx) {
                 var target = ctx && ctx.targetElement ? ctx.targetElement : zone;
-                // Find or create img element - clean approach
-                var imgEl = target.querySelector('img');
-                if (imgEl) {
-                  imgEl.src = imageUrl;
-                } else {
-                  // Clear the zone completely and insert a simple img
-                  target.innerHTML = '';
-                  var newImg = document.createElement('img');
-                  newImg.src = imageUrl;
-                  newImg.alt = ctx.word || 'Image';
-                  newImg.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;max-width:150px;max-height:150px;border-radius:8px;';
-                  target.appendChild(newImg);
+                // Persist into module state so it survives resize/rebuilds
+                if (window.wordtestSetSelectedImage) {
+                  try { window.wordtestSetSelectedImage(ctx.word, ctx.index, imageUrl); } catch (ex) {}
                 }
-                // Persist selection so regeneration can restore it
+
+                // Update DOM in-place (ensure only one <img>)
+                var container = target.querySelector('div') || target;
                 try {
-                  var key = (ctx.word || '').toLowerCase() + '_' + ctx.index;
+                  container.querySelectorAll('img').forEach(function(n){ n.remove(); });
+                } catch (_) {}
+                var newImg = document.createElement('img');
+                newImg.src = imageUrl;
+                newImg.alt = (ctx && ctx.word) ? ctx.word : 'Image';
+                newImg.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;';
+                container.appendChild(newImg);
+
+                // Also mirror to savedImageData for compatibility
+                try {
+                  var key = (ctx.word || '').toLowerCase() + '_' + String(ctx.index);
                   window.savedImageData = window.savedImageData || {};
                   window.savedImageData[key] = { src: imageUrl, word: ctx.word, index: Number(ctx.index) };
-                } catch (ex) {}
+                } catch (_) {}
               }
             });
           }

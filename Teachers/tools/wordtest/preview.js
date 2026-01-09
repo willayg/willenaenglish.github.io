@@ -41,19 +41,29 @@ export async function updatePreviewPreservingImages() {
         return;
     }
 
+    // Preserve by (word,index) from the drop-zone dataset (not from <img>)
     const existingImages = new Map();
-    previewArea.querySelectorAll('.image-drop-zone img').forEach(img => {
-        const word = img.getAttribute('data-word');
-        if (word) existingImages.set(word, img.src);
+    previewArea.querySelectorAll('.image-drop-zone').forEach(zone => {
+        const word = zone.getAttribute('data-word');
+        const idx = zone.getAttribute('data-index');
+        const img = zone.querySelector('img');
+        if (!word || idx === null || idx === undefined || !img) return;
+        const key = `${String(word).toLowerCase()}_${String(idx)}`;
+        existingImages.set(key, img.src);
     });
 
     const worksheetHTML = await generateWorksheetHTML(title, currentWords);
     previewArea.innerHTML = worksheetHTML;
     ensurePreviewHint(previewArea);
 
-    previewArea.querySelectorAll('.image-drop-zone img').forEach(img => {
-        const word = img.getAttribute('data-word');
-        if (word && existingImages.has(word)) img.src = existingImages.get(word);
+    previewArea.querySelectorAll('.image-drop-zone').forEach(zone => {
+        const word = zone.getAttribute('data-word');
+        const idx = zone.getAttribute('data-index');
+        if (!word || idx === null || idx === undefined) return;
+        const key = `${String(word).toLowerCase()}_${String(idx)}`;
+        const img = zone.querySelector('img');
+        const saved = existingImages.get(key) || (window.savedImageData && window.savedImageData[key] && window.savedImageData[key].src);
+        if (img && saved) img.src = saved;
     });
 
     enableImageDragAndDrop(updatePreviewPreservingImages);
