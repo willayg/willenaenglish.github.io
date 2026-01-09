@@ -373,8 +373,3 @@ window.openImagePicker = openImagePicker;
 window.closeImagePicker = closeImagePicker;
 
 })(); // End IIFE
-
-// ES Module exports (for import statements)
-export { };
-export const openImagePicker = window.openImagePicker;
-export const closeImagePicker = window.closeImagePicker;
