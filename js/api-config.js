@@ -40,7 +40,6 @@
     'set_student_password',
     'debug_student_data',
     'openai_proxy',
-    'pixabay',
     'google_vision_proxy',
     'supabase_proxy',
     'supabase_proxy_fixed',

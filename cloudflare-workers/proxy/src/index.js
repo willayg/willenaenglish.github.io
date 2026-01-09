@@ -17,6 +17,7 @@
  * - log_word_attempt: ✓
  * - progress_summary: ✓
  * - get_audio_urls: ✓
+ * - pixabay: ✓
  */
 
 const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
@@ -30,6 +31,7 @@ const FUNCTION_TO_BINDING = {
   log_word_attempt: 'LOG_WORD_ATTEMPT',
   progress_summary: 'PROGRESS_SUMMARY',
   get_audio_urls: 'GET_AUDIO_URLS',
+  pixabay: 'PIXABAY',
 };
 
 // Functions that should prefer CF Workers (when binding available)
@@ -39,6 +41,7 @@ const PREFER_CF_WORKER = {
   log_word_attempt: true,
   progress_summary: true,
   get_audio_urls: true,
+  pixabay: true,
 };
 
 const ALLOWED_ORIGINS = new Set([

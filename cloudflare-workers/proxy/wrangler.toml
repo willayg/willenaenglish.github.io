@@ -24,6 +24,10 @@ service = "progress-summary"
 binding = "GET_AUDIO_URLS"
 service = "get-audio-urls"
 
+[[services]]
+binding = "PIXABAY"
+service = "pixabay"
+
 # Fallback for non-CF functions
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
