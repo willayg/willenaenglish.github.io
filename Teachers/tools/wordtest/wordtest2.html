@@ -685,7 +685,15 @@
                   const container = target.querySelector('div') || target;
                   container.innerHTML = '<img src="' + imageUrl + '" style="display:block;width:100%;height:100%;object-fit:cover;" alt="' + ctx.word + '">';
                 }
-                if (window.updatePreview) window.updatePreview();
+                // Persist selection so regeneration can restore it.
+                try {
+                  const key = String(word || '').toLowerCase() + '_' + String(dataIndex);
+                  window.savedImageData = window.savedImageData || {};
+                  window.savedImageData[key] = { src: imageUrl, word: word, index: Number(dataIndex) };
+                } catch (_) {}
+
+                // IMPORTANT: do NOT call updatePreview() here.
+                // updatePreview() regenerates the HTML and would overwrite this newly-selected image.
               }
             });
           }
