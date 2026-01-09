@@ -643,12 +643,60 @@
       }
     };
     </script>
-    <script type="module" src="wordtest.js"></script>
+    <script type="module" src="wordtest.js?v=20260110"></script>
     <script>
     // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
       const previewArea = document.getElementById('previewArea');
       if (previewArea) {
+        // Capture-phase handler: ensures any legacy inline onclick handlers never run
+        // (Some older saved templates/HTML had inline window.open() to Pixabay.)
+        previewArea.addEventListener('click', function(e) {
+          // Only take over clicks on image zones
+          const zone = e.target.closest('.image-drop-zone');
+          if (!zone) return;
+          if (e.target && e.target.tagName === 'INPUT') return;
+
+          e.preventDefault();
+          e.stopImmediatePropagation();
+
+          const rawWord = (zone.dataset && zone.dataset.word) ? zone.dataset.word : '';
+          const word = (rawWord || '').trim().split(/\s|,/)[0];
+          if (!word) return;
+
+          const dataIndex = (zone.dataset && zone.dataset.index) ? zone.dataset.index : 0;
+          const pictureModeSelect = document.getElementById('pictureModeSelect');
+          const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
+          const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+          const filter = filterMap[mode] || 'all';
+
+          function openPicker() {
+            if (!(window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function')) return;
+            window.SharedImagePicker.open({
+              query: word,
+              filter: filter,
+              context: { word: word, index: dataIndex, targetElement: zone },
+              onSelect: function(imageUrl, ctx) {
+                const target = ctx && ctx.targetElement ? ctx.targetElement : zone;
+                const imgEl = target.querySelector('img');
+                if (imgEl) {
+                  imgEl.src = imageUrl;
+                } else {
+                  const container = target.querySelector('div') || target;
+                  container.innerHTML = '<img src="' + imageUrl + '" style="display:block;width:100%;height:100%;object-fit:cover;" alt="' + ctx.word + '">';
+                }
+                if (window.updatePreview) window.updatePreview();
+              }
+            });
+          }
+
+          if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+            openPicker();
+          } else if (typeof window.ensureSharedImagePicker === 'function') {
+            window.ensureSharedImagePicker().then(openPicker).catch(function(){});
+          }
+        }, true);
+
         previewArea.addEventListener('click', function(e) {
           // Skip if clicking on input fields (for editing)
           if (e.target.tagName === 'INPUT') return;
