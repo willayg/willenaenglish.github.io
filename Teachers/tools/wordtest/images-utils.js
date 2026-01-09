@@ -34,62 +34,29 @@ export function getPixabaySearchUrl(word, mode) {
 	}
 }
 
-// Helper function to render an image (kept identical to original)
+// Helper function to render an image
+// NOTE: Click handling for image picker is done via capture-phase handler in wordtest2.html
+// so we no longer need inline onclick here (which was causing HTML parsing issues).
 export function renderImage(imageUrl, index, word = null, kor = null, currentSettings = { imageSize: 50 }) {
-	// Add click to open shared image picker modal
-	let clickHandler = '';
-	if (word) {
-		// Get initial filter from pictureModeSelect if available
-		clickHandler = `onclick="
-			event.stopPropagation();
-			const pictureModeSelect = document.getElementById('pictureModeSelect');
-			const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
-			const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
-			const filter = filterMap[mode] || 'all';
-			
-			if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
-				window.SharedImagePicker.open({
-					query: '${word.replace(/'/g, "\\'")}',
-					filter: filter,
-					context: { word: '${word.replace(/'/g, "\\'")}', index: ${index} },
-					onSelect: function(imageUrl, ctx) {
-						const zone = document.querySelector('[data-word=\\\"' + ctx.word + '\\\"][data-index=\\\"' + ctx.index + '\\\"]');
-						if (zone) {
-							const img = zone.querySelector('img');
-							if (img) {
-								img.src = imageUrl;
-							} else {
-								const imgContainer = zone.querySelector('div > div') || zone.firstElementChild;
-								if (imgContainer) {
-									imgContainer.innerHTML = '<img src=\\\"' + imageUrl + '\\\" style=\\\"display:block;width:100%;height:100%;object-fit:cover;\\\" alt=\\\"Image\\\">';
-								}
-							}
-						}
-						if (window.updatePreview) window.updatePreview();
-					}
-				});
-			}
-		"`;
-	}
+	const safeWord = word || '';
 
 	if (imageUrl.startsWith('<div')) {
 		// Emoji or placeholder divs need consistent box sizing with <img>
 		const isEmoji = imageUrl.includes('font-size:') && !/width:\s*\d+px/.test(imageUrl);
 		if (isEmoji) {
 			const updatedImageUrl = imageUrl.replace(/font-size:\s*\d+px/, `font-size: ${currentSettings.imageSize * 0.8}px`);
-			return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${clickHandler}>
+			return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative; cursor: pointer;">
 				<div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid #ddd;overflow:hidden;background:#fff;">
 					${updatedImageUrl}
 				</div>
 			</div>`;
 		}
 		// Already a sized placeholder box; just wrap normally
-		return `<div class="image-drop-zone" data-word="${word}" data-index="${index}" style="position: relative; cursor: pointer;" ${clickHandler}>${imageUrl}</div>`;
+		return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative; cursor: pointer;">${imageUrl}</div>`;
 	}
 	// It's a real image URL
-	const safeWord = word || '';
 	const onErr = `onerror="this.setAttribute('data-error','1'); if(window._wordtestImageError){ window._wordtestImageError(${JSON.stringify(''+safeWord)}, ${index}, this); }"`;
-	return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative;" ${clickHandler}>
+	return `<div class="image-drop-zone" data-word="${safeWord}" data-index="${index}" style="position: relative; cursor: pointer;">
 		<div style="width:${currentSettings.imageSize}px;height:${currentSettings.imageSize}px;display:block;border-radius:8px;border:2px solid #ddd;overflow:hidden;background:#fff;">
 			<img src="${imageUrl}" ${onErr} style="display:block;width:100%;height:100%;object-fit:cover;" alt="Image ${index + 1}">
 		</div>
