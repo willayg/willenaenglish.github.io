@@ -242,7 +242,8 @@ async function fetchImageForCard(index) {
         default:
             imageTypeParam = 'photo';
     }
-    const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageTypeParam}${extraParams}`;
+    const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+    const url = `${apiPath}?q=${encodeURIComponent(query)}&image_type=${imageTypeParam}${extraParams}`;
     try {
         console.log('[Flashcards] Fetching image for', query, '->', url);
         const res = await fetch(url);

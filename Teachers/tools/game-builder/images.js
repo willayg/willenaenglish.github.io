@@ -263,7 +263,9 @@ export async function loadImageForRow(list, idx, loadingImagesSet, renderCallbac
   try {
     loadingImagesSet.add(idx);
     renderCallback(); // show spinner
-    const url = new URL('/.netlify/functions/pixabay', window.location.origin);
+    // Use WillenaAPI if available to handle routing (CF vs Netlify)
+    const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+    const url = new URL(apiPath, window.location.origin);
     url.searchParams.set('q', term);
     const res = await fetch(url.toString());
     const js = await res.json();

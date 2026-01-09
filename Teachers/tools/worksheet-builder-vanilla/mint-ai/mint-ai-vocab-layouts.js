@@ -307,7 +307,8 @@
               } else {
                 console.log('Loading new image for:', word.eng);
                 // Load image from Pixabay
-                fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word.eng)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`)
+                const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+                fetch(`${apiPath}?q=${encodeURIComponent(word.eng)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`)
                   .then(res => res.json())
                   .then(data => {
                     console.log('Pixabay response for', word.eng, ':', data);
@@ -681,7 +682,8 @@
       }
       
       // Use Netlify function exactly like wordtest.js files
-      const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=5&page=${Math.floor(Math.random()*5)+1}`;
+      const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+      const url = `${apiPath}?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=5&page=${Math.floor(Math.random()*5)+1}`;
       console.log('Fetching URL:', url);
       
       const res = await fetch(url);
@@ -732,7 +734,8 @@
       console.log('Searching for image:', word);
       
       // Use Netlify function exactly like wordtest.js files
-      const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=5&page=${Math.floor(Math.random()*5)+1}`;
+      const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+      const url = `${apiPath}?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=5&page=${Math.floor(Math.random()*5)+1}`;
       console.log('Fetching URL:', url);
       
       const res = await fetch(url);
@@ -891,7 +894,8 @@ function renderDoubleListWithStyle(words, styleId, l1Label = 'Korean') {
               if (pictureListImages[wordKey]) {
                 img.src = pictureListImages[wordKey];
               } else {
-                fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word.eng)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`)
+                const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+                fetch(`${apiPath}?q=${encodeURIComponent(word.eng)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`)
                   .then(res => res.json())
                   .then(data => {
                     if (data.images && data.images.length > 0) {

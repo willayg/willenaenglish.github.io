@@ -266,7 +266,8 @@ async function loadImagesForWords(words) {
             console.log('Loading image for:', word);
             
             // Call Netlify function endpoint for each word (same as vocab modal)
-            const response = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`);
+            const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+            const response = await fetch(`${apiPath}?q=${encodeURIComponent(word)}&image_type=photo&safesearch=true&order=popular&per_page=1&page=1`);
             const data = await response.json();
             
             console.log('Pixabay response for', word, ':', data);

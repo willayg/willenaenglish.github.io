@@ -56,7 +56,8 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
             // Choose image_type from UI if available
             const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
             const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
-            const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
+            const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+            const url = `${apiPath}?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
             try {
                 const res = await fetch(url, { cache: 'no-store' });
                 if (res.ok) {
