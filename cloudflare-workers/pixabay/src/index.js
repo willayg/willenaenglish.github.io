@@ -62,6 +62,8 @@ export default {
     }
 
     console.log('Pixabay request:', { query, imageType, contentType, order, safesearch, perPage, page: pageValue });
+    console.log('Pixabay URL (key hidden):', pixabayUrl.replace(apiKey, 'HIDDEN'));
+    console.log('API Key present:', !!apiKey, 'Key length:', apiKey?.length);
 
     try {
       const res = await fetch(pixabayUrl);

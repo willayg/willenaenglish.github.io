@@ -4,30 +4,33 @@
  * A reusable image picker component for Teacher Tools.
  * Fetches images from Pixabay with filter options and displays in a modal grid.
  * 
- * Usage:
- *   import { openImagePicker } from '/Teachers/tools/shared/image-picker-modal.js';
- *   
- *   openImagePicker({
- *     query: 'cat',           // Initial search query
- *     onSelect: (imageUrl) => {
- *       // Handle selected image URL
- *       console.log('Selected:', imageUrl);
- *     }
+ * Usage (non-module / inline handlers):
+ *   window.SharedImagePicker.open({
+ *     query: 'cat',
+ *     onSelect: (imageUrl) => { console.log('Selected:', imageUrl); }
  *   });
+ * 
+ * Usage (ES module):
+ *   import { openImagePicker } from '/Teachers/tools/shared/image-picker-modal.js';
+ *   openImagePicker({ query: 'cat', onSelect: (url) => {} });
  */
 
-// Modal state
-let modalState = {
-  open: false,
-  query: '',
-  filter: 'all',
-  page: 1,
-  perPage: 12,
-  results: [],
-  busy: false,
-  onSelect: null,
-  context: null // Optional context data passed back to onSelect
-};
+// Wrap in IIFE to avoid polluting global scope, but expose to window
+(function() {
+  'use strict';
+  
+  // Modal state
+  const modalState = {
+    open: false,
+    query: '',
+    filter: 'all',
+    page: 1,
+    perPage: 12,
+    results: [],
+    busy: false,
+    onSelect: null,
+    context: null // Optional context data passed back to onSelect
+  };
 
 // Ensure modal elements exist
 function ensureModalElements() {
@@ -200,7 +203,7 @@ function ensureModalElements() {
  * @param {any} options.context - Optional context data to pass back to onSelect
  * @param {string} options.filter - Initial filter: 'all', 'photo', 'illustration', 'vector', 'ai'
  */
-export function openImagePicker(options = {}) {
+function openImagePicker(options = {}) {
   ensureModalElements();
   
   modalState.open = true;
@@ -236,7 +239,7 @@ export function openImagePicker(options = {}) {
 /**
  * Close the image picker modal
  */
-export function closeImagePicker() {
+function closeImagePicker() {
   modalState.open = false;
   modalState.onSelect = null;
   modalState.context = null;
@@ -359,10 +362,19 @@ function selectImage(imageUrl) {
   closeImagePicker();
 }
 
-// Also expose globally for non-module usage
-if (typeof window !== 'undefined') {
-  window.SharedImagePicker = {
-    open: openImagePicker,
-    close: closeImagePicker
-  };
-}
+// Expose globally for non-module usage (inline onclick handlers etc.)
+window.SharedImagePicker = {
+  open: openImagePicker,
+  close: closeImagePicker
+};
+
+// Also expose individual functions for compatibility
+window.openImagePicker = openImagePicker;
+window.closeImagePicker = closeImagePicker;
+
+})(); // End IIFE
+
+// ES Module exports (for import statements)
+export { };
+export const openImagePicker = window.openImagePicker;
+export const closeImagePicker = window.closeImagePicker;

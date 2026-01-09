@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard Generator</title>
     <script src="/js/api-config.js?v=20260108"></script>
-    <!-- Shared Image Picker Modal -->
-    <script type="module" src="/Teachers/tools/shared/image-picker-modal.js"></script>
+    <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
+    <script src="/Teachers/tools/shared/image-picker-modal.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
     /* Ensure the preview area fills the viewport for 1x2-portrait */
@@ -550,18 +550,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Update flashcard image
                         const targetCard = document.getElementById(ctx.cardId);
                         if (targetCard) {
-                            let imgEl = targetCard.querySelector('.flashcard-image img');
+                            // Try multiple selectors - flashcards use .flashcard-imagebox or img.flashcard-image
+                            let imgEl = targetCard.querySelector('img.flashcard-image') || targetCard.querySelector('.flashcard-imagebox img') || targetCard.querySelector('img');
                             if (imgEl) {
                                 imgEl.src = imageUrl;
+                                imgEl.style.objectFit = 'cover';
                             } else {
                                 // Find or create the image container
-                                let imgContainer = targetCard.querySelector('.flashcard-image');
+                                let imgContainer = targetCard.querySelector('.flashcard-imagebox');
                                 if (!imgContainer) {
                                     imgContainer = document.createElement('div');
-                                    imgContainer.className = 'flashcard-image';
+                                    imgContainer.className = 'flashcard-imagebox';
+                                    imgContainer.style.cssText = 'width:80%;aspect-ratio:1.414/1;background:#f8f8f8;display:flex;align-items:center;justify-content:center;border-radius:12px;margin-bottom:20px;overflow:hidden;';
                                     targetCard.insertBefore(imgContainer, targetCard.firstChild);
                                 }
-                                imgContainer.innerHTML = '<img src="' + imageUrl + '" alt="' + ctx.word + '">';
+                                imgContainer.innerHTML = '<img src="' + imageUrl + '" alt="' + ctx.word + '" class="flashcard-image" style="width:100%;height:100%;object-fit:cover;">';
                             }
                         }
                         // Also update the flashcards data array
