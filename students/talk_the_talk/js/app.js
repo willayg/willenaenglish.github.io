@@ -11,7 +11,8 @@
   // ─────────────────────────────────────────────
   const CONFIG = {
     maxRecordingTime: 15,           // seconds
-    apiEndpoint: '/api/analyze-sentence',
+    apiEndpoint: 'https://api.willenaenglish.com/.netlify/functions/analyze-sentence',
+    apiSecret: import.meta.env.INTERNAL_API_SECRET,
     mimeTypes: [
       'audio/webm;codecs=opus',
       'audio/webm',
@@ -259,22 +260,22 @@
       else if (selectedMimeType.includes('ogg')) ext = 'ogg';
       
       formData.append('audio', audioBlob, `recording.${ext}`);
-      formData.append('language', currentLanguage);
+
+      // Build headers with X-Internal-Secret
+      const headers = {};
+      if (CONFIG.apiSecret) {
+        headers['X-Internal-Secret'] = CONFIG.apiSecret;
+      }
 
       // Send to API
       const response = await fetch(CONFIG.apiEndpoint, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: headers
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const code = errorData.code;
-
-        if (code === 'UNSUPPORTED_REGION') {
-          throw new Error('Speech service is unavailable on this network. Try switching networks or disabling VPN and try again.');
-        }
-
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
@@ -299,8 +300,7 @@
     hideLoading();
 
     const transcript = data.transcript || '(no speech detected)';
-    const corrected = data.corrected_sentence || data.transcript || '';
-    const teacherNote = data.teacher_note || '';
+    const corrected = data.corrected || data.transcript || '';
     
     // Add student message (what they said)
     addMessage(transcript, 'student', 'You said');
