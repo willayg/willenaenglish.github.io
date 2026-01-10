@@ -12,12 +12,26 @@ const FormData = require('form-data');
 const Busboy = require('busboy');
 
 const OPENAI_API = process.env.OPENAI_API;
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || 'willena-ttt-2026-dev';
+
+const ALLOWED_ORIGINS = [
+  'https://staging.willenaenglish.com',
+  'https://willenaenglish.com',
+  'https://www.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  'https://willenaenglish.netlify.app',
+  'http://localhost:3000',
+  'http://localhost:8000'
+];
 
 exports.handler = async (event) => {
+  const origin = event.headers.origin || event.headers.Origin || '';
+  const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin);
+  
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Internal-Secret',
     'Content-Type': 'application/json'
   };
 
@@ -31,6 +45,17 @@ exports.handler = async (event) => {
       statusCode: 405,
       headers: corsHeaders,
       body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  // Validate X-Internal-Secret header
+  const secret = event.headers['x-internal-secret'] || event.headers['X-Internal-Secret'];
+  if (secret !== INTERNAL_SECRET) {
+    console.warn('[analyze-sentence] Unauthorized: invalid or missing X-Internal-Secret');
+    return {
+      statusCode: 401,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Unauthorized' })
     };
   }
 
@@ -76,8 +101,7 @@ exports.handler = async (event) => {
         headers: corsHeaders,
         body: JSON.stringify({
           transcript: '',
-          corrected_sentence: '',
-          teacher_note: 'No speech detected. Please try speaking louder or closer to the microphone.'
+          corrected: ''
         })
       };
     }
@@ -94,8 +118,7 @@ exports.handler = async (event) => {
       headers: corsHeaders,
       body: JSON.stringify({
         transcript: transcript,
-        corrected_sentence: correction.corrected_sentence || transcript,
-        teacher_note: correction.teacher_note || 'Good job!'
+        corrected: correction.corrected_sentence || transcript
       })
     };
 

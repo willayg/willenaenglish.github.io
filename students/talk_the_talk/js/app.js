@@ -261,10 +261,13 @@
       
       formData.append('audio', audioBlob, `recording.${ext}`);
 
-      // Send to API
+      // Send to API with required secret header
       const response = await fetch(CONFIG.apiEndpoint, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          'X-Internal-Secret': 'willena-ttt-2026-dev'
+        }
       });
 
       if (!response.ok) {
