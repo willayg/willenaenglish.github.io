@@ -12,7 +12,6 @@
   const CONFIG = {
     maxRecordingTime: 15,           // seconds
     apiEndpoint: 'https://api.willenaenglish.com/.netlify/functions/analyze-sentence',
-    apiSecret: import.meta.env.INTERNAL_API_SECRET,
     mimeTypes: [
       'audio/webm;codecs=opus',
       'audio/webm',
@@ -261,17 +260,10 @@
       
       formData.append('audio', audioBlob, `recording.${ext}`);
 
-      // Build headers with X-Internal-Secret
-      const headers = {};
-      if (CONFIG.apiSecret) {
-        headers['X-Internal-Secret'] = CONFIG.apiSecret;
-      }
-
       // Send to API
       const response = await fetch(CONFIG.apiEndpoint, {
         method: 'POST',
-        body: formData,
-        headers: headers
+        body: formData
       });
 
       if (!response.ok) {
