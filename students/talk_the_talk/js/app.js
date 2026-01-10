@@ -11,7 +11,12 @@
   // ─────────────────────────────────────────────
   const CONFIG = {
     maxRecordingTime: 15,           // seconds
-    apiEndpoint: 'https://api.willenaenglish.com/.netlify/functions/analyze-sentence',
+    // Use WillenaAPI to get correct endpoint for current environment
+    get apiEndpoint() {
+      return window.WillenaAPI 
+        ? window.WillenaAPI.getApiUrl('/.netlify/functions/analyze-sentence')
+        : '/.netlify/functions/analyze-sentence';
+    },
     mimeTypes: [
       'audio/webm;codecs=opus',
       'audio/webm',
