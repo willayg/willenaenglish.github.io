@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Profile</title>
   <script>
-    // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain
+    // Teachers auth requires same-origin cookies - redirect to teachers subdomain if on other domain
     (function() {
       const host = window.location.hostname;
       if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
         const currentPath = window.location.pathname + window.location.search;
-        window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
+        window.location.href = 'https://teachers.willenaenglish.com' + currentPath;
       }
     })();
   </script>
