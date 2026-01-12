@@ -176,9 +176,9 @@ let IS_ADMIN = false; // set after role check
 async function api(action, opts = {}) {
   const method = opts.method || (opts.body ? 'POST' : 'GET');
   const url = `${API}?action=${encodeURIComponent(action)}`;
-  const res = await fetch(url, {
+  // Use WillenaAPI.fetch for proper routing on CF Pages deployments
+  const res = await WillenaAPI.fetch(url, {
     method,
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     cache: 'no-store'
