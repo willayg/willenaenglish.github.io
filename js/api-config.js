@@ -116,6 +116,7 @@
    * Get the full URL for a Netlify function.
    * Production: returns relative path (e.g., /.netlify/functions/auth)
    * GitHub Pages: returns absolute Netlify URL
+   * Cloudflare Pages: Netlify-only functions route to NETLIFY_BASE, others to CF_API_GATEWAY
    */
   function getApiUrl(functionPath) {
     // If already a full URL, return as-is
@@ -138,6 +139,12 @@
         functionPath = '/.netlify/functions/' + functionPath;
       }
     }
+    
+    // Force Netlify-only functions to route to NETLIFY_BASE even on CF Pages
+    if (fn && NETLIFY_ONLY_FUNCTIONS.includes(fn) && isCloudflarePages) {
+      return NETLIFY_BASE + functionPath;
+    }
+    
     return API_BASE + functionPath;
   }
 
