@@ -24,16 +24,23 @@ const ALLOWED_ORIGINS = [
   'http://localhost:8000'
 ];
 
-exports.handler = async (event) => {
-  const origin = event.headers.origin || event.headers.Origin || '';
-  const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin);
-  
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : '*',
+function getCorsHeaders(origin) {
+  const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Internal-Secret',
     'Content-Type': 'application/json'
   };
+  
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  
+  return headers;
+}
+
+exports.handler = async (event) => {
+  const origin = event.headers.origin || event.headers.Origin || '';
+  const corsHeaders = getCorsHeaders(origin);
 
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {

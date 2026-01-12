@@ -559,6 +559,129 @@ exports.handler = async (event) => {
       }
     }
 
+    // ===== WORKSHEET OPERATIONS =====
+    // list_worksheets action
+    if (action === 'list_worksheets') {
+      const qs = event.queryStringParameters || {};
+      const fieldsParam = qs.fields;
+      const limit = parseInt(qs.limit) || 50;
+      const offset = parseInt(qs.offset) || 0;
+      const idFilter = qs.id;
+      const typeFilter = qs.type;
+      const searchQuery = qs.search;
+      const bookFilter = qs.book;
+
+      let selectClause = fieldsParam || '*';
+      let queryFilters = [];
+      
+      if (idFilter) queryFilters.push(`user_id=eq.${encodeURIComponent(idFilter)}`);
+      if (typeFilter) queryFilters.push(`worksheet_type=eq.${encodeURIComponent(typeFilter)}`);
+      if (searchQuery) {
+        queryFilters.push(`or=(title.ilike.%25${encodeURIComponent(searchQuery)}%25,book.ilike.%25${encodeURIComponent(searchQuery)}%25,unit.ilike.%25${encodeURIComponent(searchQuery)}%25)`);
+      }
+      if (bookFilter) queryFilters.push(`book.ilike.%25${encodeURIComponent(bookFilter)}%25`);
+
+      const filterStr = queryFilters.length > 0 ? '&' + queryFilters.join('&') : '';
+      const queryStr = `select=${encodeURIComponent(selectClause)}${filterStr}&order=created_at.desc&offset=${offset}&limit=${limit}`;
+      
+      try {
+        const { data, error, count } = await supabase
+          .from('worksheets')
+          .select(selectClause, { count: 'exact' });
+        
+        if (error) throw error;
+        
+        // Apply manual filtering if needed (supabase client library may not handle complex filters perfectly)
+        let filtered = data || [];
+        if (idFilter) filtered = filtered.filter(w => w.user_id === idFilter);
+        if (typeFilter) filtered = filtered.filter(w => w.worksheet_type === typeFilter);
+        if (searchQuery) {
+          const sq = searchQuery.toLowerCase();
+          filtered = filtered.filter(w => 
+            (w.title && w.title.toLowerCase().includes(sq)) ||
+            (w.book && w.book.toLowerCase().includes(sq)) ||
+            (w.unit && w.unit.toLowerCase().includes(sq))
+          );
+        }
+        if (bookFilter) {
+          filtered = filtered.filter(w => w.book && w.book.toLowerCase().includes(bookFilter.toLowerCase()));
+        }
+        
+        // Apply pagination and sorting
+        filtered = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const paginatedData = filtered.slice(offset, offset + limit);
+        
+        return respond(event, 200, { success: true, data: paginatedData, totalCount: filtered.length });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: e.message || 'List failed' });
+      }
+    }
+
+    // save_worksheet action
+    if (action === 'save_worksheet' && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body || '{}');
+        
+        // Normalize words to array
+        let words = body.words;
+        if (typeof words === 'string') {
+          words = words.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        } else if (Array.isArray(words)) {
+          words = words.map(w => typeof w === 'string' ? w.trim() : '').filter(w => w.length > 0);
+        } else {
+          words = [];
+        }
+        body.words = words;
+        
+        // Normalize language_point
+        if (typeof body.language_point === 'string') {
+          body.language_point = body.language_point.trim() ? [body.language_point.trim()] : [];
+        } else if (!Array.isArray(body.language_point)) {
+          body.language_point = [];
+        }
+        
+        // Upsert worksheet
+        if (body.user_id) {
+          // Update existing
+          const { error } = await supabase
+            .from('worksheets')
+            .update(body)
+            .eq('user_id', body.user_id);
+          if (error) throw error;
+        } else {
+          // Insert new
+          const { error } = await supabase
+            .from('worksheets')
+            .insert([body]);
+          if (error) throw error;
+        }
+        
+        return respond(event, 200, { success: true });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: e.message || 'Save failed' });
+      }
+    }
+
+    // delete_worksheet action
+    if (action === 'delete_worksheet' && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body || '{}');
+        const { id } = body;
+        
+        if (!id) return respond(event, 400, { success: false, error: 'Missing worksheet id' });
+        
+        const { error } = await supabase
+          .from('worksheets')
+          .delete()
+          .eq('user_id', id);
+        
+        if (error) throw error;
+        return respond(event, 200, { success: true });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: e.message || 'Delete failed' });
+      }
+    }
+
     // Logout: clear cookies
     if (action === 'logout' && (event.httpMethod === 'POST' || event.httpMethod === 'GET')) {
       const dev = isLocalDev();
