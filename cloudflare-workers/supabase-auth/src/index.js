@@ -739,7 +739,7 @@ export default {
       
       // save_worksheet action
       if (action === 'save_worksheet') {
-        if (method !== 'POST') {
+        if (request.method !== 'POST') {
           return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
         }
         
@@ -785,7 +785,7 @@ export default {
       
       // delete_worksheet action
       if (action === 'delete_worksheet') {
-        if (method !== 'POST') {
+        if (request.method !== 'POST') {
           return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
         }
         
