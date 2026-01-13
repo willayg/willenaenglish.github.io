@@ -5,7 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="Student Login">Student Login</title>
   <!-- API config for GitHub Pages + Netlify Functions -->
-  <script src="/js/api-config.js?v=20260113b"></script>
+  <script src="/js/api-config.js?v=20260113c"></script>
+  <!-- HOTFIX: Force API gateway for students.willenaenglish.com (CF Pages deployment) -->
+  <script>
+  (function() {
+    if (window.location.hostname === 'students.willenaenglish.com') {
+      const API_GATEWAY = 'https://api.willenaenglish.com';
+      const origGetApiUrl = window.WillenaAPI.getApiUrl;
+      window.WillenaAPI.getApiUrl = function(path) {
+        const url = origGetApiUrl(path);
+        // If it's a relative URL, prepend the API gateway
+        if (url.startsWith('/.netlify/functions/')) {
+          console.log('[HOTFIX] Routing to API gateway:', API_GATEWAY + url);
+          return API_GATEWAY + url;
+        }
+        return url;
+      };
+      window.WillenaAPI.BASE_URL = API_GATEWAY;
+      console.log('[HOTFIX] students.willenaenglish.com API routing fixed to use', API_GATEWAY);
+    }
+  })();
+  </script>
   <link rel="stylesheet" href="/students/profile.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
