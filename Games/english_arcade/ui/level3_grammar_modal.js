@@ -110,11 +110,10 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       emoji: '💫',
       file: 'data/grammar/level3/want_to.json',
       config: { ruleHint: 'Express desire with "want to"', grammarType: 'want_to' }
-    }
-  ];
+  }
   /*
   // Additional topics (coming soon)
-  {
+  ,{
     id: 'past_vs_present_vs_future_vs_continuous',
     label: 'All Tenses Practice',
     emoji: '🎯',
