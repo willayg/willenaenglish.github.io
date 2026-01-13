@@ -18,6 +18,13 @@ function detectGrammarType(filePath, data) {
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to')) return 'like_to';
   // Check data properties for hints
   if (Array.isArray(data) && data.length > 0) {
     const first = data[0];
@@ -173,6 +180,11 @@ export async function startGrammarFillGapL3({
       case 'be_going_to': return 'Fill in the blank with the correct form';
       case 'past_regular': return 'Fill in the blank with the correct verb form';
       case 'past_vs_future': return 'Choose the correct verb form';
+      case 'will_future': return 'Fill in the blank with "will + verb"';
+      case 'will_questions': return 'Fill in the blank with "will"';
+      case 'have_to': return 'Fill in the blank with "have to" or "has to"';
+      case 'want_to': return 'Fill in the blank with "want to" or "wants to"';
+      case 'like_to': return 'Fill in the blank with "like to" or "likes to"';
       case 'all_tenses':
       case 'tense_questions':
       case 'sentence_based':
@@ -333,6 +345,92 @@ export async function startGrammarFillGapL3({
           blanked,
           answer: fullPhrase,
           choices: shuffle([fullPhrase, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Will Future: blank the "will verb" phrase
+    if (grammarType === 'will_future') {
+      const match = sentence.match(/\b(will\s+\w+)/i);
+      if (match) {
+        const willPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${willPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        // Generate distractors (wrong forms)
+        const verb = willPhrase.replace(/^will\s+/i, '');
+        const distractors = [
+          `is going to ${verb}`,
+          verb + 's',
+          verb + 'ed',
+          `are ${verb}ing`
+        ].filter(d => d.toLowerCase() !== willPhrase.toLowerCase());
+        return {
+          blanked,
+          answer: willPhrase,
+          choices: shuffle([willPhrase, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Will Questions: blank the "Will" at the start
+    if (grammarType === 'will_questions') {
+      const match = sentence.match(/^(Will)\s+/i);
+      if (match) {
+        const willWord = match[1];
+        const blanked = sentence.replace(/^Will\s+/i, '_____ ');
+        const distractors = ['Do', 'Does', 'Did', 'Is', 'Are'];
+        return {
+          blanked,
+          answer: willWord,
+          choices: shuffle([willWord, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Have To: blank the "have to" or "has to" phrase
+    if (grammarType === 'have_to') {
+      const match = sentence.match(/\b(have to|has to)\b/i);
+      if (match) {
+        const haveToPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${haveToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const distractors = ['want to', 'like to', 'need to', 'can'];
+        // Include the other variant
+        const otherVariant = haveToPhrase.toLowerCase() === 'have to' ? 'has to' : 'have to';
+        return {
+          blanked,
+          answer: haveToPhrase,
+          choices: shuffle([haveToPhrase, otherVariant, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Want To: blank the "want to" or "wants to" phrase
+    if (grammarType === 'want_to') {
+      const match = sentence.match(/\b(want to|wants to)\b/i);
+      if (match) {
+        const wantToPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${wantToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const distractors = ['have to', 'like to', 'need to', 'can'];
+        const otherVariant = wantToPhrase.toLowerCase() === 'want to' ? 'wants to' : 'want to';
+        return {
+          blanked,
+          answer: wantToPhrase,
+          choices: shuffle([wantToPhrase, otherVariant, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Like To: blank the "like to" or "likes to" phrase
+    if (grammarType === 'like_to') {
+      const match = sentence.match(/\b(like to|likes to)\b/i);
+      if (match) {
+        const likeToPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${likeToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const distractors = ['have to', 'want to', 'need to', 'can'];
+        const otherVariant = likeToPhrase.toLowerCase() === 'like to' ? 'likes to' : 'like to';
+        return {
+          blanked,
+          answer: likeToPhrase,
+          choices: shuffle([likeToPhrase, otherVariant, ...distractors]).slice(0, 4)
         };
       }
     }

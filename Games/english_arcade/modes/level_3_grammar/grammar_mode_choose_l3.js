@@ -211,6 +211,13 @@ export async function startGrammarChooseL3({
     if (path.includes('past_simple_regular')) return 'past_simple_regular';
     if (path.includes('past_vs_future')) return 'past_vs_future';
     if (path.includes('past_vs_present_vs_future')) return 'all_tenses';
+    // Will future/questions: sentence-based with "will" patterns
+    if (path.includes('will_future')) return 'will_future';
+    if (path.includes('will_questions')) return 'will_questions';
+    // Modal verbs: have to, want to, like to
+    if (path.includes('have_to')) return 'have_to';
+    if (path.includes('want_to')) return 'want_to';
+    if (path.includes('like_to')) return 'like_to';
     if (item.base && item.past && item.detractors) return 'irregular_past';
     if (item.en && item.ko) return 'sentence_based';
     return 'generic';
@@ -508,6 +515,31 @@ export async function startGrammarChooseL3({
           main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
           instruction: 'Match the correct tense.'
         };
+      case 'will_future':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "will" sentence.'
+        };
+      case 'will_questions':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct question with "will".'
+        };
+      case 'have_to':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "have to" sentence.'
+        };
+      case 'want_to':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "want to" sentence.'
+        };
+      case 'like_to':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "like to" sentence.'
+        };
       case 'irregular_past':
         return {
           main: escapeHtml(item.base || item.word || 'Base Verb'),
@@ -578,6 +610,29 @@ export async function startGrammarChooseL3({
       return shuffle(['yesterday', 'tomorrow']);
     }
 
+    // Will Future, Will Questions, Have To, Want To, Like To: Show Korean, options are English sentences from pool
+    if (['will_future', 'will_questions', 'have_to', 'want_to', 'like_to'].includes(grammarType)) {
+      const correct = sentence;
+      const poolSet = new Set();
+      if (correct) poolSet.add(correct);
+      
+      // Generate distractors from other items in the list
+      for (const other of state.list) {
+        if (other === item) continue;
+        const otherEn = (other.en || other.exampleSentence || '').trim();
+        if (otherEn && otherEn !== correct) poolSet.add(otherEn);
+        if (poolSet.size >= 4) break;
+      }
+      
+      const arr = Array.from(poolSet).filter(Boolean);
+      while (arr.length < 3) arr.push(correct || arr[0] || '');
+      const options = shuffle(arr);
+      if (correct && !options.includes(correct)) {
+        options[options.length - 1] = correct;
+      }
+      return shuffle(options.slice(0, 4));
+    }
+
     // For other sentence-based grammars
     if (['all_tenses', 'sentence_based'].includes(grammarType)) {
       const correct = sentence;
@@ -645,6 +700,11 @@ export async function startGrammarChooseL3({
     // Past vs Future: correct answer is the time word
     if (grammarType === 'past_vs_future') {
       return extractTimeWord(sentence) || 'yesterday';
+    }
+
+    // Will Future, Will Questions, Have To, Want To, Like To: correct is the English sentence
+    if (['will_future', 'will_questions', 'have_to', 'want_to', 'like_to'].includes(grammarType)) {
+      return sentence;
     }
 
     // For other sentence-based grammars
