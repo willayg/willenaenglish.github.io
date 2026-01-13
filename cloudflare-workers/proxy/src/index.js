@@ -1,14 +1,15 @@
 /**
  * Cloudflare Worker: API Gateway + Set-Cookie domain rewrite
  *
- * This is the main API gateway at api.willenaenglish.com that routes ALL requests to:
- * Cloudflare Workers via Service Bindings (NO Netlify fallback)
+ * This is the main API gateway at api.willenaenglish.com that routes requests to:
+ * - Cloudflare Workers via Service Bindings (for migrated functions)
+ * - Netlify Functions (fallback for functions not yet migrated)
  *
  * Features:
- * - All API traffic goes through CF Workers only
  * - Set-Cookie domain rewrite to .willenaenglish.com for cross-subdomain auth
  * - CORS handling with credentials support
  * - Centralized cookie management at api.willenaenglish.com
+ * - Graceful Netlify fallback for unmigrated functions
  *
  * Active CF Workers:
  * - supabase_auth: Authentication & session management
@@ -17,8 +18,13 @@
  * - progress_summary: Leaderboards, stats, overview
  * - get_audio_urls: Audio file serving from R2
  * - verify_student: Student identity verification
+ *
+ * Netlify fallback functions:
+ * - progress_teacher_summary: Teacher dashboard data
+ * - (any other unmigrated functions)
  */
 
+const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
 
 // Map function names to their service binding names
@@ -242,10 +248,15 @@ async function handleRequest(request, env) {
     
     // Check if this is a supported CF Worker function
     if (!CF_WORKER_FUNCTIONS.has(functionName)) {
-      return new Response(JSON.stringify({ error: `Unknown function: ${functionName}` }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) }
+      // Fallback to Netlify for unmigrated functions
+      console.log(`[proxy] Fallback to Netlify for unmigrated function: ${functionName}`);
+      const netlifyUrl = `${NETLIFY_BASE}${url.pathname}${url.search}`;
+      const netlifyResp = await fetch(netlifyUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
       });
+      return rewriteResponse(netlifyResp, origin);
     }
     
     // Get the service binding for this function
